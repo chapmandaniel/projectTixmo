@@ -1,0 +1,2257 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  LayoutDashboard, 
+  Calendar, 
+  Ticket, 
+  BarChart3, 
+  Settings, 
+  Bell, 
+  Search, 
+  Plus, 
+  MoreVertical, 
+  TrendingUp, 
+  DollarSign, 
+  MapPin, 
+  CreditCard, 
+  ScanLine, 
+  Tags, 
+  ChevronRight, 
+  Filter, 
+  Download, 
+  Moon, 
+  Sun,
+  ClipboardList,
+  GripVertical,
+  Trash2,
+  MoreHorizontal,
+  CheckSquare,
+  Maximize2,
+  X,
+  Send,
+  Paperclip,
+  MessageSquare,
+  Image as ImageIcon,
+  Clock,
+  Users,
+  CheckCircle2,
+  ArrowLeft,
+  ArrowRight,
+  Save,
+  UserCheck,
+  UserX,
+  Edit3,
+  Shield,
+  UserPlus,
+  Mail,
+  Check,
+  Hash // Added Hash icon
+} from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  Legend, 
+  PieChart, 
+  Pie, 
+  Cell 
+} from 'recharts';
+
+// --- Mock Data based on API Schemas ---
+
+const API_ENUMS = {
+  EventStatus: {
+    DRAFT: 'DRAFT',
+    PUBLISHED: 'PUBLISHED',
+    ON_SALE: 'ON_SALE',
+    SOLD_OUT: 'SOLD_OUT',
+    CANCELLED: 'CANCELLED',
+    COMPLETED: 'COMPLETED'
+  },
+  OrderStatus: {
+    PENDING: 'PENDING',
+    PAID: 'PAID',
+    CANCELLED: 'CANCELLED'
+  },
+  UserRole: {
+    ADMIN: 'ADMIN',
+    PROMOTER: 'PROMOTER',
+    SCANNER: 'SCANNER',
+    CUSTOMER: 'CUSTOMER'
+  }
+};
+
+const CURRENT_USER = {
+  id: 'u1',
+  firstName: 'Sarah',
+  lastName: 'Jenkins',
+  email: 'sarah@tixmo.com',
+  role: API_ENUMS.UserRole.ADMIN // Change this to test permissions
+};
+
+const MOCK_USERS = [
+  { id: 'u1', firstName: 'Sarah', lastName: 'Jenkins', email: 'sarah@tixmo.com', role: 'ADMIN', status: 'ACTIVE', lastActive: 'Now' },
+  { id: 'u2', firstName: 'Alex', lastName: 'Rivera', email: 'alex.r@tixmo.com', role: 'PROMOTER', status: 'ACTIVE', lastActive: '2h ago' },
+  { id: 'u3', firstName: 'Mike', lastName: 'Chen', email: 'mike.c@tixmo.com', role: 'SCANNER', status: 'ACTIVE', lastActive: '1d ago' },
+  { id: 'u4', firstName: 'Emma', lastName: 'Watson', email: 'emma.w@tixmo.com', role: 'SCANNER', status: 'PENDING', lastActive: '-' },
+  { id: 'u5', firstName: 'David', lastName: 'Kim', email: 'david.k@tixmo.com', role: 'PROMOTER', status: 'SUSPENDED', lastActive: '5d ago' },
+];
+
+const MOCK_ANALYTICS_DATA = [
+  { date: 'Mon', sales: 4000, tickets: 240 },
+  { date: 'Tue', sales: 3000, tickets: 139 },
+  { date: 'Wed', sales: 2000, tickets: 980 },
+  { date: 'Thu', sales: 2780, tickets: 390 },
+  { date: 'Fri', sales: 1890, tickets: 480 },
+  { date: 'Sat', sales: 2390, tickets: 380 },
+  { date: 'Sun', sales: 3490, tickets: 430 },
+];
+
+const MOCK_EVENTS = [
+  {
+    id: '1',
+    name: 'Summer Music Festival 2025',
+    venue: 'Madison Square Garden',
+    startDatetime: '2025-07-15T19:00:00Z',
+    status: API_ENUMS.EventStatus.ON_SALE,
+    capacity: 20000,
+    sold: 14500,
+    revenue: 1250000,
+    category: 'Music'
+  },
+  {
+    id: '2',
+    name: 'TechConf Global',
+    venue: 'Convention Center',
+    startDatetime: '2025-09-10T09:00:00Z',
+    status: API_ENUMS.EventStatus.PUBLISHED,
+    capacity: 5000,
+    sold: 1200,
+    revenue: 600000,
+    category: 'Conference'
+  },
+  {
+    id: '3',
+    name: 'Comedy Night Special',
+    venue: 'The Laugh Factory',
+    startDatetime: '2025-06-20T20:00:00Z',
+    status: API_ENUMS.EventStatus.SOLD_OUT,
+    capacity: 300,
+    sold: 300,
+    revenue: 15000,
+    category: 'Comedy'
+  },
+  {
+    id: '4',
+    name: 'Indie Film Premiere',
+    venue: 'Silver Screen Theater',
+    startDatetime: '2025-10-05T18:30:00Z',
+    status: API_ENUMS.EventStatus.DRAFT,
+    capacity: 200,
+    sold: 0,
+    revenue: 0,
+    category: 'Cinema'
+  }
+];
+
+const MOCK_VENUES = [
+  { id: 'v1', name: 'Madison Square Garden', capacity: 20000, address: 'New York, NY' },
+  { id: 'v2', name: 'Convention Center', capacity: 5000, address: 'San Francisco, CA' },
+  { id: 'v3', name: 'The Laugh Factory', capacity: 300, address: 'Los Angeles, CA' },
+  { id: 'v4', name: 'Silver Screen Theater', capacity: 200, address: 'Austin, TX' }
+];
+
+const MOCK_RECENT_ORDERS = [
+  { id: 'ord_1', customer: 'Alex Johnson', event: 'Summer Music Festival', amount: 250.00, status: API_ENUMS.OrderStatus.PAID, time: '2 mins ago' },
+  { id: 'ord_2', customer: 'Sarah Smith', event: 'TechConf Global', amount: 899.00, status: API_ENUMS.OrderStatus.PAID, time: '15 mins ago' },
+  { id: 'ord_3', customer: 'Mike Brown', event: 'Comedy Night', amount: 45.00, status: API_ENUMS.OrderStatus.PENDING, time: '1 hour ago' },
+  { id: 'ord_4', customer: 'Emily Davis', event: 'Summer Music Festival', amount: 125.00, status: API_ENUMS.OrderStatus.CANCELLED, time: '3 hours ago' },
+];
+
+const MOCK_TICKET_TYPES = [
+  { id: 'tt1', name: 'General Admission', price: 85, sold: 12000, total: 15000, status: 'ACTIVE' },
+  { id: 'tt2', name: 'VIP Experience', price: 250, sold: 2500, total: 3000, status: 'ACTIVE' },
+  { id: 'tt3', name: 'Early Bird', price: 65, sold: 2000, total: 2000, status: 'SOLD_OUT' },
+];
+
+const MOCK_GUESTS = [
+  { id: 'g1', name: 'Alice Freeman', type: 'VIP Experience', status: 'Checked In', time: '10:42 AM' },
+  { id: 'g2', name: 'Bob Smith', type: 'General Admission', status: 'Checked In', time: '11:15 AM' },
+  { id: 'g3', name: 'Charlie Day', type: 'General Admission', status: 'Pending', time: '-' },
+  { id: 'g4', name: 'Dana White', type: 'VIP Experience', status: 'Pending', time: '-' },
+  { id: 'g5', name: 'Evan Stone', type: 'General Admission', status: 'Checked In', time: '10:05 AM' },
+];
+
+const TICKET_TYPE_DISTRIBUTION = [
+  { name: 'VIP', value: 400 },
+  { name: 'General', value: 3000 },
+  { name: 'Early Bird', value: 1200 },
+  { name: 'Student', value: 300 },
+];
+
+const INITIAL_KANBAN_DATA = {
+  todo: {
+    title: 'To Do',
+    items: [
+      { 
+        id: 't1', 
+        content: 'Update festival lineup images', 
+        description: 'We need to replace the hero image with the new band photo and update the gallery with last year\'s highlights.',
+        priority: 'High', 
+        tag: 'Design', 
+        assignee: 'u2',
+        messages: [
+          { id: 1, text: 'Need the new vector assets by Tuesday.', sender: 'Sarah', time: '2h ago' },
+          { id: 2, text: 'On it, exporting them now.', sender: 'Alex', time: '1h ago' }
+        ],
+        attachments: []
+      },
+      { id: 't2', content: 'Review vendor contracts', description: '', priority: 'Medium', tag: 'Legal', assignee: 'u1', messages: [], attachments: [] },
+    ]
+  },
+  inProgress: {
+    title: 'In Progress',
+    items: [
+      { id: 't3', content: 'Configure scanner devices', description: 'Ensure all 20 handhelds are charged and have the latest app version.', priority: 'High', tag: 'Ops', assignee: 'u3', messages: [], attachments: [] },
+    ]
+  },
+  review: {
+    title: 'Review',
+    items: [
+      { id: 't4', content: 'Draft promotional email', description: '', priority: 'Low', tag: 'Marketing', assignee: null, messages: [], attachments: [] },
+    ]
+  },
+  done: {
+    title: 'Done',
+    items: [
+      { id: 't5', content: 'Setup Stripe Connect', description: 'Integration complete and tested in sandbox.', priority: 'High', tag: 'Dev', assignee: 'u5', messages: [], attachments: [] },
+      { id: 't6', content: 'Venue capacity check', description: 'Fire marshall approved new layout.', priority: 'Medium', tag: 'Ops', assignee: 'u2', messages: [], attachments: [] },
+    ]
+  }
+};
+
+const COLORS = ['#525252', '#737373', '#a3a3a3', '#d4d4d4'];
+const DARK_COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe'];
+
+// --- Components ---
+
+const SidebarItem = ({ icon: Icon, label, active, onClick, isDark }) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center justify-between px-4 py-2 rounded-lg transition-all duration-200 group ${
+      active 
+        ? isDark ? 'bg-[#252525] text-gray-200' : 'bg-white text-gray-800 shadow-sm' 
+        : isDark ? 'text-gray-500 hover:bg-[#1e1e1e] hover:text-gray-300' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700'
+    }`}
+  >
+    <div className="flex items-center space-x-3">
+      <Icon size={18} className={active ? (isDark ? 'text-gray-200' : 'text-gray-800') : (isDark ? 'text-gray-600 group-hover:text-gray-400' : 'text-gray-400 group-hover:text-gray-600')} />
+      <span className="text-sm font-normal">{label}</span>
+    </div>
+    {active && <div className={`w-1 h-1 rounded-full ${isDark ? 'bg-indigo-400' : 'bg-gray-800'}`} />}
+  </button>
+);
+
+const StatCard = ({ title, value, trend, trendUp, isDark }) => (
+  <div className={`${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'} p-5 rounded-xl transition-all`}>
+    <h3 className={`${isDark ? 'text-gray-500' : 'text-gray-400'} text-sm font-normal mb-1`}>{title}</h3>
+    <div className="flex items-baseline space-x-3">
+      <p className={`${isDark ? 'text-gray-200' : 'text-gray-700'} text-3xl font-medium tracking-tight`}>{value}</p>
+      <div className={`flex items-center text-xs font-medium ${trendUp ? 'text-emerald-600' : 'text-rose-600'} ${isDark ? 'bg-[#252525]' : 'bg-gray-50'} px-2 py-0.5 rounded-full`}>
+        {trendUp ? <TrendingUp size={12} className="mr-1" /> : <TrendingUp size={12} className="mr-1 rotate-180" />}
+        <span>{trend}</span>
+      </div>
+    </div>
+  </div>
+);
+
+const StatusBadge = ({ status, isDark }) => {
+  const lightStyles = {
+    [API_ENUMS.EventStatus.ON_SALE]: 'bg-emerald-50 text-emerald-700',
+    [API_ENUMS.EventStatus.PUBLISHED]: 'bg-blue-50 text-blue-700',
+    [API_ENUMS.EventStatus.DRAFT]: 'bg-gray-100 text-gray-600',
+    [API_ENUMS.EventStatus.SOLD_OUT]: 'bg-rose-50 text-rose-700',
+    [API_ENUMS.OrderStatus.PAID]: 'bg-emerald-50 text-emerald-700',
+    [API_ENUMS.OrderStatus.PENDING]: 'bg-amber-50 text-amber-700',
+    [API_ENUMS.OrderStatus.CANCELLED]: 'bg-gray-50 text-gray-500',
+    'ACTIVE': 'bg-emerald-50 text-emerald-700',
+    'SUSPENDED': 'bg-rose-50 text-rose-700',
+    'PENDING': 'bg-amber-50 text-amber-700',
+  };
+
+  const darkStyles = {
+    [API_ENUMS.EventStatus.ON_SALE]: 'bg-emerald-900/10 text-emerald-400/80',
+    [API_ENUMS.EventStatus.PUBLISHED]: 'bg-blue-900/10 text-blue-400/80',
+    [API_ENUMS.EventStatus.DRAFT]: 'bg-[#2a2a2a] text-gray-400',
+    [API_ENUMS.EventStatus.SOLD_OUT]: 'bg-rose-900/10 text-rose-400/80',
+    [API_ENUMS.OrderStatus.PAID]: 'bg-emerald-900/10 text-emerald-400/80',
+    [API_ENUMS.OrderStatus.PENDING]: 'bg-amber-900/10 text-amber-400/80',
+    [API_ENUMS.OrderStatus.CANCELLED]: 'bg-[#2a2a2a] text-gray-500',
+    'ACTIVE': 'bg-emerald-900/10 text-emerald-400/80',
+    'SUSPENDED': 'bg-rose-900/10 text-rose-400/80',
+    'PENDING': 'bg-amber-900/10 text-amber-400/80',
+  };
+
+  const styles = isDark ? darkStyles : lightStyles;
+  const formatStatus = (str) => str.replace('_', ' ').toLowerCase();
+
+  return (
+    <span className={`px-2.5 py-1 rounded-full text-xs font-normal capitalize ${styles[status] || (isDark ? 'bg-[#2a2a2a]' : 'bg-gray-50')}`}>
+      {formatStatus(status)}
+    </span>
+  );
+};
+
+const InputField = ({ label, type = "text", value, onChange, placeholder, isDark, options }) => (
+  <div className="mb-4">
+    <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{label}</label>
+    {type === 'select' ? (
+      <select 
+        value={value} 
+        onChange={onChange}
+        className={`w-full p-3 rounded-lg outline-none transition-all text-sm appearance-none ${isDark ? 'bg-[#252525] text-gray-200 focus:bg-[#2a2a2a]' : 'bg-gray-50 text-gray-900 focus:bg-white shadow-sm'}`}
+      >
+        <option value="" disabled>Select {label}</option>
+        {options?.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    ) : type === 'textarea' ? (
+      <textarea
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        rows={4}
+        className={`w-full p-3 rounded-lg outline-none transition-all text-sm resize-none ${isDark ? 'bg-[#252525] text-gray-200 placeholder-gray-600 focus:bg-[#2a2a2a]' : 'bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white shadow-sm'}`}
+      />
+    ) : (
+      <input 
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full p-3 rounded-lg outline-none transition-all text-sm ${isDark ? 'bg-[#252525] text-gray-200 placeholder-gray-600 focus:bg-[#2a2a2a]' : 'bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white shadow-sm'}`}
+      />
+    )}
+  </div>
+);
+
+// --- Modals and Feature Views ---
+
+const UserModal = ({ user, onClose, onSave, isDark }) => {
+  const [formData, setFormData] = useState(user || {
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'SCANNER' // Default
+  });
+
+  const handleSave = () => {
+    if (!formData.firstName || !formData.lastName || !formData.email) return;
+    onSave(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className={`w-full max-w-md rounded-2xl flex flex-col shadow-2xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white'}`}>
+        <div className={`p-6 border-b flex justify-between items-center ${isDark ? 'border-[#333]' : 'border-gray-100'}`}>
+          <h2 className={`text-lg font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+            {user ? 'Edit Member' : 'Invite Member'}
+          </h2>
+          <button onClick={onClose} className={`p-2 rounded-full transition-colors ${isDark ? 'text-gray-400 hover:bg-[#333] hover:text-white' : 'text-gray-400 hover:bg-gray-100'}`}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className="p-6 space-y-1">
+          <div className="grid grid-cols-2 gap-4">
+            <InputField 
+              label="First Name" 
+              value={formData.firstName} 
+              onChange={(e) => setFormData({...formData, firstName: e.target.value})} 
+              isDark={isDark} 
+            />
+            <InputField 
+              label="Last Name" 
+              value={formData.lastName} 
+              onChange={(e) => setFormData({...formData, lastName: e.target.value})} 
+              isDark={isDark} 
+            />
+          </div>
+          <InputField 
+            label="Email Address" 
+            type="email"
+            value={formData.email} 
+            onChange={(e) => setFormData({...formData, email: e.target.value})} 
+            isDark={isDark} 
+          />
+          <InputField 
+            label="Role" 
+            type="select"
+            value={formData.role} 
+            onChange={(e) => setFormData({...formData, role: e.target.value})} 
+            options={[
+              { value: 'ADMIN', label: 'Admin (Full Access)' },
+              { value: 'PROMOTER', label: 'Promoter (Events & Scanners)' },
+              { value: 'SCANNER', label: 'Scanner (Check-in Only)' }
+            ]}
+            isDark={isDark} 
+          />
+        </div>
+
+        <div className={`p-6 border-t flex justify-end space-x-3 ${isDark ? 'bg-[#252525] border-[#333]' : 'bg-gray-50 border-gray-100'}`}>
+          <button 
+            onClick={onClose}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'}`}
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleSave}
+            className={`px-6 py-2 text-sm font-medium text-white rounded-lg shadow-lg transition-all ${isDark ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'}`}
+          >
+            {user ? 'Save Changes' : 'Send Invite'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CreateTaskModal = ({ onClose, onCreate, isDark }) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '', // Maps to Description
+    priority: 'Medium',
+    tag: 'General',
+    assignee: '',
+    attachments: []
+  });
+
+  const handleCreate = () => {
+    if (!formData.title) return;
+    onCreate(formData);
+  };
+
+  const handleAddImage = () => {
+    // Simulate adding an image
+    const newImage = {
+      id: Date.now(),
+      url: `https://picsum.photos/seed/${Date.now()}/200/200`,
+      name: `Image-${Date.now()}.jpg`
+    };
+    setFormData(prev => ({ ...prev, attachments: [...prev.attachments, newImage] }));
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className={`w-full max-w-md rounded-2xl flex flex-col shadow-2xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white'}`}>
+        <div className={`p-6 border-b flex justify-between items-center ${isDark ? 'border-[#333]' : 'border-gray-100'}`}>
+          <h2 className={`text-lg font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+            Create New Task
+          </h2>
+          <button onClick={onClose} className={`p-2 rounded-full transition-colors ${isDark ? 'text-gray-400 hover:bg-[#333] hover:text-white' : 'text-gray-400 hover:bg-gray-100'}`}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className="p-6 space-y-1">
+          <InputField 
+            label="Task Title" 
+            value={formData.title} 
+            onChange={(e) => setFormData({...formData, title: e.target.value})} 
+            placeholder="Short summary..."
+            isDark={isDark} 
+          />
+          <InputField 
+            label="Description" 
+            type="textarea"
+            value={formData.content} 
+            onChange={(e) => setFormData({...formData, content: e.target.value})} 
+            placeholder="Detailed explanation..."
+            isDark={isDark} 
+          />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <InputField 
+              label="Priority" 
+              type="select"
+              value={formData.priority} 
+              onChange={(e) => setFormData({...formData, priority: e.target.value})} 
+              options={[
+                { value: 'High', label: 'High' },
+                { value: 'Medium', label: 'Medium' },
+                { value: 'Low', label: 'Low' }
+              ]}
+              isDark={isDark} 
+            />
+            <InputField 
+              label="Tag" 
+              value={formData.tag} 
+              onChange={(e) => setFormData({...formData, tag: e.target.value})} 
+              isDark={isDark} 
+            />
+          </div>
+
+          <InputField 
+            label="Assign To" 
+            type="select"
+            value={formData.assignee} 
+            onChange={(e) => setFormData({...formData, assignee: e.target.value})} 
+            options={MOCK_USERS.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))}
+            isDark={isDark} 
+          />
+
+          <div>
+            <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Attachments</label>
+            <div className="flex flex-wrap gap-2">
+              {formData.attachments.map(att => (
+                <div key={att.id} className="w-16 h-16 rounded-lg overflow-hidden border border-gray-700 relative group">
+                  <img src={att.url} alt="att" className="w-full h-full object-cover" />
+                </div>
+              ))}
+              <button 
+                onClick={handleAddImage}
+                className={`w-16 h-16 rounded-lg border-2 border-dashed flex items-center justify-center transition-colors ${isDark ? 'border-[#333] hover:border-gray-500 text-gray-500' : 'border-gray-200 hover:border-gray-400 text-gray-400'}`}
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className={`p-6 border-t flex justify-end space-x-3 ${isDark ? 'bg-[#252525] border-[#333]' : 'bg-gray-50 border-gray-100'}`}>
+          <button 
+            onClick={onClose}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'}`}
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleCreate}
+            className={`px-6 py-2 text-sm font-medium text-white rounded-lg shadow-lg transition-all ${isDark ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'}`}
+          >
+            Create Task
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TeamView = ({ isDark }) => {
+  const [users, setUsers] = useState(MOCK_USERS);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+
+  // RBAC Logic
+  const canManage = (targetUserRole) => {
+    if (CURRENT_USER.role === 'ADMIN') return true;
+    if (CURRENT_USER.role === 'PROMOTER' && targetUserRole === 'SCANNER') return true;
+    return false;
+  };
+
+  const canAdd = CURRENT_USER.role === 'ADMIN' || CURRENT_USER.role === 'PROMOTER';
+
+  const handleSaveUser = (userData) => {
+    if (editingUser) {
+      setUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...userData } : u));
+    } else {
+      const newUser = {
+        id: `u-${Date.now()}`,
+        ...userData,
+        status: 'PENDING',
+        lastActive: '-'
+      };
+      setUsers(prev => [...prev, newUser]);
+    }
+    setIsModalOpen(false);
+    setEditingUser(null);
+  };
+
+  const handleDeleteUser = (userId) => {
+    if (confirm('Are you sure you want to remove this member?')) {
+      setUsers(prev => prev.filter(u => u.id !== userId));
+    }
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
+      {isModalOpen && (
+        <UserModal 
+          user={editingUser} 
+          onClose={() => { setIsModalOpen(false); setEditingUser(null); }} 
+          onSave={handleSaveUser} 
+          isDark={isDark} 
+        />
+      )}
+
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Team Members</h2>
+          <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm font-normal`}>Manage your organization's users and permissions.</p>
+        </div>
+        {canAdd && (
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className={`flex items-center space-x-2 px-4 py-2 text-sm font-normal rounded-lg transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
+          >
+            <UserPlus size={16} />
+            <span>Add Member</span>
+          </button>
+        )}
+      </div>
+
+      <div className={`rounded-xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
+        <div className="overflow-x-auto">
+          <table className={`w-full text-left text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            <thead className={`${isDark ? 'bg-[#252525] text-gray-500' : 'bg-gray-50 text-gray-400'} text-xs uppercase font-normal`}>
+              <tr>
+                <th className="px-6 py-3 font-medium">Member</th>
+                <th className="px-6 py-3 font-medium">Role</th>
+                <th className="px-6 py-3 font-medium">Status</th>
+                <th className="px-6 py-3 font-medium">Last Active</th>
+                <th className="px-6 py-3 text-right font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody className={`divide-y ${isDark ? 'divide-[#252525]' : 'divide-gray-50'}`}>
+              {users.map((user) => (
+                <tr key={user.id} className={`transition-colors ${isDark ? 'hover:bg-[#252525]' : 'hover:bg-gray-50'}`}>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-light ${isDark ? 'bg-[#333] text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
+                        {user.firstName[0]}{user.lastName[0]}
+                      </div>
+                      <div>
+                        <p className={`font-light ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{user.firstName} {user.lastName}</p>
+                        <p className="text-xs opacity-70">{user.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`flex items-center text-xs font-medium px-2 py-1 rounded w-fit ${
+                      user.role === 'ADMIN' ? (isDark ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700') :
+                      user.role === 'PROMOTER' ? (isDark ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-50 text-amber-700') :
+                      (isDark ? 'bg-slate-500/10 text-slate-300' : 'bg-slate-50 text-slate-700')
+                    }`}>
+                      {user.role === 'ADMIN' && <Shield size={12} className="mr-1" />}
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={user.status} isDark={isDark} />
+                  </td>
+                  <td className="px-6 py-4 text-xs">{user.lastActive}</td>
+                  <td className="px-6 py-4 text-right">
+                    {canManage(user.role) && user.id !== CURRENT_USER.id && (
+                      <div className="flex justify-end space-x-2">
+                        <button 
+                          onClick={() => { setEditingUser(user); setIsModalOpen(true); }}
+                          className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-[#333] text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'}`}
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteUser(user.id)}
+                          className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-rose-500/10 text-gray-500 hover:text-rose-400' : 'hover:bg-rose-50 text-gray-500 hover:text-rose-600'}`}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EventManagementDashboard = ({ event, onBack, isDark }) => {
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'tickets', label: 'Ticket Types' },
+    { id: 'guests', label: 'Guest List' },
+    { id: 'settings', label: 'Settings' },
+  ];
+
+  return (
+    <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col space-y-4">
+        <button 
+          onClick={onBack}
+          className={`flex items-center space-x-2 text-sm ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'}`}
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Events</span>
+        </button>
+        
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center space-x-3 mb-1">
+              <h1 className={`text-2xl font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{event.name}</h1>
+              <StatusBadge status={event.status} isDark={isDark} />
+            </div>
+            <div className={`flex items-center space-x-4 text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+              <span className="flex items-center"><Calendar size={14} className="mr-1.5" /> {new Date(event.startDatetime).toLocaleDateString()}</span>
+              <span className="flex items-center"><MapPin size={14} className="mr-1.5" /> {event.venue}</span>
+            </div>
+          </div>
+          <div className="flex space-x-3">
+            <button className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center transition-colors ${isDark ? 'bg-[#252525] text-gray-300 hover:bg-[#2a2a2a]' : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}>
+              <Edit3 size={16} className="mr-2" /> Edit
+            </button>
+            <button className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center shadow-lg ${isDark ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'}`}>
+              <Download size={16} className="mr-2" /> Export
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className={`flex items-center space-x-6 border-b ${isDark ? 'border-[#2a2a2a]' : 'border-gray-200'}`}>
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-3 text-sm font-medium relative transition-colors ${
+                activeTab === tab.id 
+                  ? (isDark ? 'text-white' : 'text-indigo-600') 
+                  : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-800')
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <div className={`absolute bottom-0 left-0 w-full h-0.5 ${isDark ? 'bg-indigo-500' : 'bg-indigo-600'}`}></div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="min-h-[400px]">
+        {activeTab === 'overview' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <StatCard 
+                title="Total Revenue" 
+                value={`$${event.revenue.toLocaleString()}`} 
+                trend="15% vs last week" 
+                trendUp={true} 
+                isDark={isDark} 
+              />
+              <div className={`${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'} p-5 rounded-xl`}>
+                <h3 className={`${isDark ? 'text-gray-500' : 'text-gray-400'} text-sm font-normal mb-3`}>Tickets Sold</h3>
+                <div className="flex items-end justify-between mb-2">
+                  <p className={`${isDark ? 'text-gray-200' : 'text-gray-700'} text-3xl font-medium tracking-tight`}>{event.sold.toLocaleString()}</p>
+                  <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>of {event.capacity.toLocaleString()}</span>
+                </div>
+                <div className={`w-full rounded-full h-1.5 ${isDark ? 'bg-[#2a2a2a]' : 'bg-gray-100'}`}>
+                  <div 
+                    className={`h-1.5 rounded-full ${isDark ? 'bg-emerald-500' : 'bg-emerald-600'}`} 
+                    style={{ width: `${(event.sold / event.capacity) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+              <StatCard 
+                title="Page Views" 
+                value="45.2k" 
+                trend="5.2% vs last week" 
+                trendUp={true} 
+                isDark={isDark} 
+              />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+               <div className={`${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'} p-5 rounded-xl`}>
+                <h3 className={`text-lg font-medium mb-6 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Sales Velocity</h3>
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={MOCK_ANALYTICS_DATA}>
+                      <defs>
+                        <linearGradient id="colorSalesM" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={isDark ? '#6366f1' : '#374151'} stopOpacity={0.1}/>
+                          <stop offset="95%" stopColor={isDark ? '#6366f1' : '#374151'} stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2a2a2a' : '#f3f4f6'} />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: isDark ? '#525252' : '#9ca3af', fontSize: 12}} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fill: isDark ? '#525252' : '#9ca3af', fontSize: 12}} />
+                      <Tooltip contentStyle={{ backgroundColor: isDark ? '#252525' : '#fff', borderRadius: '8px', border: 'none' }} />
+                      <Area type="monotone" dataKey="sales" stroke={isDark ? '#6366f1' : '#374151'} strokeWidth={2} fillOpacity={1} fill="url(#colorSalesM)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+               </div>
+
+               <div className={`${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'} p-5 rounded-xl`}>
+                <h3 className={`text-lg font-medium mb-6 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Sales by Type</h3>
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={MOCK_TICKET_TYPES.map(t => ({ name: t.name, value: t.sold }))}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {MOCK_TICKET_TYPES.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={isDark ? DARK_COLORS[index % DARK_COLORS.length] : COLORS[index % COLORS.length]} strokeWidth={0} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: isDark ? '#252525' : '#fff', borderRadius: '8px', border: 'none' }} />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle"/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'tickets' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex justify-end">
+              <button className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center shadow-lg ${isDark ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'}`}>
+                <Plus size={16} className="mr-2" /> Add Ticket Type
+              </button>
+            </div>
+            <div className={`rounded-xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
+              <div className="overflow-x-auto">
+                <table className={`w-full text-left text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <thead className={`${isDark ? 'bg-[#252525] text-gray-500' : 'bg-gray-50 text-gray-400'} text-xs uppercase font-normal`}>
+                    <tr>
+                      <th className="px-6 py-3 font-medium">Name</th>
+                      <th className="px-6 py-3 font-medium">Price</th>
+                      <th className="px-6 py-3 font-medium">Sold / Total</th>
+                      <th className="px-6 py-3 font-medium">Status</th>
+                      <th className="px-6 py-3 text-right font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${isDark ? 'divide-[#252525]' : 'divide-gray-50'}`}>
+                    {MOCK_TICKET_TYPES.map((ticket) => (
+                      <tr key={ticket.id} className={`transition-colors ${isDark ? 'hover:bg-[#252525]' : 'hover:bg-gray-50'}`}>
+                        <td className={`px-6 py-4 font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{ticket.name}</td>
+                        <td className="px-6 py-4">${ticket.price.toFixed(2)}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-24 h-1.5 rounded-full ${isDark ? 'bg-[#2a2a2a]' : 'bg-gray-100'}`}>
+                              <div className={`h-1.5 rounded-full ${isDark ? 'bg-indigo-500' : 'bg-indigo-600'}`} style={{ width: `${(ticket.sold / ticket.total) * 100}%` }}></div>
+                            </div>
+                            <span className="text-xs">{ticket.sold} / {ticket.total}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                           <StatusBadge status={ticket.status} isDark={isDark} />
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-[#333] text-gray-400 hover:text-white' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-800'}`}>
+                            <MoreHorizontal size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'guests' && (
+           <div className="space-y-6 animate-fade-in">
+            <div className="flex justify-between items-center">
+              <div className={`flex items-center px-3 py-2 rounded-lg border ${isDark ? 'bg-[#252525] border-[#333]' : 'bg-white border-gray-200'}`}>
+                <Search size={16} className={`mr-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                <input 
+                  type="text" 
+                  placeholder="Search guests..." 
+                  className={`bg-transparent outline-none text-sm ${isDark ? 'text-gray-200 placeholder-gray-600' : 'text-gray-800 placeholder-gray-400'}`}
+                />
+              </div>
+               <button className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center transition-colors ${isDark ? 'bg-[#252525] text-gray-300 hover:bg-[#2a2a2a]' : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}>
+                <Filter size={16} className="mr-2" /> Filter
+              </button>
+            </div>
+            <div className={`rounded-xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
+              <div className="overflow-x-auto">
+                <table className={`w-full text-left text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <thead className={`${isDark ? 'bg-[#252525] text-gray-500' : 'bg-gray-50 text-gray-400'} text-xs uppercase font-normal`}>
+                    <tr>
+                      <th className="px-6 py-3 font-medium">Name</th>
+                      <th className="px-6 py-3 font-medium">Ticket Type</th>
+                      <th className="px-6 py-3 font-medium">Status</th>
+                      <th className="px-6 py-3 font-medium">Check-in Time</th>
+                      <th className="px-6 py-3 text-right font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${isDark ? 'divide-[#252525]' : 'divide-gray-50'}`}>
+                    {MOCK_GUESTS.map((guest) => (
+                      <tr key={guest.id} className={`transition-colors ${isDark ? 'hover:bg-[#252525]' : 'hover:bg-gray-50'}`}>
+                        <td className={`px-6 py-4 font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{guest.name}</td>
+                        <td className="px-6 py-4">{guest.type}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-full text-xs ${guest.status === 'Checked In' ? (isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-700') : (isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600')}`}>
+                            {guest.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">{guest.time}</td>
+                        <td className="px-6 py-4 text-right">
+                           <div className="flex justify-end space-x-2">
+                             <button className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-emerald-500/10 text-gray-500 hover:text-emerald-400' : 'hover:bg-emerald-50 text-gray-400 hover:text-emerald-600'}`} title="Check In">
+                               <UserCheck size={16} />
+                             </button>
+                              <button className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-rose-500/10 text-gray-500 hover:text-rose-400' : 'hover:bg-rose-50 text-gray-400 hover:text-rose-600'}`} title="Revoke">
+                               <UserX size={16} />
+                             </button>
+                           </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+           </div>
+        )}
+        
+         {activeTab === 'settings' && (
+           <div className="flex items-center justify-center h-[300px]">
+              <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Event settings form would go here (reuse wizard components)</p>
+           </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const EventWizard = ({ onClose, isDark }) => {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    title: '',
+    hashtag: '', // New field
+    category: '',
+    description: '',
+    startDateTime: '',
+    endDateTime: '',
+    venueId: '',
+    capacity: '',
+    imageUrl: ''
+  });
+
+  const steps = [
+    { id: 1, label: 'Details', icon: ClipboardList },
+    { id: 2, label: 'Timing', icon: Clock },
+    { id: 3, label: 'Venue', icon: MapPin },
+    { id: 4, label: 'Review', icon: CheckCircle2 },
+  ];
+
+  const handleNext = () => {
+    // Basic validation
+    if (step === 1 && (!formData.title || !formData.category || !formData.hashtag)) return;
+    if (step === 2 && (!formData.startDateTime || !formData.endDateTime)) return;
+    if (step === 3 && (!formData.venueId || !formData.capacity)) return;
+    
+    setStep(prev => Math.min(prev + 1, 4));
+  };
+
+  const handleBack = () => setStep(prev => Math.max(prev - 1, 1));
+
+  const handleSubmit = () => {
+    // In a real app, POST to /events
+    console.log("Submitting event:", formData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className={`w-full max-w-3xl rounded-2xl flex flex-col shadow-2xl overflow-hidden ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'}`}>
+        
+        {/* Header with Stepper */}
+        <div className={`p-8 border-b ${isDark ? 'border-[#2a2a2a]' : 'border-gray-100'}`}>
+          <div className="flex justify-between items-center mb-8">
+            <h2 className={`text-xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Create New Event</h2>
+            <button onClick={onClose} className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-[#2a2a2a] text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="flex items-center justify-between relative">
+            <div className={`absolute left-0 top-1/2 h-0.5 w-full -z-10 ${isDark ? 'bg-[#2a2a2a]' : 'bg-gray-100'}`}></div>
+            {steps.map((s) => {
+              const isActive = s.id === step;
+              const isCompleted = s.id < step;
+              return (
+                <div key={s.id} className="flex flex-col items-center bg-inherit px-2">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-4 ${
+                    isActive 
+                      ? (isDark ? 'bg-indigo-500 border-[#1e1e1e] text-white' : 'bg-indigo-600 border-white text-white shadow-lg') 
+                      : isCompleted 
+                        ? (isDark ? 'bg-[#2a2a2a] border-[#1e1e1e] text-indigo-400' : 'bg-indigo-50 border-white text-indigo-600') 
+                        : (isDark ? 'bg-[#252525] border-[#1e1e1e] text-gray-600' : 'bg-gray-100 border-white text-gray-400')
+                  }`}>
+                    <s.icon size={18} />
+                  </div>
+                  <span className={`text-xs mt-2 font-medium ${isActive ? (isDark ? 'text-indigo-400' : 'text-indigo-600') : (isDark ? 'text-gray-600' : 'text-gray-400')}`}>{s.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="p-8 min-h-[300px]">
+          {step === 1 && (
+            <div className="space-y-4 animate-fade-in">
+              <InputField 
+                label="Event Title" 
+                value={formData.title} 
+                onChange={(e) => setFormData({...formData, title: e.target.value})} 
+                placeholder="e.g. Summer Jazz Night 2025" 
+                isDark={isDark} 
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <InputField 
+                  label="Hashtag (Required for tracking)" 
+                  value={formData.hashtag} 
+                  onChange={(e) => {
+                      let val = e.target.value.replace(/\s/g, ''); // Remove spaces
+                      if (val && !val.startsWith('#')) val = '#' + val;
+                      setFormData({...formData, hashtag: val})
+                  }}
+                  placeholder="#EventName2025" 
+                  isDark={isDark} 
+                />
+                <InputField 
+                  label="Category" 
+                  type="select"
+                  value={formData.category} 
+                  onChange={(e) => setFormData({...formData, category: e.target.value})} 
+                  options={[
+                    { value: 'Music', label: 'Music' },
+                    { value: 'Conference', label: 'Conference' },
+                    { value: 'Workshop', label: 'Workshop' },
+                    { value: 'Theater', label: 'Theater' }
+                  ]}
+                  isDark={isDark} 
+                />
+              </div>
+              <InputField 
+                label="Image URL (Optional)" 
+                value={formData.imageUrl} 
+                onChange={(e) => setFormData({...formData, imageUrl: e.target.value})} 
+                placeholder="https://..." 
+                isDark={isDark} 
+              />
+              <InputField 
+                label="Description" 
+                type="textarea"
+                value={formData.description} 
+                onChange={(e) => setFormData({...formData, description: e.target.value})} 
+                placeholder="Describe your event..." 
+                isDark={isDark} 
+              />
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="grid grid-cols-2 gap-6">
+                <InputField 
+                  label="Start Date & Time" 
+                  type="datetime-local"
+                  value={formData.startDateTime} 
+                  onChange={(e) => setFormData({...formData, startDateTime: e.target.value})} 
+                  isDark={isDark} 
+                />
+                <InputField 
+                  label="End Date & Time" 
+                  type="datetime-local"
+                  value={formData.endDateTime} 
+                  onChange={(e) => setFormData({...formData, endDateTime: e.target.value})} 
+                  isDark={isDark} 
+                />
+              </div>
+              <div className={`p-4 rounded-lg flex items-start space-x-3 ${isDark ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-700'}`}>
+                <Clock size={20} className="mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Timezone Awareness</p>
+                  <p className="text-xs opacity-80 mt-1">Events are displayed in local time. Make sure to adjust for the venue's timezone.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-4 animate-fade-in">
+              <InputField 
+                label="Venue" 
+                type="select"
+                value={formData.venueId} 
+                onChange={(e) => {
+                  const venue = MOCK_VENUES.find(v => v.id === e.target.value);
+                  setFormData({
+                    ...formData, 
+                    venueId: e.target.value,
+                    capacity: venue ? venue.capacity : '' // Auto-fill capacity
+                  });
+                }} 
+                options={MOCK_VENUES.map(v => ({ value: v.id, label: v.name }))}
+                isDark={isDark} 
+              />
+              <InputField 
+                label="Total Capacity" 
+                type="number"
+                value={formData.capacity} 
+                onChange={(e) => setFormData({...formData, capacity: e.target.value})} 
+                placeholder="Max tickets available"
+                isDark={isDark} 
+              />
+              {formData.venueId && (
+                <div className={`mt-4 p-4 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
+                  <h4 className={`text-xs font-medium uppercase mb-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Venue Details</h4>
+                  <div className="flex items-center space-x-2">
+                    <MapPin size={16} className={isDark ? 'text-indigo-400' : 'text-indigo-600'} />
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {MOCK_VENUES.find(v => v.id === formData.venueId)?.address}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-6 animate-fade-in">
+              <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Review Details</h3>
+              <div className={`p-6 rounded-xl space-y-4 ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Event Title</p>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{formData.title}</p>
+                  </div>
+                  <div>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Category</p>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{formData.category}</p>
+                  </div>
+                  <div>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Hashtag</p>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{formData.hashtag}</p>
+                  </div>
+                  <div>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Start Date</p>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{new Date(formData.startDateTime).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>End Date</p>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{new Date(formData.endDateTime).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Venue</p>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                      {MOCK_VENUES.find(v => v.id === formData.venueId)?.name}
+                    </p>
+                  </div>
+                   <div>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Capacity</p>
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{formData.capacity}</p>
+                  </div>
+                </div>
+              </div>
+              <div className={`p-4 rounded-lg flex items-center space-x-3 ${isDark ? 'bg-emerald-500/10 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>
+                <CheckSquare size={20} />
+                <span className="text-sm">Ready to create draft event. Tickets can be configured after creation.</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer / Actions */}
+        <div className={`p-6 border-t flex justify-between items-center ${isDark ? 'bg-[#1e1e1e] border-[#2a2a2a]' : 'bg-white border-gray-100'}`}>
+           <button 
+            onClick={handleBack}
+            disabled={step === 1}
+            className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center ${
+              step === 1 
+                ? (isDark ? 'text-[#333] cursor-not-allowed' : 'text-gray-300 cursor-not-allowed') 
+                : (isDark ? 'text-gray-400 hover:text-white hover:bg-[#2a2a2a]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100')
+            }`}
+          >
+            <ArrowLeft size={16} className="mr-2" />
+            Back
+          </button>
+
+          {step < 4 ? (
+             <button 
+              onClick={handleNext}
+              className={`px-6 py-2.5 rounded-lg text-sm font-medium text-white transition-all flex items-center shadow-lg ${isDark ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30'}`}
+            >
+              Next Step
+              <ArrowRight size={16} className="ml-2" />
+            </button>
+          ) : (
+             <button 
+              onClick={handleSubmit}
+              className={`px-6 py-2.5 rounded-lg text-sm font-medium text-white transition-all flex items-center shadow-lg ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'}`}
+            >
+              <Save size={16} className="mr-2" />
+              Create Event
+            </button>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+// --- Kanban Components ---
+
+const KanbanCard = ({ item, isDark, onDelete, onExpand }) => {
+  const priorityColors = {
+    High: isDark ? 'text-rose-400 bg-rose-400/10' : 'text-rose-600 bg-rose-50',
+    Medium: isDark ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50',
+    Low: isDark ? 'text-emerald-400 bg-emerald-400/10' : 'text-emerald-600 bg-emerald-50',
+  };
+  
+  // Find assignee user object
+  const assignee = MOCK_USERS.find(u => u.id === item.assignee);
+
+  return (
+    <div 
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', item.id);
+        e.dataTransfer.effectAllowed = 'move';
+      }}
+      className={`group relative p-4 rounded-lg mb-3 cursor-grab active:cursor-grabbing transition-all hover:-translate-y-0.5 ${isDark ? 'bg-[#252525] shadow-md shadow-black/20 hover:bg-[#2a2a2a]' : 'bg-white shadow-sm border border-gray-100 hover:shadow-md'}`}
+    >
+      <div className="flex justify-between items-start mb-2">
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>
+          {item.tag}
+        </span>
+        <button 
+          onClick={() => onDelete(item.id)}
+          className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${isDark ? 'hover:bg-white/10 text-gray-500 hover:text-rose-400' : 'hover:bg-gray-100 text-gray-400 hover:text-rose-500'}`}
+          title="Delete Task"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+      
+      <p className={`text-sm mb-4 font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{item.content}</p>
+      
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+           <div className={`flex items-center space-x-1 text-xs px-2 py-1 rounded ${priorityColors[item.priority] || 'text-gray-500'}`}>
+            <div className="w-1.5 h-1.5 rounded-full bg-current" />
+            <span>{item.priority}</span>
+          </div>
+          {assignee && (
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-light ${isDark ? 'bg-[#333] text-gray-300' : 'bg-gray-100 text-gray-600'}`} title={`Assigned to ${assignee.firstName}`}>
+              {assignee.firstName[0]}{assignee.lastName[0]}
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center space-x-3">
+          {(item.messages?.length > 0 || item.attachments?.length > 0) && (
+            <div className={`flex items-center space-x-1 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+              {item.messages?.length > 0 && <MessageSquare size={12} />}
+              {item.attachments?.length > 0 && <Paperclip size={12} />}
+            </div>
+          )}
+
+          <button 
+            onClick={() => onExpand(item)}
+            className={`flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium transition-colors ${isDark ? 'bg-[#333] text-gray-300 hover:bg-[#404040] hover:text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'}`}
+          >
+            <span>View</span>
+            <Maximize2 size={10} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TaskDetailsModal = ({ task, onClose, onUpdate, isDark }) => {
+  const [message, setMessage] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.content);
+  const [editDescription, setEditDescription] = useState(task.description || '');
+  const [editTag, setEditTag] = useState(task.tag);
+  const [editPriority, setEditPriority] = useState(task.priority); 
+  const messagesEndRef = useRef(null);
+
+  const priorityColors = {
+    High: isDark ? 'text-rose-400 bg-rose-400/10' : 'text-rose-600 bg-rose-50',
+    Medium: isDark ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50',
+    Low: isDark ? 'text-emerald-400 bg-emerald-400/10' : 'text-emerald-600 bg-emerald-50',
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [task.messages]);
+
+  const handleSaveEdit = () => {
+    onUpdate({
+      ...task,
+      content: editTitle,
+      description: editDescription,
+      tag: editTag,
+      priority: editPriority
+    });
+    setIsEditing(false);
+  };
+
+  const handleAssign = (userId) => {
+      onUpdate({
+          ...task,
+          assignee: userId
+      });
+  };
+
+  const handleSend = () => {
+    if (!message.trim()) return;
+    const newMsg = {
+      id: Date.now(),
+      text: message,
+      sender: 'You',
+      time: 'Just now'
+    };
+    onUpdate({
+      ...task,
+      messages: [...(task.messages || []), newMsg]
+    });
+    setMessage('');
+  };
+
+  const handleAttach = () => {
+    const newAttachment = {
+      id: Date.now(),
+      url: `https://picsum.photos/seed/${Date.now()}/200/200`,
+      name: `Image-${Date.now()}.jpg`
+    };
+    onUpdate({
+      ...task,
+      attachments: [...(task.attachments || []), newAttachment]
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className={`w-full max-w-2xl h-[85vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white'}`}>
+        
+        {/* Header */}
+        <div className={`p-6 border-b flex flex-col space-y-4 ${isDark ? 'border-[#333]' : 'border-gray-100'}`}>
+            
+            {/* Top Row: Meta & Controls */}
+            <div className="flex justify-between items-start">
+                <div className="flex items-center space-x-3">
+                    {isEditing ? (
+                        <>
+                            <input 
+                                value={editTag}
+                                onChange={(e) => setEditTag(e.target.value)}
+                                className={`text-xs px-2 py-0.5 rounded font-medium outline-none border ${isDark ? 'bg-[#252525] border-[#333] text-indigo-300' : 'bg-white border-gray-200 text-indigo-600'} w-24`}
+                            />
+                            <select
+                                value={editPriority}
+                                onChange={(e) => setEditPriority(e.target.value)}
+                                className={`text-xs px-2 py-0.5 rounded font-medium outline-none border ${isDark ? 'bg-[#252525] border-[#333] text-gray-300' : 'bg-white border-gray-200 text-gray-700'}`}
+                            >
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </>
+                    ) : (
+                        <>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>
+                                {task.tag}
+                            </span>
+                             <div className={`flex items-center space-x-1 text-xs px-2 py-0.5 rounded-full ${priorityColors[task.priority] || 'text-gray-500'}`}>
+                                <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                                <span>{task.priority}</span>
+                            </div>
+                        </>
+                    )}
+                    <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>ID: {task.id}</span>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                    {/* Assigned To Dropdown */}
+                    <div className="relative group">
+                        <select 
+                            value={task.assignee || ''} 
+                            onChange={(e) => handleAssign(e.target.value)}
+                            className={`appearance-none pl-8 pr-4 py-1.5 rounded-lg text-xs font-medium outline-none cursor-pointer transition-colors ${isDark ? 'bg-[#252525] text-gray-300 hover:bg-[#333]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                            <option value="" disabled>Unassigned</option>
+                            {MOCK_USERS.map(user => (
+                                <option key={user.id} value={user.id}>{user.firstName} {user.lastName}</option>
+                            ))}
+                        </select>
+                        <Users size={14} className={`absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                    </div>
+
+                    {/* Edit Toggle */}
+                    {isEditing ? (
+                        <>
+                             <button onClick={handleSaveEdit} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'}`} title="Save">
+                                <Check size={16} />
+                            </button>
+                            <button onClick={() => setIsEditing(false)} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30' : 'bg-rose-100 text-rose-600 hover:bg-rose-200'}`} title="Cancel">
+                                <X size={16} />
+                            </button>
+                        </>
+                    ) : (
+                        <button onClick={() => setIsEditing(true)} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-[#333] text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'}`} title="Edit Task">
+                            <Edit3 size={16} />
+                        </button>
+                    )}
+                    
+                    <div className={`w-px h-4 mx-1 ${isDark ? 'bg-[#333]' : 'bg-gray-200'}`}></div>
+
+                    <button onClick={onClose} className={`p-1.5 rounded-lg transition-colors ${isDark ? 'text-gray-400 hover:bg-[#333] hover:text-white' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-900'}`}>
+                        <X size={20} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Title & Description Area */}
+            <div>
+                {isEditing ? (
+                    <div className="space-y-3 animate-fade-in">
+                        <input 
+                            type="text" 
+                            value={editTitle} 
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            className={`w-full text-xl font-semibold bg-transparent outline-none border-b pb-1 ${isDark ? 'text-gray-100 border-indigo-500' : 'text-gray-900 border-indigo-600'}`}
+                        />
+                        <textarea 
+                            value={editDescription} 
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            className={`w-full text-sm bg-transparent outline-none resize-none h-24 p-2 rounded-lg ${isDark ? 'text-gray-300 bg-[#252525]' : 'text-gray-600 bg-gray-50'}`}
+                            placeholder="Add a description..."
+                        />
+                    </div>
+                ) : (
+                    <div className="animate-fade-in">
+                        <h2 className={`text-xl font-semibold mb-2 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{task.content}</h2>
+                        <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {task.description || "No description provided."}
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+          
+          {/* Attachments */}
+          <div>
+            <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Attachments</h3>
+            <div className="grid grid-cols-4 gap-3">
+              {task.attachments?.map(att => (
+                <div key={att.id} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
+                  <img src={att.url} alt="attachment" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Download size={16} className="text-white" />
+                  </div>
+                </div>
+              ))}
+              <button 
+                onClick={handleAttach}
+                className={`aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center transition-colors ${isDark ? 'border-[#333] hover:border-indigo-500/50 hover:bg-[#252525]' : 'border-gray-200 hover:border-indigo-400 hover:bg-indigo-50'}`}
+              >
+                <Plus size={24} className={isDark ? 'text-gray-600' : 'text-gray-300'} />
+                <span className={`text-xs mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Add</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Activity / Messages */}
+          <div>
+            <h3 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Activity Log</h3>
+            <div className="space-y-4">
+              {task.messages?.map((msg, idx) => (
+                <div key={msg.id} className={`flex space-x-3 ${msg.sender === 'You' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-light shrink-0 ${
+                    msg.sender === 'You' 
+                      ? (isDark ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white')
+                      : (isDark ? 'bg-[#333] text-gray-300' : 'bg-gray-100 text-gray-600')
+                  }`}>
+                    {msg.sender.charAt(0)}
+                  </div>
+                  <div className={`max-w-[70%]`}>
+                    <div className={`flex items-baseline space-x-2 mb-1 ${msg.sender === 'You' ? 'justify-end' : ''}`}>
+                      <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-900'}`}>{msg.sender}</span>
+                      <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{msg.time}</span>
+                    </div>
+                    <div className={`p-3 rounded-xl text-sm ${
+                      msg.sender === 'You'
+                        ? (isDark ? 'bg-indigo-500/20 text-indigo-200 rounded-tr-none' : 'bg-indigo-50 text-indigo-900 rounded-tr-none')
+                        : (isDark ? 'bg-[#252525] text-gray-300 rounded-tl-none' : 'bg-gray-50 text-gray-700 rounded-tl-none')
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer / Input */}
+        <div className={`p-4 border-t ${isDark ? 'bg-[#252525] border-[#333]' : 'bg-gray-50 border-gray-200'}`}>
+          <div className={`flex items-center p-2 rounded-xl border ${isDark ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-200'}`}>
+            <button 
+              onClick={handleAttach}
+              className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-500 hover:text-indigo-400 hover:bg-[#333]' : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-100'}`}
+            >
+              <Paperclip size={20} />
+            </button>
+            <input 
+              type="text" 
+              placeholder="Write a comment..." 
+              className={`flex-1 bg-transparent border-none outline-none px-3 text-sm ${isDark ? 'text-gray-200 placeholder-gray-600' : 'text-gray-700 placeholder-gray-400'}`}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            />
+            <button 
+              onClick={handleSend}
+              disabled={!message.trim()}
+              className={`p-2 rounded-lg transition-all ${
+                message.trim() 
+                  ? (isDark ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-indigo-600 text-white shadow-md') 
+                  : (isDark ? 'text-gray-600 cursor-not-allowed' : 'text-gray-300 cursor-not-allowed')
+              }`}
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Views ---
+
+const DashboardHome = ({ isDark }) => (
+  <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
+    <div className="flex justify-between items-end">
+      <div>
+        <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Overview</h2>
+        <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm font-normal`}>Welcome back, here's what's happening today.</p>
+      </div>
+      <div className="flex space-x-3">
+        <button className={`px-4 py-2 text-sm font-normal rounded-lg flex items-center transition-colors ${isDark ? 'bg-[#1e1e1e] text-gray-300 hover:bg-[#252525] shadow-lg shadow-black/10' : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm'}`}>
+          <Calendar size={16} className="mr-2 opacity-70" />
+          Last 30 Days
+        </button>
+        <button className={`px-4 py-2 text-sm font-normal rounded-lg flex items-center shadow-lg ${isDark ? 'bg-indigo-500/90 text-white hover:bg-indigo-500 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}>
+          <Download size={16} className="mr-2 opacity-80" />
+          Export Report
+        </button>
+      </div>
+    </div>
+
+    {/* Key Metrics */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <StatCard title="Total Revenue" value="$284,392" trend="12.5%" trendUp={true} isDark={isDark} />
+      <StatCard title="Tickets Sold" value="14,209" trend="8.2%" trendUp={true} isDark={isDark} />
+      <StatCard title="Active Events" value="8" trend="2 new" trendUp={true} isDark={isDark} />
+      <StatCard title="Conversion Rate" value="4.2%" trend="1.1%" trendUp={false} isDark={isDark} />
+    </div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      {/* Sales Analytics Chart */}
+      <div className={`lg:col-span-2 p-5 rounded-xl ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Revenue Trends</h3>
+          </div>
+          <div className="flex space-x-4 text-sm">
+            <span className={`flex items-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}><div className={`w-2 h-2 rounded-full mr-2 ${isDark ? 'bg-indigo-500' : 'bg-gray-800'}`}></div>Revenue</span>
+            <span className={`flex items-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}><div className={`w-2 h-2 rounded-full mr-2 ${isDark ? 'bg-[#333]' : 'bg-gray-200'}`}></div>Target</span>
+          </div>
+        </div>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={MOCK_ANALYTICS_DATA}>
+              <defs>
+                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={isDark ? '#6366f1' : '#374151'} stopOpacity={0.05}/>
+                  <stop offset="95%" stopColor={isDark ? '#6366f1' : '#374151'} stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2a2a2a' : '#f3f4f6'} />
+              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: isDark ? '#525252' : '#9ca3af', fontSize: 12}} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{fill: isDark ? '#525252' : '#9ca3af', fontSize: 12}} tickFormatter={(value) => `$${value}`} />
+              <Tooltip 
+                contentStyle={{ backgroundColor: isDark ? '#252525' : '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.2)', color: isDark ? '#e5e5e5' : '#374151' }}
+                itemStyle={{ color: isDark ? '#e5e5e5' : '#374151' }}
+                formatter={(value) => [`$${value}`, 'Revenue']}
+              />
+              <Area type="monotone" dataKey="sales" stroke={isDark ? '#6366f1' : '#374151'} strokeWidth={1.5} fillOpacity={1} fill="url(#colorSales)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Occupancy / Real-time stats */}
+      <div className={`p-5 rounded-xl ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Live Now</h3>
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+          </span>
+        </div>
+        
+        <div className="mb-8">
+          <h4 className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-1`}>Summer Music Fest</h4>
+          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'} mb-4`}>Madison Square Garden</p>
+          
+          <div className="flex justify-between text-sm mb-2">
+            <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>Occupancy</span>
+            <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>72%</span>
+          </div>
+          <div className={`relative w-full rounded-full h-1.5 mb-6 overflow-hidden ${isDark ? 'bg-[#2a2a2a]' : 'bg-gray-100'}`}>
+            <div className={`absolute top-0 left-0 h-full rounded-full ${isDark ? 'bg-indigo-500' : 'bg-gray-800'}`} style={{ width: '72%' }}></div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
+              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'} mb-1`}>Checked In</p>
+              <p className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>14,400</p>
+            </div>
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
+              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'} mb-1`}>Remaining</p>
+              <p className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>5,600</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Recent Orders Table */}
+    <div className={`rounded-xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
+      <div className={`p-5 flex justify-between items-center`}>
+        <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Recent Orders</h3>
+        <button className={`text-sm font-normal flex items-center ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-700'}`}>
+          View All <ChevronRight size={16} />
+        </button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className={`w-full text-left text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          <thead className={`${isDark ? 'bg-[#252525] text-gray-500' : 'bg-gray-50 text-gray-400'} text-xs uppercase font-normal`}>
+            <tr>
+              <th className="px-6 py-3 font-medium">Order ID</th>
+              <th className="px-6 py-3 font-medium">Customer</th>
+              <th className="px-6 py-3 font-medium">Event</th>
+              <th className="px-6 py-3 font-medium">Status</th>
+              <th className="px-6 py-3 text-right font-medium">Amount</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${isDark ? 'divide-[#252525]' : 'divide-gray-50'}`}>
+            {MOCK_RECENT_ORDERS.map((order) => (
+              <tr key={order.id} className={`transition-colors ${isDark ? 'hover:bg-[#252525]' : 'hover:bg-gray-50'}`}>
+                <td className={`px-6 py-3.5 font-mono text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>#{order.id.split('_')[1]}</td>
+                <td className={`px-6 py-3.5 font-normal ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{order.customer}</td>
+                <td className={`px-6 py-3.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{order.event}</td>
+                <td className="px-6 py-3.5">
+                  <StatusBadge status={order.status} isDark={isDark} />
+                </td>
+                <td className={`px-6 py-3.5 text-right font-normal ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>${order.amount.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+);
+
+const EventsView = ({ isDark, onManageEvent }) => {
+  const [showWizard, setShowWizard] = useState(false);
+
+  return (
+    <div className="space-y-6 animate-fade-in max-w-7xl mx-auto relative">
+      {showWizard && <EventWizard onClose={() => setShowWizard(false)} isDark={isDark} />}
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Events</h2>
+          <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm`}>Manage your events, venues, and ticket allocations.</p>
+        </div>
+        <button 
+          onClick={() => setShowWizard(true)}
+          className={`flex items-center space-x-2 px-4 py-2 text-sm font-normal rounded-lg transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
+        >
+          <Plus size={16} />
+          <span>Create Event</span>
+        </button>
+      </div>
+
+      {/* Clean Filters */}
+      <div className={`flex items-center space-x-2 pb-2 border-b overflow-x-auto ${isDark ? 'border-[#2a2a2a]' : 'border-gray-200'}`}>
+        {['All Events', 'On Sale', 'Draft', 'Past', 'Cancelled'].map((filter, idx) => (
+          <button 
+            key={filter}
+            className={`px-4 py-2 text-sm font-normal transition-colors relative ${
+              idx === 0 
+                ? (isDark ? 'text-gray-200' : 'text-gray-700 font-medium') 
+                : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
+            }`}
+          >
+            {filter}
+            {idx === 0 && <div className={`absolute bottom-[-9px] left-0 w-full h-0.5 ${isDark ? 'bg-indigo-500' : 'bg-gray-800'}`}></div>}
+          </button>
+        ))}
+        <div className="flex-1"></div>
+        <button className={`p-2 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
+          <Filter size={16} />
+        </button>
+      </div>
+
+      {/* Events Grid - Minimalist */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {MOCK_EVENTS.map((event) => (
+          <div key={event.id} className={`rounded-xl transition-all group p-5 flex flex-col h-full ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20 hover:bg-[#252525]' : 'bg-white shadow-sm shadow-gray-200/50 hover:shadow-md'}`}>
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <span className={`text-xs font-medium tracking-wider uppercase mb-1 block ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{event.category}</span>
+                <h3 className={`text-lg font-medium transition-colors cursor-pointer ${isDark ? 'text-gray-200 group-hover:text-indigo-400' : 'text-gray-700 group-hover:text-indigo-600'}`}>{event.name}</h3>
+              </div>
+              <StatusBadge status={event.status} isDark={isDark} />
+            </div>
+
+            <div className={`grid grid-cols-2 gap-6 mb-6 text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+              <div className="flex items-center space-x-2">
+                <MapPin size={16} />
+                <span>{event.venue}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Calendar size={16} />
+                <span>{new Date(event.startDatetime).toLocaleDateString()}</span>
+              </div>
+            </div>
+
+            <div className="mt-auto space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className={isDark ? 'text-gray-500' : 'text-gray-500'}>Sales Progress</span>
+                  <span className={`font-normal ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{Math.round((event.sold / event.capacity) * 100)}%</span>
+                </div>
+                <div className={`w-full rounded-full h-1.5 ${isDark ? 'bg-[#2a2a2a]' : 'bg-gray-100'}`}>
+                  <div 
+                    className={`h-1.5 rounded-full ${isDark ? 'bg-indigo-500' : 'bg-gray-700'}`} 
+                    style={{ width: `${(event.sold / event.capacity) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              <div className={`flex items-center justify-between pt-4 border-t ${isDark ? 'border-[#2a2a2a]' : 'border-gray-100'}`}>
+                 <div>
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Total Revenue</p>
+                    <p className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>${event.revenue.toLocaleString()}</p>
+                 </div>
+                 <button 
+                   onClick={() => onManageEvent(event)}
+                   className={`text-sm font-medium flex items-center transition-colors ${isDark ? 'text-gray-400 hover:text-indigo-400' : 'text-gray-500 hover:text-indigo-600'}`}
+                 >
+                   Manage Event <ChevronRight size={16} className="ml-1" />
+                 </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const AnalyticsView = ({ isDark }) => (
+  <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
+     <div>
+        <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Analytics</h2>
+        <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm`}>Performance insights and customer data.</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Ticket Type Distribution Pie Chart */}
+        <div className={`p-5 rounded-xl flex flex-col items-center justify-center ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
+          <h3 className={`text-lg font-medium mb-6 w-full text-left ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Ticket Breakdown</h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={TICKET_TYPE_DISTRIBUTION}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={80}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {TICKET_TYPE_DISTRIBUTION.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={isDark ? DARK_COLORS[index % DARK_COLORS.length] : COLORS[index % COLORS.length]} strokeWidth={0} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: isDark ? '#252525' : '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.2)', color: isDark ? '#e5e5e5' : '#374151' }} />
+                <Legend verticalAlign="bottom" height={36} iconType="circle"/>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Comparison Bar Chart */}
+        <div className={`lg:col-span-2 p-5 rounded-xl ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
+          <h3 className={`text-lg font-medium mb-6 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Check-ins vs Sales</h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={MOCK_ANALYTICS_DATA}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                barSize={32}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2a2a2a' : '#f3f4f6'} />
+                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: isDark ? '#525252' : '#9ca3af', fontSize: 12}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: isDark ? '#525252' : '#9ca3af', fontSize: 12}} />
+                <Tooltip cursor={{fill: isDark ? '#2a2a2a' : '#f9fafb'}} contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: isDark ? '#252525' : '#fff', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.2)', color: isDark ? '#e5e5e5' : '#374151' }} />
+                <Legend />
+                <Bar dataKey="sales" fill={isDark ? '#6366f1' : '#374151'} radius={[4, 4, 0, 0]} name="Revenue ($)" />
+                <Bar dataKey="tickets" fill={isDark ? '#525252' : '#d1d5db'} radius={[4, 4, 0, 0]} name="Tickets Vol" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+  </div>
+);
+
+const TodoView = ({ isDark }) => {
+  const [columns, setColumns] = useState(INITIAL_KANBAN_DATA);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [expandedTask, setExpandedTask] = useState(null);
+  const [expandedColId, setExpandedColId] = useState(null);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, targetColId) => {
+    const taskId = e.dataTransfer.getData('text/plain');
+    let sourceColId = null;
+    let task = null;
+
+    // Find source column and task
+    Object.entries(columns).forEach(([colId, col]) => {
+      const found = col.items.find(t => t.id === taskId);
+      if (found) {
+        sourceColId = colId;
+        task = found;
+      }
+    });
+
+    if (!task || sourceColId === targetColId) return;
+
+    setColumns(prev => {
+      const sourceItems = prev[sourceColId].items.filter(t => t.id !== taskId);
+      const targetItems = [...prev[targetColId].items, task];
+
+      return {
+        ...prev,
+        [sourceColId]: { ...prev[sourceColId], items: sourceItems },
+        [targetColId]: { ...prev[targetColId], items: targetItems }
+      };
+    });
+  };
+
+  const handleDeleteTask = (taskId) => {
+    setColumns(prev => {
+      const newCols = {};
+      Object.entries(prev).forEach(([colId, col]) => {
+        newCols[colId] = {
+          ...col,
+          items: col.items.filter(t => t.id !== taskId)
+        };
+      });
+      return newCols;
+    });
+  };
+
+  const handleCreateTask = (newTaskData) => {
+    const newTask = {
+      id: `t-${Date.now()}`,
+      content: newTaskData.title, // Map title to content (KanbanCard expects content)
+      description: newTaskData.content, // Map description to description
+      priority: newTaskData.priority,
+      tag: newTaskData.tag,
+      assignee: newTaskData.assignee,
+      attachments: newTaskData.attachments,
+      messages: []
+    };
+
+    setColumns(prev => ({
+      ...prev,
+      todo: {
+        ...prev.todo,
+        items: [...prev.todo.items, newTask]
+      }
+    }));
+    setIsCreateModalOpen(false);
+  };
+
+  const handleExpandTask = (task, colId) => {
+    setExpandedTask(task);
+    setExpandedColId(colId);
+  };
+
+  const handleUpdateTask = (updatedTask) => {
+    setColumns(prev => ({
+      ...prev,
+      [expandedColId]: {
+        ...prev[expandedColId],
+        items: prev[expandedColId].items.map(t => t.id === updatedTask.id ? updatedTask : t)
+      }
+    }));
+    setExpandedTask(updatedTask); // Keep local modal state in sync
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in h-[calc(100vh-8rem)]">
+      
+      {/* Create Task Modal */}
+      {isCreateModalOpen && (
+        <CreateTaskModal 
+          onClose={() => setIsCreateModalOpen(false)} 
+          onCreate={handleCreateTask} 
+          isDark={isDark} 
+        />
+      )}
+
+      {/* Expanded Task Modal */}
+      {expandedTask && (
+        <TaskDetailsModal 
+          task={expandedTask} 
+          isDark={isDark}
+          onClose={() => setExpandedTask(null)}
+          onUpdate={handleUpdateTask}
+        />
+      )}
+
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Task Manager</h2>
+          <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm`}>Manage and track team tasks.</p>
+        </div>
+        <div className="flex space-x-3">
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center shadow-lg transition-all ${isDark ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'}`}
+          >
+            <Plus size={16} className="mr-2" />
+            Create Task
+          </button>
+          <button className={`px-4 py-2 text-sm font-normal rounded-lg flex items-center ${isDark ? 'bg-[#1e1e1e] text-gray-300 hover:bg-[#252525]' : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm'}`}>
+            <Filter size={16} className="mr-2" />
+            Filter
+          </button>
+        </div>
+      </div>
+
+      <div className="flex gap-5 overflow-x-auto h-full pb-4">
+        {Object.entries(columns).map(([colId, col]) => (
+          <div 
+            key={colId} 
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, colId)}
+            className={`flex-shrink-0 w-80 rounded-xl p-4 flex flex-col ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-gray-50 border border-gray-200'}`}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center space-x-2">
+                <h3 className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{col.title}</h3>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-[#2a2a2a] text-gray-400' : 'bg-gray-200 text-gray-600'}`}>
+                  {col.items.length}
+                </span>
+              </div>
+              <div className="flex space-x-1">
+                <button className={`p-1 rounded hover:bg-gray-500/10 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                  <MoreHorizontal size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto min-h-[100px] custom-scrollbar">
+              {col.items.map(item => (
+                <KanbanCard 
+                  key={item.id} 
+                  item={item} 
+                  isDark={isDark}
+                  onDelete={handleDeleteTask}
+                  onExpand={(task) => handleExpandTask(task, colId)}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const ComingSoonView = ({ title, isDark }) => (
+  <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4 animate-fade-in">
+    <div className={`p-4 rounded-full ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-gray-50 shadow-sm'}`}>
+      <Settings size={32} className={isDark ? 'text-gray-600' : 'text-gray-300'} />
+    </div>
+    <h2 className={`text-xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{title}</h2>
+    <p className={`${isDark ? 'text-gray-500' : 'text-gray-500'} max-w-md text-sm`}>
+      This module is available in the Enterprise API plan.
+    </p>
+  </div>
+);
+
+// --- Main App Shell ---
+
+const App = () => {
+  const [activeView, setActiveView] = useState('dashboard');
+  const [managedEvent, setManagedEvent] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const toggleTheme = () => setIsDark(!isDark);
+
+  // Reset managed event when switching views
+  const handleViewChange = (view) => {
+    setActiveView(view);
+    setManagedEvent(null);
+  };
+
+  const renderContent = () => {
+    const props = { isDark };
+
+    if (managedEvent) {
+      return (
+        <EventManagementDashboard 
+          event={managedEvent} 
+          onBack={() => setManagedEvent(null)} 
+          {...props} 
+        />
+      );
+    }
+
+    switch(activeView) {
+      case 'dashboard': return <DashboardHome {...props} />;
+      case 'events': return <EventsView onManageEvent={setManagedEvent} {...props} />;
+      case 'analytics': return <AnalyticsView {...props} />;
+      case 'todo': return <TodoView {...props} />;
+      case 'team': return <TeamView {...props} />;
+      case 'orders': return <ComingSoonView title="Orders Management" {...props} />;
+      case 'scanners': return <ComingSoonView title="Scanners" {...props} />;
+      case 'promo': return <ComingSoonView title="Promo Codes" {...props} />;
+      default: return <DashboardHome {...props} />;
+    }
+  };
+
+  return (
+    <div 
+      className={`min-h-screen flex transition-colors duration-300 ${isDark ? 'bg-[#121212] text-gray-100 selection:bg-indigo-500/30' : 'bg-[#f0f2f5] text-gray-900 selection:bg-gray-100'}`}
+      style={{ fontFamily: "'Exo', sans-serif" }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap');
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgba(156, 163, 175, 0.5);
+          border-radius: 20px;
+        }
+      `}</style>
+      
+      {/* Clean Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 ${isDark ? 'bg-[#121212] border-r border-[#1e1e1e]' : 'bg-white border-r border-gray-100'}`}>
+        <div className="h-16 flex items-center px-6">
+          <div className="flex items-center space-x-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-indigo-600' : 'bg-gray-800'}`}>
+              <Ticket size={16} className="text-white" />
+            </div>
+            <span className={`text-lg font-semibold tracking-tight ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>TixMo</span>
+          </div>
+        </div>
+
+        <div className="p-4 space-y-6 overflow-y-auto h-[calc(100vh-4rem)]">
+          <div className="space-y-1">
+            <p className={`px-4 mb-2 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Platform</p>
+            <SidebarItem 
+              icon={LayoutDashboard} 
+              label="Overview" 
+              active={activeView === 'dashboard' && !managedEvent} 
+              onClick={() => handleViewChange('dashboard')} 
+              isDark={isDark}
+            />
+            <SidebarItem 
+              icon={Calendar} 
+              label="Events" 
+              active={activeView === 'events' || !!managedEvent} 
+              onClick={() => handleViewChange('events')} 
+              isDark={isDark}
+            />
+             <SidebarItem 
+              icon={CreditCard} 
+              label="Orders" 
+              active={activeView === 'orders'} 
+              onClick={() => handleViewChange('orders')} 
+              isDark={isDark}
+            />
+             <SidebarItem 
+              icon={CheckSquare} 
+              label="Task Manager" 
+              active={activeView === 'todo'} 
+              onClick={() => handleViewChange('todo')} 
+              isDark={isDark}
+            />
+             <SidebarItem 
+              icon={Users} 
+              label="Team" 
+              active={activeView === 'team'} 
+              onClick={() => handleViewChange('team')} 
+              isDark={isDark}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <p className={`px-4 mb-2 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Tools</p>
+            <SidebarItem 
+              icon={ScanLine} 
+              label="Scanners" 
+              active={activeView === 'scanners'} 
+              onClick={() => handleViewChange('scanners')} 
+              isDark={isDark}
+            />
+            <SidebarItem 
+              icon={Tags} 
+              label="Promotions" 
+              active={activeView === 'promo'} 
+              onClick={() => handleViewChange('promo')} 
+              isDark={isDark}
+            />
+             <SidebarItem 
+              icon={MapPin} 
+              label="Venues" 
+              active={activeView === 'venues'} 
+              onClick={() => handleViewChange('venues')} 
+              isDark={isDark}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <p className={`px-4 mb-2 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Data</p>
+            <SidebarItem 
+              icon={BarChart3} 
+              label="Analytics" 
+              active={activeView === 'analytics'} 
+              onClick={() => handleViewChange('analytics')} 
+              isDark={isDark}
+            />
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        
+        {/* Minimalist Header */}
+        <header className={`h-16 flex items-center justify-between px-6 sticky top-0 z-40 transition-colors ${isDark ? 'bg-[#121212]/90 backdrop-blur-md' : 'bg-[#f0f2f5]/90 backdrop-blur-md'}`}>
+          <div className="flex items-center lg:hidden">
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className={`p-2 rounded-lg ${isDark ? 'text-gray-400 hover:bg-[#1e1e1e]' : 'text-gray-600 hover:bg-gray-100'}`}>
+              <MoreVertical size={24} className="rotate-90" />
+            </button>
+          </div>
+
+          {/* Search - Subtle */}
+          <div className="hidden lg:flex items-center flex-1 max-w-md">
+            <div className="relative w-full group">
+              <Search size={16} className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors ${isDark ? 'text-gray-600 group-focus-within:text-gray-400' : 'text-gray-400 group-focus-within:text-gray-600'}`} />
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                className={`w-full bg-transparent border-none focus:ring-0 text-sm pl-10 py-2 ${isDark ? 'text-gray-300 placeholder-gray-700' : 'text-gray-700 placeholder-gray-400'}`}
+              />
+            </div>
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-500 hover:text-gray-200 hover:bg-[#1e1e1e]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
+            <button className={`relative transition-colors ${isDark ? 'text-gray-500 hover:text-gray-200' : 'text-gray-400 hover:text-gray-900'}`}>
+              <Bell size={18} />
+              <span className={`absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full border-2 ${isDark ? 'border-[#121212]' : 'border-[#f0f2f5]'}`}></span>
+            </button>
+            
+            <div className="flex items-center space-x-3 cursor-pointer">
+              <div className={`w-8 h-8 rounded-full overflow-hidden ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-200'}`}>
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" alt="Profile" />
+              </div>
+              <span className={`text-sm font-medium hidden md:block ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Sarah J.</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Scrollable Area */}
+        <main className="flex-1 overflow-y-auto p-6 scroll-smooth">
+          {loading ? (
+            <div className="flex items-center justify-center h-full opacity-0 animate-fade-in"></div>
+          ) : (
+            renderContent()
+          )}
+        </main>
+
+      </div>
+    </div>
+  );
+};
+
+export default App;

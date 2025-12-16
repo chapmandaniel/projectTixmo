@@ -1,0 +1,170 @@
+
+> tixmoapi2@0.1.0 lint
+> eslint . --ext .ts
+
+
+/Users/danielchapman/tixmoapi2/prisma/seed.ts
+   27:5   warning  Unexpected console statement                           no-console
+   30:5   warning  Unexpected console statement                           no-console
+   33:5   warning  Unexpected console statement                           no-console
+   36:5   warning  Unexpected console statement                           no-console
+   39:5   warning  Unexpected console statement                           no-console
+   42:5   warning  Unexpected console statement                           no-console
+   45:5   warning  Unexpected console statement                           no-console
+   51:5   warning  Unexpected console statement                           no-console
+   75:38  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   75:57  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   81:9   warning  Unsafe assignment of an `any` value                    @typescript-eslint/no-unsafe-assignment
+   81:37  warning  Unsafe member access .role on an `any` value           @typescript-eslint/no-unsafe-member-access
+   83:34  error    Unsafe call of an `any` typed value                    @typescript-eslint/no-unsafe-call
+   83:40  warning  Unsafe member access .email on an `any` value          @typescript-eslint/no-unsafe-member-access
+   83:67  warning  Unsafe member access .role on an `any` value           @typescript-eslint/no-unsafe-member-access
+   86:43  warning  Unsafe member access .role on an `any` value           @typescript-eslint/no-unsafe-member-access
+   88:34  error    Unsafe call of an `any` typed value                    @typescript-eslint/no-unsafe-call
+   88:36  warning  Unsafe member access .email on an `any` value          @typescript-eslint/no-unsafe-member-access
+   88:59  warning  Unsafe member access .role on an `any` value           @typescript-eslint/no-unsafe-member-access
+   91:43  warning  Unsafe member access .role on an `any` value           @typescript-eslint/no-unsafe-member-access
+   93:34  error    Unsafe call of an `any` typed value                    @typescript-eslint/no-unsafe-call
+   93:36  warning  Unsafe member access .email on an `any` value          @typescript-eslint/no-unsafe-member-access
+   93:59  warning  Unsafe member access .role on an `any` value           @typescript-eslint/no-unsafe-member-access
+   96:46  warning  Unsafe member access .role on an `any` value           @typescript-eslint/no-unsafe-member-access
+   98:34  error    Unsafe call of an `any` typed value                    @typescript-eslint/no-unsafe-call
+   98:36  warning  Unsafe member access .email on an `any` value          @typescript-eslint/no-unsafe-member-access
+   98:59  warning  Unsafe member access .role on an `any` value           @typescript-eslint/no-unsafe-member-access
+  104:50  warning  Unsafe member access .status on an `any` value         @typescript-eslint/no-unsafe-member-access
+  107:9   warning  Unsafe member access .discountType on an `any` value   @typescript-eslint/no-unsafe-member-access
+  107:46  warning  Unsafe member access .discountValue on an `any` value  @typescript-eslint/no-unsafe-member-access
+  107:71  warning  Unsafe member access .discountValue on an `any` value  @typescript-eslint/no-unsafe-member-access
+  108:24  error    Unsafe call of an `any` typed value                    @typescript-eslint/no-unsafe-call
+  108:26  warning  Unsafe member access .code on an `any` value           @typescript-eslint/no-unsafe-member-access
+
+/Users/danielchapman/tixmoapi2/prisma/seeders/03-venues.seeder.ts
+   5:71  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  13:11  warning  Unsafe assignment of an `any` value         @typescript-eslint/no-unsafe-assignment
+  17:9   warning  Unsafe assignment of an `any` value         @typescript-eslint/no-unsafe-assignment
+  17:29  warning  Unsafe member access .id on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+/Users/danielchapman/tixmoapi2/prisma/seeders/04-events.seeder.ts
+   5:71  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   5:86  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  13:5   warning  Unsafe spread of an `any` value in an array   @typescript-eslint/no-unsafe-assignment
+  14:5   warning  Unsafe spread of an `any` value in an array   @typescript-eslint/no-unsafe-assignment
+  15:5   warning  Unsafe spread of an `any` value in an array   @typescript-eslint/no-unsafe-assignment
+  16:5   warning  Unsafe spread of an `any` value in an array   @typescript-eslint/no-unsafe-assignment
+  17:5   warning  Unsafe spread of an `any` value in an array   @typescript-eslint/no-unsafe-assignment
+  18:5   warning  Unsafe spread of an `any` value in an array   @typescript-eslint/no-unsafe-assignment
+  23:56  warning  Unsafe member access .type on an `any` value  @typescript-eslint/no-unsafe-member-access
+  24:11  warning  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  25:11  warning  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  26:11  warning  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  30:9   warning  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  30:29  warning  Unsafe member access .id on an `any` value    @typescript-eslint/no-unsafe-member-access
+  31:9   warning  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  31:24  warning  Unsafe member access .id on an `any` value    @typescript-eslint/no-unsafe-member-access
+  32:9   warning  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+
+/Users/danielchapman/tixmoapi2/prisma/seeders/05-ticket-types.seeder.ts
+   5:69  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  14:15  warning  Unsafe member access .status on an `any` value  @typescript-eslint/no-unsafe-member-access
+  16:22  warning  Unsafe member access .status on an `any` value  @typescript-eslint/no-unsafe-member-access
+  16:50  warning  Unsafe member access .status on an `any` value  @typescript-eslint/no-unsafe-member-access
+  23:9   warning  Unsafe assignment of an `any` value             @typescript-eslint/no-unsafe-assignment
+  23:24  warning  Unsafe member access .id on an `any` value      @typescript-eslint/no-unsafe-member-access
+  35:9   warning  Unsafe assignment of an `any` value             @typescript-eslint/no-unsafe-assignment
+  35:24  warning  Unsafe member access .id on an `any` value      @typescript-eslint/no-unsafe-member-access
+  48:11  warning  Unsafe assignment of an `any` value             @typescript-eslint/no-unsafe-assignment
+  48:26  warning  Unsafe member access .id on an `any` value      @typescript-eslint/no-unsafe-member-access
+
+/Users/danielchapman/tixmoapi2/prisma/seeders/06-promo-codes.seeder.ts
+   5:75  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  63:11  warning  Unsafe assignment of an `any` value         @typescript-eslint/no-unsafe-assignment
+  66:9   warning  Unsafe assignment of an `any` value         @typescript-eslint/no-unsafe-assignment
+  66:29  warning  Unsafe member access .id on an `any` value  @typescript-eslint/no-unsafe-member-access
+  68:9   warning  Unsafe assignment of an `any` value         @typescript-eslint/no-unsafe-assignment
+  68:48  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  79:11  warning  Unsafe assignment of an `any` value         @typescript-eslint/no-unsafe-assignment
+  82:9   warning  Unsafe assignment of an `any` value         @typescript-eslint/no-unsafe-assignment
+  82:29  warning  Unsafe member access .id on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+/Users/danielchapman/tixmoapi2/prisma/seeders/07-orders.seeder.ts
+   8:10  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   9:11  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  10:16  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  11:15  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  19:43  warning  Unsafe member access .role on an `any` value     @typescript-eslint/no-unsafe-member-access
+  23:5   warning  Unsafe spread of an `any` value in an array      @typescript-eslint/no-unsafe-assignment
+  24:5   warning  Unsafe spread of an `any` value in an array      @typescript-eslint/no-unsafe-assignment
+  25:5   warning  Unsafe spread of an `any` value in an array      @typescript-eslint/no-unsafe-assignment
+  26:5   warning  Unsafe spread of an `any` value in an array      @typescript-eslint/no-unsafe-assignment
+  30:11  warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  31:11  warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  32:11  warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  35:11  warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  40:9   warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  40:26  warning  Unsafe member access .id on an `any` value       @typescript-eslint/no-unsafe-member-access
+  41:9   warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  41:24  warning  Unsafe member access .id on an `any` value       @typescript-eslint/no-unsafe-member-access
+  42:9   warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  43:9   warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  44:9   warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  44:33  warning  Unsafe member access .id on an `any` value       @typescript-eslint/no-unsafe-member-access
+  52:62  warning  Unsafe member access .eventId on an `any` value  @typescript-eslint/no-unsafe-member-access
+  52:80  warning  Unsafe member access .id on an `any` value       @typescript-eslint/no-unsafe-member-access
+  58:17  warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  63:15  warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  63:30  warning  Unsafe member access .id on an `any` value       @typescript-eslint/no-unsafe-member-access
+  64:15  warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  64:40  warning  Unsafe member access .id on an `any` value       @typescript-eslint/no-unsafe-member-access
+  65:15  warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  65:32  warning  Unsafe member access .id on an `any` value       @typescript-eslint/no-unsafe-member-access
+  69:15  warning  Unsafe assignment of an `any` value              @typescript-eslint/no-unsafe-assignment
+  69:37  warning  Unsafe member access .price on an `any` value    @typescript-eslint/no-unsafe-member-access
+
+/Users/danielchapman/tixmoapi2/prisma/seeders/08-scanners.seeder.ts
+   7:10  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   8:18  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   9:11  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  16:40  warning  Unsafe member access .role on an `any` value            @typescript-eslint/no-unsafe-member-access
+  17:9   warning  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  24:9   warning  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  24:29  warning  Unsafe member access .id on an `any` value              @typescript-eslint/no-unsafe-member-access
+  25:9   warning  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  25:26  warning  Unsafe member access .id on an `any` value              @typescript-eslint/no-unsafe-member-access
+  26:22  warning  Unsafe member access .name on an `any` value            @typescript-eslint/no-unsafe-member-access
+  33:46  warning  Unsafe member access .organizationId on an `any` value  @typescript-eslint/no-unsafe-member-access
+  33:69  warning  Unsafe member access .id on an `any` value              @typescript-eslint/no-unsafe-member-access
+  33:77  warning  Unsafe member access .status on an `any` value          @typescript-eslint/no-unsafe-member-access
+  35:13  warning  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  38:11  warning  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  38:31  warning  Unsafe member access .id on an `any` value              @typescript-eslint/no-unsafe-member-access
+  39:11  warning  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  39:26  warning  Unsafe member access .id on an `any` value              @typescript-eslint/no-unsafe-member-access
+  40:11  warning  Unsafe assignment of an `any` value                     @typescript-eslint/no-unsafe-assignment
+  40:28  warning  Unsafe member access .id on an `any` value              @typescript-eslint/no-unsafe-member-access
+  41:20  error    Unsafe call of an `any` typed value                     @typescript-eslint/no-unsafe-call
+  41:26  warning  Unsafe member access .name on an `any` value            @typescript-eslint/no-unsafe-member-access
+
+/Users/danielchapman/tixmoapi2/prisma/utils/seed-logger.ts
+   4:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   5:5   warning  Unexpected console statement              no-console
+   5:43  warning  Unsafe spread of an `any` array type      @typescript-eslint/no-unsafe-argument
+   7:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   8:5   warning  Unexpected console statement              no-console
+   8:44  warning  Unsafe spread of an `any` array type      @typescript-eslint/no-unsafe-argument
+  10:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:5   warning  Unexpected console statement              no-console
+  11:42  warning  Unsafe spread of an `any` array type      @typescript-eslint/no-unsafe-argument
+  13:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  14:5   warning  Unexpected console statement              no-console
+  14:45  warning  Unsafe spread of an `any` array type      @typescript-eslint/no-unsafe-argument
+
+/Users/danielchapman/tixmoapi2/src/api/notifications/controller.ts
+  44:9   warning  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-assignment
+  46:78  warning  Unsafe argument of type `any` assigned to a parameter of type `Partial<Omit<{ id: string; createdAt: Date; updatedAt: Date; userId: string; emailOrderConfirm: boolean; emailTicketTransfer: boolean; emailEventReminder: boolean; emailPromo: boolean; emailAnnouncement: boolean; smsOrderConfirm: boolean; smsEventReminder: boolean; }, "id" | ... 2 more ... | "userId">>`  @typescript-eslint/no-unsafe-argument
+
+/Users/danielchapman/tixmoapi2/src/api/notifications/service.ts
+  142:9   warning  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  142:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 143 problems (6 errors, 137 warnings)
+

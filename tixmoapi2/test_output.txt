@@ -1,0 +1,98 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand tests/integration/scanners-offline.test.ts
+
+2025-12-13 00:33:13:3313 [32minfo[39m: [32mEmail transport using jsonTransport (env=test, hasCreds=false)[39m
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/auth/register 201 - 72ms[39m
+2025-12-13 00:33:14:3314 [32minfo[39m: [32mEmail sent to admin@test.com: Welcome to TixMo![39m
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/auth/login 200 - 70ms[39m
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/organizations 201 - 27ms[39m
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/venues 201 - 27ms[39m
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/events 201 - 28ms[39m
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/scanners/register 201 - 31ms[39m
+  console.log
+    Scanner Register Response: {
+      "success": true,
+      "data": {
+        "id": "52fcd864-8764-4ca6-a671-236e0419cc86",
+        "name": "Offline Scanner",
+        "deviceId": null,
+        "apiKey": "sk_scanner_3f90eff1a6a26865e00d7df125056ec3aed478934a6e0df2e22eceedfef822ba",
+        "organizationId": "14f8884c-446a-4b47-99c0-e9fa2508783a",
+        "eventId": "a60d7f48-c74d-4535-9278-4b0e4c2e96dd",
+        "createdBy": "1f8ea29f-055c-4bfa-9f0f-02896087f219",
+        "status": "ACTIVE",
+        "lastUsedAt": null,
+        "createdAt": "2025-12-13T04:03:14.392Z",
+        "updatedAt": "2025-12-13T04:03:14.392Z",
+        "organization": {
+          "name": "Test Org",
+          "slug": "org-1765598594281"
+        },
+        "event": {
+          "name": "Event 1765598594338",
+          "startDatetime": "2025-12-14T04:03:14.338Z",
+          "endDatetime": "2025-12-14T06:03:14.338Z"
+        }
+      },
+      "message": "Scanner registered successfully"
+    }
+
+      at Object.<anonymous> (tests/integration/scanners-offline.test.ts:52:17)
+
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/ticket-types 201 - 22ms[39m
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/auth/register 201 - 57ms[39m
+2025-12-13 00:33:14:3314 [32minfo[39m: [32mEmail sent to attendee@test.com: Welcome to TixMo![39m
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/orders 201 - 49ms[39m
+2025-12-13 00:33:14:3314 [33mwarn[39m: [33mAPI error Invalid token[39m
+2025-12-13 00:33:14:3314 [33mwarn[39m: [33mGET /api/v1/scanners/sync?eventId=a60d7f48-c74d-4535-9278-4b0e4c2e96dd 401 - 10ms[39m
+2025-12-13 00:33:14:3314 [33mwarn[39m: [33mAPI error Invalid token[39m
+2025-12-13 00:33:14:3314 [33mwarn[39m: [33mGET /api/v1/scanners/sync?eventId=a60d7f48-c74d-4535-9278-4b0e4c2e96dd&since=2025-12-13T04%3A03%3A14.661Z 401 - 2ms[39m
+2025-12-13 00:33:14:3314 [35mhttp[39m: [35mPOST /api/v1/scanners/validate 200 - 37ms[39m
+FAIL tests/integration/scanners-offline.test.ts
+  Scanner Offline Sync
+    GET /scanners/sync
+      ✕ should download valid tickets (13 ms)
+      ✕ should filter by since timestamp (103 ms)
+    POST /scanners/validate
+      ✓ should process offline scans (41 ms)
+
+  ● Scanner Offline Sync › GET /scanners/sync › should download valid tickets
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 401
+
+      87 |                 .query({ eventId });
+      88 |
+    > 89 |             expect(res.status).toBe(200);
+         |                                ^
+      90 |             expect(res.body.success).toBe(true);
+      91 |             expect(res.body.data.tickets).toHaveLength(1);
+      92 |             expect(res.body.data.tickets[0].barcode).toBe(ticket.barcode);
+
+      at Object.<anonymous> (tests/integration/scanners-offline.test.ts:89:32)
+
+  ● Scanner Offline Sync › GET /scanners/sync › should filter by since timestamp
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 401
+
+      104 |                 .query({ eventId, since });
+      105 |
+    > 106 |             expect(res.status).toBe(200);
+          |                                ^
+      107 |             expect(res.body.data.tickets).toHaveLength(0); // No updates since now
+      108 |         });
+      109 |     });
+
+      at Object.<anonymous> (tests/integration/scanners-offline.test.ts:106:32)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 1 passed, 3 total
+Snapshots:   0 total
+Time:        2.137 s, estimated 3 s
+Ran all test suites matching /tests\/integration\/scanners-offline.test.ts/i.

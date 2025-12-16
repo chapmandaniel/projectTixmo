@@ -1,0 +1,455 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  PROMOTER
+  CUSTOMER
+  SCANNER
+}
+
+enum OrganizationType {
+  PROMOTER
+  VENUE
+  RESELLER
+}
+
+enum TaskStatus {
+  TO_DO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskTag {
+  DESIGN
+  LEGAL
+  GENERAL
+  OPS
+  MARKETING
+  DEV
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+model User {
+  id                String        @id @default(uuid())
+  email             String        @unique
+  passwordHash      String        @map("password_hash")
+  firstName         String        @map("first_name")
+  lastName          String        @map("last_name")
+  phone             String?
+  role              UserRole      @default(CUSTOMER)
+  organizationId    String?       @map("organization_id")
+  organization      Organization? @relation(fields: [organizationId], references: [id])
+  emailVerified     Boolean       @default(false) @map("email_verified")
+  twoFactorEnabled  Boolean       @default(false) @map("two_factor_enabled")
+  twoFactorSecret   String?       @map("two_factor_secret")
+  lastLogin         DateTime?     @map("last_login")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  orders            Order[]
+  tickets           Ticket[]
+  notifications     Notification[]
+  notificationPreference NotificationPreference?
+  waitlistEntries   Waitlist[]
+  assignedTasks     Task[]
+  taskComments      TaskComment[]
+
+  @@map("users")
+}
+
+model Organization {
+  id               String              @id @default(uuid())
+  name             String
+  slug             String              @unique
+  type             OrganizationType
+  stripeAccountId  String?             @map("stripe_account_id")
+  status           OrganizationStatus  @default(PENDING)
+  settings         Json?
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  users            User[]
+  events           Event[]
+  venues           Venue[]
+  promoCodes       PromoCode[]
+  scanners         Scanner[]
+  tasks            Task[]
+
+  @@map("organizations")
+}
+
+model Venue {
+  id               String       @id @default(uuid())
+  organizationId   String       @map("organization_id")
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  name             String
+  address          Json
+  capacity         Int
+  seatingChart     Json?        @map("seating_chart")
+  timezone         String
+  metadata         Json?
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  events           Event[]
+
+  @@map("venues")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ON_SALE
+  SOLD_OUT
+  CANCELLED
+  COMPLETED
+}
+
+model Event {
+  id               String       @id @default(uuid())
+  organizationId   String       @map("organization_id")
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  venueId          String       @map("venue_id")
+  venue            Venue        @relation(fields: [venueId], references: [id])
+  name             String
+  slug             String       @unique
+  description      String?      @db.Text
+  category         String
+  tags             String[]
+  startDatetime    DateTime     @map("start_datetime")
+  endDatetime      DateTime     @map("end_datetime")
+  timezone         String
+  status           EventStatus  @default(DRAFT)
+  images           Json?
+  metadata         Json?
+  salesStart       DateTime?    @map("sales_start")
+  salesEnd         DateTime?    @map("sales_end")
+  capacity         Int
+  minTicketPrice   Decimal?     @map("min_ticket_price") @db.Decimal(10, 2)
+  maxTicketPrice   Decimal?     @map("max_ticket_price") @db.Decimal(10, 2)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  ticketTypes      TicketType[]
+  orders           Order[]
+  tickets          Ticket[]
+  scanners         Scanner[]
+  waitlist         Waitlist[]
+
+  @@map("events")
+}
+
+enum TicketTypeStatus {
+  ACTIVE
+  SOLD_OUT
+  HIDDEN
+}
+
+model TicketType {
+  id                    String            @id @default(uuid())
+  eventId               String            @map("event_id")
+  event                 Event             @relation(fields: [eventId], references: [id])
+  name                  String
+  description           String?           @db.Text
+  price                 Decimal           @db.Decimal(10, 2)
+  quantityTotal         Int               @map("quantity_total")
+  quantityAvailable     Int               @map("quantity_available")
+  quantitySold          Int               @default(0) @map("quantity_sold")
+  quantityHeld          Int               @default(0) @map("quantity_held")
+  salesStart            DateTime?         @map("sales_start")
+  salesEnd              DateTime?         @map("sales_end")
+  maxPerOrder           Int               @default(10) @map("max_per_order")
+  requiresSeatSelection Boolean           @default(false) @map("requires_seat_selection")
+  metadata              Json?
+  status                TicketTypeStatus  @default(ACTIVE)
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  tickets               Ticket[]
+
+  @@map("ticket_types")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+model Order {
+  id                String         @id @default(uuid())
+  orderNumber       String         @unique @map("order_number")
+  userId            String         @map("user_id")
+  user              User           @relation(fields: [userId], references: [id])
+  eventId           String         @map("event_id")
+  event             Event          @relation(fields: [eventId], references: [id])
+  status            OrderStatus    @default(PENDING)
+  totalAmount       Decimal        @map("total_amount") @db.Decimal(10, 2)
+  feesAmount        Decimal        @default(0) @map("fees_amount") @db.Decimal(10, 2)
+  taxAmount         Decimal        @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  discountAmount    Decimal        @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  paymentStatus     PaymentStatus  @default(PENDING) @map("payment_status")
+  paymentIntentId   String?        @map("payment_intent_id")
+  paymentMethod     String?        @map("payment_method")
+  promoCodeId       String?        @map("promo_code_id")
+  promoCode         PromoCode?     @relation(fields: [promoCodeId], references: [id])
+  ipAddress         String?        @map("ip_address")
+  userAgent         String?        @map("user_agent") @db.Text
+  expiresAt         DateTime?      @map("expires_at")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  tickets           Ticket[]
+
+  @@map("orders")
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  CANCELLED
+  TRANSFERRED
+}
+
+model Ticket {
+  id              String        @id @default(uuid())
+  orderId         String        @map("order_id")
+  order           Order         @relation(fields: [orderId], references: [id])
+  eventId         String        @map("event_id")
+  event           Event         @relation(fields: [eventId], references: [id])
+  ticketTypeId    String        @map("ticket_type_id")
+  ticketType      TicketType    @relation(fields: [ticketTypeId], references: [id])
+  userId          String        @map("user_id")
+  user            User          @relation(fields: [userId], references: [id])
+  barcode         String        @unique
+  qrCodeUrl       String?       @map("qr_code_url")
+  seatInfo        Json?         @map("seat_info")
+  status          TicketStatus  @default(VALID)
+  pricePaid       Decimal       @map("price_paid") @db.Decimal(10, 2)
+  checkedInAt     DateTime?     @map("checked_in_at")
+  checkedInBy     String?       @map("checked_in_by")
+  transferredFrom String?       @map("transferred_from")
+  transferredAt   DateTime?     @map("transferred_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  scanLogs        ScanLog[]
+
+  @@map("tickets")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum PromoCodeStatus {
+  ACTIVE
+  EXPIRED
+  DISABLED
+}
+
+model PromoCode {
+  id                String           @id @default(uuid())
+  organizationId    String           @map("organization_id")
+  organization      Organization     @relation(fields: [organizationId], references: [id])
+  code              String           @unique
+  description       String?          @db.Text
+  discountType      DiscountType     @map("discount_type")
+  discountValue     Decimal          @map("discount_value") @db.Decimal(10, 2)
+  maxUses           Int?             @map("max_uses")
+  usesCount         Int              @default(0) @map("uses_count")
+  validFrom         DateTime         @map("valid_from")
+  validUntil        DateTime         @map("valid_until")
+  applicableEvents  String[]         @map("applicable_events")
+  minOrderValue     Decimal?         @map("min_order_value") @db.Decimal(10, 2)
+  status            PromoCodeStatus  @default(ACTIVE)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  orders            Order[]
+
+  @@map("promo_codes")
+}
+
+enum ScannerStatus {
+  ACTIVE
+  DISABLED
+  REVOKED
+}
+
+model Scanner {
+  id              String         @id @default(uuid())
+  name            String
+  deviceId        String?        @map("device_id")
+  apiKey          String         @unique @map("api_key")
+  organizationId  String         @map("organization_id")
+  organization    Organization   @relation(fields: [organizationId], references: [id])
+  eventId         String?        @map("event_id")
+  event           Event?         @relation(fields: [eventId], references: [id])
+  createdBy       String         @map("created_by")
+  status          ScannerStatus  @default(ACTIVE)
+  lastUsedAt      DateTime?      @map("last_used_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  scanLogs        ScanLog[]
+
+  @@map("scanners")
+}
+
+model ScanLog {
+  id              String    @id @default(uuid())
+  scannerId       String    @map("scanner_id")
+  scanner         Scanner   @relation(fields: [scannerId], references: [id])
+  ticketId        String    @map("ticket_id")
+  ticket          Ticket    @relation(fields: [ticketId], references: [id])
+  eventId         String    @map("event_id")
+  scanType        String    @default("ENTRY") @map("scan_type") // ENTRY, EXIT, VALIDATION
+  success         Boolean   @default(true)
+  failureReason   String?   @map("failure_reason")
+  metadata        Json?
+  scannedAt       DateTime  @default(now()) @map("scanned_at")
+
+  @@map("scan_logs")
+}
+
+enum NotificationType {
+  ORDER_CONFIRMATION
+  TICKET_TRANSFER
+  EVENT_REMINDER
+  WELCOME
+  PROMO
+  ANNOUNCEMENT
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+model Notification {
+  id              String              @id @default(uuid())
+  userId          String              @map("user_id")
+  user            User                @relation(fields: [userId], references: [id])
+  type            NotificationType
+  status          NotificationStatus  @default(PENDING)
+  subject         String
+  message         String              @db.Text
+  metadata        Json?
+  sentAt          DateTime?           @map("sent_at")
+  readAt          DateTime?           @map("read_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id                    String   @id @default(uuid())
+  userId                String   @unique @map("user_id")
+  user                  User     @relation(fields: [userId], references: [id])
+  emailOrderConfirm     Boolean  @default(true) @map("email_order_confirm")
+  emailTicketTransfer   Boolean  @default(true) @map("email_ticket_transfer")
+  emailEventReminder    Boolean  @default(true) @map("email_event_reminder")
+  emailPromo            Boolean  @default(false) @map("email_promo")
+  emailAnnouncement     Boolean  @default(true) @map("email_announcement")
+  smsOrderConfirm       Boolean  @default(false) @map("sms_order_confirm")
+  smsEventReminder      Boolean  @default(false) @map("sms_event_reminder")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_preferences")
+}
+
+
+model Waitlist {
+  id        String   @id @default(uuid())
+  eventId   String   @map("event_id")
+  event     Event    @relation(fields: [eventId], references: [id])
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  status    String   @default("PENDING") // PENDING, NOTIFIED, EXPIRED, PURCHASED
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([eventId, userId])
+  @@map("waitlists")
+}
+
+model Task {
+  id              String        @id @default(uuid())
+  organizationId  String        @map("organization_id")
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  assigneeId      String?       @map("assignee_id")
+  assignee        User?         @relation(fields: [assigneeId], references: [id])
+  title           String
+  description     String?       @db.Text
+  status          TaskStatus    @default(TO_DO)
+  priority        TaskPriority  @default(MEDIUM)
+  tag             TaskTag?
+  attachments     Json?         // Array of { url, name, type }
+  dueDate         DateTime?     @map("due_date")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  comments        TaskComment[]
+
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("task_comments")
+}

@@ -1,0 +1,7 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run typecheck and tests before pushing (this runs locally; CI runs full coverage)
+npm run typecheck || exit 1
+npm test -- --runInBand || exit 1
+
