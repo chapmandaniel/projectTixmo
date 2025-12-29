@@ -1,26 +1,106 @@
-import React, { useState } from 'react';
-import { Plus, Filter, MoreHorizontal } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Filter, MoreHorizontal, LogIn } from 'lucide-react';
 import CreateTaskModal from './CreateTaskModal';
 import TaskDetailsModal from './TaskDetailsModal';
 import KanbanCard from './KanbanCard';
-import { INITIAL_KANBAN_DATA } from '../data/mockData';
+import api from '../lib/api';
+import { auth } from '../lib/auth';
 
-const TodoView = ({ isDark }) => {
-    const [columns, setColumns] = useState(INITIAL_KANBAN_DATA);
+const STATUS_MAP = {
+    'TO_DO': 'todo',
+    'IN_PROGRESS': 'inProgress',
+    'REVIEW': 'review',
+    'DONE': 'done'
+};
+
+const REVERSE_STATUS_MAP = {
+    'todo': 'TO_DO',
+    'inProgress': 'IN_PROGRESS',
+    'review': 'REVIEW',
+    'done': 'DONE'
+};
+
+const TodoView = ({ isDark, user }) => {
+    const [columns, setColumns] = useState({
+        todo: { title: 'To Do', items: [] },
+        inProgress: { title: 'In Progress', items: [] },
+        review: { title: 'Review', items: [] },
+        done: { title: 'Done', items: [] }
+    });
+    const [users, setUsers] = useState([]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [expandedTask, setExpandedTask] = useState(null);
     const [expandedColId, setExpandedColId] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        fetchTasks();
+        fetchUsers();
+    }, []);
+
+    const fetchTasks = async () => {
+        setIsLoading(true);
+        try {
+            const response = await api.get('/tasks');
+            const tasks = response.data;
+            // ... (rest of the logic remains similar but simplified if needed)
+            const newColumns = {
+                todo: { title: 'To Do', items: [] },
+                inProgress: { title: 'In Progress', items: [] },
+                review: { title: 'Review', items: [] },
+                done: { title: 'Done', items: [] }
+            };
+
+            // Handle potential array wrapper { data: [...] } or direct array [...]
+            const taskList = Array.isArray(tasks) ? tasks : (tasks.data || []);
+
+            taskList.forEach(task => {
+                const colKey = STATUS_MAP[task.status] || 'todo';
+                if (newColumns[colKey]) {
+                    newColumns[colKey].items.push({
+                        ...task,
+                        content: task.title,
+                        assignee: task.assignee?.id,
+                        assigneeName: task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : null,
+                        messages: task.comments?.map(c => ({
+                            id: c.id,
+                            text: c.content,
+                            sender: c.user ? `${c.user.firstName} ${c.user.lastName}` : 'Unknown',
+                            time: new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            isMe: c.user?.id === user?.id
+                        })) || []
+                    });
+                }
+            });
+
+            setColumns(newColumns);
+        } catch (error) {
+            console.error('Failed to fetch tasks', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchUsers = async () => {
+        try {
+            const response = await api.get('/users');
+            if (response.data.data && response.data.data.users) {
+                setUsers(response.data.data.users);
+            }
+        } catch (error) {
+            console.error('Failed to fetch users', error);
+        }
+    };
 
     const handleDragOver = (e) => {
         e.preventDefault();
     };
 
-    const handleDrop = (e, targetColId) => {
+    const handleDrop = async (e, targetColId) => {
         const taskId = e.dataTransfer.getData('text/plain');
         let sourceColId = null;
         let task = null;
 
-        // Find source column and task
         Object.entries(columns).forEach(([colId, col]) => {
             const found = col.items.find(t => t.id === taskId);
             if (found) {
@@ -31,19 +111,32 @@ const TodoView = ({ isDark }) => {
 
         if (!task || sourceColId === targetColId) return;
 
+        // Optimistic Update
         setColumns(prev => {
             const sourceItems = prev[sourceColId].items.filter(t => t.id !== taskId);
-            const targetItems = [...prev[targetColId].items, task];
-
+            const targetItems = [...prev[targetColId].items, { ...task, status: REVERSE_STATUS_MAP[targetColId] }];
             return {
                 ...prev,
                 [sourceColId]: { ...prev[sourceColId], items: sourceItems },
                 [targetColId]: { ...prev[targetColId], items: targetItems }
             };
         });
+
+        // API Call
+        try {
+            await api.patch(`/tasks/${taskId}`, {
+                status: REVERSE_STATUS_MAP[targetColId]
+            });
+        } catch (error) {
+            console.error('Failed to update task status', error);
+            fetchTasks(); // Revert on error
+        }
     };
 
-    const handleDeleteTask = (taskId) => {
+    const handleDeleteTask = async (taskId) => {
+        if (!window.confirm('Delete this task?')) return;
+
+        // Optimistic Update
         setColumns(prev => {
             const newCols = {};
             Object.entries(prev).forEach(([colId, col]) => {
@@ -54,28 +147,32 @@ const TodoView = ({ isDark }) => {
             });
             return newCols;
         });
+
+        try {
+            await api.delete(`/tasks/${taskId}`);
+        } catch (error) {
+            console.error('Failed to delete task', error);
+            fetchTasks();
+        }
     };
 
-    const handleCreateTask = (newTaskData) => {
-        const newTask = {
-            id: `t-${Date.now()}`,
-            content: newTaskData.title, // Map title to content (KanbanCard expects content)
-            description: newTaskData.content, // Map description to description
-            priority: newTaskData.priority,
-            tag: newTaskData.tag,
-            assignee: newTaskData.assignee,
-            attachments: newTaskData.attachments,
-            messages: []
-        };
+    const handleCreateTask = async (newTaskData) => {
+        try {
+            const payload = {
+                title: newTaskData.title,
+                description: newTaskData.content,
+                priority: newTaskData.priority.toUpperCase(),
+                tag: newTaskData.tag.toUpperCase(),
+                assigneeId: newTaskData.assignee || undefined,
+            };
 
-        setColumns(prev => ({
-            ...prev,
-            todo: {
-                ...prev.todo,
-                items: [...prev.todo.items, newTask]
-            }
-        }));
-        setIsCreateModalOpen(false);
+            await api.post('/tasks', payload);
+            fetchTasks();
+            setIsCreateModalOpen(false);
+        } catch (error) {
+            console.error('Failed to create task', error);
+            alert('Failed to create task: ' + (error.response?.data?.message || error.message));
+        }
     };
 
     const handleExpandTask = (task, colId) => {
@@ -83,15 +180,22 @@ const TodoView = ({ isDark }) => {
         setExpandedColId(colId);
     };
 
-    const handleUpdateTask = (updatedTask) => {
-        setColumns(prev => ({
-            ...prev,
-            [expandedColId]: {
-                ...prev[expandedColId],
-                items: prev[expandedColId].items.map(t => t.id === updatedTask.id ? updatedTask : t)
-            }
-        }));
-        setExpandedTask(updatedTask); // Keep local modal state in sync
+    const handleUpdateTask = async (updatedTask) => {
+        setExpandedTask(updatedTask);
+        try {
+            const payload = {
+                title: updatedTask.content,
+                description: updatedTask.description,
+                priority: updatedTask.priority,
+                tag: updatedTask.tag,
+                assigneeId: updatedTask.assignee || null,
+            };
+
+            await api.patch(`/tasks/${updatedTask.id}`, payload);
+            fetchTasks();
+        } catch (error) {
+            console.error('Failed to update task', error);
+        }
     };
 
     return (
@@ -102,6 +206,7 @@ const TodoView = ({ isDark }) => {
                 <CreateTaskModal
                     onClose={() => setIsCreateModalOpen(false)}
                     onCreate={handleCreateTask}
+                    users={users}
                     isDark={isDark}
                 />
             )}
@@ -110,6 +215,7 @@ const TodoView = ({ isDark }) => {
             {expandedTask && (
                 <TaskDetailsModal
                     task={expandedTask}
+                    users={users}
                     isDark={isDark}
                     onClose={() => setExpandedTask(null)}
                     onUpdate={handleUpdateTask}
@@ -118,8 +224,10 @@ const TodoView = ({ isDark }) => {
 
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Task Manager</h2>
-                    <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm`}>Manage and track team tasks.</p>
+                    <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Team Tasks</h2>
+                    <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm`}>
+                        {isLoading ? 'Syncing...' : 'Manage and track team tasks.'}
+                    </p>
                 </div>
                 <div className="flex space-x-3">
                     <button

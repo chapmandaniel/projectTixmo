@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { param, body } from 'express-validator';
 import { TaskController } from './controller';
 import { authenticate } from '../../middleware/auth';
-import { validate } from '../../middleware/validate'; // Assuming validate middleware exists
+import { validate } from '../../middleware/validateExpress';
 
 const router = Router();
 

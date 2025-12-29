@@ -39,6 +39,27 @@ export const deleteEvent = catchAsync(async (req: AuthRequest, res: Response) =>
   res.status(204).send();
 });
 
+export const restoreEvent = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  const event = await eventService.restoreEvent(id);
+  res.json(successResponse(event, 'Event restored successfully'));
+});
+
+export const listDeletedEvents = catchAsync(async (req: AuthRequest, res: Response) => {
+  const raw = req.query as Record<string, unknown>;
+  const page = raw.page !== undefined ? Number(raw.page) : undefined;
+  const limit = raw.limit !== undefined ? Number(raw.limit) : undefined;
+  const organizationId = raw.organizationId as string;
+
+  if (!organizationId) {
+    throw ApiError.badRequest('Organization ID is required');
+  }
+
+  const result = await eventService.listDeletedEvents(organizationId, page, limit);
+  res.json(successResponse(result));
+});
+
 export const listEvents = catchAsync(async (req: AuthRequest, res: Response) => {
   const raw = req.query as Record<string, unknown>;
   const page = raw.page !== undefined ? Number(raw.page) : undefined;

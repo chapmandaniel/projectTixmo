@@ -11,10 +11,12 @@ datasource db {
 }
 
 enum UserRole {
+  OWNER
   ADMIN
   PROMOTER
   CUSTOMER
   SCANNER
+  TEAM_MEMBER
 }
 
 enum OrganizationType {
@@ -57,7 +59,10 @@ model User {
   passwordHash      String        @map("password_hash")
   firstName         String        @map("first_name")
   lastName          String        @map("last_name")
+  title             String?       // Custom job title
+  permissions       Json?         // Granular permissions for TEAM_MEMBER
   phone             String?
+
   role              UserRole      @default(CUSTOMER)
   organizationId    String?       @map("organization_id")
   organization      Organization? @relation(fields: [organizationId], references: [id])
@@ -128,32 +133,34 @@ enum EventStatus {
   SOLD_OUT
   CANCELLED
   COMPLETED
+  DELETED
 }
 
 model Event {
   id               String       @id @default(uuid())
   organizationId   String       @map("organization_id")
   organization     Organization @relation(fields: [organizationId], references: [id])
-  venueId          String       @map("venue_id")
-  venue            Venue        @relation(fields: [venueId], references: [id])
+  venueId          String?      @map("venue_id")
+  venue            Venue?       @relation(fields: [venueId], references: [id])
   name             String
   slug             String       @unique
   description      String?      @db.Text
-  category         String
+  category         String?
   tags             String[]
-  startDatetime    DateTime     @map("start_datetime")
-  endDatetime      DateTime     @map("end_datetime")
-  timezone         String
+  startDatetime    DateTime?    @map("start_datetime")
+  endDatetime      DateTime?    @map("end_datetime")
+  timezone         String?
   status           EventStatus  @default(DRAFT)
   images           Json?
   metadata         Json?
   salesStart       DateTime?    @map("sales_start")
   salesEnd         DateTime?    @map("sales_end")
-  capacity         Int
+  capacity         Int?
   minTicketPrice   Decimal?     @map("min_ticket_price") @db.Decimal(10, 2)
   maxTicketPrice   Decimal?     @map("max_ticket_price") @db.Decimal(10, 2)
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @updatedAt @map("updated_at")
+  deletedAt        DateTime?    @map("deleted_at")
 
   // Relations
   ticketTypes      TicketType[]

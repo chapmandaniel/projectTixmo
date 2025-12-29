@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, CheckCircle, Circle, ListTodo } from 'lucide-react';
 
 const PersonalTodoView = ({ isDark }) => {
-    const [tasks, setTasks] = useState([
-        { id: 1, text: 'Review quarterly goals', completed: false },
-        { id: 2, text: 'Schedule dentist appointment', completed: true },
-        { id: 3, text: 'Update project documentation', completed: false },
-    ]);
+    // Initialize state from localStorage or default
+    const [tasks, setTasks] = useState(() => {
+        const saved = localStorage.getItem('tixmo_personal_todos');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                console.error('Failed to parse todos', e);
+            }
+        }
+        return [
+            { id: 1, text: 'Review quarterly goals', completed: false },
+            { id: 2, text: 'Schedule dentist appointment', completed: true },
+            { id: 3, text: 'Update project documentation', completed: false },
+        ];
+    });
+
     const [newTask, setNewTask] = useState('');
     const [activeTab, setActiveTab] = useState('active');
+
+    // Save to localStorage whenever tasks change
+    useEffect(() => {
+        localStorage.setItem('tixmo_personal_todos', JSON.stringify(tasks));
+    }, [tasks]);
 
     const handleAddTask = (e) => {
         e.preventDefault();
@@ -55,16 +72,16 @@ const PersonalTodoView = ({ isDark }) => {
                     onChange={(e) => setNewTask(e.target.value)}
                     placeholder="Add a new task..."
                     className={`w-full p-4 pl-5 rounded-xl border transition-all outline-none ${isDark
-                            ? 'bg-[#1e1e1e] border-[#333] text-gray-200 focus:border-indigo-500 placeholder-gray-600'
-                            : 'bg-white border-gray-200 text-gray-800 focus:border-indigo-500 placeholder-gray-400 shadow-sm'
+                        ? 'bg-[#1e1e1e] border-[#333] text-gray-200 focus:border-indigo-500 placeholder-gray-600'
+                        : 'bg-white border-gray-200 text-gray-800 focus:border-indigo-500 placeholder-gray-400 shadow-sm'
                         }`}
                 />
                 <button
                     type="submit"
                     disabled={!newTask.trim()}
                     className={`absolute right-2 top-2 bottom-2 px-4 rounded-lg font-medium transition-colors flex items-center ${isDark
-                            ? 'bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:hover:bg-indigo-600'
-                            : 'bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:hover:bg-indigo-600'
+                        ? 'bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:hover:bg-indigo-600'
+                        : 'bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 disabled:hover:bg-indigo-600'
                         }`}
                 >
                     <Plus size={18} className="mr-1" /> Add
@@ -77,8 +94,8 @@ const PersonalTodoView = ({ isDark }) => {
                     <button
                         onClick={() => setActiveTab('active')}
                         className={`flex-1 py-3 text-sm font-medium transition-colors relative ${activeTab === 'active'
-                                ? (isDark ? 'text-indigo-400' : 'text-indigo-600')
-                                : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
+                            ? (isDark ? 'text-indigo-400' : 'text-indigo-600')
+                            : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
                             }`}
                     >
                         Active ({tasks.filter(t => !t.completed).length})
@@ -89,8 +106,8 @@ const PersonalTodoView = ({ isDark }) => {
                     <button
                         onClick={() => setActiveTab('completed')}
                         className={`flex-1 py-3 text-sm font-medium transition-colors relative ${activeTab === 'completed'
-                                ? (isDark ? 'text-indigo-400' : 'text-indigo-600')
-                                : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
+                            ? (isDark ? 'text-indigo-400' : 'text-indigo-600')
+                            : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
                             }`}
                     >
                         Completed ({tasks.filter(t => t.completed).length})
@@ -118,15 +135,15 @@ const PersonalTodoView = ({ isDark }) => {
                                     <button
                                         onClick={() => toggleTask(task.id)}
                                         className={`flex-shrink-0 transition-colors ${task.completed
-                                                ? (isDark ? 'text-emerald-500' : 'text-emerald-600')
-                                                : (isDark ? 'text-gray-600 hover:text-gray-400' : 'text-gray-300 hover:text-indigo-500')
+                                            ? (isDark ? 'text-emerald-500' : 'text-emerald-600')
+                                            : (isDark ? 'text-gray-600 hover:text-gray-400' : 'text-gray-300 hover:text-indigo-500')
                                             }`}
                                     >
                                         {task.completed ? <CheckCircle size={20} /> : <Circle size={20} />}
                                     </button>
                                     <span className={`text-sm transition-all ${task.completed
-                                            ? (isDark ? 'text-gray-500 line-through' : 'text-gray-400 line-through')
-                                            : (isDark ? 'text-gray-200' : 'text-gray-700')
+                                        ? (isDark ? 'text-gray-500 line-through' : 'text-gray-400 line-through')
+                                        : (isDark ? 'text-gray-200' : 'text-gray-700')
                                         }`}>
                                         {task.text}
                                     </span>
@@ -134,8 +151,8 @@ const PersonalTodoView = ({ isDark }) => {
                                 <button
                                     onClick={() => deleteTask(task.id)}
                                     className={`opacity-0 group-hover:opacity-100 p-1.5 rounded-md transition-all ${isDark
-                                            ? 'text-gray-600 hover:bg-rose-500/10 hover:text-rose-400'
-                                            : 'text-gray-400 hover:bg-rose-50 hover:text-rose-500'
+                                        ? 'text-gray-600 hover:bg-rose-500/10 hover:text-rose-400'
+                                        : 'text-gray-400 hover:bg-rose-50 hover:text-rose-500'
                                         }`}
                                 >
                                     <Trash2 size={16} />

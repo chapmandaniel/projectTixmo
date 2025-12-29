@@ -5,6 +5,13 @@ import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { userService } from './service';
 
+export const createUser = catchAsync(async (req: AuthRequest, res: Response) => {
+  const payload = req.body as any;
+  // TODO: Add authorization check here if needed validation pass but authorization fail
+  const user = await userService.createUser(payload);
+  res.status(201).json(successResponse(user, 'User created successfully'));
+});
+
 export const getUser = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 

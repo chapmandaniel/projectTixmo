@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Users, Check, X, Edit3, Download, Plus, Paperclip, Send } from 'lucide-react';
 import { MOCK_USERS } from '../data/mockData';
 
-const TaskDetailsModal = ({ task, onClose, onUpdate, isDark }) => {
+import api from '../lib/api';
+
+const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
     const [message, setMessage] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState(task.content);
@@ -43,18 +45,29 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark }) => {
         });
     };
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!message.trim()) return;
-        const newMsg = {
-            id: Date.now(),
-            text: message,
-            sender: 'You',
-            time: 'Just now'
-        };
-        onUpdate({
-            ...task,
-            messages: [...(task.messages || []), newMsg]
-        });
+
+        try {
+            // Optimistic Update
+            const newMsg = {
+                id: Date.now(),
+                text: message,
+                sender: 'You',
+                time: 'Just now'
+            };
+            onUpdate({
+                ...task,
+                messages: [...(task.messages || []), newMsg]
+            });
+
+            await api.post(`/tasks/${task.id}/comments`, { content: message });
+            // Ideally re-fetch or sync, but optimistic is fine for now
+        } catch (error) {
+            console.error('Failed to send comment', error);
+            alert('Failed to send comment');
+        }
+
         setMessage('');
     };
 
@@ -120,7 +133,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark }) => {
                                     className={`appearance-none pl-8 pr-4 py-1.5 rounded-lg text-xs font-medium outline-none cursor-pointer transition-colors ${isDark ? 'bg-[#252525] text-gray-300 hover:bg-[#333]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                 >
                                     <option value="" disabled>Unassigned</option>
-                                    {MOCK_USERS.map(user => (
+                                    {users.map(user => (
                                         <option key={user.id} value={user.id}>{user.firstName} {user.lastName}</option>
                                     ))}
                                 </select>
@@ -211,8 +224,8 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark }) => {
                             {task.messages?.map((msg, idx) => (
                                 <div key={msg.id} className={`flex space-x-3 ${msg.sender === 'You' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-light shrink-0 ${msg.sender === 'You'
-                                            ? (isDark ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white')
-                                            : (isDark ? 'bg-[#333] text-gray-300' : 'bg-gray-100 text-gray-600')
+                                        ? (isDark ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white')
+                                        : (isDark ? 'bg-[#333] text-gray-300' : 'bg-gray-100 text-gray-600')
                                         }`}>
                                         {msg.sender.charAt(0)}
                                     </div>
@@ -222,8 +235,8 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark }) => {
                                             <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{msg.time}</span>
                                         </div>
                                         <div className={`p-3 rounded-xl text-sm ${msg.sender === 'You'
-                                                ? (isDark ? 'bg-indigo-500/20 text-indigo-200 rounded-tr-none' : 'bg-indigo-50 text-indigo-900 rounded-tr-none')
-                                                : (isDark ? 'bg-[#252525] text-gray-300 rounded-tl-none' : 'bg-gray-50 text-gray-700 rounded-tl-none')
+                                            ? (isDark ? 'bg-indigo-500/20 text-indigo-200 rounded-tr-none' : 'bg-indigo-50 text-indigo-900 rounded-tr-none')
+                                            : (isDark ? 'bg-[#252525] text-gray-300 rounded-tl-none' : 'bg-gray-50 text-gray-700 rounded-tl-none')
                                             }`}>
                                             {msg.text}
                                         </div>
@@ -256,8 +269,8 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark }) => {
                             onClick={handleSend}
                             disabled={!message.trim()}
                             className={`p-2 rounded-lg transition-all ${message.trim()
-                                    ? (isDark ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-indigo-600 text-white shadow-md')
-                                    : (isDark ? 'text-gray-600 cursor-not-allowed' : 'text-gray-300 cursor-not-allowed')
+                                ? (isDark ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-indigo-600 text-white shadow-md')
+                                : (isDark ? 'text-gray-600 cursor-not-allowed' : 'text-gray-300 cursor-not-allowed')
                                 }`}
                         >
                             <Send size={18} />

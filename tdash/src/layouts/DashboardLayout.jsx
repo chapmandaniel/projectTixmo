@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import {
     LayoutDashboard, Calendar, Ticket, BarChart3, Bell, Search, MoreVertical,
-    CreditCard, ScanLine, Tags, MapPin, Users, CheckSquare, Sun, Moon, MessageCircle, Wand2, ListTodo
+    CreditCard, ScanLine, Tags, MapPin, Users, CheckSquare, Sun, Moon, MessageCircle, Wand2, ListTodo, Settings, LogOut
 } from 'lucide-react';
 import SidebarItem from '../components/SidebarItem';
 
-const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme }) => {
+const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme, user, onLogout }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     return (
@@ -135,6 +135,17 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                             isDark={isDark}
                         />
                     </div>
+
+                    <div className="space-y-1">
+                        <p className={`px-4 mb-2 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>System</p>
+                        <SidebarItem
+                            icon={Settings}
+                            label="Settings"
+                            active={activeView === 'settings'}
+                            onClick={() => onNavigate('settings')}
+                            isDark={isDark}
+                        />
+                    </div>
                 </div>
             </aside>
 
@@ -176,11 +187,21 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                         </button>
 
                         <div className="flex items-center space-x-3 cursor-pointer">
-                            <div className={`w-8 h-8 rounded-full overflow-hidden ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-200'}`}>
-                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" alt="Profile" />
+                            <div className={`w-8 h-8 rounded-full overflow-hidden ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-200'} flex items-center justify-center text-xs font-bold`}>
+                                {user?.firstName?.[0]}{user?.lastName?.[0]}
                             </div>
-                            <span className={`text-sm font-medium hidden md:block ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Sarah J.</span>
+                            <span className={`text-sm font-medium hidden md:block ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                {user?.firstName} {user?.lastName}
+                            </span>
                         </div>
+
+                        <button
+                            onClick={onLogout}
+                            className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-500 hover:text-rose-400 hover:bg-[#1e1e1e]' : 'text-gray-400 hover:text-rose-600 hover:bg-gray-100'}`}
+                            title="Sign Out"
+                        >
+                            <LogOut size={18} />
+                        </button>
                     </div>
                 </header>
 

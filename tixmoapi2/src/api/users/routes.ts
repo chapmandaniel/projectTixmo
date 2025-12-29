@@ -207,7 +207,7 @@ router.delete('/:id', authorize('ADMIN'), controller.deleteUser);
  *         name: role
  *         schema:
  *           type: string
- *           enum: [ADMIN, PROMOTER, CUSTOMER, SCANNER]
+ *           enum: [OWNER, ADMIN, PROMOTER, CUSTOMER, SCANNER, TEAM_MEMBER]
  *         description: Filter by user role
  *     responses:
  *       200:
@@ -249,12 +249,58 @@ router.delete('/:id', authorize('ADMIN'), controller.deleteUser);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - Admin/Owner only
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/', authorize('ADMIN'), validate(validation.listUsersSchema), controller.listUsers);
+router.get('/', authorize('OWNER', 'ADMIN', 'PROMOTER'), validate(validation.listUsersSchema), controller.listUsers);
+
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Create a new user (Team Member)
+ *     description: Create a new user account with specific role and permissions. (Owner/Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, firstName, lastName, role]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [OWNER, ADMIN, PROMOTER, TEAM_MEMBER, SCANNER]
+ *               title:
+ *                 type: string
+ *               permissions:
+ *                 type: object
+ *               password: 
+ *                 type: string
+ *                 description: Initial password (optional, creates random if not provided)
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       403:
+ *         description: Forbidden
+ */
+router.post('/', authorize('OWNER', 'ADMIN', 'PROMOTER'), validate(validation.createUserSchema), controller.createUser);
 
 export default router;

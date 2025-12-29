@@ -65,21 +65,32 @@ export class EventService {
       throw ApiError.notFound('Organization not found');
     }
 
-    // Check if venue exists
-    const venue = await prisma.venue.findUnique({
-      where: { id: data.venueId },
-    });
+    // Check if venue exists (only if provided)
+    if (data.venueId) {
+      const venue = await prisma.venue.findUnique({
+        where: { id: data.venueId },
+      });
 
-    if (!venue) {
-      throw ApiError.notFound('Venue not found');
+      if (!venue) {
+        throw ApiError.notFound('Venue not found');
+      }
     }
 
-    // Validate dates
-    const startDate = new Date(data.startDateTime);
-    const endDate = new Date(data.endDateTime);
+    // Validate dates (only if both provided)
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
 
-    if (endDate <= startDate) {
-      throw ApiError.badRequest('End date/time must be after start date/time');
+    if (data.startDateTime) {
+      startDate = new Date(data.startDateTime);
+    }
+    if (data.endDateTime) {
+      endDate = new Date(data.endDateTime);
+    }
+
+    if (startDate && endDate) {
+      if (endDate <= startDate) {
+        throw ApiError.badRequest('End date/time must be after start date/time');
+      }
     }
 
     // Generate slug from title
@@ -90,15 +101,15 @@ export class EventService {
       data: {
         name: data.title,
         slug: slug,
-        description: data.description,
+        description: data.description || '', // Allow empty description for drafts
         organizationId: data.organizationId,
-        venueId: data.venueId,
-        startDatetime: startDate,
-        endDatetime: endDate,
-        timezone: data.timezone || venue.timezone,
+        venueId: data.venueId || null,
+        startDatetime: startDate || null,
+        endDatetime: endDate || null,
+        timezone: data.timezone || null,
         status: data.status || 'DRAFT',
-        capacity: data.capacity || venue.capacity,
-        category: data.category || 'General',
+        capacity: data.capacity || null,
+        category: data.category || null,
         tags: [],
         images: data.imageUrl
           ? ({ main: data.imageUrl } as unknown as Prisma.InputJsonValue)
@@ -168,12 +179,12 @@ export class EventService {
       }
     }
 
-    // Validate dates if both are provided
-    if (data.startDateTime && data.endDateTime) {
-      const startDate = new Date(data.startDateTime);
-      const endDate = new Date(data.endDateTime);
+    // Validate dates if both are provided or combined with existing
+    const newStart = data.startDateTime ? new Date(data.startDateTime) : existingEvent.startDatetime;
+    const newEnd = data.endDateTime ? new Date(data.endDateTime) : existingEvent.endDatetime;
 
-      if (endDate <= startDate) {
+    if (newStart && newEnd) {
+      if (newEnd <= newStart) {
         throw ApiError.badRequest('End date/time must be after start date/time');
       }
     }
@@ -242,10 +253,89 @@ export class EventService {
       );
     }
 
-    // Delete event
-    await prisma.event.delete({
+    // Delete event (Soft Delete)
+    await prisma.event.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        status: 'DELETED',
+      },
+    });
+  }
+
+  /**
+   * Restore deleted event
+   */
+  async restoreEvent(id: string): Promise<Event> {
+    const event = await prisma.event.findUnique({
       where: { id },
     });
+
+    if (!event) {
+      throw ApiError.notFound('Event not found');
+    }
+
+    if (!event.deletedAt) {
+      throw ApiError.badRequest('Event is not deleted');
+    }
+
+    return await prisma.event.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+        status: 'DRAFT', // Restore as DRAFT for safety
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * List deleted events
+   */
+  async listDeletedEvents(
+    organizationId: string,
+    page = 1,
+    limit = 20
+  ): Promise<PaginatedEvents> {
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.EventWhereInput = {
+      organizationId,
+      deletedAt: { not: null },
+    };
+
+    const [events, total] = await Promise.all([
+      prisma.event.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { deletedAt: 'desc' },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              tickets: true,
+            },
+          },
+        },
+      }),
+      prisma.event.count({ where }),
+    ]);
+
+    return {
+      events,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
   }
 
   /**
@@ -256,7 +346,9 @@ export class EventService {
     const skip = (page - 1) * limit;
 
     // Build where clause (use Prisma types)
-    const where: Prisma.EventWhereInput = {};
+    const where: Prisma.EventWhereInput = {
+      deletedAt: null, // Only active events
+    };
 
     if (organizationId) {
       where.organizationId = organizationId;
@@ -331,12 +423,27 @@ export class EventService {
       throw ApiError.notFound('Event not found');
     }
 
+    if (event.deletedAt) {
+      throw ApiError.badRequest('Cannot publish a deleted event');
+    }
+
     if (event.status === 'PUBLISHED') {
       throw ApiError.badRequest('Event is already published');
     }
 
     if (event.status === 'CANCELLED') {
       throw ApiError.badRequest('Cannot publish a cancelled event');
+    }
+
+    // Strictly validate required fields for publishing
+    const missingFields = [];
+    if (!event.venueId) missingFields.push('Venue');
+    if (!event.startDatetime) missingFields.push('Start Date');
+    if (!event.endDatetime) missingFields.push('End Date');
+    if (!event.capacity) missingFields.push('Capacity');
+
+    if (missingFields.length > 0) {
+      throw ApiError.badRequest(`Cannot publish event. Missing required fields: ${missingFields.join(', ')}`);
     }
 
     return await prisma.event.update({
@@ -360,6 +467,10 @@ export class EventService {
       throw ApiError.notFound('Event not found');
     }
 
+    if (event.deletedAt) {
+      throw ApiError.badRequest('Cannot cancel a deleted event');
+    }
+
     if (event.status === 'CANCELLED') {
       throw ApiError.badRequest('Event is already cancelled');
     }
@@ -373,5 +484,4 @@ export class EventService {
     });
   }
 }
-
 export const eventService = new EventService();

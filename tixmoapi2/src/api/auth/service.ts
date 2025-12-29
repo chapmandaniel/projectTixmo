@@ -112,6 +112,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        organizationId: user.organizationId,
         emailVerified: user.emailVerified,
         lastLogin: new Date(),
       },

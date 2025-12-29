@@ -1,10 +1,13 @@
 import React from 'react';
 
-const InputField = ({ label, type = "text", value, onChange, placeholder, isDark, options }) => (
+const InputField = ({ label, name, type = "text", value, onChange, placeholder, isDark, options, required }) => (
     <div className="mb-4">
-        <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{label}</label>
+        <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            {label} {required && <span className="text-rose-500">*</span>}
+        </label>
         {type === 'select' ? (
             <select
+                name={name}
                 value={value}
                 onChange={onChange}
                 className={`w-full p-3 rounded-lg outline-none transition-all text-sm appearance-none ${isDark ? 'bg-[#252525] text-gray-200 focus:bg-[#2a2a2a]' : 'bg-gray-50 text-gray-900 focus:bg-white shadow-sm'}`}
@@ -16,6 +19,7 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, isDark
             </select>
         ) : type === 'textarea' ? (
             <textarea
+                name={name}
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
@@ -25,6 +29,7 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, isDark
         ) : (
             <input
                 type={type}
+                name={name}
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}

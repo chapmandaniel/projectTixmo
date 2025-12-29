@@ -1,9 +1,20 @@
 import { PrismaClient, User, Prisma } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 import { ApiError } from '../../utils/ApiError';
 
 const prisma = new PrismaClient();
 
 type SafeUser = Omit<User, 'passwordHash' | 'twoFactorSecret'>;
+
+interface CreateUserInput {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'OWNER' | 'ADMIN' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
+  title?: string;
+  permissions?: Record<string, boolean>;
+  password?: string;
+}
 
 interface UpdateUserInput {
   firstName?: string;
@@ -14,8 +25,10 @@ interface UpdateUserInput {
 interface ListUsersParams {
   page?: number;
   limit?: number;
-  role?: 'ADMIN' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER';
+  role?: 'OWNER' | 'ADMIN' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
 }
+
+// ... existing interfaces ...
 
 interface PaginatedUsers {
   users: SafeUser[];
@@ -29,6 +42,56 @@ interface PaginatedUsers {
 
 export class UserService {
   /**
+   * Create a new user
+   */
+  async createUser(data: CreateUserInput): Promise<SafeUser> {
+    const { email, password, ...rest } = data;
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw ApiError.conflict('User with this email already exists');
+    }
+
+    // Hash password (or generate random if not provided)
+    const passwordToHash = password || Math.random().toString(36).slice(-8);
+    const passwordHash = await bcrypt.hash(passwordToHash, 10);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        ...rest,
+        permissions: rest.permissions as Prisma.InputJsonValue,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        title: true,
+        permissions: true,
+        phone: true,
+        role: true,
+        organizationId: true,
+        emailVerified: true,
+        twoFactorEnabled: true,
+        lastLogin: true,
+        createdAt: true,
+        updatedAt: true,
+        passwordHash: false,
+        twoFactorSecret: false,
+      },
+    });
+
+    return user;
+  }
+
+  /**
    * Get user by ID
    */
   async getUserById(id: string): Promise<SafeUser | null> {
@@ -39,6 +102,8 @@ export class UserService {
         email: true,
         firstName: true,
         lastName: true,
+        title: true,
+        permissions: true,
         phone: true,
         role: true,
         organizationId: true,
@@ -52,6 +117,9 @@ export class UserService {
       },
     });
   }
+
+  // ... existing methods ...
+
 
   /**
    * Update user profile
@@ -78,6 +146,8 @@ export class UserService {
         email: true,
         firstName: true,
         lastName: true,
+        title: true,
+        permissions: true,
         phone: true,
         role: true,
         organizationId: true,
@@ -149,6 +219,8 @@ export class UserService {
           email: true,
           firstName: true,
           lastName: true,
+          title: true,
+          permissions: true,
           phone: true,
           role: true,
           organizationId: true,

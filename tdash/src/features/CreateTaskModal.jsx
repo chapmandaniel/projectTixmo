@@ -3,7 +3,7 @@ import { X, Plus } from 'lucide-react';
 import InputField from '../components/InputField';
 import { MOCK_USERS } from '../data/mockData';
 
-const CreateTaskModal = ({ onClose, onCreate, isDark }) => {
+const CreateTaskModal = ({ onClose, onCreate, isDark, users = [] }) => {
     const [formData, setFormData] = useState({
         title: '',
         content: '', // Maps to Description
@@ -13,8 +13,13 @@ const CreateTaskModal = ({ onClose, onCreate, isDark }) => {
         attachments: []
     });
 
+    const [error, setError] = useState('');
+
     const handleCreate = () => {
-        if (!formData.title) return;
+        if (!formData.title.trim()) {
+            setError('Title is required');
+            return;
+        }
         onCreate(formData);
     };
 
@@ -44,10 +49,14 @@ const CreateTaskModal = ({ onClose, onCreate, isDark }) => {
                     <InputField
                         label="Task Title"
                         value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        onChange={(e) => {
+                            setFormData({ ...formData, title: e.target.value });
+                            setError('');
+                        }}
                         placeholder="Short summary..."
                         isDark={isDark}
                     />
+                    {error && <p className="text-xs text-rose-500 px-1">{error}</p>}
                     <InputField
                         label="Description"
                         type="textarea"
@@ -72,8 +81,17 @@ const CreateTaskModal = ({ onClose, onCreate, isDark }) => {
                         />
                         <InputField
                             label="Tag"
+                            type="select"
                             value={formData.tag}
                             onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
+                            options={[
+                                { value: 'General', label: 'General' },
+                                { value: 'Design', label: 'Design' },
+                                { value: 'Legal', label: 'Legal' },
+                                { value: 'Ops', label: 'Ops' },
+                                { value: 'Marketing', label: 'Marketing' },
+                                { value: 'Dev', label: 'Dev' }
+                            ]}
                             isDark={isDark}
                         />
                     </div>
@@ -83,7 +101,7 @@ const CreateTaskModal = ({ onClose, onCreate, isDark }) => {
                         type="select"
                         value={formData.assignee}
                         onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                        options={MOCK_USERS.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))}
+                        options={users.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))}
                         isDark={isDark}
                     />
 

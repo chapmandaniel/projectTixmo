@@ -252,6 +252,70 @@ router.get('/', validate(validation.listEventsSchema), controller.listEvents);
 
 /**
  * @swagger
+ * /events/deleted:
+ *   get:
+ *     summary: List deleted events
+ *     description: Get a paginated list of deleted events for an organization
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: organizationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Deleted events retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/deleted', authorize('ADMIN'), controller.listDeletedEvents);
+
+/**
+ * @swagger
+ * /events/{id}/restore:
+ *   post:
+ *     summary: Restore deleted event
+ *     description: Restore a soft-deleted event to DRAFT status
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Event restored successfully
+ *       400:
+ *         description: Event is not deleted
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin only
+ *       404:
+ *         description: Event not found
+ */
+router.post('/:id/restore', authorize('ADMIN'), controller.restoreEvent);
+
+/**
+ * @swagger
  * /events/{id}/publish:
  *   post:
  *     summary: Publish event
