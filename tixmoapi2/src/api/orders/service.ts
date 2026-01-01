@@ -494,7 +494,6 @@ export class OrderService {
         limit,
         total,
         pages: Math.ceil(total / limit),
-        pages: Math.ceil(total / limit),
       },
     };
   }

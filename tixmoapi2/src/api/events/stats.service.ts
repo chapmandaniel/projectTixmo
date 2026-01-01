@@ -191,12 +191,14 @@ export class EventStatsService {
     ]);
 
     const currentOccupancy = Math.max(0, entryCount - exitCount);
-    const percentageFull = event.capacity > 0 ? (currentOccupancy / event.capacity) * 100 : 0;
+    // Fix: Handle null capacity and potential division by zero
+    const capacity = event.capacity || 0;
+    const percentageFull = capacity > 0 ? (currentOccupancy / capacity) * 100 : 0;
 
     return {
       eventId,
       currentOccupancy,
-      capacity: event.capacity,
+      capacity,
       percentageFull: Math.round(percentageFull * 100) / 100,
     };
   }
