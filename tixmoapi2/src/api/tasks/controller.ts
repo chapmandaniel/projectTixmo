@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { TaskService } from './service';
 import { StatusCodes } from 'http-status-codes';
 import { Prisma } from '@prisma/client';
