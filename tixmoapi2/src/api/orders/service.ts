@@ -96,7 +96,7 @@ export class OrderService {
       }
 
       // Check if event hasn't started
-      if (new Date() >= ticketType.event.startDatetime) {
+      if (ticketType.event.startDatetime && new Date() >= ticketType.event.startDatetime) {
         throw ApiError.badRequest(`Event has already started`);
       }
 
@@ -360,17 +360,20 @@ export class OrderService {
     }
 
     // Send confirmation email (async, don't wait)
-    notificationService
-      .sendOrderConfirmation({
-        to: order.user.email,
-        customerName: `${order.user.firstName} ${order.user.lastName}`,
-        orderNumber: order.orderNumber,
-        eventName: order.event.name,
-        eventDate: order.event.startDatetime.toLocaleDateString(),
-        ticketCount: order.tickets.length,
-        totalAmount: order.totalAmount.toString(),
-      })
-      .catch((error) => console.error('Failed to send order confirmation email:', error));
+    // Add check that event and startDatetime exist
+    if (order.event && order.event.startDatetime) {
+      notificationService
+        .sendOrderConfirmation({
+          to: order.user.email,
+          customerName: `${order.user.firstName} ${order.user.lastName}`,
+          orderNumber: order.orderNumber,
+          eventName: order.event.name,
+          eventDate: order.event.startDatetime.toLocaleDateString(),
+          ticketCount: order.tickets.length,
+          totalAmount: order.totalAmount.toString(),
+        })
+        .catch((error) => console.error('Failed to send order confirmation email:', error));
+    }
   }
 
   /**
@@ -490,6 +493,7 @@ export class OrderService {
         page,
         limit,
         total,
+        pages: Math.ceil(total / limit),
         pages: Math.ceil(total / limit),
       },
     };
