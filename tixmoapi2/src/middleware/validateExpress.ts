@@ -10,5 +10,5 @@ export const validate = (req: Request, res: Response, next: NextFunction) => {
             errors: errors.array()
         });
     }
-    next();
+    return next();
 };

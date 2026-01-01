@@ -32,9 +32,9 @@ export const TaskController = {
                 assignee: assigneeId ? { connect: { id: assigneeId } } : undefined,
             });
 
-            res.status(StatusCodes.CREATED).json(task);
+            return res.status(StatusCodes.CREATED).json(task);
         } catch (error) {
-            next(error);
+            return next(error);
         }
     },
 
@@ -56,9 +56,9 @@ export const TaskController = {
             if (req.query.assigneeId) filters.assigneeId = req.query.assigneeId as string;
 
             const tasks = await TaskService.getTasks(organizationId, filters);
-            res.json(tasks);
+            return res.json(tasks);
         } catch (error) {
-            next(error);
+            return next(error);
         }
     },
 
@@ -76,9 +76,9 @@ export const TaskController = {
                 return res.status(StatusCodes.NOT_FOUND).json({ message: 'Task not found' });
             }
 
-            res.json(task);
+            return res.json(task);
         } catch (error) {
-            next(error);
+            return next(error);
         }
     },
 
@@ -110,12 +110,12 @@ export const TaskController = {
             }
 
             const updatedTask = await TaskService.updateTask(id, organizationId, updateData);
-            res.json(updatedTask);
+            return res.json(updatedTask);
         } catch (error) {
             if (error instanceof Error && error.message.includes('not found')) {
                 return res.status(StatusCodes.NOT_FOUND).json({ message: error.message });
             }
-            next(error);
+            return next(error);
         }
     },
 
@@ -129,12 +129,12 @@ export const TaskController = {
             if (!organizationId) return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
 
             await TaskService.deleteTask(id, organizationId);
-            res.status(StatusCodes.NO_CONTENT).send();
+            return res.status(StatusCodes.NO_CONTENT).send();
         } catch (error) {
             if (error instanceof Error && error.message.includes('not found')) {
                 return res.status(StatusCodes.NOT_FOUND).json({ message: error.message });
             }
-            next(error);
+            return next(error);
         }
     },
 
@@ -155,9 +155,9 @@ export const TaskController = {
             }
 
             const comment = await TaskService.addComment(id, userId, content);
-            res.status(StatusCodes.CREATED).json(comment);
+            return res.status(StatusCodes.CREATED).json(comment);
         } catch (error) {
-            next(error);
+            return next(error);
         }
     }
 };

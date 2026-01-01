@@ -1,4 +1,4 @@
-import { ApiError } from '@utils/ApiError';
+import { ApiError } from '../../utils/ApiError';
 import { PrismaClient, TicketType, Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -188,8 +188,11 @@ export class TicketTypeService {
     }
 
     // Check if event hasn't started yet
-    if (ticketType.event && new Date() >= ticketType.event.startDatetime) {
-      return false;
+    // Ensure both event and startDatetime are present and not null
+    if (ticketType.event && ticketType.event.startDatetime) {
+      if (new Date() >= ticketType.event.startDatetime) {
+        return false;
+      }
     }
 
     // Check sales window
