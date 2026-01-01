@@ -4,10 +4,14 @@ import { ApiError } from '../../utils/ApiError';
 import { orderService } from '../orders/service';
 
 export class PaymentService {
-  private stripe: Stripe;
+  private stripe: Stripe | null = null;
 
   constructor() {
-    this.stripe = new Stripe(config.stripeSecretKey);
+    if (config.stripeSecretKey) {
+      this.stripe = new Stripe(config.stripeSecretKey);
+    } else {
+      console.warn('⚠️ STRIPE_SECRET_KEY not provided. Payment features will be disabled.');
+    }
   }
 
   /**
@@ -17,6 +21,10 @@ export class PaymentService {
     orderId: string,
     userId: string
   ): Promise<{ clientSecret: string; paymentIntentId: string }> {
+    if (!this.stripe) {
+      throw new ApiError(503, 'Payment service is not configured (Missing Stripe Key).');
+    }
+
     const order = await orderService.getOrderById(orderId, userId);
 
     if (!order) {
@@ -58,6 +66,10 @@ export class PaymentService {
    * Handle Stripe webhook events
    */
   async handleWebhook(signature: string, payload: Buffer): Promise<void> {
+    if (!this.stripe) {
+      throw new ApiError(503, 'Payment service is not configured.');
+    }
+
     let event: Stripe.Event;
 
     try {
