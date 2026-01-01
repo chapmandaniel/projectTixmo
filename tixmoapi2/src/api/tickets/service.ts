@@ -230,7 +230,7 @@ export class TicketService {
     });
 
     // Send transfer notification email (async, don't wait)
-    if (sender && updatedTicket.event) {
+    if (sender && updatedTicket.event && updatedTicket.event.startDatetime) {
       notificationService
         .sendTicketTransfer({
           to: recipient.email,

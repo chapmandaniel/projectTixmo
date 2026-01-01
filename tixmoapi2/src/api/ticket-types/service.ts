@@ -188,7 +188,7 @@ export class TicketTypeService {
     }
 
     // Check if event hasn't started yet
-    if (new Date() >= ticketType.event.startDatetime) {
+    if (ticketType.event && new Date() >= ticketType.event.startDatetime) {
       return false;
     }
 
