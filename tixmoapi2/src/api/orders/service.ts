@@ -130,13 +130,21 @@ export class OrderService {
     const order = await prisma.$transaction(async (tx) => {
       // Hold inventory
       for (let i = 0; i < data.items.length; i++) {
-        await tx.ticketType.update({
-          where: { id: data.items[i].ticketTypeId },
-          data: {
-            quantityHeld: { increment: data.items[i].quantity },
-            quantityAvailable: { decrement: data.items[i].quantity },
-          },
-        });
+        try {
+          await tx.ticketType.update({
+            where: {
+              id: data.items[i].ticketTypeId,
+              quantityAvailable: { gte: data.items[i].quantity }
+            },
+            data: {
+              quantityHeld: { increment: data.items[i].quantity },
+              quantityAvailable: { decrement: data.items[i].quantity },
+            },
+          });
+        } catch (error) {
+          // If update fails (P2025), it means not enough tickets
+          throw ApiError.badRequest(`Not enough tickets available`);
+        }
       }
 
       // Create order
