@@ -12,6 +12,8 @@ CMD ["npm", "run", "dev", "--", "--host"]
 # Stage 3: Build for production
 FROM base AS builder
 COPY . .
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # Stage 4: Serve with Nginx
