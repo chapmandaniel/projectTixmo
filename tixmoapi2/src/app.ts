@@ -17,6 +17,9 @@ const app: Application = express();
 // Initialize Sentry (if configured)
 initSentry();
 
+// Enable trust proxy for Railway load balancers
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
