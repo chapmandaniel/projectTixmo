@@ -29,7 +29,33 @@ if (config.sentryDsn) {
 // CORS configuration
 app.use(
   cors({
-    origin: config.corsOrigin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if origin is allowed
+      const allowedOrigins = Array.isArray(config.corsOrigin) ? config.corsOrigin : [config.corsOrigin];
+
+      // Check for exact match in allowed origins (e.g. localhost)
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+
+      // Check for .tixmo.co subdomains (Regex)
+      // Allows: https://demo.tixmo.co, https://anything.tixmo.co
+      const tixmoPattern = /^https:\/\/.*\.tixmo\.co$/;
+      if (tixmoPattern.test(origin)) {
+        return callback(null, true);
+      }
+
+      // Also allow railway apps for dynamic preview branches if needed
+      if (origin.endsWith('.up.railway.app')) {
+        return callback(null, true);
+      }
+
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    },
     credentials: true,
   })
 );
