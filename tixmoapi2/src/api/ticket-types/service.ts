@@ -1,8 +1,8 @@
 import { ApiError } from '../../utils/ApiError';
-import { PrismaClient, TicketType, Prisma } from '@prisma/client';
+import { TicketType, Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface CreateTicketTypeInput {
   eventId: string;

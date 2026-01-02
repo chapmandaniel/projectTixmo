@@ -1,9 +1,9 @@
-import { PrismaClient, Order, OrderStatus, Prisma } from '@prisma/client';
+import { Prisma, Order, OrderStatus } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { Decimal } from '@prisma/client/runtime/library';
 import { notificationService } from '../../utils/notificationService';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface OrderItemInput {
   ticketTypeId: string;

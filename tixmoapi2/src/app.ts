@@ -10,6 +10,7 @@ import { requestLogger } from './middleware/requestLogger';
 import { swaggerSpec } from './config/swagger';
 import apiRoutes from './api';
 import { initSentry, Sentry } from './config/sentry';
+import rateLimit from 'express-rate-limit';
 
 const app: Application = express();
 
@@ -42,7 +43,16 @@ app.use(compression());
 
 // Request logging
 app.use(requestLogger);
+app.use(requestLogger);
 
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 1000 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 /**
  * @swagger
  * /health:
