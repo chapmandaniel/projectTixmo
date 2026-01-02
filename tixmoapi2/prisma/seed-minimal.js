@@ -12,11 +12,24 @@ async function main() {
     // Use bcryptjs to hash (same as app)
     const passwordHash = await bcrypt.hash(password, 10);
 
+    // Create default organization
+    const org = await prisma.organization.upsert({
+        where: { slug: 'tixmo-hq' },
+        update: {},
+        create: {
+            name: 'TixMo HQ',
+            slug: 'tixmo-hq',
+            type: 'PROMOTER',
+            status: 'ACTIVE',
+        },
+    });
+
     const admin = await prisma.user.upsert({
         where: { email },
         update: {
-            passwordHash, // Reset password if exists
+            passwordHash,
             role: 'ADMIN',
+            organizationId: org.id,
         },
         create: {
             email,
@@ -26,6 +39,7 @@ async function main() {
             passwordHash,
             phone: '555-0123',
             emailVerified: true,
+            organizationId: org.id,
         },
     });
 
