@@ -77,8 +77,8 @@ const EventWizard = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                 endDateTime: formData.endDateTime ? new Date(formData.endDateTime).toISOString() : undefined,
                 capacity: formData.capacity ? parseInt(formData.capacity, 10) : undefined,
                 imageUrl: formData.imageUrl || undefined,
+                category: formData.category,
                 metadata: {
-                    category: formData.category,
                     hashtag: formData.hashtag
                 }
             };
@@ -140,8 +140,8 @@ const EventWizard = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                 status: 'DRAFT', // Default to draft
                 capacity: parseInt(formData.capacity, 10),
                 imageUrl: formData.imageUrl || undefined,
+                category: formData.category,
                 metadata: {
-                    category: formData.category,
                     hashtag: formData.hashtag
                 }
             };
