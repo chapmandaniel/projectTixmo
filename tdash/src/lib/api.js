@@ -30,6 +30,12 @@ api.interceptors.response.use(
             // window.location.href = '/login'; 
             console.warn('Unauthorized access, token might be invalid');
         }
+
+        // Handle Waiting Room (503)
+        if (error.response?.status === 503) {
+            window.dispatchEvent(new CustomEvent('tixmo:waiting-room'));
+        }
+
         return Promise.reject(error);
     }
 );

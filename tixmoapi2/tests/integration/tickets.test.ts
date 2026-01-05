@@ -84,6 +84,7 @@ describe('Tickets API', () => {
         startDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // Starts in 1 hour
         endDateTime: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // Ends in 4 hours
         status: 'DRAFT',
+        capacity: 1000,
       });
 
     eventId = eventRes.body.data.id;
@@ -424,6 +425,7 @@ describe('Tickets API', () => {
           startDateTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(), // starts in 2 minutes
           endDateTime: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
           status: 'DRAFT',
+          capacity: 1000,
         });
 
       event2Id = eventRes.body.data.id;
@@ -490,7 +492,7 @@ describe('Tickets API', () => {
       // cleanup test data created during these tests
       try {
         await cleanupTestData();
-      } catch (e) {}
+      } catch (e) { }
     });
 
     describe('POST /api/v1/tickets/validate', () => {

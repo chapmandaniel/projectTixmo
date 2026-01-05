@@ -12,6 +12,53 @@ export const createOrder = catchAsync(async (req: AuthRequest, res: Response) =>
   res.status(201).json(successResponse(order, 'Order created successfully'));
 });
 
+/**
+ * @swagger
+ * /orders:
+ *   post:
+ *     summary: Create a new order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - items
+ *             properties:
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - ticketTypeId
+ *                     - quantity
+ *                   properties:
+ *                     ticketTypeId:
+ *                       type: string
+ *                     quantity:
+ *                       type: integer
+ *                       minimum: 1
+ *     responses:
+ *       201:
+ *         description: Order created successfully
+ *       400:
+ *         description: Invalid request (e.g., sold out, limit exceeded)
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Ticket type not found
+ *       409:
+ *         description: Conflict - System busy (Inventory Locked). Please try again.
+ *       429:
+ *         description: Too Many Requests - Rate limit exceeded
+ *       503:
+ *         description: Service Unavailable - High traffic (Waiting Room active)
+ */
+
 export const getOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;

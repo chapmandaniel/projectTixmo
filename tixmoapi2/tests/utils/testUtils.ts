@@ -115,6 +115,7 @@ export async function createEvent(
     startDateTime: string;
     endDateTime: string;
     status: string;
+    capacity: number;
   }> = {}
 ) {
   const now = Date.now();
@@ -126,6 +127,7 @@ export async function createEvent(
     startDateTime: payload.startDateTime ?? new Date(now + 24 * 60 * 60 * 1000).toISOString(),
     endDateTime: payload.endDateTime ?? new Date(now + 26 * 60 * 60 * 1000).toISOString(),
     status: payload.status ?? 'DRAFT',
+    capacity: payload.capacity ?? 1000,
   };
 
   const res = await request(app)
@@ -192,46 +194,46 @@ export async function cleanupTestData() {
   // 1. Child tables (ScanLog, Scanner, Notification, etc.)
   try {
     await prisma.scanLog.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
   try {
     await prisma.scanner.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
   try {
     await prisma.notification.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
   try {
     await prisma.notificationPreference.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
 
   // 2. Transactional data (Ticket, Order)
   try {
     await prisma.ticket.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
   try {
     await prisma.order.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
 
   // 3. Event related
   try {
     await prisma.ticketType.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
   try {
     await prisma.event.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
 
   // 4. Organization related
   try {
     await prisma.venue.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
   try {
     await prisma.promoCode.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
 
   // 5. Core entities (User, Organization)
   try {
     await prisma.user.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
   try {
     await prisma.organization.deleteMany();
-  } catch (e) {}
+  } catch (e) { }
 }

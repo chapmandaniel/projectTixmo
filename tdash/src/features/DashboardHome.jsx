@@ -1,146 +1,194 @@
-import React from 'react';
-import { Calendar, Download, ChevronRight } from 'lucide-react';
-import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
-import StatCard from '../components/StatCard';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Bell, CheckSquare, Ticket, ArrowRight, Clock, AlertCircle, ChevronRight } from 'lucide-react';
+import api from '../lib/api';
+import TaskDetailsModal from './TaskDetailsModal';
 import StatusBadge from '../components/StatusBadge';
-import { MOCK_ANALYTICS_DATA, MOCK_RECENT_ORDERS } from '../data/mockData';
 
-const DashboardHome = ({ isDark }) => (
-    <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
-        <div className="flex justify-between items-end">
-            <div>
-                <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Overview</h2>
-                <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm font-normal`}>Welcome back, here's what's happening today.</p>
-            </div>
-            <div className="flex space-x-3">
-                <button className={`px-4 py-2 text-sm font-normal rounded-lg flex items-center transition-colors ${isDark ? 'bg-[#1e1e1e] text-gray-300 hover:bg-[#252525] shadow-lg shadow-black/10' : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm'}`}>
-                    <Calendar size={16} className="mr-2 opacity-70" />
-                    Last 30 Days
-                </button>
-                <button className={`px-4 py-2 text-sm font-normal rounded-lg flex items-center shadow-lg ${isDark ? 'bg-indigo-500/90 text-white hover:bg-indigo-500 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}>
-                    <Download size={16} className="mr-2 opacity-80" />
-                    Export Report
-                </button>
-            </div>
-        </div>
+const DashboardHome = ({ isDark, user }) => {
+    const [tasks, setTasks] = useState([]);
+    const [notifications, setNotifications] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedTask, setSelectedTask] = useState(null);
+    const [stats, setStats] = useState({ total: 0, overdue: 0, personal: 0 });
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard title="Total Revenue" value="$284,392" trend="12.5%" trendUp={true} isDark={isDark} />
-            <StatCard title="Tickets Sold" value="14,209" trend="8.2%" trendUp={true} isDark={isDark} />
-            <StatCard title="Active Events" value="8" trend="2 new" trendUp={true} isDark={isDark} />
-            <StatCard title="Conversion Rate" value="4.2%" trend="1.1%" trendUp={false} isDark={isDark} />
-        </div>
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            setIsLoading(true);
+            try {
+                const [tasksRes, notifRes] = await Promise.all([
+                    api.get('/tasks', { params: { assigneeId: user?.id } }),
+                    api.get('/notifications', { params: { limit: 5 } }),
+                ]);
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            {/* Sales Analytics Chart */}
-            <div className={`lg:col-span-2 p-5 rounded-xl ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Revenue Trends</h3>
-                    </div>
-                    <div className="flex space-x-4 text-sm">
-                        <span className={`flex items-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}><div className={`w-2 h-2 rounded-full mr-2 ${isDark ? 'bg-indigo-500' : 'bg-gray-800'}`}></div>Revenue</span>
-                        <span className={`flex items-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}><div className={`w-2 h-2 rounded-full mr-2 ${isDark ? 'bg-[#333]' : 'bg-gray-200'}`}></div>Target</span>
+                // Tasks API returns array or { data: [] }
+                const taskData = Array.isArray(tasksRes.data) ? tasksRes.data : (tasksRes.data.data || []);
+                // Filter out Done tasks to keep dashboard focused
+                const activeTasks = taskData.filter(t => t.status !== 'DONE');
+                setTasks(activeTasks);
+
+                // Calculate stats
+                const overdue = activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date()).length;
+
+                // Get personal todos from localStorage
+                let personalCount = 0;
+                try {
+                    const saved = localStorage.getItem('tixmo_personal_todos');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        personalCount = parsed.filter(t => !t.completed).length;
+                    }
+                } catch (e) {
+                    console.error('Failed to parse local todos', e);
+                }
+
+                setStats({
+                    total: activeTasks.length,
+                    overdue: overdue,
+                    personal: personalCount
+                });
+
+                // Notifications API returns { success: true, data: { notifications: [] } }
+                if (notifRes.data.success && notifRes.data.data) {
+                    setNotifications(notifRes.data.data.notifications || []);
+                }
+            } catch (error) {
+                console.error('Failed to fetch dashboard data', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (user) {
+            fetchDashboardData();
+        } else {
+            setIsLoading(false);
+        }
+    }, [user]);
+
+    const getPriorityColor = (priority) => {
+        switch (priority) {
+            case 'HIGH': return 'text-rose-500 bg-rose-500/10';
+            case 'MEDIUM': return 'text-amber-500 bg-amber-500/10';
+            case 'LOW': return 'text-emerald-500 bg-emerald-500/10';
+            default: return 'text-gray-500 bg-gray-500/10';
+        }
+    };
+
+    return (
+        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
+            {selectedTask && (
+                <TaskDetailsModal
+                    task={selectedTask}
+                    users={[]} // View only mostly, or pass users if needed
+                    isDark={isDark}
+                    onClose={() => setSelectedTask(null)}
+                    onUpdate={() => { }} // Read only on dashboard for simplicity? Or refresh
+                />
+            )}
+
+            <div className="flex justify-between items-end">
+                <div>
+                    <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                        Welcome back, {user?.firstName || 'User'}
+                    </h2>
+                    <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm font-normal`}>
+                        Here's what's on your plate today.
+                    </p>
+                </div>
+                <div className="flex space-x-3">
+                    <div className={`px-4 py-2 text-sm font-normal rounded-lg flex items-center ${isDark ? 'bg-[#1e1e1e] text-gray-300' : 'bg-white text-gray-600 shadow-sm'}`}>
+                        <Calendar size={16} className="mr-2 opacity-70" />
+                        {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                 </div>
-                <div className="h-[300px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={MOCK_ANALYTICS_DATA}>
-                            <defs>
-                                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={isDark ? '#6366f1' : '#374151'} stopOpacity={0.05} />
-                                    <stop offset="95%" stopColor={isDark ? '#6366f1' : '#374151'} stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2a2a2a' : '#f3f4f6'} />
-                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: isDark ? '#525252' : '#9ca3af', fontSize: 12 }} dy={10} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fill: isDark ? '#525252' : '#9ca3af', fontSize: 12 }} tickFormatter={(value) => `$${value}`} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: isDark ? '#252525' : '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.2)', color: isDark ? '#e5e5e5' : '#374151' }}
-                                itemStyle={{ color: isDark ? '#e5e5e5' : '#374151' }}
-                                formatter={(value) => [`$${value}`, 'Revenue']}
-                            />
-                            <Area type="monotone" dataKey="sales" stroke={isDark ? '#6366f1' : '#374151'} strokeWidth={1.5} fillOpacity={1} fill="url(#colorSales)" />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </div>
             </div>
 
-            {/* Occupancy / Real-time stats */}
-            <div className={`p-5 rounded-xl ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Live Now</h3>
-                    <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
-                    </span>
-                </div>
-
-                <div className="mb-8">
-                    <h4 className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-1`}>Summer Music Fest</h4>
-                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'} mb-4`}>Madison Square Garden</p>
-
-                    <div className="flex justify-between text-sm mb-2">
-                        <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>Occupancy</span>
-                        <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>72%</span>
-                    </div>
-                    <div className={`relative w-full rounded-full h-1.5 mb-6 overflow-hidden ${isDark ? 'bg-[#2a2a2a]' : 'bg-gray-100'}`}>
-                        <div className={`absolute top-0 left-0 h-full rounded-full ${isDark ? 'bg-indigo-500' : 'bg-gray-800'}`} style={{ width: '72%' }}></div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className={`p-4 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
-                            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'} mb-1`}>Checked In</p>
-                            <p className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>14,400</p>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column: My Tasks Report */}
+                <div className={`lg:col-span-2 rounded-xl p-6 flex flex-col ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm border border-gray-100'}`}>
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex items-center space-x-2">
+                            <CheckSquare size={20} className={isDark ? 'text-indigo-400' : 'text-indigo-600'} />
+                            <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>My Tasks Report</h3>
                         </div>
-                        <div className={`p-4 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
-                            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'} mb-1`}>Remaining</p>
-                            <p className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>5,600</p>
+                    </div>
+
+                    {isLoading ? (
+                        <div className="flex-1 flex justify-center items-center py-10">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
+                            <div className={`flex flex-col items-center justify-center p-6 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-indigo-50'}`}>
+                                <span className={`text-4xl font-bold mb-2 ${isDark ? 'text-white' : 'text-indigo-600'}`}>{stats.total}</span>
+                                <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-indigo-600/70'}`}>Active Tasks</span>
+                            </div>
+                            <div className={`flex flex-col items-center justify-center p-6 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-rose-50'}`}>
+                                <span className={`text-4xl font-bold mb-2 ${isDark ? 'text-rose-400' : 'text-rose-500'}`}>{stats.overdue}</span>
+                                <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-rose-600/70'}`}>Overdue Tasks</span>
+                            </div>
+                            <div className={`flex flex-col items-center justify-center p-6 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-emerald-50'}`}>
+                                <span className={`text-4xl font-bold mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{stats.personal}</span>
+                                <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-emerald-600/70'}`}>Personal Todos</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Column: Notifications & Tickets */}
+                <div className="space-y-6">
+                    {/* Notifications */}
+                    <div className={`rounded-xl p-6 ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm border border-gray-100'}`}>
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center space-x-2">
+                                <Bell size={20} className={isDark ? 'text-amber-400' : 'text-amber-500'} />
+                                <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Notifications</h3>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {isLoading ? (
+                                <div className="text-center py-4 text-sm text-gray-500">Loading...</div>
+                            ) : notifications.length === 0 ? (
+                                <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                    <p>No new notifications</p>
+                                </div>
+                            ) : (
+                                notifications.map((notif) => (
+                                    <div key={notif.id} className={`p-3 rounded-lg flex items-start space-x-3 ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
+                                        <div className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${notif.read ? 'bg-gray-500' : 'bg-indigo-500'}`}></div>
+                                        <div>
+                                            <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{notif.title}</p>
+                                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{new Date(notif.createdAt).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Ticket Management Placeholder */}
+                    <div className={`rounded-xl p-6 relative overflow-hidden group ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm border border-gray-100'}`}>
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex items-center space-x-2">
+                                <Ticket size={20} className={isDark ? 'text-rose-400' : 'text-rose-500'} />
+                                <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>My Tickets</h3>
+                            </div>
+                        </div>
+
+                        <div className={`p-4 rounded-lg flex flex-col items-center text-center ${isDark ? 'bg-[#252525]/50' : 'bg-gray-50'}`}>
+                            <AlertCircle size={32} className={`mb-2 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+                            <h4 className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Coming Soon</h4>
+                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                                Enhanced ticket management and personal assignments will be available here soon.
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        {/* Recent Orders Table */}
-        <div className={`rounded-xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
-            <div className={`p-5 flex justify-between items-center`}>
-                <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Recent Orders</h3>
-                <button className={`text-sm font-normal flex items-center ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-700'}`}>
-                    View All <ChevronRight size={16} />
-                </button>
-            </div>
-            <div className="overflow-x-auto">
-                <table className={`w-full text-left text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    <thead className={`${isDark ? 'bg-[#252525] text-gray-500' : 'bg-gray-50 text-gray-400'} text-xs uppercase font-normal`}>
-                        <tr>
-                            <th className="px-6 py-3 font-medium">Order ID</th>
-                            <th className="px-6 py-3 font-medium">Customer</th>
-                            <th className="px-6 py-3 font-medium">Event</th>
-                            <th className="px-6 py-3 font-medium">Status</th>
-                            <th className="px-6 py-3 text-right font-medium">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody className={`divide-y ${isDark ? 'divide-[#252525]' : 'divide-gray-50'}`}>
-                        {MOCK_RECENT_ORDERS.map((order) => (
-                            <tr key={order.id} className={`transition-colors ${isDark ? 'hover:bg-[#252525]' : 'hover:bg-gray-50'}`}>
-                                <td className={`px-6 py-3.5 font-mono text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>#{order.id.split('_')[1]}</td>
-                                <td className={`px-6 py-3.5 font-normal ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{order.customer}</td>
-                                <td className={`px-6 py-3.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{order.event}</td>
-                                <td className="px-6 py-3.5">
-                                    <StatusBadge status={order.status} isDark={isDark} />
-                                </td>
-                                <td className={`px-6 py-3.5 text-right font-normal ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>${order.amount.toFixed(2)}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-);
+    );
+};
 
 export default DashboardHome;

@@ -15,12 +15,15 @@ import SettingsView from './features/SettingsView';
 import LoginView from './features/LoginView';
 import VenuesView from './features/VenuesView';
 
+import WaitingRoomView from './features/WaitingRoomView';
+
 const App = () => {
     const [activeView, setActiveView] = useState(localStorage.getItem('lastActiveView') || 'dashboard');
     const [managedEvent, setManagedEvent] = useState(null);
     const [isDark, setIsDark] = useState(true);
     const [user, setUser] = useState(auth.getCurrentUser());
     const [loading, setLoading] = useState(true);
+    const [showWaitingRoom, setShowWaitingRoom] = useState(false);
 
     useEffect(() => {
         // Check auth status on load
@@ -29,6 +32,12 @@ const App = () => {
             setUser(currentUser);
         }
         setLoading(false);
+
+        // Listen for waiting room events
+        const handleWaitingRoom = () => setShowWaitingRoom(true);
+        window.addEventListener('tixmo:waiting-room', handleWaitingRoom);
+
+        return () => window.removeEventListener('tixmo:waiting-room', handleWaitingRoom);
     }, []);
 
     const handleLogin = (userData) => {
@@ -43,7 +52,6 @@ const App = () => {
 
     const toggleTheme = () => setIsDark(!isDark);
 
-    // Reset managed event when switching views
     // Reset managed event when switching views
     const handleViewChange = (view) => {
         setActiveView(view);
@@ -68,7 +76,7 @@ const App = () => {
         }
 
         switch (activeView) {
-            case 'dashboard': return <DashboardHome {...props} />;
+            case 'dashboard': return <DashboardHome user={user} {...props} />;
             case 'events': return <EventsView onManageEvent={setManagedEvent} user={user} {...props} />;
             case 'analytics': return <AnalyticsView {...props} />;
             case 'marketing': return <ComingSoonView title="Marketing Hub" icon="Megaphone" isDark={isDark} />;
@@ -88,6 +96,11 @@ const App = () => {
 
     if (loading) {
         return <div className="flex items-center justify-center h-screen bg-[#121212] opacity-0 animate-fade-in"></div>;
+    }
+
+    // Force Waiting Room logic
+    if (showWaitingRoom) {
+        return <WaitingRoomView onRetry={() => setShowWaitingRoom(false)} />;
     }
 
     if (!user) {

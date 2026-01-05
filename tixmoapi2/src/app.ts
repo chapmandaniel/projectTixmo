@@ -75,12 +75,29 @@ app.use(requestLogger);
 app.use(requestLogger);
 
 // Rate limiting
+import RedisStore from 'rate-limit-redis';
+import { getRedisClient } from './config/redis';
+import { waitingRoom } from './middleware/waitingRoom';
+
+// ... (previous imports)
+
+// Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // Limit each IP to 1000 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
+  // Use Redis store
+  store: new RedisStore({
+    // @ts-ignore - Known issue with rate-limit-redis types and redis v4
+    sendCommand: (...args: string[]) => getRedisClient().sendCommand(args),
+  }),
 });
+
+// Apply Waiting Room first (throttle high traffic)
+app.use(waitingRoom);
+
+// Apply Rate Limiter
 app.use(limiter);
 /**
  * @swagger

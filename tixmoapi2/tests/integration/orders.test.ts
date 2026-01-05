@@ -73,6 +73,7 @@ describe('Orders API', () => {
         startDateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         endDateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000).toISOString(),
         status: 'DRAFT',
+        capacity: 1000,
       });
 
     eventId = eventRes.body.data.id;

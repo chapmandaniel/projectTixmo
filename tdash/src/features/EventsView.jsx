@@ -89,7 +89,7 @@ const EventsView = ({ isDark, onManageEvent, user }) => {
                             <div
                                 key={event.id}
                                 onClick={() => onManageEvent(event)}
-                                className={`rounded-xl transition-all group p-5 flex flex-col h-full cursor-pointer ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20 hover:bg-[#252525]' : 'bg-white shadow-sm shadow-gray-200/50 hover:shadow-md'}`}
+                                className={`rounded-xl transition-all group p-5 flex flex-col h-full cursor-pointer border-t-4 ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20 hover:bg-[#252525] border-t-indigo-500/30' : 'bg-white shadow-sm shadow-gray-200/50 hover:shadow-md border-t-indigo-100'}`}
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <div>

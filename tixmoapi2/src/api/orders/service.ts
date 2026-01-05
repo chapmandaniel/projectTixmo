@@ -2,6 +2,7 @@ import { Prisma, Order, OrderStatus } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { Decimal } from '@prisma/client/runtime/library';
 import { notificationService } from '../../utils/notificationService';
+import { redisLockService } from '../../services/redis-lock.service';
 
 import prisma from '../../config/prisma';
 
@@ -48,154 +49,179 @@ export class OrderService {
    * Create a new order
    */
   async createOrder(userId: string, data: CreateOrderInput): Promise<Order> {
-    // Get the first ticket type to determine the event
-    const firstTicketType = await prisma.ticketType.findUnique({
+    // 1. Determine Event ID for locking (Lightweight fetch)
+    const firstTicketTypeCheck = await prisma.ticketType.findUnique({
       where: { id: data.items[0].ticketTypeId },
-      include: {
-        event: {
-          select: {
-            id: true,
-            status: true,
-            startDatetime: true,
-          },
-        },
-      },
+      select: { eventId: true }
     });
 
-    if (!firstTicketType) {
+    if (!firstTicketTypeCheck) {
       throw ApiError.notFound('Ticket type not found');
     }
 
-    const eventId = firstTicketType.event.id;
+    const eventId = firstTicketTypeCheck.eventId;
+    const lockKey = `lock:event:${eventId}:inventory`;
 
-    // Validate all ticket types belong to the same event
-    const ticketTypes = await Promise.all(
-      data.items.map((item) =>
-        prisma.ticketType.findUnique({
-          where: { id: item.ticketTypeId },
-          include: {
-            event: true,
-          },
-        })
-      )
-    );
-
-    for (let i = 0; i < ticketTypes.length; i++) {
-      const ticketType = ticketTypes[i];
-      if (!ticketType) {
-        throw ApiError.notFound(`Ticket type ${data.items[i].ticketTypeId} not found`);
-      }
-
-      if (ticketType.event.id !== eventId) {
-        throw ApiError.badRequest('All tickets must be for the same event');
-      }
-
-      // Check if event is published
-      if (ticketType.event.status !== 'PUBLISHED') {
-        throw ApiError.badRequest(`Event is not available for purchase`);
-      }
-
-      // Check if event hasn't started
-      if (ticketType.event.startDatetime && new Date() >= ticketType.event.startDatetime) {
-        throw ApiError.badRequest(`Event has already started`);
-      }
-
-      // Check availability
-      const item = data.items[i];
-      if (ticketType.quantityAvailable < item.quantity) {
-        throw ApiError.badRequest(
-          `Only ${ticketType.quantityAvailable} tickets available for ${ticketType.name}`
-        );
-      }
-
-      if (item.quantity > ticketType.maxPerOrder) {
-        throw ApiError.badRequest(
-          `Maximum ${ticketType.maxPerOrder} tickets per order for ${ticketType.name}`
-        );
-      }
+    // 2. Acquire Lock
+    const locked = await redisLockService.acquireLock(lockKey, 5000); // 5s TTL
+    if (!locked) {
+      throw ApiError.conflict('System busy processing other orders. Please try again.');
     }
 
-    // Calculate total
-    let totalAmount = new Decimal(0);
-    for (let i = 0; i < data.items.length; i++) {
-      const ticketType = ticketTypes[i]!;
-      const item = data.items[i];
-      totalAmount = totalAmount.add(ticketType.price.mul(item.quantity));
-    }
-
-    // Generate order number
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-    // Create order and hold inventory
-    const order = await prisma.$transaction(async (tx) => {
-      // Hold inventory
-      for (let i = 0; i < data.items.length; i++) {
-        try {
-          await tx.ticketType.update({
-            where: {
-              id: data.items[i].ticketTypeId,
-              quantityAvailable: { gte: data.items[i].quantity }
-            },
-            data: {
-              quantityHeld: { increment: data.items[i].quantity },
-              quantityAvailable: { decrement: data.items[i].quantity },
-            },
-          });
-        } catch (error) {
-          // If update fails (P2025), it means not enough tickets
-          throw ApiError.badRequest(`Not enough tickets available`);
-        }
-      }
-
-      // Create order
-      const newOrder = await tx.order.create({
-        data: {
-          orderNumber,
-          userId,
-          eventId,
-          status: 'PENDING',
-          totalAmount,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
-        },
+    try {
+      // --- ORIGINAL LOGIC START ---
+      // Get the first ticket type to determine the event
+      const firstTicketType = await prisma.ticketType.findUnique({
+        where: { id: data.items[0].ticketTypeId },
         include: {
           event: {
             select: {
-              name: true,
+              id: true,
+              status: true,
               startDatetime: true,
-              venue: {
-                select: {
-                  name: true,
-                },
-              },
             },
           },
         },
       });
 
-      // Create tickets
-      for (let i = 0; i < data.items.length; i++) {
-        const item = data.items[i];
-        const ticketType = ticketTypes[i]!;
+      if (!firstTicketType) {
+        throw ApiError.notFound('Ticket type not found');
+      }
 
-        for (let j = 0; j < item.quantity; j++) {
-          await tx.ticket.create({
-            data: {
-              orderId: newOrder.id,
-              userId,
-              eventId,
-              ticketTypeId: item.ticketTypeId,
-              pricePaid: ticketType.price,
-              barcode: `TIX-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-              status: 'VALID',
+      // Validate all ticket types belong to the same event
+      const ticketTypes = await Promise.all(
+        data.items.map((item) =>
+          prisma.ticketType.findUnique({
+            where: { id: item.ticketTypeId },
+            include: {
+              event: true,
             },
-          });
+          })
+        )
+      );
+
+      for (let i = 0; i < ticketTypes.length; i++) {
+        const ticketType = ticketTypes[i];
+        if (!ticketType) {
+          throw ApiError.notFound(`Ticket type ${data.items[i].ticketTypeId} not found`);
+        }
+
+        if (ticketType.event.id !== eventId) {
+          throw ApiError.badRequest('All tickets must be for the same event');
+        }
+
+        // Check if event is published
+        if (ticketType.event.status !== 'PUBLISHED') {
+          throw ApiError.badRequest(`Event is not available for purchase`);
+        }
+
+        // Check if event hasn't started
+        if (ticketType.event.startDatetime && new Date() >= ticketType.event.startDatetime) {
+          throw ApiError.badRequest(`Event has already started`);
+        }
+
+        // Check availability
+        const item = data.items[i];
+        if (ticketType.quantityAvailable < item.quantity) {
+          throw ApiError.badRequest(
+            `Only ${ticketType.quantityAvailable} tickets available for ${ticketType.name}`
+          );
+        }
+
+        if (item.quantity > ticketType.maxPerOrder) {
+          throw ApiError.badRequest(
+            `Maximum ${ticketType.maxPerOrder} tickets per order for ${ticketType.name}`
+          );
         }
       }
 
-      return newOrder;
-    });
+      // Calculate total
+      let totalAmount = new Decimal(0);
+      for (let i = 0; i < data.items.length; i++) {
+        const ticketType = ticketTypes[i]!;
+        const item = data.items[i];
+        totalAmount = totalAmount.add(ticketType.price.mul(item.quantity));
+      }
 
-    return order;
+      // Generate order number
+      const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+      // Create order and hold inventory
+      const order = await prisma.$transaction(async (tx) => {
+        // Hold inventory
+        for (let i = 0; i < data.items.length; i++) {
+          try {
+            await tx.ticketType.update({
+              where: {
+                id: data.items[i].ticketTypeId,
+                quantityAvailable: { gte: data.items[i].quantity }
+              },
+              data: {
+                quantityHeld: { increment: data.items[i].quantity },
+                quantityAvailable: { decrement: data.items[i].quantity },
+              },
+            });
+          } catch (error) {
+            // If update fails (P2025), it means not enough tickets
+            throw ApiError.badRequest(`Not enough tickets available`);
+          }
+        }
+
+        // Create order
+        const newOrder = await tx.order.create({
+          data: {
+            orderNumber,
+            userId,
+            eventId,
+            status: 'PENDING',
+            totalAmount,
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+          },
+          include: {
+            event: {
+              select: {
+                name: true,
+                startDatetime: true,
+                venue: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Create tickets
+        for (let i = 0; i < data.items.length; i++) {
+          const item = data.items[i];
+          const ticketType = ticketTypes[i]!;
+
+          for (let j = 0; j < item.quantity; j++) {
+            await tx.ticket.create({
+              data: {
+                orderId: newOrder.id,
+                userId,
+                eventId,
+                ticketTypeId: item.ticketTypeId,
+                pricePaid: ticketType.price,
+                barcode: `TIX-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+                status: 'VALID',
+              },
+            });
+          }
+        }
+
+        return newOrder;
+      });
+
+      return order;
+      // --- ORIGINAL LOGIC END ---
+
+    } finally {
+      // 3. Release Lock
+      await redisLockService.releaseLock(lockKey);
+    }
   }
 
   /**
