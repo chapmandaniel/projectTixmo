@@ -198,6 +198,13 @@ const TodoView = ({ isDark, user }) => {
         }
     };
 
+    const COLUMN_COLORS = {
+        todo: 'border-t-4 border-indigo-500',
+        inProgress: 'border-t-4 border-emerald-500',
+        review: 'border-t-4 border-yellow-500',
+        done: 'border-t-4 border-transparent'
+    };
+
     return (
         <div className="space-y-6 animate-fade-in h-[calc(100vh-8rem)]">
 
@@ -250,7 +257,7 @@ const TodoView = ({ isDark, user }) => {
                         key={colId}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, colId)}
-                        className={`flex-shrink-0 w-80 rounded-xl p-4 flex flex-col ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-gray-50 border border-gray-200'}`}
+                        className={`flex-shrink-0 w-80 rounded-xl p-4 flex flex-col transition-all ${COLUMN_COLORS[colId]} ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-gray-50 border-x border-b border-gray-200'}`}
                     >
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center space-x-2">
