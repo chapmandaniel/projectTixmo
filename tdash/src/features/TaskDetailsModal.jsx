@@ -83,6 +83,38 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
         });
     };
 
+    const [showMentions, setShowMentions] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState('');
+    const inputRef = useRef(null);
+
+    const handleMessageChange = (e) => {
+        const val = e.target.value;
+        setMessage(val);
+
+        const lastWord = val.split(' ').pop();
+        if (lastWord.startsWith('@') && lastWord.length > 1) {
+            setShowMentions(true);
+            setMentionQuery(lastWord.substring(1).toLowerCase());
+        } else {
+            setShowMentions(false);
+        }
+    };
+
+    const handleMentionUser = (user) => {
+        const words = message.split(' ');
+        words.pop(); // Remove the partial mention
+        const mention = user.lastName ? `@${user.firstName} ${user.lastName}` : `@${user.firstName}`;
+        const newMessage = [...words, `${mention} `].join(' '); // Add space after
+        setMessage(newMessage);
+        setShowMentions(false);
+        inputRef.current?.focus();
+    };
+
+    const filteredUsers = users.filter(u =>
+        u.firstName.toLowerCase().includes(mentionQuery) ||
+        u.lastName.toLowerCase().includes(mentionQuery)
+    );
+
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
             <div className={`w-full max-w-2xl h-[85vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white'}`}>
@@ -249,7 +281,27 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                 </div>
 
                 {/* Footer / Input */}
-                <div className={`p-4 border-t ${isDark ? 'bg-[#252525] border-[#333]' : 'bg-gray-50 border-gray-200'}`}>
+                <div className={`p-4 border-t relative ${isDark ? 'bg-[#252525] border-[#333]' : 'bg-gray-50 border-gray-200'}`}>
+
+                    {/* Mention Suggestions */}
+                    {showMentions && filteredUsers.length > 0 && (
+                        <div className={`absolute bottom-full mb-2 left-4 w-60 rounded-xl shadow-2xl border overflow-hidden z-20 ${isDark ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-200'}`}>
+                            <div className={`p-2 text-xs font-semibold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Suggested Users</div>
+                            {filteredUsers.map(u => (
+                                <button
+                                    key={u.id}
+                                    onClick={() => handleMentionUser(u)}
+                                    className={`w-full text-left px-3 py-2 flex items-center space-x-2 hover:bg-indigo-500/10 transition-colors ${isDark ? 'text-gray-200' : 'text-gray-700'}`}
+                                >
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${isDark ? 'bg-[#333]' : 'bg-gray-200'}`}>
+                                        {u.firstName[0]}
+                                    </div>
+                                    <span className="text-sm">{u.firstName} {u.lastName}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     <div className={`flex items-center p-2 rounded-xl border ${isDark ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-200'}`}>
                         <button
                             onClick={handleAttach}
@@ -258,11 +310,12 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                             <Paperclip size={20} />
                         </button>
                         <input
+                            ref={inputRef}
                             type="text"
-                            placeholder="Write a comment..."
+                            placeholder="Write a comment... (Type @ to mention)"
                             className={`flex-1 bg-transparent border-none outline-none px-3 text-sm ${isDark ? 'text-gray-200 placeholder-gray-600' : 'text-gray-700 placeholder-gray-400'}`}
                             value={message}
-                            onChange={(e) => setMessage(e.target.value)}
+                            onChange={handleMessageChange}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                         />
                         <button

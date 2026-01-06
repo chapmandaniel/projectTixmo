@@ -1,6 +1,10 @@
 import { PrismaClient, User, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { ApiError } from '../../utils/ApiError';
+import { logger } from '../../config/logger';
+import { config } from '../../config/environment';
+import { transporter, emailFrom } from '../../config/email';
+import { userInvitationEmail } from '../../utils/emailTemplates';
 
 const prisma = new PrismaClient();
 
@@ -87,6 +91,30 @@ export class UserService {
         twoFactorSecret: false,
       },
     });
+
+    // Send invitation email
+    try {
+      const loginUrl = `${config.clientUrl}/login`;
+      const emailContent = userInvitationEmail({
+        name: user.firstName,
+        email: user.email,
+        password: passwordToHash,
+        loginUrl,
+      });
+
+      await transporter.sendMail({
+        from: `"${emailFrom.name}" <${emailFrom.address}>`,
+        to: user.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+      });
+
+      logger.info(`Invitation email sent to ${user.email}`);
+    } catch (error) {
+      logger.error(`Failed to send invitation email to ${user.email}: ${(error as Error).message}`);
+      // meaningful error logging but don't fail the request
+    }
 
     return user;
   }

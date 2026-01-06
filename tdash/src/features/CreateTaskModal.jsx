@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Plus, Paperclip } from 'lucide-react';
 import InputField from '../components/InputField';
-import { MOCK_USERS } from '../data/mockData';
 
 const CreateTaskModal = ({ onClose, onCreate, isDark, users = [] }) => {
     const [formData, setFormData] = useState({
@@ -14,6 +13,9 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [] }) => {
     });
 
     const [error, setError] = useState('');
+    const [showMentions, setShowMentions] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState('');
+    const descriptionRef = useRef(null);
 
     const handleCreate = () => {
         if (!formData.title.trim()) {
@@ -33,6 +35,34 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [] }) => {
         setFormData(prev => ({ ...prev, attachments: [...prev.attachments, newImage] }));
     };
 
+    const handleDescriptionChange = (e) => {
+        const val = e.target.value;
+        setFormData({ ...formData, content: val });
+
+        const lastWord = val.split(/[\s\n]/).pop();
+        if (lastWord.startsWith('@') && lastWord.length > 1) {
+            setShowMentions(true);
+            setMentionQuery(lastWord.substring(1).toLowerCase());
+        } else {
+            setShowMentions(false);
+        }
+    };
+
+    const handleMentionUser = (user) => {
+        const words = formData.content.split(/[\s\n]/);
+        words.pop(); // Remove the partial mention
+        const mention = user.lastName ? `@${user.firstName} ${user.lastName}` : `@${user.firstName}`;
+        const newContent = [...words, `${mention} `].join(' '); // Add space after
+        setFormData({ ...formData, content: newContent });
+        setShowMentions(false);
+        descriptionRef.current?.focus();
+    };
+
+    const filteredUsers = users.filter(u =>
+        u.firstName.toLowerCase().includes(mentionQuery) ||
+        u.lastName.toLowerCase().includes(mentionQuery)
+    );
+
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
             <div className={`w-full max-w-md rounded-2xl flex flex-col shadow-2xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white'}`}>
@@ -45,7 +75,7 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [] }) => {
                     </button>
                 </div>
 
-                <div className="p-6 space-y-1">
+                <div className="p-6 space-y-4">
                     <InputField
                         label="Task Title"
                         value={formData.title}
@@ -55,16 +85,40 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [] }) => {
                         }}
                         placeholder="Short summary..."
                         isDark={isDark}
+                        required
                     />
-                    {error && <p className="text-xs text-rose-500 px-1">{error}</p>}
-                    <InputField
-                        label="Description"
-                        type="textarea"
-                        value={formData.content}
-                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                        placeholder="Detailed explanation..."
-                        isDark={isDark}
-                    />
+                    {error && <p className="text-xs text-rose-500 px-1 -mt-3">{error}</p>}
+
+                    {/* Description with Mentions */}
+                    <div className="relative">
+                        <label className={`block text-xs font-medium mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Description</label>
+                        <textarea
+                            ref={descriptionRef}
+                            value={formData.content}
+                            onChange={handleDescriptionChange}
+                            placeholder="Detailed explanation... (Type @ to mention)"
+                            rows={4}
+                            className={`w-full p-3 rounded-lg outline-none transition-all text-sm resize-none ${isDark ? 'bg-[#252525] text-gray-200 placeholder-gray-600 focus:bg-[#2a2a2a]' : 'bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white shadow-sm'}`}
+                        />
+                        {/* Mention Suggestions */}
+                        {showMentions && filteredUsers.length > 0 && (
+                            <div className={`absolute top-full mt-1 left-0 w-60 rounded-xl shadow-2xl border overflow-hidden z-20 ${isDark ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-200'}`}>
+                                <div className={`p-2 text-xs font-semibold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Suggested Users</div>
+                                {filteredUsers.map(u => (
+                                    <button
+                                        key={u.id}
+                                        onClick={() => handleMentionUser(u)}
+                                        className={`w-full text-left px-3 py-2 flex items-center space-x-2 hover:bg-indigo-500/10 transition-colors ${isDark ? 'text-gray-200' : 'text-gray-700'}`}
+                                    >
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${isDark ? 'bg-[#333]' : 'bg-gray-200'}`}>
+                                            {u.firstName[0]}
+                                        </div>
+                                        <span className="text-sm">{u.firstName} {u.lastName}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <InputField

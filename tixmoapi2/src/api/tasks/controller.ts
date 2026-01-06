@@ -30,7 +30,7 @@ export const TaskController = {
                 dueDate: dueDate ? new Date(dueDate) : undefined,
                 organization: { connect: { id: organizationId } },
                 assignee: assigneeId ? { connect: { id: assigneeId } } : undefined,
-            });
+            }, userId);
 
             return res.status(StatusCodes.CREATED).json(task);
         } catch (error) {

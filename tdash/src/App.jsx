@@ -16,6 +16,7 @@ import LoginView from './features/LoginView';
 import VenuesView from './features/VenuesView';
 
 import WaitingRoomView from './features/WaitingRoomView';
+import GlobalErrorNotification from './components/GlobalErrorNotification';
 
 const App = () => {
     const [activeView, setActiveView] = useState(localStorage.getItem('lastActiveView') || 'dashboard');
@@ -24,6 +25,7 @@ const App = () => {
     const [user, setUser] = useState(auth.getCurrentUser());
     const [loading, setLoading] = useState(true);
     const [showWaitingRoom, setShowWaitingRoom] = useState(false);
+    const [globalError, setGlobalError] = useState(null);
 
     useEffect(() => {
         // Check auth status on load
@@ -37,7 +39,23 @@ const App = () => {
         const handleWaitingRoom = () => setShowWaitingRoom(true);
         window.addEventListener('tixmo:waiting-room', handleWaitingRoom);
 
-        return () => window.removeEventListener('tixmo:waiting-room', handleWaitingRoom);
+        // Listen for global errors
+        const handleGlobalError = (event) => {
+            const error = event.detail;
+            // Don't show if it's just a 401 (handled elsewhere) or 503 (waiting room)
+            if (error?.status !== 401 && error?.status !== 503) {
+                setGlobalError({
+                    message: error?.message || 'An unexpected system error occurred.',
+                    code: error?.status || 'UNKNOWN'
+                });
+            }
+        };
+        window.addEventListener('tixmo:global-error', handleGlobalError);
+
+        return () => {
+            window.removeEventListener('tixmo:waiting-room', handleWaitingRoom);
+            window.removeEventListener('tixmo:global-error', handleGlobalError);
+        };
     }, []);
 
     const handleLogin = (userData) => {
@@ -117,6 +135,11 @@ const App = () => {
             onLogout={handleLogout}
         >
             {renderContent()}
+            <GlobalErrorNotification
+                error={globalError}
+                onClose={() => setGlobalError(null)}
+                isDark={isDark}
+            />
         </DashboardLayout>
     );
 };

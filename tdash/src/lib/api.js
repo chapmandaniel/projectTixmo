@@ -36,6 +36,16 @@ api.interceptors.response.use(
             window.dispatchEvent(new CustomEvent('tixmo:waiting-room'));
         }
 
+        // Dispatch global error for other failure codes (e.g. 500, 404, network error)
+        else if (error.response?.status !== 401) {
+            window.dispatchEvent(new CustomEvent('tixmo:global-error', {
+                detail: {
+                    status: error.response?.status || 'NETWORK_ERR',
+                    message: error.response?.data?.message || error.message
+                }
+            }));
+        }
+
         return Promise.reject(error);
     }
 );

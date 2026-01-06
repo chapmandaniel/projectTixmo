@@ -368,6 +368,7 @@ enum NotificationType {
   WELCOME
   PROMO
   ANNOUNCEMENT
+  TASK_MENTION
 }
 
 enum NotificationStatus {

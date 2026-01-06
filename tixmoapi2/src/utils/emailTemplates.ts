@@ -241,3 +241,80 @@ export function welcomeEmail(data: { name: string }): EmailTemplate {
     `,
   };
 }
+// User invitation email
+export function userInvitationEmail(data: {
+  name: string;
+  email: string;
+  password?: string;
+  loginUrl: string;
+}): EmailTemplate {
+  const passwordSection = data.password
+    ? `
+    <div style="background-color: #f3f4f6; padding: 10px; margin: 10px 0; border-radius: 4px;">
+      <p style="margin: 0; font-weight: bold;">Temporary Password:</p>
+      <p style="margin: 5px 0; font-family: monospace; font-size: 16px;">${data.password}</p>
+    </div>
+    <p>Please change your password after logging in.</p>
+    `
+    : '';
+
+  const passwordText = data.password
+    ? `
+    Temporary Password: ${data.password}
+    
+    Please change your password after logging in.
+    `
+    : '';
+
+  return {
+    subject: 'You have been invited to TixMo',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #4F46E5; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background-color: #f9fafb; }
+            .button { display: inline-block; padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Welcome to TixMo!</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${data.name},</p>
+              <p>An account has been created for you on TixMo.</p>
+              
+              <p><strong>Username:</strong> ${data.email}</p>
+              ${passwordSection}
+              
+              <a href="${data.loginUrl}" class="button">Log In to TixMo</a>
+            </div>
+            <div class="footer">
+              <p>TixMo - Event Ticketing Platform</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `
+      Welcome to TixMo!
+      
+      Hi ${data.name},
+      
+      An account has been created for you on TixMo.
+      
+      Username: ${data.email}
+      ${passwordText}
+      
+      Log in here: ${data.loginUrl}
+      
+      TixMo - Event Ticketing Platform
+    `,
+  };
+}
