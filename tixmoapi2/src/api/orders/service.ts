@@ -2,7 +2,6 @@ import { Prisma, Order, OrderStatus } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { Decimal } from '@prisma/client/runtime/library';
 import { notificationService } from '../../utils/notificationService';
-import { redisLockService } from '../../services/redis-lock.service';
 import { promoCodeService } from '../promo-codes/service';
 import { ticketTierService } from '../ticket-tiers/service';
 import crypto from 'crypto';
@@ -154,27 +153,24 @@ export class OrderService {
 
     const finalAmount = Decimal.max(totalAmount.sub(discountAmount), new Decimal(0));
 
-    // Acquire inventory lock
-    const lockKey = `lock:event:${eventId}:inventory`;
-    const lockToken = await redisLockService.acquireLock(lockKey, 5000);
-    if (!lockToken) {
-      throw ApiError.conflict('System busy processing other orders. Please try again.');
-    }
+    // Generate cryptographically secure order number
+    const orderNumber = `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
 
-    try {
-      // Generate cryptographically secure order number
-      const orderNumber = `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
+    // Sort items by ticketTypeId to prevent deadlocks
+    const sortedItems = [...data.items].sort((a, b) =>
+      a.ticketTypeId.localeCompare(b.ticketTypeId)
+    );
 
-      // Create order and hold inventory in a transaction
-      const order = await prisma.$transaction(async (tx) => {
-        // Hold inventory (with optimistic concurrency check)
-        for (const item of data.items) {
-          try {
-            await tx.ticketType.update({
-              where: {
-                id: item.ticketTypeId,
-                quantityAvailable: { gte: item.quantity },
-              },
+    // Create order and hold inventory in a transaction
+    const order = await prisma.$transaction(async (tx) => {
+      // Hold inventory (with optimistic concurrency check)
+      for (const item of sortedItems) {
+        try {
+          await tx.ticketType.update({
+            where: {
+              id: item.ticketTypeId,
+              quantityAvailable: { gte: item.quantity },
+            },
               data: {
                 quantityHeld: { increment: item.quantity },
                 quantityAvailable: { decrement: item.quantity },
@@ -213,7 +209,7 @@ export class OrderService {
         });
 
         // Create tickets with secure barcodes
-        for (const item of data.items) {
+        for (const item of sortedItems) {
           const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
           for (let j = 0; j < item.quantity; j++) {
             const secureBarcode = `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`;
@@ -249,10 +245,6 @@ export class OrderService {
       }
 
       return order;
-    } finally {
-      // Release lock with owner token
-      await redisLockService.releaseLock(lockKey, lockToken);
-    }
   }
 
   /**
