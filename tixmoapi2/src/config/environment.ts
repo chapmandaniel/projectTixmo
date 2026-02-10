@@ -58,7 +58,7 @@ export const config = {
   awsS3Bucket: process.env.AWS_S3_BUCKET || '',
 
   // Elasticsearch
-  elasticsearchNode: process.env.ELASTICSEARCH_NODE || 'http://localhost:9200',
+  elasticsearchNode: process.env.ELASTICSEARCH_NODE,
   elasticsearchUsername: process.env.ELASTICSEARCH_USERNAME,
   elasticsearchPassword: process.env.ELASTICSEARCH_PASSWORD,
 
