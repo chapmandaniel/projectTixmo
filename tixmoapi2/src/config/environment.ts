@@ -23,9 +23,9 @@ export const config = {
   redisDb: parseInt(process.env.REDIS_DB || '0', 10),
 
   // JWT
-  jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
+  jwtSecret: process.env.JWT_SECRET || '',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || '',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
 
   // Stripe
@@ -75,7 +75,7 @@ export const config = {
   corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'],
 
   // Session
-  sessionSecret: process.env.SESSION_SECRET || 'your-session-secret',
+  sessionSecret: process.env.SESSION_SECRET || '',
 
   // Feature Flags
   enableResaleMarket: process.env.ENABLE_RESALE_MARKET === 'true',
@@ -92,11 +92,7 @@ export const config = {
 } as const;
 
 // Validate required environment variables
-const requiredEnvVars = ['DATABASE_URL'];
-
-if (config.nodeEnv === 'production') {
-  requiredEnvVars.push('JWT_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET');
-}
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET'];
 
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
