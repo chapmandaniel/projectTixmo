@@ -456,7 +456,7 @@ const ApprovalDetailView = ({ approval, isDark, user, onBack, onUpdate, onDelete
                         <div className={`rounded-xl border p-5 ${isDark ? 'bg-[#1A1A1A] border-gray-800' : 'bg-white border-gray-200'}`}>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Reviewers</h3>
-                                {approval.status === 'DRAFT' && (
+                                {['DRAFT', 'PENDING', 'CHANGES_REQUESTED'].includes(approval.status) && (
                                     <button
                                         onClick={() => setShowAddReviewer(true)}
                                         className="flex items-center gap-1 text-sm text-indigo-500 hover:text-indigo-400"
@@ -547,7 +547,7 @@ const ApprovalDetailView = ({ approval, isDark, user, onBack, onUpdate, onDelete
                                                     Pending
                                                 </span>
                                             )}
-                                            {approval.status === 'DRAFT' && (
+                                            {['DRAFT', 'PENDING', 'CHANGES_REQUESTED'].includes(approval.status) && (
                                                 <button
                                                     onClick={() => handleRemoveReviewer(reviewer.id)}
                                                     className={`p-1 rounded hover:bg-red-500/20 text-red-400`}
