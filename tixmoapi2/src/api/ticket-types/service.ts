@@ -165,10 +165,22 @@ export class TicketTypeService {
   /**
    * List ticket types for an event
    */
-  async listTicketTypesByEvent(eventId: string): Promise<TicketType[]> {
+  async listTicketTypesByEvent(
+    eventId: string,
+    sortBy: 'price' | 'status' | 'sold' | 'name' | 'createdAt' = 'price',
+    sortOrder: 'asc' | 'desc' = 'asc'
+  ): Promise<TicketType[]> {
+    const orderBy: Prisma.TicketTypeOrderByWithRelationInput = {};
+
+    if (sortBy === 'sold') {
+      orderBy.quantitySold = sortOrder;
+    } else {
+      orderBy[sortBy] = sortOrder;
+    }
+
     return await prisma.ticketType.findMany({
       where: { eventId },
-      orderBy: { price: 'asc' },
+      orderBy: orderBy,
     });
   }
 

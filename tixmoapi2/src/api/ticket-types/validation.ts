@@ -30,5 +30,7 @@ export const updateTicketTypeSchema = z.object({
 export const listTicketTypesSchema = z.object({
   query: z.object({
     eventId: z.string().uuid('Invalid event ID'),
+    sortBy: z.enum(['price', 'status', 'sold', 'name', 'createdAt']).optional(),
+    sortOrder: z.enum(['asc', 'desc']).optional(),
   }),
 });

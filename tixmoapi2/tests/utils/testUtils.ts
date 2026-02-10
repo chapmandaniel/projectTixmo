@@ -207,6 +207,9 @@ export async function cleanupTestData() {
 
   // 2. Transactional data (Ticket, Order)
   try {
+    await prisma.task.deleteMany();
+  } catch (e) { }
+  try {
     await prisma.ticket.deleteMany();
   } catch (e) { }
   try {
