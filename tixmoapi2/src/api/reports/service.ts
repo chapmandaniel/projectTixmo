@@ -214,11 +214,13 @@ export class ReportService {
       orderWhere.tickets = { some: { ticketType: { eventId: { in: eventIds } } } };
     }
 
-    const orders = await prisma.order.findMany({
+    const result = await prisma.order.aggregate({
       where: orderWhere,
-      select: { totalAmount: true },
+      _sum: {
+        totalAmount: true,
+      },
     });
-    const totalRevenue = orders.reduce((sum, o) => sum + Number(o.totalAmount), 0);
+    const totalRevenue = Number(result._sum.totalAmount) || 0;
 
     // 2. Tickets Sold
     const ticketWhere: Prisma.TicketWhereInput = { status: { in: ['VALID', 'USED'] } };
