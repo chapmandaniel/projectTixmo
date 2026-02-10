@@ -10,7 +10,7 @@ import prisma from '../../config/prisma';
 
 type SafeUser = Omit<User, 'passwordHash' | 'twoFactorSecret'>;
 
-interface CreateUserInput {
+export interface CreateUserInput {
   email: string;
   firstName: string;
   lastName: string;
@@ -20,13 +20,13 @@ interface CreateUserInput {
   password?: string;
 }
 
-interface UpdateUserInput {
+export interface UpdateUserInput {
   firstName?: string;
   lastName?: string;
   phone?: string;
 }
 
-interface ListUsersParams {
+export interface ListUsersParams {
   page?: number;
   limit?: number;
   role?: 'OWNER' | 'ADMIN' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
