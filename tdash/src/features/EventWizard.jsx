@@ -18,7 +18,8 @@ const EventWizard = ({ onClose, onSuccess, isDark, user, initialData = null }) =
         endDateTime: '',
         venueId: '',
         capacity: '',
-        imageUrl: ''
+        imageUrl: '',
+        tags: ''
     });
 
     useEffect(() => {
@@ -32,7 +33,8 @@ const EventWizard = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                 endDateTime: (initialData.endDateTime || initialData.endDatetime) ? new Date(initialData.endDateTime || initialData.endDatetime).toISOString().slice(0, 16) : '',
                 venueId: initialData.venueId || '',
                 capacity: initialData.capacity ? String(initialData.capacity) : '',
-                imageUrl: initialData.imageUrl || ''
+                imageUrl: initialData.imageUrl || '',
+                tags: initialData.tags ? initialData.tags.join(', ') : ''
             });
         }
     }, [initialData]);
@@ -143,7 +145,8 @@ const EventWizard = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                 category: formData.category,
                 metadata: {
                     hashtag: formData.hashtag
-                }
+                },
+                tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
             };
 
             if (initialData) {
@@ -264,6 +267,13 @@ const EventWizard = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 placeholder="Describe your event..."
+                                isDark={isDark}
+                            />
+                            <InputField
+                                label="Tags (Comma separated)"
+                                value={formData.tags}
+                                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                                placeholder="e.g. jazz, summer, outdoor, live music"
                                 isDark={isDark}
                             />
                         </div>

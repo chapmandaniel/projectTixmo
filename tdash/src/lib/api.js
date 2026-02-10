@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const api = axios.create({
+const axiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_URL || '/api/v1',
     headers: {
         'Content-Type': 'application/json',
@@ -8,7 +8,7 @@ const api = axios.create({
 });
 
 // Request interceptor to add auth token
-api.interceptors.request.use(
+axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('access_token');
         if (token) {
@@ -22,7 +22,7 @@ api.interceptors.request.use(
 );
 
 // Response interceptor to handle auth errors (401)
-api.interceptors.response.use(
+axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
@@ -50,4 +50,33 @@ api.interceptors.response.use(
     }
 );
 
-export default api;
+// Default export for backward compatibility
+export default axiosInstance;
+
+// Helper wrapper for cleaner API calls with automatic data extraction
+export const api = {
+    get: async (url) => {
+        const response = await axiosInstance.get(url);
+        return response.data;
+    },
+    post: async (url, data) => {
+        const response = await axiosInstance.post(url, data);
+        return response.data;
+    },
+    put: async (url, data) => {
+        const response = await axiosInstance.put(url, data);
+        return response.data;
+    },
+    delete: async (url) => {
+        const response = await axiosInstance.delete(url);
+        return response.data;
+    },
+    upload: async (url, formData) => {
+        const response = await axiosInstance.post(url, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
+};

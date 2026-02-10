@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-    ArrowLeft, Edit3, Download, Calendar, MapPin, Plus, MoreHorizontal, Search, Filter, UserCheck, UserX, AlertTriangle, Trash2, Globe
+    ArrowLeft, Edit3, Download, Calendar, MapPin, Plus, MoreHorizontal, Search, Filter, UserCheck, UserX, AlertTriangle, Trash2, Globe, ArrowUp, ArrowDown
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
@@ -112,23 +112,33 @@ const SimpleDeleteModal = ({ isOpen, onClose, onConfirm, title, message, isDark,
 
 const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => {
     const [activeTab, setActiveTab] = useState('overview');
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isCloning, setIsCloning] = useState(false);
+    const [statusUpdating, setStatusUpdating] = useState(false);
+    const [eventData, setEventData] = useState(event); // Use local state for event data
+
+    // If event prop changes, update local state
+    React.useEffect(() => {
+        setEventData(event);
+    }, [event]);
+
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [deleteError, setDeleteError] = useState('');
-    const [publishLoading, setPublishLoading] = useState(false);
     const [showEditWizard, setShowEditWizard] = useState(false);
 
 
     // Fallbacks for missing data
     const safeEvent = {
-        ...event,
-        revenue: event.revenue ?? 0,
-        sold: event.sold ?? 0,
-        capacity: event.capacity ?? 0
+        ...eventData,
+        revenue: eventData.revenue ?? 0,
+        sold: eventData.sold ?? 0,
+        capacity: eventData.capacity ?? 0
     };
 
     const [ticketTypes, setTicketTypes] = useState([]);
     const [loadingTickets, setLoadingTickets] = useState(false);
+    const [sortBy, setSortBy] = useState('price');
+    const [sortOrder, setSortOrder] = useState('asc');
 
     // Ticket handling state
     const [showTicketModal, setShowTicketModal] = useState(false);
@@ -144,19 +154,29 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
         if (activeTab === 'tickets') {
             fetchTicketTypes();
         }
-    }, [activeTab]);
+    }, [activeTab, eventData.id, sortBy, sortOrder]); // Add eventData.id to dependency array
 
     const fetchTicketTypes = async () => {
         setLoadingTickets(true);
         try {
-            const res = await api.get(`/ticket-types?eventId=${event.id}`);
+            const res = await api.get(`/ticket-types?eventId=${eventData.id}&sortBy=${sortBy}&sortOrder=${sortOrder}`);
             // Check for wrapped response structure
             const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
             setTicketTypes(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch ticket types:', error);
+            // Don't clear tickets on error, just stop loading
         } finally {
             setLoadingTickets(false);
+        }
+    };
+
+    const handleSort = (field) => {
+        if (sortBy === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortBy(field);
+            setSortOrder('asc');
         }
     };
 
@@ -196,9 +216,9 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
         setDeleteError('');
         try {
             setDeleteLoading(true);
-            await api.delete(`/events/${event.id}`);
+            await api.delete(`/events/${eventData.id}`);
             setDeleteLoading(false);
-            setShowDeleteModal(false);
+            setShowDeleteConfirm(false); // Changed from setShowDeleteModal
             onBack();
         } catch (error) {
             console.error('Failed to delete event:', error);
@@ -207,22 +227,39 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
         }
     }
 
-    const handlePublish = async () => {
-        setPublishLoading(true);
+    const handleCloneEvent = async () => {
+        setIsCloning(true);
         try {
-            const res = await api.post(`/events/${event.id}/publish`);
-            if (onUpdate) onUpdate(res.data.data);
-            // Optionally show toast success
+            const res = await api.post(`/events/${eventData.id}/clone`);
+            if (onUpdate) onUpdate(res.data.data); // Assuming onUpdate can handle a new event
+            // Optionally navigate to the new event's dashboard or show a success message
+            alert('Event cloned successfully!');
         } catch (error) {
-            console.error('Failed to publish event:', error);
-            alert(error.response?.data?.message || 'Failed to publish event');
+            console.error('Failed to clone event:', error);
+            alert('Failed to clone event: ' + (error.response?.data?.message || error.message));
         } finally {
-            setPublishLoading(false);
+            setIsCloning(false);
+        }
+    };
+
+    const handleStatusChange = async (newStatus) => {
+        setStatusUpdating(true);
+        try {
+            const res = await api.patch(`/events/${eventData.id}/status`, { status: newStatus });
+            setEventData(res.data.data); // Update local event state
+            if (onUpdate) onUpdate(res.data.data); // Notify parent
+            alert(`Event status updated to ${newStatus}!`);
+        } catch (error) {
+            console.error(`Failed to update event status to ${newStatus}:`, error);
+            alert(`Failed to update event status: ` + (error.response?.data?.message || error.message));
+        } finally {
+            setStatusUpdating(false);
         }
     };
 
     const handleUpdateSuccess = (updatedEvent) => {
         setShowEditWizard(false);
+        setEventData(updatedEvent); // Update local event state
         if (onUpdate) {
             onUpdate(updatedEvent);
         }
@@ -239,7 +276,7 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
         <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
             {showEditWizard && (
                 <EventWizard
-                    initialData={event}
+                    initialData={eventData}
                     onClose={() => setShowEditWizard(false)}
                     onSuccess={handleUpdateSuccess}
                     isDark={isDark}
@@ -259,33 +296,61 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
                 <div className="flex justify-between items-start">
                     <div>
                         <div className="flex items-center space-x-3 mb-1">
-                            <h1 className={`text-2xl font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{event.name}</h1>
-                            <StatusBadge status={event.status} isDark={isDark} />
+                            <h1 className={`text-2xl font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{eventData.name}</h1>
+                            <StatusBadge status={eventData.status} isDark={isDark} />
                         </div>
                         <div className={`flex items-center space-x-4 text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                            <span className="flex items-center"><Calendar size={14} className="mr-1.5" /> {(event.startDatetime) ? new Date(event.startDatetime).toLocaleDateString() : 'Date TBA'}</span>
-                            <span className="flex items-center"><MapPin size={14} className="mr-1.5" /> {event.venue?.name || (typeof event.venue === 'string' ? event.venue : 'Venue TBA')}</span>
+                            <span className="flex items-center"><Calendar size={14} className="mr-1.5" /> {(eventData.startDatetime) ? new Date(eventData.startDatetime).toLocaleDateString() : 'Date TBA'}</span>
+                            <span className="flex items-center"><MapPin size={14} className="mr-1.5" /> {eventData.venue?.name || (typeof eventData.venue === 'string' ? eventData.venue : 'Venue TBA')}</span>
                         </div>
                     </div>
                     <div className="flex space-x-3">
                         <button
-                            onClick={() => setShowEditWizard(true)}
-                            className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center transition-colors ${isDark ? 'bg-[#252525] text-gray-300 hover:bg-[#2a2a2a]' : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}
+                            onClick={handleCloneEvent}
+                            disabled={isCloning}
+                            className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-[#333] text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
+                            title="Clone Event"
                         >
-                            <Edit3 size={16} className="mr-2" /> Edit
+                            <Copy size={20} />
+                        </button>
+                        <button
+                            onClick={() => setShowEditWizard(true)}
+                            className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-[#333] text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
+                            title="Edit Event"
+                        >
+                            <Edit3 size={20} />
                         </button>
                         <button className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center shadow-lg ${isDark ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'}`}>
                             <Download size={16} className="mr-2" /> Export
                         </button>
-                        {event.status === 'DRAFT' && (
+                        {eventData.status === 'DRAFT' ? (
                             <button
-                                onClick={handlePublish}
-                                disabled={publishLoading}
-                                className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center shadow-lg ${isDark ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'}`}
+                                onClick={() => handleStatusChange('PUBLISHED')}
+                                disabled={statusUpdating}
+                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDark
+                                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20'
+                                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
+                                    }`}
                             >
-                                <Globe size={16} className="mr-2" />
-                                {publishLoading ? 'Publishing...' : 'Publish Event'}
+                                <Globe size={16} />
+                                <span>{statusUpdating ? 'Publishing...' : 'Publish Event'}</span>
                             </button>
+                        ) : (
+                            <div className="flex space-x-2">
+                                {eventData.status !== 'CANCELLED' && (
+                                    <button
+                                        onClick={() => handleStatusChange('CANCELLED')}
+                                        disabled={statusUpdating}
+                                        className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDark
+                                            ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400'
+                                            : 'bg-rose-50 hover:bg-rose-100 text-rose-600'
+                                            }`}
+                                    >
+                                        <XCircle size={16} />
+                                        <span>Cancel Event</span>
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -317,7 +382,7 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                             <StatCard
                                 title="Total Revenue"
-                                value={`$${Number(event.revenue || 0).toLocaleString()}`}
+                                value={`$${Number(eventData.revenue || 0).toLocaleString()}`}
                                 trend="15% vs last week"
                                 trendUp={true}
                                 isDark={isDark}
@@ -325,13 +390,13 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
                             <div className={`${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'} p-5 rounded-xl`}>
                                 <h3 className={`${isDark ? 'text-gray-500' : 'text-gray-400'} text-sm font-normal mb-3`}>Tickets Sold</h3>
                                 <div className="flex items-end justify-between mb-2">
-                                    <p className={`${isDark ? 'text-gray-200' : 'text-gray-700'} text-3xl font-medium tracking-tight`}>{Number(event.sold || 0).toLocaleString()}</p>
-                                    <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>of {Number(event.capacity || 0).toLocaleString()}</span>
+                                    <p className={`${isDark ? 'text-gray-200' : 'text-gray-700'} text-3xl font-medium tracking-tight`}>{Number(eventData.sold || 0).toLocaleString()}</p>
+                                    <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>of {Number(eventData.capacity || 0).toLocaleString()}</span>
                                 </div>
                                 <div className={`w-full rounded-full h-1.5 ${isDark ? 'bg-[#2a2a2a]' : 'bg-gray-100'}`}>
                                     <div
                                         className={`h-1.5 rounded-full ${isDark ? 'bg-emerald-500' : 'bg-emerald-600'}`}
-                                        style={{ width: `${(event.sold / event.capacity) * 100}%` }}
+                                        style={{ width: `${(eventData.sold / eventData.capacity) * 100}%` }}
                                     ></div>
                                 </div>
                             </div>
@@ -409,10 +474,30 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
                                 <table className={`w-full text-left text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                                     <thead className={`${isDark ? 'bg-[#252525] text-gray-500' : 'bg-gray-50 text-gray-400'} text-xs uppercase font-normal`}>
                                         <tr>
-                                            <th className="px-6 py-3 font-medium">Name</th>
-                                            <th className="px-6 py-3 font-medium">Price</th>
-                                            <th className="px-6 py-3 font-medium">Sold / Total</th>
-                                            <th className="px-6 py-3 font-medium">Status</th>
+                                            <th className="px-6 py-3 font-medium cursor-pointer hover:text-indigo-500 transition-colors" onClick={() => handleSort('name')}>
+                                                <div className="flex items-center space-x-1">
+                                                    <span>Name</span>
+                                                    {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+                                                </div>
+                                            </th>
+                                            <th className="px-6 py-3 font-medium cursor-pointer hover:text-indigo-500 transition-colors" onClick={() => handleSort('price')}>
+                                                <div className="flex items-center space-x-1">
+                                                    <span>Price</span>
+                                                    {sortBy === 'price' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+                                                </div>
+                                            </th>
+                                            <th className="px-6 py-3 font-medium cursor-pointer hover:text-indigo-500 transition-colors" onClick={() => handleSort('sold')}>
+                                                <div className="flex items-center space-x-1">
+                                                    <span>Sold / Total</span>
+                                                    {sortBy === 'sold' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+                                                </div>
+                                            </th>
+                                            <th className="px-6 py-3 font-medium cursor-pointer hover:text-indigo-500 transition-colors" onClick={() => handleSort('status')}>
+                                                <div className="flex items-center space-x-1">
+                                                    <span>Status</span>
+                                                    {sortBy === 'status' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+                                                </div>
+                                            </th>
                                             <th className="px-6 py-3 font-medium text-right">Actions</th>
                                         </tr>
                                     </thead>
@@ -437,7 +522,7 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <StatusBadge status={ticket.salesEnd && new Date(ticket.salesEnd) < new Date() ? 'EXPIRED' : 'ACTIVE'} isDark={isDark} />
+                                                        <StatusBadge status={ticket.status || 'ACTIVE'} isDark={isDark} />
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex justify-end space-x-2">

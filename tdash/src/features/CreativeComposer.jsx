@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import CreativeControls from './CreativeControls';
 import CreativePreview from './CreativePreview';
+import api from '../lib/api';
+import { toast } from 'react-hot-toast';
 
 const CreativeComposer = ({ isDark }) => {
     const [prompt, setPrompt] = useState('');
@@ -13,18 +15,26 @@ const CreativeComposer = ({ isDark }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [result, setResult] = useState(null);
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         setIsGenerating(true);
+        setResult(null);
 
-        // Simulate AI generation delay
-        setTimeout(() => {
-            setResult({
-                text: `Experience the magic of summer like never before! 🌟 Our festival brings together the hottest acts and the coolest vibes. Don't miss out on the event of the year! 🎵✨`,
-                imageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-                hashtags: ['#SummerFest', '#LiveMusic', '#FestivalVibes', '#MusicLover']
+        try {
+            const response = await api.post('/ai/generate', {
+                prompt,
+                weights
             });
+
+            if (response.data.success) {
+                setResult(response.data.data);
+                toast.success('Content generated successfully!');
+            }
+        } catch (error) {
+            console.error('Generation failed:', error);
+            toast.error('Failed to generate content. Please try again.');
+        } finally {
             setIsGenerating(false);
-        }, 2500);
+        }
     };
 
     return (

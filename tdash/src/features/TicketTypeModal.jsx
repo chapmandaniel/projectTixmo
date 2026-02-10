@@ -10,7 +10,8 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
         quantity: '',
         maxPerOrder: 10,
         salesStart: '',
-        salesEnd: ''
+        salesEnd: '',
+        status: 'ACTIVE'
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -24,7 +25,8 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                 quantity: initialData.quantity || '',
                 maxPerOrder: initialData.maxPerOrder || 10,
                 salesStart: initialData.salesStart ? new Date(initialData.salesStart).toISOString().slice(0, 16) : '',
-                salesEnd: initialData.salesEnd ? new Date(initialData.salesEnd).toISOString().slice(0, 16) : ''
+                salesEnd: initialData.salesEnd ? new Date(initialData.salesEnd).toISOString().slice(0, 16) : '',
+                status: initialData.status || 'ACTIVE'
             });
         } else {
             setFormData({
@@ -34,7 +36,8 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                 quantity: '',
                 maxPerOrder: 10,
                 salesStart: '',
-                salesEnd: ''
+                salesEnd: '',
+                status: 'ACTIVE'
             });
         }
     }, [initialData, isOpen]);
@@ -54,6 +57,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                 price: parseFloat(formData.price),
                 quantity: parseInt(formData.quantity, 10),
                 maxPerOrder: parseInt(formData.maxPerOrder, 10),
+                status: formData.status,
                 // Only include dates if they are set
                 ...(formData.salesStart ? { salesStart: new Date(formData.salesStart).toISOString() } : {}),
                 ...(formData.salesEnd ? { salesEnd: new Date(formData.salesEnd).toISOString() } : {})
@@ -117,6 +121,20 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                             rows="2"
                             className={`w-full px-4 py-2 rounded-lg outline-none border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
                         />
+                    </div>
+
+                    <div>
+                        <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Status</label>
+                        <select
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                            className={`w-full px-4 py-2 rounded-lg outline-none border transition-colors appearance-none ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
+                        >
+                            <option value="ACTIVE">Active (On Sale)</option>
+                            <option value="HIDDEN">Hidden (Not visible)</option>
+                            <option value="SOLD_OUT">Sold Out</option>
+                            <option value="PAUSED">Paused</option>
+                        </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

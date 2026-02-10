@@ -122,83 +122,195 @@ export const MOCK_GUESTS = [
 ];
 
 export const MOCK_SOCIAL_POSTS = [
+  // Instagram
   {
-    id: 'sp1',
-    eventId: '1',
+    id: 'ig1',
+    eventId: '1', // Summer Music Festival
     platform: 'instagram',
     author: '@festival_vibes',
+    authorName: 'Festival Vibes Official',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
-    content: 'Can\'t wait for the Summer Music Festival! 🎸🔥 #SummerFest2025 #LiveMusic',
+    content: 'Can\'t wait for the Summer Music Festival! 🎸🔥 The lineup this year is absolutely insane. Who are you most excited to see? #SummerFest2025 #LiveMusic #FestivalSeason',
     imageUrl: 'https://images.unsplash.com/photo-1533174072545-e8d4aa97d848?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    likes: 1240,
-    comments: 45,
+    likes: 3420,
+    comments: 145,
     shares: 210,
-    date: '2025-06-15T10:30:00Z'
+    date: '2025-06-15T10:30:00Z',
+    metrics: {
+      impressions: 15400,
+      reach: 12300,
+      engagementRate: 4.8,
+      saved: 890
+    },
+    sentiment: 'positive',
+    commentSummary: 'Overwhelming excitement for the lineup. Users are consistently tagging friends to coordinate tickets. "Best weekend of the year" is a recurring phrase.',
+    recentComments: [
+      { user: 'musicfan22', text: 'Take my money! 💸', time: '10m ago' },
+      { user: 'sarah_j', text: 'Best weekend of the year!', time: '1h ago' }
+    ]
   },
   {
-    id: 'sp2',
+    id: 'ig2',
+    eventId: '1',
+    platform: 'instagram',
+    author: '@jessica_sings',
+    authorName: 'Jessica Sings',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica',
+    content: 'Backstage pass ready! Let\'s rock this! 🤘📸 #BehindTheScenes #VIP',
+    imageUrl: 'https://images.unsplash.com/photo-1459749411177-0473ef71607b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    likes: 5200,
+    comments: 320,
+    shares: 150,
+    date: '2025-07-15T18:45:00Z',
+    metrics: {
+      impressions: 28000,
+      reach: 25000,
+      engagementRate: 6.2,
+      saved: 120
+    },
+    sentiment: 'positive',
+    commentSummary: 'Fans are expressing high FOMO (Fear Of Missing Out) and envy. Strong demand for more behind-the-scenes content in stories.',
+    recentComments: [
+      { user: 'rocker_dave', text: 'So jealous! Have fun!', time: '5m ago' },
+      { user: 'indie_lover', text: 'Post more stories pls!!', time: '12m ago' }
+    ]
+  },
+
+  // Twitter
+  {
+    id: 'tw1',
     eventId: '1',
     platform: 'twitter',
     author: '@music_lover_99',
+    authorName: 'Music Lover 99',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka',
-    content: 'Just got my tickets for the main stage! Who else is going? 🎫✨',
+    content: 'Just got my tickets for the main stage! Who else is going? 🎫✨ #SummerFest',
     imageUrl: null,
     likes: 89,
     comments: 12,
     shares: 34,
-    date: '2025-06-16T14:20:00Z'
+    date: '2025-06-16T14:20:00Z',
+    metrics: {
+      impressions: 1200,
+      reach: 800,
+      engagementRate: 2.1,
+      retweets: 34
+    },
+    sentiment: 'neutral',
+    commentSummary: 'General confirmation of attendance from followers. Several users determining meetup spots near the main stage.',
+    recentComments: [
+      { user: '@concert_goer', text: 'See you there!', time: '20m ago' }
+    ]
   },
   {
-    id: 'sp3',
+    id: 'tw2',
+    eventId: '2', // TechConf
+    platform: 'twitter',
+    author: '@tech_guru_daily',
+    authorName: 'Tech Guru Daily',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tech',
+    content: 'Disappointed with the wifi at #TechConfGlobal. Keynote stream keeps buffering. 📉 @ConventionCenter please fix this!',
+    imageUrl: null,
+    likes: 45,
+    comments: 20,
+    shares: 5,
+    date: '2025-09-10T10:00:00Z',
+    metrics: {
+      impressions: 3400,
+      reach: 3000,
+      engagementRate: 1.5,
+      retweets: 2
+    },
+    sentiment: 'negative',
+    commentSummary: 'Unified frustration regarding connectivity issues. Specific complaints centered around Hall B. Users demanding immediate vendor response.',
+    recentComments: [
+      { user: '@dev_ops_guy', text: 'Same here in Hall B.', time: '2m ago' },
+      { user: '@network_admin', text: 'Working on it!', time: '1m ago' }
+    ]
+  },
+
+  // Facebook
+  {
+    id: 'fb1',
     eventId: '2',
     platform: 'facebook',
     author: 'Tech Conference Official',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tech',
-    content: 'We are excited to announce our keynote speaker for the Global Tech Summit! Stay tuned. 🎤💻',
+    authorName: 'Tech Conference Global',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TechConf',
+    content: 'We are excited to announce our keynote speaker for the Global Tech Summit! Stay tuned for a visionary talk on AI and the Future of Work. 🎤💻',
     imageUrl: 'https://images.unsplash.com/photo-1544531586-fde5298cdd40?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     likes: 540,
     comments: 82,
     shares: 150,
-    date: '2025-08-01T09:00:00Z'
+    date: '2025-08-01T09:00:00Z',
+    metrics: {
+      impressions: 8900,
+      reach: 6500,
+      engagementRate: 3.5,
+      clicks: 450
+    },
+    sentiment: 'positive',
+    commentSummary: 'Rampant speculation that the speaker is Sam Altman or Satya Nadella. Sentiment is highly positive with strong anticipation for the AI topic.',
+    recentComments: [
+      { user: 'Alan Turing Fan', text: 'Is it Sam Altman??', time: '1d ago' },
+      { user: 'CodeMaster', text: 'Already registered!', time: '2d ago' }
+    ]
   },
+
+  // LinkedIn
   {
-    id: 'sp4',
-    eventId: '1',
-    platform: 'instagram',
-    author: '@jessica_sings',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica',
-    content: 'Backstage pass ready! Let\'s rock this! 🤘📸',
-    imageUrl: 'https://images.unsplash.com/photo-1459749411177-0473ef71607b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    likes: 3200,
-    comments: 120,
-    shares: 50,
-    date: '2025-07-15T18:45:00Z'
-  },
-  {
-    id: 'sp5',
-    eventId: '3',
+    id: 'li1',
+    eventId: '3', // Comedy Night (Charity)
     platform: 'linkedin',
     author: 'Sarah Jenkins',
+    authorName: 'Sarah Jenkins (Organizer)',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-    content: 'Proud to be organizing the Charity Gala Dinner this year. It\'s going to be a night to remember for a great cause. 🥂✨',
+    content: 'Proud to be organizing the Charity Gala & Comedy Night this year. It\'s going to be a night to remember for a great cause. Special thanks to our sponsors. 🥂✨ #Networking #Charity #EventManagement',
     imageUrl: 'https://images.unsplash.com/photo-1519671482538-518b5c2bf5c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     likes: 450,
     comments: 67,
     shares: 23,
-    date: '2025-09-10T11:15:00Z'
+    date: '2025-09-10T11:15:00Z',
+    metrics: {
+      impressions: 4500,
+      reach: 3200,
+      engagementRate: 5.1,
+      clicks: 320
+    },
+    sentiment: 'positive',
+    commentSummary: 'Professional congratulations and support from corporate partners. Multiple inquiries about remaining sponsorship tier availability.',
+    recentComments: [
+      { user: 'Corporate Sponsor', text: 'Honored to support this.', time: '3h ago' },
+      { user: 'Event Planner NYC', text: 'Looks elegant!', time: '5h ago' }
+    ]
   },
+
+  // TikTok (New!)
   {
-    id: 'sp6',
+    id: 'tt1',
     eventId: '1',
-    platform: 'twitter',
-    author: '@indie_band_official',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Band',
-    content: 'Soundcheck done. See you all tonight! 🥁🎸',
-    imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-    likes: 890,
-    comments: 230,
-    shares: 400,
-    date: '2025-07-15T16:00:00Z'
+    platform: 'tiktok',
+    author: '@dance_crew_official',
+    authorName: 'Urban Dance Crew',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dance',
+    content: 'Rehearsing for the main stage! Watch out for the drop! 💃🕺 #SummerFest #DanceChallenge #FYP',
+    imageUrl: 'https://images.unsplash.com/photo-1545128485-c400e7702796?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // In real app, would be a video thumbnail
+    likes: 15400,
+    comments: 890,
+    shares: 4500,
+    date: '2025-07-10T15:00:00Z',
+    metrics: {
+      impressions: 150000,
+      reach: 120000,
+      engagementRate: 12.5,
+      videoViews: 145000
+    },
+    sentiment: 'positive',
+    commentSummary: 'Viral reaction to the choreography. "Smooth" is the most common adjective. Hundreds of users mentioning they are practicing the challenge.',
+    recentComments: [
+      { user: 'dancer123', text: 'Smooth moves!', time: '10m ago' },
+      { user: 'fest_life', text: 'See you there!!', time: '1h ago' }
+    ]
   }
 ];
 

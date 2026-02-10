@@ -14,11 +14,21 @@ import PersonalTodoView from './features/PersonalTodoView';
 import SettingsView from './features/SettingsView';
 import LoginView from './features/LoginView';
 import VenuesView from './features/VenuesView';
+import ApprovalsView from './features/ApprovalsView';
+import OrdersView from './features/OrdersView';
 
 import WaitingRoomView from './features/WaitingRoomView';
 import GlobalErrorNotification from './components/GlobalErrorNotification';
+import ExternalReviewPage from './pages/ExternalReviewPage';
 
 const App = () => {
+    // Check if this is an external review page (no auth required)
+    const isExternalReview = window.location.pathname.startsWith('/review/');
+
+    if (isExternalReview) {
+        return <ExternalReviewPage />;
+    }
+
     const [activeView, setActiveView] = useState(localStorage.getItem('lastActiveView') || 'dashboard');
     const [managedEvent, setManagedEvent] = useState(null);
     const [isDark, setIsDark] = useState(true);
@@ -102,11 +112,14 @@ const App = () => {
             case 'personal-todo': return <PersonalTodoView {...props} />;
             case 'team': return <TeamView {...props} />;
             case 'social': return <SocialDashboard {...props} />;
-            case 'orders': return <ComingSoonView title="Orders Management" {...props} />;
+            case 'social': return <SocialDashboard {...props} />;
+            case 'orders': return <OrdersView {...props} />;
+            case 'scanners': return <ComingSoonView title="Scanners" {...props} />;
             case 'scanners': return <ComingSoonView title="Scanners" {...props} />;
             case 'promo': return <ComingSoonView title="Promo Codes" {...props} />;
             case 'creative': return <CreativeComposer {...props} />;
             case 'venues': return <VenuesView isDark={isDark} user={user} />;
+            case 'approvals': return <ApprovalsView isDark={isDark} user={user} />;
             case 'settings': return <SettingsView {...props} />;
             default: return <DashboardHome {...props} />;
         }

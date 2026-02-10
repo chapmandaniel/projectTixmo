@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import {
     LayoutDashboard, Calendar, Ticket, BarChart3, Bell, Search, MoreVertical,
-    CreditCard, ScanLine, Tags, MapPin, Users, CheckSquare, Sun, Moon, MessageCircle, Wand2, ListTodo, Settings, LogOut
+    CreditCard, ScanLine, Tags, MapPin, Users, CheckSquare, Sun, Moon, MessageCircle, Wand2, ListTodo, Settings, LogOut, CheckCircle
 } from 'lucide-react';
 import SidebarItem from '../components/SidebarItem';
 
@@ -56,7 +56,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
 
     return (
         <div
-            className={`min-h-screen flex transition-colors duration-300 ${isDark ? 'bg-[#121212] text-gray-100 selection:bg-indigo-500/30' : 'bg-[#f0f2f5] text-gray-900 selection:bg-gray-100'}`}
+            className={`min-h-screen flex transition-colors duration-300 ${isDark ? 'bg-[#141414] text-gray-100 selection:bg-indigo-500/30' : 'bg-[#f0f2f5] text-gray-900 selection:bg-gray-100'}`}
             style={{ fontFamily: "'Exo', sans-serif" }}
         >
             <style>{`
@@ -74,7 +74,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
 `}</style>
 
             {/* Clean Sidebar */}
-            <aside className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 ${isDark ? 'bg-[#121212] border-r border-[#1e1e1e]' : 'bg-white border-r border-gray-100'}`}>
+            <aside className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 ${isDark ? 'bg-[#141414]' : 'bg-white border-r border-gray-100'}`}>
                 <div className="h-16 flex items-center px-6">
                     <div className="flex items-center space-x-3">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-indigo-600' : 'bg-gray-800'}`}>
@@ -168,6 +168,13 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                             onClick={() => onNavigate('creative')}
                             isDark={isDark}
                         />
+                        <SidebarItem
+                            icon={CheckCircle}
+                            label="Approvals"
+                            active={activeView === 'approvals'}
+                            onClick={() => onNavigate('approvals')}
+                            isDark={isDark}
+                        />
                     </div>
 
                     <div className="space-y-1">
@@ -198,7 +205,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
             <div className="flex-1 flex flex-col overflow-hidden">
 
                 {/* Minimalist Header */}
-                <header className={`h-16 flex items-center justify-between px-6 sticky top-0 z-40 transition-colors ${isDark ? 'bg-[#121212]/90 backdrop-blur-md' : 'bg-[#f0f2f5]/90 backdrop-blur-md'}`}>
+                <header className={`h-16 flex items-center justify-between px-6 sticky top-0 z-40 transition-colors ${isDark ? 'bg-[#141414]/90 backdrop-blur-md' : 'bg-[#f0f2f5]/90 backdrop-blur-md'}`}>
                     <div className="flex items-center lg:hidden">
                         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className={`p-2 rounded-lg ${isDark ? 'text-gray-400 hover:bg-[#1e1e1e]' : 'text-gray-600 hover:bg-gray-100'}`}>
                             <MoreVertical size={24} className="rotate-90" />
