@@ -3,10 +3,17 @@ import { approvalService } from './service';
 import { StatusCodes } from 'http-status-codes';
 import { AuthRequest } from '../../middleware/auth';
 import multer from 'multer';
+import os from 'os';
 
-// Configure multer for memory storage
+// Configure multer for disk storage
 const upload = multer({
-    storage: multer.memoryStorage(),
+    storage: multer.diskStorage({
+        destination: os.tmpdir(),
+        filename: (_req, file, cb) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+            cb(null, file.fieldname + '-' + uniqueSuffix);
+        },
+    }),
     limits: {
         fileSize: 50 * 1024 * 1024, // 50MB limit per file
         files: 10, // Max 10 files per upload

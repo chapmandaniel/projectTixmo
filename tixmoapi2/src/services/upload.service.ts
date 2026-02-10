@@ -3,6 +3,8 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Client, S3_BUCKET, isS3Configured } from '../config/s3';
 import { randomUUID } from 'crypto';
 import path from 'path';
+import fs from 'fs';
+import { unlink } from 'fs/promises';
 
 export interface UploadResult {
     s3Key: string;
@@ -35,29 +37,50 @@ export class UploadService {
         const uniqueFilename = `${randomUUID()}${fileExtension}`;
         const s3Key = `${folder}/${uniqueFilename}`;
 
-        const command = new PutObjectCommand({
-            Bucket: this.bucketName,
-            Key: s3Key,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-            Metadata: {
+        // Support both buffer (memory storage) and stream (disk storage)
+        let body: Buffer | fs.ReadStream;
+        if (file.buffer) {
+            body = file.buffer;
+        } else if (file.path) {
+            body = fs.createReadStream(file.path);
+        } else {
+            throw new Error('File content is empty');
+        }
+
+        try {
+            const command = new PutObjectCommand({
+                Bucket: this.bucketName,
+                Key: s3Key,
+                Body: body,
+                ContentType: file.mimetype,
+                Metadata: {
+                    originalName: file.originalname,
+                },
+            });
+
+            await s3Client.send(command);
+
+            // Generate a public URL (or use getSignedUrl for private buckets)
+            const s3Url = await this.getSignedUrl(s3Key);
+
+            return {
+                s3Key,
+                s3Url,
+                filename: uniqueFilename,
                 originalName: file.originalname,
-            },
-        });
-
-        await s3Client.send(command);
-
-        // Generate a public URL (or use getSignedUrl for private buckets)
-        const s3Url = await this.getSignedUrl(s3Key);
-
-        return {
-            s3Key,
-            s3Url,
-            filename: uniqueFilename,
-            originalName: file.originalname,
-            mimeType: file.mimetype,
-            size: file.size,
-        };
+                mimeType: file.mimetype,
+                size: file.size,
+            };
+        } finally {
+            // Clean up temp file if it exists (disk storage)
+            if (file.path) {
+                try {
+                    await unlink(file.path);
+                } catch (err) {
+                    console.error('Failed to delete temp file:', err);
+                }
+            }
+        }
     }
 
     /**
