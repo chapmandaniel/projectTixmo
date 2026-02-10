@@ -27,11 +27,11 @@ describe('Concurrency Tests', () => {
 
     // Create promoter user to setup event
     const promoterRes = await request(app).post('/api/v1/auth/register').send({
-        email: 'promoter@example.com',
-        password: 'Test123!',
-        firstName: 'Promoter',
-        lastName: 'User',
-        role: 'PROMOTER'
+      email: 'promoter@example.com',
+      password: 'Test123!',
+      firstName: 'Promoter',
+      lastName: 'User',
+      role: 'PROMOTER'
     });
     const promoterToken = promoterRes.body.data.accessToken;
 
@@ -55,11 +55,11 @@ describe('Concurrency Tests', () => {
         organizationId,
         name: 'Concurrency Venue',
         address: {
-            street: '123 St',
-            city: 'City',
-            state: 'ST',
-            country: 'US',
-            postalCode: '12345'
+          street: '123 St',
+          city: 'City',
+          state: 'ST',
+          country: 'US',
+          postalCode: '12345'
         },
         capacity: 1000,
       });
@@ -77,6 +77,7 @@ describe('Concurrency Tests', () => {
         startDateTime: new Date(Date.now() + 86400000).toISOString(),
         endDateTime: new Date(Date.now() + 172800000).toISOString(),
         status: 'DRAFT',
+        capacity: 1000,
       });
 
     eventId = eventRes.body.data.id;
@@ -136,11 +137,6 @@ describe('Concurrency Tests', () => {
     const failCount = responses.filter((res) => res.status === 400).length;
     const conflictCount = responses.filter((res) => res.status === 409).length; // System busy
 
-    // Check for other errors
-    const otherErrors = responses.filter(res => ![201, 400, 409].includes(res.status)).map(r => r.status);
-    if (otherErrors.length > 0) {
-        console.log('Unexpected status codes:', otherErrors);
-    }
 
     console.log(`Success: ${successCount}, Fail: ${failCount}, Conflict: ${conflictCount}`);
 

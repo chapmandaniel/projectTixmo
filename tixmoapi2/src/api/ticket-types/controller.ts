@@ -39,9 +39,13 @@ export const deleteTicketType = catchAsync(async (req: AuthRequest, res: Respons
 });
 
 export const listTicketTypes = catchAsync(async (req: AuthRequest, res: Response) => {
-  const { eventId } = req.query;
+  const { eventId, sortBy, sortOrder } = req.query;
 
-  const ticketTypes = await ticketTypeService.listTicketTypesByEvent(eventId as string);
+  const ticketTypes = await ticketTypeService.listTicketTypesByEvent(
+    eventId as string,
+    sortBy as 'price' | 'status' | 'sold' | 'name' | 'createdAt',
+    sortOrder as 'asc' | 'desc'
+  );
   res.json(successResponse(ticketTypes));
 });
 
