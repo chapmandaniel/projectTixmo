@@ -168,12 +168,31 @@ export const syncTickets = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const result = await scannerService.syncTickets(
+    const stream = scannerService.syncTicketsStream(
       req.scanner!.id,
       req.query.eventId as string,
       req.query.since ? new Date(req.query.since as string) : undefined
     );
-    res.json(successResponse(result, 'Tickets synced successfully'));
+
+    res.setHeader('Content-Type', 'application/json');
+    res.write('{"success":true,"data":{"tickets":[');
+
+    let isFirstBatch = true;
+    for await (const batch of stream) {
+      if (!isFirstBatch) {
+        res.write(',');
+      } else {
+        isFirstBatch = false;
+      }
+
+      const json = JSON.stringify(batch);
+      // Remove [ and ] from the stringified array to append items directly
+      res.write(json.substring(1, json.length - 1));
+    }
+
+    const timestamp = new Date().toISOString();
+    res.write(`],"timestamp":"${timestamp}"},"message":"Tickets synced successfully"}`);
+    res.end();
   } catch (error) {
     next(error);
   }
