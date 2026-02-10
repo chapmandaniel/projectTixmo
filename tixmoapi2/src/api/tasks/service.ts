@@ -1,8 +1,8 @@
-import { PrismaClient, Task, TaskComment, Prisma } from '@prisma/client';
+import { Task, TaskComment, Prisma } from '@prisma/client';
 import { logger } from '../../config/logger';
 import { notificationApiService } from '../notifications/service';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 export const TaskService = {
     /**

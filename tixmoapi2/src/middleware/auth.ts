@@ -3,7 +3,7 @@ import { ApiError } from '@utils/ApiError';
 import { Request, Response, NextFunction } from 'express';
 
 export interface AuthRequest extends Request {
-  user?: { userId: string; role: string; email?: string } | null;
+  user?: { userId: string; role: string; email?: string; emailVerified?: boolean } | null;
 }
 
 export const authenticate = (req: AuthRequest, _res: Response, next: NextFunction) => {

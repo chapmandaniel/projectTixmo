@@ -2,6 +2,7 @@ import { config } from '@config/environment';
 import { logger } from '@config/logger';
 import { connectDatabase } from '@config/database';
 import { connectRedis } from '@config/redis';
+import { startOrderExpiryJob } from './jobs/order-expiry.job';
 
 // app imported dynamically after connection
 
@@ -24,6 +25,9 @@ void (async () => {
       logger.info(`📝 Environment: ${config.nodeEnv}`);
       logger.info(`🔗 API URL: http://localhost:${port}/api/${config.apiVersion}`);
       logger.info(`❤️  Health Check: http://localhost:${port}/health`);
+
+      // Start background jobs
+      startOrderExpiryJob();
     });
   } catch (err) {
     logger.error('Failed to start server', err as Error);

@@ -1,5 +1,4 @@
 import {
-  PrismaClient,
   Organization,
   OrganizationType,
   OrganizationStatus,
@@ -7,7 +6,7 @@ import {
 } from '@prisma/client';
 import { ApiError } from '@utils/ApiError';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface CreateOrganizationInput {
   name: string;

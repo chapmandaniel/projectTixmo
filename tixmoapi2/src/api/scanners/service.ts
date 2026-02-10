@@ -1,9 +1,9 @@
-import { PrismaClient, Scanner, ScanLog, ScannerStatus, Prisma } from '@prisma/client';
+import { Scanner, ScanLog, ScannerStatus, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { parseTicketQRData } from '../../utils/qrcode';
 import crypto from 'crypto';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface RegisterScannerData {
   name: string;

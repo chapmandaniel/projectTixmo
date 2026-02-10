@@ -48,6 +48,70 @@ router.use(authenticate);
  */
 router.get('/', validate(validation.listTicketsSchema), controller.listTickets);
 
+// ── STATIC routes MUST come before /:id ──────────────────────
+
+/**
+ * @swagger
+ * /tickets/validate:
+ *   post:
+ *     summary: Validate ticket
+ *     description: Validate a ticket by barcode without checking it in
+ *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - barcode
+ *             properties:
+ *               barcode:
+ *                 type: string
+ *                 example: TIX-1234567890-ABC
+ *     responses:
+ *       200:
+ *         description: Validation result returned
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/validate', authorize('ADMIN', 'PROMOTER'), controller.validateTicket);
+
+/**
+ * @swagger
+ * /tickets/check-in:
+ *   post:
+ *     summary: Check in ticket
+ *     description: Mark ticket as used (check in at event entry)
+ *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - barcode
+ *             properties:
+ *               barcode:
+ *                 type: string
+ *                 example: TIX-1234567890-ABC
+ *     responses:
+ *       200:
+ *         description: Ticket checked in successfully
+ *       400:
+ *         description: Ticket is not valid for check-in
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/check-in', authorize('ADMIN', 'PROMOTER'), controller.checkInTicket);
+
+// ── PARAMETERIZED routes (/:id) ─────────────────────────────
+
 /**
  * @swagger
  * /tickets/{id}:
@@ -142,66 +206,6 @@ router.post('/:id/transfer', validate(validation.transferTicketSchema), controll
  *         description: Ticket not found
  */
 router.post('/:id/cancel', controller.cancelTicket);
-
-/**
- * @swagger
- * /tickets/validate:
- *   post:
- *     summary: Validate ticket
- *     description: Validate a ticket by barcode without checking it in
- *     tags: [Tickets]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - barcode
- *             properties:
- *               barcode:
- *                 type: string
- *                 example: TIX-1234567890-ABC
- *     responses:
- *       200:
- *         description: Validation result returned
- *       401:
- *         description: Unauthorized
- */
-router.post('/validate', authorize('ADMIN', 'PROMOTER'), controller.validateTicket);
-
-/**
- * @swagger
- * /tickets/check-in:
- *   post:
- *     summary: Check in ticket
- *     description: Mark ticket as used (check in at event entry)
- *     tags: [Tickets]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - barcode
- *             properties:
- *               barcode:
- *                 type: string
- *                 example: TIX-1234567890-ABC
- *     responses:
- *       200:
- *         description: Ticket checked in successfully
- *       400:
- *         description: Ticket is not valid for check-in
- *       401:
- *         description: Unauthorized
- */
-router.post('/check-in', authorize('ADMIN', 'PROMOTER'), controller.checkInTicket);
 
 /**
  * @swagger

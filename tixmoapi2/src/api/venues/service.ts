@@ -1,7 +1,7 @@
-import { PrismaClient, Venue, Prisma } from '@prisma/client';
+import { Venue, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface CreateVenueInput {
   name: string;

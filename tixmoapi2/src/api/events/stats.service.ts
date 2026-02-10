@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+// @prisma/client types inferred through prisma singleton
 import { ApiError } from '../../utils/ApiError';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface EventStats {
   eventId: string;

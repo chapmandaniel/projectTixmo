@@ -48,6 +48,9 @@ export const config = {
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
   twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER || '',
 
+  // AI
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
+
   // AWS
   awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
   awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',

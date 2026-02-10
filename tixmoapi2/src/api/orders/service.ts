@@ -3,6 +3,9 @@ import { ApiError } from '../../utils/ApiError';
 import { Decimal } from '@prisma/client/runtime/library';
 import { notificationService } from '../../utils/notificationService';
 import { redisLockService } from '../../services/redis-lock.service';
+import { promoCodeService } from '../promo-codes/service';
+import { ticketTierService } from '../ticket-tiers/service';
+import crypto from 'crypto';
 
 import prisma from '../../config/prisma';
 
@@ -21,6 +24,7 @@ interface ListOrdersParams {
   limit?: number;
   status?: OrderStatus;
   userId?: string;
+  eventId?: string;
 }
 
 interface PaginatedOrders {
@@ -49,121 +53,135 @@ export class OrderService {
    * Create a new order
    */
   async createOrder(userId: string, data: CreateOrderInput): Promise<Order> {
-    // 1. Determine Event ID for locking (Lightweight fetch)
-    const firstTicketTypeCheck = await prisma.ticketType.findUnique({
-      where: { id: data.items[0].ticketTypeId },
-      select: { eventId: true }
+    // 1. Batch-fetch ALL ticket types in one query (avoid N+1)
+    const ticketTypeIds = data.items.map(item => item.ticketTypeId);
+    const ticketTypes = await prisma.ticketType.findMany({
+      where: { id: { in: ticketTypeIds } },
+      include: {
+        event: {
+          select: {
+            id: true,
+            status: true,
+            startDatetime: true,
+          },
+        },
+      },
     });
 
-    if (!firstTicketTypeCheck) {
-      throw ApiError.notFound('Ticket type not found');
+    // Build a lookup map
+    const ticketTypeMap = new Map(ticketTypes.map(tt => [tt.id, tt]));
+
+    // Validate all ticket types exist
+    for (const item of data.items) {
+      if (!ticketTypeMap.has(item.ticketTypeId)) {
+        throw ApiError.notFound(`Ticket type ${item.ticketTypeId} not found`);
+      }
     }
 
-    const eventId = firstTicketTypeCheck.eventId;
-    const lockKey = `lock:event:${eventId}:inventory`;
+    // Validate all belong to same event
+    const eventIds = new Set(ticketTypes.map(tt => tt.event.id));
+    if (eventIds.size !== 1) {
+      throw ApiError.badRequest('All tickets must be for the same event');
+    }
+    const eventId = ticketTypes[0].event.id;
+    const event = ticketTypes[0].event;
 
-    // 2. Acquire Lock
-    const locked = await redisLockService.acquireLock(lockKey, 5000); // 5s TTL
-    if (!locked) {
+    // Validate event status — accept PUBLISHED and ON_SALE
+    if (!['PUBLISHED', 'ON_SALE'].includes(event.status)) {
+      throw ApiError.badRequest('Event is not available for purchase');
+    }
+
+    // Validate event hasn't started
+    if (event.startDatetime && new Date() >= event.startDatetime) {
+      throw ApiError.badRequest('Event has already started');
+    }
+
+    // Validate availability and per-order limits
+    for (const item of data.items) {
+      const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
+      if (ticketType.quantityAvailable < item.quantity) {
+        throw ApiError.badRequest(
+          `Only ${ticketType.quantityAvailable} tickets available for ${ticketType.name}`
+        );
+      }
+      if (item.quantity > ticketType.maxPerOrder) {
+        throw ApiError.badRequest(
+          `Maximum ${ticketType.maxPerOrder} tickets per order for ${ticketType.name}`
+        );
+      }
+    }
+
+    // Calculate total amount (use active tier pricing when available)
+    let totalAmount = new Decimal(0);
+    const tierPriceMap = new Map<string, Decimal>();
+    for (const item of data.items) {
+      const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
+      let unitPrice = ticketType.price;
+
+      // Check for active tier
+      const activeTier = await ticketTierService.getActiveTier(item.ticketTypeId);
+      if (activeTier) {
+        unitPrice = activeTier.price;
+        tierPriceMap.set(item.ticketTypeId, activeTier.price);
+      }
+
+      totalAmount = totalAmount.add(unitPrice.mul(item.quantity));
+    }
+
+    // Apply promo code discount if provided
+    let discountAmount = new Decimal(0);
+    let promoCodeId: string | undefined;
+
+    if (data.promoCode) {
+      const promoResult = await promoCodeService.validatePromoCode(
+        data.promoCode,
+        userId,
+        eventId,
+        totalAmount.toNumber()
+      );
+
+      if (!promoResult.valid) {
+        throw ApiError.badRequest(promoResult.reason || 'Invalid promo code');
+      }
+
+      if (promoResult.discountAmount) {
+        discountAmount = new Decimal(promoResult.discountAmount);
+      }
+      if (promoResult.promoCode) {
+        promoCodeId = promoResult.promoCode.id;
+      }
+    }
+
+    const finalAmount = Decimal.max(totalAmount.sub(discountAmount), new Decimal(0));
+
+    // Acquire inventory lock
+    const lockKey = `lock:event:${eventId}:inventory`;
+    const lockToken = await redisLockService.acquireLock(lockKey, 5000);
+    if (!lockToken) {
       throw ApiError.conflict('System busy processing other orders. Please try again.');
     }
 
     try {
-      // --- ORIGINAL LOGIC START ---
-      // Get the first ticket type to determine the event
-      const firstTicketType = await prisma.ticketType.findUnique({
-        where: { id: data.items[0].ticketTypeId },
-        include: {
-          event: {
-            select: {
-              id: true,
-              status: true,
-              startDatetime: true,
-            },
-          },
-        },
-      });
+      // Generate cryptographically secure order number
+      const orderNumber = `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
 
-      if (!firstTicketType) {
-        throw ApiError.notFound('Ticket type not found');
-      }
-
-      // Validate all ticket types belong to the same event
-      const ticketTypes = await Promise.all(
-        data.items.map((item) =>
-          prisma.ticketType.findUnique({
-            where: { id: item.ticketTypeId },
-            include: {
-              event: true,
-            },
-          })
-        )
-      );
-
-      for (let i = 0; i < ticketTypes.length; i++) {
-        const ticketType = ticketTypes[i];
-        if (!ticketType) {
-          throw ApiError.notFound(`Ticket type ${data.items[i].ticketTypeId} not found`);
-        }
-
-        if (ticketType.event.id !== eventId) {
-          throw ApiError.badRequest('All tickets must be for the same event');
-        }
-
-        // Check if event is published
-        if (ticketType.event.status !== 'PUBLISHED') {
-          throw ApiError.badRequest(`Event is not available for purchase`);
-        }
-
-        // Check if event hasn't started
-        if (ticketType.event.startDatetime && new Date() >= ticketType.event.startDatetime) {
-          throw ApiError.badRequest(`Event has already started`);
-        }
-
-        // Check availability
-        const item = data.items[i];
-        if (ticketType.quantityAvailable < item.quantity) {
-          throw ApiError.badRequest(
-            `Only ${ticketType.quantityAvailable} tickets available for ${ticketType.name}`
-          );
-        }
-
-        if (item.quantity > ticketType.maxPerOrder) {
-          throw ApiError.badRequest(
-            `Maximum ${ticketType.maxPerOrder} tickets per order for ${ticketType.name}`
-          );
-        }
-      }
-
-      // Calculate total
-      let totalAmount = new Decimal(0);
-      for (let i = 0; i < data.items.length; i++) {
-        const ticketType = ticketTypes[i]!;
-        const item = data.items[i];
-        totalAmount = totalAmount.add(ticketType.price.mul(item.quantity));
-      }
-
-      // Generate order number
-      const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-      // Create order and hold inventory
+      // Create order and hold inventory in a transaction
       const order = await prisma.$transaction(async (tx) => {
-        // Hold inventory
-        for (let i = 0; i < data.items.length; i++) {
+        // Hold inventory (with optimistic concurrency check)
+        for (const item of data.items) {
           try {
             await tx.ticketType.update({
               where: {
-                id: data.items[i].ticketTypeId,
-                quantityAvailable: { gte: data.items[i].quantity }
+                id: item.ticketTypeId,
+                quantityAvailable: { gte: item.quantity },
               },
               data: {
-                quantityHeld: { increment: data.items[i].quantity },
-                quantityAvailable: { decrement: data.items[i].quantity },
+                quantityHeld: { increment: item.quantity },
+                quantityAvailable: { decrement: item.quantity },
               },
             });
           } catch (error) {
-            // If update fails (P2025), it means not enough tickets
-            throw ApiError.badRequest(`Not enough tickets available`);
+            throw ApiError.badRequest('Not enough tickets available');
           }
         }
 
@@ -174,7 +192,9 @@ export class OrderService {
             userId,
             eventId,
             status: 'PENDING',
-            totalAmount,
+            totalAmount: finalAmount,
+            discountAmount,
+            promoCodeId: promoCodeId || null,
             expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
           },
           include: {
@@ -192,35 +212,46 @@ export class OrderService {
           },
         });
 
-        // Create tickets
-        for (let i = 0; i < data.items.length; i++) {
-          const item = data.items[i];
-          const ticketType = ticketTypes[i]!;
-
+        // Create tickets with secure barcodes
+        for (const item of data.items) {
+          const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
           for (let j = 0; j < item.quantity; j++) {
+            const secureBarcode = `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`;
+            const pricePaid = tierPriceMap.get(item.ticketTypeId) ?? ticketType.price;
             await tx.ticket.create({
               data: {
                 orderId: newOrder.id,
                 userId,
                 eventId,
                 ticketTypeId: item.ticketTypeId,
-                pricePaid: ticketType.price,
-                barcode: `TIX-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+                pricePaid,
+                barcode: secureBarcode,
                 status: 'VALID',
               },
             });
           }
         }
 
+        // Increment promo code usage if used
+        if (promoCodeId) {
+          await tx.promoCode.update({
+            where: { id: promoCodeId },
+            data: { usesCount: { increment: 1 } },
+          });
+        }
+
         return newOrder;
       });
 
-      return order;
-      // --- ORIGINAL LOGIC END ---
+      // Auto-confirm free orders (no payment needed)
+      if (finalAmount.eq(0)) {
+        return this.confirmOrder(order.id);
+      }
 
+      return order;
     } finally {
-      // 3. Release Lock
-      await redisLockService.releaseLock(lockKey);
+      // Release lock with owner token
+      await redisLockService.releaseLock(lockKey, lockToken);
     }
   }
 
@@ -333,7 +364,6 @@ export class OrderService {
         data: {
           status: 'PAID',
           paymentStatus: 'SUCCEEDED',
-          updatedAt: new Date(),
         },
         include: {
           tickets: {
@@ -469,7 +499,6 @@ export class OrderService {
         where: { id },
         data: {
           status: 'CANCELLED',
-          updatedAt: new Date(),
         },
       });
     });
@@ -479,18 +508,21 @@ export class OrderService {
    * List orders with pagination
    */
   async listOrders(params: ListOrdersParams): Promise<PaginatedOrders> {
-    const { page = 1, limit = 20, status, userId } = params;
-    const skip = (page - 1) * limit;
+    const { page = 1, limit = 20, status, userId, eventId } = params;
+    const cappedLimit = Math.min(Math.max(1, limit), 100);
+    const safePage = Math.max(1, page);
+    const skip = (safePage - 1) * cappedLimit;
 
     const where: Prisma.OrderWhereInput = {};
     if (status) where.status = status;
     if (userId) where.userId = userId;
+    if (eventId) where.eventId = eventId;
 
     const [orders, total]: [Order[], number] = await Promise.all([
       prisma.order.findMany({
         where,
         skip,
-        take: limit,
+        take: cappedLimit,
         orderBy: { createdAt: 'desc' },
         include: {
           event: {
@@ -524,13 +556,55 @@ export class OrderService {
     return {
       orders,
       pagination: {
-        page,
-        limit,
+        page: safePage,
+        limit: cappedLimit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(total / cappedLimit),
       },
     };
+  }
+
+  /**
+   * Refund an order (ADMIN only)
+   */
+  async refundOrder(id: string): Promise<Order> {
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { tickets: true },
+    });
+
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.status !== 'PAID') {
+      throw ApiError.badRequest('Only PAID orders can be refunded');
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      // Cancel all tickets and restore inventory
+      for (const ticket of order.tickets) {
+        if (ticket.status === 'VALID' || ticket.status === 'TRANSFERRED') {
+          await tx.ticket.update({
+            where: { id: ticket.id },
+            data: { status: 'CANCELLED' },
+          });
+
+          await tx.ticketType.update({
+            where: { id: ticket.ticketTypeId },
+            data: {
+              quantitySold: { decrement: 1 },
+              quantityAvailable: { increment: 1 },
+            },
+          });
+        }
+      }
+
+      // Update order status
+      return await tx.order.update({
+        where: { id },
+        data: { status: 'REFUNDED' },
+      });
+    });
   }
 }
 
 export const orderService = new OrderService();
+

@@ -19,5 +19,6 @@ export const listOrdersSchema = z.object({
     page: z.string().transform(Number).default('1'),
     limit: z.string().transform(Number).default('20'),
     status: z.enum(['PENDING', 'PAID', 'CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED']).optional(),
+    eventId: z.string().uuid().optional(),
   }),
 });

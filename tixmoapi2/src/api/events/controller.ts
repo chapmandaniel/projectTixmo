@@ -119,3 +119,19 @@ export const getScannerStats = catchAsync(async (req: AuthRequest, res: Response
   const stats = await eventStatsService.getScannerStats(id);
   res.json(successResponse(stats));
 });
+
+export const updateEventStatus = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const event = await eventService.transitionEventStatus(id, status);
+  res.json(successResponse(event, `Event status updated to ${status}`));
+});
+
+export const cloneEvent = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  const event = await eventService.cloneEvent(id);
+  res.status(201).json(successResponse(event, 'Event cloned successfully'));
+});
+

@@ -5,7 +5,9 @@ import userRoutes from './users/routes';
 import organizationRoutes from './organizations/routes';
 import venueRoutes from './venues/routes';
 import eventRoutes from './events/routes';
+import publicEventRoutes from './events/public.routes';
 import ticketTypeRoutes from './ticket-types/routes';
+import ticketTierRoutes from './ticket-tiers/routes';
 import orderRoutes from './orders/routes';
 import ticketRoutes from './tickets/routes';
 import promoCodeRoutes from './promo-codes/routes';
@@ -17,6 +19,9 @@ import docsRoutes from './docs/routes';
 import reportsRoutes from './reports/routes';
 import waitlistRoutes from './waitlists/routes';
 import taskRoutes from './tasks/routes';
+import aiRoutes from './ai/routes';
+import approvalRoutes from './approvals/routes';
+import reviewRoutes from './review/routes';
 
 const router = Router();
 
@@ -38,8 +43,10 @@ versionRouter.use('/auth', authRoutes);
 versionRouter.use('/users', userRoutes);
 versionRouter.use('/organizations', organizationRoutes);
 versionRouter.use('/venues', venueRoutes);
+versionRouter.use('/events/public', publicEventRoutes);
 versionRouter.use('/events', eventRoutes);
 versionRouter.use('/ticket-types', ticketTypeRoutes);
+versionRouter.use('/ticket-tiers', ticketTierRoutes);
 versionRouter.use('/orders', orderRoutes);
 versionRouter.use('/tickets', ticketRoutes);
 versionRouter.use('/promo-codes', promoCodeRoutes);
@@ -50,7 +57,10 @@ versionRouter.use('/analytics', analyticsRoutes);
 versionRouter.use('/payments', paymentRoutes);
 versionRouter.use('/waitlists', waitlistRoutes);
 versionRouter.use('/tasks', taskRoutes);
+versionRouter.use('/ai', aiRoutes);
 versionRouter.use('/docs', docsRoutes);
+versionRouter.use('/approvals', approvalRoutes);
+versionRouter.use('/review', reviewRoutes);
 
 // Mount versioned routes
 router.use(`/${config.apiVersion}`, versionRouter);

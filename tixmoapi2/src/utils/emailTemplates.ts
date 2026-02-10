@@ -318,3 +318,292 @@ export function userInvitationEmail(data: {
     `,
   };
 }
+
+// ==============================================
+// APPROVAL SYSTEM EMAIL TEMPLATES
+// ==============================================
+
+// New approval request email (sent to reviewers)
+export function approvalRequestEmail(data: {
+  reviewerName: string;
+  requesterName: string;
+  title: string;
+  eventName: string;
+  description?: string;
+  priority: 'STANDARD' | 'URGENT' | 'CRITICAL';
+  dueDate?: string;
+  reviewUrl: string;
+}): EmailTemplate {
+  const priorityColors = {
+    STANDARD: '#6B7280',
+    URGENT: '#F59E0B',
+    CRITICAL: '#EF4444',
+  };
+  const priorityColor = priorityColors[data.priority] || priorityColors.STANDARD;
+
+  return {
+    subject: `${data.priority === 'CRITICAL' ? '🔴 ' : data.priority === 'URGENT' ? '🟡 ' : ''}Review Requested: ${data.title}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #4F46E5; color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { padding: 25px; background-color: white; }
+            .details { background-color: #f9fafb; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #4F46E5; }
+            .priority-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; background-color: ${priorityColor}; }
+            .button { display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: bold; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Review Requested</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${data.reviewerName},</p>
+              <p><strong>${data.requesterName}</strong> has requested your feedback on:</p>
+              
+              <div class="details">
+                <p style="margin: 0 0 10px 0;"><strong>${data.title}</strong></p>
+                <p style="margin: 0 0 10px 0;">Event: ${data.eventName}</p>
+                ${data.description ? `<p style="margin: 0 0 10px 0;">${data.description}</p>` : ''}
+                <p style="margin: 0;">
+                  <span class="priority-badge">${data.priority}</span>
+                  ${data.dueDate ? `<span style="margin-left: 10px;">Due: ${data.dueDate}</span>` : ''}
+                </p>
+              </div>
+              
+              <p>Click below to review the assets and provide your feedback:</p>
+              <a href="${data.reviewUrl}" class="button">Review Now →</a>
+              
+              <p style="margin-top: 25px; color: #6b7280; font-size: 14px;">This link expires in 30 days.</p>
+            </div>
+            <div class="footer">
+              <p>TixMo - Creative Approvals</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `
+      Review Requested
+      
+      Hi ${data.reviewerName},
+      
+      ${data.requesterName} has requested your feedback on:
+      
+      Title: ${data.title}
+      Event: ${data.eventName}
+      ${data.description ? `Description: ${data.description}` : ''}
+      Priority: ${data.priority}
+      ${data.dueDate ? `Due Date: ${data.dueDate}` : ''}
+      
+      Review here: ${data.reviewUrl}
+      
+      This link expires in 30 days.
+      
+      TixMo - Creative Approvals
+    `,
+  };
+}
+
+// Approval reminder email
+export function approvalReminderEmail(data: {
+  reviewerName: string;
+  requesterName: string;
+  title: string;
+  eventName: string;
+  dueDate?: string;
+  reviewUrl: string;
+}): EmailTemplate {
+  return {
+    subject: `⏰ Reminder: Review Pending - ${data.title}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #F59E0B; color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { padding: 25px; background-color: white; }
+            .button { display: inline-block; padding: 14px 28px; background-color: #F59E0B; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: bold; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Review Reminder</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${data.reviewerName},</p>
+              <p>This is a friendly reminder that your review is still pending for:</p>
+              <p><strong>${data.title}</strong> (${data.eventName})</p>
+              ${data.dueDate ? `<p>Due Date: <strong>${data.dueDate}</strong></p>` : ''}
+              <p>${data.requesterName} is waiting for your feedback.</p>
+              <a href="${data.reviewUrl}" class="button">Complete Review →</a>
+            </div>
+            <div class="footer">
+              <p>TixMo - Creative Approvals</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `
+      Review Reminder
+      
+      Hi ${data.reviewerName},
+      
+      This is a reminder that your review is pending for:
+      ${data.title} (${data.eventName})
+      ${data.dueDate ? `Due Date: ${data.dueDate}` : ''}
+      
+      ${data.requesterName} is waiting for your feedback.
+      
+      Review here: ${data.reviewUrl}
+      
+      TixMo - Creative Approvals
+    `,
+  };
+}
+
+// Approval decision notification (sent to requester)
+export function approvalDecisionEmail(data: {
+  requesterName: string;
+  reviewerName: string;
+  title: string;
+  eventName: string;
+  decision: 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED';
+  note?: string;
+  dashboardUrl: string;
+}): EmailTemplate {
+  const decisionConfig = {
+    APPROVED: { label: 'Approved ✅', color: '#10B981', headerBg: '#10B981' },
+    REJECTED: { label: 'Rejected ❌', color: '#EF4444', headerBg: '#EF4444' },
+    CHANGES_REQUESTED: { label: 'Changes Requested ✏️', color: '#F59E0B', headerBg: '#F59E0B' },
+  };
+  const config = decisionConfig[data.decision];
+
+  return {
+    subject: `${config.label} - ${data.title}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: ${config.headerBg}; color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { padding: 25px; background-color: white; }
+            .decision { font-size: 24px; font-weight: bold; color: ${config.color}; margin: 15px 0; }
+            .note { background-color: #f9fafb; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid ${config.color}; }
+            .button { display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: bold; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Review Complete</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${data.requesterName},</p>
+              <p><strong>${data.reviewerName}</strong> has reviewed:</p>
+              <p><strong>${data.title}</strong> (${data.eventName})</p>
+              <p class="decision">${config.label}</p>
+              ${data.note ? `<div class="note"><strong>Note:</strong><br/>${data.note}</div>` : ''}
+              <a href="${data.dashboardUrl}" class="button">View Details →</a>
+            </div>
+            <div class="footer">
+              <p>TixMo - Creative Approvals</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `
+      Review Complete
+      
+      Hi ${data.requesterName},
+      
+      ${data.reviewerName} has reviewed:
+      ${data.title} (${data.eventName})
+      
+      Decision: ${config.label}
+      ${data.note ? `Note: ${data.note}` : ''}
+      
+      View details: ${data.dashboardUrl}
+      
+      TixMo - Creative Approvals
+    `,
+  };
+}
+
+// New revision notification (sent to reviewers)
+export function approvalRevisionEmail(data: {
+  reviewerName: string;
+  requesterName: string;
+  title: string;
+  eventName: string;
+  version: number;
+  reviewUrl: string;
+}): EmailTemplate {
+  return {
+    subject: `🔄 Revision Available: ${data.title} (v${data.version})`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #6366F1; color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { padding: 25px; background-color: white; }
+            .version-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; background-color: #6366F1; }
+            .button { display: inline-block; padding: 14px 28px; background-color: #6366F1; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: bold; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>New Revision Available</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${data.reviewerName},</p>
+              <p><strong>${data.requesterName}</strong> has submitted a revision for your review:</p>
+              <p><strong>${data.title}</strong> (${data.eventName})</p>
+              <p><span class="version-badge">Version ${data.version}</span></p>
+              <p>Please review the updated assets and provide your feedback.</p>
+              <a href="${data.reviewUrl}" class="button">Review Revision →</a>
+            </div>
+            <div class="footer">
+              <p>TixMo - Creative Approvals</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `
+      New Revision Available
+      
+      Hi ${data.reviewerName},
+      
+      ${data.requesterName} has submitted a revision for your review:
+      ${data.title} (${data.eventName})
+      Version: ${data.version}
+      
+      Please review the updated assets.
+      
+      Review here: ${data.reviewUrl}
+      
+      TixMo - Creative Approvals
+    `,
+  };
+}

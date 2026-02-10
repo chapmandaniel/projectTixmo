@@ -1,4 +1,4 @@
-import { PrismaClient, User, Prisma } from '@prisma/client';
+import { User, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { ApiError } from '../../utils/ApiError';
 import { logger } from '../../config/logger';
@@ -6,7 +6,7 @@ import { config } from '../../config/environment';
 import { transporter, emailFrom } from '../../config/email';
 import { userInvitationEmail } from '../../utils/emailTemplates';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 type SafeUser = Omit<User, 'passwordHash' | 'twoFactorSecret'>;
 

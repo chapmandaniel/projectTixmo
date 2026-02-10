@@ -1,6 +1,6 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface DateRangeParams {
   startDate?: Date;

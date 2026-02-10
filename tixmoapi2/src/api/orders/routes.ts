@@ -145,6 +145,36 @@ router.post('/:id/cancel', controller.cancelOrder);
 
 /**
  * @swagger
+ * /orders/{id}/refund:
+ *   post:
+ *     summary: Refund order
+ *     description: Refund a paid order. Admin only. Cancels all tickets and restores inventory.
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Order refunded successfully
+ *       400:
+ *         description: Only paid orders can be refunded
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin only
+ *       404:
+ *         description: Order not found
+ */
+router.post('/:id/refund', authorize('ADMIN'), controller.refundOrder);
+
+/**
+ * @swagger
  * /orders:
  *   get:
  *     summary: List orders
@@ -168,6 +198,11 @@ router.post('/:id/cancel', controller.cancelOrder);
  *         schema:
  *           type: string
  *           enum: [PENDING, PAID, CANCELLED, REFUNDED, PARTIALLY_REFUNDED]
+ *       - in: query
+ *         name: eventId
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Orders retrieved successfully

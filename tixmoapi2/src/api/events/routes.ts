@@ -79,7 +79,7 @@ router.use(authenticate);
  */
 router.post(
   '/',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'PROMOTER'),
   validate(validation.createEventSchema),
   controller.createEvent
 );
@@ -108,7 +108,9 @@ router.post(
  *       404:
  *         description: Event not found
  */
-router.get('/:id', controller.getEvent);
+// NOTE: Static routes (/deleted, /) are registered BEFORE /:id to avoid parameter capture
+router.get('/', validate(validation.listEventsSchema), controller.listEvents);
+router.get('/deleted', authorize('OWNER', 'ADMIN'), controller.listDeletedEvents);
 
 /**
  * @swagger
@@ -165,9 +167,12 @@ router.get('/:id', controller.getEvent);
  *       404:
  *         description: Event not found
  */
+// Parameterized routes registered AFTER static routes
+router.get('/:id', controller.getEvent);
+
 router.put(
   '/:id',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'PROMOTER'),
   validate(validation.updateEventSchema),
   controller.updateEvent
 );
@@ -200,7 +205,7 @@ router.put(
  *       404:
  *         description: Event not found
  */
-router.delete('/:id', authorize('ADMIN'), controller.deleteEvent);
+router.delete('/:id', authorize('OWNER', 'ADMIN'), controller.deleteEvent);
 
 /**
  * @swagger
@@ -248,7 +253,7 @@ router.delete('/:id', authorize('ADMIN'), controller.deleteEvent);
  *       401:
  *         description: Unauthorized
  */
-router.get('/', validate(validation.listEventsSchema), controller.listEvents);
+// GET / and GET /deleted moved above /:id to avoid route shadowing
 
 /**
  * @swagger
@@ -282,7 +287,7 @@ router.get('/', validate(validation.listEventsSchema), controller.listEvents);
  *       401:
  *         description: Unauthorized
  */
-router.get('/deleted', authorize('ADMIN'), controller.listDeletedEvents);
+// GET /deleted moved above /:id to avoid route shadowing
 
 /**
  * @swagger
@@ -312,7 +317,7 @@ router.get('/deleted', authorize('ADMIN'), controller.listDeletedEvents);
  *       404:
  *         description: Event not found
  */
-router.post('/:id/restore', authorize('ADMIN'), controller.restoreEvent);
+router.post('/:id/restore', authorize('OWNER', 'ADMIN'), controller.restoreEvent);
 
 /**
  * @swagger
@@ -340,7 +345,7 @@ router.post('/:id/restore', authorize('ADMIN'), controller.restoreEvent);
  *       404:
  *         description: Event not found
  */
-router.post('/:id/publish', authorize('ADMIN', 'PROMOTER'), controller.publishEvent);
+router.post('/:id/publish', authorize('OWNER', 'ADMIN', 'PROMOTER'), validate(validation.publishEventSchema), controller.publishEvent);
 
 /**
  * @swagger
@@ -368,7 +373,7 @@ router.post('/:id/publish', authorize('ADMIN', 'PROMOTER'), controller.publishEv
  *       404:
  *         description: Event not found
  */
-router.post('/:id/cancel', authorize('ADMIN', 'PROMOTER'), controller.cancelEvent);
+router.post('/:id/cancel', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.cancelEvent);
 
 /**
  * @swagger
@@ -394,7 +399,7 @@ router.post('/:id/cancel', authorize('ADMIN', 'PROMOTER'), controller.cancelEven
  *       404:
  *         description: Event not found
  */
-router.get('/:id/stats', authorize('ADMIN', 'PROMOTER'), controller.getEventStats);
+router.get('/:id/stats', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.getEventStats);
 
 /**
  * @swagger
@@ -420,7 +425,7 @@ router.get('/:id/stats', authorize('ADMIN', 'PROMOTER'), controller.getEventStat
  *       404:
  *         description: Event not found
  */
-router.get('/:id/occupancy', authorize('ADMIN', 'PROMOTER'), controller.getEventOccupancy);
+router.get('/:id/occupancy', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.getEventOccupancy);
 
 /**
  * @swagger
@@ -452,7 +457,7 @@ router.get('/:id/occupancy', authorize('ADMIN', 'PROMOTER'), controller.getEvent
  *       404:
  *         description: Event not found
  */
-router.get('/:id/timeline', authorize('ADMIN', 'PROMOTER'), controller.getEntryTimeline);
+router.get('/:id/timeline', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.getEntryTimeline);
 
 /**
  * @swagger
@@ -478,6 +483,17 @@ router.get('/:id/timeline', authorize('ADMIN', 'PROMOTER'), controller.getEntryT
  *       404:
  *         description: Event not found
  */
-router.get('/:id/scanner-stats', authorize('ADMIN', 'PROMOTER'), controller.getScannerStats);
+router.get('/:id/scanner-stats', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.getScannerStats);
+
+// Event status transition (generic endpoint)
+router.post(
+  '/:id/status',
+  authorize('OWNER', 'ADMIN', 'PROMOTER'),
+  validate(validation.updateEventStatusSchema),
+  controller.updateEventStatus
+);
+
+// Clone event
+router.post('/:id/clone', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.cloneEvent);
 
 export default router;

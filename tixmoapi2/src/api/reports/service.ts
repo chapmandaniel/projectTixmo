@@ -1,7 +1,7 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface SalesReportParams {
   organizationId?: string;

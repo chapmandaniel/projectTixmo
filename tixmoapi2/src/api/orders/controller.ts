@@ -102,3 +102,10 @@ export const listOrders = catchAsync(async (req: AuthRequest, res: Response) => 
 
   res.json(successResponse(result));
 });
+
+export const refundOrder = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+
+  const order = await orderService.refundOrder(id);
+  res.json(successResponse(order, 'Order refunded successfully'));
+});

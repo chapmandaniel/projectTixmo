@@ -81,6 +81,9 @@ model User {
   waitlistEntries   Waitlist[]
   assignedTasks     Task[]
   taskComments      TaskComment[]
+  approvalRequestsCreated ApprovalRequest[] @relation("ApprovalRequestCreator")
+  approvalReviews   ApprovalReviewer[] @relation("ApprovalReviewerUser")
+  approvalComments  ApprovalComment[] @relation("ApprovalCommentUser")
 
   @@map("users")
 }
@@ -103,6 +106,7 @@ model Organization {
   promoCodes       PromoCode[]
   scanners         Scanner[]
   tasks            Task[]
+  approvalRequests ApprovalRequest[]
 
   @@map("organizations")
 }
@@ -168,6 +172,7 @@ model Event {
   tickets          Ticket[]
   scanners         Scanner[]
   waitlist         Waitlist[]
+  approvalRequests ApprovalRequest[]
 
   @@map("events")
 }
@@ -193,6 +198,7 @@ model TicketType {
   salesEnd              DateTime?         @map("sales_end")
   maxPerOrder           Int               @default(10) @map("max_per_order")
   requiresSeatSelection Boolean           @default(false) @map("requires_seat_selection")
+  sortOrder             Int               @default(0) @map("sort_order")
   metadata              Json?
   status                TicketTypeStatus  @default(ACTIVE)
   createdAt             DateTime          @default(now()) @map("created_at")
@@ -200,8 +206,27 @@ model TicketType {
 
   // Relations
   tickets               Ticket[]
+  tiers                 TicketTier[]
 
   @@map("ticket_types")
+}
+
+model TicketTier {
+  id              String     @id @default(uuid())
+  ticketTypeId    String     @map("ticket_type_id")
+  ticketType      TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+  name            String                            // "Early Bird", "Regular", "VIP Last Minute"
+  price           Decimal    @db.Decimal(10, 2)
+  quantityLimit   Int?       @map("quantity_limit")  // null = unlimited within this tier
+  quantitySold    Int        @default(0) @map("quantity_sold")
+  startsAt        DateTime?  @map("starts_at")       // null = starts immediately
+  endsAt          DateTime?  @map("ends_at")         // null = no end
+  sortOrder       Int        @default(0) @map("sort_order")
+  isActive        Boolean    @default(true) @map("is_active")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  @@map("ticket_tiers")
 }
 
 enum OrderStatus {
@@ -460,4 +485,118 @@ model TaskComment {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("task_comments")
+}
+
+// ==========================================
+// APPROVAL SYSTEM
+// ==========================================
+
+enum ApprovalStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+  REJECTED
+}
+
+enum ApprovalDecision {
+  APPROVED
+  CHANGES_REQUESTED
+  REJECTED
+}
+
+enum ApprovalPriority {
+  STANDARD
+  URGENT
+  CRITICAL
+}
+
+model ApprovalRequest {
+  id              String           @id @default(uuid())
+  organizationId  String           @map("organization_id")
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  eventId         String           @map("event_id")
+  event           Event            @relation(fields: [eventId], references: [id])
+  createdById     String           @map("created_by_id")
+  createdBy       User             @relation("ApprovalRequestCreator", fields: [createdById], references: [id])
+  
+  title           String
+  description     String?          @db.Text
+  instructions    String?          @db.Text
+  status          ApprovalStatus   @default(DRAFT)
+  priority        ApprovalPriority @default(STANDARD)
+  dueDate         DateTime?        @map("due_date")
+  version         Int              @default(1)
+  
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  
+  assets          ApprovalAsset[]
+  reviewers       ApprovalReviewer[]
+  comments        ApprovalComment[]
+  
+  @@map("approval_requests")
+}
+
+model ApprovalAsset {
+  id                String          @id @default(uuid())
+  approvalRequestId String          @map("approval_request_id")
+  approvalRequest   ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  
+  filename          String
+  originalName      String          @map("original_name")
+  mimeType          String          @map("mime_type")
+  size              Int
+  s3Key             String          @map("s3_key")
+  s3Url             String          @map("s3_url")
+  version           Int             @default(1)
+  
+  createdAt         DateTime        @default(now()) @map("created_at")
+  
+  @@map("approval_assets")
+}
+
+model ApprovalReviewer {
+  id                String           @id @default(uuid())
+  approvalRequestId String           @map("approval_request_id")
+  approvalRequest   ApprovalRequest  @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  
+  email             String
+  name              String?
+  userId            String?          @map("user_id")
+  user              User?            @relation("ApprovalReviewerUser", fields: [userId], references: [id])
+  
+  token             String           @unique
+  tokenExpiresAt    DateTime         @map("token_expires_at")
+  
+  decision          ApprovalDecision?
+  decisionAt        DateTime?        @map("decision_at")
+  decisionNote      String?          @map("decision_note") @db.Text
+  
+  invitedAt         DateTime         @default(now()) @map("invited_at")
+  viewedAt          DateTime?        @map("viewed_at")
+  lastReminderAt    DateTime?        @map("last_reminder_at")
+  
+  @@unique([approvalRequestId, email])
+  @@map("approval_reviewers")
+}
+
+model ApprovalComment {
+  id                String          @id @default(uuid())
+  approvalRequestId String          @map("approval_request_id")
+  approvalRequest   ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  
+  assetId           String?         @map("asset_id")
+  reviewerId        String?         @map("reviewer_id")
+  userId            String?         @map("user_id")
+  user              User?           @relation("ApprovalCommentUser", fields: [userId], references: [id])
+  
+  content           String          @db.Text
+  annotation        Json?           // { x, y, width, height } for visual annotations
+  resolved          Boolean         @default(false)
+  
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  
+  @@map("approval_comments")
 }

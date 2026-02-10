@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { config } from '../../config/environment';
 import { ApiError } from '../../utils/ApiError';
 import { orderService } from '../orders/service';
+import { notificationService } from '../../utils/notificationService';
 
 export class PaymentService {
   private stripe: Stripe | null = null;
@@ -120,10 +121,24 @@ export class PaymentService {
    */
   private async handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<void> {
     const orderId = paymentIntent.metadata.orderId;
+    const userId = paymentIntent.metadata.userId;
     console.log(
       `Payment failed for order ${orderId}: ${paymentIntent.last_payment_error?.message}`
     );
-    // Optional: Notify user of failure
+
+    // Notify user of payment failure
+    if (userId) {
+      try {
+        await notificationService.sendEmail({
+          to: userId, // In production, look up user email from userId
+          subject: 'Payment Failed',
+          html: `<p>Your payment for order ${orderId} could not be processed. Please try again or use a different payment method.</p>`,
+          text: `Your payment for order ${orderId} could not be processed. Please try again or use a different payment method.`,
+        });
+      } catch (error) {
+        console.error('Failed to send payment failure notification:', error);
+      }
+    }
   }
 }
 

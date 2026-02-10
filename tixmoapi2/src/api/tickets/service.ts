@@ -1,9 +1,9 @@
-import { PrismaClient, Ticket, TicketStatus, Prisma } from '@prisma/client';
+import { Ticket, TicketStatus, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { generateQRCode, generateTicketQRData } from '../../utils/qrcode';
 import { notificationService } from '../../utils/notificationService';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface ListTicketsParams {
   page?: number;
@@ -11,6 +11,8 @@ interface ListTicketsParams {
   eventId?: string;
   status?: TicketStatus;
   userId?: string;
+  sortBy?: 'createdAt' | 'pricePaid' | 'status';
+  sortOrder?: 'asc' | 'desc';
 }
 
 interface PaginatedTickets {
@@ -28,7 +30,7 @@ export class TicketService {
    * List tickets for a user
    */
   async listTickets(params: ListTicketsParams): Promise<PaginatedTickets> {
-    const { page = 1, limit = 20, eventId, status, userId } = params;
+    const { page = 1, limit = 20, eventId, status, userId, sortBy = 'createdAt', sortOrder = 'desc' } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.TicketWhereInput = {};
@@ -41,7 +43,7 @@ export class TicketService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { [sortBy]: sortOrder },
         include: {
           event: {
             select: {
@@ -211,7 +213,7 @@ export class TicketService {
         userId: recipient.id,
         transferredFrom: currentUserId,
         transferredAt: new Date(),
-        status: 'TRANSFERRED',
+        status: 'VALID', // Reset to VALID so the recipient can actually use the ticket
       },
       include: {
         event: {
@@ -294,13 +296,26 @@ export class TicketService {
       throw ApiError.badRequest('Cannot cancel tickets for events that have already started');
     }
 
-    // Cancel the ticket
-    const updatedTicket = await prisma.ticket.update({
-      where: { id },
-      data: {
-        status: 'CANCELLED',
-        updatedAt: new Date(),
-      },
+    // Cancel the ticket and restore inventory in a transaction
+    const updatedTicket = await prisma.$transaction(async (tx) => {
+      // Cancel the ticket
+      const cancelled = await tx.ticket.update({
+        where: { id },
+        data: {
+          status: 'CANCELLED',
+        },
+      });
+
+      // Restore inventory on the ticket type
+      await tx.ticketType.update({
+        where: { id: cancelled.ticketTypeId },
+        data: {
+          quantitySold: { decrement: 1 },
+          quantityAvailable: { increment: 1 },
+        },
+      });
+
+      return cancelled;
     });
 
     return updatedTicket;
@@ -359,9 +374,9 @@ export class TicketService {
       return { valid: false, ticket, reason: 'Ticket has been cancelled' };
     }
 
-    // Check if event is published
-    if (ticketTyped3.event.status !== 'PUBLISHED') {
-      return { valid: false, ticket, reason: 'Event is not published' };
+    // Check if event is published or on sale
+    if (!['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(ticketTyped3.event.status)) {
+      return { valid: false, ticket, reason: 'Event is not currently active' };
     }
 
     // Check if within event timeframe
@@ -398,7 +413,6 @@ export class TicketService {
         status: 'USED',
         checkedInAt: new Date(),
         checkedInBy: checkedInBy || 'system',
-        updatedAt: new Date(),
       },
     });
 

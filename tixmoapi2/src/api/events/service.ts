@@ -1,7 +1,7 @@
 import { ApiError } from '@utils/ApiError';
-import { PrismaClient, Event, Prisma, EventStatus } from '@prisma/client';
+import { Event, Prisma, EventStatus } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface CreateEventInput {
   title: string;
@@ -16,6 +16,7 @@ interface CreateEventInput {
   metadata?: Prisma.InputJsonValue | null | undefined;
   category?: string;
   timezone?: string;
+  tags?: string[];
 }
 
 interface UpdateEventInput {
@@ -30,7 +31,9 @@ interface UpdateEventInput {
   metadata?: Prisma.InputJsonValue | null | undefined;
   category?: string;
   timezone?: string;
+  tags?: string[];
 }
+
 
 interface ListEventsParams {
   page?: number;
@@ -51,7 +54,64 @@ interface PaginatedEvents {
   };
 }
 
+/**
+ * Valid event status transitions.
+ * Key = current status, Value = set of allowed next statuses.
+ */
+const VALID_STATUS_TRANSITIONS: Record<EventStatus, Set<EventStatus>> = {
+  DRAFT: new Set(['PUBLISHED', 'DELETED']),
+  PUBLISHED: new Set(['ON_SALE', 'CANCELLED', 'COMPLETED']),
+  ON_SALE: new Set(['SOLD_OUT', 'CANCELLED', 'COMPLETED']),
+  SOLD_OUT: new Set(['ON_SALE', 'CANCELLED', 'COMPLETED']), // ON_SALE if capacity increases
+  CANCELLED: new Set([]), // Terminal state
+  COMPLETED: new Set([]), // Terminal state
+  DELETED: new Set(['DRAFT']), // Can be restored to DRAFT
+};
+
 export class EventService {
+  /**
+   * Generate a unique slug from a title, appending a suffix on collision.
+   */
+  private async generateUniqueSlug(baseTitle: string, excludeId?: string): Promise<string> {
+    const baseSlug = baseTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, ''); // trim leading/trailing dashes
+
+    let slug = baseSlug;
+    let counter = 0;
+
+    while (true) {
+      const existing = await prisma.event.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+
+      if (!existing || (excludeId && existing.id === excludeId)) {
+        return slug;
+      }
+
+      counter++;
+      slug = `${baseSlug}-${counter}`;
+    }
+  }
+
+  /**
+   * Validate a status transition
+   */
+  private validateStatusTransition(currentStatus: EventStatus, newStatus: EventStatus): void {
+    const allowedTransitions = VALID_STATUS_TRANSITIONS[currentStatus];
+    if (!allowedTransitions || !allowedTransitions.has(newStatus)) {
+      throw ApiError.badRequest(
+        `Invalid status transition: ${currentStatus} → ${newStatus}. ` +
+        `Allowed transitions from ${currentStatus}: ${allowedTransitions && allowedTransitions.size > 0
+          ? Array.from(allowedTransitions).join(', ')
+          : 'none (terminal state)'
+        }`
+      );
+    }
+  }
+
   /**
    * Create a new event
    */
@@ -93,8 +153,8 @@ export class EventService {
       }
     }
 
-    // Generate slug from title
-    const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    // Generate unique slug from title (handles collisions)
+    const slug = await this.generateUniqueSlug(data.title);
 
     // Create event
     return await prisma.event.create({
@@ -110,7 +170,7 @@ export class EventService {
         status: data.status || 'DRAFT',
         capacity: data.capacity || null,
         category: data.category || null,
-        tags: [],
+        tags: data.tags || [],
         images: data.imageUrl
           ? ({ main: data.imageUrl } as unknown as Prisma.InputJsonValue)
           : undefined,
@@ -126,8 +186,8 @@ export class EventService {
    * Get event by ID
    */
   async getEventById(id: string): Promise<Event | null> {
-    return await prisma.event.findUnique({
-      where: { id },
+    return await prisma.event.findFirst({
+      where: { id, deletedAt: null },
       include: {
         organization: {
           select: {
@@ -179,6 +239,11 @@ export class EventService {
       }
     }
 
+    // Validate status transition if status is being changed
+    if (data.status && data.status !== existingEvent.status) {
+      this.validateStatusTransition(existingEvent.status, data.status);
+    }
+
     // Validate dates if both are provided or combined with existing
     const newStart = data.startDateTime ? new Date(data.startDateTime) : existingEvent.startDatetime;
     const newEnd = data.endDateTime ? new Date(data.endDateTime) : existingEvent.endDatetime;
@@ -194,7 +259,10 @@ export class EventService {
 
     if (data.title) {
       updateData.name = data.title;
-      updateData.slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      // Only regenerate slug if event is still in DRAFT (preserve URLs for published events)
+      if (existingEvent.status === 'DRAFT') {
+        updateData.slug = await this.generateUniqueSlug(data.title, id);
+      }
     }
     if (data.description !== undefined) updateData.description = data.description;
     if (data.venueId) updateData.venueId = data.venueId;
@@ -217,7 +285,6 @@ export class EventService {
     // Update event
     const updatePayload = {
       ...updateData,
-      updatedAt: new Date(),
     } as unknown as Prisma.EventUpdateInput;
 
     return await prisma.event.update({
@@ -284,7 +351,6 @@ export class EventService {
       data: {
         deletedAt: null,
         status: 'DRAFT', // Restore as DRAFT for safety
-        updatedAt: new Date(),
       },
     });
   }
@@ -297,7 +363,10 @@ export class EventService {
     page = 1,
     limit = 20
   ): Promise<PaginatedEvents> {
-    const skip = (page - 1) * limit;
+    // Cap limit to prevent unbounded queries
+    const cappedLimit = Math.min(Math.max(1, limit), 100);
+    const safePage = Math.max(1, page);
+    const skip = (safePage - 1) * cappedLimit;
 
     const where: Prisma.EventWhereInput = {
       organizationId,
@@ -308,7 +377,7 @@ export class EventService {
       prisma.event.findMany({
         where,
         skip,
-        take: limit,
+        take: cappedLimit,
         orderBy: { deletedAt: 'desc' },
         include: {
           venue: {
@@ -330,10 +399,10 @@ export class EventService {
     return {
       events,
       pagination: {
-        page,
-        limit,
+        page: safePage,
+        limit: cappedLimit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(total / cappedLimit),
       },
     };
   }
@@ -343,7 +412,10 @@ export class EventService {
    */
   async listEvents(params: ListEventsParams): Promise<PaginatedEvents> {
     const { page = 1, limit = 20, organizationId, venueId, status, search } = params;
-    const skip = (page - 1) * limit;
+    // Cap limit to prevent unbounded queries
+    const cappedLimit = Math.min(Math.max(1, limit), 100);
+    const safePage = Math.max(1, page);
+    const skip = (safePage - 1) * cappedLimit;
 
     // Build where clause (use Prisma types)
     const where: Prisma.EventWhereInput = {
@@ -373,7 +445,7 @@ export class EventService {
       prisma.event.findMany({
         where,
         skip,
-        take: limit,
+        take: cappedLimit,
         orderBy: { startDatetime: 'asc' },
         include: {
           organization: {
@@ -403,12 +475,32 @@ export class EventService {
     return {
       events,
       pagination: {
-        page,
-        limit,
+        page: safePage,
+        limit: cappedLimit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(total / cappedLimit),
       },
     };
+  }
+
+  /**
+   * Generic event status transition (enforces state machine + readiness checks)
+   */
+  async transitionEventStatus(id: string, newStatus: EventStatus): Promise<Event> {
+    // Delegate to existing methods for PUBLISHED and CANCELLED
+    if (newStatus === EventStatus.PUBLISHED) return this.publishEvent(id);
+    if (newStatus === EventStatus.CANCELLED) return this.cancelEvent(id);
+
+    const event = await prisma.event.findUnique({ where: { id } });
+    if (!event) throw ApiError.notFound('Event not found');
+    if (event.deletedAt) throw ApiError.badRequest('Cannot transition a deleted event');
+
+    this.validateStatusTransition(event.status, newStatus);
+
+    return await prisma.event.update({
+      where: { id },
+      data: { status: newStatus },
+    });
   }
 
   /**
@@ -427,13 +519,8 @@ export class EventService {
       throw ApiError.badRequest('Cannot publish a deleted event');
     }
 
-    if (event.status === 'PUBLISHED') {
-      throw ApiError.badRequest('Event is already published');
-    }
-
-    if (event.status === 'CANCELLED') {
-      throw ApiError.badRequest('Cannot publish a cancelled event');
-    }
+    // Validate status transition
+    this.validateStatusTransition(event.status, 'PUBLISHED');
 
     // Strictly validate required fields for publishing
     const missingFields = [];
@@ -450,17 +537,23 @@ export class EventService {
       where: { id },
       data: {
         status: 'PUBLISHED',
-        updatedAt: new Date(),
       },
     });
   }
 
   /**
-   * Cancel event
+   * Cancel event — also invalidates all tickets and handles orders
    */
   async cancelEvent(id: string): Promise<Event> {
     const event = await prisma.event.findUnique({
       where: { id },
+      include: {
+        orders: {
+          where: { status: { in: ['PENDING', 'PAID'] } },
+          include: { tickets: true },
+        },
+        ticketTypes: true,
+      },
     });
 
     if (!event) {
@@ -471,17 +564,239 @@ export class EventService {
       throw ApiError.badRequest('Cannot cancel a deleted event');
     }
 
-    if (event.status === 'CANCELLED') {
-      throw ApiError.badRequest('Event is already cancelled');
+    // Validate status transition
+    this.validateStatusTransition(event.status, 'CANCELLED');
+
+    // Cancel event and cascade to tickets/orders in a transaction
+    return await prisma.$transaction(async (tx) => {
+      // 1. Cancel all VALID/TRANSFERRED tickets for this event
+      await tx.ticket.updateMany({
+        where: {
+          eventId: id,
+          status: { in: ['VALID', 'TRANSFERRED'] },
+        },
+        data: { status: 'CANCELLED' },
+      });
+
+      // 2. Handle PENDING orders — release held inventory
+      for (const order of event.orders) {
+        if (order.status === 'PENDING') {
+          // Release held inventory
+          const ticketTypeCounts = new Map<string, number>();
+          for (const ticket of order.tickets) {
+            const count = ticketTypeCounts.get(ticket.ticketTypeId) || 0;
+            ticketTypeCounts.set(ticket.ticketTypeId, count + 1);
+          }
+
+          for (const [ticketTypeId, quantity] of ticketTypeCounts.entries()) {
+            await tx.ticketType.update({
+              where: { id: ticketTypeId },
+              data: {
+                quantityHeld: { decrement: quantity },
+                quantityAvailable: { increment: quantity },
+              },
+            });
+          }
+
+          // Cancel the order
+          await tx.order.update({
+            where: { id: order.id },
+            data: { status: 'CANCELLED' },
+          });
+
+          // Cancel associated tickets
+          await tx.ticket.updateMany({
+            where: { orderId: order.id },
+            data: { status: 'CANCELLED' },
+          });
+        }
+
+        // Note: PAID orders are kept as-is for refund processing.
+        // They should be refunded separately via the refund flow.
+        // Mark them as needing attention by keeping their status.
+      }
+
+      // 3. Update event status
+      return await tx.event.update({
+        where: { id },
+        data: {
+          status: 'CANCELLED',
+        },
+      });
+    });
+  }
+
+  /**
+   * Clone an event (with ticket types) as a new DRAFT
+   */
+  async cloneEvent(id: string): Promise<Event> {
+    const event = await prisma.event.findUnique({
+      where: { id },
+      include: { ticketTypes: true },
+    });
+
+    if (!event) {
+      throw ApiError.notFound('Event not found');
     }
 
-    return await prisma.event.update({
-      where: { id },
-      data: {
-        status: 'CANCELLED',
-        updatedAt: new Date(),
+    const slug = await this.generateUniqueSlug(`${event.name}-copy`);
+
+    return await prisma.$transaction(async (tx) => {
+      const cloned = await tx.event.create({
+        data: {
+          name: `${event.name} (Copy)`,
+          slug,
+          description: event.description || '',
+          organizationId: event.organizationId,
+          venueId: event.venueId,
+          startDatetime: null,
+          endDatetime: null,
+          timezone: event.timezone,
+          status: 'DRAFT',
+          capacity: event.capacity,
+          category: event.category,
+          tags: event.tags,
+          images: event.images as any,
+          metadata: event.metadata as any,
+        },
+      });
+
+      // Clone ticket types (reset quantities)
+      for (const tt of event.ticketTypes) {
+        await tx.ticketType.create({
+          data: {
+            eventId: cloned.id,
+            name: tt.name,
+            description: tt.description,
+            price: tt.price,
+            quantityTotal: tt.quantityTotal,
+            quantityAvailable: tt.quantityTotal,
+            maxPerOrder: tt.maxPerOrder,
+            salesStart: null,
+            salesEnd: null,
+            sortOrder: tt.sortOrder,
+          },
+        });
+      }
+
+      return cloned;
+    });
+  }
+
+  /**
+   * List public events (no auth required)
+   * Only shows PUBLISHED, ON_SALE, and SOLD_OUT events.
+   */
+  async listPublicEvents(params: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    search?: string;
+  }): Promise<PaginatedEvents> {
+    const { page = 1, limit = 20, category, search } = params;
+    const cappedLimit = Math.min(Math.max(1, limit), 100);
+    const safePage = Math.max(1, page);
+    const skip = (safePage - 1) * cappedLimit;
+
+    const publicStatuses: EventStatus[] = [
+      EventStatus.PUBLISHED,
+      EventStatus.ON_SALE,
+      EventStatus.SOLD_OUT,
+    ];
+
+    const where: Prisma.EventWhereInput = {
+      deletedAt: null,
+      status: { in: publicStatuses },
+    };
+
+    if (category) {
+      where.category = category;
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [events, total] = await Promise.all([
+      prisma.event.findMany({
+        where,
+        skip,
+        take: cappedLimit,
+        orderBy: { startDatetime: 'asc' },
+        include: {
+          organization: {
+            select: { id: true, name: true, slug: true },
+          },
+          venue: {
+            select: { id: true, name: true, address: true },
+          },
+          ticketTypes: {
+            where: { status: 'ACTIVE' },
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              quantityAvailable: true,
+              salesStart: true,
+              salesEnd: true,
+            },
+          },
+        },
+      }),
+      prisma.event.count({ where }),
+    ]);
+
+    return {
+      events,
+      pagination: {
+        page: safePage,
+        limit: cappedLimit,
+        total,
+        pages: Math.ceil(total / cappedLimit),
+      },
+    };
+  }
+
+  /**
+   * Get a single public event by slug (no auth required)
+   * Returns full event detail with ticket types and their tiers.
+   */
+  async getPublicEventBySlug(slug: string): Promise<Event | null> {
+    const publicStatuses: EventStatus[] = [
+      EventStatus.PUBLISHED,
+      EventStatus.ON_SALE,
+      EventStatus.SOLD_OUT,
+    ];
+
+    const event = await prisma.event.findFirst({
+      where: {
+        slug,
+        deletedAt: null,
+        status: { in: publicStatuses },
+      },
+      include: {
+        organization: {
+          select: { id: true, name: true, slug: true },
+        },
+        venue: {
+          select: { id: true, name: true, address: true },
+        },
+        ticketTypes: {
+          where: { status: 'ACTIVE' },
+          include: {
+            tiers: {
+              where: { isActive: true },
+              orderBy: { sortOrder: 'asc' },
+            },
+          },
+        },
       },
     });
+
+    return event;
   }
 }
 export const eventService = new EventService();

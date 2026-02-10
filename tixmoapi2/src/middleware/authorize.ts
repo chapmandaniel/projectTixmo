@@ -22,8 +22,14 @@ export const authorize = (...allowedRoles: UserRole[]) => {
   };
 };
 
-export const requireEmailVerification = (_req: AuthRequest, _res: Response, next: NextFunction) => {
-  // This would check email verification status
-  // Implementation depends on your requirements
+export const requireEmailVerification = (req: AuthRequest, _res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return next(ApiError.unauthorized('Authentication required'));
+  }
+
+  if (!req.user.emailVerified) {
+    return next(ApiError.forbidden('Email verification required. Please verify your email before proceeding.'));
+  }
+
   next();
 };

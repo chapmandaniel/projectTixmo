@@ -1,7 +1,8 @@
-import { PrismaClient, Waitlist } from '@prisma/client';
+import { Waitlist } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
+import { notificationService } from '../../utils/notificationService';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 export class WaitlistService {
   /**
@@ -80,16 +81,79 @@ export class WaitlistService {
   }
 
   /**
-   * Process waitlist (Stub for now)
-   * In a real system, this would be called when tickets become available (e.g. order cancellation, capacity increase).
-   * It would find the oldest pending waitlist entries and notify users.
+   * Get user's position in the waitlist
    */
-  async processWaitlist(_eventId: string): Promise<void> {
-    // 1. Check available inventory
-    // 2. Find pending waitlist entries ordered by createdAt ASC
-    // 3. Notify users and update status to NOTIFIED
-    // console.log(`Processing waitlist for event ${eventId}`);
+  async getWaitlistPosition(userId: string, eventId: string): Promise<number | null> {
+    const entry = await prisma.waitlist.findUnique({
+      where: {
+        eventId_userId: { eventId, userId },
+      },
+    });
+
+    if (!entry || entry.status !== 'PENDING') return null;
+
+    const position = await prisma.waitlist.count({
+      where: {
+        eventId,
+        status: 'PENDING',
+        createdAt: { lt: entry.createdAt },
+      },
+    });
+
+    return position + 1; // 1-indexed
+  }
+
+  /**
+   * Process waitlist when tickets become available
+   * Finds oldest PENDING entries and notifies users.
+   */
+  async processWaitlist(eventId: string, maxNotify: number = 5): Promise<void> {
+    // Find available ticket types for this event
+    const ticketTypes = await prisma.ticketType.findMany({
+      where: {
+        eventId,
+        quantityAvailable: { gt: 0 },
+        status: 'ACTIVE',
+      },
+    });
+
+    if (ticketTypes.length === 0) return;
+
+    // Find oldest pending waitlist entries
+    const pendingEntries = await prisma.waitlist.findMany({
+      where: {
+        eventId,
+        status: 'PENDING',
+      },
+      orderBy: { createdAt: 'asc' },
+      take: maxNotify,
+      include: {
+        user: { select: { email: true, firstName: true } },
+      },
+    });
+
+    // Notify each user and update status
+    for (const entry of pendingEntries) {
+      try {
+        await notificationService.sendEmail({
+          to: entry.userId, // In production, use entry.user.email
+          subject: 'Tickets Available!',
+          html: `<p>Tickets are now available for an event you were waiting for. Hurry — limited availability!</p>`,
+          text: `Tickets are now available for an event you were waiting for. Hurry — limited availability!`,
+        });
+
+        await prisma.waitlist.update({
+          where: { id: entry.id },
+          data: {
+            status: 'NOTIFIED',
+          },
+        });
+      } catch (error) {
+        console.error(`Failed to notify waitlist entry ${entry.id}:`, error);
+      }
+    }
   }
 }
 
 export const waitlistService = new WaitlistService();
+

@@ -1,8 +1,8 @@
 import { ApiError } from '../../utils/ApiError';
 import { Decimal } from '@prisma/client/runtime/library';
-import { PrismaClient, PromoCode, PromoCodeStatus, DiscountType, Prisma } from '@prisma/client';
+import { PromoCode, PromoCodeStatus, DiscountType, Prisma } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import prisma from '../../config/prisma';
 
 interface CreatePromoCodeInput {
   code: string;

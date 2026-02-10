@@ -9,6 +9,12 @@ interface CreateTicketTypeInput {
   name: string;
   price: number;
   quantity: number;
+  description?: string;
+  maxPerOrder?: number;
+  salesStart?: string;
+  salesEnd?: string;
+  metadata?: Record<string, unknown>;
+  status?: 'ACTIVE' | 'HIDDEN' | 'SOLD_OUT';
 }
 
 interface UpdateTicketTypeInput {
@@ -35,12 +41,15 @@ export class TicketTypeService {
       data: {
         eventId: data.eventId,
         name: data.name,
-        // Prisma model uses Decimal for price and uses quantityTotal/quantityAvailable
+        description: data.description ?? null,
         price: new Decimal(data.price),
         quantityTotal: data.quantity,
         quantityAvailable: data.quantity,
-        salesStart: null,
-        salesEnd: null,
+        maxPerOrder: data.maxPerOrder ?? 10,
+        salesStart: data.salesStart ? new Date(data.salesStart) : null,
+        salesEnd: data.salesEnd ? new Date(data.salesEnd) : null,
+        metadata: data.metadata as any ?? null,
+        status: data.status ?? 'ACTIVE',
       },
     });
   }
@@ -108,14 +117,16 @@ export class TicketTypeService {
     // Handle quantity update - adjust quantityAvailable accordingly
     if (data.quantity !== undefined) {
       const soldQuantity = existingTicketType.quantitySold;
+      const heldQuantity = existingTicketType.quantityHeld;
 
-      if (data.quantity < soldQuantity) {
-        throw ApiError.badRequest(`Cannot reduce quantity below ${soldQuantity} (already sold)`);
+      if (data.quantity < soldQuantity + heldQuantity) {
+        throw ApiError.badRequest(
+          `Cannot reduce quantity below ${soldQuantity + heldQuantity} (${soldQuantity} sold + ${heldQuantity} held)`
+        );
       }
 
       updateData.quantityTotal = data.quantity;
-      // existingTicketType.quantityHeld and quantitySold are numbers (from Prisma schema)
-      updateData.quantityAvailable = data.quantity - soldQuantity - existingTicketType.quantityHeld;
+      updateData.quantityAvailable = data.quantity - soldQuantity - heldQuantity;
     }
 
     // Update ticket type
@@ -123,7 +134,6 @@ export class TicketTypeService {
       where: { id },
       data: {
         ...updateData,
-        updatedAt: new Date(),
       },
     });
   }
@@ -182,8 +192,13 @@ export class TicketTypeService {
       throw ApiError.notFound('Ticket type not found');
     }
 
-    // Check if event is published
-    if (ticketType.event.status !== 'PUBLISHED') {
+    // Check if event is published or on sale
+    if (!['PUBLISHED', 'ON_SALE'].includes(ticketType.event.status)) {
+      return false;
+    }
+
+    // Check ticket type status (reject HIDDEN and SOLD_OUT)
+    if (ticketType.status === 'HIDDEN' || ticketType.status === 'SOLD_OUT') {
       return false;
     }
 
