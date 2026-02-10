@@ -56,39 +56,21 @@ export class EventStatsService {
       ]);
 
     // Get scan statistics
-    const [scanStats, lastScan] = await Promise.all([
-      prisma.scanLog.groupBy({
-        by: ['scanType', 'success'],
-        where: { eventId },
-        _count: {
-          _all: true,
-        },
+    const [entryScans, exitScans, successfulScans, totalScans, lastScan] = await Promise.all([
+      prisma.scanLog.count({
+        where: { eventId, scanType: 'ENTRY', success: true },
       }),
+      prisma.scanLog.count({
+        where: { eventId, scanType: 'EXIT', success: true },
+      }),
+      prisma.scanLog.count({ where: { eventId, success: true } }),
+      prisma.scanLog.count({ where: { eventId } }),
       prisma.scanLog.findFirst({
         where: { eventId },
         orderBy: { scannedAt: 'desc' },
         select: { scannedAt: true },
       }),
     ]);
-
-    let entryScans = 0;
-    let exitScans = 0;
-    let successfulScans = 0;
-    let totalScans = 0;
-
-    scanStats.forEach((stat) => {
-      const count = stat._count._all;
-      totalScans += count;
-
-      if (stat.success) {
-        successfulScans += count;
-        if (stat.scanType === 'ENTRY') {
-          entryScans += count;
-        } else if (stat.scanType === 'EXIT') {
-          exitScans += count;
-        }
-      }
-    });
 
     // Calculate current occupancy (entries - exits)
     const currentOccupancy = entryScans - exitScans;
@@ -253,33 +235,43 @@ export class EventStatsService {
     const activeScanners = scanners.filter((s) => s.status === 'ACTIVE').length;
 
     // Get scan activity per scanner
-    const scannerActivity = await Promise.all(
-      scanners.map(async (scanner) => {
-        const [totalScans, successfulScans, lastScan] = await Promise.all([
-          prisma.scanLog.count({
-            where: { scannerId: scanner.id, eventId },
-          }),
-          prisma.scanLog.count({
-            where: { scannerId: scanner.id, eventId, success: true },
-          }),
-          prisma.scanLog.findFirst({
-            where: { scannerId: scanner.id, eventId },
-            orderBy: { scannedAt: 'desc' },
-            select: { scannedAt: true },
-          }),
-        ]);
+    // Optimization: Use groupBy to avoid N+1 queries
+    const [statsByScanner, successfulScansByScanner] = await Promise.all([
+      prisma.scanLog.groupBy({
+        by: ['scannerId'],
+        where: { eventId },
+        _count: { _all: true },
+        _max: { scannedAt: true },
+      }),
+      prisma.scanLog.groupBy({
+        by: ['scannerId'],
+        where: { eventId, success: true },
+        _count: { _all: true },
+      }),
+    ]);
 
-        const successRate = totalScans > 0 ? (successfulScans / totalScans) * 100 : 0;
-
-        return {
-          scannerId: scanner.id,
-          scannerName: scanner.name,
-          scanCount: totalScans,
-          successRate: Math.round(successRate * 100) / 100,
-          lastScanAt: lastScan?.scannedAt,
-        };
-      })
+    // Create maps for O(1) lookup
+    const statsMap = new Map(
+      statsByScanner.map((s) => [s.scannerId, { total: s._count._all, last: s._max.scannedAt }])
     );
+
+    const successMap = new Map(successfulScansByScanner.map((s) => [s.scannerId, s._count._all]));
+
+    const scannerActivity = scanners.map((scanner) => {
+      const stats = statsMap.get(scanner.id) || { total: 0, last: undefined };
+      const successfulScans = successMap.get(scanner.id) || 0;
+      const totalScans = stats.total;
+
+      const successRate = totalScans > 0 ? (successfulScans / totalScans) * 100 : 0;
+
+      return {
+        scannerId: scanner.id,
+        scannerName: scanner.name,
+        scanCount: totalScans,
+        successRate: Math.round(successRate * 100) / 100,
+        lastScanAt: stats.last || undefined,
+      };
+    });
 
     return {
       totalScanners: scanners.length,
