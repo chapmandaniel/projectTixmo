@@ -20,6 +20,7 @@ import OrdersView from './features/OrdersView';
 import WaitingRoomView from './features/WaitingRoomView';
 import GlobalErrorNotification from './components/GlobalErrorNotification';
 import ExternalReviewPage from './pages/ExternalReviewPage';
+import { Toaster } from 'react-hot-toast';
 
 const App = () => {
     // Check if this is an external review page (no auth required)
@@ -153,6 +154,12 @@ const App = () => {
                 onClose={() => setGlobalError(null)}
                 isDark={isDark}
             />
+            <Toaster position="bottom-right" toastOptions={{
+                style: {
+                    background: isDark ? '#333' : '#fff',
+                    color: isDark ? '#fff' : '#333',
+                }
+            }} />
         </DashboardLayout>
     );
 };

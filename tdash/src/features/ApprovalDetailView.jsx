@@ -19,6 +19,7 @@ import {
     ExternalLink,
     AlertTriangle
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { api } from '../lib/api';
 
 const STATUS_CONFIG = {
@@ -79,13 +80,23 @@ const ApprovalDetailView = ({ approval, isDark, user, onBack, onUpdate, onDelete
         try {
             setSubmitting(true);
             const response = await api.post(`/approvals/${approval.id}/reviewers`, {
-                email: reviewerEmail,
-                name: reviewerName || undefined,
+                reviewers: [{
+                    email: reviewerEmail,
+                    name: reviewerName || undefined,
+                }]
             });
-            onUpdate({ ...approval, reviewers: [...(approval.reviewers || []), response.reviewer] });
+
+            // Backend returns an array of created reviewers
+            const newReviewers = Array.isArray(response) ? response : [response];
+
+            onUpdate({ ...approval, reviewers: [...(approval.reviewers || []), ...newReviewers] });
             setReviewerEmail('');
             setReviewerName('');
             setShowAddReviewer(false);
+
+            if (approval.status !== 'DRAFT') {
+                toast.success('Reviewer added and notified via email');
+            }
         } catch (err) {
             console.error('Add reviewer failed:', err);
             setError('Failed to add reviewer');
@@ -95,6 +106,10 @@ const ApprovalDetailView = ({ approval, isDark, user, onBack, onUpdate, onDelete
     };
 
     const handleRemoveReviewer = async (reviewerId) => {
+        if (approval.status !== 'DRAFT' && !confirm('Are you sure? Removing a reviewer from an active approval cannot be undone.')) {
+            return;
+        }
+
         try {
             await api.delete(`/approvals/${approval.id}/reviewers/${reviewerId}`);
             onUpdate({ ...approval, reviewers: approval.reviewers.filter(r => r.id !== reviewerId) });
@@ -456,7 +471,7 @@ const ApprovalDetailView = ({ approval, isDark, user, onBack, onUpdate, onDelete
                         <div className={`rounded-xl border p-5 ${isDark ? 'bg-[#1A1A1A] border-gray-800' : 'bg-white border-gray-200'}`}>
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Reviewers</h3>
-                                {approval.status === 'DRAFT' && (
+                                {['DRAFT', 'PENDING', 'CHANGES_REQUESTED'].includes(approval.status) && (
                                     <button
                                         onClick={() => setShowAddReviewer(true)}
                                         className="flex items-center gap-1 text-sm text-indigo-500 hover:text-indigo-400"
@@ -547,7 +562,7 @@ const ApprovalDetailView = ({ approval, isDark, user, onBack, onUpdate, onDelete
                                                     Pending
                                                 </span>
                                             )}
-                                            {approval.status === 'DRAFT' && (
+                                            {['DRAFT', 'PENDING', 'CHANGES_REQUESTED'].includes(approval.status) && !reviewer.decision && (
                                                 <button
                                                     onClick={() => handleRemoveReviewer(reviewer.id)}
                                                     className={`p-1 rounded hover:bg-red-500/20 text-red-400`}
