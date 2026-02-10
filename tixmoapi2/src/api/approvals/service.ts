@@ -316,33 +316,6 @@ class ApprovalService {
             createdReviewers.push(created);
         }
 
-        // If approval is already active, send review requests to new reviewers
-        if (approval.status !== 'DRAFT' && createdReviewers.length > 0) {
-            const requester = await prisma.user.findUnique({
-                where: { id: approval.createdBy.id },
-                select: { firstName: true, lastName: true, email: true },
-            });
-
-            if (requester) {
-                const approvalData = {
-                    title: approval.title,
-                    eventName: approval.event.name,
-                    description: approval.description || undefined,
-                    priority: approval.priority as 'STANDARD' | 'URGENT' | 'CRITICAL',
-                    dueDate: approval.dueDate || undefined,
-                };
-                const reviewerInfos = createdReviewers.map((r) => ({
-                    email: r.email,
-                    name: r.name || undefined,
-                    token: r.token,
-                }));
-
-                approvalEmailService
-                    .sendReviewRequestsToAll(reviewerInfos, requester, approvalData)
-                    .catch((err) => logger.error('Failed to send review request emails to new reviewers:', err));
-            }
-        }
-
         return createdReviewers;
     }
 
@@ -390,29 +363,26 @@ class ApprovalService {
         });
 
         // Send review request emails to all reviewers (non-blocking)
-        const requester = await prisma.user.findUnique({
-            where: { id: approval.createdBy.id },
-            select: { firstName: true, lastName: true, email: true },
-        });
+        const requester = {
+            firstName: approval.createdBy.firstName,
+            lastName: approval.createdBy.lastName,
+            email: '', // Will be fetched if needed for replies
+        };
+        const approvalData = {
+            title: approval.title,
+            eventName: approval.event.name,
+            description: approval.description || undefined,
+            priority: approval.priority as 'STANDARD' | 'URGENT' | 'CRITICAL',
+            dueDate: approval.dueDate || undefined,
+        };
+        const reviewerInfos = approval.reviewers.map((r) => ({
+            email: r.email,
+            name: r.name || undefined,
+            token: r.token,
+        }));
 
-        if (requester) {
-            const approvalData = {
-                title: approval.title,
-                eventName: approval.event.name,
-                description: approval.description || undefined,
-                priority: approval.priority as 'STANDARD' | 'URGENT' | 'CRITICAL',
-                dueDate: approval.dueDate || undefined,
-            };
-            const reviewerInfos = approval.reviewers.map((r) => ({
-                email: r.email,
-                name: r.name || undefined,
-                token: r.token,
-            }));
-
-            approvalEmailService
-                .sendReviewRequestsToAll(reviewerInfos, requester, approvalData)
-                .catch((err) => logger.error('Failed to send review request emails:', err));
-        }
+        approvalEmailService.sendReviewRequestsToAll(reviewerInfos, requester, approvalData)
+            .catch((err) => logger.error('Failed to send review request emails:', err));
 
         return updated;
     }

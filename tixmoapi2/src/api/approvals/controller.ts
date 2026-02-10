@@ -258,6 +258,8 @@ export const ApprovalController = {
             const { reviewers } = req.body;
             const createdReviewers = await approvalService.addReviewers(id, organizationId, reviewers);
 
+            // TODO: Send email notifications to reviewers
+
             return res.status(StatusCodes.CREATED).json(createdReviewers);
         } catch (error) {
             return next(error);
@@ -304,6 +306,8 @@ export const ApprovalController = {
             }
 
             const approval = await approvalService.submitForReview(id, organizationId);
+
+            // TODO: Send email notifications to all reviewers
 
             return res.json(approval);
         } catch (error) {
@@ -359,6 +363,8 @@ export const ApprovalController = {
             }
 
             const approval = await approvalService.createRevision(id, organizationId);
+
+            // TODO: Send email notifications to reviewers about new revision
 
             return res.json(approval);
         } catch (error) {
@@ -418,6 +424,8 @@ export const ApprovalController = {
             const { decision, note } = req.body;
 
             const reviewer = await approvalService.submitDecision(token, decision, note);
+
+            // TODO: Send email notification to approval creator
 
             return res.json(reviewer);
         } catch (error) {
