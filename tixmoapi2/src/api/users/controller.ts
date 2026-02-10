@@ -3,10 +3,10 @@ import { AuthRequest } from '../../middleware/auth';
 import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
-import { userService } from './service';
+import { userService, CreateUserInput, UpdateUserInput, ListUsersParams } from './service';
 
 export const createUser = catchAsync(async (req: AuthRequest, res: Response) => {
-  const payload = req.body as any;
+  const payload = req.body as CreateUserInput;
   // TODO: Add authorization check here if needed validation pass but authorization fail
   const user = await userService.createUser(payload);
   res.status(201).json(successResponse(user, 'User created successfully'));
@@ -37,7 +37,7 @@ export const updateUser = catchAsync(async (req: AuthRequest, res: Response) => 
     throw ApiError.forbidden('You can only update your own profile');
   }
 
-  const payload = req.body as Record<string, unknown>;
+  const payload = req.body as UpdateUserInput;
   const user = await userService.updateUser(id, payload);
   res.json(successResponse(user, 'User updated successfully'));
 });
@@ -50,7 +50,7 @@ export const deleteUser = catchAsync(async (req: AuthRequest, res: Response) => 
 });
 
 export const listUsers = catchAsync(async (req: AuthRequest, res: Response) => {
-  const query = req.query as Record<string, unknown>;
+  const query = req.query as unknown as ListUsersParams;
   const result = await userService.listUsers(query);
   res.json(successResponse(result));
 });
