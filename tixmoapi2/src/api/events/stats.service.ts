@@ -56,21 +56,39 @@ export class EventStatsService {
       ]);
 
     // Get scan statistics
-    const [entryScans, exitScans, successfulScans, totalScans, lastScan] = await Promise.all([
-      prisma.scanLog.count({
-        where: { eventId, scanType: 'ENTRY', success: true },
+    const [scanStats, lastScan] = await Promise.all([
+      prisma.scanLog.groupBy({
+        by: ['scanType', 'success'],
+        where: { eventId },
+        _count: {
+          _all: true,
+        },
       }),
-      prisma.scanLog.count({
-        where: { eventId, scanType: 'EXIT', success: true },
-      }),
-      prisma.scanLog.count({ where: { eventId, success: true } }),
-      prisma.scanLog.count({ where: { eventId } }),
       prisma.scanLog.findFirst({
         where: { eventId },
         orderBy: { scannedAt: 'desc' },
         select: { scannedAt: true },
       }),
     ]);
+
+    let entryScans = 0;
+    let exitScans = 0;
+    let successfulScans = 0;
+    let totalScans = 0;
+
+    scanStats.forEach((stat) => {
+      const count = stat._count._all;
+      totalScans += count;
+
+      if (stat.success) {
+        successfulScans += count;
+        if (stat.scanType === 'ENTRY') {
+          entryScans += count;
+        } else if (stat.scanType === 'EXIT') {
+          exitScans += count;
+        }
+      }
+    });
 
     // Calculate current occupancy (entries - exits)
     const currentOccupancy = entryScans - exitScans;
