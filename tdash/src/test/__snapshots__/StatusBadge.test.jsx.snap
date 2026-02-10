@@ -1,0 +1,209 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`StatusBadge > Dark Mode > renders correctly for status: ACTIVE 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-emerald-900/10 text-emerald-400/80"
+  >
+    active
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Dark Mode > renders correctly for status: CANCELLED 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-[#2a2a2a] text-gray-500"
+  >
+    cancelled
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Dark Mode > renders correctly for status: DRAFT 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-[#2a2a2a] text-gray-400"
+  >
+    draft
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Dark Mode > renders correctly for status: ON_SALE 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-emerald-900/10 text-emerald-400/80"
+  >
+    on sale
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Dark Mode > renders correctly for status: PAID 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-emerald-900/10 text-emerald-400/80"
+  >
+    paid
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Dark Mode > renders correctly for status: PENDING 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-amber-900/10 text-amber-400/80"
+  >
+    pending
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Dark Mode > renders correctly for status: PUBLISHED 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-blue-900/10 text-blue-400/80"
+  >
+    published
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Dark Mode > renders correctly for status: SOLD_OUT 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-rose-900/10 text-rose-400/80"
+  >
+    sold out
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Dark Mode > renders correctly for status: SUSPENDED 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-rose-900/10 text-rose-400/80"
+  >
+    suspended
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Dark Mode > renders default styles for unknown status 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-[#2a2a2a]"
+  >
+    unknown status
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders correctly for status: ACTIVE 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-emerald-50 text-emerald-700"
+  >
+    active
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders correctly for status: CANCELLED 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-gray-50 text-gray-500"
+  >
+    cancelled
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders correctly for status: DRAFT 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-gray-100 text-gray-600"
+  >
+    draft
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders correctly for status: ON_SALE 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-emerald-50 text-emerald-700"
+  >
+    on sale
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders correctly for status: PAID 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-emerald-50 text-emerald-700"
+  >
+    paid
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders correctly for status: PENDING 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-amber-50 text-amber-700"
+  >
+    pending
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders correctly for status: PUBLISHED 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-blue-50 text-blue-700"
+  >
+    published
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders correctly for status: SOLD_OUT 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-rose-50 text-rose-700"
+  >
+    sold out
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders correctly for status: SUSPENDED 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-rose-50 text-rose-700"
+  >
+    suspended
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > Light Mode > renders default styles for unknown status 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-gray-50"
+  >
+    unknown status
+  </span>
+</div>
+`;
+
+exports[`StatusBadge > renders empty when status is null/undefined 1`] = `
+<div>
+  <span
+    class="px-2.5 py-1 rounded-full text-xs font-normal capitalize bg-gray-50"
+  />
+</div>
+`;
