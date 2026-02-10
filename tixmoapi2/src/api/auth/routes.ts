@@ -3,6 +3,7 @@ import * as authController from './controller';
 import { validate } from '../../middleware/validate';
 import { authenticate } from '../../middleware/auth';
 import { registerSchema, loginSchema, refreshTokenSchema } from './validation';
+import { authRateLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 
@@ -86,7 +87,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/register', validate(registerSchema), authController.register);
+router.post('/register', authRateLimiter, validate(registerSchema), authController.register);
 
 /**
  * @swagger
@@ -153,7 +154,7 @@ router.post('/register', validate(registerSchema), authController.register);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/login', validate(loginSchema), authController.login);
+router.post('/login', authRateLimiter, validate(loginSchema), authController.login);
 
 /**
  * @swagger
@@ -211,7 +212,7 @@ router.post('/login', validate(loginSchema), authController.login);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/refresh', validate(refreshTokenSchema), authController.refreshToken);
+router.post('/refresh', authRateLimiter, validate(refreshTokenSchema), authController.refreshToken);
 
 /**
  * @swagger

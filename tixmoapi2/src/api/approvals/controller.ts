@@ -15,8 +15,8 @@ const upload = multer({
         },
     }),
     limits: {
-        fileSize: 50 * 1024 * 1024, // 50MB limit per file
-        files: 10, // Max 10 files per upload
+        fileSize: 5 * 1024 * 1024, // 5MB limit per file
+        files: 5, // Max 5 files per upload
     },
     fileFilter: (_req, file, cb) => {
         // Allow images, PDFs, and common design files
@@ -39,7 +39,7 @@ const upload = multer({
     },
 });
 
-export const uploadMiddleware = upload.array('files', 10);
+export const uploadMiddleware = upload.array('files', 5);
 
 export const ApprovalController = {
     /**
