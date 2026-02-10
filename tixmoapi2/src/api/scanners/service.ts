@@ -492,6 +492,7 @@ export class ScannerService {
 
   /**
    * Sync tickets for offline validation
+   * @deprecated Use syncTicketsStream instead for better performance
    */
   async syncTickets(
     scannerId: string,
@@ -565,6 +566,104 @@ export class ScannerService {
       tickets: mappedTickets,
       timestamp: new Date(),
     };
+  }
+
+  /**
+   * Sync tickets for offline validation (Streamed)
+   */
+  async *syncTicketsStream(
+    scannerId: string,
+    eventId?: string,
+    since?: Date,
+    batchSize = 1000
+  ): AsyncGenerator<
+    Array<{
+      id: string;
+      barcode: string;
+      status: string;
+      ticketTypeId: string;
+      hash: string;
+    }>
+  > {
+    // Get scanner to verify permissions
+    const scanner = await prisma.scanner.findUnique({
+      where: { id: scannerId },
+    });
+
+    if (!scanner) {
+      throw ApiError.notFound('Scanner not found');
+    }
+
+    // Determine event ID
+    const targetEventId = eventId || scanner.eventId;
+    if (!targetEventId) {
+      throw ApiError.badRequest('Event ID is required for sync');
+    }
+
+    // Verify scanner access to event
+    if (scanner.eventId && scanner.eventId !== targetEventId) {
+      throw ApiError.forbidden('Scanner is not assigned to this event');
+    }
+
+    // Fetch tickets
+    const where: Prisma.TicketWhereInput = {
+      eventId: targetEventId,
+      status: { in: ['VALID', 'USED'] }, // Only sync relevant tickets
+    };
+
+    if (since) {
+      where.updatedAt = { gte: since };
+    }
+
+    let cursor: string | undefined;
+
+    while (true) {
+      const params: Prisma.TicketFindManyArgs = {
+        where,
+        take: batchSize,
+        orderBy: { id: 'asc' },
+        select: {
+          id: true,
+          barcode: true,
+          status: true,
+          ticketTypeId: true,
+          updatedAt: true,
+        },
+      };
+
+      if (cursor) {
+        params.cursor = { id: cursor };
+        params.skip = 1;
+      }
+
+      const tickets = await prisma.ticket.findMany(params);
+
+      if (tickets.length === 0) {
+        break;
+      }
+
+      // Update cursor
+      cursor = tickets[tickets.length - 1].id;
+
+      // Map to minimal format
+      const mappedTickets = tickets.map((t) => ({
+        id: t.id,
+        barcode: t.barcode,
+        status: t.status,
+        ticketTypeId: t.ticketTypeId,
+        hash: crypto
+          .createHash('sha256')
+          .update(`${t.id}:${t.barcode}:${t.status}`)
+          .digest('hex')
+          .substring(0, 16),
+      }));
+
+      yield mappedTickets;
+
+      if (tickets.length < batchSize) {
+        break;
+      }
+    }
   }
 
   /**
