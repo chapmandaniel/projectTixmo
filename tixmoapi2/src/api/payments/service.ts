@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { config } from '../../config/environment';
+import { logger } from '../../config/logger';
 import { ApiError } from '../../utils/ApiError';
 import { orderService } from '../orders/service';
 import { notificationService } from '../../utils/notificationService';
@@ -11,7 +12,7 @@ export class PaymentService {
     if (config.stripeSecretKey) {
       this.stripe = new Stripe(config.stripeSecretKey);
     } else {
-      console.warn('⚠️ STRIPE_SECRET_KEY not provided. Payment features will be disabled.');
+      logger.warn('⚠️ STRIPE_SECRET_KEY not provided. Payment features will be disabled.');
     }
   }
 
@@ -92,7 +93,7 @@ export class PaymentService {
       }
       default:
         // Unhandled event type
-        console.log(`Unhandled event type ${event.type}`);
+        logger.info(`Unhandled event type ${event.type}`);
     }
   }
 
@@ -103,7 +104,7 @@ export class PaymentService {
     const orderId = paymentIntent.metadata.orderId;
 
     if (!orderId) {
-      console.error('Missing orderId in payment intent metadata');
+      logger.error('Missing orderId in payment intent metadata');
       return;
     }
 
@@ -111,7 +112,7 @@ export class PaymentService {
       await orderService.confirmOrder(orderId);
       await orderService.sendOrderConfirmationEmail(orderId);
     } catch (error) {
-      console.error(`Failed to confirm order ${orderId}:`, error);
+      logger.error(`Failed to confirm order ${orderId}: ${error}`);
       // TODO: Implement retry logic or manual intervention alert
     }
   }
@@ -122,7 +123,7 @@ export class PaymentService {
   private async handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<void> {
     const orderId = paymentIntent.metadata.orderId;
     const userId = paymentIntent.metadata.userId;
-    console.log(
+    logger.info(
       `Payment failed for order ${orderId}: ${paymentIntent.last_payment_error?.message}`
     );
 
@@ -136,7 +137,7 @@ export class PaymentService {
           text: `Your payment for order ${orderId} could not be processed. Please try again or use a different payment method.`,
         });
       } catch (error) {
-        console.error('Failed to send payment failure notification:', error);
+        logger.error(`Failed to send payment failure notification: ${error}`);
       }
     }
   }

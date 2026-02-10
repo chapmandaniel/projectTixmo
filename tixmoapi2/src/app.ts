@@ -46,13 +46,15 @@ app.use(
 
       // Check for .tixmo.co subdomains (Regex)
       // Allows: https://demo.tixmo.co, https://anything.tixmo.co
-      const tixmoPattern = /^https:\/\/(?:[a-zA-Z0-9-]+\.)+tixmo\.co$/;
+      const tixmoPattern = /^https:\/\/.*\.tixmo\.co$/;
       if (tixmoPattern.test(origin)) {
         return callback(null, true);
       }
 
-      // Railway apps for dynamic preview branches should be added to CORS_ORIGIN
-      // Removed insecure wildcard check for .up.railway.app
+      // Also allow railway apps for dynamic preview branches if needed
+      if (origin.endsWith('.up.railway.app')) {
+        return callback(null, true);
+      }
 
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
       return callback(new Error(msg), false);
