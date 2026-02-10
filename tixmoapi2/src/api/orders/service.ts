@@ -579,19 +579,32 @@ export class OrderService {
     }
 
     return await prisma.$transaction(async (tx) => {
-      // Cancel all tickets and restore inventory
-      for (const ticket of order.tickets) {
-        if (ticket.status === 'VALID' || ticket.status === 'TRANSFERRED') {
-          await tx.ticket.update({
-            where: { id: ticket.id },
-            data: { status: 'CANCELLED' },
-          });
+      // Cancel all valid tickets in one batch
+      const ticketsToCancel = order.tickets.filter(
+        (t) => t.status === 'VALID' || t.status === 'TRANSFERRED'
+      );
 
+      if (ticketsToCancel.length > 0) {
+        const ticketIds = ticketsToCancel.map((t) => t.id);
+
+        await tx.ticket.updateMany({
+          where: { id: { in: ticketIds } },
+          data: { status: 'CANCELLED' },
+        });
+
+        // Aggregate inventory updates by ticket type to avoid N+1 queries
+        const ticketTypeCounts = new Map<string, number>();
+        for (const ticket of ticketsToCancel) {
+          const count = ticketTypeCounts.get(ticket.ticketTypeId) || 0;
+          ticketTypeCounts.set(ticket.ticketTypeId, count + 1);
+        }
+
+        for (const [ticketTypeId, count] of ticketTypeCounts.entries()) {
           await tx.ticketType.update({
-            where: { id: ticket.ticketTypeId },
+            where: { id: ticketTypeId },
             data: {
-              quantitySold: { decrement: 1 },
-              quantityAvailable: { increment: 1 },
+              quantitySold: { decrement: count },
+              quantityAvailable: { increment: count },
             },
           });
         }
