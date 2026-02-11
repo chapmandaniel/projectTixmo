@@ -76,8 +76,11 @@ export class PaymentService {
 
     try {
       event = this.stripe.webhooks.constructEvent(payload, signature, config.stripeWebhookSecret);
-    } catch (err: any) {
-      throw new ApiError(400, `Webhook Error: ${err.message}`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        throw new ApiError(400, `Webhook Error: ${err.message}`);
+      }
+      throw new ApiError(400, 'Webhook Error: Unknown error');
     }
 
     switch (event.type) {
@@ -111,8 +114,9 @@ export class PaymentService {
     try {
       await orderService.confirmOrder(orderId);
       await orderService.sendOrderConfirmationEmail(orderId);
-    } catch (error) {
-      logger.error(`Failed to confirm order ${orderId}: ${error}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to confirm order ${orderId}: ${errorMessage}`);
       // TODO: Implement retry logic or manual intervention alert
     }
   }
@@ -136,8 +140,9 @@ export class PaymentService {
           html: `<p>Your payment for order ${orderId} could not be processed. Please try again or use a different payment method.</p>`,
           text: `Your payment for order ${orderId} could not be processed. Please try again or use a different payment method.`,
         });
-      } catch (error) {
-        logger.error(`Failed to send payment failure notification: ${error}`);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.error(`Failed to send payment failure notification: ${errorMessage}`);
       }
     }
   }
