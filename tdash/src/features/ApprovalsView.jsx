@@ -73,7 +73,8 @@ const ApprovalsView = ({ isDark, user }) => {
     const fetchEvents = async () => {
         try {
             const response = await api.get('/events');
-            setEvents(response.events || response || []);
+            const data = response.events || response;
+            setEvents(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Failed to fetch events:', err);
         }
@@ -102,8 +103,8 @@ const ApprovalsView = ({ isDark, user }) => {
     };
 
     const filteredApprovals = approvals.filter(approval =>
-        approval.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        approval.event?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        (approval.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (approval.event?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // If viewing detail
@@ -183,7 +184,7 @@ const ApprovalsView = ({ isDark, user }) => {
                         } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
                 >
                     <option value="">All Events</option>
-                    {events.map((event) => (
+                    {Array.isArray(events) && events.map((event) => (
                         <option key={event.id} value={event.id}>{event.name}</option>
                     ))}
                 </select>
@@ -192,7 +193,7 @@ const ApprovalsView = ({ isDark, user }) => {
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                 {Object.entries(STATUS_CONFIG).map(([status, config]) => {
-                    const count = approvals.filter(a => a.status === status).length;
+                    const count = approvals.filter(a => a?.status === status).length;
                     const IconComponent = config.icon;
                     return (
                         <div
