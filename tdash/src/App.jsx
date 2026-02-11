@@ -20,6 +20,7 @@ import OrdersView from './features/OrdersView';
 import WaitingRoomView from './features/WaitingRoomView';
 import GlobalErrorNotification from './components/GlobalErrorNotification';
 import ExternalReviewPage from './pages/ExternalReviewPage';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const App = () => {
     // Check if this is an external review page (no auth required)
@@ -139,21 +140,23 @@ const App = () => {
     }
 
     return (
-        <DashboardLayout
-            activeView={managedEvent ? 'events' : activeView}
-            onNavigate={handleViewChange}
-            isDark={isDark}
-            toggleTheme={toggleTheme}
-            user={user}
-            onLogout={handleLogout}
-        >
-            {renderContent()}
-            <GlobalErrorNotification
-                error={globalError}
-                onClose={() => setGlobalError(null)}
+        <ErrorBoundary isDark={isDark}>
+            <DashboardLayout
+                activeView={managedEvent ? 'events' : activeView}
+                onNavigate={handleViewChange}
                 isDark={isDark}
-            />
-        </DashboardLayout>
+                toggleTheme={toggleTheme}
+                user={user}
+                onLogout={handleLogout}
+            >
+                {renderContent()}
+                <GlobalErrorNotification
+                    error={globalError}
+                    onClose={() => setGlobalError(null)}
+                    isDark={isDark}
+                />
+            </DashboardLayout>
+        </ErrorBoundary>
     );
 };
 

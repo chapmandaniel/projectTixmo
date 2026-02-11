@@ -10,7 +10,7 @@ import { config } from '../config/environment';
  */
 export const authRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: config.nodeEnv === 'development' ? 100 : 5, // 100 in dev, 5 in prod
+  max: config.nodeEnv === 'development' ? 100 : 20, // Increase prod limit to 20 to avoid demo lockouts
   message: {
     success: false,
     message: 'Too many authentication attempts, please try again after a minute',
@@ -19,7 +19,7 @@ export const authRateLimiter = rateLimit({
   legacyHeaders: false,
   // Use Redis store
   store: new RedisStore({
-    // @ts-ignore - Known issue with rate-limit-redis types and redis v4
+    // @ts-expect-error - Expected by rate-limit-redis
     sendCommand: (...args: string[]) => getRedisClient().sendCommand(args),
   }),
 });

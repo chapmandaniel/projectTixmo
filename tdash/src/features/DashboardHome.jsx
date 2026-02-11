@@ -16,27 +16,30 @@ const DashboardHome = ({ isDark, user }) => {
             setIsLoading(true);
             try {
                 const [tasksRes, notifRes] = await Promise.all([
-                    api.get('/tasks', { params: { assigneeId: user?.id } }),
-                    api.get('/notifications', { params: { limit: 5 } }),
+                    api.get('/tasks', { params: { assigneeId: user?.id } }).catch(err => ({ data: [] })),
+                    api.get('/notifications', { params: { limit: 5 } }).catch(err => ({ data: { success: false } })),
                 ]);
 
                 // Tasks API returns array or { data: [] }
-                const tData = tasksRes.data;
-                const taskData = Array.isArray(tData) ? tData : (Array.isArray(tData.data) ? tData.data : []);
-                // Filter out Done tasks to keep dashboard focused
-                const activeTasks = taskData.filter(t => t.status !== 'DONE');
+                const tData = tasksRes?.data || [];
+                const taskData = Array.isArray(tData) ? tData : (Array.isArray(tData?.data) ? tData.data : []);
+
+                // Filter out Done tasks
+                const activeTasks = taskData.filter(t => t?.status !== 'DONE');
                 setTasks(activeTasks);
 
-                // Calculate stats
-                const overdue = activeTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date()).length;
+                // Calculate stats safely
+                const overdue = activeTasks.filter(t => t?.dueDate && new Date(t.dueDate) < new Date()).length;
 
-                // Get personal todos from localStorage
+                // Get personal todos from localStorage safely
                 let personalCount = 0;
                 try {
                     const saved = localStorage.getItem('tixmo_personal_todos');
                     if (saved) {
                         const parsed = JSON.parse(saved);
-                        personalCount = parsed.filter(t => !t.completed).length;
+                        if (Array.isArray(parsed)) {
+                            personalCount = parsed.filter(t => t && !t.completed).length;
+                        }
                     }
                 } catch (e) {
                     console.error('Failed to parse local todos', e);
@@ -49,9 +52,12 @@ const DashboardHome = ({ isDark, user }) => {
                 });
 
                 // Notifications API returns { success: true, data: { notifications: [] } }
-                if (notifRes.data.success && notifRes.data.data) {
+                if (notifRes?.data?.success && notifRes?.data?.data) {
                     const notifs = notifRes.data.data.notifications;
                     setNotifications(Array.isArray(notifs) ? notifs : []);
+                } else if (Array.isArray(notifRes?.data?.notifications)) {
+                    // Fallback for different API structure
+                    setNotifications(notifRes.data.notifications);
                 }
             } catch (error) {
                 console.error('Failed to fetch dashboard data', error);

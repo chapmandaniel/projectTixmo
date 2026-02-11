@@ -17,7 +17,11 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
     // Fetch notifications
     const fetchNotifications = async () => {
         try {
-            const { data } = await api.get('/notifications?limit=10');
+            const res = await api.get('/notifications?limit=10').catch(() => null);
+            if (!res) return;
+
+            const data = res.data || {};
+
             // Handle both flat and nested response structures
             let notifs = [];
             if (Array.isArray(data.notifications)) {
@@ -28,7 +32,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
 
             if (JSON.stringify(notifs) !== JSON.stringify(notifications)) {
                 setNotifications(notifs);
-                setUnreadCount(notifs.filter(n => !n.readAt).length);
+                setUnreadCount(notifs.filter(n => n && !n.readAt).length);
             }
         } catch (error) {
             console.error('Failed to fetch notifications', error);
