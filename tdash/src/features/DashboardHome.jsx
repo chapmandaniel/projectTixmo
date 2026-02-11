@@ -21,7 +21,8 @@ const DashboardHome = ({ isDark, user }) => {
                 ]);
 
                 // Tasks API returns array or { data: [] }
-                const taskData = Array.isArray(tasksRes.data) ? tasksRes.data : (tasksRes.data.data || []);
+                const tData = tasksRes.data;
+                const taskData = Array.isArray(tData) ? tData : (Array.isArray(tData.data) ? tData.data : []);
                 // Filter out Done tasks to keep dashboard focused
                 const activeTasks = taskData.filter(t => t.status !== 'DONE');
                 setTasks(activeTasks);
