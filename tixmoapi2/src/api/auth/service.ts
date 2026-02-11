@@ -41,7 +41,7 @@ export class AuthService {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
-        role: UserRole.CUSTOMER,
+        role: data.role || UserRole.CUSTOMER,
       },
       select: {
         id: true,
