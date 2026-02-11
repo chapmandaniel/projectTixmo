@@ -23,9 +23,9 @@ export const config = {
   redisDb: parseInt(process.env.REDIS_DB || '0', 10),
 
   // JWT
-  jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
+  jwtSecret: process.env.JWT_SECRET || '',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || '',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
 
   // Stripe
@@ -44,46 +44,45 @@ export const config = {
   emailFrom: process.env.EMAIL_FROM || 'noreply@tixmo.com',
 
   // SMS
-  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || '',
-  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
-  twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER || '',
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
+  twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER,
 
   // AI
   geminiApiKey: process.env.GEMINI_API_KEY || '',
 
   // AWS
-  awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-  awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+  awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   awsRegion: process.env.AWS_REGION || 'us-east-1',
-  awsS3Bucket: process.env.AWS_S3_BUCKET || '',
+  awsS3Bucket: process.env.AWS_S3_BUCKET,
 
   // Elasticsearch
-  elasticsearchNode: process.env.ELASTICSEARCH_NODE,
+  elasticsearchNode: process.env.ELASTICSEARCH_NODE || 'http://localhost:9200',
   elasticsearchUsername: process.env.ELASTICSEARCH_USERNAME,
   elasticsearchPassword: process.env.ELASTICSEARCH_PASSWORD,
 
   // Sentry
-  sentryDsn: process.env.SENTRY_DSN || '',
+  sentryDsn: process.env.SENTRY_DSN,
   sentryTracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.0'),
   release: process.env.RELEASE || undefined,
 
   // Rate Limiting
-  rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
-  rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
+  rateLimitWindowMs: 15 * 60 * 1000,
+  rateLimitMax: 100,
 
   // CORS
   corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'],
 
   // Session
-  sessionSecret: process.env.SESSION_SECRET || 'your-session-secret',
+  sessionSecret: process.env.SESSION_SECRET || '',
 
   // Feature Flags
   enableResaleMarket: process.env.ENABLE_RESALE_MARKET === 'true',
-  enableSmsNotifications: process.env.ENABLE_SMS_NOTIFICATIONS === 'true',
-  enablePushNotifications: process.env.ENABLE_PUSH_NOTIFICATIONS === 'true',
+  enableAIGeneration: process.env.ENABLE_AI_GENERATION === 'true',
 
   // Logging
-  logLevel: process.env.LOG_LEVEL || 'debug',
+  logLevel: process.env.LOG_LEVEL || 'info',
   logToFile: process.env.LOG_TO_FILE === 'true',
 
   // Cart Settings
@@ -92,14 +91,20 @@ export const config = {
 } as const;
 
 // Validate required environment variables
-const requiredEnvVars = ['DATABASE_URL'];
-
-if (config.nodeEnv === 'production') {
-  requiredEnvVars.push('JWT_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET');
-}
+const requiredEnvVars = [
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'JWT_REFRESH_SECRET',
+  'SESSION_SECRET'
+];
 
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
-  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  // Only warn in development, throw in production
+  if (config.nodeEnv === 'production') {
+    throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  } else {
+    console.warn(`WARNING: Missing environment variables: ${missingEnvVars.join(', ')}`);
+  }
 }
