@@ -209,23 +209,32 @@ export class OrderService {
         });
 
         // Create tickets with secure barcodes
+        const ticketsToCreate: Prisma.TicketCreateManyInput[] = [];
+
         for (const item of sortedItems) {
           const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
+          // Calculate price once per item (ticket type)
+          const pricePaid = tierPriceMap.get(item.ticketTypeId) ?? ticketType.price;
+
           for (let j = 0; j < item.quantity; j++) {
             const secureBarcode = `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`;
-            const pricePaid = tierPriceMap.get(item.ticketTypeId) ?? ticketType.price;
-            await tx.ticket.create({
-              data: {
-                orderId: newOrder.id,
-                userId,
-                eventId,
-                ticketTypeId: item.ticketTypeId,
-                pricePaid,
-                barcode: secureBarcode,
-                status: 'VALID',
-              },
+
+            ticketsToCreate.push({
+              orderId: newOrder.id,
+              userId,
+              eventId,
+              ticketTypeId: item.ticketTypeId,
+              pricePaid,
+              barcode: secureBarcode,
+              status: 'VALID',
             });
           }
+        }
+
+        if (ticketsToCreate.length > 0) {
+          await tx.ticket.createMany({
+            data: ticketsToCreate,
+          });
         }
 
         // Increment promo code usage if used
