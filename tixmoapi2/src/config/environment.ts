@@ -2,11 +2,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-console.log('DEBUG: Loading Environment');
-console.log('DEBUG: REDIS_URL exists:', !!process.env.REDIS_URL);
-console.log('DEBUG: DATABASE_URL exists:', !!process.env.DATABASE_URL);
-
-
 export const config = {
   // Application
   nodeEnv: process.env.NODE_ENV || 'development',
