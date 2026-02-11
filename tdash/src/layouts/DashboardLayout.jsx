@@ -18,8 +18,14 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
     const fetchNotifications = async () => {
         try {
             const { data } = await api.get('/notifications?limit=10');
-            // Assuming response structure { notifications: [], pagination: {} }
-            const notifs = data.notifications || [];
+            // Handle both flat and nested response structures
+            let notifs = [];
+            if (Array.isArray(data.notifications)) {
+                notifs = data.notifications;
+            } else if (data.data && Array.isArray(data.data.notifications)) {
+                notifs = data.data.notifications;
+            }
+
             if (JSON.stringify(notifs) !== JSON.stringify(notifications)) {
                 setNotifications(notifs);
                 setUnreadCount(notifs.filter(n => !n.readAt).length);

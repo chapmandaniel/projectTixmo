@@ -49,7 +49,8 @@ const DashboardHome = ({ isDark, user }) => {
 
                 // Notifications API returns { success: true, data: { notifications: [] } }
                 if (notifRes.data.success && notifRes.data.data) {
-                    setNotifications(notifRes.data.data.notifications || []);
+                    const notifs = notifRes.data.data.notifications;
+                    setNotifications(Array.isArray(notifs) ? notifs : []);
                 }
             } catch (error) {
                 console.error('Failed to fetch dashboard data', error);
