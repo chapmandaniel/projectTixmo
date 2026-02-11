@@ -19,7 +19,7 @@ export const authRateLimiter = rateLimit({
   legacyHeaders: false,
   // Use Redis store
   store: new RedisStore({
-    // @ts-expect-error - Expected by rate-limit-redis
+    // @ts-ignore - Known issue with rate-limit-redis types and redis v4
     sendCommand: (...args: string[]) => getRedisClient().sendCommand(args),
   }),
 });
