@@ -15,6 +15,7 @@ export interface CreateUserInput {
   firstName: string;
   lastName: string;
   role: 'OWNER' | 'ADMIN' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
+  organizationId?: string;
   title?: string;
   permissions?: Record<string, boolean>;
   password?: string;

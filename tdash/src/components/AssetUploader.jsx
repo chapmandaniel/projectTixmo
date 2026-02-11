@@ -1,6 +1,40 @@
 import React, { useCallback, useState } from 'react';
 import { Upload, X, FileText, Image, File, Loader2 } from 'lucide-react';
 
+export const validateFile = (file, maxSize, accept) => {
+    // Size check
+    if (file.size > maxSize) {
+        return `File too large (max ${maxSize / 1024 / 1024}MB)`;
+    }
+
+    // Type check if accept is provided
+    if (accept && accept !== '*' && accept !== '*/*') {
+        const acceptedTypes = accept.split(',').map(t => t.trim());
+        const fileType = file.type;
+        const fileName = file.name.toLowerCase();
+
+        const isAccepted = acceptedTypes.some(type => {
+            if (type.startsWith('.')) {
+                // Extension check
+                return fileName.endsWith(type.toLowerCase());
+            } else if (type.endsWith('/*')) {
+                // Wildcard MIME check (e.g., image/*)
+                const baseType = type.split('/')[0];
+                return fileType.startsWith(`${baseType}/`);
+            } else {
+                // Exact MIME check
+                return fileType === type;
+            }
+        });
+
+        if (!isAccepted) {
+            return `File type ${fileType || 'unknown'} is not allowed`;
+        }
+    }
+
+    return null;
+};
+
 const AssetUploader = ({
     onUpload,
     isDark,
@@ -24,21 +58,14 @@ const AssetUploader = ({
         setIsDragging(false);
     }, []);
 
-    const validateFile = (file) => {
-        if (file.size > maxSize) {
-            return `File too large (max ${maxSize / 1024 / 1024}MB)`;
-        }
-        return null;
-    };
-
     const processFiles = async (newFiles) => {
         const validFiles = [];
         const errors = [];
 
         for (const file of newFiles) {
-            const error = validateFile(file);
-            if (error) {
-                errors.push(`${file.name}: ${error}`);
+            const validationError = validateFile(file, maxSize, accept);
+            if (validationError) {
+                errors.push(`${file.name}: ${validationError}`);
             } else {
                 validFiles.push({
                     file,
@@ -67,7 +94,7 @@ const AssetUploader = ({
 
         const droppedFiles = Array.from(e.dataTransfer.files);
         processFiles(droppedFiles);
-    }, [maxSize]);
+    }, [maxSize, accept]);
 
     const handleFileSelect = (e) => {
         setError(null);
@@ -130,10 +157,10 @@ const AssetUploader = ({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${isDragging
-                        ? 'border-indigo-500 bg-indigo-500/10'
-                        : isDark
-                            ? 'border-gray-700 hover:border-gray-600 bg-gray-800/30'
-                            : 'border-gray-300 hover:border-gray-400 bg-gray-50'
+                    ? 'border-indigo-500 bg-indigo-500/10'
+                    : isDark
+                        ? 'border-gray-700 hover:border-gray-600 bg-gray-800/30'
+                        : 'border-gray-300 hover:border-gray-400 bg-gray-50'
                     } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
                 <input

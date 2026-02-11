@@ -131,6 +131,20 @@ export class NotificationService {
       text: template.text,
     });
   }
+
+  /**
+   * Send an alert to administrators for critical issues
+   */
+  async sendAdminAlert(subject: string, message: string): Promise<boolean> {
+    const adminEmail = (await import('../config/environment')).config.adminEmail;
+
+    return await this.sendEmail({
+      to: adminEmail,
+      subject: `🚨 [ALERT] ${subject}`,
+      html: `<h2>System Alert</h2><p>${message}</p>`,
+      text: `System Alert: ${message}`,
+    });
+  }
 }
 
 export const notificationService = new NotificationService();

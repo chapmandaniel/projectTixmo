@@ -88,6 +88,7 @@ export const config = {
   // Cart Settings
   cartExpiryMinutes: parseInt(process.env.CART_EXPIRY_MINUTES || '10', 10),
   seatLockDurationSeconds: parseInt(process.env.SEAT_LOCK_DURATION_SECONDS || '600', 10),
+  adminEmail: process.env.ADMIN_EMAIL || 'admin@tixmo.co',
 } as const;
 
 // Validate required environment variables

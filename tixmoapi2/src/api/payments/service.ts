@@ -109,11 +109,26 @@ export class PaymentService {
     }
 
     try {
-      await orderService.confirmOrder(orderId);
-      await orderService.sendOrderConfirmationEmail(orderId);
+      const { withRetry } = await import('../../utils/retry');
+
+      // Retry up to 5 times with exponential backoff
+      await withRetry(async () => {
+        await orderService.confirmOrder(orderId);
+        await orderService.sendOrderConfirmationEmail(orderId);
+      }, {
+        maxRetries: 5,
+        initialDelay: process.env.NODE_ENV === 'test' ? 10 : 2000,
+      });
+
+      logger.info(`Successfully confirmed order ${orderId} after payment success`);
     } catch (error) {
-      logger.error(`Failed to confirm order ${orderId}: ${error}`);
-      // TODO: Implement retry logic or manual intervention alert
+      logger.error(`Critical: Failed to confirm order ${orderId} after multiple retries: ${error}`);
+
+      // Send alert to admin for manual intervention
+      await notificationService.sendAdminAlert(
+        'Order Confirmation Failure',
+        `Order ${orderId} failed to confirm after payment succeeded. Manual intervention required. Error: ${error}`
+      );
     }
   }
 
