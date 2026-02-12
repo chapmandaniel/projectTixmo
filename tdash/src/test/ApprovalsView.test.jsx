@@ -21,27 +21,51 @@ global.ResizeObserver = class ResizeObserver {
 };
 
 describe('ApprovalsView', () => {
-    it('renders list of approvals', async () => {
+    it('renders gallery of approvals', async () => {
         const mockApprovals = [
             {
                 id: '1',
                 title: 'Test Approval 1',
                 status: 'DRAFT',
                 priority: 'STANDARD',
-                event: { name: 'Event A' }
+                event: { name: 'Event A' },
+                assets: [],
+                reviewers: [],
             },
             {
                 id: '2',
                 title: 'Test Approval 2',
                 status: 'PENDING',
                 priority: 'URGENT',
-                event: { name: 'Event B' }
+                event: { name: 'Event B' },
+                assets: [],
+                reviewers: [],
             }
         ];
 
         apiGet.mockImplementation((url) => {
             if (url.includes('/approvals')) {
                 return Promise.resolve({ approvals: mockApprovals });
+            }
+            if (url.includes('/events')) {
+                return Promise.resolve({ events: [{ id: 'e1', name: 'Event A' }, { id: 'e2', name: 'Event B' }] });
+            }
+            return Promise.resolve({});
+        });
+
+        await act(async () => {
+            render(<ApprovalsView isDark={false} user={{}} />);
+        });
+
+        expect(screen.getByText('Test Approval 1')).toBeInTheDocument();
+        expect(screen.getByText('Test Approval 2')).toBeInTheDocument();
+        expect(screen.getByText('All Events')).toBeInTheDocument();
+    });
+
+    it('renders empty state safely', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url.includes('/approvals')) {
+                return Promise.resolve({ approvals: [] });
             }
             if (url.includes('/events')) {
                 return Promise.resolve({ events: [] });
@@ -53,23 +77,25 @@ describe('ApprovalsView', () => {
             render(<ApprovalsView isDark={false} user={{}} />);
         });
 
-        expect(screen.getByText('Test Approval 1')).toBeInTheDocument();
-        expect(screen.getByText('Test Approval 2')).toBeInTheDocument();
-        expect(screen.getByText('Event A')).toBeInTheDocument();
+        expect(screen.getByText('No approval requests found')).toBeInTheDocument();
     });
 
-    it('renders empty state safely', async () => {
+    it('renders event filter pills from API', async () => {
         apiGet.mockImplementation((url) => {
             if (url.includes('/approvals')) {
                 return Promise.resolve({ approvals: [] });
+            }
+            if (url.includes('/events')) {
+                return Promise.resolve({ events: [{ id: 'e1', name: 'Summer Festival' }] });
             }
             return Promise.resolve({});
         });
 
         await act(async () => {
-            render(<ApprovalsView isDark={false} user={{}} />);
+            render(<ApprovalsView isDark={true} user={{}} />);
         });
 
-        expect(screen.getByText('No approval requests found')).toBeInTheDocument();
+        expect(screen.getByText('Summer Festival')).toBeInTheDocument();
+        expect(screen.getByText('All Events')).toBeInTheDocument();
     });
 });

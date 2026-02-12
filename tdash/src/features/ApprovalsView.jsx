@@ -3,18 +3,14 @@ import {
     CheckCircle,
     Clock,
     XCircle,
-    AlertCircle,
     Plus,
-    Filter,
     Search,
     FileText,
-    Eye,
-    MoreHorizontal,
-    Trash2,
     Edit3,
-    Send,
-    Users
+    Calendar,
+    ChevronDown
 } from 'lucide-react';
+import ApprovalCard from '../components/ApprovalCard';
 import CreateApprovalModal from './CreateApprovalModal';
 import ApprovalDetailView from './ApprovalDetailView';
 import { api } from '../lib/api';
@@ -23,14 +19,8 @@ const STATUS_CONFIG = {
     DRAFT: { label: 'Draft', color: 'bg-gray-500', textColor: 'text-gray-400', icon: FileText },
     PENDING: { label: 'Pending', color: 'bg-yellow-500', textColor: 'text-yellow-400', icon: Clock },
     APPROVED: { label: 'Approved', color: 'bg-green-500', textColor: 'text-green-400', icon: CheckCircle },
-    CHANGES_REQUESTED: { label: 'Changes Requested', color: 'bg-orange-500', textColor: 'text-orange-400', icon: Edit3 },
+    CHANGES_REQUESTED: { label: 'Changes', color: 'bg-orange-500', textColor: 'text-orange-400', icon: Edit3 },
     REJECTED: { label: 'Rejected', color: 'bg-red-500', textColor: 'text-red-400', icon: XCircle },
-};
-
-const PRIORITY_CONFIG = {
-    STANDARD: { label: 'Standard', color: 'text-gray-400', bg: 'bg-gray-500/20' },
-    URGENT: { label: 'Urgent', color: 'text-yellow-400', bg: 'bg-yellow-500/20' },
-    CRITICAL: { label: 'Critical', color: 'text-red-400', bg: 'bg-red-500/20' },
 };
 
 const ApprovalsView = ({ isDark, user }) => {
@@ -107,6 +97,8 @@ const ApprovalsView = ({ isDark, user }) => {
         (approval.event?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const selectedEventName = events.find(e => e.id === eventFilter)?.name;
+
     // If viewing detail
     if (selectedApproval) {
         return (
@@ -122,206 +114,180 @@ const ApprovalsView = ({ isDark, user }) => {
     }
 
     return (
-        <div className={`min-h-screen p-6 ${isDark ? 'bg-[#0A0A0A]' : 'bg-gray-50'}`}>
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        Approvals
-                    </h1>
-                    <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Manage design and asset approval requests
-                    </p>
-                </div>
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    New Request
-                </button>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap gap-4 mb-6">
-                {/* Search */}
-                <div className="relative flex-1 min-w-[200px] max-w-md">
-                    <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                    <input
-                        type="text"
-                        placeholder="Search approvals..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className={`w-full pl-10 pr-4 py-2 rounded-lg border ${isDark
-                                ? 'bg-[#1A1A1A] border-gray-800 text-white placeholder-gray-500'
-                                : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
-                            } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                    />
-                </div>
-
-                {/* Status Filter */}
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className={`px-4 py-2 rounded-lg border ${isDark
-                            ? 'bg-[#1A1A1A] border-gray-800 text-white'
-                            : 'bg-white border-gray-200 text-gray-900'
-                        } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                >
-                    <option value="ALL">All Statuses</option>
-                    {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                        <option key={key} value={key}>{config.label}</option>
-                    ))}
-                </select>
-
-                {/* Event Filter */}
-                <select
-                    value={eventFilter}
-                    onChange={(e) => setEventFilter(e.target.value)}
-                    className={`px-4 py-2 rounded-lg border ${isDark
-                            ? 'bg-[#1A1A1A] border-gray-800 text-white'
-                            : 'bg-white border-gray-200 text-gray-900'
-                        } focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                >
-                    <option value="">All Events</option>
-                    {Array.isArray(events) && events.map((event) => (
-                        <option key={event.id} value={event.id}>{event.name}</option>
-                    ))}
-                </select>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                {Object.entries(STATUS_CONFIG).map(([status, config]) => {
-                    const count = approvals.filter(a => a?.status === status).length;
-                    const IconComponent = config.icon;
-                    return (
-                        <div
-                            key={status}
-                            onClick={() => setStatusFilter(statusFilter === status ? 'ALL' : status)}
-                            className={`p-4 rounded-xl cursor-pointer transition-all ${statusFilter === status
-                                    ? 'ring-2 ring-indigo-500'
-                                    : ''
-                                } ${isDark ? 'bg-[#1A1A1A] hover:bg-[#222]' : 'bg-white hover:bg-gray-50'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${config.color}/20`}>
-                                    <IconComponent className={`w-5 h-5 ${config.textColor}`} />
-                                </div>
-                                <div>
-                                    <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{count}</p>
-                                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{config.label}</p>
-                                </div>
-                            </div>
+        <div className={`min-h-screen ${isDark ? 'bg-[#0A0A0A]' : 'bg-gray-50'}`}>
+            {/* ── Event Selector Bar ── */}
+            <div className={`sticky top-0 z-10 border-b ${isDark ? 'bg-[#0A0A0A]/95 backdrop-blur-xl border-gray-800/60' : 'bg-white/95 backdrop-blur-xl border-gray-200'}`}>
+                <div className="px-6 py-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                Approvals
+                            </h1>
+                            <p className={`text-sm mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                                Review and approve creative submissions
+                            </p>
                         </div>
-                    );
-                })}
-            </div>
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 font-medium text-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            New Request
+                        </button>
+                    </div>
 
-            {/* Approvals List */}
-            {loading ? (
-                <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-                </div>
-            ) : error ? (
-                <div className={`text-center py-12 ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-                    {error}
-                </div>
-            ) : filteredApprovals.length === 0 ? (
-                <div className={`text-center py-12 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No approval requests found</p>
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        className="mt-4 text-indigo-500 hover:text-indigo-400"
-                    >
-                        Create your first request
-                    </button>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {filteredApprovals.map((approval) => {
-                        const statusConfig = STATUS_CONFIG[approval.status] || STATUS_CONFIG.DRAFT;
-                        const priorityConfig = PRIORITY_CONFIG[approval.priority] || PRIORITY_CONFIG.STANDARD;
-                        const StatusIcon = statusConfig.icon;
-
-                        return (
-                            <div
-                                key={approval.id}
-                                onClick={() => setSelectedApproval(approval)}
-                                className={`p-4 rounded-xl cursor-pointer transition-all border ${isDark
-                                        ? 'bg-[#1A1A1A] border-gray-800 hover:border-gray-700'
-                                        : 'bg-white border-gray-200 hover:border-gray-300'
+                    {/* Event Selector Pills */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                        <button
+                            onClick={() => setEventFilter('')}
+                            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${!eventFilter
+                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
+                                    : isDark
+                                        ? 'bg-[#1A1A1A] text-gray-400 hover:bg-[#222] hover:text-gray-300 border border-gray-800'
+                                        : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Calendar className="w-3.5 h-3.5" />
+                                All Events
+                            </div>
+                        </button>
+                        {Array.isArray(events) && events.map((event) => (
+                            <button
+                                key={event.id}
+                                onClick={() => setEventFilter(eventFilter === event.id ? '' : event.id)}
+                                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${eventFilter === event.id
+                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
+                                        : isDark
+                                            ? 'bg-[#1A1A1A] text-gray-400 hover:bg-[#222] hover:text-gray-300 border border-gray-800'
+                                            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                     }`}
                             >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4 flex-1">
-                                        {/* Thumbnail */}
-                                        <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'
-                                            }`}>
-                                            {approval.assets?.[0]?.s3Url ? (
-                                                <img
-                                                    src={approval.assets[0].s3Url}
-                                                    alt=""
-                                                    className="w-full h-full object-cover rounded-lg"
-                                                />
-                                            ) : (
-                                                <FileText className={`w-6 h-6 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
-                                            )}
-                                        </div>
-
-                                        {/* Details */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <h3 className={`font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                                    {approval.title}
-                                                </h3>
-                                                {approval.version > 1 && (
-                                                    <span className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
-                                                        v{approval.version}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                {approval.event?.name}
-                                            </p>
-                                            <div className="flex items-center gap-3 mt-2">
-                                                <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${statusConfig.color}/20 ${statusConfig.textColor}`}>
-                                                    <StatusIcon className="w-3 h-3" />
-                                                    {statusConfig.label}
-                                                </span>
-                                                <span className={`text-xs px-2 py-1 rounded-full ${priorityConfig.bg} ${priorityConfig.color}`}>
-                                                    {priorityConfig.label}
-                                                </span>
-                                                {approval.reviewers?.length > 0 && (
-                                                    <span className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                                        <Users className="w-3 h-3" />
-                                                        {approval.reviewers.length}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Actions */}
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedApproval(approval);
-                                            }}
-                                            className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
-                                                }`}
-                                        >
-                                            <Eye className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
+                                {event.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-            )}
+            </div>
+
+            {/* ── Filters Row ── */}
+            <div className="px-6 pt-5 pb-2">
+                <div className="flex flex-wrap items-center gap-3">
+                    {/* Search */}
+                    <div className="relative flex-1 min-w-[200px] max-w-sm">
+                        <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+                        <input
+                            type="text"
+                            placeholder="Search submissions..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm ${isDark
+                                ? 'bg-[#1A1A1A] border-gray-800 text-white placeholder-gray-600'
+                                : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+                                } focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all`}
+                        />
+                    </div>
+
+                    {/* Status Filter Pills */}
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={() => setStatusFilter('ALL')}
+                            className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${statusFilter === 'ALL'
+                                    ? isDark
+                                        ? 'bg-white/10 text-white'
+                                        : 'bg-gray-900 text-white'
+                                    : isDark
+                                        ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                }`}
+                        >
+                            All
+                        </button>
+                        {Object.entries(STATUS_CONFIG).map(([key, config]) => {
+                            const StatusIcon = config.icon;
+                            const count = approvals.filter(a => a?.status === key).length;
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => setStatusFilter(statusFilter === key ? 'ALL' : key)}
+                                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${statusFilter === key
+                                            ? `${config.color}/20 ${config.textColor}`
+                                            : isDark
+                                                ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    <StatusIcon className="w-3.5 h-3.5" />
+                                    {config.label}
+                                    {count > 0 && (
+                                        <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full ${statusFilter === key
+                                                ? `${config.color}/30`
+                                                : isDark ? 'bg-gray-800' : 'bg-gray-200'
+                                            }`}>
+                                            {count}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Gallery Grid ── */}
+            <div className="px-6 py-4">
+                {loading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent"></div>
+                            <p className={`text-sm ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Loading submissions...</p>
+                        </div>
+                    </div>
+                ) : error ? (
+                    <div className={`text-center py-20 ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                        <p className="text-lg font-medium">{error}</p>
+                        <button
+                            onClick={fetchApprovals}
+                            className="mt-3 text-sm text-indigo-500 hover:text-indigo-400 transition-colors"
+                        >
+                            Try again
+                        </button>
+                    </div>
+                ) : filteredApprovals.length === 0 ? (
+                    <div className={`text-center py-20`}>
+                        <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ${isDark ? 'bg-gray-800/50' : 'bg-gray-100'}`}>
+                            <FileText className={`w-8 h-8 ${isDark ? 'text-gray-700' : 'text-gray-300'}`} />
+                        </div>
+                        <p className={`text-lg font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            No approval requests found
+                        </p>
+                        <p className={`text-sm mb-5 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+                            {eventFilter
+                                ? `No submissions for ${selectedEventName || 'this event'} yet`
+                                : 'Get started by creating your first approval request'
+                            }
+                        </p>
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 font-medium text-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Create Request
+                        </button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        {filteredApprovals.map((approval) => (
+                            <ApprovalCard
+                                key={approval.id}
+                                approval={approval}
+                                isDark={isDark}
+                                onClick={() => setSelectedApproval(approval)}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {/* Create Modal */}
             {showCreateModal && (

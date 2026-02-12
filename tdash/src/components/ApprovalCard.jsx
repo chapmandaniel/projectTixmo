@@ -5,6 +5,7 @@ import {
     XCircle,
     AlertCircle,
     FileEdit,
+    FileText,
     Image,
     MessageSquare,
     Users,
@@ -94,8 +95,8 @@ const ApprovalCard = ({
             <div
                 onClick={onClick}
                 className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all ${isDark
-                        ? 'bg-[#1A1A1A] hover:bg-[#222222] border border-gray-800'
-                        : 'bg-white hover:bg-gray-50 border border-gray-200'
+                    ? 'bg-[#1A1A1A] hover:bg-[#222222] border border-gray-800'
+                    : 'bg-white hover:bg-gray-50 border border-gray-200'
                     }`}
             >
                 {/* Thumbnail */}
@@ -134,11 +135,11 @@ const ApprovalCard = ({
         <div
             onClick={onClick}
             className={`group rounded-xl overflow-hidden cursor-pointer transition-all ${isDark
-                    ? 'bg-[#1A1A1A] hover:bg-[#222222] border border-gray-800'
-                    : 'bg-white hover:bg-gray-50 border border-gray-200 shadow-sm'
+                ? 'bg-[#1A1A1A] hover:bg-[#222222] border border-gray-800'
+                : 'bg-white hover:bg-gray-50 border border-gray-200 shadow-sm'
                 }`}
         >
-            {/* Thumbnail */}
+            {/* Thumbnail / Preview */}
             <div className={`relative aspect-[16/10] overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-gray-100'
                 }`}>
                 {thumbnail ? (
@@ -147,6 +148,20 @@ const ApprovalCard = ({
                         alt=""
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                ) : (approval.description || approval.instructions) ? (
+                    <div className={`w-full h-full p-4 flex flex-col gap-2 overflow-hidden ${isDark ? 'bg-gradient-to-b from-gray-800 to-gray-800/80' : 'bg-gradient-to-b from-gray-50 to-gray-100'}`}>
+                        <div className={`flex items-center gap-2 mb-1`}>
+                            <div className={`w-6 h-6 rounded flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                <FileText className={`w-3.5 h-3.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                            </div>
+                            <span className={`text-[10px] font-semibold uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+                                {approval.description ? 'Description' : 'Instructions'}
+                            </span>
+                        </div>
+                        <p className={`text-xs leading-relaxed line-clamp-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {approval.description || approval.instructions}
+                        </p>
+                    </div>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
                         <Image className={`w-12 h-12 ${isDark ? 'text-gray-700' : 'text-gray-300'}`} />
@@ -205,8 +220,8 @@ const ApprovalCard = ({
                     {/* Due Date */}
                     {approval.dueDate && (
                         <div className={`flex items-center gap-1.5 ml-auto ${new Date(approval.dueDate) < new Date()
-                                ? 'text-red-400'
-                                : isDark ? 'text-gray-400' : 'text-gray-500'
+                            ? 'text-red-400'
+                            : isDark ? 'text-gray-400' : 'text-gray-500'
                             }`}>
                             <Calendar className="w-4 h-4" />
                             <span>{formatDate(approval.dueDate)}</span>
