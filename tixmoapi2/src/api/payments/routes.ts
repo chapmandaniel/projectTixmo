@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import express from 'express';
 import { authenticate } from '../../middleware/auth';
+import { validate } from '../../middleware/validate';
 import * as controller from './controller';
+import { createPaymentIntentSchema } from './validation';
 
 const router = Router();
 
@@ -45,7 +47,12 @@ const router = Router();
  *                     paymentIntentId:
  *                       type: string
  */
-router.post('/create-intent', authenticate, controller.createPaymentIntent);
+router.post(
+  '/create-intent',
+  authenticate,
+  validate(createPaymentIntentSchema),
+  controller.createPaymentIntent
+);
 
 /**
  * @swagger
