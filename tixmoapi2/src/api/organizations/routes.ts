@@ -136,7 +136,12 @@ router.get('/:id', controller.getOrganization);
  *       409:
  *         description: Slug already exists
  */
-router.put('/:id', validate(validation.updateOrganizationSchema), controller.updateOrganization);
+router.put(
+  '/:id',
+  authorize('ADMIN', 'PROMOTER'),
+  validate(validation.updateOrganizationSchema),
+  controller.updateOrganization
+);
 
 /**
  * @swagger
