@@ -46,13 +46,8 @@ app.use(
 
       // Check for .tixmo.co subdomains (Regex)
       // Allows: https://demo.tixmo.co, https://anything.tixmo.co
-      const tixmoPattern = /^https:\/\/.*\.tixmo\.co$/;
+      const tixmoPattern = /^https:\/\/(?:[a-zA-Z0-9-]+\.)+tixmo\.co$/;
       if (tixmoPattern.test(origin)) {
-        return callback(null, true);
-      }
-
-      // Also allow railway apps for dynamic preview branches if needed
-      if (origin.endsWith('.up.railway.app')) {
         return callback(null, true);
       }
 
