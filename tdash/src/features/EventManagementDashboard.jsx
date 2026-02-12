@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-    ArrowLeft, Edit3, Download, Calendar, MapPin, Plus, MoreHorizontal, Search, Filter, UserCheck, UserX, AlertTriangle, Trash2, Globe, ArrowUp, ArrowDown
+    ArrowLeft, Edit3, Download, Calendar, MapPin, Plus, MoreHorizontal, Search, Filter, UserCheck, UserX, AlertTriangle, Trash2, Globe, ArrowUp, ArrowDown, Copy, XCircle
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
