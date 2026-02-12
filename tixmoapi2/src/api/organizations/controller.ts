@@ -3,6 +3,7 @@ import { AuthRequest } from '../../middleware/auth';
 import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
+import prisma from '../../config/prisma';
 import { organizationService } from './service';
 
 interface OrganizationWithUsers {
@@ -75,12 +76,36 @@ export const addMember = catchAsync(async (req: AuthRequest, res: Response) => {
 
   if (!userId) throw ApiError.badRequest('userId is required');
 
+  if (req.user!.role !== 'ADMIN') {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { organizationId: true },
+    });
+
+    if (!user || user.organizationId !== id) {
+      throw ApiError.forbidden('You do not have permission to add members to this organization');
+    }
+  }
+
   await organizationService.addMember(id, userId);
   res.json(successResponse(null, 'Member added successfully'));
 });
 
 export const removeMember = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id, userId } = req.params;
+
+  if (req.user!.role !== 'ADMIN') {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { organizationId: true },
+    });
+
+    if (!user || user.organizationId !== id) {
+      throw ApiError.forbidden(
+        'You do not have permission to remove members from this organization'
+      );
+    }
+  }
 
   await organizationService.removeMember(id, userId);
   res.json(successResponse(null, 'Member removed successfully'));
