@@ -11,7 +11,6 @@ const GlobalErrorNotification = ({ error, onClose, isDark = true }) => {
         setSending(true);
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1500));
-        console.log('Report sent for error:', error);
         setSending(false);
         setSent(true);
         setTimeout(() => {
