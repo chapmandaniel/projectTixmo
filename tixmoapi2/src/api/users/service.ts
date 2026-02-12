@@ -1,5 +1,6 @@
 import { User, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { ApiError } from '../../utils/ApiError';
 import { logger } from '../../config/logger';
 import { config } from '../../config/environment';
@@ -63,7 +64,7 @@ export class UserService {
     }
 
     // Hash password (or generate random if not provided)
-    const passwordToHash = password || Math.random().toString(36).slice(-8);
+    const passwordToHash = password || crypto.randomBytes(8).toString('hex');
     const passwordHash = await bcrypt.hash(passwordToHash, 10);
 
     // Create user
@@ -149,7 +150,6 @@ export class UserService {
   }
 
   // ... existing methods ...
-
 
   /**
    * Update user profile
