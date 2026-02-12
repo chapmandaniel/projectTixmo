@@ -112,7 +112,7 @@ const SimpleDeleteModal = ({ isOpen, onClose, onConfirm, title, message, isDark,
 
 const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => {
     const [activeTab, setActiveTab] = useState('overview');
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isCloning, setIsCloning] = useState(false);
     const [statusUpdating, setStatusUpdating] = useState(false);
     const [eventData, setEventData] = useState(event); // Use local state for event data
@@ -218,7 +218,7 @@ const EventManagementDashboard = ({ event, onBack, isDark, user, onUpdate }) => 
             setDeleteLoading(true);
             await api.delete(`/events/${eventData.id}`);
             setDeleteLoading(false);
-            setShowDeleteConfirm(false); // Changed from setShowDeleteModal
+            setShowDeleteModal(false);
             onBack();
         } catch (error) {
             console.error('Failed to delete event:', error);
