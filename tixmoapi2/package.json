@@ -19,6 +19,8 @@
     "migrate:dev": "prisma migrate dev",
     "migrate:create": "prisma migrate dev --create-only",
     "db:seed": "node prisma/seed-minimal.js",
+    "db:reset": "TS_NODE_TRANSPILE_ONLY=true ts-node -r tsconfig-paths/register scripts/dev-data.ts reset",
+    "db:populate": "TS_NODE_TRANSPILE_ONLY=true ts-node -r tsconfig-paths/register scripts/dev-data.ts populate",
     "db:studio": "prisma studio",
     "prepare": "husky install",
     "docs:openapi": "node -r ts-node/register -r tsconfig-paths/register scripts/export-openapi.js"
