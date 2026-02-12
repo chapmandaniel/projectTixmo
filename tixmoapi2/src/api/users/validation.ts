@@ -27,5 +27,6 @@ export const listUsersSchema = z.object({
     page: z.string().transform(Number).default('1'),
     limit: z.string().transform(Number).default('20'),
     role: z.enum(['OWNER', 'ADMIN', 'PROMOTER', 'CUSTOMER', 'SCANNER', 'TEAM_MEMBER']).optional(),
+    organizationId: z.string().uuid().optional(),
   }),
 });

@@ -31,6 +31,7 @@ export interface ListUsersParams {
   page?: number;
   limit?: number;
   role?: 'OWNER' | 'ADMIN' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
+  organizationId?: string;
 }
 
 // ... existing interfaces ...
@@ -221,13 +222,17 @@ export class UserService {
    * List users with pagination and filters
    */
   async listUsers(params: ListUsersParams): Promise<PaginatedUsers> {
-    const { page = 1, limit = 20, role } = params;
+    const { page = 1, limit = 20, role, organizationId } = params;
     const skip = (page - 1) * limit;
 
     // Build where clause
     const where: Prisma.UserWhereInput = {};
     if (role) {
       where.role = role;
+    }
+
+    if (organizationId) {
+      where.organizationId = organizationId;
     }
 
     // Exclude soft-deleted users (those with deleted_ email prefix)

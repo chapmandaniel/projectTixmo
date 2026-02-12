@@ -92,6 +92,23 @@ export const deleteUser = catchAsync(async (req: AuthRequest, res: Response) => 
 
 export const listUsers = catchAsync(async (req: AuthRequest, res: Response) => {
   const query = req.query as unknown as ListUsersParams;
+  const caller = req.user!;
+
+  // Security check: PROMOTERs can only list users in their organization
+  if (caller.role === 'PROMOTER') {
+    const callerDetails = await prisma.user.findUnique({
+      where: { id: caller.userId },
+      select: { organizationId: true },
+    });
+
+    if (!callerDetails?.organizationId) {
+      throw ApiError.forbidden('Your account must be associated with an organization to list users');
+    }
+
+    // Force organizationId to match caller's
+    query.organizationId = callerDetails.organizationId;
+  }
+
   const result = await userService.listUsers(query);
   res.json(successResponse(result));
 });
