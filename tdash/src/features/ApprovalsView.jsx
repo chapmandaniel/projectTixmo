@@ -62,11 +62,14 @@ const ApprovalsView = ({ isDark, user }) => {
 
     const fetchEvents = async () => {
         try {
-            const response = await api.get('/events');
-            const data = response.events || response;
-            setEvents(Array.isArray(data) ? data : []);
+            const response = await api.get('/events?limit=100'); // Fetch all events for dropdown
+            // API returns { success: true, data: { events: [], pagination: {} } }
+            // api.get unwraps 'data', so response is { events: [], pagination: {} }
+            const eventsList = response.events || response.data?.events || [];
+            setEvents(Array.isArray(eventsList) ? eventsList : []);
         } catch (err) {
             console.error('Failed to fetch events:', err);
+            setEvents([]);
         }
     };
 
@@ -141,10 +144,10 @@ const ApprovalsView = ({ isDark, user }) => {
                         <button
                             onClick={() => setEventFilter('')}
                             className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${!eventFilter
-                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
-                                    : isDark
-                                        ? 'bg-[#1A1A1A] text-gray-400 hover:bg-[#222] hover:text-gray-300 border border-gray-800'
-                                        : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
+                                : isDark
+                                    ? 'bg-[#1A1A1A] text-gray-400 hover:bg-[#222] hover:text-gray-300 border border-gray-800'
+                                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                 }`}
                         >
                             <div className="flex items-center gap-2">
@@ -157,10 +160,10 @@ const ApprovalsView = ({ isDark, user }) => {
                                 key={event.id}
                                 onClick={() => setEventFilter(eventFilter === event.id ? '' : event.id)}
                                 className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${eventFilter === event.id
-                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
-                                        : isDark
-                                            ? 'bg-[#1A1A1A] text-gray-400 hover:bg-[#222] hover:text-gray-300 border border-gray-800'
-                                            : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25'
+                                    : isDark
+                                        ? 'bg-[#1A1A1A] text-gray-400 hover:bg-[#222] hover:text-gray-300 border border-gray-800'
+                                        : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                                     }`}
                             >
                                 {event.name}
@@ -193,12 +196,12 @@ const ApprovalsView = ({ isDark, user }) => {
                         <button
                             onClick={() => setStatusFilter('ALL')}
                             className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${statusFilter === 'ALL'
-                                    ? isDark
-                                        ? 'bg-white/10 text-white'
-                                        : 'bg-gray-900 text-white'
-                                    : isDark
-                                        ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
-                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                ? isDark
+                                    ? 'bg-white/10 text-white'
+                                    : 'bg-gray-900 text-white'
+                                : isDark
+                                    ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             All
@@ -211,18 +214,18 @@ const ApprovalsView = ({ isDark, user }) => {
                                     key={key}
                                     onClick={() => setStatusFilter(statusFilter === key ? 'ALL' : key)}
                                     className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${statusFilter === key
-                                            ? `${config.color}/20 ${config.textColor}`
-                                            : isDark
-                                                ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
-                                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                        ? `${config.color}/20 ${config.textColor}`
+                                        : isDark
+                                            ? 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
                                         }`}
                                 >
                                     <StatusIcon className="w-3.5 h-3.5" />
                                     {config.label}
                                     {count > 0 && (
                                         <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full ${statusFilter === key
-                                                ? `${config.color}/30`
-                                                : isDark ? 'bg-gray-800' : 'bg-gray-200'
+                                            ? `${config.color}/30`
+                                            : isDark ? 'bg-gray-800' : 'bg-gray-200'
                                             }`}>
                                             {count}
                                         </span>

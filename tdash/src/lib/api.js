@@ -74,7 +74,7 @@ export const api = {
     upload: async (url, formData) => {
         const response = await axiosInstance.post(url, formData, {
             headers: {
-                'Content-Type': 'multipart/form-data',
+                'Content-Type': null, // Unset default to allow browser to set multipart/form-data with boundary
             },
         });
         return response.data;
