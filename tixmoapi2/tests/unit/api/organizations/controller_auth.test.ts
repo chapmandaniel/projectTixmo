@@ -67,6 +67,7 @@ describe('Organization Controller Authorization', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'promoter-1',
         organizationId: 'org-123',
+        role: 'PROMOTER',
       });
 
       await (addMember as any)(req as AuthRequest, res, next);
@@ -74,7 +75,7 @@ describe('Organization Controller Authorization', () => {
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'promoter-1' },
-        select: { organizationId: true },
+        select: { organizationId: true, role: true },
       });
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(organizationService.addMember).toHaveBeenCalledWith('org-123', 'new-member-1');

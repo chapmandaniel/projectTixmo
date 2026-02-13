@@ -79,11 +79,15 @@ export const addMember = catchAsync(async (req: AuthRequest, res: Response) => {
   if (req.user!.role !== 'ADMIN') {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { organizationId: true },
+      select: { organizationId: true, role: true },
     });
 
     if (!user || user.organizationId !== id) {
       throw ApiError.forbidden('You do not have permission to add members to this organization');
+    }
+
+    if (user.role !== 'PROMOTER' && user.role !== 'OWNER') {
+      throw ApiError.forbidden('You do not have sufficient privileges to add members');
     }
   }
 
@@ -97,13 +101,17 @@ export const removeMember = catchAsync(async (req: AuthRequest, res: Response) =
   if (req.user!.role !== 'ADMIN') {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { organizationId: true },
+      select: { organizationId: true, role: true },
     });
 
     if (!user || user.organizationId !== id) {
       throw ApiError.forbidden(
         'You do not have permission to remove members from this organization'
       );
+    }
+
+    if (user.role !== 'PROMOTER' && user.role !== 'OWNER') {
+      throw ApiError.forbidden('You do not have sufficient privileges to remove members');
     }
   }
 
