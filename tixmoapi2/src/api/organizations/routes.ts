@@ -208,8 +208,15 @@ router.delete('/:id', authorize('ADMIN'), controller.deleteOrganization);
  *         description: Organizations retrieved successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin only
  */
-router.get('/', validate(validation.listOrganizationsSchema), controller.listOrganizations);
+router.get(
+  '/',
+  authorize('ADMIN'),
+  validate(validation.listOrganizationsSchema),
+  controller.listOrganizations
+);
 
 /**
  * @swagger
