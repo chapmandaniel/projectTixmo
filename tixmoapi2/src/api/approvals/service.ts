@@ -621,7 +621,7 @@ class ApprovalService {
             where: { id },
             data: {
                 version: approval.version + 1,
-                status: 'PENDING',
+                status: 'DRAFT',
             },
         });
 
