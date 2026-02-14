@@ -10,8 +10,10 @@ import {
     MessageSquare,
     Users,
     Calendar,
-    ChevronRight
+    ChevronRight,
+    User
 } from 'lucide-react';
+
 
 const STATUS_CONFIG = {
     DRAFT: {
@@ -57,6 +59,22 @@ const PRIORITY_CONFIG = {
     CRITICAL: { label: 'Critical', color: 'text-red-400' },
 };
 
+const formatTimeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+};
+
 const ApprovalCard = ({
     approval,
     onClick,
@@ -89,6 +107,7 @@ const ApprovalCard = ({
     const decidedCount = approval.reviewers?.filter(r => r.decision)?.length || 0;
     const commentsCount = approval._count?.comments || approval.comments?.length || 0;
     const assetsCount = approval.assets?.length || 0;
+    const creatorName = approval.creator ? `${approval.creator.firstName} ${approval.creator.lastName || ''}` : 'Unknown';
 
     if (compact) {
         return (
@@ -116,9 +135,15 @@ const ApprovalCard = ({
                     <p className={`font-medium truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
                         {approval.title}
                     </p>
-                    <p className={`text-sm truncate ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                        {approval.event?.name}
-                    </p>
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className={`truncate ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                            {approval.event?.name}
+                        </span>
+                        <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>•</span>
+                        <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+                            {formatTimeAgo(approval.updatedAt)}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Status */}
@@ -194,26 +219,39 @@ const ApprovalCard = ({
 
             {/* Content */}
             <div className="p-4">
-                <h3 className={`font-semibold truncate mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {approval.title}
-                </h3>
-                <p className={`text-sm truncate mb-3 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                    {approval.event?.name}
-                </p>
+                <div className="flex justify-between items-start gap-2 mb-1">
+                    <h3 className={`font-semibold truncate flex-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {approval.title}
+                    </h3>
+                    <span className={`text-[10px] whitespace-nowrap mt-0.5 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+                        {formatTimeAgo(approval.updatedAt)}
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-2 mb-3">
+                    <span className={`text-xs truncate ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                        {approval.event?.name}
+                    </span>
+                    <span className={`text-[10px] ${isDark ? 'text-gray-700' : 'text-gray-300'}`}>•</span>
+                    <span className={`text-xs flex items-center gap-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                        <User className="w-3 h-3" />
+                        {creatorName}
+                    </span>
+                </div>
 
                 {/* Meta */}
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-4 text-sm pt-3 border-t border-gray-100 dark:border-gray-800/50">
                     {/* Reviewers */}
-                    <div className={`flex items-center gap-1.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div className={`flex items-center gap-1.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} title="Review Status">
                         <Users className="w-4 h-4" />
-                        <span>{decidedCount}/{reviewersCount}</span>
+                        <span className="text-xs">{decidedCount}/{reviewersCount} Reviews</span>
                     </div>
 
                     {/* Comments */}
                     {commentsCount > 0 && (
                         <div className={`flex items-center gap-1.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                             <MessageSquare className="w-4 h-4" />
-                            <span>{commentsCount}</span>
+                            <span className="text-xs">{commentsCount}</span>
                         </div>
                     )}
 
@@ -224,13 +262,13 @@ const ApprovalCard = ({
                             : isDark ? 'text-gray-400' : 'text-gray-500'
                             }`}>
                             <Calendar className="w-4 h-4" />
-                            <span>{formatDate(approval.dueDate)}</span>
+                            <span className="text-xs">{formatDate(approval.dueDate)}</span>
                         </div>
                     )}
 
                     {/* Priority (if not standard) */}
                     {approval.priority !== 'STANDARD' && (
-                        <span className={`text-xs font-medium ${priority.color}`}>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ml-auto ${priority.color}`}>
                             {priority.label}
                         </span>
                     )}

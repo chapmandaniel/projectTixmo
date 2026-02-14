@@ -13,43 +13,52 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
 
-    // Fetch notifications
-    const fetchNotifications = async () => {
+    // Fetch notifications and stats
+    const fetchDashboardData = async () => {
         try {
-            const res = await api.get('/notifications?limit=10').catch(() => null);
-            if (!res) return;
+            // Notifications
+            const notifRes = await api.get('/notifications?limit=10').catch(() => null);
+            if (notifRes) {
+                const data = notifRes.data || {};
+                let notifs = [];
+                if (Array.isArray(data.notifications)) {
+                    notifs = data.notifications;
+                } else if (data.data && Array.isArray(data.data.notifications)) {
+                    notifs = data.data.notifications;
+                }
 
-            const data = res.data || {};
-
-            // Handle both flat and nested response structures
-            let notifs = [];
-            if (Array.isArray(data.notifications)) {
-                notifs = data.notifications;
-            } else if (data.data && Array.isArray(data.data.notifications)) {
-                notifs = data.data.notifications;
+                if (JSON.stringify(notifs) !== JSON.stringify(notifications)) {
+                    setNotifications(notifs);
+                    setUnreadCount(notifs.filter(n => n && !n.readAt).length);
+                }
             }
 
-            if (JSON.stringify(notifs) !== JSON.stringify(notifications)) {
-                setNotifications(notifs);
-                setUnreadCount(notifs.filter(n => n && !n.readAt).length);
+            // Pending Approvals Count
+            // We'll fetch all approvals that are PENDING to get the count
+            const approvalRes = await api.get('/approvals?status=PENDING').catch(() => null);
+            if (approvalRes) {
+                const approvals = approvalRes.approvals || [];
+                setPendingApprovalsCount(approvals.length);
             }
+
         } catch (error) {
-            console.error('Failed to fetch notifications', error);
+            console.error('Failed to fetch dashboard data', error);
         }
     };
 
-    // Poll for notifications
+    // Poll for notifications and stats
     React.useEffect(() => {
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000); // 30s
+        fetchDashboardData();
+        const interval = setInterval(fetchDashboardData, 30000); // 30s
         return () => clearInterval(interval);
     }, []);
 
     // Toggle and fetch
     const toggleNotifications = () => {
         if (!showNotifications) {
-            fetchNotifications();
+            fetchDashboardData();
         }
         setShowNotifications(!showNotifications);
     };
@@ -184,6 +193,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                             active={activeView === 'approvals'}
                             onClick={() => onNavigate('approvals')}
                             isDark={isDark}
+                            badge={pendingApprovalsCount > 0 ? pendingApprovalsCount : null}
                         />
                     </div>
 

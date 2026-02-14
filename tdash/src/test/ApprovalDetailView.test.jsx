@@ -59,9 +59,9 @@ describe('ApprovalDetailView', () => {
                     approval={{ ...mockApproval, status }}
                     isDark={false}
                     user={{ id: 'u1' }}
-                    onBack={() => {}}
-                    onUpdate={() => {}}
-                    onDelete={() => {}}
+                    onBack={() => { }}
+                    onUpdate={() => { }}
+                    onDelete={() => { }}
                 />
             );
 
@@ -73,7 +73,7 @@ describe('ApprovalDetailView', () => {
                 Add
             </button>
             */
-            const addButton = screen.queryByText('Add', { selector: 'button' });
+            const addButton = screen.queryByText('+ Add', { selector: 'button' });
 
             // "Remove" reviewer button has X icon
             // In the component:
