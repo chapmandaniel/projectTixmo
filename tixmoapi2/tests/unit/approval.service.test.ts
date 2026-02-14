@@ -347,7 +347,7 @@ describe('ApprovalService', () => {
             expect(prisma.approvalReviewer.updateMany).toHaveBeenCalled();
             expect(prisma.approvalRequest.update).toHaveBeenCalledWith(expect.objectContaining({
                 where: { id: mockApprovalId },
-                data: expect.objectContaining({ version: 2, status: 'PENDING' })
+                data: expect.objectContaining({ version: 2, status: 'DRAFT' })
             }));
             expect(approvalEmailService.sendRevisionNotification).toHaveBeenCalled();
         });
