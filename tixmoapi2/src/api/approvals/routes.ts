@@ -63,6 +63,7 @@ router.post('/:id/reviewers', authenticate, validate(addReviewersSchema), Approv
 // Remove reviewer
 router.delete('/:id/reviewers/:reviewerId', authenticate, validate(reviewerIdParamsSchema), ApprovalController.removeReviewer);
 
+
 // Submit decision (authenticated)
 router.post('/:id/review', authenticate, validate(submitAuthenticatedDecisionSchema), ApprovalController.submitAuthenticatedDecision);
 
