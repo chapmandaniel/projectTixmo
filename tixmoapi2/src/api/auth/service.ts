@@ -4,6 +4,7 @@ import { generateTokens } from '../../utils/jwt';
 import { ApiError } from '../../utils/ApiError';
 import { UserRole } from '@prisma/client';
 import { notificationService } from '../../utils/notificationService';
+import { logger } from '../../config/logger';
 
 interface RegisterData {
   email: string;
@@ -67,7 +68,7 @@ export class AuthService {
         to: user.email,
         name: user.firstName,
       })
-      .catch((error) => console.error('Failed to send welcome email:', error));
+      .catch((error) => logger.error('Failed to send welcome email:', error));
 
     return {
       user,
@@ -83,7 +84,10 @@ export class AuthService {
 
     if (!user) {
       // Dummy comparison to prevent timing attacks
-      await comparePassword(data.password, '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy');
+      await comparePassword(
+        data.password,
+        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'
+      );
       throw ApiError.unauthorized('Invalid credentials');
     }
 

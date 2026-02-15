@@ -17,6 +17,7 @@ global.URL.createObjectURL = vi.fn();
 
 describe('CreateApprovalModal', () => {
     it('submits correctly formatted ISO date', async () => {
+        apiPost.mockResolvedValue({ id: '123' });
         const handleCreate = vi.fn();
         const onClose = vi.fn();
 
@@ -49,7 +50,7 @@ describe('CreateApprovalModal', () => {
         const callArgs = apiPost.mock.calls[0];
         const payload = callArgs[1];
 
-        // Zod datetime() expects ISO string, including time if checks are strict, 
+        // Zod datetime() expects ISO string, including time if checks are strict,
         // but 'YYYY-MM-DD' is definitely NOT enough.
         // We expect it to be converted to something like '2026-05-20T00:00:00.000Z' or minimal ISO
         expect(payload.dueDate).toContain('2026-05-20');

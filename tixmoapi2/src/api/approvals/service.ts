@@ -505,7 +505,80 @@ class ApprovalService {
         }
 
         const { reviewer, approval } = result;
+        return this._submitReviewerDecision(reviewer, approval, decision, note);
+    }
 
+    /**
+     * Submit decision from authenticated user
+     */
+    async submitAuthenticatedDecision(
+        approvalId: string,
+        userId: string,
+        decision: ApprovalDecision,
+        note?: string
+    ): Promise<ApprovalReviewer> {
+        // Find reviewer by approvalId and userId
+        let reviewer = await prisma.approvalReviewer.findFirst({
+            where: {
+                approvalRequestId: approvalId,
+                userId: userId,
+            },
+        });
+
+        // If not found by userId, try to find by email
+        if (!reviewer) {
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { email: true },
+            });
+            if (user) {
+                reviewer = await prisma.approvalReviewer.findUnique({
+                    where: {
+                        approvalRequestId_email: {
+                            approvalRequestId: approvalId,
+                            email: user.email,
+                        },
+                    },
+                });
+            }
+        }
+
+        if (!reviewer) {
+            throw new ApiError(StatusCodes.FORBIDDEN, 'You are not a reviewer for this approval request');
+        }
+
+        const approval = await prisma.approvalRequest.findUnique({
+            where: { id: approvalId },
+            include: {
+                assets: { orderBy: { createdAt: 'desc' } },
+                reviewers: { orderBy: { invitedAt: 'desc' } },
+                comments: {
+                    orderBy: { createdAt: 'asc' },
+                    include: {
+                        user: { select: { firstName: true, lastName: true } },
+                    },
+                },
+                event: { select: { id: true, name: true } },
+                createdBy: { select: { id: true, firstName: true, lastName: true } },
+            },
+        }) as ApprovalWithRelations | null;
+
+        if (!approval) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Approval request not found');
+        }
+
+        return this._submitReviewerDecision(reviewer, approval, decision, note);
+    }
+
+    /**
+     * Internal helper to process reviewer decision
+     */
+    private async _submitReviewerDecision(
+        reviewer: ApprovalReviewer,
+        approval: ApprovalWithRelations,
+        decision: ApprovalDecision,
+        note?: string
+    ): Promise<ApprovalReviewer> {
         // Update reviewer decision
         const updatedReviewer = await prisma.approvalReviewer.update({
             where: { id: reviewer.id },

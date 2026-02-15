@@ -14,6 +14,7 @@ import {
     tokenParamsSchema,
     assetIdParamsSchema,
     reviewerIdParamsSchema,
+    submitAuthenticatedDecisionSchema,
 } from './validation';
 
 const router = Router();
@@ -61,6 +62,10 @@ router.post('/:id/reviewers', authenticate, validate(addReviewersSchema), Approv
 
 // Remove reviewer
 router.delete('/:id/reviewers/:reviewerId', authenticate, validate(reviewerIdParamsSchema), ApprovalController.removeReviewer);
+
+
+// Submit decision (authenticated)
+router.post('/:id/review', authenticate, validate(submitAuthenticatedDecisionSchema), ApprovalController.submitAuthenticatedDecision);
 
 // Submit for review
 router.post('/:id/submit', authenticate, validate(approvalIdParamsSchema), ApprovalController.submitForReview);

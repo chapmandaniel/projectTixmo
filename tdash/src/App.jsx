@@ -113,9 +113,7 @@ const App = () => {
             case 'personal-todo': return <PersonalTodoView {...props} />;
             case 'team': return <TeamView {...props} />;
             case 'social': return <SocialDashboard {...props} />;
-            case 'social': return <SocialDashboard {...props} />;
             case 'orders': return <OrdersView {...props} />;
-            case 'scanners': return <ComingSoonView title="Scanners" {...props} />;
             case 'scanners': return <ComingSoonView title="Scanners" {...props} />;
             case 'promo': return <ComingSoonView title="Promo Codes" {...props} />;
             case 'creative': return <CreativeComposer {...props} />;

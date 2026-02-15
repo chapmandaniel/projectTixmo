@@ -13,7 +13,7 @@ const TicketBuilder = ({ tickets, onChange, isDark }) => {
     });
 
     // State for managing tiers within the "Add Ticket" form (if we want to add tiers at creation)
-    // Or simpler: Create ticket first, then add tiers? 
+    // Or simpler: Create ticket first, then add tiers?
     // Let's allow adding tiers to EXISTING tickets in the list to keep the "Add" form simple.
 
     const [error, setError] = useState('');
