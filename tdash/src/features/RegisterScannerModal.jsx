@@ -17,27 +17,7 @@ const RegisterScannerModal = ({ onClose, onSuccess, isDark }) => {
         setIsLoading(true);
 
         try {
-            // Need organizationId - usually from context or selected org
-            // For now, we rely on the backend to handle it or user context
-            // But the schema requires 'organizationId'.
-            // In a real app, we'd pick the org.
-            // Let's assume the user has a default organization or we fetch it.
-            // Actually, `registerScanner` in routes says required: name, organizationId.
-            // The API might infer it if we don't send it, OR we need to fetch the current user's org.
-            // Let's look at `auth.getCurrentUser()` in App.jsx.
-            // Let's simpler: The backend `registerScanner` controller uses `req.body`.
-            // The backend `validation.ts` likely enforces it.
-            // For this UI, let's try sending just name and see if backend infers from User's org (common pattern)
-            // or if we need to mock it/fetch it. 
-            // Audit found `User` model has a `organizationId`.
-            // Let's try to fetch user profile or get from local storage if available.
-            // Assuming for now the backend might handle it or we pass a hardcoded/fetched ID.
-            // Wait, looking at routes.ts line 28: organizationId is required in body.
-            // I'll grab it from the user object if passed as prop, or try to get it from auth.
-            // For this implementation, I'll attempt to use the `user.organizationId` if available.
-
-            // Note: In a real "admin" dashboard, you might select which org you are creating it for.
-            // For "Promoter" dashboard, it's their own org.
+            // Get organizationId from the current user session
             let organizationId;
             try {
                 const user = JSON.parse(localStorage.getItem('tixmo_user') || '{}');
