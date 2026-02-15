@@ -1,446 +1,347 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
+    X,
     ArrowLeft,
-    Upload,
-    Users,
-    Send,
-    Trash2,
-    Edit3,
     CheckCircle,
     XCircle,
     Clock,
-    MessageSquare,
-    FileText,
-    Image,
-    X,
-    Plus,
-    RefreshCw,
+    Send,
+    Paperclip,
     Download,
-    ExternalLink,
-    AlertTriangle
+    Eye,
+    Edit3,
+    MoreHorizontal,
+    FileText,
+    MessageSquare,
+    ChevronRight,
+    Users
 } from 'lucide-react';
 import { api } from '../lib/api';
 
 const STATUS_CONFIG = {
-    DRAFT: { label: 'Draft', color: 'bg-gray-500', textColor: 'text-gray-400' },
-    PENDING: { label: 'Pending Review', color: 'bg-yellow-500', textColor: 'text-yellow-400' },
-    APPROVED: { label: 'Approved', color: 'bg-green-500', textColor: 'text-green-400' },
-    CHANGES_REQUESTED: { label: 'Changes Requested', color: 'bg-orange-500', textColor: 'text-orange-400' },
-    REJECTED: { label: 'Rejected', color: 'bg-red-500', textColor: 'text-red-400' },
+    DRAFT: { label: 'Draft', color: 'bg-gray-100 text-gray-600', icon: FileText },
+    PENDING: { label: 'Pending Review', color: 'bg-amber-100 text-amber-700', icon: Clock },
+    APPROVED: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle },
+    CHANGES_REQUESTED: { label: 'Changes Requested', color: 'bg-orange-100 text-orange-700', icon: Edit3 },
+    REJECTED: { label: 'Rejected', color: 'bg-rose-100 text-rose-700', icon: XCircle },
 };
 
-const ApprovalDetailView = ({ approval, isDark, user, onBack, onUpdate, onDelete }) => {
-    const [uploading, setUploading] = useState(false);
-    const [showAddReviewer, setShowAddReviewer] = useState(false);
-    const [reviewerEmail, setReviewerEmail] = useState('');
-    const [reviewerName, setReviewerName] = useState('');
-    const [comment, setComment] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState(null);
+const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate, onDelete }) => {
+    // State
+    const [assets, setAssets] = useState(approval?.assets || []);
+    const [comments, setComments] = useState(approval?.comments || []);
+    const [reviewers, setReviewers] = useState(approval?.reviewers || []);
+    const [newComment, setNewComment] = useState('');
     const [activeAssetIndex, setActiveAssetIndex] = useState(0);
+    const [uploading, setUploading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const commentsEndRef = useRef(null);
 
-    const statusConfig = STATUS_CONFIG[approval.status] || STATUS_CONFIG.DRAFT;
-    const assets = approval.assets || [];
-    const activeAsset = assets[activeAssetIndex];
+    useEffect(() => {
+        if (approval) {
+            setAssets(approval.assets || []);
+            setComments(approval.comments || []);
+            setReviewers(approval.reviewers || []);
+            // Default to latest asset
+            if (approval.assets?.length > 0) {
+                setActiveAssetIndex(approval.assets.length - 1);
+            }
+        }
+    }, [approval]);
+
+    // Scroll to bottom of comments
+    useEffect(() => {
+        commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [comments]);
+
+    const handleCommentSubmit = async (e) => {
+        e.preventDefault();
+        if (!newComment.trim()) return;
+
+        try {
+            const response = await api.post(`/approvals/${approval.id}/comments`, { content: newComment });
+            const addedComment = response.comment || response;
+            const updatedComments = [...comments, { ...addedComment, user: { name: user.name, email: user.email } }];
+            setComments(updatedComments);
+            setNewComment('');
+            onUpdate({ ...approval, comments: updatedComments });
+        } catch (err) {
+            console.error('Failed to post comment:', err);
+        }
+    };
+
+    const handleReviewAction = async (decision) => {
+        setSubmitting(true);
+        try {
+            const response = await api.post(`/approvals/${approval.id}/review`, { decision, feedback: newComment });
+            onUpdate(response);
+            setNewComment('');
+        } catch (err) {
+            console.error('Failed to submit review:', err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     const handleFileUpload = async (e) => {
-        const files = Array.from(e.target.files || []);
+        const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
         try {
             setUploading(true);
-            setError(null);
-
             const formData = new FormData();
             files.forEach(file => formData.append('files', file));
 
             const response = await api.upload(`/approvals/${approval.id}/assets`, formData);
-            // API returns array of assets directly
             const newAssets = Array.isArray(response) ? response : (response.assets || []);
 
-            onUpdate({ ...approval, assets: [...assets, ...newAssets] });
-            // Switch to the newly uploaded asset
-            if (newAssets.length > 0) {
-                setActiveAssetIndex(assets.length);
-            }
+            const updatedAssets = [...assets, ...newAssets];
+            setAssets(updatedAssets);
+            onUpdate({ ...approval, assets: updatedAssets });
+            setActiveAssetIndex(updatedAssets.length - 1);
         } catch (err) {
             console.error('Upload failed:', err);
-            setError('Failed to upload files');
         } finally {
             setUploading(false);
+            e.target.value = '';
         }
     };
 
-    const handleDeleteAsset = async (assetId) => {
-        console.log('Attempting to delete asset:', assetId);
-        if (!confirm('Delete this asset?')) return;
-
-        try {
-            await api.delete(`/approvals/${approval.id}/assets/${assetId}`);
-            console.log('Asset deleted successfully');
-            const newAssets = assets.filter(a => a.id !== assetId);
-            onUpdate({ ...approval, assets: newAssets });
-            // Adjust index if needed
-            if (activeAssetIndex >= newAssets.length) {
-                setActiveAssetIndex(Math.max(0, newAssets.length - 1));
-            }
-        } catch (err) {
-            console.error('Delete failed:', err);
-            setError('Failed to delete asset');
-        }
-    };
-
-    // ... (keep handleAddReviewer, handleRemoveReviewer, handleSubmitForReview, handleAddComment, handleCreateRevision as is)
-
-    const handleAddReviewer = async () => {
-        if (!reviewerEmail) return;
-
-        try {
-            setSubmitting(true);
-            // API expects { reviewers: [{ email, name }] } and returns array
-            const response = await api.post(`/approvals/${approval.id}/reviewers`, {
-                reviewers: [{
-                    email: reviewerEmail,
-                    name: reviewerName || undefined,
-                }]
-            });
-
-            const newReviewers = Array.isArray(response) ? response : (response.reviewers || [response.reviewer]);
-            onUpdate({ ...approval, reviewers: [...(approval.reviewers || []), ...newReviewers] });
-
-            setReviewerEmail('');
-            setReviewerName('');
-            setShowAddReviewer(false);
-        } catch (err) {
-            console.error('Add reviewer failed:', err);
-            setError('Failed to add reviewer');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleRemoveReviewer = async (reviewerId) => {
-        try {
-            await api.delete(`/approvals/${approval.id}/reviewers/${reviewerId}`);
-            onUpdate({ ...approval, reviewers: approval.reviewers.filter(r => r.id !== reviewerId) });
-        } catch (err) {
-            console.error('Remove reviewer failed:', err);
-        }
-    };
-
-    const handleSubmitForReview = async () => {
-        if (!approval.reviewers?.length) {
-            setError('Please add at least one reviewer');
-            return;
-        }
-        if (!approval.assets?.length) {
-            setError('Please upload at least one asset');
-            return;
-        }
-
-        try {
-            setSubmitting(true);
-            const response = await api.post(`/approvals/${approval.id}/submit`);
-            onUpdate(response);
-        } catch (err) {
-            console.error('Submit failed:', err);
-            setError('Failed to submit for review');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleAddComment = async () => {
-        if (!comment.trim()) return;
-
-        try {
-            setSubmitting(true);
-            const response = await api.post(`/approvals/${approval.id}/comments`, {
-                content: comment,
-            });
-            // API returns comment object directly
-            const newComment = response.comment || response;
-            onUpdate({ ...approval, comments: [...(approval.comments || []), newComment] });
-            setComment('');
-        } catch (err) {
-            console.error('Add comment failed:', err);
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleCreateRevision = async () => {
-        if (!confirm('Create a new revision? This will reset reviewer decisions.')) return;
-
-        try {
-            setSubmitting(true);
-            const response = await api.post(`/approvals/${approval.id}/revise`);
-            onUpdate(response);
-        } catch (err) {
-            console.error('Revision failed:', err);
-            setError('Failed to create revision');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
+    const primaryAsset = assets[activeAssetIndex];
+    const StatusIcon = STATUS_CONFIG[approval.status]?.icon || Clock;
+    const isMyReviewPending = reviewers.some(r => r.email === user?.email && !r.decision);
 
     return (
-        <div className={`fixed inset-0 z-50 flex flex-col ${isDark ? 'bg-[#0A0A0A]' : 'bg-gray-50'}`}>
-            {/* Header */}
-            <div className={`flex items-center justify-between px-6 py-3 border-b ${isDark ? 'bg-[#0A0A0A] border-gray-800' : 'bg-white border-gray-200'}`}>
+        <div className={`flex flex-col h-full bg-[#FAFAFA] dark:bg-[#050505] text-gray-900 dark:text-gray-100`}>
+
+            {/* 1. Global Header */}
+            <header className={`flex items-center justify-between px-6 py-4 border-b bg-white dark:bg-[#0A0A0A] border-gray-200 dark:border-gray-800 shadow-sm z-10`}>
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onBack}
-                        className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                        className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
                     >
-                        <ArrowLeft className={`w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
                         <div className="flex items-center gap-3">
-                            <h1 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                {approval.title}
-                            </h1>
-                            {approval.version > 1 && (
-                                <span className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>
-                                    v{approval.version}
-                                </span>
-                            )}
-                            <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${statusConfig.color}/20 ${statusConfig.textColor}`}>
-                                {statusConfig.label}
+                            <h1 className="text-xl font-bold tracking-tight">{approval.title}</h1>
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${STATUS_CONFIG[approval.status].color}`}>
+                                <StatusIcon className="w-3.5 h-3.5" />
+                                {STATUS_CONFIG[approval.status].label}
                             </span>
                         </div>
+                        <p className="text-sm text-gray-500 flex items-center gap-2 mt-0.5">
+                            <span className="font-medium text-gray-900 dark:text-gray-300">{approval.event?.name || 'General Project'}</span>
+                            <span>•</span>
+                            <span>v{assets.length} recently updated</span>
+                        </p>
                     </div>
                 </div>
 
+                {/* Primary Actions Area */}
                 <div className="flex items-center gap-3">
-                    {/* Primary Actions based on Status */}
-                    {approval.status === 'DRAFT' && (
+                    {/* Only show upload if allowed (e.g. owner or changes requested) */}
+                    <label className="cursor-pointer px-4 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#252525] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-sm">
+                        <Paperclip className="w-4 h-4" />
+                        Upload New Version
+                        <input type="file" multiple className="hidden" onChange={handleFileUpload} />
+                    </label>
+
+                    {isMyReviewPending && (
                         <>
-                            <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium">
-                                <input
-                                    type="file"
-                                    multiple
-                                    className="hidden"
-                                    onChange={handleFileUpload}
-                                    accept="image/*,.pdf"
-                                />
-                                <Upload className="w-4 h-4" />
-                                {uploading ? 'Uploading...' : (approval.version > 1 ? 'Upload Revision' : 'Upload Assets')}
-                            </label>
                             <button
-                                onClick={handleSubmitForReview}
+                                onClick={() => handleReviewAction('CHANGES_REQUESTED')}
                                 disabled={submitting}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 text-sm font-medium"
+                                className="px-4 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800 rounded-lg text-sm font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all flex items-center gap-2"
                             >
-                                <Send className="w-4 h-4" />
-                                Submit
+                                <Edit3 className="w-4 h-4" />
+                                Request Changes
+                            </button>
+                            <button
+                                onClick={() => handleReviewAction('APPROVED')}
+                                disabled={submitting}
+                                className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2"
+                            >
+                                <CheckCircle className="w-4 h-4" />
+                                Approve
                             </button>
                         </>
                     )}
-                    {(approval.status === 'CHANGES_REQUESTED' || approval.status === 'REJECTED') && (
-                        <button
-                            onClick={handleCreateRevision}
-                            disabled={submitting}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 text-sm font-medium"
-                        >
-                            <RefreshCw className="w-4 h-4" />
-                            New Revision
-                        </button>
-                    )}
                 </div>
-            </div>
+            </header>
 
-            {/* Main Content Split */}
+            {/* 2. Main Content Grid */}
             <div className="flex-1 flex overflow-hidden">
-                {/* LEFT PANEL: Asset Preview (70%) */}
-                <div className={`flex-1 flex flex-col relative ${isDark ? 'bg-[#121212]' : 'bg-gray-200'}`}>
-                    {/* Main Preview */}
-                    <div className="flex-1 flex items-center justify-center p-8 overflow-hidden">
-                        {activeAsset ? (
-                            <div className="relative max-w-full max-h-full">
-                                {activeAsset.mimeType?.startsWith('image/') ? (
-                                    <img
-                                        src={activeAsset.s3Url}
-                                        alt={activeAsset.originalName}
-                                        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                                    />
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center p-20 bg-white/5 rounded-xl text-center">
-                                        <FileText className="w-20 h-20 text-gray-400 mb-4" />
-                                        <p className="text-xl text-gray-400">{activeAsset.originalName}</p>
-                                        <a
-                                            href={activeAsset.s3Url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                                        >
-                                            View File
-                                        </a>
-                                    </div>
-                                )}
 
-                                {/* Asset Actions overlay (Delete) */}
-                                {approval.status === 'DRAFT' && (
-                                    <button
-                                        onClick={() => handleDeleteAsset(activeAsset.id)}
-                                        className="absolute top-4 right-4 p-2 bg-red-500/80 hover:bg-red-600 text-white rounded-full shadow-lg transition-all z-10"
-                                        title="Delete Asset"
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="text-center text-gray-500">
-                                <Image className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                                <p className="text-lg">No assets uploaded</p>
-                                {approval.status === 'DRAFT' && (
-                                    <p className="text-sm mt-2">Use the "Upload Assets" button to add files</p>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Bottom Thumbnail Strip */}
-                    {assets.length > 0 && (
-                        <div className={`h-24 px-6 py-3 border-t overflow-x-auto flex items-center gap-3 ${isDark ? 'bg-[#0A0A0A] border-gray-800' : 'bg-white border-gray-200'}`}>
-                            {assets.map((asset, idx) => (
-                                <button
-                                    key={asset.id}
-                                    onClick={() => setActiveAssetIndex(idx)}
-                                    className={`relative flex-shrink-0 h-16 w-16 rounded-lg overflow-hidden border-2 transition-all ${activeAssetIndex === idx
-                                        ? 'border-indigo-500 ring-2 ring-indigo-500/20'
-                                        : 'border-transparent opacity-60 hover:opacity-100'
-                                        }`}
-                                >
-                                    {asset.mimeType?.startsWith('image/') ? (
-                                        <img src={asset.s3Url} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                                            <FileText className="w-6 h-6 text-gray-400" />
-                                        </div>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* RIGHT PANEL: Sidebar (30%, min 350px) */}
-                <div className={`w-96 flex flex-col border-l ${isDark ? 'bg-[#0A0A0A] border-gray-800' : 'bg-gray-50 border-gray-200'}`}>
-
-                    {/* 1. Details & Status */}
-                    <div className="p-5 border-b border-gray-200/50 dark:border-gray-800/50 shrink-0">
-                        {/* Description */}
-                        {approval.description && (
-                            <div className="mb-4">
-                                <p className={`text-xs uppercase font-semibold mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Description</p>
-                                <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{approval.description}</p>
-                            </div>
-                        )}
-
-                        {/* Reviewers */}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <p className={`text-xs uppercase font-semibold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Reviewers</p>
-                                {['DRAFT', 'PENDING', 'CHANGES_REQUESTED'].includes(approval.status) && (
-                                    <button onClick={() => setShowAddReviewer(!showAddReviewer)} className="text-xs text-indigo-500 hover:text-indigo-400 font-medium">
-                                        {showAddReviewer ? 'Cancel' : '+ Add'}
-                                    </button>
-                                )}
-                            </div>
-
-                            {showAddReviewer && (
-                                <div className="mb-3 space-y-2">
-                                    <input
-                                        type="email"
-                                        value={reviewerEmail}
-                                        onChange={(e) => setReviewerEmail(e.target.value)}
-                                        placeholder="Email..."
-                                        className={`w-full px-2 py-1.5 text-sm rounded border ${isDark ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-gray-300'}`}
-                                    />
-                                    <button onClick={handleAddReviewer} className="w-full py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700">Add Reviewer</button>
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                {approval.reviewers?.map(r => (
-                                    <div key={r.id} className="flex items-center justify-between text-sm">
-                                        <span className={`truncate mr-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{r.name || r.email}</span>
-                                        <div className="flex items-center gap-2">
-                                            {r.decision === 'APPROVED' && <CheckCircle className="w-4 h-4 text-green-500" />}
-                                            {r.decision === 'REJECTED' && <XCircle className="w-4 h-4 text-red-500" />}
-                                            {r.decision === 'CHANGES_REQUESTED' && <Edit3 className="w-4 h-4 text-orange-500" />}
-                                            {!r.decision && <Clock className="w-4 h-4 text-gray-400" />}
-                                        </div>
-                                    </div>
-                                ))}
-                                {(!approval.reviewers || approval.reviewers.length === 0) && (
-                                    <p className="text-sm text-gray-500 italic">No reviewers yet</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 2. Comments List (Scrollable) */}
-                    <div className="flex-1 overflow-y-auto p-5 scrollbar-thin">
-                        <p className={`text-xs uppercase font-semibold mb-3 sticky top-0 bg-inherit z-10 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Comments</p>
-                        <div className="space-y-4">
-                            {approval.comments?.map((c) => (
-                                <div key={c.id} className="flex gap-3">
-                                    <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium ${isDark ? 'bg-gray-800 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
-                                        {c.user?.firstName?.[0] || c.reviewerEmail?.[0] || '?'}
-                                    </div>
-                                    <div>
-                                        <div className="flex items-baseline gap-2 mb-0.5">
-                                            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>
-                                                {c.user ? `${c.user.firstName}` : 'Reviewer'}
-                                            </span>
-                                            <span className="text-[10px] text-gray-500">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                        </div>
-                                        <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{c.content}</p>
-                                    </div>
-                                </div>
-                            ))}
-                            {(!approval.comments || approval.comments.length === 0) && (
-                                <div className="text-center py-8">
-                                    <MessageSquare className="w-6 h-6 mx-auto mb-2 text-gray-600 opacity-20" />
-                                    <p className="text-sm text-gray-500">No comments yet</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* 3. Comment Input (Fixed Bottom) */}
-                    <div className={`p-4 border-t ${isDark ? 'bg-[#0A0A0A] border-gray-800' : 'bg-white border-gray-200'}`}>
-                        <div className={`flex gap-2 p-2 rounded-xl border transition-colors ${isDark ? 'bg-[#151515] border-gray-800 focus-within:border-gray-700' : 'bg-white border-gray-300 focus-within:border-indigo-500'}`}>
-                            <input
-                                type="text"
-                                value={comment}
-                                onChange={(e) => setComment(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAddComment()}
-                                placeholder="Write a comment..."
-                                className={`flex-1 bg-transparent px-2 text-sm focus:outline-none ${isDark ? 'text-white placeholder-gray-600' : 'text-gray-900 placeholder-gray-400'}`}
-                            />
+                {/* LEFT: Asset Canvas (Dominant) */}
+                <div className="flex-1 flex flex-col bg-gray-100 dark:bg-[#0F0F0F] relative overflow-hidden">
+                    {/* Canvas Toolbar */}
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/90 dark:bg-[#222]/90 backdrop-blur shadow-sm border border-gray-200 dark:border-gray-700 p-1 rounded-full z-10 transition-all hover:shadow-md">
+                        {assets.map((a, i) => (
                             <button
-                                onClick={handleAddComment}
-                                disabled={!comment.trim() || submitting}
-                                className={`p-1.5 rounded-lg transition-colors ${comment.trim()
-                                    ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                                    : 'bg-transparent text-gray-400 cursor-not-allowed'
+                                key={a.id}
+                                onClick={() => setActiveAssetIndex(i)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${activeAssetIndex === i
+                                        ? 'bg-indigo-500 text-white shadow-sm'
+                                        : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
                                     }`}
                             >
-                                <Send className="w-4 h-4" />
+                                v{i + 1}
                             </button>
+                        ))}
+                    </div>
+
+                    <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
+                        {primaryAsset ? (
+                            primaryAsset.mimeType?.startsWith('image/') ? (
+                                <img
+                                    src={primaryAsset.s3Url}
+                                    alt="Asset Preview"
+                                    className="max-w-full max-h-full object-contain rounded shadow-xl ring-1 ring-black/5 dark:ring-white/10"
+                                />
+                            ) : (
+                                <div className="bg-white dark:bg-[#1A1A1A] p-12 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 text-center">
+                                    <div className="w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <FileText className="w-10 h-10 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold mb-1">{primaryAsset.originalName}</h3>
+                                    <p className="text-sm text-gray-500 mb-6 uppercase tracking-wide font-medium">{primaryAsset.mimeType}</p>
+                                    <a
+                                        href={primaryAsset.s3Url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        Download Asset
+                                    </a>
+                                </div>
+                            )
+                        ) : (
+                            <div className="text-center text-gray-400">
+                                <Clock className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                <p>No assets uploaded yet</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* RIGHT: Control Panel (Sidebar) */}
+                <div className="w-[400px] flex flex-col border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0A0A0A]">
+
+                    {/* Reviewers Status Card */}
+                    <div className="p-6 border-b border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                <Users className="w-4 h-4" />
+                                Review Status
+                            </h3>
+                            <button className="text-xs text-indigo-500 font-medium hover:underline">Manage</button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {reviewers.map((r, i) => (
+                                <div key={i} className="flex items-center justify-between group">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-2 ring-white dark:ring-[#111] ${r.decision === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                                                r.decision === 'CHANGES_REQUESTED' ? 'bg-orange-100 text-orange-700' :
+                                                    r.decision === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                        'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                            }`}>
+                                            {r.name?.[0] || r.email?.[0]}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium leading-none">{r.name || r.email}</p>
+                                            <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">
+                                                {r.decision?.replace('_', ' ') || 'Pending Review'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <MoreHorizontal className="w-4 h-4 text-gray-400 cursor-pointer" />
+                                    </div>
+                                </div>
+                            ))}
+                            {reviewers.length === 0 && (
+                                <p className="text-sm text-gray-500 italic">No reviewers assigned.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Chat / Activity Feed */}
+                    <div className="flex-1 flex flex-col min-h-0 bg-gray-50/50 dark:bg-[#0C0C0C]">
+                        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-gray-400" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Discussion</span>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                            {comments.length === 0 && (
+                                <div className="text-center py-10 opacity-50">
+                                    <p className="text-sm">Start the conversation</p>
+                                </div>
+                            )}
+
+                            {comments.map((comment, i) => {
+                                const isMe = comment.user?.email === user?.email; // Simplified check
+                                return (
+                                    <div key={i} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+                                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 flex-shrink-0 flex items-center justify-center text-xs font-bold">
+                                            {comment.user?.name?.[0]}
+                                        </div>
+                                        <div className={`flex flex-col max-w-[85%] ${isMe ? 'items-end' : 'items-start'}`}>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{comment.user?.name}</span>
+                                                <span className="text-[10px] text-gray-400">{new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                            <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${isMe
+                                                    ? 'bg-indigo-600 text-white rounded-tr-none'
+                                                    : 'bg-white dark:bg-[#1A1A1A] border border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-200 rounded-tl-none'
+                                                }`}>
+                                                {comment.content}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            <div ref={commentsEndRef} />
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="p-4 bg-white dark:bg-[#0A0A0A] border-t border-gray-200 dark:border-gray-800">
+                            <form onSubmit={handleCommentSubmit} className="relative rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
+                                <textarea
+                                    className="w-full bg-transparent p-3 pr-12 text-sm max-h-32 resize-none focus:outline-none dark:text-gray-200"
+                                    placeholder="Type a message..."
+                                    rows="2"
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleCommentSubmit(e);
+                                        }
+                                    }}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!newComment.trim()}
+                                    className="absolute right-2 bottom-2 p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:bg-gray-300 transition-colors"
+                                >
+                                    <Send className="w-4 h-4" />
+                                </button>
+                            </form>
+                            <p className="text-[10px] text-gray-400 mt-2 text-center">
+                                Press <span className="font-mono bg-gray-100 dark:bg-gray-800 px-1 rounded">Enter</span> to send
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     );
 };
 
 export default ApprovalDetailView;
-
-

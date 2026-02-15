@@ -343,6 +343,27 @@ export const ApprovalController = {
     },
 
     /**
+     * Submit decision (authenticated user)
+     */
+    async submitAuthenticatedDecision(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const { id } = req.params;
+            const userId = req.user?.userId;
+            if (!userId) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+            }
+
+            const { decision, note } = req.body;
+
+            const reviewer = await approvalService.submitAuthenticatedDecision(id, userId, decision, note);
+
+            return res.json(reviewer);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
+    /**
      * Create revision and re-submit for review
      */
     async createRevision(req: AuthRequest, res: Response, next: NextFunction) {

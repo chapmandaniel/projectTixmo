@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Filter, MapPin, Calendar, ChevronRight } from 'lucide-react';
-import EventWizard from './EventWizard';
+import EventStudio from './EventStudio';
 import StatusBadge from '../components/StatusBadge';
 import api from '../lib/api';
 
@@ -35,7 +35,7 @@ const EventsView = ({ isDark, onManageEvent, user }) => {
 
     return (
         <div className="space-y-6 animate-fade-in max-w-7xl mx-auto relative">
-            {showWizard && <EventWizard onClose={() => setShowWizard(false)} onSuccess={handleCreateSuccess} isDark={isDark} user={user} />}
+            {showWizard && <EventStudio onClose={() => setShowWizard(false)} onSuccess={handleCreateSuccess} isDark={isDark} user={user} />}
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
