@@ -50,6 +50,17 @@ export const submitDecisionSchema = z.object({
     }),
 });
 
+// Submit decision (for authenticated reviewers)
+export const submitAuthenticatedDecisionSchema = z.object({
+    params: z.object({
+        id: z.string().uuid('Invalid approval ID'),
+    }),
+    body: z.object({
+        decision: z.enum(['APPROVED', 'CHANGES_REQUESTED', 'REJECTED']),
+        note: z.string().optional(),
+    }),
+});
+
 // Add comment
 export const addCommentSchema = z.object({
     params: z.object({
@@ -128,4 +139,5 @@ export type CreateApprovalInput = z.infer<typeof createApprovalSchema>['body'];
 export type UpdateApprovalInput = z.infer<typeof updateApprovalSchema>['body'];
 export type AddReviewersInput = z.infer<typeof addReviewersSchema>['body'];
 export type SubmitDecisionInput = z.infer<typeof submitDecisionSchema>['body'];
+export type SubmitAuthenticatedDecisionInput = z.infer<typeof submitAuthenticatedDecisionSchema>['body'];
 export type AddCommentInput = z.infer<typeof addCommentSchema>['body'];

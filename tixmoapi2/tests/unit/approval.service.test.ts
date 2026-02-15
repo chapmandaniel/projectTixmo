@@ -16,6 +16,7 @@ jest.mock('../../src/config/prisma', () => ({
         },
         approvalRequest: {
             create: jest.fn(),
+            findUnique: jest.fn(),
             findFirst: jest.fn(),
             findMany: jest.fn(),
             count: jest.fn(),
@@ -28,6 +29,7 @@ jest.mock('../../src/config/prisma', () => ({
         },
         approvalReviewer: {
             findUnique: jest.fn(),
+            findFirst: jest.fn(),
             create: jest.fn(),
             delete: jest.fn(),
             findMany: jest.fn(),
@@ -347,7 +349,7 @@ describe('ApprovalService', () => {
             expect(prisma.approvalReviewer.updateMany).toHaveBeenCalled();
             expect(prisma.approvalRequest.update).toHaveBeenCalledWith(expect.objectContaining({
                 where: { id: mockApprovalId },
-                data: expect.objectContaining({ version: 2, status: 'PENDING' })
+                data: expect.objectContaining({ version: 2, status: 'DRAFT' })
             }));
             expect(approvalEmailService.sendRevisionNotification).toHaveBeenCalled();
         });
@@ -367,6 +369,129 @@ describe('ApprovalService', () => {
             await approvalService.removeReviewer(mockApprovalId, 'reviewer-1', mockOrgId);
 
             expect(prisma.approvalReviewer.delete).toHaveBeenCalledWith({ where: { id: 'reviewer-1' } });
+        });
+    });
+
+    describe('submitAuthenticatedDecision', () => {
+        const mockApprovalId = 'approval-123';
+        const mockUserId = 'user-123';
+        const mockReviewerId = 'reviewer-1';
+
+        it('should submit decision for authenticated user (found by userId)', async () => {
+            // Mock finding reviewer by userId
+            (prisma.approvalReviewer.findFirst as jest.Mock).mockResolvedValue({
+                id: mockReviewerId,
+                userId: mockUserId,
+                approvalRequestId: mockApprovalId,
+            });
+
+            // Mock finding approval
+            (prisma.approvalRequest.findUnique as jest.Mock).mockResolvedValue({
+                id: mockApprovalId,
+                title: 'Test',
+                priority: 'STANDARD',
+                event: { name: 'Event' },
+                createdBy: { id: 'creator-id' },
+            });
+
+            // Mock updating reviewer
+            (prisma.approvalReviewer.update as jest.Mock).mockResolvedValue({
+                id: mockReviewerId,
+                decision: 'APPROVED',
+            });
+
+            // Mock finding all reviewers (to check status update)
+            (prisma.approvalReviewer.findMany as jest.Mock).mockResolvedValue([
+                { id: mockReviewerId, decision: 'APPROVED' }
+            ]);
+
+            // Mock finding requester for email
+            (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+                firstName: 'Requester', lastName: 'User', email: 'req@example.com'
+            });
+
+            await approvalService.submitAuthenticatedDecision(mockApprovalId, mockUserId, 'APPROVED', 'Good job');
+
+            expect(prisma.approvalReviewer.findFirst).toHaveBeenCalledWith({
+                where: { approvalRequestId: mockApprovalId, userId: mockUserId }
+            });
+            expect(prisma.approvalReviewer.update).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    where: { id: mockReviewerId },
+                    data: expect.objectContaining({ decision: 'APPROVED', decisionNote: 'Good job' })
+                })
+            );
+        });
+
+        it('should submit decision for authenticated user (found by email)', async () => {
+            // Mock finding reviewer by userId returns null
+            (prisma.approvalReviewer.findFirst as jest.Mock).mockResolvedValue(null);
+
+            // Mock finding user email
+            (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+                id: mockUserId,
+                email: 'user@example.com',
+            });
+
+            // Mock finding reviewer by email
+            (prisma.approvalReviewer.findUnique as jest.Mock).mockResolvedValue({
+                id: mockReviewerId,
+                email: 'user@example.com',
+                approvalRequestId: mockApprovalId,
+            });
+
+            // Mock finding approval
+            (prisma.approvalRequest.findUnique as jest.Mock).mockResolvedValue({
+                id: mockApprovalId,
+                title: 'Test',
+                priority: 'STANDARD',
+                event: { name: 'Event' },
+                createdBy: { id: 'creator-id' },
+            });
+
+            // Mock updating reviewer
+            (prisma.approvalReviewer.update as jest.Mock).mockResolvedValue({
+                id: mockReviewerId,
+                decision: 'REJECTED',
+            });
+            // Mock finding all reviewers (to check status update)
+            (prisma.approvalReviewer.findMany as jest.Mock).mockResolvedValue([
+                { id: mockReviewerId, decision: 'REJECTED' }
+            ]);
+
+            // Mock finding requester for email (second call to findUnique for user)
+            (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+                firstName: 'Requester', lastName: 'User', email: 'req@example.com'
+            });
+
+            await approvalService.submitAuthenticatedDecision(mockApprovalId, mockUserId, 'REJECTED');
+
+            expect(prisma.approvalReviewer.findUnique).toHaveBeenCalledWith({
+                where: {
+                    approvalRequestId_email: {
+                        approvalRequestId: mockApprovalId,
+                        email: 'user@example.com',
+                    }
+                }
+            });
+            expect(prisma.approvalReviewer.update).toHaveBeenCalled();
+        });
+
+        it('should throw FORBIDDEN if user is not a reviewer', async () => {
+            // Mock finding reviewer by userId returns null
+            (prisma.approvalReviewer.findFirst as jest.Mock).mockResolvedValue(null);
+
+            // Mock finding user email
+            (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+                id: mockUserId,
+                email: 'user@example.com',
+            });
+
+            // Mock finding reviewer by email returns null
+            (prisma.approvalReviewer.findUnique as jest.Mock).mockResolvedValue(null);
+
+            await expect(approvalService.submitAuthenticatedDecision(mockApprovalId, mockUserId, 'APPROVED'))
+                .rejects.toThrow(ApiError);
         });
     });
 });

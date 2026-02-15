@@ -14,7 +14,7 @@ import PersonalTodoView from './features/PersonalTodoView';
 import SettingsView from './features/SettingsView';
 import LoginView from './features/LoginView';
 import VenuesView from './features/VenuesView';
-import ApprovalsView from './features/ApprovalsView';
+import ApprovalsDashboard from './features/ApprovalsDashboard';
 import OrdersView from './features/OrdersView';
 
 import WaitingRoomView from './features/WaitingRoomView';
@@ -113,14 +113,12 @@ const App = () => {
             case 'personal-todo': return <PersonalTodoView {...props} />;
             case 'team': return <TeamView {...props} />;
             case 'social': return <SocialDashboard {...props} />;
-            case 'social': return <SocialDashboard {...props} />;
             case 'orders': return <OrdersView {...props} />;
-            case 'scanners': return <ComingSoonView title="Scanners" {...props} />;
             case 'scanners': return <ComingSoonView title="Scanners" {...props} />;
             case 'promo': return <ComingSoonView title="Promo Codes" {...props} />;
             case 'creative': return <CreativeComposer {...props} />;
             case 'venues': return <VenuesView isDark={isDark} user={user} />;
-            case 'approvals': return <ApprovalsView isDark={isDark} user={user} />;
+            case 'approvals': return <ApprovalsDashboard isDark={isDark} user={user} />;
             case 'settings': return <SettingsView {...props} />;
             default: return <DashboardHome {...props} />;
         }
