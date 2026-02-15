@@ -289,10 +289,25 @@ export class EventService {
       ...updateData,
     } as unknown as Prisma.EventUpdateInput;
 
-    return await prisma.event.update({
+    const updatedEvent = await prisma.event.update({
       where: { id },
       data: updatePayload,
     });
+
+    // Invalidate cache
+    try {
+      if (existingEvent.slug) {
+        await getRedisClient().del(`public_event:slug:${existingEvent.slug}`);
+      }
+      // If slug changed, invalidate new one too (though unlikely needed immediately)
+      if (updatedEvent.slug && updatedEvent.slug !== existingEvent.slug) {
+        await getRedisClient().del(`public_event:slug:${updatedEvent.slug}`);
+      }
+    } catch (error) {
+      logger.error('Redis cache invalidation error (updateEvent):', error);
+    }
+
+    return updatedEvent;
   }
 
   /**
@@ -330,6 +345,15 @@ export class EventService {
         status: 'DELETED',
       },
     });
+
+    // Invalidate cache
+    try {
+      if (existingEvent.slug) {
+        await getRedisClient().del(`public_event:slug:${existingEvent.slug}`);
+      }
+    } catch (error) {
+      logger.error('Redis cache invalidation error (deleteEvent):', error);
+    }
   }
 
   /**
@@ -535,12 +559,23 @@ export class EventService {
       throw ApiError.badRequest(`Cannot publish event. Missing required fields: ${missingFields.join(', ')}`);
     }
 
-    return await prisma.event.update({
+    const updated = await prisma.event.update({
       where: { id },
       data: {
         status: 'PUBLISHED',
       },
     });
+
+    // Invalidate cache
+    try {
+      if (event.slug) {
+        await getRedisClient().del(`public_event:slug:${event.slug}`);
+      }
+    } catch (error) {
+      logger.error('Redis cache invalidation error (publishEvent):', error);
+    }
+
+    return updated;
   }
 
   /**
@@ -619,13 +654,26 @@ export class EventService {
       }
 
       // 3. Update event status
-      return await tx.event.update({
+      const cancelledEvent = await tx.event.update({
         where: { id },
         data: {
           status: 'CANCELLED',
         },
       });
+
+      return cancelledEvent;
     });
+
+    // Invalidate cache (outside transaction)
+    try {
+      if (event.slug) {
+        await getRedisClient().del(`public_event:slug:${event.slug}`);
+      }
+    } catch (error) {
+      logger.error('Redis cache invalidation error (cancelEvent):', error);
+    }
+
+    return result;
   }
 
   /**
