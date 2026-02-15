@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import api from '../lib/api';
 
-const PromoCodeModal = ({ promoCode, onClose, onSuccess, isDark }) => {
+const PromoCodeModal = ({ promoCode, onClose, onSuccess, isDark, eventId, organizationId }) => {
     const isEditMode = !!promoCode;
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -59,7 +59,12 @@ const PromoCodeModal = ({ promoCode, onClose, onSuccess, isDark }) => {
             if (isEditMode) {
                 await api.put(`/promo-codes/${promoCode.id}`, payload);
             } else {
-                await api.post('/promo-codes', payload);
+                const finalPayload = {
+                    ...payload,
+                    eventId,
+                    organizationId
+                };
+                await api.post('/promo-codes', finalPayload);
             }
 
             onSuccess();
