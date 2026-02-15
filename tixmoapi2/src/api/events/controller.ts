@@ -50,13 +50,20 @@ export const listDeletedEvents = catchAsync(async (req: AuthRequest, res: Respon
   const raw = req.query as Record<string, unknown>;
   const page = raw.page !== undefined ? Number(raw.page) : undefined;
   const limit = raw.limit !== undefined ? Number(raw.limit) : undefined;
-  const organizationId = raw.organizationId as string;
-
-  if (!organizationId) {
-    throw ApiError.badRequest('Organization ID is required');
+  const userId = req.user?.userId;
+  if (!userId) {
+    throw ApiError.unauthorized('User not authenticated');
   }
 
-  const result = await eventService.listDeletedEvents(organizationId, page, limit);
+  const userOrgId = await eventService.getUserOrganizationId(userId);
+  if (!userOrgId) {
+    throw ApiError.forbidden('User does not belong to an organization');
+  }
+
+  // Force organizationId from user context
+  const targetOrgId = userOrgId;
+
+  const result = await eventService.listDeletedEvents(targetOrgId, page, limit);
   res.json(successResponse(result));
 });
 
@@ -64,10 +71,20 @@ export const listEvents = catchAsync(async (req: AuthRequest, res: Response) => 
   const raw = req.query as Record<string, unknown>;
   const page = raw.page !== undefined ? Number(raw.page) : undefined;
   const limit = raw.limit !== undefined ? Number(raw.limit) : undefined;
+  const userId = req.user?.userId;
+  if (!userId) {
+    throw ApiError.unauthorized('User not authenticated');
+  }
+
+  const userOrgId = await eventService.getUserOrganizationId(userId);
+  if (!userOrgId) {
+    throw ApiError.forbidden('User does not belong to an organization');
+  }
+
   const query = {
     ...(page !== undefined ? { page } : {}),
     ...(limit !== undefined ? { limit } : {}),
-    organizationId: raw.organizationId as string | undefined,
+    organizationId: userOrgId, // Force organizationId from user context
     venueId: raw.venueId as string | undefined,
     status: raw.status as Parameters<typeof eventService.listEvents>[0]['status'],
     search: raw.search as string | undefined,

@@ -72,6 +72,17 @@ const VALID_STATUS_TRANSITIONS: Record<EventStatus, Set<EventStatus>> = {
 
 export class EventService {
   /**
+   * Get user's organization ID
+   */
+  async getUserOrganizationId(userId: string): Promise<string | null> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { organizationId: true },
+    });
+    return user?.organizationId || null;
+  }
+
+  /**
    * Generate a unique slug from a title, appending a suffix on collision.
    */
   private async generateUniqueSlug(baseTitle: string, excludeId?: string): Promise<string> {
