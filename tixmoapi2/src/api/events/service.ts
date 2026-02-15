@@ -2,6 +2,8 @@ import { ApiError } from '@utils/ApiError';
 import { Event, Prisma, EventStatus } from '@prisma/client';
 
 import prisma from '../../config/prisma';
+import { getRedisClient } from '../../config/redis';
+import { logger } from '../../config/logger';
 
 interface CreateEventInput {
   title: string;
@@ -765,6 +767,26 @@ export class EventService {
    * Returns full event detail with ticket types and their tiers.
    */
   async getPublicEventBySlug(slug: string): Promise<Event | null> {
+    const cacheKey = `public_event:slug:${slug}`;
+
+    try {
+      const cachedEvent = await getRedisClient().get(cacheKey);
+      if (cachedEvent) {
+        return JSON.parse(cachedEvent, (_key, value) => {
+          if (
+            typeof value === 'string' &&
+            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/.test(value)
+          ) {
+            return new Date(value);
+          }
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return value;
+        }) as Event;
+      }
+    } catch (error) {
+      logger.error('Redis cache error (getPublicEventBySlug):', error);
+    }
+
     const publicStatuses: EventStatus[] = [
       EventStatus.PUBLISHED,
       EventStatus.ON_SALE,
@@ -795,6 +817,14 @@ export class EventService {
         },
       },
     });
+
+    if (event) {
+      try {
+        await getRedisClient().set(cacheKey, JSON.stringify(event), { EX: 300 }); // 5 minutes TTL
+      } catch (error) {
+        logger.error('Redis cache error (set getPublicEventBySlug):', error);
+      }
+    }
 
     return event;
   }
