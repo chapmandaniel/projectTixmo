@@ -29,8 +29,8 @@ const STATUS_ICONS = {
 };
 
 const ApprovalsDashboard = ({ isDark, user }) => {
-    const [currentTab, setCurrentTab] = useState('active'); // 'active' | 'history'
-    const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+    const [statusFilter, setStatusFilter] = useState('PENDING'); // Default to PENDING
+    const [viewMode, setViewMode] = useState('grid');
     const [approvals, setApprovals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -57,7 +57,7 @@ const ApprovalsDashboard = ({ isDark, user }) => {
         if (approvals.length > 0 || !loading) {
             processApprovals();
         }
-    }, [approvals, currentTab, searchQuery, user]);
+    }, [approvals, statusFilter, searchQuery, user]);
 
     const fetchInitialData = async () => {
         setLoading(true);
@@ -65,8 +65,7 @@ const ApprovalsDashboard = ({ isDark, user }) => {
             const [eventsRes] = await Promise.all([
                 api.get('/events')
             ]);
-            setEvents(eventsRes.events || []);
-            // Approvals fetched via fetchApprovals trigger in useEffect
+            setEvents(eventsRes.data?.events || eventsRes.events || []);
         } catch (err) {
             console.error('Failed to fetch initial data:', err);
             setLoading(false);
@@ -91,11 +90,9 @@ const ApprovalsDashboard = ({ isDark, user }) => {
             (item.title || '').toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-        // Tab Filtering
-        if (currentTab === 'active') {
-            filtered = filtered.filter(item => ['DRAFT', 'PENDING', 'CHANGES_REQUESTED'].includes(item.status));
-        } else {
-            filtered = filtered.filter(item => ['APPROVED', 'REJECTED'].includes(item.status));
+        // Status Filtering
+        if (statusFilter !== 'ALL') {
+            filtered = filtered.filter(item => item.status === statusFilter);
         }
 
         setDisplayApprovals(filtered);
@@ -104,8 +101,8 @@ const ApprovalsDashboard = ({ isDark, user }) => {
     const handleApprovalCreated = (newApproval) => {
         setApprovals([newApproval, ...approvals]);
         setShowCreateModal(false);
-        // If created, switch to active tab if not already
-        if (currentTab !== 'active') setCurrentTab('active');
+        // Switch to the status of the new item (usually DRAFT)
+        setStatusFilter('DRAFT');
     };
 
     const handleApprovalUpdated = (updated) => {
@@ -138,31 +135,31 @@ const ApprovalsDashboard = ({ isDark, user }) => {
     }
 
     return (
-        <div className={`flex h-screen overflow-hidden ${isDark ? 'bg-[#0A0A0A] text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`flex flex-col h-full ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0">
 
                 {/* Header */}
-                <header className={`px-8 py-5 border-b flex items-center justify-between z-10 ${isDark ? 'bg-[#0A0A0A]/95 border-gray-800' : 'bg-white/95 border-gray-200'}`}>
+                <header className={`px-1 py-5 flex items-center justify-between z-10 border-b ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Creative Gallery</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">Client Approvals</h1>
                         <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Manage and review creative assets</p>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* Event Dropdown - Fixed Wiring */}
-                        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${isDark ? 'bg-[#151515] border-gray-800' : 'bg-white border-gray-200'}`}>
-                            <Calendar className="w-4 h-4 text-gray-500" />
+                        {/* Event Dropdown */}
+                        <div className={`relative flex items-center gap-2 px-3 py-2 rounded-lg border text-sm w-48 ${isDark ? 'bg-[#1e1e1e] border-gray-800' : 'bg-white border-gray-200'}`}>
+                            <Calendar className="w-4 h-4 text-gray-500 pointer-events-none absolute left-3" />
                             <select
                                 value={eventFilter}
                                 onChange={(e) => setEventFilter(e.target.value)}
-                                className={`bg-transparent outline-none cursor-pointer pr-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                                className={`w-full h-full bg-transparent outline-none cursor-pointer appearance-none pl-6 pr-6 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                             >
                                 <option value="">All Events</option>
                                 {events.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                             </select>
-                            <ChevronDown className="w-3 h-3 text-gray-500 -ml-1" />
+                            <ChevronDown className="absolute right-3 w-3 h-3 text-gray-500 pointer-events-none" />
                         </div>
 
                         <button
@@ -174,44 +171,46 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                     </div>
                 </header>
 
-                {/* Toolbar & Tabs */}
-                <div className="px-8 flex flex-col gap-4 pt-6 pb-2 border-b border-gray-200/5 dark:border-gray-800/50">
+                {/* Toolbar & Filters */}
+                <div className="flex flex-col gap-4 pt-6 pb-2">
 
-                    {/* Tabs */}
-                    <div className="flex items-center gap-6 border-b border-gray-200 dark:border-gray-800">
-                        <button
-                            onClick={() => setCurrentTab('active')}
-                            className={`pb-3 text-sm font-medium transition-colors relative ${currentTab === 'active'
-                                    ? (isDark ? 'text-white' : 'text-gray-900')
-                                    : 'text-gray-500 hover:text-gray-400'
-                                }`}
-                        >
-                            Active Approvals
-                            {currentTab === 'active' && (
-                                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500 rounded-t-full"></span>
-                            )}
-                        </button>
-                        <button
-                            onClick={() => setCurrentTab('history')}
-                            className={`pb-3 text-sm font-medium transition-colors relative ${currentTab === 'history'
-                                    ? (isDark ? 'text-white' : 'text-gray-900')
-                                    : 'text-gray-500 hover:text-gray-400'
-                                }`}
-                        >
-                            History
-                            {currentTab === 'history' && (
-                                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500 rounded-t-full"></span>
-                            )}
-                        </button>
+                    {/* Status Filters (Pills) */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        {[
+                            { id: 'ALL', label: 'All' },
+                            { id: 'PENDING', label: 'Pending Review', icon: Eye },
+                            { id: 'DRAFT', label: 'Drafts', icon: Clock },
+                            { id: 'CHANGES_REQUESTED', label: 'In Revision', icon: Edit3 },
+                            { id: 'APPROVED', label: 'Approved', icon: CheckCircle },
+                            { id: 'REJECTED', label: 'Rejected', icon: XCircle },
+                        ].map(filter => {
+                            const Icon = filter.icon;
+                            const isActive = statusFilter === filter.id;
+                            return (
+                                <button
+                                    key={filter.id}
+                                    onClick={() => setStatusFilter(filter.id)}
+                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border ${isActive
+                                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                                        : isDark
+                                            ? 'bg-[#151515] border-[#333] text-gray-400 hover:bg-[#222] hover:text-gray-200'
+                                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                        }`}
+                                >
+                                    {Icon && <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-gray-500'}`} />}
+                                    {filter.label}
+                                </button>
+                            );
+                        })}
                     </div>
 
-                    {/* Filters Row */}
+                    {/* Search & View Toggle Row */}
                     <div className="flex items-center justify-between py-2">
                         <div className={`relative w-80`}>
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search projects..."
+                                placeholder="Search by title..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className={`w-full pl-10 pr-4 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none ${isDark ? 'bg-[#151515] border-gray-800 placeholder-gray-600' : 'bg-white border-gray-200'
@@ -238,10 +237,10 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto px-8 py-8 scrollbar-thin">
+                <div className="flex-1 overflow-y-auto py-8">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {currentTab === 'active' ? 'Active Projects' : 'Project History'}
+                            {statusFilter === 'ALL' ? 'All Approvals' : statusFilter.replace('_', ' ')}
                         </h2>
                         <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
                             {displayApprovals.length} items
@@ -327,7 +326,7 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                         )
                     ) : (
                         <div className="py-20 text-center">
-                            <p className="text-gray-500">No projects found in {currentTab === 'active' ? 'active' : 'history'}.</p>
+                            <p className="text-gray-500">No projects found with status '{statusFilter.toLowerCase().replace('_', ' ')}'.</p>
                         </div>
                     )}
                 </div>

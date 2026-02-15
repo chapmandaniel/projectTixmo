@@ -31,8 +31,8 @@ const ApprovalGalleryCard = ({ approval, isDark, onClick }) => {
         <div
             onClick={onClick}
             className={`group relative flex flex-col rounded-xl border transition-all cursor-pointer hover:shadow-xl hover:-translate-y-1 overflow-hidden ${isDark
-                    ? 'bg-[#151515] border-[#333] hover:border-[#555]'
-                    : 'bg-white border-gray-200 hover:border-indigo-200'
+                ? 'bg-[#1E1E1E] border-[#333] hover:border-[#555]'
+                : 'bg-white border-gray-200 hover:border-indigo-200'
                 }`}
         >
             {/* Thumbnail Header - Larger for Gallery */}
@@ -85,8 +85,8 @@ const ApprovalGalleryCard = ({ approval, isDark, onClick }) => {
                                 key={i}
                                 title={r.name || r.email}
                                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] border-2 ${isDark
-                                        ? 'bg-[#222] border-[#151515] text-gray-400'
-                                        : 'bg-gray-100 border-white text-gray-600'
+                                    ? 'bg-[#222] border-[#151515] text-gray-400'
+                                    : 'bg-gray-100 border-white text-gray-600'
                                     }`}
                             >
                                 {(r.name?.[0] || r.email?.[0] || '?').toUpperCase()}
