@@ -5,6 +5,8 @@ export const createApprovalSchema = z.object({
     body: z.object({
         eventId: z.string().uuid('Invalid event ID'),
         title: z.string().min(1, 'Title is required').max(200),
+        type: z.enum(['MEDIA', 'SOCIAL']).default('MEDIA'),
+        content: z.any().optional(), // Flexible JSON content
         description: z.string().optional(),
         instructions: z.string().optional(),
         priority: z.enum(['STANDARD', 'URGENT', 'CRITICAL']).default('STANDARD'),
@@ -19,6 +21,8 @@ export const updateApprovalSchema = z.object({
     }),
     body: z.object({
         title: z.string().min(1).max(200).optional(),
+        type: z.enum(['MEDIA', 'SOCIAL']).optional(),
+        content: z.any().optional(),
         description: z.string().optional(),
         instructions: z.string().optional(),
         priority: z.enum(['STANDARD', 'URGENT', 'CRITICAL']).optional(),

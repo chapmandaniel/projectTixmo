@@ -14,7 +14,16 @@ import {
     FileText,
     MessageSquare,
     ChevronRight,
-    Users
+
+    Users,
+    Instagram,
+    Facebook,
+    Twitter,
+    Linkedin,
+    Heart,
+    MessageCircle,
+    Share2,
+    Bookmark
 } from 'lucide-react';
 import { api } from '../lib/api';
 
@@ -110,6 +119,14 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
     const primaryAsset = assets[activeAssetIndex];
     const StatusIcon = STATUS_CONFIG[approval.status]?.icon || Clock;
     const isMyReviewPending = reviewers.some(r => r.email === user?.email && !r.decision);
+    const isSocial = approval.type === 'SOCIAL';
+
+    const SocialIcon = {
+        instagram: Instagram,
+        facebook: Facebook,
+        twitter: Twitter,
+        linkedin: Linkedin
+    }[approval.content?.platform] || Instagram;
 
     return (
         <div className={`flex flex-col h-full bg-[#FAFAFA] dark:bg-[#050505] text-gray-900 dark:text-gray-100`}>
@@ -183,8 +200,8 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                                 key={a.id}
                                 onClick={() => setActiveAssetIndex(i)}
                                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${activeAssetIndex === i
-                                        ? 'bg-indigo-500 text-white shadow-sm'
-                                        : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                    ? 'bg-indigo-500 text-white shadow-sm'
+                                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
                                     }`}
                             >
                                 v{i + 1}
@@ -193,7 +210,62 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                     </div>
 
                     <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
-                        {primaryAsset ? (
+                        {isSocial ? (
+                            <div className="w-[375px] bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col">
+                                {/* Social Header */}
+                                <div className="p-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                                            <span className="font-bold text-xs">T</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold dark:text-white">tixmo_official</span>
+                                            <span className="text-[10px] text-gray-500">{approval.content?.platform}</span>
+                                        </div>
+                                    </div>
+                                    <SocialIcon className="w-5 h-5 text-gray-400" />
+                                </div>
+
+                                {/* Social Content (Image/Asset) */}
+                                <div className="aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
+                                    {primaryAsset ? (
+                                        primaryAsset.mimeType?.startsWith('image/') ? (
+                                            <img src={primaryAsset.s3Url} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="text-center p-4">
+                                                <FileText className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                                                <p className="text-sm text-gray-500">{primaryAsset.originalName}</p>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <div className="text-gray-400 text-sm">No media attached</div>
+                                    )}
+                                </div>
+
+                                {/* Social Actions */}
+                                <div className="p-3">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-4">
+                                            <Heart className="w-6 h-6 text-gray-800 dark:text-white" />
+                                            <MessageCircle className="w-6 h-6 text-gray-800 dark:text-white" />
+                                            <Share2 className="w-6 h-6 text-gray-800 dark:text-white" />
+                                        </div>
+                                        <Bookmark className="w-6 h-6 text-gray-800 dark:text-white" />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-semibold dark:text-white">1,234 likes</p>
+                                        <p className="text-sm dark:text-gray-200">
+                                            <span className="font-semibold mr-1">tixmo_official</span>
+                                            {approval.content?.caption}
+                                        </p>
+                                        {approval.content?.hashtags && (
+                                            <p className="text-sm text-blue-500">{approval.content.hashtags}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : primaryAsset ? (
                             primaryAsset.mimeType?.startsWith('image/') ? (
                                 <img
                                     src={primaryAsset.s3Url}
@@ -245,9 +317,9 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                                 <div key={i} className="flex items-center justify-between group">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-2 ring-white dark:ring-[#111] ${r.decision === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                                                r.decision === 'CHANGES_REQUESTED' ? 'bg-orange-100 text-orange-700' :
-                                                    r.decision === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                                                        'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                            r.decision === 'CHANGES_REQUESTED' ? 'bg-orange-100 text-orange-700' :
+                                                r.decision === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                    'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                                             }`}>
                                             {r.name?.[0] || r.email?.[0]}
                                         </div>
@@ -296,8 +368,8 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                                                 <span className="text-[10px] text-gray-400">{new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                             </div>
                                             <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${isMe
-                                                    ? 'bg-indigo-600 text-white rounded-tr-none'
-                                                    : 'bg-white dark:bg-[#1A1A1A] border border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-200 rounded-tl-none'
+                                                ? 'bg-indigo-600 text-white rounded-tr-none'
+                                                : 'bg-white dark:bg-[#1A1A1A] border border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-200 rounded-tl-none'
                                                 }`}>
                                                 {comment.content}
                                             </div>

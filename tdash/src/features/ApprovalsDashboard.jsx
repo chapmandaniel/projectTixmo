@@ -16,7 +16,7 @@ import {
     Paperclip
 } from 'lucide-react';
 import ApprovalGalleryCard from './ApprovalGalleryCard';
-import CreateApprovalModal from './CreateApprovalModal';
+import ApprovalStudio from './ApprovalStudio';
 import ApprovalDetailView from './ApprovalDetailView';
 import { api } from '../lib/api';
 
@@ -35,8 +35,9 @@ const ApprovalsDashboard = ({ isDark, user }) => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [eventFilter, setEventFilter] = useState('');
+    const [typeFilter, setTypeFilter] = useState('ALL'); // ALL, MEDIA, SOCIAL
     const [events, setEvents] = useState([]);
-    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showStudio, setShowStudio] = useState(false);
     const [selectedApproval, setSelectedApproval] = useState(null);
 
     // Derived state
@@ -57,7 +58,7 @@ const ApprovalsDashboard = ({ isDark, user }) => {
         if (approvals.length > 0 || !loading) {
             processApprovals();
         }
-    }, [approvals, statusFilter, searchQuery, user]);
+    }, [approvals, statusFilter, typeFilter, searchQuery, user]);
 
     const fetchInitialData = async () => {
         setLoading(true);
@@ -95,14 +96,23 @@ const ApprovalsDashboard = ({ isDark, user }) => {
             filtered = filtered.filter(item => item.status === statusFilter);
         }
 
+        // Type Filtering
+        if (typeFilter !== 'ALL') {
+            filtered = filtered.filter(item => item.type === typeFilter);
+        }
+
         setDisplayApprovals(filtered);
     };
 
     const handleApprovalCreated = (newApproval) => {
         setApprovals([newApproval, ...approvals]);
-        setShowCreateModal(false);
         // Switch to the status of the new item (usually DRAFT)
         setStatusFilter('DRAFT');
+    };
+
+    const handleStudioSuccess = () => {
+        fetchApprovals(); // Refresh list to get new item
+        setShowStudio(false);
     };
 
     const handleApprovalUpdated = (updated) => {
@@ -163,7 +173,7 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                         </div>
 
                         <button
-                            onClick={() => setShowCreateModal(true)}
+                            onClick={() => setShowStudio(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-all shadow-lg shadow-indigo-600/20"
                         >
                             <Plus className="w-4 h-4" /> New Project
@@ -202,6 +212,22 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                                 </button>
                             );
                         })}
+                    </div>
+
+                    {/* Type Filters */}
+                    <div className="flex items-center gap-2 pb-2">
+                        {['ALL', 'MEDIA', 'SOCIAL'].map(type => (
+                            <button
+                                key={type}
+                                onClick={() => setTypeFilter(type)}
+                                className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${typeFilter === type
+                                        ? isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900'
+                                        : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                {type === 'ALL' ? 'All Types' : type === 'MEDIA' ? 'Media Assets' : 'Social Posts'}
+                            </button>
+                        ))}
                     </div>
 
                     {/* Search & View Toggle Row */}
@@ -332,13 +358,13 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                 </div>
             </div>
 
-            {/* Modals */}
-            {showCreateModal && (
-                <CreateApprovalModal
+            {/* Studio Modal */}
+            {showStudio && (
+                <ApprovalStudio
                     isDark={isDark}
-                    events={events}
-                    onClose={() => setShowCreateModal(false)}
-                    onCreate={handleApprovalCreated}
+                    user={user}
+                    onClose={() => setShowStudio(false)}
+                    onSuccess={handleStudioSuccess}
                 />
             )}
         </div>

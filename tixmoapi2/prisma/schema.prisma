@@ -505,6 +505,11 @@ enum ApprovalDecision {
   REJECTED
 }
 
+enum ApprovalType {
+  MEDIA
+  SOCIAL
+}
+
 enum ApprovalPriority {
   STANDARD
   URGENT
@@ -523,6 +528,8 @@ model ApprovalRequest {
   title           String
   description     String?          @db.Text
   instructions    String?          @db.Text
+  type            ApprovalType     @default(MEDIA)
+  content         Json?            // structured content for SOCIAL types (caption, platform, etc)
   status          ApprovalStatus   @default(DRAFT)
   priority        ApprovalPriority @default(STANDARD)
   dueDate         DateTime?        @map("due_date")

@@ -11,7 +11,12 @@ import {
     Users,
     Calendar,
     ChevronRight,
-    User
+    User,
+    Instagram,
+    Facebook,
+    Twitter,
+    Linkedin,
+    Layout
 } from 'lucide-react';
 
 
@@ -109,6 +114,15 @@ const ApprovalCard = ({
     const assetsCount = approval.assets?.length || 0;
     const creatorName = approval.creator ? `${approval.creator.firstName} ${approval.creator.lastName || ''}` : 'Unknown';
 
+    const SocialIcon = {
+        instagram: Instagram,
+        facebook: Facebook,
+        twitter: Twitter,
+        linkedin: Linkedin
+    }[approval.content?.platform] || Layout;
+
+    const isSocial = approval.type === 'SOCIAL';
+
     if (compact) {
         return (
             <div
@@ -119,14 +133,14 @@ const ApprovalCard = ({
                     }`}
             >
                 {/* Thumbnail */}
-                <div className={`w-12 h-12 rounded-lg flex-shrink-0 overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-gray-100'
+                <div className={`w-12 h-12 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'
                     }`}>
                     {thumbnail ? (
                         <img src={thumbnail} alt="" className="w-full h-full object-cover" />
+                    ) : isSocial ? (
+                        <SocialIcon className={`w-6 h-6 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <Image className={`w-5 h-5 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
-                        </div>
+                        <Image className={`w-5 h-5 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
                     )}
                 </div>
 
@@ -187,6 +201,13 @@ const ApprovalCard = ({
                             {approval.description || approval.instructions}
                         </p>
                     </div>
+                ) : isSocial ? (
+                    <div className="w-full h-full p-4 flex flex-col justify-center items-center gap-3 bg-gradient-to-br from-pink-500/10 to-purple-500/10">
+                        <SocialIcon className={`w-10 h-10 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <p className={`text-xs text-center line-clamp-3 px-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {approval.content?.caption || 'No caption'}
+                        </p>
+                    </div>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
                         <Image className={`w-12 h-12 ${isDark ? 'text-gray-700' : 'text-gray-300'}`} />
@@ -206,6 +227,14 @@ const ApprovalCard = ({
                         v{approval.version}
                     </div>
                 )}
+
+                {/* Type Badge */}
+                <div className={`absolute bottom-3 left-3 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm border ${isSocial
+                        ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+                        : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                    }`}>
+                    {approval.type || 'MEDIA'}
+                </div>
 
                 {/* Assets Count */}
                 {assetsCount > 1 && (

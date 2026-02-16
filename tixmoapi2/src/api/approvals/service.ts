@@ -23,6 +23,8 @@ export interface CreateApprovalData {
     eventId: string;
     createdById: string;
     title: string;
+    type?: 'MEDIA' | 'SOCIAL';
+    content?: any;
     description?: string;
     instructions?: string;
     priority?: 'STANDARD' | 'URGENT' | 'CRITICAL';
@@ -83,6 +85,8 @@ class ApprovalService {
                 eventId: data.eventId,
                 createdById: data.createdById,
                 title: data.title,
+                type: data.type || 'MEDIA',
+                content: data.content,
                 description: data.description,
                 instructions: data.instructions,
                 priority: data.priority || 'STANDARD',
@@ -172,7 +176,7 @@ class ApprovalService {
     async update(
         id: string,
         organizationId: string,
-        data: Partial<Pick<ApprovalRequest, 'title' | 'description' | 'instructions' | 'priority' | 'dueDate'>>
+        data: Partial<Pick<ApprovalRequest, 'title' | 'type' | 'content' | 'description' | 'instructions' | 'priority' | 'dueDate'>>
     ): Promise<ApprovalRequest> {
         const approval = await this.getById(id, organizationId);
         if (!approval) {
@@ -181,7 +185,7 @@ class ApprovalService {
 
         return prisma.approvalRequest.update({
             where: { id },
-            data,
+            data: data as any,
         });
     }
 
