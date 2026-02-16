@@ -136,11 +136,11 @@ const EventWizard = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                 title: formData.title,
                 description: formData.description || 'No description provided',
                 organizationId: user.organizationId,
-                venueId: formData.venueId,
+                venueId: formData.venueId || undefined,
                 startDateTime: new Date(formData.startDateTime).toISOString(),
                 endDateTime: new Date(formData.endDateTime).toISOString(),
                 status: 'DRAFT', // Default to draft
-                capacity: parseInt(formData.capacity, 10),
+                capacity: formData.capacity ? parseInt(formData.capacity, 10) : undefined,
                 imageUrl: formData.imageUrl || undefined,
                 category: formData.category,
                 metadata: {
