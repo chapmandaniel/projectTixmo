@@ -71,7 +71,7 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
     const fetchEvents = async () => {
         try {
             const res = await api.get('/events');
-            setEvents(res.data.events || []);
+            setEvents(res.events || res.data?.events || []);
         } catch (err) {
             console.error('Failed to fetch events', err);
         }

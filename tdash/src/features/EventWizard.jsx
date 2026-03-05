@@ -82,7 +82,8 @@ const EventWizard = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                 category: formData.category,
                 metadata: {
                     hashtag: formData.hashtag
-                }
+                },
+                tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
             };
 
             if (initialData) {

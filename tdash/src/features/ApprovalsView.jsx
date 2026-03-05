@@ -334,13 +334,13 @@ const ApprovalsView = ({ isDark, user }) => {
                 )}
             </div>
 
-            {/* Create Modal */}
             {showCreateModal && (
                 <CreateApprovalModal
                     isDark={isDark}
                     events={events}
                     onClose={() => setShowCreateModal(false)}
                     onCreate={handleApprovalCreated}
+                    initialEventId={eventFilter}
                 />
             )}
         </div>

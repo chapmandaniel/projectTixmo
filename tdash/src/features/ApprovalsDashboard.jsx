@@ -221,8 +221,8 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                                 key={type}
                                 onClick={() => setTypeFilter(type)}
                                 className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${typeFilter === type
-                                        ? isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900'
-                                        : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                                    ? isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900'
+                                    : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 {type === 'ALL' ? 'All Types' : type === 'MEDIA' ? 'Media Assets' : 'Social Posts'}
@@ -365,6 +365,7 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                     user={user}
                     onClose={() => setShowStudio(false)}
                     onSuccess={handleStudioSuccess}
+                    initialData={{ eventId: eventFilter }}
                 />
             )}
         </div>

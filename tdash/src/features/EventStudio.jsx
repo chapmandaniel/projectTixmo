@@ -134,7 +134,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                 startDateTime: eventData.startDateTime ? new Date(eventData.startDateTime).toISOString() : undefined,
                 endDateTime: eventData.endDateTime ? new Date(eventData.endDateTime).toISOString() : undefined,
                 status: publish ? 'PUBLISHED' : (eventData.status || 'DRAFT'),
-                capacity: parseInt(eventData.capacity, 10) || 0,
+                capacity: (parseInt(eventData.capacity, 10) > 0) ? parseInt(eventData.capacity, 10) : undefined,
                 imageUrl: eventData.imageUrl || undefined,
                 category: eventData.category,
                 metadata: { hashtag: eventData.hashtag },

@@ -10,9 +10,9 @@ const PRIORITIES = [
 
 const ALLOWED_FILE_TYPES = "image/*,.pdf,.svg,video/mp4,video/webm";
 
-const CreateApprovalModal = ({ isDark, events, onClose, onCreate }) => {
+const CreateApprovalModal = ({ isDark, events, onClose, onCreate, initialEventId = '' }) => {
     const [formData, setFormData] = useState({
-        eventId: '',
+        eventId: initialEventId,
         title: '',
         description: '',
         instructions: '',
