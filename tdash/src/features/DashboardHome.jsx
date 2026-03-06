@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
     Calendar, CheckSquare, BarChart3,
     CreditCard, ScanLine, Tags, MapPin, Users,
-    MessageCircle, Wand2, ListTodo, Settings, CheckCircle, Heart
+    MessageCircle, Wand2, ListTodo, Settings, CheckCircle, Heart, Eye, EyeOff
 } from 'lucide-react';
 import api from '../lib/api';
 
@@ -34,12 +34,32 @@ const DashboardHome = ({ isDark, user, onNavigate }) => {
         }
     });
 
+    const [hiddenCards, setHiddenCards] = useState(() => {
+        try {
+            const saved = localStorage.getItem('tixmo_dashboard_hidden');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            return [];
+        }
+    });
+
     const toggleFavorite = (e, id) => {
+        e.preventDefault();
         e.stopPropagation();
         setFavorites(prev => {
             const newFavs = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
             localStorage.setItem('tixmo_dashboard_favorites', JSON.stringify(newFavs));
             return newFavs;
+        });
+    };
+
+    const toggleHidden = (e, id) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setHiddenCards(prev => {
+            const newHidden = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+            localStorage.setItem('tixmo_dashboard_hidden', JSON.stringify(newHidden));
+            return newHidden;
         });
     };
 
@@ -64,8 +84,17 @@ const DashboardHome = ({ isDark, user, onNavigate }) => {
     const sortedItems = [...gridItems].sort((a, b) => {
         const aFav = favorites.includes(a.id);
         const bFav = favorites.includes(b.id);
+        const aHidden = hiddenCards.includes(a.id);
+        const bHidden = hiddenCards.includes(b.id);
+
+        // Hidden items filter to bottom
+        if (aHidden && !bHidden) return 1;
+        if (!aHidden && bHidden) return -1;
+
+        // Favorites filtering
         if (aFav && !bFav) return -1;
         if (!aFav && bFav) return 1;
+
         return 0; // maintain original relative order
     });
 
@@ -85,25 +114,34 @@ const DashboardHome = ({ isDark, user, onNavigate }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {sortedItems.map((item) => {
                     const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;
+                    const isFav = favorites.includes(item.id);
+                    const isHidden = hiddenCards.includes(item.id);
 
                     return (
                         <Link
                             key={item.id}
                             to={`/${item.id}`}
-                            className={`relative text-left flex flex-col p-6 rounded-md border transition-all duration-300 group overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 ${isDark
-                                ? `bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a] hover:shadow-2xl hover:shadow-black/50`
-                                : `bg-white border-gray-200 hover:bg-gray-50 hover:shadow-xl shadow-sm`
+                            className={`relative text-left flex flex-col p-6 rounded-md border transition-all duration-300 group overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 
+                                ${isHidden
+                                    ? (isDark
+                                        ? `bg-[#151521] border-[#2b2b40]/30 opacity-60 grayscale-[50%] hover:opacity-100 hover:grayscale-0 focus:opacity-100 focus:grayscale-0`
+                                        : `bg-gray-50 border-gray-200/50 opacity-60 grayscale-[50%] hover:opacity-100 hover:grayscale-0 focus:opacity-100 focus:grayscale-0`)
+                                    : (isDark
+                                        ? `bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a] hover:shadow-2xl hover:shadow-black/50`
+                                        : `bg-white border-gray-200 hover:bg-gray-50 hover:shadow-xl shadow-sm`)
                                 }`}
                         >
                             {/* Colorful Gradient Top Bar for Square Aesthetic */}
-                            <div className={`absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r ${item.grad} opacity-70 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                            <div className={`absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r ${item.grad} ${isHidden ? 'opacity-20 group-hover:opacity-100' : 'opacity-70 group-hover:opacity-100'} transition-opacity duration-300`}></div>
 
                             {/* Decorative Blur Bubble (very subtle) */}
-                            <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-700 blur-2xl bg-gradient-to-br ${item.grad}`}></div>
+                            {!isHidden && (
+                                <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-700 blur-2xl bg-gradient-to-br ${item.grad}`}></div>
+                            )}
 
                             <div className="flex items-center justify-between w-full mb-6 z-10 transition-transform duration-300 group-hover:translate-x-1">
-                                <item.icon size={26} className={`drop-shadow-sm transition-colors duration-300 ${item.color}`} />
-                                {badge && (
+                                <item.icon size={26} className={`drop-shadow-sm transition-colors duration-300 ${isHidden ? 'text-gray-500' : item.color}`} />
+                                {badge && !isHidden && (
                                     <span className="flex items-center justify-center text-[11px] font-medium text-white bg-[#ff3366] h-6 px-3 rounded-full shadow-md animate-pulse">
                                         {badge > 9 ? '9+' : badge} Pending
                                     </span>
@@ -111,23 +149,35 @@ const DashboardHome = ({ isDark, user, onNavigate }) => {
                             </div>
 
                             <div className="z-10 transition-transform duration-300 group-hover:translate-x-1">
-                                <h3 className={`text-lg font-light mb-0.5 tracking-tight transition-colors ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
+                                <h3 className={`text-lg font-light mb-0.5 tracking-tight transition-colors ${isHidden ? (isDark ? 'text-gray-400' : 'text-gray-500') : (isDark ? 'text-gray-100' : 'text-gray-800')}`}>
                                     {item.label}
                                 </h3>
-                                <p className={`text-sm leading-relaxed font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                                <p className={`text-sm leading-relaxed font-light ${isHidden ? (isDark ? 'text-[#a1a5b7]/50' : 'text-gray-400') : (isDark ? 'text-[#a1a5b7]' : 'text-gray-500')}`}>
                                     {item.description}
                                 </p>
                             </div>
 
-                            <div className="absolute bottom-4 right-4 z-20">
+                            <div className="absolute bottom-4 right-4 z-20 flex space-x-2">
+                                <button
+                                    onClick={(e) => toggleHidden(e, item.id)}
+                                    className={`p-1.5 rounded-full outline-none transition-colors duration-300 ${isDark ? 'hover:bg-[#2b2b40]' : 'hover:bg-gray-100'}`}
+                                    title={isHidden ? "Show Card" : "Hide Card"}
+                                >
+                                    {isHidden ? (
+                                        <EyeOff size={16} className={`transition-colors duration-300 ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`} />
+                                    ) : (
+                                        <Eye size={16} className={`transition-colors duration-300 opacity-0 group-hover:opacity-100 ${isDark ? 'text-[#3a3a5a] hover:text-gray-300' : 'text-gray-200 hover:text-gray-500'}`} />
+                                    )}
+                                </button>
+
                                 <button
                                     onClick={(e) => toggleFavorite(e, item.id)}
                                     className={`p-1.5 rounded-full outline-none transition-colors duration-300 ${isDark ? 'hover:bg-[#2b2b40]' : 'hover:bg-gray-100'}`}
-                                    title={favorites.includes(item.id) ? "Remove from Favorites" : "Add to Favorites"}
+                                    title={isFav ? "Remove from Favorites" : "Add to Favorites"}
                                 >
                                     <Heart
                                         size={18}
-                                        className={`transition-colors duration-300 ${favorites.includes(item.id) ? 'fill-[#ff3366] text-[#ff3366]' : (isDark ? 'text-[#3a3a5a] hover:text-[#ff3366]' : 'text-gray-200 hover:text-[#ff3366]')}`}
+                                        className={`transition-colors duration-300 ${isFav ? 'fill-[#ff3366] text-[#ff3366]' : (isDark ? 'text-[#3a3a5a] hover:text-[#ff3366]' : 'text-gray-200 hover:text-[#ff3366]')}`}
                                     />
                                 </button>
                             </div>
