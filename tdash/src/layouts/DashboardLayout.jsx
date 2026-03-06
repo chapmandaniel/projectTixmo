@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 
 import api from '../lib/api';
+import { Link } from 'react-router-dom';
 
 const navItems = [
     { id: 'dashboard', icon: Home, label: 'Home' },
@@ -29,8 +30,8 @@ const TopbarItem = ({ item, activeView, onNavigate, isDark, pendingApprovalsCoun
     const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;
 
     return (
-        <button
-            onClick={() => onNavigate(item.id)}
+        <Link
+            to={`/${item.id}`}
             className={`flex items-center justify-center px-4 py-2 h-10 rounded-md transition-all min-w-[64px] group relative ${active
                 ? (isDark ? 'bg-[#2a2b40] text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-indigo-50 text-indigo-600 shadow-sm')
                 : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-gray-200' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900')
@@ -47,7 +48,7 @@ const TopbarItem = ({ item, activeView, onNavigate, isDark, pendingApprovalsCoun
             <span className={`absolute flex items-center justify-center text-[12px] font-light tracking-wide w-full text-center px-2 whitespace-nowrap transition-all duration-200 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100`}>
                 {item.label}
             </span>
-        </button>
+        </Link>
     );
 };
 
@@ -128,9 +129,9 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
             <header className={`h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-50 transition-colors shadow-sm ${isDark ? 'bg-[#1e1e2d]/95 backdrop-blur-xl' : 'bg-white/95 backdrop-blur-xl'}`}>
 
                 {/* Brand Logo */}
-                <div className="flex items-center space-x-3 mr-4 lg:mr-8 shrink-0 cursor-pointer" onClick={() => onNavigate('dashboard')}>
+                <Link to="/dashboard" className="flex items-center space-x-3 mr-4 lg:mr-8 shrink-0 cursor-pointer">
                     <img src="https://tixmo.co/images/tixmo_logo.png" alt="TixMo Logo" className="h-8 w-auto object-contain" />
-                </div>
+                </Link>
 
                 {/* Central Icon Navigation Area */}
                 <div className="flex-1 flex items-center relative overflow-hidden h-full">

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Filter, MapPin, Calendar, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import EventStudio from './EventStudio';
 import StatusBadge from '../components/StatusBadge';
 import api from '../lib/api';
+import { generateEventSlug } from '../lib/utils';
 
-const EventsView = ({ isDark, onManageEvent, user }) => {
+const EventsView = ({ isDark, user }) => {
+    const navigate = useNavigate();
     const [showWizard, setShowWizard] = useState(false);
     const [events, setEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -89,7 +92,7 @@ const EventsView = ({ isDark, onManageEvent, user }) => {
                         events.map((event) => (
                             <div
                                 key={event.id}
-                                onClick={() => onManageEvent(event)}
+                                onClick={() => navigate('/events/' + generateEventSlug(event.name, event.id), { state: { event } })}
                                 className={`relative rounded-md transition-all group p-6 flex flex-col h-full cursor-pointer border overflow-hidden ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a] shadow-lg shadow-black/20' : 'bg-white border-gray-200 hover:bg-gray-50 shadow-sm shadow-gray-200/50 hover:shadow-xl'}`}
                             >
                                 <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-pink-500 to-orange-400 opacity-70 group-hover:opacity-100 transition-opacity duration-300"></div>

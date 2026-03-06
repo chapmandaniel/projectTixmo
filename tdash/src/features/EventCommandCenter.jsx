@@ -3,6 +3,8 @@ import {
     LayoutDashboard, Ticket, Users, Settings, ChevronLeft, Menu, LogOut,
     Calendar, MapPin, Globe, CreditCard, Megaphone, Bell
 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { generateEventSlug } from '../lib/utils';
 import StatusBadge from '../components/StatusBadge';
 import ECC_Overview from './ECC_Overview';
 import ECC_Orders from './ECC_Orders';
@@ -18,7 +20,13 @@ import EventStudio from './EventStudio';
  * Features a persistent sidebar and deep-dive sub-views.
  */
 const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
-    const [activeView, setActiveView] = useState('overview');
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Extract the active sub-view from the URL (e.g., /events/:id/attendees)
+    const pathParts = location.pathname.split('/');
+    const activeView = pathParts[3] || 'overview';
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
 
@@ -127,7 +135,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                             return (
                                 <button
                                     key={item.id}
-                                    onClick={() => setActiveView(item.id)}
+                                    onClick={() => navigate(`/events/${generateEventSlug(event.name, event.id)}/${item.id}`, { replace: true, state: location.state })}
                                     className={`w-full flex items-center px-4 py-2.5 rounded-r-md transition-colors group relative
                                         ${isActive
                                             ? (isDark ? 'bg-[#2b2b40] text-gray-100 shadow-sm' : 'bg-indigo-50 text-indigo-600')

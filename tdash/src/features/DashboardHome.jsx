@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Calendar, CheckSquare, BarChart3,
     CreditCard, ScanLine, Tags, MapPin, Users,
@@ -86,18 +87,10 @@ const DashboardHome = ({ isDark, user, onNavigate }) => {
                     const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;
 
                     return (
-                        <div
+                        <Link
                             key={item.id}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    onNavigate && onNavigate(item.id);
-                                }
-                            }}
-                            onClick={() => onNavigate && onNavigate(item.id)}
-                            className={`relative text-left flex flex-col p-6 rounded-md border transition-all duration-300 group overflow-hidden cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 ${isDark
+                            to={`/${item.id}`}
+                            className={`relative text-left flex flex-col p-6 rounded-md border transition-all duration-300 group overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 ${isDark
                                 ? `bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a] hover:shadow-2xl hover:shadow-black/50`
                                 : `bg-white border-gray-200 hover:bg-gray-50 hover:shadow-xl shadow-sm`
                                 }`}
@@ -138,7 +131,7 @@ const DashboardHome = ({ isDark, user, onNavigate }) => {
                                     />
                                 </button>
                             </div>
-                        </div>
+                        </Link>
                     )
                 })}
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from './lib/auth';
 import DashboardLayout from './layouts/DashboardLayout';
 import DashboardHome from './features/DashboardHome';
@@ -22,16 +23,65 @@ import GlobalErrorNotification from './components/GlobalErrorNotification';
 import ExternalReviewPage from './pages/ExternalReviewPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
+const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setGlobalError }) => {
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // The layout needs to know the active view for the sidebar.
+    // Example: "/analytics" -> "analytics", "/events/123" -> "events"
+    const path = location.pathname.split('/')[1] || 'dashboard';
+
+    // To gracefully handle DashboardHome's expectations without refactoring it heavily yet
+    const handleNavigationEvent = (view) => {
+        navigate(`/${view}`);
+    };
+
+    return (
+        <ErrorBoundary isDark={isDark}>
+            <DashboardLayout
+                activeView={path}
+                onNavigate={handleNavigationEvent}
+                isDark={isDark}
+                toggleTheme={toggleTheme}
+                user={user}
+                onLogout={handleLogout}
+            >
+                <Routes>
+                    <Route path="/dashboard" element={<DashboardHome user={user} onNavigate={handleNavigationEvent} isDark={isDark} />} />
+                    <Route path="/events" element={<EventsView user={user} isDark={isDark} />} />
+                    <Route path="/events/:eventId/*" element={<EventManagementDashboard user={user} isDark={isDark} />} />
+                    <Route path="/analytics" element={<AnalyticsView isDark={isDark} />} />
+                    <Route path="/todo" element={<TodoView isDark={isDark} />} />
+                    <Route path="/personal-todo" element={<PersonalTodoView isDark={isDark} />} />
+                    <Route path="/team" element={<TeamView isDark={isDark} />} />
+                    <Route path="/social" element={<SocialDashboard isDark={isDark} />} />
+                    <Route path="/orders" element={<OrdersView isDark={isDark} />} />
+                    <Route path="/settings" element={<SettingsView isDark={isDark} />} />
+                    <Route path="/creative" element={<CreativeComposer isDark={isDark} />} />
+                    <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />
+                    <Route path="/approvals" element={<ApprovalsDashboard isDark={isDark} user={user} />} />
+
+                    {/* Coming Soon hubs */}
+                    <Route path="/marketing" element={<ComingSoonView title="Marketing Hub" icon="Megaphone" isDark={isDark} />} />
+                    <Route path="/scanners" element={<ComingSoonView title="Scanners" isDark={isDark} />} />
+                    <Route path="/promo" element={<ComingSoonView title="Promo Codes" isDark={isDark} />} />
+
+                    {/* Fallback to dashboard */}
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+
+                <GlobalErrorNotification
+                    error={globalError}
+                    onClose={() => setGlobalError(null)}
+                    isDark={isDark}
+                />
+            </DashboardLayout>
+        </ErrorBoundary>
+    );
+};
+
 const App = () => {
-    // Check if this is an external review page (no auth required)
-    const isExternalReview = window.location.pathname.startsWith('/review/');
-
-    if (isExternalReview) {
-        return <ExternalReviewPage />;
-    }
-
-    const [activeView, setActiveView] = useState(localStorage.getItem('lastActiveView') || 'dashboard');
-    const [managedEvent, setManagedEvent] = useState(null);
     const [isDark, setIsDark] = useState(true);
     const [user, setUser] = useState(auth.getCurrentUser());
     const [loading, setLoading] = useState(true);
@@ -53,7 +103,6 @@ const App = () => {
         // Listen for global errors
         const handleGlobalError = (event) => {
             const error = event.detail;
-            // Don't show if it's just a 401 (handled elsewhere) or 503 (waiting room)
             if (error?.status !== 401 && error?.status !== 503) {
                 setGlobalError({
                     message: error?.message || 'An unexpected system error occurred.',
@@ -76,85 +125,37 @@ const App = () => {
     const handleLogout = () => {
         auth.logout();
         setUser(null);
-        setActiveView('dashboard');
     };
 
     const toggleTheme = () => setIsDark(!isDark);
-
-    // Reset managed event when switching views
-    const handleViewChange = (view) => {
-        setActiveView(view);
-        localStorage.setItem('lastActiveView', view);
-        setManagedEvent(null);
-    };
-
-    const renderContent = () => {
-
-        const props = { isDark };
-
-        if (managedEvent) {
-            return (
-                <EventManagementDashboard
-                    event={managedEvent}
-                    onBack={() => setManagedEvent(null)}
-                    user={user}
-                    onUpdate={(updatedEvent) => setManagedEvent(updatedEvent)}
-                    {...props}
-                />
-            );
-        }
-
-        switch (activeView) {
-            case 'dashboard': return <DashboardHome user={user} onNavigate={handleViewChange} {...props} />;
-            case 'events': return <EventsView onManageEvent={setManagedEvent} user={user} {...props} />;
-            case 'analytics': return <AnalyticsView {...props} />;
-            case 'marketing': return <ComingSoonView title="Marketing Hub" icon="Megaphone" isDark={isDark} />;
-            case 'todo': return <TodoView {...props} />;
-            case 'personal-todo': return <PersonalTodoView {...props} />;
-            case 'team': return <TeamView {...props} />;
-            case 'social': return <SocialDashboard {...props} />;
-            case 'orders': return <OrdersView {...props} />;
-            case 'scanners': return <ComingSoonView title="Scanners" {...props} />;
-            case 'promo': return <ComingSoonView title="Promo Codes" {...props} />;
-            case 'creative': return <CreativeComposer {...props} />;
-            case 'venues': return <VenuesView isDark={isDark} user={user} />;
-            case 'approvals': return <ApprovalsDashboard isDark={isDark} user={user} />;
-            case 'settings': return <SettingsView {...props} />;
-            default: return <DashboardHome user={user} onNavigate={handleViewChange} {...props} />;
-        }
-    };
 
     if (loading) {
         return <div className="flex items-center justify-center h-screen bg-[#121212] opacity-0 animate-fade-in"></div>;
     }
 
-    // Force Waiting Room logic
-    if (showWaitingRoom) {
-        return <WaitingRoomView onRetry={() => setShowWaitingRoom(false)} />;
-    }
-
-    if (!user) {
-        return <LoginView onLogin={handleLogin} />;
-    }
-
     return (
-        <ErrorBoundary isDark={isDark}>
-            <DashboardLayout
-                activeView={managedEvent ? 'events' : activeView}
-                onNavigate={handleViewChange}
-                isDark={isDark}
-                toggleTheme={toggleTheme}
-                user={user}
-                onLogout={handleLogout}
-            >
-                {renderContent()}
-                <GlobalErrorNotification
-                    error={globalError}
-                    onClose={() => setGlobalError(null)}
-                    isDark={isDark}
-                />
-            </DashboardLayout>
-        </ErrorBoundary>
+        <Routes>
+            {/* External unauthenticated routes */}
+            <Route path="/review/*" element={<ExternalReviewPage />} />
+
+            {/* Main Application */}
+            <Route path="*" element={
+                showWaitingRoom ? (
+                    <WaitingRoomView onRetry={() => setShowWaitingRoom(false)} />
+                ) : !user ? (
+                    <LoginView onLogin={handleLogin} />
+                ) : (
+                    <AppContent
+                        user={user}
+                        handleLogout={handleLogout}
+                        isDark={isDark}
+                        toggleTheme={toggleTheme}
+                        globalError={globalError}
+                        setGlobalError={setGlobalError}
+                    />
+                )
+            } />
+        </Routes>
     );
 };
 
