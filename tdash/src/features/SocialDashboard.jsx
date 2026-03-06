@@ -63,8 +63,8 @@ const SocialDashboard = ({ isDark }) => {
             <div className="flex flex-col gap-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                     <div>
-                        <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Social Pulse</h2>
-                        <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm`}>Monitor social engagement across all your events.</p>
+                        <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-700'}`}>Social Pulse</h2>
+                        <p className={`mt-1 text-lg font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>Monitor social engagement across all your events.</p>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
@@ -73,7 +73,7 @@ const SocialDashboard = ({ isDark }) => {
                             <select
                                 value={selectedEventId}
                                 onChange={(e) => setSelectedEventId(e.target.value)}
-                                className={`appearance-none pl-4 pr-10 py-2.5 rounded-xl text-sm font-medium outline-none cursor-pointer transition-all shadow-sm ${isDark ? 'bg-[#1e1e1e] text-gray-200 hover:bg-[#252525] border border-[#333]' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'}`}
+                                className={`appearance-none pl-4 pr-10 py-2.5 rounded-md text-sm font-light tracking-wide outline-none cursor-pointer transition-all shadow-sm ${isDark ? 'bg-[#1e1e2d] text-gray-200 hover:bg-[#232336] border border-[#2b2b40]' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'}`}
                             >
                                 <option value="all">All Events</option>
                                 {MOCK_EVENTS.map(event => (
@@ -84,14 +84,14 @@ const SocialDashboard = ({ isDark }) => {
                         </div>
 
                         {/* Platform Filters */}
-                        <div className={`flex p-1 rounded-xl ${isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white border border-gray-200'}`}>
+                        <div className={`flex p-1 rounded-md ${isDark ? 'bg-[#1e1e2d] border border-[#2b2b40]' : 'bg-white border border-gray-200'}`}>
                             {platforms.map(p => (
                                 <button
                                     key={p.id}
                                     onClick={() => setSelectedPlatform(p.id)}
-                                    className={`p-2 rounded-lg transition-all ${selectedPlatform === p.id
-                                        ? (isDark ? 'bg-[#333] text-white shadow-sm' : 'bg-gray-100 text-gray-900 shadow-sm')
-                                        : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600')
+                                    className={`p-2 rounded-md transition-all ${selectedPlatform === p.id
+                                        ? (isDark ? 'bg-[#2b2b40] text-gray-100 shadow-sm' : 'bg-gray-100 text-gray-900 shadow-sm')
+                                        : (isDark ? 'text-gray-500 hover:text-gray-300 hover:bg-[#232336]' : 'text-gray-400 hover:text-gray-600')
                                         }`}
                                     title={p.label}
                                 >
@@ -105,10 +105,10 @@ const SocialDashboard = ({ isDark }) => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {stats.map((stat, idx) => (
-                        <div key={idx} className={`p-4 rounded-xl border flex items-center justify-between ${isDark ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-200'}`}>
+                        <div key={idx} className={`p-4 rounded-md border flex items-center justify-between transition-all ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a]' : 'bg-white border-gray-200'}`}>
                             <div>
-                                <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{stat.label}</p>
-                                <p className={`text-2xl font-semibold mt-1 ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>{stat.value}</p>
+                                <p className={`text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{stat.label}</p>
+                                <p className={`text-3xl font-light mt-1 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{stat.value}</p>
                             </div>
                             <div className={`p-3 rounded-lg ${stat.bg} ${stat.color}`}>
                                 <stat.icon size={20} />

@@ -12,22 +12,22 @@ import api from '../lib/api';
 // ─── Nivo Dark Theme ────────────────────────────────────────────────────────
 const nivoDarkTheme = {
     background: 'transparent',
-    text: { fontSize: 11, fill: '#a1a1aa' },
+    text: { fontSize: 11, fill: '#a1a5b7', fontFamily: 'inherit', fontWeight: 300 },
     axis: {
-        domain: { line: { stroke: '#3f3f46', strokeWidth: 1 } },
-        ticks: { line: { stroke: '#3f3f46', strokeWidth: 1 }, text: { fill: '#71717a', fontSize: 11 } },
-        legend: { text: { fill: '#a1a1aa', fontSize: 12 } },
+        domain: { line: { stroke: '#2b2b40', strokeWidth: 1 } },
+        ticks: { line: { stroke: '#2b2b40', strokeWidth: 1 }, text: { fill: '#a1a5b7', fontSize: 11 } },
+        legend: { text: { fill: '#a1a5b7', fontSize: 12 } },
     },
-    grid: { line: { stroke: '#27272a', strokeWidth: 1 } },
-    legends: { text: { fill: '#a1a1aa', fontSize: 11 } },
+    grid: { line: { stroke: '#2b2b40', strokeWidth: 1, strokeDasharray: '4 4' } },
+    legends: { text: { fill: '#a1a5b7', fontSize: 11 } },
     tooltip: {
         container: {
-            background: '#18181b', color: '#e4e4e7', fontSize: 12,
-            borderRadius: '8px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', border: '1px solid #3f3f46',
-            padding: '8px 12px',
+            background: '#151521', color: '#e4e4e7', fontSize: 12,
+            borderRadius: '6px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', border: '1px solid #2b2b40',
+            padding: '8px 12px', fontFamily: 'inherit', fontWeight: 300
         },
     },
-    crosshair: { line: { stroke: '#6366f1', strokeWidth: 1, strokeOpacity: 0.5 } },
+    crosshair: { line: { stroke: '#ec4899', strokeWidth: 1, strokeOpacity: 0.5 } },
 };
 
 const nivoLightTheme = {
@@ -51,8 +51,8 @@ const nivoLightTheme = {
 };
 
 // ─── Color palettes ─────────────────────────────────────────────────────────
-const ACCENT_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#818cf8', '#6d28d9'];
-const PIE_COLORS_DARK = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
+const ACCENT_COLORS = ['#ec4899', '#f97316', '#f59e0b', '#8b5cf6', '#d946ef', '#06b6d4'];
+const PIE_COLORS_DARK = ['#ec4899', '#f97316', '#f59e0b', '#8b5cf6', '#d946ef', '#06b6d4'];
 const PIE_COLORS_LIGHT = ['#4f46e5', '#7c3aed', '#db2777', '#d97706', '#059669', '#0891b2'];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -70,14 +70,14 @@ const formatNumber = (v) => {
 
 // ─── KPI Card ───────────────────────────────────────────────────────────────
 const KpiCard = ({ label, value, icon: Icon, color, isDark, prefix = '' }) => (
-    <div className={`p-5 rounded-xl transition-all duration-300 hover:scale-[1.02] ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30' : 'bg-white shadow-sm hover:shadow-md'}`}>
+    <div className={`p-5 rounded-md border transition-all duration-300 hover:scale-[1.02] ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a] hover:shadow-lg hover:shadow-black/20' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
         <div className="flex items-center justify-between mb-3">
-            <span className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{label}</span>
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${color}`}>
+            <span className={`text-xs font-light tracking-widest uppercase ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>{label}</span>
+            <div className={`w-9 h-9 rounded-md flex items-center justify-center ${color}`}>
                 <Icon size={18} className="text-white" />
             </div>
         </div>
-        <div className={`text-2xl font-bold tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
+        <div className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
             {prefix}{value}
         </div>
     </div>
@@ -85,9 +85,9 @@ const KpiCard = ({ label, value, icon: Icon, color, isDark, prefix = '' }) => (
 
 // ─── Chart Card Wrapper ─────────────────────────────────────────────────────
 const ChartCard = ({ title, children, isDark, className = '', colSpan = '' }) => (
-    <div className={`rounded-xl overflow-hidden ${colSpan} ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm'} ${className}`}>
+    <div className={`rounded-md border overflow-hidden ${colSpan} ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-100 shadow-sm'} ${className}`}>
         <div className="p-5 pb-0">
-            <h3 className={`text-sm font-semibold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{title}</h3>
+            <h3 className={`text-xs font-light tracking-widest uppercase ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{title}</h3>
         </div>
         <div className="p-5 pt-3">{children}</div>
     </div>
@@ -289,17 +289,17 @@ const AnalyticsView = ({ isDark }) => {
             {/* ── Header + Event Selector ─────────────────────────────── */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
-                    <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Analytics</h2>
-                    <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm`}>Performance insights and customer data.</p>
+                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-700'}`}>Analytics</h2>
+                    <p className={`mt-1 text-lg font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>Performance insights and customer data.</p>
                 </div>
 
                 {/* Event Selector Dropdown */}
                 <div className="relative">
                     <button
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 min-w-[220px] justify-between ${isDark
-                            ? 'bg-[#1e1e1e] text-gray-300 hover:bg-[#252525] shadow-lg shadow-black/20'
-                            : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm'
+                        className={`flex items-center space-x-2 px-4 py-2.5 rounded-md border text-sm font-light tracking-wide transition-all duration-200 min-w-[220px] justify-between ${isDark
+                            ? 'bg-[#1e1e2d] border-[#2b2b40] text-gray-200 hover:bg-[#232336]'
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm'
                             }`}
                     >
                         <span className="truncate">{selectedEventName}</span>
@@ -309,15 +309,15 @@ const AnalyticsView = ({ isDark }) => {
                     {isDropdownOpen && (
                         <>
                             <div className="fixed inset-0 z-30" onClick={() => setIsDropdownOpen(false)} />
-                            <div className={`absolute right-0 mt-2 w-72 rounded-xl overflow-hidden z-40 max-h-80 overflow-y-auto animate-fade-in ${isDark
-                                ? 'bg-[#1e1e1e] border border-[#333] shadow-2xl shadow-black/50'
+                            <div className={`absolute right-0 mt-2 w-72 rounded-md overflow-hidden z-40 max-h-80 overflow-y-auto animate-fade-in ${isDark
+                                ? 'bg-[#151521] border border-[#2b2b40] shadow-2xl shadow-black/50'
                                 : 'bg-white border border-gray-200 shadow-xl'
                                 }`}>
                                 <button
                                     onClick={() => { setSelectedEventId('all'); setIsDropdownOpen(false); }}
-                                    className={`w-full text-left px-4 py-3 text-sm transition-colors ${selectedEventId === 'all'
-                                        ? (isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-700')
-                                        : (isDark ? 'text-gray-300 hover:bg-[#252525]' : 'text-gray-700 hover:bg-gray-50')
+                                    className={`w-full text-left px-4 py-3 text-sm font-light transition-colors ${selectedEventId === 'all'
+                                        ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-indigo-50 text-indigo-700')
+                                        : (isDark ? 'text-gray-300 hover:bg-[#232336]' : 'text-gray-700 hover:bg-gray-50')
                                         }`}
                                 >
                                     <span className="font-medium">All Events</span>
@@ -352,28 +352,28 @@ const AnalyticsView = ({ isDark }) => {
                     label="Total Revenue"
                     value={formatCurrency(filteredSalesData?.totalRevenue || 0)}
                     icon={DollarSign}
-                    color="bg-indigo-600"
+                    color="bg-gradient-to-br from-indigo-500 to-purple-600"
                     isDark={isDark}
                 />
                 <KpiCard
                     label="Tickets Sold"
                     value={formatNumber(filteredSalesData?.totalTicketsSold || 0)}
                     icon={Ticket}
-                    color="bg-violet-600"
+                    color="bg-gradient-to-br from-pink-500 to-orange-400"
                     isDark={isDark}
                 />
                 <KpiCard
                     label="Total Orders"
                     value={formatNumber(filteredSalesData?.totalOrders || 0)}
                     icon={ShoppingCart}
-                    color="bg-pink-600"
+                    color="bg-gradient-to-br from-fuchsia-500 to-pink-500"
                     isDark={isDark}
                 />
                 <KpiCard
                     label="Avg Order Value"
                     value={formatCurrency(filteredSalesData?.averageOrderValue || 0)}
                     icon={TrendingUp}
-                    color="bg-emerald-600"
+                    color="bg-gradient-to-br from-emerald-400 to-teal-500"
                     isDark={isDark}
                 />
             </div>
@@ -404,12 +404,12 @@ const AnalyticsView = ({ isDark }) => {
                                 enableArea={true}
                                 areaOpacity={0.15}
                                 areaBaselineValue={0}
-                                colors={['#6366f1']}
+                                colors={['#ec4899']}
                                 lineWidth={2.5}
                                 pointSize={6}
-                                pointColor={isDark ? '#1e1e1e' : '#ffffff'}
+                                pointColor={isDark ? '#1e1e2d' : '#ffffff'}
                                 pointBorderWidth={2.5}
-                                pointBorderColor="#6366f1"
+                                pointBorderColor="#ec4899"
                                 enableCrosshair={true}
                                 useMesh={true}
                                 defs={[
@@ -495,8 +495,8 @@ const AnalyticsView = ({ isDark }) => {
                                 margin={{ top: 10, right: 30, bottom: 40, left: 160 }}
                                 padding={0.35}
                                 valueScale={{ type: 'linear' }}
-                                colors={['#6366f1']}
-                                borderRadius={4}
+                                colors={['#ec4899']}
+                                borderRadius={0}
                                 borderWidth={0}
                                 enableLabel={true}
                                 label={d => formatCurrency(d.value)}
@@ -531,17 +531,17 @@ const AnalyticsView = ({ isDark }) => {
                     <div className="flex flex-col h-[340px]">
                         {/* Customer KPIs */}
                         <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
-                                <div className={`text-xl font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                            <div className={`p-4 rounded-md border text-center ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+                                <div className={`text-2xl font-light tracking-tight ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
                                     {formatNumber(customerData?.totalCustomers || 0)}
                                 </div>
-                                <div className={`text-[10px] uppercase tracking-wider font-medium mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Total</div>
+                                <div className={`text-[10px] uppercase tracking-wider font-light mt-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>Total</div>
                             </div>
-                            <div className={`p-3 rounded-lg text-center ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
-                                <div className={`text-xl font-bold ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
+                            <div className={`p-4 rounded-md border text-center ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+                                <div className={`text-2xl font-light tracking-tight ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
                                     {formatNumber(customerData?.repeatCustomers || 0)}
                                 </div>
-                                <div className={`text-[10px] uppercase tracking-wider font-medium mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Repeat</div>
+                                <div className={`text-[10px] uppercase tracking-wider font-light mt-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>Repeat</div>
                             </div>
                         </div>
                         {/* Sparkline */}
@@ -626,10 +626,10 @@ const AnalyticsView = ({ isDark }) => {
                                 scheme: 'purples',
                                 minValue: 0,
                             }}
-                            emptyColor={isDark ? '#1a1a2e' : '#f5f3ff'}
-                            borderRadius={3}
+                            emptyColor={isDark ? '#151521' : '#f5f3ff'}
+                            borderRadius={0}
                             borderWidth={1}
-                            borderColor={isDark ? '#27272a' : '#e4e4e7'}
+                            borderColor={isDark ? '#2b2b40' : '#e4e4e7'}
                             opacity={0.95}
                             inactiveOpacity={0.35}
                             activeOpacity={1}

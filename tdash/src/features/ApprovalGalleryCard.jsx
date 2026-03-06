@@ -30,11 +30,13 @@ const ApprovalGalleryCard = ({ approval, isDark, onClick }) => {
     return (
         <div
             onClick={onClick}
-            className={`group relative flex flex-col rounded-xl border transition-all cursor-pointer hover:shadow-xl hover:-translate-y-1 overflow-hidden ${isDark
-                ? 'bg-[#1E1E1E] border-[#333] hover:border-[#555]'
+            className={`group relative flex flex-col rounded-md border transition-all cursor-pointer hover:shadow-xl hover:-translate-y-1 overflow-hidden ${isDark
+                ? 'bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a]'
                 : 'bg-white border-gray-200 hover:border-indigo-200'
                 }`}
         >
+            {/* Colorful Gradient Top Bar for Square Aesthetic */}
+            <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-pink-500 to-orange-400 opacity-70 group-hover:opacity-100 transition-opacity duration-300 z-50"></div>
             {/* Thumbnail Header - Larger for Gallery */}
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100 dark:bg-[#222]">
                 {primaryAsset?.mimeType?.startsWith('image/') ? (
@@ -64,28 +66,28 @@ const ApprovalGalleryCard = ({ approval, isDark, onClick }) => {
             </div>
 
             {/* Content Body */}
-            <div className="p-4 flex flex-col gap-2">
+            <div className="p-4 flex flex-col gap-2 z-10 transition-transform duration-300 group-hover:translate-x-1">
                 <div className="flex justify-between items-start gap-2">
                     <div>
-                        <h4 className={`text-sm font-semibold line-clamp-1 leading-tight ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                        <h4 className={`text-lg font-light tracking-tight line-clamp-1 leading-tight ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
                             {approval.title}
                         </h4>
-                        <p className={`text-xs mt-0.5 line-clamp-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                        <p className={`text-xs mt-0.5 font-light line-clamp-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
                             {approval.event?.name || 'General Event'}
                         </p>
                     </div>
                 </div>
 
                 {/* Footer Meta */}
-                <div className={`flex items-center justify-between mt-2 pt-3 border-t ${isDark ? 'border-[#333]' : 'border-gray-100'}`}>
+                <div className={`flex items-center justify-between mt-2 pt-3 border-t ${isDark ? 'border-[#2b2b40]' : 'border-gray-100'}`}>
                     {/* Left: Reviewers Avatars */}
                     <div className="flex -space-x-1.5 pl-1">
                         {approval.reviewers?.slice(0, 3).map((r, i) => (
                             <div
                                 key={i}
                                 title={r.name || r.email}
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] border-2 ${isDark
-                                    ? 'bg-[#222] border-[#151515] text-gray-400'
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] border-2 font-light ${isDark
+                                    ? 'bg-[#222] border-[#151521] text-gray-400'
                                     : 'bg-gray-100 border-white text-gray-600'
                                     }`}
                             >

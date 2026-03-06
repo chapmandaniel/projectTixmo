@@ -1,199 +1,146 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Bell, CheckSquare, Ticket, ArrowRight, Clock, AlertCircle, ChevronRight } from 'lucide-react';
+import {
+    Calendar, CheckSquare, BarChart3,
+    CreditCard, ScanLine, Tags, MapPin, Users,
+    MessageCircle, Wand2, ListTodo, Settings, CheckCircle, Heart
+} from 'lucide-react';
 import api from '../lib/api';
-import TaskDetailsModal from './TaskDetailsModal';
-import StatusBadge from '../components/StatusBadge';
 
-const DashboardHome = ({ isDark, user }) => {
-    const [tasks, setTasks] = useState([]);
-    const [notifications, setNotifications] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [selectedTask, setSelectedTask] = useState(null);
-    const [stats, setStats] = useState({ total: 0, overdue: 0, personal: 0 });
+const gridItems = [
+    { id: 'events', icon: Calendar, label: 'Events Hub', description: 'Manage and create your upcoming events.', grad: 'from-pink-500 to-orange-400', color: 'text-pink-500' },
+    { id: 'orders', icon: CreditCard, label: 'Orders & Sales', description: 'Track tickets sold and revenue.', grad: 'from-cyan-400 to-blue-500', color: 'text-cyan-400' },
+    { id: 'todo', icon: CheckSquare, label: 'Team Tasks', description: 'Collaborate and assign work.', grad: 'from-indigo-400 to-purple-500', color: 'text-indigo-400' },
+    { id: 'personal-todo', icon: ListTodo, label: "My TODO's", description: 'Your personal checklist.', grad: 'from-emerald-400 to-teal-500', color: 'text-emerald-400' },
+    { id: 'team', icon: Users, label: 'Team Members', description: 'Manage organization access.', grad: 'from-rose-400 to-red-500', color: 'text-rose-400' },
+    { id: 'social', icon: MessageCircle, label: 'Social & CRM', description: 'Connect with your audience.', grad: 'from-fuchsia-500 to-purple-600', color: 'text-fuchsia-500' },
+    { id: 'scanners', icon: ScanLine, label: 'Scanners', description: 'Setup on-site ticket scanning.', grad: 'from-yellow-400 to-orange-500', color: 'text-yellow-400' },
+    { id: 'promo', icon: Tags, label: 'Promotions', description: 'Create discount codes.', grad: 'from-teal-400 to-emerald-500', color: 'text-teal-400' },
+    { id: 'venues', icon: MapPin, label: 'Venues', description: 'Manage your locations.', grad: 'from-red-400 to-pink-500', color: 'text-red-400' },
+    { id: 'creative', icon: Wand2, label: 'Creative Studio', description: 'Design event assets.', grad: 'from-purple-500 to-indigo-500', color: 'text-purple-500' },
+    { id: 'approvals', icon: CheckCircle, label: 'Approvals', description: 'Review pending requests.', grad: 'from-lime-400 to-emerald-500', color: 'text-lime-400' },
+    { id: 'analytics', icon: BarChart3, label: 'Analytics', description: 'Deep dive into your metrics.', grad: 'from-blue-400 to-indigo-600', color: 'text-blue-400' },
+    { id: 'settings', icon: Settings, label: 'Settings', description: 'Configure application preferences.', grad: 'from-gray-500 to-slate-600', color: 'text-gray-400' },
+];
+
+const DashboardHome = ({ isDark, user, onNavigate }) => {
+    const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+    const [favorites, setFavorites] = useState(() => {
+        try {
+            const saved = localStorage.getItem('tixmo_dashboard_favorites');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            return [];
+        }
+    });
+
+    const toggleFavorite = (e, id) => {
+        e.stopPropagation();
+        setFavorites(prev => {
+            const newFavs = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+            localStorage.setItem('tixmo_dashboard_favorites', JSON.stringify(newFavs));
+            return newFavs;
+        });
+    };
 
     useEffect(() => {
         const fetchDashboardData = async () => {
-            setIsLoading(true);
             try {
-                const [tasksRes, notifRes] = await Promise.all([
-                    api.get('/tasks', { params: { assigneeId: user?.id } }).catch(err => ({ data: [] })),
-                    api.get('/notifications', { params: { limit: 5 } }).catch(err => ({ data: { success: false } })),
-                ]);
-
-                // Tasks API returns array or { data: [] }
-                const tData = tasksRes?.data || [];
-                const taskData = Array.isArray(tData) ? tData : (Array.isArray(tData?.data) ? tData.data : []);
-
-                // Filter out Done tasks
-                const activeTasks = taskData.filter(t => t?.status !== 'DONE');
-                setTasks(activeTasks);
-
-                // Calculate stats safely
-                const overdue = activeTasks.filter(t => t?.dueDate && new Date(t.dueDate) < new Date()).length;
-
-                // Get personal todos from localStorage safely
-                let personalCount = 0;
-                try {
-                    const saved = localStorage.getItem('tixmo_personal_todos');
-                    if (saved) {
-                        const parsed = JSON.parse(saved);
-                        if (Array.isArray(parsed)) {
-                            personalCount = parsed.filter(t => t && !t.completed).length;
-                        }
-                    }
-                } catch (e) {
-                    console.error('Failed to parse local todos', e);
-                }
-
-                setStats({
-                    total: activeTasks.length,
-                    overdue: overdue,
-                    personal: personalCount
-                });
-
-                // Notifications API returns { success: true, data: { notifications: [] } }
-                if (notifRes?.data?.success && notifRes?.data?.data) {
-                    const notifs = notifRes.data.data.notifications;
-                    setNotifications(Array.isArray(notifs) ? notifs : []);
-                } else if (Array.isArray(notifRes?.data?.notifications)) {
-                    // Fallback for different API structure
-                    setNotifications(notifRes.data.notifications);
+                const approvalRes = await api.get('/approvals?status=PENDING').catch(() => null);
+                if (approvalRes) {
+                    const approvals = approvalRes.approvals || [];
+                    setPendingApprovalsCount(approvals.length);
                 }
             } catch (error) {
                 console.error('Failed to fetch dashboard data', error);
-            } finally {
-                setIsLoading(false);
             }
         };
 
         if (user) {
             fetchDashboardData();
-        } else {
-            setIsLoading(false);
         }
     }, [user]);
 
-    const getPriorityColor = (priority) => {
-        switch (priority) {
-            case 'HIGH': return 'text-rose-500 bg-rose-500/10';
-            case 'MEDIUM': return 'text-amber-500 bg-amber-500/10';
-            case 'LOW': return 'text-emerald-500 bg-emerald-500/10';
-            default: return 'text-gray-500 bg-gray-500/10';
-        }
-    };
+    const sortedItems = [...gridItems].sort((a, b) => {
+        const aFav = favorites.includes(a.id);
+        const bFav = favorites.includes(b.id);
+        if (aFav && !bFav) return -1;
+        if (!aFav && bFav) return 1;
+        return 0; // maintain original relative order
+    });
 
     return (
-        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
-            {selectedTask && (
-                <TaskDetailsModal
-                    task={selectedTask}
-                    users={[]} // View only mostly, or pass users if needed
-                    isDark={isDark}
-                    onClose={() => setSelectedTask(null)}
-                    onUpdate={() => { }} // Read only on dashboard for simplicity? Or refresh
-                />
-            )}
+        <div className="space-y-8 animate-fade-in max-w-[1600px] mx-auto pb-12">
 
-            <div className="flex justify-between items-end">
-                <div>
-                    <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                        Welcome back, {user?.firstName || 'User'}
-                    </h2>
-                    <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm font-normal`}>
-                        Here's what's on your plate today.
-                    </p>
-                </div>
-                <div className="flex space-x-3">
-                    <div className={`px-4 py-2 text-sm font-normal rounded-lg flex items-center ${isDark ? 'bg-[#1e1e1e] text-gray-300' : 'bg-white text-gray-600 shadow-sm'}`}>
-                        <Calendar size={16} className="mr-2 opacity-70" />
-                        {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                    </div>
-                </div>
+            <div className="flex flex-col space-y-1.5 mb-8">
+                <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                    Welcome back, {user?.firstName || 'User'}
+                </h2>
+                <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'} text-base font-light`}>
+                    Access all your modules and tools from your control center.
+                </p>
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column: My Tasks Report */}
-                <div className={`lg:col-span-2 rounded-xl p-6 flex flex-col ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm border border-gray-100'}`}>
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center space-x-2">
-                            <CheckSquare size={20} className={isDark ? 'text-indigo-400' : 'text-indigo-600'} />
-                            <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>My Tasks Report</h3>
-                        </div>
-                    </div>
+            {/* Expansive Feature Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {sortedItems.map((item) => {
+                    const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;
 
-                    {isLoading ? (
-                        <div className="flex-1 flex justify-center items-center py-10">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 h-full">
-                            <div className={`flex flex-col items-center justify-center p-6 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-indigo-50'}`}>
-                                <span className={`text-4xl font-bold mb-2 ${isDark ? 'text-white' : 'text-indigo-600'}`}>{stats.total}</span>
-                                <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-indigo-600/70'}`}>Active Tasks</span>
-                            </div>
-                            <div className={`flex flex-col items-center justify-center p-6 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-rose-50'}`}>
-                                <span className={`text-4xl font-bold mb-2 ${isDark ? 'text-rose-400' : 'text-rose-500'}`}>{stats.overdue}</span>
-                                <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-rose-600/70'}`}>Overdue Tasks</span>
-                            </div>
-                            <div className={`flex flex-col items-center justify-center p-6 rounded-lg ${isDark ? 'bg-[#252525]' : 'bg-emerald-50'}`}>
-                                <span className={`text-4xl font-bold mb-2 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{stats.personal}</span>
-                                <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-emerald-600/70'}`}>Personal Todos</span>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    return (
+                        <div
+                            key={item.id}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    onNavigate && onNavigate(item.id);
+                                }
+                            }}
+                            onClick={() => onNavigate && onNavigate(item.id)}
+                            className={`relative text-left flex flex-col p-6 rounded-md border transition-all duration-300 group overflow-hidden cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 ${isDark
+                                ? `bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a] hover:shadow-2xl hover:shadow-black/50`
+                                : `bg-white border-gray-200 hover:bg-gray-50 hover:shadow-xl shadow-sm`
+                                }`}
+                        >
+                            {/* Colorful Gradient Top Bar for Square Aesthetic */}
+                            <div className={`absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r ${item.grad} opacity-70 group-hover:opacity-100 transition-opacity duration-300`}></div>
 
-                {/* Right Column: Notifications & Tickets */}
-                <div className="space-y-6">
-                    {/* Notifications */}
-                    <div className={`rounded-xl p-6 ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm border border-gray-100'}`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center space-x-2">
-                                <Bell size={20} className={isDark ? 'text-amber-400' : 'text-amber-500'} />
-                                <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Notifications</h3>
+                            {/* Decorative Blur Bubble (very subtle) */}
+                            <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-700 blur-2xl bg-gradient-to-br ${item.grad}`}></div>
+
+                            <div className="flex items-center justify-between w-full mb-6 z-10 transition-transform duration-300 group-hover:translate-x-1">
+                                <item.icon size={26} className={`drop-shadow-sm transition-colors duration-300 ${item.color}`} />
+                                {badge && (
+                                    <span className="flex items-center justify-center text-[11px] font-medium text-white bg-[#ff3366] h-6 px-3 rounded-full shadow-md animate-pulse">
+                                        {badge > 9 ? '9+' : badge} Pending
+                                    </span>
+                                )}
                             </div>
-                        </div>
 
-                        <div className="space-y-4">
-                            {isLoading ? (
-                                <div className="text-center py-4 text-sm text-gray-500">Loading...</div>
-                            ) : notifications.length === 0 ? (
-                                <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                    <p>No new notifications</p>
-                                </div>
-                            ) : (
-                                notifications.map((notif) => (
-                                    <div key={notif.id} className={`p-3 rounded-lg flex items-start space-x-3 ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
-                                        <div className={`mt-1 h-2 w-2 rounded-full flex-shrink-0 ${notif.read ? 'bg-gray-500' : 'bg-indigo-500'}`}></div>
-                                        <div>
-                                            <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{notif.title}</p>
-                                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{new Date(notif.createdAt).toLocaleDateString()}</p>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
+                            <div className="z-10 transition-transform duration-300 group-hover:translate-x-1">
+                                <h3 className={`text-lg font-light mb-0.5 tracking-tight transition-colors ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
+                                    {item.label}
+                                </h3>
+                                <p className={`text-sm leading-relaxed font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                                    {item.description}
+                                </p>
+                            </div>
 
-                    {/* Ticket Management Placeholder */}
-                    <div className={`rounded-xl p-6 relative overflow-hidden group ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm border border-gray-100'}`}>
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center space-x-2">
-                                <Ticket size={20} className={isDark ? 'text-rose-400' : 'text-rose-500'} />
-                                <h3 className={`text-lg font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>My Tickets</h3>
+                            <div className="absolute bottom-4 right-4 z-20">
+                                <button
+                                    onClick={(e) => toggleFavorite(e, item.id)}
+                                    className={`p-1.5 rounded-full outline-none transition-colors duration-300 ${isDark ? 'hover:bg-[#2b2b40]' : 'hover:bg-gray-100'}`}
+                                    title={favorites.includes(item.id) ? "Remove from Favorites" : "Add to Favorites"}
+                                >
+                                    <Heart
+                                        size={18}
+                                        className={`transition-colors duration-300 ${favorites.includes(item.id) ? 'fill-[#ff3366] text-[#ff3366]' : (isDark ? 'text-[#3a3a5a] hover:text-[#ff3366]' : 'text-gray-200 hover:text-[#ff3366]')}`}
+                                    />
+                                </button>
                             </div>
                         </div>
-
-                        <div className={`p-4 rounded-lg flex flex-col items-center text-center ${isDark ? 'bg-[#252525]/50' : 'bg-gray-50'}`}>
-                            <AlertCircle size={32} className={`mb-2 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
-                            <h4 className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Coming Soon</h4>
-                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                                Enhanced ticket management and personal assignments will be available here soon.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                    )
+                })}
             </div>
         </div>
     );

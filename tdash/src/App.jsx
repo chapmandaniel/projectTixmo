@@ -105,7 +105,7 @@ const App = () => {
         }
 
         switch (activeView) {
-            case 'dashboard': return <DashboardHome user={user} {...props} />;
+            case 'dashboard': return <DashboardHome user={user} onNavigate={handleViewChange} {...props} />;
             case 'events': return <EventsView onManageEvent={setManagedEvent} user={user} {...props} />;
             case 'analytics': return <AnalyticsView {...props} />;
             case 'marketing': return <ComingSoonView title="Marketing Hub" icon="Megaphone" isDark={isDark} />;
@@ -120,7 +120,7 @@ const App = () => {
             case 'venues': return <VenuesView isDark={isDark} user={user} />;
             case 'approvals': return <ApprovalsDashboard isDark={isDark} user={user} />;
             case 'settings': return <SettingsView {...props} />;
-            default: return <DashboardHome {...props} />;
+            default: return <DashboardHome user={user} onNavigate={handleViewChange} {...props} />;
         }
     };
 

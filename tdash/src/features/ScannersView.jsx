@@ -87,14 +87,14 @@ const ScannersView = ({ isDark, user }) => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>Scanner Management</h2>
-                    <p className={`mt-1 text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Scanner Management</h2>
+                    <p className={`mt-1 text-lg font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
                         Manage scanning devices and view entry logs.
                     </p>
                 </div>
                 <button
                     onClick={() => setIsRegisterModalOpen(true)}
-                    className="flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium text-sm"
+                    className="flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 shadow-md shadow-pink-500/20 text-white rounded-md transition-colors font-light tracking-wide text-sm"
                 >
                     <Plus size={18} />
                     <span>Register New Scanner</span>
@@ -102,12 +102,12 @@ const ScannersView = ({ isDark, user }) => {
             </div>
 
             {/* Tabs */}
-            <div className={`border-b ${isDark ? 'border-[#2a2a2a]' : 'border-gray-200'}`}>
+            <div className={`border-b border-[#2b2b40] ${isDark ? 'border-[#2b2b40]' : 'border-gray-200'}`}>
                 <div className="flex space-x-8">
                     <button
                         onClick={() => { setActiveTab('scanners'); setPage(1); }}
-                        className={`pb-4 text-sm font-medium transition-colors relative ${activeTab === 'scanners'
-                            ? (isDark ? 'text-white' : 'text-indigo-600')
+                        className={`pb-4 text-sm font-light tracking-wide transition-colors relative ${activeTab === 'scanners'
+                            ? (isDark ? 'text-white' : 'text-pink-600')
                             : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
                             }`}
                     >
@@ -116,13 +116,13 @@ const ScannersView = ({ isDark, user }) => {
                             <span>Active Scanners</span>
                         </div>
                         {activeTab === 'scanners' && (
-                            <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${isDark ? 'bg-white' : 'bg-indigo-600'}`} />
+                            <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 to-orange-400 ${isDark ? '' : ''}`} />
                         )}
                     </button>
                     <button
                         onClick={() => { setActiveTab('logs'); setPage(1); }}
-                        className={`pb-4 text-sm font-medium transition-colors relative ${activeTab === 'logs'
-                            ? (isDark ? 'text-white' : 'text-indigo-600')
+                        className={`pb-4 text-sm font-light tracking-wide transition-colors relative ${activeTab === 'logs'
+                            ? (isDark ? 'text-white' : 'text-pink-600')
                             : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
                             }`}
                     >
@@ -131,14 +131,14 @@ const ScannersView = ({ isDark, user }) => {
                             <span>Scan Logs</span>
                         </div>
                         {activeTab === 'logs' && (
-                            <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${isDark ? 'bg-white' : 'bg-indigo-600'}`} />
+                            <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 to-orange-400 ${isDark ? '' : ''}`} />
                         )}
                     </button>
                 </div>
             </div>
 
             {/* Content */}
-            <div className={`overflow-hidden rounded-xl border ${isDark ? 'border-[#2a2a2a] bg-[#1e1e1e]' : 'border-gray-200 bg-white'}`}>
+            <div className={`overflow-hidden rounded-md border ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
                 {isLoading ? (
                     <div className="p-20 text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
@@ -157,19 +157,19 @@ const ScannersView = ({ isDark, user }) => {
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
-                                        <thead className={`text-xs uppercase tracking-wider border-b ${isDark ? 'bg-[#252525] text-gray-400 border-[#2a2a2a]' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                        <thead className={`text-xs uppercase tracking-wider border-b ${isDark ? 'bg-[#2b2b40] text-[#a1a5b7] border-[#3a3a5a]' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
                                             <tr>
-                                                <th className="p-4 font-medium">Name</th>
-                                                <th className="p-4 font-medium">Device ID</th>
-                                                <th className="p-4 font-medium">Status</th>
-                                                <th className="p-4 font-medium">Last Active</th>
-                                                <th className="p-4 font-medium text-right">Actions</th>
+                                                <th className="p-4 font-light tracking-wide">Name</th>
+                                                <th className="p-4 font-light tracking-wide">Device ID</th>
+                                                <th className="p-4 font-light tracking-wide">Status</th>
+                                                <th className="p-4 font-light tracking-wide">Last Active</th>
+                                                <th className="p-4 font-light tracking-wide text-right">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody className={`text-sm divide-y ${isDark ? 'divide-[#2a2a2a] text-gray-300' : 'divide-gray-100 text-gray-600'}`}>
+                                        <tbody className={`text-sm divide-y font-light tracking-wide ${isDark ? 'divide-[#2b2b40] text-gray-300' : 'divide-gray-100 text-gray-600'}`}>
                                             {scanners.map((scanner) => (
-                                                <tr key={scanner.id} className={`group transition-colors ${isDark ? 'hover:bg-[#252525]' : 'hover:bg-gray-50'}`}>
-                                                    <td className="p-4 font-medium">{scanner.name}</td>
+                                                <tr key={scanner.id} className={`group transition-colors ${isDark ? 'hover:bg-[#232336]' : 'hover:bg-gray-50'}`}>
+                                                    <td className="p-4">{scanner.name}</td>
                                                     <td className="p-4 font-mono text-xs opacity-70">{scanner.deviceId || 'N/A'}</td>
                                                     <td className="p-4">
                                                         <span className={`px-2 py-1 rounded-full text-xs font-medium border ${scanner.status === 'ACTIVE'
@@ -207,18 +207,18 @@ const ScannersView = ({ isDark, user }) => {
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
-                                        <thead className={`text-xs uppercase tracking-wider border-b ${isDark ? 'bg-[#252525] text-gray-400 border-[#2a2a2a]' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                                        <thead className={`text-xs uppercase tracking-wider border-b ${isDark ? 'bg-[#2b2b40] text-[#a1a5b7] border-[#3a3a5a]' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
                                             <tr>
-                                                <th className="p-4 font-medium">Time</th>
-                                                <th className="p-4 font-medium">Type</th>
-                                                <th className="p-4 font-medium">Scanner</th>
-                                                <th className="p-4 font-medium">Ticket</th>
-                                                <th className="p-4 font-medium">Result</th>
+                                                <th className="p-4 font-light tracking-wide">Time</th>
+                                                <th className="p-4 font-light tracking-wide">Type</th>
+                                                <th className="p-4 font-light tracking-wide">Scanner</th>
+                                                <th className="p-4 font-light tracking-wide">Ticket</th>
+                                                <th className="p-4 font-light tracking-wide">Result</th>
                                             </tr>
                                         </thead>
-                                        <tbody className={`text-sm divide-y ${isDark ? 'divide-[#2a2a2a] text-gray-300' : 'divide-gray-100 text-gray-600'}`}>
+                                        <tbody className={`text-sm divide-y font-light tracking-wide ${isDark ? 'divide-[#2b2b40] text-gray-300' : 'divide-gray-100 text-gray-600'}`}>
                                             {Array.isArray(logs) && logs.map((log) => (
-                                                <tr key={log.id} className={`group transition-colors ${isDark ? 'hover:bg-[#252525]' : 'hover:bg-gray-50'}`}>
+                                                <tr key={log.id} className={`group transition-colors ${isDark ? 'hover:bg-[#232336]' : 'hover:bg-gray-50'}`}>
                                                     <td className="p-4 whitespace-nowrap">
                                                         {new Date(log.scannedAt).toLocaleString()}
                                                     </td>

@@ -130,7 +130,7 @@ const ApprovalsDashboard = ({ isDark, user }) => {
     // Full Screen Control Center View
     if (selectedApproval) {
         return (
-            <div className={`h-screen flex flex-col ${isDark ? 'bg-[#0A0A0A]' : 'bg-gray-50'}`}>
+            <div className={`h-screen flex flex-col ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
                 <ApprovalDetailView
                     approval={selectedApproval}
                     isDark={isDark}
@@ -151,20 +151,20 @@ const ApprovalsDashboard = ({ isDark, user }) => {
             <div className="flex-1 flex flex-col min-w-0">
 
                 {/* Header */}
-                <header className={`px-1 py-5 flex items-center justify-between z-10 border-b ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
+                <header className={`px-1 py-5 flex items-center justify-between z-10 border-b ${isDark ? 'border-[#2b2b40]' : 'border-gray-200'}`}>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Client Approvals</h1>
-                        <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Manage and review creative assets</p>
+                        <h1 className="text-3xl font-light tracking-tight">Client Approvals</h1>
+                        <p className={`text-lg font-light mt-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>Manage and review creative assets</p>
                     </div>
 
                     <div className="flex items-center gap-3">
                         {/* Event Dropdown */}
-                        <div className={`relative flex items-center gap-2 px-3 py-2 rounded-lg border text-sm w-48 ${isDark ? 'bg-[#1e1e1e] border-gray-800' : 'bg-white border-gray-200'}`}>
+                        <div className={`relative flex items-center gap-2 px-3 py-2 rounded-md border text-sm w-48 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200'}`}>
                             <Calendar className="w-4 h-4 text-gray-500 pointer-events-none absolute left-3" />
                             <select
                                 value={eventFilter}
                                 onChange={(e) => setEventFilter(e.target.value)}
-                                className={`w-full h-full bg-transparent outline-none cursor-pointer appearance-none pl-6 pr-6 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                                className={`w-full h-full bg-transparent outline-none cursor-pointer appearance-none pl-6 pr-6 font-light ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                             >
                                 <option value="">All Events</option>
                                 {events.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
@@ -200,14 +200,14 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                                 <button
                                     key={filter.id}
                                     onClick={() => setStatusFilter(filter.id)}
-                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border ${isActive
-                                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-light transition-all whitespace-nowrap border ${isActive
+                                        ? 'bg-gradient-to-r from-pink-500 to-orange-400 border-transparent text-white shadow-md shadow-pink-500/20'
                                         : isDark
-                                            ? 'bg-[#151515] border-[#333] text-gray-400 hover:bg-[#222] hover:text-gray-200'
+                                            ? 'bg-[#1e1e2d] border-[#2b2b40] text-[#a1a5b7] hover:bg-[#232336] hover:text-gray-200'
                                             : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                         }`}
                                 >
-                                    {Icon && <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-gray-500'}`} />}
+                                    {Icon && <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />}
                                     {filter.label}
                                 </button>
                             );
@@ -239,22 +239,22 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                                 placeholder="Search by title..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className={`w-full pl-10 pr-4 py-2 rounded-lg border text-sm focus:ring-2 focus:ring-indigo-500/50 outline-none ${isDark ? 'bg-[#151515] border-gray-800 placeholder-gray-600' : 'bg-white border-gray-200'
+                                className={`w-full pl-10 pr-4 py-2 rounded-md border text-sm focus:ring-2 focus:ring-pink-500/50 outline-none font-light ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] placeholder-gray-500 text-gray-200' : 'bg-white border-gray-200'
                                     }`}
                             />
                         </div>
 
                         {/* View Toggle */}
-                        <div className={`flex items-center p-1 rounded-lg border ${isDark ? 'bg-[#151515] border-gray-800' : 'bg-white border-gray-200'}`}>
+                        <div className={`flex items-center p-1 rounded-md border ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200'}`}>
                             <button
                                 onClick={() => setViewMode('grid')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900 shadow-sm') : 'text-gray-500 hover:text-gray-400'}`}
+                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-gray-100 text-gray-900 shadow-sm') : 'text-gray-500 hover:text-gray-300'}`}
                             >
                                 <LayoutGrid className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setViewMode('list')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? (isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900 shadow-sm') : 'text-gray-500 hover:text-gray-400'}`}
+                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-gray-100 text-gray-900 shadow-sm') : 'text-gray-500 hover:text-gray-300'}`}
                             >
                                 <ListIcon className="w-4 h-4" />
                             </button>
@@ -290,15 +290,15 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                                 ))}
                             </div>
                         ) : (
-                            <div className={`w-full rounded-xl border overflow-hidden ${isDark ? 'bg-[#111] border-[#333]' : 'bg-white border-gray-200'}`}>
-                                <table className="w-full text-left text-sm">
-                                    <thead className={`${isDark ? 'bg-[#151515] text-gray-400' : 'bg-gray-50 text-gray-500'}`}>
+                            <div className={`w-full rounded-md border overflow-hidden ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200'}`}>
+                                <table className="w-full text-left text-sm font-light">
+                                    <thead className={`${isDark ? 'bg-[#2b2b40] text-[#a1a5b7]' : 'bg-gray-50 text-gray-500'}`}>
                                         <tr>
-                                            <th className="px-4 py-3 font-medium">Project</th>
-                                            <th className="px-4 py-3 font-medium">Status</th>
-                                            <th className="px-4 py-3 font-medium">Event</th>
-                                            <th className="px-4 py-3 font-medium">Reviewers</th>
-                                            <th className="px-4 py-3 font-medium">Last Updated</th>
+                                            <th className="px-6 py-4 font-light tracking-wide">Project</th>
+                                            <th className="px-6 py-4 font-light tracking-wide">Status</th>
+                                            <th className="px-6 py-4 font-light tracking-wide">Event</th>
+                                            <th className="px-6 py-4 font-light tracking-wide">Reviewers</th>
+                                            <th className="px-6 py-4 font-light tracking-wide">Last Updated</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 dark:divide-gray-800">

@@ -1,15 +1,57 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    LayoutDashboard, Calendar, Ticket, BarChart3, Bell, Search, MoreVertical,
-    CreditCard, ScanLine, Tags, MapPin, Users, CheckSquare, Sun, Moon, MessageCircle, Wand2, ListTodo, Settings, LogOut, CheckCircle
+    Home, Calendar, Ticket, BarChart3, Bell, Search,
+    CreditCard, ScanLine, Tags, MapPin, Users, CheckSquare, Sun, Moon,
+    MessageCircle, Wand2, ListTodo, Settings, LogOut, CheckCircle, ChevronLeft, ChevronRight, User
 } from 'lucide-react';
-import SidebarItem from '../components/SidebarItem';
 
 import api from '../lib/api';
 
+const navItems = [
+    { id: 'dashboard', icon: Home, label: 'Home' },
+    { id: 'events', icon: Calendar, label: 'Events' },
+    { id: 'orders', icon: CreditCard, label: 'Orders' },
+    { id: 'todo', icon: CheckSquare, label: 'Team Tasks' },
+    { id: 'personal-todo', icon: ListTodo, label: "My TODO's" },
+    { id: 'team', icon: Users, label: 'Team' },
+    { id: 'social', icon: MessageCircle, label: 'Social' },
+    { id: 'scanners', icon: ScanLine, label: 'Scanners' },
+    { id: 'promo', icon: Tags, label: 'Promotions' },
+    { id: 'venues', icon: MapPin, label: 'Venues' },
+    { id: 'creative', icon: Wand2, label: 'Composer' },
+    { id: 'approvals', icon: CheckCircle, label: 'Approvals' },
+    { id: 'analytics', icon: BarChart3, label: 'Analytics' },
+    { id: 'settings', icon: Settings, label: 'Settings' },
+];
+
+const TopbarItem = ({ item, activeView, onNavigate, isDark, pendingApprovalsCount }) => {
+    const active = activeView === item.id;
+    const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;
+
+    return (
+        <button
+            onClick={() => onNavigate(item.id)}
+            className={`flex items-center justify-center px-4 py-2 h-10 rounded-md transition-all min-w-[64px] group relative ${active
+                ? (isDark ? 'bg-[#2a2b40] text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-indigo-50 text-indigo-600 shadow-sm')
+                : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-gray-200' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900')
+                }`}
+        >
+            <div className="relative flex items-center justify-center transition-all duration-200 group-hover:opacity-0 group-hover:scale-75">
+                <item.icon size={20} className={active ? 'drop-shadow-sm' : ''} />
+                {badge && (
+                    <span className="absolute -top-2 -right-3 w-4 h-4 flex items-center justify-center text-[9px] font-medium text-white bg-[#ff3366] rounded-full border-2 border-[#1e1e2d] dark:border-[#1e1e2d] shadow-sm">
+                        {badge > 9 ? '9+' : badge}
+                    </span>
+                )}
+            </div>
+            <span className={`absolute flex items-center justify-center text-[12px] font-light tracking-wide w-full text-center px-2 whitespace-nowrap transition-all duration-200 opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100`}>
+                {item.label}
+            </span>
+        </button>
+    );
+};
+
 const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme, user, onLogout }) => {
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -18,7 +60,6 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
     // Fetch notifications and stats
     const fetchDashboardData = async () => {
         try {
-            // Notifications
             const notifRes = await api.get('/notifications?limit=10').catch(() => null);
             if (notifRes) {
                 const data = notifRes.data || {};
@@ -35,31 +76,24 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                 }
             }
 
-            // Pending Approvals Count
-            // We'll fetch all approvals that are PENDING to get the count
             const approvalRes = await api.get('/approvals?status=PENDING').catch(() => null);
             if (approvalRes) {
                 const approvals = approvalRes.approvals || [];
                 setPendingApprovalsCount(approvals.length);
             }
-
         } catch (error) {
             console.error('Failed to fetch dashboard data', error);
         }
     };
 
-    // Poll for notifications and stats
-    React.useEffect(() => {
+    useEffect(() => {
         fetchDashboardData();
         const interval = setInterval(fetchDashboardData, 30000); // 30s
         return () => clearInterval(interval);
     }, []);
 
-    // Toggle and fetch
     const toggleNotifications = () => {
-        if (!showNotifications) {
-            fetchDashboardData();
-        }
+        if (!showNotifications) fetchDashboardData();
         setShowNotifications(!showNotifications);
     };
 
@@ -73,263 +107,140 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
         }
     };
 
+    // Horizontal Scrolling
+    const scrollContainerRef = React.useRef(null);
+
     return (
         <div
-            className={`min-h-screen flex transition-colors duration-300 ${isDark ? 'bg-[#141414] text-gray-100 selection:bg-indigo-500/30' : 'bg-[#f0f2f5] text-gray-900 selection:bg-gray-100'}`}
+            className={`min-h-screen flex flex-col transition-colors duration-300 ${isDark ? 'bg-[#151521] text-[#e0e0e0] selection:bg-fuchsia-500/30' : 'bg-[#fafafa] text-gray-900 selection:bg-gray-200'}`}
             style={{ fontFamily: "'Exo', sans-serif" }}
         >
             <style>{`
-@import url('https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap');
-        .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
-        .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-}
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgba(156, 163, 175, 0.5);
-    border-radius: 20px;
-}
-`}</style>
+                @import url('https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap');
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.4); border-radius: 20px; }
+                .hide-scrollbar::-webkit-scrollbar { display: none; }
+                .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
 
-            {/* Clean Sidebar */}
-            <aside className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 ${isDark ? 'bg-[#141414]' : 'bg-white border-r border-gray-100'}`}>
-                <div className="h-16 flex items-center px-6">
-                    <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isDark ? 'bg-indigo-600' : 'bg-gray-800'}`}>
-                            <Ticket size={16} className="text-white" />
-                        </div>
-                        <span className={`text-lg font-semibold tracking-tight ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>TixMo</span>
-                    </div>
+            {/* Top Navigation Bar */}
+            <header className={`h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-50 transition-colors shadow-sm ${isDark ? 'bg-[#1e1e2d]/95 backdrop-blur-xl' : 'bg-white/95 backdrop-blur-xl'}`}>
+
+                {/* Brand Logo */}
+                <div className="flex items-center space-x-3 mr-4 lg:mr-8 shrink-0 cursor-pointer" onClick={() => onNavigate('dashboard')}>
+                    <img src="https://tixmo.co/images/tixmo_logo.png" alt="TixMo Logo" className="h-8 w-auto object-contain" />
                 </div>
 
-                <div className="p-4 space-y-6 overflow-y-auto h-[calc(100vh-4rem)]">
-                    <div className="space-y-1">
-                        <p className={`px-4 mb-2 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Platform</p>
-                        <SidebarItem
-                            icon={LayoutDashboard}
-                            label="Overview"
-                            active={activeView === 'dashboard'}
-                            onClick={() => onNavigate('dashboard')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={Calendar}
-                            label="Events"
-                            active={activeView === 'events'}
-                            onClick={() => onNavigate('events')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={CreditCard}
-                            label="Orders"
-                            active={activeView === 'orders'}
-                            onClick={() => onNavigate('orders')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={CheckSquare}
-                            label="Team Tasks"
-                            active={activeView === 'todo'}
-                            onClick={() => onNavigate('todo')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={ListTodo}
-                            label="My TODO's"
-                            active={activeView === 'personal-todo'}
-                            onClick={() => onNavigate('personal-todo')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={Users}
-                            label="Team"
-                            active={activeView === 'team'}
-                            onClick={() => onNavigate('team')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={MessageCircle}
-                            label="Social"
-                            active={activeView === 'social'}
-                            onClick={() => onNavigate('social')}
-                            isDark={isDark}
-                        />
-                    </div>
-
-                    <div className="space-y-1">
-                        <p className={`px-4 mb-2 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Tools</p>
-                        <SidebarItem
-                            icon={ScanLine}
-                            label="Scanners"
-                            active={activeView === 'scanners'}
-                            onClick={() => onNavigate('scanners')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={Tags}
-                            label="Promotions"
-                            active={activeView === 'promo'}
-                            onClick={() => onNavigate('promo')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={MapPin}
-                            label="Venues"
-                            active={activeView === 'venues'}
-                            onClick={() => onNavigate('venues')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={Wand2}
-                            label="Creative Composer"
-                            active={activeView === 'creative'}
-                            onClick={() => onNavigate('creative')}
-                            isDark={isDark}
-                        />
-                        <SidebarItem
-                            icon={CheckCircle}
-                            label="Approvals"
-                            active={activeView === 'approvals'}
-                            onClick={() => onNavigate('approvals')}
-                            isDark={isDark}
-                            badge={pendingApprovalsCount > 0 ? pendingApprovalsCount : null}
-                        />
-                    </div>
-
-                    <div className="space-y-1">
-                        <p className={`px-4 mb-2 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Data</p>
-                        <SidebarItem
-                            icon={BarChart3}
-                            label="Analytics"
-                            active={activeView === 'analytics'}
-                            onClick={() => onNavigate('analytics')}
-                            isDark={isDark}
-                        />
-                    </div>
-
-                    <div className="space-y-1">
-                        <p className={`px-4 mb-2 text-xs font-medium uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>System</p>
-                        <SidebarItem
-                            icon={Settings}
-                            label="Settings"
-                            active={activeView === 'settings'}
-                            onClick={() => onNavigate('settings')}
-                            isDark={isDark}
-                        />
-                    </div>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-
-                {/* Minimalist Header */}
-                <header className={`h-16 flex items-center justify-between px-6 sticky top-0 z-40 transition-colors ${isDark ? 'bg-[#141414]/90 backdrop-blur-md' : 'bg-[#f0f2f5]/90 backdrop-blur-md'}`}>
-                    <div className="flex items-center lg:hidden">
-                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className={`p-2 rounded-lg ${isDark ? 'text-gray-400 hover:bg-[#1e1e1e]' : 'text-gray-600 hover:bg-gray-100'}`}>
-                            <MoreVertical size={24} className="rotate-90" />
-                        </button>
-                    </div>
-
-                    {/* Search - Subtle */}
-                    <div className="hidden lg:flex items-center flex-1 max-w-md">
-                        <div className="relative w-full group">
-                            <Search size={16} className={`absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors ${isDark ? 'text-gray-600 group-focus-within:text-gray-400' : 'text-gray-400 group-focus-within:text-gray-600'}`} />
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                className={`w-full bg-transparent border-none focus:ring-0 text-sm pl-10 py-2 ${isDark ? 'text-gray-300 placeholder-gray-700' : 'text-gray-700 placeholder-gray-400'}`}
+                {/* Central Icon Navigation Area */}
+                <div className="flex-1 flex items-center relative overflow-hidden h-full">
+                    <nav
+                        ref={scrollContainerRef}
+                        className="flex items-center gap-1 sm:gap-2 overflow-x-auto hide-scrollbar scroll-smooth w-full px-2 py-2"
+                    >
+                        {navItems.map(item => (
+                            <TopbarItem
+                                key={item.id}
+                                item={item}
+                                activeView={activeView}
+                                onNavigate={onNavigate}
+                                isDark={isDark}
+                                pendingApprovalsCount={pendingApprovalsCount}
                             />
-                        </div>
-                    </div>
+                        ))}
+                    </nav>
+                </div>
 
-                    {/* Right Actions */}
-                    <div className="flex items-center space-x-4">
+                {/* Right Area: Tools */}
+                <div className="flex items-center space-x-2 sm:space-x-4 pl-4 shrink-0 border-l border-gray-200/60 dark:border-[#2b2b40]/60">
+
+                    <button
+                        onClick={toggleTheme}
+                        className={`p-2 rounded-md transition-colors ${isDark ? 'text-[#8e8fa6] hover:text-amber-400 hover:bg-[#232336]' : 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+                    >
+                        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+
+                    <div className="relative">
                         <button
-                            onClick={toggleTheme}
-                            className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-500 hover:text-gray-200 hover:bg-[#1e1e1e]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
+                            onClick={toggleNotifications}
+                            className={`relative p-2 rounded-md transition-colors ${isDark ? 'text-[#8e8fa6] hover:text-white hover:bg-[#232336]' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`}
                         >
-                            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                            <Bell size={20} />
+                            {unreadCount > 0 && <span className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#ff3366] rounded-full border-2 ${isDark ? 'border-[#1e1e2d]' : 'border-white'} shadow-sm`}></span>}
                         </button>
 
-                        {/* Notification Bell with Dropdown */}
-                        <div className="relative">
-                            <button
-                                onClick={toggleNotifications}
-                                className={`relative transition-colors p-2 rounded-lg ${isDark ? 'text-gray-500 hover:text-gray-200 hover:bg-[#1e1e1e]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'}`}
-                            >
-                                <Bell size={18} />
-                                {unreadCount > 0 && <span className={`absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 ${isDark ? 'border-[#121212]' : 'border-[#f0f2f5]'}`}></span>}
-                            </button>
-
-                            {/* Notification Dropdown */}
-                            {showNotifications && (
-                                <div className={`absolute right-0 mt-2 w-80 rounded-xl shadow-2xl border overflow-hidden z-50 animate-scale-in origin-top-right ${isDark ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-200'}`}>
-                                    <div className={`p-3 border-b flex justify-between items-center ${isDark ? 'border-[#333]' : 'border-gray-100'}`}>
-                                        <h3 className={`text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Notifications</h3>
-                                        <button onClick={() => setShowNotifications(false)} className={isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}>
-                                            <span className="text-xs">Close</span>
-                                        </button>
-                                    </div>
-                                    <div className="max-h-80 overflow-y-auto">
-                                        {notifications.length === 0 ? (
-                                            <div className="p-6 text-center text-sm text-gray-500">
-                                                No notifications
-                                            </div>
-                                        ) : (
-                                            notifications.map(n => (
-                                                <div
-                                                    key={n.id}
-                                                    onClick={() => !n.readAt && handleMarkRead(n.id)}
-                                                    className={`p-3 border-b last:border-0 cursor-pointer transition-colors ${!n.readAt ? (isDark ? 'bg-indigo-500/10' : 'bg-indigo-50') : 'bg-transparent'} ${isDark ? 'border-[#333] hover:bg-[#252525]' : 'border-gray-100 hover:bg-gray-50'}`}
-                                                >
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <span className={`text-xs font-semibold ${isDark ? 'text-indigo-300' : 'text-indigo-600'}`}>{n.subject}</span>
-                                                        {!n.readAt && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>}
-                                                    </div>
-                                                    <p className={`text-xs mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{n.message}</p>
-                                                    <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                                        {new Date(n.createdAt).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                    <div className={`p-2 text-center border-t ${isDark ? 'bg-[#181818] border-[#333]' : 'bg-gray-50 border-gray-100'}`}>
-                                        <button className={`text-xs font-medium ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}>
-                                            View All
-                                        </button>
-                                    </div>
+                        {/* Dropdown */}
+                        {showNotifications && (
+                            <div className={`absolute right-0 mt-3 w-80 rounded-md shadow-2xl border overflow-hidden z-[100] animate-in slide-in-from-top-2 origin-top-right ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60' : 'bg-white border-gray-100'}`}>
+                                <div className={`px-4 py-3 border-b flex justify-between items-center ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-100'}`}>
+                                    <h3 className={`font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Notifications</h3>
+                                    <button onClick={() => setShowNotifications(false)} className={isDark ? 'text-[#8e8fa6] hover:text-white' : 'text-gray-400 hover:text-gray-600'}>
+                                        <span className="text-xs font-light tracking-wider">CLOSE</span>
+                                    </button>
                                 </div>
-                            )}
-                        </div>
-
-                        <div className="flex items-center space-x-3 cursor-pointer">
-                            <div className={`w-8 h-8 rounded-full overflow-hidden ${isDark ? 'bg-[#1e1e1e]' : 'bg-gray-200'} flex items-center justify-center text-xs font-bold`}>
-                                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                                <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                                    {notifications.length === 0 ? (
+                                        <div className="p-8 text-center text-sm text-gray-500 flex flex-col items-center font-light">
+                                            <Bell size={32} className="opacity-20 mb-2" />
+                                            No notifications
+                                        </div>
+                                    ) : (
+                                        notifications.map(n => (
+                                            <div
+                                                key={n.id}
+                                                onClick={() => !n.readAt && handleMarkRead(n.id)}
+                                                className={`p-4 border-b last:border-0 cursor-pointer transition-colors ${!n.readAt ? (isDark ? 'bg-[#232336]' : 'bg-indigo-50') : 'bg-transparent'} ${isDark ? 'border-[#2b2b40]/60 hover:bg-[#2a2b40]' : 'border-gray-100 hover:bg-gray-50'}`}
+                                            >
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className={`text-sm font-light ${isDark ? 'text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-orange-400' : 'text-indigo-600'}`}>{n.subject}</span>
+                                                    {!n.readAt && <span className="w-2 h-2 rounded-full bg-fuchsia-500 mt-1 shadow-sm shadow-fuchsia-500/50"></span>}
+                                                </div>
+                                                <p className={`text-xs mb-2 leading-relaxed font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-600'}`}>{n.message}</p>
+                                                <span className={`text-[10px] uppercase tracking-wider font-light ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`}>
+                                                    {new Date(n.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                <div className={`p-3 text-center border-t ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-gray-50 border-gray-100'}`}>
+                                    <button className={`text-sm font-light tracking-wide ${isDark ? 'text-[#8e8fa6] hover:text-white' : 'text-indigo-600 hover:text-indigo-700'}`}>
+                                        VIEW ALL
+                                    </button>
+                                </div>
                             </div>
-                            <span className={`text-sm font-medium hidden md:block ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                {user?.firstName} {user?.lastName}
+                        )}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="h-6 w-px bg-gray-200 dark:bg-[#2b2b40] hidden sm:block mx-2"></div>
+
+                    {/* Profile & Logout */}
+                    <div className="flex items-center space-x-2">
+                        <div className={`h-9 px-2 rounded-md overflow-hidden ${isDark ? 'bg-gradient-to-br from-[#2a2b40] to-[#1e1e2d] border-[#3a3a5a] text-white shadow-[0_0_10px_rgba(0,0,0,0.5)]' : 'bg-gradient-to-br from-indigo-100 to-purple-100 border-white text-indigo-700 shadow-sm'} border-2 flex items-center justify-center space-x-1.5 cursor-pointer hover:opacity-80 transition-opacity`}>
+                            <User size={14} className="opacity-70" />
+                            <span className="text-[11px] font-medium tracking-widest uppercase pt-px">
+                                {user?.firstName?.[0]}{user?.lastName?.[0]}
                             </span>
                         </div>
-
                         <button
                             onClick={onLogout}
-                            className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-500 hover:text-rose-400 hover:bg-[#1e1e1e]' : 'text-gray-400 hover:text-rose-600 hover:bg-gray-100'}`}
+                            className={`hidden sm:flex p-2 rounded-md transition-colors ${isDark ? 'text-[#8e8fa6] hover:text-[#ff3366] hover:bg-[#232336]' : 'text-gray-400 hover:text-rose-600 hover:bg-gray-100'}`}
                             title="Sign Out"
                         >
-                            <LogOut size={18} />
+                            <LogOut size={20} />
                         </button>
                     </div>
-                </header>
+                </div>
+            </header>
 
-                {/* Main Scrollable Area */}
-                <main className="flex-1 overflow-y-auto p-6 scroll-smooth">
+            {/* Expansive Main Content Area */}
+            <main className="flex-1 w-full overflow-y-auto custom-scrollbar p-6 sm:p-8">
+                <div className="h-full w-full max-w-[1600px] mx-auto">
                     {children}
-                </main>
-
-            </div>
+                </div>
+            </main>
         </div>
     );
 };

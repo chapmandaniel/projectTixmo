@@ -37,6 +37,10 @@ vi.mock('lucide-react', async () => {
         Eye: () => <span data-testid="icon-eye" />,
         MoreHorizontal: () => <span data-testid="icon-more-horizontal" />,
         ChevronRight: () => <span data-testid="icon-chevron-right" />,
+        Instagram: () => <span data-testid="icon-instagram" />,
+        Facebook: () => <span data-testid="icon-facebook" />,
+        Twitter: () => <span data-testid="icon-twitter" />,
+        Linkedin: () => <span data-testid="icon-linkedin" />,
     };
 });
 

@@ -198,15 +198,15 @@ const TodoView = ({ isDark, user }) => {
         }
     };
 
-    const COLUMN_COLORS = {
-        todo: 'border-t-4 border-indigo-500',
-        inProgress: 'border-t-4 border-emerald-500',
-        review: 'border-t-4 border-yellow-500',
-        done: 'border-t-4 border-transparent'
+    const COLUMN_GRADIENTS = {
+        todo: 'from-pink-500 to-orange-400',
+        inProgress: 'from-cyan-400 to-blue-500',
+        review: 'from-fuchsia-500 to-purple-600',
+        done: 'from-emerald-400 to-teal-500'
     };
 
     return (
-        <div className="space-y-6 animate-fade-in h-[calc(100vh-8rem)]">
+        <div className="flex flex-col gap-6 animate-fade-in max-w-7xl mx-auto h-full min-h-[600px]">
 
             {/* Create Task Modal */}
             {isCreateModalOpen && (
@@ -229,51 +229,53 @@ const TodoView = ({ isDark, user }) => {
                 />
             )}
 
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
                 <div>
-                    <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Team Tasks</h2>
-                    <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm`}>
+                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Team Tasks</h2>
+                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1 text-lg font-light`}>
                         {isLoading ? 'Syncing...' : 'Manage and track team tasks.'}
                     </p>
                 </div>
                 <div className="flex space-x-3">
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center shadow-lg transition-all ${isDark ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'}`}
+                        className={`flex items-center space-x-2 px-4 py-2 text-sm font-normal rounded-md transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
                     >
-                        <Plus size={16} className="mr-2" />
-                        Create Task
+                        <Plus size={16} />
+                        <span>Create Task</span>
                     </button>
-                    <button className={`px-4 py-2 text-sm font-normal rounded-lg flex items-center ${isDark ? 'bg-[#1e1e1e] text-gray-300 hover:bg-[#252525]' : 'bg-white text-gray-600 hover:bg-gray-50 shadow-sm'}`}>
-                        <Filter size={16} className="mr-2" />
-                        Filter
+                    <button className={`flex items-center space-x-2 px-3 py-2 text-sm font-light rounded-md border transition-colors ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 text-[#a1a5b7] hover:text-gray-200 hover:bg-[#232336]' : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50'}`}>
+                        <Filter size={14} />
+                        <span>Filter</span>
                     </button>
                 </div>
             </div>
 
-            <div className="flex gap-5 overflow-x-auto h-full pb-4">
+            <div className="flex-1 flex gap-4 overflow-x-auto overflow-y-hidden min-h-0 pb-2">
                 {Object.entries(columns).map(([colId, col]) => (
                     <div
                         key={colId}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, colId)}
-                        className={`flex-shrink-0 w-80 rounded-xl p-4 flex flex-col transition-all ${COLUMN_COLORS[colId]} ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-gray-50 border-x border-b border-gray-200'}`}
+                        className={`relative h-full flex-shrink-0 w-72 lg:flex-1 min-w-[280px] rounded-md p-4 flex flex-col transition-all border overflow-hidden ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 shadow-lg shadow-black/20' : 'bg-gray-50 border-gray-200/60'}`}
                     >
-                        <div className="flex justify-between items-center mb-4">
+                        <div className={`absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r ${COLUMN_GRADIENTS[colId]} opacity-70`}></div>
+
+                        <div className="flex justify-between items-center mb-4 z-10 pt-1">
                             <div className="flex items-center space-x-2">
-                                <h3 className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{col.title}</h3>
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${isDark ? 'bg-[#2a2a2a] text-gray-400' : 'bg-gray-200 text-gray-600'}`}>
+                                <h3 className={`font-light tracking-tight text-lg ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{col.title}</h3>
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark ? 'bg-[#151521] text-gray-400 border border-[#2b2b40]/60' : 'bg-white text-gray-600 border border-gray-200/60'}`}>
                                     {col.items.length}
                                 </span>
                             </div>
                             <div className="flex space-x-1">
-                                <button className={`p-1 rounded hover:bg-gray-500/10 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                <button className={`p-1 rounded-md transition-colors ${isDark ? 'text-gray-500 hover:text-white hover:bg-[#232336]' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-200'}`}>
                                     <MoreHorizontal size={16} />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto min-h-[100px] custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto min-h-[100px] custom-scrollbar z-10 pr-2 -mr-2">
                             {col.items.map(item => (
                                 <KanbanCard
                                     key={item.id}

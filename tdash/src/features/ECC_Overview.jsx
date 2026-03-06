@@ -4,29 +4,29 @@ import { ArrowUp, ArrowDown, DollarSign, Ticket, Users, Activity, Clock } from '
 import { MOCK_ANALYTICS_DATA } from '../data/mockData';
 
 const StatCard = ({ title, value, trend, trendUp, icon: Icon, isDark }) => (
-    <div className={`p-6 rounded-2xl border transition-all ${isDark ? 'bg-[#1e1e1e] border-[#333] hover:border-[#444]' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
+    <div className={`p-6 rounded-md border transition-all ${isDark ? 'bg-[#151521] border-[#2b2b40]/60 hover:border-[#3a3a5a]' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
         <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-xl ${isDark ? 'bg-[#252525] text-gray-300' : 'bg-indigo-50 text-indigo-600'}`}>
+            <div className={`p-3 rounded-md ${isDark ? 'bg-[#1e1e2d] text-gray-300' : 'bg-indigo-50 text-indigo-600'}`}>
                 <Icon size={24} />
             </div>
             {trend && (
-                <div className={`flex items-center text-xs font-medium px-2 py-1 rounded-full ${trendUp ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                <div className={`flex items-center text-xs font-light tracking-wide px-2 py-1 rounded-sm ${trendUp ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                     {trendUp ? <ArrowUp size={12} className="mr-1" /> : <ArrowDown size={12} className="mr-1" />}
                     {trend}
                 </div>
             )}
         </div>
-        <h3 className={`text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{title}</h3>
-        <p className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{value}</p>
+        <h3 className={`text-xs font-light tracking-widest uppercase mb-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{title}</h3>
+        <p className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{value}</p>
     </div>
 );
 
 const ActivityItem = ({ title, time, type, isDark }) => (
-    <div className={`flex items-start space-x-3 p-3 rounded-lg transition-colors ${isDark ? 'hover:bg-[#252525]' : 'hover:bg-gray-50'}`}>
-        <div className={`mt-1 w-2 h-2 rounded-full ${type === 'sale' ? 'bg-emerald-500' : type === 'checkin' ? 'bg-indigo-500' : 'bg-amber-500'}`}></div>
+    <div className={`flex items-start space-x-3 p-3 rounded-md transition-colors ${isDark ? 'hover:bg-[#232336]' : 'hover:bg-gray-50'}`}>
+        <div className={`mt-1.5 w-1.5 h-1.5 rounded-sm ${type === 'sale' ? 'bg-emerald-500' : type === 'checkin' ? 'bg-indigo-500' : 'bg-amber-500'}`}></div>
         <div className="flex-1">
-            <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{title}</p>
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{time}</p>
+            <p className={`text-sm font-light ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{title}</p>
+            <p className={`text-xs font-light tracking-wide ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{time}</p>
         </div>
     </div>
 );
@@ -34,13 +34,13 @@ const ActivityItem = ({ title, time, type, isDark }) => (
 const CustomTooltip = ({ active, payload, label, isDark }) => {
     if (active && payload && payload.length) {
         return (
-            <div className={`p-3 rounded-lg border shadow-lg ${isDark ? 'bg-[#1e1e1e] border-[#333] text-gray-200' : 'bg-white border-gray-100 text-gray-700'}`}>
-                <p className="text-sm font-medium mb-2">{label}</p>
+            <div className={`p-3 rounded-md border shadow-lg font-light ${isDark ? 'bg-[#151521] border-[#2b2b40]/60 text-gray-200' : 'bg-white border-gray-100 text-gray-700'}`}>
+                <p className="text-sm tracking-wide font-light mb-2">{label}</p>
                 {payload.map((entry, index) => (
                     <div key={index} className="flex items-center space-x-2 text-xs">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }}></div>
+                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: entry.color }}></div>
                         <span className="capitalize">{entry.name}:</span>
-                        <span className="font-semibold">
+                        <span className="font-normal">
                             {entry.name === 'revenue' ? '$' : ''}{entry.value}
                         </span>
                     </div>
@@ -126,10 +126,10 @@ const ECC_Overview = ({ event, isDark }) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[500px]">
 
                 {/* Sales Chart (2/3 width) */}
-                <div className={`col-span-2 p-6 rounded-2xl border ${isDark ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-100 shadow-sm'}`}>
+                <div className={`col-span-2 p-6 rounded-md border ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-white border-gray-100 shadow-sm'}`}>
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Sales Velocity</h3>
-                        <select className={`text-sm bg-transparent outline-none border rounded-lg px-2 py-1 ${isDark ? 'border-[#333] text-gray-400' : 'border-gray-200 text-gray-500'}`}>
+                        <h3 className={`text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Sales Velocity</h3>
+                        <select className={`text-sm font-light tracking-wide bg-transparent outline-none border rounded-md px-2 py-1 ${isDark ? 'border-[#2b2b40]/60 text-[#a1a5b7] focus:border-pink-500' : 'border-gray-200/60 text-gray-500'}`}>
                             <option>Last 7 Days</option>
                             <option>Last 30 Days</option>
                         </select>
@@ -139,27 +139,27 @@ const ECC_Overview = ({ event, isDark }) => {
                             <AreaChart data={MOCK_ANALYTICS_DATA}>
                                 <defs>
                                     <linearGradient id="colorSalesECC" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2a2a2a' : '#f3f4f6'} />
-                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: isDark ? '#525252' : '#9ca3af', fontSize: 12 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: isDark ? '#525252' : '#9ca3af', fontSize: 12 }} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2b2b40' : '#f3f4f6'} />
+                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: isDark ? '#a1a5b7' : '#9ca3af', fontSize: 12, fontWeight: 300 }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: isDark ? '#a1a5b7' : '#9ca3af', fontSize: 12, fontWeight: 300 }} />
                                 <Tooltip content={<CustomTooltip isDark={isDark} />} />
-                                <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenueECC)" />
-                                <Area type="monotone" dataKey="sales" stroke="#82ca9d" strokeWidth={3} fillOpacity={1} fill="url(#colorSalesECC)" />
+                                <Area type="monotone" dataKey="revenue" stroke="#ec4899" strokeWidth={3} fillOpacity={1} fill="url(#colorSalesECC)" />
+                                <Area type="monotone" dataKey="sales" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorSalesECC)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* Activity Feed (1/3 width) */}
-                <div className={`col-span-1 p-6 rounded-2xl border flex flex-col ${isDark ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-100 shadow-sm'}`}>
+                <div className={`col-span-1 p-6 rounded-md border flex flex-col ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-white border-gray-100 shadow-sm'}`}>
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Live Activity</h3>
-                        <div className={`p-1.5 rounded-full ${isDark ? 'bg-emerald-500/10 text-emerald-500' : 'bg-emerald-50 text-emerald-600'}`}>
-                            <div className="w-2 h-2 rounded-full bg-current animate-pulse"></div>
+                        <h3 className={`text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Live Activity</h3>
+                        <div className={`p-1.5 rounded-sm ${isDark ? 'bg-emerald-500/10 text-emerald-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                            <div className="w-1.5 h-1.5 rounded-sm bg-current animate-pulse"></div>
                         </div>
                     </div>
 
@@ -168,10 +168,10 @@ const ECC_Overview = ({ event, isDark }) => {
                             <div className="space-y-3">
                                 {[1, 2, 3].map(i => (
                                     <div key={i} className="flex items-center space-x-3 opacity-50">
-                                        <div className={`w-8 h-8 rounded-full ${isDark ? 'bg-[#252525]' : 'bg-gray-100'}`}></div>
+                                        <div className={`w-8 h-8 rounded-md ${isDark ? 'bg-[#232336]' : 'bg-gray-100'}`}></div>
                                         <div className="space-y-1">
-                                            <div className={`h-3 w-32 rounded ${isDark ? 'bg-[#252525]' : 'bg-gray-100'}`}></div>
-                                            <div className={`h-2 w-20 rounded ${isDark ? 'bg-[#252525]' : 'bg-gray-100'}`}></div>
+                                            <div className={`h-3 w-32 rounded-sm ${isDark ? 'bg-[#232336]' : 'bg-gray-100'}`}></div>
+                                            <div className={`h-2 w-20 rounded-sm ${isDark ? 'bg-[#232336]' : 'bg-gray-100'}`}></div>
                                         </div>
                                     </div>
                                 ))}
@@ -186,7 +186,7 @@ const ECC_Overview = ({ event, isDark }) => {
                                     key={activity.id}
                                     title={
                                         <span>
-                                            <span className="font-medium">{activity.user}</span> purchased {activity.details} for ${Number(activity.amount).toFixed(2)}
+                                            <span className={`font-normal ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{activity.user}</span> purchased {activity.details} for ${Number(activity.amount).toFixed(2)}
                                         </span>
                                     }
                                     time={new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -197,7 +197,7 @@ const ECC_Overview = ({ event, isDark }) => {
                         )}
                     </div>
 
-                    <button className={`w-full mt-4 py-2 text-sm font-medium rounded-lg border border-dashed transition-colors ${isDark ? 'border-[#333] text-gray-400 hover:text-white hover:border-gray-500' : 'border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300'}`}>
+                    <button className={`w-full mt-4 py-2 text-sm tracking-wide font-light rounded-md border transition-colors ${isDark ? 'border-[#2b2b40]/60 text-[#a1a5b7] hover:bg-[#1e1e2d] hover:text-gray-200' : 'bg-gray-50 border-gray-200/60 text-gray-500 hover:text-gray-800 hover:border-gray-300'}`}>
                         View All Activity
                     </button>
                 </div>
