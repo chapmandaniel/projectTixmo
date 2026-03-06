@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Home, Calendar, Ticket, BarChart3, Bell, Search,
     CreditCard, ScanLine, Tags, MapPin, Users, CheckSquare, Sun, Moon,
-    MessageCircle, Wand2, ListTodo, Settings, LogOut, CheckCircle, ChevronLeft, ChevronRight, User
+    MessageCircle, Wand2, ListTodo, Settings, LogOut, CheckCircle, ChevronLeft, ChevronRight, User, Terminal
 } from 'lucide-react';
 
 import api from '../lib/api';
@@ -216,6 +216,17 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
 
                     {/* Divider */}
                     <div className="h-6 w-px bg-gray-200 dark:bg-[#2b2b40] hidden sm:block mx-2"></div>
+
+                    {/* Dev Mode (Admin/Owner Only) */}
+                    {(user?.role === 'OWNER' || user?.role === 'ADMIN') && (
+                        <Link
+                            to="/dev"
+                            className={`p-2 rounded-md transition-colors mr-1 sm:mr-3 ${isDark ? 'text-indigo-400 hover:text-indigo-300 hover:bg-[#232336]' : 'text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+                            title="Developer Terminal"
+                        >
+                            <Terminal size={20} />
+                        </Link>
+                    )}
 
                     {/* Profile & Logout */}
                     <div className="flex items-center space-x-2">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Filter, MapPin, Calendar, ChevronRight } from 'lucide-react';
+import { Plus, Filter, MapPin, Calendar, ChevronRight, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import EventStudio from './EventStudio';
 import StatusBadge from '../components/StatusBadge';
@@ -11,6 +11,32 @@ const EventsView = ({ isDark, user }) => {
     const [showWizard, setShowWizard] = useState(false);
     const [events, setEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [devSettings, setDevSettings] = useState(() => {
+        try {
+            const saved = localStorage.getItem('tixmo_dev_settings');
+            return saved ? JSON.parse(saved) : { enableAutoEventGeneration: false };
+        } catch (e) {
+            return { enableAutoEventGeneration: false };
+        }
+    });
+
+    const handleAutoGenerate = async () => {
+        try {
+            setIsLoading(true);
+            const mockTitle = `Test Event ${Math.floor(Math.random() * 10000)}`;
+            const payload = {
+                title: mockTitle,
+                description: "This is an auto-generated test event from the Dev Dashboard.",
+                organizationId: user?.organizationId,
+                capacity: 500
+            };
+            await api.post('/events', payload);
+            fetchEvents();
+        } catch (error) {
+            console.error('Failed to auto-generate event', error);
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
         fetchEvents();
@@ -45,13 +71,26 @@ const EventsView = ({ isDark, user }) => {
                     <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Events</h2>
                     <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1 text-lg font-light`}>Manage your events, venues, and ticket allocations.</p>
                 </div>
-                <button
-                    onClick={() => setShowWizard(true)}
-                    className={`flex items-center space-x-2 px-4 py-2 text-sm font-normal rounded-lg transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
-                >
-                    <Plus size={16} />
-                    <span>Create Event</span>
-                </button>
+                <div className="flex items-center space-x-3">
+                    {devSettings.enableAutoEventGeneration && (user?.role === 'OWNER' || user?.role === 'ADMIN') && (
+                        <button
+                            onClick={handleAutoGenerate}
+                            disabled={isLoading}
+                            className={`flex items-center space-x-2 px-4 py-2 text-sm font-normal rounded-lg transition-all shadow-sm border ${isDark ? 'bg-[#232336] border-fuchsia-500/50 text-fuchsia-400 hover:bg-[#2b2b40]' : 'bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600 hover:bg-fuchsia-100'}`}
+                            title="Auto-Generate Mock Event"
+                        >
+                            <Zap size={16} className={isLoading ? 'animate-pulse' : ''} />
+                            <span className="hidden sm:inline">Auto-Gen Event</span>
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setShowWizard(true)}
+                        className={`flex items-center space-x-2 px-4 py-2 text-sm font-normal rounded-lg transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
+                    >
+                        <Plus size={16} />
+                        <span>Create Event</span>
+                    </button>
+                </div>
             </div>
 
             {/* Clean Filters */}

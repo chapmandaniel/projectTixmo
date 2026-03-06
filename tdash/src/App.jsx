@@ -17,6 +17,7 @@ import LoginView from './features/LoginView';
 import VenuesView from './features/VenuesView';
 import ApprovalsDashboard from './features/ApprovalsDashboard';
 import OrdersView from './features/OrdersView';
+import DevDashboard from './features/DevDashboard';
 
 import WaitingRoomView from './features/WaitingRoomView';
 import GlobalErrorNotification from './components/GlobalErrorNotification';
@@ -60,6 +61,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                     <Route path="/creative" element={<CreativeComposer isDark={isDark} />} />
                     <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />
                     <Route path="/approvals" element={<ApprovalsDashboard isDark={isDark} user={user} />} />
+                    <Route path="/dev" element={<DevDashboard isDark={isDark} user={user} />} />
 
                     {/* Coming Soon hubs */}
                     <Route path="/marketing" element={<ComingSoonView title="Marketing Hub" icon="Megaphone" isDark={isDark} />} />
