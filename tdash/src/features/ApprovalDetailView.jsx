@@ -47,17 +47,37 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
     const [submitting, setSubmitting] = useState(false);
     const commentsEndRef = useRef(null);
 
+    const fetchApprovalDetails = async () => {
+        try {
+            const response = await api.get(`/approvals/${approval.id}`);
+            const fullApproval = response.approval || response;
+            if (fullApproval) {
+                setAssets(fullApproval.assets || []);
+                setComments(fullApproval.comments || []);
+                setReviewers(fullApproval.reviewers || []);
+                if (fullApproval.assets?.length > 0) {
+                    setActiveAssetIndex(fullApproval.assets.length - 1);
+                }
+                onUpdate(fullApproval);
+            }
+        } catch (err) {
+            console.error('Failed to fetch full approval details:', err);
+        }
+    };
+
     useEffect(() => {
         if (approval) {
+            // Instant display of shallow passed data
             setAssets(approval.assets || []);
             setComments(approval.comments || []);
             setReviewers(approval.reviewers || []);
-            // Default to latest asset
             if (approval.assets?.length > 0) {
                 setActiveAssetIndex(approval.assets.length - 1);
             }
+            // Fetch deep data from server in background
+            fetchApprovalDetails();
         }
-    }, [approval]);
+    }, [approval?.id]);
 
     // Scroll to bottom of comments
     useEffect(() => {
@@ -83,9 +103,9 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
     const handleReviewAction = async (decision) => {
         setSubmitting(true);
         try {
-            const response = await api.post(`/approvals/${approval.id}/review`, { decision, feedback: newComment });
-            onUpdate(response);
+            await api.post(`/approvals/${approval.id}/review`, { decision, feedback: newComment });
             setNewComment('');
+            await fetchApprovalDetails();
         } catch (err) {
             console.error('Failed to submit review:', err);
         } finally {
@@ -102,13 +122,8 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
             const formData = new FormData();
             files.forEach(file => formData.append('files', file));
 
-            const response = await api.upload(`/approvals/${approval.id}/assets`, formData);
-            const newAssets = Array.isArray(response) ? response : (response.assets || []);
-
-            const updatedAssets = [...assets, ...newAssets];
-            setAssets(updatedAssets);
-            onUpdate({ ...approval, assets: updatedAssets });
-            setActiveAssetIndex(updatedAssets.length - 1);
+            await api.upload(`/approvals/${approval.id}/assets`, formData);
+            await fetchApprovalDetails();
         } catch (err) {
             console.error('Upload failed:', err);
         } finally {
