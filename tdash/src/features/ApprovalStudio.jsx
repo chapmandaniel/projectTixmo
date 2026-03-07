@@ -114,6 +114,22 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
             return;
         }
 
+        // Production validation before Submit
+        if (submitType === 'submit') {
+            if (files.length === 0) {
+                setError('At least one asset is required to submit for review');
+                setActiveSection('content');
+                setLoading(false);
+                return;
+            }
+            if (reviewers.length === 0) {
+                setError('At least one reviewer is required to submit for review');
+                setActiveSection('reviewers');
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             // Step 1: Create Approval
             const payload = {
