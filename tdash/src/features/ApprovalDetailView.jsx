@@ -52,7 +52,8 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
             const response = await api.get(`/approvals/${approval.id}`);
             const fullApproval = response.approval || response;
             if (fullApproval) {
-                setAssets(fullApproval.assets || []);
+                // Reverse to show older versions first (v1, v2...)
+                setAssets([...(fullApproval.assets || [])].reverse());
                 setComments(fullApproval.comments || []);
                 setReviewers(fullApproval.reviewers || []);
                 if (fullApproval.assets?.length > 0) {
@@ -68,7 +69,7 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
     useEffect(() => {
         if (approval) {
             // Instant display of shallow passed data
-            setAssets(approval.assets || []);
+            setAssets([...(approval.assets || [])].reverse());
             setComments(approval.comments || []);
             setReviewers(approval.reviewers || []);
             if (approval.assets?.length > 0) {

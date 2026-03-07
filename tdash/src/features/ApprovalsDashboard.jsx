@@ -190,7 +190,7 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                             onClick={() => setShowStudio(true)}
                             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-600/20'}`}
                         >
-                            <Plus size={16} /> <span className="hidden sm:inline">New Project</span>
+                            <Plus size={16} /> <span className="hidden sm:inline">New Approval</span>
                         </button>
                     </div>
                 </div>
