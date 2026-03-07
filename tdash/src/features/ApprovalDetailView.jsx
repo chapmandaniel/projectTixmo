@@ -52,12 +52,13 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
             const response = await api.get(`/approvals/${approval.id}`);
             const fullApproval = response.approval || response;
             if (fullApproval) {
-                // Reverse to show older versions first (v1, v2...)
-                setAssets([...(fullApproval.assets || [])].reverse());
+                // Sort chronologically (oldest is v1, newest is latest)
+                const sortedAssets = [...(fullApproval.assets || [])].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                setAssets(sortedAssets);
                 setComments(fullApproval.comments || []);
                 setReviewers(fullApproval.reviewers || []);
-                if (fullApproval.assets?.length > 0) {
-                    setActiveAssetIndex(fullApproval.assets.length - 1);
+                if (sortedAssets.length > 0) {
+                    setActiveAssetIndex(sortedAssets.length - 1);
                 }
                 onUpdate(fullApproval);
             }
@@ -69,11 +70,12 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
     useEffect(() => {
         if (approval) {
             // Instant display of shallow passed data
-            setAssets([...(approval.assets || [])].reverse());
+            const sortedAssets = [...(approval.assets || [])].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            setAssets(sortedAssets);
             setComments(approval.comments || []);
             setReviewers(approval.reviewers || []);
-            if (approval.assets?.length > 0) {
-                setActiveAssetIndex(approval.assets.length - 1);
+            if (sortedAssets.length > 0) {
+                setActiveAssetIndex(sortedAssets.length - 1);
             }
             // Fetch deep data from server in background
             fetchApprovalDetails();
