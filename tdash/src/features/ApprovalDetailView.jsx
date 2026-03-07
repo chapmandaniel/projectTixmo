@@ -213,7 +213,7 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                         ))}
                     </div>
 
-                    <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
+                    <div className="flex-1 flex items-center justify-center p-8 overflow-hidden">
                         {isSocial ? (
                             <div className="w-[375px] bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col">
                                 {/* Social Header */}
@@ -237,7 +237,7 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                                             <img
                                                 src={primaryAsset.s3Url}
                                                 className="w-full h-full object-cover"
-                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/e2e8f0/94a3b8?text=Image+Unavailable'; }}
+                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/1e1e2d/a1a5b7?text=Image+Unavailable'; }}
                                             />
                                         ) : (
                                             <div className="text-center p-4">
@@ -279,7 +279,7 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                                     src={primaryAsset.s3Url}
                                     alt="Asset Preview"
                                     className="max-w-full max-h-full object-contain rounded shadow-xl ring-1 ring-black/5 dark:ring-white/10"
-                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/800x800/e2e8f0/94a3b8?text=Image+Unavailable'; }}
+                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/800x800/1e1e2d/a1a5b7?text=Image+Unavailable'; }}
                                 />
                             ) : (
                                 <div className="bg-white dark:bg-[#1A1A1A] p-12 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 text-center">

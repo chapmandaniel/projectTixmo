@@ -354,7 +354,7 @@ const ApprovalsDashboard = ({ isDark, user }) => {
                                                                     <img
                                                                         src={approval.assets[0].s3Url}
                                                                         className="w-8 h-8 rounded object-cover bg-gray-700"
-                                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100/e2e8f0/94a3b8?text=Img'; }}
+                                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100/1e1e2d/a1a5b7?text=Img'; }}
                                                                     />
                                                                 ) : (
                                                                     <div className="w-8 h-8 rounded bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
