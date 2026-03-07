@@ -193,10 +193,10 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
             </div>
 
             {/* 2. Main Content Grid */}
-            <div className={`flex-1 flex overflow-hidden rounded-t-lg border-t border-l border-r shadow-sm ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-200/60'}`}>
+            <div className="flex-1 flex gap-6 pb-6 overflow-hidden">
 
                 {/* LEFT: Asset Canvas (Dominant) */}
-                <div className="flex-1 flex flex-col bg-gray-100/50 dark:bg-[#0A0A0A] relative overflow-hidden">
+                <div className={`flex-1 flex flex-col relative overflow-hidden rounded-md border shadow-sm ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-white border-gray-200/60'}`}>
                     {/* Canvas Toolbar */}
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/90 dark:bg-[#222]/90 backdrop-blur shadow-sm border border-gray-200 dark:border-gray-700 p-1 rounded-full z-10 transition-all hover:shadow-md">
                         {assets.map((a, i) => (
@@ -309,10 +309,10 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                 </div>
 
                 {/* RIGHT: Control Panel (Sidebar) */}
-                <div className="w-[400px] flex flex-col border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0A0A0A]">
+                <div className={`w-[380px] shrink-0 flex flex-col relative overflow-hidden rounded-md border shadow-sm ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-white border-gray-200/60'}`}>
 
                     {/* Reviewers Status Card */}
-                    <div className="p-6 border-b border-gray-100 dark:border-gray-800">
+                    <div className={`p-6 border-b ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-100'}`}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
                                 <Users className="w-4 h-4" />
@@ -351,8 +351,8 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                     </div>
 
                     {/* Chat / Activity Feed */}
-                    <div className="flex-1 flex flex-col min-h-0 bg-gray-50/50 dark:bg-[#0C0C0C]">
-                        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                    <div className="flex-1 flex flex-col min-h-0 bg-gray-50/50 dark:bg-transparent">
+                        <div className={`p-4 border-b flex items-center gap-2 ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-100'}`}>
                             <MessageSquare className="w-4 h-4 text-gray-400" />
                             <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Discussion</span>
                         </div>
@@ -390,8 +390,8 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-4 bg-white dark:bg-[#0A0A0A] border-t border-gray-200 dark:border-gray-800">
-                            <form onSubmit={handleCommentSubmit} className="relative rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
+                        <div className={`p-4 bg-white dark:bg-transparent border-t ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-200'}`}>
+                            <form onSubmit={handleCommentSubmit} className={`relative rounded-xl border shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all ${isDark ? 'border-[#2b2b40]' : 'border-gray-200'}`}>
                                 <textarea
                                     className="w-full bg-transparent p-3 pr-12 text-sm max-h-32 resize-none focus:outline-none dark:text-gray-200"
                                     placeholder="Type a message..."
