@@ -44,6 +44,7 @@ const ApprovalGalleryCard = ({ approval, isDark, onClick }) => {
                         src={primaryAsset.s3Url}
                         alt="Preview"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x300/e2e8f0/94a3b8?text=No+Image'; }}
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">

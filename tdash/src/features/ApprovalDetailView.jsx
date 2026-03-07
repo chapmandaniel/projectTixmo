@@ -234,7 +234,11 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                                 <div className="aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
                                     {primaryAsset ? (
                                         primaryAsset.mimeType?.startsWith('image/') ? (
-                                            <img src={primaryAsset.s3Url} className="w-full h-full object-cover" />
+                                            <img
+                                                src={primaryAsset.s3Url}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/e2e8f0/94a3b8?text=Image+Unavailable'; }}
+                                            />
                                         ) : (
                                             <div className="text-center p-4">
                                                 <FileText className="w-12 h-12 mx-auto text-gray-400 mb-2" />
@@ -275,6 +279,7 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
                                     src={primaryAsset.s3Url}
                                     alt="Asset Preview"
                                     className="max-w-full max-h-full object-contain rounded shadow-xl ring-1 ring-black/5 dark:ring-white/10"
+                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/800x800/e2e8f0/94a3b8?text=Image+Unavailable'; }}
                                 />
                             ) : (
                                 <div className="bg-white dark:bg-[#1A1A1A] p-12 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 text-center">
