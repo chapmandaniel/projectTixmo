@@ -129,70 +129,73 @@ const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate
     }[approval.content?.platform] || Instagram;
 
     return (
-        <div className={`flex flex-col h-full bg-[#FAFAFA] dark:bg-[#050505] text-gray-900 dark:text-gray-100`}>
+        <div className={`flex flex-col w-full h-[calc(100vh-64px)] overflow-hidden -m-6 sm:-m-8 px-4 sm:px-6 pt-6 pb-0 ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
 
-            {/* 1. Global Header */}
-            <header className={`flex items-center justify-between px-6 py-4 border-b bg-white dark:bg-[#0A0A0A] border-gray-200 dark:border-gray-800 shadow-sm z-10`}>
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={onBack}
-                        className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-xl font-bold tracking-tight">{approval.title}</h1>
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${STATUS_CONFIG[approval.status].color}`}>
-                                <StatusIcon className="w-3.5 h-3.5" />
-                                {STATUS_CONFIG[approval.status].label}
-                            </span>
+            {/* 1. Global Header Card */}
+            <div className="mb-6 shrink-0 relative z-10 w-full">
+                <div className={`flex items-center justify-between px-4 sm:px-5 py-3 rounded-md shadow-sm w-full ${isDark ? 'bg-[#1e1e2d] border border-[#2b2b40]/60' : 'bg-white border border-gray-200/60'}`}>
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={onBack}
+                            className={`p-2 shrink-0 rounded-md transition-colors ${isDark ? 'bg-[#1e1e2d] text-[#a1a5b7] hover:text-white hover:bg-[#232336]' : 'bg-white border border-gray-200/60 text-gray-500 hover:text-gray-900'} shadow-sm`}
+                            title="Back to Approvals"
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-xl font-bold tracking-tight">{approval.title}</h1>
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${STATUS_CONFIG[approval.status].color}`}>
+                                    <StatusIcon className="w-3.5 h-3.5" />
+                                    {STATUS_CONFIG[approval.status].label}
+                                </span>
+                            </div>
+                            <p className="text-sm text-gray-500 flex items-center gap-2 mt-0.5">
+                                <span className="font-medium text-gray-900 dark:text-gray-300">{approval.event?.name || 'General Project'}</span>
+                                <span>•</span>
+                                <span>v{assets.length} recently updated</span>
+                            </p>
                         </div>
-                        <p className="text-sm text-gray-500 flex items-center gap-2 mt-0.5">
-                            <span className="font-medium text-gray-900 dark:text-gray-300">{approval.event?.name || 'General Project'}</span>
-                            <span>•</span>
-                            <span>v{assets.length} recently updated</span>
-                        </p>
+                    </div>
+
+                    {/* Primary Actions Area */}
+                    <div className="flex items-center gap-3">
+                        {/* Only show upload if allowed (e.g. owner or changes requested) */}
+                        <label className="cursor-pointer px-4 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#252525] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-sm">
+                            <Paperclip className="w-4 h-4" />
+                            Upload New Version
+                            <input type="file" multiple className="hidden" onChange={handleFileUpload} />
+                        </label>
+
+                        {isMyReviewPending && (
+                            <>
+                                <button
+                                    onClick={() => handleReviewAction('CHANGES_REQUESTED')}
+                                    disabled={submitting}
+                                    className="px-4 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800 rounded-lg text-sm font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all flex items-center gap-2"
+                                >
+                                    <Edit3 className="w-4 h-4" />
+                                    Request Changes
+                                </button>
+                                <button
+                                    onClick={() => handleReviewAction('APPROVED')}
+                                    disabled={submitting}
+                                    className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2"
+                                >
+                                    <CheckCircle className="w-4 h-4" />
+                                    Approve
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
-
-                {/* Primary Actions Area */}
-                <div className="flex items-center gap-3">
-                    {/* Only show upload if allowed (e.g. owner or changes requested) */}
-                    <label className="cursor-pointer px-4 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#252525] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-sm">
-                        <Paperclip className="w-4 h-4" />
-                        Upload New Version
-                        <input type="file" multiple className="hidden" onChange={handleFileUpload} />
-                    </label>
-
-                    {isMyReviewPending && (
-                        <>
-                            <button
-                                onClick={() => handleReviewAction('CHANGES_REQUESTED')}
-                                disabled={submitting}
-                                className="px-4 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800 rounded-lg text-sm font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all flex items-center gap-2"
-                            >
-                                <Edit3 className="w-4 h-4" />
-                                Request Changes
-                            </button>
-                            <button
-                                onClick={() => handleReviewAction('APPROVED')}
-                                disabled={submitting}
-                                className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2"
-                            >
-                                <CheckCircle className="w-4 h-4" />
-                                Approve
-                            </button>
-                        </>
-                    )}
-                </div>
-            </header>
+            </div>
 
             {/* 2. Main Content Grid */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className={`flex-1 flex overflow-hidden rounded-t-lg border-t border-l border-r shadow-sm ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-200/60'}`}>
 
                 {/* LEFT: Asset Canvas (Dominant) */}
-                <div className="flex-1 flex flex-col bg-gray-100 dark:bg-[#0F0F0F] relative overflow-hidden">
+                <div className="flex-1 flex flex-col bg-gray-100/50 dark:bg-[#0A0A0A] relative overflow-hidden">
                     {/* Canvas Toolbar */}
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/90 dark:bg-[#222]/90 backdrop-blur shadow-sm border border-gray-200 dark:border-gray-700 p-1 rounded-full z-10 transition-all hover:shadow-md">
                         {assets.map((a, i) => (
