@@ -13,6 +13,7 @@ import {
     MoreHorizontal,
     FileText,
     MessageSquare,
+    ChevronLeft,
     ChevronRight,
 
     Users,
