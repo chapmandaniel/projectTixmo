@@ -1,9 +1,17 @@
 import request from 'supertest';
 import app from '../../src/app';
-import { cleanupTestData, prisma } from '../utils/testUtils';
+import {
+  cleanupTestData,
+  createEvent,
+  createOrganization,
+  createVenue,
+  prisma,
+  registerUser,
+} from '../utils/testUtils';
 
 describe('Tickets API', () => {
   let authToken: string;
+  let promoterToken: string;
   let userId: string;
   let secondUserId: string;
   let organizationId: string;
@@ -13,90 +21,73 @@ describe('Tickets API', () => {
   let ticketId: string;
 
   beforeAll(async () => {
-    // Clean up database in correct order (respecting foreign keys)
     await cleanupTestData();
 
-    // Create first test user with PROMOTER role
-    const registerRes = await request(app).post('/api/v1/auth/register').send({
+    const customerData = await registerUser(app, {
       email: 'tickets-test@example.com',
       password: 'Test123!',
       firstName: 'Tickets',
       lastName: 'Test',
+    });
+
+    authToken = customerData.accessToken;
+    userId = customerData.user.id;
+
+    const promoterData = await registerUser(app, {
+      email: 'tickets-promoter@example.com',
+      password: 'Test123!',
+      firstName: 'Tickets',
+      lastName: 'Promoter',
       role: 'PROMOTER',
     });
 
-    authToken = registerRes.body.data.accessToken;
-    userId = registerRes.body.data.user.id;
+    promoterToken = promoterData.accessToken;
 
-    // Create second user for transfer tests
-    const registerRes2 = await request(app).post('/api/v1/auth/register').send({
+    const recipientData = await registerUser(app, {
       email: 'tickets-recipient@example.com',
       password: 'Test123!',
       firstName: 'Recipient',
       lastName: 'User',
     });
 
-    secondUserId = registerRes2.body.data.user.id;
+    secondUserId = recipientData.user.id;
 
-    // Create organization
-    const orgRes = await request(app)
-      .post('/api/v1/organizations')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        name: 'Test Tickets Org',
-        slug: 'test-tickets-org',
-        type: 'PROMOTER',
-        contactEmail: 'org@example.com',
-      });
+    const org = await createOrganization(app, promoterToken, {
+      name: 'Test Tickets Org',
+      slug: 'test-tickets-org',
+      type: 'PROMOTER',
+    });
+    organizationId = org.id;
 
-    organizationId = orgRes.body.data.id;
+    const venue = await createVenue(app, promoterToken, {
+      organizationId,
+      name: 'Test Venue',
+      address: {
+        street: '123 Test St',
+        city: 'Test City',
+        state: 'TS',
+        country: 'USA',
+        postalCode: '12345',
+      },
+      capacity: 500,
+    });
 
-    // Create venue
-    const venueRes = await request(app)
-      .post('/api/v1/venues')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        organizationId,
-        name: 'Test Venue',
-        address: {
-          street: '123 Test St',
-          city: 'Test City',
-          state: 'TS',
-          country: 'USA',
-          postalCode: '12345',
-        },
-        capacity: 500,
-      });
-
-    if (!venueRes.body.data || !venueRes.body.data.id) {
-      throw new Error(`Failed to create venue: ${JSON.stringify(venueRes.body)}`);
-    }
-
-    // Create and publish event (starts in 1 hour to allow order creation)
-    const eventRes = await request(app)
-      .post('/api/v1/events')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        organizationId,
-        venueId: venueRes.body.data.id,
-        title: 'Test Event for Tickets',
-        description: 'Test event description',
-        startDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // Starts in 1 hour
-        endDateTime: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // Ends in 4 hours
-        status: 'DRAFT',
-        capacity: 1000,
-      });
-
-    eventId = eventRes.body.data.id;
-
-    await request(app)
-      .post(`/api/v1/events/${eventId}/publish`)
-      .set('Authorization', `Bearer ${authToken}`);
+    const event = await createEvent(app, promoterToken, {
+      organizationId,
+      venueId: venue.id,
+      title: 'Test Event for Tickets',
+      description: 'Test event description',
+      startDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      endDateTime: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+      status: 'PUBLISHED',
+      capacity: 1000,
+    });
+    eventId = event.id;
 
     // Create ticket type
     const ticketTypeRes = await request(app)
       .post('/api/v1/ticket-types')
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Authorization', `Bearer ${promoterToken}`)
       .send({
         eventId,
         name: 'General Admission',
@@ -123,7 +114,7 @@ describe('Tickets API', () => {
     // Confirm order to generate tickets
     await request(app)
       .post(`/api/v1/orders/${orderId}/confirm`)
-      .set('Authorization', `Bearer ${authToken}`)
+      .set('Authorization', `Bearer ${promoterToken}`)
       .send({
         paymentMethodId: 'pm_test_success',
       });
@@ -241,7 +232,7 @@ describe('Tickets API', () => {
       // Confirm order to generate tickets
       await request(app)
         .post(`/api/v1/orders/${orderRes.body.data.id}/confirm`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${promoterToken}`)
         .send({
           paymentMethodId: 'pm_test_success',
         });
@@ -263,7 +254,7 @@ describe('Tickets API', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.status).toBe('TRANSFERRED');
+      expect(res.body.data.status).toBe('VALID');
       expect(res.body.data.userId).toBe(secondUserId);
       expect(res.body.data.transferredFrom).toBe(userId);
     });
@@ -295,7 +286,10 @@ describe('Tickets API', () => {
     it('should fail to transfer cancelled ticket', async () => {
       await request(app)
         .post(`/api/v1/tickets/${transferTicketId}/cancel`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          paymentMethodId: 'pm_test_success',
+        });
 
       const res = await request(app)
         .post(`/api/v1/tickets/${transferTicketId}/transfer`)
@@ -344,7 +338,10 @@ describe('Tickets API', () => {
 
       await request(app)
         .post(`/api/v1/orders/${cancelOrderId}/confirm`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Authorization', `Bearer ${promoterToken}`)
+        .send({
+          paymentMethodId: 'pm_test_success',
+        });
 
       const orderDetails = await request(app)
         .get(`/api/v1/orders/${cancelOrderId}`)
@@ -394,50 +391,37 @@ describe('Tickets API', () => {
     let checkInBarcode: string;
 
     beforeAll(async () => {
-      // install fake clock but only fake Date (not setTimeout/clearTimeout) to avoid interfering with server internals
       clock = FakeTimers.install({ now: Date.now(), toFake: ['Date'] });
 
-      // create event that starts in 2 minutes
-      const venueRes = await request(app)
-        .post('/api/v1/venues')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          organizationId,
-          name: 'Time Test Venue',
-          address: {
-            street: '1 Time St',
-            city: 'Time City',
-            state: 'TS',
-            country: 'USA',
-            postalCode: '00000',
-          },
-          capacity: 100,
-        });
+      const venue = await createVenue(app, authToken, {
+        organizationId,
+        name: 'Time Test Venue',
+        address: {
+          street: '1 Time St',
+          city: 'Time City',
+          state: 'TS',
+          country: 'USA',
+          postalCode: '00000',
+        },
+        capacity: 100,
+      });
 
-      const eventRes = await request(app)
-        .post('/api/v1/events')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          organizationId,
-          venueId: venueRes.body.data.id,
-          title: 'Time Test Event',
-          description: 'Event for time-sensitive tests',
-          startDateTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(), // starts in 2 minutes
-          endDateTime: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
-          status: 'DRAFT',
-          capacity: 1000,
-        });
-
-      event2Id = eventRes.body.data.id;
-
-      await request(app)
-        .post(`/api/v1/events/${event2Id}/publish`)
-        .set('Authorization', `Bearer ${authToken}`);
+      const event = await createEvent(app, authToken, {
+        organizationId,
+        venueId: venue.id,
+        title: 'Time Test Event',
+        description: 'Event for time-sensitive tests',
+        startDateTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+        endDateTime: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+        status: 'PUBLISHED',
+        capacity: 1000,
+      });
+      event2Id = event.id;
 
       // create ticket type for this event
       const ttRes = await request(app)
         .post('/api/v1/ticket-types')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${promoterToken}`)
         .send({
           eventId: event2Id,
           name: 'Time GA',
@@ -456,7 +440,7 @@ describe('Tickets API', () => {
 
       await request(app)
         .post(`/api/v1/orders/${orderValRes.body.data.id}/confirm`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${promoterToken}`)
         .send({ paymentMethodId: 'pm_test_success' });
 
       const orderValDetails = await request(app)
@@ -472,7 +456,7 @@ describe('Tickets API', () => {
 
       await request(app)
         .post(`/api/v1/orders/${orderCheckRes.body.data.id}/confirm`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${promoterToken}`)
         .send({ paymentMethodId: 'pm_test_success' });
 
       const orderCheckDetails = await request(app)
@@ -499,7 +483,7 @@ describe('Tickets API', () => {
       it('should validate a valid ticket', async () => {
         const res = await request(app)
           .post('/api/v1/tickets/validate')
-          .set('Authorization', `Bearer ${authToken}`)
+          .set('Authorization', `Bearer ${promoterToken}`)
           .send({ barcode: validateBarcode });
 
         expect(res.status).toBe(200);
@@ -511,7 +495,7 @@ describe('Tickets API', () => {
       it('should fail for invalid barcode', async () => {
         const res = await request(app)
           .post('/api/v1/tickets/validate')
-          .set('Authorization', `Bearer ${authToken}`)
+          .set('Authorization', `Bearer ${promoterToken}`)
           .send({ barcode: 'INVALID-BARCODE' });
 
         expect(res.status).toBe(200);
@@ -532,7 +516,7 @@ describe('Tickets API', () => {
       it('should check in a valid ticket', async () => {
         const res = await request(app)
           .post('/api/v1/tickets/check-in')
-          .set('Authorization', `Bearer ${authToken}`)
+          .set('Authorization', `Bearer ${promoterToken}`)
           .send({ barcode: checkInBarcode });
 
         expect(res.status).toBe(200);
@@ -544,12 +528,12 @@ describe('Tickets API', () => {
       it('should fail to check in already used ticket', async () => {
         await request(app)
           .post('/api/v1/tickets/check-in')
-          .set('Authorization', `Bearer ${authToken}`)
+          .set('Authorization', `Bearer ${promoterToken}`)
           .send({ barcode: checkInBarcode });
 
         const res = await request(app)
           .post('/api/v1/tickets/check-in')
-          .set('Authorization', `Bearer ${authToken}`)
+          .set('Authorization', `Bearer ${promoterToken}`)
           .send({ barcode: checkInBarcode });
 
         expect(res.status).toBe(400);

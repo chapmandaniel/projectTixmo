@@ -1,6 +1,13 @@
 import request from 'supertest';
 import app from '../../src/app';
-import { cleanupTestData, prisma } from '../utils/testUtils';
+import {
+  cleanupTestData,
+  createEvent,
+  createOrganization,
+  createVenue,
+  prisma,
+  registerUser,
+} from '../utils/testUtils';
 
 describe('Orders API', () => {
   let authToken: string;
@@ -11,11 +18,9 @@ describe('Orders API', () => {
   let ticketTypeId: string;
 
   beforeAll(async () => {
-    // Clean up database in correct order (respecting foreign keys)
     await cleanupTestData();
 
-    // Create test user with PROMOTER role
-    const registerRes = await request(app).post('/api/v1/auth/register').send({
+    const userData = await registerUser(app, {
       email: 'orders-test@example.com',
       password: 'Test123!',
       firstName: 'Orders',
@@ -23,67 +28,42 @@ describe('Orders API', () => {
       role: 'PROMOTER',
     });
 
-    authToken = registerRes.body.data.accessToken;
-    userId = registerRes.body.data.user.id;
+    authToken = userData.accessToken;
+    userId = userData.user.id;
 
-    // Create organization
-    const orgRes = await request(app)
-      .post('/api/v1/organizations')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        name: 'Test Event Org',
-        slug: 'test-event-org',
-        type: 'PROMOTER',
-        contactEmail: 'org@example.com',
-      });
+    const org = await createOrganization(app, authToken, {
+      name: 'Test Event Org',
+      slug: 'test-event-org',
+      type: 'PROMOTER',
+    });
+    organizationId = org.id;
 
-    organizationId = orgRes.body.data.id;
+    const venue = await createVenue(app, authToken, {
+      organizationId,
+      name: 'Test Venue',
+      address: {
+        street: '123 Test St',
+        city: 'Test City',
+        state: 'TS',
+        country: 'USA',
+        postalCode: '12345',
+      },
+      capacity: 1000,
+    });
+    venueId = venue.id;
 
-    // Create venue
-    const venueRes = await request(app)
-      .post('/api/v1/venues')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        organizationId,
-        name: 'Test Venue',
-        address: {
-          street: '123 Test St',
-          city: 'Test City',
-          state: 'TS',
-          country: 'USA',
-          postalCode: '12345',
-        },
-        capacity: 1000,
-      });
+    const event = await createEvent(app, authToken, {
+      organizationId,
+      venueId,
+      title: 'Test Event',
+      description: 'Test event description',
+      startDateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      endDateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000).toISOString(),
+      status: 'PUBLISHED',
+      capacity: 1000,
+    });
+    eventId = event.id;
 
-    if (!venueRes.body.data || !venueRes.body.data.id) {
-      throw new Error(`Failed to create venue: ${JSON.stringify(venueRes.body)}`);
-    }
-    venueId = venueRes.body.data.id;
-
-    // Create event
-    const eventRes = await request(app)
-      .post('/api/v1/events')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        organizationId,
-        venueId,
-        title: 'Test Event',
-        description: 'Test event description',
-        startDateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        endDateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000).toISOString(),
-        status: 'DRAFT',
-        capacity: 1000,
-      });
-
-    eventId = eventRes.body.data.id;
-
-    // Publish event
-    await request(app)
-      .post(`/api/v1/events/${eventId}/publish`)
-      .set('Authorization', `Bearer ${authToken}`);
-
-    // Create ticket type
     const ticketTypeRes = await request(app)
       .post('/api/v1/ticket-types')
       .set('Authorization', `Bearer ${authToken}`)

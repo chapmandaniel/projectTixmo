@@ -8,14 +8,14 @@ jest.mock('../../src/config/redis', () => ({
 
 describe('RedisLockService', () => {
     let mockSet: jest.Mock;
-    let mockDel: jest.Mock;
+    let mockEval: jest.Mock;
 
     beforeEach(() => {
         mockSet = jest.fn();
-        mockDel = jest.fn();
+        mockEval = jest.fn();
         (getRedisClient as jest.Mock).mockReturnValue({
             set: mockSet,
-            del: mockDel,
+            eval: mockEval,
         });
     });
 
@@ -29,8 +29,12 @@ describe('RedisLockService', () => {
 
             const result = await redisLockService.acquireLock('test-key', 5000);
 
-            expect(result).toBe(true);
-            expect(mockSet).toHaveBeenCalledWith('test-key', 'locked', { PX: 5000, NX: true });
+            expect(typeof result).toBe('string');
+            expect(mockSet).toHaveBeenCalledWith(
+                'test-key',
+                expect.any(String),
+                { PX: 5000, NX: true }
+            );
         });
 
         it('should return false when lock is already held', async () => {
@@ -38,8 +42,12 @@ describe('RedisLockService', () => {
 
             const result = await redisLockService.acquireLock('test-key', 5000);
 
-            expect(result).toBe(false);
-            expect(mockSet).toHaveBeenCalledWith('test-key', 'locked', { PX: 5000, NX: true });
+            expect(result).toBeNull();
+            expect(mockSet).toHaveBeenCalledWith(
+                'test-key',
+                expect.any(String),
+                { PX: 5000, NX: true }
+            );
         });
 
         it('should return false if redis throws an error', async () => {
@@ -47,24 +55,30 @@ describe('RedisLockService', () => {
 
             const result = await redisLockService.acquireLock('test-key', 5000);
 
-            expect(result).toBe(false);
+            expect(result).toBeNull();
         });
     });
 
     describe('releaseLock', () => {
         it('should release the lock', async () => {
-            mockDel.mockResolvedValue(1);
+            mockEval.mockResolvedValue(1);
 
-            await redisLockService.releaseLock('test-key');
+            const result = await redisLockService.releaseLock('test-key', 'lock-token');
 
-            expect(mockDel).toHaveBeenCalledWith('test-key');
+            expect(result).toBe(true);
+            expect(mockEval).toHaveBeenCalledWith(
+                expect.any(String),
+                {
+                    keys: ['test-key'],
+                    arguments: ['lock-token'],
+                }
+            );
         });
 
         it('should handle errors gracefully during release', async () => {
-            mockDel.mockRejectedValue(new Error('Redis error'));
+            mockEval.mockRejectedValue(new Error('Redis error'));
 
-            // Should not throw
-            await expect(redisLockService.releaseLock('test-key')).resolves.not.toThrow();
+            await expect(redisLockService.releaseLock('test-key', 'lock-token')).resolves.toBe(false);
         });
     });
 });

@@ -29,7 +29,7 @@ export const authorizeOrg = (source: Source, field: string) => {
                 return next();
             }
 
-            const userOrgId = (req.user as any).organizationId;
+            const userOrgId = req.user.organizationId;
             if (!userOrgId) {
                 throw ApiError.forbidden('User is not associated with an organization');
             }

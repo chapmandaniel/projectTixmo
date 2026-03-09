@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import DashboardHome from '../features/DashboardHome';
 import api from '../lib/api';
@@ -47,12 +48,14 @@ describe('Notification Resilience', () => {
 
         await act(async () => {
             render(
-                <DashboardLayout
-                    activeView="dashboard"
-                    user={{ firstName: 'Test' }}
-                >
-                    <div>Dashboard Content</div>
-                </DashboardLayout>
+                <MemoryRouter>
+                    <DashboardLayout
+                        activeView="dashboard"
+                        user={{ firstName: 'Test' }}
+                    >
+                        <div>Dashboard Content</div>
+                    </DashboardLayout>
+                </MemoryRouter>
             );
         });
 
@@ -71,7 +74,11 @@ describe('Notification Resilience', () => {
         });
 
         await act(async () => {
-            render(<DashboardHome isDark={false} user={{ firstName: 'Test' }} />);
+            render(
+                <MemoryRouter>
+                    <DashboardHome isDark={false} user={{ firstName: 'Test' }} />
+                </MemoryRouter>
+            );
         });
 
         // If it renders without throwing, the fix is working
@@ -88,7 +95,11 @@ describe('Notification Resilience', () => {
         });
 
         await act(async () => {
-            render(<DashboardHome isDark={false} user={{ firstName: 'Test' }} />);
+            render(
+                <MemoryRouter>
+                    <DashboardHome isDark={false} user={{ firstName: 'Test' }} />
+                </MemoryRouter>
+            );
         });
 
         expect(screen.getByText(/Test/)).toBeInTheDocument();

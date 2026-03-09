@@ -53,23 +53,58 @@ axiosInstance.interceptors.response.use(
 // Default export for backward compatibility
 export default axiosInstance;
 
+const normalizeResponse = (body) => {
+    if (!body || typeof body !== 'object') {
+        return body;
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(body, 'data')) {
+        return body;
+    }
+
+    const payload = body.data;
+
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        return {
+            ...payload,
+            data: payload,
+            success: body.success,
+            message: body.message,
+            meta: body.meta,
+            raw: body,
+        };
+    }
+
+    return {
+        data: payload,
+        success: body.success,
+        message: body.message,
+        meta: body.meta,
+        raw: body,
+    };
+};
+
 // Helper wrapper for cleaner API calls with automatic data extraction
 export const api = {
     get: async (url) => {
         const response = await axiosInstance.get(url);
-        return response.data;
+        return normalizeResponse(response.data);
     },
     post: async (url, data) => {
         const response = await axiosInstance.post(url, data);
-        return response.data;
+        return normalizeResponse(response.data);
     },
     put: async (url, data) => {
         const response = await axiosInstance.put(url, data);
-        return response.data;
+        return normalizeResponse(response.data);
+    },
+    patch: async (url, data) => {
+        const response = await axiosInstance.patch(url, data);
+        return normalizeResponse(response.data);
     },
     delete: async (url) => {
         const response = await axiosInstance.delete(url);
-        return response.data;
+        return normalizeResponse(response.data);
     },
     upload: async (url, formData) => {
         const response = await axiosInstance.post(url, formData, {
@@ -77,6 +112,6 @@ export const api = {
                 'Content-Type': null, // Unset default to allow browser to set multipart/form-data with boundary
             },
         });
-        return response.data;
+        return normalizeResponse(response.data);
     },
 };

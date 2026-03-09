@@ -14,7 +14,6 @@ jest.mock('../../src/config/prisma', () => ({
     scanLog: {
       count: jest.fn(),
       findFirst: jest.fn(),
-      groupBy: jest.fn(),
     },
   },
 }));
@@ -27,7 +26,7 @@ describe('EventStatsService', () => {
   });
 
   describe('getEventStats', () => {
-    it('should return event stats using optimized groupBy query', async () => {
+    it('should return event stats using targeted count queries', async () => {
       // Mock event
       (prisma.event.findUnique as jest.Mock).mockResolvedValue({ name: 'Test Event' });
 
@@ -39,17 +38,12 @@ describe('EventStatsService', () => {
         .mockResolvedValueOnce(30)  // valid
         .mockResolvedValueOnce(20); // cancelled
 
-      // Mock scan log groupBy
-      // We want to simulate:
-      // - ENTRY, success: 50
-      // - EXIT, success: 10
-      // - ENTRY, failed: 5
-      // Total: 65, Success: 60, Entry: 50 (success), Exit: 10 (success)
-      (prisma.scanLog.groupBy as jest.Mock).mockResolvedValue([
-        { scanType: 'ENTRY', success: true, _count: { _all: 50 } },
-        { scanType: 'EXIT', success: true, _count: { _all: 10 } },
-        { scanType: 'ENTRY', success: false, _count: { _all: 5 } },
-      ]);
+      // Mock scan log counts
+      (prisma.scanLog.count as jest.Mock)
+        .mockResolvedValueOnce(50) // entry scans
+        .mockResolvedValueOnce(10) // exit scans
+        .mockResolvedValueOnce(60) // successful scans
+        .mockResolvedValueOnce(65); // total scans
 
       // Mock last scan
       const now = new Date();
@@ -65,18 +59,19 @@ describe('EventStatsService', () => {
       // Verify ticket counts called (5 times)
       expect(prisma.ticket.count).toHaveBeenCalledTimes(5);
 
-      // Verify scan log groupBy called (1 time)
-      expect(prisma.scanLog.groupBy).toHaveBeenCalledTimes(1);
-      expect(prisma.scanLog.groupBy).toHaveBeenCalledWith({
-        by: ['scanType', 'success'],
-        where: { eventId: mockEventId },
-        _count: {
-          _all: true,
-        },
+      expect(prisma.scanLog.count).toHaveBeenCalledTimes(4);
+      expect(prisma.scanLog.count).toHaveBeenNthCalledWith(1, {
+        where: { eventId: mockEventId, scanType: 'ENTRY', success: true },
       });
-
-      // Verify scan log count NOT called
-      expect(prisma.scanLog.count).not.toHaveBeenCalled();
+      expect(prisma.scanLog.count).toHaveBeenNthCalledWith(2, {
+        where: { eventId: mockEventId, scanType: 'EXIT', success: true },
+      });
+      expect(prisma.scanLog.count).toHaveBeenNthCalledWith(3, {
+        where: { eventId: mockEventId, success: true },
+      });
+      expect(prisma.scanLog.count).toHaveBeenNthCalledWith(4, {
+        where: { eventId: mockEventId },
+      });
 
       // Verify scan log findFirst called (1 time)
       expect(prisma.scanLog.findFirst).toHaveBeenCalledTimes(1);

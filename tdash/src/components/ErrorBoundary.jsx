@@ -1,6 +1,16 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
+const SESSION_STORAGE_KEYS = [
+    'access_token',
+    'refresh_token',
+    'user',
+    'tixmo_dashboard_favorites',
+    'tixmo_dashboard_hidden',
+    'tixmo_personal_todos',
+    'tixmo_dev_settings',
+];
+
 class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
@@ -43,7 +53,7 @@ class ErrorBoundary extends React.Component {
 
                             <button
                                 onClick={() => {
-                                    localStorage.clear();
+                                    SESSION_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
                                     window.location.href = '/';
                                 }}
                                 className={`w-full py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'}`}
@@ -53,7 +63,7 @@ class ErrorBoundary extends React.Component {
                             </button>
                         </div>
 
-                        {process.env.NODE_ENV === 'development' && (
+                        {import.meta.env.DEV && (
                             <div className="mt-8 text-left">
                                 <p className="text-xs font-mono text-gray-500 mb-2 uppercase tracking-wider">Error Details:</p>
                                 <div className={`p-3 rounded-lg text-xs font-mono overflow-auto max-h-32 text-left ${isDark ? 'bg-black/50 text-rose-400' : 'bg-rose-50 text-rose-600'}`}>
