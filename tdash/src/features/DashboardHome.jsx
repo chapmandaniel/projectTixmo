@@ -66,9 +66,9 @@ const DashboardHome = ({ isDark, user, onNavigate }) => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const approvalRes = await api.get('/approvals?status=PENDING').catch(() => null);
+                const approvalRes = await api.get('/approvals?status=PENDING_REVIEW').catch(() => null);
                 if (approvalRes) {
-                    const approvals = approvalRes.data?.approvals || [];
+                    const approvals = approvalRes.approvals || approvalRes.data?.approvals || [];
                     setPendingApprovalsCount(approvals.length);
                 }
             } catch (error) {

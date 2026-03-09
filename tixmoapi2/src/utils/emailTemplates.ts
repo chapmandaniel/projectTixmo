@@ -330,19 +330,12 @@ export function approvalRequestEmail(data: {
   title: string;
   eventName: string;
   description?: string;
-  priority: 'STANDARD' | 'URGENT' | 'CRITICAL';
-  dueDate?: string;
+  deadline: string;
+  revisionNumber: number;
   reviewUrl: string;
 }): EmailTemplate {
-  const priorityColors = {
-    STANDARD: '#6B7280',
-    URGENT: '#F59E0B',
-    CRITICAL: '#EF4444',
-  };
-  const priorityColor = priorityColors[data.priority] || priorityColors.STANDARD;
-
   return {
-    subject: `${data.priority === 'CRITICAL' ? '🔴 ' : data.priority === 'URGENT' ? '🟡 ' : ''}Review Requested: ${data.title}`,
+    subject: `Review requested: ${data.title}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -353,7 +346,7 @@ export function approvalRequestEmail(data: {
             .header { background-color: #4F46E5; color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
             .content { padding: 25px; background-color: white; }
             .details { background-color: #f9fafb; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #4F46E5; }
-            .priority-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; background-color: ${priorityColor}; }
+            .priority-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; background-color: #4F46E5; }
             .button { display: inline-block; padding: 14px 28px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: bold; }
             .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
           </style>
@@ -372,8 +365,8 @@ export function approvalRequestEmail(data: {
                 <p style="margin: 0 0 10px 0;">Event: ${data.eventName}</p>
                 ${data.description ? `<p style="margin: 0 0 10px 0;">${data.description}</p>` : ''}
                 <p style="margin: 0;">
-                  <span class="priority-badge">${data.priority}</span>
-                  ${data.dueDate ? `<span style="margin-left: 10px;">Due: ${data.dueDate}</span>` : ''}
+                  <span class="priority-badge">Revision ${data.revisionNumber}</span>
+                  <span style="margin-left: 10px;">Deadline: ${data.deadline}</span>
                 </p>
               </div>
               
@@ -399,8 +392,8 @@ export function approvalRequestEmail(data: {
       Title: ${data.title}
       Event: ${data.eventName}
       ${data.description ? `Description: ${data.description}` : ''}
-      Priority: ${data.priority}
-      ${data.dueDate ? `Due Date: ${data.dueDate}` : ''}
+      Revision: ${data.revisionNumber}
+      Deadline: ${data.deadline}
       
       Review here: ${data.reviewUrl}
       
@@ -417,7 +410,8 @@ export function approvalReminderEmail(data: {
   requesterName: string;
   title: string;
   eventName: string;
-  dueDate?: string;
+  deadline: string;
+  revisionNumber: number;
   reviewUrl: string;
 }): EmailTemplate {
   return {
@@ -444,7 +438,8 @@ export function approvalReminderEmail(data: {
               <p>Hi ${data.reviewerName},</p>
               <p>This is a friendly reminder that your review is still pending for:</p>
               <p><strong>${data.title}</strong> (${data.eventName})</p>
-              ${data.dueDate ? `<p>Due Date: <strong>${data.dueDate}</strong></p>` : ''}
+              <p>Revision: <strong>${data.revisionNumber}</strong></p>
+              <p>Deadline: <strong>${data.deadline}</strong></p>
               <p>${data.requesterName} is waiting for your feedback.</p>
               <a href="${data.reviewUrl}" class="button">Complete Review →</a>
             </div>
@@ -462,7 +457,8 @@ export function approvalReminderEmail(data: {
       
       This is a reminder that your review is pending for:
       ${data.title} (${data.eventName})
-      ${data.dueDate ? `Due Date: ${data.dueDate}` : ''}
+      Revision: ${data.revisionNumber}
+      Deadline: ${data.deadline}
       
       ${data.requesterName} is waiting for your feedback.
       
@@ -479,13 +475,14 @@ export function approvalDecisionEmail(data: {
   reviewerName: string;
   title: string;
   eventName: string;
-  decision: 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED';
+  revisionNumber: number;
+  decision: 'APPROVED' | 'DECLINED' | 'CHANGES_REQUESTED';
   note?: string;
   dashboardUrl: string;
 }): EmailTemplate {
   const decisionConfig = {
     APPROVED: { label: 'Approved ✅', color: '#10B981', headerBg: '#10B981' },
-    REJECTED: { label: 'Rejected ❌', color: '#EF4444', headerBg: '#EF4444' },
+    DECLINED: { label: 'Declined ❌', color: '#EF4444', headerBg: '#EF4444' },
     CHANGES_REQUESTED: { label: 'Changes Requested ✏️', color: '#F59E0B', headerBg: '#F59E0B' },
   };
   const config = decisionConfig[data.decision];
@@ -516,6 +513,7 @@ export function approvalDecisionEmail(data: {
               <p>Hi ${data.requesterName},</p>
               <p><strong>${data.reviewerName}</strong> has reviewed:</p>
               <p><strong>${data.title}</strong> (${data.eventName})</p>
+              <p>Revision ${data.revisionNumber}</p>
               <p class="decision">${config.label}</p>
               ${data.note ? `<div class="note"><strong>Note:</strong><br/>${data.note}</div>` : ''}
               <a href="${data.dashboardUrl}" class="button">View Details →</a>
@@ -534,6 +532,7 @@ export function approvalDecisionEmail(data: {
       
       ${data.reviewerName} has reviewed:
       ${data.title} (${data.eventName})
+      Revision: ${data.revisionNumber}
       
       Decision: ${config.label}
       ${data.note ? `Note: ${data.note}` : ''}
@@ -551,11 +550,13 @@ export function approvalRevisionEmail(data: {
   requesterName: string;
   title: string;
   eventName: string;
-  version: number;
+  deadline: string;
+  revisionNumber: number;
+  summary?: string;
   reviewUrl: string;
 }): EmailTemplate {
   return {
-    subject: `🔄 Revision Available: ${data.title} (v${data.version})`,
+    subject: `🔄 Revision available: ${data.title} (v${data.revisionNumber})`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -579,7 +580,9 @@ export function approvalRevisionEmail(data: {
               <p>Hi ${data.reviewerName},</p>
               <p><strong>${data.requesterName}</strong> has submitted a revision for your review:</p>
               <p><strong>${data.title}</strong> (${data.eventName})</p>
-              <p><span class="version-badge">Version ${data.version}</span></p>
+              <p><span class="version-badge">Version ${data.revisionNumber}</span></p>
+              ${data.summary ? `<p>${data.summary}</p>` : ''}
+              <p>Deadline: ${data.deadline}</p>
               <p>Please review the updated assets and provide your feedback.</p>
               <a href="${data.reviewUrl}" class="button">Review Revision →</a>
             </div>
@@ -597,12 +600,71 @@ export function approvalRevisionEmail(data: {
       
       ${data.requesterName} has submitted a revision for your review:
       ${data.title} (${data.eventName})
-      Version: ${data.version}
+      Version: ${data.revisionNumber}
+      ${data.summary ? `Summary: ${data.summary}` : ''}
+      Deadline: ${data.deadline}
       
       Please review the updated assets.
       
       Review here: ${data.reviewUrl}
       
+      TixMo - Creative Approvals
+    `,
+  };
+}
+
+export function approvalCommentEmail(data: {
+  title: string;
+  eventName: string;
+  revisionNumber: number;
+  authorName: string;
+  comment: string;
+  dashboardUrl: string;
+}): EmailTemplate {
+  return {
+    subject: `New approval comment: ${data.title}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f5f5f5; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #2563EB; color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { padding: 25px; background-color: white; }
+            .note { background-color: #f9fafb; padding: 15px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #2563EB; }
+            .button { display: inline-block; padding: 14px 28px; background-color: #2563EB; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; font-weight: bold; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>New Comment</h1>
+            </div>
+            <div class="content">
+              <p><strong>${data.authorName}</strong> commented on <strong>${data.title}</strong> (${data.eventName})</p>
+              <p>Revision ${data.revisionNumber}</p>
+              <div class="note">${data.comment}</div>
+              <a href="${data.dashboardUrl}" class="button">Open Approval →</a>
+            </div>
+            <div class="footer">
+              <p>TixMo - Creative Approvals</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `
+      New approval comment
+
+      ${data.authorName} commented on ${data.title} (${data.eventName})
+      Revision: ${data.revisionNumber}
+
+      ${data.comment}
+
+      View details: ${data.dashboardUrl}
+
       TixMo - Creative Approvals
     `,
   };

@@ -1,419 +1,506 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+    Calendar,
+    Filter,
+    FolderKanban,
     Plus,
     Search,
-    Filter,
-    Calendar,
-    LayoutGrid,
-    List as ListIcon,
-    Inbox,
-    Clock,
-    CheckCircle,
-    Edit3,
-    XCircle,
-    Eye,
-    ChevronDown,
-    Paperclip,
-    FolderGit2,
-    Settings,
-    MoreVertical
+    UserCheck,
+    X,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import ApprovalGalleryCard from './ApprovalGalleryCard';
-import ApprovalStudio from './ApprovalStudio';
-import ApprovalDetailView from './ApprovalDetailView';
 import { api } from '../lib/api';
+import ApprovalDetailView from './ApprovalDetailView';
+import {
+    APPROVAL_STATUS_META,
+    APPROVAL_STATUS_OPTIONS,
+    formatApprovalDate,
+} from './approvalConstants';
 
-const STATUS_ICONS = {
-    DRAFT: Clock,
-    PENDING: Eye,
-    CHANGES_REQUESTED: Edit3,
-    APPROVED: CheckCircle,
-    REJECTED: XCircle
+const emptyForm = {
+    title: '',
+    eventId: '',
+    deadline: '',
+    description: '',
+    reviewers: [],
 };
 
-const ApprovalsDashboard = ({ isDark, user }) => {
-    const [statusFilter, setStatusFilter] = useState('PENDING'); // Default to PENDING
-    const [viewMode, setViewMode] = useState('grid');
-    const [approvals, setApprovals] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [eventFilter, setEventFilter] = useState('');
-    const [typeFilter, setTypeFilter] = useState('ALL'); // ALL, MEDIA, SOCIAL
-    const [events, setEvents] = useState([]);
-    const [showStudio, setShowStudio] = useState(false);
-    const [selectedApproval, setSelectedApproval] = useState(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+const CreateApprovalModal = ({ events, onClose, onCreated }) => {
+    const [form, setForm] = useState(emptyForm);
+    const [reviewerInput, setReviewerInput] = useState('');
+    const [files, setFiles] = useState([]);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
-    // Derived state
-    const [displayApprovals, setDisplayApprovals] = useState([]);
-
-    // Initial Data Fetch
-    useEffect(() => {
-        fetchInitialData();
-    }, []);
-
-    // Re-fetch approvals when event filter changes
-    useEffect(() => {
-        fetchApprovals();
-    }, [eventFilter]);
-
-    // Local Filtering & Tab Logic
-    useEffect(() => {
-        if (approvals.length > 0 || !loading) {
-            processApprovals();
+    const addReviewer = () => {
+        const email = reviewerInput.trim().toLowerCase();
+        if (!email || form.reviewers.some((reviewer) => reviewer.email === email)) {
+            return;
         }
-    }, [approvals, statusFilter, typeFilter, searchQuery, user]);
 
-    const fetchInitialData = async () => {
-        setLoading(true);
+        setForm((current) => ({
+            ...current,
+            reviewers: [...current.reviewers, { email }],
+        }));
+        setReviewerInput('');
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        if (!form.title || !form.eventId || !form.deadline || !files.length || !form.reviewers.length) {
+            setError('Event, title, deadline, at least one file, and at least one reviewer are required.');
+            return;
+        }
+
         try {
-            const [eventsRes] = await Promise.all([
-                api.get('/events')
-            ]);
-            setEvents(eventsRes.data?.events || eventsRes.events || []);
-        } catch (err) {
-            console.error('Failed to fetch initial data:', err);
-            setLoading(false);
+            setSubmitting(true);
+            setError('');
+
+            const payload = new FormData();
+            payload.append('title', form.title);
+            payload.append('eventId', form.eventId);
+            payload.append('deadline', new Date(form.deadline).toISOString());
+            if (form.description) {
+                payload.append('description', form.description);
+            }
+            payload.append('reviewers', JSON.stringify(form.reviewers));
+            files.forEach((file) => payload.append('files', file));
+
+            const approval = await api.upload('/approvals', payload);
+            onCreated(approval);
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to create approval request.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    const fetchApprovals = async () => {
-        setLoading(true);
+    return (
+        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="mx-auto max-w-3xl rounded-3xl border border-white/10 bg-[#10161e] text-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+                    <div>
+                        <h2 className="text-xl font-semibold">Submit Creative Approval</h2>
+                        <p className="text-sm text-slate-400">Create the initial submission with files, deadline, and reviewers.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-full border border-white/10 p-2 text-slate-400 transition hover:text-white"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <form className="space-y-6 px-6 py-6" onSubmit={handleSubmit}>
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <label className="space-y-2">
+                            <span className="text-sm text-slate-300">Event</span>
+                            <select
+                                value={form.eventId}
+                                onChange={(e) => setForm((current) => ({ ...current, eventId: e.target.value }))}
+                                className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                            >
+                                <option value="">Select an event</option>
+                                {events.map((event) => (
+                                    <option key={event.id} value={event.id}>
+                                        {event.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        <label className="space-y-2">
+                            <span className="text-sm text-slate-300">Deadline</span>
+                            <input
+                                type="datetime-local"
+                                value={form.deadline}
+                                onChange={(e) => setForm((current) => ({ ...current, deadline: e.target.value }))}
+                                className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                            />
+                        </label>
+                    </div>
+
+                    <label className="space-y-2">
+                        <span className="text-sm text-slate-300">Asset title</span>
+                        <input
+                            type="text"
+                            value={form.title}
+                            onChange={(e) => setForm((current) => ({ ...current, title: e.target.value }))}
+                            placeholder="Festival poster, VIP reel, stage motion graphic..."
+                            className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                        />
+                    </label>
+
+                    <label className="space-y-2">
+                        <span className="text-sm text-slate-300">Description</span>
+                        <textarea
+                            rows={4}
+                            value={form.description}
+                            onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))}
+                            placeholder="Context for reviewers, distribution notes, or what changed."
+                            className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                        />
+                    </label>
+
+                    <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+                        <div className="space-y-3">
+                            <span className="text-sm text-slate-300">Reviewers</span>
+                            <div className="flex gap-2">
+                                <input
+                                    type="email"
+                                    value={reviewerInput}
+                                    onChange={(e) => setReviewerInput(e.target.value)}
+                                    placeholder="reviewer@example.com"
+                                    className="flex-1 rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={addReviewer}
+                                    className="rounded-2xl border border-sky-400/40 bg-sky-500/10 px-4 py-3 text-sm font-medium text-sky-200 transition hover:bg-sky-500/20"
+                                >
+                                    Add
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {form.reviewers.map((reviewer) => (
+                                    <button
+                                        key={reviewer.email}
+                                        type="button"
+                                        onClick={() =>
+                                            setForm((current) => ({
+                                                ...current,
+                                                reviewers: current.reviewers.filter((item) => item.email !== reviewer.email),
+                                            }))
+                                        }
+                                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-200"
+                                    >
+                                        {reviewer.email}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <label className="space-y-2">
+                            <span className="text-sm text-slate-300">Asset files</span>
+                            <input
+                                type="file"
+                                multiple
+                                onChange={(e) => setFiles(Array.from(e.target.files || []))}
+                                className="block w-full rounded-2xl border border-dashed border-white/15 bg-[#0b1118] px-4 py-6 text-sm text-slate-300"
+                            />
+                            <p className="text-xs text-slate-500">{files.length ? `${files.length} file(s) selected` : 'Images, PDFs, and videos are supported.'}</p>
+                        </label>
+                    </div>
+
+                    {error && (
+                        <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-2xl border border-white/10 px-5 py-3 text-sm text-slate-300 transition hover:text-white"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {submitting ? 'Submitting…' : 'Create approval'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+const ApprovalsDashboard = ({ user }) => {
+    const [approvals, setApprovals] = useState([]);
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [statusFilter, setStatusFilter] = useState('PENDING_REVIEW');
+    const [eventFilter, setEventFilter] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [assignedToMe, setAssignedToMe] = useState(false);
+    const [approachingDeadline, setApproachingDeadline] = useState(false);
+    const [sortBy, setSortBy] = useState('deadline');
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [selectedApproval, setSelectedApproval] = useState(null);
+
+    const loadApprovals = async () => {
         try {
-            const query = eventFilter ? `?eventId=${eventFilter}` : '';
-            const res = await api.get(`/approvals${query}`);
-            setApprovals(res.approvals || []);
-        } catch (err) {
-            console.error('Failed to fetch approvals:', err);
+            setLoading(true);
+            setError('');
+            const params = new URLSearchParams();
+            if (statusFilter) {
+                params.set('status', statusFilter);
+            }
+            if (eventFilter) {
+                params.set('eventId', eventFilter);
+            }
+            if (assignedToMe) {
+                params.set('assignedToMe', 'true');
+            }
+            if (approachingDeadline) {
+                params.set('approachingDeadline', 'true');
+            }
+            params.set('sortBy', sortBy);
+
+            const response = await api.get(`/approvals?${params.toString()}`);
+            setApprovals(response.approvals || []);
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to load approvals.');
         } finally {
             setLoading(false);
         }
     };
 
-    const processApprovals = () => {
-        let filtered = approvals.filter(item =>
-            (item.title || '').toLowerCase().includes(searchQuery.toLowerCase())
-        );
-
-        // Status Filtering
-        if (statusFilter !== 'ALL') {
-            filtered = filtered.filter(item => item.status === statusFilter);
-        }
-
-        // Type Filtering
-        if (typeFilter !== 'ALL') {
-            filtered = filtered.filter(item => item.type === typeFilter);
-        }
-
-        setDisplayApprovals(filtered);
-    };
-
-    const handleApprovalCreated = (newApproval) => {
-        setApprovals([newApproval, ...approvals]);
-        // Switch to the status of the new item (usually DRAFT)
-        setStatusFilter('DRAFT');
-    };
-
-    const handleStudioSuccess = () => {
-        fetchApprovals(); // Refresh list to get new item
-        setShowStudio(false);
-    };
-
-    const handleApprovalUpdated = (updated) => {
-        setApprovals(prev => prev.map(a => a.id === updated.id ? updated : a));
-        if (selectedApproval?.id === updated.id) {
-            setSelectedApproval(updated);
+    const loadEvents = async () => {
+        try {
+            const response = await api.get('/events?limit=100');
+            setEvents(response.events || response.data?.events || []);
+        } catch {
+            setEvents([]);
         }
     };
 
-    const handleApprovalDeleted = (id) => {
-        setApprovals(prev => prev.filter(a => a.id !== id));
-        setSelectedApproval(null);
-    };
+    useEffect(() => {
+        loadEvents();
+    }, []);
 
-    // Full Screen Control Center View
+    useEffect(() => {
+        loadApprovals();
+    }, [statusFilter, eventFilter, assignedToMe, approachingDeadline, sortBy]);
+
     if (selectedApproval) {
         return (
-            <div className={`h-screen flex flex-col ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
-                <ApprovalDetailView
-                    approval={selectedApproval}
-                    isDark={isDark}
-                    user={user}
-                    isDrawer={false}
-                    onBack={() => setSelectedApproval(null)}
-                    onUpdate={handleApprovalUpdated}
-                    onDelete={handleApprovalDeleted}
-                />
-            </div>
+            <ApprovalDetailView
+                approvalId={selectedApproval.id}
+                initialApproval={selectedApproval}
+                user={user}
+                onBack={() => {
+                    setSelectedApproval(null);
+                    loadApprovals();
+                }}
+                onUpdated={(approval) => {
+                    setSelectedApproval(approval);
+                    setApprovals((current) => current.map((item) => (item.id === approval.id ? approval : item)));
+                }}
+            />
         );
     }
 
+    const visibleApprovals = approvals.filter((approval) => {
+        const haystack = `${approval.title} ${approval.event?.name || ''}`.toLowerCase();
+        return haystack.includes(searchQuery.toLowerCase());
+    });
+
     return (
-        <div className={`flex flex-col w-full h-[calc(100vh-64px)] overflow-hidden -m-6 sm:-m-8 px-4 sm:px-6 pt-6 pb-0 ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
+        <div className="min-h-[calc(100vh-64px)] bg-[#081018] text-white -m-6 px-4 py-6 sm:-m-8 sm:px-6 lg:px-8">
+            {showCreateModal && (
+                <CreateApprovalModal
+                    events={events}
+                    onClose={() => setShowCreateModal(false)}
+                    onCreated={(approval) => {
+                        setShowCreateModal(false);
+                        setSelectedApproval(approval);
+                        setApprovals((current) => [approval, ...current]);
+                    }}
+                />
+            )}
 
-            {/* Unified Top Header Bar/Card */}
-            <div className="mb-6 shrink-0 relative z-10 w-full">
-                <div className={`flex items-center justify-between px-4 sm:px-5 py-3 rounded-md shadow-sm w-full ${isDark ? 'bg-[#1e1e2d] border border-[#2b2b40]/60' : 'bg-white border border-gray-200/60'}`}>
-
-                    {/* Left Title */}
-                    <div className="flex flex-1 items-center space-x-4 overflow-hidden mr-4">
-                        <div className={`p-2 rounded-md shrink-0 transition-colors ${isDark ? 'bg-[#232336] text-[#a1a5b7]' : 'bg-indigo-50 text-indigo-500'} shadow-sm`}>
-                            <FolderGit2 size={20} />
-                        </div>
-                        <div className="flex flex-col overflow-hidden">
-                            <h2 className={`text-xl sm:text-2xl tracking-tight truncate font-normal ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                Client Approvals
-                            </h2>
-                            <div className={`flex items-center space-x-3 text-[11px] sm:text-xs tracking-wide mt-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'} overflow-hidden`}>
-                                <span className="truncate">Manage and review creative assets</span>
+            <div className="mx-auto max-w-7xl space-y-6">
+                <section className="rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_35%),linear-gradient(135deg,_#0b1724,_#0f1116)] p-6 shadow-2xl">
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="space-y-3">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+                                <FolderKanban className="h-3.5 w-3.5" />
+                                Creative Asset Approval System
                             </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        {/* Event Dropdown */}
-                        <div className={`relative flex items-center gap-2 px-3 py-2 rounded-md border text-sm w-48 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200'}`}>
-                            <Calendar className="w-4 h-4 text-gray-500 pointer-events-none absolute left-3" />
-                            <select
-                                value={eventFilter}
-                                onChange={(e) => setEventFilter(e.target.value)}
-                                className={`w-full h-full bg-transparent outline-none cursor-pointer appearance-none pl-6 pr-6 font-light ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
-                            >
-                                <option value="">All Events</option>
-                                {events.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-                            </select>
-                            <ChevronDown className="absolute right-3 w-3 h-3 text-gray-500 pointer-events-none" />
+                            <div>
+                                <h1 className="text-3xl font-semibold tracking-tight">Approvals Dashboard</h1>
+                                <p className="mt-2 max-w-2xl text-sm text-slate-400">
+                                    Latest revision first, threaded collaboration, secure external review, and deadline-aware triage in one workspace.
+                                </p>
+                            </div>
                         </div>
 
                         <button
-                            onClick={() => setShowStudio(true)}
-                            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-600/20'}`}
+                            type="button"
+                            onClick={() => setShowCreateModal(true)}
+                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-300"
                         >
-                            <Plus size={16} /> <span className="hidden sm:inline">New Approval</span>
+                            <Plus className="h-4 w-4" />
+                            New submission
                         </button>
                     </div>
-                </div>
-            </div>
+                </section>
 
-            {/* Split View (Sidebar + Main Content) */}
-            <div className="flex flex-1 overflow-hidden">
+                <section className="grid gap-3 rounded-[2rem] border border-white/10 bg-[#0d1520] p-5 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+                    <label className="relative">
+                        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by asset title or event"
+                            className="w-full rounded-2xl border border-white/10 bg-[#081018] py-3 pl-10 pr-4 text-sm outline-none focus:border-sky-400"
+                        />
+                    </label>
 
-                {/* Sidebar Setup */}
-                <aside className={`flex flex-col transition-all duration-300 shrink-0 ${isSidebarOpen ? 'w-56' : 'w-20'}`}>
-                    <nav className="flex-1 overflow-y-auto py-2 pr-4 space-y-1">
-                        {[
-                            { id: 'ALL', label: 'All Projects', icon: LayoutGrid },
-                            { id: 'PENDING', label: 'Pending Review', icon: Eye },
-                            { id: 'DRAFT', label: 'Drafts', icon: Clock },
-                            { id: 'CHANGES_REQUESTED', label: 'In Revision', icon: Edit3 },
-                            { id: 'APPROVED', label: 'Approved', icon: CheckCircle },
-                            { id: 'REJECTED', label: 'Rejected', icon: XCircle },
-                        ].map(filter => {
-                            const Icon = filter.icon;
-                            const isActive = statusFilter === filter.id;
+                    <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#081018] px-4 py-3 text-sm">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                        <select
+                            value={eventFilter}
+                            onChange={(e) => setEventFilter(e.target.value)}
+                            className="w-full bg-transparent outline-none"
+                        >
+                            <option value="">All events</option>
+                            {events.map((event) => (
+                                <option key={event.id} value={event.id}>
+                                    {event.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+
+                    <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#081018] px-4 py-3 text-sm">
+                        <Filter className="h-4 w-4 text-slate-500" />
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="w-full bg-transparent outline-none"
+                        >
+                            <option value="deadline">Sort by deadline</option>
+                            <option value="submittedAt">Sort by submission</option>
+                        </select>
+                    </label>
+
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setAssignedToMe((current) => !current)}
+                            className={`flex-1 rounded-2xl border px-4 py-3 text-sm transition ${assignedToMe ? 'border-sky-400 bg-sky-500/15 text-sky-100' : 'border-white/10 bg-[#081018] text-slate-300'}`}
+                        >
+                            <span className="inline-flex items-center gap-2">
+                                <UserCheck className="h-4 w-4" />
+                                Assigned to me
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setApproachingDeadline((current) => !current)}
+                            className={`flex-1 rounded-2xl border px-4 py-3 text-sm transition ${approachingDeadline ? 'border-amber-300 bg-amber-500/15 text-amber-100' : 'border-white/10 bg-[#081018] text-slate-300'}`}
+                        >
+                            Near deadline
+                        </button>
+                    </div>
+                </section>
+
+                <section className="flex flex-wrap gap-2">
+                    {APPROVAL_STATUS_OPTIONS.map((status) => {
+                        const meta = APPROVAL_STATUS_META[status];
+                        const Icon = meta.icon;
+                        const count = approvals.filter((approval) => approval.status === status).length;
+                        const active = statusFilter === status;
+
+                        return (
+                            <button
+                                key={status}
+                                type="button"
+                                onClick={() => setStatusFilter(status)}
+                                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${active ? meta.chip : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:text-white'}`}
+                            >
+                                <Icon className="h-4 w-4" />
+                                {meta.label}
+                                <span className="rounded-full bg-black/20 px-2 py-0.5 text-xs">{count}</span>
+                            </button>
+                        );
+                    })}
+                </section>
+
+                {error && (
+                    <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                        {error}
+                    </div>
+                )}
+
+                {loading ? (
+                    <div className="rounded-[2rem] border border-white/10 bg-[#0d1520] px-6 py-16 text-center text-sm text-slate-400">
+                        Loading approvals…
+                    </div>
+                ) : visibleApprovals.length === 0 ? (
+                    <div className="rounded-[2rem] border border-dashed border-white/10 bg-[#0d1520] px-6 py-16 text-center">
+                        <p className="text-lg font-medium text-slate-200">No approvals match this view.</p>
+                        <p className="mt-2 text-sm text-slate-500">Try a different status or create a new submission.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {visibleApprovals.map((approval) => {
+                            const meta = APPROVAL_STATUS_META[approval.status];
+                            const Icon = meta.icon;
+                            const previewAsset = approval.latestRevision?.assets?.[0];
+                            const pendingCount = approval.reviewers.filter((reviewer) => !reviewer.latestDecision).length;
+
                             return (
                                 <button
-                                    key={filter.id}
-                                    onClick={() => setStatusFilter(filter.id)}
-                                    className={`w-full flex items-center px-4 py-2.5 rounded-r-md transition-colors group relative
-                                        ${isActive
-                                            ? (isDark ? 'bg-[#2b2b40] text-gray-100 shadow-sm' : 'bg-indigo-50 text-indigo-600')
-                                            : (isDark ? 'text-[#a1a5b7] hover:bg-[#232336] hover:text-gray-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900')
-                                        }
-                                    `}
-                                    title={!isSidebarOpen ? filter.label : ''}
+                                    key={approval.id}
+                                    type="button"
+                                    onClick={() => setSelectedApproval(approval)}
+                                    className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#0d1520] text-left transition hover:-translate-y-0.5 hover:border-sky-300/40 hover:shadow-2xl"
                                 >
-                                    <Icon size={18} className={`${isSidebarOpen ? 'mr-3' : 'mx-auto'} ${isActive && isDark ? 'text-pink-500' : ''}`} />
-                                    {isSidebarOpen && <span className="font-light tracking-wide text-sm whitespace-nowrap">{filter.label}</span>}
-                                    {isActive && isSidebarOpen && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-[4px] rounded-r-md bg-gradient-to-b from-pink-500 to-orange-400"></div>
-                                    )}
-                                    {isActive && !isSidebarOpen && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-md bg-gradient-to-b from-pink-500 to-orange-400"></div>
-                                    )}
+                                    <div className="aspect-[4/3] bg-[linear-gradient(135deg,_rgba(14,165,233,0.18),_rgba(15,23,42,0.8))]">
+                                        {previewAsset?.mimeType?.startsWith('image/') ? (
+                                            <img src={previewAsset.s3Url} alt={approval.title} className="h-full w-full object-cover" />
+                                        ) : (
+                                            <div className="flex h-full items-center justify-center text-slate-400">
+                                                Latest revision preview unavailable
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-4 px-5 py-5">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${meta.chip}`}>
+                                                <Icon className="h-3.5 w-3.5" />
+                                                {meta.label}
+                                            </span>
+                                            <span className="text-xs text-slate-500">v{approval.latestRevisionNumber}</span>
+                                        </div>
+
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-white">{approval.title}</h2>
+                                            <p className="mt-1 text-sm text-slate-400">{approval.event?.name || 'Unassigned event'}</p>
+                                        </div>
+
+                                        <div className="grid gap-2 text-sm text-slate-400">
+                                            <div className="flex items-center justify-between">
+                                                <span>Submitted</span>
+                                                <span>{formatApprovalDate(approval.submittedAt)}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span>Deadline</span>
+                                                <span>{formatApprovalDate(approval.deadline)}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span>Pending reviewers</span>
+                                                <span>{pendingCount}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </button>
                             );
                         })}
-                    </nav>
-
-                    {/* Sidebar Footer */}
-                    <div className="p-4 mt-auto border-t border-gray-200/50 dark:border-[#2b2b40]/50 pr-4">
-                        <button
-                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                            className={`flex items-center w-full p-2 rounded-md transition-colors ${isDark ? 'text-[#a1a5b7] hover:bg-[#232336] hover:text-gray-200' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
-                        >
-                            <Settings size={18} className={`${isSidebarOpen ? 'mr-3' : 'mx-auto'}`} />
-                            {isSidebarOpen && <span className="font-light tracking-wide text-sm whitespace-nowrap">Settings</span>}
-                        </button>
                     </div>
-                </aside>
-
-                {/* Main Content Area */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar pb-10 pl-2 lg:pl-6">
-                    {/* Search & Toolbar */}
-
-                    {/* Type Filters */}
-                    <div className="flex items-center gap-2 pb-2">
-                        {['ALL', 'MEDIA', 'SOCIAL'].map(type => (
-                            <button
-                                key={type}
-                                onClick={() => setTypeFilter(type)}
-                                className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${typeFilter === type
-                                    ? isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900'
-                                    : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                {type === 'ALL' ? 'All Types' : type === 'MEDIA' ? 'Media Assets' : 'Social Posts'}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Search & View Toggle Row */}
-                    <div className="flex items-center justify-between py-2">
-                        <div className={`relative w-80`}>
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search by title..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className={`w-full pl-10 pr-4 py-2 rounded-md border text-sm focus:ring-2 focus:ring-pink-500/50 outline-none font-light ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] placeholder-gray-500 text-gray-200' : 'bg-white border-gray-200'
-                                    }`}
-                            />
-                        </div>
-
-                        {/* View Toggle */}
-                        <div className={`flex items-center p-1 rounded-md border ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200'}`}>
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-gray-100 text-gray-900 shadow-sm') : 'text-gray-500 hover:text-gray-300'}`}
-                            >
-                                <LayoutGrid className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-gray-100 text-gray-900 shadow-sm') : 'text-gray-500 hover:text-gray-300'}`}
-                            >
-                                <ListIcon className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Content grids moved right up here */}
-                    <div className="mt-6 mb-4">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className={`text-sm font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {statusFilter === 'ALL' ? 'All Approvals' : statusFilter.replace('_', ' ')}
-                            </h2>
-                            <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
-                                {displayApprovals.length} items
-                            </span>
-                        </div>
-
-                        {loading ? (
-                            <div className="py-20 flex justify-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-                            </div>
-                        ) : displayApprovals.length > 0 ? (
-                            viewMode === 'grid' ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {displayApprovals.map(approval => (
-                                        <ApprovalGalleryCard
-                                            key={approval.id}
-                                            approval={approval}
-                                            isDark={isDark}
-                                            onClick={() => setSelectedApproval(approval)}
-                                        />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className={`w-full rounded-md border overflow-hidden ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200'}`}>
-                                    <table className="w-full text-left text-sm font-light">
-                                        <thead className={`${isDark ? 'bg-[#2b2b40] text-[#a1a5b7]' : 'bg-gray-50 text-gray-500'}`}>
-                                            <tr>
-                                                <th className="px-6 py-4 font-light tracking-wide">Project</th>
-                                                <th className="px-6 py-4 font-light tracking-wide">Status</th>
-                                                <th className="px-6 py-4 font-light tracking-wide">Event</th>
-                                                <th className="px-6 py-4 font-light tracking-wide">Reviewers</th>
-                                                <th className="px-6 py-4 font-light tracking-wide">Last Updated</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                                            {displayApprovals.map(approval => {
-                                                const StatusIcon = STATUS_ICONS[approval.status] || Clock;
-                                                return (
-                                                    <tr
-                                                        key={approval.id}
-                                                        onClick={() => setSelectedApproval(approval)}
-                                                        className={`cursor-pointer transition-colors ${isDark ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50'}`}
-                                                    >
-                                                        <td className="px-4 py-3 font-medium">
-                                                            <div className="flex items-center gap-3">
-                                                                {approval.assets?.[0]?.mimeType?.startsWith('image/') ? (
-                                                                    <img
-                                                                        src={approval.assets[0].s3Url}
-                                                                        className="w-8 h-8 rounded object-cover bg-gray-700"
-                                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/100x100/1e1e2d/a1a5b7?text=Img'; }}
-                                                                    />
-                                                                ) : (
-                                                                    <div className="w-8 h-8 rounded bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-                                                                        <Paperclip className="w-4 h-4 text-gray-500" />
-                                                                    </div>
-                                                                )}
-                                                                <span className={isDark ? 'text-gray-200' : 'text-gray-900'}>{approval.title}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400`}>
-                                                                <StatusIcon className="w-3 h-3" />
-                                                                {approval.status.replace('_', ' ')}
-                                                            </div>
-                                                        </td>
-                                                        <td className={`px-4 py-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                            {approval.event?.name || '-'}
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <div className="flex -space-x-1.5">
-                                                                {approval.reviewers?.slice(0, 3).map((r, i) => (
-                                                                    <div key={i} className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] border-2 uppercase ${isDark ? 'bg-[#222] border-[#151515] text-gray-400' : 'bg-gray-100 border-white text-gray-600'}`}>
-                                                                        {r.name?.[0] || r.email?.[0]}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </td>
-                                                        <td className={`px-4 py-3 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                                            {new Date(approval.updatedAt).toLocaleDateString()}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )
-                        ) : (
-                            <div className="py-20 text-center flex flex-col items-center">
-                                <Search className={`w-8 h-8 mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
-                                <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>
-                                    No projects found for '{statusFilter === 'ALL' ? 'All Projects' : statusFilter.replace('_', ' ')}'.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                )}
             </div>
-
-            {/* Studio Modal */}
-            {showStudio && (
-                <ApprovalStudio
-                    isDark={isDark}
-                    user={user}
-                    onClose={() => setShowStudio(false)}
-                    onSuccess={handleStudioSuccess}
-                    initialData={{ eventId: eventFilter }}
-                />
-            )}
         </div>
     );
 };

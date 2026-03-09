@@ -2,6 +2,7 @@ import { config } from '@config/environment';
 import { logger } from '@config/logger';
 import { connectDatabase } from '@config/database';
 import { connectRedis } from '@config/redis';
+import { startApprovalReminderJob } from './jobs/approval-reminder.job';
 import { startOrderExpiryJob } from './jobs/order-expiry.job';
 
 // app imported dynamically after connection
@@ -28,6 +29,7 @@ void (async () => {
 
       // Start background jobs
       startOrderExpiryJob();
+      startApprovalReminderJob();
     });
   } catch (err) {
     logger.error('Failed to start server', err as Error);

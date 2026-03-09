@@ -2,8 +2,6 @@ import { Router } from 'express';
 import { ApprovalController } from '../approvals/controller';
 import { validate } from '../../middleware/validate';
 import {
-  submitDecisionSchema,
-  externalCommentSchema,
   tokenParamsSchema,
 } from '../approvals/validation';
 
@@ -20,12 +18,12 @@ router.get('/:token', validate(tokenParamsSchema), (req, res, next) =>
 );
 
 // Submit decision
-router.post('/:token/decision', validate(submitDecisionSchema), (req, res, next) =>
-  ApprovalController.submitDecision(req, res, next)
+router.post('/:token/decisions', validate(tokenParamsSchema), (req, res, next) =>
+  ApprovalController.submitExternalDecision(req, res, next)
 );
 
 // Add comment
-router.post('/:token/comments', validate(externalCommentSchema), (req, res, next) =>
+router.post('/:token/comments', validate(tokenParamsSchema), (req, res, next) =>
   ApprovalController.addExternalComment(req, res, next)
 );
 

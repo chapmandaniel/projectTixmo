@@ -1,5 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-undef */
+import { execSync } from 'child_process';
+import path from 'path';
+
+try {
+    execSync('npx prisma db push --accept-data-loss --skip-generate', {
+        cwd: path.resolve(__dirname, '..'),
+        stdio: 'ignore',
+    });
+} catch (error) {
+    // Surface schema bootstrap failures through the tests that depend on the database.
+}
 
 // Mock Redis client globally
 jest.mock('../src/config/redis', () => {

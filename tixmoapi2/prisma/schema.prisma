@@ -84,6 +84,7 @@ model User {
   approvalRequestsCreated ApprovalRequest[] @relation("ApprovalRequestCreator")
   approvalReviews   ApprovalReviewer[] @relation("ApprovalReviewerUser")
   approvalComments  ApprovalComment[] @relation("ApprovalCommentUser")
+  approvalRevisionsUploaded ApprovalRevision[] @relation("ApprovalRevisionUploader")
 
   @@map("users")
 }
@@ -492,118 +493,170 @@ model TaskComment {
 // ==========================================
 
 enum ApprovalStatus {
-  DRAFT
-  PENDING
-  APPROVED
+  PENDING_REVIEW
   CHANGES_REQUESTED
-  REJECTED
+  UPDATED
+  APPROVED
+  DECLINED
 }
 
 enum ApprovalDecision {
   APPROVED
   CHANGES_REQUESTED
-  REJECTED
+  DECLINED
 }
 
-enum ApprovalType {
-  MEDIA
-  SOCIAL
+enum ApprovalReviewerType {
+  INTERNAL
+  EXTERNAL
 }
 
-enum ApprovalPriority {
-  STANDARD
-  URGENT
-  CRITICAL
+enum ApprovalReminderType {
+  AFTER_24_HOURS
+  DEADLINE_48_HOURS
+  DEADLINE_24_HOURS
 }
 
 model ApprovalRequest {
-  id              String           @id @default(uuid())
-  organizationId  String           @map("organization_id")
-  organization    Organization     @relation(fields: [organizationId], references: [id])
-  eventId         String           @map("event_id")
-  event           Event            @relation(fields: [eventId], references: [id])
-  createdById     String           @map("created_by_id")
-  createdBy       User             @relation("ApprovalRequestCreator", fields: [createdById], references: [id])
-  
-  title           String
-  description     String?          @db.Text
-  instructions    String?          @db.Text
-  type            ApprovalType     @default(MEDIA)
-  content         Json?            // structured content for SOCIAL types (caption, platform, etc)
-  status          ApprovalStatus   @default(DRAFT)
-  priority        ApprovalPriority @default(STANDARD)
-  dueDate         DateTime?        @map("due_date")
-  version         Int              @default(1)
-  
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  
-  assets          ApprovalAsset[]
-  reviewers       ApprovalReviewer[]
-  comments        ApprovalComment[]
-  
+  id                 String                 @id @default(uuid())
+  organizationId     String                 @map("organization_id")
+  organization       Organization           @relation(fields: [organizationId], references: [id])
+  eventId            String                 @map("event_id")
+  event              Event                  @relation(fields: [eventId], references: [id])
+  createdById        String                 @map("created_by_id")
+  createdBy          User                   @relation("ApprovalRequestCreator", fields: [createdById], references: [id])
+
+  title              String
+  description        String?                @db.Text
+  status             ApprovalStatus         @default(PENDING_REVIEW)
+  deadline           DateTime               @map("deadline")
+  latestRevisionNumber Int                  @default(1) @map("latest_revision_number")
+  submittedAt        DateTime               @default(now()) @map("submitted_at")
+  completedAt        DateTime?              @map("completed_at")
+  lastCommentAt      DateTime?              @map("last_comment_at")
+
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
+
+  revisions          ApprovalRevision[]
+  reviewers          ApprovalReviewer[]
+  comments           ApprovalComment[]
+  decisions          ApprovalReviewDecision[]
+
   @@map("approval_requests")
 }
 
+model ApprovalRevision {
+  id                String                 @id @default(uuid())
+  approvalRequestId String                 @map("approval_request_id")
+  approvalRequest   ApprovalRequest        @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  revisionNumber    Int                    @map("revision_number")
+  summary           String?                @db.Text
+  uploadedById      String                 @map("uploaded_by_id")
+  uploadedBy        User                   @relation("ApprovalRevisionUploader", fields: [uploadedById], references: [id])
+  createdAt         DateTime               @default(now()) @map("created_at")
+
+  assets            ApprovalAsset[]
+  comments          ApprovalComment[]
+  decisions         ApprovalReviewDecision[]
+  reminders         ApprovalReminder[]
+
+  @@unique([approvalRequestId, revisionNumber])
+  @@map("approval_revisions")
+}
+
 model ApprovalAsset {
-  id                String          @id @default(uuid())
-  approvalRequestId String          @map("approval_request_id")
-  approvalRequest   ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
-  
+  id                String           @id @default(uuid())
+  approvalRevisionId String          @map("approval_revision_id")
+  approvalRevision  ApprovalRevision @relation(fields: [approvalRevisionId], references: [id], onDelete: Cascade)
+
   filename          String
-  originalName      String          @map("original_name")
-  mimeType          String          @map("mime_type")
+  originalName      String           @map("original_name")
+  mimeType          String           @map("mime_type")
   size              Int
-  s3Key             String          @map("s3_key")
-  s3Url             String          @map("s3_url")
-  version           Int             @default(1)
-  
-  createdAt         DateTime        @default(now()) @map("created_at")
-  
+  s3Key             String           @map("s3_key")
+  s3Url             String           @map("s3_url")
+  createdAt         DateTime         @default(now()) @map("created_at")
+
   @@map("approval_assets")
 }
 
 model ApprovalReviewer {
-  id                String           @id @default(uuid())
-  approvalRequestId String           @map("approval_request_id")
-  approvalRequest   ApprovalRequest  @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
-  
+  id                String                 @id @default(uuid())
+  approvalRequestId String                 @map("approval_request_id")
+  approvalRequest   ApprovalRequest        @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+
   email             String
   name              String?
-  userId            String?          @map("user_id")
-  user              User?            @relation("ApprovalReviewerUser", fields: [userId], references: [id])
-  
-  token             String           @unique
-  tokenExpiresAt    DateTime         @map("token_expires_at")
-  
-  decision          ApprovalDecision?
-  decisionAt        DateTime?        @map("decision_at")
-  decisionNote      String?          @map("decision_note") @db.Text
-  
-  invitedAt         DateTime         @default(now()) @map("invited_at")
-  viewedAt          DateTime?        @map("viewed_at")
-  lastReminderAt    DateTime?        @map("last_reminder_at")
-  
+  reviewerType      ApprovalReviewerType   @default(EXTERNAL) @map("reviewer_type")
+  userId            String?                @map("user_id")
+  user              User?                  @relation("ApprovalReviewerUser", fields: [userId], references: [id])
+
+  token             String                 @unique
+  tokenExpiresAt    DateTime               @map("token_expires_at")
+  firstViewedAt     DateTime?              @map("first_viewed_at")
+  lastViewedAt      DateTime?              @map("last_viewed_at")
+  lastCommentAt     DateTime?              @map("last_comment_at")
+  lastDecisionAt    DateTime?              @map("last_decision_at")
+  lastInteractionAt DateTime?              @map("last_interaction_at")
+  lastInteractionRevisionNumber Int?       @map("last_interaction_revision_number")
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+
+  comments          ApprovalComment[]      @relation("ApprovalCommentReviewer")
+  decisions         ApprovalReviewDecision[]
+  reminders         ApprovalReminder[]
+
   @@unique([approvalRequestId, email])
   @@map("approval_reviewers")
 }
 
+model ApprovalReviewDecision {
+  id                String           @id @default(uuid())
+  approvalRequestId String           @map("approval_request_id")
+  approvalRequest   ApprovalRequest  @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  approvalRevisionId String          @map("approval_revision_id")
+  approvalRevision  ApprovalRevision @relation(fields: [approvalRevisionId], references: [id], onDelete: Cascade)
+  reviewerId        String           @map("reviewer_id")
+  reviewer          ApprovalReviewer @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+  decision          ApprovalDecision
+  note              String?          @db.Text
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  @@unique([approvalRevisionId, reviewerId])
+  @@map("approval_review_decisions")
+}
+
 model ApprovalComment {
-  id                String          @id @default(uuid())
-  approvalRequestId String          @map("approval_request_id")
-  approvalRequest   ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
-  
-  assetId           String?         @map("asset_id")
-  reviewerId        String?         @map("reviewer_id")
-  userId            String?         @map("user_id")
-  user              User?           @relation("ApprovalCommentUser", fields: [userId], references: [id])
-  
-  content           String          @db.Text
-  annotation        Json?           // { x, y, width, height } for visual annotations
-  resolved          Boolean         @default(false)
-  
-  createdAt         DateTime        @default(now()) @map("created_at")
-  updatedAt         DateTime        @updatedAt @map("updated_at")
-  
+  id                String            @id @default(uuid())
+  approvalRequestId String            @map("approval_request_id")
+  approvalRequest   ApprovalRequest   @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  approvalRevisionId String           @map("approval_revision_id")
+  approvalRevision  ApprovalRevision  @relation(fields: [approvalRevisionId], references: [id], onDelete: Cascade)
+  reviewerId        String?           @map("reviewer_id")
+  reviewer          ApprovalReviewer? @relation("ApprovalCommentReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  userId            String?           @map("user_id")
+  user              User?             @relation("ApprovalCommentUser", fields: [userId], references: [id], onDelete: SetNull)
+  parentCommentId   String?           @map("parent_comment_id")
+  parentComment     ApprovalComment?  @relation("ApprovalCommentThread", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies           ApprovalComment[] @relation("ApprovalCommentThread")
+  content           String            @db.Text
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
   @@map("approval_comments")
+}
+
+model ApprovalReminder {
+  id                String             @id @default(uuid())
+  approvalRevisionId String            @map("approval_revision_id")
+  approvalRevision  ApprovalRevision   @relation(fields: [approvalRevisionId], references: [id], onDelete: Cascade)
+  reviewerId        String             @map("reviewer_id")
+  reviewer          ApprovalReviewer   @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+  reminderType      ApprovalReminderType @map("reminder_type")
+  sentAt            DateTime           @default(now()) @map("sent_at")
+
+  @@unique([approvalRevisionId, reviewerId, reminderType])
+  @@map("approval_reminders")
 }

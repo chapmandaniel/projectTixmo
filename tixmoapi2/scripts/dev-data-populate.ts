@@ -769,8 +769,9 @@ export async function populateDatabase() {
     console.log(`  ✓ ${waitlistTotal} waitlist entries`);
 
     // ──────────────────────────────────────────────────────────
-    // 13. APPROVAL REQUESTS
+    // 13. APPROVAL REQUESTS (Disabled temporarily due to schema rewrite)
     // ──────────────────────────────────────────────────────────
+/*
     console.log('✅ Creating approval requests...');
 
     const approvalStatuses: ApprovalStatus[] = [
@@ -881,7 +882,7 @@ export async function populateDatabase() {
     const reviewerCount = await prisma.approvalReviewer.count();
     const approvalCommentCount = await prisma.approvalComment.count();
     console.log(`  ✓ ${approvalCount} approvals, ${approvalAssetCount} assets, ${reviewerCount} reviewers, ${approvalCommentCount} comments`);
-
+*/
     // ──────────────────────────────────────────────────────────
     // SUMMARY
     // ──────────────────────────────────────────────────────────

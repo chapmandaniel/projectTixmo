@@ -1,444 +1,476 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-    X,
     ArrowLeft,
-    CheckCircle,
-    XCircle,
-    Clock,
-    Send,
-    Paperclip,
+    CalendarDays,
+    CheckCircle2,
     Download,
-    Eye,
-    Edit3,
-    MoreHorizontal,
     FileText,
     MessageSquare,
-    ChevronLeft,
-    ChevronRight,
-
-    Users,
-    Instagram,
-    Facebook,
-    Twitter,
-    Linkedin,
-    Heart,
-    MessageCircle,
-    Share2,
-    Bookmark
+    RefreshCcw,
+    Send,
+    Upload,
+    User,
+    XCircle,
 } from 'lucide-react';
 import { api } from '../lib/api';
+import {
+    APPROVAL_STATUS_META,
+    DECISION_OPTIONS,
+    formatApprovalDate,
+} from './approvalConstants';
 
-const STATUS_CONFIG = {
-    DRAFT: { label: 'Draft', color: 'bg-gray-100 text-gray-600', icon: FileText },
-    PENDING: { label: 'Pending Review', color: 'bg-amber-100 text-amber-700', icon: Clock },
-    APPROVED: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle },
-    CHANGES_REQUESTED: { label: 'Changes Requested', color: 'bg-orange-100 text-orange-700', icon: Edit3 },
-    REJECTED: { label: 'Rejected', color: 'bg-rose-100 text-rose-700', icon: XCircle },
+const authorLabel = (author) => {
+    if (!author) {
+        return 'Unknown';
+    }
+
+    return author.name || author.email || 'Unknown';
 };
 
-const ApprovalDetailView = ({ approval, isDark, user, isDrawer, onBack, onUpdate, onDelete }) => {
-    // State
-    const [assets, setAssets] = useState(approval?.assets || []);
-    const [comments, setComments] = useState(approval?.comments || []);
-    const [reviewers, setReviewers] = useState(approval?.reviewers || []);
-    const [newComment, setNewComment] = useState('');
-    const [activeAssetIndex, setActiveAssetIndex] = useState(0);
-    const [uploading, setUploading] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const commentsEndRef = useRef(null);
+const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdated }) => {
+    const [approval, setApproval] = useState(initialApproval);
+    const [selectedRevisionId, setSelectedRevisionId] = useState(initialApproval?.latestRevision?.id || null);
+    const [assetIndex, setAssetIndex] = useState(0);
+    const [comment, setComment] = useState('');
+    const [replyTo, setReplyTo] = useState(null);
+    const [decisionNote, setDecisionNote] = useState('');
+    const [revisionSummary, setRevisionSummary] = useState('');
+    const [revisionFiles, setRevisionFiles] = useState([]);
+    const [loading, setLoading] = useState(!initialApproval);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
 
-    const fetchApprovalDetails = async () => {
+    const fetchApproval = async () => {
         try {
-            const response = await api.get(`/approvals/${approval.id}`);
-            const fullApproval = response.approval || response;
-            if (fullApproval) {
-                // Sort chronologically (oldest is v1, newest is latest)
-                const sortedAssets = [...(fullApproval.assets || [])].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-                setAssets(sortedAssets);
-                setComments(fullApproval.comments || []);
-                setReviewers(fullApproval.reviewers || []);
-                if (sortedAssets.length > 0) {
-                    setActiveAssetIndex(sortedAssets.length - 1);
-                }
-                onUpdate(fullApproval);
-            }
-        } catch (err) {
-            console.error('Failed to fetch full approval details:', err);
+            setLoading(true);
+            setError('');
+            const response = await api.get(`/approvals/${approvalId}`);
+            setApproval(response);
+            setSelectedRevisionId(response.latestRevision?.id || response.revisions?.[0]?.id || null);
+            onUpdated?.(response);
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to load approval.');
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (approval) {
-            // Instant display of shallow passed data
-            const sortedAssets = [...(approval.assets || [])].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-            setAssets(sortedAssets);
-            setComments(approval.comments || []);
-            setReviewers(approval.reviewers || []);
-            if (sortedAssets.length > 0) {
-                setActiveAssetIndex(sortedAssets.length - 1);
-            }
-            // Fetch deep data from server in background
-            fetchApprovalDetails();
-        }
-    }, [approval?.id]);
+        fetchApproval();
+    }, [approvalId]);
 
-    // Scroll to bottom of comments
+    const selectedRevision = useMemo(() => {
+        if (!approval?.revisions?.length) {
+            return null;
+        }
+
+        return (
+            approval.revisions.find((revision) => revision.id === selectedRevisionId) ||
+            approval.latestRevision ||
+            approval.revisions[0]
+        );
+    }, [approval, selectedRevisionId]);
+
     useEffect(() => {
-        commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [comments]);
+        setAssetIndex(0);
+    }, [selectedRevisionId]);
 
-    const handleCommentSubmit = async (e) => {
-        e.preventDefault();
-        if (!newComment.trim()) return;
+    const selectedAsset = selectedRevision?.assets?.[assetIndex] || null;
+    const reviewerAssignment = approval?.reviewers?.find((reviewer) => reviewer.email === user?.email) || null;
+    const latestDecision = reviewerAssignment?.latestDecision || approval?.myReview || null;
+    const statusMeta = APPROVAL_STATUS_META[approval?.status] || APPROVAL_STATUS_META.PENDING_REVIEW;
+    const StatusIcon = statusMeta.icon;
 
-        try {
-            const response = await api.post(`/approvals/${approval.id}/comments`, { content: newComment });
-            const addedComment = response.comment || response;
-            const updatedComments = [...comments, { ...addedComment, user: { name: user.name, email: user.email } }];
-            setComments(updatedComments);
-            setNewComment('');
-            onUpdate({ ...approval, comments: updatedComments });
-        } catch (err) {
-            console.error('Failed to post comment:', err);
+    const submitComment = async (event) => {
+        event.preventDefault();
+        if (!comment.trim() || !selectedRevision) {
+            return;
         }
-    };
 
-    const handleReviewAction = async (decision) => {
-        setSubmitting(true);
         try {
-            await api.post(`/approvals/${approval.id}/review`, { decision, feedback: newComment });
-            setNewComment('');
-            await fetchApprovalDetails();
-        } catch (err) {
-            console.error('Failed to submit review:', err);
+            setSaving(true);
+            setError('');
+            await api.post(`/approvals/${approval.id}/comments`, {
+                content: comment,
+                revisionId: selectedRevision.id,
+                parentCommentId: replyTo?.id,
+            });
+            setComment('');
+            setReplyTo(null);
+            await fetchApproval();
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to add comment.');
         } finally {
-            setSubmitting(false);
+            setSaving(false);
         }
     };
 
-    const handleFileUpload = async (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
+    const submitDecision = async (decision) => {
+        try {
+            setSaving(true);
+            setError('');
+            await api.post(`/approvals/${approval.id}/decisions`, {
+                decision,
+                note: decisionNote || undefined,
+                revisionId: approval.latestRevision?.id,
+            });
+            setDecisionNote('');
+            await fetchApproval();
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to submit decision.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const uploadRevision = async (event) => {
+        event.preventDefault();
+        if (!revisionFiles.length) {
+            return;
+        }
 
         try {
-            setUploading(true);
-            const formData = new FormData();
-            files.forEach(file => formData.append('files', file));
+            setSaving(true);
+            setError('');
+            const payload = new FormData();
+            revisionFiles.forEach((file) => payload.append('files', file));
+            if (revisionSummary) {
+                payload.append('summary', revisionSummary);
+            }
 
-            await api.upload(`/approvals/${approval.id}/assets`, formData);
-            await fetchApprovalDetails();
-        } catch (err) {
-            console.error('Upload failed:', err);
+            const updated = await api.upload(`/approvals/${approval.id}/revisions`, payload);
+            setRevisionFiles([]);
+            setRevisionSummary('');
+            setApproval(updated);
+            setSelectedRevisionId(updated.latestRevision?.id || updated.revisions?.[0]?.id || null);
+            onUpdated?.(updated);
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to upload revision.');
         } finally {
-            setUploading(false);
-            e.target.value = '';
+            setSaving(false);
         }
     };
 
-    const primaryAsset = assets[activeAssetIndex];
-    const StatusIcon = STATUS_CONFIG[approval.status]?.icon || Clock;
-    const isMyReviewPending = reviewers.some(r => r.email === user?.email && !r.decision);
-    const isSocial = approval.type === 'SOCIAL';
+    if (loading) {
+        return (
+            <div className="min-h-[calc(100vh-64px)] bg-[#081018] px-6 py-16 text-center text-sm text-slate-400">
+                Loading approval workspace…
+            </div>
+        );
+    }
 
-    const SocialIcon = {
-        instagram: Instagram,
-        facebook: Facebook,
-        twitter: Twitter,
-        linkedin: Linkedin
-    }[approval.content?.platform] || Instagram;
+    if (!approval) {
+        return (
+            <div className="min-h-[calc(100vh-64px)] bg-[#081018] px-6 py-16 text-center text-sm text-slate-400">
+                Approval not found.
+            </div>
+        );
+    }
 
     return (
-        <div className={`flex flex-col w-full h-[calc(100vh-64px)] overflow-hidden -m-6 sm:-m-8 px-4 sm:px-6 pt-6 pb-0 ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
-
-            {/* 1. Global Header Card */}
-            <div className="mb-6 shrink-0 relative z-10 w-full">
-                <div className={`flex items-center justify-between px-4 sm:px-5 py-3 rounded-md shadow-sm w-full ${isDark ? 'bg-[#1e1e2d] border border-[#2b2b40]/60' : 'bg-white border border-gray-200/60'}`}>
-                    <div className="flex items-center gap-4">
+        <div className="min-h-[calc(100vh-64px)] bg-[#081018] text-white -m-6 px-4 py-6 sm:-m-8 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl space-y-6">
+                <div className="flex flex-col gap-4 rounded-[2rem] border border-white/10 bg-[#0d1520] p-6 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-3">
                         <button
+                            type="button"
                             onClick={onBack}
-                            className={`p-2 shrink-0 rounded-md transition-colors ${isDark ? 'bg-[#1e1e2d] text-[#a1a5b7] hover:text-white hover:bg-[#232336]' : 'bg-white border border-gray-200/60 text-gray-500 hover:text-gray-900'} shadow-sm`}
-                            title="Back to Approvals"
+                            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-slate-300 transition hover:text-white"
                         >
-                            <ChevronLeft size={20} />
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to dashboard
                         </button>
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-xl font-bold tracking-tight">{approval.title}</h1>
-                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 ${STATUS_CONFIG[approval.status].color}`}>
-                                    <StatusIcon className="w-3.5 h-3.5" />
-                                    {STATUS_CONFIG[approval.status].label}
-                                </span>
-                            </div>
-                            <p className="text-sm text-gray-500 flex items-center gap-2 mt-0.5">
-                                <span className="font-medium text-gray-900 dark:text-gray-300">{approval.event?.name || 'General Project'}</span>
-                                <span>•</span>
-                                <span>v{assets.length} recently updated</span>
-                            </p>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h1 className="text-3xl font-semibold tracking-tight">{approval.title}</h1>
+                            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${statusMeta.chip}`}>
+                                <StatusIcon className="h-3.5 w-3.5" />
+                                {statusMeta.label}
+                            </span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                            <span>{approval.event?.name}</span>
+                            <span className="inline-flex items-center gap-2">
+                                <CalendarDays className="h-4 w-4" />
+                                Deadline {formatApprovalDate(approval.deadline)}
+                            </span>
+                            <span>Submitted {formatApprovalDate(approval.submittedAt)}</span>
                         </div>
                     </div>
 
-                    {/* Primary Actions Area */}
-                    <div className="flex items-center gap-3">
-                        {/* Only show upload if allowed (e.g. owner or changes requested) */}
-                        <label className="cursor-pointer px-4 py-2 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-[#252525] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-sm">
-                            <Paperclip className="w-4 h-4" />
-                            Upload New Version
-                            <input type="file" multiple className="hidden" onChange={handleFileUpload} />
-                        </label>
-
-                        {isMyReviewPending && (
-                            <>
-                                <button
-                                    onClick={() => handleReviewAction('CHANGES_REQUESTED')}
-                                    disabled={submitting}
-                                    className="px-4 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800 rounded-lg text-sm font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all flex items-center gap-2"
-                                >
-                                    <Edit3 className="w-4 h-4" />
-                                    Request Changes
-                                </button>
-                                <button
-                                    onClick={() => handleReviewAction('APPROVED')}
-                                    disabled={submitting}
-                                    className="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2"
-                                >
-                                    <CheckCircle className="w-4 h-4" />
-                                    Approve
-                                </button>
-                            </>
+                    <div className="grid gap-3 md:min-w-[320px]">
+                        {reviewerAssignment && (
+                            <div className="rounded-2xl border border-white/10 bg-[#081018] p-4">
+                                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Your review</p>
+                                <p className="mt-2 text-sm text-slate-300">
+                                    {latestDecision ? `Current decision: ${latestDecision.decision.replaceAll('_', ' ')}` : 'You are assigned and have not submitted a decision yet.'}
+                                </p>
+                                <textarea
+                                    rows={3}
+                                    value={decisionNote}
+                                    onChange={(e) => setDecisionNote(e.target.value)}
+                                    placeholder="Optional decision note"
+                                    className="mt-3 w-full rounded-2xl border border-white/10 bg-[#0d1520] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                                />
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {DECISION_OPTIONS.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            disabled={saving}
+                                            onClick={() => submitDecision(option.value)}
+                                            className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200 transition hover:border-sky-300/40 hover:text-white disabled:opacity-60"
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         )}
+
+                        <form onSubmit={uploadRevision} className="rounded-2xl border border-white/10 bg-[#081018] p-4">
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Upload revision</p>
+                            <textarea
+                                rows={3}
+                                value={revisionSummary}
+                                onChange={(e) => setRevisionSummary(e.target.value)}
+                                placeholder="What changed in this revision?"
+                                className="mt-3 w-full rounded-2xl border border-white/10 bg-[#0d1520] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                            />
+                            <input
+                                type="file"
+                                multiple
+                                onChange={(e) => setRevisionFiles(Array.from(e.target.files || []))}
+                                className="mt-3 block w-full rounded-2xl border border-dashed border-white/10 bg-[#0d1520] px-4 py-4 text-sm text-slate-300"
+                            />
+                            <button
+                                type="submit"
+                                disabled={saving || !revisionFiles.length}
+                                className="mt-3 inline-flex items-center gap-2 rounded-full bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                <Upload className="h-4 w-4" />
+                                Upload revision
+                            </button>
+                        </form>
                     </div>
                 </div>
-            </div>
 
-            {/* 2. Main Content Grid */}
-            <div className="flex-1 flex gap-6 pb-6 overflow-hidden">
-
-                {/* LEFT: Asset Canvas (Dominant) */}
-                <div className={`flex-1 flex flex-col relative overflow-hidden rounded-md border shadow-sm ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-white border-gray-200/60'}`}>
-                    {/* Canvas Toolbar */}
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/90 dark:bg-[#222]/90 backdrop-blur shadow-sm border border-gray-200 dark:border-gray-700 p-1 rounded-full z-10 transition-all hover:shadow-md">
-                        {assets.map((a, i) => (
-                            <button
-                                key={a.id}
-                                onClick={() => setActiveAssetIndex(i)}
-                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${activeAssetIndex === i
-                                    ? 'bg-indigo-500 text-white shadow-sm'
-                                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                    }`}
-                            >
-                                v{i + 1}
-                            </button>
-                        ))}
+                {error && (
+                    <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                        {error}
                     </div>
+                )}
 
-                    <div className="flex-1 flex items-center justify-center p-8 overflow-hidden">
-                        {isSocial ? (
-                            <div className="w-[375px] bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col">
-                                {/* Social Header */}
-                                <div className="p-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                                            <span className="font-bold text-xs">T</span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold dark:text-white">tixmo_official</span>
-                                            <span className="text-[10px] text-gray-500">{approval.content?.platform}</span>
-                                        </div>
-                                    </div>
-                                    <SocialIcon className="w-5 h-5 text-gray-400" />
+                <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+                    <section className="space-y-6">
+                        <div className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Asset viewer</p>
+                                    <h2 className="mt-2 text-lg font-semibold">
+                                        Revision {selectedRevision?.revisionNumber || approval.latestRevisionNumber}
+                                    </h2>
                                 </div>
+                                <div className="text-sm text-slate-400">
+                                    {selectedRevision ? formatApprovalDate(selectedRevision.createdAt) : ''}
+                                </div>
+                            </div>
 
-                                {/* Social Content (Image/Asset) */}
-                                <div className="aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
-                                    {primaryAsset ? (
-                                        primaryAsset.mimeType?.startsWith('image/') ? (
-                                            <img
-                                                src={primaryAsset.s3Url}
-                                                className="w-full h-full object-cover"
-                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x400/1e1e2d/a1a5b7?text=Image+Unavailable'; }}
-                                            />
+                            <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#081018]">
+                                <div className="flex min-h-[420px] items-center justify-center p-6">
+                                    {selectedAsset ? (
+                                        selectedAsset.mimeType?.startsWith('image/') ? (
+                                            <img src={selectedAsset.s3Url} alt={selectedAsset.originalName} className="max-h-[520px] w-full rounded-2xl object-contain" />
                                         ) : (
-                                            <div className="text-center p-4">
-                                                <FileText className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-                                                <p className="text-sm text-gray-500">{primaryAsset.originalName}</p>
+                                            <div className="rounded-[1.5rem] border border-white/10 bg-[#0d1520] px-8 py-12 text-center">
+                                                <FileText className="mx-auto h-12 w-12 text-slate-500" />
+                                                <p className="mt-4 text-sm text-slate-300">{selectedAsset.originalName}</p>
+                                                <a
+                                                    href={selectedAsset.s3Url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950"
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                    Download
+                                                </a>
                                             </div>
                                         )
                                     ) : (
-                                        <div className="text-gray-400 text-sm">No media attached</div>
+                                        <div className="text-sm text-slate-500">No assets uploaded for this revision.</div>
                                     )}
                                 </div>
 
-                                {/* Social Actions */}
-                                <div className="p-3">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-4">
-                                            <Heart className="w-6 h-6 text-gray-800 dark:text-white" />
-                                            <MessageCircle className="w-6 h-6 text-gray-800 dark:text-white" />
-                                            <Share2 className="w-6 h-6 text-gray-800 dark:text-white" />
-                                        </div>
-                                        <Bookmark className="w-6 h-6 text-gray-800 dark:text-white" />
+                                {selectedRevision?.assets?.length > 1 && (
+                                    <div className="flex gap-2 overflow-x-auto border-t border-white/10 p-4">
+                                        {selectedRevision.assets.map((asset, index) => (
+                                            <button
+                                                key={asset.id}
+                                                type="button"
+                                                onClick={() => setAssetIndex(index)}
+                                                className={`h-20 min-w-20 overflow-hidden rounded-2xl border ${index === assetIndex ? 'border-sky-400' : 'border-white/10'}`}
+                                            >
+                                                {asset.mimeType?.startsWith('image/') ? (
+                                                    <img src={asset.s3Url} alt={asset.originalName} className="h-full w-full object-cover" />
+                                                ) : (
+                                                    <div className="flex h-full items-center justify-center bg-[#0d1520] text-xs text-slate-400">File</div>
+                                                )}
+                                            </button>
+                                        ))}
                                     </div>
-
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-semibold dark:text-white">1,234 likes</p>
-                                        <p className="text-sm dark:text-gray-200">
-                                            <span className="font-semibold mr-1">tixmo_official</span>
-                                            {approval.content?.caption}
-                                        </p>
-                                        {approval.content?.hashtags && (
-                                            <p className="text-sm text-blue-500">{approval.content.hashtags}</p>
-                                        )}
-                                    </div>
-                                </div>
+                                )}
                             </div>
-                        ) : primaryAsset ? (
-                            primaryAsset.mimeType?.startsWith('image/') ? (
-                                <img
-                                    src={primaryAsset.s3Url}
-                                    alt="Asset Preview"
-                                    className="max-w-full max-h-full object-contain rounded shadow-xl ring-1 ring-black/5 dark:ring-white/10"
-                                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/800x800/1e1e2d/a1a5b7?text=Image+Unavailable'; }}
-                                />
-                            ) : (
-                                <div className="bg-white dark:bg-[#1A1A1A] p-12 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 text-center">
-                                    <div className="w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <FileText className="w-10 h-10 text-gray-400" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold mb-1">{primaryAsset.originalName}</h3>
-                                    <p className="text-sm text-gray-500 mb-6 uppercase tracking-wide font-medium">{primaryAsset.mimeType}</p>
-                                    <a
-                                        href={primaryAsset.s3Url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                        Download Asset
-                                    </a>
+                        </div>
+
+                        <div className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Discussion</p>
+                                    <h2 className="mt-2 text-lg font-semibold">Threaded feedback</h2>
                                 </div>
-                            )
-                        ) : (
-                            <div className="text-center text-gray-400">
-                                <Clock className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                <p>No assets uploaded yet</p>
+                                <span className="inline-flex items-center gap-2 text-sm text-slate-400">
+                                    <MessageSquare className="h-4 w-4" />
+                                    {approval.comments.length} comments
+                                </span>
                             </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* RIGHT: Control Panel (Sidebar) */}
-                <div className={`w-[380px] shrink-0 flex flex-col relative overflow-hidden rounded-md border shadow-sm ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-white border-gray-200/60'}`}>
-
-                    {/* Reviewers Status Card */}
-                    <div className={`p-6 border-b ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-100'}`}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                <Users className="w-4 h-4" />
-                                Review Status
-                            </h3>
-                            <button className="text-xs text-indigo-500 font-medium hover:underline">Manage</button>
-                        </div>
-
-                        <div className="space-y-3">
-                            {reviewers.map((r, i) => (
-                                <div key={i} className="flex items-center justify-between group">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-2 ring-white dark:ring-[#111] ${r.decision === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                                            r.decision === 'CHANGES_REQUESTED' ? 'bg-orange-100 text-orange-700' :
-                                                r.decision === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                                                    'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                                            }`}>
-                                            {r.name?.[0] || r.email?.[0]}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium leading-none">{r.name || r.email}</p>
-                                            <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">
-                                                {r.decision?.replace('_', ' ') || 'Pending Review'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <MoreHorizontal className="w-4 h-4 text-gray-400 cursor-pointer" />
-                                    </div>
-                                </div>
-                            ))}
-                            {reviewers.length === 0 && (
-                                <p className="text-sm text-gray-500 italic">No reviewers assigned.</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Chat / Activity Feed */}
-                    <div className="flex-1 flex flex-col min-h-0 bg-gray-50/50 dark:bg-transparent">
-                        <div className={`p-4 border-b flex items-center gap-2 ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-100'}`}>
-                            <MessageSquare className="w-4 h-4 text-gray-400" />
-                            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Discussion</span>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                            {comments.length === 0 && (
-                                <div className="text-center py-10 opacity-50">
-                                    <p className="text-sm">Start the conversation</p>
-                                </div>
-                            )}
-
-                            {comments.map((comment, i) => {
-                                const isMe = comment.user?.email === user?.email; // Simplified check
-                                return (
-                                    <div key={i} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
-                                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 flex-shrink-0 flex items-center justify-center text-xs font-bold">
-                                            {comment.user?.name?.[0]}
-                                        </div>
-                                        <div className={`flex flex-col max-w-[85%] ${isMe ? 'items-end' : 'items-start'}`}>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-xs font-bold text-gray-800 dark:text-gray-200">{comment.user?.name}</span>
-                                                <span className="text-[10px] text-gray-400">{new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <div className="space-y-3">
+                                {approval.comments.map((item) => (
+                                    <div key={item.id} className="rounded-2xl border border-white/10 bg-[#081018] p-4">
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 text-sm text-slate-300">
+                                                <User className="h-4 w-4 text-slate-500" />
+                                                <span>{authorLabel(item.author)}</span>
+                                                <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-400">
+                                                    Revision {approval.revisions.find((revision) => revision.id === item.revisionId)?.revisionNumber || approval.latestRevisionNumber}
+                                                </span>
+                                                {item.parentCommentId && (
+                                                    <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-400">Reply</span>
+                                                )}
                                             </div>
-                                            <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${isMe
-                                                ? 'bg-indigo-600 text-white rounded-tr-none'
-                                                : 'bg-white dark:bg-[#1A1A1A] border border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-200 rounded-tl-none'
-                                                }`}>
-                                                {comment.content}
-                                            </div>
+                                            <span className="text-xs text-slate-500">{formatApprovalDate(item.createdAt)}</span>
                                         </div>
+                                        <p className="mt-3 text-sm leading-6 text-slate-200">{item.content}</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setReplyTo(item);
+                                                setSelectedRevisionId(item.revisionId);
+                                            }}
+                                            className="mt-3 text-xs text-sky-300 transition hover:text-sky-200"
+                                        >
+                                            Reply
+                                        </button>
                                     </div>
-                                );
-                            })}
-                            <div ref={commentsEndRef} />
-                        </div>
+                                ))}
 
-                        {/* Input Area */}
-                        <div className={`p-4 bg-white dark:bg-transparent border-t ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-200'}`}>
-                            <form onSubmit={handleCommentSubmit} className={`relative rounded-xl border shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all ${isDark ? 'border-[#2b2b40]' : 'border-gray-200'}`}>
+                                {approval.comments.length === 0 && (
+                                    <div className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-slate-500">
+                                        No comments yet.
+                                    </div>
+                                )}
+                            </div>
+
+                            <form onSubmit={submitComment} className="mt-5 rounded-[1.5rem] border border-white/10 bg-[#081018] p-4">
+                                {replyTo && (
+                                    <div className="mb-3 flex items-center justify-between rounded-2xl border border-sky-400/25 bg-sky-500/10 px-3 py-2 text-xs text-sky-100">
+                                        <span>Replying to {authorLabel(replyTo.author)}</span>
+                                        <button type="button" onClick={() => setReplyTo(null)}>
+                                            Cancel
+                                        </button>
+                                    </div>
+                                )}
                                 <textarea
-                                    className="w-full bg-transparent p-3 pr-12 text-sm max-h-32 resize-none focus:outline-none dark:text-gray-200"
-                                    placeholder="Type a message..."
-                                    rows="2"
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                            e.preventDefault();
-                                            handleCommentSubmit(e);
-                                        }
-                                    }}
+                                    rows={4}
+                                    value={comment}
+                                    onChange={(e) => setComment(e.target.value)}
+                                    placeholder="Add feedback, answer questions, or clarify requested changes."
+                                    className="w-full rounded-2xl border border-white/10 bg-[#0d1520] px-4 py-3 text-sm outline-none focus:border-sky-400"
                                 />
-                                <button
-                                    type="submit"
-                                    disabled={!newComment.trim()}
-                                    className="absolute right-2 bottom-2 p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50 disabled:bg-gray-300 transition-colors"
-                                >
-                                    <Send className="w-4 h-4" />
-                                </button>
+                                <div className="mt-3 flex items-center justify-between">
+                                    <span className="text-xs text-slate-500">
+                                        Comment will be attached to revision {selectedRevision?.revisionNumber || approval.latestRevisionNumber}.
+                                    </span>
+                                    <button
+                                        type="submit"
+                                        disabled={saving || !comment.trim()}
+                                        className="inline-flex items-center gap-2 rounded-full bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <Send className="h-4 w-4" />
+                                        Post comment
+                                    </button>
+                                </div>
                             </form>
-                            <p className="text-[10px] text-gray-400 mt-2 text-center">
-                                Press <span className="font-mono bg-gray-100 dark:bg-gray-800 px-1 rounded">Enter</span> to send
-                            </p>
                         </div>
-                    </div>
+                    </section>
+
+                    <aside className="space-y-6">
+                        <section className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Version history</p>
+                            <div className="mt-4 space-y-3">
+                                {approval.revisions.map((revision) => (
+                                    <button
+                                        key={revision.id}
+                                        type="button"
+                                        onClick={() => setSelectedRevisionId(revision.id)}
+                                        className={`w-full rounded-2xl border px-4 py-4 text-left transition ${revision.id === selectedRevision?.id ? 'border-sky-400/50 bg-sky-500/10' : 'border-white/10 bg-[#081018]'}`}
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-sm font-medium">Revision {revision.revisionNumber}</span>
+                                            <span className="text-xs text-slate-500">{formatApprovalDate(revision.createdAt)}</span>
+                                        </div>
+                                        <p className="mt-2 text-sm text-slate-400">{revision.summary || 'No revision note provided.'}</p>
+                                        <p className="mt-2 text-xs text-slate-500">
+                                            Uploaded by {revision.uploadedBy?.firstName} {revision.uploadedBy?.lastName}
+                                        </p>
+                                    </button>
+                                ))}
+                            </div>
+                        </section>
+
+                        <section className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Reviewers</p>
+                            <div className="mt-4 space-y-3">
+                                {approval.reviewers.map((reviewer) => (
+                                    <div key={reviewer.id} className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-200">{reviewer.name || reviewer.email}</p>
+                                                <p className="text-xs text-slate-500">{reviewer.email}</p>
+                                            </div>
+                                            <span className="rounded-full bg-white/5 px-2 py-1 text-[11px] text-slate-400">
+                                                {reviewer.reviewerType}
+                                            </span>
+                                        </div>
+                                        <p className="mt-3 text-xs text-slate-400">
+                                            {reviewer.latestDecision ? `Decision: ${reviewer.latestDecision.decision.replaceAll('_', ' ')}` : 'Awaiting decision'}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <section className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Submission metadata</p>
+                            <dl className="mt-4 grid gap-3 text-sm">
+                                <div className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
+                                    <dt className="text-slate-500">Requested by</dt>
+                                    <dd className="mt-1 text-slate-200">{approval.createdBy?.firstName} {approval.createdBy?.lastName}</dd>
+                                </div>
+                                <div className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
+                                    <dt className="text-slate-500">Latest revision</dt>
+                                    <dd className="mt-1 text-slate-200">v{approval.latestRevisionNumber}</dd>
+                                </div>
+                                <div className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
+                                    <dt className="text-slate-500">Last comment</dt>
+                                    <dd className="mt-1 text-slate-200">{formatApprovalDate(approval.lastCommentAt)}</dd>
+                                </div>
+                            </dl>
+                        </section>
+                    </aside>
                 </div>
             </div>
-
         </div>
     );
 };

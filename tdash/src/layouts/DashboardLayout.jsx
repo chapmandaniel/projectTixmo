@@ -77,10 +77,12 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                 }
             }
 
-            const approvalRes = await api.get('/approvals?status=PENDING').catch(() => null);
-            if (approvalRes) {
-                const approvals = approvalRes.data?.approvals || [];
-                setPendingApprovalsCount(approvals.length);
+            if (activeView !== 'approvals') {
+                const approvalRes = await api.get('/approvals?status=PENDING_REVIEW').catch(() => null);
+                if (approvalRes) {
+                    const approvals = approvalRes.approvals || approvalRes.data?.approvals || [];
+                    setPendingApprovalsCount(approvals.length);
+                }
             }
         } catch (error) {
             console.error('Failed to fetch dashboard data', error);
@@ -89,9 +91,9 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
 
     useEffect(() => {
         fetchDashboardData();
-        const interval = setInterval(fetchDashboardData, 30000); // 30s
+        const interval = setInterval(fetchDashboardData, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [activeView]);
 
     const toggleNotifications = () => {
         if (!showNotifications) fetchDashboardData();

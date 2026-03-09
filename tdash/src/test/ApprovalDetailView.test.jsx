@@ -1,86 +1,127 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ApprovalDetailView from '../features/ApprovalDetailView';
 
-// Mock api
+const apiGet = vi.fn();
+const apiPost = vi.fn();
+const apiUpload = vi.fn();
+
 vi.mock('../lib/api', () => ({
     api: {
-        get: vi.fn().mockResolvedValue({}),
-        post: vi.fn(),
-        delete: vi.fn(),
-        upload: vi.fn(),
+        get: (...args) => apiGet(...args),
+        post: (...args) => apiPost(...args),
+        upload: (...args) => apiUpload(...args),
     },
 }));
 
-// Mock lucide-react icons to be easily queryable
-vi.mock('lucide-react', async () => {
-    return {
-        ArrowLeft: () => <span data-testid="icon-arrow-left" />,
-        Upload: () => <span data-testid="icon-upload" />,
-        Users: () => <span data-testid="icon-users" />,
-        Send: () => <span data-testid="icon-send" />,
-        Trash2: () => <span data-testid="icon-trash-2" />,
-        Edit3: () => <span data-testid="icon-edit-3" />,
-        CheckCircle: () => <span data-testid="icon-check-circle" />,
-        XCircle: () => <span data-testid="icon-x-circle" />,
-        Clock: () => <span data-testid="icon-clock" />,
-        MessageSquare: () => <span data-testid="icon-message-square" />,
-        FileText: () => <span data-testid="icon-file-text" />,
-        Image: () => <span data-testid="icon-image" />,
-        X: () => <span data-testid="icon-x" />,
-        Plus: () => <span data-testid="icon-plus" />,
-        RefreshCw: () => <span data-testid="icon-refresh-cw" />,
-        Download: () => <span data-testid="icon-download" />,
-        ExternalLink: () => <span data-testid="icon-external-link" />,
-        AlertTriangle: () => <span data-testid="icon-alert-triangle" />,
-        Paperclip: () => <span data-testid="icon-paperclip" />,
-        Eye: () => <span data-testid="icon-eye" />,
-        MoreHorizontal: () => <span data-testid="icon-more-horizontal" />,
-        ChevronLeft: () => <span data-testid="icon-chevron-left" />,
-        ChevronRight: () => <span data-testid="icon-chevron-right" />,
-        Instagram: () => <span data-testid="icon-instagram" />,
-        Facebook: () => <span data-testid="icon-facebook" />,
-        Twitter: () => <span data-testid="icon-twitter" />,
-        Linkedin: () => <span data-testid="icon-linkedin" />,
-    };
-});
-
-// Mock scrollIntoView
-window.HTMLElement.prototype.scrollIntoView = vi.fn();
+const approvalFixture = {
+    id: 'approval-1',
+    title: 'Main stage artwork',
+    status: 'UPDATED',
+    deadline: '2026-03-12T10:00:00.000Z',
+    submittedAt: '2026-03-09T10:00:00.000Z',
+    latestRevisionNumber: 2,
+    lastCommentAt: '2026-03-09T12:00:00.000Z',
+    event: { name: 'Summer Jam' },
+    createdBy: { firstName: 'Nina', lastName: 'Lopez' },
+    reviewers: [
+        {
+            id: 'reviewer-1',
+            email: 'reviewer@example.com',
+            reviewerType: 'INTERNAL',
+            latestDecision: null,
+        },
+    ],
+    latestRevision: {
+        id: 'revision-2',
+        revisionNumber: 2,
+        createdAt: '2026-03-09T12:00:00.000Z',
+        assets: [],
+    },
+    revisions: [
+        {
+            id: 'revision-2',
+            revisionNumber: 2,
+            summary: 'Adjusted headline contrast.',
+            createdAt: '2026-03-09T12:00:00.000Z',
+            uploadedBy: { firstName: 'Nina', lastName: 'Lopez' },
+            assets: [],
+        },
+        {
+            id: 'revision-1',
+            revisionNumber: 1,
+            summary: 'Initial upload.',
+            createdAt: '2026-03-09T10:00:00.000Z',
+            uploadedBy: { firstName: 'Nina', lastName: 'Lopez' },
+            assets: [],
+        },
+    ],
+    comments: [
+        {
+            id: 'comment-1',
+            revisionId: 'revision-2',
+            content: 'Need a bit more breathing room above the sponsor row.',
+            createdAt: '2026-03-09T12:30:00.000Z',
+            author: { name: 'Reviewer', email: 'reviewer@example.com' },
+        },
+    ],
+};
 
 describe('ApprovalDetailView', () => {
-    const mockApproval = {
-        id: '123',
-        title: 'Test Approval',
-        status: 'DRAFT',
-        reviewers: [
-            { id: 'r1', email: 'test@example.com', name: 'Test User' },
-        ],
-        assets: [],
-        comments: [],
-        version: 1,
-        event: { name: 'Test Event' },
-    };
+    beforeEach(() => {
+        vi.clearAllMocks();
+        apiGet.mockResolvedValue(approvalFixture);
+    });
 
-    const statuses = ['DRAFT', 'PENDING', 'CHANGES_REQUESTED', 'APPROVED', 'REJECTED'];
-
-    statuses.forEach((status) => {
-        it(`should render correctly for status: ${status}`, () => {
+    it('renders revision history and reviewer controls for the latest revision', async () => {
+        await act(async () => {
             render(
                 <ApprovalDetailView
-                    approval={{ ...mockApproval, status }}
-                    isDark={false}
-                    user={{ id: 'u1' }}
-                    onBack={() => { }}
-                    onUpdate={() => { }}
-                    onDelete={() => { }}
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={{ email: 'reviewer@example.com' }}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
                 />
             );
-
-            // Check for Manage button
-            const manageButton = screen.queryByText('Manage', { selector: 'button' });
-            expect(manageButton).toBeInTheDocument();
         });
+
+        expect(screen.getByText('Main stage artwork')).toBeInTheDocument();
+        expect(screen.getAllByText('Revision 2').length).toBeGreaterThan(0);
+        expect(screen.getByText('Threaded feedback')).toBeInTheDocument();
+        expect(screen.getAllByText('Upload revision').length).toBeGreaterThan(0);
+    });
+
+    it('posts a comment against the selected revision', async () => {
+        apiPost.mockResolvedValue({});
+
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={{ email: 'reviewer@example.com' }}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        fireEvent.change(screen.getByPlaceholderText(/Add feedback/i), {
+            target: { value: 'Looks better now.' },
+        });
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('Post comment'));
+        });
+
+        await waitFor(() =>
+            expect(apiPost).toHaveBeenCalledWith('/approvals/approval-1/comments', {
+                content: 'Looks better now.',
+                revisionId: 'revision-2',
+                parentCommentId: undefined,
+            })
+        );
     });
 });

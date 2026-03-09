@@ -215,10 +215,19 @@ export async function cleanupTestData() {
     await prisma.approvalComment.deleteMany();
   } catch (e) { }
   try {
+    await prisma.approvalReviewDecision.deleteMany();
+  } catch (e) { }
+  try {
+    await prisma.approvalReminder.deleteMany();
+  } catch (e) { }
+  try {
     await prisma.approvalReviewer.deleteMany();
   } catch (e) { }
   try {
     await prisma.approvalAsset.deleteMany();
+  } catch (e) { }
+  try {
+    await prisma.approvalRevision.deleteMany();
   } catch (e) { }
 
   // 2. Transactional data (Ticket, Order)

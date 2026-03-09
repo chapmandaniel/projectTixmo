@@ -64,7 +64,12 @@ export const config = {
 
   // Rate Limiting
   rateLimitWindowMs: 15 * 60 * 1000,
-  rateLimitMax: 100,
+  rateLimitMax:
+    process.env.NODE_ENV === 'test'
+      ? 1000
+      : process.env.NODE_ENV === 'development'
+        ? 2000
+        : parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
 
   // CORS
   corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'],

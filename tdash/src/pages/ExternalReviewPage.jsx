@@ -1,23 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-    CheckCircle,
-    XCircle,
-    AlertTriangle,
-    MessageSquare,
-    Clock,
-    FileText,
-    Image,
+    CalendarDays,
+    CheckCircle2,
     Download,
-    ExternalLink,
+    FileText,
+    MessageSquare,
     Send,
-    Loader2,
-    ChevronLeft,
-    ChevronRight,
-    Calendar,
-    User
+    ShieldCheck,
+    XCircle,
 } from 'lucide-react';
+import {
+    APPROVAL_STATUS_META,
+    DECISION_OPTIONS,
+    formatApprovalDate,
+} from '../features/approvalConstants';
 
-// External API calls without authentication
 const reviewApi = {
     baseUrl: import.meta.env.VITE_API_URL || '/api/v1',
 
@@ -30,273 +27,218 @@ const reviewApi = {
         return response.json();
     },
 
-    async submitDecision(token, decision, note) {
-        const response = await fetch(`${this.baseUrl}/review/${token}/decision`, {
+    async submitDecision(token, body) {
+        const response = await fetch(`${this.baseUrl}/review/${token}/decisions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ decision, note }),
+            body: JSON.stringify(body),
         });
-        if (!response.ok) throw new Error('Failed to submit decision');
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Failed to submit decision');
+        }
         return response.json();
     },
 
-    async addComment(token, content) {
+    async addComment(token, body) {
         const response = await fetch(`${this.baseUrl}/review/${token}/comments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content }),
+            body: JSON.stringify(body),
         });
-        if (!response.ok) throw new Error('Failed to add comment');
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Failed to add comment');
+        }
         return response.json();
     },
 };
 
-const STATUS_LABELS = {
-    PENDING: 'Awaiting Review',
-    APPROVED: 'Approved',
-    REJECTED: 'Rejected',
-    CHANGES_REQUESTED: 'Changes Requested',
-};
+const authorLabel = (author) => author?.name || author?.email || 'Unknown';
 
 const ExternalReviewPage = () => {
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const token = window.location.pathname.split('/').pop();
     const [approval, setApproval] = useState(null);
     const [reviewer, setReviewer] = useState(null);
-    const [currentAssetIndex, setCurrentAssetIndex] = useState(0);
+    const [selectedRevisionId, setSelectedRevisionId] = useState(null);
+    const [assetIndex, setAssetIndex] = useState(0);
     const [comment, setComment] = useState('');
     const [decisionNote, setDecisionNote] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-    const [showDecisionModal, setShowDecisionModal] = useState(false);
-    const [pendingDecision, setPendingDecision] = useState(null);
-
-    // Get token from URL
-    const token = window.location.pathname.split('/').pop();
-
-    useEffect(() => {
-        loadReview();
-    }, [token]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
 
     const loadReview = async () => {
         try {
             setLoading(true);
-            setError(null);
-            const data = await reviewApi.getReview(token);
-            setApproval(data.approval);
-            setReviewer(data.reviewer);
-        } catch (err) {
-            setError(err.message);
+            setError('');
+            const response = await reviewApi.getReview(token);
+            setApproval(response.approval);
+            setReviewer(response.reviewer);
+            setSelectedRevisionId(response.approval.latestRevision?.id || response.approval.revisions?.[0]?.id || null);
+        } catch (requestError) {
+            setError(requestError.message);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDecision = async (decision) => {
+    useEffect(() => {
+        loadReview();
+    }, [token]);
+
+    const selectedRevision = useMemo(() => {
+        if (!approval?.revisions?.length) {
+            return null;
+        }
+
+        return approval.revisions.find((revision) => revision.id === selectedRevisionId) || approval.latestRevision;
+    }, [approval, selectedRevisionId]);
+
+    useEffect(() => {
+        setAssetIndex(0);
+    }, [selectedRevisionId]);
+
+    const selectedAsset = selectedRevision?.assets?.[assetIndex] || null;
+    const statusMeta = APPROVAL_STATUS_META[approval?.status] || APPROVAL_STATUS_META.PENDING_REVIEW;
+    const StatusIcon = statusMeta.icon;
+
+    const submitDecision = async (decision) => {
         try {
-            setSubmitting(true);
-            await reviewApi.submitDecision(token, decision, decisionNote);
-            await loadReview();
-            setShowDecisionModal(false);
+            setSaving(true);
+            setError('');
+            await reviewApi.submitDecision(token, {
+                decision,
+                note: decisionNote || undefined,
+                revisionId: approval.latestRevision?.id,
+            });
             setDecisionNote('');
-        } catch (err) {
-            setError(err.message);
+            await loadReview();
+        } catch (requestError) {
+            setError(requestError.message);
         } finally {
-            setSubmitting(false);
+            setSaving(false);
         }
     };
 
-    const handleAddComment = async () => {
-        if (!comment.trim()) return;
+    const submitComment = async (event) => {
+        event.preventDefault();
+        if (!comment.trim() || !selectedRevision) {
+            return;
+        }
+
         try {
-            setSubmitting(true);
-            await reviewApi.addComment(token, comment);
+            setSaving(true);
+            setError('');
+            await reviewApi.addComment(token, {
+                content: comment,
+                revisionId: selectedRevision.id,
+            });
             setComment('');
             await loadReview();
-        } catch (err) {
-            console.error('Failed to add comment:', err);
+        } catch (requestError) {
+            setError(requestError.message);
         } finally {
-            setSubmitting(false);
+            setSaving(false);
         }
     };
-
-    const openDecisionModal = (decision) => {
-        setPendingDecision(decision);
-        setShowDecisionModal(true);
-    };
-
-    const currentAsset = approval?.assets?.[currentAssetIndex];
-    const isImage = currentAsset?.mimeType?.startsWith('image/');
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-                <div className="text-center">
-                    <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
-                    <p className="text-gray-400">Loading review...</p>
-                </div>
+            <div className="min-h-screen bg-[#07111a] text-slate-300 flex items-center justify-center">
+                Loading review link…
             </div>
         );
     }
 
-    if (error) {
+    if (error && !approval) {
         return (
-            <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6">
-                <div className="max-w-md text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-6">
-                        <AlertTriangle className="w-8 h-8 text-red-400" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Unable to Load Review</h1>
-                    <p className="text-gray-400 mb-6">{error}</p>
-                    <p className="text-sm text-gray-500">
-                        This link may have expired or been used already. Please contact the requester for a new link.
-                    </p>
-                </div>
+            <div className="min-h-screen bg-[#07111a] px-6 py-16 text-center text-slate-300">
+                <XCircle className="mx-auto h-12 w-12 text-rose-400" />
+                <h1 className="mt-4 text-2xl font-semibold text-white">Review link unavailable</h1>
+                <p className="mt-2 text-sm text-slate-400">{error}</p>
             </div>
         );
     }
-
-    const hasDecided = reviewer?.decision !== null;
 
     return (
-        <div className="min-h-screen bg-[#0A0A0A] text-white">
-            {/* Header */}
-            <header className="sticky top-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-gray-800">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-xl font-bold">{approval.title}</h1>
-                            <p className="text-sm text-gray-400 mt-1">
-                                {approval.event?.name} • Requested by {approval.createdBy?.firstName} {approval.createdBy?.lastName}
-                            </p>
+        <div className="min-h-screen bg-[#07111a] text-white">
+            <header className="border-b border-white/10 bg-[#0d1520]/90 backdrop-blur">
+                <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+                    <div>
+                        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-400">
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            Secure External Review
                         </div>
-                        <div className="flex items-center gap-3">
-                            {approval.dueDate && (
-                                <div className="flex items-center gap-2 text-sm text-gray-400">
-                                    <Calendar className="w-4 h-4" />
-                                    Due {new Date(approval.dueDate).toLocaleDateString()}
-                                </div>
-                            )}
-                            {hasDecided ? (
-                                <div className={`px-4 py-2 rounded-lg font-medium ${reviewer.decision === 'APPROVED' ? 'bg-green-500/20 text-green-400' :
-                                        reviewer.decision === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
-                                            'bg-orange-500/20 text-orange-400'
-                                    }`}>
-                                    {reviewer.decision === 'APPROVED' ? 'You Approved' :
-                                        reviewer.decision === 'REJECTED' ? 'You Rejected' :
-                                            'Changes Requested'}
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => openDecisionModal('APPROVED')}
-                                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                                    >
-                                        <CheckCircle className="w-4 h-4" />
-                                        Approve
-                                    </button>
-                                    <button
-                                        onClick={() => openDecisionModal('CHANGES_REQUESTED')}
-                                        className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                                    >
-                                        <AlertTriangle className="w-4 h-4" />
-                                        Request Changes
-                                    </button>
-                                    <button
-                                        onClick={() => openDecisionModal('REJECTED')}
-                                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                    >
-                                        <XCircle className="w-4 h-4" />
-                                        Reject
-                                    </button>
-                                </div>
-                            )}
+                        <h1 className="mt-3 text-2xl font-semibold">{approval.title}</h1>
+                        <p className="mt-2 text-sm text-slate-400">
+                            {approval.event?.name} • Requested by {approval.createdBy?.firstName} {approval.createdBy?.lastName}
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-3 lg:items-end">
+                        <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${statusMeta.chip}`}>
+                            <StatusIcon className="h-3.5 w-3.5" />
+                            {statusMeta.label}
+                        </span>
+                        <div className="inline-flex items-center gap-2 text-sm text-slate-400">
+                            <CalendarDays className="h-4 w-4" />
+                            Deadline {formatApprovalDate(approval.deadline)}
                         </div>
                     </div>
                 </div>
             </header>
 
-            <div className="max-w-7xl mx-auto px-6 py-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Main Asset Viewer */}
-                    <div className="lg:col-span-2 space-y-4">
-                        {/* Asset Display */}
-                        <div className="relative bg-gray-900 rounded-xl overflow-hidden" style={{ minHeight: '500px' }}>
-                            {currentAsset ? (
-                                isImage ? (
-                                    <img
-                                        src={currentAsset.s3Url}
-                                        alt={currentAsset.originalName}
-                                        className="w-full h-full object-contain"
-                                        style={{ maxHeight: '600px' }}
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex flex-col items-center justify-center py-20">
-                                        <FileText className="w-20 h-20 text-gray-600 mb-4" />
-                                        <p className="text-gray-400 font-medium">{currentAsset.originalName}</p>
-                                        <a
-                                            href={currentAsset.s3Url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                                        >
-                                            <Download className="w-4 h-4" />
-                                            Download to View
-                                        </a>
-                                    </div>
-                                )
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center py-20">
-                                    <Image className="w-20 h-20 text-gray-700" />
-                                </div>
-                            )}
-
-                            {/* Navigation */}
-                            {approval.assets?.length > 1 && (
-                                <>
-                                    <button
-                                        onClick={() => setCurrentAssetIndex((i) => Math.max(0, i - 1))}
-                                        disabled={currentAssetIndex === 0}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white hover:bg-black/70 disabled:opacity-30"
-                                    >
-                                        <ChevronLeft className="w-6 h-6" />
-                                    </button>
-                                    <button
-                                        onClick={() => setCurrentAssetIndex((i) => Math.min(approval.assets.length - 1, i + 1))}
-                                        disabled={currentAssetIndex === approval.assets.length - 1}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white hover:bg-black/70 disabled:opacity-30"
-                                    >
-                                        <ChevronRight className="w-6 h-6" />
-                                    </button>
-                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                                        {approval.assets.map((_, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => setCurrentAssetIndex(i)}
-                                                className={`w-2 h-2 rounded-full transition-colors ${i === currentAssetIndex ? 'bg-white' : 'bg-white/30 hover:bg-white/50'
-                                                    }`}
-                                            />
-                                        ))}
-                                    </div>
-                                </>
-                            )}
+            <main className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8">
+                <section className="space-y-6">
+                    <div className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Asset viewer</p>
+                                <h2 className="mt-2 text-lg font-semibold">Revision {selectedRevision?.revisionNumber}</h2>
+                            </div>
+                            <span className="text-sm text-slate-400">{formatApprovalDate(selectedRevision?.createdAt)}</span>
                         </div>
 
-                        {/* Asset Thumbnails */}
-                        {approval.assets?.length > 1 && (
-                            <div className="flex gap-2 overflow-x-auto pb-2">
-                                {approval.assets.map((asset, i) => (
+                        <div className="min-h-[420px] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#07111a] p-6">
+                            <div className="flex h-full items-center justify-center">
+                                {selectedAsset ? (
+                                    selectedAsset.mimeType?.startsWith('image/') ? (
+                                        <img src={selectedAsset.s3Url} alt={selectedAsset.originalName} className="max-h-[520px] w-full rounded-2xl object-contain" />
+                                    ) : (
+                                        <div className="rounded-[1.5rem] border border-white/10 bg-[#0d1520] px-8 py-12 text-center">
+                                            <FileText className="mx-auto h-12 w-12 text-slate-500" />
+                                            <p className="mt-4 text-sm text-slate-300">{selectedAsset.originalName}</p>
+                                            <a
+                                                href={selectedAsset.s3Url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950"
+                                            >
+                                                <Download className="h-4 w-4" />
+                                                Download
+                                            </a>
+                                        </div>
+                                    )
+                                ) : (
+                                    <p className="text-sm text-slate-500">No preview available.</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {selectedRevision?.assets?.length > 1 && (
+                            <div className="mt-4 flex gap-2 overflow-x-auto">
+                                {selectedRevision.assets.map((asset, index) => (
                                     <button
                                         key={asset.id}
-                                        onClick={() => setCurrentAssetIndex(i)}
-                                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${i === currentAssetIndex ? 'border-indigo-500' : 'border-transparent hover:border-gray-600'
-                                            }`}
+                                        type="button"
+                                        onClick={() => setAssetIndex(index)}
+                                        className={`h-20 min-w-20 overflow-hidden rounded-2xl border ${index === assetIndex ? 'border-sky-400' : 'border-white/10'}`}
                                     >
                                         {asset.mimeType?.startsWith('image/') ? (
-                                            <img src={asset.s3Url} alt="" className="w-full h-full object-cover" />
+                                            <img src={asset.s3Url} alt={asset.originalName} className="h-full w-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                                                <FileText className="w-6 h-6 text-gray-500" />
-                                            </div>
+                                            <div className="flex h-full items-center justify-center bg-[#07111a] text-xs text-slate-400">File</div>
                                         )}
                                     </button>
                                 ))}
@@ -304,116 +246,113 @@ const ExternalReviewPage = () => {
                         )}
                     </div>
 
-                    {/* Sidebar */}
-                    <div className="space-y-6">
-                        {/* Instructions */}
-                        {approval.instructions && (
-                            <div className="bg-[#1A1A1A] rounded-xl p-5 border border-gray-800">
-                                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                    <User className="w-4 h-4 text-indigo-400" />
-                                    Instructions
-                                </h3>
-                                <p className="text-gray-300 text-sm whitespace-pre-wrap">{approval.instructions}</p>
+                    <div className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div>
+                                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Comments</p>
+                                <h2 className="mt-2 text-lg font-semibold">Discussion thread</h2>
                             </div>
-                        )}
+                            <span className="inline-flex items-center gap-2 text-sm text-slate-400">
+                                <MessageSquare className="h-4 w-4" />
+                                {approval.comments.length} comments
+                            </span>
+                        </div>
 
-                        {/* Description */}
-                        {approval.description && (
-                            <div className="bg-[#1A1A1A] rounded-xl p-5 border border-gray-800">
-                                <h3 className="font-semibold mb-3">Description</h3>
-                                <p className="text-gray-400 text-sm whitespace-pre-wrap">{approval.description}</p>
-                            </div>
-                        )}
-
-                        {/* Comments */}
-                        <div className="bg-[#1A1A1A] rounded-xl p-5 border border-gray-800">
-                            <h3 className="font-semibold mb-4 flex items-center gap-2">
-                                <MessageSquare className="w-4 h-4 text-indigo-400" />
-                                Comments ({approval.comments?.length || 0})
-                            </h3>
-
-                            <div className="space-y-4 max-h-80 overflow-y-auto mb-4">
-                                {approval.comments?.map((c) => (
-                                    <div key={c.id} className="text-sm">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-medium text-gray-300">
-                                                {c.user ? `${c.user.firstName} ${c.user.lastName}` : c.reviewerEmail || 'Reviewer'}
-                                            </span>
-                                            <span className="text-gray-600 text-xs">
-                                                {new Date(c.createdAt).toLocaleString()}
-                                            </span>
-                                        </div>
-                                        <p className="text-gray-400">{c.content}</p>
+                        <div className="space-y-3">
+                            {approval.comments.map((item) => (
+                                <div key={item.id} className="rounded-2xl border border-white/10 bg-[#07111a] p-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="text-sm text-slate-300">{authorLabel(item.author)}</div>
+                                        <div className="text-xs text-slate-500">{formatApprovalDate(item.createdAt)}</div>
                                     </div>
-                                ))}
-                                {(!approval.comments || approval.comments.length === 0) && (
-                                    <p className="text-gray-500 text-sm text-center py-4">No comments yet</p>
-                                )}
-                            </div>
+                                    <p className="mt-3 text-sm leading-6 text-slate-200">{item.content}</p>
+                                </div>
+                            ))}
+                        </div>
 
-                            {/* Add Comment */}
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                                    placeholder="Add a comment..."
-                                    className="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
+                        <form onSubmit={submitComment} className="mt-5 rounded-[1.5rem] border border-white/10 bg-[#07111a] p-4">
+                            <textarea
+                                rows={4}
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                placeholder="Add a comment or ask for clarification."
+                                className="w-full rounded-2xl border border-white/10 bg-[#0d1520] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                            />
+                            <div className="mt-3 flex justify-end">
                                 <button
-                                    onClick={handleAddComment}
-                                    disabled={!comment.trim() || submitting}
-                                    className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                                    type="submit"
+                                    disabled={saving || !comment.trim()}
+                                    className="inline-flex items-center gap-2 rounded-full bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    <Send className="w-5 h-5" />
+                                    <Send className="h-4 w-4" />
+                                    Add comment
                                 </button>
                             </div>
-                        </div>
+                        </form>
                     </div>
-                </div>
-            </div>
+                </section>
 
-            {/* Decision Modal */}
-            {showDecisionModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-                    <div className="bg-[#1A1A1A] rounded-xl max-w-md w-full p-6 border border-gray-800">
-                        <h2 className="text-xl font-bold mb-2">
-                            {pendingDecision === 'APPROVED' ? 'Approve this request?' :
-                                pendingDecision === 'REJECTED' ? 'Reject this request?' :
-                                    'Request changes?'}
-                        </h2>
-                        <p className="text-gray-400 text-sm mb-4">
-                            Add an optional note to explain your decision.
-                        </p>
+                <aside className="space-y-6">
+                    <section className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Your access</p>
+                        <div className="mt-4 rounded-2xl border border-white/10 bg-[#07111a] px-4 py-4 text-sm text-slate-300">
+                            <p>{reviewer?.name || reviewer?.email}</p>
+                            <p className="mt-1 text-xs text-slate-500">{reviewer?.email}</p>
+                            <p className="mt-3 text-xs text-slate-400">
+                                You can comment, browse revision history, approve, request changes, or decline this submission.
+                            </p>
+                        </div>
+
                         <textarea
+                            rows={3}
                             value={decisionNote}
                             onChange={(e) => setDecisionNote(e.target.value)}
-                            placeholder="Optional note..."
-                            rows={3}
-                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none mb-4"
+                            placeholder="Optional decision note"
+                            className="mt-4 w-full rounded-2xl border border-white/10 bg-[#07111a] px-4 py-3 text-sm outline-none focus:border-sky-400"
                         />
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowDecisionModal(false)}
-                                className="flex-1 py-3 text-gray-400 hover:text-white transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => handleDecision(pendingDecision)}
-                                disabled={submitting}
-                                className={`flex-1 py-3 rounded-lg font-medium text-white transition-colors disabled:opacity-50 ${pendingDecision === 'APPROVED' ? 'bg-green-600 hover:bg-green-700' :
-                                        pendingDecision === 'REJECTED' ? 'bg-red-600 hover:bg-red-700' :
-                                            'bg-orange-600 hover:bg-orange-700'
-                                    }`}
-                            >
-                                {submitting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Submit'}
-                            </button>
+
+                        <div className="mt-4 grid gap-2">
+                            {DECISION_OPTIONS.map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    disabled={saving}
+                                    onClick={() => submitDecision(option.value)}
+                                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-slate-200 transition hover:border-sky-300/40 hover:text-white disabled:opacity-60"
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
                         </div>
-                    </div>
-                </div>
-            )}
+                    </section>
+
+                    <section className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Version history</p>
+                        <div className="mt-4 space-y-3">
+                            {approval.revisions.map((revision) => (
+                                <button
+                                    key={revision.id}
+                                    type="button"
+                                    onClick={() => setSelectedRevisionId(revision.id)}
+                                    className={`w-full rounded-2xl border px-4 py-4 text-left transition ${revision.id === selectedRevision?.id ? 'border-sky-400/50 bg-sky-500/10' : 'border-white/10 bg-[#07111a]'}`}
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <span className="text-sm font-medium">Revision {revision.revisionNumber}</span>
+                                        <span className="text-xs text-slate-500">{formatApprovalDate(revision.createdAt)}</span>
+                                    </div>
+                                    <p className="mt-2 text-sm text-slate-400">{revision.summary || 'No revision note provided.'}</p>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+
+                    {error && (
+                        <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                            {error}
+                        </div>
+                    )}
+                </aside>
+            </main>
         </div>
     );
 };

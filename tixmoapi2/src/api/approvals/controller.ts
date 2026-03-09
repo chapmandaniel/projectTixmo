@@ -1,26 +1,33 @@
-import { Response, NextFunction } from 'express';
-import { approvalService } from './service';
-import { StatusCodes } from 'http-status-codes';
-import { AuthRequest } from '../../middleware/auth';
 import multer from 'multer';
 import os from 'os';
+import { NextFunction, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
+import { ZodError } from 'zod';
+import { AuthRequest } from '../../middleware/auth';
+import { ApiError } from '../../utils/ApiError';
+import {
+    approvalCommentBodySchema,
+    approvalDecisionBodySchema,
+    approvalMetadataUpdateSchema,
+    createApprovalBodySchema,
+    createRevisionBodySchema,
+} from './validation';
+import { approvalService } from './service';
 
-// Configure multer for disk storage
 const upload = multer({
     storage: multer.diskStorage({
         destination: os.tmpdir(),
         filename: (_req, file, cb) => {
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-            cb(null, file.fieldname + '-' + uniqueSuffix);
+            const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+            cb(null, `${file.fieldname}-${uniqueSuffix}`);
         },
     }),
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit per file
-        files: 5, // Max 5 files per upload
+        fileSize: 25 * 1024 * 1024,
+        files: 10,
     },
     fileFilter: (_req, file, cb) => {
-        // Allow images, PDFs, and common design files
-        const allowedMimes = [
+        const allowedMimeTypes = [
             'image/jpeg',
             'image/png',
             'image/gif',
@@ -28,23 +35,41 @@ const upload = multer({
             'image/svg+xml',
             'application/pdf',
             'video/mp4',
+            'video/quicktime',
             'video/webm',
         ];
 
-        if (allowedMimes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
+        if (!allowedMimeTypes.includes(file.mimetype)) {
             cb(new Error(`File type ${file.mimetype} is not allowed`));
+            return;
         }
+
+        cb(null, true);
     },
 });
 
-export const uploadMiddleware = upload.array('files', 5);
+export const approvalCreateUploadMiddleware = upload.array('files', 10);
+export const approvalRevisionUploadMiddleware = upload.array('files', 10);
+
+const parseSchema = <T>(schema: { parse: (value: unknown) => T }, value: unknown): T => {
+    try {
+        return schema.parse(value);
+    } catch (error) {
+        if (error instanceof ZodError) {
+            throw ApiError.badRequest(
+                'Validation failed',
+                error.errors.map((issue) => ({
+                    path: issue.path.join('.'),
+                    message: issue.message,
+                }))
+            );
+        }
+
+        throw error;
+    }
+};
 
 export const ApprovalController = {
-    /**
-     * Create a new approval request
-     */
     async create(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user?.userId;
@@ -52,22 +77,23 @@ export const ApprovalController = {
                 return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
             }
 
+            const body = parseSchema(createApprovalBodySchema, req.body);
+            const files = (req.files as Express.Multer.File[]) || [];
             const organizationId = await approvalService.getUserOrganizationId(userId);
+
             if (!organizationId) {
                 return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
             }
 
-            const { eventId, title, description, instructions, priority, dueDate } = req.body;
-
             const approval = await approvalService.create({
                 organizationId,
-                eventId,
                 createdById: userId,
-                title,
-                description,
-                instructions,
-                priority,
-                dueDate: dueDate ? new Date(dueDate) : undefined,
+                eventId: body.eventId,
+                title: body.title,
+                description: body.description,
+                deadline: new Date(body.deadline),
+                reviewers: body.reviewers,
+                files,
             });
 
             return res.status(StatusCodes.CREATED).json(approval);
@@ -76,9 +102,6 @@ export const ApprovalController = {
         }
     },
 
-    /**
-     * List approval requests with filters
-     */
     async list(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user?.userId;
@@ -86,77 +109,39 @@ export const ApprovalController = {
                 return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
             }
 
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            const { eventId, status, page, limit } = req.query;
-
-            const result = await approvalService.list(organizationId, {
-                eventId: eventId as string,
-                status: status as any,
-                page: page ? parseInt(page as string, 10) : undefined,
-                limit: limit ? parseInt(limit as string, 10) : undefined,
-            });
-
+            const result = await approvalService.list(userId, req.query as any);
             return res.json(result);
         } catch (error) {
             return next(error);
         }
     },
 
-    /**
-     * Get approval request by ID
-     */
     async getById(req: AuthRequest, res: Response, next: NextFunction) {
         try {
-            const { id } = req.params;
             const userId = req.user?.userId;
             if (!userId) {
                 return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
             }
 
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            const approval = await approvalService.getById(id, organizationId);
-            if (!approval) {
-                return res.status(StatusCodes.NOT_FOUND).json({ message: 'Approval request not found' });
-            }
-
+            const approval = await approvalService.getById(req.params.id, userId);
             return res.json(approval);
         } catch (error) {
             return next(error);
         }
     },
 
-    /**
-     * Update approval request
-     */
-    async update(req: AuthRequest, res: Response, next: NextFunction) {
+    async updateMetadata(req: AuthRequest, res: Response, next: NextFunction) {
         try {
-            const { id } = req.params;
             const userId = req.user?.userId;
             if (!userId) {
                 return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
             }
 
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            const { title, description, instructions, priority, dueDate } = req.body;
-
-            const approval = await approvalService.update(id, organizationId, {
-                title,
-                description,
-                instructions,
-                priority,
-                dueDate: dueDate ? new Date(dueDate) : dueDate === null ? null : undefined,
+            const body = parseSchema(approvalMetadataUpdateSchema, req.body);
+            const approval = await approvalService.updateMetadata(req.params.id, userId, {
+                title: body.title,
+                description: body.description,
+                deadline: body.deadline ? new Date(body.deadline) : undefined,
             });
 
             return res.json(approval);
@@ -165,298 +150,84 @@ export const ApprovalController = {
         }
     },
 
-    /**
-     * Delete approval request
-     */
-    async delete(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
-            }
-
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            await approvalService.delete(id, organizationId);
-            return res.status(StatusCodes.NO_CONTENT).send();
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    /**
-     * Upload assets
-     */
-    async uploadAssets(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
-            }
-
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            const files = req.files as Express.Multer.File[];
-            if (!files || files.length === 0) {
-                return res.status(StatusCodes.BAD_REQUEST).json({ message: 'No files provided' });
-            }
-
-            const assets = await approvalService.uploadAssets(id, organizationId, files);
-            return res.status(StatusCodes.CREATED).json(assets);
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    /**
-     * Delete asset
-     */
-    async deleteAsset(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { id, assetId } = req.params;
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
-            }
-
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            await approvalService.deleteAsset(id, assetId, organizationId);
-            return res.status(StatusCodes.NO_CONTENT).send();
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    /**
-     * Add reviewers
-     */
-    async addReviewers(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
-            }
-
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            const { reviewers } = req.body;
-            const createdReviewers = await approvalService.addReviewers(id, organizationId, reviewers);
-
-            return res.status(StatusCodes.CREATED).json(createdReviewers);
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    /**
-     * Remove reviewer
-     */
-    async removeReviewer(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { id, reviewerId } = req.params;
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
-            }
-
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            await approvalService.removeReviewer(id, reviewerId, organizationId);
-            return res.status(StatusCodes.NO_CONTENT).send();
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    /**
-     * Submit for review
-     */
-    async submitForReview(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
-            }
-
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            const approval = await approvalService.submitForReview(id, organizationId);
-
-            return res.json(approval);
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    /**
-     * Add comment (authenticated user)
-     */
-    async addComment(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
-            }
-
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            // Verify approval exists
-            const approval = await approvalService.getById(id, organizationId);
-            if (!approval) {
-                return res.status(StatusCodes.NOT_FOUND).json({ message: 'Approval request not found' });
-            }
-
-            const { content, assetId, annotation } = req.body;
-            const comment = await approvalService.addComment(id, userId, { content, assetId, annotation });
-
-            return res.status(StatusCodes.CREATED).json(comment);
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    /**
-     * Submit decision (authenticated user)
-     */
-    async submitAuthenticatedDecision(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { id } = req.params;
-            const userId = req.user?.userId;
-            if (!userId) {
-                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
-            }
-
-            const { decision, note } = req.body;
-
-            const reviewer = await approvalService.submitAuthenticatedDecision(id, userId, decision, note);
-
-            return res.json(reviewer);
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    /**
-     * Create revision and re-submit for review
-     */
     async createRevision(req: AuthRequest, res: Response, next: NextFunction) {
         try {
-            const { id } = req.params;
             const userId = req.user?.userId;
             if (!userId) {
                 return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
             }
 
-            const organizationId = await approvalService.getUserOrganizationId(userId);
-            if (!organizationId) {
-                return res.status(StatusCodes.FORBIDDEN).json({ message: 'User does not belong to an organization' });
-            }
-
-            const approval = await approvalService.createRevision(id, organizationId);
-
-            return res.json(approval);
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    // ==========================================
-    // External Reviewer Endpoints (No Auth)
-    // ==========================================
-
-    /**
-     * Get approval by token (external reviewer)
-     */
-    async getByToken(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { token } = req.params;
-            const result = await approvalService.getByToken(token);
-
-            if (!result) {
-                return res.status(StatusCodes.NOT_FOUND).json({ message: 'Invalid or expired review link' });
-            }
-
-            // Hide tokens from other reviewers in response
-            const sanitizedApproval = {
-                ...result.approval,
-                reviewers: result.approval.reviewers.map((r) => ({
-                    id: r.id,
-                    email: r.email,
-                    name: r.name,
-                    decision: r.decision,
-                    decisionAt: r.decisionAt,
-                })),
-            };
-
-            return res.json({
-                approval: sanitizedApproval,
-                reviewer: {
-                    id: result.reviewer.id,
-                    email: result.reviewer.email,
-                    name: result.reviewer.name,
-                    decision: result.reviewer.decision,
-                    decisionAt: result.reviewer.decisionAt,
-                },
+            const body = parseSchema(createRevisionBodySchema, req.body);
+            const files = (req.files as Express.Multer.File[]) || [];
+            const approval = await approvalService.createRevision(req.params.id, userId, {
+                summary: body.summary,
+                files,
             });
+
+            return res.status(StatusCodes.CREATED).json(approval);
         } catch (error) {
             return next(error);
         }
     },
 
-    /**
-     * Submit decision (external reviewer)
-     */
-    async submitDecision(req: AuthRequest, res: Response, next: NextFunction) {
+    async addComment(req: AuthRequest, res: Response, next: NextFunction) {
         try {
-            const { token } = req.params;
-            const { decision, note } = req.body;
+            const userId = req.user?.userId;
+            if (!userId) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+            }
 
-            const reviewer = await approvalService.submitDecision(token, decision, note);
-
-            return res.json(reviewer);
-        } catch (error) {
-            return next(error);
-        }
-    },
-
-    /**
-     * Add comment (external reviewer)
-     */
-    async addExternalComment(req: AuthRequest, res: Response, next: NextFunction) {
-        try {
-            const { token } = req.params;
-            const { content, assetId, annotation } = req.body;
-
-            const comment = await approvalService.addExternalComment(token, { content, assetId, annotation });
+            const body = parseSchema(approvalCommentBodySchema, req.body);
+            const comment = await approvalService.addCommentByUser(req.params.id, userId, body);
 
             return res.status(StatusCodes.CREATED).json(comment);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
+    async submitDecision(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user?.userId;
+            if (!userId) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+            }
+
+            const body = parseSchema(approvalDecisionBodySchema, req.body);
+            const decision = await approvalService.submitDecisionByUser(req.params.id, userId, body);
+
+            return res.json(decision);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
+    async getByToken(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const review = await approvalService.getByToken(req.params.token);
+            return res.json(review);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
+    async addExternalComment(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const body = parseSchema(approvalCommentBodySchema, req.body);
+            const comment = await approvalService.addCommentByToken(req.params.token, body);
+
+            return res.status(StatusCodes.CREATED).json(comment);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
+    async submitExternalDecision(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const body = parseSchema(approvalDecisionBodySchema, req.body);
+            const decision = await approvalService.submitDecisionByToken(req.params.token, body);
+
+            return res.json(decision);
         } catch (error) {
             return next(error);
         }

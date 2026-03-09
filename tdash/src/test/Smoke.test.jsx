@@ -13,7 +13,12 @@ vi.mock('../lib/api', () => ({
             request: { use: vi.fn() },
             response: { use: vi.fn() }
         }
-    }
+    },
+    api: {
+        get: vi.fn().mockResolvedValue({ approvals: [], events: [], data: { notifications: [], stats: {}, recentSales: [], events: [], salesTrend: [] } }),
+        post: vi.fn().mockResolvedValue({}),
+        upload: vi.fn().mockResolvedValue({}),
+    },
 }));
 
 vi.mock('../lib/auth', () => ({

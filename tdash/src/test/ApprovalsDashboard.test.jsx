@@ -1,140 +1,145 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ApprovalsDashboard from '../features/ApprovalsDashboard';
 
-// Mock dependencies
 const apiGet = vi.fn();
+const apiUpload = vi.fn();
+
 vi.mock('../lib/api', () => ({
     api: {
         get: (...args) => apiGet(...args),
+        upload: (...args) => apiUpload(...args),
         post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-    }
-}));
-
-// Mock child components
-vi.mock('../features/ApprovalGalleryCard', () => ({
-    default: ({ approval }) => <div data-testid="approval-card">{approval.title}</div>
-}));
-
-vi.mock('../features/CreateApprovalModal', () => ({
-    default: () => <div>Create Modal</div>
+    },
 }));
 
 vi.mock('../features/ApprovalDetailView', () => ({
-    default: () => <div>Detail View</div>
+    default: ({ approvalId }) => <div>Detail view for {approvalId}</div>,
 }));
 
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-    observe() { }
-    unobserve() { }
-    disconnect() { }
-};
-
 describe('ApprovalsDashboard', () => {
-    it('renders gallery of approvals and filters', async () => {
-        const mockApprovals = [
-            {
-                id: '1',
-                title: 'Test Approval 1',
-                status: 'DRAFT',
-                event: { name: 'Event A' },
-                assets: [],
-                reviewers: [],
-            },
-            {
-                id: '2',
-                title: 'Test Approval 2',
-                status: 'PENDING', // This one should show by default
-                event: { name: 'Event B' },
-                assets: [],
-                reviewers: [],
-            }
-        ];
-
-        apiGet.mockImplementation((url) => {
-            if (url.includes('/approvals')) {
-                return Promise.resolve({ approvals: mockApprovals });
-            }
-            if (url.includes('/events')) {
-                return Promise.resolve({ data: { events: [{ id: 'e1', name: 'Event A' }, { id: 'e2', name: 'Event B' }] } });
-            }
-            return Promise.resolve({});
-        });
-
-        await act(async () => {
-            render(
-                <MemoryRouter>
-                    <ApprovalsDashboard isDark={false} user={{}} />
-                </MemoryRouter>
-            );
-        });
-
-        expect(screen.getByText('Client Approvals')).toBeInTheDocument();
-
-        // The default filter is PENDING, so 'Test Approval 2' should be visible
-        expect(screen.getByText('Test Approval 2')).toBeInTheDocument();
-
-        // 'Test Approval 1' (DRAFT) should NOT be visible initially
-        expect(screen.queryByText('Test Approval 1')).not.toBeInTheDocument();
-
-        // Check for Status Filter Pills
-        expect(screen.getByText('Pending Review')).toBeInTheDocument();
-        expect(screen.getByText('Drafts')).toBeInTheDocument();
+    beforeEach(() => {
+        vi.clearAllMocks();
     });
 
-    it('filters approvals when clicking status pills', async () => {
-        const mockApprovals = [
-            { id: '1', title: 'Draft Item', status: 'DRAFT', event: {} },
-            { id: '2', title: 'Pending Item', status: 'PENDING', event: {} }
-        ];
-
+    it('loads the creative approvals dashboard and filters by search', async () => {
         apiGet.mockImplementation((url) => {
-            if (url.includes('/approvals')) return Promise.resolve({ approvals: mockApprovals });
-            if (url.includes('/events')) return Promise.resolve({ events: [] });
-            return Promise.resolve({});
+            if (url.startsWith('/events')) {
+                return Promise.resolve({
+                    events: [
+                        { id: 'event-1', name: 'Summer Jam' },
+                        { id: 'event-2', name: 'Neon Nights' },
+                    ],
+                });
+            }
+
+            return Promise.resolve({
+                approvals: [
+                    {
+                        id: 'approval-1',
+                        title: 'Main poster',
+                        status: 'PENDING_REVIEW',
+                        latestRevisionNumber: 1,
+                        submittedAt: '2026-03-09T10:00:00.000Z',
+                        deadline: '2026-03-12T10:00:00.000Z',
+                        event: { name: 'Summer Jam' },
+                        latestRevision: { assets: [] },
+                        reviewers: [],
+                    },
+                    {
+                        id: 'approval-2',
+                        title: 'Sponsor lockup',
+                        status: 'PENDING_REVIEW',
+                        latestRevisionNumber: 2,
+                        submittedAt: '2026-03-09T12:00:00.000Z',
+                        deadline: '2026-03-11T10:00:00.000Z',
+                        event: { name: 'Neon Nights' },
+                        latestRevision: { assets: [] },
+                        reviewers: [],
+                    },
+                ],
+            });
         });
 
         await act(async () => {
             render(
                 <MemoryRouter>
-                    <ApprovalsDashboard isDark={false} user={{}} />
+                    <ApprovalsDashboard user={{ email: 'designer@example.com' }} />
                 </MemoryRouter>
             );
         });
 
-        // Initially shows Pending Item
-        expect(screen.getByText('Pending Item')).toBeInTheDocument();
-        expect(screen.queryByText('Draft Item')).not.toBeInTheDocument();
+        expect(screen.getByText('Approvals Dashboard')).toBeInTheDocument();
+        expect(screen.getByText('Main poster')).toBeInTheDocument();
+        expect(screen.getByText('Sponsor lockup')).toBeInTheDocument();
 
-        // Click "Drafts" filter
-        const draftFilter = screen.getByText('Drafts');
-        fireEvent.click(draftFilter);
+        fireEvent.change(screen.getByPlaceholderText('Search by asset title or event'), {
+            target: { value: 'main' },
+        });
 
-        // Now shows Draft Item
-        expect(screen.getByText('Draft Item')).toBeInTheDocument();
-        expect(screen.queryByText('Pending Item')).not.toBeInTheDocument();
+        expect(screen.getByText('Main poster')).toBeInTheDocument();
+        expect(screen.queryByText('Sponsor lockup')).not.toBeInTheDocument();
     });
 
-    it('renders empty state correctly by status', async () => {
+    it('opens the create submission modal and uploads a new approval', async () => {
         apiGet.mockImplementation((url) => {
-            if (url.includes('/approvals')) return Promise.resolve({ approvals: [] });
-            if (url.includes('/events')) return Promise.resolve({ events: [] });
-            return Promise.resolve({});
+            if (url.startsWith('/events')) {
+                return Promise.resolve({
+                    events: [{ id: 'event-1', name: 'Summer Jam' }],
+                });
+            }
+
+            return Promise.resolve({ approvals: [] });
+        });
+
+        apiUpload.mockResolvedValue({
+            id: 'approval-99',
+            title: 'VIP poster',
+            status: 'PENDING_REVIEW',
+            latestRevisionNumber: 1,
+            latestRevision: { id: 'revision-1', assets: [] },
+            revisions: [{ id: 'revision-1', revisionNumber: 1, assets: [] }],
+            reviewers: [],
+            event: { name: 'Summer Jam' },
         });
 
         await act(async () => {
             render(
                 <MemoryRouter>
-                    <ApprovalsDashboard isDark={false} user={{}} />
+                    <ApprovalsDashboard user={{ email: 'designer@example.com' }} />
                 </MemoryRouter>
             );
         });
 
-        // Default is PENDING
-        expect(screen.getByText("No projects found for 'PENDING'.")).toBeInTheDocument();
+        fireEvent.click(screen.getByText('New submission'));
+
+        fireEvent.change(screen.getByLabelText('Event'), {
+            target: { value: 'event-1' },
+        });
+
+        fireEvent.change(screen.getByPlaceholderText(/Festival poster/i), {
+            target: { value: 'VIP poster' },
+        });
+
+        fireEvent.change(screen.getByPlaceholderText('reviewer@example.com'), {
+            target: { value: 'manager@example.com' },
+        });
+        fireEvent.click(screen.getByText('Add'));
+
+        fireEvent.change(screen.getByLabelText('Deadline'), {
+            target: { value: '2026-03-12T10:00' },
+        });
+
+        const file = new File(['file'], 'poster.png', { type: 'image/png' });
+        const fileInput = screen.getByLabelText(/Asset files/i);
+        fireEvent.change(fileInput, { target: { files: [file] } });
+
+        await act(async () => {
+            fireEvent.submit(screen.getByText('Create approval').closest('form'));
+        });
+
+        await waitFor(() => expect(apiUpload).toHaveBeenCalled());
+        expect(screen.getByText('Detail view for approval-99')).toBeInTheDocument();
     });
 });

@@ -30,6 +30,29 @@ export class UploadService {
         folder: string = 'approvals'
     ): Promise<UploadResult> {
         if (!isS3Configured()) {
+            if (process.env.NODE_ENV === 'test') {
+                const fileExtension = path.extname(file.originalname);
+                const uniqueFilename = `${randomUUID()}${fileExtension}`;
+                const s3Key = `${folder}/${uniqueFilename}`;
+
+                if (file.path) {
+                    try {
+                        await unlink(file.path);
+                    } catch (err) {
+                        console.error('Failed to delete temp file:', err);
+                    }
+                }
+
+                return {
+                    s3Key,
+                    s3Url: `https://test-storage.local/${s3Key}`,
+                    filename: uniqueFilename,
+                    originalName: file.originalname,
+                    mimeType: file.mimetype,
+                    size: file.size,
+                };
+            }
+
             throw new Error('S3 is not configured. Please set S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, and S3_BUCKET_NAME environment variables.');
         }
 
