@@ -6,5 +6,6 @@ const router = Router();
 
 // Protect AI routes with authentication
 router.post('/generate', authenticate, aiController.generate);
+router.post('/social-analyze', authenticate, aiController.analyzeSocial);
 
 export default router;

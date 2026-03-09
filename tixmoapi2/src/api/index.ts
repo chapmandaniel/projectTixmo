@@ -22,6 +22,7 @@ import taskRoutes from './tasks/routes';
 import aiRoutes from './ai/routes';
 import approvalRoutes from './approvals/routes';
 import reviewRoutes from './review/routes';
+import socialRoutes from './social/routes';
 
 const router = Router();
 
@@ -58,6 +59,7 @@ versionRouter.use('/payments', paymentRoutes);
 versionRouter.use('/waitlists', waitlistRoutes);
 versionRouter.use('/tasks', taskRoutes);
 versionRouter.use('/ai', aiRoutes);
+versionRouter.use('/social', socialRoutes);
 versionRouter.use('/docs', docsRoutes);
 versionRouter.use('/approvals', approvalRoutes);
 versionRouter.use('/review', reviewRoutes);

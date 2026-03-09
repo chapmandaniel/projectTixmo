@@ -25,8 +25,8 @@ const CreativeComposer = ({ isDark }) => {
                 weights
             });
 
-            if (response.data.success) {
-                setResult(response.data.data);
+            if (response?.success) {
+                setResult(response.data || response);
                 toast.success('Content generated successfully!');
             }
         } catch (error) {

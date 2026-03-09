@@ -1,76 +1,156 @@
 import React from 'react';
-import { Heart, MessageCircle, Share2, Instagram, Twitter, Facebook, Linkedin } from 'lucide-react';
+import {
+    AlertTriangle,
+    CheckCircle2,
+    Clock3,
+    Eye,
+    Facebook,
+    Instagram,
+    MessageSquare,
+    Music,
+    RefreshCw,
+    Share2,
+} from 'lucide-react';
 
-const SocialPostCard = ({ post, onClick, isDark }) => {
-    const PlatformIcon = {
-        instagram: Instagram,
-        twitter: Twitter,
-        facebook: Facebook,
-        linkedin: Linkedin
-    }[post.platform] || Instagram;
+const platformMeta = {
+    instagram: { icon: Instagram, label: 'Instagram', accent: 'from-pink-500 via-orange-400 to-amber-300' },
+    facebook: { icon: Facebook, label: 'Facebook', accent: 'from-sky-500 via-blue-500 to-indigo-500' },
+    tiktok: { icon: Music, label: 'TikTok', accent: 'from-cyan-400 via-emerald-400 to-lime-300' },
+};
 
-    const platformColor = {
-        instagram: 'text-pink-500',
-        twitter: 'text-sky-500',
-        facebook: 'text-blue-600',
-        linkedin: 'text-blue-700'
-    }[post.platform] || 'text-gray-500';
+const statusMeta = {
+    flagged: { label: 'Flagged', icon: AlertTriangle, className: 'bg-rose-500/15 text-rose-300 border-rose-400/20' },
+    watch: { label: 'Watch', icon: Clock3, className: 'bg-amber-500/15 text-amber-200 border-amber-400/20' },
+    clear: { label: 'Clear', icon: CheckCircle2, className: 'bg-emerald-500/15 text-emerald-200 border-emerald-400/20' },
+    resolved: { label: 'Resolved', icon: CheckCircle2, className: 'bg-slate-500/15 text-slate-200 border-slate-400/20' },
+};
+
+const cadenceLabel = {
+    hourly: 'Hourly refresh',
+    daily: 'Morning refresh',
+    'on-demand': 'On demand',
+};
+
+const formatCompactNumber = (value) => new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+}).format(value);
+
+const SocialPostCard = ({ post, onOpen, onRefresh, isBusy, isDark }) => {
+    const platform = platformMeta[post.platform] || platformMeta.instagram;
+    const status = statusMeta[post.alertStatus] || statusMeta.clear;
+    const PlatformIcon = platform.icon;
+    const StatusIcon = status.icon;
 
     return (
-        <div
-            onClick={() => onClick(post)}
-            className={`group relative break-inside-avoid mb-6 rounded-md border overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a]' : 'bg-white border-gray-200 hover:border-indigo-200 hover:shadow-xl hover:shadow-gray-200'}`}
+        <article
+            onClick={() => onOpen(post.id)}
+            className={`group overflow-hidden rounded-[28px] border cursor-pointer transition-all duration-300 hover:-translate-y-1 ${isDark
+                ? 'bg-[#171b28] border-[#2d3348] hover:border-[#445070] hover:shadow-[0_25px_80px_rgba(0,0,0,0.28)]'
+                : 'bg-white border-[#e8ebf2] hover:border-[#bcc8df] hover:shadow-[0_24px_60px_rgba(15,23,42,0.08)]'
+                }`}
         >
-            {/* Colorful Gradient bg top */}
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-pink-500 to-orange-400 opacity-70 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+            <div className={`h-1.5 w-full bg-gradient-to-r ${platform.accent}`}></div>
 
-            {/* Header */}
-            <div className="p-4 flex items-center justify-between z-10 relative">
-                <div className="flex items-center space-x-3">
-                    <img src={post.avatar} alt={post.author} className="w-8 h-8 rounded-full bg-gray-200" />
-                    <div>
-                        <p className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{post.author}</p>
-                        <p className={`text-xs font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>{new Date(post.date).toLocaleDateString()}</p>
+            <div className="relative">
+                <img
+                    src={post.mediaUrl}
+                    alt={post.eventName}
+                    className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0f111a] via-[#0f111a]/30 to-transparent"></div>
+                <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
+                    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs uppercase tracking-[0.22em] ${status.className}`}>
+                        <StatusIcon size={12} />
+                        <span>{status.label}</span>
+                    </div>
+                    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${isDark ? 'bg-[#111521]/85 text-white' : 'bg-white/90 text-[#0f172a]'}`}>
+                        <PlatformIcon size={14} />
+                        <span>{platform.label}</span>
                     </div>
                 </div>
-                <PlatformIcon size={18} className={platformColor} />
+                <div className="absolute left-4 right-4 bottom-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-white/70">{post.eventName}</p>
+                    <h3 className="mt-2 text-xl font-semibold text-white">{post.artistName}</h3>
+                </div>
             </div>
 
-            {/* Image */}
-            {post.imageUrl && (
-                <div className="relative aspect-video w-full overflow-hidden">
-                    <img
-                        src={post.imageUrl}
-                        alt="Post content"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
+            <div className="space-y-5 p-5">
+                <div className="flex items-center gap-3">
+                    <img src={post.avatarUrl} alt={post.handle} className="h-10 w-10 rounded-full bg-slate-200" />
+                    <div>
+                        <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{post.author}</p>
+                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>{post.handle}</p>
+                    </div>
                 </div>
-            )}
 
-            {/* Content */}
-            <div className="p-4 relative z-10">
-                <p className={`text-sm mb-4 line-clamp-3 font-light leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    {post.content}
+                <p className={`text-sm leading-7 ${isDark ? 'text-[#d6dbee]' : 'text-[#334155]'}`}>
+                    {post.content.length > 165 ? `${post.content.slice(0, 165)}...` : post.content}
                 </p>
 
-                {/* Metrics */}
-                <div className={`flex items-center justify-between pt-3 border-t ${isDark ? 'border-[#2b2b40]' : 'border-gray-100'}`}>
-                    <div className="flex items-center space-x-4">
-                        <div className={`flex items-center space-x-1.5 text-xs ${isDark ? 'text-gray-400 group-hover:text-rose-400' : 'text-gray-500 group-hover:text-rose-500'}`}>
-                            <Heart size={14} />
-                            <span>{post.likes}</span>
+                <div className={`rounded-2xl border p-4 ${isDark ? 'border-[#2a3144] bg-[#111521]' : 'border-[#e8ebf2] bg-[#f8fafc]'}`}>
+                    <div className="flex items-center justify-between gap-4">
+                        <div>
+                            <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Sentiment</p>
+                            <p className={`mt-1 text-3xl font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{post.analysis.sentimentScore}</p>
                         </div>
-                        <div className={`flex items-center space-x-1.5 text-xs ${isDark ? 'text-gray-400 group-hover:text-indigo-400' : 'text-gray-500 group-hover:text-indigo-500'}`}>
-                            <MessageCircle size={14} />
-                            <span>{post.comments}</span>
+                        <div className={`max-w-[12rem] text-right text-xs leading-5 ${isDark ? 'text-[#aeb6cc]' : 'text-[#475569]'}`}>
+                            {post.attentionReason || post.analysis.summary}
                         </div>
                     </div>
-                    <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                        <Share2 size={14} />
+
+                    <div className="mt-4 flex h-2 overflow-hidden rounded-full bg-black/10">
+                        <div className="bg-emerald-400" style={{ width: `${post.analysis.breakdown.positive}%` }}></div>
+                        <div className="bg-slate-400" style={{ width: `${post.analysis.breakdown.neutral}%` }}></div>
+                        <div className="bg-rose-400" style={{ width: `${post.analysis.breakdown.negative}%` }}></div>
                     </div>
                 </div>
+
+                <div className="grid grid-cols-4 gap-3 text-center">
+                    <div className={`rounded-2xl px-3 py-3 ${isDark ? 'bg-[#111521]' : 'bg-[#f8fafc]'}`}>
+                        <Eye size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
+                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Views</p>
+                        <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.views)}</p>
+                    </div>
+                    <div className={`rounded-2xl px-3 py-3 ${isDark ? 'bg-[#111521]' : 'bg-[#f8fafc]'}`}>
+                        <MessageSquare size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
+                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Comments</p>
+                        <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.comments)}</p>
+                    </div>
+                    <div className={`rounded-2xl px-3 py-3 ${isDark ? 'bg-[#111521]' : 'bg-[#f8fafc]'}`}>
+                        <Share2 size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
+                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Shares</p>
+                        <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.shares)}</p>
+                    </div>
+                    <div className={`rounded-2xl px-3 py-3 ${isDark ? 'bg-[#111521]' : 'bg-[#f8fafc]'}`}>
+                        <Clock3 size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
+                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Cadence</p>
+                        <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{cadenceLabel[post.updateCadence]}</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                    <div className={`text-xs uppercase tracking-[0.2em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>
+                        {post.analysis.priority} priority
+                    </div>
+                    <button
+                        type="button"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onRefresh(post.id);
+                        }}
+                        disabled={isBusy}
+                        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors ${isDark
+                            ? 'bg-[#243047] text-white hover:bg-[#31415f] disabled:bg-[#1d2230] disabled:text-[#64748b]'
+                            : 'bg-[#0f172a] text-white hover:bg-[#1e293b] disabled:bg-[#dbe2ee] disabled:text-[#94a3b8]'
+                            }`}
+                    >
+                        <RefreshCw size={14} className={isBusy ? 'animate-spin' : ''} />
+                        <span>Refresh AI</span>
+                    </button>
+                </div>
             </div>
-        </div>
+        </article>
     );
 };
 

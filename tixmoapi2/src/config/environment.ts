@@ -45,6 +45,8 @@ export const config = {
 
   // AI
   geminiApiKey: process.env.GEMINI_API_KEY || '',
+  openaiApiKey: process.env.OPENAI_API_KEY || '',
+  openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
 
   // AWS
   awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID,

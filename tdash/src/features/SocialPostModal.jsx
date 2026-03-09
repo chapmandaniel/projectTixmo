@@ -1,173 +1,257 @@
 import React from 'react';
-import { X, Heart, MessageCircle, Share2, MoreHorizontal, Instagram, Twitter, Facebook, Linkedin, Music, BarChart, Eye, TrendingUp, Sparkles, User } from 'lucide-react';
+import {
+    AlertTriangle,
+    Bot,
+    CheckCircle2,
+    ExternalLink,
+    Facebook,
+    Instagram,
+    MessageSquare,
+    Music,
+    RefreshCw,
+    Send,
+    Sparkles,
+    X,
+} from 'lucide-react';
 
-const SocialPostModal = ({ post, onClose, isDark }) => {
-    if (!post) return null;
+const platformMeta = {
+    instagram: { icon: Instagram, label: 'Instagram', accent: 'from-pink-500 via-orange-400 to-amber-300' },
+    facebook: { icon: Facebook, label: 'Facebook', accent: 'from-sky-500 via-blue-500 to-indigo-500' },
+    tiktok: { icon: Music, label: 'TikTok', accent: 'from-cyan-400 via-emerald-400 to-lime-300' },
+};
 
-    const PlatformIcon = {
-        instagram: Instagram,
-        twitter: Twitter,
-        facebook: Facebook,
-        linkedin: Linkedin,
-        tiktok: Music
-    }[post.platform] || Instagram;
+const statusMeta = {
+    flagged: { label: 'Flagged', icon: AlertTriangle, className: 'bg-rose-500/15 text-rose-300 border-rose-400/20' },
+    watch: { label: 'Watch', icon: AlertTriangle, className: 'bg-amber-500/15 text-amber-200 border-amber-400/20' },
+    clear: { label: 'Clear', icon: CheckCircle2, className: 'bg-emerald-500/15 text-emerald-200 border-emerald-400/20' },
+    resolved: { label: 'Resolved', icon: CheckCircle2, className: 'bg-slate-500/15 text-slate-200 border-slate-400/20' },
+};
 
-    const platformColor = {
-        instagram: 'text-pink-500',
-        twitter: 'text-sky-500',
-        facebook: 'text-blue-600',
-        linkedin: 'text-blue-700',
-        tiktok: 'text-pink-600'
-    }[post.platform] || 'text-gray-500';
+const cadenceLabel = {
+    hourly: 'Hourly refresh',
+    daily: 'Daily morning refresh',
+    'on-demand': 'On-demand review',
+};
 
-    const getSentimentColor = (sentiment) => {
-        switch (sentiment) {
-            case 'positive': return isDark ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-green-50 text-green-700 border-green-200';
-            case 'negative': return isDark ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-red-50 text-red-700 border-red-200';
-            default: return isDark ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' : 'bg-gray-50 text-gray-700 border-gray-200';
-        }
-    };
+const breakdownColor = {
+    positive: 'bg-emerald-400',
+    neutral: 'bg-slate-400',
+    negative: 'bg-rose-400',
+};
+
+const formatDateTime = (value) => {
+    if (!value) {
+        return 'On demand';
+    }
+
+    return new Intl.DateTimeFormat('en', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    }).format(new Date(value));
+};
+
+const SocialPostModal = ({ post, onClose, onResolve, onRefresh, isBusy, isDark }) => {
+    if (!post) {
+        return null;
+    }
+
+    const platform = platformMeta[post.platform] || platformMeta.instagram;
+    const status = statusMeta[post.alertStatus] || statusMeta.clear;
+    const PlatformIcon = platform.icon;
+    const StatusIcon = status.icon;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] bg-black/70 p-4 backdrop-blur-md" onClick={onClose}>
             <div
-                className={`w-full max-w-5xl h-[85vh] rounded-2xl flex overflow-hidden shadow-2xl ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'}`}
-                onClick={e => e.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
+                className={`mx-auto flex h-[92vh] w-full max-w-7xl flex-col overflow-hidden rounded-[32px] border shadow-[0_30px_120px_rgba(0,0,0,0.35)] xl:flex-row ${isDark ? 'border-[#2d3348] bg-[#141925]' : 'border-[#d7deea] bg-white'}`}
             >
-                {/* Left Side - Image (if exists) */}
-                {post.imageUrl ? (
-                    <div className="w-1/2 bg-black flex items-center justify-center relative">
-                        <img src={post.imageUrl} alt="Post" className="max-h-full max-w-full object-contain" />
-                    </div>
-                ) : (
-                    <div className={`w-1/2 flex items-center justify-center p-12 ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
-                        <div className="max-w-md text-center">
-                            <PlatformIcon size={48} className={`mx-auto mb-6 opacity-20 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                            <p className={`text-xl font-medium leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>"{post.content}"</p>
+                <div className="relative xl:w-[46%]">
+                    <img src={post.mediaUrl} alt={post.eventName} className="h-72 w-full object-cover xl:h-full" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c1018] via-[#0c1018]/10 to-transparent"></div>
+                    <div className="absolute left-6 right-6 top-6 flex items-center justify-between">
+                        <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs uppercase tracking-[0.24em] ${status.className}`}>
+                            <StatusIcon size={12} />
+                            <span>{status.label}</span>
                         </div>
-                    </div>
-                )}
-
-                {/* Right Side - Details */}
-                <div className={`w-1/2 flex flex-col h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'}`}>
-                    {/* Header */}
-                    <div className={`p-5 border-b flex items-center justify-between shrink-0 ${isDark ? 'border-[#2a2a2a]' : 'border-gray-100'}`}>
-                        <div className="flex items-center space-x-3">
-                            <img src={post.avatar} alt={post.author} className="w-10 h-10 rounded-full bg-gray-200" />
-                            <div>
-                                <p className={`font-medium text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{post.authorName || post.author}</p>
-                                <div className="flex items-center space-x-2">
-                                    <PlatformIcon size={12} className={platformColor} />
-                                    <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{post.author} • {new Date(post.date).toLocaleDateString()}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <button onClick={onClose} className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-[#2a2a2a] text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
-                            <X size={20} />
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className={`inline-flex h-11 w-11 items-center justify-center rounded-full ${isDark ? 'bg-[#101522]/80 text-white hover:bg-[#162032]' : 'bg-white/90 text-[#0f172a] hover:bg-white'}`}
+                        >
+                            <X size={18} />
                         </button>
                     </div>
+                    <div className="absolute bottom-6 left-6 right-6">
+                        <div className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r px-4 py-2 text-xs uppercase tracking-[0.24em] text-[#08111f] ${platform.accent}`}>
+                            <PlatformIcon size={14} />
+                            <span>{platform.label}</span>
+                        </div>
+                        <h2 className="mt-4 text-3xl font-semibold text-white">{post.eventName}</h2>
+                        <p className="mt-2 text-sm uppercase tracking-[0.24em] text-white/70">{post.artistName}</p>
+                        <p className="mt-4 max-w-xl text-base leading-8 text-white/88">{post.content}</p>
+                    </div>
+                </div>
 
-                    {/* Scrollable Content Area */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        <div className="p-6 space-y-6">
-                            {/* Post Text */}
-                            <p className={`text-base leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>
-                                {post.content}
-                            </p>
-
-                            {/* AI Insights & Metrics */}
-                            {(post.metrics || post.sentiment) && (
-                                <div className={`p-4 rounded-xl border ${isDark ? 'bg-[#252525]/50 border-[#333]' : 'bg-gray-50/50 border-gray-100'}`}>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <Sparkles size={16} className="text-violet-500" />
-                                            <span className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>AI Analysis</span>
-                                        </div>
-                                        {post.sentiment && (
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getSentimentColor(post.sentiment)} capitalize`}>
-                                                {post.sentiment} Sentiment
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Impressions</span>
-                                            <div className={`flex items-center gap-2 font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
-                                                <Eye size={16} className="text-blue-500" />
-                                                {(post.metrics?.impressions || 0).toLocaleString()}
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Engagement Rate</span>
-                                            <div className={`flex items-center gap-2 font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
-                                                <TrendingUp size={16} className="text-green-500" />
-                                                {post.metrics?.engagementRate || 0}%
-                                            </div>
-                                        </div>
-                                    </div>
+                <div className="flex flex-1 flex-col">
+                    <div className={`border-b px-6 py-5 ${isDark ? 'border-[#262d3f]' : 'border-[#e2e8f0]'}`}>
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="flex items-center gap-3">
+                                <img src={post.avatarUrl} alt={post.handle} className="h-12 w-12 rounded-full bg-slate-200" />
+                                <div>
+                                    <p className={`text-base font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{post.author}</p>
+                                    <p className={`text-sm ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>{post.handle}</p>
                                 </div>
-                            )}
-
-                            {/* AI Comment Summary */}
-                            <div className="space-y-4">
-                                <h4 className={`text-xs font-semibold uppercase tracking-wider sticky top-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                    Community Consensus
-                                </h4>
-
-                                <div className={`p-4 rounded-xl border relative overflow-hidden ${isDark ? 'bg-indigo-500/5 border-indigo-500/10' : 'bg-indigo-50 border-indigo-100'}`}>
-                                    <div className="flex gap-3">
-                                        <div className={`shrink-0 mt-0.5 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                            <Sparkles size={18} />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-indigo-400' : 'text-indigo-700'}`}>
-                                                AI Summary
-                                            </p>
-                                            <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                                {post.commentSummary || "Analyzing comments..."}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {/* Decorative background element */}
-                                    <div className={`absolute -right-4 -bottom-4 w-24 h-24 rounded-full blur-2xl opacity-10 pointer-events-none ${isDark ? 'bg-indigo-500' : 'bg-indigo-400'}`}></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                <div className={`rounded-2xl px-4 py-3 ${isDark ? 'bg-[#101522]' : 'bg-[#f8fafc]'}`}>
+                                    <p className={`text-[11px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Score</p>
+                                    <p className={`mt-1 text-2xl font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{post.analysis.sentimentScore}</p>
                                 </div>
-
-                                <div className="flex items-center justify-between pt-2">
-                                    <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                        Based on {post.comments} comments
-                                    </span>
-                                    <button className={`text-xs font-medium hover:underline ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                                        View all comments
-                                    </button>
+                                <div className={`rounded-2xl px-4 py-3 ${isDark ? 'bg-[#101522]' : 'bg-[#f8fafc]'}`}>
+                                    <p className={`text-[11px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Cadence</p>
+                                    <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{cadenceLabel[post.updateCadence]}</p>
+                                </div>
+                                <div className={`rounded-2xl px-4 py-3 ${isDark ? 'bg-[#101522]' : 'bg-[#f8fafc]'}`}>
+                                    <p className={`text-[11px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Checked</p>
+                                    <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatDateTime(post.lastCheckedAt)}</p>
+                                </div>
+                                <div className={`rounded-2xl px-4 py-3 ${isDark ? 'bg-[#101522]' : 'bg-[#f8fafc]'}`}>
+                                    <p className={`text-[11px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Next</p>
+                                    <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatDateTime(post.nextUpdateAt)}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Footer Actions */}
-                    <div className={`p-5 border-t shrink-0 ${isDark ? 'border-[#2a2a2a]' : 'border-gray-100'}`}>
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex space-x-6">
-                                <button className={`flex items-center space-x-2 transition-colors ${isDark ? 'text-gray-400 hover:text-rose-400' : 'text-gray-600 hover:text-rose-600'}`}>
-                                    <Heart size={20} />
-                                    <span className="text-sm font-medium">{post.likes.toLocaleString()}</span>
-                                </button>
-                                <button className={`flex items-center space-x-2 transition-colors ${isDark ? 'text-gray-400 hover:text-indigo-400' : 'text-gray-600 hover:text-indigo-600'}`}>
-                                    <MessageCircle size={20} />
-                                    <span className="text-sm font-medium">{post.comments.toLocaleString()}</span>
-                                </button>
-                                <button className={`flex items-center space-x-2 transition-colors ${isDark ? 'text-gray-400 hover:text-green-400' : 'text-gray-600 hover:text-green-600'}`}>
-                                    <Share2 size={20} />
-                                    <span className="text-sm font-medium">{post.shares.toLocaleString()}</span>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-6">
+                        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+                            <section className="space-y-6">
+                                <div className={`rounded-[28px] border p-5 ${isDark ? 'border-[#262d3f] bg-[#101522]' : 'border-[#e2e8f0] bg-[#f8fafc]'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <Bot size={18} className="text-cyan-400" />
+                                        <h3 className={`text-sm font-semibold uppercase tracking-[0.24em] ${isDark ? 'text-[#b8c2db]' : 'text-[#475569]'}`}>AI Summary</h3>
+                                    </div>
+                                    <p className={`mt-4 text-sm leading-7 ${isDark ? 'text-[#d6dbee]' : 'text-[#334155]'}`}>{post.analysis.summary}</p>
+                                    {post.attentionReason && (
+                                        <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${isDark ? 'border-rose-400/20 bg-rose-500/10 text-rose-100' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+                                            {post.attentionReason}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className={`rounded-[28px] border p-5 ${isDark ? 'border-[#262d3f] bg-[#101522]' : 'border-[#e2e8f0] bg-[#f8fafc]'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles size={18} className="text-amber-400" />
+                                        <h3 className={`text-sm font-semibold uppercase tracking-[0.24em] ${isDark ? 'text-[#b8c2db]' : 'text-[#475569]'}`}>Sentiment Breakdown</h3>
+                                    </div>
+                                    <div className="mt-5 space-y-4">
+                                        {Object.entries(post.analysis.breakdown).map(([key, value]) => (
+                                            <div key={key}>
+                                                <div className="mb-2 flex items-center justify-between">
+                                                    <span className={`text-sm capitalize ${isDark ? 'text-[#d6dbee]' : 'text-[#334155]'}`}>{key}</span>
+                                                    <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{value}%</span>
+                                                </div>
+                                                <div className={`h-2 overflow-hidden rounded-full ${isDark ? 'bg-[#1f2738]' : 'bg-[#e2e8f0]'}`}>
+                                                    <div className={`h-full rounded-full ${breakdownColor[key]}`} style={{ width: `${value}%` }}></div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className={`rounded-[28px] border p-5 ${isDark ? 'border-[#262d3f] bg-[#101522]' : 'border-[#e2e8f0] bg-[#f8fafc]'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <Send size={18} className="text-emerald-400" />
+                                        <h3 className={`text-sm font-semibold uppercase tracking-[0.24em] ${isDark ? 'text-[#b8c2db]' : 'text-[#475569]'}`}>Recommended Actions</h3>
+                                    </div>
+                                    <div className="mt-4 space-y-3">
+                                        {post.analysis.recommendedActions.map((action) => (
+                                            <div key={action} className={`rounded-2xl px-4 py-3 text-sm leading-6 ${isDark ? 'bg-[#161e2f] text-[#d6dbee]' : 'bg-white text-[#334155]'}`}>
+                                                {action}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="space-y-6">
+                                <div className={`rounded-[28px] border p-5 ${isDark ? 'border-[#262d3f] bg-[#101522]' : 'border-[#e2e8f0] bg-[#f8fafc]'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <MessageSquare size={18} className="text-fuchsia-400" />
+                                        <h3 className={`text-sm font-semibold uppercase tracking-[0.24em] ${isDark ? 'text-[#b8c2db]' : 'text-[#475569]'}`}>Key Comments</h3>
+                                    </div>
+                                    <div className="mt-4 space-y-3">
+                                        {post.analysis.keyComments.map((comment) => (
+                                            <div key={comment.id} className={`rounded-2xl border px-4 py-4 ${isDark ? 'border-[#262d3f] bg-[#161e2f]' : 'border-[#e2e8f0] bg-white'}`}>
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{comment.author}</p>
+                                                    {comment.requiresResponse && (
+                                                        <span className={`rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.2em] ${isDark ? 'bg-rose-500/15 text-rose-200' : 'bg-rose-100 text-rose-700'}`}>
+                                                            Needs response
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className={`mt-3 text-sm leading-7 ${isDark ? 'text-[#d6dbee]' : 'text-[#334155]'}`}>{comment.text}</p>
+                                                <p className={`mt-3 text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>{comment.reason}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className={`rounded-[28px] border p-5 ${isDark ? 'border-[#262d3f] bg-[#101522]' : 'border-[#e2e8f0] bg-[#f8fafc]'}`}>
+                                    <h3 className={`text-sm font-semibold uppercase tracking-[0.24em] ${isDark ? 'text-[#b8c2db]' : 'text-[#475569]'}`}>Engagement</h3>
+                                    <div className="mt-4 grid grid-cols-2 gap-3">
+                                        {[
+                                            ['Views', post.engagement.views],
+                                            ['Likes', post.engagement.likes],
+                                            ['Comments', post.engagement.comments],
+                                            ['Shares', post.engagement.shares],
+                                        ].map(([label, value]) => (
+                                            <div key={label} className={`rounded-2xl px-4 py-4 ${isDark ? 'bg-[#161e2f]' : 'bg-white'}`}>
+                                                <p className={`text-[11px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>{label}</p>
+                                                <p className={`mt-2 text-xl font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{value.toLocaleString()}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+
+                    <div className={`border-t px-6 py-5 ${isDark ? 'border-[#262d3f]' : 'border-[#e2e8f0]'}`}>
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div className="flex flex-wrap gap-3">
+                                <a
+                                    href={post.platformUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ${isDark ? 'bg-[#161e2f] text-white hover:bg-[#1d2840]' : 'bg-[#f1f5f9] text-[#0f172a] hover:bg-[#e2e8f0]'}`}
+                                >
+                                    <ExternalLink size={15} />
+                                    <span>View on platform</span>
+                                </a>
+                                <button
+                                    type="button"
+                                    onClick={() => onRefresh(post.id)}
+                                    disabled={isBusy}
+                                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ${isDark ? 'bg-[#243047] text-white hover:bg-[#31415f] disabled:bg-[#1d2230] disabled:text-[#64748b]' : 'bg-[#0f172a] text-white hover:bg-[#1e293b] disabled:bg-[#dbe2ee] disabled:text-[#94a3b8]'}`}
+                                >
+                                    <RefreshCw size={15} className={isBusy ? 'animate-spin' : ''} />
+                                    <span>Refresh AI</span>
                                 </button>
                             </div>
-                            <button className={isDark ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-900'}>
-                                <MoreHorizontal size={20} />
+                            <button
+                                type="button"
+                                onClick={() => onResolve(post.id)}
+                                disabled={isBusy || post.alertStatus === 'resolved'}
+                                className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm ${isDark ? 'bg-emerald-400 text-[#062814] hover:bg-emerald-300 disabled:bg-[#1d2230] disabled:text-[#64748b]' : 'bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-[#dbe2ee] disabled:text-[#94a3b8]'}`}
+                            >
+                                <CheckCircle2 size={15} />
+                                <span>{post.alertStatus === 'resolved' ? 'Resolved' : 'Resolve alert'}</span>
                             </button>
-                        </div>
-                        <div className={`w-full h-10 rounded-lg flex items-center px-4 transition-colors cursor-text ${isDark ? 'bg-[#252525] text-gray-500 hover:bg-[#2a2a2a]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
-                            <span className="text-sm">Write a reply...</span>
                         </div>
                     </div>
                 </div>
