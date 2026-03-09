@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import App from '../App';
 import DashboardLayout from '../layouts/DashboardLayout';
 
@@ -35,12 +36,14 @@ describe('Smoke Tests', () => {
     it('renders DashboardLayout without crashing', async () => {
         await act(async () => {
              render(
-                <DashboardLayout
-                    activeView="dashboard"
-                    user={{ firstName: 'Test' }}
-                >
-                    <div>Content</div>
-                </DashboardLayout>
+                <MemoryRouter>
+                    <DashboardLayout
+                        activeView="dashboard"
+                        user={{ firstName: 'Test' }}
+                    >
+                        <div>Content</div>
+                    </DashboardLayout>
+                </MemoryRouter>
             );
         });
         expect(screen.getByText('Content')).toBeInTheDocument();
@@ -48,7 +51,11 @@ describe('Smoke Tests', () => {
 
     it('renders App without crashing', async () => {
         await act(async () => {
-            render(<App />);
+            render(
+                <MemoryRouter>
+                    <App />
+                </MemoryRouter>
+            );
         });
     });
 });

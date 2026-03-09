@@ -11,6 +11,9 @@ import { swaggerSpec } from './config/swagger';
 import apiRoutes from './api';
 import { initSentry, Sentry } from './config/sentry';
 import rateLimit from 'express-rate-limit';
+import RedisStore from 'rate-limit-redis';
+import { getRedisClient } from './config/redis';
+import { waitingRoom } from './middleware/waitingRoom';
 
 const app: Application = express();
 
@@ -58,8 +61,16 @@ app.use(
   })
 );
 
+// Stripe webhooks require the raw request body for signature verification.
+app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json', limit: '10mb' }));
+
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/v1/payments/webhook') {
+    return next();
+  }
+  return express.json({ limit: '10mb' })(req, res, next);
+});
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Compression middleware
@@ -67,23 +78,16 @@ app.use(compression());
 
 // Request logging
 app.use(requestLogger);
-app.use(requestLogger);
-
-// Rate limiting
-import RedisStore from 'rate-limit-redis';
-import { getRedisClient } from './config/redis';
-import { waitingRoom } from './middleware/waitingRoom';
-
-// ... (previous imports)
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 1000 requests per windowMs
+  windowMs: config.rateLimitWindowMs,
+  max: config.rateLimitMax,
   standardHeaders: true,
   legacyHeaders: false,
   // Use Redis store
   store: new RedisStore({
+    prefix: 'rl:global:',
     // @ts-ignore - Known issue with rate-limit-redis types and redis v4
     sendCommand: (...args: string[]) => getRedisClient().sendCommand(args),
   }),

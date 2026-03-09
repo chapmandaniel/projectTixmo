@@ -5,11 +5,13 @@ import {
     createOrganization,
     createVenue,
     createEvent,
-    cleanupTestData
+    cleanupTestData,
+    prisma,
 } from '../utils/testUtils';
 
 describe('Approvals API Integration Tests', () => {
     let authToken: string;
+    let authUserId: string;
     let testOrg: any;
     let testVenue: any;
     let testEvent: any;
@@ -17,12 +19,20 @@ describe('Approvals API Integration Tests', () => {
     let reviewerToken: string;
 
     beforeAll(async () => {
+        await cleanupTestData();
+
         // Register user and get token
         const authData = await registerUser(app);
         authToken = authData.accessToken;
+        authUserId = authData.user.id;
 
         // Create test organization
         testOrg = await createOrganization(app, authToken);
+
+        await prisma.user.update({
+            where: { id: authUserId },
+            data: { organizationId: testOrg.id },
+        });
 
         // Create test venue
         testVenue = await createVenue(app, authToken, { organizationId: testOrg.id });

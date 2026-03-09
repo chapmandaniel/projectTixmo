@@ -60,6 +60,8 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       role: user.role,
+      organizationId: null,
+      emailVerified: user.emailVerified,
     });
 
     // Send welcome email (async, don't wait)
@@ -109,6 +111,8 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       role: user.role,
+      organizationId: user.organizationId,
+      emailVerified: user.emailVerified,
     });
 
     return {
@@ -140,6 +144,8 @@ export class AuthService {
         id: true,
         email: true,
         role: true,
+        organizationId: true,
+        emailVerified: true,
       },
     });
 
@@ -152,6 +158,8 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       role: user.role,
+      organizationId: user.organizationId,
+      emailVerified: user.emailVerified,
     });
 
     return tokens;

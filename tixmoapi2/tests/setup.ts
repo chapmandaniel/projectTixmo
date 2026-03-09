@@ -25,14 +25,69 @@ jest.mock('../src/config/redis', () => {
 
 // Mock rate-limit-redis to avoid complex Redis interactions
 jest.mock('rate-limit-redis', () => {
+    class MockRedisStore {
+        localKeys = true;
+        prefix: string;
+        windowMs = 60 * 1000;
+        counts = new Map<string, { totalHits: number; resetTime: Date }>();
+
+        constructor(options: { prefix?: string } = {}) {
+            this.prefix = options.prefix || 'rl:';
+        }
+
+        init(options: { windowMs: number }) {
+            this.windowMs = options.windowMs;
+        }
+
+        async increment(key: string) {
+            const storeKey = `${this.prefix}${key}`;
+            const now = Date.now();
+            const current = this.counts.get(storeKey);
+
+            if (!current || current.resetTime.getTime() <= now) {
+                const next = {
+                    totalHits: 1,
+                    resetTime: new Date(now + this.windowMs),
+                };
+                this.counts.set(storeKey, next);
+                return next;
+            }
+
+            const next = {
+                totalHits: current.totalHits + 1,
+                resetTime: current.resetTime,
+            };
+            this.counts.set(storeKey, next);
+            return next;
+        }
+
+        async decrement(key: string) {
+            const storeKey = `${this.prefix}${key}`;
+            const current = this.counts.get(storeKey);
+
+            if (!current) {
+                return;
+            }
+
+            if (current.totalHits <= 1) {
+                this.counts.delete(storeKey);
+                return;
+            }
+
+            this.counts.set(storeKey, {
+                totalHits: current.totalHits - 1,
+                resetTime: current.resetTime,
+            });
+        }
+
+        async resetKey(key: string) {
+            this.counts.delete(`${this.prefix}${key}`);
+        }
+    }
+
     return {
         __esModule: true,
-        default: jest.fn().mockImplementation(() => ({
-            init: jest.fn(),
-            increment: jest.fn().mockResolvedValue({ totalHits: 1, resetTime: new Date() }),
-            decrement: jest.fn(),
-            resetKey: jest.fn(),
-        })),
+        default: MockRedisStore,
     };
 });
 
