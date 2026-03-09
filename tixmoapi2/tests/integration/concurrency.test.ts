@@ -1,6 +1,13 @@
 import request from 'supertest';
 import app from '../../src/app';
-import { cleanupTestData, prisma } from '../utils/testUtils';
+import {
+  cleanupTestData,
+  createEvent,
+  createOrganization,
+  createVenue,
+  prisma,
+  registerUser,
+} from '../utils/testUtils';
 
 describe('Concurrency Tests', () => {
   let authToken: string;
@@ -11,83 +18,57 @@ describe('Concurrency Tests', () => {
   const TOTAL_TICKETS = 20;
 
   beforeAll(async () => {
-    // Clean up database
     await cleanupTestData();
 
-    // Create test user (customer)
-    const registerRes = await request(app).post('/api/v1/auth/register').send({
+    const customerData = await registerUser(app, {
       email: 'concurrency@example.com',
       password: 'Test123!',
       firstName: 'Concurrency',
       lastName: 'Test',
-      role: 'CUSTOMER',
     });
+    authToken = customerData.accessToken;
 
-    authToken = registerRes.body.data.accessToken;
-
-    // Create promoter user to setup event
-    const promoterRes = await request(app).post('/api/v1/auth/register').send({
+    const promoterData = await registerUser(app, {
       email: 'promoter@example.com',
       password: 'Test123!',
       firstName: 'Promoter',
       lastName: 'User',
-      role: 'PROMOTER'
+      role: 'PROMOTER',
     });
-    const promoterToken = promoterRes.body.data.accessToken;
+    const promoterToken = promoterData.accessToken;
 
-    // Create organization
-    const orgRes = await request(app)
-      .post('/api/v1/organizations')
-      .set('Authorization', `Bearer ${promoterToken}`)
-      .send({
-        name: 'Concurrency Org',
-        slug: 'concurrency-org',
-        type: 'PROMOTER',
-      });
+    const org = await createOrganization(app, promoterToken, {
+      name: 'Concurrency Org',
+      slug: 'concurrency-org',
+      type: 'PROMOTER',
+    });
+    organizationId = org.id;
 
-    organizationId = orgRes.body.data.id;
+    const venue = await createVenue(app, promoterToken, {
+      organizationId,
+      name: 'Concurrency Venue',
+      address: {
+        street: '123 St',
+        city: 'City',
+        state: 'ST',
+        country: 'US',
+        postalCode: '12345',
+      },
+      capacity: 1000,
+    });
+    venueId = venue.id;
 
-    // Create venue
-    const venueRes = await request(app)
-      .post('/api/v1/venues')
-      .set('Authorization', `Bearer ${promoterToken}`)
-      .send({
-        organizationId,
-        name: 'Concurrency Venue',
-        address: {
-          street: '123 St',
-          city: 'City',
-          state: 'ST',
-          country: 'US',
-          postalCode: '12345'
-        },
-        capacity: 1000,
-      });
+    const event = await createEvent(app, promoterToken, {
+      organizationId,
+      venueId,
+      title: 'Concurrency Event',
+      startDateTime: new Date(Date.now() + 86400000).toISOString(),
+      endDateTime: new Date(Date.now() + 172800000).toISOString(),
+      status: 'PUBLISHED',
+      capacity: 1000,
+    });
+    eventId = event.id;
 
-    venueId = venueRes.body.data.id;
-
-    // Create event
-    const eventRes = await request(app)
-      .post('/api/v1/events')
-      .set('Authorization', `Bearer ${promoterToken}`)
-      .send({
-        organizationId,
-        venueId,
-        title: 'Concurrency Event',
-        startDateTime: new Date(Date.now() + 86400000).toISOString(),
-        endDateTime: new Date(Date.now() + 172800000).toISOString(),
-        status: 'DRAFT',
-        capacity: 1000,
-      });
-
-    eventId = eventRes.body.data.id;
-
-    // Publish event
-    await request(app)
-      .post(`/api/v1/events/${eventId}/publish`)
-      .set('Authorization', `Bearer ${promoterToken}`);
-
-    // Create ticket type with limited quantity
     const ticketTypeRes = await request(app)
       .post('/api/v1/ticket-types')
       .set('Authorization', `Bearer ${promoterToken}`)

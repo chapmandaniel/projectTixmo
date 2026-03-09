@@ -6,6 +6,8 @@ import app from '../../src/app';
 // But for a proper test, we want to see the 429.
 
 describe('Authentication Rate Limiting', () => {
+  const loginTestIp = '203.0.113.10';
+  const registerTestIp = '203.0.113.20';
   const testUser = {
     email: 'rate-limit-test@example.com',
     password: 'SecurePass123!',
@@ -21,6 +23,8 @@ describe('Authentication Rate Limiting', () => {
     for (let i = 0; i < 5; i++) {
       const res = await request(app)
         .post('/api/v1/auth/login')
+        .set('X-Forwarded-For', loginTestIp)
+        .set('X-Test-Rate-Limit', 'strict')
         .send(loginData);
 
       // Should not be rate limited yet
@@ -30,6 +34,8 @@ describe('Authentication Rate Limiting', () => {
     // 6th request should be rate limited
     const response = await request(app)
       .post('/api/v1/auth/login')
+      .set('X-Forwarded-For', loginTestIp)
+      .set('X-Test-Rate-Limit', 'strict')
       .send(loginData);
 
     expect(response.status).toBe(429);
@@ -49,6 +55,8 @@ describe('Authentication Rate Limiting', () => {
     for (let i = 0; i < 5; i++) {
       const res = await request(app)
         .post('/api/v1/auth/register')
+        .set('X-Forwarded-For', registerTestIp)
+        .set('X-Test-Rate-Limit', 'strict')
         .send({ ...registerData, email: `user${i}@example.com` });
 
       expect(res.status).not.toBe(429);
@@ -57,6 +65,8 @@ describe('Authentication Rate Limiting', () => {
     // 6th request should be rate limited
     const response = await request(app)
       .post('/api/v1/auth/register')
+      .set('X-Forwarded-For', registerTestIp)
+      .set('X-Test-Rate-Limit', 'strict')
       .send(registerData);
 
     expect(response.status).toBe(429);

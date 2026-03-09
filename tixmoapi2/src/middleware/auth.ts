@@ -3,7 +3,13 @@ import { ApiError } from '@utils/ApiError';
 import { Request, Response, NextFunction } from 'express';
 
 export interface AuthRequest extends Request {
-  user?: { userId: string; role: string; email?: string; emailVerified?: boolean } | null;
+  user?: {
+    userId: string;
+    role: string;
+    email?: string;
+    emailVerified?: boolean;
+    organizationId?: string | null;
+  } | null;
 }
 
 export const authenticate = (req: AuthRequest, _res: Response, next: NextFunction) => {
@@ -27,7 +33,13 @@ export const authenticate = (req: AuthRequest, _res: Response, next: NextFunctio
 
   try {
     const payload = verifyAccessToken(token);
-    req.user = { userId: payload.userId, role: payload.role, email: payload.email };
+    req.user = {
+      userId: payload.userId,
+      role: payload.role,
+      email: payload.email,
+      emailVerified: payload.emailVerified,
+      organizationId: payload.organizationId,
+    };
     return next();
   } catch (err) {
     return next(ApiError.unauthorized('Invalid token'));
@@ -54,7 +66,13 @@ export const optionalAuthenticate = (req: AuthRequest, _res: Response, next: Nex
 
   try {
     const payload = verifyAccessToken(token);
-    req.user = { userId: payload.userId, role: payload.role, email: payload.email };
+    req.user = {
+      userId: payload.userId,
+      role: payload.role,
+      email: payload.email,
+      emailVerified: payload.emailVerified,
+      organizationId: payload.organizationId,
+    };
     return next();
   } catch (err) {
     return next();

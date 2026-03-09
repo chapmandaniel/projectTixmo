@@ -20,7 +20,7 @@ const RegisterScannerModal = ({ onClose, onSuccess, isDark }) => {
             // Get organizationId from the current user session
             let organizationId;
             try {
-                const user = JSON.parse(localStorage.getItem('tixmo_user') || '{}');
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
                 organizationId = user.organizationId;
             } catch (e) {
                 console.error('Failed to parse user from local storage', e);

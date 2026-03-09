@@ -79,7 +79,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
 
             const approvalRes = await api.get('/approvals?status=PENDING').catch(() => null);
             if (approvalRes) {
-                const approvals = approvalRes.approvals || [];
+                const approvals = approvalRes.data?.approvals || [];
                 setPendingApprovalsCount(approvals.length);
             }
         } catch (error) {

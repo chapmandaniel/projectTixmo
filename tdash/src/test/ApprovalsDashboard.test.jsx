@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, act, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import ApprovalsDashboard from '../features/ApprovalsDashboard';
 
 // Mock dependencies
@@ -65,7 +66,11 @@ describe('ApprovalsDashboard', () => {
         });
 
         await act(async () => {
-            render(<ApprovalsDashboard isDark={false} user={{}} />);
+            render(
+                <MemoryRouter>
+                    <ApprovalsDashboard isDark={false} user={{}} />
+                </MemoryRouter>
+            );
         });
 
         expect(screen.getByText('Client Approvals')).toBeInTheDocument();
@@ -78,7 +83,7 @@ describe('ApprovalsDashboard', () => {
 
         // Check for Status Filter Pills
         expect(screen.getByText('Pending Review')).toBeInTheDocument();
-        expect(screen.getByText('All')).toBeInTheDocument();
+        expect(screen.getByText('Drafts')).toBeInTheDocument();
     });
 
     it('filters approvals when clicking status pills', async () => {
@@ -94,7 +99,11 @@ describe('ApprovalsDashboard', () => {
         });
 
         await act(async () => {
-            render(<ApprovalsDashboard isDark={false} user={{}} />);
+            render(
+                <MemoryRouter>
+                    <ApprovalsDashboard isDark={false} user={{}} />
+                </MemoryRouter>
+            );
         });
 
         // Initially shows Pending Item
@@ -118,10 +127,14 @@ describe('ApprovalsDashboard', () => {
         });
 
         await act(async () => {
-            render(<ApprovalsDashboard isDark={false} user={{}} />);
+            render(
+                <MemoryRouter>
+                    <ApprovalsDashboard isDark={false} user={{}} />
+                </MemoryRouter>
+            );
         });
 
         // Default is PENDING
-        expect(screen.getByText("No projects found with status 'pending'.")).toBeInTheDocument();
+        expect(screen.getByText("No projects found for 'PENDING'.")).toBeInTheDocument();
     });
 });

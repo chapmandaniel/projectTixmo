@@ -6,6 +6,7 @@ import ApprovalDetailView from '../features/ApprovalDetailView';
 // Mock api
 vi.mock('../lib/api', () => ({
     api: {
+        get: vi.fn().mockResolvedValue({}),
         post: vi.fn(),
         delete: vi.fn(),
         upload: vi.fn(),
@@ -36,6 +37,7 @@ vi.mock('lucide-react', async () => {
         Paperclip: () => <span data-testid="icon-paperclip" />,
         Eye: () => <span data-testid="icon-eye" />,
         MoreHorizontal: () => <span data-testid="icon-more-horizontal" />,
+        ChevronLeft: () => <span data-testid="icon-chevron-left" />,
         ChevronRight: () => <span data-testid="icon-chevron-right" />,
         Instagram: () => <span data-testid="icon-instagram" />,
         Facebook: () => <span data-testid="icon-facebook" />,

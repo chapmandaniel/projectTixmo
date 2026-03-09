@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import express from 'express';
 import { authenticate } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import * as controller from './controller';
@@ -65,9 +64,6 @@ router.post(
  *       200:
  *         description: Webhook received
  */
-// Webhook route needs raw body for signature verification
-// This is typically handled at the app level or by using a specific parser here
-// For this implementation, we assume the raw body is passed correctly or handled in app.ts
-router.post('/webhook', express.raw({ type: 'application/json' }), controller.handleWebhook);
+router.post('/webhook', controller.handleWebhook);
 
 export default router;
