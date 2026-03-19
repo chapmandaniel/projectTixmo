@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
     Calendar, CheckSquare, BarChart3,
     CreditCard, ScanLine, Tags, MapPin, Users,
-    MessageCircle, Wand2, ListTodo, Settings, CheckCircle, Heart, Eye, EyeOff
+    MessageCircle, Wand2, ListTodo, Settings, CheckCircle, Heart, Eye, EyeOff, BrainCircuit
 } from 'lucide-react';
 import api from '../lib/api';
 
@@ -19,6 +19,7 @@ const gridItems = [
     { id: 'venues', icon: MapPin, label: 'Venues', description: 'Manage your locations.', grad: 'from-red-400 to-pink-500', color: 'text-red-400' },
     { id: 'creative', icon: Wand2, label: 'Creative Studio', description: 'Design event assets.', grad: 'from-purple-500 to-indigo-500', color: 'text-purple-500' },
     { id: 'approvals', icon: CheckCircle, label: 'Approvals', description: 'Review pending requests.', grad: 'from-lime-400 to-emerald-500', color: 'text-lime-400' },
+    { id: 'quantmo', icon: BrainCircuit, label: 'QuantMo', description: 'AI-driven quant intelligence for promoters.', grad: 'from-fuchsia-500 to-cyan-400', color: 'text-fuchsia-400' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics', description: 'Deep dive into your metrics.', grad: 'from-blue-400 to-indigo-600', color: 'text-blue-400' },
     { id: 'settings', icon: Settings, label: 'Settings', description: 'Configure application preferences.', grad: 'from-gray-500 to-slate-600', color: 'text-gray-400' },
 ];

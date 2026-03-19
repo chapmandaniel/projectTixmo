@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Home, Calendar, Ticket, BarChart3, Bell, Search,
     CreditCard, ScanLine, Tags, MapPin, Users, CheckSquare, Sun, Moon,
-    MessageCircle, Wand2, ListTodo, Settings, LogOut, CheckCircle, ChevronLeft, ChevronRight, User, Terminal
+    MessageCircle, Wand2, ListTodo, Settings, LogOut, CheckCircle, ChevronLeft, ChevronRight, User, Terminal, BrainCircuit
 } from 'lucide-react';
 
 import api from '../lib/api';
@@ -21,6 +21,7 @@ const navItems = [
     { id: 'venues', icon: MapPin, label: 'Venues' },
     { id: 'creative', icon: Wand2, label: 'Composer' },
     { id: 'approvals', icon: CheckCircle, label: 'Approvals' },
+    { id: 'quantmo', icon: BrainCircuit, label: 'QuantMo' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics' },
     { id: 'settings', icon: Settings, label: 'Settings' },
 ];

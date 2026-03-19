@@ -5,6 +5,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import DashboardHome from './features/DashboardHome';
 import EventsView from './features/EventsView';
 import AnalyticsView from './features/AnalyticsView';
+import QuantMoView from './features/QuantMoView';
 import TodoView from './features/TodoView';
 import TeamView from './features/TeamView';
 import ComingSoonView from './features/ComingSoonView';
@@ -52,6 +53,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                     <Route path="/events" element={<EventsView user={user} isDark={isDark} />} />
                     <Route path="/events/:eventId/*" element={<EventManagementDashboard user={user} isDark={isDark} />} />
                     <Route path="/analytics" element={<AnalyticsView isDark={isDark} />} />
+                    <Route path="/quantmo" element={<QuantMoView isDark={isDark} />} />
                     <Route path="/todo" element={<TodoView isDark={isDark} />} />
                     <Route path="/personal-todo" element={<PersonalTodoView isDark={isDark} />} />
                     <Route path="/team" element={<TeamView isDark={isDark} />} />
