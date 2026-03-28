@@ -3,7 +3,13 @@ import { Search, Plus, RefreshCw, Smartphone, History, Trash2, Power, PowerOff }
 import api from '../lib/api';
 import RegisterScannerModal from './RegisterScannerModal';
 
-const ScannersView = ({ isDark, user }) => {
+const ScannersView = ({
+    isDark,
+    user,
+    title = 'Scanner Management',
+    description = 'Manage scanning devices and view entry logs.',
+    embedded = false,
+}) => {
     const [activeTab, setActiveTab] = useState('scanners'); // 'scanners' | 'logs'
     const [scanners, setScanners] = useState([]);
     const [logs, setLogs] = useState([]);
@@ -74,8 +80,12 @@ const ScannersView = ({ isDark, user }) => {
         }
     };
 
+    const wrapperClassName = embedded
+        ? 'space-y-6 animate-fade-in'
+        : 'space-y-6 animate-fade-in max-w-7xl mx-auto';
+
     return (
-        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
+        <div className={wrapperClassName}>
             {isRegisterModalOpen && (
                 <RegisterScannerModal
                     onClose={() => setIsRegisterModalOpen(false)}
@@ -87,9 +97,9 @@ const ScannersView = ({ isDark, user }) => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Scanner Management</h2>
+                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{title}</h2>
                     <p className={`mt-1 text-lg font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                        Manage scanning devices and view entry logs.
+                        {description}
                     </p>
                 </div>
                 <button

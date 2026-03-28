@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Filter, MoreHorizontal, LogIn } from 'lucide-react';
+import { Plus, Filter, MoreHorizontal, LogIn, ListTodo } from 'lucide-react';
 import CreateTaskModal from './CreateTaskModal';
 import TaskDetailsModal from './TaskDetailsModal';
 import KanbanCard from './KanbanCard';
@@ -206,7 +206,7 @@ const TodoView = ({ isDark, user }) => {
     };
 
     return (
-        <div className="flex flex-col gap-6 animate-fade-in max-w-7xl mx-auto h-full min-h-[600px]">
+        <div className="flex flex-col gap-6 animate-fade-in max-w-[1500px] mx-auto h-full min-h-[600px]">
 
             {/* Create Task Modal */}
             {isCreateModalOpen && (
@@ -229,27 +229,35 @@ const TodoView = ({ isDark, user }) => {
                 />
             )}
 
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
-                <div>
-                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Team Tasks</h2>
-                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-500'} mt-1 text-lg font-light`}>
-                        {isLoading ? 'Syncing...' : 'Manage and track team tasks.'}
-                    </p>
+            <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 shrink-0 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
+                <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-fuchsia-500/10 blur-3xl" />
+                    <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                 </div>
-                <div className="flex space-x-3">
-                    <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className={`flex items-center space-x-2 px-4 py-2 text-sm font-normal rounded-md transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
-                    >
-                        <Plus size={16} />
-                        <span>Create Task</span>
-                    </button>
-                    <button className={`flex items-center space-x-2 px-3 py-2 text-sm font-light rounded-md border transition-colors ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 text-[#a1a5b7] hover:text-gray-200 hover:bg-[#232336]' : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50'}`}>
-                        <Filter size={14} />
-                        <span>Filter</span>
-                    </button>
+                <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            <span className="inline-flex items-center gap-2">
+                                <span>Task Manager</span>
+                                <ListTodo className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`} />
+                            </span>
+                        </h2>
+                    </div>
+                    <div className="flex space-x-3">
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className={`flex items-center space-x-2 px-4 py-2 text-sm font-normal rounded-md transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
+                        >
+                            <Plus size={16} />
+                            <span>Create Task</span>
+                        </button>
+                        <button className={`flex items-center space-x-2 px-3 py-2 text-sm font-light rounded-md border transition-colors ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 text-[#a1a5b7] hover:text-gray-200 hover:bg-[#232336]' : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50'}`}>
+                            <Filter size={14} />
+                            <span>Filter</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </section>
 
             <div className="flex-1 flex gap-4 overflow-x-auto overflow-y-hidden min-h-0 pb-2">
                 {Object.entries(columns).map(([colId, col]) => (

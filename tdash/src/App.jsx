@@ -12,13 +12,13 @@ import ComingSoonView from './features/ComingSoonView';
 import EventManagementDashboard from './features/EventManagementDashboard';
 import SocialDashboard from './features/SocialDashboard';
 import CreativeComposer from './features/CreativeComposer';
-import PersonalTodoView from './features/PersonalTodoView';
 import SettingsView from './features/SettingsView';
 import LoginView from './features/LoginView';
 import VenuesView from './features/VenuesView';
 import ApprovalsDashboard from './features/ApprovalsDashboard';
 import OrdersView from './features/OrdersView';
 import DevDashboard from './features/DevDashboard';
+import ScannersView from './features/ScannersView';
 
 import WaitingRoomView from './features/WaitingRoomView';
 import GlobalErrorNotification from './components/GlobalErrorNotification';
@@ -55,7 +55,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                     <Route path="/analytics" element={<AnalyticsView isDark={isDark} />} />
                     <Route path="/quantmo" element={<QuantMoView isDark={isDark} />} />
                     <Route path="/todo" element={<TodoView isDark={isDark} />} />
-                    <Route path="/personal-todo" element={<PersonalTodoView isDark={isDark} />} />
+                    <Route path="/personal-todo" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/team" element={<TeamView isDark={isDark} />} />
                     <Route path="/social" element={<SocialDashboard isDark={isDark} />} />
                     <Route path="/orders" element={<OrdersView isDark={isDark} />} />
@@ -67,8 +67,8 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
 
                     {/* Coming Soon hubs */}
                     <Route path="/marketing" element={<ComingSoonView title="Marketing Hub" icon="Megaphone" isDark={isDark} />} />
-                    <Route path="/scanners" element={<ComingSoonView title="Scanners" isDark={isDark} />} />
-                    <Route path="/promo" element={<ComingSoonView title="Promo Codes" isDark={isDark} />} />
+                    <Route path="/scanners" element={<ScannersView isDark={isDark} user={user} />} />
+                    <Route path="/promo" element={<Navigate to="/dashboard" replace />} />
 
                     {/* Fallback to dashboard */}
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />

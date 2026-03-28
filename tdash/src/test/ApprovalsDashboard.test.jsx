@@ -70,7 +70,7 @@ describe('ApprovalsDashboard', () => {
             );
         });
 
-        expect(screen.getByText('Approvals Dashboard')).toBeInTheDocument();
+        expect(screen.getByText('Review Portal')).toBeInTheDocument();
         expect(screen.getByText('Main poster')).toBeInTheDocument();
         expect(screen.getByText('Sponsor lockup')).toBeInTheDocument();
 

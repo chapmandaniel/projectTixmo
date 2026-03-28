@@ -31,6 +31,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const [approval, setApproval] = useState(initialApproval);
     const [selectedRevisionId, setSelectedRevisionId] = useState(initialApproval?.latestRevision?.id || null);
     const [assetIndex, setAssetIndex] = useState(0);
+    const [isImageExpanded, setIsImageExpanded] = useState(false);
     const [comment, setComment] = useState('');
     const [replyTo, setReplyTo] = useState(null);
     const [decisionNote, setDecisionNote] = useState('');
@@ -74,6 +75,21 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     useEffect(() => {
         setAssetIndex(0);
     }, [selectedRevisionId]);
+
+    useEffect(() => {
+        if (!isImageExpanded) {
+            return undefined;
+        }
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setIsImageExpanded(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isImageExpanded]);
 
     const selectedAsset = selectedRevision?.assets?.[assetIndex] || null;
     const reviewerAssignment = approval?.reviewers?.find((reviewer) => reviewer.email === user?.email) || null;
@@ -281,7 +297,17 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                 <div className="flex min-h-[420px] items-center justify-center p-6">
                                     {selectedAsset ? (
                                         selectedAsset.mimeType?.startsWith('image/') ? (
-                                            <img src={selectedAsset.s3Url} alt={selectedAsset.originalName} className="max-h-[520px] w-full rounded-2xl object-contain" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsImageExpanded(true)}
+                                                className="group relative w-full cursor-zoom-in overflow-hidden rounded-2xl"
+                                                aria-label={`Expand ${selectedAsset.originalName}`}
+                                            >
+                                                <img src={selectedAsset.s3Url} alt={selectedAsset.originalName} className="max-h-[520px] w-full rounded-2xl object-contain" />
+                                                <span className="pointer-events-none absolute inset-x-4 bottom-4 rounded-full bg-black/60 px-3 py-2 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100">
+                                                    Click to expand
+                                                </span>
+                                            </button>
                                         ) : (
                                             <div className="rounded-[1.5rem] border border-white/10 bg-[#0d1520] px-8 py-12 text-center">
                                                 <FileText className="mx-auto h-12 w-12 text-slate-500" />
@@ -471,6 +497,31 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                     </aside>
                 </div>
             </div>
+
+            {isImageExpanded && selectedAsset?.mimeType?.startsWith('image/') && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4 py-6"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`Expanded preview for ${selectedAsset.originalName}`}
+                    onClick={() => setIsImageExpanded(false)}
+                >
+                    <button
+                        type="button"
+                        onClick={() => setIsImageExpanded(false)}
+                        className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/20"
+                    >
+                        <XCircle className="h-4 w-4" />
+                        Close preview
+                    </button>
+                    <img
+                        src={selectedAsset.s3Url}
+                        alt={selectedAsset.originalName}
+                        className="max-h-full max-w-full rounded-3xl object-contain shadow-2xl"
+                        onClick={(event) => event.stopPropagation()}
+                    />
+                </div>
+            )}
         </div>
     );
 };

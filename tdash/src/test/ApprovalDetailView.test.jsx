@@ -124,4 +124,55 @@ describe('ApprovalDetailView', () => {
             })
         );
     });
+
+    it('expands the selected image asset in a full-screen preview', async () => {
+        const approvalWithImage = {
+            ...approvalFixture,
+            latestRevision: {
+                ...approvalFixture.latestRevision,
+                assets: [
+                    {
+                        id: 'asset-1',
+                        mimeType: 'image/png',
+                        originalName: 'poster.png',
+                        s3Url: 'https://example.com/poster.png',
+                    },
+                ],
+            },
+            revisions: approvalFixture.revisions.map((revision) =>
+                revision.id === 'revision-2'
+                    ? {
+                          ...revision,
+                          assets: [
+                              {
+                                  id: 'asset-1',
+                                  mimeType: 'image/png',
+                                  originalName: 'poster.png',
+                                  s3Url: 'https://example.com/poster.png',
+                              },
+                          ],
+                      }
+                    : revision
+            ),
+        };
+
+        apiGet.mockResolvedValue(approvalWithImage);
+
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalWithImage}
+                    user={{ email: 'reviewer@example.com' }}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Expand poster.png' }));
+
+        expect(screen.getByRole('dialog', { name: 'Expanded preview for poster.png' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Close preview' })).toBeInTheDocument();
+    });
 });

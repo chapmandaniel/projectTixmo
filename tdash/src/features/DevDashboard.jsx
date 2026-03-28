@@ -60,7 +60,7 @@ const DevDashboard = ({ isDark, user }) => {
                             }`}>
                             <div className="flex flex-col">
                                 <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>Auto-Generate Event Button</span>
-                                <span className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Show a button in the Events Hub to instantly create a mock event.</span>
+                                <span className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Show a button in Event Manager to instantly create a mock event.</span>
                             </div>
                             <div className="relative inline-flex items-center ml-4 shrink-0">
                                 <input
