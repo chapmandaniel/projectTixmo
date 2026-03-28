@@ -1,12 +1,17 @@
 describe('email transport configuration', () => {
   const createTransport = jest.fn();
-  const verify = jest.fn();
+  const logger = {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  };
 
   const loadEmailModule = (configOverrides: Record<string, unknown> = {}) => {
     jest.resetModules();
     createTransport.mockReset();
-    verify.mockReset().mockResolvedValue(true);
-    createTransport.mockReturnValue({ verify });
+    logger.info.mockReset();
+    logger.error.mockReset();
+    logger.warn.mockReset();
 
     jest.doMock('nodemailer', () => ({
       __esModule: true,
@@ -14,26 +19,20 @@ describe('email transport configuration', () => {
       createTransport,
     }));
 
-    jest.doMock('../../src/config/logger', () => ({
-      logger: {
-        info: jest.fn(),
-        error: jest.fn(),
-        warn: jest.fn(),
-      },
-    }));
+    jest.doMock('../../src/config/logger', () => ({ logger }));
 
     jest.doMock('../../src/config/environment', () => ({
       config: {
         nodeEnv: 'production',
         postmarkServerToken: '',
         postmarkMessageStream: '',
-        fromEmail: 'noreply@tixmo.com',
+        fromEmail: 'info@tixmo.co',
         fromName: 'TixMo',
         emailHost: 'smtp.gmail.com',
         emailPort: 587,
         emailUser: '',
         emailPassword: '',
-        emailFrom: 'noreply@tixmo.com',
+        emailFrom: 'info@tixmo.co',
         ...configOverrides,
       },
     }));
@@ -48,40 +47,29 @@ describe('email transport configuration', () => {
     jest.clearAllMocks();
   });
 
-  it('uses Postmark SMTP when POSTMARK_SERVER_TOKEN is configured', async () => {
+  it('selects the Postmark API transport when POSTMARK_SERVER_TOKEN is configured', () => {
     const emailModule = loadEmailModule({
       postmarkServerToken: 'pm-server-token',
       postmarkMessageStream: 'outbound',
     });
 
-    expect(createTransport).toHaveBeenCalledTimes(1);
-    const [transport, defaults] = createTransport.mock.calls[0];
-    expect(transport).toMatchObject({
-      host: 'smtp.postmarkapp.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'pm-server-token',
-        pass: 'pm-server-token',
-      },
-    });
-    expect(defaults).toEqual({
-      headers: {
-        'X-PM-Message-Stream': 'outbound',
-      },
-    });
+    expect(createTransport).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      'Email transport using Postmark API derived from POSTMARK_SERVER_TOKEN'
+    );
     expect(emailModule.emailFrom).toEqual({
       name: 'TixMo',
-      address: 'noreply@tixmo.com',
+      address: 'info@tixmo.co',
     });
-
-    await expect(emailModule.verifyEmailConnection()).resolves.toBe(true);
-    expect(verify).toHaveBeenCalledTimes(1);
+    expect(typeof emailModule.transporter.sendMail).toBe('function');
+    expect(typeof emailModule.transporter.verify).toBe('function');
   });
 
-  it('prefers explicit SMTP credentials over the Postmark token shortcut', () => {
+  it('uses explicit SMTP credentials when no Postmark token is configured', () => {
+    const smtpVerify = jest.fn().mockResolvedValue(true);
+    createTransport.mockReturnValue({ verify: smtpVerify });
+
     loadEmailModule({
-      postmarkServerToken: 'pm-server-token',
       emailHost: 'smtp.example.com',
       emailPort: 2525,
       emailUser: 'smtp-user',
@@ -89,8 +77,7 @@ describe('email transport configuration', () => {
     });
 
     expect(createTransport).toHaveBeenCalledTimes(1);
-    const [transport, defaults] = createTransport.mock.calls[0];
-    expect(transport).toMatchObject({
+    expect(createTransport).toHaveBeenCalledWith({
       host: 'smtp.example.com',
       port: 2525,
       secure: false,
@@ -99,6 +86,5 @@ describe('email transport configuration', () => {
         pass: 'smtp-pass',
       },
     });
-    expect(defaults).toBeUndefined();
   });
 });
