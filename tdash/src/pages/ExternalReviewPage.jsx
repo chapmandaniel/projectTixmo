@@ -14,9 +14,10 @@ import {
     DECISION_OPTIONS,
     formatApprovalDate,
 } from '../features/approvalConstants';
+import { getApiBaseUrl } from '../lib/runtimeConfig';
 
 const reviewApi = {
-    baseUrl: import.meta.env.VITE_API_URL || '/api/v1',
+    baseUrl: getApiBaseUrl(),
 
     async getReview(token) {
         const response = await fetch(`${this.baseUrl}/review/${token}`);

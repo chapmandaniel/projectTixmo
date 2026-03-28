@@ -17,6 +17,18 @@ import { waitingRoom } from './middleware/waitingRoom';
 
 const app: Application = express();
 
+const allowedOrigins = new Set(
+  (Array.isArray(config.corsOrigin) ? config.corsOrigin : [config.corsOrigin])
+    .map((origin) => origin?.trim())
+    .filter(Boolean)
+);
+
+try {
+  allowedOrigins.add(new URL(config.clientUrl).origin);
+} catch (_error) {
+  // Ignore invalid client URL here; email and deployment checks will surface it elsewhere.
+}
+
 // Initialize Sentry (if configured)
 initSentry();
 
@@ -39,11 +51,8 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      // Check if origin is allowed
-      const allowedOrigins = Array.isArray(config.corsOrigin) ? config.corsOrigin : [config.corsOrigin];
-
       // Check for exact match in allowed origins (e.g. localhost)
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      if (allowedOrigins.has(origin)) {
         return callback(null, true);
       }
 

@@ -8,6 +8,7 @@ import {
     UserCheck,
     X,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import ApprovalDetailView from './ApprovalDetailView';
 import {
@@ -267,6 +268,7 @@ const StatusFilterCard = ({ status, meta, count, active, onClick, isDark }) => {
 };
 
 const ApprovalsDashboard = ({ user, isDark = true }) => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [approvals, setApprovals] = useState([]);
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -279,6 +281,24 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
     const [sortBy, setSortBy] = useState('deadline');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedApproval, setSelectedApproval] = useState(null);
+    const deepLinkedApprovalId = searchParams.get('approvalId');
+
+    const syncApprovalIdParam = (approvalId) => {
+        const nextParams = new URLSearchParams(searchParams);
+
+        if (approvalId) {
+            nextParams.set('approvalId', approvalId);
+        } else {
+            nextParams.delete('approvalId');
+        }
+
+        setSearchParams(nextParams, { replace: true });
+    };
+
+    const openApproval = (approval) => {
+        setSelectedApproval(approval);
+        syncApprovalIdParam(approval.id);
+    };
 
     const loadApprovals = async () => {
         try {
@@ -325,6 +345,34 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
         loadApprovals();
     }, [statusFilter, eventFilter, assignedToMe, approachingDeadline, sortBy]);
 
+    useEffect(() => {
+        if (!deepLinkedApprovalId || selectedApproval?.id === deepLinkedApprovalId) {
+            return;
+        }
+
+        let isCancelled = false;
+
+        const loadSelectedApproval = async () => {
+            try {
+                setError('');
+                const response = await api.get(`/approvals/${deepLinkedApprovalId}`);
+                if (!isCancelled) {
+                    setSelectedApproval(response);
+                }
+            } catch (requestError) {
+                if (!isCancelled) {
+                    setError(requestError.response?.data?.message || requestError.message || 'Failed to load approval.');
+                }
+            }
+        };
+
+        loadSelectedApproval();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [deepLinkedApprovalId, selectedApproval?.id]);
+
     const visibleApprovals = approvals.filter((approval) => {
         const haystack = `${approval.title} ${approval.event?.name || ''}`.toLowerCase();
         return haystack.includes(searchQuery.toLowerCase());
@@ -345,10 +393,11 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                 user={user}
                 onBack={() => {
                     setSelectedApproval(null);
+                    syncApprovalIdParam(null);
                     loadApprovals();
                 }}
                 onUpdated={(approval) => {
-                    setSelectedApproval(approval);
+                    openApproval(approval);
                     setApprovals((current) => current.map((item) => (item.id === approval.id ? approval : item)));
                 }}
             />
@@ -363,7 +412,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                     onClose={() => setShowCreateModal(false)}
                     onCreated={(approval) => {
                         setShowCreateModal(false);
-                        setSelectedApproval(approval);
+                        openApproval(approval);
                         setApprovals((current) => [approval, ...current]);
                     }}
                 />
@@ -516,7 +565,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                 <button
                                     key={approval.id}
                                     type="button"
-                                    onClick={() => setSelectedApproval(approval)}
+                                    onClick={() => openApproval(approval)}
                                     className={`relative overflow-hidden rounded-md border text-left transition-all duration-300 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] hover:border-[#3a3a5a] hover:bg-[#232336] hover:shadow-xl hover:shadow-black/20' : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'}`}
                                 >
                                     <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${STATUS_CARD_ACCENTS[approval.status] || 'from-slate-400 to-slate-500'}`} />

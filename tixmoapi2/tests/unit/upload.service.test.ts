@@ -69,12 +69,15 @@ describe('UploadService', () => {
             size: 2048,
         } as Express.Multer.File;
 
-        it('should throw error if S3 is not configured', async () => {
+        it('should fall back to deterministic test storage URLs if S3 is not configured in test', async () => {
             (isS3Configured as jest.Mock).mockReturnValue(false);
 
             await expect(uploadService.uploadFile(mockBufferFile))
-                .rejects
-                .toThrow('S3 is not configured');
+                .resolves
+                .toEqual(expect.objectContaining({
+                    s3Key: `approvals/${mockUuid}.png`,
+                    s3Url: `https://test-storage.local/approvals/${mockUuid}.png`,
+                }));
         });
 
         it('should upload file from buffer successfully', async () => {
@@ -185,6 +188,23 @@ describe('UploadService', () => {
             });
             expect(getSignedUrl).toHaveBeenCalledWith(s3Client, expect.any(GetObjectCommand), { expiresIn: 1800 });
             expect(result).toBe('https://s3.example.com/signed-url');
+        });
+    });
+
+    describe('resolveFileUrl', () => {
+        it('should return a newly signed URL when S3 is configured', async () => {
+            const result = await uploadService.resolveFileUrl('test/file.png', 'https://fallback.example.com/file.png', 7200);
+
+            expect(getSignedUrl).toHaveBeenCalledWith(s3Client, expect.any(GetObjectCommand), { expiresIn: 7200 });
+            expect(result).toBe('https://s3.example.com/signed-url');
+        });
+
+        it('should return the fallback URL when S3 is not configured', async () => {
+            (isS3Configured as jest.Mock).mockReturnValue(false);
+
+            const result = await uploadService.resolveFileUrl('test/file.png', 'https://fallback.example.com/file.png');
+
+            expect(result).toBe('https://fallback.example.com/file.png');
         });
     });
 
