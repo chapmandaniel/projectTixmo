@@ -5,7 +5,7 @@ import { logger } from './logger';
 // Decide transport based on environment/credentials
 function createTransport() {
   const hasSmtpCreds = Boolean(config.emailUser && config.emailPassword);
-  const hasSendgridApiKey = Boolean(config.sendgridApiKey);
+  const hasPostmarkServerToken = Boolean(config.postmarkServerToken);
   const isTest = config.nodeEnv === 'test';
 
   if (isTest) {
@@ -21,18 +21,22 @@ function createTransport() {
     return nodemailer.createTransport(testTransport);
   }
 
-  if (!hasSmtpCreds && hasSendgridApiKey) {
-    logger.info('Email transport using SendGrid SMTP credentials derived from SENDGRID_API_KEY');
+  if (!hasSmtpCreds && hasPostmarkServerToken) {
+    logger.info('Email transport using Postmark SMTP credentials derived from POSTMARK_SERVER_TOKEN');
 
     return nodemailer.createTransport({
-      host: 'smtp.sendgrid.net',
+      host: 'smtp.postmarkapp.com',
       port: 587,
       secure: false,
       auth: {
-        user: 'apikey',
-        pass: config.sendgridApiKey,
+        user: config.postmarkServerToken,
+        pass: config.postmarkServerToken,
       },
-    });
+    }, config.postmarkMessageStream ? {
+      headers: {
+        'X-PM-Message-Stream': config.postmarkMessageStream,
+      },
+    } : undefined);
   }
 
   if (!hasSmtpCreds) {
@@ -41,7 +45,7 @@ function createTransport() {
     } as TransportOptions;
 
     logger.info(
-      `Email transport using jsonTransport (env=${config.nodeEnv}, hasCreds=${hasSmtpCreds}, hasSendgrid=${hasSendgridApiKey})`
+      `Email transport using jsonTransport (env=${config.nodeEnv}, hasCreds=${hasSmtpCreds}, hasPostmark=${hasPostmarkServerToken})`
     );
 
     return nodemailer.createTransport(testTransport);
@@ -78,6 +82,6 @@ export async function verifyEmailConnection(): Promise<boolean> {
 
 // Email sender info
 export const emailFrom = {
-  name: 'TixMo',
-  address: config.emailFrom || 'noreply@tixmo.com',
+  name: config.fromName,
+  address: config.fromEmail || config.emailFrom || 'noreply@tixmo.com',
 };

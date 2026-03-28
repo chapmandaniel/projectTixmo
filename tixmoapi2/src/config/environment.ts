@@ -29,7 +29,8 @@ export const config = {
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
 
   // Email
-  sendgridApiKey: process.env.SENDGRID_API_KEY || '',
+  postmarkServerToken: process.env.POSTMARK_SERVER_TOKEN || '',
+  postmarkMessageStream: process.env.POSTMARK_MESSAGE_STREAM || '',
   fromEmail: process.env.FROM_EMAIL || 'noreply@tixmo.com',
   fromName: process.env.FROM_NAME || 'TixMo',
   emailHost: process.env.EMAIL_HOST || 'smtp.gmail.com',
