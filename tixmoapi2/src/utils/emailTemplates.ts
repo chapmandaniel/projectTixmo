@@ -619,7 +619,8 @@ export function approvalCommentEmail(data: {
   revisionNumber: number;
   authorName: string;
   comment: string;
-  dashboardUrl: string;
+  actionUrl: string;
+  actionLabel: string;
 }): EmailTemplate {
   return {
     subject: `New approval comment: ${data.title}`,
@@ -646,7 +647,7 @@ export function approvalCommentEmail(data: {
               <p><strong>${data.authorName}</strong> commented on <strong>${data.title}</strong> (${data.eventName})</p>
               <p>Revision ${data.revisionNumber}</p>
               <div class="note">${data.comment}</div>
-              <a href="${data.dashboardUrl}" class="button">Open Approval →</a>
+              <a href="${data.actionUrl}" class="button">${data.actionLabel} →</a>
             </div>
             <div class="footer">
               <p>TixMo - Creative Approvals</p>
@@ -663,7 +664,7 @@ export function approvalCommentEmail(data: {
 
       ${data.comment}
 
-      View details: ${data.dashboardUrl}
+      View details: ${data.actionUrl}
 
       TixMo - Creative Approvals
     `,

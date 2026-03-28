@@ -234,14 +234,47 @@ class ApprovalService {
                         id: comment.reviewer.id,
                         name: comment.reviewer.name || comment.reviewer.email,
                         email: comment.reviewer.email,
-                    }
+                }
                     : null,
         };
     }
 
-    private serializeApproval(approval: ApprovalDetailRecord, viewer?: { email?: string; reviewerId?: string }) {
+    private async serializeAsset(asset: ApprovalDetailRecord['revisions'][number]['assets'][number]) {
+        return {
+            id: asset.id,
+            filename: asset.filename,
+            originalName: asset.originalName,
+            mimeType: asset.mimeType,
+            size: asset.size,
+            s3Url: await uploadService.resolveFileUrl(asset.s3Key, asset.s3Url),
+            createdAt: asset.createdAt,
+        };
+    }
+
+    private async serializeApproval(approval: ApprovalDetailRecord, viewer?: { email?: string; reviewerId?: string }) {
         const latestRevision = this.getLatestRevision(approval);
         const comments = approval.comments.map((comment) => this.serializeComment(comment));
+        const revisions = await Promise.all(
+            approval.revisions.map(async (revision) => ({
+                id: revision.id,
+                revisionNumber: revision.revisionNumber,
+                summary: revision.summary,
+                createdAt: revision.createdAt,
+                uploadedBy: revision.uploadedBy,
+                assets: await Promise.all(revision.assets.map((asset) => this.serializeAsset(asset))),
+                commentCount: revision.comments.length,
+                decisions: revision.decisions.map((decision) => ({
+                    id: decision.id,
+                    reviewerId: decision.reviewerId,
+                    decision: decision.decision,
+                    note: decision.note,
+                    createdAt: decision.createdAt,
+                    reviewer: decision.reviewer,
+                })),
+            }))
+        );
+        const serializedLatestRevision =
+            revisions.find((revision) => revision.id === latestRevision.id) || revisions[0];
 
         return {
             id: approval.id,
@@ -278,55 +311,10 @@ class ApprovalService {
                         : null,
                 };
             }),
-            revisions: approval.revisions.map((revision) => ({
-                id: revision.id,
-                revisionNumber: revision.revisionNumber,
-                summary: revision.summary,
-                createdAt: revision.createdAt,
-                uploadedBy: revision.uploadedBy,
-                assets: revision.assets.map((asset) => ({
-                    id: asset.id,
-                    filename: asset.filename,
-                    originalName: asset.originalName,
-                    mimeType: asset.mimeType,
-                    size: asset.size,
-                    s3Url: asset.s3Url,
-                    createdAt: asset.createdAt,
-                })),
-                commentCount: revision.comments.length,
-                decisions: revision.decisions.map((decision) => ({
-                    id: decision.id,
-                    reviewerId: decision.reviewerId,
-                    decision: decision.decision,
-                    note: decision.note,
-                    createdAt: decision.createdAt,
-                    reviewer: decision.reviewer,
-                })),
-            })),
+            revisions,
             latestRevision: {
-                id: latestRevision.id,
-                revisionNumber: latestRevision.revisionNumber,
-                summary: latestRevision.summary,
-                createdAt: latestRevision.createdAt,
-                uploadedBy: latestRevision.uploadedBy,
-                assets: latestRevision.assets.map((asset) => ({
-                    id: asset.id,
-                    filename: asset.filename,
-                    originalName: asset.originalName,
-                    mimeType: asset.mimeType,
-                    size: asset.size,
-                    s3Url: asset.s3Url,
-                    createdAt: asset.createdAt,
-                })),
+                ...serializedLatestRevision,
                 comments: comments.filter((comment) => comment.revisionId === latestRevision.id),
-                decisions: latestRevision.decisions.map((decision) => ({
-                    id: decision.id,
-                    reviewerId: decision.reviewerId,
-                    decision: decision.decision,
-                    note: decision.note,
-                    createdAt: decision.createdAt,
-                    reviewer: decision.reviewer,
-                })),
             },
             comments,
             myReview: viewer
@@ -588,16 +576,38 @@ class ApprovalService {
         revisionNumber: number,
         comment: string
     ) {
-        const recipients = new Set<string>();
+        const normalizedAuthorEmail = authorEmail?.toLowerCase() || null;
+        const recipients = new Map<
+            string,
+            {
+                email: string;
+                name?: string;
+                reviewerToken?: string;
+            }
+        >();
 
-        if (approval.createdBy.email !== authorEmail) {
-            recipients.add(approval.createdBy.email);
+        if (approval.createdBy.email.toLowerCase() !== normalizedAuthorEmail) {
+            recipients.set(approval.createdBy.email.toLowerCase(), {
+                email: approval.createdBy.email,
+                name: `${approval.createdBy.firstName} ${approval.createdBy.lastName}`.trim(),
+            });
         }
 
         for (const reviewer of approval.reviewers) {
-            if (reviewer.email !== authorEmail) {
-                recipients.add(reviewer.email);
+            if (reviewer.email.toLowerCase() === normalizedAuthorEmail) {
+                continue;
             }
+
+            const recipientKey = reviewer.email.toLowerCase();
+            if (recipients.has(recipientKey)) {
+                continue;
+            }
+
+            recipients.set(recipientKey, {
+                email: reviewer.email,
+                name: reviewer.name || undefined,
+                reviewerToken: reviewer.token,
+            });
         }
 
         if (recipients.size === 0) {
@@ -605,7 +615,7 @@ class ApprovalService {
         }
 
         await approvalEmailService.sendCommentNotification(
-            [...recipients],
+            [...recipients.values()],
             {
                 title: approval.title,
                 eventName: approval.event.name,
@@ -687,7 +697,7 @@ class ApprovalService {
             logger.error(`Failed to send approval submission emails: ${(error as Error).message}`);
         });
 
-        return this.serializeApproval(approval);
+        return await this.serializeApproval(approval);
     }
 
     async list(userId: string, filters: ApprovalListFilters) {
@@ -741,8 +751,8 @@ class ApprovalService {
         ]);
 
         return {
-            approvals: approvals.map((approval) =>
-                this.serializeApproval(approval, { email: user.email })
+            approvals: await Promise.all(
+                approvals.map((approval) => this.serializeApproval(approval, { email: user.email }))
             ),
             pagination: {
                 page,
@@ -770,7 +780,7 @@ class ApprovalService {
             });
         }
 
-        return this.serializeApproval(approval, {
+        return await this.serializeApproval(approval, {
             email: user.email,
             reviewerId: reviewer?.id,
         });
@@ -802,7 +812,7 @@ class ApprovalService {
             throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated approval');
         }
 
-        return this.serializeApproval(updated, { email: user.email });
+        return await this.serializeApproval(updated, { email: user.email });
     }
 
     async createRevision(approvalId: string, userId: string, input: CreateRevisionInput) {
@@ -868,7 +878,7 @@ class ApprovalService {
             logger.error(`Failed to send revision emails: ${(error as Error).message}`);
         });
 
-        return this.serializeApproval(updated, { email: user.email });
+        return await this.serializeApproval(updated, { email: user.email });
     }
 
     private async resolveRevisionOrLatest(approval: ApprovalDetailRecord, revisionId?: string) {
@@ -967,7 +977,7 @@ class ApprovalService {
                 reviewerType: reviewer.reviewerType,
                 tokenExpiresAt: reviewer.tokenExpiresAt,
             },
-            approval: this.serializeApproval(reviewer.approvalRequest, {
+            approval: await this.serializeApproval(reviewer.approvalRequest, {
                 reviewerId: reviewer.id,
                 email: reviewer.email,
             }),
