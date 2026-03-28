@@ -31,9 +31,30 @@ export interface ApprovalEmailData {
     approvalId?: string;
 }
 
+export interface CommentNotificationRecipient {
+    email: string;
+    name?: string;
+    reviewerToken?: string;
+}
+
+const buildClientUrl = (pathname: string, params?: Record<string, string>) => {
+    const url = new URL(pathname, config.clientUrl.endsWith('/') ? config.clientUrl : `${config.clientUrl}/`);
+    if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+            url.searchParams.set(key, value);
+        });
+    }
+    return url.toString();
+};
+
 class ApprovalEmailService {
-    private baseReviewUrl = `${config.clientUrl}/review`;
-    private baseDashboardUrl = `${config.clientUrl}/approvals`;
+    private buildReviewUrl(token: string) {
+        return buildClientUrl(`/review/${token}`);
+    }
+
+    private buildDashboardUrl(approvalId?: string) {
+        return buildClientUrl('/approvals', approvalId ? { approvalId } : undefined);
+    }
 
     async sendReviewRequest(
         reviewer: ReviewerInfo,
@@ -41,7 +62,7 @@ class ApprovalEmailService {
         approval: ApprovalEmailData
     ): Promise<boolean> {
         try {
-            const reviewUrl = `${this.baseReviewUrl}/${reviewer.token}`;
+            const reviewUrl = this.buildReviewUrl(reviewer.token);
             const emailData = approvalRequestEmail({
                 reviewerName: reviewer.name || reviewer.email.split('@')[0],
                 requesterName: `${requester.firstName} ${requester.lastName}`.trim(),
@@ -85,7 +106,7 @@ class ApprovalEmailService {
     ) {
         for (const reviewer of reviewers) {
             try {
-                const reviewUrl = `${this.baseReviewUrl}/${reviewer.token}`;
+                const reviewUrl = this.buildReviewUrl(reviewer.token);
                 const emailData = approvalRevisionEmail({
                     reviewerName: reviewer.name || reviewer.email.split('@')[0],
                     requesterName: `${requester.firstName} ${requester.lastName}`.trim(),
@@ -116,7 +137,7 @@ class ApprovalEmailService {
         approval: ApprovalEmailData
     ) {
         try {
-            const reviewUrl = `${this.baseReviewUrl}/${reviewer.token}`;
+            const reviewUrl = this.buildReviewUrl(reviewer.token);
             const emailData = approvalReminderEmail({
                 reviewerName: reviewer.name || reviewer.email.split('@')[0],
                 requesterName: `${requester.firstName} ${requester.lastName}`.trim(),
@@ -151,7 +172,7 @@ class ApprovalEmailService {
         note?: string
     ) {
         try {
-            const dashboardUrl = `${this.baseDashboardUrl}?approvalId=${approvalId}`;
+            const dashboardUrl = this.buildDashboardUrl(approvalId);
             const emailData = approvalDecisionEmail({
                 requesterName: requester.firstName,
                 reviewerName: reviewer.name || reviewer.email.split('@')[0],
@@ -179,34 +200,37 @@ class ApprovalEmailService {
     }
 
     async sendCommentNotification(
-        recipients: string[],
+        recipients: CommentNotificationRecipient[],
         approval: ApprovalEmailData,
         authorName: string,
         comment: string
     ) {
-        try {
-            const dashboardUrl = approval.approvalId
-                ? `${this.baseDashboardUrl}?approvalId=${approval.approvalId}`
-                : this.baseDashboardUrl;
+        for (const recipient of recipients) {
+            try {
+                const actionUrl = recipient.reviewerToken
+                    ? this.buildReviewUrl(recipient.reviewerToken)
+                    : this.buildDashboardUrl(approval.approvalId);
 
-            const emailData = approvalCommentEmail({
-                title: approval.title,
-                eventName: approval.eventName,
-                revisionNumber: approval.revisionNumber,
-                authorName,
-                comment,
-                dashboardUrl,
-            });
+                const emailData = approvalCommentEmail({
+                    title: approval.title,
+                    eventName: approval.eventName,
+                    revisionNumber: approval.revisionNumber,
+                    authorName,
+                    comment,
+                    actionUrl,
+                    actionLabel: recipient.reviewerToken ? 'Open Review' : 'Open Approval',
+                });
 
-            await transporter.sendMail({
-                from: emailFrom,
-                to: recipients.join(','),
-                subject: emailData.subject,
-                html: emailData.html,
-                text: emailData.text,
-            });
-        } catch (error) {
-            logger.error(`Failed to send comment notification email: ${(error as Error).message}`);
+                await transporter.sendMail({
+                    from: emailFrom,
+                    to: recipient.email,
+                    subject: emailData.subject,
+                    html: emailData.html,
+                    text: emailData.text,
+                });
+            } catch (error) {
+                logger.error(`Failed to send comment notification email to ${recipient.email}: ${(error as Error).message}`);
+            }
         }
     }
 }

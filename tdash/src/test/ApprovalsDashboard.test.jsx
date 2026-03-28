@@ -142,4 +142,54 @@ describe('ApprovalsDashboard', () => {
         await waitFor(() => expect(apiUpload).toHaveBeenCalled());
         expect(screen.getByText('Detail view for approval-99')).toBeInTheDocument();
     });
+
+    it('opens a deep-linked approval from the dashboard query string', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url.startsWith('/events')) {
+                return Promise.resolve({
+                    events: [{ id: 'event-1', name: 'Summer Jam' }],
+                });
+            }
+
+            if (url === '/approvals/approval-2') {
+                return Promise.resolve({
+                    id: 'approval-2',
+                    title: 'Sponsor lockup',
+                    latestRevision: { id: 'revision-2', assets: [] },
+                    revisions: [{ id: 'revision-2', revisionNumber: 1, assets: [] }],
+                    reviewers: [],
+                    comments: [],
+                });
+            }
+
+            return Promise.resolve({
+                approvals: [
+                    {
+                        id: 'approval-1',
+                        title: 'Main poster',
+                        status: 'PENDING_REVIEW',
+                        latestRevisionNumber: 1,
+                        submittedAt: '2026-03-09T10:00:00.000Z',
+                        deadline: '2026-03-12T10:00:00.000Z',
+                        event: { name: 'Summer Jam' },
+                        latestRevision: { assets: [] },
+                        reviewers: [],
+                    },
+                ],
+            });
+        });
+
+        await act(async () => {
+            render(
+                <MemoryRouter initialEntries={['/approvals?approvalId=approval-2']}>
+                    <ApprovalsDashboard user={{ email: 'designer@example.com' }} />
+                </MemoryRouter>
+            );
+        });
+
+        await waitFor(() => {
+            expect(apiGet).toHaveBeenCalledWith('/approvals/approval-2');
+        });
+        expect(screen.getByText('Detail view for approval-2')).toBeInTheDocument();
+    });
 });

@@ -1,6 +1,7 @@
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3Client, S3_BUCKET, isS3Configured } from '../config/s3';
+import { logger } from '../config/logger';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import fs from 'fs';
@@ -116,6 +117,26 @@ export class UploadService {
         });
 
         return getSignedUrl(s3Client, command, { expiresIn });
+    }
+
+    async resolveFileUrl(
+        s3Key: string,
+        fallbackUrl?: string,
+        expiresIn: number = 24 * 60 * 60
+    ): Promise<string> {
+        if (!isS3Configured()) {
+            return fallbackUrl || `https://test-storage.local/${s3Key}`;
+        }
+
+        try {
+            return await this.getSignedUrl(s3Key, expiresIn);
+        } catch (error) {
+            logger.warn(`Failed to generate signed URL for ${s3Key}: ${(error as Error).message}`);
+            if (fallbackUrl) {
+                return fallbackUrl;
+            }
+            throw error;
+        }
     }
 
     /**

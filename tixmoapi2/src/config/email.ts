@@ -5,9 +5,10 @@ import { logger } from './logger';
 // Decide transport based on environment/credentials
 function createTransport() {
   const hasSmtpCreds = Boolean(config.emailUser && config.emailPassword);
+  const hasSendgridApiKey = Boolean(config.sendgridApiKey);
   const isTest = config.nodeEnv === 'test';
 
-  if (isTest || !hasSmtpCreds) {
+  if (isTest) {
     // Test/dev-safe transport: does not send real emails
     const testTransport: TransportOptions = {
       jsonTransport: true,
@@ -15,6 +16,32 @@ function createTransport() {
 
     logger.info(
       `Email transport using jsonTransport (env=${config.nodeEnv}, hasCreds=${hasSmtpCreds})`
+    );
+
+    return nodemailer.createTransport(testTransport);
+  }
+
+  if (!hasSmtpCreds && hasSendgridApiKey) {
+    logger.info('Email transport using SendGrid SMTP credentials derived from SENDGRID_API_KEY');
+
+    return nodemailer.createTransport({
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'apikey',
+        pass: config.sendgridApiKey,
+      },
+    });
+  }
+
+  if (!hasSmtpCreds) {
+    const testTransport: TransportOptions = {
+      jsonTransport: true,
+    } as TransportOptions;
+
+    logger.info(
+      `Email transport using jsonTransport (env=${config.nodeEnv}, hasCreds=${hasSmtpCreds}, hasSendgrid=${hasSendgridApiKey})`
     );
 
     return nodemailer.createTransport(testTransport);

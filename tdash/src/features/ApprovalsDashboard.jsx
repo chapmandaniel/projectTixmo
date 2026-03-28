@@ -8,6 +8,7 @@ import {
     UserCheck,
     X,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import ApprovalDetailView from './ApprovalDetailView';
 import {
@@ -221,6 +222,7 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
 };
 
 const ApprovalsDashboard = ({ user }) => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [approvals, setApprovals] = useState([]);
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -233,6 +235,24 @@ const ApprovalsDashboard = ({ user }) => {
     const [sortBy, setSortBy] = useState('deadline');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedApproval, setSelectedApproval] = useState(null);
+    const deepLinkedApprovalId = searchParams.get('approvalId');
+
+    const syncApprovalIdParam = (approvalId) => {
+        const nextParams = new URLSearchParams(searchParams);
+
+        if (approvalId) {
+            nextParams.set('approvalId', approvalId);
+        } else {
+            nextParams.delete('approvalId');
+        }
+
+        setSearchParams(nextParams, { replace: true });
+    };
+
+    const openApproval = (approval) => {
+        setSelectedApproval(approval);
+        syncApprovalIdParam(approval.id);
+    };
 
     const loadApprovals = async () => {
         try {
@@ -279,6 +299,33 @@ const ApprovalsDashboard = ({ user }) => {
         loadApprovals();
     }, [statusFilter, eventFilter, assignedToMe, approachingDeadline, sortBy]);
 
+    useEffect(() => {
+        if (!deepLinkedApprovalId || selectedApproval?.id === deepLinkedApprovalId) {
+            return;
+        }
+
+        let isCancelled = false;
+
+        const loadSelectedApproval = async () => {
+            try {
+                setError('');
+                const response = await api.get(`/approvals/${deepLinkedApprovalId}`);
+                if (!isCancelled) {
+                    setSelectedApproval(response);
+                }
+            } catch (requestError) {
+                if (!isCancelled) {
+                    setError(requestError.response?.data?.message || requestError.message || 'Failed to load approval.');
+                }
+            }
+        };
+
+        loadSelectedApproval();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [deepLinkedApprovalId, selectedApproval?.id]);
     if (selectedApproval) {
         return (
             <ApprovalDetailView
@@ -287,10 +334,11 @@ const ApprovalsDashboard = ({ user }) => {
                 user={user}
                 onBack={() => {
                     setSelectedApproval(null);
+                    syncApprovalIdParam(null);
                     loadApprovals();
                 }}
                 onUpdated={(approval) => {
-                    setSelectedApproval(approval);
+                    openApproval(approval);
                     setApprovals((current) => current.map((item) => (item.id === approval.id ? approval : item)));
                 }}
             />
@@ -310,7 +358,7 @@ const ApprovalsDashboard = ({ user }) => {
                     onClose={() => setShowCreateModal(false)}
                     onCreated={(approval) => {
                         setShowCreateModal(false);
-                        setSelectedApproval(approval);
+                        openApproval(approval);
                         setApprovals((current) => [approval, ...current]);
                     }}
                 />
@@ -453,7 +501,7 @@ const ApprovalsDashboard = ({ user }) => {
                                 <button
                                     key={approval.id}
                                     type="button"
-                                    onClick={() => setSelectedApproval(approval)}
+                                    onClick={() => openApproval(approval)}
                                     className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#0d1520] text-left transition hover:-translate-y-0.5 hover:border-sky-300/40 hover:shadow-2xl"
                                 >
                                     <div className="aspect-[4/3] bg-[linear-gradient(135deg,_rgba(14,165,233,0.18),_rgba(15,23,42,0.8))]">
