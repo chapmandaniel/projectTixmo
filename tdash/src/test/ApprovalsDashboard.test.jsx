@@ -23,7 +23,7 @@ describe('ApprovalsDashboard', () => {
         vi.clearAllMocks();
     });
 
-    it('loads the creative approvals dashboard and filters by search', async () => {
+    it('loads the creative approvals dashboard and filters by event and status', async () => {
         apiGet.mockImplementation((url) => {
             if (url.startsWith('/events')) {
                 return Promise.resolve({
@@ -43,18 +43,18 @@ describe('ApprovalsDashboard', () => {
                         latestRevisionNumber: 1,
                         submittedAt: '2026-03-09T10:00:00.000Z',
                         deadline: '2026-03-12T10:00:00.000Z',
-                        event: { name: 'Summer Jam' },
+                        event: { id: 'event-1', name: 'Summer Jam' },
                         latestRevision: { assets: [] },
                         reviewers: [],
                     },
                     {
                         id: 'approval-2',
                         title: 'Sponsor lockup',
-                        status: 'PENDING_REVIEW',
+                        status: 'APPROVED',
                         latestRevisionNumber: 2,
                         submittedAt: '2026-03-09T12:00:00.000Z',
-                        deadline: '2026-03-11T10:00:00.000Z',
-                        event: { name: 'Neon Nights' },
+                        deadline: '2026-04-11T10:00:00.000Z',
+                        event: { id: 'event-2', name: 'Neon Nights' },
                         latestRevision: { assets: [] },
                         reviewers: [],
                     },
@@ -73,9 +73,21 @@ describe('ApprovalsDashboard', () => {
         expect(screen.getByText('Review Portal')).toBeInTheDocument();
         expect(screen.getByText('Main poster')).toBeInTheDocument();
         expect(screen.getByText('Sponsor lockup')).toBeInTheDocument();
+        expect(screen.getByText('Overdue')).toBeInTheDocument();
 
-        fireEvent.change(screen.getByPlaceholderText('Search by asset title or event'), {
-            target: { value: 'main' },
+        fireEvent.change(screen.getByLabelText('Status filter'), {
+            target: { value: 'APPROVED' },
+        });
+
+        expect(screen.queryByText('Main poster')).not.toBeInTheDocument();
+        expect(screen.getByText('Sponsor lockup')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Status filter'), {
+            target: { value: '' },
+        });
+
+        fireEvent.change(screen.getByLabelText('Event filter'), {
+            target: { value: 'event-1' },
         });
 
         expect(screen.getByText('Main poster')).toBeInTheDocument();
@@ -114,7 +126,7 @@ describe('ApprovalsDashboard', () => {
 
         fireEvent.click(screen.getByText('New submission'));
 
-        fireEvent.change(screen.getByLabelText('Event'), {
+        fireEvent.change(screen.getAllByLabelText('Event')[0], {
             target: { value: 'event-1' },
         });
 

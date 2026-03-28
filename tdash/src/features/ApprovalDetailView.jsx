@@ -1,12 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     ArrowLeft,
-    CalendarDays,
-    CheckCircle2,
     Download,
     FileText,
-    MessageSquare,
-    RefreshCcw,
     Send,
     Upload,
     User,
@@ -19,6 +15,24 @@ import {
     formatApprovalDate,
 } from './approvalConstants';
 
+const STATUS_CARD_ACCENTS = {
+    PENDING_REVIEW: 'from-amber-400 to-orange-500',
+    UPDATED: 'from-sky-400 to-cyan-500',
+    CHANGES_REQUESTED: 'from-orange-400 to-rose-500',
+    APPROVED: 'from-emerald-400 to-teal-500',
+    DECLINED: 'from-rose-400 to-red-500',
+};
+
+const DECISION_CARD_STYLES = {
+    APPROVED: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:border-emerald-300/50 hover:bg-emerald-500/15',
+    CHANGES_REQUESTED: 'border-amber-400/30 bg-amber-500/10 text-amber-100 hover:border-amber-300/50 hover:bg-amber-500/15',
+    DECLINED: 'border-rose-400/30 bg-rose-500/10 text-rose-100 hover:border-rose-300/50 hover:bg-rose-500/15',
+};
+
+const panelClass = 'rounded-md border border-[#2b2b40] bg-[#1e1e2d]';
+const surfaceClass = 'rounded-md border border-[#2b2b40] bg-[#151521]';
+const inputClass = 'w-full rounded-md border border-[#2b2b40] bg-[#151521] px-4 py-3 text-sm font-light text-gray-100 outline-none transition focus:border-sky-400 placeholder:text-[#5e6278]';
+
 const authorLabel = (author) => {
     if (!author) {
         return 'Unknown';
@@ -27,7 +41,64 @@ const authorLabel = (author) => {
     return author.name || author.email || 'Unknown';
 };
 
+const initialsLabel = (author) => {
+    const label = authorLabel(author).trim();
+    if (!label) {
+        return '??';
+    }
+
+    const parts = label.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+        return parts[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase();
+};
+
+const assetLabel = (asset, index) => {
+    const filename = asset?.originalName?.trim();
+    if (!filename) {
+        return `Option ${index + 1}`;
+    }
+
+    return filename.replace(/\.[^/.]+$/, '') || filename;
+};
+
+const assetTypeLabel = (asset) => (
+    asset?.mimeType?.startsWith('image/')
+        ? 'Image option'
+        : 'File option'
+);
+
+const personLabel = (person) => {
+    if (!person) {
+        return 'Unknown';
+    }
+
+    const name = [person.firstName, person.lastName].filter(Boolean).join(' ').trim();
+    return name || person.name || person.email || 'Unknown';
+};
+
+const DecisionActionCard = ({ option, saving, onClick }) => (
+    <button
+        type="button"
+        disabled={saving}
+        onClick={onClick}
+        className={`rounded-md border px-4 py-3 text-left text-sm font-light transition disabled:cursor-not-allowed disabled:opacity-60 ${DECISION_CARD_STYLES[option.value] || 'border-white/10 bg-white/5 text-slate-200 hover:border-sky-300/40 hover:text-white'}`}
+    >
+        <span className="block font-medium text-inherit">{option.label}</span>
+        <span className="mt-1 block text-xs text-inherit/80">
+            {option.value === 'APPROVED'
+                ? 'Confirm the latest version is ready to ship.'
+                : option.value === 'CHANGES_REQUESTED'
+                    ? 'Send the work back for another iteration.'
+                    : 'Reject the submission in its current state.'}
+        </span>
+    </button>
+);
+
 const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdated }) => {
+    const fileInputRef = useRef(null);
     const [approval, setApproval] = useState(initialApproval);
     const [selectedRevisionId, setSelectedRevisionId] = useState(initialApproval?.latestRevision?.id || null);
     const [assetIndex, setAssetIndex] = useState(0);
@@ -72,6 +143,19 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         );
     }, [approval, selectedRevisionId]);
 
+    const revisions = approval?.revisions || [];
+    const comments = approval?.comments || [];
+    const reviewers = approval?.reviewers || [];
+    const sortedComments = useMemo(
+        () =>
+            [...comments].sort((left, right) => {
+                const leftTime = new Date(left.createdAt || 0).getTime();
+                const rightTime = new Date(right.createdAt || 0).getTime();
+                return rightTime - leftTime;
+            }),
+        [comments]
+    );
+
     useEffect(() => {
         setAssetIndex(0);
     }, [selectedRevisionId]);
@@ -92,14 +176,24 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     }, [isImageExpanded]);
 
     const selectedAsset = selectedRevision?.assets?.[assetIndex] || null;
-    const reviewerAssignment = approval?.reviewers?.find((reviewer) => reviewer.email === user?.email) || null;
+    const reviewerAssignment = reviewers.find((reviewer) => reviewer.email === user?.email) || null;
     const latestDecision = reviewerAssignment?.latestDecision || approval?.myReview || null;
     const statusMeta = APPROVAL_STATUS_META[approval?.status] || APPROVAL_STATUS_META.PENDING_REVIEW;
     const StatusIcon = statusMeta.icon;
+    const requesterName = personLabel(approval?.createdBy);
+    const commentRevisionId = approval?.latestRevision?.id || selectedRevision?.id || null;
+
+    const resetRevisionDraft = () => {
+        setRevisionFiles([]);
+        setRevisionSummary('');
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     const submitComment = async (event) => {
         event.preventDefault();
-        if (!comment.trim() || !selectedRevision) {
+        if (!comment.trim() || !commentRevisionId) {
             return;
         }
 
@@ -108,7 +202,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setError('');
             await api.post(`/approvals/${approval.id}/comments`, {
                 content: comment,
-                revisionId: selectedRevision.id,
+                revisionId: commentRevisionId,
                 parentCommentId: replyTo?.id,
             });
             setComment('');
@@ -155,13 +249,12 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             }
 
             const updated = await api.upload(`/approvals/${approval.id}/revisions`, payload);
-            setRevisionFiles([]);
-            setRevisionSummary('');
+            resetRevisionDraft();
             setApproval(updated);
             setSelectedRevisionId(updated.latestRevision?.id || updated.revisions?.[0]?.id || null);
             onUpdated?.(updated);
         } catch (requestError) {
-            setError(requestError.response?.data?.message || requestError.message || 'Failed to upload revision.');
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to upload version.');
         } finally {
             setSaving(false);
         }
@@ -169,333 +262,387 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
 
     if (loading) {
         return (
-            <div className="min-h-[calc(100vh-64px)] bg-[#081018] px-6 py-16 text-center text-sm text-slate-400">
-                Loading approval workspace…
+            <div className="min-h-[calc(100vh-64px)] bg-[#141625] px-6 py-16 text-center text-sm font-light text-[#8f94aa]">
+                Loading review workspace...
             </div>
         );
     }
 
     if (!approval) {
         return (
-            <div className="min-h-[calc(100vh-64px)] bg-[#081018] px-6 py-16 text-center text-sm text-slate-400">
+            <div className="min-h-[calc(100vh-64px)] bg-[#141625] px-6 py-16 text-center text-sm font-light text-[#8f94aa]">
                 Approval not found.
             </div>
         );
     }
 
     return (
-        <div className="min-h-[calc(100vh-64px)] bg-[#081018] text-white -m-6 px-4 py-6 sm:-m-8 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-7xl space-y-6">
-                <div className="flex flex-col gap-4 rounded-[2rem] border border-white/10 bg-[#0d1520] p-6 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-3">
-                        <button
-                            type="button"
-                            onClick={onBack}
-                            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-slate-300 transition hover:text-white"
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to dashboard
-                        </button>
+        <div className="min-h-[calc(100vh-64px)] bg-[#141625] text-white -m-6 px-4 py-6 sm:-m-8 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1500px] space-y-5">
+                <button
+                    type="button"
+                    onClick={onBack}
+                    className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm font-light text-[#a1a5b7] transition hover:text-white"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to review portal
+                </button>
 
-                        <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-3xl font-semibold tracking-tight">{approval.title}</h1>
-                            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${statusMeta.chip}`}>
-                                <StatusIcon className="h-3.5 w-3.5" />
-                                {statusMeta.label}
-                            </span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-                            <span>{approval.event?.name}</span>
-                            <span className="inline-flex items-center gap-2">
-                                <CalendarDays className="h-4 w-4" />
-                                Deadline {formatApprovalDate(approval.deadline)}
-                            </span>
-                            <span>Submitted {formatApprovalDate(approval.submittedAt)}</span>
-                        </div>
+                <section className={`relative overflow-hidden rounded-md border px-6 py-8 sm:px-8 ${panelClass}`}>
+                    <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${STATUS_CARD_ACCENTS[approval.status] || 'from-slate-400 to-slate-500'}`} />
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
+                        <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                     </div>
-
-                    <div className="grid gap-3 md:min-w-[320px]">
-                        {reviewerAssignment && (
-                            <div className="rounded-2xl border border-white/10 bg-[#081018] p-4">
-                                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Your review</p>
-                                <p className="mt-2 text-sm text-slate-300">
-                                    {latestDecision ? `Current decision: ${latestDecision.decision.replaceAll('_', ' ')}` : 'You are assigned and have not submitted a decision yet.'}
-                                </p>
-                                <textarea
-                                    rows={3}
-                                    value={decisionNote}
-                                    onChange={(e) => setDecisionNote(e.target.value)}
-                                    placeholder="Optional decision note"
-                                    className="mt-3 w-full rounded-2xl border border-white/10 bg-[#0d1520] px-4 py-3 text-sm outline-none focus:border-sky-400"
-                                />
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {DECISION_OPTIONS.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            disabled={saving}
-                                            onClick={() => submitDecision(option.value)}
-                                            className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200 transition hover:border-sky-300/40 hover:text-white disabled:opacity-60"
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <form onSubmit={uploadRevision} className="rounded-2xl border border-white/10 bg-[#081018] p-4">
-                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Upload revision</p>
-                            <textarea
-                                rows={3}
-                                value={revisionSummary}
-                                onChange={(e) => setRevisionSummary(e.target.value)}
-                                placeholder="What changed in this revision?"
-                                className="mt-3 w-full rounded-2xl border border-white/10 bg-[#0d1520] px-4 py-3 text-sm outline-none focus:border-sky-400"
-                            />
-                            <input
-                                type="file"
-                                multiple
-                                onChange={(e) => setRevisionFiles(Array.from(e.target.files || []))}
-                                className="mt-3 block w-full rounded-2xl border border-dashed border-white/10 bg-[#0d1520] px-4 py-4 text-sm text-slate-300"
-                            />
-                            <button
-                                type="submit"
-                                disabled={saving || !revisionFiles.length}
-                                className="mt-3 inline-flex items-center gap-2 rounded-full bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                <Upload className="h-4 w-4" />
-                                Upload revision
-                            </button>
-                        </form>
+                    <div className="relative">
+                        <h1 className="text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
+                            Review Portal
+                        </h1>
                     </div>
-                </div>
+                </section>
 
                 {error && (
-                    <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                    <div className="rounded-md border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-light text-rose-300">
                         {error}
                     </div>
                 )}
 
-                <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-                    <section className="space-y-6">
-                        <div className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div>
-                                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Asset viewer</p>
-                                    <h2 className="mt-2 text-lg font-semibold">
-                                        Revision {selectedRevision?.revisionNumber || approval.latestRevisionNumber}
-                                    </h2>
-                                </div>
-                                <div className="text-sm text-slate-400">
-                                    {selectedRevision ? formatApprovalDate(selectedRevision.createdAt) : ''}
-                                </div>
+                <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)]">
+                    <section className={`${panelClass} p-4 sm:p-5`}>
+                        <div className={`${surfaceClass} relative overflow-hidden`}>
+                            <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-9.5rem)] gap-2 overflow-x-auto rounded-md border border-white/10 bg-[#0f1020]/90 px-2 py-2 shadow-lg shadow-black/20 backdrop-blur">
+                                {revisions.map((revision) => (
+                                    <button
+                                        key={revision.id}
+                                        type="button"
+                                        onClick={() => setSelectedRevisionId(revision.id)}
+                                        className={`rounded-md px-3 py-2 text-xs uppercase tracking-[0.16em] transition ${revision.id === selectedRevision?.id ? 'bg-sky-500 text-white' : 'bg-white/5 text-[#a1a5b7] hover:bg-white/10 hover:text-white'}`}
+                                    >
+                                        v{revision.revisionNumber}
+                                    </button>
+                                ))}
                             </div>
 
-                            <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#081018]">
-                                <div className="flex min-h-[420px] items-center justify-center p-6">
-                                    {selectedAsset ? (
-                                        selectedAsset.mimeType?.startsWith('image/') ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsImageExpanded(true)}
-                                                className="group relative w-full cursor-zoom-in overflow-hidden rounded-2xl"
-                                                aria-label={`Expand ${selectedAsset.originalName}`}
-                                            >
-                                                <img src={selectedAsset.s3Url} alt={selectedAsset.originalName} className="max-h-[520px] w-full rounded-2xl object-contain" />
-                                                <span className="pointer-events-none absolute inset-x-4 bottom-4 rounded-full bg-black/60 px-3 py-2 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100">
-                                                    Click to expand
-                                                </span>
-                                            </button>
-                                        ) : (
-                                            <div className="rounded-[1.5rem] border border-white/10 bg-[#0d1520] px-8 py-12 text-center">
-                                                <FileText className="mx-auto h-12 w-12 text-slate-500" />
-                                                <p className="mt-4 text-sm text-slate-300">{selectedAsset.originalName}</p>
-                                                <a
-                                                    href={selectedAsset.s3Url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950"
-                                                >
-                                                    <Download className="h-4 w-4" />
-                                                    Download
-                                                </a>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <div className="text-sm text-slate-500">No assets uploaded for this revision.</div>
-                                    )}
-                                </div>
+                            <div className="absolute right-4 top-4 z-10">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-[#0f1020]/90 px-4 py-2 text-sm font-light text-white shadow-lg shadow-black/20 backdrop-blur transition hover:bg-[#17192b]"
+                                >
+                                    <Upload className="h-4 w-4" />
+                                    Upload version
+                                </button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    multiple
+                                    onChange={(event) => setRevisionFiles(Array.from(event.target.files || []))}
+                                    className="hidden"
+                                />
+                            </div>
 
-                                {selectedRevision?.assets?.length > 1 && (
-                                    <div className="flex gap-2 overflow-x-auto border-t border-white/10 p-4">
+                            {revisionFiles.length > 0 && (
+                                <form
+                                    onSubmit={uploadRevision}
+                                    className="absolute bottom-4 left-4 right-4 z-10 rounded-md border border-white/10 bg-[#0f1020]/92 p-4 shadow-2xl shadow-black/30 backdrop-blur"
+                                >
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <p className="text-xs uppercase tracking-[0.16em] text-[#8f94aa]">Version upload ready</p>
+                                            <p className="mt-1 text-sm font-light text-gray-100">
+                                                {revisionFiles.length} file{revisionFiles.length === 1 ? '' : 's'} selected
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={resetRevisionDraft}
+                                            className="text-xs uppercase tracking-[0.16em] text-[#8f94aa] transition hover:text-white"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {revisionFiles.map((file) => (
+                                            <span
+                                                key={`${file.name}-${file.size}`}
+                                                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-light text-[#d7d9e4]"
+                                            >
+                                                {file.name}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <textarea
+                                        rows={2}
+                                        value={revisionSummary}
+                                        onChange={(event) => setRevisionSummary(event.target.value)}
+                                        placeholder="What changed in this version?"
+                                        className={`${inputClass} mt-3 bg-[#151521]/90`}
+                                    />
+
+                                    <div className="mt-3 flex justify-end">
+                                        <button
+                                            type="submit"
+                                            disabled={saving}
+                                            className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            <Upload className="h-4 w-4" />
+                                            Upload version
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
+                            <div className="flex min-h-[520px] items-center justify-center p-6">
+                                {selectedAsset ? (
+                                    selectedAsset.mimeType?.startsWith('image/') ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsImageExpanded(true)}
+                                            className="group relative w-full cursor-zoom-in overflow-hidden rounded-md"
+                                            aria-label={`Expand ${selectedAsset.originalName}`}
+                                        >
+                                            <img
+                                                src={selectedAsset.s3Url}
+                                                alt={selectedAsset.originalName}
+                                                className="max-h-[560px] w-full rounded-md object-contain"
+                                            />
+                                            <span className="pointer-events-none absolute inset-x-4 bottom-4 rounded-full bg-black/60 px-3 py-2 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100">
+                                                Click to expand
+                                            </span>
+                                        </button>
+                                    ) : (
+                                        <div className="rounded-md border border-[#2b2b40] bg-[#1e1e2d] px-8 py-12 text-center">
+                                            <FileText className="mx-auto h-12 w-12 text-[#5e6278]" />
+                                            <p className="mt-4 text-sm font-light text-gray-200">{selectedAsset.originalName}</p>
+                                            <a
+                                                href={selectedAsset.s3Url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-4 inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400"
+                                            >
+                                                <Download className="h-4 w-4" />
+                                                Download asset
+                                            </a>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="text-sm font-light text-[#8f94aa]">No assets uploaded for this version.</div>
+                                )}
+                            </div>
+
+                            {selectedRevision?.assets?.length > 1 && (
+                                <div className="border-t border-[#2b2b40] p-4">
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <p className="text-xs uppercase tracking-[0.16em] text-[#8f94aa]">Version options</p>
+                                        <span className="text-[11px] uppercase tracking-[0.16em] text-[#5e6278]">
+                                            {selectedRevision.assets.length} files
+                                        </span>
+                                    </div>
+
+                                    <div className="flex gap-3 overflow-x-auto pb-1">
                                         {selectedRevision.assets.map((asset, index) => (
                                             <button
                                                 key={asset.id}
                                                 type="button"
                                                 onClick={() => setAssetIndex(index)}
-                                                className={`h-20 min-w-20 overflow-hidden rounded-2xl border ${index === assetIndex ? 'border-sky-400' : 'border-white/10'}`}
+                                                className={`min-w-[148px] overflow-hidden rounded-lg border text-left transition ${index === assetIndex ? 'border-sky-400 bg-sky-500/10 shadow-lg shadow-sky-500/10' : 'border-[#2b2b40] bg-[#1e1e2d] hover:border-[#3a3a5a] hover:bg-[#232336]'}`}
                                             >
-                                                {asset.mimeType?.startsWith('image/') ? (
-                                                    <img src={asset.s3Url} alt={asset.originalName} className="h-full w-full object-cover" />
-                                                ) : (
-                                                    <div className="flex h-full items-center justify-center bg-[#0d1520] text-xs text-slate-400">File</div>
-                                                )}
+                                                <div className="flex h-24 items-center justify-center overflow-hidden border-b border-inherit bg-[#151521]">
+                                                    {asset.mimeType?.startsWith('image/') ? (
+                                                        <img src={asset.s3Url} alt={asset.originalName} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <div className="flex h-full w-full items-center justify-center text-xs font-light text-[#8f94aa]">File</div>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-1 px-3 py-3">
+                                                    <p className="truncate text-sm font-light text-gray-100">{assetLabel(asset, index)}</p>
+                                                    <p className="text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
+                                                        {assetTypeLabel(asset)}
+                                                    </p>
+                                                </div>
                                             </button>
                                         ))}
                                     </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div>
-                                    <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Discussion</p>
-                                    <h2 className="mt-2 text-lg font-semibold">Threaded feedback</h2>
                                 </div>
-                                <span className="inline-flex items-center gap-2 text-sm text-slate-400">
-                                    <MessageSquare className="h-4 w-4" />
-                                    {approval.comments.length} comments
+                            )}
+                        </div>
+                    </section>
+
+                    <aside className="space-y-4">
+                        <section className={`${panelClass} p-4`}>
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h2 className="truncate text-lg font-light text-gray-100">{approval.title}</h2>
+                                    {approval.description && (
+                                        <p className="mt-1 text-sm font-light leading-5 text-[#8f94aa]">
+                                            {approval.description}
+                                        </p>
+                                    )}
+                                </div>
+                                <span className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-xs ${statusMeta.chip}`}>
+                                    <StatusIcon className="h-3.5 w-3.5" />
+                                    {statusMeta.label}
                                 </span>
                             </div>
 
+                            <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-light text-[#a1a5b7]">
+                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Event</span>
+                                    <span className="mt-1 block text-sm text-gray-100">{approval.event?.name || 'Unassigned'}</span>
+                                </div>
+                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Owner</span>
+                                    <span className="mt-1 block text-sm text-gray-100">{requesterName}</span>
+                                </div>
+                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Due</span>
+                                    <span className="mt-1 block text-sm text-gray-100">{formatApprovalDate(approval.deadline)}</span>
+                                </div>
+                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Version</span>
+                                    <span className="mt-1 block text-sm text-gray-100">v{approval.latestRevisionNumber}</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        {reviewerAssignment && (
+                            <section className={`${panelClass} p-5`}>
+                                <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Decision controls</p>
+                                <p className="mt-2 text-sm font-light text-[#a1a5b7]">
+                                    {latestDecision
+                                        ? `Current decision: ${latestDecision.decision.replaceAll('_', ' ')}`
+                                        : 'You are assigned to review this submission and have not responded yet.'}
+                                </p>
+                                <textarea
+                                    rows={3}
+                                    value={decisionNote}
+                                    onChange={(event) => setDecisionNote(event.target.value)}
+                                    placeholder="Optional decision note"
+                                    className={`${inputClass} mt-4`}
+                                />
+                                <div className="mt-4 grid gap-2">
+                                    {DECISION_OPTIONS.map((option) => (
+                                        <DecisionActionCard
+                                            key={option.value}
+                                            option={option}
+                                            saving={saving}
+                                            onClick={() => submitDecision(option.value)}
+                                        />
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        <section className={`${panelClass} p-4`}>
+                            <div className="flex items-center justify-between gap-4 px-1 pb-3">
+                                <h2 className="text-lg font-light text-gray-100">Discussion</h2>
+                                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
+                                    {sortedComments.length}
+                                </span>
+                            </div>
+
+                            {replyTo && (
+                                <div className="mb-3 flex items-center justify-between rounded-full border border-sky-400/25 bg-sky-500/10 px-3 py-2 text-xs uppercase tracking-[0.16em] text-sky-100">
+                                    <span>Replying to {authorLabel(replyTo.author)}</span>
+                                    <button type="button" onClick={() => setReplyTo(null)} className="text-sky-100 transition hover:text-white">
+                                        Cancel
+                                    </button>
+                                </div>
+                            )}
+
                             <div className="space-y-3">
-                                {approval.comments.map((item) => (
-                                    <div key={item.id} className="rounded-2xl border border-white/10 bg-[#081018] p-4">
-                                        <div className="flex flex-wrap items-center justify-between gap-2">
-                                            <div className="flex items-center gap-2 text-sm text-slate-300">
-                                                <User className="h-4 w-4 text-slate-500" />
-                                                <span>{authorLabel(item.author)}</span>
-                                                <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-400">
-                                                    Revision {approval.revisions.find((revision) => revision.id === item.revisionId)?.revisionNumber || approval.latestRevisionNumber}
-                                                </span>
-                                                {item.parentCommentId && (
-                                                    <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-slate-400">Reply</span>
-                                                )}
+                                {sortedComments.map((item, index) => (
+                                    <div
+                                        key={item.id}
+                                        data-testid="approval-comment-card"
+                                        className={`relative rounded-lg px-1 pb-3 ${index !== sortedComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
+                                    >
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                            <div className="flex items-start gap-3">
+                                                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-500/10 text-[11px] uppercase tracking-[0.18em] text-sky-100">
+                                                    {initialsLabel(item.author)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="text-sm font-light text-gray-100">{authorLabel(item.author)}</span>
+                                                        {item.parentCommentId && (
+                                                            <span className="inline-flex rounded-full border border-sky-400/25 bg-sky-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-sky-100">
+                                                                Reply
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="mt-2 text-sm leading-6 font-light text-[#d7d9e4]">{item.content}</p>
+                                                </div>
                                             </div>
-                                            <span className="text-xs text-slate-500">{formatApprovalDate(item.createdAt)}</span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[11px] font-light uppercase tracking-[0.16em] text-[#5e6278]">{formatApprovalDate(item.createdAt)}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setReplyTo(item)}
+                                                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-sky-200 transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white"
+                                                >
+                                                    <User className="h-3.5 w-3.5" />
+                                                    Reply
+                                                </button>
+                                            </div>
                                         </div>
-                                        <p className="mt-3 text-sm leading-6 text-slate-200">{item.content}</p>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setReplyTo(item);
-                                                setSelectedRevisionId(item.revisionId);
-                                            }}
-                                            className="mt-3 text-xs text-sky-300 transition hover:text-sky-200"
-                                        >
-                                            Reply
-                                        </button>
                                     </div>
                                 ))}
 
-                                {approval.comments.length === 0 && (
-                                    <div className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-slate-500">
+                                {sortedComments.length === 0 && (
+                                    <div className="rounded-lg border border-dashed border-[#2b2b40] px-4 py-8 text-center text-sm font-light text-[#8f94aa]">
                                         No comments yet.
                                     </div>
                                 )}
                             </div>
 
-                            <form onSubmit={submitComment} className="mt-5 rounded-[1.5rem] border border-white/10 bg-[#081018] p-4">
-                                {replyTo && (
-                                    <div className="mb-3 flex items-center justify-between rounded-2xl border border-sky-400/25 bg-sky-500/10 px-3 py-2 text-xs text-sky-100">
-                                        <span>Replying to {authorLabel(replyTo.author)}</span>
-                                        <button type="button" onClick={() => setReplyTo(null)}>
-                                            Cancel
-                                        </button>
-                                    </div>
-                                )}
+                            <form onSubmit={submitComment} className="mt-4 flex items-end gap-3 border-t border-[#2b2b40] pt-4">
                                 <textarea
-                                    rows={4}
+                                    rows={3}
                                     value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Add feedback, answer questions, or clarify requested changes."
-                                    className="w-full rounded-2xl border border-white/10 bg-[#0d1520] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                                    onChange={(event) => setComment(event.target.value)}
+                                    placeholder="Add a comment"
+                                    className={`flex-1 ${inputClass}`}
                                 />
-                                <div className="mt-3 flex items-center justify-between">
-                                    <span className="text-xs text-slate-500">
-                                        Comment will be attached to revision {selectedRevision?.revisionNumber || approval.latestRevisionNumber}.
-                                    </span>
-                                    <button
-                                        type="submit"
-                                        disabled={saving || !comment.trim()}
-                                        className="inline-flex items-center gap-2 rounded-full bg-sky-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                        <Send className="h-4 w-4" />
-                                        Post comment
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </section>
 
-                    <aside className="space-y-6">
-                        <section className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
-                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Version history</p>
-                            <div className="mt-4 space-y-3">
-                                {approval.revisions.map((revision) => (
-                                    <button
-                                        key={revision.id}
-                                        type="button"
-                                        onClick={() => setSelectedRevisionId(revision.id)}
-                                        className={`w-full rounded-2xl border px-4 py-4 text-left transition ${revision.id === selectedRevision?.id ? 'border-sky-400/50 bg-sky-500/10' : 'border-white/10 bg-[#081018]'}`}
-                                    >
-                                        <div className="flex items-center justify-between gap-3">
-                                            <span className="text-sm font-medium">Revision {revision.revisionNumber}</span>
-                                            <span className="text-xs text-slate-500">{formatApprovalDate(revision.createdAt)}</span>
-                                        </div>
-                                        <p className="mt-2 text-sm text-slate-400">{revision.summary || 'No revision note provided.'}</p>
-                                        <p className="mt-2 text-xs text-slate-500">
-                                            Uploaded by {revision.uploadedBy?.firstName} {revision.uploadedBy?.lastName}
-                                        </p>
-                                    </button>
-                                ))}
-                            </div>
+                                <button
+                                    type="submit"
+                                    aria-label="Send comment"
+                                    disabled={saving || !comment.trim()}
+                                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-500 text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <Send className="h-4 w-4" />
+                                </button>
+                            </form>
                         </section>
 
-                        <section className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
-                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Reviewers</p>
+                        <section className={`${panelClass} p-5`}>
+                            <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Reviewers</p>
                             <div className="mt-4 space-y-3">
-                                {approval.reviewers.map((reviewer) => (
-                                    <div key={reviewer.id} className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
+                                {reviewers.map((reviewer) => (
+                                    <div key={reviewer.id} className={`${surfaceClass} px-4 py-3`}>
                                         <div className="flex items-center justify-between gap-3">
                                             <div>
-                                                <p className="text-sm font-medium text-slate-200">{reviewer.name || reviewer.email}</p>
-                                                <p className="text-xs text-slate-500">{reviewer.email}</p>
+                                                <p className="text-sm font-light text-gray-100">{reviewer.name || reviewer.email}</p>
+                                                <p className="text-xs font-light text-[#5e6278]">{reviewer.email}</p>
                                             </div>
-                                            <span className="rounded-full bg-white/5 px-2 py-1 text-[11px] text-slate-400">
+                                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-[#a1a5b7]">
                                                 {reviewer.reviewerType}
                                             </span>
                                         </div>
-                                        <p className="mt-3 text-xs text-slate-400">
-                                            {reviewer.latestDecision ? `Decision: ${reviewer.latestDecision.decision.replaceAll('_', ' ')}` : 'Awaiting decision'}
+                                        <p className="mt-3 text-xs uppercase tracking-[0.16em] text-[#8f94aa]">
+                                            {reviewer.latestDecision
+                                                ? `Decision: ${reviewer.latestDecision.decision.replaceAll('_', ' ')}`
+                                                : 'Awaiting decision'}
                                         </p>
                                     </div>
                                 ))}
                             </div>
                         </section>
-
-                        <section className="rounded-[2rem] border border-white/10 bg-[#0d1520] p-5">
-                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Submission metadata</p>
-                            <dl className="mt-4 grid gap-3 text-sm">
-                                <div className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
-                                    <dt className="text-slate-500">Requested by</dt>
-                                    <dd className="mt-1 text-slate-200">{approval.createdBy?.firstName} {approval.createdBy?.lastName}</dd>
-                                </div>
-                                <div className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
-                                    <dt className="text-slate-500">Latest revision</dt>
-                                    <dd className="mt-1 text-slate-200">v{approval.latestRevisionNumber}</dd>
-                                </div>
-                                <div className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
-                                    <dt className="text-slate-500">Last comment</dt>
-                                    <dd className="mt-1 text-slate-200">{formatApprovalDate(approval.lastCommentAt)}</dd>
-                                </div>
-                            </dl>
-                        </section>
                     </aside>
-                </div>
+                </section>
             </div>
 
             {isImageExpanded && selectedAsset?.mimeType?.startsWith('image/') && (
@@ -509,7 +656,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                     <button
                         type="button"
                         onClick={() => setIsImageExpanded(false)}
-                        className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/20"
+                        className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/20"
                     >
                         <XCircle className="h-4 w-4" />
                         Close preview
@@ -517,7 +664,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                     <img
                         src={selectedAsset.s3Url}
                         alt={selectedAsset.originalName}
-                        className="max-h-full max-w-full rounded-3xl object-contain shadow-2xl"
+                        className="max-h-full max-w-full rounded-md object-contain shadow-2xl"
                         onClick={(event) => event.stopPropagation()}
                     />
                 </div>

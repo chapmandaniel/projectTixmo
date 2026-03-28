@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import ApprovalDetailView from '../features/ApprovalDetailView';
 
 const apiGet = vi.fn();
@@ -59,9 +59,16 @@ const approvalFixture = {
     ],
     comments: [
         {
+            id: 'comment-2',
+            revisionId: 'revision-1',
+            content: 'Newest note from the approval thread.',
+            createdAt: '2026-03-10T09:15:00.000Z',
+            author: { name: 'Producer', email: 'producer@example.com' },
+        },
+        {
             id: 'comment-1',
             revisionId: 'revision-2',
-            content: 'Need a bit more breathing room above the sponsor row.',
+            content: 'Older note from the approval thread.',
             createdAt: '2026-03-09T12:30:00.000Z',
             author: { name: 'Reviewer', email: 'reviewer@example.com' },
         },
@@ -74,7 +81,7 @@ describe('ApprovalDetailView', () => {
         apiGet.mockResolvedValue(approvalFixture);
     });
 
-    it('renders revision history and reviewer controls for the latest revision', async () => {
+    it('renders version controls and reviewer actions for the latest version', async () => {
         await act(async () => {
             render(
                 <ApprovalDetailView
@@ -87,10 +94,30 @@ describe('ApprovalDetailView', () => {
             );
         });
 
+        expect(screen.getByText('Review Portal')).toBeInTheDocument();
         expect(screen.getByText('Main stage artwork')).toBeInTheDocument();
-        expect(screen.getAllByText('Revision 2').length).toBeGreaterThan(0);
-        expect(screen.getByText('Threaded feedback')).toBeInTheDocument();
-        expect(screen.getAllByText('Upload revision').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('v2').length).toBeGreaterThan(0);
+        expect(screen.getByText('Discussion')).toBeInTheDocument();
+        expect(screen.getByText('Decision controls')).toBeInTheDocument();
+        expect(screen.getAllByText('Upload version').length).toBeGreaterThan(0);
+    });
+
+    it('shows newest approval comments first in the shared thread', async () => {
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={{ email: 'reviewer@example.com' }}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        const commentCards = screen.getAllByTestId('approval-comment-card');
+        expect(within(commentCards[0]).getByText('Newest note from the approval thread.')).toBeInTheDocument();
+        expect(within(commentCards[1]).getByText('Older note from the approval thread.')).toBeInTheDocument();
     });
 
     it('posts a comment against the selected revision', async () => {
@@ -108,12 +135,12 @@ describe('ApprovalDetailView', () => {
             );
         });
 
-        fireEvent.change(screen.getByPlaceholderText(/Add feedback/i), {
+        fireEvent.change(screen.getByPlaceholderText(/Add a comment/i), {
             target: { value: 'Looks better now.' },
         });
 
         await act(async () => {
-            fireEvent.click(screen.getByText('Post comment'));
+            fireEvent.click(screen.getByRole('button', { name: 'Send comment' }));
         });
 
         await waitFor(() =>
@@ -137,6 +164,12 @@ describe('ApprovalDetailView', () => {
                         originalName: 'poster.png',
                         s3Url: 'https://example.com/poster.png',
                     },
+                    {
+                        id: 'asset-2',
+                        mimeType: 'image/png',
+                        originalName: 'poster-alt.png',
+                        s3Url: 'https://example.com/poster-alt.png',
+                    },
                 ],
             },
             revisions: approvalFixture.revisions.map((revision) =>
@@ -149,6 +182,12 @@ describe('ApprovalDetailView', () => {
                                   mimeType: 'image/png',
                                   originalName: 'poster.png',
                                   s3Url: 'https://example.com/poster.png',
+                              },
+                              {
+                                  id: 'asset-2',
+                                  mimeType: 'image/png',
+                                  originalName: 'poster-alt.png',
+                                  s3Url: 'https://example.com/poster-alt.png',
                               },
                           ],
                       }
@@ -170,6 +209,8 @@ describe('ApprovalDetailView', () => {
             );
         });
 
+        expect(screen.getByText('Version options')).toBeInTheDocument();
+        expect(screen.getByText('poster-alt')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Expand poster.png' }));
 
         expect(screen.getByRole('dialog', { name: 'Expanded preview for poster.png' })).toBeInTheDocument();
