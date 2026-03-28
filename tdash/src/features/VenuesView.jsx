@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, MapPin, Search } from 'lucide-react';
+import { Plus, MapPin } from 'lucide-react';
 import VenueWizard from './VenueWizard';
 import api from '../lib/api';
 
-const VenuesView = ({ isDark, user }) => {
+const VenuesView = ({
+    isDark,
+    user,
+    title = 'Venues',
+    description = 'Manage your venue locations and details.',
+    embedded = false,
+}) => {
     const [showWizard, setShowWizard] = useState(false);
     const [venues, setVenues] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -33,14 +39,18 @@ const VenuesView = ({ isDark, user }) => {
         fetchVenues();
     };
 
+    const wrapperClassName = embedded
+        ? 'space-y-6 animate-fade-in relative'
+        : 'space-y-6 animate-fade-in max-w-7xl mx-auto relative';
+
     return (
-        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto relative">
+        <div className={wrapperClassName}>
             {showWizard && <VenueWizard onClose={() => setShowWizard(false)} onSuccess={handleCreateSuccess} isDark={isDark} user={user} />}
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Venues</h2>
-                    <p className={`mt-1 text-lg font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>Manage your venue locations and details.</p>
+                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{title}</h2>
+                    <p className={`mt-1 text-lg font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{description}</p>
                 </div>
                 <button
                     onClick={() => setShowWizard(true)}

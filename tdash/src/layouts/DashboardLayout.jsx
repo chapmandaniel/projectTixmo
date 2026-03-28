@@ -1,29 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import {
     Home, Calendar, Ticket, BarChart3, Bell, Search,
-    CreditCard, ScanLine, Tags, MapPin, Users, CheckSquare, Sun, Moon,
-    MessageCircle, Wand2, ListTodo, Settings, LogOut, CheckCircle, ChevronLeft, ChevronRight, User, Terminal, BrainCircuit
+    Users, CheckSquare, Sun, Moon,
+    MessageCircle, Wand2, Settings, LogOut, CheckCircle, ChevronLeft, ChevronRight, User, Terminal, BrainCircuit
 } from 'lucide-react';
 
 import api from '../lib/api';
 import { Link } from 'react-router-dom';
 
 const navItems = [
-    { id: 'dashboard', icon: Home, label: 'Home' },
-    { id: 'events', icon: Calendar, label: 'Events' },
-    { id: 'orders', icon: CreditCard, label: 'Orders' },
-    { id: 'todo', icon: CheckSquare, label: 'Team Tasks' },
-    { id: 'personal-todo', icon: ListTodo, label: "My TODO's" },
-    { id: 'team', icon: Users, label: 'Team' },
-    { id: 'social', icon: MessageCircle, label: 'Social' },
-    { id: 'scanners', icon: ScanLine, label: 'Scanners' },
-    { id: 'promo', icon: Tags, label: 'Promotions' },
-    { id: 'venues', icon: MapPin, label: 'Venues' },
-    { id: 'creative', icon: Wand2, label: 'Composer' },
-    { id: 'approvals', icon: CheckCircle, label: 'Approvals' },
+    { id: 'dashboard', icon: Home, label: 'HOME' },
+    { id: 'events', icon: Calendar, label: 'EVENTS' },
+    { id: 'todo', icon: CheckSquare, label: 'TASKS' },
+    { id: 'team', icon: Users, label: 'TEAM' },
+    { id: 'social', icon: MessageCircle, label: 'SOCIAL' },
+    { id: 'creative', icon: Wand2, label: 'ProMo' },
+    { id: 'approvals', icon: CheckCircle, label: 'Review Portal' },
     { id: 'quantmo', icon: BrainCircuit, label: 'QuantMo' },
-    { id: 'analytics', icon: BarChart3, label: 'Analytics' },
-    { id: 'settings', icon: Settings, label: 'Settings' },
+    { id: 'analytics', icon: BarChart3, label: 'ANALYTICS' },
+    { id: 'settings', icon: Settings, label: 'SETTINGS' },
 ];
 
 const TopbarItem = ({ item, activeView, onNavigate, isDark, pendingApprovalsCount }) => {

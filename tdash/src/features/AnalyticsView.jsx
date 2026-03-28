@@ -5,9 +5,16 @@ import { ResponsiveBar } from '@nivo/bar';
 import { ResponsiveHeatMap } from '@nivo/heatmap';
 import {
     TrendingUp, TrendingDown, DollarSign, Ticket, ShoppingCart,
-    BarChart3, ChevronDown, Loader2, AlertCircle, Flame, Users
+    BarChart3, ChevronDown, Loader2, AlertCircle, Flame, Users, Link2
 } from 'lucide-react';
 import api from '../lib/api';
+import {
+    ANALYTICS_TIMEFRAMES,
+    GOOGLE_ANALYTICS_DIMENSION_BLUEPRINT,
+    GOOGLE_ANALYTICS_METRIC_BLUEPRINT,
+    buildAnalyticsQueryString,
+    getGoogleAnalyticsIntegrationMeta,
+} from '../lib/analyticsSources';
 
 // ─── Nivo Dark Theme ────────────────────────────────────────────────────────
 const nivoDarkTheme = {
@@ -83,6 +90,13 @@ const KpiCard = ({ label, value, icon: Icon, color, isDark, prefix = '' }) => (
     </div>
 );
 
+const PrepStatCard = ({ label, value, isDark }) => (
+    <div className={`rounded-md border p-4 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+        <p className={`text-[10px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{label}</p>
+        <p className={`mt-2 text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{value}</p>
+    </div>
+);
+
 // ─── Chart Card Wrapper ─────────────────────────────────────────────────────
 const ChartCard = ({ title, children, isDark, className = '', colSpan = '' }) => (
     <div className={`rounded-md border overflow-hidden ${colSpan} ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-100 shadow-sm'} ${className}`}>
@@ -137,15 +151,19 @@ const buildHeatmapData = (salesByDay) => {
 const AnalyticsView = ({ isDark }) => {
     const [events, setEvents] = useState([]);
     const [selectedEventId, setSelectedEventId] = useState('all');
+    const [selectedTimeframe, setSelectedTimeframe] = useState('30d');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const [salesData, setSalesData] = useState(null);
     const [eventData, setEventData] = useState(null);
     const [customerData, setCustomerData] = useState(null);
 
     const theme = isDark ? nivoDarkTheme : nivoLightTheme;
+    const googleAnalyticsMeta = useMemo(() => getGoogleAnalyticsIntegrationMeta(), []);
+    const analyticsQuery = useMemo(() => buildAnalyticsQueryString(selectedTimeframe), [selectedTimeframe]);
 
     // ── Fetch all data on mount ──────────────────────────────────────────
     useEffect(() => {
@@ -153,21 +171,17 @@ const AnalyticsView = ({ isDark }) => {
             setLoading(true);
             setError(null);
             try {
-                // Fetch events list + analytics in parallel
-                // axiosInstance.get() returns { data: { success, data: ... } }
                 const [eventsRes, salesRes, eventsAnalyticsRes, customersRes] = await Promise.all([
                     api.get('/events?limit=100').catch(() => null),
-                    api.get('/analytics/sales').catch(() => null),
-                    api.get('/analytics/events').catch(() => null),
-                    api.get('/analytics/customers').catch(() => null),
+                    api.get(`/analytics/sales${analyticsQuery}`).catch(() => null),
+                    api.get(`/analytics/events${analyticsQuery}`).catch(() => null),
+                    api.get(`/analytics/customers${analyticsQuery}`).catch(() => null),
                 ]);
 
-                // Extract events list: { data: { success, data: { events: [...] } } }
                 const eventsPayload = eventsRes?.data?.data || eventsRes?.data || {};
                 const eventsList = eventsPayload?.events || (Array.isArray(eventsPayload) ? eventsPayload : []);
                 setEvents(eventsList);
 
-                // Extract analytics data: { data: { success, data: { totalRevenue, ... } } }
                 setSalesData(salesRes?.data?.data || salesRes?.data || null);
                 setEventData(eventsAnalyticsRes?.data?.data || eventsAnalyticsRes?.data || null);
                 setCustomerData(customersRes?.data?.data || customersRes?.data || null);
@@ -179,7 +193,7 @@ const AnalyticsView = ({ isDark }) => {
             }
         };
         fetchAll();
-    }, []);
+    }, [analyticsQuery, refreshKey]);
 
     // ── Filter data by selected event (client-side) ────────────────────
     const filteredSalesData = useMemo(() => {
@@ -275,7 +289,7 @@ const AnalyticsView = ({ isDark }) => {
                 <AlertCircle size={40} className="text-rose-400 mb-4" />
                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{error}</p>
                 <button
-                    onClick={() => setSelectedEventId(prev => prev)}
+                    onClick={() => setRefreshKey((current) => current + 1)}
                     className="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-500 transition-colors"
                 >
                     Retry
@@ -286,21 +300,94 @@ const AnalyticsView = ({ isDark }) => {
 
     return (
         <div className="space-y-6 animate-fade-in max-w-[1400px] mx-auto">
-            {/* ── Header + Event Selector ─────────────────────────────── */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
-                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-700'}`}>Analytics</h2>
-                    <p className={`mt-1 text-lg font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>Performance insights and customer data.</p>
+            <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
+                <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl" />
+                    <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
+                </div>
+                <div className="relative">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                        <div>
+                            <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                <span>Analytics</span>
+                                <span className={`text-base sm:text-lg tracking-[0.16em] uppercase ${isDark ? 'text-indigo-300' : 'text-indigo-700'}`}>[google analytics ready]</span>
+                            </h2>
+                            <p className={`mt-3 max-w-3xl text-sm sm:text-base font-light leading-relaxed ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                                This dashboard is now structured for Google Analytics integration. Until a GA property is connected, it continues to render the current platform analytics so the layout and query model stay production-useful.
+                            </p>
+                        </div>
+                        <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs uppercase tracking-[0.18em] ${googleAnalyticsMeta.connected
+                            ? (isDark ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-emerald-50 text-emerald-700 border border-emerald-100')
+                            : (isDark ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-100')
+                        }`}>
+                            <Link2 size={14} />
+                            {googleAnalyticsMeta.statusLabel}
+                        </div>
+                    </div>
+
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <PrepStatCard isDark={isDark} label="Primary source" value={googleAnalyticsMeta.label} />
+                        <PrepStatCard isDark={isDark} label="Property ID" value={googleAnalyticsMeta.propertyId || 'Not configured yet'} />
+                        <PrepStatCard isDark={isDark} label="Measurement ID" value={googleAnalyticsMeta.measurementId || 'Not configured yet'} />
+                    </div>
+
+                    <div className={`mt-4 rounded-md border p-4 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+                        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-4">
+                            <div>
+                                <p className={`text-[10px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>GA4 metric blueprint</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {GOOGLE_ANALYTICS_METRIC_BLUEPRINT.map((item) => (
+                                        <span
+                                            key={item}
+                                            className={`rounded-full px-3 py-1.5 text-xs font-light ${isDark ? 'bg-[#232336] text-gray-200' : 'bg-white border border-gray-200 text-gray-700'}`}
+                                        >
+                                            {item}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <p className={`text-[10px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Dimension blueprint</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {GOOGLE_ANALYTICS_DIMENSION_BLUEPRINT.map((item) => (
+                                        <span
+                                            key={item}
+                                            className={`rounded-full px-3 py-1.5 text-xs font-light ${isDark ? 'bg-[#232336] text-gray-200' : 'bg-white border border-gray-200 text-gray-700'}`}
+                                        >
+                                            {item}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                <div className={`inline-flex flex-wrap gap-2 rounded-md border p-1 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+                    {ANALYTICS_TIMEFRAMES.map((timeframe) => (
+                        <button
+                            key={timeframe.id}
+                            type="button"
+                            onClick={() => setSelectedTimeframe(timeframe.id)}
+                            className={`rounded-sm px-4 py-2 text-sm font-light transition-colors ${selectedTimeframe === timeframe.id
+                                ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-white text-gray-900 shadow-sm')
+                                : (isDark ? 'text-[#8f94aa] hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
+                            }`}
+                        >
+                            {timeframe.label}
+                        </button>
+                    ))}
                 </div>
 
-                {/* Event Selector Dropdown */}
                 <div className="relative">
                     <button
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                         className={`flex items-center space-x-2 px-4 py-2.5 rounded-md border text-sm font-light tracking-wide transition-all duration-200 min-w-[220px] justify-between ${isDark
                             ? 'bg-[#1e1e2d] border-[#2b2b40] text-gray-200 hover:bg-[#232336]'
                             : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm'
-                            }`}
+                        }`}
                     >
                         <span className="truncate">{selectedEventName}</span>
                         <ChevronDown size={16} className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''} ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -312,13 +399,13 @@ const AnalyticsView = ({ isDark }) => {
                             <div className={`absolute right-0 mt-2 w-72 rounded-md overflow-hidden z-40 max-h-80 overflow-y-auto animate-fade-in ${isDark
                                 ? 'bg-[#151521] border border-[#2b2b40] shadow-2xl shadow-black/50'
                                 : 'bg-white border border-gray-200 shadow-xl'
-                                }`}>
+                            }`}>
                                 <button
                                     onClick={() => { setSelectedEventId('all'); setIsDropdownOpen(false); }}
                                     className={`w-full text-left px-4 py-3 text-sm font-light transition-colors ${selectedEventId === 'all'
                                         ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-indigo-50 text-indigo-700')
                                         : (isDark ? 'text-gray-300 hover:bg-[#232336]' : 'text-gray-700 hover:bg-gray-50')
-                                        }`}
+                                    }`}
                                 >
                                     <span className="font-medium">All Events</span>
                                     <span className={`block text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Aggregate view</span>
@@ -331,7 +418,7 @@ const AnalyticsView = ({ isDark }) => {
                                         className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedEventId === e.id
                                             ? (isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-700')
                                             : (isDark ? 'text-gray-300 hover:bg-[#252525]' : 'text-gray-700 hover:bg-gray-50')
-                                            }`}
+                                        }`}
                                     >
                                         <span className="truncate block">{e.name}</span>
                                         {e.status && <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{e.status}</span>}

@@ -27,6 +27,7 @@ import {
     Target,
     TrendingDown,
     TrendingUp,
+    Users,
 } from 'lucide-react';
 import api from '../lib/api';
 
@@ -45,6 +46,53 @@ const CHART_COLORS = {
     tickets: '#38bdf8',
     benchmark: '#a78bfa',
     support: '#fb923c',
+};
+
+const inferToolIdFromPrompt = (prompt = '') => {
+    const normalizedPrompt = prompt.trim().toLowerCase();
+
+    if (
+        normalizedPrompt.includes('state of the world')
+        || normalizedPrompt.includes('brief')
+        || normalizedPrompt.includes('report')
+    ) {
+        return 'brief';
+    }
+
+    if (
+        normalizedPrompt.includes('underperform')
+        || normalizedPrompt.includes('lagging')
+        || normalizedPrompt.includes('weak')
+    ) {
+        return 'risk';
+    }
+
+    if (
+        normalizedPrompt.includes('sales pace')
+        || normalizedPrompt.includes('revenue by day')
+        || normalizedPrompt.includes('pace')
+        || normalizedPrompt.includes('trend')
+    ) {
+        return 'pace';
+    }
+
+    if (
+        normalizedPrompt.includes('compare')
+        || normalizedPrompt.includes('average')
+        || normalizedPrompt.includes('performing')
+    ) {
+        return 'comparison';
+    }
+
+    if (
+        normalizedPrompt.includes('demographic')
+        || normalizedPrompt.includes('audience')
+        || normalizedPrompt.includes('customer')
+    ) {
+        return 'audience';
+    }
+
+    return 'query-lab';
 };
 
 const readStoredValue = (key, fallback) => {
@@ -557,17 +605,34 @@ const ResultTone = ({ tone }) => {
     return <Target size={14} className="text-cyan-400" />;
 };
 
-const MetricCard = ({ label, value, detail, icon: Icon, isDark }) => (
-    <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-lg shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
-        <div className="flex items-center justify-between mb-3">
-            <span className={`text-xs tracking-[0.24em] uppercase font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{label}</span>
-            <div className={`h-10 w-10 rounded-md flex items-center justify-center ${isDark ? 'bg-[#151521] text-fuchsia-300' : 'bg-fuchsia-50 text-fuchsia-600'}`}>
-                <Icon size={18} />
+const ToolCard = ({ tool, isDark, isActive, onClick }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={`relative w-full overflow-hidden rounded-md border p-6 text-left transition-all duration-300 ${
+            isDark
+                ? `bg-[#1e1e2d] ${isActive ? 'border-fuchsia-400/60 shadow-xl shadow-fuchsia-950/30' : 'border-[#2b2b40] hover:border-[#3a3a5a] hover:bg-[#232336]'}`
+                : `bg-white ${isActive ? 'border-fuchsia-300 shadow-lg' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'}`
+        }`}
+    >
+        <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${tool.grad}`} />
+        <div className={`absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br ${tool.grad} opacity-10 blur-2xl`} />
+        <div className="relative">
+            <div className="mb-5 flex items-start justify-between gap-3">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-md ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
+                    <tool.icon size={20} className={tool.color} />
+                </div>
+                {isActive && (
+                    <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${isDark ? 'bg-fuchsia-500/15 text-fuchsia-200' : 'bg-fuchsia-50 text-fuchsia-700'}`}>
+                        Open
+                    </span>
+                )}
             </div>
+            <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{tool.label}</h3>
+            <p className={`mt-2 text-sm font-light leading-relaxed ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{tool.description}</p>
+            <p className={`mt-4 text-xs uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-400'}`}>{tool.helper}</p>
         </div>
-        <div className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{value}</div>
-        <div className={`mt-2 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{detail}</div>
-    </div>
+    </button>
 );
 
 const ChartRenderer = ({ chart, isDark }) => {
@@ -677,6 +742,7 @@ const QuantMoView = ({ isDark }) => {
     const [customerData, setCustomerData] = useState(null);
     const [scope, setScope] = useState('all');
     const [selectedEventId, setSelectedEventId] = useState('all');
+    const [activeTool, setActiveTool] = useState(null);
     const [prompt, setPrompt] = useState('');
     const [currentResult, setCurrentResult] = useState(null);
     const [history, setHistory] = useState(() => readStoredValue(HISTORY_KEY, []));
@@ -744,12 +810,125 @@ const QuantMoView = ({ isDark }) => {
     }, [quantContext.selectedEvent]);
 
     const snapshotResult = useMemo(() => buildStateOfWorldResult(quantContext), [quantContext]);
+    const toolCards = useMemo(() => {
+        const focusLabel = quantContext.selectedEvent ? quantContext.selectedEvent.label : 'the portfolio average';
+
+        return [
+            {
+                id: 'brief',
+                label: 'Portfolio Brief',
+                description: 'Executive summary of revenue, sell-through, repeat buyers, and next actions.',
+                helper: 'Best for daily check-ins',
+                icon: Sparkles,
+                grad: 'from-fuchsia-500 to-cyan-400',
+                color: 'text-fuchsia-400',
+                prompt: 'Create a state of the world report',
+                quickPrompts: [
+                    'Create a state of the world report',
+                    'Give me a portfolio snapshot',
+                    'Build a promoter brief for this scope',
+                ],
+            },
+            {
+                id: 'comparison',
+                label: 'Event Comparison',
+                description: 'Compare one focus event against your current portfolio benchmark.',
+                helper: 'Best before moving budget',
+                icon: BarChart3,
+                grad: 'from-cyan-400 to-blue-500',
+                color: 'text-cyan-400',
+                prompt: `How is ${focusLabel} performing vs my average?`,
+                quickPrompts: [
+                    `How is ${focusLabel} performing vs my average?`,
+                    'Compare my selected event against the portfolio',
+                    'Show my focus event versus average sell-through',
+                ],
+            },
+            {
+                id: 'pace',
+                label: 'Sales Pace',
+                description: 'Open a cleaner pace view for modeled daily revenue and ticket momentum.',
+                helper: 'Best for standups',
+                icon: Clock3,
+                grad: 'from-amber-400 to-orange-500',
+                color: 'text-amber-400',
+                prompt: 'What is my current sales pace?',
+                quickPrompts: [
+                    'What is my current sales pace?',
+                    'Show revenue by day',
+                    'Is the current pace flattening?',
+                ],
+            },
+            {
+                id: 'risk',
+                label: 'Risk Radar',
+                description: 'Surface lagging events and prioritize where intervention is needed.',
+                helper: 'Best for recovery planning',
+                icon: TrendingDown,
+                grad: 'from-rose-400 to-red-500',
+                color: 'text-rose-400',
+                prompt: 'Which events are underperforming?',
+                quickPrompts: [
+                    'Which events are underperforming?',
+                    'Show lagging events',
+                    'Which events are weak right now?',
+                ],
+            },
+            {
+                id: 'audience',
+                label: 'Audience Pulse',
+                description: 'Review acquisition momentum and repeat-buyer signals for the current scope.',
+                helper: 'Best for targeting decisions',
+                icon: Users,
+                grad: 'from-emerald-400 to-teal-500',
+                color: 'text-emerald-400',
+                prompt: 'Show audience momentum',
+                quickPrompts: [
+                    'Show audience momentum',
+                    'What is customer growth telling me?',
+                    'How strong is repeat buyer behavior?',
+                ],
+            },
+            {
+                id: 'query-lab',
+                label: 'Query Lab',
+                description: 'Ask a custom QuantMo question with templates and query history close at hand.',
+                helper: 'Best for ad hoc analysis',
+                icon: Search,
+                grad: 'from-indigo-400 to-purple-500',
+                color: 'text-indigo-400',
+                prompt: '',
+                quickPrompts: suggestedQueries,
+            },
+        ];
+    }, [quantContext.selectedEvent, suggestedQueries]);
+    const selectedTool = toolCards.find((tool) => tool.id === activeTool) || null;
 
     useEffect(() => {
         if (selectedEventId !== 'all' && !quantContext.scopeEvents.find((event) => event.id === selectedEventId)) {
             setSelectedEventId('all');
         }
     }, [quantContext.scopeEvents, selectedEventId]);
+
+    const openTool = (toolId) => {
+        const tool = toolCards.find((item) => item.id === toolId);
+        setActiveTool(toolId);
+        setTaskFeedback(null);
+
+        if (!tool) {
+            return;
+        }
+
+        if (tool.id === 'query-lab') {
+            setPrompt((current) => current || suggestedQueries[0] || '');
+            return;
+        }
+
+        if (tool.prompt) {
+            setPrompt(tool.prompt);
+            executePrompt(tool.prompt);
+        }
+    };
 
     const executePrompt = (nextPrompt, overrides = {}) => {
         const targetScope = overrides.scope || scope;
@@ -824,7 +1003,7 @@ const QuantMoView = ({ isDark }) => {
 
             setTaskFeedback({
                 tone: 'success',
-                message: 'QuantMo brief sent to Team Tasks.',
+                message: 'QuantMo brief sent to Task Manager.',
             });
         } catch (taskError) {
             console.error('Failed to create QuantMo task', taskError);
@@ -863,89 +1042,76 @@ const QuantMoView = ({ isDark }) => {
     }
 
     return (
-        <div className="space-y-6 animate-fade-in max-w-[1500px] mx-auto pb-12">
+        <div className="space-y-8 animate-fade-in max-w-[1500px] mx-auto pb-12">
             <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-fuchsia-500/10 blur-3xl" />
                     <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                 </div>
-                <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-                    <div className="max-w-3xl">
-                        <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs tracking-[0.24em] uppercase font-light ${isDark ? 'bg-[#151521] text-fuchsia-300 border border-[#2b2b40]' : 'bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-100'}`}>
-                            <BrainCircuit size={14} />
-                            QuantMo Command Center
-                        </div>
-                        <h2 className={`mt-4 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>AI-driven quant intelligence for promoters</h2>
-                        <p className={`mt-3 text-base sm:text-lg font-light max-w-2xl ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                            QuantMo turns event telemetry into promoter-ready answers, comparisons, forecasts, and task briefs without leaving the control center.
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                        <button
-                            onClick={() => executePrompt('Create a state of the world report')}
-                            className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-fuchsia-500 text-white hover:bg-fuchsia-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
-                        >
-                            <Sparkles size={16} />
-                            State of the World
-                        </button>
-                        <button
-                            onClick={() => handleCreateTask(snapshotResult)}
-                            disabled={isCreatingTask}
-                            className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm border transition-colors ${isDark ? 'border-[#2b2b40] text-gray-200 hover:bg-[#232336]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                        >
-                            <FileText size={16} />
-                            Create Brief Task
-                        </button>
-                    </div>
+                <div className="relative">
+                    <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                        <span className="inline-flex items-center gap-2">
+                            <span>QuantMo</span>
+                            <BrainCircuit className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`} />
+                        </span>
+                        <span className={`text-base sm:text-lg tracking-[0.16em] uppercase ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`}>[analytics assistant]</span>
+                    </h2>
                 </div>
             </section>
 
-            <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                <MetricCard
-                    label="Revenue"
-                    value={formatCompactCurrency(quantContext.totalRevenue)}
-                    detail={`${quantContext.scopeEvents.length} events in ${quantContext.scopeLabel.toLowerCase()}`}
-                    icon={BarChart3}
-                    isDark={isDark}
-                />
-                <MetricCard
-                    label="Tickets Sold"
-                    value={formatCompactNumber(quantContext.totalTickets)}
-                    detail={`${formatPercent(safeRatio(quantContext.totalTickets, Math.max(quantContext.totalCapacity, 1)))} of known capacity`}
-                    icon={Target}
-                    isDark={isDark}
-                />
-                <MetricCard
-                    label="Daily Pace"
-                    value={formatCompactCurrency(quantContext.avgDailyRevenue)}
-                    detail="Modeled from recent portfolio revenue"
-                    icon={Clock3}
-                    isDark={isDark}
-                />
-                <MetricCard
-                    label="Repeat Buyers"
-                    value={formatPercent(quantContext.repeatCustomerShare)}
-                    detail={`${formatCompactNumber(quantContext.repeatCustomers)} repeat customers identified`}
-                    icon={ListTodo}
-                    isDark={isDark}
-                />
-            </section>
+            {!activeTool ? (
+                <section className="space-y-4">
+                    <div>
+                        <h3 className={`text-2xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Tools</h3>
+                        <p className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                            Choose the QuantMo function you want to use.
+                        </p>
+                    </div>
 
-            <section className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_380px] gap-6">
-                <div className="space-y-6">
-                    <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
-                        <div className="flex flex-col lg:flex-row gap-4 lg:items-end lg:justify-between">
-                            <div>
-                                <h3 className={`text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Query engine</h3>
-                                <p className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                                    Ask QuantMo for pace, comparisons, risk, or a full portfolio brief.
-                                </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {toolCards.map((tool) => (
+                            <ToolCard
+                                key={tool.id}
+                                tool={tool}
+                                isDark={isDark}
+                                isActive={false}
+                                onClick={() => openTool(tool.id)}
+                            />
+                        ))}
+                    </div>
+                </section>
+            ) : (
+                <section className="space-y-4">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTool(null)}
+                        className={`rounded-md border px-4 py-2 text-sm transition-colors ${isDark ? 'border-[#2b2b40] text-gray-200 hover:bg-[#232336]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                        Back to tools
+                    </button>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-6">
+                    <aside className="space-y-6">
+                        <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <p className={`text-xs uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Open tool</p>
+                                    <h3 className={`mt-2 text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{selectedTool?.label}</h3>
+                                </div>
+                                {selectedTool && (
+                                    <div className={`flex h-11 w-11 items-center justify-center rounded-md ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
+                                        <selectedTool.icon size={18} className={selectedTool.color} />
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-3">
+                            <p className={`mt-3 text-sm font-light leading-relaxed ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{selectedTool?.description}</p>
+
+                            <div className="mt-5">
                                 <div className={`inline-flex rounded-md border p-1 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
                                     {SCOPE_OPTIONS.map((option) => (
                                         <button
                                             key={option.id}
+                                            type="button"
                                             onClick={() => setScope(option.id)}
                                             className={`px-3 py-1.5 rounded-sm text-sm font-light transition-colors ${scope === option.id
                                                 ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-white text-gray-900 shadow-sm')
@@ -956,10 +1122,14 @@ const QuantMoView = ({ isDark }) => {
                                         </button>
                                     ))}
                                 </div>
+                            </div>
+
+                            <div className="mt-4">
+                                <label className={`mb-2 block text-xs uppercase tracking-[0.2em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Event focus</label>
                                 <select
                                     value={selectedEventId}
                                     onChange={(event) => setSelectedEventId(event.target.value)}
-                                    className={`min-w-[220px] rounded-md border px-3 py-2 text-sm font-light outline-none ${isDark ? 'bg-[#151521] border-[#2b2b40] text-gray-100' : 'bg-white border-gray-200 text-gray-700'}`}
+                                    className={`w-full rounded-md border px-3 py-2 text-sm font-light outline-none ${isDark ? 'bg-[#151521] border-[#2b2b40] text-gray-100' : 'bg-white border-gray-200 text-gray-700'}`}
                                 >
                                     <option value="all">{scope === 'all' ? 'All events' : `${quantContext.scopeLabel} events`}</option>
                                     {quantContext.scopeEvents.map((event) => (
@@ -969,250 +1139,223 @@ const QuantMoView = ({ isDark }) => {
                                     ))}
                                 </select>
                             </div>
-                        </div>
 
-                        <div className={`mt-5 rounded-md border p-4 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-                            <div className="flex items-start gap-3">
-                                <div className={`mt-1 h-10 w-10 rounded-md flex items-center justify-center ${isDark ? 'bg-[#232336] text-fuchsia-300' : 'bg-white text-fuchsia-600 border border-gray-200'}`}>
-                                    <Search size={18} />
-                                </div>
-                                <div className="flex-1">
-                                    <textarea
-                                        value={prompt}
-                                        onChange={(event) => setPrompt(event.target.value)}
-                                        onKeyDown={(event) => {
-                                            if (event.key === 'Enter' && !event.shiftKey) {
-                                                event.preventDefault();
-                                                handlePromptSubmit();
-                                            }
-                                        }}
-                                        rows={3}
-                                        placeholder="Compare ticket sales 30 days in vs previous events"
-                                        className={`w-full resize-none bg-transparent outline-none text-sm sm:text-base font-light ${isDark ? 'text-gray-100 placeholder:text-[#5e6278]' : 'text-gray-800 placeholder:text-gray-400'}`}
-                                    />
-                                    <div className="mt-4 flex flex-wrap gap-2">
-                                        {suggestedQueries.map((query) => (
-                                            <button
-                                                key={query}
-                                                onClick={() => executePrompt(query)}
-                                                className={`rounded-full px-3 py-1.5 text-xs sm:text-sm font-light transition-colors ${isDark ? 'bg-[#232336] text-[#c6c9d8] hover:bg-[#2b2b40]' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
-                                            >
-                                                {query}
-                                            </button>
-                                        ))}
+                            <div className={`mt-5 rounded-md border p-4 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+                                <div className="flex items-start gap-3">
+                                    <div className={`mt-1 h-10 w-10 rounded-md flex items-center justify-center ${isDark ? 'bg-[#232336] text-fuchsia-300' : 'bg-white text-fuchsia-600 border border-gray-200'}`}>
+                                        <Search size={18} />
                                     </div>
-                                    <div className="mt-4 flex flex-wrap gap-3">
+                                    <div className="flex-1">
+                                        <textarea
+                                            value={prompt}
+                                            onChange={(event) => setPrompt(event.target.value)}
+                                            onKeyDown={(event) => {
+                                                if (event.key === 'Enter' && !event.shiftKey) {
+                                                    event.preventDefault();
+                                                    handlePromptSubmit();
+                                                }
+                                            }}
+                                            rows={4}
+                                            placeholder="Ask QuantMo a focused question for this tool"
+                                            className={`w-full resize-none bg-transparent outline-none text-sm sm:text-base font-light ${isDark ? 'text-gray-100 placeholder:text-[#5e6278]' : 'text-gray-800 placeholder:text-gray-400'}`}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    {(selectedTool?.quickPrompts || suggestedQueries).map((query) => (
                                         <button
-                                            onClick={handlePromptSubmit}
-                                            className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm transition-colors ${isDark ? 'bg-fuchsia-500 text-white hover:bg-fuchsia-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                                            key={query}
+                                            type="button"
+                                            onClick={() => executePrompt(query)}
+                                            className={`rounded-full px-3 py-1.5 text-xs sm:text-sm font-light transition-colors ${isDark ? 'bg-[#232336] text-[#c6c9d8] hover:bg-[#2b2b40]' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
                                         >
-                                            <Send size={15} />
-                                            Run query
+                                            {query}
                                         </button>
-                                        <button
-                                            onClick={handleSaveTemplate}
-                                            className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm border transition-colors ${isDark ? 'border-[#2b2b40] text-gray-200 hover:bg-[#232336]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                                        >
-                                            <Sparkles size={15} />
-                                            Save as template
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
-                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                            <div>
-                                <h3 className={`text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                    {currentResult?.title || 'Ready for a QuantMo prompt'}
-                                </h3>
-                                <p className={`mt-2 max-w-3xl text-sm sm:text-base font-light leading-relaxed ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                                    {currentResult?.summary || 'Start with a state-of-the-world report, a sales-pace question, or an underperformance scan.'}
-                                </p>
-                            </div>
-                            <div className="flex flex-wrap gap-3">
-                                <button
-                                    onClick={() => handleCreateTask(currentResult || snapshotResult)}
-                                    disabled={isCreatingTask}
-                                    className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm border transition-colors ${isDark ? 'border-[#2b2b40] text-gray-200 hover:bg-[#232336]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                                >
-                                    {isCreatingTask ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
-                                    Create task brief
-                                </button>
-                                {currentResult && (
-                                    <button
-                                        onClick={() => setCurrentResult(null)}
-                                        className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm transition-colors ${isDark ? 'bg-[#151521] text-[#a1a5b7] hover:text-gray-100' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}`}
-                                    >
-                                        Reset
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {taskFeedback && (
-                            <div className={`mt-4 rounded-md border px-4 py-3 text-sm font-light ${taskFeedback.tone === 'success'
-                                ? (isDark ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
-                                : (isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700')
-                            }`}>
-                                {taskFeedback.message}
-                            </div>
-                        )}
-
-                        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                            {(currentResult?.highlights || snapshotResult.highlights).map((item) => (
-                                <div key={`${item.label}-${item.value}`} className={`rounded-md border p-4 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-                                    <div className="flex items-center justify-between">
-                                        <span className={`text-xs uppercase tracking-[0.2em] font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{item.label}</span>
-                                        <ResultTone tone={item.tone} />
-                                    </div>
-                                    <div className={`mt-3 text-lg font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{item.value}</div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className={`mt-6 rounded-md border p-5 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-                            <div className="flex items-center justify-between gap-4 mb-4">
-                                <div>
-                                    <div className={`text-xs uppercase tracking-[0.2em] font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{(currentResult?.chart || snapshotResult.chart).title}</div>
-                                    <div className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                                        {currentResult?.prompt || 'QuantMo overview'}
-                                    </div>
-                                </div>
-                                <ArrowRight size={18} className={isDark ? 'text-[#5e6278]' : 'text-gray-400'} />
-                            </div>
-                            <ChartRenderer chart={currentResult?.chart || snapshotResult.chart} isDark={isDark} />
-                            {(currentResult?.disclaimer || snapshotResult.disclaimer) && (
-                                <p className={`mt-4 text-xs font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                                    {currentResult?.disclaimer || snapshotResult.disclaimer}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div className={`rounded-md border p-5 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-                                <div className="flex items-center gap-2">
-                                    <Sparkles size={16} className={isDark ? 'text-fuchsia-300' : 'text-fuchsia-600'} />
-                                    <h4 className={`text-sm uppercase tracking-[0.2em] font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Observations</h4>
-                                </div>
-                                <div className={`mt-4 text-sm font-light leading-relaxed ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                                    {currentResult?.summary || snapshotResult.summary}
-                                </div>
-                            </div>
-                            <div className={`rounded-md border p-5 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-                                <div className="flex items-center gap-2">
-                                    <ListTodo size={16} className={isDark ? 'text-cyan-300' : 'text-cyan-600'} />
-                                    <h4 className={`text-sm uppercase tracking-[0.2em] font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Recommended actions</h4>
-                                </div>
-                                <div className="mt-4 space-y-3">
-                                    {(currentResult?.recommendations || snapshotResult.recommendations).map((item) => (
-                                        <div key={item} className="flex gap-3">
-                                            <div className={`mt-1 h-2 w-2 rounded-full ${isDark ? 'bg-fuchsia-400' : 'bg-fuchsia-500'}`} />
-                                            <div className={`text-sm font-light leading-relaxed ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{item}</div>
-                                        </div>
                                     ))}
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <aside className="space-y-6">
-                    <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
-                        <div className="flex items-start justify-between gap-3">
-                            <div>
-                                <div className={`text-xs uppercase tracking-[0.2em] font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>State of the World</div>
-                                <h3 className={`mt-2 text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{quantContext.scopeLabel}</h3>
-                            </div>
-                            <div className={`h-11 w-11 rounded-md flex items-center justify-center ${isDark ? 'bg-[#151521] text-fuchsia-300' : 'bg-fuchsia-50 text-fuchsia-600'}`}>
-                                <BrainCircuit size={18} />
-                            </div>
-                        </div>
-                        <p className={`mt-4 text-sm font-light leading-relaxed ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{snapshotResult.summary}</p>
-                        <div className="mt-5 space-y-3">
-                            <div className={`flex items-center justify-between rounded-md border px-4 py-3 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
-                                <span className={isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}>Top performer</span>
-                                <span className={isDark ? 'text-gray-100' : 'text-gray-900'}>{quantContext.topPerformer ? quantContext.topPerformer.label : 'No leader yet'}</span>
-                            </div>
-                            <div className={`flex items-center justify-between rounded-md border px-4 py-3 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
-                                <span className={isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}>30-day projection</span>
-                                <span className={isDark ? 'text-gray-100' : 'text-gray-900'}>{formatCompactCurrency(quantContext.projected30DayRevenue)}</span>
-                            </div>
-                            <div className={`flex items-center justify-between rounded-md border px-4 py-3 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
-                                <span className={isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}>Projected sellout</span>
-                                <span className={isDark ? 'text-gray-100' : 'text-gray-900'}>
-                                    {quantContext.projectedSellOutDays ? `${quantContext.projectedSellOutDays} days` : 'Need event focus'}
-                                </span>
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => executePrompt('Create a state of the world report')}
-                            className={`mt-5 w-full inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-fuchsia-500 text-white hover:bg-fuchsia-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
-                        >
-                            <Sparkles size={15} />
-                            Open report
-                        </button>
-                    </div>
-
-                    <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
-                        <div className="flex items-center gap-2">
-                            <History size={16} className={isDark ? 'text-cyan-300' : 'text-cyan-600'} />
-                            <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent queries</h3>
-                        </div>
-                        <div className="mt-4 space-y-3">
-                            {history.length === 0 ? (
-                                <div className={`rounded-md border border-dashed p-4 text-sm font-light ${isDark ? 'border-[#2b2b40] text-[#8f94aa]' : 'border-gray-200 text-gray-500'}`}>
-                                    No history yet. Run a QuantMo prompt to build your trail.
+                                <div className="mt-4 flex flex-wrap gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={handlePromptSubmit}
+                                        className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm transition-colors ${isDark ? 'bg-fuchsia-500 text-white hover:bg-fuchsia-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                                    >
+                                        <Send size={15} />
+                                        Run analysis
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveTemplate}
+                                        className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm border transition-colors ${isDark ? 'border-[#2b2b40] text-gray-200 hover:bg-[#232336]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                    >
+                                        <Sparkles size={15} />
+                                        Save prompt
+                                    </button>
                                 </div>
-                            ) : history.map((entry) => (
-                                <button
-                                    key={`${entry.prompt}-${entry.timestamp}`}
-                                    onClick={() => {
-                                        setScope(entry.scope || 'all');
-                                        setSelectedEventId(entry.selectedEventId || 'all');
-                                        executePrompt(entry.prompt, {
-                                            scope: entry.scope || 'all',
-                                            selectedEventId: entry.selectedEventId || 'all',
-                                            skipHistory: true,
-                                        });
-                                    }}
-                                    className={`w-full text-left rounded-md border p-4 transition-colors ${isDark ? 'border-[#2b2b40] bg-[#151521] hover:bg-[#232336]' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'}`}
-                                >
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className={`text-sm font-light ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{entry.title}</span>
-                                        <span className={`text-[10px] uppercase tracking-[0.18em] ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`}>{entry.chartType}</span>
-                                    </div>
-                                    <div className={`mt-2 text-xs font-light leading-relaxed ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{entry.prompt}</div>
-                                    <div className={`mt-3 flex items-center justify-between text-[11px] font-light ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`}>
-                                        <span>{SCOPE_OPTIONS.find((item) => item.id === entry.scope)?.label || 'All Events'}</span>
-                                        <span>{new Date(entry.timestamp).toLocaleString()}</span>
-                                    </div>
-                                </button>
-                            ))}
+                            </div>
                         </div>
-                    </div>
 
-                    <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
-                        <div className="flex items-center gap-2">
-                            <CalendarDays size={16} className={isDark ? 'text-amber-300' : 'text-amber-600'} />
-                            <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Saved templates</h3>
+                        <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
+                            <div className="flex items-center gap-2">
+                                <History size={16} className={isDark ? 'text-cyan-300' : 'text-cyan-600'} />
+                                <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Recent queries</h3>
+                            </div>
+                            <div className="mt-4 space-y-3">
+                                {history.length === 0 ? (
+                                    <div className={`rounded-md border border-dashed p-4 text-sm font-light ${isDark ? 'border-[#2b2b40] text-[#8f94aa]' : 'border-gray-200 text-gray-500'}`}>
+                                        No history yet. Run a QuantMo prompt to build your trail.
+                                    </div>
+                                ) : history.map((entry) => (
+                                    <button
+                                        key={`${entry.prompt}-${entry.timestamp}`}
+                                        type="button"
+                                        onClick={() => {
+                                            setScope(entry.scope || 'all');
+                                            setSelectedEventId(entry.selectedEventId || 'all');
+                                            setActiveTool(inferToolIdFromPrompt(entry.prompt));
+                                            executePrompt(entry.prompt, {
+                                                scope: entry.scope || 'all',
+                                                selectedEventId: entry.selectedEventId || 'all',
+                                                skipHistory: true,
+                                            });
+                                        }}
+                                        className={`w-full text-left rounded-md border p-4 transition-colors ${isDark ? 'border-[#2b2b40] bg-[#151521] hover:bg-[#232336]' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'}`}
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className={`text-sm font-light ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{entry.title}</span>
+                                            <span className={`text-[10px] uppercase tracking-[0.18em] ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`}>{entry.chartType}</span>
+                                        </div>
+                                        <div className={`mt-2 text-xs font-light leading-relaxed ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{entry.prompt}</div>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="mt-4 space-y-2">
-                            {templates.map((template) => (
-                                <button
-                                    key={template}
-                                    onClick={() => setPrompt(template)}
-                                    className={`w-full text-left rounded-md border px-4 py-3 text-sm font-light transition-colors ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-200 hover:bg-[#232336]' : 'border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
-                                >
-                                    {template}
-                                </button>
-                            ))}
+
+                        <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
+                            <div className="flex items-center gap-2">
+                                <CalendarDays size={16} className={isDark ? 'text-amber-300' : 'text-amber-600'} />
+                                <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Saved prompts</h3>
+                            </div>
+                            <div className="mt-4 space-y-2">
+                                {templates.map((template) => (
+                                    <button
+                                        key={template}
+                                        type="button"
+                                        onClick={() => {
+                                            setActiveTool(inferToolIdFromPrompt(template));
+                                            setPrompt(template);
+                                        }}
+                                        className={`w-full text-left rounded-md border px-4 py-3 text-sm font-light transition-colors ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-200 hover:bg-[#232336]' : 'border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
+                                    >
+                                        {template}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </aside>
+
+                    <div className="space-y-6">
+                        <div className={`rounded-md border p-5 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
+                            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                                <div>
+                                    <p className={`text-xs uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Workspace output</p>
+                                    <h3 className={`mt-2 text-2xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                        {currentResult?.title || selectedTool?.label || 'Ready for analysis'}
+                                    </h3>
+                                    <p className={`mt-2 max-w-3xl text-sm sm:text-base font-light leading-relaxed ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                                        {currentResult?.summary || 'Run the selected tool to see a focused QuantMo answer here.'}
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCreateTask(currentResult || snapshotResult)}
+                                        disabled={isCreatingTask}
+                                        className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm border transition-colors ${isDark ? 'border-[#2b2b40] text-gray-200 hover:bg-[#232336]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                    >
+                                        {isCreatingTask ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
+                                        Create task brief
+                                    </button>
+                                    {currentResult && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setCurrentResult(null)}
+                                            className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm transition-colors ${isDark ? 'bg-[#151521] text-[#a1a5b7] hover:text-gray-100' : 'bg-gray-50 text-gray-600 hover:text-gray-800'}`}
+                                        >
+                                            Reset result
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {taskFeedback && (
+                                <div className={`mt-4 rounded-md border px-4 py-3 text-sm font-light ${taskFeedback.tone === 'success'
+                                    ? (isDark ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
+                                    : (isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700')
+                                }`}>
+                                    {taskFeedback.message}
+                                </div>
+                            )}
+
+                            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                                {(currentResult?.highlights || snapshotResult.highlights).map((item) => (
+                                    <div key={`${item.label}-${item.value}`} className={`rounded-md border p-4 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+                                        <div className="flex items-center justify-between">
+                                            <span className={`text-xs uppercase tracking-[0.2em] font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{item.label}</span>
+                                            <ResultTone tone={item.tone} />
+                                        </div>
+                                        <div className={`mt-3 text-lg font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{item.value}</div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className={`mt-6 rounded-md border p-5 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+                                <div className="mb-4 flex items-center justify-between gap-4">
+                                    <div>
+                                        <div className={`text-xs uppercase tracking-[0.2em] font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{(currentResult?.chart || snapshotResult.chart).title}</div>
+                                        <div className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                                            {currentResult?.prompt || selectedTool?.label || 'QuantMo overview'}
+                                        </div>
+                                    </div>
+                                    <ArrowRight size={18} className={isDark ? 'text-[#5e6278]' : 'text-gray-400'} />
+                                </div>
+                                <ChartRenderer chart={currentResult?.chart || snapshotResult.chart} isDark={isDark} />
+                                {(currentResult?.disclaimer || snapshotResult.disclaimer) && (
+                                    <p className={`mt-4 text-xs font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                                        {currentResult?.disclaimer || snapshotResult.disclaimer}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div className={`rounded-md border p-5 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles size={16} className={isDark ? 'text-fuchsia-300' : 'text-fuchsia-600'} />
+                                        <h4 className={`text-sm uppercase tracking-[0.2em] font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Observations</h4>
+                                    </div>
+                                    <div className={`mt-4 text-sm font-light leading-relaxed ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                                        {currentResult?.summary || snapshotResult.summary}
+                                    </div>
+                                </div>
+                                <div className={`rounded-md border p-5 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <ListTodo size={16} className={isDark ? 'text-cyan-300' : 'text-cyan-600'} />
+                                        <h4 className={`text-sm uppercase tracking-[0.2em] font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Recommended actions</h4>
+                                    </div>
+                                    <div className="mt-4 space-y-3">
+                                        {(currentResult?.recommendations || snapshotResult.recommendations).map((item) => (
+                                            <div key={item} className="flex gap-3">
+                                                <div className={`mt-1 h-2 w-2 rounded-full ${isDark ? 'bg-fuchsia-400' : 'bg-fuchsia-500'}`} />
+                                                <div className={`text-sm font-light leading-relaxed ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{item}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </aside>
-            </section>
+                    </div>
+                </section>
+            )}
         </div>
     );
 };

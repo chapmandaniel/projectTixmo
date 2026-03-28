@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
     X, Save, Loader, Layout, Calendar, MapPin, Image as ImageIcon, Ticket,
-    ChevronRight, ArrowLeft, CheckCircle2, Globe, Clock, Smartphone, Monitor, AlertCircle
+    CheckCircle2, Globe, Smartphone, Monitor, AlertCircle
 } from 'lucide-react';
 import InputField from '../components/InputField';
 import TicketBuilder from '../components/TicketBuilder';
-import { MOCK_VENUES } from '../data/mockData';
 import api from '../lib/api';
 
 /**
  * Tixmo Studio - Unified Event Creator
  * Replaces the old EventWizard with a modern, split-screen interface.
  */
-const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null }) => {
+const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, embedded = false }) => {
     const [loading, setLoading] = useState(false);
-    const [activeSection, setActiveSection] = useState('basics'); // basics, logistics, tickets, media
     const [previewMode, setPreviewMode] = useState('mobile'); // mobile, desktop
 
     // Unified State
@@ -205,7 +203,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null }) =
             setTimeout(() => {
                 setNotification(null);
                 if (onSuccess) onSuccess();
-                onClose();
+                if (!embedded && onClose) onClose();
             }, 1500);
 
         } catch (err) {
@@ -236,16 +234,28 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null }) =
         return v ? v.name : 'Unknown Venue';
     };
 
+    const containerClassName = embedded
+        ? `relative overflow-hidden rounded-md border min-h-[960px] animate-fade-in ${isDark ? 'bg-[#121212] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`
+        : 'fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col animate-fade-in-up';
+
+    const topBarClassName = embedded
+        ? `h-16 border-b flex items-center justify-between px-6 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`
+        : `h-16 border-b flex items-center justify-between px-6 ${isDark ? 'border-[#333] bg-[#1a1a1a]' : 'border-gray-200 bg-white'}`;
+
     return (
-        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col animate-fade-in-up">
+        <div className={containerClassName}>
 
             {/* Top Bar */}
-            <div className={`h-16 border-b flex items-center justify-between px-6 ${isDark ? 'border-[#333] bg-[#1a1a1a]' : 'border-gray-200 bg-white'}`}>
+            <div className={topBarClassName}>
                 <div className="flex items-center space-x-4">
-                    <button onClick={onClose} className={`p-2 rounded-full hover:bg-gray-800 transition-colors ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        <X size={20} />
-                    </button>
-                    <div className="h-6 w-px bg-gray-700 mx-2"></div>
+                    {onClose && (
+                        <>
+                            <button onClick={onClose} className={`p-2 rounded-full transition-colors ${isDark ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+                                <X size={20} />
+                            </button>
+                            <div className={`h-6 w-px mx-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+                        </>
+                    )}
                     <span className={`font-semibold text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>
                         {initialData ? 'Edit Event' : 'New Event'}
                     </span>
@@ -283,7 +293,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null }) =
             </div>
 
             {/* Main Canvas */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex flex-col xl:flex-row overflow-hidden">
 
                 {/* Notification Banner */}
                 {notification && (
@@ -296,7 +306,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                     </div>
                 )}
 
-                <div className={`w-1/2 flex flex-col border-r relative overflow-y-auto custom-scrollbar ${isDark ? 'bg-[#1a1a1a] border-[#333]' : 'bg-white border-gray-200'}`}>
+                <div className={`w-full xl:w-1/2 flex flex-col border-b xl:border-b-0 xl:border-r relative overflow-y-auto custom-scrollbar ${isDark ? 'bg-[#1a1a1a] border-[#333]' : 'bg-white border-gray-200'}`}>
                     <div className="p-8 pb-32 space-y-10">
 
                         {/* Section: Basics */}
@@ -449,7 +459,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null }) =
                 </div>
 
                 {/* Right Panel: Preview */}
-                <div className={`flex-1 relative flex flex-col ${isDark ? 'bg-[#121212]' : 'bg-gray-100'}`}>
+                <div className={`w-full xl:flex-1 min-h-[420px] relative flex flex-col ${isDark ? 'bg-[#121212]' : 'bg-gray-100'}`}>
 
                     {/* Preview Toolbar */}
                     <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 flex space-x-2 p-1 bg-black/50 backdrop-blur-md rounded-full border border-white/10">

@@ -1,24 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    Calendar, CheckSquare, BarChart3,
-    CreditCard, ScanLine, Tags, MapPin, Users,
-    MessageCircle, Wand2, ListTodo, Settings, CheckCircle, Heart, Eye, EyeOff, BrainCircuit
+    Calendar, BarChart3,
+    Users, CheckSquare,
+    MessageCircle, Wand2, Settings, CheckCircle, Heart, Eye, EyeOff, BrainCircuit
 } from 'lucide-react';
 import api from '../lib/api';
 
 const gridItems = [
-    { id: 'events', icon: Calendar, label: 'Events Hub', description: 'Manage and create your upcoming events.', grad: 'from-pink-500 to-orange-400', color: 'text-pink-500' },
-    { id: 'orders', icon: CreditCard, label: 'Orders & Sales', description: 'Track tickets sold and revenue.', grad: 'from-cyan-400 to-blue-500', color: 'text-cyan-400' },
-    { id: 'todo', icon: CheckSquare, label: 'Team Tasks', description: 'Collaborate and assign work.', grad: 'from-indigo-400 to-purple-500', color: 'text-indigo-400' },
-    { id: 'personal-todo', icon: ListTodo, label: "My TODO's", description: 'Your personal checklist.', grad: 'from-emerald-400 to-teal-500', color: 'text-emerald-400' },
+    { id: 'events', icon: Calendar, label: 'Event Manager', description: 'Create events and manage sales, scanners, and venues from one dashboard.', grad: 'from-pink-500 to-orange-400', color: 'text-pink-500' },
+    { id: 'todo', icon: CheckSquare, label: 'Task Manager', description: 'Collaborate, assign work, and track operational follow-through.', grad: 'from-indigo-400 to-purple-500', color: 'text-indigo-400' },
     { id: 'team', icon: Users, label: 'Team Members', description: 'Manage organization access.', grad: 'from-rose-400 to-red-500', color: 'text-rose-400' },
     { id: 'social', icon: MessageCircle, label: 'Social & CRM', description: 'Connect with your audience.', grad: 'from-fuchsia-500 to-purple-600', color: 'text-fuchsia-500' },
-    { id: 'scanners', icon: ScanLine, label: 'Scanners', description: 'Setup on-site ticket scanning.', grad: 'from-yellow-400 to-orange-500', color: 'text-yellow-400' },
-    { id: 'promo', icon: Tags, label: 'Promotions', description: 'Create discount codes.', grad: 'from-teal-400 to-emerald-500', color: 'text-teal-400' },
-    { id: 'venues', icon: MapPin, label: 'Venues', description: 'Manage your locations.', grad: 'from-red-400 to-pink-500', color: 'text-red-400' },
-    { id: 'creative', icon: Wand2, label: 'Creative Studio', description: 'Design event assets.', grad: 'from-purple-500 to-indigo-500', color: 'text-purple-500' },
-    { id: 'approvals', icon: CheckCircle, label: 'Approvals', description: 'Review pending requests.', grad: 'from-lime-400 to-emerald-500', color: 'text-lime-400' },
+    { id: 'creative', icon: Wand2, label: 'ProMo', description: 'Create brand-ready posts and artwork.', grad: 'from-fuchsia-500 to-rose-400', color: 'text-fuchsia-400' },
+    { id: 'approvals', icon: CheckCircle, label: 'Review Portal', description: 'Review pending requests.', grad: 'from-lime-400 to-emerald-500', color: 'text-lime-400' },
     { id: 'quantmo', icon: BrainCircuit, label: 'QuantMo', description: 'AI-driven quant intelligence for promoters.', grad: 'from-fuchsia-500 to-cyan-400', color: 'text-fuchsia-400' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics', description: 'Deep dive into your metrics.', grad: 'from-blue-400 to-indigo-600', color: 'text-blue-400' },
     { id: 'settings', icon: Settings, label: 'Settings', description: 'Configure application preferences.', grad: 'from-gray-500 to-slate-600', color: 'text-gray-400' },
