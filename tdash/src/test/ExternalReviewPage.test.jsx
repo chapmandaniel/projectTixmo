@@ -20,7 +20,7 @@ describe('ExternalReviewPage', () => {
         window.history.pushState({}, '', '/');
     });
 
-    it('renders the refreshed external review workspace shell', async () => {
+    it('renders the simplified external review workspace shell', async () => {
         fetchMock.mockResolvedValue({
             ok: true,
             json: async () => ({
@@ -76,10 +76,13 @@ describe('ExternalReviewPage', () => {
         render(<ExternalReviewPage />);
 
         expect(await screen.findByText('Review Portal')).toBeInTheDocument();
-        expect(screen.getByText('Secure External Review')).toBeInTheDocument();
         expect(screen.getByText('Creative Briefing')).toBeInTheDocument();
         expect(screen.getByText('Decision controls')).toBeInTheDocument();
-        expect(screen.getByText('Version history')).toBeInTheDocument();
+        expect(screen.getByText('Discussion')).toBeInTheDocument();
+        expect(screen.queryByText('External Reviewer')).not.toBeInTheDocument();
+        expect(screen.queryByText('Secure External Review')).not.toBeInTheDocument();
+        expect(screen.queryByText('Version history')).not.toBeInTheDocument();
+        expect(screen.getByText('v1')).toBeInTheDocument();
         expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/review/token-123');
     });
 });

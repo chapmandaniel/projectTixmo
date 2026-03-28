@@ -1,13 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    CalendarDays,
-    CheckCircle2,
     Download,
     FileText,
-    MessageSquare,
     Send,
-    ShieldCheck,
-    User,
     XCircle,
 } from 'lucide-react';
 import {
@@ -76,6 +71,44 @@ const reviewApi = {
 
 const authorLabel = (author) => author?.name || author?.email || 'Unknown';
 
+const initialsLabel = (author) => {
+    const label = authorLabel(author).trim();
+    if (!label) {
+        return '??';
+    }
+
+    const parts = label.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+        return parts[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase();
+};
+
+const assetLabel = (asset, index) => {
+    const filename = asset?.originalName?.trim();
+    if (!filename) {
+        return `Option ${index + 1}`;
+    }
+
+    return filename.replace(/\.[^/.]+$/, '') || filename;
+};
+
+const assetTypeLabel = (asset) => (
+    asset?.mimeType?.startsWith('image/')
+        ? 'Image option'
+        : 'File option'
+);
+
+const personLabel = (person) => {
+    if (!person) {
+        return 'Unknown';
+    }
+
+    const name = [person.firstName, person.lastName].filter(Boolean).join(' ').trim();
+    return name || person.name || person.email || 'Unknown';
+};
+
 const DecisionActionCard = ({ option, saving, onClick }) => (
     <button
         type="button"
@@ -86,10 +119,10 @@ const DecisionActionCard = ({ option, saving, onClick }) => (
         <span className="block font-medium text-inherit">{option.label}</span>
         <span className="mt-1 block text-xs text-inherit/80">
             {option.value === 'APPROVED'
-                ? 'Confirm the latest revision is ready to go.'
+                ? 'Confirm the latest version is ready to ship.'
                 : option.value === 'CHANGES_REQUESTED'
-                    ? 'Flag the revision for another iteration.'
-                    : 'Reject the submission in its current form.'}
+                    ? 'Send the work back for another iteration.'
+                    : 'Reject the submission in its current state.'}
         </span>
     </button>
 );
@@ -100,6 +133,7 @@ const ExternalReviewPage = () => {
     const [reviewer, setReviewer] = useState(null);
     const [selectedRevisionId, setSelectedRevisionId] = useState(null);
     const [assetIndex, setAssetIndex] = useState(0);
+    const [isImageExpanded, setIsImageExpanded] = useState(false);
     const [comment, setComment] = useState('');
     const [decisionNote, setDecisionNote] = useState('');
     const [loading, setLoading] = useState(true);
@@ -130,22 +164,51 @@ const ExternalReviewPage = () => {
             return null;
         }
 
-        return approval.revisions.find((revision) => revision.id === selectedRevisionId) || approval.latestRevision;
+        return (
+            approval.revisions.find((revision) => revision.id === selectedRevisionId) ||
+            approval.latestRevision ||
+            approval.revisions[0]
+        );
     }, [approval, selectedRevisionId]);
+
+    const comments = approval?.comments || [];
+    const sortedComments = useMemo(
+        () =>
+            [...comments].sort((left, right) => {
+                const leftTime = new Date(left.createdAt || 0).getTime();
+                const rightTime = new Date(right.createdAt || 0).getTime();
+                return rightTime - leftTime;
+            }),
+        [comments]
+    );
 
     useEffect(() => {
         setAssetIndex(0);
     }, [selectedRevisionId]);
 
+    useEffect(() => {
+        if (!isImageExpanded) {
+            return undefined;
+        }
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setIsImageExpanded(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isImageExpanded]);
+
     const selectedAsset = selectedRevision?.assets?.[assetIndex] || null;
     const statusMeta = APPROVAL_STATUS_META[approval?.status] || APPROVAL_STATUS_META.PENDING_REVIEW;
     const StatusIcon = statusMeta.icon;
-    const requesterName = [approval?.createdBy?.firstName, approval?.createdBy?.lastName].filter(Boolean).join(' ')
-        || approval?.createdBy?.email
-        || 'Unknown requester';
+    const requesterName = personLabel(approval?.createdBy);
     const currentDecision = approval?.myReview?.decision
-        ? approval.myReview.decision.replaceAll('_', ' ')
-        : 'No decision submitted';
+        ? `Current decision: ${approval.myReview.decision.replaceAll('_', ' ')}`
+        : 'You have not responded yet.';
+    const commentRevisionId = approval?.latestRevision?.id || selectedRevision?.id || null;
 
     const submitDecision = async (decision) => {
         try {
@@ -167,7 +230,7 @@ const ExternalReviewPage = () => {
 
     const submitComment = async (event) => {
         event.preventDefault();
-        if (!comment.trim() || !selectedRevision) {
+        if (!comment.trim() || !commentRevisionId) {
             return;
         }
 
@@ -176,7 +239,7 @@ const ExternalReviewPage = () => {
             setError('');
             await reviewApi.addComment(token, {
                 content: comment,
-                revisionId: selectedRevision.id,
+                revisionId: commentRevisionId,
             });
             setComment('');
             await loadReview();
@@ -211,93 +274,186 @@ const ExternalReviewPage = () => {
 
     return (
         <div className="min-h-screen bg-[#141625] text-white">
-            <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-                <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 ${panelClass}`}>
+            <div className="mx-auto max-w-[1500px] space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+                <section className={`relative overflow-hidden rounded-md border px-6 py-8 sm:px-8 ${panelClass}`}>
+                    <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${STATUS_CARD_ACCENTS[approval.status] || 'from-slate-400 to-slate-500'}`} />
                     <div className="absolute inset-0 pointer-events-none">
                         <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
                         <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                     </div>
-
-                    <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                        <div className="space-y-4">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.22em] text-[#a1a5b7]">
-                                <ShieldCheck className="h-3.5 w-3.5" />
-                                Secure External Review
-                            </div>
-                            <div>
-                                <h1 className="flex flex-wrap items-baseline gap-3 text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
-                                    <span className="inline-flex items-center gap-2">
-                                        <span>Review Portal</span>
-                                        <CheckCircle2 className="h-6 w-6 text-sky-300 sm:h-7 sm:w-7" />
-                                    </span>
-                                </h1>
-                                <p className="mt-3 text-lg font-light text-gray-200">{approval.title}</p>
-                                <p className="mt-2 max-w-3xl text-sm font-light text-[#8f94aa]">
-                                    {approval.description || 'Browse the latest revision, leave comments, and submit your decision from a secure review workspace.'}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="grid gap-3 md:min-w-[320px]">
-                            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${statusMeta.chip}`}>
-                                <StatusIcon className="h-3.5 w-3.5" />
-                                {statusMeta.label}
-                            </span>
-                            <div className={`${surfaceClass} px-4 py-4 text-sm font-light text-[#a1a5b7]`}>
-                                <div className="flex items-center justify-between gap-3">
-                                    <span>Requested by</span>
-                                    <span className="text-right text-gray-100">{requesterName}</span>
-                                </div>
-                                <div className="mt-2 flex items-center justify-between gap-3">
-                                    <span>Event</span>
-                                    <span className="text-right text-gray-100">{approval.event?.name || 'Unassigned event'}</span>
-                                </div>
-                                <div className="mt-2 flex items-center justify-between gap-3">
-                                    <span>Deadline</span>
-                                    <span className="text-right text-gray-100">{formatApprovalDate(approval.deadline)}</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="relative">
+                        <h1 className="text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
+                            Review Portal
+                        </h1>
                     </div>
                 </section>
 
-                <section className="grid grid-cols-1 gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-                    <aside className="space-y-4">
-                        <section className={`${panelClass} p-4`}>
-                            <p className="text-xs uppercase tracking-[0.2em] text-[#8f94aa]">Your access</p>
-                            <div className={`${surfaceClass} mt-3 px-4 py-4 text-sm font-light text-[#a1a5b7]`}>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#1e1e2d] text-sky-200">
-                                        <User className="h-4 w-4" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="truncate text-sm text-gray-100">{reviewer?.name || reviewer?.email}</p>
-                                        <p className="truncate text-xs text-[#8f94aa]">{reviewer?.email}</p>
+                {error && (
+                    <div className="rounded-md border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-light text-rose-300">
+                        {error}
+                    </div>
+                )}
+
+                <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)]">
+                    <section className={`${panelClass} p-4 sm:p-5`}>
+                        <div className={`${surfaceClass} relative overflow-hidden`}>
+                            <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-2rem)] gap-2 overflow-x-auto rounded-md border border-white/10 bg-[#0f1020]/90 px-2 py-2 shadow-lg shadow-black/20 backdrop-blur">
+                                {(approval.revisions || []).map((revision) => (
+                                    <button
+                                        key={revision.id}
+                                        type="button"
+                                        onClick={() => setSelectedRevisionId(revision.id)}
+                                        className={`rounded-md px-3 py-2 text-xs uppercase tracking-[0.16em] transition ${revision.id === selectedRevision?.id ? 'bg-sky-500 text-white' : 'bg-white/5 text-[#a1a5b7] hover:bg-white/10 hover:text-white'}`}
+                                    >
+                                        v{revision.revisionNumber}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex min-h-[520px] items-center justify-center p-6">
+                                {selectedAsset ? (
+                                    selectedAsset.mimeType?.startsWith('image/') ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsImageExpanded(true)}
+                                            className="group relative w-full cursor-zoom-in overflow-hidden rounded-md"
+                                            aria-label={`Expand ${selectedAsset.originalName}`}
+                                        >
+                                            <img
+                                                src={selectedAsset.s3Url}
+                                                alt={selectedAsset.originalName}
+                                                className="max-h-[560px] w-full rounded-md object-contain"
+                                            />
+                                            <span className="pointer-events-none absolute inset-x-4 bottom-4 rounded-full bg-black/60 px-3 py-2 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100">
+                                                Click to expand
+                                            </span>
+                                        </button>
+                                    ) : (
+                                        <div className={`${panelClass} px-8 py-12 text-center`}>
+                                            <FileText className="mx-auto h-12 w-12 text-[#5e6278]" />
+                                            <p className="mt-4 text-sm font-light text-gray-200">{selectedAsset.originalName}</p>
+                                            <a
+                                                href={selectedAsset.s3Url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="mt-4 inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400"
+                                            >
+                                                <Download className="h-4 w-4" />
+                                                Download file
+                                            </a>
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="text-sm font-light text-[#8f94aa]">No assets uploaded for this version.</div>
+                                )}
+                            </div>
+
+                            {selectedAsset && (
+                                <div className="border-t border-[#2b2b40] px-4 py-4">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-light text-gray-100">{selectedAsset.originalName}</p>
+                                            <p className="mt-1 text-xs font-light text-[#8f94aa]">{selectedAsset.mimeType || 'Unknown file type'}</p>
+                                        </div>
+                                        <a
+                                            href={selectedAsset.s3Url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex shrink-0 items-center gap-2 rounded-md border border-[#2b2b40] bg-[#1e1e2d] px-4 py-2 text-sm font-light text-gray-100 transition hover:border-[#3a3a5a] hover:bg-[#232336]"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            Download
+                                        </a>
                                     </div>
                                 </div>
-                                <div className="mt-4 grid gap-2 text-xs">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="text-[#8f94aa]">Current decision</span>
-                                        <span className="text-right uppercase tracking-[0.14em] text-gray-100">{currentDecision}</span>
+                            )}
+
+                            {(selectedRevision?.assets?.length || 0) > 1 && (
+                                <div className="border-t border-[#2b2b40] p-4">
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <p className="text-xs uppercase tracking-[0.16em] text-[#8f94aa]">Version options</p>
+                                        <span className="text-[11px] uppercase tracking-[0.16em] text-[#5e6278]">
+                                            {selectedRevision.assets.length} files
+                                        </span>
                                     </div>
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="text-[#8f94aa]">Link expires</span>
-                                        <span className="text-right text-gray-100">{formatApprovalDate(reviewer?.tokenExpiresAt)}</span>
+
+                                    <div className="flex gap-3 overflow-x-auto pb-1">
+                                        {selectedRevision.assets.map((asset, index) => (
+                                            <button
+                                                key={asset.id}
+                                                type="button"
+                                                onClick={() => setAssetIndex(index)}
+                                                className={`min-w-[148px] overflow-hidden rounded-lg border text-left transition ${index === assetIndex ? 'border-sky-400 bg-sky-500/10 shadow-lg shadow-sky-500/10' : 'border-[#2b2b40] bg-[#1e1e2d] hover:border-[#3a3a5a] hover:bg-[#232336]'}`}
+                                            >
+                                                <div className="flex h-24 items-center justify-center overflow-hidden border-b border-inherit bg-[#151521]">
+                                                    {asset.mimeType?.startsWith('image/') ? (
+                                                        <img src={asset.s3Url} alt={asset.originalName} className="h-full w-full object-cover" />
+                                                    ) : (
+                                                        <div className="flex h-full w-full items-center justify-center text-xs font-light text-[#8f94aa]">File</div>
+                                                    )}
+                                                </div>
+                                                <div className="space-y-1 px-3 py-3">
+                                                    <p className="truncate text-sm font-light text-gray-100">{assetLabel(asset, index)}</p>
+                                                    <p className="text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
+                                                        {assetTypeLabel(asset)}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        ))}
                                     </div>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    <aside className="space-y-4">
+                        <section className={`${panelClass} p-4`}>
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h2 className="truncate text-lg font-light text-gray-100">{approval.title}</h2>
+                                    {approval.description && (
+                                        <p className="mt-1 text-sm font-light leading-5 text-[#8f94aa]">
+                                            {approval.description}
+                                        </p>
+                                    )}
+                                </div>
+                                <span className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-xs ${statusMeta.chip}`}>
+                                    <StatusIcon className="h-3.5 w-3.5" />
+                                    {statusMeta.label}
+                                </span>
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-light text-[#a1a5b7]">
+                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Event</span>
+                                    <span className="mt-1 block text-sm text-gray-100">{approval.event?.name || 'Unassigned'}</span>
+                                </div>
+                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Requested by</span>
+                                    <span className="mt-1 block text-sm text-gray-100">{requesterName}</span>
+                                </div>
+                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Due</span>
+                                    <span className="mt-1 block text-sm text-gray-100">{formatApprovalDate(approval.deadline)}</span>
+                                </div>
+                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
+                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Link expires</span>
+                                    <span className="mt-1 block text-sm text-gray-100">{formatApprovalDate(reviewer?.tokenExpiresAt)}</span>
                                 </div>
                             </div>
                         </section>
 
-                        <section className={`${panelClass} p-4`}>
-                            <p className="text-xs uppercase tracking-[0.2em] text-[#8f94aa]">Decision controls</p>
+                        <section className={`${panelClass} p-5`}>
+                            <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Decision controls</p>
+                            <p className="mt-2 text-sm font-light text-[#a1a5b7]">{currentDecision}</p>
                             <textarea
-                                rows={4}
+                                rows={3}
                                 value={decisionNote}
                                 onChange={(e) => setDecisionNote(e.target.value)}
-                                placeholder="Optional note for your decision"
-                                className={`${inputClass} mt-3`}
+                                placeholder="Optional decision note"
+                                className={`${inputClass} mt-4`}
                             />
-                            <div className="mt-3 grid gap-2">
+                            <div className="mt-4 grid gap-2">
                                 {DECISION_OPTIONS.map((option) => (
                                     <DecisionActionCard
                                         key={option.value}
@@ -310,193 +466,90 @@ const ExternalReviewPage = () => {
                         </section>
 
                         <section className={`${panelClass} p-4`}>
-                            <p className="text-xs uppercase tracking-[0.2em] text-[#8f94aa]">Version history</p>
-                            <div className="mt-3 space-y-2">
-                                {(approval.revisions || []).map((revision) => (
-                                    <button
-                                        key={revision.id}
-                                        type="button"
-                                        onClick={() => setSelectedRevisionId(revision.id)}
-                                        className={`relative w-full overflow-hidden rounded-md border px-4 py-4 text-left transition-all duration-300 ${
-                                            revision.id === selectedRevision?.id
-                                                ? 'border-sky-400/50 bg-[#232336] shadow-xl shadow-sky-950/20'
-                                                : 'border-[#2b2b40] bg-[#151521] hover:border-[#3a3a5a] hover:bg-[#202033]'
-                                        }`}
-                                    >
-                                        <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${STATUS_CARD_ACCENTS[approval.status] || 'from-slate-400 to-slate-500'} ${revision.id === selectedRevision?.id ? 'opacity-100' : 'opacity-45'}`} />
-                                        <div className="flex items-center justify-between gap-3">
-                                            <span className="text-sm font-light text-gray-100">Revision {revision.revisionNumber}</span>
-                                            <span className="text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">{revision.assets?.length || 0} files</span>
-                                        </div>
-                                        <p className="mt-2 text-xs font-light text-[#8f94aa]">{revision.summary || 'No revision note provided.'}</p>
-                                        <p className="mt-3 text-[11px] font-light text-[#5e6278]">{formatApprovalDate(revision.createdAt)}</p>
-                                    </button>
-                                ))}
-                            </div>
-                        </section>
-                    </aside>
-
-                    <div className="space-y-4">
-                        {error && (
-                            <div className="rounded-md border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-light text-rose-300">
-                                {error}
-                            </div>
-                        )}
-
-                        <section className={`${panelClass} p-4`}>
-                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                <div>
-                                    <p className="text-xs uppercase tracking-[0.2em] text-[#8f94aa]">Active revision</p>
-                                    <h2 className="mt-2 text-2xl font-light tracking-tight text-gray-100">
-                                        Revision {selectedRevision?.revisionNumber || 'Latest'}
-                                    </h2>
-                                    <p className="mt-2 max-w-2xl text-sm font-light text-[#a1a5b7]">
-                                        {selectedRevision?.summary || approval.description || 'Review the latest supplied files and confirm whether this version is ready to move forward.'}
-                                    </p>
-                                </div>
-
-                                <div className={`${surfaceClass} min-w-[260px] px-4 py-4 text-sm font-light text-[#a1a5b7]`}>
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="inline-flex items-center gap-2">
-                                            <CalendarDays className="h-4 w-4 text-[#5e6278]" />
-                                            Uploaded
-                                        </span>
-                                        <span className="text-right text-gray-100">{formatApprovalDate(selectedRevision?.createdAt)}</span>
-                                    </div>
-                                    <div className="mt-2 flex items-center justify-between gap-3">
-                                        <span>Files in revision</span>
-                                        <span className="text-right text-gray-100">{selectedRevision?.assets?.length || 0}</span>
-                                    </div>
-                                    <div className="mt-2 flex items-center justify-between gap-3">
-                                        <span>Comments</span>
-                                        <span className="text-right text-gray-100">{approval.comments?.length || 0}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={`${surfaceClass} mt-4 overflow-hidden p-4`}>
-                                <div className="flex min-h-[480px] items-center justify-center rounded-md bg-[linear-gradient(135deg,_rgba(56,189,248,0.14),_rgba(21,21,33,0.9))] p-4">
-                                    {selectedAsset ? (
-                                        selectedAsset.mimeType?.startsWith('image/') ? (
-                                            <img
-                                                src={selectedAsset.s3Url}
-                                                alt={selectedAsset.originalName}
-                                                className="max-h-[560px] w-full rounded-md object-contain"
-                                            />
-                                        ) : (
-                                            <div className={`${panelClass} max-w-md px-8 py-12 text-center`}>
-                                                <FileText className="mx-auto h-12 w-12 text-[#8f94aa]" />
-                                                <p className="mt-4 text-sm font-light text-gray-100">{selectedAsset.originalName}</p>
-                                                <p className="mt-2 text-xs font-light text-[#8f94aa]">Preview unavailable for this file type.</p>
-                                                <a
-                                                    href={selectedAsset.s3Url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="mt-4 inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2.5 text-sm text-white transition-colors hover:bg-sky-400"
-                                                >
-                                                    <Download className="h-4 w-4" />
-                                                    Download file
-                                                </a>
-                                            </div>
-                                        )
-                                    ) : (
-                                        <p className="text-sm font-light text-[#8f94aa]">No preview available.</p>
-                                    )}
-                                </div>
-
-                                {selectedAsset && (
-                                    <div className="mt-4 flex items-center justify-between gap-4">
-                                        <div className="min-w-0">
-                                            <p className="truncate text-sm font-light text-gray-100">{selectedAsset.originalName}</p>
-                                            <p className="mt-1 text-xs font-light text-[#8f94aa]">{selectedAsset.mimeType || 'Unknown file type'}</p>
-                                        </div>
-                                        <a
-                                            href={selectedAsset.s3Url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex shrink-0 items-center gap-2 rounded-md border border-[#2b2b40] bg-[#1e1e2d] px-4 py-2.5 text-sm font-light text-gray-100 transition hover:border-[#3a3a5a] hover:bg-[#232336]"
-                                        >
-                                            <Download className="h-4 w-4" />
-                                            Download
-                                        </a>
-                                    </div>
-                                )}
-
-                                {(selectedRevision?.assets?.length || 0) > 1 && (
-                                    <div className="mt-4 grid gap-2 sm:grid-cols-4 lg:grid-cols-6">
-                                        {selectedRevision.assets.map((asset, index) => (
-                                            <button
-                                                key={asset.id}
-                                                type="button"
-                                                onClick={() => setAssetIndex(index)}
-                                                className={`relative overflow-hidden rounded-md border transition-all duration-300 ${
-                                                    index === assetIndex
-                                                        ? 'border-sky-400/50 bg-[#232336] shadow-lg shadow-sky-950/20'
-                                                        : 'border-[#2b2b40] bg-[#151521] hover:border-[#3a3a5a] hover:bg-[#202033]'
-                                                }`}
-                                            >
-                                                <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${STATUS_CARD_ACCENTS[approval.status] || 'from-slate-400 to-slate-500'} ${index === assetIndex ? 'opacity-100' : 'opacity-45'}`} />
-                                                <div className="aspect-square">
-                                                    {asset.mimeType?.startsWith('image/') ? (
-                                                        <img src={asset.s3Url} alt={asset.originalName} className="h-full w-full object-cover" />
-                                                    ) : (
-                                                        <div className="flex h-full items-center justify-center text-xs font-light text-[#8f94aa]">File</div>
-                                                    )}
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-
-                        <section className={`${panelClass} p-4`}>
-                            <div className="flex items-center justify-between gap-3">
-                                <div>
-                                    <p className="text-xs uppercase tracking-[0.2em] text-[#8f94aa]">Discussion thread</p>
-                                    <h2 className="mt-2 text-2xl font-light tracking-tight text-gray-100">Comments</h2>
-                                </div>
-                                <span className="inline-flex items-center gap-2 text-sm font-light text-[#a1a5b7]">
-                                    <MessageSquare className="h-4 w-4" />
-                                    {approval.comments?.length || 0} comments
+                            <div className="flex items-center justify-between gap-4 px-1 pb-3">
+                                <h2 className="text-lg font-light text-gray-100">Discussion</h2>
+                                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
+                                    {sortedComments.length}
                                 </span>
                             </div>
 
-                            <div className="mt-4 space-y-3">
-                                {(approval.comments || []).map((item) => (
-                                    <div key={item.id} className={`${surfaceClass} px-4 py-4`}>
-                                        <div className="flex items-center justify-between gap-3">
-                                            <div className="text-sm font-light text-gray-100">{authorLabel(item.author)}</div>
-                                            <div className="text-xs font-light text-[#8f94aa]">{formatApprovalDate(item.createdAt)}</div>
+                            <div className="space-y-3">
+                                {sortedComments.map((item, index) => (
+                                    <div
+                                        key={item.id}
+                                        data-testid="external-comment-card"
+                                        className={`relative rounded-lg px-1 pb-3 ${index !== sortedComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
+                                    >
+                                        <div className="flex flex-wrap items-start justify-between gap-3">
+                                            <div className="flex items-start gap-3">
+                                                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-500/10 text-[11px] uppercase tracking-[0.18em] text-sky-100">
+                                                    {initialsLabel(item.author)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <span className="text-sm font-light text-gray-100">{authorLabel(item.author)}</span>
+                                                    <p className="mt-2 text-sm leading-6 font-light text-[#d7d9e4]">{item.content}</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-[11px] font-light uppercase tracking-[0.16em] text-[#5e6278]">
+                                                {formatApprovalDate(item.createdAt)}
+                                            </span>
                                         </div>
-                                        <p className="mt-3 text-sm font-light leading-6 text-[#d2d5e2]">{item.content}</p>
                                     </div>
                                 ))}
+
+                                {sortedComments.length === 0 && (
+                                    <div className="rounded-lg border border-dashed border-[#2b2b40] px-4 py-8 text-center text-sm font-light text-[#8f94aa]">
+                                        No comments yet.
+                                    </div>
+                                )}
                             </div>
 
-                            <form onSubmit={submitComment} className={`${surfaceClass} mt-4 px-4 py-4`}>
+                            <form onSubmit={submitComment} className="mt-4 flex items-end gap-3 border-t border-[#2b2b40] pt-4">
                                 <textarea
-                                    rows={4}
+                                    rows={3}
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Add a comment or ask for clarification."
-                                    className={inputClass}
+                                    placeholder="Add a comment"
+                                    className={`flex-1 ${inputClass}`}
                                 />
-                                <div className="mt-3 flex justify-end">
-                                    <button
-                                        type="submit"
-                                        disabled={saving || !comment.trim()}
-                                        className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2.5 text-sm text-white transition-colors hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
-                                    >
-                                        <Send className="h-4 w-4" />
-                                        Add comment
-                                    </button>
-                                </div>
+                                <button
+                                    type="submit"
+                                    aria-label="Send comment"
+                                    disabled={saving || !comment.trim()}
+                                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-500 text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <Send className="h-4 w-4" />
+                                </button>
                             </form>
                         </section>
-                    </div>
+                    </aside>
                 </section>
             </div>
+
+            {isImageExpanded && selectedAsset?.mimeType?.startsWith('image/') && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-4 py-6"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`Expanded preview for ${selectedAsset.originalName}`}
+                    onClick={() => setIsImageExpanded(false)}
+                >
+                    <button
+                        type="button"
+                        onClick={() => setIsImageExpanded(false)}
+                        className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/20"
+                    >
+                        <XCircle className="h-4 w-4" />
+                        Close preview
+                    </button>
+                    <img
+                        src={selectedAsset.s3Url}
+                        alt={selectedAsset.originalName}
+                        className="max-h-full max-w-full rounded-md object-contain shadow-2xl"
+                        onClick={(event) => event.stopPropagation()}
+                    />
+                </div>
+            )}
         </div>
     );
 };
