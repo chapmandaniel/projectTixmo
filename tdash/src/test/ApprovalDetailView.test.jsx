@@ -29,6 +29,7 @@ const approvalFixture = {
         {
             id: 'reviewer-1',
             email: 'reviewer@example.com',
+            name: 'Lead Reviewer',
             reviewerType: 'INTERNAL',
             latestDecision: null,
         },
@@ -100,6 +101,9 @@ describe('ApprovalDetailView', () => {
         expect(screen.getByText('Discussion')).toBeInTheDocument();
         expect(screen.getByText('Decision controls')).toBeInTheDocument();
         expect(screen.getAllByText('Upload version').length).toBeGreaterThan(0);
+        expect(screen.getByText('reviewer@example.com')).toBeInTheDocument();
+        expect(screen.queryByText('Lead Reviewer')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Pending')).toBeInTheDocument();
     });
 
     it('shows newest approval comments first in the shared thread', async () => {
@@ -150,6 +154,58 @@ describe('ApprovalDetailView', () => {
                 parentCommentId: undefined,
             })
         );
+    });
+
+    it('opens a modal and submits a new reviewer email', async () => {
+        const updatedApproval = {
+            ...approvalFixture,
+            reviewers: [
+                ...approvalFixture.reviewers,
+                {
+                    id: 'reviewer-2',
+                    email: 'new-reviewer@example.com',
+                    reviewerType: 'EXTERNAL',
+                    latestDecision: { decision: 'APPROVED' },
+                },
+            ],
+        };
+
+        apiPost.mockResolvedValue(updatedApproval);
+
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={{ email: 'reviewer@example.com' }}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /Add reviewer/i }));
+
+        const dialog = screen.getByRole('dialog', { name: 'Add reviewer' });
+        expect(dialog).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText('Reviewer email'), {
+            target: { value: 'new-reviewer@example.com' },
+        });
+
+        await act(async () => {
+            fireEvent.click(within(dialog).getByRole('button', { name: /^Add reviewer$/i }));
+        });
+
+        await waitFor(() =>
+            expect(apiPost).toHaveBeenCalledWith('/approvals/approval-1/reviewers', {
+                reviewers: [{ email: 'new-reviewer@example.com' }],
+            })
+        );
+
+        expect(screen.getByText('new-reviewer@example.com')).toBeInTheDocument();
+        expect(screen.getByLabelText('Approved')).toBeInTheDocument();
+        expect(screen.queryByRole('dialog', { name: 'Add reviewer' })).not.toBeInTheDocument();
     });
 
     it('expands the selected image asset in a full-screen preview', async () => {

@@ -76,6 +76,26 @@ describe('Creative approvals API', () => {
         expect(response.body.approvals[0]).toHaveProperty('latestRevision');
     });
 
+    it('adds a reviewer to an existing approval request', async () => {
+        const approval = await prisma.approvalRequest.findFirstOrThrow({
+            where: { title: 'Main stage LED artwork' },
+        });
+
+        const response = await request(app)
+            .post(`/api/v1/approvals/${approval.id}/reviewers`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({
+                reviewers: [{ email: 'second-reviewer@example.com' }],
+            });
+
+        expect(response.status).toBe(201);
+        expect(response.body.reviewers).toHaveLength(2);
+        expect(response.body.reviewers.map((reviewer: { email: string }) => reviewer.email)).toContain(
+            'second-reviewer@example.com'
+        );
+        expect(response.body.status).toBe('PENDING_REVIEW');
+    });
+
     it('supports external review comments and decisions via secure token', async () => {
         const approval = await prisma.approvalRequest.findFirstOrThrow({
             where: { title: 'Main stage LED artwork' },

@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     ArrowLeft,
+    CheckCircle2,
+    Circle,
     Download,
     FileText,
+    MailPlus,
     Send,
     Upload,
     User,
@@ -79,6 +82,36 @@ const personLabel = (person) => {
     return name || person.name || person.email || 'Unknown';
 };
 
+const reviewerStatusMeta = (reviewer) => {
+    if (reviewer?.latestDecision?.decision === 'APPROVED') {
+        return {
+            icon: CheckCircle2,
+            className: 'text-emerald-400',
+            label: 'Approved',
+        };
+    }
+
+    if (
+        reviewer?.latestDecision?.decision === 'DECLINED' ||
+        reviewer?.latestDecision?.decision === 'CHANGES_REQUESTED'
+    ) {
+        return {
+            icon: XCircle,
+            className: 'text-rose-400',
+            label:
+                reviewer.latestDecision.decision === 'CHANGES_REQUESTED'
+                    ? 'Changes requested'
+                    : 'Declined',
+        };
+    }
+
+    return {
+        icon: Circle,
+        className: 'text-[#707791]',
+        label: 'Pending',
+    };
+};
+
 const DecisionActionCard = ({ option, saving, onClick }) => (
     <button
         type="button"
@@ -108,6 +141,8 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const [decisionNote, setDecisionNote] = useState('');
     const [revisionSummary, setRevisionSummary] = useState('');
     const [revisionFiles, setRevisionFiles] = useState([]);
+    const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
+    const [reviewerEmail, setReviewerEmail] = useState('');
     const [loading, setLoading] = useState(!initialApproval);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -191,6 +226,11 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         }
     };
 
+    const closeReviewerModal = () => {
+        setIsReviewerModalOpen(false);
+        setReviewerEmail('');
+    };
+
     const submitComment = async (event) => {
         event.preventDefault();
         if (!comment.trim() || !commentRevisionId) {
@@ -255,6 +295,34 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             onUpdated?.(updated);
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message || 'Failed to upload version.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const addReviewer = async (event) => {
+        event.preventDefault();
+        if (!reviewerEmail.trim()) {
+            return;
+        }
+
+        try {
+            setSaving(true);
+            setError('');
+            const updated = await api.post(`/approvals/${approval.id}/reviewers`, {
+                reviewers: [{ email: reviewerEmail.trim() }],
+            });
+
+            setApproval(updated);
+            setSelectedRevisionId((currentRevisionId) =>
+                updated.revisions?.some((revision) => revision.id === currentRevisionId)
+                    ? currentRevisionId
+                    : updated.latestRevision?.id || updated.revisions?.[0]?.id || null
+            );
+            closeReviewerModal();
+            onUpdated?.(updated);
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to add reviewer.');
         } finally {
             setSaving(false);
         }
@@ -619,24 +687,36 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                         </section>
 
                         <section className={`${panelClass} p-5`}>
-                            <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Reviewers</p>
-                            <div className="mt-4 space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Reviewers</p>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsReviewerModalOpen(true)}
+                                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-[0.16em] text-[#d7d9e4] transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white"
+                                >
+                                    <MailPlus className="h-3.5 w-3.5" />
+                                    Add reviewer
+                                </button>
+                            </div>
+                            <div className="mt-4 space-y-2">
                                 {reviewers.map((reviewer) => (
                                     <div key={reviewer.id} className={`${surfaceClass} px-4 py-3`}>
                                         <div className="flex items-center justify-between gap-3">
-                                            <div>
-                                                <p className="text-sm font-light text-gray-100">{reviewer.name || reviewer.email}</p>
-                                                <p className="text-xs font-light text-[#5e6278]">{reviewer.email}</p>
-                                            </div>
-                                            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-[#a1a5b7]">
-                                                {reviewer.reviewerType}
-                                            </span>
+                                            <p className="min-w-0 truncate pr-2 text-sm font-light text-gray-100">
+                                                {reviewer.email}
+                                            </p>
+                                            {(() => {
+                                                const meta = reviewerStatusMeta(reviewer);
+                                                const ReviewerStatusIcon = meta.icon;
+                                                return (
+                                                    <ReviewerStatusIcon
+                                                        className={`h-5 w-5 shrink-0 ${meta.className}`}
+                                                        aria-label={meta.label}
+                                                        title={meta.label}
+                                                    />
+                                                );
+                                            })()}
                                         </div>
-                                        <p className="mt-3 text-xs uppercase tracking-[0.16em] text-[#8f94aa]">
-                                            {reviewer.latestDecision
-                                                ? `Decision: ${reviewer.latestDecision.decision.replaceAll('_', ' ')}`
-                                                : 'Awaiting decision'}
-                                        </p>
                                     </div>
                                 ))}
                             </div>
@@ -667,6 +747,73 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                         className="max-h-full max-w-full rounded-md object-contain shadow-2xl"
                         onClick={(event) => event.stopPropagation()}
                     />
+                </div>
+            )}
+
+            {isReviewerModalOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Add reviewer"
+                    onClick={closeReviewerModal}
+                >
+                    <div
+                        className={`${panelClass} w-full max-w-md p-6 shadow-2xl shadow-black/30`}
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-light text-gray-100">Add reviewer</h2>
+                                <p className="mt-1 text-sm font-light text-[#8f94aa]">
+                                    Invite one more reviewer to this approval.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeReviewerModal}
+                                className="rounded-full border border-white/10 bg-white/5 p-2 text-[#8f94aa] transition hover:text-white"
+                                aria-label="Close add reviewer modal"
+                            >
+                                <XCircle className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={addReviewer} className="mt-5 space-y-4">
+                            <div>
+                                <label htmlFor="reviewer-email" className="mb-2 block text-xs uppercase tracking-[0.16em] text-[#8f94aa]">
+                                    Reviewer email
+                                </label>
+                                <input
+                                    id="reviewer-email"
+                                    type="email"
+                                    autoFocus
+                                    value={reviewerEmail}
+                                    onChange={(event) => setReviewerEmail(event.target.value)}
+                                    placeholder="reviewer@company.com"
+                                    className={inputClass}
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={closeReviewerModal}
+                                    className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-sm font-light text-[#a1a5b7] transition hover:text-white"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={saving || !reviewerEmail.trim()}
+                                    className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <MailPlus className="h-4 w-4" />
+                                    Add reviewer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

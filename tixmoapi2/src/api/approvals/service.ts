@@ -11,7 +11,7 @@ import { StatusCodes } from 'http-status-codes';
 import prisma from '../../config/prisma';
 import { logger } from '../../config/logger';
 import { uploadService } from '../../services/upload.service';
-import { approvalEmailService } from '../../services/approval-email.service';
+import { approvalEmailService, ReviewerInfo } from '../../services/approval-email.service';
 import { ApiError } from '../../utils/ApiError';
 
 const TOKEN_EXPIRY_DAYS = 30;
@@ -527,6 +527,23 @@ class ApprovalService {
         );
     }
 
+    private async notifyReviewerSubsetOfSubmission(
+        approval: Pick<ApprovalDetailRecord, 'title' | 'description' | 'event' | 'deadline' | 'latestRevisionNumber' | 'createdBy'>,
+        reviewers: ReviewerInfo[]
+    ) {
+        if (!reviewers.length) {
+            return;
+        }
+
+        await approvalEmailService.sendReviewRequestsToAll(reviewers, approval.createdBy, {
+            title: approval.title,
+            eventName: approval.event.name,
+            description: approval.description || undefined,
+            deadline: approval.deadline,
+            revisionNumber: approval.latestRevisionNumber,
+        });
+    }
+
     private async notifyReviewersOfRevision(approval: ApprovalDetailRecord, revisionNumber: number, summary?: string) {
         await approvalEmailService.sendRevisionNotification(
             approval.reviewers.map((reviewer) => ({
@@ -811,6 +828,56 @@ class ApprovalService {
         if (!updated) {
             throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated approval');
         }
+
+        return await this.serializeApproval(updated, { email: user.email });
+    }
+
+    async addReviewers(approvalId: string, userId: string, reviewers: ReviewerInput[]) {
+        const user = await this.getUserContext(userId);
+        const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+
+        if (!approval) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Approval request not found');
+        }
+
+        const existingEmails = new Set(approval.reviewers.map((reviewer) => reviewer.email.toLowerCase()));
+        const newReviewerInputs = reviewers.filter((reviewer) => {
+            const normalizedEmail = reviewer.email.trim().toLowerCase();
+            return normalizedEmail && !existingEmails.has(normalizedEmail);
+        });
+
+        if (!newReviewerInputs.length) {
+            throw new ApiError(StatusCodes.BAD_REQUEST, 'All provided reviewers are already assigned');
+        }
+
+        const resolvedReviewers = await this.resolveReviewers(user.organizationId, newReviewerInputs, approval.deadline);
+
+        await prisma.approvalRequest.update({
+            where: { id: approvalId },
+            data: {
+                reviewers: {
+                    create: resolvedReviewers,
+                },
+            },
+        });
+
+        await this.recalculateApprovalStatus(approvalId);
+
+        const updated = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+        if (!updated) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated approval');
+        }
+
+        this.notifyReviewerSubsetOfSubmission(
+            approval,
+            resolvedReviewers.map((reviewer) => ({
+                email: reviewer.email,
+                name: reviewer.name,
+                token: reviewer.token,
+            }))
+        ).catch((error) => {
+            logger.error(`Failed to send new reviewer emails: ${(error as Error).message}`);
+        });
 
         return await this.serializeApproval(updated, { email: user.email });
     }

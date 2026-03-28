@@ -17,6 +17,7 @@ router.post('/', authenticate, approvalCreateUploadMiddleware, ApprovalControlle
 router.get('/', authenticate, validate(listApprovalsQuerySchema), ApprovalController.list);
 router.get('/:id', authenticate, validate(approvalIdParamsSchema), ApprovalController.getById);
 router.patch('/:id', authenticate, validate(approvalIdParamsSchema), ApprovalController.updateMetadata);
+router.post('/:id/reviewers', authenticate, validate(approvalIdParamsSchema), ApprovalController.addReviewers);
 router.post(
     '/:id/revisions',
     authenticate,

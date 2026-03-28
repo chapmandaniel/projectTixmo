@@ -6,6 +6,7 @@ import { ZodError } from 'zod';
 import { AuthRequest } from '../../middleware/auth';
 import { ApiError } from '../../utils/ApiError';
 import {
+    addApprovalReviewersBodySchema,
     approvalCommentBodySchema,
     approvalDecisionBodySchema,
     approvalMetadataUpdateSchema,
@@ -145,6 +146,22 @@ export const ApprovalController = {
             });
 
             return res.json(approval);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
+    async addReviewers(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user?.userId;
+            if (!userId) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+            }
+
+            const body = parseSchema(addApprovalReviewersBodySchema, req.body);
+            const approval = await approvalService.addReviewers(req.params.id, userId, body.reviewers);
+
+            return res.status(StatusCodes.CREATED).json(approval);
         } catch (error) {
             return next(error);
         }

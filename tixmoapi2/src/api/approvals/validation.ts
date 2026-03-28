@@ -44,6 +44,13 @@ export const createApprovalBodySchema = z.object({
     ),
 });
 
+export const addApprovalReviewersBodySchema = z.object({
+    reviewers: z.preprocess(
+        parseReviewers,
+        z.array(reviewerSchema).min(1, 'At least one reviewer is required')
+    ),
+});
+
 export const createRevisionBodySchema = z.object({
     summary: z.string().trim().max(4000).optional(),
 });
