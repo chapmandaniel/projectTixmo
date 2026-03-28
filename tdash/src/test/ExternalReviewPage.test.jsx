@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ExternalReviewPage from '../pages/ExternalReviewPage';
 
 vi.mock('../lib/runtimeConfig', () => ({
@@ -172,5 +172,61 @@ describe('ExternalReviewPage', () => {
 
         expect(await screen.findByText('Please adjust the headline lockup.')).toBeInTheDocument();
         expect(screen.getByLabelText('Changes requested note')).toBeInTheDocument();
+    });
+
+    it('keeps the current review visible while a background refresh is in flight', async () => {
+        let resolveRefresh;
+
+        fetchMock
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => baseReview,
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ id: 'comment-2' }),
+            })
+            .mockImplementationOnce(
+                () =>
+                    new Promise((resolve) => {
+                        resolveRefresh = resolve;
+                    })
+            );
+
+        render(<ExternalReviewPage />);
+
+        expect(await screen.findByText('Creative Briefing')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByPlaceholderText('Add a comment'), {
+            target: { value: 'Need one more logo adjustment.' },
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Send comment' }));
+
+        await waitFor(() =>
+            expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/review/token-123/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: 'Need one more logo adjustment.',
+                    revisionId: 'revision-1',
+                }),
+            })
+        );
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/review/token-123'));
+
+        expect(screen.getByText('Creative Briefing')).toBeInTheDocument();
+        expect(screen.queryByText('Loading review workspace...')).not.toBeInTheDocument();
+        expect(screen.getByText('Refreshing')).toBeInTheDocument();
+
+        await act(async () => {
+            resolveRefresh({
+                ok: true,
+                json: async () => baseReview,
+            });
+        });
+
+        await waitFor(() => expect(screen.queryByText('Refreshing')).not.toBeInTheDocument());
     });
 });

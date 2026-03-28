@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
     AlertTriangle,
     CheckCircle2,
-    ChevronRight,
     Download,
     FileText,
+    Search,
     Send,
     XCircle,
 } from 'lucide-react';
@@ -155,12 +155,19 @@ const ExternalReviewPage = () => {
     const [pendingDecision, setPendingDecision] = useState(null);
     const [decisionReason, setDecisionReason] = useState('');
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
     const loadReview = async () => {
+        const shouldShowLoading = !approval;
+
         try {
-            setLoading(true);
+            if (shouldShowLoading) {
+                setLoading(true);
+            } else {
+                setRefreshing(true);
+            }
             setError('');
             const response = await reviewApi.getReview(token);
             setApproval(response.approval);
@@ -169,7 +176,11 @@ const ExternalReviewPage = () => {
         } catch (requestError) {
             setError(requestError.message);
         } finally {
-            setLoading(false);
+            if (shouldShowLoading) {
+                setLoading(false);
+            } else {
+                setRefreshing(false);
+            }
         }
     };
 
@@ -360,16 +371,18 @@ const ExternalReviewPage = () => {
                         <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                     </div>
                     <div className="relative">
-                        <h1 className="flex flex-wrap items-center gap-3 text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
-                            <span>Review Portal</span>
-                            <ChevronRight className="h-6 w-6 text-sky-300" />
-                            <span className="text-[#d7d9e4]">{approval.title}</span>
-                        </h1>
-                        {approval.description && (
-                            <p className="mt-3 text-sm font-light leading-6 text-[#8f94aa]">
-                                {approval.description}
-                            </p>
-                        )}
+                        <div className="flex items-start justify-between gap-3">
+                            <h1 className="flex flex-wrap items-center gap-3 text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
+                                <span>Review Portal</span>
+                                <Search className="h-5 w-5 text-sky-300" />
+                                <span className="text-lg font-medium text-sky-300 sm:text-xl">{approval.title}</span>
+                            </h1>
+                            {refreshing && (
+                                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
+                                    Refreshing
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </section>
 
@@ -437,8 +450,10 @@ const ExternalReviewPage = () => {
                                 <div className="border-t border-[#2b2b40] px-4 py-4">
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="min-w-0">
-                                            <p className="truncate text-sm font-light text-gray-100">{selectedAsset.originalName}</p>
-                                            <p className="mt-1 text-xs font-light text-[#8f94aa]">{selectedAsset.mimeType || 'Unknown file type'}</p>
+                                            <p className="truncate text-base font-medium text-gray-100">{approval.title}</p>
+                                            <p className="mt-1 text-sm font-light leading-6 text-[#8f94aa]">
+                                                {approval.description || 'Review the latest supplied asset and respond from this secure portal.'}
+                                            </p>
                                         </div>
                                         <a
                                             href={selectedAsset.s3Url}

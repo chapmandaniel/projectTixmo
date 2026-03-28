@@ -156,6 +156,40 @@ describe('ApprovalDetailView', () => {
         );
     });
 
+    it('keeps the current view mounted during a background approval refresh', async () => {
+        let resolveFetch;
+        apiGet.mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    resolveFetch = resolve;
+                })
+        );
+
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={{ email: 'reviewer@example.com' }}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        await waitFor(() => expect(apiGet).toHaveBeenCalledWith('/approvals/approval-1'));
+
+        expect(screen.getByText('Main stage artwork')).toBeInTheDocument();
+        expect(screen.queryByText('Loading review workspace...')).not.toBeInTheDocument();
+        expect(screen.getByText('Refreshing')).toBeInTheDocument();
+
+        await act(async () => {
+            resolveFetch(approvalFixture);
+        });
+
+        await waitFor(() => expect(screen.queryByText('Refreshing')).not.toBeInTheDocument());
+    });
+
     it('opens a modal and submits a new reviewer email', async () => {
         const updatedApproval = {
             ...approvalFixture,

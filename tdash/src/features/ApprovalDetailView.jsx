@@ -144,12 +144,19 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
     const [reviewerEmail, setReviewerEmail] = useState('');
     const [loading, setLoading] = useState(!initialApproval);
+    const [refreshing, setRefreshing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
     const fetchApproval = async () => {
+        const shouldShowLoading = !approval;
+
         try {
-            setLoading(true);
+            if (shouldShowLoading) {
+                setLoading(true);
+            } else {
+                setRefreshing(true);
+            }
             setError('');
             const response = await api.get(`/approvals/${approvalId}`);
             setApproval(response);
@@ -158,7 +165,11 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message || 'Failed to load approval.');
         } finally {
-            setLoading(false);
+            if (shouldShowLoading) {
+                setLoading(false);
+            } else {
+                setRefreshing(false);
+            }
         }
     };
 
@@ -363,9 +374,16 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                         <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                     </div>
                     <div className="relative">
-                        <h1 className="text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
-                            Review Portal
-                        </h1>
+                        <div className="flex items-center justify-between gap-3">
+                            <h1 className="text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
+                                Review Portal
+                            </h1>
+                            {refreshing && (
+                                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
+                                    Refreshing
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </section>
 
