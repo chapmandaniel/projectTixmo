@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+    AlertTriangle,
+    CheckCircle2,
+    ChevronRight,
     Download,
     FileText,
     Send,
@@ -24,6 +27,27 @@ const DECISION_CARD_STYLES = {
     APPROVED: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:border-emerald-300/50 hover:bg-emerald-500/15',
     CHANGES_REQUESTED: 'border-amber-400/30 bg-amber-500/10 text-amber-100 hover:border-amber-300/50 hover:bg-amber-500/15',
     DECLINED: 'border-rose-400/30 bg-rose-500/10 text-rose-100 hover:border-rose-300/50 hover:bg-rose-500/15',
+};
+
+const DECISION_NOTE_META = {
+    APPROVED: {
+        icon: CheckCircle2,
+        label: 'Approved note',
+        badge: 'bg-emerald-500/12 text-emerald-200 border border-emerald-400/20',
+        iconWrap: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
+    },
+    CHANGES_REQUESTED: {
+        icon: AlertTriangle,
+        label: 'Changes requested note',
+        badge: 'bg-amber-500/12 text-amber-200 border border-amber-400/20',
+        iconWrap: 'border-amber-400/20 bg-amber-500/10 text-amber-100',
+    },
+    DECLINED: {
+        icon: XCircle,
+        label: 'Declined note',
+        badge: 'bg-rose-500/12 text-rose-200 border border-rose-400/20',
+        iconWrap: 'border-rose-400/20 bg-rose-500/10 text-rose-100',
+    },
 };
 
 const panelClass = 'rounded-md border border-[#2b2b40] bg-[#1e1e2d]';
@@ -109,21 +133,14 @@ const personLabel = (person) => {
     return name || person.name || person.email || 'Unknown';
 };
 
-const DecisionActionCard = ({ option, saving, onClick }) => (
+const DecisionActionButton = ({ option, saving, onClick }) => (
     <button
         type="button"
         disabled={saving}
         onClick={onClick}
-        className={`rounded-md border px-4 py-3 text-left text-sm font-light transition disabled:cursor-not-allowed disabled:opacity-60 ${DECISION_CARD_STYLES[option.value] || 'border-white/10 bg-white/5 text-slate-200 hover:border-sky-300/40 hover:text-white'}`}
+        className={`flex-1 rounded-md border px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${DECISION_CARD_STYLES[option.value] || 'border-white/10 bg-white/5 text-slate-200 hover:border-sky-300/40 hover:text-white'}`}
     >
-        <span className="block font-medium text-inherit">{option.label}</span>
-        <span className="mt-1 block text-xs text-inherit/80">
-            {option.value === 'APPROVED'
-                ? 'Confirm the latest version is ready to ship.'
-                : option.value === 'CHANGES_REQUESTED'
-                    ? 'Send the work back for another iteration.'
-                    : 'Reject the submission in its current state.'}
-        </span>
+        {option.label}
     </button>
 );
 
@@ -135,7 +152,8 @@ const ExternalReviewPage = () => {
     const [assetIndex, setAssetIndex] = useState(0);
     const [isImageExpanded, setIsImageExpanded] = useState(false);
     const [comment, setComment] = useState('');
-    const [decisionNote, setDecisionNote] = useState('');
+    const [pendingDecision, setPendingDecision] = useState(null);
+    const [decisionReason, setDecisionReason] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -172,15 +190,47 @@ const ExternalReviewPage = () => {
     }, [approval, selectedRevisionId]);
 
     const comments = approval?.comments || [];
-    const sortedComments = useMemo(
-        () =>
-            [...comments].sort((left, right) => {
-                const leftTime = new Date(left.createdAt || 0).getTime();
-                const rightTime = new Date(right.createdAt || 0).getTime();
-                return rightTime - leftTime;
-            }),
-        [comments]
-    );
+    const latestRevisionDecisions =
+        approval?.latestRevision?.decisions ||
+        approval?.revisions?.[0]?.decisions ||
+        [];
+
+    const discussionItems = useMemo(() => {
+        const commentItems = comments.map((item) => ({
+            id: `comment-${item.id}`,
+            type: 'comment',
+            createdAt: item.createdAt,
+            author: item.author,
+            content: item.content,
+        }));
+
+        const decisionItems = latestRevisionDecisions
+            .filter((decision) => decision.note?.trim())
+            .map((decision) => ({
+                id: `decision-${decision.id}`,
+                type: 'decision',
+                createdAt: decision.createdAt,
+                author: decision.reviewer
+                    ? {
+                        name: decision.reviewer.name || decision.reviewer.email,
+                        email: decision.reviewer.email,
+                    }
+                    : reviewer
+                        ? {
+                            name: reviewer.name || reviewer.email,
+                            email: reviewer.email,
+                        }
+                        : null,
+                content: decision.note.trim(),
+                decision: decision.decision,
+            }));
+
+        return [...commentItems, ...decisionItems].sort((left, right) => {
+            const leftTime = new Date(left.createdAt || 0).getTime();
+            const rightTime = new Date(right.createdAt || 0).getTime();
+            return rightTime - leftTime;
+        });
+    }, [comments, latestRevisionDecisions, reviewer]);
 
     useEffect(() => {
         setAssetIndex(0);
@@ -202,29 +252,57 @@ const ExternalReviewPage = () => {
     }, [isImageExpanded]);
 
     const selectedAsset = selectedRevision?.assets?.[assetIndex] || null;
-    const statusMeta = APPROVAL_STATUS_META[approval?.status] || APPROVAL_STATUS_META.PENDING_REVIEW;
-    const StatusIcon = statusMeta.icon;
     const requesterName = personLabel(approval?.createdBy);
+    const statusMeta = APPROVAL_STATUS_META[approval?.status] || APPROVAL_STATUS_META.PENDING_REVIEW;
+    const commentRevisionId = approval?.latestRevision?.id || selectedRevision?.id || null;
     const currentDecision = approval?.myReview?.decision
         ? `Current decision: ${approval.myReview.decision.replaceAll('_', ' ')}`
         : 'You have not responded yet.';
-    const commentRevisionId = approval?.latestRevision?.id || selectedRevision?.id || null;
 
-    const submitDecision = async (decision) => {
+    const closeDecisionModal = () => {
+        setPendingDecision(null);
+        setDecisionReason('');
+    };
+
+    const submitDecision = async (decision, note) => {
         try {
             setSaving(true);
             setError('');
             await reviewApi.submitDecision(token, {
                 decision,
-                note: decisionNote || undefined,
+                note: note || undefined,
                 revisionId: approval.latestRevision?.id,
             });
-            setDecisionNote('');
             await loadReview();
         } catch (requestError) {
             setError(requestError.message);
+            throw requestError;
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDecisionAction = async (decision) => {
+        if (decision === 'APPROVED') {
+            await submitDecision(decision);
+            return;
+        }
+
+        setPendingDecision(decision);
+        setDecisionReason('');
+    };
+
+    const submitDecisionReason = async (event) => {
+        event.preventDefault();
+        if (!pendingDecision || !decisionReason.trim()) {
+            return;
+        }
+
+        try {
+            await submitDecision(pendingDecision, decisionReason.trim());
+            closeDecisionModal();
+        } catch {
+            // submitDecision already surfaces the error banner
         }
     };
 
@@ -282,9 +360,16 @@ const ExternalReviewPage = () => {
                         <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                     </div>
                     <div className="relative">
-                        <h1 className="text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
-                            Review Portal
+                        <h1 className="flex flex-wrap items-center gap-3 text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
+                            <span>Review Portal</span>
+                            <ChevronRight className="h-6 w-6 text-sky-300" />
+                            <span className="text-[#d7d9e4]">{approval.title}</span>
                         </h1>
+                        {approval.description && (
+                            <p className="mt-3 text-sm font-light leading-6 text-[#8f94aa]">
+                                {approval.description}
+                            </p>
+                        )}
                     </div>
                 </section>
 
@@ -294,7 +379,7 @@ const ExternalReviewPage = () => {
                     </div>
                 )}
 
-                <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)]">
+                <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)]">
                     <section className={`${panelClass} p-4 sm:p-5`}>
                         <div className={`${surfaceClass} relative overflow-hidden`}>
                             <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-2rem)] gap-2 overflow-x-auto rounded-md border border-white/10 bg-[#0f1020]/90 px-2 py-2 shadow-lg shadow-black/20 backdrop-blur">
@@ -403,101 +488,92 @@ const ExternalReviewPage = () => {
                                     </div>
                                 </div>
                             )}
+
+                            <div className="border-t border-[#2b2b40] p-4">
+                                <div className="rounded-md border border-white/10 bg-white/5 px-4 py-3 text-xs font-light leading-6 text-[#a1a5b7]">
+                                    <span className="text-gray-100">{approval.event?.name || 'Unassigned event'}</span>
+                                    <span className="mx-2 text-[#5e6278]">/</span>
+                                    <span className="text-gray-100">{requesterName}</span>
+                                    <span className="mx-2 text-[#5e6278]">/</span>
+                                    <span>Due <span className="text-gray-100">{formatApprovalDate(approval.deadline)}</span></span>
+                                    <span className="mx-2 text-[#5e6278]">/</span>
+                                    <span>Link expires <span className="text-gray-100">{formatApprovalDate(reviewer?.tokenExpiresAt)}</span></span>
+                                    <span className="mx-2 text-[#5e6278]">/</span>
+                                    <span>Status <span className="text-gray-100">{statusMeta.label}</span></span>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
                     <aside className="space-y-4">
-                        <section className={`${panelClass} p-4`}>
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                    <h2 className="truncate text-lg font-light text-gray-100">{approval.title}</h2>
-                                    {approval.description && (
-                                        <p className="mt-1 text-sm font-light leading-5 text-[#8f94aa]">
-                                            {approval.description}
-                                        </p>
-                                    )}
-                                </div>
-                                <span className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-xs ${statusMeta.chip}`}>
-                                    <StatusIcon className="h-3.5 w-3.5" />
-                                    {statusMeta.label}
-                                </span>
-                            </div>
-
-                            <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-light text-[#a1a5b7]">
-                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
-                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Event</span>
-                                    <span className="mt-1 block text-sm text-gray-100">{approval.event?.name || 'Unassigned'}</span>
-                                </div>
-                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
-                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Requested by</span>
-                                    <span className="mt-1 block text-sm text-gray-100">{requesterName}</span>
-                                </div>
-                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
-                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Due</span>
-                                    <span className="mt-1 block text-sm text-gray-100">{formatApprovalDate(approval.deadline)}</span>
-                                </div>
-                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
-                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Link expires</span>
-                                    <span className="mt-1 block text-sm text-gray-100">{formatApprovalDate(reviewer?.tokenExpiresAt)}</span>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className={`${panelClass} p-5`}>
-                            <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Decision controls</p>
-                            <p className="mt-2 text-sm font-light text-[#a1a5b7]">{currentDecision}</p>
-                            <textarea
-                                rows={3}
-                                value={decisionNote}
-                                onChange={(e) => setDecisionNote(e.target.value)}
-                                placeholder="Optional decision note"
-                                className={`${inputClass} mt-4`}
-                            />
-                            <div className="mt-4 grid gap-2">
+                        <div className="px-1 pt-1">
+                            <p className="text-sm font-light text-[#a1a5b7]">{currentDecision}</p>
+                            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                                 {DECISION_OPTIONS.map((option) => (
-                                    <DecisionActionCard
+                                    <DecisionActionButton
                                         key={option.value}
                                         option={option}
                                         saving={saving}
-                                        onClick={() => submitDecision(option.value)}
+                                        onClick={() => handleDecisionAction(option.value)}
                                     />
                                 ))}
                             </div>
-                        </section>
+                        </div>
 
                         <section className={`${panelClass} p-4`}>
                             <div className="flex items-center justify-between gap-4 px-1 pb-3">
                                 <h2 className="text-lg font-light text-gray-100">Discussion</h2>
                                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
-                                    {sortedComments.length}
+                                    {discussionItems.length}
                                 </span>
                             </div>
 
                             <div className="space-y-3">
-                                {sortedComments.map((item, index) => (
-                                    <div
-                                        key={item.id}
-                                        data-testid="external-comment-card"
-                                        className={`relative rounded-lg px-1 pb-3 ${index !== sortedComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
-                                    >
-                                        <div className="flex flex-wrap items-start justify-between gap-3">
-                                            <div className="flex items-start gap-3">
-                                                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-500/10 text-[11px] uppercase tracking-[0.18em] text-sky-100">
-                                                    {initialsLabel(item.author)}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <span className="text-sm font-light text-gray-100">{authorLabel(item.author)}</span>
-                                                    <p className="mt-2 text-sm leading-6 font-light text-[#d7d9e4]">{item.content}</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-[11px] font-light uppercase tracking-[0.16em] text-[#5e6278]">
-                                                {formatApprovalDate(item.createdAt)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+                                {discussionItems.map((item, index) => {
+                                    const decisionMeta =
+                                        item.type === 'decision'
+                                            ? DECISION_NOTE_META[item.decision]
+                                            : null;
+                                    const DecisionIcon = decisionMeta?.icon || null;
 
-                                {sortedComments.length === 0 && (
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            data-testid="external-discussion-item"
+                                            className={`relative rounded-lg px-1 pb-3 ${index !== discussionItems.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
+                                        >
+                                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                                <div className="flex items-start gap-3">
+                                                    {item.type === 'decision' && DecisionIcon ? (
+                                                        <div className={`flex h-9 w-9 items-center justify-center rounded-full border ${decisionMeta.iconWrap}`}>
+                                                            <DecisionIcon className="h-4 w-4" aria-label={decisionMeta.label} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-500/10 text-[11px] uppercase tracking-[0.18em] text-sky-100">
+                                                            {initialsLabel(item.author)}
+                                                        </div>
+                                                    )}
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span className="text-sm font-light text-gray-100">{authorLabel(item.author)}</span>
+                                                            {item.type === 'decision' && decisionMeta && (
+                                                                <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] ${decisionMeta.badge}`}>
+                                                                    {item.decision.replaceAll('_', ' ')}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="mt-2 text-sm leading-6 font-light text-[#d7d9e4]">{item.content}</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[11px] font-light uppercase tracking-[0.16em] text-[#5e6278]">
+                                                    {formatApprovalDate(item.createdAt)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+
+                                {discussionItems.length === 0 && (
                                     <div className="rounded-lg border border-dashed border-[#2b2b40] px-4 py-8 text-center text-sm font-light text-[#8f94aa]">
                                         No comments yet.
                                     </div>
@@ -525,6 +601,67 @@ const ExternalReviewPage = () => {
                     </aside>
                 </section>
             </div>
+
+            {pendingDecision && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`${pendingDecision === 'CHANGES_REQUESTED' ? 'Request changes' : 'Decline'} note`}
+                    onClick={closeDecisionModal}
+                >
+                    <div
+                        className={`${panelClass} w-full max-w-lg p-6 shadow-2xl shadow-black/30`}
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-light text-gray-100">
+                                    {pendingDecision === 'CHANGES_REQUESTED' ? 'Request changes' : 'Decline submission'}
+                                </h2>
+                                <p className="mt-1 text-sm font-light text-[#8f94aa]">
+                                    Add context so the requester sees it in the discussion thread.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeDecisionModal}
+                                className="rounded-full border border-white/10 bg-white/5 p-2 text-[#8f94aa] transition hover:text-white"
+                                aria-label="Close decision note modal"
+                            >
+                                <XCircle className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={submitDecisionReason} className="mt-5 space-y-4">
+                            <textarea
+                                rows={5}
+                                value={decisionReason}
+                                onChange={(event) => setDecisionReason(event.target.value)}
+                                placeholder={pendingDecision === 'CHANGES_REQUESTED' ? 'Explain what needs to change' : 'Explain why you are declining this submission'}
+                                className={inputClass}
+                            />
+
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={closeDecisionModal}
+                                    className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-sm font-light text-[#a1a5b7] transition hover:text-white"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={saving || !decisionReason.trim()}
+                                    className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    Submit note
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {isImageExpanded && selectedAsset?.mimeType?.startsWith('image/') && (
                 <div

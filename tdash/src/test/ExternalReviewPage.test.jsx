@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ExternalReviewPage from '../pages/ExternalReviewPage';
 
 vi.mock('../lib/runtimeConfig', () => ({
@@ -8,6 +8,56 @@ vi.mock('../lib/runtimeConfig', () => ({
 
 describe('ExternalReviewPage', () => {
     const fetchMock = vi.fn();
+    const baseReview = {
+        reviewer: {
+            id: 'reviewer-1',
+            email: 'reviewer@example.com',
+            name: 'External Reviewer',
+            tokenExpiresAt: '2026-04-15T10:00:00.000Z',
+        },
+        approval: {
+            id: 'approval-1',
+            title: 'Creative Briefing',
+            description: 'Review the hero artwork and launch copy.',
+            status: 'PENDING_REVIEW',
+            deadline: '2026-04-10T18:00:00.000Z',
+            event: { name: 'Summer Jam' },
+            createdBy: {
+                firstName: 'Nina',
+                lastName: 'Lopez',
+                email: 'nina@example.com',
+            },
+            revisions: [
+                {
+                    id: 'revision-1',
+                    revisionNumber: 1,
+                    summary: 'Initial submission',
+                    createdAt: '2026-04-01T12:00:00.000Z',
+                    assets: [],
+                    decisions: [],
+                },
+            ],
+            latestRevision: {
+                id: 'revision-1',
+                revisionNumber: 1,
+                summary: 'Initial submission',
+                createdAt: '2026-04-01T12:00:00.000Z',
+                assets: [],
+                decisions: [],
+            },
+            comments: [
+                {
+                    id: 'comment-1',
+                    content: 'Please confirm the final headline.',
+                    createdAt: '2026-04-02T09:00:00.000Z',
+                    author: {
+                        name: 'Nina Lopez',
+                    },
+                },
+            ],
+            myReview: null,
+        },
+    };
 
     beforeEach(() => {
         fetchMock.mockReset();
@@ -23,66 +73,104 @@ describe('ExternalReviewPage', () => {
     it('renders the simplified external review workspace shell', async () => {
         fetchMock.mockResolvedValue({
             ok: true,
-            json: async () => ({
-                reviewer: {
-                    id: 'reviewer-1',
-                    email: 'reviewer@example.com',
-                    name: 'External Reviewer',
-                    tokenExpiresAt: '2026-04-15T10:00:00.000Z',
-                },
-                approval: {
-                    id: 'approval-1',
-                    title: 'Creative Briefing',
-                    description: 'Review the hero artwork and launch copy.',
-                    status: 'PENDING_REVIEW',
-                    deadline: '2026-04-10T18:00:00.000Z',
-                    event: { name: 'Summer Jam' },
-                    createdBy: {
-                        firstName: 'Nina',
-                        lastName: 'Lopez',
-                        email: 'nina@example.com',
-                    },
-                    revisions: [
-                        {
-                            id: 'revision-1',
-                            revisionNumber: 1,
-                            summary: 'Initial submission',
-                            createdAt: '2026-04-01T12:00:00.000Z',
-                            assets: [],
-                        },
-                    ],
-                    latestRevision: {
-                        id: 'revision-1',
-                        revisionNumber: 1,
-                        summary: 'Initial submission',
-                        createdAt: '2026-04-01T12:00:00.000Z',
-                        assets: [],
-                    },
-                    comments: [
-                        {
-                            id: 'comment-1',
-                            content: 'Please confirm the final headline.',
-                            createdAt: '2026-04-02T09:00:00.000Z',
-                            author: {
-                                name: 'Nina Lopez',
-                            },
-                        },
-                    ],
-                    myReview: null,
-                },
-            }),
+            json: async () => baseReview,
         });
 
         render(<ExternalReviewPage />);
 
         expect(await screen.findByText('Review Portal')).toBeInTheDocument();
         expect(screen.getByText('Creative Briefing')).toBeInTheDocument();
-        expect(screen.getByText('Decision controls')).toBeInTheDocument();
         expect(screen.getByText('Discussion')).toBeInTheDocument();
         expect(screen.queryByText('External Reviewer')).not.toBeInTheDocument();
-        expect(screen.queryByText('Secure External Review')).not.toBeInTheDocument();
-        expect(screen.queryByText('Version history')).not.toBeInTheDocument();
         expect(screen.getByText('v1')).toBeInTheDocument();
+        expect(screen.getByText('Link expires')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
         expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/review/token-123');
+    });
+
+    it('opens a note modal for request changes and adds the note to discussion after submit', async () => {
+        fetchMock
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => baseReview,
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ id: 'decision-1' }),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    ...baseReview,
+                    approval: {
+                        ...baseReview.approval,
+                        status: 'CHANGES_REQUESTED',
+                        latestRevision: {
+                            ...baseReview.approval.latestRevision,
+                            decisions: [
+                                {
+                                    id: 'decision-1',
+                                    decision: 'CHANGES_REQUESTED',
+                                    note: 'Please adjust the headline lockup.',
+                                    createdAt: '2026-04-02T10:00:00.000Z',
+                                    reviewer: {
+                                        email: 'reviewer@example.com',
+                                        name: 'External Reviewer',
+                                    },
+                                },
+                            ],
+                        },
+                        revisions: [
+                            {
+                                ...baseReview.approval.revisions[0],
+                                decisions: [
+                                    {
+                                        id: 'decision-1',
+                                        decision: 'CHANGES_REQUESTED',
+                                        note: 'Please adjust the headline lockup.',
+                                        createdAt: '2026-04-02T10:00:00.000Z',
+                                        reviewer: {
+                                            email: 'reviewer@example.com',
+                                            name: 'External Reviewer',
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
+                        myReview: {
+                            decision: 'CHANGES_REQUESTED',
+                        },
+                    },
+                }),
+            });
+
+        render(<ExternalReviewPage />);
+
+        expect(await screen.findByText('Creative Briefing')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Request Changes' }));
+
+        expect(screen.getByRole('dialog', { name: 'Request changes note' })).toBeInTheDocument();
+
+        fireEvent.change(screen.getByPlaceholderText('Explain what needs to change'), {
+            target: { value: 'Please adjust the headline lockup.' },
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Submit note' }));
+
+        await waitFor(() =>
+            expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/review/token-123/decisions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    decision: 'CHANGES_REQUESTED',
+                    note: 'Please adjust the headline lockup.',
+                    revisionId: 'revision-1',
+                }),
+            })
+        );
+
+        expect(await screen.findByText('Please adjust the headline lockup.')).toBeInTheDocument();
+        expect(screen.getByLabelText('Changes requested note')).toBeInTheDocument();
     });
 });
