@@ -1060,25 +1060,16 @@ const QuantMoView = ({ isDark }) => {
             </section>
 
             {!activeTool ? (
-                <section className="space-y-4">
-                    <div>
-                        <h3 className={`text-2xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Tools</h3>
-                        <p className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                            Choose the QuantMo function you want to use.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {toolCards.map((tool) => (
-                            <ToolCard
-                                key={tool.id}
-                                tool={tool}
-                                isDark={isDark}
-                                isActive={false}
-                                onClick={() => openTool(tool.id)}
-                            />
-                        ))}
-                    </div>
+                <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    {toolCards.map((tool) => (
+                        <ToolCard
+                            key={tool.id}
+                            tool={tool}
+                            isDark={isDark}
+                            isActive={false}
+                            onClick={() => openTool(tool.id)}
+                        />
+                    ))}
                 </section>
             ) : (
                 <section className="space-y-4">

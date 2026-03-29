@@ -343,17 +343,23 @@ const ToolCard = ({ item, onClick }) => (
     <button
         type="button"
         onClick={onClick}
-        className="relative overflow-hidden rounded-md border border-white/10 bg-[#0d1520] p-6 text-left transition-all duration-300 hover:border-white/20 hover:bg-[#111b27] hover:shadow-xl hover:shadow-black/20"
+        className="group relative overflow-hidden rounded-md border border-white/10 bg-[#0d1520] p-6 text-left transition-all duration-300 hover:border-white/20 hover:bg-[#111b27] hover:shadow-xl hover:shadow-black/20"
     >
         <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${item.grad}`} />
-        <div className={`absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br ${item.grad} opacity-10 blur-2xl`} />
+        <div className={`absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br ${item.grad} opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-10`} />
         <div className="relative">
-            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-md bg-[#081018]">
-                <item.icon size={20} className={item.color} />
+            <div className="mb-6 flex items-center justify-between gap-4 transition-transform duration-300 group-hover:translate-x-1">
+                <item.icon size={24} className={item.color} />
+                <span className="rounded-full border border-white/10 bg-[#081018] px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                    {item.helper}
+                </span>
             </div>
             <h3 className="text-lg font-light tracking-tight text-white">{item.label}</h3>
             <p className="mt-2 text-sm leading-relaxed text-slate-400">{item.description}</p>
-            <p className="mt-4 text-xs uppercase tracking-[0.2em] text-slate-500">{item.helper}</p>
+            <div className="mt-6 inline-flex items-center gap-2 text-sm text-slate-200">
+                Open
+                <ArrowRight size={16} />
+            </div>
         </div>
     </button>
 );
@@ -362,15 +368,15 @@ const ScenarioCard = ({ item, onClick }) => (
     <button
         type="button"
         onClick={onClick}
-        className="relative overflow-hidden rounded-md border border-white/10 bg-[#0d1520] p-5 text-left transition-all duration-300 hover:border-white/20 hover:bg-[#111b27]"
+        className="group relative overflow-hidden rounded-md border border-white/10 bg-[#0d1520] p-5 text-left transition-all duration-300 hover:border-white/20 hover:bg-[#111b27]"
     >
         <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${item.grad}`} />
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-3 transition-transform duration-300 group-hover:translate-x-1">
             <div>
-                <h3 className="text-base font-medium text-white">{item.label}</h3>
+                <h3 className="text-base font-light tracking-tight text-white">{item.label}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-400">{item.description}</p>
             </div>
-            <item.icon size={18} className="text-slate-300" />
+            <item.icon size={18} className="text-slate-300 shrink-0" />
         </div>
     </button>
 );
@@ -597,105 +603,93 @@ const CreativeComposer = ({ isDark }) => {
             </section>
 
             {!activeTool ? (
-                <div className="space-y-8">
-                    <section className="space-y-4">
-                        <div>
-                            <h2 className="text-2xl font-light tracking-tight text-white">Core tools</h2>
-                            <p className="mt-1 text-sm text-slate-400">Pick the workspace you want to open.</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.16fr)_minmax(320px,0.84fr)]">
+                    <div className="space-y-6">
+                        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                             {toolCards.map((item) => (
                                 <ToolCard key={item.id} item={item} onClick={() => setActiveTool(item.id)} />
                             ))}
-                        </div>
-                    </section>
+                        </section>
 
-                    <section className="space-y-4">
-                        <div>
-                            <h2 className="text-2xl font-light tracking-tight text-white">Creative scenarios</h2>
-                            <p className="mt-1 text-sm text-slate-400">Open ProMo already framed for the job at hand.</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                            {scenarioCards.map((item) => (
-                                <ScenarioCard key={item.id} item={item} onClick={() => applyScenario(item)} />
-                            ))}
-                        </div>
-                    </section>
-
-                    <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_0.85fr]">
-                        <div className="rounded-md border border-white/10 bg-[#0d1520] p-6">
+                        <section className="rounded-md border border-white/10 bg-[#0d1520] p-6">
                             <div className="flex items-start justify-between gap-4">
                                 <div>
-                                    <div className="text-xs uppercase tracking-[0.22em] text-slate-500">What ProMo covers</div>
-                                    <h2 className="mt-2 text-2xl font-light tracking-tight text-white">Campaign strategy, copy systems, and creative direction</h2>
+                                    <div className="text-xs uppercase tracking-[0.22em] text-slate-500">Creative scenarios</div>
+                                    <h2 className="mt-2 text-2xl font-light tracking-tight text-white">Open ProMo already framed for the job at hand.</h2>
                                     <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
-                                        ProMo is designed to give promoters and marketers a clean path from brand context to execution. Start in Brand HQ, then move into posts or artwork with scenario-aware setups and reusable creative logic.
+                                        Start with a launch, sale, lineup, poster, story, or sponsor prompt and jump straight into a prepared workspace.
                                     </p>
                                 </div>
                                 <ArrowRight size={18} className="text-slate-500" />
                             </div>
 
-                            <div className="mt-6 grid gap-4 md:grid-cols-3">
-                                <div className="rounded-2xl border border-white/10 bg-[#081018] p-4">
-                                    <FileText size={18} className="text-cyan-400" />
-                                    <h3 className="mt-4 text-sm uppercase tracking-[0.18em] text-slate-400">Brand HQ</h3>
-                                    <p className="mt-2 text-sm leading-6 text-slate-300">Stores tone, visual cues, CTA style, handles, hashtags, and creative guardrails.</p>
+                            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                {scenarioCards.map((item) => (
+                                    <ScenarioCard key={item.id} item={item} onClick={() => applyScenario(item)} />
+                                ))}
+                            </div>
+                        </section>
+                    </div>
+
+                    <aside className="space-y-6">
+                        <div className="rounded-md border border-white/10 bg-[#0d1520] p-5">
+                            <div className="flex items-center gap-2">
+                                <FileText size={16} className="text-fuchsia-400" />
+                                <h3 className="text-lg font-light tracking-tight text-white">Creative system</h3>
+                            </div>
+                            <div className="mt-4 space-y-3">
+                                <div className="rounded-md border border-white/10 bg-[#081018] px-4 py-3 text-sm text-slate-300">
+                                    Brand HQ locks in voice, visual cues, CTA style, hashtags, and guardrails.
                                 </div>
-                                <div className="rounded-2xl border border-white/10 bg-[#081018] p-4">
-                                    <PenSquare size={18} className="text-fuchsia-400" />
-                                    <h3 className="mt-4 text-sm uppercase tracking-[0.18em] text-slate-400">Post Studio</h3>
-                                    <p className="mt-2 text-sm leading-6 text-slate-300">Creates social-ready post sets for launches, lineups, reminders, and conversion pushes.</p>
+                                <div className="rounded-md border border-white/10 bg-[#081018] px-4 py-3 text-sm text-slate-300">
+                                    Post Studio turns campaign goals into platform-ready copy sets.
                                 </div>
-                                <div className="rounded-2xl border border-white/10 bg-[#081018] p-4">
-                                    <Palette size={18} className="text-amber-400" />
-                                    <h3 className="mt-4 text-sm uppercase tracking-[0.18em] text-slate-400">Artwork Studio</h3>
-                                    <p className="mt-2 text-sm leading-6 text-slate-300">Turns campaign needs into concept directions, overlay copy, and designer-ready image prompts.</p>
+                                <div className="rounded-md border border-white/10 bg-[#081018] px-4 py-3 text-sm text-slate-300">
+                                    Artwork Studio produces concept directions, overlays, and design prompts.
                                 </div>
                             </div>
                         </div>
 
-                        <aside className="space-y-6">
-                            <div className="rounded-md border border-white/10 bg-[#0d1520] p-5">
-                                <div className="flex items-center gap-2">
-                                    <Building2 size={16} className="text-cyan-400" />
-                                    <h3 className="text-lg font-light tracking-tight text-white">Brand snapshot</h3>
+                        <div className="rounded-md border border-white/10 bg-[#0d1520] p-5">
+                            <div className="flex items-center gap-2">
+                                <Building2 size={16} className="text-cyan-400" />
+                                <h3 className="text-lg font-light tracking-tight text-white">Brand snapshot</h3>
+                            </div>
+                            <div className="mt-4 space-y-3">
+                                <div className="rounded-md border border-white/10 bg-[#081018] px-4 py-3">
+                                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Brand</div>
+                                    <div className="mt-1 text-sm text-slate-100">{brandProfile.brandName || 'Not set'}</div>
                                 </div>
-                                <div className="mt-4 space-y-3">
-                                    <div className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
-                                        <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Brand</div>
-                                        <div className="mt-1 text-sm text-slate-100">{brandProfile.brandName || 'Not set'}</div>
-                                    </div>
-                                    <div className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
-                                        <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Voice</div>
-                                        <div className="mt-1 text-sm text-slate-300">{brandProfile.voice || 'Not set'}</div>
-                                    </div>
-                                    <div className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
-                                        <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Visual direction</div>
-                                        <div className="mt-1 text-sm text-slate-300">{brandProfile.visualDirection || 'Not set'}</div>
-                                    </div>
+                                <div className="rounded-md border border-white/10 bg-[#081018] px-4 py-3">
+                                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Voice</div>
+                                    <div className="mt-1 text-sm text-slate-300">{brandProfile.voice || 'Not set'}</div>
+                                </div>
+                                <div className="rounded-md border border-white/10 bg-[#081018] px-4 py-3">
+                                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Visual direction</div>
+                                    <div className="mt-1 text-sm text-slate-300">{brandProfile.visualDirection || 'Not set'}</div>
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="rounded-md border border-white/10 bg-[#0d1520] p-5">
-                                <div className="flex items-center gap-2">
-                                    <RefreshCw size={16} className="text-amber-400" />
-                                    <h3 className="text-lg font-light tracking-tight text-white">Recent outputs</h3>
-                                </div>
-                                <div className="mt-4 space-y-3">
-                                    {history.length === 0 ? (
-                                        <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-500">
-                                            No ProMo generations yet.
-                                        </div>
-                                    ) : history.map((item) => (
-                                        <div key={item.id} className="rounded-2xl border border-white/10 bg-[#081018] px-4 py-3">
-                                            <div className="text-sm text-white">{item.title}</div>
-                                            <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">{item.subtitle}</div>
-                                        </div>
-                                    ))}
-                                </div>
+                        <div className="rounded-md border border-white/10 bg-[#0d1520] p-5">
+                            <div className="flex items-center gap-2">
+                                <RefreshCw size={16} className="text-amber-400" />
+                                <h3 className="text-lg font-light tracking-tight text-white">Recent outputs</h3>
                             </div>
-                        </aside>
-                    </section>
+                            <div className="mt-4 space-y-3">
+                                {history.length === 0 ? (
+                                    <div className="rounded-md border border-dashed border-white/10 px-4 py-6 text-sm text-slate-500">
+                                        No ProMo generations yet.
+                                    </div>
+                                ) : history.map((item) => (
+                                    <div key={item.id} className="rounded-md border border-white/10 bg-[#081018] px-4 py-3">
+                                        <div className="text-sm text-white">{item.title}</div>
+                                        <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">{item.subtitle}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </aside>
                 </div>
             ) : (
                 <section className="space-y-4">

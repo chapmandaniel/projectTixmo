@@ -45,12 +45,12 @@ const SocialPostCard = ({ post, onOpen, onRefresh, isBusy, isDark }) => {
     return (
         <article
             onClick={() => onOpen(post.id)}
-            className={`group overflow-hidden rounded-[28px] border cursor-pointer transition-all duration-300 hover:-translate-y-1 ${isDark
-                ? 'bg-[#171b28] border-[#2d3348] hover:border-[#445070] hover:shadow-[0_25px_80px_rgba(0,0,0,0.28)]'
-                : 'bg-white border-[#e8ebf2] hover:border-[#bcc8df] hover:shadow-[0_24px_60px_rgba(15,23,42,0.08)]'
+            className={`group overflow-hidden rounded-md border cursor-pointer transition-all duration-300 hover:-translate-y-1 ${isDark
+                ? 'bg-[#151521] border-[#2b2b40] hover:border-[#445070] hover:shadow-[0_25px_80px_rgba(0,0,0,0.28)]'
+                : 'bg-white border-gray-200 hover:border-[#bcc8df] hover:shadow-[0_24px_60px_rgba(15,23,42,0.08)]'
                 }`}
         >
-            <div className={`h-1.5 w-full bg-gradient-to-r ${platform.accent}`}></div>
+            <div className={`h-[3px] w-full bg-gradient-to-r ${platform.accent}`}></div>
 
             <div className="relative">
                 <img
@@ -64,7 +64,7 @@ const SocialPostCard = ({ post, onOpen, onRefresh, isBusy, isDark }) => {
                         <StatusIcon size={12} />
                         <span>{status.label}</span>
                     </div>
-                    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${isDark ? 'bg-[#111521]/85 text-white' : 'bg-white/90 text-[#0f172a]'}`}>
+                    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${isDark ? 'bg-[#0f1020]/90 text-white' : 'bg-white/90 text-[#0f172a]'}`}>
                         <PlatformIcon size={14} />
                         <span>{platform.label}</span>
                     </div>
@@ -88,7 +88,7 @@ const SocialPostCard = ({ post, onOpen, onRefresh, isBusy, isDark }) => {
                     {post.content.length > 165 ? `${post.content.slice(0, 165)}...` : post.content}
                 </p>
 
-                <div className={`rounded-2xl border p-4 ${isDark ? 'border-[#2a3144] bg-[#111521]' : 'border-[#e8ebf2] bg-[#f8fafc]'}`}>
+                <div className={`rounded-md border p-4 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-gray-50'}`}>
                     <div className="flex items-center justify-between gap-4">
                         <div>
                             <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Sentiment</p>
@@ -107,22 +107,22 @@ const SocialPostCard = ({ post, onOpen, onRefresh, isBusy, isDark }) => {
                 </div>
 
                 <div className="grid grid-cols-4 gap-3 text-center">
-                    <div className={`rounded-2xl px-3 py-3 ${isDark ? 'bg-[#111521]' : 'bg-[#f8fafc]'}`}>
+                    <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
                         <Eye size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
                         <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Views</p>
                         <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.views)}</p>
                     </div>
-                    <div className={`rounded-2xl px-3 py-3 ${isDark ? 'bg-[#111521]' : 'bg-[#f8fafc]'}`}>
+                    <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
                         <MessageSquare size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
                         <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Comments</p>
                         <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.comments)}</p>
                     </div>
-                    <div className={`rounded-2xl px-3 py-3 ${isDark ? 'bg-[#111521]' : 'bg-[#f8fafc]'}`}>
+                    <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
                         <Share2 size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
                         <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Shares</p>
                         <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.shares)}</p>
                     </div>
-                    <div className={`rounded-2xl px-3 py-3 ${isDark ? 'bg-[#111521]' : 'bg-[#f8fafc]'}`}>
+                    <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
                         <Clock3 size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
                         <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Cadence</p>
                         <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{cadenceLabel[post.updateCadence]}</p>
