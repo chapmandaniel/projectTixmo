@@ -10,10 +10,9 @@ import { requestLogger } from './middleware/requestLogger';
 import { swaggerSpec } from './config/swagger';
 import apiRoutes from './api';
 import { initSentry, Sentry } from './config/sentry';
-import rateLimit from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
-import { getRedisClient } from './config/redis';
 import { waitingRoom } from './middleware/waitingRoom';
+import { optionalAuthenticate } from './middleware/auth';
+import { apiReadRateLimiter, apiWriteRateLimiter } from './middleware/rateLimiter';
 
 const app: Application = express();
 
@@ -88,26 +87,8 @@ app.use(compression());
 // Request logging
 app.use(requestLogger);
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: config.rateLimitWindowMs,
-  max: config.rateLimitMax,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => req.method === 'OPTIONS' || req.method === 'HEAD',
-  // Use Redis store
-  store: new RedisStore({
-    prefix: 'rl:global:',
-    // @ts-ignore - Known issue with rate-limit-redis types and redis v4
-    sendCommand: (...args: string[]) => getRedisClient().sendCommand(args),
-  }),
-});
-
 // Apply Waiting Room first (throttle high traffic)
 app.use(waitingRoom);
-
-// Apply Rate Limiter
-app.use(limiter);
 /**
  * @swagger
  * /health:
@@ -167,7 +148,7 @@ app.use(
 );
 
 // API routes
-app.use('/api', apiRoutes);
+app.use('/api', optionalAuthenticate, apiReadRateLimiter, apiWriteRateLimiter, apiRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

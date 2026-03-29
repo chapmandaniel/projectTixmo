@@ -2,6 +2,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const isTest = process.env.NODE_ENV === 'test';
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+const rateLimitWindowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10);
+const legacyRateLimitMax =
+  process.env.RATE_LIMIT_MAX || process.env.RATE_LIMIT_MAX_REQUESTS || undefined;
+
 export const config = {
   // Application
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -66,13 +73,17 @@ export const config = {
   release: process.env.RELEASE || undefined,
 
   // Rate Limiting
-  rateLimitWindowMs: 15 * 60 * 1000,
-  rateLimitMax:
-    process.env.NODE_ENV === 'test'
-      ? 1000
-      : process.env.NODE_ENV === 'development'
-        ? 2000
-        : parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+  rateLimitWindowMs,
+  rateLimitReadMax: isTest
+    ? 1000
+    : isDevelopment
+      ? 4000
+      : parseInt(process.env.RATE_LIMIT_READ_MAX || legacyRateLimitMax || '600', 10),
+  rateLimitWriteMax: isTest
+    ? 1000
+    : isDevelopment
+      ? 2000
+      : parseInt(process.env.RATE_LIMIT_WRITE_MAX || legacyRateLimitMax || '240', 10),
 
   // CORS
   corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'],

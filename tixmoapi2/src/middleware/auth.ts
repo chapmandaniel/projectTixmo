@@ -12,20 +12,28 @@ export interface AuthRequest extends Request {
   } | null;
 }
 
-export const authenticate = (req: AuthRequest, _res: Response, next: NextFunction) => {
-  // treat header as unknown then narrow to avoid assigning `any` to typed variables
+const getAuthorizationHeader = (req: Request): string | undefined => {
   const headerRaw = req.headers['authorization'] as unknown;
-  let headerValue: string | undefined;
 
   if (Array.isArray(headerRaw) && headerRaw.length > 0 && typeof headerRaw[0] === 'string') {
-    headerValue = headerRaw[0];
-  } else if (typeof headerRaw === 'string') {
-    headerValue = headerRaw;
-  } else {
-    headerValue = undefined;
+    return headerRaw[0];
   }
 
-  if (!headerValue || typeof headerValue !== 'string') {
+  if (typeof headerRaw === 'string') {
+    return headerRaw;
+  }
+
+  return undefined;
+};
+
+export const authenticate = (req: AuthRequest, _res: Response, next: NextFunction) => {
+  if (req.user) {
+    return next();
+  }
+
+  const headerValue = getAuthorizationHeader(req);
+
+  if (!headerValue) {
     return next(ApiError.unauthorized('No token provided'));
   }
 
@@ -47,18 +55,13 @@ export const authenticate = (req: AuthRequest, _res: Response, next: NextFunctio
 };
 
 export const optionalAuthenticate = (req: AuthRequest, _res: Response, next: NextFunction) => {
-  const headerRaw = req.headers['authorization'] as unknown;
-  let headerValue: string | undefined;
-
-  if (Array.isArray(headerRaw) && headerRaw.length > 0 && typeof headerRaw[0] === 'string') {
-    headerValue = headerRaw[0];
-  } else if (typeof headerRaw === 'string') {
-    headerValue = headerRaw;
-  } else {
-    headerValue = undefined;
+  if (req.user) {
+    return next();
   }
 
-  if (!headerValue || typeof headerValue !== 'string') {
+  const headerValue = getAuthorizationHeader(req);
+
+  if (!headerValue) {
     return next();
   }
 
