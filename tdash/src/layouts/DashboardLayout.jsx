@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Home, Calendar, Ticket, BarChart3, Bell, Search,
     Users, CheckSquare, Sun, Moon,
@@ -20,6 +20,8 @@ const navItems = [
     { id: 'analytics', icon: BarChart3, label: 'ANALYTICS' },
     { id: 'settings', icon: Settings, label: 'SETTINGS' },
 ];
+
+const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
 
 const TopbarItem = ({ item, activeView, onNavigate, isDark, pendingApprovalsCount }) => {
     const active = activeView === item.id;
@@ -53,9 +55,19 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+    const isFetchingDashboardDataRef = useRef(false);
 
     // Fetch notifications and stats
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = async ({ force = false } = {}) => {
+        if (!force && typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+            return;
+        }
+
+        if (isFetchingDashboardDataRef.current) {
+            return;
+        }
+
+        isFetchingDashboardDataRef.current = true;
         try {
             const notifRes = await api.get('/notifications?limit=10').catch(() => null);
             if (notifRes) {
@@ -82,17 +94,33 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
             }
         } catch (error) {
             console.error('Failed to fetch dashboard data', error);
+        } finally {
+            isFetchingDashboardDataRef.current = false;
         }
     };
 
     useEffect(() => {
-        fetchDashboardData();
-        const interval = setInterval(fetchDashboardData, 30000);
-        return () => clearInterval(interval);
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchDashboardData({ force: true });
+            }
+        };
+
+        fetchDashboardData({ force: true });
+        const interval = setInterval(() => {
+            fetchDashboardData();
+        }, DASHBOARD_POLL_INTERVAL_MS);
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [activeView]);
 
     const toggleNotifications = () => {
-        if (!showNotifications) fetchDashboardData();
+        if (!showNotifications) fetchDashboardData({ force: true });
         setShowNotifications(!showNotifications);
     };
 

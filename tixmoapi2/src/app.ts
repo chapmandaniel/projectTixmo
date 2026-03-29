@@ -94,6 +94,7 @@ const limiter = rateLimit({
   max: config.rateLimitMax,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS' || req.method === 'HEAD',
   // Use Redis store
   store: new RedisStore({
     prefix: 'rl:global:',
