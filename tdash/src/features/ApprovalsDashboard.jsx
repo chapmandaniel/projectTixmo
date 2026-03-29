@@ -373,6 +373,11 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
         syncApprovalIdParam(approval.id);
     };
 
+    const closeApproval = () => {
+        setSelectedApproval(null);
+        syncApprovalIdParam(null);
+    };
+
     const loadDashboardData = async ({ background = false } = {}) => {
         const hasVisibleContent =
             Boolean(initialCacheRef.current) ||
@@ -448,6 +453,12 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
     }, [approvals, events, loading]);
 
     useEffect(() => {
+        if (!deepLinkedApprovalId) {
+            setSelectedApproval(null);
+        }
+    }, [deepLinkedApprovalId]);
+
+    useEffect(() => {
         if (!deepLinkedApprovalId || selectedApproval?.id === deepLinkedApprovalId) {
             return;
         }
@@ -503,8 +514,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                 initialApproval={selectedApproval}
                 user={user}
                 onBack={() => {
-                    setSelectedApproval(null);
-                    syncApprovalIdParam(null);
+                    closeApproval();
                     loadDashboardData({ background: true });
                 }}
                 onUpdated={(approval) => {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import ApprovalsDashboard from '../features/ApprovalsDashboard';
 
 const apiGet = vi.fn();
@@ -15,8 +15,25 @@ vi.mock('../lib/api', () => ({
 }));
 
 vi.mock('../features/ApprovalDetailView', () => ({
-    default: ({ approvalId }) => <div>Detail view for {approvalId}</div>,
+    default: ({ approvalId, onBack }) => (
+        <div>
+            <div>Detail view for {approvalId}</div>
+            <button type="button" onClick={onBack}>
+                Mock back
+            </button>
+        </div>
+    ),
 }));
+
+const NavigateToApprovals = () => {
+    const navigate = useNavigate();
+
+    return (
+        <button type="button" onClick={() => navigate('/approvals')}>
+            Go to approvals root
+        </button>
+    );
+};
 
 describe('ApprovalsDashboard', () => {
     beforeEach(() => {
@@ -258,6 +275,120 @@ describe('ApprovalsDashboard', () => {
 
         await waitFor(() => {
             expect(screen.getByText('Fresh poster')).toBeInTheDocument();
+        });
+    });
+
+    it('returns to the approvals grid from the detail back action', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url.startsWith('/events')) {
+                return Promise.resolve({
+                    events: [{ id: 'event-1', name: 'Summer Jam' }],
+                });
+            }
+
+            if (url === '/approvals/approval-2') {
+                return Promise.resolve({
+                    id: 'approval-2',
+                    title: 'Sponsor lockup',
+                    latestRevision: { id: 'revision-2', assets: [] },
+                    revisions: [{ id: 'revision-2', revisionNumber: 1, assets: [] }],
+                    reviewers: [],
+                    comments: [],
+                });
+            }
+
+            return Promise.resolve({
+                approvals: [
+                    {
+                        id: 'approval-1',
+                        title: 'Main poster',
+                        status: 'PENDING_REVIEW',
+                        latestRevisionNumber: 1,
+                        deadline: '2026-03-12T10:00:00.000Z',
+                        event: { id: 'event-1', name: 'Summer Jam' },
+                        latestRevision: { assets: [] },
+                        reviewers: [],
+                    },
+                ],
+            });
+        });
+
+        render(
+            <MemoryRouter initialEntries={['/approvals?approvalId=approval-2']}>
+                <ApprovalsDashboard user={{ email: 'designer@example.com' }} />
+            </MemoryRouter>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText('Detail view for approval-2')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByText('Mock back'));
+
+        await waitFor(() => {
+            expect(screen.getByText('Main poster')).toBeInTheDocument();
+        });
+    });
+
+    it('clears the selected approval when the route returns to plain approvals', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url.startsWith('/events')) {
+                return Promise.resolve({
+                    events: [{ id: 'event-1', name: 'Summer Jam' }],
+                });
+            }
+
+            if (url === '/approvals/approval-2') {
+                return Promise.resolve({
+                    id: 'approval-2',
+                    title: 'Sponsor lockup',
+                    latestRevision: { id: 'revision-2', assets: [] },
+                    revisions: [{ id: 'revision-2', revisionNumber: 1, assets: [] }],
+                    reviewers: [],
+                    comments: [],
+                });
+            }
+
+            return Promise.resolve({
+                approvals: [
+                    {
+                        id: 'approval-1',
+                        title: 'Main poster',
+                        status: 'PENDING_REVIEW',
+                        latestRevisionNumber: 1,
+                        deadline: '2026-03-12T10:00:00.000Z',
+                        event: { id: 'event-1', name: 'Summer Jam' },
+                        latestRevision: { assets: [] },
+                        reviewers: [],
+                    },
+                ],
+            });
+        });
+
+        render(
+            <MemoryRouter initialEntries={['/approvals?approvalId=approval-2']}>
+                <Routes>
+                    <Route
+                        path="/approvals"
+                        element={(
+                            <>
+                                <NavigateToApprovals />
+                                <ApprovalsDashboard user={{ email: 'designer@example.com' }} />
+                            </>
+                        )}
+                    />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText('Detail view for approval-2')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByText('Go to approvals root'));
+
+        await waitFor(() => {
+            expect(screen.getByText('Main poster')).toBeInTheDocument();
         });
     });
 });
