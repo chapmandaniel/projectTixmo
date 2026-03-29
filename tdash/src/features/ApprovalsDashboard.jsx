@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertTriangle,
     Calendar,
     CheckCircle2,
     Clock3,
     Plus,
+    RefreshCcw,
     X,
     XCircle,
 } from 'lucide-react';
@@ -19,6 +20,51 @@ const emptyForm = {
     deadline: '',
     description: '',
     reviewers: [],
+};
+
+const APPROVALS_DASHBOARD_CACHE_KEY = 'tixmo:approvals-dashboard-cache';
+
+const readApprovalsDashboardCache = () => {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        const raw = window.sessionStorage.getItem(APPROVALS_DASHBOARD_CACHE_KEY);
+        if (!raw) {
+            return null;
+        }
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed?.approvals) || !Array.isArray(parsed?.events)) {
+            return null;
+        }
+
+        return {
+            approvals: parsed.approvals,
+            events: parsed.events,
+        };
+    } catch {
+        return null;
+    }
+};
+
+const writeApprovalsDashboardCache = ({ approvals, events }) => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        window.sessionStorage.setItem(
+            APPROVALS_DASHBOARD_CACHE_KEY,
+            JSON.stringify({
+                approvals,
+                events,
+            })
+        );
+    } catch {
+        // Cache writes are best-effort only.
+    }
 };
 
 const REVIEW_STATUS_META = {
@@ -68,6 +114,35 @@ const isOverdueApproval = (approval) => {
 
     return new Date(approval.deadline).getTime() < Date.now();
 };
+
+const ApprovalCardSkeleton = ({ isDark = true }) => (
+    <div
+        data-testid="approval-card-skeleton"
+        className={`overflow-hidden rounded-md border animate-pulse ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}
+    >
+        <div className={`aspect-[1.2/1] ${isDark ? 'bg-[#25253a]' : 'bg-gray-100'}`} />
+        <div className="space-y-3 px-4 py-4">
+            <div className="flex items-center justify-between gap-3">
+                <div className={`h-6 w-24 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
+                <div className={`h-4 w-10 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
+            </div>
+            <div className="space-y-2">
+                <div className={`h-5 w-3/4 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
+                <div className={`h-4 w-1/2 rounded-full ${isDark ? 'bg-[#25253a]' : 'bg-gray-50'}`} />
+            </div>
+            <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between gap-3">
+                    <div className={`h-4 w-8 rounded-full ${isDark ? 'bg-[#25253a]' : 'bg-gray-50'}`} />
+                    <div className={`h-4 w-24 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                    <div className={`h-4 w-10 rounded-full ${isDark ? 'bg-[#25253a]' : 'bg-gray-50'}`} />
+                    <div className={`h-4 w-20 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
+                </div>
+            </div>
+        </div>
+    </div>
+);
 
 const CreateApprovalModal = ({ events, onClose, onCreated }) => {
     const [form, setForm] = useState(emptyForm);
@@ -267,15 +342,19 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
 
 const ApprovalsDashboard = ({ user, isDark = true }) => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const [approvals, setApprovals] = useState([]);
-    const [events, setEvents] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const initialCacheRef = useRef(readApprovalsDashboardCache());
+    const [approvals, setApprovals] = useState(initialCacheRef.current?.approvals || []);
+    const [events, setEvents] = useState(initialCacheRef.current?.events || []);
+    const [loading, setLoading] = useState(!initialCacheRef.current);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [eventFilter, setEventFilter] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedApproval, setSelectedApproval] = useState(null);
     const deepLinkedApprovalId = searchParams.get('approvalId');
+    const approvalsRef = useRef(approvals);
+    const eventsRef = useRef(events);
 
     const syncApprovalIdParam = (approvalId) => {
         const nextParams = new URLSearchParams(searchParams);
@@ -294,38 +373,88 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
         syncApprovalIdParam(approval.id);
     };
 
-    const loadApprovals = async () => {
+    const loadDashboardData = async ({ background = false } = {}) => {
+        const hasVisibleContent =
+            Boolean(initialCacheRef.current) ||
+            approvalsRef.current.length > 0 ||
+            eventsRef.current.length > 0;
+
         try {
-            setLoading(true);
+            if (background || hasVisibleContent) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             setError('');
-            const response = await api.get('/approvals?sortBy=deadline');
-            setApprovals(response.approvals || []);
-        } catch (requestError) {
-            setError(requestError.response?.data?.message || requestError.message || 'Failed to load approvals.');
+
+            const [approvalsResponse, eventsResponse] = await Promise.allSettled([
+                api.get('/approvals?sortBy=deadline'),
+                api.get('/events?limit=100'),
+            ]);
+
+            let nextApprovals = approvalsRef.current;
+            let nextEvents = eventsRef.current;
+            let nextError = '';
+
+            if (approvalsResponse.status === 'fulfilled') {
+                nextApprovals = approvalsResponse.value.approvals || [];
+                setApprovals(nextApprovals);
+            } else {
+                nextError =
+                    approvalsResponse.reason?.response?.data?.message ||
+                    approvalsResponse.reason?.message ||
+                    'Failed to load approvals.';
+            }
+
+            if (eventsResponse.status === 'fulfilled') {
+                nextEvents = eventsResponse.value.events || eventsResponse.value.data?.events || [];
+                setEvents(nextEvents);
+            }
+
+            if (approvalsResponse.status === 'fulfilled' || eventsResponse.status === 'fulfilled') {
+                writeApprovalsDashboardCache({
+                    approvals: nextApprovals,
+                    events: nextEvents,
+                });
+            }
+
+            if (nextError) {
+                setError(nextError);
+            }
         } finally {
             setLoading(false);
-        }
-    };
-
-    const loadEvents = async () => {
-        try {
-            const response = await api.get('/events?limit=100');
-            setEvents(response.events || response.data?.events || []);
-        } catch {
-            setEvents([]);
+            setRefreshing(false);
         }
     };
 
     useEffect(() => {
-        loadEvents();
+        approvalsRef.current = approvals;
+    }, [approvals]);
+
+    useEffect(() => {
+        eventsRef.current = events;
+    }, [events]);
+
+    useEffect(() => {
+        loadDashboardData({ background: Boolean(initialCacheRef.current) });
     }, []);
 
     useEffect(() => {
-        loadApprovals();
-    }, []);
+        if (loading) {
+            return;
+        }
+
+        writeApprovalsDashboardCache({ approvals, events });
+    }, [approvals, events, loading]);
 
     useEffect(() => {
         if (!deepLinkedApprovalId || selectedApproval?.id === deepLinkedApprovalId) {
+            return;
+        }
+
+        const matchingApproval = approvals.find((approval) => approval.id === deepLinkedApprovalId);
+        if (matchingApproval) {
+            setSelectedApproval(matchingApproval);
             return;
         }
 
@@ -350,7 +479,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
         return () => {
             isCancelled = true;
         };
-    }, [deepLinkedApprovalId, selectedApproval?.id]);
+    }, [approvals, deepLinkedApprovalId, selectedApproval?.id]);
 
     const visibleApprovals = useMemo(
         () => approvals.filter((approval) => {
@@ -376,7 +505,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                 onBack={() => {
                     setSelectedApproval(null);
                     syncApprovalIdParam(null);
-                    loadApprovals();
+                    loadDashboardData({ background: true });
                 }}
                 onUpdated={(approval) => {
                     openApproval(approval);
@@ -414,6 +543,17 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                     <CheckCircle2 className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-sky-300' : 'text-sky-700'}`} />
                                 </span>
                             </h1>
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <span className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                                    {visibleApprovals.length} showing
+                                </span>
+                                {refreshing && (
+                                    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${isDark ? 'border-sky-400/20 bg-sky-500/10 text-sky-200' : 'border-sky-200 bg-sky-50 text-sky-700'}`}>
+                                        <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
+                                        Syncing latest
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         <div className="relative flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-end">
@@ -470,8 +610,10 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                     )}
 
                     {loading ? (
-                        <div className={`rounded-md border px-6 py-16 text-center text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] text-[#8f94aa]' : 'border-gray-200 bg-white text-gray-500 shadow-sm'}`}>
-                            Loading approvals…
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                            {Array.from({ length: 6 }, (_, index) => (
+                                <ApprovalCardSkeleton key={index} isDark={isDark} />
+                            ))}
                         </div>
                     ) : visibleApprovals.length === 0 ? (
                         <div className={`rounded-md border border-dashed px-6 py-16 text-center ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
@@ -497,7 +639,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                         <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${meta.accent}`} />
                                         <div className={`aspect-[1.2/1] ${isDark ? 'bg-[linear-gradient(135deg,_rgba(56,189,248,0.14),_rgba(30,30,45,0.8))]' : 'bg-[linear-gradient(135deg,_rgba(14,165,233,0.08),_rgba(255,255,255,0.9))]'}`}>
                                             {previewAsset?.mimeType?.startsWith('image/') ? (
-                                                <img src={previewAsset.s3Url} alt={approval.title} className="h-full w-full object-cover" />
+                                                <img src={previewAsset.s3Url} alt={approval.title} loading="lazy" className="h-full w-full object-cover" />
                                             ) : (
                                                 <div className={`flex h-full items-center justify-center text-sm font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
                                                     Latest version preview unavailable

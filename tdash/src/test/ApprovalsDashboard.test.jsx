@@ -21,6 +21,7 @@ vi.mock('../features/ApprovalDetailView', () => ({
 describe('ApprovalsDashboard', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        window.sessionStorage.clear();
     });
 
     it('loads the creative approvals dashboard and filters by event and status', async () => {
@@ -203,5 +204,60 @@ describe('ApprovalsDashboard', () => {
             expect(apiGet).toHaveBeenCalledWith('/approvals/approval-2');
         });
         expect(screen.getByText('Detail view for approval-2')).toBeInTheDocument();
+    });
+
+    it('renders cached approvals immediately while refreshing in the background', async () => {
+        window.sessionStorage.setItem(
+            'tixmo:approvals-dashboard-cache',
+            JSON.stringify({
+                approvals: [
+                    {
+                        id: 'approval-cached',
+                        title: 'Cached poster',
+                        status: 'PENDING_REVIEW',
+                        latestRevisionNumber: 1,
+                        deadline: '2026-04-12T10:00:00.000Z',
+                        event: { id: 'event-1', name: 'Summer Jam' },
+                        latestRevision: { assets: [] },
+                    },
+                ],
+                events: [{ id: 'event-1', name: 'Summer Jam' }],
+            })
+        );
+
+        apiGet.mockImplementation((url) => {
+            if (url.startsWith('/events')) {
+                return Promise.resolve({
+                    events: [{ id: 'event-1', name: 'Summer Jam' }],
+                });
+            }
+
+            return Promise.resolve({
+                approvals: [
+                    {
+                        id: 'approval-fresh',
+                        title: 'Fresh poster',
+                        status: 'APPROVED',
+                        latestRevisionNumber: 2,
+                        deadline: '2026-04-13T10:00:00.000Z',
+                        event: { id: 'event-1', name: 'Summer Jam' },
+                        latestRevision: { assets: [] },
+                    },
+                ],
+            });
+        });
+
+        render(
+            <MemoryRouter>
+                <ApprovalsDashboard user={{ email: 'designer@example.com' }} />
+            </MemoryRouter>
+        );
+
+        expect(screen.getByText('Cached poster')).toBeInTheDocument();
+        expect(screen.queryByText('Loading approvals…')).not.toBeInTheDocument();
+
+        await waitFor(() => {
+            expect(screen.getByText('Fresh poster')).toBeInTheDocument();
+        });
     });
 });
