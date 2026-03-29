@@ -5,12 +5,14 @@ import ApprovalDetailView from '../features/ApprovalDetailView';
 
 const apiGet = vi.fn();
 const apiPost = vi.fn();
+const apiDelete = vi.fn();
 const apiUpload = vi.fn();
 
 vi.mock('../lib/api', () => ({
     api: {
         get: (...args) => apiGet(...args),
         post: (...args) => apiPost(...args),
+        delete: (...args) => apiDelete(...args),
         upload: (...args) => apiUpload(...args),
     },
 }));
@@ -80,11 +82,14 @@ describe('ApprovalDetailView', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         apiGet.mockResolvedValue(approvalFixture);
+        vi.spyOn(window, 'confirm').mockReturnValue(true);
     });
 
     it('renders version controls and reviewer actions for the latest version', async () => {
+        let container;
+
         await act(async () => {
-            render(
+            ({ container } = render(
                 <ApprovalDetailView
                     approvalId="approval-1"
                     initialApproval={approvalFixture}
@@ -92,18 +97,26 @@ describe('ApprovalDetailView', () => {
                     onBack={() => {}}
                     onUpdated={() => {}}
                 />
-            );
+            ));
         });
 
         expect(screen.getByText('Review Portal')).toBeInTheDocument();
-        expect(screen.getByText('Main stage artwork')).toBeInTheDocument();
+        expect(screen.getAllByText('Main stage artwork').length).toBeGreaterThan(0);
         expect(screen.getAllByText('v2').length).toBeGreaterThan(0);
         expect(screen.getByText('Discussion')).toBeInTheDocument();
-        expect(screen.getByText('Decision controls')).toBeInTheDocument();
+        expect(screen.getByText('You have not responded yet.')).toBeInTheDocument();
         expect(screen.getAllByText('Upload version').length).toBeGreaterThan(0);
         expect(screen.getByText('reviewer@example.com')).toBeInTheDocument();
         expect(screen.queryByText('Lead Reviewer')).not.toBeInTheDocument();
         expect(screen.getByLabelText('Pending')).toBeInTheDocument();
+        expect(screen.getByText('Summer Jam')).toBeInTheDocument();
+
+        const aside = container.querySelector('aside');
+        expect(aside).not.toBeNull();
+
+        const reviewersHeading = within(aside).getByText('Reviewers');
+        const discussionHeading = within(aside).getByText('Discussion');
+        expect(reviewersHeading.compareDocumentPosition(discussionHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
     it('shows newest approval comments first in the shared thread', async () => {
@@ -240,6 +253,57 @@ describe('ApprovalDetailView', () => {
         expect(screen.getByText('new-reviewer@example.com')).toBeInTheDocument();
         expect(screen.getByLabelText('Approved')).toBeInTheDocument();
         expect(screen.queryByRole('dialog', { name: 'Add reviewer' })).not.toBeInTheDocument();
+    });
+
+    it('resends a reviewer invite from the reviewer row', async () => {
+        apiPost.mockResolvedValue(approvalFixture);
+
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={{ email: 'reviewer@example.com' }}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Resend reviewer invite for reviewer@example.com' }));
+
+        await waitFor(() =>
+            expect(apiPost).toHaveBeenCalledWith('/approvals/approval-1/reviewers/reviewer-1/resend')
+        );
+    });
+
+    it('removes a reviewer from the reviewer row after confirmation', async () => {
+        apiDelete.mockResolvedValue({
+            ...approvalFixture,
+            reviewers: [],
+        });
+
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={{ email: 'reviewer@example.com' }}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Remove reviewer reviewer@example.com' }));
+
+        expect(window.confirm).toHaveBeenCalledWith('Remove reviewer reviewer@example.com?');
+
+        await waitFor(() =>
+            expect(apiDelete).toHaveBeenCalledWith('/approvals/approval-1/reviewers/reviewer-1')
+        );
+
+        expect(screen.queryByText('reviewer@example.com')).not.toBeInTheDocument();
     });
 
     it('expands the selected image asset in a full-screen preview', async () => {

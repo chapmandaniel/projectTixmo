@@ -882,6 +882,119 @@ class ApprovalService {
         return await this.serializeApproval(updated, { email: user.email });
     }
 
+    async resendReviewerInvite(approvalId: string, reviewerId: string, userId: string) {
+        const user = await this.getUserContext(userId);
+        const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+
+        if (!approval) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Approval request not found');
+        }
+
+        if (approval.deadline <= new Date()) {
+            throw new ApiError(StatusCodes.BAD_REQUEST, 'Cannot resend an invite after the deadline has passed');
+        }
+
+        const reviewer = approval.reviewers.find((item) => item.id === reviewerId);
+        if (!reviewer) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Reviewer not found');
+        }
+
+        const token = this.generateToken();
+        const tokenExpiresAt = this.buildTokenExpiry(approval.deadline);
+
+        await prisma.approvalReviewer.update({
+            where: { id: reviewerId },
+            data: {
+                token,
+                tokenExpiresAt,
+            },
+        });
+
+        const updated = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+        if (!updated) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated approval');
+        }
+
+        const updatedReviewer = updated.reviewers.find((item) => item.id === reviewerId);
+        if (!updatedReviewer) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated reviewer');
+        }
+
+        this.notifyReviewerSubsetOfSubmission(updated, [
+            {
+                email: updatedReviewer.email,
+                name: updatedReviewer.name || undefined,
+                token: updatedReviewer.token,
+            },
+        ]).catch((error) => {
+            logger.error(`Failed to resend reviewer invite: ${(error as Error).message}`);
+        });
+
+        return await this.serializeApproval(updated, { email: user.email });
+    }
+
+    async removeReviewer(approvalId: string, reviewerId: string, userId: string) {
+        const user = await this.getUserContext(userId);
+        const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+
+        if (!approval) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Approval request not found');
+        }
+
+        const reviewer = await prisma.approvalReviewer.findFirst({
+            where: {
+                id: reviewerId,
+                approvalRequestId: approvalId,
+                approvalRequest: {
+                    organizationId: user.organizationId,
+                },
+            },
+            include: {
+                comments: {
+                    select: { id: true },
+                    take: 1,
+                },
+                decisions: {
+                    select: { id: true },
+                    take: 1,
+                },
+            },
+        });
+
+        if (!reviewer) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Reviewer not found');
+        }
+
+        const hasInteracted =
+            Boolean(reviewer.firstViewedAt) ||
+            Boolean(reviewer.lastViewedAt) ||
+            Boolean(reviewer.lastCommentAt) ||
+            Boolean(reviewer.lastDecisionAt) ||
+            Boolean(reviewer.lastInteractionAt) ||
+            reviewer.comments.length > 0 ||
+            reviewer.decisions.length > 0;
+
+        if (hasInteracted) {
+            throw new ApiError(
+                StatusCodes.BAD_REQUEST,
+                'Cannot remove a reviewer who has already interacted with this approval'
+            );
+        }
+
+        await prisma.approvalReviewer.delete({
+            where: { id: reviewerId },
+        });
+
+        await this.recalculateApprovalStatus(approvalId);
+
+        const updated = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+        if (!updated) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated approval');
+        }
+
+        return await this.serializeApproval(updated, { email: user.email });
+    }
+
     async createRevision(approvalId: string, userId: string, input: CreateRevisionInput) {
         const user = await this.getUserContext(userId);
         const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);

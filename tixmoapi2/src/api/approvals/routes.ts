@@ -8,6 +8,7 @@ import {
 } from './controller';
 import {
     approvalIdParamsSchema,
+    approvalReviewerParamsSchema,
     listApprovalsQuerySchema,
 } from './validation';
 
@@ -18,6 +19,18 @@ router.get('/', authenticate, validate(listApprovalsQuerySchema), ApprovalContro
 router.get('/:id', authenticate, validate(approvalIdParamsSchema), ApprovalController.getById);
 router.patch('/:id', authenticate, validate(approvalIdParamsSchema), ApprovalController.updateMetadata);
 router.post('/:id/reviewers', authenticate, validate(approvalIdParamsSchema), ApprovalController.addReviewers);
+router.post(
+    '/:id/reviewers/:reviewerId/resend',
+    authenticate,
+    validate(approvalReviewerParamsSchema),
+    ApprovalController.resendReviewerInvite
+);
+router.delete(
+    '/:id/reviewers/:reviewerId',
+    authenticate,
+    validate(approvalReviewerParamsSchema),
+    ApprovalController.removeReviewer
+);
 router.post(
     '/:id/revisions',
     authenticate,

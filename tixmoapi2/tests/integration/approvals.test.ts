@@ -96,6 +96,51 @@ describe('Creative approvals API', () => {
         expect(response.body.status).toBe('PENDING_REVIEW');
     });
 
+    it('resends an invite for an existing reviewer with a fresh secure token', async () => {
+        const approval = await prisma.approvalRequest.findFirstOrThrow({
+            where: { title: 'Main stage LED artwork' },
+            include: { reviewers: true },
+        });
+
+        const reviewer = approval.reviewers.find((item) => item.email === 'second-reviewer@example.com');
+        expect(reviewer).toBeDefined();
+
+        const previousToken = reviewer?.token;
+
+        const response = await request(app)
+            .post(`/api/v1/approvals/${approval.id}/reviewers/${reviewer?.id}/resend`)
+            .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.reviewers).toHaveLength(2);
+
+        const refreshedReviewer = await prisma.approvalReviewer.findUniqueOrThrow({
+            where: { id: reviewer?.id },
+        });
+
+        expect(refreshedReviewer.token).not.toBe(previousToken);
+    });
+
+    it('removes a pending reviewer who has not interacted yet', async () => {
+        const approval = await prisma.approvalRequest.findFirstOrThrow({
+            where: { title: 'Main stage LED artwork' },
+            include: { reviewers: true },
+        });
+
+        const reviewer = approval.reviewers.find((item) => item.email === 'second-reviewer@example.com');
+        expect(reviewer).toBeDefined();
+
+        const response = await request(app)
+            .delete(`/api/v1/approvals/${approval.id}/reviewers/${reviewer?.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.reviewers).toHaveLength(1);
+        expect(response.body.reviewers.map((item: { email: string }) => item.email)).not.toContain(
+            'second-reviewer@example.com'
+        );
+    });
+
     it('supports external review comments and decisions via secure token', async () => {
         const approval = await prisma.approvalRequest.findFirstOrThrow({
             where: { title: 'Main stage LED artwork' },

@@ -2,11 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     ArrowLeft,
     CheckCircle2,
-    Circle,
     Download,
     FileText,
+    Hourglass,
     MailPlus,
+    RotateCcw,
+    Search,
     Send,
+    Trash2,
     Upload,
     User,
     XCircle,
@@ -106,7 +109,7 @@ const reviewerStatusMeta = (reviewer) => {
     }
 
     return {
-        icon: Circle,
+        icon: Hourglass,
         className: 'text-[#707791]',
         label: 'Pending',
     };
@@ -117,16 +120,9 @@ const DecisionActionCard = ({ option, saving, onClick }) => (
         type="button"
         disabled={saving}
         onClick={onClick}
-        className={`rounded-md border px-4 py-3 text-left text-sm font-light transition disabled:cursor-not-allowed disabled:opacity-60 ${DECISION_CARD_STYLES[option.value] || 'border-white/10 bg-white/5 text-slate-200 hover:border-sky-300/40 hover:text-white'}`}
+        className={`flex-1 rounded-md border px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${DECISION_CARD_STYLES[option.value] || 'border-white/10 bg-white/5 text-slate-200 hover:border-sky-300/40 hover:text-white'}`}
     >
-        <span className="block font-medium text-inherit">{option.label}</span>
-        <span className="mt-1 block text-xs text-inherit/80">
-            {option.value === 'APPROVED'
-                ? 'Confirm the latest version is ready to ship.'
-                : option.value === 'CHANGES_REQUESTED'
-                    ? 'Send the work back for another iteration.'
-                    : 'Reject the submission in its current state.'}
-        </span>
+        {option.label}
     </button>
 );
 
@@ -138,7 +134,6 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const [isImageExpanded, setIsImageExpanded] = useState(false);
     const [comment, setComment] = useState('');
     const [replyTo, setReplyTo] = useState(null);
-    const [decisionNote, setDecisionNote] = useState('');
     const [revisionSummary, setRevisionSummary] = useState('');
     const [revisionFiles, setRevisionFiles] = useState([]);
     const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
@@ -225,9 +220,11 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const reviewerAssignment = reviewers.find((reviewer) => reviewer.email === user?.email) || null;
     const latestDecision = reviewerAssignment?.latestDecision || approval?.myReview || null;
     const statusMeta = APPROVAL_STATUS_META[approval?.status] || APPROVAL_STATUS_META.PENDING_REVIEW;
-    const StatusIcon = statusMeta.icon;
     const requesterName = personLabel(approval?.createdBy);
     const commentRevisionId = approval?.latestRevision?.id || selectedRevision?.id || null;
+    const currentDecision = latestDecision?.decision
+        ? `Current decision: ${latestDecision.decision.replaceAll('_', ' ')}`
+        : 'You have not responded yet.';
 
     const resetRevisionDraft = () => {
         setRevisionFiles([]);
@@ -235,6 +232,16 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
+    };
+
+    const applyUpdatedApproval = (updated) => {
+        setApproval(updated);
+        setSelectedRevisionId((currentRevisionId) =>
+            updated.revisions?.some((revision) => revision.id === currentRevisionId)
+                ? currentRevisionId
+                : updated.latestRevision?.id || updated.revisions?.[0]?.id || null
+        );
+        onUpdated?.(updated);
     };
 
     const closeReviewerModal = () => {
@@ -272,10 +279,8 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setError('');
             await api.post(`/approvals/${approval.id}/decisions`, {
                 decision,
-                note: decisionNote || undefined,
                 revisionId: approval.latestRevision?.id,
             });
-            setDecisionNote('');
             await fetchApproval();
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message || 'Failed to submit decision.');
@@ -301,9 +306,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
 
             const updated = await api.upload(`/approvals/${approval.id}/revisions`, payload);
             resetRevisionDraft();
-            setApproval(updated);
-            setSelectedRevisionId(updated.latestRevision?.id || updated.revisions?.[0]?.id || null);
-            onUpdated?.(updated);
+            applyUpdatedApproval(updated);
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message || 'Failed to upload version.');
         } finally {
@@ -324,16 +327,40 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                 reviewers: [{ email: reviewerEmail.trim() }],
             });
 
-            setApproval(updated);
-            setSelectedRevisionId((currentRevisionId) =>
-                updated.revisions?.some((revision) => revision.id === currentRevisionId)
-                    ? currentRevisionId
-                    : updated.latestRevision?.id || updated.revisions?.[0]?.id || null
-            );
+            applyUpdatedApproval(updated);
             closeReviewerModal();
-            onUpdated?.(updated);
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message || 'Failed to add reviewer.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const resendReviewerInvite = async (reviewerId) => {
+        try {
+            setSaving(true);
+            setError('');
+            const updated = await api.post(`/approvals/${approval.id}/reviewers/${reviewerId}/resend`);
+            applyUpdatedApproval(updated);
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to resend reviewer email.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const removeReviewer = async (reviewer) => {
+        if (!window.confirm(`Remove reviewer ${reviewer.email}?`)) {
+            return;
+        }
+
+        try {
+            setSaving(true);
+            setError('');
+            const updated = await api.delete(`/approvals/${approval.id}/reviewers/${reviewer.id}`);
+            applyUpdatedApproval(updated);
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to remove reviewer.');
         } finally {
             setSaving(false);
         }
@@ -374,9 +401,11 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                         <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                     </div>
                     <div className="relative">
-                        <div className="flex items-center justify-between gap-3">
-                            <h1 className="text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
-                                Review Portal
+                        <div className="flex items-start justify-between gap-3">
+                            <h1 className="flex flex-wrap items-center gap-3 text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
+                                <span>Review Portal</span>
+                                <Search className="h-5 w-5 text-sky-300" />
+                                <span className="text-lg font-medium text-sky-300 sm:text-xl">{approval.title}</span>
                             </h1>
                             {refreshing && (
                                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
@@ -393,7 +422,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                     </div>
                 )}
 
-                <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)]">
+                <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)]">
                     <section className={`${panelClass} p-4 sm:p-5`}>
                         <div className={`${surfaceClass} relative overflow-hidden`}>
                             <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-9.5rem)] gap-2 overflow-x-auto rounded-md border border-white/10 bg-[#0f1020]/90 px-2 py-2 shadow-lg shadow-black/20 backdrop-blur">
@@ -518,6 +547,28 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                 )}
                             </div>
 
+                            {selectedAsset && (
+                                <div className="border-t border-[#2b2b40] px-4 py-4">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-base font-medium text-gray-100">{approval.title}</p>
+                                            <p className="mt-1 text-sm font-light leading-6 text-[#8f94aa]">
+                                                {approval.description || 'Review the latest supplied asset and respond from this secure portal.'}
+                                            </p>
+                                        </div>
+                                        <a
+                                            href={selectedAsset.s3Url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex shrink-0 items-center gap-2 rounded-md border border-[#2b2b40] bg-[#1e1e2d] px-4 py-2 text-sm font-light text-gray-100 transition hover:border-[#3a3a5a] hover:bg-[#232336]"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                            Download
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
                             {selectedRevision?.assets?.length > 1 && (
                                 <div className="border-t border-[#2b2b40] p-4">
                                     <div className="mb-3 flex items-center justify-between gap-3">
@@ -553,62 +604,28 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     </div>
                                 </div>
                             )}
+
+                            <div className="border-t border-[#2b2b40] p-4">
+                                <div className="rounded-md border border-white/10 bg-white/5 px-4 py-3 text-xs font-light leading-6 text-[#a1a5b7]">
+                                    <span className="text-gray-100">{approval.event?.name || 'Unassigned event'}</span>
+                                    <span className="mx-2 text-[#5e6278]">/</span>
+                                    <span className="text-gray-100">{requesterName}</span>
+                                    <span className="mx-2 text-[#5e6278]">/</span>
+                                    <span>Due <span className="text-gray-100">{formatApprovalDate(approval.deadline)}</span></span>
+                                    <span className="mx-2 text-[#5e6278]">/</span>
+                                    <span>Version <span className="text-gray-100">v{approval.latestRevisionNumber}</span></span>
+                                    <span className="mx-2 text-[#5e6278]">/</span>
+                                    <span>Status <span className="text-gray-100">{statusMeta.label}</span></span>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
                     <aside className="space-y-4">
-                        <section className={`${panelClass} p-4`}>
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                    <h2 className="truncate text-lg font-light text-gray-100">{approval.title}</h2>
-                                    {approval.description && (
-                                        <p className="mt-1 text-sm font-light leading-5 text-[#8f94aa]">
-                                            {approval.description}
-                                        </p>
-                                    )}
-                                </div>
-                                <span className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-xs ${statusMeta.chip}`}>
-                                    <StatusIcon className="h-3.5 w-3.5" />
-                                    {statusMeta.label}
-                                </span>
-                            </div>
-
-                            <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-light text-[#a1a5b7]">
-                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
-                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Event</span>
-                                    <span className="mt-1 block text-sm text-gray-100">{approval.event?.name || 'Unassigned'}</span>
-                                </div>
-                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
-                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Owner</span>
-                                    <span className="mt-1 block text-sm text-gray-100">{requesterName}</span>
-                                </div>
-                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
-                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Due</span>
-                                    <span className="mt-1 block text-sm text-gray-100">{formatApprovalDate(approval.deadline)}</span>
-                                </div>
-                                <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2">
-                                    <span className="block uppercase tracking-[0.16em] text-[#5e6278]">Version</span>
-                                    <span className="mt-1 block text-sm text-gray-100">v{approval.latestRevisionNumber}</span>
-                                </div>
-                            </div>
-                        </section>
-
                         {reviewerAssignment && (
-                            <section className={`${panelClass} p-5`}>
-                                <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Decision controls</p>
-                                <p className="mt-2 text-sm font-light text-[#a1a5b7]">
-                                    {latestDecision
-                                        ? `Current decision: ${latestDecision.decision.replaceAll('_', ' ')}`
-                                        : 'You are assigned to review this submission and have not responded yet.'}
-                                </p>
-                                <textarea
-                                    rows={3}
-                                    value={decisionNote}
-                                    onChange={(event) => setDecisionNote(event.target.value)}
-                                    placeholder="Optional decision note"
-                                    className={`${inputClass} mt-4`}
-                                />
-                                <div className="mt-4 grid gap-2">
+                            <div className="px-1 pt-1">
+                                <p className="text-sm font-light text-[#a1a5b7]">{currentDecision}</p>
+                                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                                     {DECISION_OPTIONS.map((option) => (
                                         <DecisionActionCard
                                             key={option.value}
@@ -618,8 +635,67 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                         />
                                     ))}
                                 </div>
-                            </section>
+                            </div>
                         )}
+
+                        <section className={`${panelClass} p-5`}>
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Reviewers</p>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsReviewerModalOpen(true)}
+                                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-[0.16em] text-[#d7d9e4] transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white"
+                                >
+                                    <MailPlus className="h-3.5 w-3.5" />
+                                    Add reviewer
+                                </button>
+                            </div>
+                            <div className="mt-4 space-y-2">
+                                {reviewers.map((reviewer) => (
+                                    <div key={reviewer.id} className={`${surfaceClass} px-4 py-3`}>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="min-w-0 truncate pr-2 text-sm font-light text-gray-100">
+                                                {reviewer.email}
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => resendReviewerInvite(reviewer.id)}
+                                                    disabled={saving}
+                                                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-[#d7d9e4] transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                                    aria-label={`Resend reviewer invite for ${reviewer.email}`}
+                                                    title="Resend invite"
+                                                >
+                                                    <RotateCcw className="h-3.5 w-3.5" />
+                                                    Resend
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeReviewer(reviewer)}
+                                                    disabled={saving}
+                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#8f94aa] transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                                    aria-label={`Remove reviewer ${reviewer.email}`}
+                                                    title="Remove reviewer"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                                {(() => {
+                                                    const meta = reviewerStatusMeta(reviewer);
+                                                    const ReviewerStatusIcon = meta.icon;
+                                                    return (
+                                                        <ReviewerStatusIcon
+                                                            className={`h-5 w-5 shrink-0 ${meta.className}`}
+                                                            aria-label={meta.label}
+                                                            title={meta.label}
+                                                        />
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
 
                         <section className={`${panelClass} p-4`}>
                             <div className="flex items-center justify-between gap-4 px-1 pb-3">
@@ -702,42 +778,6 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     <Send className="h-4 w-4" />
                                 </button>
                             </form>
-                        </section>
-
-                        <section className={`${panelClass} p-5`}>
-                            <div className="flex items-center justify-between gap-3">
-                                <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Reviewers</p>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsReviewerModalOpen(true)}
-                                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-[0.16em] text-[#d7d9e4] transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white"
-                                >
-                                    <MailPlus className="h-3.5 w-3.5" />
-                                    Add reviewer
-                                </button>
-                            </div>
-                            <div className="mt-4 space-y-2">
-                                {reviewers.map((reviewer) => (
-                                    <div key={reviewer.id} className={`${surfaceClass} px-4 py-3`}>
-                                        <div className="flex items-center justify-between gap-3">
-                                            <p className="min-w-0 truncate pr-2 text-sm font-light text-gray-100">
-                                                {reviewer.email}
-                                            </p>
-                                            {(() => {
-                                                const meta = reviewerStatusMeta(reviewer);
-                                                const ReviewerStatusIcon = meta.icon;
-                                                return (
-                                                    <ReviewerStatusIcon
-                                                        className={`h-5 w-5 shrink-0 ${meta.className}`}
-                                                        aria-label={meta.label}
-                                                        title={meta.label}
-                                                    />
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
                         </section>
                     </aside>
                 </section>

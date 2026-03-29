@@ -167,6 +167,34 @@ export const ApprovalController = {
         }
     },
 
+    async resendReviewerInvite(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user?.userId;
+            if (!userId) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+            }
+
+            const approval = await approvalService.resendReviewerInvite(req.params.id, req.params.reviewerId, userId);
+            return res.json(approval);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
+    async removeReviewer(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user?.userId;
+            if (!userId) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+            }
+
+            const approval = await approvalService.removeReviewer(req.params.id, req.params.reviewerId, userId);
+            return res.json(approval);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
     async createRevision(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user?.userId;

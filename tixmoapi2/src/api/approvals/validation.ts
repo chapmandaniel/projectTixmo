@@ -79,6 +79,13 @@ export const approvalIdParamsSchema = z.object({
     }),
 });
 
+export const approvalReviewerParamsSchema = z.object({
+    params: z.object({
+        id: z.string().uuid('Invalid approval ID'),
+        reviewerId: z.string().uuid('Invalid reviewer ID'),
+    }),
+});
+
 export const tokenParamsSchema = z.object({
     params: z.object({
         token: z.string().min(1, 'Token is required'),
