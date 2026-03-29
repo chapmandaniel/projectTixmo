@@ -128,6 +128,8 @@ const DecisionActionCard = ({ option, saving, onClick }) => (
 
 const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdated }) => {
     const fileInputRef = useRef(null);
+    const isMountedRef = useRef(true);
+    const requestSequenceRef = useRef(0);
     const [approval, setApproval] = useState(initialApproval);
     const [selectedRevisionId, setSelectedRevisionId] = useState(initialApproval?.latestRevision?.id || null);
     const [assetIndex, setAssetIndex] = useState(0);
@@ -144,6 +146,8 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const [error, setError] = useState('');
 
     const fetchApproval = async () => {
+        const requestId = requestSequenceRef.current + 1;
+        requestSequenceRef.current = requestId;
         const shouldShowLoading = !approval;
 
         try {
@@ -154,19 +158,39 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             }
             setError('');
             const response = await api.get(`/approvals/${approvalId}`);
+            if (!isMountedRef.current || requestSequenceRef.current !== requestId) {
+                return null;
+            }
             setApproval(response);
             setSelectedRevisionId(response.latestRevision?.id || response.revisions?.[0]?.id || null);
             onUpdated?.(response);
+            return response;
         } catch (requestError) {
+            if (!isMountedRef.current || requestSequenceRef.current !== requestId) {
+                return null;
+            }
             setError(requestError.response?.data?.message || requestError.message || 'Failed to load approval.');
         } finally {
+            if (!isMountedRef.current || requestSequenceRef.current !== requestId) {
+                return;
+            }
             if (shouldShowLoading) {
                 setLoading(false);
             } else {
                 setRefreshing(false);
             }
         }
+
+        return null;
     };
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+            requestSequenceRef.current += 1;
+        };
+    }, []);
 
     useEffect(() => {
         fetchApproval();
@@ -235,6 +259,10 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     };
 
     const applyUpdatedApproval = (updated) => {
+        if (!isMountedRef.current) {
+            return;
+        }
+
         setApproval(updated);
         setSelectedRevisionId((currentRevisionId) =>
             updated.revisions?.some((revision) => revision.id === currentRevisionId)

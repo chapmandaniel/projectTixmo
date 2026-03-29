@@ -368,8 +368,21 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
         setSearchParams(nextParams, { replace: true });
     };
 
+    const mergeApprovalIntoList = (nextApproval) => {
+        setApprovals((current) => {
+            const existingIndex = current.findIndex((item) => item.id === nextApproval.id);
+
+            if (existingIndex === -1) {
+                return [nextApproval, ...current];
+            }
+
+            return current.map((item) => (item.id === nextApproval.id ? nextApproval : item));
+        });
+    };
+
     const openApproval = (approval) => {
         setSelectedApproval(approval);
+        mergeApprovalIntoList(approval);
         syncApprovalIdParam(approval.id);
     };
 
@@ -518,8 +531,8 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                     loadDashboardData({ background: true });
                 }}
                 onUpdated={(approval) => {
-                    openApproval(approval);
-                    setApprovals((current) => current.map((item) => (item.id === approval.id ? approval : item)));
+                    setSelectedApproval(approval);
+                    mergeApprovalIntoList(approval);
                 }}
             />
         );
@@ -534,7 +547,6 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                     onCreated={(approval) => {
                         setShowCreateModal(false);
                         openApproval(approval);
-                        setApprovals((current) => [approval, ...current]);
                     }}
                 />
             )}

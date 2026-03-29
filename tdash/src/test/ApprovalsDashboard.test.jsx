@@ -15,11 +15,28 @@ vi.mock('../lib/api', () => ({
 }));
 
 vi.mock('../features/ApprovalDetailView', () => ({
-    default: ({ approvalId, onBack }) => (
+    default: ({ approvalId, onBack, onUpdated }) => (
         <div>
             <div>Detail view for {approvalId}</div>
             <button type="button" onClick={onBack}>
                 Mock back
+            </button>
+            <button
+                type="button"
+                onClick={() => {
+                    setTimeout(() => {
+                        onUpdated?.({
+                            id: approvalId,
+                            title: 'Updated approval',
+                            latestRevision: { id: 'revision-2', assets: [] },
+                            revisions: [{ id: 'revision-2', revisionNumber: 2, assets: [] }],
+                            reviewers: [],
+                            comments: [],
+                        });
+                    }, 0);
+                }}
+            >
+                Mock async update
             </button>
         </div>
     ),
@@ -31,6 +48,16 @@ const NavigateToApprovals = () => {
     return (
         <button type="button" onClick={() => navigate('/approvals')}>
             Go to approvals root
+        </button>
+    );
+};
+
+const NavigateToSocial = () => {
+    const navigate = useNavigate();
+
+    return (
+        <button type="button" onClick={() => navigate('/social')}>
+            Go to social
         </button>
     );
 };
@@ -390,5 +417,77 @@ describe('ApprovalsDashboard', () => {
         await waitFor(() => {
             expect(screen.getByText('Main poster')).toBeInTheDocument();
         });
+    });
+
+    it('does not force the router back to approvals after leaving the page', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url.startsWith('/events')) {
+                return Promise.resolve({
+                    events: [{ id: 'event-1', name: 'Summer Jam' }],
+                });
+            }
+
+            if (url === '/approvals/approval-2') {
+                return Promise.resolve({
+                    id: 'approval-2',
+                    title: 'Sponsor lockup',
+                    latestRevision: { id: 'revision-2', assets: [] },
+                    revisions: [{ id: 'revision-2', revisionNumber: 1, assets: [] }],
+                    reviewers: [],
+                    comments: [],
+                });
+            }
+
+            return Promise.resolve({
+                approvals: [
+                    {
+                        id: 'approval-1',
+                        title: 'Main poster',
+                        status: 'PENDING_REVIEW',
+                        latestRevisionNumber: 1,
+                        deadline: '2026-03-12T10:00:00.000Z',
+                        event: { id: 'event-1', name: 'Summer Jam' },
+                        latestRevision: { assets: [] },
+                        reviewers: [],
+                    },
+                ],
+            });
+        });
+
+        render(
+            <MemoryRouter initialEntries={['/approvals?approvalId=approval-2']}>
+                <Routes>
+                    <Route
+                        path="/approvals"
+                        element={(
+                            <>
+                                <NavigateToSocial />
+                                <ApprovalsDashboard user={{ email: 'designer@example.com' }} />
+                            </>
+                        )}
+                    />
+                    <Route path="/social" element={<div>Social view</div>} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText('Detail view for approval-2')).toBeInTheDocument();
+        });
+
+        vi.useFakeTimers();
+        fireEvent.click(screen.getByText('Mock async update'));
+        fireEvent.click(screen.getByText('Go to social'));
+
+        expect(screen.getByText('Social view')).toBeInTheDocument();
+
+        await act(async () => {
+            vi.runAllTimers();
+        });
+
+        expect(screen.getByText('Social view')).toBeInTheDocument();
+        expect(screen.queryByText('Detail view for approval-2')).not.toBeInTheDocument();
+
+        vi.useRealTimers();
     });
 });
