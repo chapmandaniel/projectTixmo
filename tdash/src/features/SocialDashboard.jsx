@@ -13,24 +13,36 @@ import {
     Settings2,
     ShieldAlert,
     Sparkles,
+    X,
 } from 'lucide-react';
 import SocialPostCard from './SocialPostCard';
 import SocialPostModal from './SocialPostModal';
 import { socialCommandCenterApi } from '../lib/socialCommandCenterApi';
 
 const platformOptions = [
-    { id: 'all', label: 'All platforms', icon: Sparkles },
-    { id: 'instagram', label: 'Instagram', icon: Instagram },
-    { id: 'facebook', label: 'Facebook', icon: Facebook },
-    { id: 'tiktok', label: 'TikTok', icon: Music },
+    { id: 'all', label: 'All platforms' },
+    { id: 'instagram', label: 'Instagram' },
+    { id: 'facebook', label: 'Facebook' },
+    { id: 'tiktok', label: 'TikTok' },
 ];
 
-const statMeta = [
-    { key: 'attentionNeeded', label: 'Need Attention', icon: ShieldAlert, accent: 'from-rose-500 to-orange-400' },
-    { key: 'flaggedPosts', label: 'Flagged', icon: AlertTriangle, accent: 'from-amber-400 to-rose-500' },
-    { key: 'avgSentimentScore', label: 'Avg Sentiment', icon: Bot, accent: 'from-cyan-400 to-sky-500' },
-    { key: 'resolvedPosts', label: 'Resolved', icon: CheckCircle2, accent: 'from-emerald-400 to-teal-500' },
+const statusOptions = [
+    { id: 'all', label: 'All posts' },
+    { id: 'attention', label: 'Needs attention' },
+    { id: 'resolved', label: 'Resolved' },
 ];
+
+const platformMeta = {
+    instagram: { icon: Instagram, label: 'Instagram', className: 'text-pink-300' },
+    facebook: { icon: Facebook, label: 'Facebook', className: 'text-sky-300' },
+    tiktok: { icon: Music, label: 'TikTok', className: 'text-emerald-300' },
+};
+
+const priorityRank = {
+    high: 0,
+    medium: 1,
+    low: 2,
+};
 
 const emptyPayload = {
     overview: {
@@ -78,28 +90,229 @@ const formatDateTime = (value) => {
     }).format(new Date(value));
 };
 
+const MonitoringRulesModal = ({
+    isDark,
+    limits,
+    onClose,
+    onDraftChange,
+    onSave,
+    settingsDraft,
+    isSaving,
+    aiUsage,
+}) => (
+    <div
+        className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Monitoring rules"
+        onClick={onClose}
+    >
+        <div
+            onClick={(event) => event.stopPropagation()}
+            className={`w-full max-w-2xl rounded-md border p-6 shadow-2xl shadow-black/30 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}
+        >
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <h2 className={`text-2xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Monitoring rules</h2>
+                    <p className={`mt-2 text-sm leading-6 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                        Keep the dashboard simple. Only adjust how often AI revisits posts and the daily budget cap.
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className={`rounded-full border p-2 transition-colors ${isDark ? 'border-white/10 bg-white/5 text-[#8f94aa] hover:text-white' : 'border-gray-200 bg-gray-50 text-gray-500 hover:text-gray-900'}`}
+                    aria-label="Close monitoring rules modal"
+                >
+                    <X className="h-4 w-4" />
+                </button>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {[
+                    ['hourlyWindowDays', 'Hourly window (days)'],
+                    ['dailyWindowDays', 'Daily window (days)'],
+                    ['dailyUpdateHour', 'Morning refresh hour (UTC)'],
+                    ['maxAICallsPerDay', 'Max AI calls per day'],
+                ].map(([field, label]) => (
+                    <label key={field} className="block">
+                        <span className={`mb-2 block text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            {label}
+                        </span>
+                        <input
+                            type="number"
+                            min={limits[field].min}
+                            max={limits[field].max}
+                            value={settingsDraft[field]}
+                            onChange={(event) => onDraftChange(field, event.target.value)}
+                            className={`w-full rounded-md border px-3 py-2.5 text-sm outline-none ${isDark ? 'border-[#2b2b40] bg-[#151521] text-white' : 'border-gray-200 bg-gray-50 text-[#0f172a]'}`}
+                        />
+                    </label>
+                ))}
+            </div>
+
+            <div className={`mt-6 rounded-md border p-4 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="flex items-center justify-between gap-4">
+                    <div>
+                        <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>AI budget</p>
+                        <p className={`mt-1 text-sm ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {aiUsage.remainingToday} calls remaining today
+                        </p>
+                    </div>
+                    <p className={`text-sm font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                        {aiUsage.usedToday} / {aiUsage.maxPerDay}
+                    </p>
+                </div>
+                <div className={`mt-3 h-2 overflow-hidden rounded-full ${isDark ? 'bg-[#0f1320]' : 'bg-gray-200'}`}>
+                    <div
+                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400"
+                        style={{ width: `${Math.min(100, (aiUsage.usedToday / Math.max(1, aiUsage.maxPerDay)) * 100)}%` }}
+                    />
+                </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className={`rounded-md border px-4 py-2 text-sm transition-colors ${isDark ? 'border-white/10 bg-white/5 text-[#a1a5b7] hover:text-white' : 'border-gray-200 bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    onClick={onSave}
+                    disabled={isSaving}
+                    className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm transition-colors ${isDark ? 'bg-sky-500 text-white hover:bg-sky-400 disabled:bg-[#1d2230] disabled:text-[#64748b]' : 'bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-500'}`}
+                >
+                    <Settings2 className="h-4 w-4" />
+                    {isSaving ? 'Saving...' : 'Save rules'}
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
+const kpiMeta = [
+    {
+        key: 'attentionNeeded',
+        label: 'Need action',
+        accent: 'from-rose-500 to-orange-400',
+        icon: ShieldAlert,
+        formatter: (payload) => payload.overview.attentionNeeded,
+        helper: 'Posts that still need a human decision.',
+    },
+    {
+        key: 'totalPosts',
+        label: 'Live coverage',
+        accent: 'from-sky-400 to-cyan-500',
+        icon: Sparkles,
+        formatter: (payload) => payload.overview.totalPosts,
+        helper: 'Posts currently in the monitoring pool.',
+    },
+    {
+        key: 'resolvedPosts',
+        label: 'Resolved',
+        accent: 'from-emerald-400 to-teal-500',
+        icon: CheckCircle2,
+        formatter: (payload) => payload.overview.resolvedPosts,
+        helper: 'Posts already handled by the team.',
+    },
+    {
+        key: 'aiBudget',
+        label: 'AI remaining',
+        accent: 'from-fuchsia-500 to-violet-500',
+        icon: Bot,
+        formatter: (payload) => payload.aiUsage.remainingToday,
+        helper: (payload) => `${payload.aiUsage.usedToday}/${payload.aiUsage.maxPerDay} used today`,
+    },
+];
+
+const QueueItem = ({ isDark, post, onOpen, onResolve, isBusy }) => {
+    const PlatformIcon = (platformMeta[post.platform] || platformMeta.instagram).icon;
+
+    return (
+        <div className={`rounded-md border p-4 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] ${isDark ? 'bg-rose-500/10 text-rose-200' : 'bg-rose-50 text-rose-700'}`}>
+                            <PlatformIcon className="h-3.5 w-3.5" />
+                            {(platformMeta[post.platform] || platformMeta.instagram).label}
+                        </span>
+                        <span className={`rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] ${post.analysis.priority === 'high'
+                            ? 'bg-rose-500/10 text-rose-200'
+                            : post.analysis.priority === 'medium'
+                                ? 'bg-amber-500/10 text-amber-200'
+                                : isDark ? 'bg-white/5 text-[#a1a5b7]' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                            {post.analysis.priority} priority
+                        </span>
+                    </div>
+                    <p className={`mt-3 text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{post.eventName}</p>
+                    <h3 className={`mt-1 text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{post.artistName}</h3>
+                    <p className={`mt-2 text-sm leading-6 ${isDark ? 'text-[#d7d9e4]' : 'text-gray-600'}`}>
+                        {post.attentionReason || post.analysis.summary}
+                    </p>
+                </div>
+                <div className={`rounded-md px-3 py-2 text-right ${isDark ? 'bg-[#1e1e2d]' : 'bg-white'}`}>
+                    <p className={`text-[10px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Next check</p>
+                    <p className={`mt-2 text-xs font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatDateTime(post.nextUpdateAt)}</p>
+                </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    onClick={() => onOpen(post.id)}
+                    className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${isDark ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                >
+                    Review
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onResolve(post.id)}
+                    disabled={isBusy || post.alertStatus === 'resolved'}
+                    className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${isDark ? 'border border-white/10 bg-white/5 text-gray-100 hover:border-emerald-400/30 hover:bg-emerald-500/10 disabled:border-[#2b2b40] disabled:text-[#5e6278]' : 'border border-gray-200 bg-white text-gray-800 hover:border-emerald-200 hover:bg-emerald-50 disabled:text-gray-400'}`}
+                >
+                    {post.alertStatus === 'resolved' ? 'Resolved' : 'Resolve'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const SocialDashboard = ({ isDark }) => {
     const [payload, setPayload] = useState(emptyPayload);
     const [selectedEventId, setSelectedEventId] = useState('all');
-    const [selectedArtistId, setSelectedArtistId] = useState('all');
     const [selectedPlatform, setSelectedPlatform] = useState('all');
-    const [flaggedOnly, setFlaggedOnly] = useState(false);
+    const [selectedStatus, setSelectedStatus] = useState('all');
     const [selectedPostId, setSelectedPostId] = useState(null);
     const [settingsDraft, setSettingsDraft] = useState(emptyPayload.settings);
     const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [busyPostId, setBusyPostId] = useState(null);
+    const [error, setError] = useState('');
+    const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
 
-    const loadCommandCenter = async () => {
-        setIsLoading(true);
+    const loadCommandCenter = async ({ background = false } = {}) => {
         try {
+            if (background) {
+                setIsRefreshing(true);
+            } else {
+                setIsLoading(true);
+            }
+            setError('');
+
             const data = await socialCommandCenterApi.getCommandCenter();
             setPayload(data);
             setSettingsDraft(data.settings);
-        } catch (error) {
-            console.error('Failed to load social command center', error);
+        } catch (requestError) {
+            setError(requestError?.response?.data?.error || requestError?.message || 'Failed to load social command center.');
         } finally {
             setIsLoading(false);
+            setIsRefreshing(false);
         }
     };
 
@@ -107,37 +320,59 @@ const SocialDashboard = ({ isDark }) => {
         loadCommandCenter();
     }, []);
 
-    const availableArtists = useMemo(() => {
-        if (selectedEventId === 'all') {
-            return payload.artists;
-        }
+    const filteredPosts = useMemo(
+        () =>
+            payload.posts.filter((post) => {
+                const eventMatch = selectedEventId === 'all' || post.eventId === selectedEventId;
+                const platformMatch = selectedPlatform === 'all' || post.platform === selectedPlatform;
+                const statusMatch = (() => {
+                    if (selectedStatus === 'attention') {
+                        return post.analysis.needsAttention && post.alertStatus !== 'resolved';
+                    }
 
-        return payload.artists.filter((artist) => artist.eventIds.includes(selectedEventId));
-    }, [payload.artists, selectedEventId]);
+                    if (selectedStatus === 'resolved') {
+                        return post.alertStatus === 'resolved';
+                    }
 
-    const filteredPosts = useMemo(() => payload.posts.filter((post) => {
-        const eventMatch = selectedEventId === 'all' || post.eventId === selectedEventId;
-        const artistMatch = selectedArtistId === 'all' || post.artistId === selectedArtistId;
-        const platformMatch = selectedPlatform === 'all' || post.platform === selectedPlatform;
-        const statusMatch = !flaggedOnly || (post.analysis.needsAttention && post.alertStatus !== 'resolved');
+                    return true;
+                })();
 
-        return eventMatch && artistMatch && platformMatch && statusMatch;
-    }), [payload.posts, selectedEventId, selectedArtistId, selectedPlatform, flaggedOnly]);
+                return eventMatch && platformMatch && statusMatch;
+            }),
+        [payload.posts, selectedEventId, selectedPlatform, selectedStatus]
+    );
+
+    const actionQueue = useMemo(
+        () =>
+            payload.alertQueue
+                .filter((post) => {
+                    const eventMatch = selectedEventId === 'all' || post.eventId === selectedEventId;
+                    const platformMatch = selectedPlatform === 'all' || post.platform === selectedPlatform;
+                    return eventMatch && platformMatch;
+                })
+                .sort((left, right) => {
+                    const priorityGap =
+                        (priorityRank[left.analysis.priority] ?? 3) - (priorityRank[right.analysis.priority] ?? 3);
+
+                    if (priorityGap !== 0) {
+                        return priorityGap;
+                    }
+
+                    return new Date(left.nextUpdateAt || 0).getTime() - new Date(right.nextUpdateAt || 0).getTime();
+                }),
+        [payload.alertQueue, selectedEventId, selectedPlatform]
+    );
 
     const selectedPost = payload.posts.find((post) => post.id === selectedPostId) || null;
-
-    const handleEventChange = (event) => {
-        setSelectedEventId(event.target.value);
-        setSelectedArtistId('all');
-    };
 
     const handleRefreshPost = async (postId) => {
         setBusyPostId(postId);
         try {
+            setError('');
             await socialCommandCenterApi.refreshPost(postId);
-            await loadCommandCenter();
-        } catch (error) {
-            console.error('Failed to refresh post', error);
+            await loadCommandCenter({ background: true });
+        } catch (requestError) {
+            setError(requestError?.response?.data?.error || requestError?.message || 'Failed to refresh post.');
         } finally {
             setBusyPostId(null);
         }
@@ -146,10 +381,11 @@ const SocialDashboard = ({ isDark }) => {
     const handleResolvePost = async (postId) => {
         setBusyPostId(postId);
         try {
+            setError('');
             await socialCommandCenterApi.resolvePost(postId);
-            await loadCommandCenter();
-        } catch (error) {
-            console.error('Failed to resolve post', error);
+            await loadCommandCenter({ background: true });
+        } catch (requestError) {
+            setError(requestError?.response?.data?.error || requestError?.message || 'Failed to resolve post.');
         } finally {
             setBusyPostId(null);
         }
@@ -158,6 +394,7 @@ const SocialDashboard = ({ isDark }) => {
     const handleSaveSettings = async () => {
         setIsSavingSettings(true);
         try {
+            setError('');
             const nextSettings = {
                 hourlyWindowDays: Number(settingsDraft.hourlyWindowDays),
                 dailyWindowDays: Number(settingsDraft.dailyWindowDays),
@@ -168,15 +405,21 @@ const SocialDashboard = ({ isDark }) => {
             const data = await socialCommandCenterApi.updateSettings(nextSettings);
             setPayload(data);
             setSettingsDraft(data.settings);
-        } catch (error) {
-            console.error('Failed to save social settings', error);
+            setIsAutomationModalOpen(false);
+        } catch (requestError) {
+            setError(requestError?.response?.data?.error || requestError?.message || 'Failed to save monitoring rules.');
         } finally {
             setIsSavingSettings(false);
         }
     };
 
+    const aiBudgetPercent = Math.min(
+        100,
+        (payload.aiUsage.usedToday / Math.max(1, payload.aiUsage.maxPerDay)) * 100
+    );
+
     return (
-        <div className="space-y-8 animate-fade-in max-w-[1520px] mx-auto pb-12">
+        <div className="space-y-8 animate-fade-in max-w-[1500px] mx-auto pb-12">
             {selectedPost && (
                 <SocialPostModal
                     post={selectedPost}
@@ -188,12 +431,31 @@ const SocialDashboard = ({ isDark }) => {
                 />
             )}
 
+            {isAutomationModalOpen && (
+                <MonitoringRulesModal
+                    isDark={isDark}
+                    limits={payload.limits}
+                    onClose={() => setIsAutomationModalOpen(false)}
+                    onDraftChange={(field, value) =>
+                        setSettingsDraft((current) => ({
+                            ...current,
+                            [field]: value,
+                        }))
+                    }
+                    onSave={handleSaveSettings}
+                    settingsDraft={settingsDraft}
+                    isSaving={isSavingSettings}
+                    aiUsage={payload.aiUsage}
+                />
+            )}
+
             <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-400/10 blur-3xl" />
-                    <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-rose-400/10 blur-3xl" />
+                    <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-sky-500/10 blur-3xl" />
                 </div>
-                <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+
+                <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
                     <div>
                         <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                             <span className="inline-flex items-center gap-2">
@@ -202,26 +464,105 @@ const SocialDashboard = ({ isDark }) => {
                             </span>
                         </h2>
                         <p className={`mt-3 max-w-3xl text-sm leading-7 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                            Monitor sentiment, surface posts that need intervention, and keep your AI review cadence under control from one operating view.
+                            A calmer operating view for social monitoring. Triage what needs action, keep tabs on live coverage, and adjust automation only when the cadence actually needs to change.
                         </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <span className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em] ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                                {filteredPosts.length} posts in view
+                            </span>
+                            {isRefreshing && (
+                                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em] ${isDark ? 'border-sky-400/20 bg-sky-500/10 text-sky-200' : 'border-sky-200 bg-sky-50 text-sky-700'}`}>
+                                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                    Syncing
+                                </span>
+                            )}
+                        </div>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={loadCommandCenter}
-                        className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
-                    >
-                        <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
-                        <span>Reload feed</span>
-                    </button>
+                    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-end">
+                        <div className={`flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-100' : 'border-gray-200 bg-gray-50 text-gray-800'}`}>
+                            <Filter className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
+                            <select
+                                aria-label="Social event filter"
+                                value={selectedEventId}
+                                onChange={(event) => setSelectedEventId(event.target.value)}
+                                className="min-w-[11rem] bg-transparent outline-none"
+                            >
+                                <option value="all">All events</option>
+                                {payload.events.map((event) => (
+                                    <option key={event.id} value={event.id}>
+                                        {event.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
+                        </div>
+
+                        <div className={`flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-100' : 'border-gray-200 bg-gray-50 text-gray-800'}`}>
+                            <Sparkles className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
+                            <select
+                                aria-label="Social platform filter"
+                                value={selectedPlatform}
+                                onChange={(event) => setSelectedPlatform(event.target.value)}
+                                className="min-w-[10rem] bg-transparent outline-none"
+                            >
+                                {platformOptions.map((platform) => (
+                                    <option key={platform.id} value={platform.id}>
+                                        {platform.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
+                        </div>
+
+                        <div className={`flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-100' : 'border-gray-200 bg-gray-50 text-gray-800'}`}>
+                            <ShieldAlert className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
+                            <select
+                                aria-label="Social status filter"
+                                value={selectedStatus}
+                                onChange={(event) => setSelectedStatus(event.target.value)}
+                                className="min-w-[10rem] bg-transparent outline-none"
+                            >
+                                {statusOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setIsAutomationModalOpen(true)}
+                            className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'border border-white/10 bg-white/5 text-gray-100 hover:border-sky-400/30 hover:bg-sky-500/10' : 'border border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50'}`}
+                        >
+                            <Settings2 className="h-4 w-4" />
+                            Monitoring rules
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => loadCommandCenter({ background: true })}
+                            className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                        >
+                            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                            Refresh feed
+                        </button>
+                    </div>
                 </div>
             </section>
 
+            {error && (
+                <div className={`rounded-md border px-4 py-3 text-sm font-light ${isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+                    {error}
+                </div>
+            )}
+
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {statMeta.map((stat) => {
+                {kpiMeta.map((stat) => {
                     const Icon = stat.icon;
-                    const rawValue = payload.overview[stat.key];
-                    const value = stat.key === 'avgSentimentScore' ? Number(rawValue || 0).toFixed(1) : rawValue;
+                    const helperText = typeof stat.helper === 'function' ? stat.helper(payload) : stat.helper;
 
                     return (
                         <div key={stat.key} className={`relative overflow-hidden rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
@@ -229,7 +570,8 @@ const SocialDashboard = ({ isDark }) => {
                             <div className="flex items-center justify-between gap-4">
                                 <div>
                                     <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{stat.label}</p>
-                                    <p className={`mt-3 text-3xl font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{value}</p>
+                                    <p className={`mt-3 text-3xl font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{stat.formatter(payload)}</p>
+                                    <p className={`mt-2 text-sm leading-6 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{helperText}</p>
                                 </div>
                                 <div className={`flex h-11 w-11 items-center justify-center rounded-md bg-gradient-to-br text-[#08111f] ${stat.accent}`}>
                                     <Icon size={18} />
@@ -240,220 +582,140 @@ const SocialDashboard = ({ isDark }) => {
                 })}
             </section>
 
-            <section className="grid grid-cols-1 gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-                <aside className="space-y-4">
-                    <section className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                        <div className="flex items-center gap-2">
-                            <Filter size={16} className={isDark ? 'text-cyan-300' : 'text-sky-700'} />
-                            <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Filters</h3>
-                        </div>
-
-                        <div className="mt-4 space-y-4">
-                            <label className="block">
-                                <span className={`mb-2 block text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Event</span>
-                                <div className={`relative flex items-center rounded-md border px-3 py-2.5 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
-                                    <select
-                                        value={selectedEventId}
-                                        onChange={handleEventChange}
-                                        className={`w-full appearance-none bg-transparent pr-8 text-sm outline-none ${isDark ? 'text-gray-100' : 'text-gray-900'}`}
-                                    >
-                                        <option value="all">All events</option>
-                                        {payload.events.map((event) => (
-                                            <option key={event.id} value={event.id}>{event.name}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
-                                </div>
-                            </label>
-
-                            <label className="block">
-                                <span className={`mb-2 block text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Artist</span>
-                                <div className={`relative flex items-center rounded-md border px-3 py-2.5 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
-                                    <select
-                                        value={selectedArtistId}
-                                        onChange={(event) => setSelectedArtistId(event.target.value)}
-                                        className={`w-full appearance-none bg-transparent pr-8 text-sm outline-none ${isDark ? 'text-gray-100' : 'text-gray-900'}`}
-                                    >
-                                        <option value="all">All artists</option>
-                                        {availableArtists.map((artist) => (
-                                            <option key={artist.id} value={artist.id}>{artist.name}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={16} className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
-                                </div>
-                            </label>
-
-                            <div>
-                                <span className={`mb-2 block text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Platform</span>
-                                <div className="flex flex-wrap gap-2">
-                                    {platformOptions.map((platform) => (
-                                        <button
-                                            key={platform.id}
-                                            type="button"
-                                            onClick={() => setSelectedPlatform(platform.id)}
-                                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors ${selectedPlatform === platform.id
-                                                ? (isDark ? 'border-sky-400/30 bg-sky-500/10 text-white' : 'border-gray-900 bg-gray-900 text-white')
-                                                : (isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8a93ae] hover:text-white' : 'border-gray-200 bg-gray-50 text-gray-600 hover:text-gray-900')
-                                            }`}
-                                        >
-                                            <platform.icon size={14} />
-                                            <span>{platform.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setFlaggedOnly((current) => !current)}
-                                className={`inline-flex items-center gap-2 rounded-md border px-4 py-2.5 text-sm transition-colors ${flaggedOnly
-                                    ? (isDark ? 'border-rose-400/30 bg-rose-500/10 text-rose-100' : 'border-rose-200 bg-rose-50 text-rose-700')
-                                    : (isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8a93ae]' : 'border-gray-200 bg-gray-50 text-gray-600')
-                                }`}
-                            >
-                                <AlertTriangle size={14} />
-                                <span>Attention only</span>
-                            </button>
-                        </div>
-                    </section>
-
-                    <section className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                        <div className="flex items-center gap-2">
-                            <Settings2 size={16} className="text-amber-400" />
-                            <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Automation</h3>
-                        </div>
-                        <p className={`mt-2 text-sm font-light leading-6 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                            Hourly for posts under {settingsDraft.hourlyWindowDays} days, morning refresh for posts under {settingsDraft.dailyWindowDays} days, and on-demand beyond that.
-                        </p>
-
-                        <div className="mt-4 grid gap-3">
-                            {[
-                                ['hourlyWindowDays', 'Hourly window (days)'],
-                                ['dailyWindowDays', 'Daily window (days)'],
-                                ['dailyUpdateHour', 'Morning update hour (UTC)'],
-                                ['maxAICallsPerDay', 'Max AI calls / day'],
-                            ].map(([field, label]) => (
-                                <label key={field} className="block">
-                                    <span className={`mb-2 block text-xs uppercase tracking-[0.16em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>{label}</span>
-                                    <input
-                                        type="number"
-                                        min={payload.limits[field].min}
-                                        max={payload.limits[field].max}
-                                        value={settingsDraft[field]}
-                                        onChange={(event) => setSettingsDraft((current) => ({
-                                            ...current,
-                                            [field]: event.target.value,
-                                        }))}
-                                        className={`w-full rounded-md border px-3 py-2.5 text-sm outline-none ${isDark ? 'border-[#2b2b40] bg-[#151521] text-white' : 'border-gray-200 bg-gray-50 text-[#0f172a]'}`}
-                                    />
-                                </label>
-                            ))}
-                        </div>
-
-                        <div className={`mt-4 rounded-md border p-4 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
-                            <div className="flex items-center justify-between">
-                                <span className={`text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>AI budget</span>
-                                <span className={`text-sm font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{payload.aiUsage.usedToday} / {payload.aiUsage.maxPerDay}</span>
-                            </div>
-                            <div className={`mt-3 h-2 overflow-hidden rounded-full ${isDark ? 'bg-[#111521]' : 'bg-[#e2e8f0]'}`}>
-                                <div
-                                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400"
-                                    style={{ width: `${Math.min(100, (payload.aiUsage.usedToday / Math.max(1, payload.aiUsage.maxPerDay)) * 100)}%` }}
-                                ></div>
-                            </div>
-                            <p className={`mt-3 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                                {payload.aiUsage.remainingToday} calls remaining before the cap blocks manual refreshes.
-                            </p>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleSaveSettings}
-                            disabled={isSavingSettings}
-                            className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-emerald-400 text-[#062814] hover:bg-emerald-300 disabled:bg-[#1d2230] disabled:text-[#64748b]' : 'bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-[#dbe2ee] disabled:text-[#94a3b8]'}`}
-                        >
-                            <Clock3 size={15} />
-                            <span>{isSavingSettings ? 'Saving...' : 'Save controls'}</span>
-                        </button>
-                    </section>
-
-                    <section className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                        <div className="flex items-center justify-between gap-4">
-                            <div>
-                                <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Flagged queue</h3>
-                                <p className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>Posts that need a decision soon.</p>
-                            </div>
-                            <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.16em] ${isDark ? 'border border-white/10 bg-white/5 text-[#8a93ae]' : 'border border-gray-200 bg-gray-50 text-[#64748b]'}`}>
-                                {payload.alertQueue.length}
-                            </span>
-                        </div>
-
-                        <div className="mt-4 space-y-3">
-                            {payload.alertQueue.length === 0 ? (
-                                <div className={`rounded-md border border-dashed px-4 py-8 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#a1a5b7]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-                                    No active alerts right now.
-                                </div>
-                            ) : payload.alertQueue.map((post) => (
-                                <button
-                                    key={post.id}
-                                    type="button"
-                                    onClick={() => setSelectedPostId(post.id)}
-                                    className={`w-full rounded-md border p-4 text-left transition-colors ${isDark ? 'border-[#2b2b40] bg-[#151521] hover:border-[#445070]' : 'border-gray-200 bg-gray-50 hover:border-[#bcc8df]'}`}
-                                >
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div>
-                                            <p className={`text-xs uppercase tracking-[0.16em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>{post.eventName}</p>
-                                            <h4 className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{post.artistName}</h4>
-                                            <p className={`mt-2 text-sm leading-6 ${isDark ? 'text-[#d6dbee]' : 'text-[#334155]'}`}>{post.attentionReason || post.analysis.summary}</p>
-                                        </div>
-                                        <div className={`rounded-md px-3 py-2 text-center ${isDark ? 'bg-[#1e1e2d]' : 'bg-white'}`}>
-                                            <p className={`text-[10px] uppercase tracking-[0.16em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Next</p>
-                                            <p className={`mt-2 text-xs font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatDateTime(post.nextUpdateAt)}</p>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </section>
-                </aside>
-
+            <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                 <section className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <h3 className={`text-2xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Feed grid</h3>
+                            <h3 className={`text-2xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Monitoring board</h3>
                             <p className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                                Cross-event social monitoring with AI refresh and modal drill-in.
+                                Clean coverage cards for the posts inside your current scope.
                             </p>
                         </div>
-                        <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.16em] ${isDark ? 'border border-white/10 bg-white/5 text-[#8a93ae]' : 'border border-gray-200 bg-gray-50 text-[#64748b]'}`}>
+                        <span className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.16em] ${isDark ? 'border-white/10 bg-white/5 text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
                             {filteredPosts.length} posts
                         </span>
                     </div>
 
-                    <div className="mt-6 grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
-                        {isLoading && Array.from({ length: 3 }).map((_, index) => (
-                            <div key={index} className={`h-[31rem] animate-pulse rounded-md ${isDark ? 'bg-[#151521]' : 'bg-[#f8fafc]'}`}></div>
-                        ))}
+                    <div className="mt-6 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                        {isLoading &&
+                            Array.from({ length: 6 }, (_, index) => (
+                                <div
+                                    key={index}
+                                    className={`h-[23rem] animate-pulse rounded-md ${isDark ? 'bg-[#151521]' : 'bg-[#f8fafc]'}`}
+                                />
+                            ))}
 
-                        {!isLoading && filteredPosts.map((post) => (
-                            <SocialPostCard
-                                key={post.id}
-                                post={post}
-                                onOpen={setSelectedPostId}
-                                onRefresh={handleRefreshPost}
-                                isBusy={busyPostId === post.id}
-                                isDark={isDark}
-                            />
-                        ))}
+                        {!isLoading &&
+                            filteredPosts.map((post) => (
+                                <SocialPostCard
+                                    key={post.id}
+                                    post={post}
+                                    onOpen={setSelectedPostId}
+                                    onRefresh={handleRefreshPost}
+                                    isBusy={busyPostId === post.id}
+                                    isDark={isDark}
+                                />
+                            ))}
                     </div>
 
                     {!isLoading && filteredPosts.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 opacity-70">
-                            <Filter size={42} className={isDark ? 'text-[#4f5972]' : 'text-[#94a3b8]'} />
-                            <p className={`mt-4 text-sm ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>No posts match the current filters.</p>
+                            <Filter className={isDark ? 'h-10 w-10 text-[#4f5972]' : 'h-10 w-10 text-[#94a3b8]'} />
+                            <p className={`mt-4 text-sm ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>No posts match the current scope.</p>
                         </div>
                     )}
                 </section>
+
+                <aside className="space-y-4">
+                    <section className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Action queue</h3>
+                                <p className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                                    The few issues worth opening first.
+                                </p>
+                            </div>
+                            <span className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.16em] ${isDark ? 'border-white/10 bg-white/5 text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                                {actionQueue.length}
+                            </span>
+                        </div>
+
+                        <div className="mt-4 space-y-3">
+                            {isLoading && (
+                                Array.from({ length: 3 }, (_, index) => (
+                                    <div
+                                        key={index}
+                                        className={`h-40 animate-pulse rounded-md ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}
+                                    />
+                                ))
+                            )}
+
+                            {!isLoading && actionQueue.length === 0 && (
+                                <div className={`rounded-md border border-dashed px-4 py-8 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#a1a5b7]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                                    Nothing urgent in the current scope.
+                                </div>
+                            )}
+
+                            {!isLoading &&
+                                actionQueue.map((post) => (
+                                    <QueueItem
+                                        key={post.id}
+                                        isDark={isDark}
+                                        post={post}
+                                        onOpen={setSelectedPostId}
+                                        onResolve={handleResolvePost}
+                                        isBusy={busyPostId === post.id}
+                                    />
+                                ))}
+                        </div>
+                    </section>
+
+                    <section className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
+                        <div className="flex items-center gap-2">
+                            <Settings2 className="h-4 w-4 text-amber-400" />
+                            <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Automation</h3>
+                        </div>
+
+                        <div className={`mt-4 rounded-md border p-4 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Coverage cadence</p>
+                                    <p className={`mt-2 text-sm leading-6 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                        Hourly for {payload.settings.hourlyWindowDays} days, then daily until day {payload.settings.dailyWindowDays}.
+                                    </p>
+                                </div>
+                                <Clock3 className={`h-5 w-5 shrink-0 ${isDark ? 'text-cyan-300' : 'text-sky-700'}`} />
+                            </div>
+                        </div>
+
+                        <div className={`mt-3 rounded-md border p-4 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>AI budget</p>
+                                    <p className={`mt-2 text-sm leading-6 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                        {payload.aiUsage.remainingToday} calls left before manual refreshes pause.
+                                    </p>
+                                </div>
+                                <Bot className={`h-5 w-5 shrink-0 ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`} />
+                            </div>
+                            <div className={`mt-3 h-2 overflow-hidden rounded-full ${isDark ? 'bg-[#0f1320]' : 'bg-gray-200'}`}>
+                                <div
+                                    className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400"
+                                    style={{ width: `${aiBudgetPercent}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setIsAutomationModalOpen(true)}
+                            className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                        >
+                            <Settings2 className="h-4 w-4" />
+                            Edit monitoring rules
+                        </button>
+                    </section>
+                </aside>
             </section>
         </div>
     );

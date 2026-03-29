@@ -3,13 +3,11 @@ import {
     AlertTriangle,
     CheckCircle2,
     Clock3,
-    Eye,
     Facebook,
     Instagram,
     MessageSquare,
     Music,
     RefreshCw,
-    Share2,
 } from 'lucide-react';
 
 const platformMeta = {
@@ -26,29 +24,43 @@ const statusMeta = {
 };
 
 const cadenceLabel = {
-    hourly: 'Hourly refresh',
-    daily: 'Morning refresh',
+    hourly: 'Hourly',
+    daily: 'Daily',
     'on-demand': 'On demand',
 };
 
-const formatCompactNumber = (value) => new Intl.NumberFormat('en', {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-}).format(value);
+const formatCompactNumber = (value) =>
+    new Intl.NumberFormat('en', {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+    }).format(value);
+
+const formatDateTime = (value) => {
+    if (!value) {
+        return 'On demand';
+    }
+
+    return new Intl.DateTimeFormat('en', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    }).format(new Date(value));
+};
 
 const SocialPostCard = ({ post, onOpen, onRefresh, isBusy, isDark }) => {
     const platform = platformMeta[post.platform] || platformMeta.instagram;
     const status = statusMeta[post.alertStatus] || statusMeta.clear;
     const PlatformIcon = platform.icon;
     const StatusIcon = status.icon;
+    const summary = post.attentionReason || post.analysis.summary;
 
     return (
         <article
-            onClick={() => onOpen(post.id)}
-            className={`group overflow-hidden rounded-md border cursor-pointer transition-all duration-300 hover:-translate-y-1 ${isDark
-                ? 'bg-[#151521] border-[#2b2b40] hover:border-[#445070] hover:shadow-[0_25px_80px_rgba(0,0,0,0.28)]'
-                : 'bg-white border-gray-200 hover:border-[#bcc8df] hover:shadow-[0_24px_60px_rgba(15,23,42,0.08)]'
-                }`}
+            className={`group overflow-hidden rounded-md border transition-all duration-300 ${isDark
+                ? 'bg-[#151521] border-[#2b2b40] hover:border-[#445070] hover:shadow-[0_20px_60px_rgba(0,0,0,0.22)]'
+                : 'bg-white border-gray-200 hover:border-[#bcc8df] hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]'
+            }`}
         >
             <div className={`h-[3px] w-full bg-gradient-to-r ${platform.accent}`}></div>
 
@@ -56,97 +68,88 @@ const SocialPostCard = ({ post, onOpen, onRefresh, isBusy, isDark }) => {
                 <img
                     src={post.mediaUrl}
                     alt={post.eventName}
-                    className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    className="h-36 w-full object-cover"
+                    loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0f111a] via-[#0f111a]/30 to-transparent"></div>
-                <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
-                    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs uppercase tracking-[0.22em] ${status.className}`}>
-                        <StatusIcon size={12} />
-                        <span>{status.label}</span>
-                    </div>
-                    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${isDark ? 'bg-[#0f1020]/90 text-white' : 'bg-white/90 text-[#0f172a]'}`}>
-                        <PlatformIcon size={14} />
-                        <span>{platform.label}</span>
-                    </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#10131f] via-[#10131f]/25 to-transparent"></div>
+                <div className="absolute left-4 right-4 top-4 flex items-center justify-between gap-2">
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] ${status.className}`}>
+                        <StatusIcon className="h-3.5 w-3.5" />
+                        {status.label}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] ${isDark ? 'bg-[#0f1020]/90 text-white' : 'bg-white/90 text-[#0f172a]'}`}>
+                        <PlatformIcon className="h-3.5 w-3.5" />
+                        {platform.label}
+                    </span>
                 </div>
-                <div className="absolute left-4 right-4 bottom-4">
-                    <p className="text-xs uppercase tracking-[0.24em] text-white/70">{post.eventName}</p>
-                    <h3 className="mt-2 text-xl font-semibold text-white">{post.artistName}</h3>
+                <div className="absolute bottom-4 left-4 right-4">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-white/70">{post.eventName}</p>
+                    <h3 className="mt-1 text-lg font-light tracking-tight text-white">{post.artistName}</h3>
                 </div>
             </div>
 
-            <div className="space-y-5 p-5">
-                <div className="flex items-center gap-3">
-                    <img src={post.avatarUrl} alt={post.handle} className="h-10 w-10 rounded-full bg-slate-200" />
-                    <div>
-                        <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{post.author}</p>
-                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>{post.handle}</p>
-                    </div>
+            <div className="space-y-4 p-4">
+                <div className="space-y-2">
+                    <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>
+                        {post.handle}
+                    </p>
+                    <p className={`text-sm leading-6 ${isDark ? 'text-[#d6dbee]' : 'text-[#334155]'}`}>
+                        {summary}
+                    </p>
                 </div>
 
-                <p className={`text-sm leading-7 ${isDark ? 'text-[#d6dbee]' : 'text-[#334155]'}`}>
-                    {post.content.length > 165 ? `${post.content.slice(0, 165)}...` : post.content}
-                </p>
-
-                <div className={`rounded-md border p-4 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-gray-50'}`}>
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Sentiment</p>
-                            <p className={`mt-1 text-3xl font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{post.analysis.sentimentScore}</p>
+                <div className="grid grid-cols-3 gap-3 text-left">
+                    <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
+                        <p className={`text-[10px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Score</p>
+                        <p className={`mt-1 text-lg font-light ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{post.analysis.sentimentScore}</p>
+                    </div>
+                    <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
+                        <div className="flex items-center gap-1">
+                            <MessageSquare className={`h-3.5 w-3.5 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
+                            <p className={`text-[10px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Comments</p>
                         </div>
-                        <div className={`max-w-[12rem] text-right text-xs leading-5 ${isDark ? 'text-[#aeb6cc]' : 'text-[#475569]'}`}>
-                            {post.attentionReason || post.analysis.summary}
-                        </div>
-                    </div>
-
-                    <div className="mt-4 flex h-2 overflow-hidden rounded-full bg-black/10">
-                        <div className="bg-emerald-400" style={{ width: `${post.analysis.breakdown.positive}%` }}></div>
-                        <div className="bg-slate-400" style={{ width: `${post.analysis.breakdown.neutral}%` }}></div>
-                        <div className="bg-rose-400" style={{ width: `${post.analysis.breakdown.negative}%` }}></div>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-3 text-center">
-                    <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
-                        <Eye size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
-                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Views</p>
-                        <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.views)}</p>
+                        <p className={`mt-1 text-lg font-light ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.comments)}</p>
                     </div>
                     <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
-                        <MessageSquare size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
-                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Comments</p>
-                        <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.comments)}</p>
-                    </div>
-                    <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
-                        <Share2 size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
-                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Shares</p>
-                        <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{formatCompactNumber(post.engagement.shares)}</p>
-                    </div>
-                    <div className={`rounded-md px-3 py-3 ${isDark ? 'bg-[#1e1e2d]' : 'bg-gray-50'}`}>
-                        <Clock3 size={15} className={`mx-auto mb-2 ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`} />
-                        <p className={`text-xs ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Cadence</p>
-                        <p className={`mt-1 text-sm font-semibold ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{cadenceLabel[post.updateCadence]}</p>
+                        <p className={`text-[10px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Cadence</p>
+                        <p className={`mt-1 text-sm font-light ${isDark ? 'text-white' : 'text-[#0f172a]'}`}>{cadenceLabel[post.updateCadence]}</p>
                     </div>
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                    <div className={`text-xs uppercase tracking-[0.2em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>
-                        {post.analysis.priority} priority
+                    <div>
+                        <p className={`text-[10px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8a93ae]' : 'text-[#64748b]'}`}>Next check</p>
+                        <p className={`mt-1 text-sm font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatDateTime(post.nextUpdateAt)}</p>
                     </div>
+                    <span className={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] ${post.analysis.priority === 'high'
+                        ? 'bg-rose-500/10 text-rose-200'
+                        : post.analysis.priority === 'medium'
+                            ? 'bg-amber-500/10 text-amber-200'
+                            : isDark ? 'bg-white/5 text-[#8a93ae]' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                        {post.analysis.priority} priority
+                    </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
                     <button
                         type="button"
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            onRefresh(post.id);
-                        }}
-                        disabled={isBusy}
-                        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors ${isDark
-                            ? 'bg-[#243047] text-white hover:bg-[#31415f] disabled:bg-[#1d2230] disabled:text-[#64748b]'
-                            : 'bg-[#0f172a] text-white hover:bg-[#1e293b] disabled:bg-[#dbe2ee] disabled:text-[#94a3b8]'
-                            }`}
+                        onClick={() => onOpen(post.id)}
+                        className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${isDark ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
                     >
-                        <RefreshCw size={14} className={isBusy ? 'animate-spin' : ''} />
-                        <span>Refresh AI</span>
+                        Review
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onRefresh(post.id)}
+                        disabled={isBusy}
+                        className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${isDark
+                            ? 'border border-white/10 bg-white/5 text-gray-100 hover:border-sky-400/30 hover:bg-sky-500/10 disabled:border-[#2b2b40] disabled:text-[#64748b]'
+                            : 'border border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50 disabled:text-gray-400'
+                        }`}
+                    >
+                        <RefreshCw className={`h-4 w-4 ${isBusy ? 'animate-spin' : ''}`} />
+                        Refresh AI
                     </button>
                 </div>
             </div>
