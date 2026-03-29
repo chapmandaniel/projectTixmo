@@ -406,75 +406,63 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                         <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
                         <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                     </div>
-                    <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
                         <div className="relative">
                             <h1 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                 <span className="inline-flex items-center gap-2">
-                                    <span>Review Portal</span>
+                                    <span>Approvals</span>
                                     <CheckCircle2 className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-sky-300' : 'text-sky-700'}`} />
                                 </span>
                             </h1>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => setShowCreateModal(true)}
-                            className={`relative inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
-                        >
-                            <Plus className="h-4 w-4" />
-                            New submission
-                        </button>
+                        <div className="relative flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-end">
+                            <div className={`flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-100' : 'border-gray-200 bg-gray-50 text-gray-800'}`}>
+                                <Calendar className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
+                                <select
+                                    aria-label="Event filter"
+                                    value={eventFilter}
+                                    onChange={(e) => setEventFilter(e.target.value)}
+                                    className="min-w-[11rem] bg-transparent outline-none"
+                                >
+                                    <option value="">Filter by event</option>
+                                    {events.map((event) => (
+                                        <option key={event.id} value={event.id}>
+                                            {event.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className={`flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-100' : 'border-gray-200 bg-gray-50 text-gray-800'}`}>
+                                <Clock3 className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
+                                <select
+                                    aria-label="Status filter"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="min-w-[10rem] bg-transparent outline-none"
+                                >
+                                    {DASHBOARD_STATUS_OPTIONS.map((option) => (
+                                        <option key={option.value || 'all'} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowCreateModal(true)}
+                                className={`relative inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                            >
+                                <Plus className="h-4 w-4" />
+                                New submission
+                            </button>
+                        </div>
                     </div>
                 </section>
 
                 <section className="space-y-4">
-                    <div className={`rounded-md border p-4 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-200 shadow-sm'}`}>
-                        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-                            <label className="block">
-                                <span className={`mb-2 block text-xs uppercase tracking-[0.2em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Event</span>
-                                <div className={`flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-100' : 'border-gray-200 bg-gray-50 text-gray-800'}`}>
-                                    <Calendar className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
-                                    <select
-                                        aria-label="Event filter"
-                                        value={eventFilter}
-                                        onChange={(e) => setEventFilter(e.target.value)}
-                                        className="w-full bg-transparent outline-none"
-                                    >
-                                        <option value="">All events</option>
-                                        {events.map((event) => (
-                                            <option key={event.id} value={event.id}>
-                                                {event.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </label>
-
-                            <label className="block">
-                                <span className={`mb-2 block text-xs uppercase tracking-[0.2em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Status</span>
-                                <div className={`flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-100' : 'border-gray-200 bg-gray-50 text-gray-800'}`}>
-                                    <Clock3 className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
-                                    <select
-                                        aria-label="Status filter"
-                                        value={statusFilter}
-                                        onChange={(e) => setStatusFilter(e.target.value)}
-                                        className="w-full bg-transparent outline-none"
-                                    >
-                                        {DASHBOARD_STATUS_OPTIONS.map((option) => (
-                                            <option key={option.value || 'all'} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </label>
-
-                            <div className={`flex items-end rounded-md border px-4 py-3 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#a1a5b7]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-                                {visibleApprovals.length} items
-                            </div>
-                        </div>
-                    </div>
-
                     {error && (
                         <div className={`rounded-md border px-4 py-3 text-sm font-light ${isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
                             {error}
