@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
-import SectionSkeletonOverlay from '../components/SectionSkeletonOverlay';
+import PendingSectionBlocker from '../components/PendingSectionBlocker';
 import ApprovalDetailView from './ApprovalDetailView';
 import { formatApprovalDate } from './approvalConstants';
 
@@ -664,12 +664,6 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                         </div>
                     ) : (
                         <div className="relative grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                            {refreshing && (
-                                <SectionSkeletonOverlay
-                                    label="Refreshing approvals"
-                                    variant="cards"
-                                />
-                            )}
                             {visibleApprovals.map((approval) => {
                                 const reviewStatus = mapApprovalStatus(approval.status);
                                 const meta = REVIEW_STATUS_META[reviewStatus];
@@ -682,7 +676,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                         key={approval.id}
                                         type="button"
                                         onClick={() => openApproval(approval)}
-                                        className={`relative overflow-hidden rounded-md border text-left transition-all duration-300 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] hover:border-[#3a3a5a] hover:bg-[#232336] hover:shadow-xl hover:shadow-black/20' : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'}`}
+                                        className={`relative overflow-hidden rounded-md border text-left transition-all duration-300 ${refreshing ? 'pending-surface-soft' : ''} ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] hover:border-[#3a3a5a] hover:bg-[#232336] hover:shadow-xl hover:shadow-black/20' : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'}`}
                                     >
                                         <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${meta.accent}`} />
                                         <div className={`aspect-[1.2/1] ${isDark ? 'bg-[linear-gradient(135deg,_rgba(56,189,248,0.14),_rgba(30,30,45,0.8))]' : 'bg-[linear-gradient(135deg,_rgba(14,165,233,0.08),_rgba(255,255,255,0.9))]'}`}>
@@ -731,6 +725,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                     </button>
                                 );
                             })}
+                            {refreshing && <PendingSectionBlocker label="Refreshing approvals" />}
                         </div>
                     )}
                 </section>

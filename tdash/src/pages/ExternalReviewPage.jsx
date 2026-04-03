@@ -14,7 +14,7 @@ import {
     DECISION_OPTIONS,
     formatApprovalDate,
 } from '../features/approvalConstants';
-import SectionSkeletonOverlay from '../components/SectionSkeletonOverlay';
+import PendingSectionBlocker from '../components/PendingSectionBlocker';
 import { getApiBaseUrl } from '../lib/runtimeConfig';
 
 const STATUS_CARD_ACCENTS = {
@@ -305,6 +305,7 @@ const ExternalReviewPage = () => {
     const currentDecision = approval?.myReview?.decision
         ? `Current decision: ${approval.myReview.decision.replaceAll('_', ' ')}`
         : 'You have not responded yet.';
+    const isAsidePending = refreshing || pendingSection === 'aside';
     const canDeleteComment = (item) => (
         !item.pending &&
         item.type === 'comment' &&
@@ -617,12 +618,6 @@ const ExternalReviewPage = () => {
                     </section>
 
                     <aside className="relative space-y-4">
-                        {(refreshing || pendingSection === 'aside') && (
-                            <SectionSkeletonOverlay
-                                label={pendingSection === 'aside' ? 'Updating review panel' : 'Refreshing review panel'}
-                                variant="conversation"
-                            />
-                        )}
                         <div className="px-1 pt-1">
                             <p className="text-sm font-light text-[#a1a5b7]">{currentDecision}</p>
                             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -637,7 +632,7 @@ const ExternalReviewPage = () => {
                             </div>
                         </div>
 
-                        <section className={`${panelClass} p-4`}>
+                        <section className={`${panelClass} ${isAsidePending ? 'pending-surface-soft' : ''} p-4`}>
                             <div className="flex items-center justify-between gap-4 px-1 pb-3">
                                 <h2 className="text-lg font-light text-gray-100">Discussion</h2>
                                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
@@ -732,6 +727,11 @@ const ExternalReviewPage = () => {
                                 </button>
                             </form>
                         </section>
+                        {isAsidePending && (
+                            <PendingSectionBlocker
+                                label={pendingSection === 'aside' ? 'Updating review panel' : 'Refreshing review panel'}
+                            />
+                        )}
                     </aside>
                 </section>
             </div>

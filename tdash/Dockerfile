@@ -19,7 +19,8 @@ RUN npm run build
 # Stage 4: Serve with Nginx
 FROM nginx:alpine AS production
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.site.conf /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.d/40-runtime-config.sh /docker-entrypoint.d/40-runtime-config.sh
 RUN chmod +x /docker-entrypoint.d/40-runtime-config.sh
 EXPOSE 80
