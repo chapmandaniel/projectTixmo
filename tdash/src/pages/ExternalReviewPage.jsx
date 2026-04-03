@@ -651,6 +651,7 @@ const ExternalReviewPage = () => {
                                     return (
                                         <div
                                             key={item.id}
+                                            data-pending-block-root="panel"
                                             data-testid="external-discussion-item"
                                             className={`relative rounded-lg px-1 pb-3 ${item.pending ? optimisticDiscussionItemClass : ''} ${index !== discussionItems.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
                                         >
