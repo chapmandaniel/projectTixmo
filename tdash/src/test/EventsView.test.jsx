@@ -148,12 +148,18 @@ describe('EventsView', () => {
 
         expect(screen.queryByText('Tools')).not.toBeInTheDocument();
         expect(screen.queryByText('Choose the Event Manager workspace you want to use.')).not.toBeInTheDocument();
-        expect(screen.getByText('Create Event')).toBeInTheDocument();
+        expect(screen.getByText('Create New Event')).toBeInTheDocument();
         expect(screen.getByText('Event Library')).toBeInTheDocument();
-        expect(screen.getByText('Active events')).toBeInTheDocument();
+        expect(screen.getByText('Current Events')).toBeInTheDocument();
         expect(screen.getByText('Midnight Market')).toBeInTheDocument();
         expect(screen.queryByText('Old Draft Show')).not.toBeInTheDocument();
         expect(screen.queryByText('Cancelled Expo')).not.toBeInTheDocument();
+        expect(screen.queryByText('Revenue')).not.toBeInTheDocument();
+        expect(screen.queryByText('Sell-through')).not.toBeInTheDocument();
+        expect(screen.queryByText('Enter event')).not.toBeInTheDocument();
+
+        const activeEventsRail = screen.getByText('Current Events').closest('aside');
+        expect(activeEventsRail).toHaveClass('flex', 'flex-col', 'p-6');
 
         fireEvent.click(screen.getByText('Harbour Lights Festival').closest('button'));
 
