@@ -833,7 +833,11 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                             </div>
                             <div className="mt-4 space-y-2">
                                 {reviewers.map((reviewer) => (
-                                    <div key={reviewer.id} className={`${surfaceClass} px-4 py-3 ${reviewer.pending ? optimisticItemClass : ''}`}>
+                                    <div
+                                        key={reviewer.id}
+                                        data-pending-block-root="panel"
+                                        className={`${surfaceClass} px-4 py-3 ${reviewer.pending ? optimisticItemClass : ''}`}
+                                    >
                                         <div className="flex items-center justify-between gap-3">
                                             <p className="min-w-0 truncate pr-2 text-sm font-light text-gray-100">
                                                 {reviewer.email}
@@ -942,6 +946,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                 {visibleComments.map((item, index) => (
                                     <div
                                         key={item.id}
+                                        data-pending-block-root="panel"
                                         data-testid="approval-comment-card"
                                         className={`relative rounded-lg px-1 pb-3 ${item.pending ? 'opacity-80' : ''} ${index !== visibleComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
                                     >
