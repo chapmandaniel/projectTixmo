@@ -14,7 +14,6 @@ import {
     DECISION_OPTIONS,
     formatApprovalDate,
 } from '../features/approvalConstants';
-import PendingSectionBlocker from '../components/PendingSectionBlocker';
 import { getApiBaseUrl } from '../lib/runtimeConfig';
 
 const STATUS_CARD_ACCENTS = {
@@ -728,11 +727,6 @@ const ExternalReviewPage = () => {
                                 </button>
                             </form>
                         </section>
-                        {isAsidePending && (
-                            <PendingSectionBlocker
-                                label={pendingSection === 'aside' ? 'Updating review panel' : 'Refreshing review panel'}
-                            />
-                        )}
                     </aside>
                 </section>
             </div>

@@ -14,7 +14,6 @@ import {
     User,
     XCircle,
 } from 'lucide-react';
-import PendingSectionBlocker from '../components/PendingSectionBlocker';
 import { api } from '../lib/api';
 import {
     APPROVAL_STATUS_META,
@@ -631,12 +630,6 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                 />
                             </div>
 
-                            {isWorkspacePending && (
-                                <PendingSectionBlocker
-                                    label={pendingSection === 'workspace' ? 'Updating preview' : 'Refreshing preview'}
-                                />
-                            )}
-
                             {revisionFiles.length > 0 && (
                                 <form
                                     onSubmit={uploadRevision}
@@ -891,11 +884,6 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     </div>
                                 ))}
                             </div>
-                            {isReviewersPending && (
-                                <PendingSectionBlocker
-                                    label={pendingSection === 'reviewers' ? 'Updating reviewers' : 'Refreshing reviewers'}
-                                />
-                            )}
                         </section>
 
                         <section className={`${panelClass} ${isDiscussionPending ? 'pending-surface-soft' : ''} relative overflow-hidden p-4`}>
@@ -1024,15 +1012,6 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     <Send className="h-4 w-4" />
                                 </button>
                             </form>
-                            {isDiscussionPending && (
-                                <PendingSectionBlocker
-                                    label={pendingSection === 'decision'
-                                        ? 'Updating review state'
-                                        : pendingSection === 'discussion'
-                                            ? 'Updating discussion'
-                                            : 'Refreshing discussion'}
-                                />
-                            )}
                         </section>
                     </aside>
                 </section>
