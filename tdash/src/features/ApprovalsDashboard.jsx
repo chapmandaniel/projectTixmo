@@ -21,6 +21,12 @@ const emptyForm = {
     description: '',
     reviewers: [],
 };
+const reviewerAssociationOptions = [
+    { value: 'ARTIST', label: 'Artist' },
+    { value: 'AGENT', label: 'Agent' },
+    { value: 'MANAGEMENT', label: 'Management' },
+    { value: 'OTHER', label: 'Other' },
+];
 
 const APPROVALS_DASHBOARD_CACHE_KEY = 'tixmo:approvals-dashboard-cache';
 
@@ -147,6 +153,7 @@ const ApprovalCardSkeleton = ({ isDark = true }) => (
 const CreateApprovalModal = ({ events, onClose, onCreated }) => {
     const [form, setForm] = useState(emptyForm);
     const [reviewerInput, setReviewerInput] = useState('');
+    const [reviewerAssociation, setReviewerAssociation] = useState('ARTIST');
     const [files, setFiles] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -159,9 +166,10 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
 
         setForm((current) => ({
             ...current,
-            reviewers: [...current.reviewers, { email }],
+            reviewers: [...current.reviewers, { email, association: reviewerAssociation }],
         }));
         setReviewerInput('');
+        setReviewerAssociation('ARTIST');
     };
 
     const handleSubmit = async (event) => {
@@ -265,7 +273,7 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                     <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
                         <div className="space-y-3">
                             <span className="text-sm text-slate-300">Reviewers</span>
-                            <div className="flex gap-2">
+                            <div className="grid gap-2 md:grid-cols-[1fr_180px_auto]">
                                 <input
                                     type="email"
                                     value={reviewerInput}
@@ -273,6 +281,17 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                                     placeholder="reviewer@example.com"
                                     className="flex-1 rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
                                 />
+                                <select
+                                    value={reviewerAssociation}
+                                    onChange={(e) => setReviewerAssociation(e.target.value)}
+                                    className="rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                                >
+                                    {reviewerAssociationOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
                                 <button
                                     type="button"
                                     onClick={addReviewer}
@@ -294,7 +313,7 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                                         }
                                         className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-200"
                                     >
-                                        {reviewer.email}
+                                        {reviewer.email} · {reviewerAssociationOptions.find((option) => option.value === reviewer.association)?.label || 'Other'}
                                     </button>
                                 ))}
                             </div>

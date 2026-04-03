@@ -52,7 +52,7 @@ describe('Creative approvals API', () => {
             .field('title', 'Main stage LED artwork')
             .field('description', 'Initial static composition for management review.')
             .field('deadline', new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString())
-            .field('reviewers', JSON.stringify([{ email: 'manager@example.com' }]))
+            .field('reviewers', JSON.stringify([{ email: 'manager@example.com', association: 'MANAGEMENT' }]))
             .attach('files', Buffer.from('fake-image'), {
                 filename: 'artwork.png',
                 contentType: 'image/png',
@@ -63,6 +63,7 @@ describe('Creative approvals API', () => {
         expect(response.body.status).toBe('PENDING_REVIEW');
         expect(response.body.latestRevisionNumber).toBe(1);
         expect(response.body.reviewers).toHaveLength(1);
+        expect(response.body.reviewers[0].association).toBe('MANAGEMENT');
         expect(response.body.latestRevision.assets).toHaveLength(1);
     });
 
@@ -85,7 +86,7 @@ describe('Creative approvals API', () => {
             .post(`/api/v1/approvals/${approval.id}/reviewers`)
             .set('Authorization', `Bearer ${authToken}`)
             .send({
-                reviewers: [{ email: 'second-reviewer@example.com' }],
+                reviewers: [{ email: 'second-reviewer@example.com', association: 'AGENT' }],
             });
 
         expect(response.status).toBe(201);
@@ -93,6 +94,10 @@ describe('Creative approvals API', () => {
         expect(response.body.reviewers.map((reviewer: { email: string }) => reviewer.email)).toContain(
             'second-reviewer@example.com'
         );
+        expect(
+            response.body.reviewers.find((reviewer: { email: string }) => reviewer.email === 'second-reviewer@example.com')
+                ?.association
+        ).toBe('AGENT');
         expect(response.body.status).toBe('PENDING_REVIEW');
     });
 
@@ -175,6 +180,90 @@ describe('Creative approvals API', () => {
             .set('Authorization', `Bearer ${authToken}`);
         expect(refreshedApproval.status).toBe(200);
         expect(refreshedApproval.body.status).toBe('CHANGES_REQUESTED');
+    });
+
+    it('keeps internal comments private while allowing authors to delete their own messages', async () => {
+        const approval = await prisma.approvalRequest.findFirstOrThrow({
+            where: { title: 'Main stage LED artwork' },
+            include: {
+                reviewers: true,
+                revisions: {
+                    orderBy: { revisionNumber: 'desc' },
+                    take: 1,
+                },
+            },
+        });
+
+        const latestRevisionId = approval.revisions[0].id;
+        const reviewerToken = approval.reviewers[0].token;
+
+        const globalCommentResponse = await request(app)
+            .post(`/api/v1/approvals/${approval.id}/comments`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({
+                content: 'This update can stay open to invited reviewers.',
+                revisionId: latestRevisionId,
+                visibility: 'GLOBAL',
+            });
+        expect(globalCommentResponse.status).toBe(201);
+
+        const internalCommentResponse = await request(app)
+            .post(`/api/v1/approvals/${approval.id}/comments`)
+            .set('Authorization', `Bearer ${authToken}`)
+            .send({
+                content: 'This note should stay inside the logged-in team thread.',
+                revisionId: latestRevisionId,
+                visibility: 'INTERNAL',
+            });
+        expect(internalCommentResponse.status).toBe(201);
+
+        const internalViewResponse = await request(app)
+            .get(`/api/v1/approvals/${approval.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        expect(internalViewResponse.status).toBe(200);
+        expect(internalViewResponse.body.comments.map((comment: { content: string }) => comment.content)).toEqual(
+            expect.arrayContaining([
+                'This update can stay open to invited reviewers.',
+                'This note should stay inside the logged-in team thread.',
+            ])
+        );
+
+        const externalViewResponse = await request(app).get(`/api/v1/review/${reviewerToken}`);
+        expect(externalViewResponse.status).toBe(200);
+        expect(externalViewResponse.body.approval.comments.map((comment: { content: string }) => comment.content)).toEqual(
+            expect.arrayContaining(['This update can stay open to invited reviewers.'])
+        );
+        expect(externalViewResponse.body.approval.comments.map((comment: { content: string }) => comment.content)).not.toContain(
+            'This note should stay inside the logged-in team thread.'
+        );
+        expect(externalViewResponse.body.reviewer.association).toBe('MANAGEMENT');
+
+        const deleteGlobalResponse = await request(app)
+            .delete(`/api/v1/approvals/${approval.id}/comments/${globalCommentResponse.body.id}`)
+            .set('Authorization', `Bearer ${authToken}`);
+        expect(deleteGlobalResponse.status).toBe(200);
+        expect(deleteGlobalResponse.body.comments.map((comment: { id: string }) => comment.id)).not.toContain(
+            globalCommentResponse.body.id
+        );
+
+        const externalCommentResponse = await request(app)
+            .post(`/api/v1/review/${reviewerToken}/comments`)
+            .send({
+                content: 'Reviewer follow-up that should be deletable by the same reviewer.',
+                revisionId: latestRevisionId,
+            });
+        expect(externalCommentResponse.status).toBe(201);
+
+        const deleteExternalResponse = await request(app)
+            .delete(`/api/v1/review/${reviewerToken}/comments/${externalCommentResponse.body.id}`);
+        expect(deleteExternalResponse.status).toBe(200);
+        expect(deleteExternalResponse.body.approval.comments.map((comment: { id: string }) => comment.id)).not.toContain(
+            externalCommentResponse.body.id
+        );
+
+        const forbiddenDeleteResponse = await request(app)
+            .delete(`/api/v1/review/${reviewerToken}/comments/${internalCommentResponse.body.id}`);
+        expect(forbiddenDeleteResponse.status).toBe(403);
     });
 
     it('creates a new revision and updates the dashboard status', async () => {

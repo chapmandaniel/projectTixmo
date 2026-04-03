@@ -8,6 +8,7 @@ import {
 } from './controller';
 import {
     approvalIdParamsSchema,
+    approvalCommentParamsSchema,
     approvalReviewerParamsSchema,
     listApprovalsQuerySchema,
 } from './validation';
@@ -39,6 +40,7 @@ router.post(
     ApprovalController.createRevision
 );
 router.post('/:id/comments', authenticate, validate(approvalIdParamsSchema), ApprovalController.addComment);
+router.delete('/:id/comments/:commentId', authenticate, validate(approvalCommentParamsSchema), ApprovalController.deleteComment);
 router.post('/:id/decisions', authenticate, validate(approvalIdParamsSchema), ApprovalController.submitDecision);
 
 export default router;

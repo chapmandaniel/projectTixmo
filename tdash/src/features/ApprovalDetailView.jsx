@@ -38,6 +38,19 @@ const DECISION_CARD_STYLES = {
 const panelClass = 'rounded-md border border-[#2b2b40] bg-[#1e1e2d]';
 const surfaceClass = 'rounded-md border border-[#2b2b40] bg-[#151521]';
 const inputClass = 'w-full rounded-md border border-[#2b2b40] bg-[#151521] px-4 py-3 text-sm font-light text-gray-100 outline-none transition focus:border-sky-400 placeholder:text-[#5e6278]';
+const discussionCardClass = 'rounded-lg border px-4 py-3 text-left transition';
+const reviewerAssociationOptions = [
+    { value: 'ARTIST', label: 'Artist' },
+    { value: 'AGENT', label: 'Agent' },
+    { value: 'MANAGEMENT', label: 'Management' },
+    { value: 'OTHER', label: 'Other' },
+];
+
+const associationLabel = (association) => (
+    reviewerAssociationOptions.find((option) => option.value === association)?.label || association || ''
+);
+
+const associationBadgeClass = 'inline-flex rounded-full border border-fuchsia-400/35 bg-fuchsia-500/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-fuchsia-100';
 
 const authorLabel = (author) => {
     if (!author) {
@@ -136,10 +149,12 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const [isImageExpanded, setIsImageExpanded] = useState(false);
     const [comment, setComment] = useState('');
     const [replyTo, setReplyTo] = useState(null);
+    const [activeDiscussionView, setActiveDiscussionView] = useState('GLOBAL');
     const [revisionSummary, setRevisionSummary] = useState('');
     const [revisionFiles, setRevisionFiles] = useState([]);
     const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
     const [reviewerEmail, setReviewerEmail] = useState('');
+    const [reviewerAssociation, setReviewerAssociation] = useState('ARTIST');
     const [loading, setLoading] = useState(!initialApproval);
     const [refreshing, setRefreshing] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -220,10 +235,23 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             }),
         [comments]
     );
+    const globalComments = useMemo(
+        () => sortedComments.filter((item) => item.visibility === 'GLOBAL'),
+        [sortedComments]
+    );
+    const internalComments = useMemo(
+        () => sortedComments.filter((item) => item.visibility === 'INTERNAL'),
+        [sortedComments]
+    );
+    const visibleComments = activeDiscussionView === 'INTERNAL' ? internalComments : globalComments;
 
     useEffect(() => {
         setAssetIndex(0);
     }, [selectedRevisionId]);
+
+    useEffect(() => {
+        setReplyTo(null);
+    }, [activeDiscussionView]);
 
     useEffect(() => {
         if (!isImageExpanded) {
@@ -249,6 +277,36 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const currentDecision = latestDecision?.decision
         ? `Current decision: ${latestDecision.decision.replaceAll('_', ' ')}`
         : 'You have not responded yet.';
+    const discussionCards = [
+        {
+            key: 'INTERNAL',
+            title: 'Internal / Private',
+            description: 'Only logged-in team members can view this chat.',
+            count: internalComments.length,
+        },
+        {
+            key: 'GLOBAL',
+            title: 'Global',
+            description: 'Visible to invited reviewers and logged-in team members.',
+            count: globalComments.length,
+        },
+    ];
+    const commentPlaceholder = activeDiscussionView === 'INTERNAL'
+        ? 'Message the internal chat'
+        : 'Message the global chat';
+    const emptyStateLabel = activeDiscussionView === 'INTERNAL'
+        ? 'No internal messages yet.'
+        : 'No global messages yet.';
+
+    const canDeleteComment = (commentItem) => {
+        const currentEmail = user?.email?.toLowerCase();
+        const authorEmail = commentItem.author?.email?.toLowerCase();
+
+        return Boolean(
+            commentItem.author?.id === user?.id ||
+            (currentEmail && authorEmail && currentEmail === authorEmail)
+        );
+    };
 
     const resetRevisionDraft = () => {
         setRevisionFiles([]);
@@ -275,6 +333,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const closeReviewerModal = () => {
         setIsReviewerModalOpen(false);
         setReviewerEmail('');
+        setReviewerAssociation('ARTIST');
     };
 
     const submitComment = async (event) => {
@@ -290,12 +349,33 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                 content: comment,
                 revisionId: commentRevisionId,
                 parentCommentId: replyTo?.id,
+                visibility: activeDiscussionView,
             });
             setComment('');
             setReplyTo(null);
             await fetchApproval();
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message || 'Failed to add comment.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const deleteComment = async (commentItem) => {
+        if (!window.confirm('Delete this message?')) {
+            return;
+        }
+
+        try {
+            setSaving(true);
+            setError('');
+            const updated = await api.delete(`/approvals/${approval.id}/comments/${commentItem.id}`);
+            if (replyTo?.id === commentItem.id) {
+                setReplyTo(null);
+            }
+            applyUpdatedApproval(updated);
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message || 'Failed to delete comment.');
         } finally {
             setSaving(false);
         }
@@ -352,7 +432,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setSaving(true);
             setError('');
             const updated = await api.post(`/approvals/${approval.id}/reviewers`, {
-                reviewers: [{ email: reviewerEmail.trim() }],
+                reviewers: [{ email: reviewerEmail.trim(), association: reviewerAssociation }],
             });
 
             applyUpdatedApproval(updated);
@@ -685,6 +765,11 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                             <p className="min-w-0 truncate pr-2 text-sm font-light text-gray-100">
                                                 {reviewer.email}
                                             </p>
+                                            {reviewer.reviewerType !== 'INTERNAL' && reviewer.association && (
+                                                <span className={`${associationBadgeClass} shrink-0`}>
+                                                    {associationLabel(reviewer.association)}
+                                                </span>
+                                            )}
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     type="button"
@@ -728,9 +813,36 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                         <section className={`${panelClass} p-4`}>
                             <div className="flex items-center justify-between gap-4 px-1 pb-3">
                                 <h2 className="text-lg font-light text-gray-100">Discussion</h2>
-                                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
-                                    {sortedComments.length}
-                                </span>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {discussionCards.map((card) => {
+                                    const isActive = activeDiscussionView === card.key;
+                                    return (
+                                        <button
+                                            key={card.key}
+                                            type="button"
+                                            onClick={() => setActiveDiscussionView(card.key)}
+                                            className={`${discussionCardClass} ${isActive
+                                                ? 'border-sky-400/50 bg-sky-500/10 shadow-[0_0_0_1px_rgba(56,189,248,0.15)]'
+                                                : 'border-white/10 bg-white/5 hover:border-sky-400/30 hover:bg-sky-500/5'
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p className="text-sm font-light text-gray-100">{card.title}</p>
+                                                    <p className="mt-1 text-xs font-light leading-5 text-[#8f94aa]">{card.description}</p>
+                                                </div>
+                                                <span className={`rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] ${isActive
+                                                    ? 'border border-sky-400/30 bg-sky-500/10 text-sky-100'
+                                                    : 'border border-white/10 bg-white/5 text-[#8f94aa]'
+                                                }`}>
+                                                    {card.count}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
 
                             {replyTo && (
@@ -742,21 +854,26 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                 </div>
                             )}
 
-                            <div className="space-y-3">
-                                {sortedComments.map((item, index) => (
+                            <div className="mt-4 space-y-3">
+                                {visibleComments.map((item, index) => (
                                     <div
                                         key={item.id}
                                         data-testid="approval-comment-card"
-                                        className={`relative rounded-lg px-1 pb-3 ${index !== sortedComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
+                                        className={`relative rounded-lg px-1 pb-3 ${index !== visibleComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
                                     >
                                         <div className="flex flex-wrap items-start justify-between gap-3">
                                             <div className="flex items-start gap-3">
-                                                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-500/10 text-[11px] uppercase tracking-[0.18em] text-sky-100">
+                                                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-500/10 text-[11px] uppercase tracking-[0.18em] text-sky-100">
                                                     {initialsLabel(item.author)}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <span className="text-sm font-light text-gray-100">{authorLabel(item.author)}</span>
+                                                        {activeDiscussionView === 'GLOBAL' && item.author?.type !== 'INTERNAL' && item.author?.association && (
+                                                            <span className={associationBadgeClass}>
+                                                                {associationLabel(item.author.association)}
+                                                            </span>
+                                                        )}
                                                         {item.parentCommentId && (
                                                             <span className="inline-flex rounded-full border border-sky-400/25 bg-sky-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-sky-100">
                                                                 Reply
@@ -776,14 +893,26 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                                     <User className="h-3.5 w-3.5" />
                                                     Reply
                                                 </button>
+                                                {canDeleteComment(item) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => deleteComment(item)}
+                                                        disabled={saving}
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#8f94aa] transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        aria-label={`Delete message from ${authorLabel(item.author)}`}
+                                                        title="Delete message"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
                                 ))}
 
-                                {sortedComments.length === 0 && (
+                                {visibleComments.length === 0 && (
                                     <div className="rounded-lg border border-dashed border-[#2b2b40] px-4 py-8 text-center text-sm font-light text-[#8f94aa]">
-                                        No comments yet.
+                                        {emptyStateLabel}
                                     </div>
                                 )}
                             </div>
@@ -793,7 +922,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     rows={3}
                                     value={comment}
                                     onChange={(event) => setComment(event.target.value)}
-                                    placeholder="Add a comment"
+                                    placeholder={commentPlaceholder}
                                     className={`flex-1 ${inputClass}`}
                                 />
 
@@ -879,6 +1008,24 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     placeholder="reviewer@company.com"
                                     className={inputClass}
                                 />
+                            </div>
+
+                            <div>
+                                <label htmlFor="reviewer-association" className="mb-2 block text-xs uppercase tracking-[0.16em] text-[#8f94aa]">
+                                    Association
+                                </label>
+                                <select
+                                    id="reviewer-association"
+                                    value={reviewerAssociation}
+                                    onChange={(event) => setReviewerAssociation(event.target.value)}
+                                    className={inputClass}
+                                >
+                                    {reviewerAssociationOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="flex justify-end gap-3">

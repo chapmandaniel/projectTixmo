@@ -511,6 +511,18 @@ enum ApprovalReviewerType {
   EXTERNAL
 }
 
+enum ApprovalReviewerAssociation {
+  ARTIST
+  AGENT
+  MANAGEMENT
+  OTHER
+}
+
+enum ApprovalCommentVisibility {
+  INTERNAL
+  GLOBAL
+}
+
 enum ApprovalReminderType {
   AFTER_24_HOURS
   DEADLINE_48_HOURS
@@ -589,6 +601,7 @@ model ApprovalReviewer {
   email             String
   name              String?
   reviewerType      ApprovalReviewerType   @default(EXTERNAL) @map("reviewer_type")
+  association       ApprovalReviewerAssociation?
   userId            String?                @map("user_id")
   user              User?                  @relation("ApprovalReviewerUser", fields: [userId], references: [id])
 
@@ -641,6 +654,7 @@ model ApprovalComment {
   parentCommentId   String?           @map("parent_comment_id")
   parentComment     ApprovalComment?  @relation("ApprovalCommentThread", fields: [parentCommentId], references: [id], onDelete: Cascade)
   replies           ApprovalComment[] @relation("ApprovalCommentThread")
+  visibility        ApprovalCommentVisibility @default(GLOBAL)
   content           String            @db.Text
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")

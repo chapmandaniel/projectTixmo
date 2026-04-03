@@ -62,20 +62,35 @@ const approvalFixture = {
     ],
     comments: [
         {
+            id: 'comment-3',
+            revisionId: 'revision-2',
+            visibility: 'INTERNAL',
+            content: 'Private alignment note for the team only.',
+            createdAt: '2026-03-10T10:15:00.000Z',
+            author: { id: 'user-2', type: 'INTERNAL', name: 'Producer', email: 'producer@example.com' },
+        },
+        {
             id: 'comment-2',
             revisionId: 'revision-1',
+            visibility: 'GLOBAL',
             content: 'Newest note from the approval thread.',
             createdAt: '2026-03-10T09:15:00.000Z',
-            author: { name: 'Producer', email: 'producer@example.com' },
+            author: { id: 'reviewer-2', type: 'EXTERNAL', association: 'MANAGEMENT', name: 'Producer', email: 'producer@example.com' },
         },
         {
             id: 'comment-1',
             revisionId: 'revision-2',
+            visibility: 'GLOBAL',
             content: 'Older note from the approval thread.',
             createdAt: '2026-03-09T12:30:00.000Z',
-            author: { name: 'Reviewer', email: 'reviewer@example.com' },
+            author: { id: 'user-1', type: 'INTERNAL', name: 'Reviewer', email: 'reviewer@example.com' },
         },
     ],
+};
+
+const currentUser = {
+    id: 'user-1',
+    email: 'reviewer@example.com',
 };
 
 describe('ApprovalDetailView', () => {
@@ -93,7 +108,7 @@ describe('ApprovalDetailView', () => {
                 <ApprovalDetailView
                     approvalId="approval-1"
                     initialApproval={approvalFixture}
-                    user={{ email: 'reviewer@example.com' }}
+                    user={currentUser}
                     onBack={() => {}}
                     onUpdated={() => {}}
                 />
@@ -104,6 +119,8 @@ describe('ApprovalDetailView', () => {
         expect(screen.getAllByText('Main stage artwork').length).toBeGreaterThan(0);
         expect(screen.getAllByText('v2').length).toBeGreaterThan(0);
         expect(screen.getByText('Discussion')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Internal \/ Private/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Global/i })).toBeInTheDocument();
         expect(screen.getByText('You have not responded yet.')).toBeInTheDocument();
         expect(screen.getAllByText('Upload version').length).toBeGreaterThan(0);
         expect(screen.getByText('reviewer@example.com')).toBeInTheDocument();
@@ -125,7 +142,7 @@ describe('ApprovalDetailView', () => {
                 <ApprovalDetailView
                     approvalId="approval-1"
                     initialApproval={approvalFixture}
-                    user={{ email: 'reviewer@example.com' }}
+                    user={currentUser}
                     onBack={() => {}}
                     onUpdated={() => {}}
                 />
@@ -135,6 +152,27 @@ describe('ApprovalDetailView', () => {
         const commentCards = screen.getAllByTestId('approval-comment-card');
         expect(within(commentCards[0]).getByText('Newest note from the approval thread.')).toBeInTheDocument();
         expect(within(commentCards[1]).getByText('Older note from the approval thread.')).toBeInTheDocument();
+        expect(screen.getByText('Management')).toBeInTheDocument();
+        expect(screen.queryByText('Private alignment note for the team only.')).not.toBeInTheDocument();
+    });
+
+    it('switches to the internal chat card for private team discussion', async () => {
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={currentUser}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /Internal \/ Private/i }));
+
+        expect(screen.getByText('Private alignment note for the team only.')).toBeInTheDocument();
+        expect(screen.queryByText('Newest note from the approval thread.')).not.toBeInTheDocument();
     });
 
     it('posts a comment against the selected revision', async () => {
@@ -145,14 +183,14 @@ describe('ApprovalDetailView', () => {
                 <ApprovalDetailView
                     approvalId="approval-1"
                     initialApproval={approvalFixture}
-                    user={{ email: 'reviewer@example.com' }}
+                    user={currentUser}
                     onBack={() => {}}
                     onUpdated={() => {}}
                 />
             );
         });
 
-        fireEvent.change(screen.getByPlaceholderText(/Add a comment/i), {
+        fireEvent.change(screen.getByPlaceholderText(/Message the global chat/i), {
             target: { value: 'Looks better now.' },
         });
 
@@ -165,8 +203,38 @@ describe('ApprovalDetailView', () => {
                 content: 'Looks better now.',
                 revisionId: 'revision-2',
                 parentCommentId: undefined,
+                visibility: 'GLOBAL',
             })
         );
+    });
+
+    it('deletes a message authored by the current user', async () => {
+        apiDelete.mockResolvedValue({
+            ...approvalFixture,
+            comments: approvalFixture.comments.filter((item) => item.id !== 'comment-1'),
+        });
+
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={currentUser}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Delete message from Reviewer' }));
+
+        expect(window.confirm).toHaveBeenCalledWith('Delete this message?');
+
+        await waitFor(() =>
+            expect(apiDelete).toHaveBeenCalledWith('/approvals/approval-1/comments/comment-1')
+        );
+
+        expect(screen.queryByText('Older note from the approval thread.')).not.toBeInTheDocument();
     });
 
     it('keeps the current view mounted during a background approval refresh', async () => {
@@ -183,7 +251,7 @@ describe('ApprovalDetailView', () => {
                 <ApprovalDetailView
                     approvalId="approval-1"
                     initialApproval={approvalFixture}
-                    user={{ email: 'reviewer@example.com' }}
+                    user={currentUser}
                     onBack={() => {}}
                     onUpdated={() => {}}
                 />
@@ -224,7 +292,7 @@ describe('ApprovalDetailView', () => {
                 <ApprovalDetailView
                     approvalId="approval-1"
                     initialApproval={approvalFixture}
-                    user={{ email: 'reviewer@example.com' }}
+                    user={currentUser}
                     onBack={() => {}}
                     onUpdated={() => {}}
                 />
@@ -239,6 +307,9 @@ describe('ApprovalDetailView', () => {
         fireEvent.change(screen.getByLabelText('Reviewer email'), {
             target: { value: 'new-reviewer@example.com' },
         });
+        fireEvent.change(screen.getByLabelText('Association'), {
+            target: { value: 'MANAGEMENT' },
+        });
 
         await act(async () => {
             fireEvent.click(within(dialog).getByRole('button', { name: /^Add reviewer$/i }));
@@ -246,7 +317,7 @@ describe('ApprovalDetailView', () => {
 
         await waitFor(() =>
             expect(apiPost).toHaveBeenCalledWith('/approvals/approval-1/reviewers', {
-                reviewers: [{ email: 'new-reviewer@example.com' }],
+                reviewers: [{ email: 'new-reviewer@example.com', association: 'MANAGEMENT' }],
             })
         );
 
@@ -263,7 +334,7 @@ describe('ApprovalDetailView', () => {
                 <ApprovalDetailView
                     approvalId="approval-1"
                     initialApproval={approvalFixture}
-                    user={{ email: 'reviewer@example.com' }}
+                    user={currentUser}
                     onBack={() => {}}
                     onUpdated={() => {}}
                 />
@@ -356,7 +427,7 @@ describe('ApprovalDetailView', () => {
                 <ApprovalDetailView
                     approvalId="approval-1"
                     initialApproval={approvalWithImage}
-                    user={{ email: 'reviewer@example.com' }}
+                    user={currentUser}
                     onBack={() => {}}
                     onUpdated={() => {}}
                 />

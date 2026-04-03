@@ -3,6 +3,7 @@ import { z } from 'zod';
 const reviewerSchema = z.object({
     email: z.string().email('Invalid reviewer email address'),
     name: z.string().trim().min(1).max(120).optional(),
+    association: z.enum(['ARTIST', 'AGENT', 'MANAGEMENT', 'OTHER']).optional(),
 });
 
 const parseReviewers = (value: unknown) => {
@@ -65,6 +66,7 @@ export const approvalCommentBodySchema = z.object({
     content: z.string().trim().min(1, 'Comment content is required').max(4000),
     revisionId: z.string().uuid('Invalid revision ID').optional(),
     parentCommentId: z.string().uuid('Invalid parent comment ID').optional(),
+    visibility: z.enum(['INTERNAL', 'GLOBAL']).optional(),
 });
 
 export const approvalDecisionBodySchema = z.object({
@@ -86,9 +88,23 @@ export const approvalReviewerParamsSchema = z.object({
     }),
 });
 
+export const approvalCommentParamsSchema = z.object({
+    params: z.object({
+        id: z.string().uuid('Invalid approval ID'),
+        commentId: z.string().uuid('Invalid comment ID'),
+    }),
+});
+
 export const tokenParamsSchema = z.object({
     params: z.object({
         token: z.string().min(1, 'Token is required'),
+    }),
+});
+
+export const tokenCommentParamsSchema = z.object({
+    params: z.object({
+        token: z.string().min(1, 'Token is required'),
+        commentId: z.string().uuid('Invalid comment ID'),
     }),
 });
 

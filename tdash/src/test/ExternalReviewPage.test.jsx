@@ -13,6 +13,8 @@ describe('ExternalReviewPage', () => {
             id: 'reviewer-1',
             email: 'reviewer@example.com',
             name: 'External Reviewer',
+            association: 'AGENT',
+            reviewerType: 'EXTERNAL',
             tokenExpiresAt: '2026-04-15T10:00:00.000Z',
         },
         approval: {
@@ -51,7 +53,10 @@ describe('ExternalReviewPage', () => {
                     content: 'Please confirm the final headline.',
                     createdAt: '2026-04-02T09:00:00.000Z',
                     author: {
+                        id: 'reviewer-1',
                         name: 'Nina Lopez',
+                        type: 'EXTERNAL',
+                        association: 'MANAGEMENT',
                     },
                 },
             ],
@@ -62,6 +67,7 @@ describe('ExternalReviewPage', () => {
     beforeEach(() => {
         fetchMock.mockReset();
         vi.stubGlobal('fetch', fetchMock);
+        vi.spyOn(window, 'confirm').mockReturnValue(true);
         window.history.pushState({}, '', '/review/token-123');
     });
 
@@ -81,6 +87,7 @@ describe('ExternalReviewPage', () => {
         expect(await screen.findByText('Review Portal')).toBeInTheDocument();
         expect(screen.getByText('Creative Briefing')).toBeInTheDocument();
         expect(screen.getByText('Discussion')).toBeInTheDocument();
+        expect(screen.getByText('Management')).toBeInTheDocument();
         expect(screen.queryByText('External Reviewer')).not.toBeInTheDocument();
         expect(screen.getByText('v1')).toBeInTheDocument();
         expect(screen.getByText('Link expires')).toBeInTheDocument();
@@ -116,6 +123,8 @@ describe('ExternalReviewPage', () => {
                                     reviewer: {
                                         email: 'reviewer@example.com',
                                         name: 'External Reviewer',
+                                        reviewerType: 'EXTERNAL',
+                                        association: 'AGENT',
                                     },
                                 },
                             ],
@@ -132,6 +141,8 @@ describe('ExternalReviewPage', () => {
                                         reviewer: {
                                             email: 'reviewer@example.com',
                                             name: 'External Reviewer',
+                                            reviewerType: 'EXTERNAL',
+                                            association: 'AGENT',
                                         },
                                     },
                                 ],
@@ -228,5 +239,56 @@ describe('ExternalReviewPage', () => {
         });
 
         await waitFor(() => expect(screen.queryByText('Refreshing')).not.toBeInTheDocument());
+    });
+
+    it('shows a delete action for the reviewer’s own message and removes it', async () => {
+        const ownCommentReview = {
+            ...baseReview,
+            approval: {
+                ...baseReview.approval,
+                comments: [
+                    {
+                        id: 'comment-1',
+                        content: 'Please confirm the final headline.',
+                        createdAt: '2026-04-02T09:00:00.000Z',
+                        author: {
+                            id: 'reviewer-1',
+                            name: 'External Reviewer',
+                            email: 'reviewer@example.com',
+                        },
+                    },
+                ],
+            },
+        };
+
+        fetchMock
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ownCommentReview,
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ approval: baseReview.approval, reviewer: baseReview.reviewer }),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => baseReview,
+            });
+
+        render(<ExternalReviewPage />);
+
+        expect(await screen.findByText('Please confirm the final headline.')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Delete message' }));
+
+        expect(window.confirm).toHaveBeenCalledWith('Delete this message?');
+
+        await waitFor(() =>
+            expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/review/token-123/comments/comment-1', {
+                method: 'DELETE',
+            })
+        );
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/review/token-123'));
     });
 });

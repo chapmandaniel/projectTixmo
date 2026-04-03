@@ -231,6 +231,20 @@ export const ApprovalController = {
         }
     },
 
+    async deleteComment(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user?.userId;
+            if (!userId) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+            }
+
+            const approval = await approvalService.deleteCommentByUser(req.params.id, req.params.commentId, userId);
+            return res.json(approval);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
     async submitDecision(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user?.userId;
@@ -273,6 +287,15 @@ export const ApprovalController = {
             const decision = await approvalService.submitDecisionByToken(req.params.token, body);
 
             return res.json(decision);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
+    async deleteExternalComment(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const approval = await approvalService.deleteCommentByToken(req.params.token, req.params.commentId);
+            return res.json(approval);
         } catch (error) {
             return next(error);
         }

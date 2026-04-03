@@ -6,6 +6,7 @@ import {
     FileText,
     Search,
     Send,
+    Trash2,
     XCircle,
 } from 'lucide-react';
 import {
@@ -53,6 +54,17 @@ const DECISION_NOTE_META = {
 const panelClass = 'rounded-md border border-[#2b2b40] bg-[#1e1e2d]';
 const surfaceClass = 'rounded-md border border-[#2b2b40] bg-[#151521]';
 const inputClass = 'w-full rounded-md border border-[#2b2b40] bg-[#151521] px-4 py-3 text-sm font-light text-gray-100 outline-none transition focus:border-sky-400 placeholder:text-[#5e6278]';
+const reviewerAssociationOptions = [
+    { value: 'ARTIST', label: 'Artist' },
+    { value: 'AGENT', label: 'Agent' },
+    { value: 'MANAGEMENT', label: 'Management' },
+    { value: 'OTHER', label: 'Other' },
+];
+const associationBadgeClass = 'inline-flex rounded-full border border-fuchsia-400/35 bg-fuchsia-500/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-fuchsia-100';
+
+const associationLabel = (association) => (
+    reviewerAssociationOptions.find((option) => option.value === association)?.label || association || ''
+);
 
 const reviewApi = {
     baseUrl: getApiBaseUrl(),
@@ -88,6 +100,17 @@ const reviewApi = {
         if (!response.ok) {
             const error = await response.json().catch(() => ({}));
             throw new Error(error.message || 'Failed to add comment');
+        }
+        return response.json();
+    },
+
+    async deleteComment(token, commentId) {
+        const response = await fetch(`${this.baseUrl}/review/${token}/comments/${commentId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Failed to delete comment');
         }
         return response.json();
     },
@@ -209,6 +232,7 @@ const ExternalReviewPage = () => {
     const discussionItems = useMemo(() => {
         const commentItems = comments.map((item) => ({
             id: `comment-${item.id}`,
+            commentId: item.id,
             type: 'comment',
             createdAt: item.createdAt,
             author: item.author,
@@ -225,11 +249,15 @@ const ExternalReviewPage = () => {
                     ? {
                         name: decision.reviewer.name || decision.reviewer.email,
                         email: decision.reviewer.email,
+                        type: decision.reviewer.reviewerType,
+                        association: decision.reviewer.association,
                     }
                     : reviewer
                         ? {
                             name: reviewer.name || reviewer.email,
                             email: reviewer.email,
+                            type: reviewer.reviewerType,
+                            association: reviewer.association,
                         }
                         : null,
                 content: decision.note.trim(),
@@ -269,6 +297,17 @@ const ExternalReviewPage = () => {
     const currentDecision = approval?.myReview?.decision
         ? `Current decision: ${approval.myReview.decision.replaceAll('_', ' ')}`
         : 'You have not responded yet.';
+    const canDeleteComment = (item) => (
+        item.type === 'comment' &&
+        Boolean(
+            item.author?.id === reviewer?.id ||
+            (
+                item.author?.email?.toLowerCase() &&
+                reviewer?.email?.toLowerCase() &&
+                item.author.email.toLowerCase() === reviewer.email.toLowerCase()
+            )
+        )
+    );
 
     const closeDecisionModal = () => {
         setPendingDecision(null);
@@ -331,6 +370,23 @@ const ExternalReviewPage = () => {
                 revisionId: commentRevisionId,
             });
             setComment('');
+            await loadReview();
+        } catch (requestError) {
+            setError(requestError.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const deleteComment = async (commentId) => {
+        if (!window.confirm('Delete this message?')) {
+            return;
+        }
+
+        try {
+            setSaving(true);
+            setError('');
+            await reviewApi.deleteComment(token, commentId);
             await loadReview();
         } catch (requestError) {
             setError(requestError.message);
@@ -571,6 +627,11 @@ const ExternalReviewPage = () => {
                                                     <div className="min-w-0">
                                                         <div className="flex flex-wrap items-center gap-2">
                                                             <span className="text-sm font-light text-gray-100">{authorLabel(item.author)}</span>
+                                                            {item.author?.type !== 'INTERNAL' && item.author?.association && (
+                                                                <span className={associationBadgeClass}>
+                                                                    {associationLabel(item.author.association)}
+                                                                </span>
+                                                            )}
                                                             {item.type === 'decision' && decisionMeta && (
                                                                 <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] ${decisionMeta.badge}`}>
                                                                     {item.decision.replaceAll('_', ' ')}
@@ -583,6 +644,18 @@ const ExternalReviewPage = () => {
                                                 <span className="text-[11px] font-light uppercase tracking-[0.16em] text-[#5e6278]">
                                                     {formatApprovalDate(item.createdAt)}
                                                 </span>
+                                                {canDeleteComment(item) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => deleteComment(item.commentId)}
+                                                        disabled={saving}
+                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#8f94aa] transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                                        aria-label="Delete message"
+                                                        title="Delete message"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );

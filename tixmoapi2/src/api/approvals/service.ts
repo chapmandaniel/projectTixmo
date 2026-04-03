@@ -1,7 +1,9 @@
 import {
+    ApprovalCommentVisibility,
     ApprovalDecision,
     ApprovalReminderType,
     ApprovalRequest,
+    ApprovalReviewerAssociation,
     ApprovalReviewer,
     ApprovalStatus,
     Prisma,
@@ -38,6 +40,7 @@ const approvalDetailInclude = {
                             id: true,
                             email: true,
                             name: true,
+                            association: true,
                             reviewerType: true,
                         },
                     },
@@ -47,7 +50,7 @@ const approvalDetailInclude = {
             comments: {
                 include: {
                     user: { select: { id: true, firstName: true, lastName: true, email: true } },
-                    reviewer: { select: { id: true, email: true, name: true, reviewerType: true } },
+                    reviewer: { select: { id: true, email: true, name: true, association: true, reviewerType: true } },
                 },
                 orderBy: { createdAt: 'asc' as const },
             },
@@ -57,7 +60,7 @@ const approvalDetailInclude = {
     comments: {
         include: {
             user: { select: { id: true, firstName: true, lastName: true, email: true } },
-            reviewer: { select: { id: true, email: true, name: true, reviewerType: true } },
+            reviewer: { select: { id: true, email: true, name: true, association: true, reviewerType: true } },
         },
         orderBy: { createdAt: 'asc' as const },
     },
@@ -68,6 +71,7 @@ const approvalDetailInclude = {
                     id: true,
                     email: true,
                     name: true,
+                    association: true,
                     reviewerType: true,
                 },
             },
@@ -83,6 +87,7 @@ type ApprovalDetailRecord = Prisma.ApprovalRequestGetPayload<{
 export interface ReviewerInput {
     email: string;
     name?: string;
+    association?: ApprovalReviewerAssociation;
 }
 
 export interface CreateApprovalInput {
@@ -115,6 +120,7 @@ export interface ApprovalCommentInput {
     content: string;
     revisionId?: string;
     parentCommentId?: string;
+    visibility?: ApprovalCommentVisibility;
 }
 
 export interface DecisionInput {
@@ -218,6 +224,7 @@ class ApprovalService {
             id: comment.id,
             revisionId: comment.approvalRevisionId,
             parentCommentId: comment.parentCommentId,
+            visibility: comment.visibility,
             content: comment.content,
             createdAt: comment.createdAt,
             updatedAt: comment.updatedAt,
@@ -234,9 +241,21 @@ class ApprovalService {
                         id: comment.reviewer.id,
                         name: comment.reviewer.name || comment.reviewer.email,
                         email: comment.reviewer.email,
+                        association: comment.reviewer.association,
                 }
                     : null,
         };
+    }
+
+    private filterVisibleComments(
+        comments: ApprovalDetailRecord['comments'],
+        canViewInternalComments: boolean
+    ) {
+        if (canViewInternalComments) {
+            return comments;
+        }
+
+        return comments.filter((comment) => comment.visibility === 'GLOBAL');
     }
 
     private async serializeAsset(asset: ApprovalDetailRecord['revisions'][number]['assets'][number]) {
@@ -251,9 +270,15 @@ class ApprovalService {
         };
     }
 
-    private async serializeApproval(approval: ApprovalDetailRecord, viewer?: { email?: string; reviewerId?: string }) {
+    private async serializeApproval(
+        approval: ApprovalDetailRecord,
+        viewer?: { email?: string; reviewerId?: string; canViewInternalComments?: boolean }
+    ) {
         const latestRevision = this.getLatestRevision(approval);
-        const comments = approval.comments.map((comment) => this.serializeComment(comment));
+        const canViewInternalComments = viewer?.canViewInternalComments ?? true;
+        const comments = this.filterVisibleComments(approval.comments, canViewInternalComments).map((comment) =>
+            this.serializeComment(comment)
+        );
         const revisions = await Promise.all(
             approval.revisions.map(async (revision) => ({
                 id: revision.id,
@@ -262,7 +287,7 @@ class ApprovalService {
                 createdAt: revision.createdAt,
                 uploadedBy: revision.uploadedBy,
                 assets: await Promise.all(revision.assets.map((asset) => this.serializeAsset(asset))),
-                commentCount: revision.comments.length,
+                commentCount: this.filterVisibleComments(revision.comments, canViewInternalComments).length,
                 decisions: revision.decisions.map((decision) => ({
                     id: decision.id,
                     reviewerId: decision.reviewerId,
@@ -294,6 +319,7 @@ class ApprovalService {
                     id: reviewer.id,
                     email: reviewer.email,
                     name: reviewer.name,
+                    association: reviewer.association,
                     reviewerType: reviewer.reviewerType,
                     firstViewedAt: reviewer.firstViewedAt,
                     lastViewedAt: reviewer.lastViewedAt,
@@ -345,6 +371,7 @@ class ApprovalService {
                 {
                     email: reviewer.email.trim().toLowerCase(),
                     name: reviewer.name?.trim() || undefined,
+                    association: reviewer.association,
                 },
             ])
         ).values()];
@@ -376,6 +403,7 @@ class ApprovalService {
             return {
                 email: reviewer.email,
                 name: reviewer.name || (matchedUser ? `${matchedUser.firstName} ${matchedUser.lastName}`.trim() : undefined),
+                association: isInternal ? undefined : reviewer.association,
                 reviewerType: isInternal ? 'INTERNAL' : 'EXTERNAL',
                 ...(isInternal && matchedUser ? { user: { connect: { id: matchedUser.id } } } : {}),
                 token: this.generateToken(),
@@ -591,7 +619,8 @@ class ApprovalService {
         authorEmail: string | null,
         authorName: string,
         revisionNumber: number,
-        comment: string
+        comment: string,
+        visibility: ApprovalCommentVisibility
     ) {
         const normalizedAuthorEmail = authorEmail?.toLowerCase() || null;
         const recipients = new Map<
@@ -611,6 +640,10 @@ class ApprovalService {
         }
 
         for (const reviewer of approval.reviewers) {
+            if (visibility === 'INTERNAL' && reviewer.reviewerType !== 'INTERNAL') {
+                continue;
+            }
+
             if (reviewer.email.toLowerCase() === normalizedAuthorEmail) {
                 continue;
             }
@@ -1074,6 +1107,24 @@ class ApprovalService {
         return revision;
     }
 
+    private async syncApprovalLastCommentAt(
+        tx: Prisma.TransactionClient,
+        approvalId: string
+    ) {
+        const latestComment = await tx.approvalComment.findFirst({
+            where: { approvalRequestId: approvalId },
+            orderBy: { createdAt: 'desc' },
+            select: { createdAt: true },
+        });
+
+        await tx.approvalRequest.update({
+            where: { id: approvalId },
+            data: {
+                lastCommentAt: latestComment?.createdAt ?? null,
+            },
+        });
+    }
+
     async addCommentByUser(approvalId: string, userId: string, input: ApprovalCommentInput) {
         const user = await this.getUserContext(userId);
         const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
@@ -1091,11 +1142,12 @@ class ApprovalService {
                 approvalRevisionId: revision.id,
                 userId: user.id,
                 parentCommentId: input.parentCommentId,
+                visibility: input.visibility ?? 'GLOBAL',
                 content: input.content,
             },
             include: {
                 user: { select: { id: true, firstName: true, lastName: true, email: true } },
-                reviewer: { select: { id: true, email: true, name: true, reviewerType: true } },
+                reviewer: { select: { id: true, email: true, name: true, association: true, reviewerType: true } },
             },
         });
 
@@ -1116,7 +1168,8 @@ class ApprovalService {
             user.email,
             `${user.firstName} ${user.lastName}`.trim(),
             revision.revisionNumber,
-            input.content
+            input.content,
+            input.visibility ?? 'GLOBAL'
         ).catch((error) => {
             logger.error(`Failed to send comment notifications: ${(error as Error).message}`);
         });
@@ -1154,12 +1207,14 @@ class ApprovalService {
                 id: reviewer.id,
                 email: reviewer.email,
                 name: reviewer.name,
+                association: reviewer.association,
                 reviewerType: reviewer.reviewerType,
                 tokenExpiresAt: reviewer.tokenExpiresAt,
             },
             approval: await this.serializeApproval(reviewer.approvalRequest, {
                 reviewerId: reviewer.id,
                 email: reviewer.email,
+                canViewInternalComments: false,
             }),
         };
     }
@@ -1182,6 +1237,10 @@ class ApprovalService {
             throw new ApiError(StatusCodes.UNAUTHORIZED, 'Review link has expired');
         }
 
+        if (input.visibility && input.visibility !== 'GLOBAL') {
+            throw new ApiError(StatusCodes.FORBIDDEN, 'Invited reviewers can only post to the global chat');
+        }
+
         const revision = await this.resolveRevisionOrLatest(reviewer.approvalRequest, input.revisionId);
 
         const comment = await prisma.approvalComment.create({
@@ -1190,11 +1249,12 @@ class ApprovalService {
                 approvalRevisionId: revision.id,
                 reviewerId: reviewer.id,
                 parentCommentId: input.parentCommentId,
+                visibility: 'GLOBAL',
                 content: input.content,
             },
             include: {
                 user: { select: { id: true, firstName: true, lastName: true, email: true } },
-                reviewer: { select: { id: true, email: true, name: true, reviewerType: true } },
+                reviewer: { select: { id: true, email: true, name: true, association: true, reviewerType: true } },
             },
         });
 
@@ -1213,12 +1273,150 @@ class ApprovalService {
             reviewer.email,
             reviewer.name || reviewer.email,
             revision.revisionNumber,
-            input.content
+            input.content,
+            'GLOBAL'
         ).catch((error) => {
             logger.error(`Failed to send comment notifications: ${(error as Error).message}`);
         });
 
         return this.serializeComment(comment);
+    }
+
+    async deleteCommentByUser(approvalId: string, commentId: string, userId: string) {
+        const user = await this.getUserContext(userId);
+        const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+
+        if (!approval) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Approval request not found');
+        }
+
+        const comment = await prisma.approvalComment.findFirst({
+            where: {
+                id: commentId,
+                approvalRequestId: approvalId,
+            },
+            include: {
+                reviewer: {
+                    select: {
+                        id: true,
+                        userId: true,
+                    },
+                },
+            },
+        });
+
+        if (!comment) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Comment not found');
+        }
+
+        if (comment.userId !== user.id && comment.reviewer?.userId !== user.id) {
+            throw new ApiError(StatusCodes.FORBIDDEN, 'You can only delete your own messages');
+        }
+
+        await prisma.$transaction(async (tx) => {
+            await tx.approvalComment.updateMany({
+                where: { parentCommentId: comment.id },
+                data: { parentCommentId: null },
+            });
+
+            await tx.approvalComment.delete({
+                where: { id: comment.id },
+            });
+
+            await this.syncApprovalLastCommentAt(tx, approvalId);
+        });
+
+        const refreshedApproval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+        if (!refreshedApproval) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated approval');
+        }
+
+        const reviewer = await this.findReviewerForUser(approvalId, user.id, user.email);
+        return this.serializeApproval(refreshedApproval, {
+            email: user.email,
+            reviewerId: reviewer?.id,
+            canViewInternalComments: true,
+        });
+    }
+
+    async deleteCommentByToken(token: string, commentId: string) {
+        const reviewer = await prisma.approvalReviewer.findUnique({
+            where: { token },
+            include: {
+                approvalRequest: {
+                    include: approvalDetailInclude,
+                },
+            },
+        });
+
+        if (!reviewer) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Invalid review link');
+        }
+
+        if (new Date() > reviewer.tokenExpiresAt) {
+            throw new ApiError(StatusCodes.UNAUTHORIZED, 'Review link has expired');
+        }
+
+        const comment = await prisma.approvalComment.findFirst({
+            where: {
+                id: commentId,
+                approvalRequestId: reviewer.approvalRequestId,
+            },
+            select: {
+                id: true,
+                reviewerId: true,
+            },
+        });
+
+        if (!comment) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Comment not found');
+        }
+
+        if (comment.reviewerId !== reviewer.id) {
+            throw new ApiError(StatusCodes.FORBIDDEN, 'You can only delete your own messages');
+        }
+
+        await prisma.$transaction(async (tx) => {
+            await tx.approvalComment.updateMany({
+                where: { parentCommentId: comment.id },
+                data: { parentCommentId: null },
+            });
+
+            await tx.approvalComment.delete({
+                where: { id: comment.id },
+            });
+
+            await this.syncApprovalLastCommentAt(tx, reviewer.approvalRequestId);
+        });
+
+        const refreshedReviewer = await prisma.approvalReviewer.findUnique({
+            where: { id: reviewer.id },
+            include: {
+                approvalRequest: {
+                    include: approvalDetailInclude,
+                },
+            },
+        });
+
+        if (!refreshedReviewer) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated review');
+        }
+
+        return {
+            reviewer: {
+                id: refreshedReviewer.id,
+                email: refreshedReviewer.email,
+                name: refreshedReviewer.name,
+                association: refreshedReviewer.association,
+                reviewerType: refreshedReviewer.reviewerType,
+                tokenExpiresAt: refreshedReviewer.tokenExpiresAt,
+            },
+            approval: await this.serializeApproval(refreshedReviewer.approvalRequest, {
+                reviewerId: refreshedReviewer.id,
+                email: refreshedReviewer.email,
+                canViewInternalComments: false,
+            }),
+        };
     }
 
     private async submitDecisionForReviewer(
@@ -1252,6 +1450,7 @@ class ApprovalService {
                         id: true,
                         email: true,
                         name: true,
+                        association: true,
                         reviewerType: true,
                     },
                 },

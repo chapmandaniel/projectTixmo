@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ApprovalController } from '../approvals/controller';
 import { validate } from '../../middleware/validate';
 import {
+  tokenCommentParamsSchema,
   tokenParamsSchema,
 } from '../approvals/validation';
 
@@ -25,6 +26,10 @@ router.post('/:token/decisions', validate(tokenParamsSchema), (req, res, next) =
 // Add comment
 router.post('/:token/comments', validate(tokenParamsSchema), (req, res, next) =>
   ApprovalController.addExternalComment(req, res, next)
+);
+
+router.delete('/:token/comments/:commentId', validate(tokenCommentParamsSchema), (req, res, next) =>
+  ApprovalController.deleteExternalComment(req, res, next)
 );
 
 export default router;
