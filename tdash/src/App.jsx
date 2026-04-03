@@ -122,6 +122,17 @@ const App = () => {
         };
     }, []);
 
+    useEffect(() => {
+        const backgroundColor = isDark ? '#151521' : '#fafafa';
+        document.documentElement.style.backgroundColor = backgroundColor;
+        document.body.style.backgroundColor = backgroundColor;
+
+        const root = document.getElementById('root');
+        if (root) {
+            root.style.backgroundColor = backgroundColor;
+        }
+    }, [isDark]);
+
     const handleLogin = (userData) => {
         setUser(userData);
     };

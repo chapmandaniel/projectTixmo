@@ -7,6 +7,17 @@
     font-size: 17px;
   }
 
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    background-color: #151521;
+  }
+
+  body {
+    margin: 0;
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
@@ -40,6 +51,38 @@
       transparent 100%
     );
     animation: skeletonShimmer 1.3s ease-in-out infinite;
+  }
+
+  .pending-surface,
+  .pending-surface-soft {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pending-surface::after,
+  .pending-surface-soft::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(125, 211, 252, 0.05) 40%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(125, 211, 252, 0.05) 60%,
+      transparent 100%
+    );
+    animation: skeletonShimmer 1.4s ease-in-out infinite;
+  }
+
+  .pending-surface {
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.12);
+  }
+
+  .pending-surface-soft {
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.08);
   }
 }
 
