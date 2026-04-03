@@ -15,6 +15,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import { api } from '../lib/api';
+import SectionSkeletonOverlay from '../components/SectionSkeletonOverlay';
 import {
     APPROVAL_STATUS_META,
     DECISION_OPTIONS,
@@ -51,6 +52,7 @@ const associationLabel = (association) => (
 );
 
 const associationBadgeClass = 'inline-flex rounded-full border border-fuchsia-400/35 bg-fuchsia-500/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-fuchsia-100';
+const optimisticItemClass = 'border-sky-400/20 bg-sky-500/8 opacity-80';
 
 const authorLabel = (author) => {
     if (!author) {
@@ -158,6 +160,9 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const [loading, setLoading] = useState(!initialApproval);
     const [refreshing, setRefreshing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [pendingSection, setPendingSection] = useState(null);
+    const [optimisticComments, setOptimisticComments] = useState([]);
+    const [optimisticReviewers, setOptimisticReviewers] = useState([]);
     const [error, setError] = useState('');
 
     const fetchApproval = async () => {
@@ -224,8 +229,14 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     }, [approval, selectedRevisionId]);
 
     const revisions = approval?.revisions || [];
-    const comments = approval?.comments || [];
-    const reviewers = approval?.reviewers || [];
+    const comments = useMemo(
+        () => [...(approval?.comments || []), ...optimisticComments],
+        [approval?.comments, optimisticComments]
+    );
+    const reviewers = useMemo(
+        () => [...(approval?.reviewers || []), ...optimisticReviewers],
+        [approval?.reviewers, optimisticReviewers]
+    );
     const sortedComments = useMemo(
         () =>
             [...comments].sort((left, right) => {
@@ -299,6 +310,10 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         : 'No global messages yet.';
 
     const canDeleteComment = (commentItem) => {
+        if (commentItem.pending) {
+            return false;
+        }
+
         const currentEmail = user?.email?.toLowerCase();
         const authorEmail = commentItem.author?.email?.toLowerCase();
 
@@ -306,6 +321,10 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             commentItem.author?.id === user?.id ||
             (currentEmail && authorEmail && currentEmail === authorEmail)
         );
+    };
+
+    const clearSectionState = (section) => {
+        setPendingSection((current) => (current === section ? null : current));
     };
 
     const resetRevisionDraft = () => {
@@ -342,22 +361,44 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             return;
         }
 
+        const content = comment.trim();
+        const optimisticComment = {
+            id: `optimistic-comment-${Date.now()}`,
+            revisionId: commentRevisionId,
+            parentCommentId: replyTo?.id,
+            visibility: activeDiscussionView,
+            content,
+            createdAt: new Date().toISOString(),
+            pending: true,
+            author: {
+                id: user?.id,
+                type: 'INTERNAL',
+                name: personLabel(user),
+                email: user?.email,
+            },
+        };
+
         try {
+            setPendingSection('discussion');
             setSaving(true);
             setError('');
+            setOptimisticComments((current) => [optimisticComment, ...current]);
+            setComment('');
+            setReplyTo(null);
             await api.post(`/approvals/${approval.id}/comments`, {
-                content: comment,
+                content,
                 revisionId: commentRevisionId,
                 parentCommentId: replyTo?.id,
                 visibility: activeDiscussionView,
             });
-            setComment('');
-            setReplyTo(null);
+            setOptimisticComments([]);
             await fetchApproval();
         } catch (requestError) {
+            setOptimisticComments((current) => current.filter((item) => item.id !== optimisticComment.id));
             setError(requestError.response?.data?.message || requestError.message || 'Failed to add comment.');
         } finally {
             setSaving(false);
+            clearSectionState('discussion');
         }
     };
 
@@ -367,6 +408,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         }
 
         try {
+            setPendingSection('discussion');
             setSaving(true);
             setError('');
             const updated = await api.delete(`/approvals/${approval.id}/comments/${commentItem.id}`);
@@ -378,11 +420,13 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setError(requestError.response?.data?.message || requestError.message || 'Failed to delete comment.');
         } finally {
             setSaving(false);
+            clearSectionState('discussion');
         }
     };
 
     const submitDecision = async (decision) => {
         try {
+            setPendingSection('decision');
             setSaving(true);
             setError('');
             await api.post(`/approvals/${approval.id}/decisions`, {
@@ -394,6 +438,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setError(requestError.response?.data?.message || requestError.message || 'Failed to submit decision.');
         } finally {
             setSaving(false);
+            clearSectionState('decision');
         }
     };
 
@@ -404,6 +449,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         }
 
         try {
+            setPendingSection('workspace');
             setSaving(true);
             setError('');
             const payload = new FormData();
@@ -419,6 +465,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setError(requestError.response?.data?.message || requestError.message || 'Failed to upload version.');
         } finally {
             setSaving(false);
+            clearSectionState('workspace');
         }
     };
 
@@ -429,23 +476,37 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         }
 
         try {
+            setPendingSection('reviewers');
             setSaving(true);
             setError('');
+            const optimisticReviewer = {
+                id: `optimistic-reviewer-${Date.now()}`,
+                email: reviewerEmail.trim(),
+                association: reviewerAssociation,
+                reviewerType: 'EXTERNAL',
+                pending: true,
+                latestDecision: null,
+            };
+            setOptimisticReviewers((current) => [...current, optimisticReviewer]);
             const updated = await api.post(`/approvals/${approval.id}/reviewers`, {
                 reviewers: [{ email: reviewerEmail.trim(), association: reviewerAssociation }],
             });
 
+            setOptimisticReviewers([]);
             applyUpdatedApproval(updated);
             closeReviewerModal();
         } catch (requestError) {
+            setOptimisticReviewers([]);
             setError(requestError.response?.data?.message || requestError.message || 'Failed to add reviewer.');
         } finally {
             setSaving(false);
+            clearSectionState('reviewers');
         }
     };
 
     const resendReviewerInvite = async (reviewerId) => {
         try {
+            setPendingSection('reviewers');
             setSaving(true);
             setError('');
             const updated = await api.post(`/approvals/${approval.id}/reviewers/${reviewerId}/resend`);
@@ -454,6 +515,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setError(requestError.response?.data?.message || requestError.message || 'Failed to resend reviewer email.');
         } finally {
             setSaving(false);
+            clearSectionState('reviewers');
         }
     };
 
@@ -463,6 +525,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         }
 
         try {
+            setPendingSection('reviewers');
             setSaving(true);
             setError('');
             const updated = await api.delete(`/approvals/${approval.id}/reviewers/${reviewer.id}`);
@@ -471,6 +534,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setError(requestError.response?.data?.message || requestError.message || 'Failed to remove reviewer.');
         } finally {
             setSaving(false);
+            clearSectionState('reviewers');
         }
     };
 
@@ -531,8 +595,14 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                 )}
 
                 <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)]">
-                    <section className={`${panelClass} p-4 sm:p-5`}>
+                    <section className={`${panelClass} relative p-4 sm:p-5`}>
                         <div className={`${surfaceClass} relative overflow-hidden`}>
+                            {(refreshing || pendingSection === 'workspace') && (
+                                <SectionSkeletonOverlay
+                                    label={pendingSection === 'workspace' ? 'Updating preview' : 'Refreshing preview'}
+                                    variant="workspace"
+                                />
+                            )}
                             <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-9.5rem)] gap-2 overflow-x-auto rounded-md border border-white/10 bg-[#0f1020]/90 px-2 py-2 shadow-lg shadow-black/20 backdrop-blur">
                                 {revisions.map((revision) => (
                                     <button
@@ -746,7 +816,13 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                             </div>
                         )}
 
-                        <section className={`${panelClass} p-5`}>
+                        <section className={`${panelClass} relative p-5`}>
+                            {(refreshing || pendingSection === 'reviewers') && (
+                                <SectionSkeletonOverlay
+                                    label={pendingSection === 'reviewers' ? 'Updating reviewers' : 'Refreshing reviewers'}
+                                    variant="list"
+                                />
+                            )}
                             <div className="flex items-center justify-between gap-3">
                                 <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Reviewers</p>
                                 <button
@@ -760,7 +836,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                             </div>
                             <div className="mt-4 space-y-2">
                                 {reviewers.map((reviewer) => (
-                                    <div key={reviewer.id} className={`${surfaceClass} px-4 py-3`}>
+                                    <div key={reviewer.id} className={`${surfaceClass} px-4 py-3 ${reviewer.pending ? optimisticItemClass : ''}`}>
                                         <div className="flex items-center justify-between gap-3">
                                             <p className="min-w-0 truncate pr-2 text-sm font-light text-gray-100">
                                                 {reviewer.email}
@@ -771,10 +847,16 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                                 </span>
                                             )}
                                             <div className="flex items-center gap-2">
+                                                {reviewer.pending && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full border border-sky-400/25 bg-sky-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-sky-100">
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-sky-300 animate-pulse" />
+                                                        Inviting
+                                                    </span>
+                                                )}
                                                 <button
                                                     type="button"
                                                     onClick={() => resendReviewerInvite(reviewer.id)}
-                                                    disabled={saving}
+                                                    disabled={saving || reviewer.pending}
                                                     className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-[#d7d9e4] transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                                     aria-label={`Resend reviewer invite for ${reviewer.email}`}
                                                     title="Resend invite"
@@ -785,7 +867,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                                 <button
                                                     type="button"
                                                     onClick={() => removeReviewer(reviewer)}
-                                                    disabled={saving}
+                                                    disabled={saving || reviewer.pending}
                                                     className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#8f94aa] transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
                                                     aria-label={`Remove reviewer ${reviewer.email}`}
                                                     title="Remove reviewer"
@@ -810,7 +892,17 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                             </div>
                         </section>
 
-                        <section className={`${panelClass} p-4`}>
+                        <section className={`${panelClass} relative p-4`}>
+                            {(refreshing || pendingSection === 'discussion' || pendingSection === 'decision') && (
+                                <SectionSkeletonOverlay
+                                    label={pendingSection === 'decision'
+                                        ? 'Updating review state'
+                                        : pendingSection === 'discussion'
+                                            ? 'Updating discussion'
+                                            : 'Refreshing discussion'}
+                                    variant="conversation"
+                                />
+                            )}
                             <div className="flex items-center justify-between gap-4 px-1 pb-3">
                                 <h2 className="text-lg font-light text-gray-100">Discussion</h2>
                             </div>
@@ -859,7 +951,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     <div
                                         key={item.id}
                                         data-testid="approval-comment-card"
-                                        className={`relative rounded-lg px-1 pb-3 ${index !== visibleComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
+                                        className={`relative rounded-lg px-1 pb-3 ${item.pending ? 'opacity-80' : ''} ${index !== visibleComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
                                     >
                                         <div className="flex flex-wrap items-start justify-between gap-3">
                                             <div className="flex items-start gap-3">

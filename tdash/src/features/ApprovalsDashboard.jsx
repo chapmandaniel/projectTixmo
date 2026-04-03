@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
+import SectionSkeletonOverlay from '../components/SectionSkeletonOverlay';
 import ApprovalDetailView from './ApprovalDetailView';
 import { formatApprovalDate } from './approvalConstants';
 
@@ -643,7 +644,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                     </div>
                 </section>
 
-                <section className="space-y-4">
+                <section className="relative space-y-4">
                     {error && (
                         <div className={`rounded-md border px-4 py-3 text-sm font-light ${isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
                             {error}
@@ -662,7 +663,13 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                             <p className={`mt-2 text-sm font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Try a different event or status filter.</p>
                         </div>
                     ) : (
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                        <div className="relative grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                            {refreshing && (
+                                <SectionSkeletonOverlay
+                                    label="Refreshing approvals"
+                                    variant="cards"
+                                />
+                            )}
                             {visibleApprovals.map((approval) => {
                                 const reviewStatus = mapApprovalStatus(approval.status);
                                 const meta = REVIEW_STATUS_META[reviewStatus];

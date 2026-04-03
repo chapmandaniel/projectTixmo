@@ -14,6 +14,7 @@ import {
     DECISION_OPTIONS,
     formatApprovalDate,
 } from '../features/approvalConstants';
+import SectionSkeletonOverlay from '../components/SectionSkeletonOverlay';
 import { getApiBaseUrl } from '../lib/runtimeConfig';
 
 const STATUS_CARD_ACCENTS = {
@@ -61,6 +62,7 @@ const reviewerAssociationOptions = [
     { value: 'OTHER', label: 'Other' },
 ];
 const associationBadgeClass = 'inline-flex rounded-full border border-fuchsia-400/35 bg-fuchsia-500/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-fuchsia-100';
+const optimisticDiscussionItemClass = 'border-sky-400/20 bg-sky-500/8 opacity-80';
 
 const associationLabel = (association) => (
     reviewerAssociationOptions.find((option) => option.value === association)?.label || association || ''
@@ -180,6 +182,8 @@ const ExternalReviewPage = () => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [pendingSection, setPendingSection] = useState(null);
+    const [optimisticComments, setOptimisticComments] = useState([]);
     const [error, setError] = useState('');
 
     const loadReview = async () => {
@@ -223,7 +227,10 @@ const ExternalReviewPage = () => {
         );
     }, [approval, selectedRevisionId]);
 
-    const comments = approval?.comments || [];
+    const comments = useMemo(
+        () => [...(approval?.comments || []), ...optimisticComments],
+        [approval?.comments, optimisticComments]
+    );
     const latestRevisionDecisions =
         approval?.latestRevision?.decisions ||
         approval?.revisions?.[0]?.decisions ||
@@ -237,6 +244,7 @@ const ExternalReviewPage = () => {
             createdAt: item.createdAt,
             author: item.author,
             content: item.content,
+            pending: item.pending,
         }));
 
         const decisionItems = latestRevisionDecisions
@@ -298,6 +306,7 @@ const ExternalReviewPage = () => {
         ? `Current decision: ${approval.myReview.decision.replaceAll('_', ' ')}`
         : 'You have not responded yet.';
     const canDeleteComment = (item) => (
+        !item.pending &&
         item.type === 'comment' &&
         Boolean(
             item.author?.id === reviewer?.id ||
@@ -314,8 +323,13 @@ const ExternalReviewPage = () => {
         setDecisionReason('');
     };
 
+    const clearSectionState = (section) => {
+        setPendingSection((current) => (current === section ? null : current));
+    };
+
     const submitDecision = async (decision, note) => {
         try {
+            setPendingSection('aside');
             setSaving(true);
             setError('');
             await reviewApi.submitDecision(token, {
@@ -329,6 +343,7 @@ const ExternalReviewPage = () => {
             throw requestError;
         } finally {
             setSaving(false);
+            clearSectionState('aside');
         }
     };
 
@@ -362,19 +377,42 @@ const ExternalReviewPage = () => {
             return;
         }
 
+        const content = comment.trim();
+        const optimisticId = `optimistic-comment-${Date.now()}`;
+        const optimisticComment = {
+            id: optimisticId,
+            commentId: optimisticId,
+            type: 'comment',
+            createdAt: new Date().toISOString(),
+            content,
+            pending: true,
+            author: {
+                id: reviewer?.id,
+                name: reviewer?.name || reviewer?.email,
+                email: reviewer?.email,
+                type: reviewer?.reviewerType,
+                association: reviewer?.association,
+            },
+        };
+
         try {
+            setPendingSection('aside');
             setSaving(true);
             setError('');
+            setOptimisticComments((current) => [optimisticComment, ...current]);
+            setComment('');
             await reviewApi.addComment(token, {
-                content: comment,
+                content,
                 revisionId: commentRevisionId,
             });
-            setComment('');
+            setOptimisticComments([]);
             await loadReview();
         } catch (requestError) {
+            setOptimisticComments((current) => current.filter((item) => item.id !== optimisticComment.id));
             setError(requestError.message);
         } finally {
             setSaving(false);
+            clearSectionState('aside');
         }
     };
 
@@ -384,6 +422,7 @@ const ExternalReviewPage = () => {
         }
 
         try {
+            setPendingSection('aside');
             setSaving(true);
             setError('');
             await reviewApi.deleteComment(token, commentId);
@@ -392,6 +431,7 @@ const ExternalReviewPage = () => {
             setError(requestError.message);
         } finally {
             setSaving(false);
+            clearSectionState('aside');
         }
     };
 
@@ -576,7 +616,13 @@ const ExternalReviewPage = () => {
                         </div>
                     </section>
 
-                    <aside className="space-y-4">
+                    <aside className="relative space-y-4">
+                        {(refreshing || pendingSection === 'aside') && (
+                            <SectionSkeletonOverlay
+                                label={pendingSection === 'aside' ? 'Updating review panel' : 'Refreshing review panel'}
+                                variant="conversation"
+                            />
+                        )}
                         <div className="px-1 pt-1">
                             <p className="text-sm font-light text-[#a1a5b7]">{currentDecision}</p>
                             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -611,7 +657,7 @@ const ExternalReviewPage = () => {
                                         <div
                                             key={item.id}
                                             data-testid="external-discussion-item"
-                                            className={`relative rounded-lg px-1 pb-3 ${index !== discussionItems.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
+                                            className={`relative rounded-lg px-1 pb-3 ${item.pending ? optimisticDiscussionItemClass : ''} ${index !== discussionItems.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
                                         >
                                             <div className="flex flex-wrap items-start justify-between gap-3">
                                                 <div className="flex items-start gap-3">
