@@ -14,8 +14,8 @@ import {
     User,
     XCircle,
 } from 'lucide-react';
+import PendingSectionBlocker from '../components/PendingSectionBlocker';
 import { api } from '../lib/api';
-import SectionSkeletonOverlay from '../components/SectionSkeletonOverlay';
 import {
     APPROVAL_STATUS_META,
     DECISION_OPTIONS,
@@ -52,7 +52,7 @@ const associationLabel = (association) => (
 );
 
 const associationBadgeClass = 'inline-flex rounded-full border border-fuchsia-400/35 bg-fuchsia-500/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-fuchsia-100';
-const optimisticItemClass = 'border-sky-400/20 bg-sky-500/8 opacity-80';
+const optimisticItemClass = 'pending-surface-soft border-sky-400/20 bg-sky-500/8 opacity-80';
 
 const authorLabel = (author) => {
     if (!author) {
@@ -322,6 +322,9 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             (currentEmail && authorEmail && currentEmail === authorEmail)
         );
     };
+    const isWorkspacePending = refreshing || pendingSection === 'workspace';
+    const isReviewersPending = refreshing || pendingSection === 'reviewers';
+    const isDiscussionPending = refreshing || pendingSection === 'discussion' || pendingSection === 'decision';
 
     const clearSectionState = (section) => {
         setPendingSection((current) => (current === section ? null : current));
@@ -595,14 +598,8 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                 )}
 
                 <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)]">
-                    <section className={`${panelClass} relative p-4 sm:p-5`}>
-                        <div className={`${surfaceClass} relative overflow-hidden`}>
-                            {(refreshing || pendingSection === 'workspace') && (
-                                <SectionSkeletonOverlay
-                                    label={pendingSection === 'workspace' ? 'Updating preview' : 'Refreshing preview'}
-                                    variant="workspace"
-                                />
-                            )}
+                    <section className={`${panelClass} p-4 sm:p-5`}>
+                        <div className={`${surfaceClass} relative overflow-hidden ${isWorkspacePending ? 'pending-surface' : ''}`}>
                             <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-9.5rem)] gap-2 overflow-x-auto rounded-md border border-white/10 bg-[#0f1020]/90 px-2 py-2 shadow-lg shadow-black/20 backdrop-blur">
                                 {revisions.map((revision) => (
                                     <button
@@ -633,6 +630,12 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     className="hidden"
                                 />
                             </div>
+
+                            {isWorkspacePending && (
+                                <PendingSectionBlocker
+                                    label={pendingSection === 'workspace' ? 'Updating preview' : 'Refreshing preview'}
+                                />
+                            )}
 
                             {revisionFiles.length > 0 && (
                                 <form
@@ -687,7 +690,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                 </form>
                             )}
 
-                            <div className="flex min-h-[520px] items-center justify-center p-6">
+                            <div className={`flex min-h-[520px] items-center justify-center p-6 transition-opacity ${isWorkspacePending ? 'opacity-70' : ''}`}>
                                 {selectedAsset ? (
                                     selectedAsset.mimeType?.startsWith('image/') ? (
                                         <button
@@ -816,13 +819,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                             </div>
                         )}
 
-                        <section className={`${panelClass} relative p-5`}>
-                            {(refreshing || pendingSection === 'reviewers') && (
-                                <SectionSkeletonOverlay
-                                    label={pendingSection === 'reviewers' ? 'Updating reviewers' : 'Refreshing reviewers'}
-                                    variant="list"
-                                />
-                            )}
+                        <section className={`${panelClass} ${isReviewersPending ? 'pending-surface-soft' : ''} relative overflow-hidden p-5`}>
                             <div className="flex items-center justify-between gap-3">
                                 <p className="text-xs uppercase tracking-[0.24em] text-[#8f94aa]">Reviewers</p>
                                 <button
@@ -890,19 +887,14 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     </div>
                                 ))}
                             </div>
-                        </section>
-
-                        <section className={`${panelClass} relative p-4`}>
-                            {(refreshing || pendingSection === 'discussion' || pendingSection === 'decision') && (
-                                <SectionSkeletonOverlay
-                                    label={pendingSection === 'decision'
-                                        ? 'Updating review state'
-                                        : pendingSection === 'discussion'
-                                            ? 'Updating discussion'
-                                            : 'Refreshing discussion'}
-                                    variant="conversation"
+                            {isReviewersPending && (
+                                <PendingSectionBlocker
+                                    label={pendingSection === 'reviewers' ? 'Updating reviewers' : 'Refreshing reviewers'}
                                 />
                             )}
+                        </section>
+
+                        <section className={`${panelClass} ${isDiscussionPending ? 'pending-surface-soft' : ''} relative overflow-hidden p-4`}>
                             <div className="flex items-center justify-between gap-4 px-1 pb-3">
                                 <h2 className="text-lg font-light text-gray-100">Discussion</h2>
                             </div>
@@ -1027,6 +1019,15 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     <Send className="h-4 w-4" />
                                 </button>
                             </form>
+                            {isDiscussionPending && (
+                                <PendingSectionBlocker
+                                    label={pendingSection === 'decision'
+                                        ? 'Updating review state'
+                                        : pendingSection === 'discussion'
+                                            ? 'Updating discussion'
+                                            : 'Refreshing discussion'}
+                                />
+                            )}
                         </section>
                     </aside>
                 </section>
