@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
-import PendingSectionBlocker from '../components/PendingSectionBlocker';
 import ApprovalDetailView from './ApprovalDetailView';
 import { formatApprovalDate } from './approvalConstants';
 
@@ -725,7 +724,6 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                     </button>
                                 );
                             })}
-                            {refreshing && <PendingSectionBlocker label="Refreshing approvals" />}
                         </div>
                     )}
                 </section>
