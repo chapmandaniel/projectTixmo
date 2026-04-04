@@ -33,6 +33,20 @@
     will-change: opacity, transform;
   }
 
+  .login-orb-float {
+    animation: loginOrbFloat 10s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .login-orb-float-delayed {
+    animation-delay: -5s;
+  }
+
+  .login-panel-reveal {
+    animation: loginPanelReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: opacity, transform;
+  }
+
   .wireframe-panel {
     position: relative;
     overflow: hidden;
@@ -132,6 +146,29 @@
   }
 }
 
+@keyframes loginOrbFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.03);
+  }
+}
+
+@keyframes loginPanelReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes skeletonShimmer {
   100% {
     transform: translateX(100%);
@@ -174,6 +211,8 @@
 @media (prefers-reduced-motion: reduce) {
   .page-section-enter,
   .page-section-reload,
+  .login-orb-float,
+  .login-panel-reveal,
   .pending-surface,
   .pending-surface-soft,
   .animate-fade-in,

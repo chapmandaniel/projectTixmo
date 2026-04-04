@@ -1,13 +1,12 @@
 import api from './api';
+import { clearStoredSession, getAccessToken, getStoredUser, storeSession } from './session';
 
 export const auth = {
     login: async (email, password) => {
         const response = await api.post('/auth/login', { email, password });
         const { accessToken, refreshToken, user } = response.data.data;
 
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
-        localStorage.setItem('user', JSON.stringify(user));
+        storeSession({ accessToken, refreshToken, user });
 
         return user;
     },
@@ -16,31 +15,28 @@ export const auth = {
         const response = await api.post('/auth/register', userData);
         const { accessToken, refreshToken, user } = response.data.data;
 
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
-        localStorage.setItem('user', JSON.stringify(user));
+        storeSession({ accessToken, refreshToken, user });
 
         return user;
     },
 
-    logout: async () => {
+    logout: async ({ notifyServer = true } = {}) => {
         try {
-            await api.post('/auth/logout');
+            if (notifyServer) {
+                await api.post('/auth/logout');
+            }
         } catch (error) {
             console.error('Logout failed on server', error);
         } finally {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('user');
+            clearStoredSession();
         }
     },
 
     getCurrentUser: () => {
-        const userStr = localStorage.getItem('user');
-        return userStr ? JSON.parse(userStr) : null;
+        return getStoredUser();
     },
 
     isAuthenticated: () => {
-        return !!localStorage.getItem('access_token');
+        return !!getAccessToken();
     }
 };
