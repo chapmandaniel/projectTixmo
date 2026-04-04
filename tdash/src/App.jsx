@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from './lib/auth';
+import {
+    ACCESS_TOKEN_KEY,
+    AUTH_EXPIRED_EVENT,
+    AUTH_EXPIRED_REASONS,
+    SESSION_TIMEOUT_MINUTES,
+    USER_STORAGE_KEY,
+    createInactivityManager,
+} from './lib/session';
 import DashboardLayout from './layouts/DashboardLayout';
 import DashboardHome from './features/DashboardHome';
 import EventsView from './features/EventsView';
@@ -91,6 +99,9 @@ const App = () => {
     const [loading, setLoading] = useState(true);
     const [showWaitingRoom, setShowWaitingRoom] = useState(false);
     const [globalError, setGlobalError] = useState(null);
+    const [authNotice, setAuthNotice] = useState('');
+
+    const inactivityMessage = `You were signed out after ${SESSION_TIMEOUT_MINUTES} minutes of inactivity.`;
 
     useEffect(() => {
         // Check auth status on load
@@ -116,11 +127,63 @@ const App = () => {
         };
         window.addEventListener('tixmo:global-error', handleGlobalError);
 
+        const handleAuthExpired = (event) => {
+            const reason = event.detail?.reason;
+
+            if (reason === AUTH_EXPIRED_REASONS.idle) {
+                setAuthNotice(inactivityMessage);
+            } else {
+                setAuthNotice('Your session expired. Sign in again to continue.');
+            }
+
+            setUser(null);
+        };
+        window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+
+        const handleStorage = (event) => {
+            if (event.key === ACCESS_TOKEN_KEY && !event.newValue) {
+                setUser(null);
+            }
+
+            if (event.key === USER_STORAGE_KEY && event.newValue) {
+                try {
+                    setUser(JSON.parse(event.newValue));
+                } catch (error) {
+                    console.warn('Failed to sync user from storage', error);
+                }
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+
         return () => {
             window.removeEventListener('tixmo:waiting-room', handleWaitingRoom);
             window.removeEventListener('tixmo:global-error', handleGlobalError);
+            window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+            window.removeEventListener('storage', handleStorage);
         };
-    }, []);
+    }, [inactivityMessage]);
+
+    useEffect(() => {
+        if (!user) {
+            return undefined;
+        }
+
+        const inactivityManager = createInactivityManager({
+            onTimeout: () => {
+                auth.logout({ notifyServer: false }).finally(() => {
+                    window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT, {
+                        detail: { reason: AUTH_EXPIRED_REASONS.idle },
+                    }));
+                });
+            },
+        });
+
+        inactivityManager.start();
+
+        return () => {
+            inactivityManager.stop();
+        };
+    }, [user]);
 
     useEffect(() => {
         const backgroundColor = isDark ? '#151521' : '#fafafa';
@@ -134,10 +197,12 @@ const App = () => {
     }, [isDark]);
 
     const handleLogin = (userData) => {
+        setAuthNotice('');
         setUser(userData);
     };
 
     const handleLogout = () => {
+        setAuthNotice('');
         auth.logout();
         setUser(null);
     };
@@ -158,7 +223,7 @@ const App = () => {
                 showWaitingRoom ? (
                     <WaitingRoomView onRetry={() => setShowWaitingRoom(false)} />
                 ) : !user ? (
-                    <LoginView onLogin={handleLogin} />
+                    <LoginView onLogin={handleLogin} notice={authNotice} />
                 ) : (
                     <AppContent
                         user={user}
