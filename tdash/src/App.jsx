@@ -94,12 +94,15 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
 };
 
 const App = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
     const [isDark, setIsDark] = useState(true);
     const [user, setUser] = useState(auth.getCurrentUser());
     const [loading, setLoading] = useState(true);
     const [showWaitingRoom, setShowWaitingRoom] = useState(false);
     const [globalError, setGlobalError] = useState(null);
     const [authNotice, setAuthNotice] = useState('');
+    const [redirectToDashboardAfterLogin, setRedirectToDashboardAfterLogin] = useState(false);
 
     const inactivityMessage = `You were signed out after ${SESSION_TIMEOUT_MINUTES} minutes of inactivity.`;
 
@@ -136,12 +139,16 @@ const App = () => {
                 setAuthNotice('Your session expired. Sign in again to continue.');
             }
 
+            setRedirectToDashboardAfterLogin(false);
+            navigate('/dashboard', { replace: true });
             setUser(null);
         };
         window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
 
         const handleStorage = (event) => {
             if (event.key === ACCESS_TOKEN_KEY && !event.newValue) {
+                setRedirectToDashboardAfterLogin(false);
+                navigate('/dashboard', { replace: true });
                 setUser(null);
             }
 
@@ -161,7 +168,7 @@ const App = () => {
             window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
             window.removeEventListener('storage', handleStorage);
         };
-    }, [inactivityMessage]);
+    }, [inactivityMessage, navigate]);
 
     useEffect(() => {
         if (!user) {
@@ -196,14 +203,27 @@ const App = () => {
         }
     }, [isDark]);
 
+    useEffect(() => {
+        if (!redirectToDashboardAfterLogin) {
+            return;
+        }
+
+        if (!user || location.pathname === '/dashboard') {
+            setRedirectToDashboardAfterLogin(false);
+        }
+    }, [location.pathname, redirectToDashboardAfterLogin, user]);
+
     const handleLogin = (userData) => {
         setAuthNotice('');
+        setRedirectToDashboardAfterLogin(true);
         setUser(userData);
     };
 
     const handleLogout = () => {
         setAuthNotice('');
+        setRedirectToDashboardAfterLogin(false);
         auth.logout();
+        navigate('/dashboard', { replace: true });
         setUser(null);
     };
 
@@ -224,6 +244,8 @@ const App = () => {
                     <WaitingRoomView onRetry={() => setShowWaitingRoom(false)} />
                 ) : !user ? (
                     <LoginView onLogin={handleLogin} notice={authNotice} />
+                ) : redirectToDashboardAfterLogin && location.pathname !== '/dashboard' ? (
+                    <Navigate to="/dashboard" replace />
                 ) : (
                     <AppContent
                         user={user}

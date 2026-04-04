@@ -586,13 +586,23 @@ const EventsView = ({ isDark, user }) => {
                     <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-fuchsia-500/10 blur-3xl" />
                     <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                 </div>
-                <div className="relative">
+                <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                     <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                         <span className="inline-flex items-center gap-2">
                             <span>Event Manager</span>
                             <Calendar className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`} />
                         </span>
                     </h2>
+
+                    {activeTool ? (
+                        <button
+                            type="button"
+                            onClick={() => setActiveTool(null)}
+                            className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-pink-500 text-white hover:bg-pink-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                        >
+                            Back to tools
+                        </button>
+                    ) : null}
                 </div>
             </section>
 
@@ -618,14 +628,6 @@ const EventsView = ({ isDark, user }) => {
                 </section>
             ) : (
                 <section className="space-y-4">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTool(null)}
-                        className={`rounded-md border px-4 py-2 text-sm transition-colors ${isDark ? 'border-[#2b2b40] text-gray-200 hover:bg-[#232336]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                    >
-                        Back to tools
-                    </button>
-
                     {renderActiveTool()}
                 </section>
             )}
