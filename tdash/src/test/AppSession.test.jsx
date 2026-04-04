@@ -54,7 +54,7 @@ describe('App session messaging', () => {
         });
 
         expect(screen.getByText(/signed out after 30 minutes of inactivity/i)).toBeInTheDocument();
-        expect(screen.getByText(/sign in to tixmo dashboard/i)).toBeInTheDocument();
+        expect(screen.getByPlaceholderText(/name@example.com/i)).toBeInTheDocument();
     });
 
     it('lands on the main dashboard after signing in from a deep route', async () => {
