@@ -142,7 +142,7 @@ const DecisionActionCard = ({ option, saving, onClick }) => (
 );
 
 const ApprovalDetailLoadingSkeleton = () => (
-    <SkeletonTheme baseColor="#26293a" highlightColor="#353a50">
+    <SkeletonTheme baseColor="#26293a" highlightColor="#1d2130">
         <div className="min-h-[calc(100vh-64px)] bg-[#141625] text-white -m-6 px-4 py-6 sm:-m-8 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[1500px] space-y-5">
                 <div className="w-48">

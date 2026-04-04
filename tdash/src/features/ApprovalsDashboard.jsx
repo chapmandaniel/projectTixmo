@@ -124,8 +124,8 @@ const isOverdueApproval = (approval) => {
 
 const ApprovalCardSkeleton = ({ isDark = true }) => (
     <SkeletonTheme
-        baseColor={isDark ? '#26293a' : '#e8ebf2'}
-        highlightColor={isDark ? '#353a50' : '#f8fafc'}
+        baseColor={isDark ? '#26293a' : '#edf0f5'}
+        highlightColor={isDark ? '#1d2130' : '#e2e7ef'}
     >
         <div
             data-testid="approval-card-skeleton"

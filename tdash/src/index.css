@@ -77,6 +77,18 @@
   .pending-surface-soft {
     animation: pendingPulseSoft 1.8s ease-in-out infinite;
   }
+
+  .react-loading-skeleton {
+    animation: skeletonDimPulse var(--animation-duration, 1.6s) ease-in-out infinite;
+    background-image: none !important;
+    will-change: background-color;
+  }
+
+  .react-loading-skeleton::after {
+    animation: none !important;
+    background-image: none !important;
+    display: none !important;
+  }
 }
 
 @keyframes fadeIn {
@@ -126,6 +138,17 @@
   }
 }
 
+@keyframes skeletonDimPulse {
+  0%,
+  100% {
+    background-color: var(--base-color);
+  }
+
+  50% {
+    background-color: var(--highlight-color);
+  }
+}
+
 @keyframes pendingPulseStrong {
   0%,
   100% {
@@ -153,7 +176,12 @@
   .page-section-reload,
   .pending-surface,
   .pending-surface-soft,
-  .animate-fade-in {
+  .animate-fade-in,
+  .react-loading-skeleton {
     animation: none !important;
+  }
+
+  .react-loading-skeleton::after {
+    display: none !important;
   }
 }
