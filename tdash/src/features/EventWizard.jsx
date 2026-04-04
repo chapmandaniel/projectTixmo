@@ -7,7 +7,6 @@ import {
     Loader2,
     MapPin,
     Sparkles,
-    X,
 } from 'lucide-react';
 import api from '../lib/api';
 
@@ -16,34 +15,38 @@ const CATEGORY_OPTIONS = ['Music', 'Nightlife', 'Festival', 'Conference', 'Theat
 const QUESTION_STEPS = [
     {
         id: 'identity',
-        eyebrow: 'Question 1',
-        title: 'What should people call this event?',
-        detail: 'Name it, pick the lane, and the draft shell will carry the rest into the dashboard.',
+        eyebrow: 'Step 1',
+        navTitle: 'Name',
+        title: 'Event details',
+        detail: 'Set the event title and primary category.',
         accent: 'from-sky-400 to-cyan-500',
         Icon: Sparkles,
     },
     {
         id: 'schedule',
-        eyebrow: 'Question 2',
-        title: 'When does it happen?',
-        detail: 'Set the core timing now. You can refine schedules, doors, and on-sale moments later.',
-        accent: 'from-sky-400 to-cyan-500',
+        eyebrow: 'Step 2',
+        navTitle: 'Schedule',
+        title: 'Schedule',
+        detail: 'Set the start and end time for the draft.',
+        accent: 'from-emerald-400 to-teal-500',
         Icon: CalendarDays,
     },
     {
         id: 'venue',
-        eyebrow: 'Question 3',
-        title: 'Where should people show up?',
-        detail: 'Pick a saved venue or leave it open and finish that detail inside the event workspace.',
-        accent: 'from-sky-400 to-cyan-500',
+        eyebrow: 'Step 3',
+        navTitle: 'Venue',
+        title: 'Venue',
+        detail: 'Choose a saved venue or leave it open for later.',
+        accent: 'from-amber-400 to-orange-500',
         Icon: MapPin,
     },
     {
         id: 'launch',
-        eyebrow: 'Handoff',
-        title: 'Ready to generate the draft?',
-        detail: 'The wizard creates the event shell. Tickets, artwork, copy, and publishing stay in the event dashboard.',
-        accent: 'from-sky-400 to-cyan-500',
+        eyebrow: 'Step 4',
+        navTitle: 'Review',
+        title: 'Review',
+        detail: 'Check the required details, then create the draft event.',
+        accent: 'from-fuchsia-500 to-pink-500',
         Icon: CheckCircle2,
     },
 ];
@@ -85,6 +88,29 @@ const addHoursToDateTimeLocal = (value, hours) => {
 
     date.setHours(date.getHours() + hours);
     return toDateTimeLocalValue(date);
+};
+
+const getDurationLabel = (startValue, endValue) => {
+    const start = new Date(startValue);
+    const end = new Date(endValue);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+        return 'Not set';
+    }
+
+    const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000);
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = durationMinutes % 60;
+
+    if (hours && minutes) {
+        return `${hours}h ${minutes}m`;
+    }
+
+    if (hours) {
+        return `${hours}h`;
+    }
+
+    return `${minutes}m`;
 };
 
 const getVenueAddress = (venue) => {
@@ -261,31 +287,33 @@ const EventWizard = ({ onClose, onSuccess, isDark, user }) => {
     };
 
     const renderIdentityStep = () => (
-        <div className="space-y-8 animate-fade-in">
-            <div className={`rounded-md border p-6 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                <label className="block">
-                    <span className={`mb-3 block text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                        Event title
-                    </span>
-                    <input
-                        autoFocus
-                        type="text"
-                        value={formData.title}
-                        onChange={(event) => updateFormData({ title: event.target.value })}
-                        placeholder="Neon Harbour Sessions"
-                        className={`w-full border-b bg-transparent pb-4 text-3xl font-light tracking-tight outline-none transition-colors sm:text-4xl ${isDark
-                            ? 'border-[#2b2b40] text-white placeholder:text-[#5e6278] focus:border-sky-400'
-                            : 'border-gray-200 text-gray-900 placeholder:text-gray-300 focus:border-sky-500'
-                        }`}
-                    />
-                </label>
+        <div className="space-y-6 animate-fade-in">
+            <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-center">
+                <div>
+                    <p className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                        What is the event&apos;s name?
+                    </p>
+                </div>
+                <input
+                    autoFocus
+                    type="text"
+                    value={formData.title}
+                    onChange={(event) => updateFormData({ title: event.target.value })}
+                    placeholder="Neon Harbour Sessions"
+                    className={`w-full rounded-md border px-4 py-4 text-lg font-light outline-none transition-colors ${isDark
+                        ? 'border-[#2b2b40] bg-[#151521] text-white placeholder:text-[#5e6278] focus:border-fuchsia-400/40'
+                        : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-300 focus:border-fuchsia-500'
+                    }`}
+                />
             </div>
 
-            <div className="space-y-3">
-                <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                    Category
-                </p>
-                <div className="flex flex-wrap gap-3">
+            <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+                <div>
+                    <p className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                        What is the category?
+                    </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     {CATEGORY_OPTIONS.map((option) => {
                         const isSelected = formData.category === option;
                         return (
@@ -293,8 +321,8 @@ const EventWizard = ({ onClose, onSuccess, isDark, user }) => {
                                 key={option}
                                 type="button"
                                 onClick={() => updateFormData({ category: option })}
-                                className={`rounded-md border px-4 py-2 text-sm font-light transition-all ${isSelected
-                                    ? (isDark ? 'border-sky-400/30 bg-sky-500/10 text-sky-100' : 'border-sky-200 bg-sky-50 text-sky-700')
+                                className={`rounded-md border px-4 py-4 text-left text-sm font-light transition-all ${isSelected
+                                    ? (isDark ? 'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-100' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700')
                                     : (isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-200 hover:border-[#3a3a5a] hover:bg-[#232336]' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50')
                                 }`}
                             >
@@ -304,229 +332,249 @@ const EventWizard = ({ onClose, onSuccess, isDark, user }) => {
                     })}
                 </div>
             </div>
-
-            <p className={`max-w-2xl text-sm leading-7 ${isDark ? 'text-[#b8bed4]' : 'text-gray-500'}`}>
-                The wizard keeps this intentionally lean. Description, artwork, ticketing, promo codes, and public-page polish move to the event dashboard after creation.
-            </p>
         </div>
     );
 
     const renderScheduleStep = () => (
-        <div className="space-y-8 animate-fade-in">
-            <div className="grid gap-6 xl:grid-cols-2">
-                <label className={`rounded-md border p-6 transition-colors ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                    <span className={`mb-3 block text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                        Start
-                    </span>
-                    <input
-                        type="datetime-local"
-                        value={formData.startDateTime}
-                        onChange={(event) => {
-                            const nextStart = event.target.value;
-                            const nextPatch = { startDateTime: nextStart };
+        <div className="space-y-6 animate-fade-in">
+            <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-center">
+                <div>
+                    <p className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                        When does it start?
+                    </p>
+                </div>
+                <input
+                    type="datetime-local"
+                    value={formData.startDateTime}
+                    onChange={(event) => {
+                        const nextStart = event.target.value;
+                        const nextPatch = { startDateTime: nextStart };
 
-                            if (nextStart && (!formData.endDateTime || new Date(formData.endDateTime) <= new Date(nextStart))) {
-                                nextPatch.endDateTime = addHoursToDateTimeLocal(nextStart, 3);
-                            }
+                        if (nextStart && (!formData.endDateTime || new Date(formData.endDateTime) <= new Date(nextStart))) {
+                            nextPatch.endDateTime = addHoursToDateTimeLocal(nextStart, 3);
+                        }
 
-                            updateFormData(nextPatch);
-                        }}
-                        className={`w-full bg-transparent text-lg font-light outline-none ${isDark ? 'text-white' : 'text-gray-900'}`}
-                    />
-                </label>
-
-                <label className={`rounded-md border p-6 transition-colors ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                    <span className={`mb-3 block text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                        End
-                    </span>
-                    <input
-                        type="datetime-local"
-                        value={formData.endDateTime}
-                        onChange={(event) => updateFormData({ endDateTime: event.target.value })}
-                        className={`w-full bg-transparent text-lg font-light outline-none ${isDark ? 'text-white' : 'text-gray-900'}`}
-                    />
-                </label>
+                        updateFormData(nextPatch);
+                    }}
+                    className={`w-full rounded-md border px-4 py-4 text-lg font-light outline-none transition-colors ${isDark
+                        ? 'border-[#2b2b40] bg-[#151521] text-white focus:border-emerald-400/40'
+                        : 'border-gray-200 bg-white text-gray-900 focus:border-emerald-500'
+                    }`}
+                />
             </div>
 
-            <div className={`grid gap-4 rounded-md border p-6 lg:grid-cols-[1.2fr_0.8fr] ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
+            <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-center">
                 <div>
-                    <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                        Timeline preview
+                    <p className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                        When does it end?
                     </p>
-                    <div className="mt-4 space-y-3">
-                        <div>
-                            <p className={`text-xs ${isDark ? 'text-[#8f96b0]' : 'text-gray-500'}`}>Start</p>
-                            <p className={`text-xl font-light tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                {formatLocalDateTime(formData.startDateTime, { weekday: 'short' })}
-                            </p>
-                        </div>
-                        <div>
-                            <p className={`text-xs ${isDark ? 'text-[#8f96b0]' : 'text-gray-500'}`}>End</p>
-                            <p className={`text-xl font-light tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                {formatLocalDateTime(formData.endDateTime, { weekday: 'short' })}
-                            </p>
-                        </div>
-                    </div>
                 </div>
-                <div className={`rounded-md p-5 ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
-                    <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                        Wizard note
-                    </p>
-                    <p className={`mt-3 text-sm leading-7 ${isDark ? 'text-[#c7cee2]' : 'text-gray-600'}`}>
-                        If you only choose the start time first, the wizard auto-sets the end time three hours later so you can keep moving.
-                    </p>
+                <input
+                    type="datetime-local"
+                    value={formData.endDateTime}
+                    onChange={(event) => updateFormData({ endDateTime: event.target.value })}
+                    className={`w-full rounded-md border px-4 py-4 text-lg font-light outline-none transition-colors ${isDark
+                        ? 'border-[#2b2b40] bg-[#151521] text-white focus:border-emerald-400/40'
+                        : 'border-gray-200 bg-white text-gray-900 focus:border-emerald-500'
+                    }`}
+                />
+            </div>
+
+            <div className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="grid gap-4 md:grid-cols-3">
+                    <div>
+                        <p className={`text-[11px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            Start
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {formatLocalDateTime(formData.startDateTime, { weekday: 'short' })}
+                        </p>
+                    </div>
+                    <div>
+                        <p className={`text-[11px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            End
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {formatLocalDateTime(formData.endDateTime, { weekday: 'short' })}
+                        </p>
+                    </div>
+                    <div>
+                        <p className={`text-[11px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            Duration
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {getDurationLabel(formData.startDateTime, formData.endDateTime)}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     );
 
     const renderVenueStep = () => (
-        <div className="space-y-8 animate-fade-in">
-            <div className="grid gap-4 xl:grid-cols-2">
-                <button
-                    type="button"
-                    onClick={() => updateFormData({ venueId: '' })}
-                    className={`rounded-md border p-6 text-left transition-all ${!formData.venueId
-                        ? (isDark ? 'border-sky-400/30 bg-sky-500/10' : 'border-sky-200 bg-sky-50 shadow-sm')
-                        : (isDark ? 'border-[#2b2b40] bg-[#151521] hover:border-[#3a3a5a] hover:bg-[#232336]' : 'border-gray-200 bg-white hover:bg-gray-50 shadow-sm')
-                    }`}
-                >
-                    <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-sky-200' : 'text-sky-700'}`}>
-                        Decide later
+        <div className="space-y-6 animate-fade-in">
+            <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+                <div>
+                    <p className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                        Where is the event?
                     </p>
-                    <h3 className={`mt-3 text-2xl font-light tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        Start with a venue-free draft
-                    </h3>
-                    <p className={`mt-3 text-sm leading-7 ${isDark ? 'text-[#c7cee2]' : 'text-gray-600'}`}>
-                        The event dashboard can assign the venue later, along with capacity, layout, and any venue-specific edits.
+                    <p className={`mt-2 text-sm leading-6 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                        Choose a saved venue or leave it open for later.
                     </p>
-                </button>
-
-                <div className={`rounded-md border p-6 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                    <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                        Selected venue
-                    </p>
-                    <h3 className={`mt-3 text-2xl font-light tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {selectedVenue?.name || 'Venue to be assigned'}
-                    </h3>
-                    <p className={`mt-2 text-sm leading-7 ${isDark ? 'text-[#b8bed4]' : 'text-gray-600'}`}>
-                        {selectedVenue ? getVenueAddress(selectedVenue) : 'No venue is locked yet. This will stay editable after the draft is created.'}
-                    </p>
-                    {selectedVenue?.capacity ? (
-                        <p className={`mt-4 text-sm ${isDark ? 'text-emerald-200' : 'text-emerald-700'}`}>
-                            Capacity will start at {selectedVenue.capacity}.
+                </div>
+                <div className="space-y-4">
+                    <button
+                        type="button"
+                        onClick={() => updateFormData({ venueId: '' })}
+                        className={`w-full rounded-md border p-5 text-left transition-all ${!formData.venueId
+                            ? (isDark ? 'border-amber-400/30 bg-amber-500/10 text-amber-50' : 'border-amber-200 bg-amber-50 text-amber-700 shadow-sm')
+                            : (isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-200 hover:border-[#3a3a5a] hover:bg-[#232336]' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-sm')
+                        }`}
+                    >
+                        <p className={`text-[11px] uppercase tracking-[0.2em] ${!formData.venueId ? (isDark ? 'text-amber-200' : 'text-amber-700') : (isDark ? 'text-[#8f94aa]' : 'text-gray-500')}`}>
+                            Decide later
                         </p>
-                    ) : null}
+                        <p className="mt-2 text-base font-light">
+                            Create the draft without assigning a venue.
+                        </p>
+                    </button>
+
+                    {venues.length > 0 ? (
+                        <div className="grid gap-3 xl:grid-cols-2">
+                            {venues.map((venue) => {
+                                const isSelected = formData.venueId === venue.id;
+
+                                return (
+                                    <button
+                                        key={venue.id}
+                                        type="button"
+                                        onClick={() => updateFormData({ venueId: venue.id })}
+                                        className={`rounded-md border p-5 text-left transition-all ${isSelected
+                                            ? (isDark ? 'border-amber-400/30 bg-amber-500/10' : 'border-amber-200 bg-amber-50 shadow-sm')
+                                            : (isDark ? 'border-[#2b2b40] bg-[#151521] hover:border-[#3a3a5a] hover:bg-[#232336]' : 'border-gray-200 bg-white hover:bg-gray-50 shadow-sm')
+                                        }`}
+                                    >
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div>
+                                                <p className={`text-[11px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                                                    Saved venue
+                                                </p>
+                                                <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                                    {venue.name}
+                                                </p>
+                                            </div>
+                                            {isSelected ? (
+                                                <span className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.16em] ${isDark ? 'border border-amber-400/20 bg-amber-500/10 text-amber-100' : 'border border-amber-200 bg-amber-100 text-amber-700'}`}>
+                                                    Selected
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                        <p className={`mt-3 text-sm leading-6 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                                            {getVenueAddress(venue)}
+                                        </p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className={`rounded-md border border-dashed px-4 py-10 text-center text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                            No saved venues yet.
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {venues.length > 0 ? (
-                <div className="grid gap-4 xl:grid-cols-2">
-                    {venues.map((venue) => {
-                        const isSelected = formData.venueId === venue.id;
-
-                        return (
-                            <button
-                                key={venue.id}
-                                type="button"
-                                onClick={() => updateFormData({ venueId: venue.id })}
-                                className={`rounded-md border p-6 text-left transition-all ${isSelected
-                                    ? (isDark ? 'border-sky-400/30 bg-sky-500/10' : 'border-sky-200 bg-sky-50 shadow-sm')
-                                    : (isDark ? 'border-[#2b2b40] bg-[#151521] hover:border-[#3a3a5a] hover:bg-[#232336]' : 'border-gray-200 bg-white hover:bg-gray-50 shadow-sm')
-                                }`}
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                                            Saved venue
-                                        </p>
-                                        <h3 className={`mt-2 text-2xl font-light tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                            {venue.name}
-                                        </h3>
-                                    </div>
-                                    {isSelected ? (
-                                        <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em] ${isDark ? 'border border-sky-400/20 bg-sky-500/15 text-sky-100' : 'border border-sky-100 bg-sky-100 text-sky-700'}`}>
-                                            Selected
-                                        </span>
-                                    ) : null}
-                                </div>
-                                <p className={`mt-3 text-sm leading-7 ${isDark ? 'text-[#c7cee2]' : 'text-gray-600'}`}>
-                                    {getVenueAddress(venue)}
-                                </p>
-                                <div className={`mt-5 flex items-center justify-between text-sm ${isDark ? 'text-[#9ca3c7]' : 'text-gray-500'}`}>
-                                    <span>{venue.address?.city || 'City unavailable'}</span>
-                                    <span>{venue.capacity ? `${venue.capacity} cap` : 'Capacity later'}</span>
-                                </div>
-                            </button>
-                        );
-                    })}
+            <div className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="grid gap-4 md:grid-cols-3">
+                    <div>
+                        <p className={`text-[11px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            Venue
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {selectedVenue?.name || 'Set later'}
+                        </p>
+                    </div>
+                    <div>
+                        <p className={`text-[11px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            Address
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {selectedVenue ? getVenueAddress(selectedVenue) : 'To be assigned'}
+                        </p>
+                    </div>
+                    <div>
+                        <p className={`text-[11px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            Capacity
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {selectedVenue?.capacity ? selectedVenue.capacity : 'Set later'}
+                        </p>
+                    </div>
                 </div>
-            ) : (
-                <div className={`rounded-md border border-dashed p-8 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
-                    <p className={`text-lg font-light tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        No saved venues yet.
-                    </p>
-                    <p className={`mt-2 text-sm leading-7 ${isDark ? 'text-[#b8bed4]' : 'text-gray-600'}`}>
-                        Create the draft now and add the venue from the dashboard when your location is ready.
-                    </p>
-                </div>
-            )}
+            </div>
         </div>
     );
 
     const renderLaunchStep = () => (
-        <div className="space-y-8 animate-fade-in">
-            <div className={`overflow-hidden rounded-md border ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                <div className="relative overflow-hidden px-7 py-8 sm:px-8">
-                    <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${currentStep.accent}`} />
-                    <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-                        <div>
-                            <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                                Draft summary
-                            </p>
-                            <h3 className={`mt-3 text-3xl font-light tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                {formData.title.trim() || 'Untitled event'}
-                            </h3>
-                            <div className={`mt-6 grid gap-4 sm:grid-cols-2 ${isDark ? 'text-[#d7dcef]' : 'text-gray-900'}`}>
-                                <div>
-                                    <p className={`text-[11px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f96b0]' : 'text-gray-500'}`}>
-                                        Category
-                                    </p>
-                                    <p className="mt-2 text-lg font-light">{formData.category}</p>
-                                </div>
-                                <div>
-                                    <p className={`text-[11px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f96b0]' : 'text-gray-500'}`}>
-                                        Venue
-                                    </p>
-                                    <p className="mt-2 text-lg font-light">{selectedVenue?.name || 'Set later in dashboard'}</p>
-                                </div>
-                                <div>
-                                    <p className={`text-[11px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f96b0]' : 'text-gray-500'}`}>
-                                        Starts
-                                    </p>
-                                    <p className="mt-2 text-lg font-light">{formatLocalDateTime(formData.startDateTime, { weekday: 'short' })}</p>
-                                </div>
-                                <div>
-                                    <p className={`text-[11px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f96b0]' : 'text-gray-500'}`}>
-                                        Ends
-                                    </p>
-                                    <p className="mt-2 text-lg font-light">{formatLocalDateTime(formData.endDateTime, { weekday: 'short' })}</p>
-                                </div>
-                            </div>
-                        </div>
+        <div className="space-y-6 animate-fade-in">
+            <div className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h3 className={`text-2xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {formData.title.trim() || 'Untitled event'}
+                        </h3>
+                        <p className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                            Review the required details before creating the draft.
+                        </p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.16em] ${isDark ? 'border border-white/10 bg-white/5 text-[#8f94aa]' : 'border border-gray-200 bg-white text-gray-500'}`}>
+                        {formData.category}
+                    </span>
+                </div>
 
-                        <div className={`rounded-md p-6 ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
-                            <p className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                                Next in the dashboard
-                            </p>
-                            <div className={`mt-4 space-y-4 text-sm leading-7 ${isDark ? 'text-[#c7cee2]' : 'text-gray-600'}`}>
-                                <p>Add event description, poster art, and search tags.</p>
-                                <p>Build ticket types, tiers, inventory, and pricing.</p>
-                                <p>Review public-page details, marketing settings, and publishing state.</p>
-                            </div>
-                        </div>
+                <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div className={`rounded-md border px-4 py-4 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
+                        <p className={`text-[10px] uppercase tracking-[0.16em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            Category
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {formData.category}
+                        </p>
+                    </div>
+                    <div className={`rounded-md border px-4 py-4 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
+                        <p className={`text-[10px] uppercase tracking-[0.16em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            Start
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {formatLocalDateTime(formData.startDateTime, { weekday: 'short' })}
+                        </p>
+                    </div>
+                    <div className={`rounded-md border px-4 py-4 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
+                        <p className={`text-[10px] uppercase tracking-[0.16em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            End
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {formatLocalDateTime(formData.endDateTime, { weekday: 'short' })}
+                        </p>
+                    </div>
+                    <div className={`rounded-md border px-4 py-4 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
+                        <p className={`text-[10px] uppercase tracking-[0.16em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                            Venue
+                        </p>
+                        <p className={`mt-2 text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                            {selectedVenue?.name || 'Set later'}
+                        </p>
                     </div>
                 </div>
+            </div>
+
+            <div className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
+                <p className={`text-[11px] uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                    After creation
+                </p>
+                <p className={`mt-3 text-sm leading-7 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
+                    Add tickets, artwork, public-page copy, and publishing settings in the event dashboard.
+                </p>
             </div>
         </div>
     );
@@ -548,100 +596,72 @@ const EventWizard = ({ onClose, onSuccess, isDark, user }) => {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            <section className={`rounded-md border overflow-hidden ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 shadow-lg shadow-black/20' : 'bg-white border-gray-200/60 shadow-sm'}`}>
-                <div className={`p-6 sm:p-8 border-b ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-200/60'}`}>
-                    <div className="flex flex-col gap-6">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                                <p className={`text-[11px] uppercase tracking-[0.28em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
-                                    Event Creation Wizard
-                                </p>
-                                <p className={`mt-2 text-[11px] uppercase tracking-[0.28em] ${isDark ? 'text-[#707791]' : 'text-gray-400'}`}>
-                                    Step {step + 1} of {QUESTION_STEPS.length}
-                                </p>
-                                <h3 className={`mt-4 text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                    {currentStep.title}
-                                </h3>
-                                <p className={`mt-3 max-w-2xl text-sm leading-7 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                                    {currentStep.detail}
-                                </p>
-                            </div>
+        <div className="space-y-6 animate-fade-in max-w-[1500px] mx-auto pb-12">
+            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {QUESTION_STEPS.map((item, index) => {
+                    const isActive = index === step;
+                    const isComplete = index < step;
+                    const ItemIcon = item.Icon;
 
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-colors ${isDark ? 'border-[#2b2b40]/60 text-[#a1a5b7] hover:text-gray-200 hover:bg-[#232336]' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-                                aria-label="Close wizard"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <div className="overflow-x-auto pb-1">
-                            <div className="min-w-[720px]">
-                                <div className="relative grid grid-cols-4 gap-4">
-                                    <div className={`absolute left-[6%] right-[6%] top-5 h-0.5 ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-200'}`} />
-                                    <div
-                                        className={`absolute left-[6%] top-5 h-0.5 transition-all duration-300 ${isDark ? 'bg-sky-400/80' : 'bg-sky-500'}`}
-                                        style={{ width: `${Math.max(0, (step / (QUESTION_STEPS.length - 1)) * 88)}%` }}
-                                    />
-
-                                    {QUESTION_STEPS.map((item, index) => {
-                                        const isActive = index === step;
-                                        const isComplete = index < step;
-                                        const ItemIcon = item.Icon;
-
-                                        return (
-                                            <div key={item.id} className="relative z-10 flex flex-col items-center text-center">
-                                                <div className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all ${isComplete
-                                                    ? (isDark ? 'border-sky-400/30 bg-sky-500 text-white' : 'border-sky-500 bg-sky-500 text-white')
-                                                    : isActive
-                                                        ? (isDark ? 'border-sky-400/30 bg-[#232336] text-sky-100' : 'border-sky-500 bg-white text-sky-600')
-                                                        : (isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8f94aa]' : 'border-gray-200 bg-white text-gray-400')
-                                                }`}>
-                                                    <ItemIcon size={16} />
-                                                </div>
-                                                <p className={`mt-3 text-[10px] uppercase tracking-[0.2em] ${isActive ? (isDark ? 'text-sky-200' : 'text-sky-700') : (isDark ? 'text-[#8f94aa]' : 'text-gray-500')}`}>
-                                                    {item.eyebrow}
-                                                </p>
-                                                <p className={`mt-1 text-sm font-light leading-5 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
-                                                    {item.title}
-                                                </p>
-                                            </div>
-                                        );
-                                    })}
+                    return (
+                        <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                                if (index <= step && !loading) {
+                                    setError('');
+                                    setStep(index);
+                                }
+                            }}
+                            disabled={index > step || loading}
+                            className={`relative overflow-hidden rounded-md border p-5 text-left transition-all ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'} ${index <= step ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
+                        >
+                            <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${item.accent} ${isActive || isComplete ? 'opacity-90' : 'opacity-35'}`} />
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
+                                        {item.eyebrow}
+                                    </p>
+                                    <p className={`mt-3 text-3xl font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                        {index + 1}
+                                    </p>
+                                </div>
+                                <div className={`flex h-11 w-11 items-center justify-center rounded-md ${isDark ? 'bg-[#151521]' : 'bg-gray-50'} ${isActive ? (isDark ? 'text-gray-100' : 'text-gray-900') : (isDark ? 'text-[#8f94aa]' : 'text-gray-500')}`}>
+                                    <ItemIcon size={18} />
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                            <p className={`mt-4 text-base font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                {item.navTitle}
+                            </p>
+                        </button>
+                    );
+                })}
+            </section>
+
+            {error ? (
+                <div className={`rounded-md border px-4 py-3 text-sm font-light ${isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+                    {error}
+                </div>
+            ) : null}
+
+            <section className={`rounded-md border p-5 sm:p-6 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
+                <div className="min-h-[340px]">
+                    {renderStepContent()}
                 </div>
 
-                <div className="p-6 sm:p-8">
-                    {error ? (
-                        <div className={`mb-8 rounded-md border px-5 py-4 text-sm font-light ${isDark ? 'border-rose-400/30 bg-rose-500/10 text-rose-100' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
-                            {error}
-                        </div>
-                    ) : null}
-
-                    <div className="min-h-[420px]">
-                        {renderStepContent()}
-                    </div>
-                </div>
-
-                <div className={`px-6 py-5 sm:px-8 border-t flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-[#2b2b40]/60 bg-[#151521]' : 'border-gray-200/60 bg-gray-50/60'}`}>
-                    <button
-                        type="button"
-                        onClick={handleBack}
-                        disabled={loading}
-                        className={`inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isDark ? 'text-gray-200 hover:bg-[#232336]' : 'text-gray-700 hover:bg-gray-100'}`}
-                    >
-                        <ArrowLeft size={16} />
-                        {step === 0 ? 'Back to tools' : 'Previous question'}
-                    </button>
-
-                    <div className={`rounded-md border px-4 py-3 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] text-[#d7dcef]' : 'border-gray-200 bg-white text-gray-700'}`}>
-                        {formData.title.trim() || 'Untitled event'}
+                <div className={`mt-6 flex flex-col gap-4 border-t pt-5 sm:flex-row sm:items-center sm:justify-between ${isDark ? 'border-[#2b2b40]' : 'border-gray-200'}`}>
+                    <div>
+                        {step > 0 ? (
+                            <button
+                                type="button"
+                                onClick={handleBack}
+                                disabled={loading}
+                                className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isDark ? 'text-gray-200 hover:bg-[#232336]' : 'text-gray-700 hover:bg-gray-100'}`}
+                            >
+                                <ArrowLeft size={16} />
+                                Previous
+                            </button>
+                        ) : null}
                     </div>
 
                     {step < QUESTION_STEPS.length - 1 ? (
@@ -649,9 +669,9 @@ const EventWizard = ({ onClose, onSuccess, isDark, user }) => {
                             type="button"
                             onClick={handleNext}
                             disabled={!canAdvance || loading}
-                            className={`inline-flex items-center justify-center gap-2 rounded-md px-6 py-3 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-40 ${isDark ? 'bg-sky-500 text-white hover:bg-sky-400 shadow-lg shadow-sky-500/20' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                            className={`inline-flex items-center justify-center gap-2 rounded-md px-6 py-3 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${isDark ? 'bg-pink-500 text-white hover:bg-pink-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
                         >
-                            Continue
+                            Next
                             <ArrowRight size={16} />
                         </button>
                     ) : (
@@ -659,10 +679,10 @@ const EventWizard = ({ onClose, onSuccess, isDark, user }) => {
                             type="button"
                             onClick={handleCreateEvent}
                             disabled={loading}
-                            className={`inline-flex items-center justify-center gap-2 rounded-md px-6 py-3 text-sm text-white transition-all disabled:cursor-not-allowed disabled:opacity-50 ${isDark ? 'bg-sky-500 hover:bg-sky-400 shadow-lg shadow-sky-500/20' : 'bg-gray-900 hover:bg-gray-800'}`}
+                            className={`inline-flex items-center justify-center gap-2 rounded-md px-6 py-3 text-sm text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${isDark ? 'bg-pink-500 hover:bg-pink-400' : 'bg-gray-900 hover:bg-gray-800'}`}
                         >
                             {loading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                            Create draft and open dashboard
+                            Create event
                         </button>
                     )}
                 </div>
