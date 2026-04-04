@@ -304,6 +304,7 @@ const ExternalReviewPage = () => {
     const currentDecision = approval?.myReview?.decision
         ? `Current decision: ${approval.myReview.decision.replaceAll('_', ' ')}`
         : 'You have not responded yet.';
+    const isWorkspacePending = refreshing;
     const isAsidePending = refreshing || pendingSection === 'aside';
     const canDeleteComment = (item) => (
         !item.pending &&
@@ -460,27 +461,29 @@ const ExternalReviewPage = () => {
     return (
         <div className="min-h-screen bg-[#141625] text-white">
             <div className="mx-auto max-w-[1500px] space-y-5 px-4 py-6 sm:px-6 lg:px-8">
-                <section className={`relative overflow-hidden rounded-md border px-6 py-8 sm:px-8 ${panelClass}`}>
-                    <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${STATUS_CARD_ACCENTS[approval.status] || 'from-slate-400 to-slate-500'}`} />
-                    <div className="absolute inset-0 pointer-events-none">
-                        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
-                        <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
-                    </div>
-                    <div className="relative">
-                        <div className="flex items-start justify-between gap-3">
-                            <h1 className="flex flex-wrap items-center gap-3 text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
-                                <span>Review Portal</span>
-                                <Search className="h-5 w-5 text-sky-300" />
-                                <span className="text-lg font-medium text-sky-300 sm:text-xl">{approval.title}</span>
-                            </h1>
-                            {refreshing && (
-                                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
-                                    Refreshing
-                                </span>
-                            )}
+                <div className="page-section-enter" style={{ '--section-delay': '0ms' }}>
+                    <section className={`relative overflow-hidden rounded-md border px-6 py-8 sm:px-8 ${refreshing ? 'page-section-reload' : ''} ${panelClass}`}>
+                        <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${STATUS_CARD_ACCENTS[approval.status] || 'from-slate-400 to-slate-500'}`} />
+                        <div className="absolute inset-0 pointer-events-none">
+                            <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
+                            <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
                         </div>
-                    </div>
-                </section>
+                        <div className="relative">
+                            <div className="flex items-start justify-between gap-3">
+                                <h1 className="flex flex-wrap items-center gap-3 text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
+                                    <span>Review Portal</span>
+                                    <Search className="h-5 w-5 text-sky-300" />
+                                    <span className="text-lg font-medium text-sky-300 sm:text-xl">{approval.title}</span>
+                                </h1>
+                                {refreshing && (
+                                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
+                                        Refreshing
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </section>
+                </div>
 
                 {error && (
                     <div className="rounded-md border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-light text-rose-300">
@@ -489,7 +492,8 @@ const ExternalReviewPage = () => {
                 )}
 
                 <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)]">
-                    <section className={`${panelClass} p-4 sm:p-5`}>
+                    <div className="page-section-enter" style={{ '--section-delay': '80ms' }}>
+                    <section className={`${panelClass} ${isWorkspacePending ? 'page-section-reload' : ''} p-4 sm:p-5`}>
                         <div className={`${surfaceClass} relative overflow-hidden`}>
                             <div className="absolute left-4 top-4 z-10 flex max-w-[calc(100%-2rem)] gap-2 overflow-x-auto rounded-md border border-white/10 bg-[#0f1020]/90 px-2 py-2 shadow-lg shadow-black/20 backdrop-blur">
                                 {(approval.revisions || []).map((revision) => (
@@ -615,9 +619,10 @@ const ExternalReviewPage = () => {
                             </div>
                         </div>
                     </section>
+                    </div>
 
                     <aside className="relative space-y-4">
-                        <div className="px-1 pt-1">
+                        <div className="page-section-enter px-1 pt-1" style={{ '--section-delay': '120ms' }}>
                             <p className="text-sm font-light text-[#a1a5b7]">{currentDecision}</p>
                             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                                 {DECISION_OPTIONS.map((option) => (
@@ -631,7 +636,8 @@ const ExternalReviewPage = () => {
                             </div>
                         </div>
 
-                        <section className={`${panelClass} ${isAsidePending ? 'pending-surface-soft' : ''} p-4`}>
+                        <div className="page-section-enter" style={{ '--section-delay': '180ms' }}>
+                        <section className={`${panelClass} ${isAsidePending ? 'pending-surface-soft page-section-reload' : ''} p-4`}>
                             <div className="flex items-center justify-between gap-4 px-1 pb-3">
                                 <h2 className="text-lg font-light text-gray-100">Discussion</h2>
                                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
@@ -727,6 +733,7 @@ const ExternalReviewPage = () => {
                                 </button>
                             </form>
                         </section>
+                        </div>
                     </aside>
                 </section>
             </div>

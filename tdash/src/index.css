@@ -22,6 +22,17 @@
     animation: fadeIn 0.3s ease-in-out;
   }
 
+  .page-section-enter {
+    animation: pageSectionEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--section-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .page-section-reload {
+    animation: pageSectionReload 0.38s ease-in-out;
+    will-change: opacity, transform;
+  }
+
   .wireframe-panel {
     position: relative;
     overflow: hidden;
@@ -80,6 +91,35 @@
   }
 }
 
+@keyframes pageSectionEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageSectionReload {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 0.62;
+    transform: translateY(4px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes skeletonShimmer {
   100% {
     transform: translateX(100%);
@@ -105,5 +145,15 @@
 
   50% {
     background-color: rgba(255, 255, 255, 0.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-section-enter,
+  .page-section-reload,
+  .pending-surface,
+  .pending-surface-soft,
+  .animate-fade-in {
+    animation: none !important;
   }
 }
