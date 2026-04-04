@@ -27,8 +27,8 @@ vi.mock('../lib/api', () => ({
     },
 }));
 
-vi.mock('../features/EventStudio', () => ({
-    default: () => <div>Event Studio</div>,
+vi.mock('../features/EventWizard', () => ({
+    default: () => <div>Event Wizard</div>,
 }));
 
 vi.mock('../features/OrdersView', () => ({

@@ -1,21 +1,56 @@
 import React, { useState } from 'react';
-import { ArrowRight, Lock, Mail, Loader, Radio, ScanLine, ShieldCheck } from 'lucide-react';
+import {
+    ArrowRight,
+    Loader,
+    Lock,
+    Mail,
+    Radio,
+    ScanLine,
+    ShieldCheck,
+} from 'lucide-react';
 import { auth } from '../lib/auth';
 
 const operationalPillars = [
-    { label: 'Create', value: 'Launch event pages, tiers, and offers without leaving the workspace.' },
-    { label: 'Promote', value: 'Coordinate social, approvals, and sales signals from the same dashboard.' },
-    { label: 'Greet', value: 'Keep scanners, venue access, and door operations aligned in real time.' },
-    { label: 'Get Paid', value: 'Track orders, performance, and post-event follow-through from one view.' },
+    { label: 'Events', value: 'Build and manage live experiences.' },
+    { label: 'Reviews', value: 'Keep approvals and revisions in sync.' },
+    { label: 'Operations', value: 'Run sales, scanners, and venue workflows.' },
 ];
 
 const securityPoints = [
-    { icon: ShieldCheck, title: 'Secure sessions', detail: 'Short-lived access tokens with automatic refresh while you stay active.' },
-    { icon: Radio, title: 'Live operations', detail: 'One dashboard for sales, approvals, notifications, and room status.' },
-    { icon: ScanLine, title: 'Door-ready tools', detail: 'Scanner, venue, and attendee workflows stay tied to the same account.' },
+    {
+        icon: ShieldCheck,
+        title: 'Secure access',
+        detail: 'Protected sign-in for your workspace.',
+        iconClassName: 'text-[#8b3dff]',
+        iconSurfaceClassName: 'bg-[#8b3dff]/10',
+    },
+    {
+        icon: Radio,
+        title: 'Live updates',
+        detail: 'Stay current across your account.',
+        iconClassName: 'text-[#6b7fae]',
+        iconSurfaceClassName: 'bg-[#6b7fae]/10',
+    },
+    {
+        icon: ScanLine,
+        title: 'Connected tools',
+        detail: 'Your workflows stay in one place.',
+        iconClassName: 'text-[#d66bb3]',
+        iconSurfaceClassName: 'bg-[#d66bb3]/10',
+    },
 ];
 
-const inputClassName = 'w-full rounded-2xl border border-white/10 bg-[rgba(8,17,29,0.85)] px-12 py-3.5 text-white placeholder:text-slate-500 focus:border-fuchsia-400/70 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/20 transition-all';
+const supportItems = [
+    { label: 'New access', value: 'Contact your Tixmo administrator to provision your workspace.' },
+    { label: 'Password help', value: 'If you cannot sign in, request a reset from your team.' },
+];
+
+const panelClass = 'relative overflow-hidden rounded-md border border-[#2b2b40] bg-[#1e1e2d]';
+const inputClassName = 'w-full rounded-md border border-[#2b2b40] bg-[#151521] px-12 py-3 text-sm font-light text-gray-100 outline-none transition focus:border-[#6b7fae] placeholder:text-[#5e6278]';
+const eyebrowClass = 'text-[11px] uppercase tracking-[0.24em] text-[#8f94aa]';
+const accentBarBaseClass = 'absolute left-0 top-0 h-[3px] w-full';
+const primaryAccentBarClass = 'bg-[#b235fb] opacity-85';
+const secondaryAccentBarClass = 'bg-[#6b7fae] opacity-75';
 
 const LoginView = ({ onLogin, notice = '' }) => {
     const [email, setEmail] = useState('');
@@ -40,87 +75,77 @@ const LoginView = ({ onLogin, notice = '' }) => {
     };
 
     return (
-        <div
-            className="relative min-h-screen overflow-hidden bg-[#050913] text-white selection:bg-fuchsia-500/30"
-            style={{ fontFamily: "'Exo', sans-serif" }}
-        >
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap');
-            `}</style>
-
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(244,63,94,0.22),_transparent_28%),radial-gradient(circle_at_78%_18%,_rgba(168,85,247,0.18),_transparent_24%),linear-gradient(135deg,_#050913_0%,_#08111d_45%,_#050913_100%)]" />
-            <div className="login-orb-float absolute -left-20 top-16 h-72 w-72 rounded-full bg-[rgba(217,70,239,0.18)] blur-3xl" />
-            <div className="login-orb-float login-orb-float-delayed absolute bottom-0 right-0 h-[28rem] w-[28rem] rounded-full bg-[rgba(6,182,212,0.12)] blur-3xl" />
-
-            <div className="relative grid min-h-screen lg:grid-cols-[1.1fr_0.9fr]">
-                <section className="flex items-center px-6 py-12 sm:px-10 lg:px-16 xl:px-20">
-                    <div className="page-section-enter mx-auto w-full max-w-2xl space-y-10" style={{ '--section-delay': '70ms' }}>
+        <div className="min-h-screen bg-[#141625] text-white">
+            <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(79,70,229,0.1),_transparent_24%),linear-gradient(180deg,_#141625_0%,_#121420_100%)]">
+                <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
+                    <section className={`${panelClass} page-section-enter mb-6 px-6 py-5 sm:px-8`} style={{ '--section-delay': '60ms' }}>
+                        <div className={`${accentBarBaseClass} ${primaryAccentBarClass}`} />
                         <img
                             src="https://tixmo.co/images/tixmo_logo.png"
                             alt="Tixmo"
-                            className="h-12 w-auto object-contain sm:h-14"
+                            className="h-11 w-auto object-contain"
                         />
+                    </section>
 
-                        <div className="max-w-xl space-y-5">
-                            <p className="text-xs font-medium uppercase tracking-[0.42em] text-fuchsia-200/75">Dashboard Access</p>
-                            <h1 className="text-4xl font-semibold leading-tight text-white sm:text-5xl">
-                                Run events, sales, scanning, and approvals from one Tixmo control room.
-                            </h1>
-                            <p className="max-w-lg text-base leading-7 text-slate-300 sm:text-lg">
-                                The dashboard now opens with the same dark-surface, high-contrast Tixmo styling used across the platform.
-                            </p>
-                        </div>
-
-                        <div className="grid gap-4 md:grid-cols-3">
-                            {securityPoints.map(({ icon: Icon, title, detail }) => (
-                                <div key={title} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-                                    <div className="mb-4 inline-flex rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/10 p-3 text-fuchsia-200">
-                                        <Icon size={18} />
-                                    </div>
-                                    <h2 className="text-sm font-semibold uppercase tracking-[0.24em] text-white/90">{title}</h2>
-                                    <p className="mt-3 text-sm leading-6 text-slate-300">{detail}</p>
+                    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_430px]">
+                            <section className={`${panelClass} page-section-enter px-6 py-6`} style={{ '--section-delay': '100ms' }}>
+                                <div className={`${accentBarBaseClass} ${secondaryAccentBarClass}`} />
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className={eyebrowClass}>Workspace</p>
+                                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#c8cbda]">
+                                        Live
+                                    </span>
                                 </div>
-                            ))}
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            {operationalPillars.map(({ label, value }) => (
-                                <div key={label} className="border-b border-white/10 pb-4">
-                                    <p className="text-xs font-medium uppercase tracking-[0.28em] text-fuchsia-200/70">{label}</p>
-                                    <p className="mt-2 text-sm leading-6 text-slate-300">{value}</p>
+                                <div className="mt-5 divide-y divide-[#2b2b40]">
+                                    {operationalPillars.map(({ label, value }) => (
+                                        <div key={label} className="py-4 first:pt-0 last:pb-0">
+                                            <p className="text-[11px] uppercase tracking-[0.2em] text-[#8f94aa]">{label}</p>
+                                            <p className="mt-2 text-sm leading-7 text-gray-200">{value}</p>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
+                            </section>
 
-                <section className="flex items-center justify-center border-t border-white/10 bg-[rgba(0,0,0,0.12)] px-6 py-10 backdrop-blur-2xl lg:border-l lg:border-t-0 lg:px-10">
-                    <div className="page-section-enter w-full max-w-md" style={{ '--section-delay': '150ms' }}>
-                        <div className="login-panel-reveal rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,16,28,0.96)_0%,rgba(7,11,20,0.96)_100%)] shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
-                            <div className="p-8 sm:p-10">
-                                <p className="text-xs font-medium uppercase tracking-[0.36em] text-fuchsia-200/70">Secure Login</p>
-                                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">Sign in to Tixmo Dashboard</h2>
-                                <p className="mt-3 text-sm leading-6 text-slate-400">
-                                    Active sessions stay refreshed while you work. Idle sessions automatically close after 30 minutes.
-                                </p>
+                            <section className={`${panelClass} page-section-enter px-6 py-6`} style={{ '--section-delay': '140ms' }}>
+                                <div className={`${accentBarBaseClass} ${secondaryAccentBarClass}`} />
+                                <p className={eyebrowClass}>Access</p>
+                                <div className="mt-5 divide-y divide-[#2b2b40]">
+                                    {securityPoints.map(({ icon: Icon, title, detail, iconClassName, iconSurfaceClassName }) => (
+                                        <div key={title} className="flex items-start gap-4 py-4 first:pt-0 last:pb-0">
+                                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${iconSurfaceClassName} ${iconClassName}`}>
+                                                <Icon size={16} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-100">{title}</p>
+                                                <p className="mt-1 text-sm leading-6 text-[#a1a5b7]">{detail}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            <section className={`${panelClass} page-section-enter flex flex-col px-6 py-6 xl:row-span-2`} style={{ '--section-delay': '180ms' }}>
+                                <div className={`${accentBarBaseClass} ${secondaryAccentBarClass}`} />
 
                                 {notice && (
-                                    <div className="mt-6 rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">
+                                    <div className="rounded-md border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm leading-6 text-amber-100">
                                         {notice}
                                     </div>
                                 )}
 
                                 {error && (
-                                    <div className="mt-6 rounded-2xl border border-rose-400/25 bg-rose-400/10 px-4 py-3 text-sm leading-6 text-rose-100">
+                                    <div className="mt-4 rounded-md border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100">
                                         {error}
                                     </div>
                                 )}
 
-                                <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                                <form onSubmit={handleSubmit} className="mt-6 space-y-5">
                                     <div className="space-y-2">
-                                        <label className="ml-1 text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Email Address</label>
+                                        <label className="ml-1 text-[11px] uppercase tracking-[0.22em] text-[#8f94aa]">
+                                            Email Address
+                                        </label>
                                         <div className="group relative">
-                                            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors group-focus-within:text-fuchsia-300" />
+                                            <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5e6278] transition-colors group-focus-within:text-[#7f92bd]" />
                                             <input
                                                 type="email"
                                                 value={email}
@@ -134,9 +159,11 @@ const LoginView = ({ onLogin, notice = '' }) => {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="ml-1 text-xs font-medium uppercase tracking-[0.22em] text-slate-400">Password</label>
+                                        <label className="ml-1 text-[11px] uppercase tracking-[0.22em] text-[#8f94aa]">
+                                            Password
+                                        </label>
                                         <div className="group relative">
-                                            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors group-focus-within:text-fuchsia-300" />
+                                            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5e6278] transition-colors group-focus-within:text-[#7f92bd]" />
                                             <input
                                                 type="password"
                                                 value={password}
@@ -152,7 +179,7 @@ const LoginView = ({ onLogin, notice = '' }) => {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400 px-5 py-3.5 text-sm font-semibold uppercase tracking-[0.22em] text-white shadow-[0_18px_36px_rgba(244,63,94,0.22)] transition-all hover:scale-[1.01] hover:shadow-[0_22px_44px_rgba(244,63,94,0.28)] disabled:cursor-not-allowed disabled:opacity-60"
+                                        className="flex w-full items-center justify-center gap-2 rounded-md bg-[#b235fb] px-5 py-3 text-sm font-medium uppercase tracking-[0.2em] text-white transition-colors hover:bg-[#bf52fc] disabled:cursor-not-allowed disabled:opacity-60"
                                     >
                                         {loading ? (
                                             <>
@@ -167,14 +194,23 @@ const LoginView = ({ onLogin, notice = '' }) => {
                                         )}
                                     </button>
                                 </form>
-                            </div>
-                        </div>
 
-                        <p className="mt-6 text-center text-sm leading-6 text-slate-400">
-                            Need access? Contact the Tixmo team to provision your organization and dashboard permissions.
-                        </p>
+                            </section>
+
+                            <section className={`${panelClass} page-section-enter px-6 py-6 xl:col-span-2`} style={{ '--section-delay': '220ms' }}>
+                                <div className={`${accentBarBaseClass} ${secondaryAccentBarClass}`} />
+                                <p className={eyebrowClass}>Support</p>
+                                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                                    {supportItems.map(({ label, value }) => (
+                                        <div key={label} className="rounded-md border border-[#2b2b40] bg-[#151521] px-4 py-4">
+                                            <p className="text-[11px] uppercase tracking-[0.2em] text-[#8f94aa]">{label}</p>
+                                            <p className="mt-2 text-sm leading-6 text-gray-200">{value}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
                     </div>
-                </section>
+                </div>
             </div>
         </div>
     );
