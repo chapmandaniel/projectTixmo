@@ -9,6 +9,7 @@ import {
     X,
     XCircle,
 } from 'lucide-react';
+import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import ApprovalDetailView from './ApprovalDetailView';
@@ -122,32 +123,37 @@ const isOverdueApproval = (approval) => {
 };
 
 const ApprovalCardSkeleton = ({ isDark = true }) => (
-    <div
-        data-testid="approval-card-skeleton"
-        className={`overflow-hidden rounded-md border animate-pulse ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}
+    <SkeletonTheme
+        baseColor={isDark ? '#26293a' : '#e8ebf2'}
+        highlightColor={isDark ? '#353a50' : '#f8fafc'}
     >
-        <div className={`aspect-[1.2/1] ${isDark ? 'bg-[#25253a]' : 'bg-gray-100'}`} />
-        <div className="space-y-3 px-4 py-4">
-            <div className="flex items-center justify-between gap-3">
-                <div className={`h-6 w-24 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
-                <div className={`h-4 w-10 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
-            </div>
-            <div className="space-y-2">
-                <div className={`h-5 w-3/4 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
-                <div className={`h-4 w-1/2 rounded-full ${isDark ? 'bg-[#25253a]' : 'bg-gray-50'}`} />
-            </div>
-            <div className="space-y-2 pt-1">
+        <div
+            data-testid="approval-card-skeleton"
+            className={`overflow-hidden rounded-md border ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}
+        >
+            <Skeleton height="100%" containerClassName="block aspect-[1.2/1]" />
+            <div className="space-y-3 px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
-                    <div className={`h-4 w-8 rounded-full ${isDark ? 'bg-[#25253a]' : 'bg-gray-50'}`} />
-                    <div className={`h-4 w-24 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
+                    <Skeleton height={24} width={110} borderRadius={999} />
+                    <Skeleton height={16} width={44} borderRadius={999} />
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                    <div className={`h-4 w-10 rounded-full ${isDark ? 'bg-[#25253a]' : 'bg-gray-50'}`} />
-                    <div className={`h-4 w-20 rounded-full ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-100'}`} />
+                <div className="space-y-2">
+                    <Skeleton height={20} width="78%" borderRadius={999} />
+                    <Skeleton height={16} width="54%" borderRadius={999} />
+                </div>
+                <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between gap-3">
+                        <Skeleton height={16} width={40} borderRadius={999} />
+                        <Skeleton height={16} width={92} borderRadius={999} />
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                        <Skeleton height={16} width={48} borderRadius={999} />
+                        <Skeleton height={16} width={82} borderRadius={999} />
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </SkeletonTheme>
 );
 
 const CreateApprovalModal = ({ events, onClose, onCreated }) => {
