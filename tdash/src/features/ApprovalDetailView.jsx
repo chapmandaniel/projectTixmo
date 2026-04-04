@@ -14,6 +14,7 @@ import {
     User,
     XCircle,
 } from 'lucide-react';
+import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import { api } from '../lib/api';
 import {
     APPROVAL_STATUS_META,
@@ -138,6 +139,100 @@ const DecisionActionCard = ({ option, saving, onClick }) => (
     >
         {option.label}
     </button>
+);
+
+const ApprovalDetailLoadingSkeleton = () => (
+    <SkeletonTheme baseColor="#26293a" highlightColor="#353a50">
+        <div className="min-h-[calc(100vh-64px)] bg-[#141625] text-white -m-6 px-4 py-6 sm:-m-8 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-[1500px] space-y-5">
+                <div className="w-48">
+                    <Skeleton height={40} borderRadius={8} />
+                </div>
+
+                <section className={`${panelClass} overflow-hidden px-6 py-8 sm:px-8`}>
+                    <div className="space-y-4">
+                        <Skeleton height={18} width={112} borderRadius={999} />
+                        <Skeleton height={42} width="52%" borderRadius={10} />
+                        <Skeleton height={18} width="34%" borderRadius={999} />
+                    </div>
+                </section>
+
+                <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.06fr)_minmax(0,0.94fr)]">
+                    <section className={`${panelClass} p-4 sm:p-5`}>
+                        <div className={`${surfaceClass} overflow-hidden`}>
+                            <div className="flex items-center justify-between gap-3 border-b border-[#2b2b40] px-4 py-4">
+                                <div className="flex gap-2">
+                                    <Skeleton height={34} width={74} borderRadius={8} />
+                                    <Skeleton height={34} width={74} borderRadius={8} />
+                                    <Skeleton height={34} width={74} borderRadius={8} />
+                                </div>
+                                <Skeleton height={36} width={138} borderRadius={8} />
+                            </div>
+                            <div className="p-6">
+                                <Skeleton height={420} borderRadius={12} />
+                            </div>
+                            <div className="space-y-4 border-t border-[#2b2b40] px-4 py-4">
+                                <Skeleton height={20} width="42%" borderRadius={999} />
+                                <Skeleton count={2} height={16} borderRadius={999} />
+                            </div>
+                        </div>
+                    </section>
+
+                    <aside className="space-y-4">
+                        <section className={`${panelClass} p-5`}>
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <Skeleton height={18} width={96} borderRadius={999} />
+                                <Skeleton height={32} width={124} borderRadius={999} />
+                            </div>
+                            <div className="space-y-3">
+                                {Array.from({ length: 3 }, (_, index) => (
+                                    <div key={index} className={`${surfaceClass} px-4 py-3`}>
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div className="flex-1 space-y-2">
+                                                <Skeleton height={18} width="58%" borderRadius={999} />
+                                                <Skeleton height={14} width="34%" borderRadius={999} />
+                                            </div>
+                                            <Skeleton height={32} width={96} borderRadius={999} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <section className={`${panelClass} p-4`}>
+                            <div className="mb-4 flex items-center justify-between gap-4 px-1">
+                                <Skeleton height={24} width={108} borderRadius={999} />
+                                <Skeleton height={24} width={44} borderRadius={999} />
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <Skeleton height={84} borderRadius={12} />
+                                <Skeleton height={84} borderRadius={12} />
+                            </div>
+                            <div className="mt-4 space-y-3">
+                                {Array.from({ length: 3 }, (_, index) => (
+                                    <div key={index} className="rounded-lg border border-[#2b2b40] px-4 py-4">
+                                        <div className="flex items-start gap-3">
+                                            <Skeleton circle height={36} width={36} />
+                                            <div className="flex-1 space-y-2">
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <Skeleton height={16} width={120} borderRadius={999} />
+                                                    <Skeleton height={12} width={72} borderRadius={999} />
+                                                </div>
+                                                <Skeleton count={2} height={14} borderRadius={999} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-4 border-t border-[#2b2b40] pt-4">
+                                <Skeleton height={110} borderRadius={12} />
+                            </div>
+                        </section>
+                    </aside>
+                </section>
+            </div>
+        </div>
+    </SkeletonTheme>
 );
 
 const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdated }) => {
@@ -541,11 +636,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     };
 
     if (loading) {
-        return (
-            <div className="min-h-[calc(100vh-64px)] bg-[#141625] px-6 py-16 text-center text-sm font-light text-[#8f94aa]">
-                Loading review workspace...
-            </div>
-        );
+        return <ApprovalDetailLoadingSkeleton />;
     }
 
     if (!approval) {
