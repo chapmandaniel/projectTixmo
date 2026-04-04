@@ -12,7 +12,7 @@ import {
     Zap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import EventStudio from './EventStudio';
+import EventWizard from './EventWizard';
 import OrdersView from './OrdersView';
 import ScannersView from './ScannersView';
 import VenuesView from './VenuesView';
@@ -24,12 +24,12 @@ const TOOL_DEFINITIONS = [
     {
         id: 'create',
         label: 'Create New Event',
-        description: 'Open the full event wizard with live preview, ticket setup, and publishing controls.',
-        helper: 'Best for launches',
+        description: 'Answer the core launch questions, create the draft, and jump straight into the event dashboard.',
+        helper: 'Best for first-pass setup',
         icon: Sparkles,
         grad: 'from-fuchsia-500 to-cyan-400',
         color: 'text-fuchsia-400',
-        metricLabel: 'Wizard',
+        metricLabel: 'Launch',
     },
     {
         id: 'library',
@@ -505,15 +505,19 @@ const EventsView = ({ isDark, user }) => {
     const renderActiveTool = () => {
         if (activeTool === 'create') {
             return (
-                <EventStudio
-                    embedded
+                <EventWizard
                     isDark={isDark}
                     user={user}
                     onClose={() => setActiveTool(null)}
-                    onSuccess={async () => {
-                        await fetchDashboardData();
-                        setLibraryFilter('all');
-                        setActiveTool('library');
+                    onSuccess={(createdEvent) => {
+                        if (!createdEvent?.id) {
+                            fetchDashboardData();
+                            setLibraryFilter('all');
+                            setActiveTool('library');
+                            return;
+                        }
+
+                        openEventWorkspace(createdEvent);
                     }}
                 />
             );
