@@ -5,6 +5,7 @@ import TaskDetailsModal from './TaskDetailsModal';
 import KanbanCard from './KanbanCard';
 import api from '../lib/api';
 import { auth } from '../lib/auth';
+import { DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
 
 const STATUS_MAP = {
     'TO_DO': 'todo',
@@ -229,20 +230,14 @@ const TodoView = ({ isDark, user }) => {
                 />
             )}
 
-            <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 shrink-0 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
-                <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-fuchsia-500/10 blur-3xl" />
-                    <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
-                </div>
-                <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                            <span className="inline-flex items-center gap-2">
-                                <span>Task Manager</span>
-                                <ListTodo className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`} />
-                            </span>
-                        </h2>
-                    </div>
+            <DashboardTitleBar
+                isDark={isDark}
+                title="Task Manager"
+                icon={ListTodo}
+                iconClassName={isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}
+                className="shrink-0"
+                bodyClassName="sm:flex-row sm:items-center sm:justify-between"
+                actions={(
                     <div className="flex space-x-3">
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
@@ -256,8 +251,8 @@ const TodoView = ({ isDark, user }) => {
                             <span>Filter</span>
                         </button>
                     </div>
-                </div>
-            </section>
+                )}
+            />
 
             <div className="flex-1 flex gap-4 overflow-x-auto overflow-y-hidden min-h-0 pb-2">
                 {Object.entries(columns).map(([colId, col]) => (

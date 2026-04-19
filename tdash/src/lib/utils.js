@@ -1,5 +1,7 @@
 // General utility functions
 
+export const cn = (...classes) => classes.filter(Boolean).join(' ');
+
 /**
  * Creates a URL-friendly slug incorporating the human-readable string and the unique ID.
  * Example: "My Awesome Event" + "1234-5678" -> "my-awesome-event-1234-5678"

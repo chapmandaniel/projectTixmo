@@ -4,8 +4,8 @@ import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveBar } from '@nivo/bar';
 import { ResponsiveHeatMap } from '@nivo/heatmap';
 import {
-    TrendingUp, TrendingDown, DollarSign, Ticket, ShoppingCart,
-    BarChart3, ChevronDown, Loader2, AlertCircle, Flame, Users, Link2
+    TrendingUp, DollarSign, Ticket, ShoppingCart,
+    BarChart3, ChevronDown, Loader2, AlertCircle, Flame, Link2, RefreshCcw
 } from 'lucide-react';
 import api from '../lib/api';
 import {
@@ -15,23 +15,40 @@ import {
     buildAnalyticsQueryString,
     getGoogleAnalyticsIntegrationMeta,
 } from '../lib/analyticsSources';
+import {
+    DashboardButton,
+    DashboardChip,
+    DashboardEmptyState,
+    DashboardPage,
+    DashboardSection,
+    DashboardStat,
+    DashboardSurface,
+    DashboardTitleBar,
+} from '../components/dashboard/DashboardPrimitives';
+import { dashboardColorTokens, getDashboardTheme } from '../lib/dashboardTheme';
+import { cn } from '../lib/utils';
 
-// ─── Nivo Dark Theme ────────────────────────────────────────────────────────
 const nivoDarkTheme = {
     background: 'transparent',
-    text: { fontSize: 11, fill: '#a1a5b7', fontFamily: 'inherit', fontWeight: 300 },
+    text: { fontSize: 11, fill: dashboardColorTokens.muted, fontFamily: 'inherit', fontWeight: 300 },
     axis: {
-        domain: { line: { stroke: '#2b2b40', strokeWidth: 1 } },
-        ticks: { line: { stroke: '#2b2b40', strokeWidth: 1 }, text: { fill: '#a1a5b7', fontSize: 11 } },
-        legend: { text: { fill: '#a1a5b7', fontSize: 12 } },
+        domain: { line: { stroke: dashboardColorTokens.border, strokeWidth: 1 } },
+        ticks: { line: { stroke: dashboardColorTokens.border, strokeWidth: 1 }, text: { fill: dashboardColorTokens.muted, fontSize: 11 } },
+        legend: { text: { fill: dashboardColorTokens.muted, fontSize: 12 } },
     },
-    grid: { line: { stroke: '#2b2b40', strokeWidth: 1, strokeDasharray: '4 4' } },
-    legends: { text: { fill: '#a1a5b7', fontSize: 11 } },
+    grid: { line: { stroke: dashboardColorTokens.border, strokeWidth: 1, strokeDasharray: '4 4' } },
+    legends: { text: { fill: dashboardColorTokens.muted, fontSize: 11 } },
     tooltip: {
         container: {
-            background: '#151521', color: '#e4e4e7', fontSize: 12,
-            borderRadius: '6px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', border: '1px solid #2b2b40',
-            padding: '8px 12px', fontFamily: 'inherit', fontWeight: 300
+            background: dashboardColorTokens.shell,
+            color: '#e4e4e7',
+            fontSize: 12,
+            borderRadius: '12px',
+            boxShadow: '0 18px 45px rgba(8, 10, 24, 0.28)',
+            border: `1px solid ${dashboardColorTokens.border}`,
+            padding: '8px 12px',
+            fontFamily: 'inherit',
+            fontWeight: 300,
         },
     },
     crosshair: { line: { stroke: '#ec4899', strokeWidth: 1, strokeOpacity: 0.5 } },
@@ -45,24 +62,25 @@ const nivoLightTheme = {
         ticks: { line: { stroke: '#e4e4e7', strokeWidth: 1 }, text: { fill: '#a1a1aa', fontSize: 11 } },
         legend: { text: { fill: '#71717a', fontSize: 12 } },
     },
-    grid: { line: { stroke: '#f4f4f5', strokeWidth: 1 } },
+    grid: { line: { stroke: '#f1f5f9', strokeWidth: 1 } },
     legends: { text: { fill: '#71717a', fontSize: 11 } },
     tooltip: {
         container: {
-            background: '#ffffff', color: '#3f3f46', fontSize: 12,
-            borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', border: '1px solid #e4e4e7',
+            background: '#ffffff',
+            color: '#334155',
+            fontSize: 12,
+            borderRadius: '12px',
+            boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)',
+            border: '1px solid #e2e8f0',
             padding: '8px 12px',
         },
     },
     crosshair: { line: { stroke: '#6366f1', strokeWidth: 1, strokeOpacity: 0.5 } },
 };
 
-// ─── Color palettes ─────────────────────────────────────────────────────────
-const ACCENT_COLORS = ['#ec4899', '#f97316', '#f59e0b', '#8b5cf6', '#d946ef', '#06b6d4'];
 const PIE_COLORS_DARK = ['#ec4899', '#f97316', '#f59e0b', '#8b5cf6', '#d946ef', '#06b6d4'];
 const PIE_COLORS_LIGHT = ['#4f46e5', '#7c3aed', '#db2777', '#d97706', '#059669', '#0891b2'];
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
 const formatCurrency = (v) => {
     if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
     if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}K`;
@@ -75,79 +93,100 @@ const formatNumber = (v) => {
     return v.toString();
 };
 
-// ─── KPI Card ───────────────────────────────────────────────────────────────
-const KpiCard = ({ label, value, icon: Icon, color, isDark, prefix = '' }) => (
-    <div className={`p-5 rounded-md border transition-all duration-300 hover:scale-[1.02] ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] hover:bg-[#232336] hover:border-[#3a3a5a] hover:shadow-lg hover:shadow-black/20' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
-        <div className="flex items-center justify-between mb-3">
-            <span className={`text-xs font-light tracking-widest uppercase ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>{label}</span>
-            <div className={`w-9 h-9 rounded-md flex items-center justify-center ${color}`}>
-                <Icon size={18} className="text-white" />
+const analyticsTooltipClass = (isDark) => cn(
+    'rounded-md border px-3 py-2 text-xs',
+    isDark ? 'border-dashboard-border bg-dashboard-shell text-zinc-100' : 'border-slate-200 bg-white text-slate-700'
+);
+
+const KpiCard = ({ label, value, icon: Icon, iconClassName, accent = 'slate', isDark }) => {
+    const uiTheme = getDashboardTheme(isDark);
+
+    return (
+        <DashboardSurface isDark={isDark} accent={accent} interactive className="p-5">
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <p className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textTertiary)}>{label}</p>
+                    <p className={cn('mt-3 text-3xl font-light tracking-tight', uiTheme.textPrimary)}>{value}</p>
+                </div>
+                <Icon size={24} className={iconClassName} />
             </div>
-        </div>
-        <div className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
-            {prefix}{value}
-        </div>
+        </DashboardSurface>
+    );
+};
+
+const ChartCard = ({ title, description, children, isDark, className = '', colSpan = '', accent = 'slate' }) => {
+    const uiTheme = getDashboardTheme(isDark);
+
+    return (
+        <DashboardSurface isDark={isDark} accent={accent} className={cn('overflow-hidden', colSpan, className)}>
+            <div className="p-5 pb-0">
+                <div className={cn('text-[10px] font-light uppercase tracking-[0.16em]', uiTheme.textTertiary)}>
+                    {title}
+                </div>
+                {description ? (
+                    <p className={cn('mt-2 text-sm font-light leading-6', uiTheme.textSecondary)}>{description}</p>
+                ) : null}
+            </div>
+            <div className="p-5 pt-4">{children}</div>
+        </DashboardSurface>
+    );
+};
+
+const BlueprintTag = ({ isDark, children }) => (
+    <span className={cn(
+        'rounded-full px-3 py-1.5 text-xs font-light',
+        isDark ? 'border border-dashboard-borderStrong bg-dashboard-panelAlt text-zinc-100' : 'border border-slate-200 bg-white text-slate-700'
+    )}>
+        {children}
+    </span>
+);
+
+const InlineEmptyState = ({ isDark, title, description, compact = false }) => (
+    <div className={cn('h-full', compact ? 'py-4' : 'py-0')}>
+        <DashboardEmptyState
+            isDark={isDark}
+            compact={compact}
+            title={title}
+            description={description}
+            className="flex h-full flex-col items-center justify-center"
+        />
     </div>
 );
 
-const PrepStatCard = ({ label, value, isDark }) => (
-    <div className={`rounded-md border p-4 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-        <p className={`text-[10px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{label}</p>
-        <p className={`mt-2 text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{value}</p>
-    </div>
-);
-
-// ─── Chart Card Wrapper ─────────────────────────────────────────────────────
-const ChartCard = ({ title, children, isDark, className = '', colSpan = '' }) => (
-    <div className={`rounded-md border overflow-hidden ${colSpan} ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-white border-gray-100 shadow-sm'} ${className}`}>
-        <div className="p-5 pb-0">
-            <h3 className={`text-xs font-light tracking-widest uppercase ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{title}</h3>
-        </div>
-        <div className="p-5 pt-3">{children}</div>
-    </div>
-);
-
-// ─── Build heatmap data from salesByDay ─────────────────────────────────────
 const buildHeatmapData = (salesByDay) => {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
-
-    // Initialize grid
     const grid = {};
-    dayNames.forEach(day => {
+
+    dayNames.forEach((day) => {
         grid[day] = {};
-        hours.forEach(h => { grid[day][h] = 0; });
+        hours.forEach((hour) => { grid[day][hour] = 0; });
     });
 
-    // Distribute sales data across hours with a realistic pattern
-    // (peak afternoon/evening, low night, bumps at lunch)
     const hourWeights = [
-        0.5, 0.3, 0.2, 0.1, 0.1, 0.2, 0.4, 0.8,     // 00-07
-        1.2, 2.0, 3.0, 3.5, 4.0, 3.2, 2.8, 3.0,      // 08-15
-        3.5, 4.5, 5.0, 4.8, 4.0, 3.0, 2.0, 1.0,       // 16-23
+        0.5, 0.3, 0.2, 0.1, 0.1, 0.2, 0.4, 0.8,
+        1.2, 2.0, 3.0, 3.5, 4.0, 3.2, 2.8, 3.0,
+        3.5, 4.5, 5.0, 4.8, 4.0, 3.0, 2.0, 1.0,
     ];
     const totalWeight = hourWeights.reduce((a, b) => a + b, 0);
 
-    (salesByDay || []).forEach(entry => {
-        const d = new Date(entry.date + 'T12:00:00Z');
-        const dayName = dayNames[d.getUTCDay()];
+    (salesByDay || []).forEach((entry) => {
+        const date = new Date(`${entry.date}T12:00:00Z`);
+        const dayName = dayNames[date.getUTCDay()];
         if (!grid[dayName]) return;
-        hours.forEach((h, idx) => {
-            const portion = (entry.orders || entry.tickets || 1) * (hourWeights[idx] / totalWeight);
-            grid[dayName][h] += Math.round(portion * 10) / 10;
+
+        hours.forEach((hour, index) => {
+            const portion = (entry.orders || entry.tickets || 1) * (hourWeights[index] / totalWeight);
+            grid[dayName][hour] += Math.round(portion * 10) / 10;
         });
     });
 
-    // Convert to Nivo format
-    return dayNames.map(day => ({
+    return dayNames.map((day) => ({
         id: day,
-        data: hours.map(h => ({ x: h, y: Math.round(grid[day][h]) })),
+        data: hours.map((hour) => ({ x: hour, y: Math.round(grid[day][hour]) })),
     }));
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// AnalyticsView Component
-// ═══════════════════════════════════════════════════════════════════════════
 const AnalyticsView = ({ isDark }) => {
     const [events, setEvents] = useState([]);
     const [selectedEventId, setSelectedEventId] = useState('all');
@@ -156,16 +195,15 @@ const AnalyticsView = ({ isDark }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
-
     const [salesData, setSalesData] = useState(null);
     const [eventData, setEventData] = useState(null);
     const [customerData, setCustomerData] = useState(null);
 
-    const theme = isDark ? nivoDarkTheme : nivoLightTheme;
+    const chartTheme = isDark ? nivoDarkTheme : nivoLightTheme;
+    const uiTheme = getDashboardTheme(isDark);
     const googleAnalyticsMeta = useMemo(() => getGoogleAnalyticsIntegrationMeta(), []);
     const analyticsQuery = useMemo(() => buildAnalyticsQueryString(selectedTimeframe), [selectedTimeframe]);
 
-    // ── Fetch all data on mount ──────────────────────────────────────────
     useEffect(() => {
         const fetchAll = async () => {
             setLoading(true);
@@ -181,51 +219,52 @@ const AnalyticsView = ({ isDark }) => {
                 const eventsPayload = eventsRes?.data?.data || eventsRes?.data || {};
                 const eventsList = eventsPayload?.events || (Array.isArray(eventsPayload) ? eventsPayload : []);
                 setEvents(eventsList);
-
                 setSalesData(salesRes?.data?.data || salesRes?.data || null);
                 setEventData(eventsAnalyticsRes?.data?.data || eventsAnalyticsRes?.data || null);
                 setCustomerData(customersRes?.data?.data || customersRes?.data || null);
-            } catch (e) {
+            } catch (requestError) {
                 setError('Failed to load analytics data. Please try again.');
-                console.error(e);
+                console.error(requestError);
             } finally {
                 setLoading(false);
             }
         };
+
         fetchAll();
     }, [analyticsQuery, refreshKey]);
 
-    // ── Filter data by selected event (client-side) ────────────────────
     const filteredSalesData = useMemo(() => {
         if (!salesData || selectedEventId === 'all') return salesData;
-        // When a specific event is selected, find its data from salesByEvent
-        const eventSales = salesData.salesByEvent?.find(e => e.eventId === selectedEventId);
-        if (!eventSales) return { totalRevenue: 0, totalOrders: 0, totalTicketsSold: 0, averageOrderValue: 0, salesByDay: [], salesByEvent: [] };
+        const eventSales = salesData.salesByEvent?.find((event) => event.eventId === selectedEventId);
+
+        if (!eventSales) {
+            return { totalRevenue: 0, totalOrders: 0, totalTicketsSold: 0, averageOrderValue: 0, salesByDay: [], salesByEvent: [] };
+        }
+
         return {
             totalRevenue: eventSales.revenue,
             totalOrders: eventSales.orders,
             totalTicketsSold: eventSales.ticketsSold,
             averageOrderValue: eventSales.orders > 0 ? eventSales.revenue / eventSales.orders : 0,
-            salesByDay: salesData.salesByDay, // Keep full timeline for line chart
+            salesByDay: salesData.salesByDay,
             salesByEvent: [eventSales],
         };
     }, [salesData, selectedEventId]);
 
     const filteredEventData = useMemo(() => {
         if (!eventData || selectedEventId === 'all') return eventData;
-        const filtered = eventData.topEvents?.filter(e => e.id === selectedEventId) || [];
+        const filtered = eventData.topEvents?.filter((event) => event.id === selectedEventId) || [];
         return { ...eventData, topEvents: filtered };
     }, [eventData, selectedEventId]);
 
-    // ── Derive chart data ───────────────────────────────────────────────
     const revenueLineData = useMemo(() => {
         if (!filteredSalesData?.salesByDay?.length) return [];
         return [{
             id: 'Revenue',
             color: '#6366f1',
-            data: filteredSalesData.salesByDay.map(d => ({
-                x: d.date,
-                y: d.revenue,
+            data: filteredSalesData.salesByDay.map((day) => ({
+                x: day.date,
+                y: day.revenue,
             })),
         }];
     }, [filteredSalesData]);
@@ -233,21 +272,21 @@ const AnalyticsView = ({ isDark }) => {
     const ticketPieData = useMemo(() => {
         const topEvents = filteredEventData?.topEvents;
         if (!topEvents?.length) return [];
-        return topEvents.slice(0, 6).map((e, i) => ({
-            id: e.name.length > 20 ? e.name.substring(0, 18) + '…' : e.name,
-            label: e.name,
-            value: e.ticketsSold,
-            color: (isDark ? PIE_COLORS_DARK : PIE_COLORS_LIGHT)[i % 6],
+        return topEvents.slice(0, 6).map((event, index) => ({
+            id: event.name.length > 20 ? `${event.name.substring(0, 18)}…` : event.name,
+            label: event.name,
+            value: event.ticketsSold,
+            color: (isDark ? PIE_COLORS_DARK : PIE_COLORS_LIGHT)[index % 6],
         }));
     }, [filteredEventData, isDark]);
 
     const topEventsBarData = useMemo(() => {
         const topEvents = filteredEventData?.topEvents;
         if (!topEvents?.length) return [];
-        return topEvents.slice(0, 8).reverse().map(e => ({
-            event: e.name.length > 25 ? e.name.substring(0, 23) + '…' : e.name,
-            revenue: e.revenue,
-            tickets: e.ticketsSold,
+        return topEvents.slice(0, 8).reverse().map((event) => ({
+            event: event.name.length > 25 ? `${event.name.substring(0, 23)}…` : event.name,
+            revenue: event.revenue,
+            tickets: event.ticketsSold,
         }));
     }, [filteredEventData]);
 
@@ -256,9 +295,9 @@ const AnalyticsView = ({ isDark }) => {
         return [{
             id: 'Customers',
             color: '#10b981',
-            data: customerData.customersByRegistrationDate.map(d => ({
-                x: d.date,
-                y: d.count,
+            data: customerData.customersByRegistrationDate.map((day) => ({
+                x: day.date,
+                y: day.count,
             })),
         }];
     }, [customerData]);
@@ -270,209 +309,201 @@ const AnalyticsView = ({ isDark }) => {
 
     const selectedEventName = selectedEventId === 'all'
         ? 'All Events'
-        : events.find(e => e.id === selectedEventId)?.name || 'Selected Event';
+        : events.find((event) => event.id === selectedEventId)?.name || 'Selected Event';
 
-    // ── Loading state ───────────────────────────────────────────────────
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-32 animate-fade-in">
-                <Loader2 size={40} className={`animate-spin mb-4 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
-                <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Loading analytics…</p>
-            </div>
+            <DashboardPage className="mx-auto max-w-[1400px]">
+                <DashboardEmptyState
+                    isDark={isDark}
+                    title="Loading analytics"
+                    description="Pulling revenue, event, and customer data into the shared analytics workspace."
+                    action={<Loader2 size={18} className="animate-spin" />}
+                />
+            </DashboardPage>
         );
     }
 
-    // ── Error state ─────────────────────────────────────────────────────
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center py-32 animate-fade-in">
-                <AlertCircle size={40} className="text-rose-400 mb-4" />
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{error}</p>
-                <button
-                    onClick={() => setRefreshKey((current) => current + 1)}
-                    className="mt-4 px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-500 transition-colors"
-                >
-                    Retry
-                </button>
-            </div>
+            <DashboardPage className="mx-auto max-w-[1400px]">
+                <DashboardEmptyState
+                    isDark={isDark}
+                    title="Analytics unavailable"
+                    description={error}
+                    action={(
+                        <DashboardButton isDark={isDark} onClick={() => setRefreshKey((current) => current + 1)}>
+                            <RefreshCcw size={16} />
+                            Retry
+                        </DashboardButton>
+                    )}
+                />
+            </DashboardPage>
         );
     }
 
     return (
-        <div className="space-y-6 animate-fade-in max-w-[1400px] mx-auto">
-            <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
-                <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-indigo-500/10 blur-3xl" />
-                    <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
-                </div>
-                <div className="relative">
-                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                        <div>
-                            <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                <span>Analytics</span>
-                                <span className={`text-base sm:text-lg tracking-[0.16em] uppercase ${isDark ? 'text-indigo-300' : 'text-indigo-700'}`}>[google analytics ready]</span>
-                            </h2>
-                            <p className={`mt-3 max-w-3xl text-sm sm:text-base font-light leading-relaxed ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                                This dashboard is now structured for Google Analytics integration. Until a GA property is connected, it continues to render the current platform analytics so the layout and query model stay production-useful.
-                            </p>
-                        </div>
-                        <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs uppercase tracking-[0.18em] ${googleAnalyticsMeta.connected
-                            ? (isDark ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-emerald-50 text-emerald-700 border border-emerald-100')
-                            : (isDark ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-100')
-                        }`}>
-                            <Link2 size={14} />
-                            {googleAnalyticsMeta.statusLabel}
-                        </div>
-                    </div>
-
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <PrepStatCard isDark={isDark} label="Primary source" value={googleAnalyticsMeta.label} />
-                        <PrepStatCard isDark={isDark} label="Property ID" value={googleAnalyticsMeta.propertyId || 'Not configured yet'} />
-                        <PrepStatCard isDark={isDark} label="Measurement ID" value={googleAnalyticsMeta.measurementId || 'Not configured yet'} />
-                    </div>
-
-                    <div className={`mt-4 rounded-md border p-4 ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-                        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-4">
-                            <div>
-                                <p className={`text-[10px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>GA4 metric blueprint</p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {GOOGLE_ANALYTICS_METRIC_BLUEPRINT.map((item) => (
-                                        <span
-                                            key={item}
-                                            className={`rounded-full px-3 py-1.5 text-xs font-light ${isDark ? 'bg-[#232336] text-gray-200' : 'bg-white border border-gray-200 text-gray-700'}`}
-                                        >
-                                            {item}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                            <div>
-                                <p className={`text-[10px] uppercase tracking-[0.2em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>Dimension blueprint</p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    {GOOGLE_ANALYTICS_DIMENSION_BLUEPRINT.map((item) => (
-                                        <span
-                                            key={item}
-                                            className={`rounded-full px-3 py-1.5 text-xs font-light ${isDark ? 'bg-[#232336] text-gray-200' : 'bg-white border border-gray-200 text-gray-700'}`}
-                                        >
-                                            {item}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-                <div className={`inline-flex flex-wrap gap-2 rounded-md border p-1 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-                    {ANALYTICS_TIMEFRAMES.map((timeframe) => (
-                        <button
-                            key={timeframe.id}
-                            type="button"
-                            onClick={() => setSelectedTimeframe(timeframe.id)}
-                            className={`rounded-sm px-4 py-2 text-sm font-light transition-colors ${selectedTimeframe === timeframe.id
-                                ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-white text-gray-900 shadow-sm')
-                                : (isDark ? 'text-[#8f94aa] hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
-                            }`}
-                        >
-                            {timeframe.label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="relative">
-                    <button
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className={`flex items-center space-x-2 px-4 py-2.5 rounded-md border text-sm font-light tracking-wide transition-all duration-200 min-w-[220px] justify-between ${isDark
-                            ? 'bg-[#1e1e2d] border-[#2b2b40] text-gray-200 hover:bg-[#232336]'
-                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm'
-                        }`}
+        <DashboardPage className="mx-auto max-w-[1400px]">
+            <DashboardTitleBar
+                isDark={isDark}
+                title="Analytics"
+                description="Review revenue, event, and customer performance from the same control-center shell used across the dashboard."
+                icon={BarChart3}
+                iconClassName={isDark ? 'text-cyan-300' : 'text-sky-700'}
+                glowTopClassName="bg-cyan-400/10"
+                glowBottomClassName="bg-sky-500/10"
+                badges={(
+                    <DashboardChip
+                        isDark={isDark}
+                        className={cn(
+                            'gap-2 border',
+                            googleAnalyticsMeta.connected
+                                ? (isDark ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
+                                : (isDark ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700')
+                        )}
                     >
-                        <span className="truncate">{selectedEventName}</span>
-                        <ChevronDown size={16} className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''} ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                    </button>
+                        <Link2 size={14} />
+                        {googleAnalyticsMeta.statusLabel}
+                    </DashboardChip>
+                )}
+            />
 
-                    {isDropdownOpen && (
-                        <>
-                            <div className="fixed inset-0 z-30" onClick={() => setIsDropdownOpen(false)} />
-                            <div className={`absolute right-0 mt-2 w-72 rounded-md overflow-hidden z-40 max-h-80 overflow-y-auto animate-fade-in ${isDark
-                                ? 'bg-[#151521] border border-[#2b2b40] shadow-2xl shadow-black/50'
-                                : 'bg-white border border-gray-200 shadow-xl'
-                            }`}>
-                                <button
-                                    onClick={() => { setSelectedEventId('all'); setIsDropdownOpen(false); }}
-                                    className={`w-full text-left px-4 py-3 text-sm font-light transition-colors ${selectedEventId === 'all'
-                                        ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-indigo-50 text-indigo-700')
-                                        : (isDark ? 'text-gray-300 hover:bg-[#232336]' : 'text-gray-700 hover:bg-gray-50')
-                                    }`}
-                                >
-                                    <span className="font-medium">All Events</span>
-                                    <span className={`block text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Aggregate view</span>
-                                </button>
-                                <div className={`border-t ${isDark ? 'border-[#333]' : 'border-gray-100'}`} />
-                                {events.map(e => (
-                                    <button
-                                        key={e.id}
-                                        onClick={() => { setSelectedEventId(e.id); setIsDropdownOpen(false); }}
-                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${selectedEventId === e.id
-                                            ? (isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-50 text-indigo-700')
-                                            : (isDark ? 'text-gray-300 hover:bg-[#252525]' : 'text-gray-700 hover:bg-gray-50')
-                                        }`}
-                                    >
-                                        <span className="truncate block">{e.name}</span>
-                                        {e.status && <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{e.status}</span>}
-                                    </button>
-                                ))}
-                                {events.length === 0 && (
-                                    <div className={`px-4 py-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>No events found</div>
-                                )}
-                            </div>
-                        </>
-                    )}
+            <DashboardSection
+                isDark={isDark}
+                accent="violet"
+                title="GA4 readiness"
+                description="Keep the source configuration visible while the analytics workspace continues to run against the current query model."
+                actions={(
+                    <DashboardButton isDark={isDark} variant="secondary" onClick={() => setRefreshKey((current) => current + 1)}>
+                        <RefreshCcw size={16} />
+                        Refresh data
+                    </DashboardButton>
+                )}
+            >
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <DashboardStat isDark={isDark} label="Primary source" value={googleAnalyticsMeta.label} detail="Current analytics backend" />
+                    <DashboardStat isDark={isDark} label="Property ID" value={googleAnalyticsMeta.propertyId || 'Not configured'} detail="GA property target" />
+                    <DashboardStat isDark={isDark} label="Measurement ID" value={googleAnalyticsMeta.measurementId || 'Not configured'} detail="Web stream measurement" />
                 </div>
+
+                <DashboardSurface isDark={isDark} accent="slate" className="mt-4 p-4 sm:p-5">
+                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+                        <div>
+                            <p className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textTertiary)}>GA4 metric blueprint</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                {GOOGLE_ANALYTICS_METRIC_BLUEPRINT.map((item) => (
+                                    <BlueprintTag key={item} isDark={isDark}>{item}</BlueprintTag>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <p className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Dimension blueprint</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                {GOOGLE_ANALYTICS_DIMENSION_BLUEPRINT.map((item) => (
+                                    <BlueprintTag key={item} isDark={isDark}>{item}</BlueprintTag>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </DashboardSurface>
+            </DashboardSection>
+
+            <DashboardSurface isDark={isDark} accent="blue" className="p-4 sm:p-5">
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                    <div className={cn('inline-flex flex-wrap gap-2 rounded-md border p-1', isDark ? 'border-dashboard-borderStrong bg-dashboard-panelMuted' : 'border-slate-200 bg-slate-50')}>
+                        {ANALYTICS_TIMEFRAMES.map((timeframe) => (
+                            <button
+                                key={timeframe.id}
+                                type="button"
+                                onClick={() => setSelectedTimeframe(timeframe.id)}
+                                className={cn(
+                                    'rounded-md px-4 py-2 text-sm font-light transition-colors',
+                                    selectedTimeframe === timeframe.id
+                                        ? (isDark ? 'bg-dashboard-panelAlt text-zinc-100' : 'bg-white text-slate-900 shadow-sm')
+                                        : uiTheme.textTertiary
+                                )}
+                            >
+                                {timeframe.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => setIsDropdownOpen((current) => !current)}
+                            className={cn(
+                                'flex min-w-[220px] items-center justify-between gap-3 rounded-md border px-4 py-2.5 text-sm font-light transition-colors',
+                                uiTheme.panel,
+                                isDark ? 'hover:bg-dashboard-panelAlt' : 'hover:bg-slate-50'
+                            )}
+                        >
+                            <span className="truncate">{selectedEventName}</span>
+                            <ChevronDown size={16} className={cn('transition-transform duration-200', isDropdownOpen ? 'rotate-180' : '', uiTheme.textTertiary)} />
+                        </button>
+
+                        {isDropdownOpen ? (
+                            <>
+                                <div className="fixed inset-0 z-30" onClick={() => setIsDropdownOpen(false)} />
+                                <DashboardSurface
+                                    isDark={isDark}
+                                    accent="blue"
+                                    className={cn('absolute right-0 z-40 mt-2 max-h-80 w-72 overflow-y-auto', isDark ? 'bg-dashboard-shell' : 'bg-white')}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => { setSelectedEventId('all'); setIsDropdownOpen(false); }}
+                                        className={cn(
+                                            'w-full px-4 py-3 text-left text-sm font-light transition-colors',
+                                            selectedEventId === 'all'
+                                                ? (isDark ? 'bg-white/10 text-zinc-100' : 'bg-slate-100 text-slate-900')
+                                                : (isDark ? 'text-zinc-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50')
+                                        )}
+                                    >
+                                        <span className="font-medium">All Events</span>
+                                        <span className={cn('mt-0.5 block text-xs', uiTheme.textTertiary)}>Aggregate view</span>
+                                    </button>
+                                    <div className={cn('border-t', uiTheme.divider)} />
+                                    {events.map((event) => (
+                                        <button
+                                            key={event.id}
+                                            type="button"
+                                            onClick={() => { setSelectedEventId(event.id); setIsDropdownOpen(false); }}
+                                            className={cn(
+                                                'w-full px-4 py-2.5 text-left text-sm transition-colors',
+                                                selectedEventId === event.id
+                                                    ? (isDark ? 'bg-sky-500/15 text-sky-200' : 'bg-sky-50 text-sky-700')
+                                                    : (isDark ? 'text-zinc-300 hover:bg-white/5' : 'text-slate-700 hover:bg-slate-50')
+                                            )}
+                                        >
+                                            <span className="block truncate">{event.name}</span>
+                                            {event.status ? <span className={cn('text-xs', uiTheme.textTertiary)}>{event.status}</span> : null}
+                                        </button>
+                                    ))}
+                                    {events.length === 0 ? (
+                                        <div className={cn('px-4 py-3 text-xs', uiTheme.textTertiary)}>No events found</div>
+                                    ) : null}
+                                </DashboardSurface>
+                            </>
+                        ) : null}
+                    </div>
+                </div>
+            </DashboardSurface>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <KpiCard label="Total Revenue" value={formatCurrency(filteredSalesData?.totalRevenue || 0)} icon={DollarSign} accent="violet" iconClassName="text-indigo-400" isDark={isDark} />
+                <KpiCard label="Tickets Sold" value={formatNumber(filteredSalesData?.totalTicketsSold || 0)} icon={Ticket} accent="brand" iconClassName="text-pink-400" isDark={isDark} />
+                <KpiCard label="Total Orders" value={formatNumber(filteredSalesData?.totalOrders || 0)} icon={ShoppingCart} accent="violet" iconClassName="text-fuchsia-400" isDark={isDark} />
+                <KpiCard label="Avg Order Value" value={formatCurrency(filteredSalesData?.averageOrderValue || 0)} icon={TrendingUp} accent="green" iconClassName="text-emerald-400" isDark={isDark} />
             </div>
 
-            {/* ── KPI Cards ──────────────────────────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <KpiCard
-                    label="Total Revenue"
-                    value={formatCurrency(filteredSalesData?.totalRevenue || 0)}
-                    icon={DollarSign}
-                    color="bg-gradient-to-br from-indigo-500 to-purple-600"
-                    isDark={isDark}
-                />
-                <KpiCard
-                    label="Tickets Sold"
-                    value={formatNumber(filteredSalesData?.totalTicketsSold || 0)}
-                    icon={Ticket}
-                    color="bg-gradient-to-br from-pink-500 to-orange-400"
-                    isDark={isDark}
-                />
-                <KpiCard
-                    label="Total Orders"
-                    value={formatNumber(filteredSalesData?.totalOrders || 0)}
-                    icon={ShoppingCart}
-                    color="bg-gradient-to-br from-fuchsia-500 to-pink-500"
-                    isDark={isDark}
-                />
-                <KpiCard
-                    label="Avg Order Value"
-                    value={formatCurrency(filteredSalesData?.averageOrderValue || 0)}
-                    icon={TrendingUp}
-                    color="bg-gradient-to-br from-emerald-400 to-teal-500"
-                    isDark={isDark}
-                />
-            </div>
-
-            {/* ── Row 2: Revenue Line + Pie ───────────────────────────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                <ChartCard title="Revenue Over Time" isDark={isDark} colSpan="lg:col-span-2">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                <ChartCard title="Revenue over time" isDark={isDark} colSpan="lg:col-span-2" accent="violet">
                     <div className="h-[320px]">
                         {revenueLineData.length > 0 ? (
                             <ResponsiveLine
                                 data={revenueLineData}
-                                theme={theme}
+                                theme={chartTheme}
                                 margin={{ top: 20, right: 20, bottom: 50, left: 60 }}
                                 xScale={{ type: 'point' }}
                                 yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false }}
@@ -481,24 +512,24 @@ const AnalyticsView = ({ isDark }) => {
                                     tickSize: 0,
                                     tickPadding: 12,
                                     tickRotation: -45,
-                                    format: v => v.substring(5), // MM-DD
+                                    format: (value) => value.substring(5),
                                 }}
                                 axisLeft={{
                                     tickSize: 0,
                                     tickPadding: 8,
-                                    format: v => formatCurrency(v),
+                                    format: (value) => formatCurrency(value),
                                 }}
-                                enableArea={true}
+                                enableArea
                                 areaOpacity={0.15}
                                 areaBaselineValue={0}
                                 colors={['#ec4899']}
                                 lineWidth={2.5}
                                 pointSize={6}
-                                pointColor={isDark ? '#1e1e2d' : '#ffffff'}
+                                pointColor={isDark ? dashboardColorTokens.panel : '#ffffff'}
                                 pointBorderWidth={2.5}
                                 pointBorderColor="#ec4899"
-                                enableCrosshair={true}
-                                useMesh={true}
+                                enableCrosshair
+                                useMesh
                                 defs={[
                                     {
                                         id: 'areaGradient',
@@ -511,24 +542,24 @@ const AnalyticsView = ({ isDark }) => {
                                 ]}
                                 fill={[{ match: '*', id: 'areaGradient' }]}
                                 tooltip={({ point }) => (
-                                    <div className={`px-3 py-2 rounded-lg text-xs shadow-lg ${isDark ? 'bg-[#18181b] text-gray-200 border border-[#3f3f46]' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                                    <div className={analyticsTooltipClass(isDark)}>
                                         <strong>{point.data.xFormatted}</strong>
                                         <div className="mt-1">{formatCurrency(point.data.y)}</div>
                                     </div>
                                 )}
                             />
                         ) : (
-                            <EmptyState isDark={isDark} message="No revenue data available" />
+                            <InlineEmptyState isDark={isDark} title="No revenue data" description="Sales activity will appear here once analytics data is available." />
                         )}
                     </div>
                 </ChartCard>
 
-                <ChartCard title="Ticket Distribution" isDark={isDark}>
+                <ChartCard title="Ticket distribution" isDark={isDark} accent="brand">
                     <div className="h-[320px]">
                         {ticketPieData.length > 0 ? (
                             <ResponsivePie
                                 data={ticketPieData}
-                                theme={theme}
+                                theme={chartTheme}
                                 margin={{ top: 20, right: 20, bottom: 40, left: 20 }}
                                 innerRadius={0.6}
                                 padAngle={2}
@@ -539,7 +570,7 @@ const AnalyticsView = ({ isDark }) => {
                                 enableArcLinkLabels={false}
                                 arcLabelsSkipAngle={20}
                                 arcLabelsTextColor={isDark ? '#e4e4e7' : '#ffffff'}
-                                arcLabel={d => formatNumber(d.value)}
+                                arcLabel={(datum) => formatNumber(datum.value)}
                                 motionConfig="gentle"
                                 transitionMode="startAngle"
                                 legends={[
@@ -555,27 +586,26 @@ const AnalyticsView = ({ isDark }) => {
                                     },
                                 ]}
                                 tooltip={({ datum }) => (
-                                    <div className={`px-3 py-2 rounded-lg text-xs shadow-lg ${isDark ? 'bg-[#18181b] text-gray-200 border border-[#3f3f46]' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                                    <div className={analyticsTooltipClass(isDark)}>
                                         <strong>{datum.label}</strong>
                                         <div className="mt-1">{formatNumber(datum.value)} tickets</div>
                                     </div>
                                 )}
                             />
                         ) : (
-                            <EmptyState isDark={isDark} message="No ticket data available" />
+                            <InlineEmptyState isDark={isDark} title="No ticket data" description="Ticket distribution appears once event totals are available." />
                         )}
                     </div>
                 </ChartCard>
             </div>
 
-            {/* ── Row 3: Top Events Bar + Customer Acquisition ────────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                <ChartCard title="Top Events by Revenue" isDark={isDark} colSpan="lg:col-span-2">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                <ChartCard title="Top events by revenue" isDark={isDark} colSpan="lg:col-span-2" accent="brand">
                     <div className="h-[340px]">
                         {topEventsBarData.length > 0 ? (
                             <ResponsiveBar
                                 data={topEventsBarData}
-                                theme={theme}
+                                theme={chartTheme}
                                 keys={['revenue']}
                                 indexBy="event"
                                 layout="horizontal"
@@ -585,63 +615,44 @@ const AnalyticsView = ({ isDark }) => {
                                 colors={['#ec4899']}
                                 borderRadius={0}
                                 borderWidth={0}
-                                enableLabel={true}
-                                label={d => formatCurrency(d.value)}
+                                enableLabel
+                                label={(datum) => formatCurrency(datum.value)}
                                 labelTextColor="#e4e4e7"
                                 labelSkipWidth={60}
-                                axisLeft={{
-                                    tickSize: 0,
-                                    tickPadding: 8,
-                                }}
-                                axisBottom={{
-                                    tickSize: 0,
-                                    tickPadding: 8,
-                                    format: v => formatCurrency(v),
-                                }}
-                                enableGridX={true}
+                                axisLeft={{ tickSize: 0, tickPadding: 8 }}
+                                axisBottom={{ tickSize: 0, tickPadding: 8, format: (value) => formatCurrency(value) }}
+                                enableGridX
                                 enableGridY={false}
                                 motionConfig="gentle"
                                 tooltip={({ indexValue, value }) => (
-                                    <div className={`px-3 py-2 rounded-lg text-xs shadow-lg ${isDark ? 'bg-[#18181b] text-gray-200 border border-[#3f3f46]' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                                    <div className={analyticsTooltipClass(isDark)}>
                                         <strong>{indexValue}</strong>
                                         <div className="mt-1">{formatCurrency(value)}</div>
                                     </div>
                                 )}
                             />
                         ) : (
-                            <EmptyState isDark={isDark} message="No event data available" />
+                            <InlineEmptyState isDark={isDark} title="No event revenue data" description="Revenue rankings will populate after event analytics are synced." />
                         )}
                     </div>
                 </ChartCard>
 
-                <ChartCard title="New Customers" isDark={isDark}>
-                    <div className="flex flex-col h-[340px]">
-                        {/* Customer KPIs */}
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div className={`p-4 rounded-md border text-center ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-                                <div className={`text-2xl font-light tracking-tight ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                                    {formatNumber(customerData?.totalCustomers || 0)}
-                                </div>
-                                <div className={`text-[10px] uppercase tracking-wider font-light mt-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>Total</div>
-                            </div>
-                            <div className={`p-4 rounded-md border text-center ${isDark ? 'bg-[#151521] border-[#2b2b40]' : 'bg-gray-50 border-gray-200'}`}>
-                                <div className={`text-2xl font-light tracking-tight ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>
-                                    {formatNumber(customerData?.repeatCustomers || 0)}
-                                </div>
-                                <div className={`text-[10px] uppercase tracking-wider font-light mt-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>Repeat</div>
-                            </div>
+                <ChartCard title="New customers" isDark={isDark} accent="green">
+                    <div className="flex h-[340px] flex-col">
+                        <div className="mb-4 grid grid-cols-2 gap-3">
+                            <DashboardStat isDark={isDark} label="Total" value={formatNumber(customerData?.totalCustomers || 0)} />
+                            <DashboardStat isDark={isDark} label="Repeat" value={formatNumber(customerData?.repeatCustomers || 0)} />
                         </div>
-                        {/* Sparkline */}
-                        <div className="flex-1 min-h-0">
+                        <div className="min-h-0 flex-1">
                             {customerSparkData.length > 0 ? (
                                 <ResponsiveLine
                                     data={customerSparkData}
-                                    theme={theme}
+                                    theme={chartTheme}
                                     margin={{ top: 5, right: 5, bottom: 25, left: 5 }}
                                     xScale={{ type: 'point' }}
                                     yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
                                     curve="natural"
-                                    enableArea={true}
+                                    enableArea
                                     areaOpacity={0.15}
                                     colors={['#10b981']}
                                     lineWidth={2}
@@ -651,7 +662,7 @@ const AnalyticsView = ({ isDark }) => {
                                     axisLeft={null}
                                     axisBottom={null}
                                     enableCrosshair={false}
-                                    useMesh={true}
+                                    useMesh
                                     defs={[
                                         {
                                             id: 'customerGradient',
@@ -664,45 +675,48 @@ const AnalyticsView = ({ isDark }) => {
                                     ]}
                                     fill={[{ match: '*', id: 'customerGradient' }]}
                                     tooltip={({ point }) => (
-                                        <div className={`px-3 py-2 rounded-lg text-xs shadow-lg ${isDark ? 'bg-[#18181b] text-gray-200 border border-[#3f3f46]' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                                        <div className={analyticsTooltipClass(isDark)}>
                                             <strong>{point.data.xFormatted}</strong>
                                             <div className="mt-1">{point.data.y} new customers</div>
                                         </div>
                                     )}
                                 />
                             ) : (
-                                <EmptyState isDark={isDark} message="No customer data" small />
+                                <InlineEmptyState isDark={isDark} title="No customer data" description="Customer acquisition will populate once registrations are available." compact />
                             )}
                         </div>
                     </div>
                 </ChartCard>
             </div>
 
-            {/* ── Row 4: Revenue Heatmap (Killer Feature) ────────────── */}
             <ChartCard
-                title={
+                title={(
                     <span className="flex items-center gap-2">
                         <Flame size={15} className="text-orange-400" />
-                        Purchase Activity Heatmap
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${isDark ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'}`}>NEW</span>
+                        Purchase activity heatmap
+                        <span className={cn(
+                            'rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                            isDark ? 'bg-orange-500/20 text-orange-300' : 'bg-orange-100 text-orange-700'
+                        )}>
+                            NEW
+                        </span>
                     </span>
-                }
+                )}
+                description="Shows when customers are most active so campaign pacing and ticket drops can align with peak windows."
                 isDark={isDark}
+                accent="amber"
             >
-                <p className={`text-xs mb-4 -mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                    Shows when your customers are most active — optimize ad spend and ticket drops around these peak windows.
-                </p>
                 <div className="h-[280px]">
                     {heatmapData.length > 0 ? (
                         <ResponsiveHeatMap
                             data={heatmapData}
-                            theme={theme}
+                            theme={chartTheme}
                             margin={{ top: 30, right: 30, bottom: 10, left: 50 }}
                             axisTop={{
                                 tickSize: 0,
                                 tickPadding: 8,
                                 tickRotation: -45,
-                                format: v => v.replace(':00', 'h'),
+                                format: (value) => value.replace(':00', 'h'),
                             }}
                             axisLeft={{
                                 tickSize: 0,
@@ -713,16 +727,16 @@ const AnalyticsView = ({ isDark }) => {
                                 scheme: 'purples',
                                 minValue: 0,
                             }}
-                            emptyColor={isDark ? '#151521' : '#f5f3ff'}
+                            emptyColor={isDark ? dashboardColorTokens.shell : '#f8fafc'}
                             borderRadius={0}
                             borderWidth={1}
-                            borderColor={isDark ? '#2b2b40' : '#e4e4e7'}
+                            borderColor={isDark ? dashboardColorTokens.border : '#e2e8f0'}
                             opacity={0.95}
                             inactiveOpacity={0.35}
                             activeOpacity={1}
                             hoverTarget="cell"
                             cellComponent="rect"
-                            labelTextColor={({ value }) => value > 3 ? '#e4e4e7' : 'transparent'}
+                            labelTextColor={({ value }) => (value > 3 ? '#e4e4e7' : 'transparent')}
                             legends={[
                                 {
                                     anchor: 'right',
@@ -739,27 +753,19 @@ const AnalyticsView = ({ isDark }) => {
                                 },
                             ]}
                             tooltip={({ cell }) => (
-                                <div className={`px-3 py-2 rounded-lg text-xs shadow-lg ${isDark ? 'bg-[#18181b] text-gray-200 border border-[#3f3f46]' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                                <div className={analyticsTooltipClass(isDark)}>
                                     <strong>{cell.serieId} @ {cell.data.x}</strong>
                                     <div className="mt-1">{cell.formattedValue} purchases</div>
                                 </div>
                             )}
                         />
                     ) : (
-                        <EmptyState isDark={isDark} message="Not enough data for heatmap — more sales data will populate this view." />
+                        <InlineEmptyState isDark={isDark} title="Heatmap not ready" description="More sales activity is needed before the activity map becomes useful." />
                     )}
                 </div>
             </ChartCard>
-        </div>
+        </DashboardPage>
     );
 };
-
-// ─── Empty State ────────────────────────────────────────────────────────────
-const EmptyState = ({ isDark, message, small = false }) => (
-    <div className={`flex flex-col items-center justify-center h-full ${small ? 'py-4' : 'py-12'}`}>
-        <BarChart3 size={small ? 20 : 32} className={`mb-2 ${isDark ? 'text-gray-700' : 'text-gray-300'}`} />
-        <p className={`text-xs text-center max-w-[200px] ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{message}</p>
-    </div>
-);
 
 export default AnalyticsView;

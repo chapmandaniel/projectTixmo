@@ -1,0 +1,42 @@
+name: Tdash Design System
+
+on:
+  pull_request:
+    paths:
+      - 'tdash/**'
+      - '.github/workflows/tdash-design-system.yml'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'tdash/**'
+      - '.github/workflows/tdash-design-system.yml'
+
+jobs:
+  guard-and-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tdash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: tdash/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Design Guard
+        run: npm run design:guard
+
+      - name: Targeted Tests
+        run: npm test -- --run src/test/Smoke.test.jsx src/test/NotificationResilience.test.jsx
+
+      - name: Build
+        run: npm run build

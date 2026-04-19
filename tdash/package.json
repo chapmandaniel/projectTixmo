@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "design:guard": "node ./scripts/design-system-guard.mjs",
+    "design:guard:update": "node ./scripts/design-system-guard.mjs --update"
   },
   "dependencies": {
     "@nivo/bar": "^0.99.0",

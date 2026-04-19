@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, RotateCcw, Search, AlertCircle, RefreshCw } from 'lucide-react';
+import { Trash2, RotateCcw, Search, AlertCircle, RefreshCw, Settings } from 'lucide-react';
 import api from '../lib/api';
+import { DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
 
 const SettingsView = ({ isDark }) => {
     const [activeTab, setActiveTab] = useState('recycleBit');
@@ -64,10 +65,15 @@ const SettingsView = ({ isDark }) => {
     return (
         <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
             <div className="flex flex-col space-y-4">
-                <div>
-                    <h2 className={`text-2xl font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Settings</h2>
-                    <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'} mt-1 text-sm`}>Manage your account and application preferences.</p>
-                </div>
+                <DashboardTitleBar
+                    isDark={isDark}
+                    title="Settings"
+                    description="Manage your account and application preferences."
+                    icon={Settings}
+                    iconClassName={isDark ? 'text-indigo-300' : 'text-indigo-700'}
+                    glowTopClassName="bg-indigo-500/10"
+                    glowBottomClassName="bg-sky-400/10"
+                />
 
                 <div className={`flex items-center space-x-6 border-b ${isDark ? 'border-[#2a2a2a]' : 'border-gray-200'}`}>
                     <button

@@ -1,0 +1,40 @@
+<svg width="960" height="1200" viewBox="0 0 960 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="960" height="1200" fill="#241F35"/>
+<rect width="960" height="1200" fill="url(#bg)"/>
+<circle cx="641" cy="208" r="296" fill="url(#glow)" fill-opacity="0.72"/>
+<circle cx="798" cy="133" r="153" fill="#8F67FF" fill-opacity="0.18"/>
+<path d="M0 799C130 723 259 682 389 676C495 671 563 735 661 735C761 735 855 666 960 627V1200H0V799Z" fill="#171326"/>
+<path d="M0 844C124 797 219 764 336 760C487 755 592 826 710 826C801 826 877 785 960 749V1200H0V844Z" fill="url(#ridge1)"/>
+<path d="M0 972C149 898 290 863 458 864C621 864 752 933 960 871V1200H0V972Z" fill="url(#ridge2)"/>
+<path d="M0 1038C126 998 222 992 330 1005C441 1017 532 1060 644 1060C764 1060 849 1016 960 982V1200H0V1038Z" fill="url(#ridge3)"/>
+<path d="M0 1117C121 1085 214 1078 321 1090C423 1101 500 1135 596 1135C709 1135 838 1102 960 1071V1200H0V1117Z" fill="#0F0C1A"/>
+<rect x="95" y="87" width="188" height="34" rx="17" fill="rgba(255,255,255,0.16)"/>
+<rect x="95" y="87" width="188" height="34" rx="17" stroke="rgba(255,255,255,0.18)"/>
+<path d="M129.911 110H122.566V96.9091H122.283L117.112 109.914H113.708L108.544 96.973H108.262V110H100.917V84.6818H111.668L115.188 94.6037H115.435L118.956 84.6818H129.911V110Z" fill="white"/>
+<path d="M135.106 110V84.6818H154.099V90.7571H142.927V94.8434H153.142V100.919H142.927V110H135.106Z" fill="white"/>
+<path d="M184.854 84.6818V110H176.968L168.805 98.4396H168.681V110H160.86V84.6818H168.87L176.894 96.1925H177.193V84.6818H184.854Z" fill="white"/>
+<rect x="404" y="1029" width="148" height="5" rx="2.5" fill="#E9E2FF" fill-opacity="0.95"/>
+<defs>
+<linearGradient id="bg" x1="480" y1="0" x2="480" y2="1200" gradientUnits="userSpaceOnUse">
+<stop stop-color="#3D3370"/>
+<stop offset="0.45" stop-color="#2B2450"/>
+<stop offset="1" stop-color="#191428"/>
+</linearGradient>
+<radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(641 208) rotate(90) scale(296)">
+<stop stop-color="#8E74FF"/>
+<stop offset="1" stop-color="#8E74FF" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="ridge1" x1="437" y1="760" x2="437" y2="1200" gradientUnits="userSpaceOnUse">
+<stop stop-color="#2B2348"/>
+<stop offset="1" stop-color="#171223"/>
+</linearGradient>
+<linearGradient id="ridge2" x1="480" y1="864" x2="480" y2="1200" gradientUnits="userSpaceOnUse">
+<stop stop-color="#473975"/>
+<stop offset="1" stop-color="#211935"/>
+</linearGradient>
+<linearGradient id="ridge3" x1="480" y1="982" x2="480" y2="1200" gradientUnits="userSpaceOnUse">
+<stop stop-color="#342A56"/>
+<stop offset="1" stop-color="#181222"/>
+</linearGradient>
+</defs>
+</svg>

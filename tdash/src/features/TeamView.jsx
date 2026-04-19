@@ -11,8 +11,22 @@ import {
 } from 'lucide-react';
 import TeamMemberWizard from './TeamMemberWizard';
 import api from '../lib/api';
+import {
+    DashboardButton,
+    DashboardChip,
+    DashboardEmptyState,
+    DashboardPage,
+    DashboardSection,
+    DashboardStripedList,
+    DashboardStripedRow,
+    DashboardSurface,
+    DashboardTitleBar,
+} from '../components/dashboard/DashboardPrimitives';
+import { getDashboardTheme } from '../lib/dashboardTheme';
+import { cn } from '../lib/utils';
 
 const TeamView = ({ isDark, user: currentUser }) => {
+    const uiTheme = getDashboardTheme(isDark);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -57,13 +71,13 @@ const TeamView = ({ isDark, user: currentUser }) => {
     const getRoleBadge = (role) => {
         switch (role) {
             case 'OWNER':
-                return { icon: Lock, color: isDark ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'bg-pink-50 text-pink-700 border border-pink-100' };
+                return { icon: Lock, color: isDark ? 'bg-pink-500/12 text-pink-300' : 'bg-pink-50 text-pink-700' };
             case 'ADMIN':
-                return { icon: Shield, color: isDark ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : 'bg-orange-50 text-orange-700 border border-orange-100' };
+                return { icon: Shield, color: isDark ? 'bg-orange-500/12 text-orange-300' : 'bg-orange-50 text-orange-700' };
             case 'TEAM_MEMBER':
-                return { icon: User, color: isDark ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-blue-50 text-blue-700 border border-blue-100' };
+                return { icon: User, color: isDark ? 'bg-indigo-500/12 text-indigo-300' : 'bg-blue-50 text-blue-700' };
             default:
-                return { icon: User, color: isDark ? 'bg-slate-500/10 text-slate-300 border border-slate-500/20' : 'bg-slate-50 text-slate-700 border border-slate-100' };
+                return { icon: User, color: isDark ? 'bg-slate-500/12 text-slate-300' : 'bg-slate-50 text-slate-700' };
         }
     };
 
@@ -73,15 +87,15 @@ const TeamView = ({ isDark, user: currentUser }) => {
         const admins = users.filter((member) => member.role === 'OWNER' || member.role === 'ADMIN').length;
 
         return [
-            { id: 'total', label: 'Members', value: users.length, icon: Users, accent: 'from-fuchsia-500 to-cyan-400' },
-            { id: 'active', label: 'Active', value: active, icon: CheckCircle2, accent: 'from-emerald-400 to-teal-500' },
-            { id: 'pending', label: 'Pending', value: pending, icon: Clock3, accent: 'from-amber-400 to-orange-500' },
-            { id: 'admins', label: 'Admins', value: admins, icon: Shield, accent: 'from-pink-500 to-rose-400' },
+            { id: 'total', label: 'Members', value: users.length, icon: Users, accent: 'brand', iconClassName: 'text-pink-300' },
+            { id: 'active', label: 'Active', value: active, icon: CheckCircle2, accent: 'green', iconClassName: 'text-emerald-300' },
+            { id: 'pending', label: 'Pending', value: pending, icon: Clock3, accent: 'amber', iconClassName: 'text-amber-300' },
+            { id: 'admins', label: 'Admins', value: admins, icon: Shield, accent: 'violet', iconClassName: 'text-violet-300' },
         ];
     }, [users]);
 
     return (
-        <div className="space-y-8 animate-fade-in max-w-[1500px] mx-auto pb-12">
+        <DashboardPage className="mx-auto max-w-[1500px] space-y-8">
             {isWizardOpen && (
                 <TeamMemberWizard
                     onClose={() => setIsWizardOpen(false)}
@@ -90,33 +104,27 @@ const TeamView = ({ isDark, user: currentUser }) => {
                 />
             )}
 
-            <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
-                <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-pink-500/10 blur-3xl" />
-                    <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
-                </div>
-                <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                        <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                            <span className="inline-flex items-center gap-2">
-                                <span>Team Members</span>
-                                <Users className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-pink-300' : 'text-pink-700'}`} />
-                            </span>
-                        </h2>
-                        <p className={`mt-3 max-w-2xl text-sm leading-7 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                            Manage organization access, role coverage, and pending invites from one roster.
-                        </p>
-                    </div>
-
-                    <button
+            <DashboardTitleBar
+                isDark={isDark}
+                title="Team Members"
+                description="Manage organization access, role coverage, and pending invites from one roster."
+                icon={Users}
+                iconClassName={isDark ? 'text-pink-300' : 'text-pink-700'}
+                glowTopClassName="bg-pink-500/10"
+                glowBottomClassName="bg-cyan-400/10"
+                actions={(
+                    <DashboardButton
+                        isDark={isDark}
                         onClick={() => setIsWizardOpen(true)}
-                        className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-pink-500 text-white hover:bg-pink-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                        className={cn(
+                            isDark ? 'border-pink-500 bg-pink-500 hover:border-pink-400 hover:bg-pink-400' : ''
+                        )}
                     >
                         <UserPlus size={16} />
                         <span>Add member</span>
-                    </button>
-                </div>
-            </section>
+                    </DashboardButton>
+                )}
+            />
 
             {error && (
                 <div className={`rounded-md border px-4 py-3 text-sm font-light ${isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
@@ -128,101 +136,119 @@ const TeamView = ({ isDark, user: currentUser }) => {
                 {stats.map((stat) => {
                     const Icon = stat.icon;
                     return (
-                        <div key={stat.id} className={`relative overflow-hidden rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                            <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${stat.accent}`} />
+                        <DashboardSurface key={stat.id} isDark={isDark} accent={stat.accent} className="p-5">
                             <div className="flex items-center justify-between gap-4">
                                 <div>
-                                    <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>{stat.label}</p>
-                                    <p className={`mt-3 text-3xl font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{stat.value}</p>
+                                    <p className={cn('text-[10px] uppercase tracking-[0.18em]', uiTheme.textTertiary)}>{stat.label}</p>
+                                    <p className={cn('mt-3 text-3xl font-light tracking-tight', uiTheme.textPrimary)}>{stat.value}</p>
                                 </div>
                                 <div className={`flex h-11 w-11 items-center justify-center rounded-md ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
-                                    <Icon size={18} className={isDark ? 'text-gray-200' : 'text-gray-700'} />
+                                    <Icon size={18} className={stat.iconClassName} />
                                 </div>
                             </div>
-                        </div>
+                        </DashboardSurface>
                     );
                 })}
             </section>
 
-            <section className={`rounded-md border p-5 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h3 className={`text-2xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Team directory</h3>
-                        <p className={`mt-1 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                            Everyone with access, their role, and whether they have completed their invite.
-                        </p>
-                    </div>
-                    <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.16em] ${isDark ? 'border border-white/10 bg-white/5 text-[#8f94aa]' : 'border border-gray-200 bg-gray-50 text-gray-500'}`}>
+            <DashboardSection
+                isDark={isDark}
+                accent="slate"
+                title="Team directory"
+                description="Everyone with access, their role, and whether they have completed their invite."
+                actions={(
+                    <DashboardChip isDark={isDark}>
                         {users.length} members
-                    </span>
-                </div>
-
+                    </DashboardChip>
+                )}
+            >
                 {loading ? (
-                    <div className={`mt-5 rounded-md border border-dashed px-4 py-16 text-center text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-                        Loading team members...
-                    </div>
+                    <DashboardEmptyState
+                        isDark={isDark}
+                        title="Loading team members"
+                        description="Pulling the current organization roster into the shared team workspace."
+                        className="mt-1"
+                    />
                 ) : users.length === 0 ? (
-                    <div className={`mt-5 rounded-md border border-dashed px-4 py-16 text-center text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-                        No team members found.
-                    </div>
+                    <DashboardEmptyState
+                        isDark={isDark}
+                        title="No team members found"
+                        description="Invite a member to start assigning access and role coverage."
+                        className="mt-1"
+                    />
                 ) : (
-                    <div className="mt-5 space-y-3">
-                        {users.map((member) => {
+                    <DashboardStripedList isDark={isDark}>
+                        <div className={cn(
+                            'hidden px-5 py-3 lg:grid lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_44px]',
+                            isDark ? 'bg-dashboard-panelAlt' : 'bg-slate-100'
+                        )}>
+                            <div className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Member</div>
+                            <div className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Role</div>
+                            <div className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Title</div>
+                            <div className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Status</div>
+                            <div />
+                        </div>
+                        {users.map((member, index) => {
                             const badge = getRoleBadge(member.role);
                             const Icon = badge.icon;
                             const isCurrentUser = currentUser?.id === member.id;
 
                             return (
-                                <div key={member.id} className={`rounded-md border px-4 py-4 ${isDark ? 'border-[#2b2b40] bg-[#151521]' : 'border-gray-200 bg-gray-50'}`}>
-                                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                                <DashboardStripedRow
+                                    key={member.id}
+                                    isDark={isDark}
+                                    index={index}
+                                    className="px-5 py-4"
+                                >
+                                    <div className="grid gap-4 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_44px] lg:items-center">
                                         <div className="flex min-w-0 items-center gap-4">
-                                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-light ${isDark ? 'bg-[#232336] text-gray-200 border border-[#3a3a5a]' : 'bg-white text-gray-700 border border-gray-200'}`}>
+                                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-light ${isDark ? 'bg-dashboard-panelAlt text-gray-200' : 'bg-white text-gray-700 shadow-sm'}`}>
                                                 {member.firstName?.[0]}{member.lastName?.[0]}
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <p className={`truncate text-base font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                                    <p className={cn('truncate text-base font-light', uiTheme.textPrimary)}>
                                                         {member.firstName} {member.lastName}
                                                     </p>
                                                     {isCurrentUser && (
-                                                        <span className={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] ${isDark ? 'bg-cyan-500/10 text-cyan-200 border border-cyan-400/20' : 'bg-cyan-50 text-cyan-700 border border-cyan-100'}`}>
+                                                        <span className={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] ${isDark ? 'bg-cyan-500/12 text-cyan-200' : 'bg-cyan-50 text-cyan-700'}`}>
                                                             You
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className={`truncate text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{member.email}</p>
+                                                <p className={cn('truncate text-sm font-light', uiTheme.textSecondary)}>{member.email}</p>
                                             </div>
                                         </div>
 
-                                        <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[36rem]">
-                                            <div className={`rounded-md border px-3 py-2 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
-                                                <div className="text-[10px] uppercase tracking-[0.16em] text-gray-500">Role</div>
-                                                <div className={`mt-2 inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-xs font-light tracking-wide w-fit ${badge.color}`}>
+                                        <div className="min-w-0 text-left">
+                                            <div className={cn('text-[10px] uppercase tracking-[0.16em] lg:hidden', uiTheme.textTertiary)}>Role</div>
+                                            <div className="mt-2 lg:mt-0">
+                                                <div className={`inline-flex items-center justify-start gap-1.5 rounded-full px-2.5 py-1 text-xs font-light tracking-wide w-fit ${badge.color}`}>
                                                     <Icon size={12} />
                                                     {member.role.replace('_', ' ')}
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <div className={`rounded-md border px-3 py-2 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
-                                                <div className="text-[10px] uppercase tracking-[0.16em] text-gray-500">Title</div>
-                                                <div className={`mt-2 text-sm font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                                    {member.title || '-'}
-                                                </div>
-                                            </div>
-
-                                            <div className={`rounded-md border px-3 py-2 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
-                                                <div className="text-[10px] uppercase tracking-[0.16em] text-gray-500">Status</div>
-                                                <div className={`mt-2 inline-flex items-center px-2.5 py-1 rounded-sm text-xs font-light tracking-wide border ${
-                                                    member.emailVerified
-                                                        ? (isDark ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-emerald-50 text-emerald-700 border border-emerald-100')
-                                                        : (isDark ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-amber-50 text-amber-700 border border-amber-100')
-                                                }`}>
-                                                    {member.emailVerified ? 'Active' : 'Pending'}
-                                                </div>
+                                        <div className="min-w-0 text-left">
+                                            <div className={cn('text-[10px] uppercase tracking-[0.16em] lg:hidden', uiTheme.textTertiary)}>Title</div>
+                                            <div className={cn('mt-2 truncate text-sm font-light lg:mt-0', member.title ? uiTheme.textPrimary : uiTheme.textMuted)}>
+                                                {member.title || '-'}
                                             </div>
                                         </div>
 
-                                        <div className="flex justify-end">
+                                        <div className="min-w-0 text-left">
+                                            <div className={cn('text-[10px] uppercase tracking-[0.16em] lg:hidden', uiTheme.textTertiary)}>Status</div>
+                                            <div className={`mt-2 inline-flex items-center justify-start rounded-full px-2.5 py-1 text-xs font-light tracking-wide w-fit lg:mt-0 ${
+                                                    member.emailVerified
+                                                        ? (isDark ? 'bg-green-500/12 text-green-300' : 'bg-emerald-50 text-emerald-700')
+                                                        : (isDark ? 'bg-amber-500/12 text-amber-300' : 'bg-amber-50 text-amber-700')
+                                                }`}>
+                                                {member.emailVerified ? 'Active' : 'Pending'}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-end lg:justify-center">
                                             <button
                                                 onClick={() => handleDeleteUser(member.id)}
                                                 disabled={isCurrentUser}
@@ -237,13 +263,13 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                             </button>
                                         </div>
                                     </div>
-                                </div>
+                                </DashboardStripedRow>
                             );
                         })}
-                    </div>
+                    </DashboardStripedList>
                 )}
-            </section>
-        </div>
+            </DashboardSection>
+        </DashboardPage>
     );
 };
 

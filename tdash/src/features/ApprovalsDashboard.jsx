@@ -14,6 +14,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import ApprovalDetailView from './ApprovalDetailView';
 import { formatApprovalDate } from './approvalConstants';
+import { DashboardChip, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
 
 const emptyForm = {
     title: '',
@@ -578,33 +579,29 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
 
             <div className="space-y-6">
                 <div className="page-section-enter" style={{ '--section-delay': '0ms' }}>
-                    <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 ${refreshing ? 'page-section-reload' : ''} ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
-                        <div className="absolute inset-0 pointer-events-none">
-                            <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
-                            <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
-                        </div>
-                        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-                            <div className="relative">
-                                <h1 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                                    <span className="inline-flex items-center gap-2">
-                                        <span>Approvals</span>
-                                        <CheckCircle2 className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-sky-300' : 'text-sky-700'}`} />
+                    <DashboardTitleBar
+                        isDark={isDark}
+                        title="Approvals"
+                        icon={CheckCircle2}
+                        iconClassName={isDark ? 'text-sky-300' : 'text-sky-700'}
+                        glowTopClassName="bg-sky-500/10"
+                        glowBottomClassName="bg-cyan-400/10"
+                        className={refreshing ? 'page-section-reload' : ''}
+                        badges={(
+                            <>
+                                <DashboardChip isDark={isDark} className="uppercase tracking-[0.22em]">
+                                    {visibleApprovals.length} showing
+                                </DashboardChip>
+                                {refreshing ? (
+                                    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${isDark ? 'border-sky-400/20 bg-sky-500/10 text-sky-200' : 'border-sky-200 bg-sky-50 text-sky-700'}`}>
+                                        <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
+                                        Syncing latest
                                     </span>
-                                </h1>
-                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                    <span className={`rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-                                        {visibleApprovals.length} showing
-                                    </span>
-                                    {refreshing && (
-                                        <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${isDark ? 'border-sky-400/20 bg-sky-500/10 text-sky-200' : 'border-sky-200 bg-sky-50 text-sky-700'}`}>
-                                            <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
-                                            Syncing latest
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="relative flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-end">
+                                ) : null}
+                            </>
+                        )}
+                        actions={(
+                            <>
                                 <div className={`flex items-center gap-3 rounded-md border px-3 py-2.5 text-sm font-light ${isDark ? 'border-[#2b2b40] bg-[#151521] text-gray-100' : 'border-gray-200 bg-gray-50 text-gray-800'}`}>
                                     <Calendar className={`h-4 w-4 ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`} />
                                     <select
@@ -646,9 +643,9 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                     <Plus className="h-4 w-4" />
                                     New submission
                                 </button>
-                            </div>
-                        </div>
-                    </section>
+                            </>
+                        )}
+                    />
                 </div>
 
                 <div className="page-section-enter" style={{ '--section-delay': '80ms' }}>

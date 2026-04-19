@@ -30,6 +30,7 @@ import {
     Users,
 } from 'lucide-react';
 import api from '../lib/api';
+import { DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
 
 const HISTORY_KEY = 'tixmo_quantmo_history';
 const TEMPLATE_KEY = 'tixmo_quantmo_templates';
@@ -1043,21 +1044,15 @@ const QuantMoView = ({ isDark }) => {
 
     return (
         <div className="space-y-8 animate-fade-in max-w-[1500px] mx-auto pb-12">
-            <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
-                <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-fuchsia-500/10 blur-3xl" />
-                    <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
-                </div>
-                <div className="relative">
-                    <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                        <span className="inline-flex items-center gap-2">
-                            <span>QuantMo</span>
-                            <BrainCircuit className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`} />
-                        </span>
-                        <span className={`text-base sm:text-lg tracking-[0.16em] uppercase ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`}>[analytics assistant]</span>
-                    </h2>
-                </div>
-            </section>
+            <DashboardTitleBar
+                isDark={isDark}
+                title="QuantMo"
+                icon={BrainCircuit}
+                iconClassName={isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}
+                glowTopClassName="bg-fuchsia-500/10"
+                glowBottomClassName="bg-cyan-400/10"
+                titleSuffix={<span className={`text-base uppercase tracking-[0.16em] sm:text-lg ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`}>[analytics assistant]</span>}
+            />
 
             {!activeTool ? (
                 <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">

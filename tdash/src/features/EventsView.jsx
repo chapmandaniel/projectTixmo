@@ -19,57 +19,60 @@ import VenuesView from './VenuesView';
 import StatusBadge from '../components/StatusBadge';
 import api from '../lib/api';
 import { generateEventSlug } from '../lib/utils';
+import {
+    DashboardButton,
+    DashboardChip,
+    DashboardEmptyState,
+    DashboardPage,
+    DashboardPageHeader,
+    DashboardStat,
+    DashboardSurface,
+    DashboardTitleBar,
+    DashboardWorkspaceTile,
+} from '../components/dashboard/DashboardPrimitives';
+import { getDashboardTheme } from '../lib/dashboardTheme';
+import { cn } from '../lib/utils';
 
 const TOOL_DEFINITIONS = [
     {
         id: 'create',
         label: 'Create New Event',
         description: 'Answer the core launch questions, create the draft, and jump straight into the event dashboard.',
-        helper: 'Best for first-pass setup',
         icon: Sparkles,
-        grad: 'from-fuchsia-500 to-cyan-400',
-        color: 'text-fuchsia-400',
-        metricLabel: 'Launch',
+        accent: 'violet',
+        iconClassName: 'text-fuchsia-400',
     },
     {
         id: 'library',
         label: 'Event Library',
         description: 'Review drafts, published events, and direct links into each event workspace.',
-        helper: 'Best for day-to-day management',
         icon: LayoutGrid,
-        grad: 'from-pink-500 to-orange-400',
-        color: 'text-pink-400',
-        metricLabel: 'Events',
+        accent: 'brand',
+        iconClassName: 'text-pink-400',
     },
     {
         id: 'sales',
         label: 'Sales',
         description: 'List transactions with event-aware filters and sorting for finance and box office review.',
-        helper: 'Best for revenue checks',
         icon: CreditCard,
-        grad: 'from-cyan-400 to-blue-500',
-        color: 'text-cyan-400',
-        metricLabel: 'Transactions',
+        accent: 'blue',
+        iconClassName: 'text-cyan-400',
     },
     {
         id: 'scanners',
         label: 'Scanners',
         description: 'Manage scanner devices, access, and entry logs from one operations panel.',
-        helper: 'Best for door ops',
         icon: ScanLine,
-        grad: 'from-amber-400 to-orange-500',
-        color: 'text-amber-400',
-        metricLabel: 'Devices',
+        accent: 'amber',
+        iconClassName: 'text-amber-400',
     },
     {
         id: 'venues',
         label: 'Venues',
         description: 'Maintain venue details, capacity, and location records that power event creation.',
-        helper: 'Best for setup and logistics',
         icon: MapPin,
-        grad: 'from-emerald-400 to-teal-500',
-        color: 'text-emerald-400',
-        metricLabel: 'Locations',
+        accent: 'green',
+        iconClassName: 'text-emerald-400',
     },
 ];
 
@@ -101,6 +104,7 @@ const extractScanners = (response) => {
 
 const getEventName = (event) => event.title || event.name || 'Untitled Event';
 const getEventStart = (event) => event.startDateTime || event.startDatetime || null;
+
 const formatEventDate = (value) => {
     if (!value) {
         return 'Date TBA';
@@ -145,105 +149,101 @@ const formatCurrency = (value) => new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0,
 }).format(Number(value) || 0);
 
-const ToolCard = ({ tool, isDark, onClick }) => (
-    <button
-        type="button"
-        onClick={onClick}
-        className={`group relative self-start overflow-hidden rounded-md border p-6 text-left transition-all duration-300 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] hover:bg-[#232336] hover:border-[#3a3a5a] hover:shadow-2xl hover:shadow-black/40' : 'border-gray-200 bg-white hover:bg-gray-50 hover:shadow-xl shadow-sm'}`}
-    >
-        <div className={`absolute top-0 left-0 h-[3px] w-full bg-gradient-to-r ${tool.grad} opacity-80 transition-opacity duration-300 group-hover:opacity-100`} />
-        <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br ${tool.grad} opacity-0 blur-2xl transition-opacity duration-700 group-hover:opacity-10`} />
-
-        <div className="relative z-10 mb-6 flex items-center justify-between gap-4 transition-transform duration-300 group-hover:translate-x-1">
-            <tool.icon size={26} className={tool.color} />
-            <span className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.18em] ${isDark ? 'bg-[#151521] text-[#8f94aa]' : 'bg-gray-100 text-gray-500'}`}>
-                {tool.metric} {tool.metricLabel}
-            </span>
-        </div>
-
-        <div className="relative z-10 transition-transform duration-300 group-hover:translate-x-1">
-            <h3 className={`text-lg font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{tool.label}</h3>
-            <p className={`mt-1 text-sm font-light leading-relaxed ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{tool.description}</p>
-        </div>
-
-        <div className={`relative z-10 mt-6 inline-flex items-center gap-2 text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-            Open
-            <ChevronRight size={16} />
-        </div>
-    </button>
-);
-
-const ActiveEventCard = ({ event, isDark, onOpen }) => {
+const ToolCard = ({ tool, isDark, onClick }) => {
     return (
-        <button
+        <DashboardWorkspaceTile
+            as="button"
             type="button"
-            onClick={() => onOpen(event)}
-            className={`group relative overflow-hidden rounded-md border p-3 text-left transition-all duration-300 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] hover:bg-[#232336] hover:border-[#3a3a5a] hover:shadow-xl hover:shadow-black/30' : 'border-gray-200 bg-white hover:bg-gray-50 hover:shadow-lg'}`}
-        >
-            <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-pink-500 to-orange-400 opacity-80" />
-            <div className="relative">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                        <p className={`text-[10px] uppercase tracking-[0.18em] ${isDark ? 'text-pink-300' : 'text-pink-600'}`}>
-                            {event.category || 'Active event'}
-                        </p>
-                        <h3 className={`mt-1 truncate text-base font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                            {getEventName(event)}
-                        </h3>
-                    </div>
-                    <StatusBadge status={event.status} isDark={isDark} />
-                </div>
-
-                <div className={`mt-3 grid gap-1.5 text-xs font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                    <div className="flex items-center gap-2">
-                        <CalendarDays size={14} className={isDark ? 'text-gray-500' : 'text-gray-400'} />
-                        <span>{formatEventDate(getEventStart(event))}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <MapPin size={14} className={isDark ? 'text-gray-500' : 'text-gray-400'} />
-                        <span>{event.venue?.name || 'Venue TBA'}</span>
-                    </div>
-                </div>
-            </div>
-        </button>
+            isDark={isDark}
+            accent={tool.accent}
+            onClick={onClick}
+            icon={tool.icon}
+            iconClassName={tool.iconClassName}
+            title={tool.label}
+            description={tool.description}
+        />
     );
 };
 
-const ActiveEventsRail = ({ isDark, events, loading, onOpen }) => (
-    <aside className={`flex flex-col rounded-md border p-6 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white shadow-sm'}`}>
-        <div className="flex items-center justify-between gap-4">
-            <div>
-                <h3 className={`text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Current Events</h3>
-            </div>
-            <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.16em] ${isDark ? 'border border-white/10 bg-white/5 text-[#8f94aa]' : 'border border-gray-200 bg-gray-50 text-gray-500'}`}>
-                {events.length}
-            </span>
-        </div>
+const ActiveEventCard = ({ event, isDark, onOpen }) => {
+    const uiTheme = getDashboardTheme(isDark);
 
-        {loading ? (
-            <div className="flex items-center justify-center py-16">
-                <Loader2 size={28} className={`animate-spin ${isDark ? 'text-fuchsia-400' : 'text-fuchsia-600'}`} />
+    return (
+        <DashboardSurface
+            as="button"
+            type="button"
+            isDark={isDark}
+            accent={null}
+            interactive
+            onClick={() => onOpen(event)}
+            data-testid={`active-event-card-${event.id}`}
+            className="group p-5 text-left"
+        >
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-pink-300' : 'text-pink-600')}>
+                        {event.category || 'Active event'}
+                    </p>
+                    <h3 className={cn('mt-1 truncate text-base font-light tracking-tight', uiTheme.textPrimary)}>
+                        {getEventName(event)}
+                    </h3>
+                </div>
+                <StatusBadge status={event.status} isDark={isDark} />
             </div>
-        ) : events.length === 0 ? (
-            <div className={`mt-5 rounded-md border border-dashed px-4 py-10 text-center ${isDark ? 'border-[#2b2b40] bg-[#151521] text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-                <CalendarDays size={28} className="mx-auto mb-3 opacity-60" />
-                <p className={`text-sm font-light ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>No active events right now.</p>
-                <p className="mt-1 text-xs font-light">Create or publish an upcoming event to see it here.</p>
+
+            <div className={cn('mt-3 grid gap-1.5 text-xs font-light', uiTheme.textSecondary)}>
+                <div className="flex items-center gap-2">
+                    <CalendarDays size={14} className={uiTheme.textTertiary} />
+                    <span>{formatEventDate(getEventStart(event))}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <MapPin size={14} className={uiTheme.textTertiary} />
+                    <span>{event.venue?.name || 'Venue TBA'}</span>
+                </div>
             </div>
-        ) : (
-            <div className="mt-5 grid content-start gap-2.5">
-                {events.map((event) => (
-                    <ActiveEventCard
-                        key={event.id}
-                        event={event}
-                        isDark={isDark}
-                        onOpen={onOpen}
-                    />
-                ))}
+        </DashboardSurface>
+    );
+};
+
+const ActiveEventsRail = ({ isDark, events, loading, onOpen }) => {
+    const uiTheme = getDashboardTheme(isDark);
+
+    return (
+        <DashboardSurface as="aside" isDark={isDark} accent="brand" className="flex flex-col p-6">
+            <div className="flex items-center justify-between gap-4">
+                <div>
+                    <h3 className={cn('text-xl font-light tracking-tight', uiTheme.textPrimary)}>Current Events</h3>
+                </div>
+                <DashboardChip isDark={isDark}>{events.length}</DashboardChip>
             </div>
-        )}
-    </aside>
-);
+
+            {loading ? (
+                <div className="flex items-center justify-center py-16">
+                    <Loader2 size={28} className={cn('animate-spin', isDark ? 'text-fuchsia-400' : 'text-fuchsia-600')} />
+                </div>
+            ) : events.length === 0 ? (
+                <DashboardEmptyState
+                    isDark={isDark}
+                    compact
+                    className="mt-5"
+                    title="No active events"
+                    description="Create or publish an upcoming event to see it here."
+                />
+            ) : (
+                <div className="mt-5 grid content-start gap-2.5">
+                    {events.map((event) => (
+                        <ActiveEventCard
+                            key={event.id}
+                            event={event}
+                            isDark={isDark}
+                            onOpen={onOpen}
+                        />
+                    ))}
+                </div>
+            )}
+        </DashboardSurface>
+    );
+};
 
 const EventLibrary = ({
     isDark,
@@ -256,130 +256,146 @@ const EventLibrary = ({
     onAutoGenerate,
     showAutoGenerate,
     autoGenerating,
-}) => (
-    <div className="space-y-6 animate-fade-in">
-        <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-            <div>
-                <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Event Library</h2>
-                <p className={`mt-1 text-lg font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                    Browse drafts, live events, and hand off into event management.
-                </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-                {showAutoGenerate && (
-                    <button
-                        type="button"
-                        onClick={onAutoGenerate}
-                        disabled={autoGenerating}
-                        className={`inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm transition-colors ${isDark ? 'border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300 hover:bg-fuchsia-500/20' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100'}`}
-                    >
-                        <Zap size={16} className={autoGenerating ? 'animate-pulse' : ''} />
-                        Auto-generate mock event
-                    </button>
+}) => {
+    const uiTheme = getDashboardTheme(isDark);
+
+    return (
+        <DashboardPage className="space-y-6">
+            <DashboardPageHeader
+                isDark={isDark}
+                eyebrow="Event workspace"
+                title="Event Library"
+                description="Browse drafts, live events, and hand off into event management."
+                icon={LayoutGrid}
+                iconClassName={isDark ? 'text-pink-300' : 'text-pink-700'}
+                glowTopClassName="bg-pink-500/10"
+                glowBottomClassName="bg-cyan-400/10"
+                actions={(
+                    <div className="flex flex-wrap gap-3">
+                        {showAutoGenerate ? (
+                            <DashboardButton
+                                isDark={isDark}
+                                variant="secondary"
+                                onClick={onAutoGenerate}
+                                disabled={autoGenerating}
+                                className={cn(
+                                    isDark ? 'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-100 hover:bg-fuchsia-500/20' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100'
+                                )}
+                            >
+                                <Zap size={16} className={autoGenerating ? 'animate-pulse' : ''} />
+                                Auto-generate mock event
+                            </DashboardButton>
+                        ) : null}
+                        <DashboardButton isDark={isDark} onClick={onCreateEvent}>
+                            <Sparkles size={16} />
+                            Create New Event
+                        </DashboardButton>
+                    </div>
                 )}
-                <button
-                    type="button"
-                    onClick={onCreateEvent}
-                    className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm transition-colors ${isDark ? 'bg-fuchsia-500 text-white hover:bg-fuchsia-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
-                >
-                    <Sparkles size={16} />
-                    Create New Event
-                </button>
+            />
+
+            <DashboardSurface isDark={isDark} accent="brand" className="p-5 sm:p-6">
+            <div className={cn('inline-flex flex-wrap gap-2 rounded-md border p-1', isDark ? 'border-dashboard-borderStrong bg-dashboard-panelMuted' : 'border-slate-200 bg-slate-50')}>
+                {LIBRARY_FILTERS.map((filter) => (
+                    <button
+                        key={filter.id}
+                        type="button"
+                        onClick={() => onFilterChange(filter.id)}
+                        className={cn(
+                            'rounded-md px-4 py-2 text-sm font-light transition-colors',
+                            filterId === filter.id
+                                ? (isDark ? 'bg-dashboard-panelAlt text-zinc-100' : 'bg-white text-slate-900 shadow-sm')
+                                : uiTheme.textTertiary
+                        )}
+                    >
+                        {filter.label}
+                    </button>
+                ))}
             </div>
-        </div>
 
-        <div className={`inline-flex flex-wrap gap-2 rounded-md border p-1 ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-gray-50'}`}>
-            {LIBRARY_FILTERS.map((filter) => (
-                <button
-                    key={filter.id}
-                    type="button"
-                    onClick={() => onFilterChange(filter.id)}
-                    className={`rounded-sm px-4 py-2 text-sm font-light transition-colors ${filterId === filter.id
-                        ? (isDark ? 'bg-[#2b2b40] text-gray-100' : 'bg-white text-gray-900 shadow-sm')
-                        : (isDark ? 'text-[#8f94aa] hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
-                    }`}
-                >
-                    {filter.label}
-                </button>
-            ))}
-        </div>
+            {loading ? (
+                <div className="flex items-center justify-center py-24">
+                    <Loader2 size={32} className={cn('animate-spin', isDark ? 'text-fuchsia-400' : 'text-fuchsia-600')} />
+                </div>
+            ) : events.length === 0 ? (
+                <DashboardEmptyState
+                    isDark={isDark}
+                    title="No events in this view"
+                    description="Create a new event or switch filters to review the rest of your schedule."
+                    className="mt-6"
+                />
+            ) : (
+                <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+                    {events.map((event) => {
+                        const capacity = Number(event.capacity) || 0;
+                        const sold = Number(event.sold) || 0;
+                        const progress = capacity > 0 ? Math.min(100, Math.round((sold / capacity) * 100)) : 0;
 
-        {loading ? (
-            <div className="flex items-center justify-center py-24">
-                <Loader2 size={32} className={`animate-spin ${isDark ? 'text-fuchsia-400' : 'text-fuchsia-600'}`} />
-            </div>
-        ) : events.length === 0 ? (
-            <div className={`rounded-md border border-dashed p-12 text-center ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] text-[#8f94aa]' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-                <CalendarDays size={40} className="mx-auto mb-4 opacity-60" />
-                <h3 className={`text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>No events in this view</h3>
-                <p className="mt-2 text-sm font-light">Create a new event or switch filters to review the rest of your schedule.</p>
-            </div>
-        ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                {events.map((event) => {
-                    const capacity = Number(event.capacity) || 0;
-                    const sold = Number(event.sold) || 0;
-                    const progress = capacity > 0 ? Math.min(100, Math.round((sold / capacity) * 100)) : 0;
-
-                    return (
-                        <button
-                            key={event.id}
-                            type="button"
-                            onClick={() => onNavigate(`/events/${generateEventSlug(getEventName(event), event.id)}`, { state: { event } })}
-                            className={`group relative overflow-hidden rounded-md border p-5 text-left transition-all ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] hover:bg-[#232336] hover:border-[#3a3a5a]' : 'border-gray-200 bg-white hover:bg-gray-50 hover:shadow-lg'}`}
-                        >
-                            <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-pink-500 to-orange-400 opacity-80" />
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <p className={`text-xs uppercase tracking-[0.18em] ${isDark ? 'text-pink-300' : 'text-pink-600'}`}>{event.category || 'Event'}</p>
-                                    <h3 className={`mt-2 text-2xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{getEventName(event)}</h3>
-                                </div>
-                                <StatusBadge status={event.status} isDark={isDark} />
-                            </div>
-
-                            <div className={`mt-4 grid gap-3 text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                                <div className="flex items-center gap-2">
-                                    <MapPin size={16} className={isDark ? 'text-gray-500' : 'text-gray-400'} />
-                                    <span>{event.venue?.name || 'Venue TBA'}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <CalendarDays size={16} className={isDark ? 'text-gray-500' : 'text-gray-400'} />
-                                    <span>{getEventStart(event) ? new Date(getEventStart(event)).toLocaleDateString() : 'Date TBA'}</span>
-                                </div>
-                            </div>
-
-                            <div className="mt-5 space-y-3">
-                                <div>
-                                    <div className={`mb-2 flex items-center justify-between text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                                        <span>Sell-through</span>
-                                        <span className={isDark ? 'text-gray-200' : 'text-gray-800'}>{progress}%</span>
-                                    </div>
-                                    <div className={`h-1.5 rounded-full ${isDark ? 'bg-[#151521]' : 'bg-gray-100'}`}>
-                                        <div className="h-1.5 rounded-full bg-gradient-to-r from-pink-500 to-orange-400" style={{ width: `${progress}%` }} />
-                                    </div>
-                                </div>
-
-                                <div className="flex items-end justify-between">
+                        return (
+                            <DashboardSurface
+                                key={event.id}
+                                as="button"
+                                type="button"
+                                isDark={isDark}
+                                accent="brand"
+                                interactive
+                                onClick={() => onNavigate(`/events/${generateEventSlug(getEventName(event), event.id)}`, { state: { event } })}
+                                className="p-5 text-left"
+                            >
+                                <div className="flex items-start justify-between gap-4">
                                     <div>
-                                        <p className={`text-[10px] uppercase tracking-[0.18em] ${isDark ? 'text-[#5e6278]' : 'text-gray-400'}`}>Revenue</p>
-                                        <p className={`mt-1 text-xl font-light ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formatCurrency(event.revenue)}</p>
+                                        <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-pink-300' : 'text-pink-600')}>{event.category || 'Event'}</p>
+                                        <h3 className={cn('mt-2 text-2xl font-light tracking-tight', uiTheme.textPrimary)}>{getEventName(event)}</h3>
                                     </div>
-                                    <span className={`inline-flex items-center gap-2 text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-                                        Open event
-                                        <ChevronRight size={16} />
-                                    </span>
+                                    <StatusBadge status={event.status} isDark={isDark} />
                                 </div>
-                            </div>
-                        </button>
-                    );
-                })}
-            </div>
-        )}
-    </div>
-);
+
+                                <div className={cn('mt-4 grid gap-3 text-sm font-light', uiTheme.textSecondary)}>
+                                    <div className="flex items-center gap-2">
+                                        <MapPin size={16} className={uiTheme.textTertiary} />
+                                        <span>{event.venue?.name || 'Venue TBA'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CalendarDays size={16} className={uiTheme.textTertiary} />
+                                        <span>{getEventStart(event) ? new Date(getEventStart(event)).toLocaleDateString() : 'Date TBA'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="mt-5 space-y-3">
+                                    <div>
+                                        <div className={cn('mb-2 flex items-center justify-between text-sm font-light', uiTheme.textSecondary)}>
+                                            <span>Sell-through</span>
+                                            <span className={uiTheme.textPrimary}>{progress}%</span>
+                                        </div>
+                                        <div className={cn('h-1.5 rounded-full', isDark ? 'bg-dashboard-shell' : 'bg-slate-100')}>
+                                            <div className="h-1.5 rounded-full bg-gradient-to-r from-pink-500 to-orange-400" style={{ width: `${progress}%` }} />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-end justify-between">
+                                        <div>
+                                            <p className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textMuted)}>Revenue</p>
+                                            <p className={cn('mt-1 text-xl font-light', uiTheme.textPrimary)}>{formatCurrency(event.revenue)}</p>
+                                        </div>
+                                        <span className={cn('inline-flex items-center gap-2 text-sm', uiTheme.textPrimary)}>
+                                            Open event
+                                            <ChevronRight size={16} />
+                                        </span>
+                                    </div>
+                                </div>
+                            </DashboardSurface>
+                        );
+                    })}
+                </div>
+            )}
+            </DashboardSurface>
+        </DashboardPage>
+    );
+};
 
 const EventsView = ({ isDark, user }) => {
     const navigate = useNavigate();
+    const uiTheme = getDashboardTheme(isDark);
     const [activeTool, setActiveTool] = useState(null);
     const [events, setEvents] = useState([]);
     const [ordersCount, setOrdersCount] = useState(0);
@@ -452,18 +468,11 @@ const EventsView = ({ isDark, user }) => {
         return events
             .filter((event) => {
                 const status = (event.status || '').toUpperCase();
-                if (status === 'CANCELLED') {
-                    return false;
-                }
-
-                if (!['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(status)) {
-                    return false;
-                }
+                if (status === 'CANCELLED') return false;
+                if (!['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(status)) return false;
 
                 const startValue = getEventStart(event);
-                if (!startValue) {
-                    return true;
-                }
+                if (!startValue) return true;
 
                 const startTime = new Date(startValue).getTime();
                 return Number.isNaN(startTime) || startTime >= Date.now();
@@ -479,28 +488,6 @@ const EventsView = ({ isDark, user }) => {
     const openEventWorkspace = (event) => {
         navigate(`/events/${generateEventSlug(getEventName(event), event.id)}`, { state: { event } });
     };
-
-    const toolCards = useMemo(() => {
-        return TOOL_DEFINITIONS.map((tool) => {
-            if (tool.id === 'library') {
-                return { ...tool, metric: isLoading ? '...' : events.length };
-            }
-
-            if (tool.id === 'sales') {
-                return { ...tool, metric: isLoading ? '...' : ordersCount };
-            }
-
-            if (tool.id === 'scanners') {
-                return { ...tool, metric: isLoading ? '...' : scannersCount };
-            }
-
-            if (tool.id === 'venues') {
-                return { ...tool, metric: isLoading ? '...' : venuesCount };
-            }
-
-            return { ...tool, metric: isLoading ? '...' : 'Live' };
-        });
-    }, [events.length, isLoading, ordersCount, scannersCount, venuesCount]);
 
     const renderActiveTool = () => {
         if (activeTool === 'create') {
@@ -579,59 +566,45 @@ const EventsView = ({ isDark, user }) => {
         return null;
     };
 
+    if (activeTool) {
+        return (
+            <DashboardPage className="mx-auto max-w-[1500px]">
+                {renderActiveTool()}
+            </DashboardPage>
+        );
+    }
+
     return (
-        <div className="space-y-8 animate-fade-in max-w-[1500px] mx-auto pb-12">
-            <section className={`relative overflow-hidden rounded-md border p-6 sm:p-8 ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40] shadow-2xl shadow-black/20' : 'bg-white border-gray-200 shadow-sm'}`}>
-                <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-fuchsia-500/10 blur-3xl" />
-                    <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
-                </div>
-                <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                    <h2 className={`flex flex-wrap items-baseline gap-3 text-3xl sm:text-4xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                        <span className="inline-flex items-center gap-2">
-                            <span>Event Manager</span>
-                            <Calendar className={`h-6 w-6 sm:h-7 sm:w-7 ${isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}`} />
-                        </span>
-                    </h2>
+        <DashboardPage className="mx-auto max-w-[1680px] space-y-8">
+            <DashboardTitleBar
+                isDark={isDark}
+                title="Event Manager"
+                icon={Calendar}
+                iconClassName={isDark ? 'text-pink-300' : 'text-pink-700'}
+                glowTopClassName="bg-pink-500/10"
+                glowBottomClassName="bg-cyan-400/10"
+            />
 
-                    {activeTool ? (
-                        <button
-                            type="button"
-                            onClick={() => setActiveTool(null)}
-                            className={`inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-pink-500 text-white hover:bg-pink-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
-                        >
-                            Back to tools
-                        </button>
-                    ) : null}
+            <section className="grid grid-cols-1 items-start gap-7 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                <div className="grid grid-cols-1 gap-7 sm:grid-cols-2">
+                    {TOOL_DEFINITIONS.map((tool) => (
+                        <ToolCard
+                            key={tool.id}
+                            tool={tool}
+                            isDark={isDark}
+                            onClick={() => setActiveTool(tool.id)}
+                        />
+                    ))}
                 </div>
+
+                <ActiveEventsRail
+                    isDark={isDark}
+                    events={activeEvents}
+                    loading={isLoading}
+                    onOpen={openEventWorkspace}
+                />
             </section>
-
-            {!activeTool ? (
-                <section className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)]">
-                    <div className="grid grid-cols-1 content-start items-start gap-6 sm:grid-cols-2">
-                        {toolCards.map((tool) => (
-                            <ToolCard
-                                key={tool.id}
-                                tool={tool}
-                                isDark={isDark}
-                                onClick={() => setActiveTool(tool.id)}
-                            />
-                        ))}
-                    </div>
-
-                    <ActiveEventsRail
-                        isDark={isDark}
-                        events={activeEvents}
-                        loading={isLoading}
-                        onOpen={openEventWorkspace}
-                    />
-                </section>
-            ) : (
-                <section className="space-y-4">
-                    {renderActiveTool()}
-                </section>
-            )}
-        </div>
+        </DashboardPage>
     );
 };
 

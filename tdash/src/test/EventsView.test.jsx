@@ -160,6 +160,8 @@ describe('EventsView', () => {
 
         const activeEventsRail = screen.getByText('Current Events').closest('aside');
         expect(activeEventsRail).toHaveClass('flex', 'flex-col', 'p-6');
+        const activeEventCard = screen.getByTestId('active-event-card-event-1');
+        expect(activeEventCard.querySelector('[aria-hidden="true"]')).toBeNull();
 
         fireEvent.click(screen.getByText('Harbour Lights Festival').closest('button'));
 

@@ -1,10 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
+@layer base {
   html {
     font-size: 17px;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Exo', sans-serif;
   }
 
   html,
@@ -13,11 +20,9 @@
     min-height: 100%;
     background-color: #151521;
   }
+}
 
-  body {
-    margin: 0;
-  }
-
+@layer utilities {
   .animate-fade-in {
     animation: fadeIn 0.3s ease-in-out;
   }
@@ -102,6 +107,26 @@
     animation: none !important;
     background-image: none !important;
     display: none !important;
+  }
+
+  .dashboard-radial {
+    background-image:
+      radial-gradient(circle at top left, rgba(255, 51, 102, 0.16), transparent 32%),
+      radial-gradient(circle at top right, rgba(255, 138, 61, 0.1), transparent 24%);
+  }
+
+  .dashboard-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 120px 120px;
+  }
+
+  .dashboard-grid-light {
+    background-image:
+      linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+    background-size: 120px 120px;
   }
 }
 
