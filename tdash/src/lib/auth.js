@@ -3,7 +3,8 @@ import { clearStoredSession, getAccessToken, getStoredUser, storeSession } from 
 
 export const auth = {
     login: async (email, password) => {
-        const response = await api.post('/auth/login', { email, password });
+        const normalizedEmail = email.trim().toLowerCase();
+        const response = await api.post('/auth/login', { email: normalizedEmail, password });
         const { accessToken, refreshToken, user } = response.data.data;
 
         storeSession({ accessToken, refreshToken, user });
@@ -12,7 +13,11 @@ export const auth = {
     },
 
     register: async (userData) => {
-        const response = await api.post('/auth/register', userData);
+        const normalizedUserData = {
+            ...userData,
+            email: userData.email.trim().toLowerCase(),
+        };
+        const response = await api.post('/auth/register', normalizedUserData);
         const { accessToken, refreshToken, user } = response.data.data;
 
         storeSession({ accessToken, refreshToken, user });
