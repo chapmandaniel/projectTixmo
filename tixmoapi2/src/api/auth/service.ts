@@ -20,11 +20,15 @@ interface LoginData {
   password: string;
 }
 
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
 export class AuthService {
   async register(data: RegisterData) {
+    const normalizedEmail = normalizeEmail(data.email);
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -37,7 +41,7 @@ export class AuthService {
     // Create user
     const user = await prisma.user.create({
       data: {
-        email: data.email,
+        email: normalizedEmail,
         passwordHash,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -79,9 +83,11 @@ export class AuthService {
   }
 
   async login(data: LoginData) {
+    const normalizedEmail = normalizeEmail(data.email);
+
     // Find user
     const user = await prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {

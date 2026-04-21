@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 async function main() {
     const email = 'admin@tixmo.com';
-    const password = 'admin';
+    const password = 'Password123!';
     const hashedPassword = await bcrypt.hash(password, 10);
 
     console.log(`Upserting admin user: ${email}`);

@@ -79,6 +79,19 @@ describe('Authentication Endpoints', () => {
       expect(response.body.message).toMatch(/already exists|duplicate/i);
     });
 
+    it('should normalize email casing and whitespace during registration', async () => {
+      const response = await request(app)
+        .post('/api/v1/auth/register')
+        .send({
+          ...validUser,
+          email: '  TEST-REGISTER@EXAMPLE.COM  ',
+        })
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.user.email).toBe(validUser.email);
+    });
+
     it('should reject invalid email format (400)', async () => {
       const response = await request(app)
         .post('/api/v1/auth/register')
@@ -160,6 +173,19 @@ describe('Authentication Endpoints', () => {
       expect(response.body.data.user.email).toBe(testUser.email);
       expect(response.body.data).toHaveProperty('accessToken');
       expect(response.body.data).toHaveProperty('refreshToken');
+    });
+
+    it('should login with normalized email input', async () => {
+      const response = await request(app)
+        .post('/api/v1/auth/login')
+        .send({
+          email: '  TEST-LOGIN@EXAMPLE.COM  ',
+          password: testUser.password,
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.user.email).toBe(testUser.email);
     });
 
     it('should update lastLogin timestamp', async () => {

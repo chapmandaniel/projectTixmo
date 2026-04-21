@@ -1,8 +1,13 @@
 import { z } from 'zod';
 
+const normalizedEmailSchema = z.preprocess(
+  (value) => (typeof value === 'string' ? value.trim().toLowerCase() : value),
+  z.string().email('Invalid email address')
+);
+
 export const registerSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email address'),
+    email: normalizedEmailSchema,
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
@@ -18,7 +23,7 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email address'),
+    email: normalizedEmailSchema,
     password: z.string().min(1, 'Password is required'),
   }),
 });
@@ -31,7 +36,7 @@ export const refreshTokenSchema = z.object({
 
 export const forgotPasswordSchema = z.object({
   body: z.object({
-    email: z.string().email('Invalid email address'),
+    email: normalizedEmailSchema,
   }),
 });
 
