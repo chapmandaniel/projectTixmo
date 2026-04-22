@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+    AlertCircle,
     ArrowLeft,
     CheckCircle2,
     Download,
@@ -39,14 +40,12 @@ const DECISION_CARD_STYLES = {
 const panelClass = 'rounded-md border border-[#2b2b40] bg-[#1e1e2d]';
 const surfaceClass = 'rounded-md border border-[#2b2b40] bg-[#151521]';
 const inputClass = 'w-full rounded-md border border-[#2b2b40] bg-[#151521] px-4 py-3 text-sm font-light text-gray-100 outline-none transition focus:border-sky-400 placeholder:text-[#5e6278]';
-const discussionCardClass = 'rounded-lg border px-4 py-3 text-left transition';
 const reviewerAssociationOptions = [
     { value: 'ARTIST', label: 'Artist' },
     { value: 'AGENT', label: 'Agent' },
     { value: 'MANAGEMENT', label: 'Management' },
     { value: 'OTHER', label: 'Other' },
 ];
-
 const associationLabel = (association) => (
     reviewerAssociationOptions.find((option) => option.value === association)?.label || association || ''
 );
@@ -98,6 +97,17 @@ const personLabel = (person) => {
 
     const name = [person.firstName, person.lastName].filter(Boolean).join(' ').trim();
     return name || person.name || person.email || 'Unknown';
+};
+
+const normalizeEmail = (value) => value?.trim().toLowerCase() || '';
+
+const replyPrefill = (commentItem) => {
+    const label = authorLabel(commentItem?.author);
+    if (!label || label === 'Unknown') {
+        return '';
+    }
+
+    return `@${label} `;
 };
 
 const reviewerStatusMeta = (reviewer) => {
@@ -245,7 +255,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const [isImageExpanded, setIsImageExpanded] = useState(false);
     const [comment, setComment] = useState('');
     const [replyTo, setReplyTo] = useState(null);
-    const [activeDiscussionView, setActiveDiscussionView] = useState('GLOBAL');
+    const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
     const [revisionSummary, setRevisionSummary] = useState('');
     const [revisionFiles, setRevisionFiles] = useState([]);
     const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
@@ -331,6 +341,21 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         () => [...(approval?.reviewers || []), ...optimisticReviewers],
         [approval?.reviewers, optimisticReviewers]
     );
+    const isTeamMember = useMemo(() => {
+        if (user?.role || user?.organizationId) {
+            return true;
+        }
+
+        const currentEmail = normalizeEmail(user?.email);
+        if (!currentEmail) {
+            return false;
+        }
+
+        return reviewers.some((reviewer) => (
+            normalizeEmail(reviewer.email) === currentEmail &&
+            reviewer.reviewerType === 'INTERNAL'
+        ));
+    }, [reviewers, user?.email, user?.organizationId, user?.role]);
     const sortedComments = useMemo(
         () =>
             [...comments].sort((left, right) => {
@@ -340,23 +365,18 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             }),
         [comments]
     );
-    const globalComments = useMemo(
-        () => sortedComments.filter((item) => item.visibility === 'GLOBAL'),
-        [sortedComments]
-    );
     const internalComments = useMemo(
         () => sortedComments.filter((item) => item.visibility === 'INTERNAL'),
         [sortedComments]
     );
-    const visibleComments = activeDiscussionView === 'INTERNAL' ? internalComments : globalComments;
+    const visibleComments = useMemo(
+        () => sortedComments.filter((item) => isTeamMember || item.visibility !== 'INTERNAL'),
+        [isTeamMember, sortedComments]
+    );
 
     useEffect(() => {
         setAssetIndex(0);
     }, [selectedRevisionId]);
-
-    useEffect(() => {
-        setReplyTo(null);
-    }, [activeDiscussionView]);
 
     useEffect(() => {
         if (!isImageExpanded) {
@@ -382,34 +402,17 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
     const currentDecision = latestDecision?.decision
         ? `Current decision: ${latestDecision.decision.replaceAll('_', ' ')}`
         : 'You have not responded yet.';
-    const discussionCards = [
-        {
-            key: 'INTERNAL',
-            title: 'Internal / Private',
-            description: 'Only logged-in team members can view this chat.',
-            count: internalComments.length,
-        },
-        {
-            key: 'GLOBAL',
-            title: 'Global',
-            description: 'Visible to invited reviewers and logged-in team members.',
-            count: globalComments.length,
-        },
-    ];
-    const commentPlaceholder = activeDiscussionView === 'INTERNAL'
-        ? 'Message the internal chat'
-        : 'Message the global chat';
-    const emptyStateLabel = activeDiscussionView === 'INTERNAL'
-        ? 'No internal messages yet.'
-        : 'No global messages yet.';
+    const emptyStateLabel = isTeamMember
+        ? 'No messages in this approval thread yet.'
+        : 'No reviewer-visible messages yet.';
 
     const canDeleteComment = (commentItem) => {
         if (commentItem.pending) {
             return false;
         }
 
-        const currentEmail = user?.email?.toLowerCase();
-        const authorEmail = commentItem.author?.email?.toLowerCase();
+        const currentEmail = normalizeEmail(user?.email);
+        const authorEmail = normalizeEmail(commentItem.author?.email);
 
         return Boolean(
             commentItem.author?.id === user?.id ||
@@ -452,18 +455,35 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         setReviewerAssociation('ARTIST');
     };
 
-    const submitComment = async (event) => {
-        event.preventDefault();
+    const resetCommentDraft = () => {
+        setComment('');
+        setReplyTo(null);
+    };
+
+    const closeCommentModal = () => {
+        setIsCommentModalOpen(false);
+        resetCommentDraft();
+    };
+
+    const openCommentModal = (commentItem = null) => {
+        setReplyTo(commentItem);
+        setComment(commentItem ? replyPrefill(commentItem) : '');
+        setIsCommentModalOpen(true);
+    };
+
+    const submitComment = async (event, visibilityOverride = 'GLOBAL') => {
+        event?.preventDefault?.();
         if (!comment.trim() || !commentRevisionId) {
             return;
         }
 
         const content = comment.trim();
+        const visibility = visibilityOverride;
         const optimisticComment = {
             id: `optimistic-comment-${Date.now()}`,
             revisionId: commentRevisionId,
             parentCommentId: replyTo?.id,
-            visibility: activeDiscussionView,
+            visibility,
             content,
             createdAt: new Date().toISOString(),
             pending: true,
@@ -480,13 +500,12 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setSaving(true);
             setError('');
             setOptimisticComments((current) => [optimisticComment, ...current]);
-            setComment('');
-            setReplyTo(null);
+            closeCommentModal();
             await api.post(`/approvals/${approval.id}/comments`, {
                 content,
                 revisionId: commentRevisionId,
                 parentCommentId: replyTo?.id,
-                visibility: activeDiscussionView,
+                visibility,
             });
             setOptimisticComments([]);
             await fetchApproval();
@@ -510,7 +529,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
             setError('');
             const updated = await api.delete(`/approvals/${approval.id}/comments/${commentItem.id}`);
             if (replyTo?.id === commentItem.id) {
-                setReplyTo(null);
+                closeCommentModal();
             }
             applyUpdatedApproval(updated);
         } catch (requestError) {
@@ -985,105 +1004,107 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
 
                         <div className="page-section-enter" style={{ '--section-delay': '220ms' }}>
                         <section className={`${panelClass} ${isDiscussionPending ? 'pending-surface-soft page-section-reload' : ''} relative overflow-hidden p-4`}>
-                            <div className="flex items-center justify-between gap-4 px-1 pb-3">
-                                <h2 className="text-lg font-light text-gray-100">Discussion</h2>
-                            </div>
-
-                            <div className="grid gap-3 sm:grid-cols-2">
-                                {discussionCards.map((card) => {
-                                    const isActive = activeDiscussionView === card.key;
-                                    return (
-                                        <button
-                                            key={card.key}
-                                            type="button"
-                                            onClick={() => setActiveDiscussionView(card.key)}
-                                            className={`${discussionCardClass} ${isActive
-                                                ? 'border-sky-400/50 bg-sky-500/10 shadow-[0_0_0_1px_rgba(56,189,248,0.15)]'
-                                                : 'border-white/10 bg-white/5 hover:border-sky-400/30 hover:bg-sky-500/5'
-                                            }`}
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div>
-                                                    <p className="text-sm font-light text-gray-100">{card.title}</p>
-                                                    <p className="mt-1 text-xs font-light leading-5 text-[#8f94aa]">{card.description}</p>
-                                                </div>
-                                                <span className={`rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] ${isActive
-                                                    ? 'border border-sky-400/30 bg-sky-500/10 text-sky-100'
-                                                    : 'border border-white/10 bg-white/5 text-[#8f94aa]'
-                                                }`}>
-                                                    {card.count}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {replyTo && (
-                                <div className="mb-3 flex items-center justify-between rounded-full border border-sky-400/25 bg-sky-500/10 px-3 py-2 text-xs uppercase tracking-[0.16em] text-sky-100">
-                                    <span>Replying to {authorLabel(replyTo.author)}</span>
-                                    <button type="button" onClick={() => setReplyTo(null)} className="text-sky-100 transition hover:text-white">
-                                        Cancel
+                            <div className="flex items-start justify-between gap-4 px-1 pb-3">
+                                <div className="min-w-0">
+                                    <h2 className="text-lg font-light text-gray-100">Discussion</h2>
+                                    <p className="mt-1 text-sm font-light text-[#8f94aa]">
+                                        {isTeamMember
+                                            ? 'Team members see the full thread. Internal notes stay hidden from invited reviewers.'
+                                            : 'Only reviewer-visible messages appear in this thread.'}
+                                    </p>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-2">
+                                    {isTeamMember && internalComments.length > 0 && (
+                                        <span className="rounded-full border border-amber-400/25 bg-amber-500/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-amber-100">
+                                            {internalComments.length} internal
+                                        </span>
+                                    )}
+                                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
+                                        {visibleComments.length} visible
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => openCommentModal()}
+                                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-[0.16em] text-[#d7d9e4] transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white"
+                                    >
+                                        <Send className="h-3.5 w-3.5" />
+                                        Add comment
                                     </button>
                                 </div>
-                            )}
+                            </div>
 
                             <div className="mt-4 space-y-3">
-                                {visibleComments.map((item, index) => (
-                                    <div
-                                        key={item.id}
-                                        data-pending-block-root="panel"
-                                        data-testid="approval-comment-card"
-                                        className={`relative rounded-lg px-1 pb-3 ${item.pending ? 'opacity-80' : ''} ${index !== visibleComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
-                                    >
-                                        <div className="flex flex-wrap items-start justify-between gap-3">
-                                            <div className="flex items-start gap-3">
-                                                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-400/20 bg-sky-500/10 text-[11px] uppercase tracking-[0.18em] text-sky-100">
-                                                    {initialsLabel(item.author)}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <span className="text-sm font-light text-gray-100">{authorLabel(item.author)}</span>
-                                                        {activeDiscussionView === 'GLOBAL' && item.author?.type !== 'INTERNAL' && item.author?.association && (
-                                                            <span className={associationBadgeClass}>
-                                                                {associationLabel(item.author.association)}
-                                                            </span>
-                                                        )}
-                                                        {item.parentCommentId && (
-                                                            <span className="inline-flex rounded-full border border-sky-400/25 bg-sky-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-sky-100">
-                                                                Reply
-                                                            </span>
-                                                        )}
+                                {visibleComments.map((item, index) => {
+                                    const isInternalComment = item.visibility === 'INTERNAL';
+                                    const cardTone = isInternalComment
+                                        ? 'border-amber-400/20 bg-amber-500/[0.08]'
+                                        : 'border-[#2b2b40] bg-[#151521]';
+                                    const avatarTone = isInternalComment
+                                        ? 'border-amber-400/30 bg-amber-500/12 text-amber-100'
+                                        : 'border-sky-400/20 bg-sky-500/10 text-sky-100';
+
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            data-pending-block-root="panel"
+                                            data-testid="approval-comment-card"
+                                            className={`relative rounded-lg border px-4 py-4 ${cardTone} ${item.pending ? optimisticItemClass : ''} ${index !== visibleComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
+                                        >
+                                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`flex h-9 w-9 items-center justify-center rounded-full border text-[11px] uppercase tracking-[0.18em] ${avatarTone}`}>
+                                                        {initialsLabel(item.author)}
                                                     </div>
-                                                    <p className="mt-2 text-sm leading-6 font-light text-[#d7d9e4]">{item.content}</p>
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span className="text-sm font-light text-gray-100">{authorLabel(item.author)}</span>
+                                                            {item.visibility === 'INTERNAL' && isTeamMember && (
+                                                                <span className="inline-flex rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-amber-100">
+                                                                    Internal
+                                                                </span>
+                                                            )}
+                                                            {item.author?.type !== 'INTERNAL' && item.author?.association && (
+                                                                <span className={associationBadgeClass}>
+                                                                    {associationLabel(item.author.association)}
+                                                                </span>
+                                                            )}
+                                                            {item.parentCommentId && (
+                                                                <span className="inline-flex rounded-full border border-sky-400/25 bg-sky-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-sky-100">
+                                                                    Reply
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="mt-2 text-sm leading-6 font-light text-[#d7d9e4]">{item.content}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-[11px] font-light uppercase tracking-[0.16em] text-[#5e6278]">{formatApprovalDate(item.createdAt)}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setReplyTo(item)}
-                                                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-sky-200 transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white"
-                                                >
-                                                    <User className="h-3.5 w-3.5" />
-                                                    Reply
-                                                </button>
-                                                {canDeleteComment(item) && (
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[11px] font-light uppercase tracking-[0.16em] text-[#5e6278]">{formatApprovalDate(item.createdAt)}</span>
                                                     <button
                                                         type="button"
-                                                        onClick={() => deleteComment(item)}
-                                                        disabled={saving}
-                                                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#8f94aa] transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
-                                                        aria-label={`Delete message from ${authorLabel(item.author)}`}
-                                                        title="Delete message"
+                                                        onClick={() => openCommentModal(item)}
+                                                        className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-sky-200 transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white"
+                                                        aria-label={`Reply to ${authorLabel(item.author)}`}
                                                     >
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <User className="h-3.5 w-3.5" />
+                                                        Reply
                                                     </button>
-                                                )}
+                                                    {canDeleteComment(item) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => deleteComment(item)}
+                                                            disabled={saving}
+                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#8f94aa] transition hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-60"
+                                                            aria-label={`Delete message from ${authorLabel(item.author)}`}
+                                                            title="Delete message"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
 
                                 {visibleComments.length === 0 && (
                                     <div className="rounded-lg border border-dashed border-[#2b2b40] px-4 py-8 text-center text-sm font-light text-[#8f94aa]">
@@ -1091,25 +1112,6 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     </div>
                                 )}
                             </div>
-
-                            <form onSubmit={submitComment} className="mt-4 flex items-end gap-3 border-t border-[#2b2b40] pt-4">
-                                <textarea
-                                    rows={3}
-                                    value={comment}
-                                    onChange={(event) => setComment(event.target.value)}
-                                    placeholder={commentPlaceholder}
-                                    className={`flex-1 ${inputClass}`}
-                                />
-
-                                <button
-                                    type="submit"
-                                    aria-label="Send comment"
-                                    disabled={saving || !comment.trim()}
-                                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-500 text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    <Send className="h-4 w-4" />
-                                </button>
-                            </form>
                         </section>
                         </div>
                     </aside>
@@ -1138,6 +1140,108 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                         className="max-h-full max-w-full rounded-md object-contain shadow-2xl"
                         onClick={(event) => event.stopPropagation()}
                     />
+                </div>
+            )}
+
+            {isCommentModalOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={replyTo ? `Reply to ${authorLabel(replyTo.author)}` : 'Add comment'}
+                    onClick={closeCommentModal}
+                >
+                    <div
+                        className={`${panelClass} w-full max-w-2xl p-6 shadow-2xl shadow-black/30`}
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-light text-gray-100">
+                                    {replyTo ? `Reply to ${authorLabel(replyTo.author)}` : 'Add comment'}
+                                </h2>
+                                <p className="mt-1 text-sm font-light text-[#8f94aa]">
+                                    {replyTo
+                                        ? 'Replies start with a mention and stay in the shared approval thread.'
+                                        : 'Choose who can see the note before sending it to the thread.'}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeCommentModal}
+                                className="rounded-full border border-white/10 bg-white/5 p-2 text-[#8f94aa] transition hover:text-white"
+                                aria-label="Close comment modal"
+                            >
+                                <XCircle className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        {replyTo && (
+                            <div className="mt-5 rounded-lg border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm font-light text-sky-100">
+                                Replying to {authorLabel(replyTo.author)}
+                            </div>
+                        )}
+
+                        <form onSubmit={(event) => submitComment(event, 'GLOBAL')} className="mt-5 space-y-4">
+                            {!isTeamMember && (
+                                <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-light text-[#d7d9e4]">
+                                    This note will be sent to the global approval thread.
+                                </div>
+                            )}
+
+                            <div>
+                                <label htmlFor="approval-comment" className="mb-2 block text-xs uppercase tracking-[0.16em] text-[#8f94aa]">
+                                    Message
+                                </label>
+                                <textarea
+                                    id="approval-comment"
+                                    rows={5}
+                                    autoFocus
+                                    value={comment}
+                                    onChange={(event) => setComment(event.target.value)}
+                                    placeholder="Write your note"
+                                    className={inputClass}
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3">
+                                {isTeamMember && (
+                                    <div className="mr-auto flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs font-light text-amber-100">
+                                        <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                        <span>Only team members can see private messages.</span>
+                                    </div>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={closeCommentModal}
+                                    className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-sm font-light text-[#a1a5b7] transition hover:text-white"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    aria-label="Send"
+                                    disabled={saving || !comment.trim()}
+                                    className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <Send className="h-4 w-4" />
+                                    Send
+                                </button>
+                                {isTeamMember && (
+                                    <button
+                                        type="button"
+                                        onClick={(event) => submitComment(event, 'INTERNAL')}
+                                        aria-label="Send private"
+                                        disabled={saving || !comment.trim()}
+                                        className="inline-flex items-center gap-2 rounded-md border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-100 transition hover:border-amber-300/40 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        <Send className="h-4 w-4" />
+                                        Send private
+                                    </button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
 
