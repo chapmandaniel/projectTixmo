@@ -119,8 +119,7 @@ describe('ApprovalDetailView', () => {
         expect(screen.getAllByText('Main stage artwork').length).toBeGreaterThan(0);
         expect(screen.getAllByText('v2').length).toBeGreaterThan(0);
         expect(screen.getByText('Discussion')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Internal \/ Private/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Global/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Add comment/i })).toBeInTheDocument();
         expect(screen.getByText('You have not responded yet.')).toBeInTheDocument();
         expect(screen.getAllByText('Upload version').length).toBeGreaterThan(0);
         expect(screen.getByText('reviewer@example.com')).toBeInTheDocument();
@@ -150,13 +149,50 @@ describe('ApprovalDetailView', () => {
         });
 
         const commentCards = screen.getAllByTestId('approval-comment-card');
-        expect(within(commentCards[0]).getByText('Newest note from the approval thread.')).toBeInTheDocument();
-        expect(within(commentCards[1]).getByText('Older note from the approval thread.')).toBeInTheDocument();
+        expect(within(commentCards[0]).getByText('Private alignment note for the team only.')).toBeInTheDocument();
+        expect(within(commentCards[0]).getByText('Internal')).toBeInTheDocument();
+        expect(within(commentCards[1]).getByText('Newest note from the approval thread.')).toBeInTheDocument();
+        expect(within(commentCards[2]).getByText('Older note from the approval thread.')).toBeInTheDocument();
         expect(screen.getByText('Management')).toBeInTheDocument();
-        expect(screen.queryByText('Private alignment note for the team only.')).not.toBeInTheDocument();
     });
 
-    it('switches to the internal chat card for private team discussion', async () => {
+    it('hides internal comments for non-team viewers', async () => {
+        const externalApprovalFixture = {
+            ...approvalFixture,
+            reviewers: [
+                {
+                    id: 'reviewer-2',
+                    email: 'guest@example.com',
+                    name: 'Guest Reviewer',
+                    reviewerType: 'EXTERNAL',
+                    latestDecision: null,
+                },
+            ],
+        };
+
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={externalApprovalFixture}
+                    user={{ email: 'guest@example.com' }}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        expect(screen.queryByText('Private alignment note for the team only.')).not.toBeInTheDocument();
+        expect(screen.getByText('Newest note from the approval thread.')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /Add comment/i }));
+
+        const dialog = screen.getByRole('dialog', { name: 'Add comment' });
+        expect(within(dialog).queryByText('Internal / Private')).not.toBeInTheDocument();
+        expect(within(dialog).getByText('This note will be sent to the global approval thread.')).toBeInTheDocument();
+    });
+
+    it('opens the reply modal with an @mention prefilled', async () => {
         await act(async () => {
             render(
                 <ApprovalDetailView
@@ -169,13 +205,13 @@ describe('ApprovalDetailView', () => {
             );
         });
 
-        fireEvent.click(screen.getByRole('button', { name: /Internal \/ Private/i }));
+        fireEvent.click(screen.getAllByRole('button', { name: 'Reply to Producer' })[0]);
 
-        expect(screen.getByText('Private alignment note for the team only.')).toBeInTheDocument();
-        expect(screen.queryByText('Newest note from the approval thread.')).not.toBeInTheDocument();
+        const dialog = screen.getByRole('dialog', { name: 'Reply to Producer' });
+        expect(within(dialog).getByLabelText('Message')).toHaveValue('@Producer ');
     });
 
-    it('posts a comment against the selected revision', async () => {
+    it('posts a global comment from the modal by default', async () => {
         apiPost.mockResolvedValue({});
 
         await act(async () => {
@@ -190,12 +226,17 @@ describe('ApprovalDetailView', () => {
             );
         });
 
-        fireEvent.change(screen.getByPlaceholderText(/Message the global chat/i), {
+        fireEvent.click(screen.getByRole('button', { name: /Add comment/i }));
+
+        const dialog = screen.getByRole('dialog', { name: 'Add comment' });
+
+        fireEvent.change(within(dialog).getByLabelText('Message'), {
             target: { value: 'Looks better now.' },
         });
+        expect(within(dialog).getByText('Only team members can see private messages.')).toBeInTheDocument();
 
         await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: 'Send comment' }));
+            fireEvent.click(within(dialog).getByRole('button', { name: 'Send' }));
         });
 
         await waitFor(() =>
@@ -204,6 +245,42 @@ describe('ApprovalDetailView', () => {
                 revisionId: 'revision-2',
                 parentCommentId: undefined,
                 visibility: 'GLOBAL',
+            })
+        );
+    });
+
+    it('lets team members send an internal comment from the modal', async () => {
+        apiPost.mockResolvedValue({});
+
+        await act(async () => {
+            render(
+                <ApprovalDetailView
+                    approvalId="approval-1"
+                    initialApproval={approvalFixture}
+                    user={currentUser}
+                    onBack={() => {}}
+                    onUpdated={() => {}}
+                />
+            );
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /Add comment/i }));
+
+        const dialog = screen.getByRole('dialog', { name: 'Add comment' });
+        fireEvent.change(within(dialog).getByLabelText('Message'), {
+            target: { value: 'Team-only note.' },
+        });
+
+        await act(async () => {
+            fireEvent.click(within(dialog).getByRole('button', { name: 'Send private' }));
+        });
+
+        await waitFor(() =>
+            expect(apiPost).toHaveBeenCalledWith('/approvals/approval-1/comments', {
+                content: 'Team-only note.',
+                revisionId: 'revision-2',
+                parentCommentId: undefined,
+                visibility: 'INTERNAL',
             })
         );
     });
