@@ -37,8 +37,8 @@ export interface CommentNotificationRecipient {
     reviewerToken?: string;
 }
 
-const buildClientUrl = (pathname: string, params?: Record<string, string>) => {
-    const url = new URL(pathname, config.clientUrl.endsWith('/') ? config.clientUrl : `${config.clientUrl}/`);
+const buildClientUrl = (pathname: string, params?: Record<string, string>, clientUrl = config.clientUrl) => {
+    const url = new URL(pathname, clientUrl.endsWith('/') ? clientUrl : `${clientUrl}/`);
     if (params) {
         Object.entries(params).forEach(([key, value]) => {
             url.searchParams.set(key, value);
@@ -48,21 +48,22 @@ const buildClientUrl = (pathname: string, params?: Record<string, string>) => {
 };
 
 class ApprovalEmailService {
-    private buildReviewUrl(token: string) {
-        return buildClientUrl(`/review/${token}`);
+    private buildReviewUrl(token: string, clientUrl?: string) {
+        return buildClientUrl(`/review/${token}`, undefined, clientUrl);
     }
 
-    private buildDashboardUrl(approvalId?: string) {
-        return buildClientUrl('/approvals', approvalId ? { approvalId } : undefined);
+    private buildDashboardUrl(approvalId?: string, clientUrl?: string) {
+        return buildClientUrl('/approvals', approvalId ? { approvalId } : undefined, clientUrl);
     }
 
     async sendReviewRequest(
         reviewer: ReviewerInfo,
         requester: RequesterInfo,
-        approval: ApprovalEmailData
+        approval: ApprovalEmailData,
+        clientUrl?: string
     ): Promise<boolean> {
         try {
-            const reviewUrl = this.buildReviewUrl(reviewer.token);
+            const reviewUrl = this.buildReviewUrl(reviewer.token, clientUrl);
             const emailData = approvalRequestEmail({
                 reviewerName: reviewer.name || reviewer.email.split('@')[0],
                 requesterName: `${requester.firstName} ${requester.lastName}`.trim(),
@@ -92,21 +93,23 @@ class ApprovalEmailService {
     async sendReviewRequestsToAll(
         reviewers: ReviewerInfo[],
         requester: RequesterInfo,
-        approval: ApprovalEmailData
+        approval: ApprovalEmailData,
+        clientUrl?: string
     ) {
         for (const reviewer of reviewers) {
-            await this.sendReviewRequest(reviewer, requester, approval);
+            await this.sendReviewRequest(reviewer, requester, approval, clientUrl);
         }
     }
 
     async sendRevisionNotification(
         reviewers: ReviewerInfo[],
         requester: RequesterInfo,
-        approval: ApprovalEmailData
+        approval: ApprovalEmailData,
+        clientUrl?: string
     ) {
         for (const reviewer of reviewers) {
             try {
-                const reviewUrl = this.buildReviewUrl(reviewer.token);
+                const reviewUrl = this.buildReviewUrl(reviewer.token, clientUrl);
                 const emailData = approvalRevisionEmail({
                     reviewerName: reviewer.name || reviewer.email.split('@')[0],
                     requesterName: `${requester.firstName} ${requester.lastName}`.trim(),
@@ -134,10 +137,11 @@ class ApprovalEmailService {
     async sendReminder(
         reviewer: ReviewerInfo,
         requester: RequesterInfo,
-        approval: ApprovalEmailData
+        approval: ApprovalEmailData,
+        clientUrl?: string
     ) {
         try {
-            const reviewUrl = this.buildReviewUrl(reviewer.token);
+            const reviewUrl = this.buildReviewUrl(reviewer.token, clientUrl);
             const emailData = approvalReminderEmail({
                 reviewerName: reviewer.name || reviewer.email.split('@')[0],
                 requesterName: `${requester.firstName} ${requester.lastName}`.trim(),
@@ -169,10 +173,11 @@ class ApprovalEmailService {
         approval: ApprovalEmailData,
         approvalId: string,
         decision: 'APPROVED' | 'CHANGES_REQUESTED' | 'DECLINED',
-        note?: string
+        note?: string,
+        clientUrl?: string
     ) {
         try {
-            const dashboardUrl = this.buildDashboardUrl(approvalId);
+            const dashboardUrl = this.buildDashboardUrl(approvalId, clientUrl);
             const emailData = approvalDecisionEmail({
                 requesterName: requester.firstName,
                 reviewerName: reviewer.name || reviewer.email.split('@')[0],
@@ -203,13 +208,14 @@ class ApprovalEmailService {
         recipients: CommentNotificationRecipient[],
         approval: ApprovalEmailData,
         authorName: string,
-        comment: string
+        comment: string,
+        clientUrl?: string
     ) {
         for (const recipient of recipients) {
             try {
                 const actionUrl = recipient.reviewerToken
-                    ? this.buildReviewUrl(recipient.reviewerToken)
-                    : this.buildDashboardUrl(approval.approvalId);
+                    ? this.buildReviewUrl(recipient.reviewerToken, clientUrl)
+                    : this.buildDashboardUrl(approval.approvalId, clientUrl);
 
                 const emailData = approvalCommentEmail({
                     title: approval.title,

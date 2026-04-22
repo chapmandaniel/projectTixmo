@@ -99,6 +99,7 @@ export interface CreateApprovalInput {
     deadline: Date;
     reviewers: ReviewerInput[];
     files: Express.Multer.File[];
+    dashboardOrigin?: string;
 }
 
 export interface CreateRevisionInput {
@@ -537,7 +538,7 @@ class ApprovalService {
         return status;
     }
 
-    private async notifyReviewersOfSubmission(approval: ApprovalDetailRecord) {
+    private async notifyReviewersOfSubmission(approval: ApprovalDetailRecord, dashboardOrigin?: string) {
         await approvalEmailService.sendReviewRequestsToAll(
             approval.reviewers.map((reviewer) => ({
                 email: reviewer.email,
@@ -551,13 +552,15 @@ class ApprovalService {
                 description: approval.description || undefined,
                 deadline: approval.deadline,
                 revisionNumber: approval.latestRevisionNumber,
-            }
+            },
+            dashboardOrigin
         );
     }
 
     private async notifyReviewerSubsetOfSubmission(
         approval: Pick<ApprovalDetailRecord, 'title' | 'description' | 'event' | 'deadline' | 'latestRevisionNumber' | 'createdBy'>,
-        reviewers: ReviewerInfo[]
+        reviewers: ReviewerInfo[],
+        dashboardOrigin?: string
     ) {
         if (!reviewers.length) {
             return;
@@ -569,10 +572,15 @@ class ApprovalService {
             description: approval.description || undefined,
             deadline: approval.deadline,
             revisionNumber: approval.latestRevisionNumber,
-        });
+        }, dashboardOrigin);
     }
 
-    private async notifyReviewersOfRevision(approval: ApprovalDetailRecord, revisionNumber: number, summary?: string) {
+    private async notifyReviewersOfRevision(
+        approval: ApprovalDetailRecord,
+        revisionNumber: number,
+        summary?: string,
+        dashboardOrigin?: string
+    ) {
         await approvalEmailService.sendRevisionNotification(
             approval.reviewers.map((reviewer) => ({
                 email: reviewer.email,
@@ -586,7 +594,8 @@ class ApprovalService {
                 deadline: approval.deadline,
                 revisionNumber,
                 summary,
-            }
+            },
+            dashboardOrigin
         );
     }
 
@@ -594,7 +603,8 @@ class ApprovalService {
         approval: ApprovalDetailRecord,
         reviewer: ApprovalReviewer,
         decision: ApprovalDecision,
-        note?: string
+        note?: string,
+        dashboardOrigin?: string
     ) {
         await approvalEmailService.sendDecisionNotification(
             approval.createdBy,
@@ -610,7 +620,8 @@ class ApprovalService {
             },
             approval.id,
             decision,
-            note
+            note,
+            dashboardOrigin
         );
     }
 
@@ -620,7 +631,8 @@ class ApprovalService {
         authorName: string,
         revisionNumber: number,
         comment: string,
-        visibility: ApprovalCommentVisibility
+        visibility: ApprovalCommentVisibility,
+        dashboardOrigin?: string
     ) {
         const normalizedAuthorEmail = authorEmail?.toLowerCase() || null;
         const recipients = new Map<
@@ -674,7 +686,8 @@ class ApprovalService {
                 approvalId: approval.id,
             },
             authorName,
-            comment
+            comment,
+            dashboardOrigin
         );
     }
 
@@ -743,7 +756,7 @@ class ApprovalService {
             throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load created approval');
         }
 
-        this.notifyReviewersOfSubmission(approval).catch((error) => {
+        this.notifyReviewersOfSubmission(approval, input.dashboardOrigin).catch((error) => {
             logger.error(`Failed to send approval submission emails: ${(error as Error).message}`);
         });
 
@@ -865,7 +878,7 @@ class ApprovalService {
         return await this.serializeApproval(updated, { email: user.email });
     }
 
-    async addReviewers(approvalId: string, userId: string, reviewers: ReviewerInput[]) {
+    async addReviewers(approvalId: string, userId: string, reviewers: ReviewerInput[], dashboardOrigin?: string) {
         const user = await this.getUserContext(userId);
         const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
 
@@ -907,7 +920,8 @@ class ApprovalService {
                 email: reviewer.email,
                 name: reviewer.name,
                 token: reviewer.token,
-            }))
+            })),
+            dashboardOrigin
         ).catch((error) => {
             logger.error(`Failed to send new reviewer emails: ${(error as Error).message}`);
         });
@@ -915,7 +929,7 @@ class ApprovalService {
         return await this.serializeApproval(updated, { email: user.email });
     }
 
-    async resendReviewerInvite(approvalId: string, reviewerId: string, userId: string) {
+    async resendReviewerInvite(approvalId: string, reviewerId: string, userId: string, dashboardOrigin?: string) {
         const user = await this.getUserContext(userId);
         const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
 
@@ -959,7 +973,7 @@ class ApprovalService {
                 name: updatedReviewer.name || undefined,
                 token: updatedReviewer.token,
             },
-        ]).catch((error) => {
+        ], dashboardOrigin).catch((error) => {
             logger.error(`Failed to resend reviewer invite: ${(error as Error).message}`);
         });
 
@@ -1028,7 +1042,7 @@ class ApprovalService {
         return await this.serializeApproval(updated, { email: user.email });
     }
 
-    async createRevision(approvalId: string, userId: string, input: CreateRevisionInput) {
+    async createRevision(approvalId: string, userId: string, input: CreateRevisionInput, dashboardOrigin?: string) {
         const user = await this.getUserContext(userId);
         const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
 
@@ -1087,7 +1101,7 @@ class ApprovalService {
             throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated approval');
         }
 
-        this.notifyReviewersOfRevision(updated, revisionNumber, input.summary).catch((error) => {
+        this.notifyReviewersOfRevision(updated, revisionNumber, input.summary, dashboardOrigin).catch((error) => {
             logger.error(`Failed to send revision emails: ${(error as Error).message}`);
         });
 
@@ -1125,7 +1139,7 @@ class ApprovalService {
         });
     }
 
-    async addCommentByUser(approvalId: string, userId: string, input: ApprovalCommentInput) {
+    async addCommentByUser(approvalId: string, userId: string, input: ApprovalCommentInput, dashboardOrigin?: string) {
         const user = await this.getUserContext(userId);
         const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
 
@@ -1169,7 +1183,8 @@ class ApprovalService {
             `${user.firstName} ${user.lastName}`.trim(),
             revision.revisionNumber,
             input.content,
-            input.visibility ?? 'GLOBAL'
+            input.visibility ?? 'GLOBAL',
+            dashboardOrigin
         ).catch((error) => {
             logger.error(`Failed to send comment notifications: ${(error as Error).message}`);
         });
@@ -1422,7 +1437,8 @@ class ApprovalService {
     private async submitDecisionForReviewer(
         approval: ApprovalDetailRecord,
         reviewer: ApprovalReviewer,
-        input: DecisionInput
+        input: DecisionInput,
+        dashboardOrigin?: string
     ) {
         const revision = await this.resolveRevisionOrLatest(approval, input.revisionId);
 
@@ -1464,7 +1480,7 @@ class ApprovalService {
 
         await this.recalculateApprovalStatus(approval.id);
 
-        this.notifyRequesterOfDecision(approval, reviewer, input.decision, input.note).catch((error) => {
+        this.notifyRequesterOfDecision(approval, reviewer, input.decision, input.note, dashboardOrigin).catch((error) => {
             logger.error(`Failed to send decision notification: ${(error as Error).message}`);
         });
 
@@ -1477,7 +1493,7 @@ class ApprovalService {
         };
     }
 
-    async submitDecisionByUser(approvalId: string, userId: string, input: DecisionInput) {
+    async submitDecisionByUser(approvalId: string, userId: string, input: DecisionInput, dashboardOrigin?: string) {
         const user = await this.getUserContext(userId);
         const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
 
@@ -1490,7 +1506,7 @@ class ApprovalService {
             throw new ApiError(StatusCodes.FORBIDDEN, 'You are not assigned as a reviewer on this request');
         }
 
-        return this.submitDecisionForReviewer(approval, reviewer, input);
+        return this.submitDecisionForReviewer(approval, reviewer, input, dashboardOrigin);
     }
 
     async submitDecisionByToken(token: string, input: DecisionInput) {

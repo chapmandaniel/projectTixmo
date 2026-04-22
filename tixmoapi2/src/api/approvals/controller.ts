@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
 import { AuthRequest } from '../../middleware/auth';
 import { ApiError } from '../../utils/ApiError';
+import { resolveTrustedClientOrigin } from '../../utils/clientOrigin';
 import {
     addApprovalReviewersBodySchema,
     approvalCommentBodySchema,
@@ -70,6 +71,9 @@ const parseSchema = <T>(schema: { parse: (value: unknown) => T }, value: unknown
     }
 };
 
+const getDashboardOrigin = (req: AuthRequest) =>
+    resolveTrustedClientOrigin(req.get('origin'), req.get('referer'));
+
 export const ApprovalController = {
     async create(req: AuthRequest, res: Response, next: NextFunction) {
         try {
@@ -95,6 +99,7 @@ export const ApprovalController = {
                 deadline: new Date(body.deadline),
                 reviewers: body.reviewers,
                 files,
+                dashboardOrigin: getDashboardOrigin(req),
             });
 
             return res.status(StatusCodes.CREATED).json(approval);
@@ -159,7 +164,12 @@ export const ApprovalController = {
             }
 
             const body = parseSchema(addApprovalReviewersBodySchema, req.body);
-            const approval = await approvalService.addReviewers(req.params.id, userId, body.reviewers);
+            const approval = await approvalService.addReviewers(
+                req.params.id,
+                userId,
+                body.reviewers,
+                getDashboardOrigin(req)
+            );
 
             return res.status(StatusCodes.CREATED).json(approval);
         } catch (error) {
@@ -174,7 +184,12 @@ export const ApprovalController = {
                 return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
             }
 
-            const approval = await approvalService.resendReviewerInvite(req.params.id, req.params.reviewerId, userId);
+            const approval = await approvalService.resendReviewerInvite(
+                req.params.id,
+                req.params.reviewerId,
+                userId,
+                getDashboardOrigin(req)
+            );
             return res.json(approval);
         } catch (error) {
             return next(error);
@@ -204,10 +219,15 @@ export const ApprovalController = {
 
             const body = parseSchema(createRevisionBodySchema, req.body);
             const files = (req.files as Express.Multer.File[]) || [];
-            const approval = await approvalService.createRevision(req.params.id, userId, {
-                summary: body.summary,
-                files,
-            });
+            const approval = await approvalService.createRevision(
+                req.params.id,
+                userId,
+                {
+                    summary: body.summary,
+                    files,
+                },
+                getDashboardOrigin(req)
+            );
 
             return res.status(StatusCodes.CREATED).json(approval);
         } catch (error) {
@@ -223,7 +243,12 @@ export const ApprovalController = {
             }
 
             const body = parseSchema(approvalCommentBodySchema, req.body);
-            const comment = await approvalService.addCommentByUser(req.params.id, userId, body);
+            const comment = await approvalService.addCommentByUser(
+                req.params.id,
+                userId,
+                body,
+                getDashboardOrigin(req)
+            );
 
             return res.status(StatusCodes.CREATED).json(comment);
         } catch (error) {
@@ -253,7 +278,12 @@ export const ApprovalController = {
             }
 
             const body = parseSchema(approvalDecisionBodySchema, req.body);
-            const decision = await approvalService.submitDecisionByUser(req.params.id, userId, body);
+            const decision = await approvalService.submitDecisionByUser(
+                req.params.id,
+                userId,
+                body,
+                getDashboardOrigin(req)
+            );
 
             return res.json(decision);
         } catch (error) {
