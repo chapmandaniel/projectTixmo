@@ -6,6 +6,15 @@ import { ApiError } from '../../utils/ApiError';
 import { userService, CreateUserInput, UpdateUserInput, ListUsersParams } from './service';
 import prisma from '../../config/prisma';
 
+const getCallerOrganizationId = async (userId: string) => {
+  const callerDetails = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { organizationId: true },
+  });
+
+  return callerDetails?.organizationId ?? null;
+};
+
 export const createUser = catchAsync(async (req: AuthRequest, res: Response) => {
   const payload = req.body as CreateUserInput;
   const caller = req.user!;
@@ -31,22 +40,23 @@ export const createUser = catchAsync(async (req: AuthRequest, res: Response) => 
   // 2. Organization Scoping
   // If caller is PROMOTER, they can only create users in their own organization
   if (caller.role === 'PROMOTER') {
-    // Fetch caller's organizationId if not in token (it's not currently in our jwt payload)
-    const callerDetails = await prisma.user.findUnique({
-      where: { id: caller.userId },
-      select: { organizationId: true },
-    });
+    const callerOrganizationId = await getCallerOrganizationId(caller.userId);
 
-    if (!callerDetails?.organizationId) {
+    if (!callerOrganizationId) {
       throw ApiError.forbidden('Your account must be associated with an organization to create users');
     }
 
     // Force organizationId to match caller's
-    payload.organizationId = callerDetails.organizationId;
+    payload.organizationId = callerOrganizationId;
   } else if ((caller.role === 'ADMIN' || caller.role === 'OWNER') && !payload.organizationId) {
-    // Optional: If Admin/Owner creates a user without orgId, it's a global user (like another Admin)
-    // which is fine, but for PROMOTER level users, maybe we should enforce it?
-    // Leaving as is for now to allow global Admins.
+    const callerOrganizationId = await getCallerOrganizationId(caller.userId);
+
+    // Team dashboard invites omit organizationId, so inherit the caller's organization
+    // when one exists. Global admins without an organization still retain the ability
+    // to create unscoped users intentionally.
+    if (callerOrganizationId) {
+      payload.organizationId = callerOrganizationId;
+    }
   }
 
   const user = await userService.createUser(payload);

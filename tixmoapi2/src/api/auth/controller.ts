@@ -19,7 +19,11 @@ interface LoginData {
 
 export const register = catchAsync(async (req: AuthRequest, res: Response) => {
   const payload = req.body as RegisterData;
-  const result = await authService.register(payload);
+  const result = await authService.register(payload, {
+    requestHost:
+      (typeof req.headers['x-forwarded-host'] === 'string' && req.headers['x-forwarded-host']) ||
+      req.get('host'),
+  });
 
   res.status(201).json(successResponse(result, 'User registered successfully'));
 });

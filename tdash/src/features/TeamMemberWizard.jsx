@@ -3,7 +3,7 @@ import { User, Shield, Lock, CheckCircle2, X, ArrowLeft, ArrowRight, Save } from
 import InputField from '../components/InputField';
 import api from '../lib/api';
 
-const TeamMemberWizard = ({ onClose, onSuccess, isDark }) => {
+const TeamMemberWizard = ({ onClose, onSuccess, isDark, currentUser }) => {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -81,7 +81,11 @@ const TeamMemberWizard = ({ onClose, onSuccess, isDark }) => {
         setLoading(true);
         setError('');
         try {
-            await api.post('/users', formData);
+            const payload = {
+                ...formData,
+                ...(currentUser?.organizationId ? { organizationId: currentUser.organizationId } : {}),
+            };
+            await api.post('/users', payload);
             if (onSuccess) onSuccess();
             onClose();
         } catch (err) {

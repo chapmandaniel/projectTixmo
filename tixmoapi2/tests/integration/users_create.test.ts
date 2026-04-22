@@ -6,9 +6,12 @@ import { UserRole } from '@prisma/client';
 describe('User Creation Authorization (RBAC)', () => {
     let ownerToken: string;
     let adminToken: string;
+    let ownerWithOrgToken: string;
+    let adminWithOrgToken: string;
     let promoterUser: any;
     let promoterToken: string;
     let otherOrgId: string;
+    let scopedOrgId: string;
 
     beforeAll(async () => {
         await cleanupTestData();
@@ -45,6 +48,41 @@ describe('User Creation Authorization (RBAC)', () => {
             password: 'SecurePass123!',
         });
         adminToken = adminLogin.body.data.accessToken;
+
+        const scopedOrg = await prisma.organization.create({
+            data: { name: 'Scoped Org', slug: 'scoped-org', type: 'PROMOTER' },
+        });
+        scopedOrgId = scopedOrg.id;
+
+        const ownerWithOrgData = await registerUser(app, {
+            email: 'owner-with-org@test.com',
+            firstName: 'Scoped',
+            lastName: 'Owner',
+        });
+        await prisma.user.update({
+            where: { id: ownerWithOrgData.user.id },
+            data: { role: UserRole.OWNER, organizationId: scopedOrgId },
+        });
+        const ownerWithOrgLogin = await request(app).post('/api/v1/auth/login').send({
+            email: 'owner-with-org@test.com',
+            password: 'SecurePass123!',
+        });
+        ownerWithOrgToken = ownerWithOrgLogin.body.data.accessToken;
+
+        const adminWithOrgData = await registerUser(app, {
+            email: 'admin-with-org@test.com',
+            firstName: 'Scoped',
+            lastName: 'Admin',
+        });
+        await prisma.user.update({
+            where: { id: adminWithOrgData.user.id },
+            data: { role: UserRole.ADMIN, organizationId: scopedOrgId },
+        });
+        const adminWithOrgLogin = await request(app).post('/api/v1/auth/login').send({
+            email: 'admin-with-org@test.com',
+            password: 'SecurePass123!',
+        });
+        adminWithOrgToken = adminWithOrgLogin.body.data.accessToken;
 
         // 3. Create Promoter
         const org = await prisma.organization.create({
@@ -148,6 +186,36 @@ describe('User Creation Authorization (RBAC)', () => {
                 });
 
             expect(res.status).toBe(201);
+        });
+
+        it('should inherit the OWNER organization when orgId is omitted', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${ownerWithOrgToken}`)
+                .send({
+                    email: 'owner_scoped_team@test.com',
+                    firstName: 'Owner',
+                    lastName: 'Scoped Team',
+                    role: 'TEAM_MEMBER',
+                });
+
+            expect(res.status).toBe(201);
+            expect(res.body.data.organizationId).toBe(scopedOrgId);
+        });
+
+        it('should inherit the ADMIN organization when orgId is omitted', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${adminWithOrgToken}`)
+                .send({
+                    email: 'admin_scoped_team@test.com',
+                    firstName: 'Admin',
+                    lastName: 'Scoped Team',
+                    role: 'TEAM_MEMBER',
+                });
+
+            expect(res.status).toBe(201);
+            expect(res.body.data.organizationId).toBe(scopedOrgId);
         });
     });
 

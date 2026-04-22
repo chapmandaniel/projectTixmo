@@ -2,9 +2,10 @@ import prisma from '../../config/prisma';
 import { hashPassword, comparePassword } from '../../utils/password';
 import { generateTokens } from '../../utils/jwt';
 import { ApiError } from '../../utils/ApiError';
-import { UserRole } from '@prisma/client';
+import { OrganizationStatus, OrganizationType, UserRole } from '@prisma/client';
 import { notificationService } from '../../utils/notificationService';
 import { logger } from '../../config/logger';
+import { resolveTenantOrganizationSeed } from './tenantOrganization';
 
 interface RegisterData {
   email: string;
@@ -20,10 +21,66 @@ interface LoginData {
   password: string;
 }
 
+interface RegisterContext {
+  requestHost?: string | null;
+}
+
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
+const canonicalizeOrganizationKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 export class AuthService {
-  async register(data: RegisterData) {
+  private async resolveTenantOrganization(context?: RegisterContext) {
+    const seed = resolveTenantOrganizationSeed({
+      requestHost: context?.requestHost,
+      serviceDashUrl: process.env.RAILWAY_SERVICE_DASH_URL,
+      projectName: process.env.RAILWAY_PROJECT_NAME,
+    });
+
+    if (!seed) {
+      return null;
+    }
+
+    const existingOrganizations = await prisma.organization.findMany({
+      where: {
+        NOT: { slug: 'tixmo-hq' },
+      },
+      select: { id: true, name: true, slug: true },
+    });
+
+    const seedKey = canonicalizeOrganizationKey(seed.slug);
+    const matchedOrganization = existingOrganizations.find((organization) => {
+      const slugKey = canonicalizeOrganizationKey(organization.slug);
+      const nameKey = canonicalizeOrganizationKey(organization.name);
+      return slugKey === seedKey || nameKey === seedKey;
+    });
+
+    if (matchedOrganization) {
+      const organizationId = matchedOrganization.id;
+      const memberCount = await prisma.user.count({ where: { organizationId } });
+      return { organizationId, memberCount };
+    }
+
+    let organizationSlug = seed.slug;
+    let suffix = 1;
+    while (await prisma.organization.findUnique({ where: { slug: organizationSlug } })) {
+      suffix += 1;
+      organizationSlug = `${seed.slug}-${suffix}`;
+    }
+
+    const organization = await prisma.organization.create({
+      data: {
+        name: seed.name,
+        slug: organizationSlug,
+        type: OrganizationType.PROMOTER,
+        status: OrganizationStatus.ACTIVE,
+      },
+      select: { id: true },
+    });
+
+    return { organizationId: organization.id, memberCount: 0 };
+  }
+
+  async register(data: RegisterData, context?: RegisterContext) {
     const normalizedEmail = normalizeEmail(data.email);
 
     // Check if user already exists
@@ -37,6 +94,12 @@ export class AuthService {
 
     // Hash password
     const passwordHash = await hashPassword(data.password);
+    const tenantOrganization = await this.resolveTenantOrganization(context);
+    const role = tenantOrganization
+      ? tenantOrganization.memberCount === 0
+        ? UserRole.OWNER
+        : UserRole.TEAM_MEMBER
+      : UserRole.CUSTOMER;
 
     // Create user
     const user = await prisma.user.create({
@@ -46,7 +109,8 @@ export class AuthService {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
-        role: UserRole.CUSTOMER,
+        role,
+        organizationId: tenantOrganization?.organizationId ?? null,
       },
       select: {
         id: true,
@@ -54,6 +118,7 @@ export class AuthService {
         firstName: true,
         lastName: true,
         role: true,
+        organizationId: true,
         emailVerified: true,
         createdAt: true,
       },
