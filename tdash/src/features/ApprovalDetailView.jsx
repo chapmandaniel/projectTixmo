@@ -1019,15 +1019,12 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                             {internalComments.length} internal
                                         </span>
                                     )}
-                                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
-                                        {visibleComments.length} visible
-                                    </span>
                                     <button
                                         type="button"
                                         onClick={() => openCommentModal()}
-                                        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-[0.16em] text-[#d7d9e4] transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white"
+                                        className="inline-flex items-center gap-2 rounded-md border border-sky-400/30 bg-sky-500 px-4 py-2 text-sm font-light text-white shadow-lg shadow-sky-500/20 transition hover:border-sky-300/40 hover:bg-sky-400"
                                     >
-                                        <Send className="h-3.5 w-3.5" />
+                                        <MailPlus className="h-4 w-4" />
                                         Add comment
                                     </button>
                                 </div>
