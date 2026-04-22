@@ -6,6 +6,7 @@ import {
     Download,
     FileText,
     Hourglass,
+    MessageCircle,
     MailPlus,
     RotateCcw,
     Search,
@@ -1007,11 +1008,6 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                             <div className="flex items-start justify-between gap-4 px-1 pb-3">
                                 <div className="min-w-0">
                                     <h2 className="text-lg font-light text-gray-100">Discussion</h2>
-                                    <p className="mt-1 text-sm font-light text-[#8f94aa]">
-                                        {isTeamMember
-                                            ? 'Team members see the full thread. Internal notes stay hidden from invited reviewers.'
-                                            : 'Only reviewer-visible messages appear in this thread.'}
-                                    </p>
                                 </div>
                                 <div className="flex shrink-0 items-center gap-2">
                                     {isTeamMember && internalComments.length > 0 && (
@@ -1022,9 +1018,9 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     <button
                                         type="button"
                                         onClick={() => openCommentModal()}
-                                        className="inline-flex items-center gap-2 rounded-md border border-sky-400/30 bg-sky-500 px-4 py-2 text-sm font-light text-white shadow-lg shadow-sky-500/20 transition hover:border-sky-300/40 hover:bg-sky-400"
+                                        className="inline-flex items-center gap-2 rounded-md border border-violet-400/30 bg-violet-500 px-4 py-2 text-sm font-light text-white shadow-lg shadow-violet-500/20 transition hover:border-violet-300/40 hover:bg-violet-400"
                                     >
-                                        <MailPlus className="h-4 w-4" />
+                                        <MessageCircle className="h-4 w-4" />
                                         Add comment
                                     </button>
                                 </div>
