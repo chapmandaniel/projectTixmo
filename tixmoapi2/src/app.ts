@@ -13,20 +13,9 @@ import { initSentry, Sentry } from './config/sentry';
 import { waitingRoom } from './middleware/waitingRoom';
 import { optionalAuthenticate } from './middleware/auth';
 import { apiReadRateLimiter, apiWriteRateLimiter } from './middleware/rateLimiter';
+import { isTrustedClientOrigin } from './utils/clientOrigin';
 
 const app: Application = express();
-
-const allowedOrigins = new Set(
-  (Array.isArray(config.corsOrigin) ? config.corsOrigin : [config.corsOrigin])
-    .map((origin) => origin?.trim())
-    .filter(Boolean)
-);
-
-try {
-  allowedOrigins.add(new URL(config.clientUrl).origin);
-} catch (_error) {
-  // Ignore invalid client URL here; email and deployment checks will surface it elsewhere.
-}
 
 // Initialize Sentry (if configured)
 initSentry();
@@ -50,15 +39,7 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      // Check for exact match in allowed origins (e.g. localhost)
-      if (allowedOrigins.has(origin)) {
-        return callback(null, true);
-      }
-
-      // Check for .tixmo.co subdomains (Regex)
-      // Allows: https://demo.tixmo.co, https://anything.tixmo.co
-      const tixmoPattern = /^https:\/\/(?:[a-zA-Z0-9-]+\.)+tixmo\.co$/;
-      if (tixmoPattern.test(origin)) {
+      if (isTrustedClientOrigin(origin)) {
         return callback(null, true);
       }
 
