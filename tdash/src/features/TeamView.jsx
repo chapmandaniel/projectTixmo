@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import TeamMemberWizard from './TeamMemberWizard';
 import api from '../lib/api';
+import { getStoredUser } from '../lib/session';
 import {
     DashboardButton,
     DashboardChip,
@@ -27,6 +28,7 @@ import { cn } from '../lib/utils';
 
 const TeamView = ({ isDark, user: currentUser }) => {
     const uiTheme = getDashboardTheme(isDark);
+    const scopedUser = currentUser || getStoredUser();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -35,7 +37,10 @@ const TeamView = ({ isDark, user: currentUser }) => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await api.get('/users');
+            const query = scopedUser?.organizationId
+                ? `/users?organizationId=${encodeURIComponent(scopedUser.organizationId)}`
+                : '/users';
+            const res = await api.get(query);
             setUsers(res.data.data.users || []);
             setError('');
         } catch (err) {
@@ -48,7 +53,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
 
     useEffect(() => {
         fetchUsers();
-    }, []);
+    }, [scopedUser?.organizationId]);
 
     const handleDeleteUser = async (userId) => {
         if (!window.confirm('Are you sure you want to remove this member? This action cannot be undone.')) {
@@ -101,6 +106,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                     onClose={() => setIsWizardOpen(false)}
                     onSuccess={handleWizardSuccess}
                     isDark={isDark}
+                    currentUser={scopedUser}
                 />
             )}
 
@@ -191,7 +197,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                         {users.map((member, index) => {
                             const badge = getRoleBadge(member.role);
                             const Icon = badge.icon;
-                            const isCurrentUser = currentUser?.id === member.id;
+                            const isCurrentUser = scopedUser?.id === member.id;
 
                             return (
                                 <DashboardStripedRow
