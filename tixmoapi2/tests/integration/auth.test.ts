@@ -21,12 +21,26 @@ describe('Authentication Endpoints', () => {
       firstName: 'Test',
       lastName: 'User',
     };
+    const tenantBootstrapSlug = 'mighty-quinton-bootstrap';
 
     afterEach(async () => {
       // Clean up after each test (use safe helper)
       try {
         await safeCleanupUsers(validUser.email);
       } catch (e) {}
+
+      try {
+        await safeCleanupUsers('tenant-bootstrap');
+      } catch (e) {}
+
+      try {
+        await prisma.organization.deleteMany({
+          where: { slug: { startsWith: tenantBootstrapSlug } },
+        });
+      } catch (e) {}
+
+      delete process.env.RAILWAY_SERVICE_DASH_URL;
+      delete process.env.RAILWAY_PROJECT_NAME;
     });
 
     it('should register new user successfully', async () => {
@@ -138,6 +152,62 @@ describe('Authentication Endpoints', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
+    });
+
+    it('should bootstrap a tenant organization and make the first tenant user owner', async () => {
+      process.env.RAILWAY_SERVICE_DASH_URL = `${tenantBootstrapSlug}.tixmo.co`;
+      process.env.RAILWAY_PROJECT_NAME = `tixmo ${tenantBootstrapSlug}`;
+
+      const response = await request(app)
+        .post('/api/v1/auth/register')
+        .send({
+          email: 'tenant-bootstrap-owner@example.com',
+          password: 'SecurePass123!',
+          firstName: 'Tenant',
+          lastName: 'Owner',
+        })
+        .expect(201);
+
+      expect(response.body.data.user.role).toBe('OWNER');
+      expect(response.body.data.user.organizationId).toBeTruthy();
+
+      const organization = await prisma.organization.findUnique({
+        where: { slug: tenantBootstrapSlug },
+      });
+
+      expect(organization).toBeTruthy();
+      expect(organization?.name).toBe('Mighty Quinton Bootstrap');
+    });
+
+    it('should reuse the tenant organization for later tenant registrations', async () => {
+      process.env.RAILWAY_SERVICE_DASH_URL = `${tenantBootstrapSlug}.tixmo.co`;
+      process.env.RAILWAY_PROJECT_NAME = `tixmo ${tenantBootstrapSlug}`;
+
+      const firstResponse = await request(app)
+        .post('/api/v1/auth/register')
+        .send({
+          email: 'tenant-bootstrap-first@example.com',
+          password: 'SecurePass123!',
+          firstName: 'Tenant',
+          lastName: 'First',
+        })
+        .expect(201);
+
+      const secondResponse = await request(app)
+        .post('/api/v1/auth/register')
+        .send({
+          email: 'tenant-bootstrap-second@example.com',
+          password: 'SecurePass123!',
+          firstName: 'Tenant',
+          lastName: 'Second',
+        })
+        .expect(201);
+
+      expect(firstResponse.body.data.user.role).toBe('OWNER');
+      expect(secondResponse.body.data.user.role).toBe('TEAM_MEMBER');
+      expect(secondResponse.body.data.user.organizationId).toBe(
+        firstResponse.body.data.user.organizationId
+      );
     });
   });
 
