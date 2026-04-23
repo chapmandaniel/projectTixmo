@@ -28,6 +28,11 @@ router.post('/:token/comments', validate(tokenParamsSchema), (req, res, next) =>
   ApprovalController.addExternalComment(req, res, next)
 );
 
+// Add reviewer
+router.post('/:token/reviewers', validate(tokenParamsSchema), (req, res, next) =>
+  ApprovalController.addExternalReviewers(req, res, next)
+);
+
 router.delete('/:token/comments/:commentId', validate(tokenCommentParamsSchema), (req, res, next) =>
   ApprovalController.deleteExternalComment(req, res, next)
 );
