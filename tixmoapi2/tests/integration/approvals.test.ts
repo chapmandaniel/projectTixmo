@@ -182,6 +182,62 @@ describe('Creative approvals API', () => {
         expect(refreshedApproval.body.status).toBe('CHANGES_REQUESTED');
     });
 
+    it('allows invited reviewers to add another reviewer from the secure portal', async () => {
+        const approval = await prisma.approvalRequest.findFirstOrThrow({
+            where: { title: 'Main stage LED artwork' },
+            include: { reviewers: true },
+        });
+
+        const invitingReviewer = approval.reviewers.find((reviewer) => reviewer.email === 'manager@example.com');
+        expect(invitingReviewer).toBeDefined();
+
+        const response = await request(app)
+            .post(`/api/v1/review/${invitingReviewer?.token}/reviewers`)
+            .send({
+                reviewers: [{ email: 'agent-approval@example.com', association: 'AGENT' }],
+            });
+
+        expect(response.status).toBe(201);
+        expect(response.body.reviewer.id).toBe(invitingReviewer?.id);
+        expect(response.body.approval.reviewers.map((reviewer: { email: string }) => reviewer.email)).toContain(
+            'agent-approval@example.com'
+        );
+        expect(
+            response.body.approval.reviewers.find(
+                (reviewer: { email: string }) => reviewer.email === 'agent-approval@example.com'
+            )?.association
+        ).toBe('AGENT');
+    });
+
+    it('prevents invited reviewers from adding reviewers after approval is complete', async () => {
+        const approval = await prisma.approvalRequest.findFirstOrThrow({
+            where: { title: 'Main stage LED artwork' },
+            include: { reviewers: true },
+        });
+
+        const invitingReviewer = approval.reviewers.find((reviewer) => reviewer.email === 'manager@example.com');
+        expect(invitingReviewer).toBeDefined();
+
+        await prisma.approvalRequest.update({
+            where: { id: approval.id },
+            data: { status: 'APPROVED', completedAt: new Date() },
+        });
+
+        const response = await request(app)
+            .post(`/api/v1/review/${invitingReviewer?.token}/reviewers`)
+            .send({
+                reviewers: [{ email: 'late-reviewer@example.com', association: 'AGENT' }],
+            });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe('Cannot add reviewers after this approval is complete');
+
+        await prisma.approvalRequest.update({
+            where: { id: approval.id },
+            data: { status: 'CHANGES_REQUESTED', completedAt: null },
+        });
+    });
+
     it('keeps internal comments private while allowing authors to delete their own messages', async () => {
         const approval = await prisma.approvalRequest.findFirstOrThrow({
             where: { title: 'Main stage LED artwork' },
@@ -195,7 +251,9 @@ describe('Creative approvals API', () => {
         });
 
         const latestRevisionId = approval.revisions[0].id;
-        const reviewerToken = approval.reviewers[0].token;
+        const managerReviewer = approval.reviewers.find((reviewer) => reviewer.email === 'manager@example.com');
+        expect(managerReviewer).toBeDefined();
+        const reviewerToken = managerReviewer?.token;
 
         const globalCommentResponse = await request(app)
             .post(`/api/v1/approvals/${approval.id}/comments`)

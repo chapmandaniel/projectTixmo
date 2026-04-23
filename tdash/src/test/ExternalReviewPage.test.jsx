@@ -47,6 +47,15 @@ describe('ExternalReviewPage', () => {
                 assets: [],
                 decisions: [],
             },
+            reviewers: [
+                {
+                    id: 'reviewer-1',
+                    email: 'reviewer@example.com',
+                    name: 'External Reviewer',
+                    association: 'AGENT',
+                    reviewerType: 'EXTERNAL',
+                },
+            ],
             comments: [
                 {
                     id: 'comment-1',
@@ -86,9 +95,10 @@ describe('ExternalReviewPage', () => {
 
         expect(await screen.findByText('Review Portal')).toBeInTheDocument();
         expect(screen.getByText('Creative Briefing')).toBeInTheDocument();
+        expect(screen.getByText('Reviewers')).toBeInTheDocument();
+        expect(screen.getByText('External Reviewer')).toBeInTheDocument();
         expect(screen.getByText('Discussion')).toBeInTheDocument();
-        expect(screen.getByText('Management')).toBeInTheDocument();
-        expect(screen.queryByText('External Reviewer')).not.toBeInTheDocument();
+        expect(screen.getAllByText('Management').length).toBeGreaterThan(0);
         expect(screen.getByText('v1')).toBeInTheDocument();
         expect(screen.getByText('Link expires')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
@@ -290,5 +300,52 @@ describe('ExternalReviewPage', () => {
         );
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/review/token-123'));
+    });
+
+    it('lets an invited reviewer add another reviewer from the portal', async () => {
+        fetchMock
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => baseReview,
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    reviewer: baseReview.reviewer,
+                    approval: {
+                        ...baseReview.approval,
+                        reviewers: [
+                            ...baseReview.approval.reviewers,
+                            {
+                                id: 'reviewer-2',
+                                email: 'agent@example.com',
+                                association: 'AGENT',
+                                reviewerType: 'EXTERNAL',
+                            },
+                        ],
+                    },
+                }),
+            });
+
+        render(<ExternalReviewPage />);
+
+        expect(await screen.findByText('Creative Briefing')).toBeInTheDocument();
+
+        fireEvent.change(screen.getByPlaceholderText('agent@company.com'), {
+            target: { value: 'agent@example.com' },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Add reviewer' }));
+
+        await waitFor(() =>
+            expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/review/token-123/reviewers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reviewers: [{ email: 'agent@example.com', association: 'AGENT' }],
+                }),
+            })
+        );
+
+        expect(await screen.findByText('agent@example.com')).toBeInTheDocument();
     });
 });

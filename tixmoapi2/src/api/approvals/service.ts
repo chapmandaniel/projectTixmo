@@ -929,6 +929,99 @@ class ApprovalService {
         return await this.serializeApproval(updated, { email: user.email });
     }
 
+    async addReviewersByToken(token: string, reviewers: ReviewerInput[], dashboardOrigin?: string) {
+        const reviewer = await prisma.approvalReviewer.findUnique({
+            where: { token },
+            include: {
+                approvalRequest: {
+                    include: approvalDetailInclude,
+                },
+            },
+        });
+
+        if (!reviewer) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Invalid review link');
+        }
+
+        if (new Date() > reviewer.tokenExpiresAt) {
+            throw new ApiError(StatusCodes.UNAUTHORIZED, 'Review link has expired');
+        }
+
+        const approval = reviewer.approvalRequest;
+
+        if (approval.status === 'APPROVED' || approval.status === 'DECLINED') {
+            throw new ApiError(StatusCodes.BAD_REQUEST, 'Cannot add reviewers after this approval is complete');
+        }
+
+        const existingEmails = new Set(approval.reviewers.map((item) => item.email.toLowerCase()));
+        const newReviewerInputs = reviewers.filter((item) => {
+            const normalizedEmail = item.email.trim().toLowerCase();
+            return normalizedEmail && !existingEmails.has(normalizedEmail);
+        });
+
+        if (!newReviewerInputs.length) {
+            throw new ApiError(StatusCodes.BAD_REQUEST, 'All provided reviewers are already assigned');
+        }
+
+        const resolvedReviewers = await this.resolveReviewers(
+            approval.organizationId,
+            newReviewerInputs,
+            approval.deadline
+        );
+
+        await prisma.approvalRequest.update({
+            where: { id: approval.id },
+            data: {
+                reviewers: {
+                    create: resolvedReviewers,
+                },
+            },
+        });
+
+        await this.updateReviewerInteraction(reviewer.id, approval.latestRevisionNumber, {
+            lastInteractionAt: new Date(),
+        });
+        await this.recalculateApprovalStatus(approval.id);
+
+        const updated = await this.getApprovalDetailRecord(approval.id, approval.organizationId);
+        if (!updated) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated approval');
+        }
+
+        this.notifyReviewerSubsetOfSubmission(
+            updated,
+            resolvedReviewers.map((item) => ({
+                email: item.email,
+                name: item.name,
+                token: item.token,
+            })),
+            dashboardOrigin
+        ).catch((error) => {
+            logger.error(`Failed to send reviewer-added invite emails: ${(error as Error).message}`);
+        });
+
+        const refreshedReviewer = updated.reviewers.find((item) => item.id === reviewer.id);
+        if (!refreshedReviewer) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated reviewer');
+        }
+
+        return {
+            reviewer: {
+                id: refreshedReviewer.id,
+                email: refreshedReviewer.email,
+                name: refreshedReviewer.name,
+                association: refreshedReviewer.association,
+                reviewerType: refreshedReviewer.reviewerType,
+                tokenExpiresAt: refreshedReviewer.tokenExpiresAt,
+            },
+            approval: await this.serializeApproval(updated, {
+                reviewerId: refreshedReviewer.id,
+                email: refreshedReviewer.email,
+                canViewInternalComments: false,
+            }),
+        };
+    }
+
     async resendReviewerInvite(approvalId: string, reviewerId: string, userId: string, dashboardOrigin?: string) {
         const user = await this.getUserContext(userId);
         const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);

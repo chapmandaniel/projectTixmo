@@ -7,6 +7,8 @@ import {
     Search,
     Send,
     Trash2,
+    UserPlus,
+    Users,
     XCircle,
 } from 'lucide-react';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
@@ -113,6 +115,19 @@ const reviewApi = {
         if (!response.ok) {
             const error = await response.json().catch(() => ({}));
             throw new Error(error.message || 'Failed to delete comment');
+        }
+        return response.json();
+    },
+
+    async addReviewer(token, body) {
+        const response = await fetch(`${this.baseUrl}/review/${token}/reviewers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Failed to add reviewer');
         }
         return response.json();
     },
@@ -251,6 +266,8 @@ const ExternalReviewPage = () => {
     const [assetIndex, setAssetIndex] = useState(0);
     const [isImageExpanded, setIsImageExpanded] = useState(false);
     const [comment, setComment] = useState('');
+    const [reviewerEmail, setReviewerEmail] = useState('');
+    const [reviewerAssociation, setReviewerAssociation] = useState('AGENT');
     const [pendingDecision, setPendingDecision] = useState(null);
     const [decisionReason, setDecisionReason] = useState('');
     const [loading, setLoading] = useState(true);
@@ -258,6 +275,7 @@ const ExternalReviewPage = () => {
     const [saving, setSaving] = useState(false);
     const [pendingSection, setPendingSection] = useState(null);
     const [optimisticComments, setOptimisticComments] = useState([]);
+    const [optimisticReviewers, setOptimisticReviewers] = useState([]);
     const [error, setError] = useState('');
 
     const loadReview = async () => {
@@ -304,6 +322,10 @@ const ExternalReviewPage = () => {
     const comments = useMemo(
         () => [...(approval?.comments || []), ...optimisticComments],
         [approval?.comments, optimisticComments]
+    );
+    const reviewers = useMemo(
+        () => [...(approval?.reviewers || []), ...optimisticReviewers],
+        [approval?.reviewers, optimisticReviewers]
     );
     const latestRevisionDecisions =
         approval?.latestRevision?.decisions ||
@@ -381,6 +403,7 @@ const ExternalReviewPage = () => {
         : 'You have not responded yet.';
     const isWorkspacePending = refreshing;
     const isAsidePending = refreshing || pendingSection === 'aside';
+    const isReviewersPending = refreshing || pendingSection === 'reviewers';
     const canDeleteComment = (item) => (
         !item.pending &&
         item.type === 'comment' &&
@@ -489,6 +512,49 @@ const ExternalReviewPage = () => {
         } finally {
             setSaving(false);
             clearSectionState('aside');
+        }
+    };
+
+    const submitReviewer = async (event) => {
+        event.preventDefault();
+        const email = reviewerEmail.trim();
+        if (!email) {
+            return;
+        }
+
+        const normalizedEmail = email.toLowerCase();
+        if (reviewers.some((item) => item.email?.toLowerCase() === normalizedEmail)) {
+            setError('That reviewer is already assigned.');
+            return;
+        }
+
+        const optimisticReviewer = {
+            id: `optimistic-reviewer-${Date.now()}`,
+            email,
+            association: reviewerAssociation,
+            reviewerType: 'EXTERNAL',
+            pending: true,
+        };
+
+        try {
+            setPendingSection('reviewers');
+            setSaving(true);
+            setError('');
+            setOptimisticReviewers((current) => [...current, optimisticReviewer]);
+            setReviewerEmail('');
+            const response = await reviewApi.addReviewer(token, {
+                reviewers: [{ email, association: reviewerAssociation }],
+            });
+            setOptimisticReviewers([]);
+            setApproval(response.approval);
+            setReviewer(response.reviewer);
+            setSelectedRevisionId(response.approval.latestRevision?.id || response.approval.revisions?.[0]?.id || null);
+        } catch (requestError) {
+            setOptimisticReviewers((current) => current.filter((item) => item.id !== optimisticReviewer.id));
+            setError(requestError.message);
+        } finally {
+            setSaving(false);
+            clearSectionState('reviewers');
         }
     };
 
@@ -708,6 +774,71 @@ const ExternalReviewPage = () => {
                         </div>
 
                         <div className="page-section-enter" style={{ '--section-delay': '180ms' }}>
+                        <section className={`${panelClass} ${isReviewersPending ? 'pending-surface-soft page-section-reload' : ''} mb-4 p-4`}>
+                            <div className="flex items-center justify-between gap-4 px-1 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <Users className="h-4 w-4 text-sky-300" />
+                                    <h2 className="text-lg font-light text-gray-100">Reviewers</h2>
+                                </div>
+                                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
+                                    {reviewers.length}
+                                </span>
+                            </div>
+
+                            <div className="space-y-2">
+                                {reviewers.map((item) => (
+                                    <div
+                                        key={item.id || item.email}
+                                        className={`flex flex-wrap items-center justify-between gap-2 ${surfaceClass} px-3 py-2 ${item.pending ? 'border-sky-400/20 bg-sky-500/8 opacity-80' : ''}`}
+                                    >
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-light text-gray-100">
+                                                {item.name || item.email}
+                                                {item.id === reviewer?.id && (
+                                                    <span className="ml-2 text-[11px] uppercase tracking-[0.16em] text-sky-300">You</span>
+                                                )}
+                                            </p>
+                                            {item.name && (
+                                                <p className="truncate text-xs font-light text-slate-400">{item.email}</p>
+                                            )}
+                                        </div>
+                                        {item.reviewerType !== 'INTERNAL' && item.association && (
+                                            <span className={associationBadgeClass}>{associationLabel(item.association)}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <form onSubmit={submitReviewer} className="mt-4 grid gap-3 border-t border-white/10 pt-4 sm:grid-cols-[minmax(0,1fr)_160px_40px]">
+                                <input
+                                    type="email"
+                                    value={reviewerEmail}
+                                    onChange={(event) => setReviewerEmail(event.target.value)}
+                                    placeholder="agent@company.com"
+                                    className={inputClass}
+                                />
+                                <select
+                                    value={reviewerAssociation}
+                                    onChange={(event) => setReviewerAssociation(event.target.value)}
+                                    className={inputClass}
+                                >
+                                    {reviewerAssociationOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="submit"
+                                    aria-label="Add reviewer"
+                                    disabled={saving || !reviewerEmail.trim()}
+                                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <UserPlus className="h-4 w-4" />
+                                </button>
+                            </form>
+                        </section>
+
                         <section className={`${panelClass} ${isAsidePending ? 'pending-surface-soft page-section-reload' : ''} p-4`}>
                             <div className="flex items-center justify-between gap-4 px-1 pb-3">
                                 <h2 className="text-lg font-light text-gray-100">Discussion</h2>

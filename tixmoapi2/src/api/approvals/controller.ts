@@ -311,6 +311,21 @@ export const ApprovalController = {
         }
     },
 
+    async addExternalReviewers(req: AuthRequest, res: Response, next: NextFunction) {
+        try {
+            const body = parseSchema(addApprovalReviewersBodySchema, req.body);
+            const review = await approvalService.addReviewersByToken(
+                req.params.token,
+                body.reviewers,
+                getDashboardOrigin(req)
+            );
+
+            return res.status(StatusCodes.CREATED).json(review);
+        } catch (error) {
+            return next(error);
+        }
+    },
+
     async submitExternalDecision(req: AuthRequest, res: Response, next: NextFunction) {
         try {
             const body = parseSchema(approvalDecisionBodySchema, req.body);
