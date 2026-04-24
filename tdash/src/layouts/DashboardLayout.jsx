@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     Home, Calendar, BarChart3, Bell,
     Users, CheckSquare, Sun, Moon,
-    MessageCircle, Wand2, Settings, LogOut, CheckCircle, User, BrainCircuit
+    MessageCircle, Wand2, Settings, LogOut, CheckCircle, User, BrainCircuit, Image
 } from 'lucide-react';
 
 import api from '../lib/api';
@@ -17,6 +17,7 @@ const navItems = [
     { id: 'team', icon: Users, label: 'TEAM' },
     { id: 'social', icon: MessageCircle, label: 'SOCIAL' },
     { id: 'creative', icon: Wand2, label: 'ProMo' },
+    { id: 'assets', icon: Image, label: 'ASSETS' },
     { id: 'approvals', icon: CheckCircle, label: 'Review Portal' },
     { id: 'quantmo', icon: BrainCircuit, label: 'QuantMo' },
     { id: 'analytics', icon: BarChart3, label: 'ANALYTICS' },

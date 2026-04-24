@@ -11,6 +11,7 @@ import {
 import { randomBytes, randomUUID } from 'crypto';
 import { StatusCodes } from 'http-status-codes';
 import prisma from '../../config/prisma';
+import { config } from '../../config/environment';
 import { logger } from '../../config/logger';
 import { uploadService } from '../../services/upload.service';
 import { approvalEmailService, ReviewerInfo } from '../../services/approval-email.service';
@@ -21,6 +22,11 @@ const APPROACHING_DEADLINE_WINDOW_HOURS = 72;
 const REMINDER_AFTER_24_HOURS_MS = 24 * 60 * 60 * 1000;
 const REMINDER_BEFORE_48_HOURS_MS = 48 * 60 * 60 * 1000;
 const REMINDER_BEFORE_24_HOURS_MS = 24 * 60 * 60 * 1000;
+
+const buildReviewUrl = (token: string) => {
+    const baseUrl = config.clientUrl.endsWith('/') ? config.clientUrl : `${config.clientUrl}/`;
+    return new URL(`/review/${token}`, baseUrl).toString();
+};
 
 const approvalDetailInclude = {
     event: { select: { id: true, name: true } },
@@ -322,6 +328,8 @@ class ApprovalService {
                     name: reviewer.name,
                     association: reviewer.association,
                     reviewerType: reviewer.reviewerType,
+                    tokenExpiresAt: reviewer.tokenExpiresAt,
+                    reviewUrl: buildReviewUrl(reviewer.token),
                     firstViewedAt: reviewer.firstViewedAt,
                     lastViewedAt: reviewer.lastViewedAt,
                     lastCommentAt: reviewer.lastCommentAt,
