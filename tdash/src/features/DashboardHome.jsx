@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Calendar, BarChart3,
     Users, CheckSquare,
-    MessageCircle, Wand2, Settings, CheckCircle, BrainCircuit
+    MessageCircle, Wand2, Settings, CheckCircle, BrainCircuit, Image
 } from 'lucide-react';
 import api from '../lib/api';
 import {
@@ -19,6 +19,7 @@ const gridItems = [
     { id: 'team', icon: Users, label: 'Team Members', description: 'Manage organization access.', accent: 'from-gray-600 to-gray-700', iconClassName: 'text-gray-500' },
     { id: 'social', icon: MessageCircle, label: 'Social & CRM', description: 'Connect with your audience.', accent: 'from-fuchsia-500 to-purple-600', iconClassName: 'text-fuchsia-500' },
     { id: 'creative', icon: Wand2, label: 'ProMo', description: 'Create brand-ready posts and artwork.', accent: 'from-fuchsia-500 to-rose-400', iconClassName: 'text-fuchsia-400' },
+    { id: 'assets', icon: Image, label: 'Asset Library', description: 'Browse uploaded creative, preview versions, and copy share links for internal or external handoff.', accent: 'from-sky-500 to-cyan-400', iconClassName: 'text-sky-400' },
     { id: 'approvals', icon: CheckCircle, label: 'Review Portal', description: 'Review pending requests.', accent: 'from-lime-400 to-emerald-500', iconClassName: 'text-lime-400' },
     { id: 'quantmo', icon: BrainCircuit, label: 'QuantMo', description: 'AI-driven quant intelligence for promoters.', accent: 'from-fuchsia-500 to-cyan-400', iconClassName: 'text-fuchsia-400' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics', description: 'Deep dive into your metrics.', accent: 'from-blue-400 to-indigo-600', iconClassName: 'text-blue-400' },

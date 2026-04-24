@@ -99,6 +99,34 @@ export const DashboardButton = ({ isDark, variant = 'primary', className, childr
     );
 };
 
+export const DashboardTextInput = ({ isDark, className, ...props }) => (
+    <input
+        className={cn(
+            'h-11 w-full rounded-md border px-3 text-sm font-light outline-none transition focus:ring-2 focus:ring-pink-500/20',
+            isDark
+                ? 'border-white/10 bg-white/5 text-zinc-100 placeholder:text-zinc-500 focus:border-pink-400'
+                : 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-slate-400',
+            className
+        )}
+        {...props}
+    />
+);
+
+export const DashboardSelect = ({ isDark, className, children, ...props }) => (
+    <select
+        className={cn(
+            'h-11 w-full rounded-md border px-3 text-sm font-light outline-none transition focus:ring-2 focus:ring-pink-500/20',
+            isDark
+                ? 'border-white/10 bg-white/5 text-zinc-100 focus:border-pink-400'
+                : 'border-slate-200 bg-white text-slate-900 focus:border-slate-400',
+            className
+        )}
+        {...props}
+    >
+        {children}
+    </select>
+);
+
 export const DashboardTitleBar = ({
     isDark,
     title,

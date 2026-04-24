@@ -64,6 +64,7 @@ describe('Creative approvals API', () => {
         expect(response.body.latestRevisionNumber).toBe(1);
         expect(response.body.reviewers).toHaveLength(1);
         expect(response.body.reviewers[0].association).toBe('MANAGEMENT');
+        expect(response.body.reviewers[0].reviewUrl).toContain('/review/');
         expect(response.body.latestRevision.assets).toHaveLength(1);
     });
 
@@ -75,6 +76,7 @@ describe('Creative approvals API', () => {
         expect(response.status).toBe(200);
         expect(Array.isArray(response.body.approvals)).toBe(true);
         expect(response.body.approvals[0]).toHaveProperty('latestRevision');
+        expect(response.body.approvals[0].reviewers[0]).toHaveProperty('reviewUrl');
     });
 
     it('adds a reviewer to an existing approval request', async () => {

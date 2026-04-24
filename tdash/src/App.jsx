@@ -20,6 +20,7 @@ import ComingSoonView from './features/ComingSoonView';
 import EventManagementDashboard from './features/EventManagementDashboard';
 import SocialDashboard from './features/SocialDashboard';
 import CreativeComposer from './features/CreativeComposer';
+import AssetLibraryView from './features/AssetLibraryView';
 import SettingsView from './features/SettingsView';
 import LoginView from './features/LoginView';
 import VenuesView from './features/VenuesView';
@@ -69,6 +70,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                     <Route path="/orders" element={<OrdersView isDark={isDark} />} />
                     <Route path="/settings" element={<SettingsView isDark={isDark} />} />
                     <Route path="/creative" element={<CreativeComposer isDark={isDark} />} />
+                    <Route path="/assets" element={<AssetLibraryView isDark={isDark} />} />
                     <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />
                     <Route path="/approvals" element={<ApprovalsDashboard isDark={isDark} user={user} />} />
                     <Route path="/dev" element={<DevDashboard isDark={isDark} user={user} />} />
