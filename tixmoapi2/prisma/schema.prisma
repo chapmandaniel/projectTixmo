@@ -85,6 +85,7 @@ model User {
   approvalReviews   ApprovalReviewer[] @relation("ApprovalReviewerUser")
   approvalComments  ApprovalComment[] @relation("ApprovalCommentUser")
   approvalRevisionsUploaded ApprovalRevision[] @relation("ApprovalRevisionUploader")
+  approvalAssetsApproved ApprovalAsset[] @relation("ApprovalAssetLibraryApprover")
 
   @@map("users")
 }
@@ -546,6 +547,7 @@ model ApprovalRequest {
   submittedAt        DateTime               @default(now()) @map("submitted_at")
   completedAt        DateTime?              @map("completed_at")
   lastCommentAt      DateTime?              @map("last_comment_at")
+  archivedAt         DateTime?              @map("archived_at")
 
   createdAt          DateTime               @default(now()) @map("created_at")
   updatedAt          DateTime               @updatedAt @map("updated_at")
@@ -588,6 +590,9 @@ model ApprovalAsset {
   size              Int
   s3Key             String           @map("s3_key")
   s3Url             String           @map("s3_url")
+  approvedForLibraryAt DateTime?     @map("approved_for_library_at")
+  approvedForLibraryById String?     @map("approved_for_library_by_id")
+  approvedForLibraryBy User?         @relation("ApprovalAssetLibraryApprover", fields: [approvedForLibraryById], references: [id], onDelete: SetNull)
   createdAt         DateTime         @default(now()) @map("created_at")
 
   @@map("approval_assets")

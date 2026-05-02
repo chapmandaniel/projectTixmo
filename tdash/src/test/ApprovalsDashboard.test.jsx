@@ -4,13 +4,25 @@ import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import ApprovalsDashboard from '../features/ApprovalsDashboard';
 
 const apiGet = vi.fn();
+const apiPost = vi.fn();
+const apiDelete = vi.fn();
 const apiUpload = vi.fn();
+const toastSuccess = vi.fn();
+const toastError = vi.fn();
 
 vi.mock('../lib/api', () => ({
     api: {
         get: (...args) => apiGet(...args),
+        post: (...args) => apiPost(...args),
+        delete: (...args) => apiDelete(...args),
         upload: (...args) => apiUpload(...args),
-        post: vi.fn(),
+    },
+}));
+
+vi.mock('react-hot-toast', () => ({
+    toast: {
+        success: (...args) => toastSuccess(...args),
+        error: (...args) => toastError(...args),
     },
 }));
 
@@ -66,6 +78,7 @@ describe('ApprovalsDashboard', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         window.sessionStorage.clear();
+        window.confirm = vi.fn(() => true);
     });
 
     it('loads the creative approvals dashboard and filters by event and status', async () => {
@@ -198,6 +211,123 @@ describe('ApprovalsDashboard', () => {
 
         await waitFor(() => expect(apiUpload).toHaveBeenCalled());
         expect(screen.getByText('Detail view for approval-99')).toBeInTheDocument();
+    });
+
+    it('lets admins add approved images to the asset library and archive gallery approvals', async () => {
+        const approvedApproval = {
+            id: 'approval-3',
+            title: 'Approved poster',
+            status: 'APPROVED',
+            latestRevisionNumber: 1,
+            deadline: '2026-06-12T10:00:00.000Z',
+            event: { id: 'event-1', name: 'Summer Jam' },
+            latestRevision: {
+                id: 'revision-3',
+                assets: [
+                    {
+                        id: 'asset-3',
+                        originalName: 'approved-poster.png',
+                        mimeType: 'image/png',
+                        s3Url: 'https://cdn.example.com/approved-poster.png',
+                    },
+                ],
+            },
+            reviewers: [],
+        };
+
+        apiGet.mockImplementation((url) => {
+            if (url.startsWith('/events')) {
+                return Promise.resolve({
+                    events: [{ id: 'event-1', name: 'Summer Jam' }],
+                });
+            }
+
+            return Promise.resolve({ approvals: [approvedApproval] });
+        });
+
+        apiPost.mockImplementation((url) => {
+            if (url === '/approvals/approval-3/approved-assets') {
+                return Promise.resolve({
+                    ...approvedApproval,
+                    latestRevision: {
+                        ...approvedApproval.latestRevision,
+                        assets: [
+                            {
+                                ...approvedApproval.latestRevision.assets[0],
+                                approvedForLibraryAt: '2026-05-02T12:00:00.000Z',
+                            },
+                        ],
+                    },
+                });
+            }
+
+            return Promise.resolve({});
+        });
+
+        await act(async () => {
+            render(
+                <MemoryRouter>
+                    <ApprovalsDashboard user={{ email: 'admin@example.com', role: 'ADMIN' }} />
+                </MemoryRouter>
+            );
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /Add to approved assets/i }));
+
+        await waitFor(() => {
+            expect(apiPost).toHaveBeenCalledWith('/approvals/approval-3/approved-assets');
+            expect(screen.getByText('In approved assets')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /^Archive$/i }));
+
+        await waitFor(() => {
+            expect(apiPost).toHaveBeenCalledWith('/approvals/approval-3/archive');
+            expect(screen.queryByText('Approved poster')).not.toBeInTheDocument();
+        });
+
+        expect(toastSuccess).toHaveBeenCalledWith('Approval archived');
+    });
+
+    it('lets admins delete gallery approvals after confirmation', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url.startsWith('/events')) {
+                return Promise.resolve({
+                    events: [{ id: 'event-1', name: 'Summer Jam' }],
+                });
+            }
+
+            return Promise.resolve({
+                approvals: [
+                    {
+                        id: 'approval-delete',
+                        title: 'Delete me',
+                        status: 'PENDING_REVIEW',
+                        latestRevisionNumber: 1,
+                        deadline: '2026-06-12T10:00:00.000Z',
+                        event: { id: 'event-1', name: 'Summer Jam' },
+                        latestRevision: { assets: [] },
+                        reviewers: [],
+                    },
+                ],
+            });
+        });
+        apiDelete.mockResolvedValue({ id: 'approval-delete', deleted: true });
+
+        await act(async () => {
+            render(
+                <MemoryRouter>
+                    <ApprovalsDashboard user={{ email: 'owner@example.com', role: 'OWNER' }} />
+                </MemoryRouter>
+            );
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /^Delete$/i }));
+
+        await waitFor(() => {
+            expect(apiDelete).toHaveBeenCalledWith('/approvals/approval-delete');
+            expect(screen.queryByText('Delete me')).not.toBeInTheDocument();
+        });
     });
 
     it('opens a deep-linked approval from the dashboard query string', async () => {

@@ -116,6 +116,7 @@ export const listApprovalsQuerySchema = z.object({
             .optional(),
         assignedToMe: booleanish.optional(),
         approachingDeadline: booleanish.optional(),
+        includeArchived: booleanish.optional(),
         sortBy: z.enum(['deadline', 'submittedAt']).optional(),
         page: z.coerce.number().int().positive().optional(),
         limit: z.coerce.number().int().positive().max(100).optional(),

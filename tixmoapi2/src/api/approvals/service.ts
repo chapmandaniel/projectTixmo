@@ -118,6 +118,7 @@ export interface ApprovalListFilters {
     status?: ApprovalStatus;
     assignedToMe?: boolean;
     approachingDeadline?: boolean;
+    includeArchived?: boolean;
     sortBy?: 'deadline' | 'submittedAt';
     page?: number;
     limit?: number;
@@ -140,6 +141,7 @@ interface UserContext {
     id: string;
     email: string;
     organizationId: string;
+    role: string;
     firstName: string;
     lastName: string;
 }
@@ -178,6 +180,7 @@ class ApprovalService {
                 id: true,
                 email: true,
                 organizationId: true,
+                role: true,
                 firstName: true,
                 lastName: true,
             },
@@ -191,9 +194,16 @@ class ApprovalService {
             id: user.id,
             email: user.email,
             organizationId: user.organizationId,
+            role: user.role,
             firstName: user.firstName,
             lastName: user.lastName,
         };
+    }
+
+    private assertCanCurateApprovals(user: UserContext): void {
+        if (!['ADMIN', 'OWNER'].includes(user.role)) {
+            throw new ApiError(StatusCodes.FORBIDDEN, 'Only admins and owners can curate approval records');
+        }
     }
 
     async getUserOrganizationId(userId: string): Promise<string | null> {
@@ -273,6 +283,8 @@ class ApprovalService {
             mimeType: asset.mimeType,
             size: asset.size,
             s3Url: await uploadService.resolveFileUrl(asset.s3Key, asset.s3Url),
+            approvedForLibraryAt: asset.approvedForLibraryAt,
+            approvedForLibraryById: asset.approvedForLibraryById,
             createdAt: asset.createdAt,
         };
     }
@@ -779,6 +791,7 @@ class ApprovalService {
 
         const where: Prisma.ApprovalRequestWhereInput = {
             organizationId: user.organizationId,
+            ...(filters.includeArchived ? {} : { archivedAt: null }),
             ...(filters.eventId ? { eventId: filters.eventId } : {}),
             ...(filters.status ? { status: filters.status } : {}),
             ...(filters.assignedToMe
@@ -876,6 +889,106 @@ class ApprovalService {
         await prisma.approvalRequest.update({
             where: { id: approvalId },
             data,
+        });
+
+        const updated = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+        if (!updated) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load updated approval');
+        }
+
+        return await this.serializeApproval(updated, { email: user.email });
+    }
+
+    async archive(approvalId: string, userId: string) {
+        const user = await this.getUserContext(userId);
+        this.assertCanCurateApprovals(user);
+
+        const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+
+        if (!approval) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Approval request not found');
+        }
+
+        await prisma.approvalRequest.update({
+            where: { id: approvalId },
+            data: { archivedAt: new Date() },
+        });
+
+        const updated = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+        if (!updated) {
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to load archived approval');
+        }
+
+        return await this.serializeApproval(updated, { email: user.email });
+    }
+
+    async delete(approvalId: string, userId: string) {
+        const user = await this.getUserContext(userId);
+        this.assertCanCurateApprovals(user);
+
+        const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+
+        if (!approval) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Approval request not found');
+        }
+
+        const assetKeys = approval.revisions.flatMap((revision) =>
+            revision.assets.map((asset) => asset.s3Key)
+        );
+
+        await prisma.approvalRequest.delete({
+            where: { id: approvalId },
+        });
+
+        await Promise.all(assetKeys.map(async (s3Key) => {
+            try {
+                await uploadService.deleteFile(s3Key);
+            } catch (error) {
+                logger.error(`Failed to delete approval asset ${s3Key}: ${(error as Error).message}`);
+            }
+        }));
+
+        return { id: approvalId, deleted: true };
+    }
+
+    async addApprovedAssets(approvalId: string, userId: string) {
+        const user = await this.getUserContext(userId);
+        this.assertCanCurateApprovals(user);
+
+        const approval = await this.getApprovalDetailRecord(approvalId, user.organizationId);
+
+        if (!approval) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Approval request not found');
+        }
+
+        if (approval.status !== 'APPROVED') {
+            throw new ApiError(StatusCodes.BAD_REQUEST, 'Only fully approved requests can be added to approved assets');
+        }
+
+        const latestRevision = this.getLatestRevision(approval);
+        const imageAssetIds = latestRevision.assets
+            .filter((asset) => asset.mimeType.startsWith('image/'))
+            .filter((asset) => !asset.approvedForLibraryAt)
+            .map((asset) => asset.id);
+
+        if (imageAssetIds.length === 0) {
+            throw new ApiError(StatusCodes.BAD_REQUEST, 'No new approved image assets are available to add');
+        }
+
+        await prisma.approvalAsset.updateMany({
+            where: {
+                id: { in: imageAssetIds },
+                approvalRevision: {
+                    approvalRequestId: approvalId,
+                    approvalRequest: {
+                        organizationId: user.organizationId,
+                    },
+                },
+            },
+            data: {
+                approvedForLibraryAt: new Date(),
+                approvedForLibraryById: user.id,
+            },
         });
 
         const updated = await this.getApprovalDetailRecord(approvalId, user.organizationId);

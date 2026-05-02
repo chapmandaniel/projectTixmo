@@ -414,4 +414,84 @@ describe('Creative approvals API', () => {
     expect(refreshed.status).toBe(200);
     expect(refreshed.body.status).toBe('APPROVED');
   });
+
+  it('requires owner or admin curation before approved image assets enter the library', async () => {
+    const ownerAuth = await registerUser(app, {
+      email: `approval-owner-${Date.now()}@example.com`,
+      role: 'OWNER',
+    });
+
+    await prisma.user.update({
+      where: { id: ownerAuth.user.id },
+      data: { organizationId },
+    });
+
+    const createResponse = await request(app)
+      .post('/api/v1/approvals')
+      .set('Authorization', `Bearer ${ownerAuth.accessToken}`)
+      .field('eventId', eventId)
+      .field('title', 'Library-ready key art')
+      .field('deadline', new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString())
+      .field('reviewers', JSON.stringify([{ email: 'library-reviewer@example.com', association: 'MANAGEMENT' }]))
+      .attach('files', tinyPng, {
+        filename: 'library-key-art.png',
+        contentType: 'image/png',
+      });
+
+    expect(createResponse.status).toBe(201);
+    expect(createResponse.body.latestRevision.assets[0].approvedForLibraryAt).toBeNull();
+
+    await prisma.approvalRequest.update({
+      where: { id: createResponse.body.id },
+      data: { status: 'APPROVED', completedAt: new Date() },
+    });
+
+    const forbiddenResponse = await request(app)
+      .post(`/api/v1/approvals/${createResponse.body.id}/approved-assets`)
+      .set('Authorization', `Bearer ${authToken}`);
+
+    expect(forbiddenResponse.status).toBe(403);
+
+    const promoteResponse = await request(app)
+      .post(`/api/v1/approvals/${createResponse.body.id}/approved-assets`)
+      .set('Authorization', `Bearer ${ownerAuth.accessToken}`);
+
+    expect(promoteResponse.status).toBe(200);
+    expect(promoteResponse.body.latestRevision.assets[0].approvedForLibraryAt).toBeTruthy();
+    expect(promoteResponse.body.latestRevision.assets[0].approvedForLibraryById).toBe(ownerAuth.user.id);
+
+    const archiveResponse = await request(app)
+      .post(`/api/v1/approvals/${createResponse.body.id}/archive`)
+      .set('Authorization', `Bearer ${ownerAuth.accessToken}`);
+
+    expect(archiveResponse.status).toBe(200);
+
+    const listResponse = await request(app)
+      .get('/api/v1/approvals?limit=100')
+      .set('Authorization', `Bearer ${ownerAuth.accessToken}`);
+
+    expect(listResponse.status).toBe(200);
+    expect(listResponse.body.approvals.map((approval: { id: string }) => approval.id)).not.toContain(
+      createResponse.body.id
+    );
+
+    const libraryListResponse = await request(app)
+      .get('/api/v1/approvals?limit=100&includeArchived=true')
+      .set('Authorization', `Bearer ${ownerAuth.accessToken}`);
+
+    expect(libraryListResponse.status).toBe(200);
+    expect(libraryListResponse.body.approvals.map((approval: { id: string }) => approval.id)).toContain(
+      createResponse.body.id
+    );
+
+    const deleteResponse = await request(app)
+      .delete(`/api/v1/approvals/${createResponse.body.id}`)
+      .set('Authorization', `Bearer ${ownerAuth.accessToken}`);
+
+    expect(deleteResponse.status).toBe(200);
+    expect(deleteResponse.body).toEqual({ id: createResponse.body.id, deleted: true });
+    await expect(
+      prisma.approvalRequest.findUnique({ where: { id: createResponse.body.id } })
+    ).resolves.toBeNull();
+  });
 });

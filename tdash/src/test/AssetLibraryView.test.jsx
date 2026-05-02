@@ -52,6 +52,7 @@ const approvalsResponse = [
                         mimeType: 'image/png',
                         size: 1048576,
                         s3Url: 'https://cdn.example.com/assets/summer-poster.png',
+                        approvedForLibraryAt: '2026-04-22T13:00:00.000Z',
                         createdAt: '2026-04-22T12:30:00.000Z',
                     },
                 ],
@@ -79,6 +80,7 @@ const approvalsResponse = [
                         mimeType: 'video/mp4',
                         size: 7340032,
                         s3Url: 'https://cdn.example.com/assets/vip-loop.mp4',
+                        approvedForLibraryAt: '2026-04-20T10:00:00.000Z',
                         createdAt: '2026-04-20T09:15:00.000Z',
                     },
                 ],
@@ -109,6 +111,7 @@ describe('AssetLibraryView', () => {
             );
         });
 
+        expect(apiGet).toHaveBeenCalledWith('/approvals?limit=100&includeArchived=true');
         expect(screen.getByRole('heading', { name: 'Asset Library' })).toBeInTheDocument();
         expect(screen.getAllByText('Summer Poster 4x5.png').length).toBeGreaterThan(0);
         expect(screen.getAllByText('VIP Loop.mp4').length).toBeGreaterThan(0);
@@ -141,5 +144,49 @@ describe('AssetLibraryView', () => {
             );
         });
         expect(toastSuccess).toHaveBeenCalledWith('Review link copied');
+    });
+
+    it('does not show approval assets until they are promoted to approved assets', async () => {
+        apiGet.mockResolvedValue({
+            approvals: [
+                {
+                    id: 'approval-3',
+                    title: 'Approved But Not Added',
+                    status: 'APPROVED',
+                    event: { id: 'event-3', name: 'Late Night' },
+                    latestRevision: { id: 'revision-5' },
+                    reviewers: [],
+                    revisions: [
+                        {
+                            id: 'revision-5',
+                            revisionNumber: 1,
+                            createdAt: '2026-04-24T09:00:00.000Z',
+                            assets: [
+                                {
+                                    id: 'asset-3',
+                                    originalName: 'Hidden approved poster.png',
+                                    filename: 'hidden-approved-poster.png',
+                                    mimeType: 'image/png',
+                                    size: 512000,
+                                    s3Url: 'https://cdn.example.com/assets/hidden-approved-poster.png',
+                                    createdAt: '2026-04-24T09:10:00.000Z',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+
+        await act(async () => {
+            render(
+                <MemoryRouter>
+                    <AssetLibraryView isDark />
+                </MemoryRouter>
+            );
+        });
+
+        expect(screen.queryByText('Hidden approved poster.png')).not.toBeInTheDocument();
+        expect(screen.getByText('No assets match these filters')).toBeInTheDocument();
     });
 });

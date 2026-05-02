@@ -229,7 +229,7 @@ const flattenAssets = (approvals) => approvals
         const latestRevisionId = approval?.latestRevision?.id;
 
         return (approval?.revisions || []).flatMap((revision) =>
-            (revision?.assets || []).map((asset) => {
+            (revision?.assets || []).filter((asset) => asset?.approvedForLibraryAt).map((asset) => {
                 const uploader = revision?.uploadedBy || approval?.createdBy || null;
                 const item = {
                     id: asset.id,
@@ -249,6 +249,8 @@ const flattenAssets = (approvals) => approvals
                     kind: getAssetKind(asset.mimeType),
                     size: asset.size || 0,
                     s3Url: asset.s3Url,
+                    approvedForLibraryAt: asset.approvedForLibraryAt,
+                    approvedForLibraryById: asset.approvedForLibraryById,
                     reviewers: approval.reviewers || [],
                     uploaderName: formatUserName(uploader),
                     uploaderEmail: uploader?.email || '',
@@ -748,7 +750,7 @@ const AssetLibraryView = ({ isDark }) => {
                 setLoading(true);
             }
 
-            const response = await api.get('/approvals?limit=100');
+            const response = await api.get('/approvals?limit=100&includeArchived=true');
             setApprovals(extractApprovals(response));
         } catch (requestError) {
             setError(requestError?.response?.data?.message || requestError.message || 'Failed to load uploaded assets.');
@@ -997,12 +999,12 @@ const AssetLibraryView = ({ isDark }) => {
             <DashboardPageHeader
                 isDark={isDark}
                 title="Asset Library"
-                description="Browse, upload, organize, and download creative assets."
+                description="Browse, organize, and download assets promoted from fully approved creative reviews."
                 className="min-h-[132px]"
                 descriptionClassName="text-base"
                 badges={(
                     <>
-                        <DashboardChip isDark={isDark}>{assets.length} live assets</DashboardChip>
+                        <DashboardChip isDark={isDark}>{assets.length} approved assets</DashboardChip>
                         <DashboardChip isDark={isDark}>{selectedAssetIds.length} selected</DashboardChip>
                         {refreshing ? <DashboardChip isDark={isDark}>Refreshing</DashboardChip> : null}
                     </>

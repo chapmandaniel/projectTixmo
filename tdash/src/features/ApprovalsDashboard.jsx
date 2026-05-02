@@ -1,20 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertTriangle,
+    Archive,
     Calendar,
     CheckCircle2,
     Clock3,
+    ImagePlus,
+    Loader2,
     Plus,
     RefreshCcw,
+    Trash2,
     X,
     XCircle,
 } from 'lucide-react';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
+import { toast } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import ApprovalDetailView from './ApprovalDetailView';
 import { formatApprovalDate } from './approvalConstants';
-import { DashboardChip, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
+import { DashboardButton, DashboardChip, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
 
 const emptyForm = {
     title: '',
@@ -31,6 +36,7 @@ const reviewerAssociationOptions = [
 ];
 
 const APPROVALS_DASHBOARD_CACHE_KEY = 'tixmo:approvals-dashboard-cache';
+const APPROVAL_CURATOR_ROLES = new Set(['ADMIN', 'OWNER']);
 
 const readApprovalsDashboardCache = () => {
     if (typeof window === 'undefined') {
@@ -122,6 +128,19 @@ const isOverdueApproval = (approval) => {
 
     return new Date(approval.deadline).getTime() < Date.now();
 };
+
+const getLatestImageAssets = (approval) => (
+    approval?.latestRevision?.assets || []
+).filter((asset) => asset?.mimeType?.startsWith('image/'));
+
+const hasUnpromotedApprovedImages = (approval) => (
+    approval?.status === 'APPROVED' &&
+    getLatestImageAssets(approval).some((asset) => !asset.approvedForLibraryAt)
+);
+
+const hasPromotedApprovedImages = (approval) => (
+    getLatestImageAssets(approval).some((asset) => asset.approvedForLibraryAt)
+);
 
 const ApprovalCardSkeleton = ({ isDark = true }) => (
     <SkeletonTheme
@@ -378,9 +397,11 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
     const [eventFilter, setEventFilter] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedApproval, setSelectedApproval] = useState(null);
+    const [approvalAction, setApprovalAction] = useState(null);
     const deepLinkedApprovalId = searchParams.get('approvalId');
     const approvalsRef = useRef(approvals);
     const eventsRef = useRef(events);
+    const canCurateApprovals = APPROVAL_CURATOR_ROLES.has(user?.role);
 
     const syncApprovalIdParam = (approvalId) => {
         const nextParams = new URLSearchParams(searchParams);
@@ -406,6 +427,13 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
         });
     };
 
+    const removeApprovalFromList = (approvalId) => {
+        setApprovals((current) => current.filter((item) => item.id !== approvalId));
+        if (selectedApproval?.id === approvalId) {
+            closeApproval();
+        }
+    };
+
     const openApproval = (approval) => {
         setSelectedApproval(approval);
         mergeApprovalIntoList(approval);
@@ -415,6 +443,44 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
     const closeApproval = () => {
         setSelectedApproval(null);
         syncApprovalIdParam(null);
+    };
+
+    const handleApprovalAction = async (event, approval, action) => {
+        event.stopPropagation();
+
+        const destructive = action === 'delete';
+        if (destructive && !window.confirm(`Delete "${approval.title}" and its uploaded approval assets? This cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            setApprovalAction({ id: approval.id, action });
+            setError('');
+
+            if (action === 'archive') {
+                await api.post(`/approvals/${approval.id}/archive`);
+                removeApprovalFromList(approval.id);
+                toast.success('Approval archived');
+                return;
+            }
+
+            if (action === 'delete') {
+                await api.delete(`/approvals/${approval.id}`);
+                removeApprovalFromList(approval.id);
+                toast.success('Approval deleted');
+                return;
+            }
+
+            const updated = await api.post(`/approvals/${approval.id}/approved-assets`);
+            mergeApprovalIntoList(updated);
+            toast.success('Added to approved assets');
+        } catch (requestError) {
+            const message = requestError.response?.data?.message || requestError.message || 'Approval action failed.';
+            setError(message);
+            toast.error(message);
+        } finally {
+            setApprovalAction(null);
+        }
     };
 
     const loadDashboardData = async ({ background = false } = {}) => {
@@ -676,11 +742,23 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                 const previewAsset = approval.latestRevision?.assets?.[0];
                                 const isOverdue = isOverdueApproval(approval);
 
+                                const actionInProgress = approvalAction?.id === approval.id;
+                                const showPromoteAction = canCurateApprovals && hasUnpromotedApprovedImages(approval);
+                                const showPromotedChip = canCurateApprovals && hasPromotedApprovedImages(approval);
+
                                 return (
-                                    <button
+                                    <div
                                         key={approval.id}
-                                        type="button"
+                                        role="button"
+                                        tabIndex={0}
+                                        aria-label={`Open approval ${approval.title}`}
                                         onClick={() => openApproval(approval)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                event.preventDefault();
+                                                openApproval(approval);
+                                            }
+                                        }}
                                         className={`relative overflow-hidden rounded-md border text-left transition-all duration-300 ${refreshing ? 'pending-surface-soft' : ''} ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d] hover:border-[#3a3a5a] hover:bg-[#232336] hover:shadow-xl hover:shadow-black/20' : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'}`}
                                     >
                                         <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${meta.accent}`} />
@@ -726,8 +804,56 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                                     <span className={isDark ? 'text-gray-200' : 'text-gray-800'}>{meta.label}</span>
                                                 </div>
                                             </div>
+
+                                            {canCurateApprovals ? (
+                                                <div className={`flex flex-wrap items-center gap-2 border-t pt-3 ${isDark ? 'border-dashboard-border' : 'border-gray-100'}`}>
+                                                    {showPromoteAction ? (
+                                                        <DashboardButton
+                                                            isDark={isDark}
+                                                            variant="primary"
+                                                            className="px-3 py-2 text-xs"
+                                                            disabled={actionInProgress}
+                                                            onClick={(event) => handleApprovalAction(event, approval, 'promote')}
+                                                        >
+                                                            {actionInProgress && approvalAction?.action === 'promote' ? (
+                                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                            ) : (
+                                                                <ImagePlus className="h-3.5 w-3.5" />
+                                                            )}
+                                                            Add to approved assets
+                                                        </DashboardButton>
+                                                    ) : null}
+                                                    {showPromotedChip ? (
+                                                        <DashboardChip isDark={isDark}>In approved assets</DashboardChip>
+                                                    ) : null}
+                                                    <DashboardButton
+                                                        isDark={isDark}
+                                                        variant="secondary"
+                                                        className="px-3 py-2 text-xs"
+                                                        disabled={actionInProgress}
+                                                        onClick={(event) => handleApprovalAction(event, approval, 'archive')}
+                                                    >
+                                                        {actionInProgress && approvalAction?.action === 'archive' ? (
+                                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                        ) : (
+                                                            <Archive className="h-3.5 w-3.5" />
+                                                        )}
+                                                        Archive
+                                                    </DashboardButton>
+                                                    <DashboardButton
+                                                        isDark={isDark}
+                                                        variant="danger"
+                                                        className="px-3 py-2 text-xs"
+                                                        disabled={actionInProgress}
+                                                        onClick={(event) => handleApprovalAction(event, approval, 'delete')}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                        Delete
+                                                    </DashboardButton>
+                                                </div>
+                                            ) : null}
                                         </div>
-                                    </button>
+                                    </div>
                                 );
                             })}
                         </div>

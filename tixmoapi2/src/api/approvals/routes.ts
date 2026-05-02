@@ -19,6 +19,9 @@ router.post('/', authenticate, approvalCreateUploadMiddleware, ApprovalControlle
 router.get('/', authenticate, validate(listApprovalsQuerySchema), ApprovalController.list);
 router.get('/:id', authenticate, validate(approvalIdParamsSchema), ApprovalController.getById);
 router.patch('/:id', authenticate, validate(approvalIdParamsSchema), ApprovalController.updateMetadata);
+router.post('/:id/archive', authenticate, validate(approvalIdParamsSchema), ApprovalController.archive);
+router.post('/:id/approved-assets', authenticate, validate(approvalIdParamsSchema), ApprovalController.addApprovedAssets);
+router.delete('/:id', authenticate, validate(approvalIdParamsSchema), ApprovalController.delete);
 router.post('/:id/reviewers', authenticate, validate(approvalIdParamsSchema), ApprovalController.addReviewers);
 router.post(
     '/:id/reviewers/:reviewerId/resend',

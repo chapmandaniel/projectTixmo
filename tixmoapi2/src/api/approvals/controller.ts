@@ -218,6 +218,48 @@ export const ApprovalController = {
     }
   },
 
+  async archive(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const approval = await approvalService.archive(req.params.id, userId);
+      return res.json(approval);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async addApprovedAssets(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const approval = await approvalService.addApprovedAssets(req.params.id, userId);
+      return res.json(approval);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async delete(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const result = await approvalService.delete(req.params.id, userId);
+      return res.json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
   async addReviewers(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const userId = req.user?.userId;
