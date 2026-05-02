@@ -118,7 +118,7 @@ describe('ApprovalsDashboard', () => {
         expect(screen.getByText('Approvals')).toBeInTheDocument();
         expect(screen.getByText('Main poster')).toBeInTheDocument();
         expect(screen.getByText('Sponsor lockup')).toBeInTheDocument();
-        expect(screen.getByText('Overdue')).toBeInTheDocument();
+        expect(screen.getAllByText('Overdue').length).toBeGreaterThan(0);
 
         fireEvent.change(screen.getByLabelText('Status filter'), {
             target: { value: 'APPROVED' },

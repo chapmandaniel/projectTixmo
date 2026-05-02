@@ -10,8 +10,9 @@ must match the screenshot literally before they are considered correct.
 
 ## Default Home State
 
-- Top row order is `Event Manager`, `Task Manager`, `QuantMo`, `Analytics`.
-- `Team Members` and `Settings` are hidden by default.
+- Top row order is `Event Manager`, `Task Manager`, `Asset Library`, `Review Portal`.
+- `Social`, `ProMo`, `QuantMo`, `Team Members`, and `Settings` are hidden by default.
+- Social, ProMo, and QuantMo are route placeholders with no active workflow or API dependency.
 - Visible cards show the favorite heart in the bottom-right.
 - Visible cards do not show the eye control until hover.
 - Hidden cards show both the hide/show eye control and the heart control.

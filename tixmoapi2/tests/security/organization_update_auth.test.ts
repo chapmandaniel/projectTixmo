@@ -15,6 +15,7 @@ jest.mock('../../src/middleware/auth', () => ({
     req.user = { userId: 'user-123', role: 'CUSTOMER' };
     next();
   },
+  optionalAuthenticate: (_req: any, _res: any, next: any) => next(),
   authorize: jest.requireActual('../../src/middleware/authorize').authorize,
 }));
 

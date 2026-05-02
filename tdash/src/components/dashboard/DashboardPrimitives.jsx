@@ -79,6 +79,9 @@ export const DashboardButton = ({ isDark, variant = 'primary', className, childr
         secondary: isDark
             ? 'border-dashboard-border bg-dashboard-panel text-zinc-100 hover:bg-dashboard-panelAlt'
             : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+        danger: isDark
+            ? 'border-rose-500/30 bg-rose-500/10 text-rose-200 hover:border-rose-400/40 hover:bg-rose-500/15'
+            : 'border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100',
         subtle: isDark
             ? cn(theme.textSecondary, 'border-transparent hover:bg-white/5 hover:text-zinc-100')
             : 'border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900',

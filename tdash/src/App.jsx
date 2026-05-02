@@ -13,13 +13,11 @@ import DashboardLayout from './layouts/DashboardLayout';
 import DashboardHome from './features/DashboardHome';
 import EventsView from './features/EventsView';
 import AnalyticsView from './features/AnalyticsView';
-import QuantMoView from './features/QuantMoView';
 import TodoView from './features/TodoView';
 import TeamView from './features/TeamView';
 import ComingSoonView from './features/ComingSoonView';
 import EventManagementDashboard from './features/EventManagementDashboard';
-import SocialDashboard from './features/SocialDashboard';
-import CreativeComposer from './features/CreativeComposer';
+import DashboardPlaceholderView from './features/DashboardPlaceholderView';
 import AssetLibraryView from './features/AssetLibraryView';
 import SettingsView from './features/SettingsView';
 import LoginView from './features/LoginView';
@@ -28,6 +26,7 @@ import ApprovalsDashboard from './features/ApprovalsDashboard';
 import OrdersView from './features/OrdersView';
 import DevDashboard from './features/DevDashboard';
 import ScannersView from './features/ScannersView';
+import { BrainCircuit, MessageCircle, Wand2 } from 'lucide-react';
 
 import WaitingRoomView from './features/WaitingRoomView';
 import GlobalErrorNotification from './components/GlobalErrorNotification';
@@ -62,14 +61,14 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                     <Route path="/events" element={<EventsView user={user} isDark={isDark} />} />
                     <Route path="/events/:eventId/*" element={<EventManagementDashboard user={user} isDark={isDark} />} />
                     <Route path="/analytics" element={<AnalyticsView isDark={isDark} />} />
-                    <Route path="/quantmo" element={<QuantMoView isDark={isDark} />} />
+                    <Route path="/quantmo" element={<DashboardPlaceholderView isDark={isDark} title="QuantMo" icon={BrainCircuit} />} />
                     <Route path="/todo" element={<TodoView isDark={isDark} />} />
                     <Route path="/personal-todo" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/team" element={<TeamView isDark={isDark} />} />
-                    <Route path="/social" element={<SocialDashboard isDark={isDark} />} />
+                    <Route path="/social" element={<DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} />} />
                     <Route path="/orders" element={<OrdersView isDark={isDark} />} />
                     <Route path="/settings" element={<SettingsView isDark={isDark} />} />
-                    <Route path="/creative" element={<CreativeComposer isDark={isDark} />} />
+                    <Route path="/creative" element={<DashboardPlaceholderView isDark={isDark} title="ProMo" icon={Wand2} />} />
                     <Route path="/assets" element={<AssetLibraryView isDark={isDark} />} />
                     <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />
                     <Route path="/approvals" element={<ApprovalsDashboard isDark={isDark} user={user} />} />
