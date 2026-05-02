@@ -53,10 +53,12 @@ export const getCurrentUser = catchAsync(async (req: AuthRequest, res: Response)
   res.status(200).json(successResponse(user, 'User retrieved successfully'));
 });
 
-export const logout = catchAsync(async (_req: AuthRequest, res: Response) => {
-  // For JWT, logout is handled client-side by removing the token
-  // This endpoint can be used for logging/analytics or token blacklisting
-  // Add a no-op await so the function remains async (required by linter/catchAsync)
-  await Promise.resolve();
+export const logout = catchAsync(async (req: AuthRequest, res: Response) => {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
+  }
+
+  await authService.logout(req.user.userId);
   res.status(200).json(successResponse(null, 'Logout successful'));
 });

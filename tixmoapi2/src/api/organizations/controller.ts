@@ -5,6 +5,7 @@ import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/prisma';
 import { organizationService } from './service';
+import { assertOrganizationAccess, getActorScope } from '../../utils/tenantScope';
 
 interface OrganizationWithUsers {
   id: string;
@@ -19,6 +20,8 @@ export const createOrganization = catchAsync(async (req: AuthRequest, res: Respo
 
 export const getOrganization = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const actor = await getActorScope(req);
+  assertOrganizationAccess(actor, id);
 
   const organization = await organizationService.getOrganizationById(id);
 
@@ -31,6 +34,8 @@ export const getOrganization = catchAsync(async (req: AuthRequest, res: Response
 
 export const updateOrganization = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const actor = await getActorScope(req);
+  assertOrganizationAccess(actor, id);
 
   // Check if user is admin or belongs to the organization
   const org = (await organizationService.getOrganizationById(id)) as OrganizationWithUsers | null;

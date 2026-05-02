@@ -2,6 +2,11 @@ import { Response, NextFunction } from 'express';
 import { reportService } from './service';
 import { successResponse } from '../../utils/response';
 import { AuthRequest } from '../../middleware/auth';
+import {
+  assertEventAccess,
+  getActorScope,
+  resolveOrganizationFilter,
+} from '../../utils/tenantScope';
 
 /**
  * Get sales report
@@ -14,24 +19,14 @@ export const getSalesReport = async (
   try {
     // If user is admin, they can see all or filter by any org
     // If user is promoter, force organizationId to their org
-    let organizationId = req.query.organizationId as string | undefined;
+    const actor = await getActorScope(req);
+    const organizationId = resolveOrganizationFilter(
+      actor,
+      req.query.organizationId as string | undefined
+    );
 
-    if (req.user!.role !== 'ADMIN') {
-      // Fetch user's org
-      const user = await (
-        await import('@prisma/client')
-      ).PrismaClient.prototype.user.findUnique({
-        where: { id: req.user!.userId },
-        select: { organizationId: true },
-      });
-
-      if (!user?.organizationId) {
-        // If promoter has no org, they see nothing or error?
-        // Let's assume they see nothing
-        res.json(successResponse([]));
-        return;
-      }
-      organizationId = user.organizationId;
+    if (req.query.eventId) {
+      await assertEventAccess(actor, req.query.eventId as string);
     }
 
     const report = await reportService.getSalesReport({
@@ -53,6 +48,9 @@ export const getAttendanceReport = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const actor = await getActorScope(req);
+    await assertEventAccess(actor, req.query.eventId as string);
+
     const report = await reportService.getAttendanceReport({
       eventId: req.query.eventId as string,
     });
@@ -71,29 +69,11 @@ export const getDashboardStats = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    let organizationId = req.query.organizationId as string | undefined;
-
-    if (req.user!.role !== 'ADMIN') {
-      const user = await (
-        await import('@prisma/client')
-      ).PrismaClient.prototype.user.findUnique({
-        where: { id: req.user!.userId },
-        select: { organizationId: true },
-      });
-
-      if (!user?.organizationId) {
-        res.json(
-          successResponse({
-            totalRevenue: 0,
-            totalTicketsSold: 0,
-            activeEvents: 0,
-            recentOrders: [],
-          })
-        );
-        return;
-      }
-      organizationId = user.organizationId;
-    }
+    const actor = await getActorScope(req);
+    const organizationId = resolveOrganizationFilter(
+      actor,
+      req.query.organizationId as string | undefined
+    );
 
     const stats = await reportService.getDashboardStats({
       organizationId,

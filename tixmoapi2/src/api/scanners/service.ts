@@ -42,6 +42,7 @@ interface ListScanLogsParams {
   scannerId?: string;
   ticketId?: string;
   eventId?: string;
+  organizationId?: string;
   success?: boolean;
   page?: number;
   limit?: number;
@@ -439,13 +440,14 @@ export class ScannerService {
    * Get scan logs
    */
   async getScanLogs(params: ListScanLogsParams): Promise<PaginatedScanLogs> {
-    const { page = 1, limit = 20, scannerId, ticketId, eventId, success } = params;
+    const { page = 1, limit = 20, scannerId, ticketId, eventId, organizationId, success } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.ScanLogWhereInput = {};
     if (scannerId) where.scannerId = scannerId;
     if (ticketId) where.ticketId = ticketId;
     if (eventId) where.eventId = eventId;
+    if (organizationId) where.scanner = { organizationId };
     if (success !== undefined) where.success = success;
 
     const [scanLogs, total] = await Promise.all([

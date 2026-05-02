@@ -4,6 +4,13 @@ import { ApiError } from '../../utils/ApiError';
 import { successResponse } from '../../utils/response';
 import { AuthRequest } from '../../middleware/auth';
 import { ScannerRequest } from '../../middleware/scannerAuth';
+import {
+  assertEventAccess,
+  assertScannerAccess,
+  getActorScope,
+  requireOrganizationId,
+  resolveOrganizationFilter,
+} from '../../utils/tenantScope';
 
 /**
  * Register a new scanner
@@ -14,8 +21,19 @@ export const registerScanner = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const actor = await getActorScope(req);
+    const organizationId = requireOrganizationId(actor, req.body.organizationId);
+
+    if (req.body.eventId) {
+      const event = await assertEventAccess(actor, req.body.eventId);
+      if (event.organizationId !== organizationId) {
+        throw ApiError.badRequest('Event does not belong to the specified organization');
+      }
+    }
+
     const scanner = await scannerService.registerScanner({
       ...req.body,
+      organizationId,
       createdBy: req.user!.userId,
     });
     res.status(201).json(successResponse(scanner, 'Scanner registered successfully'));
@@ -50,7 +68,18 @@ export const listScanners = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const result = await scannerService.listScanners(req.query);
+    const actor = await getActorScope(req);
+    const query = req.query as Record<string, unknown>;
+    query.organizationId = resolveOrganizationFilter(
+      actor,
+      query.organizationId as string | undefined
+    );
+
+    if (query.eventId) {
+      await assertEventAccess(actor, query.eventId as string);
+    }
+
+    const result = await scannerService.listScanners(query);
     // Remove API keys from list
     const scannersWithoutKeys = result.scanners.map(({ apiKey: _apiKey, ...scanner }) => scanner);
 
@@ -71,6 +100,9 @@ export const getScanner = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const actor = await getActorScope(req);
+    await assertScannerAccess(actor, req.params.id);
+
     const scanner = await scannerService.getScannerById(req.params.id);
     if (!scanner) {
       throw ApiError.notFound('Scanner not found');
@@ -91,6 +123,13 @@ export const updateScanner = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const actor = await getActorScope(req);
+    await assertScannerAccess(actor, req.params.id);
+
+    if (req.body.eventId) {
+      await assertEventAccess(actor, req.body.eventId);
+    }
+
     const scanner = await scannerService.updateScanner(req.params.id, req.body);
     const { apiKey: _apiKey, ...scannerData } = scanner;
     res.json(successResponse(scannerData, 'Scanner updated successfully'));
@@ -108,6 +147,9 @@ export const deleteScanner = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const actor = await getActorScope(req);
+    await assertScannerAccess(actor, req.params.id);
+
     await scannerService.deleteScanner(req.params.id);
     res.status(204).send();
   } catch (error) {
@@ -150,7 +192,19 @@ export const getScanLogs = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const result = await scannerService.getScanLogs(req.query);
+    const actor = await getActorScope(req);
+    const query = req.query as Record<string, unknown>;
+    query.organizationId = resolveOrganizationFilter(actor);
+
+    if (query.scannerId) {
+      await assertScannerAccess(actor, query.scannerId as string);
+    }
+
+    if (query.eventId) {
+      await assertEventAccess(actor, query.eventId as string);
+    }
+
+    const result = await scannerService.getScanLogs(query);
     res.json(
       successResponse(result.scanLogs, 'Scan logs retrieved successfully', result.pagination)
     );

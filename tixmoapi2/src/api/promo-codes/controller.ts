@@ -4,15 +4,34 @@ import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { promoCodeService } from './service';
+import {
+  assertEventAccess,
+  assertPromoCodeAccess,
+  getActorScope,
+  requireOrganizationId,
+  resolveOrganizationFilter,
+} from '../../utils/tenantScope';
 
 export const createPromoCode = catchAsync(async (req: AuthRequest, res: Response) => {
   const payload = req.body as Parameters<typeof promoCodeService.createPromoCode>[0];
+  const actor = await getActorScope(req);
+  payload.organizationId = requireOrganizationId(actor, payload.organizationId);
+
+  if (payload.eventId) {
+    const event = await assertEventAccess(actor, payload.eventId);
+    if (event.organizationId !== payload.organizationId) {
+      throw ApiError.badRequest('Event does not belong to the specified organization');
+    }
+  }
+
   const promoCode = await promoCodeService.createPromoCode(payload);
   res.status(201).json(successResponse(promoCode, 'Promo code created successfully'));
 });
 
 export const getPromoCode = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const actor = await getActorScope(req);
+  await assertPromoCodeAccess(actor, id);
 
   const promoCode = await promoCodeService.getPromoCodeById(id);
 
@@ -26,6 +45,8 @@ export const getPromoCode = catchAsync(async (req: AuthRequest, res: Response) =
 export const updatePromoCode = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const payload = req.body as Parameters<typeof promoCodeService.updatePromoCode>[1];
+  const actor = await getActorScope(req);
+  await assertPromoCodeAccess(actor, id);
 
   const promoCode = await promoCodeService.updatePromoCode(id, payload);
   res.json(successResponse(promoCode, 'Promo code updated successfully'));
@@ -33,6 +54,8 @@ export const updatePromoCode = catchAsync(async (req: AuthRequest, res: Response
 
 export const deletePromoCode = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const actor = await getActorScope(req);
+  await assertPromoCodeAccess(actor, id);
 
   await promoCodeService.deletePromoCode(id);
   res.status(204).send();
@@ -40,6 +63,13 @@ export const deletePromoCode = catchAsync(async (req: AuthRequest, res: Response
 
 export const listPromoCodes = catchAsync(async (req: AuthRequest, res: Response) => {
   const query = req.query as Parameters<typeof promoCodeService.listPromoCodes>[0];
+  const actor = await getActorScope(req);
+  query.organizationId = resolveOrganizationFilter(actor, query.organizationId);
+
+  if (query.eventId) {
+    await assertEventAccess(actor, query.eventId);
+  }
+
   const result = await promoCodeService.listPromoCodes(query);
   res.json(successResponse(result));
 });

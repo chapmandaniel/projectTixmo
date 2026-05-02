@@ -229,18 +229,29 @@ export class AnalyticsService {
     params: DateRangeParams & { organizationId?: string }
   ): Promise<CustomerAnalytics> {
     const { startDate, endDate, organizationId } = params;
+    const customerWhere: Prisma.UserWhereInput = {
+      role: 'CUSTOMER',
+      ...(organizationId && {
+        orders: {
+          some: {
+            status: 'PAID',
+            event: {
+              organizationId,
+            },
+          },
+        },
+      }),
+    };
 
     // Get all customers
     const totalCustomers = await prisma.user.count({
-      where: {
-        role: 'CUSTOMER',
-      },
+      where: customerWhere,
     });
 
     // Get new customers in period
     const newCustomersInPeriod = await prisma.user.count({
       where: {
-        role: 'CUSTOMER',
+        ...customerWhere,
         ...(startDate && { createdAt: { gte: startDate } }),
         ...(endDate && { createdAt: { lte: endDate } }),
       },
@@ -249,7 +260,7 @@ export class AnalyticsService {
     // Get customers with orders
     const customersWithOrders = await prisma.user.findMany({
       where: {
-        role: 'CUSTOMER',
+        ...customerWhere,
         orders: {
           some: {
             status: 'PAID',
@@ -295,7 +306,7 @@ export class AnalyticsService {
     // Get customers by registration date
     const customers = await prisma.user.findMany({
       where: {
-        role: 'CUSTOMER',
+        ...customerWhere,
         ...(startDate && { createdAt: { gte: startDate } }),
         ...(endDate && { createdAt: { lte: endDate } }),
       },

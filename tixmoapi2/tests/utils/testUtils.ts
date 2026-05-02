@@ -1,5 +1,6 @@
 import prisma from '../../src/config/prisma';
 import request from 'supertest';
+import { verifyAccessToken } from '../../src/utils/jwt';
 export { prisma };
 
 export async function safeCleanupUsers(filter = 'test') {
@@ -75,11 +76,11 @@ export async function registerUser(
 // New helpers: createOrganization, createVenue, createEvent, createOrder
 export async function createOrganization(
   _app: any,
-  _authToken: string,
+  authToken: string,
   payload: Partial<{ name: string; slug: string; type: string; contactEmail: string }> = {}
 ) {
   const now = Date.now();
-  return prisma.organization.create({
+  const organization = await prisma.organization.create({
     data: {
       name: payload.name ?? `Org ${now}`,
       slug: payload.slug ?? `org-${now}`,
@@ -87,6 +88,22 @@ export async function createOrganization(
       status: 'ACTIVE',
     },
   });
+
+  if (authToken) {
+    try {
+      const token = verifyAccessToken(authToken);
+      if (token.role !== 'ADMIN') {
+        await prisma.user.update({
+          where: { id: token.userId },
+          data: { organizationId: organization.id },
+        });
+      }
+    } catch (_error) {
+      // Some tests call this helper without a real auth token.
+    }
+  }
+
+  return organization;
 }
 
 export async function createVenue(
@@ -201,76 +218,76 @@ export async function cleanupTestData() {
   // 1. Child tables (ScanLog, Scanner, Notification, etc.)
   try {
     await prisma.scanLog.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.scanner.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.notification.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.notificationPreference.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.approvalComment.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.approvalReviewDecision.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.approvalReminder.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.approvalReviewer.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.approvalAsset.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.approvalRevision.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
 
   // 2. Transactional data (Ticket, Order)
   try {
     await prisma.waitlist.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.taskComment.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.task.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.ticket.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.order.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
 
   // 3. Event related
   try {
     await prisma.ticketType.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.approvalRequest.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.event.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
 
   // 4. Organization related
   try {
     await prisma.venue.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.promoCode.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
 
   // 5. Core entities (User, Organization)
   try {
     await prisma.user.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
   try {
     await prisma.organization.deleteMany();
-  } catch (e) { }
+  } catch (e) {}
 }
