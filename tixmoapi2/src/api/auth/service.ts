@@ -6,6 +6,7 @@ import { OrganizationStatus, OrganizationType, UserRole } from '@prisma/client';
 import { notificationService } from '../../utils/notificationService';
 import { logger } from '../../config/logger';
 import { resolveTenantOrganizationSeed } from './tenantOrganization';
+import { getRedisClient } from '../../config/redis';
 
 interface RegisterData {
   email: string;
@@ -26,7 +27,10 @@ interface RegisterContext {
 }
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
-const canonicalizeOrganizationKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+const canonicalizeOrganizationKey = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]/g, '');
+const REFRESH_REVOCATION_TTL_SECONDS = 31 * 24 * 60 * 60;
+const refreshRevokedBeforeKey = (userId: string) => `auth:refresh-revoked-before:${userId}`;
 
 export class AuthService {
   private async resolveTenantOrganization(context?: RegisterContext) {
@@ -129,7 +133,7 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       role: user.role,
-      organizationId: null,
+      organizationId: user.organizationId,
       emailVerified: user.emailVerified,
     });
 
@@ -208,6 +212,11 @@ export class AuthService {
     // Verify refresh token
     const decoded = verifyRefreshToken(refreshToken);
 
+    const revokedBefore = await this.getRefreshRevokedBefore(decoded.userId);
+    if (revokedBefore && decoded.iat && decoded.iat < revokedBefore) {
+      throw ApiError.unauthorized('Refresh token has been revoked');
+    }
+
     // Check if user still exists
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -234,6 +243,31 @@ export class AuthService {
     });
 
     return tokens;
+  }
+
+  async logout(userId: string) {
+    await this.setRefreshRevokedBefore(userId, Math.floor(Date.now() / 1000));
+  }
+
+  private async getRefreshRevokedBefore(userId: string): Promise<number | null> {
+    try {
+      const value = await getRedisClient().get(refreshRevokedBeforeKey(userId));
+      return value ? Number(value) : null;
+    } catch (error) {
+      logger.error(`Failed to read refresh token revocation state: ${(error as Error).message}`);
+      throw ApiError.internal('Unable to validate refresh token state');
+    }
+  }
+
+  private async setRefreshRevokedBefore(userId: string, timestamp: number): Promise<void> {
+    try {
+      await getRedisClient().set(refreshRevokedBeforeKey(userId), String(timestamp), {
+        EX: REFRESH_REVOCATION_TTL_SECONDS,
+      });
+    } catch (error) {
+      logger.error(`Failed to revoke refresh tokens: ${(error as Error).message}`);
+      throw ApiError.internal('Unable to revoke refresh tokens');
+    }
   }
 
   async getCurrentUser(userId: string) {
