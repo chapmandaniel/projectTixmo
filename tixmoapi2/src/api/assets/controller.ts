@@ -125,7 +125,11 @@ export const AssetLibraryController = {
 
       const files = (req.files as Express.Multer.File[]) || [];
       await validateUploadedFiles(files);
-      const result = await assetLibraryService.upload(userId, files);
+      const result = await assetLibraryService.upload(userId, files, {
+        usageType: req.body?.usageType || req.body?.collectionType,
+        eventId: req.body?.eventId,
+        category: req.body?.category,
+      });
       return res.status(StatusCodes.CREATED).json(result);
     } catch (error) {
       return next(error);

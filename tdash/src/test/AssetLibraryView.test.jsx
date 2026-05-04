@@ -91,10 +91,25 @@ const approvalsResponse = [
     },
 ];
 
+const eventsResponse = [
+    { id: 'event-1', name: 'Summer Jam' },
+    { id: 'event-2', name: 'Neon Nights' },
+];
+
 describe('AssetLibraryView', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        apiGet.mockResolvedValue({ approvals: approvalsResponse });
+        apiGet.mockImplementation((url) => {
+            if (url === '/assets') {
+                return Promise.resolve({ assets: [] });
+            }
+
+            if (url.startsWith('/events')) {
+                return Promise.resolve({ events: eventsResponse });
+            }
+
+            return Promise.resolve({ approvals: approvalsResponse });
+        });
         apiUpload.mockResolvedValue({ assets: [] });
         Object.defineProperty(navigator, 'clipboard', {
             configurable: true,
@@ -115,9 +130,11 @@ describe('AssetLibraryView', () => {
         });
 
         expect(apiGet).toHaveBeenCalledWith('/approvals?limit=100&includeArchived=true');
+        expect(apiGet).toHaveBeenCalledWith('/events?limit=100');
         expect(screen.getByRole('heading', { name: 'Asset Library' })).toBeInTheDocument();
         expect(screen.getAllByText('Summer Poster 4x5.png').length).toBeGreaterThan(0);
         expect(screen.getAllByText('VIP Loop.mp4').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Summer Jam').length).toBeGreaterThan(0);
 
         fireEvent.change(screen.getByLabelText('Asset type filter'), {
             target: { value: 'image' },
@@ -150,35 +167,45 @@ describe('AssetLibraryView', () => {
     });
 
     it('does not show approval assets until they are promoted to approved assets', async () => {
-        apiGet.mockResolvedValue({
-            approvals: [
-                {
-                    id: 'approval-3',
-                    title: 'Approved But Not Added',
-                    status: 'APPROVED',
-                    event: { id: 'event-3', name: 'Late Night' },
-                    latestRevision: { id: 'revision-5' },
-                    reviewers: [],
-                    revisions: [
-                        {
-                            id: 'revision-5',
-                            revisionNumber: 1,
-                            createdAt: '2026-04-24T09:00:00.000Z',
-                            assets: [
-                                {
-                                    id: 'asset-3',
-                                    originalName: 'Hidden approved poster.png',
-                                    filename: 'hidden-approved-poster.png',
-                                    mimeType: 'image/png',
-                                    size: 512000,
-                                    s3Url: 'https://cdn.example.com/assets/hidden-approved-poster.png',
-                                    createdAt: '2026-04-24T09:10:00.000Z',
-                                },
-                            ],
-                        },
-                    ],
-                },
-            ],
+        apiGet.mockImplementation((url) => {
+            if (url === '/assets') {
+                return Promise.resolve({ assets: [] });
+            }
+
+            if (url.startsWith('/events')) {
+                return Promise.resolve({ events: eventsResponse });
+            }
+
+            return Promise.resolve({
+                approvals: [
+                    {
+                        id: 'approval-3',
+                        title: 'Approved But Not Added',
+                        status: 'APPROVED',
+                        event: { id: 'event-3', name: 'Late Night' },
+                        latestRevision: { id: 'revision-5' },
+                        reviewers: [],
+                        revisions: [
+                            {
+                                id: 'revision-5',
+                                revisionNumber: 1,
+                                createdAt: '2026-04-24T09:00:00.000Z',
+                                assets: [
+                                    {
+                                        id: 'asset-3',
+                                        originalName: 'Hidden approved poster.png',
+                                        filename: 'hidden-approved-poster.png',
+                                        mimeType: 'image/png',
+                                        size: 512000,
+                                        s3Url: 'https://cdn.example.com/assets/hidden-approved-poster.png',
+                                        createdAt: '2026-04-24T09:10:00.000Z',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            });
         });
 
         await act(async () => {
@@ -201,6 +228,8 @@ describe('AssetLibraryView', () => {
             mimeType: 'image/png',
             size: 2048,
             s3Url: 'https://cdn.example.com/assets/door-poster.png',
+            usageType: 'BRAND',
+            category: 'branding',
             createdAt: '2026-04-25T09:00:00.000Z',
             uploadedBy: {
                 id: 'user-1',
@@ -229,11 +258,98 @@ describe('AssetLibraryView', () => {
         });
 
         expect(apiUpload).toHaveBeenCalledWith('/assets', expect.any(FormData));
+        expect(apiUpload.mock.calls[0][1].get('usageType')).toBe('BRAND');
+        expect(apiUpload.mock.calls[0][1].get('category')).toBe('branding');
         expect(apiUpload).not.toHaveBeenCalledWith(expect.stringContaining('/approvals'), expect.anything());
         expect(toastSuccess).toHaveBeenCalledWith('1 file uploaded to the asset library.');
 
         await waitFor(() => {
             expect(screen.getAllByText('Door Poster.png').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('Brand library').length).toBeGreaterThan(0);
+        });
+    });
+
+    it('requires an event before uploading event assets', async () => {
+        let container;
+        await act(async () => {
+            ({ container } = render(
+                <MemoryRouter>
+                    <AssetLibraryView isDark />
+                </MemoryRouter>
+            ));
+        });
+
+        fireEvent.change(screen.getByLabelText('Upload destination'), {
+            target: { value: 'EVENT' },
+        });
+
+        await act(async () => {
+            fireEvent.change(container.querySelector('input[type="file"]'), {
+                target: {
+                    files: [new File(['image'], 'Event Poster.png', { type: 'image/png' })],
+                },
+            });
+        });
+
+        expect(apiUpload).not.toHaveBeenCalled();
+        expect(toastError).toHaveBeenCalledWith('Select an event or switch to Brand library before uploading.');
+    });
+
+    it('uploads event assets with the selected event context', async () => {
+        apiUpload.mockResolvedValue({
+            assets: [
+                {
+                    id: 'direct-asset-2',
+                    originalName: 'Stage Poster.png',
+                    filename: 'stage-poster.png',
+                    mimeType: 'image/png',
+                    size: 2048,
+                    s3Url: 'https://cdn.example.com/assets/stage-poster.png',
+                    usageType: 'EVENT',
+                    eventId: 'event-1',
+                    event: { id: 'event-1', name: 'Summer Jam' },
+                    createdAt: '2026-04-25T09:00:00.000Z',
+                    uploadedBy: {
+                        id: 'user-1',
+                        firstName: 'Nina',
+                        lastName: 'Lopez',
+                        email: 'nina@example.com',
+                    },
+                },
+            ],
+        });
+
+        let container;
+        await act(async () => {
+            ({ container } = render(
+                <MemoryRouter>
+                    <AssetLibraryView isDark />
+                </MemoryRouter>
+            ));
+        });
+
+        fireEvent.change(screen.getByLabelText('Upload destination'), {
+            target: { value: 'EVENT' },
+        });
+        fireEvent.change(screen.getByLabelText('Upload event'), {
+            target: { value: 'event-1' },
+        });
+
+        await act(async () => {
+            fireEvent.change(container.querySelector('input[type="file"]'), {
+                target: {
+                    files: [new File(['image'], 'Stage Poster.png', { type: 'image/png' })],
+                },
+            });
+        });
+
+        expect(apiUpload).toHaveBeenCalledWith('/assets', expect.any(FormData));
+        expect(apiUpload.mock.calls[0][1].get('usageType')).toBe('EVENT');
+        expect(apiUpload.mock.calls[0][1].get('eventId')).toBe('event-1');
+
+        await waitFor(() => {
+            expect(screen.getAllByText('Stage Poster.png').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('Summer Jam').length).toBeGreaterThan(0);
         });
     });
 });

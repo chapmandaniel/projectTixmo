@@ -618,10 +618,12 @@ model AssetLibraryAsset {
   s3Key             String       @map("s3_key")
   s3Url             String       @map("s3_url")
   category          String?
+  usageType         String       @default("BRAND") @map("usage_type")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
   @@index([organizationId, createdAt])
+  @@index([organizationId, usageType])
   @@index([eventId])
   @@map("asset_library_assets")
 }
