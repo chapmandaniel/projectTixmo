@@ -87,6 +87,7 @@ model User {
   approvalComments  ApprovalComment[] @relation("ApprovalCommentUser")
   approvalRevisionsUploaded ApprovalRevision[] @relation("ApprovalRevisionUploader")
   approvalAssetsApproved ApprovalAsset[] @relation("ApprovalAssetLibraryApprover")
+  assetLibraryUploads AssetLibraryAsset[] @relation("AssetLibraryAssetUploader")
 
   @@map("users")
 }
@@ -110,6 +111,7 @@ model Organization {
   scanners         Scanner[]
   tasks            Task[]
   approvalRequests ApprovalRequest[]
+  assetLibraryAssets AssetLibraryAsset[]
 
   @@map("organizations")
 }
@@ -176,6 +178,7 @@ model Event {
   scanners         Scanner[]
   waitlist         Waitlist[]
   approvalRequests ApprovalRequest[]
+  assetLibraryAssets AssetLibraryAsset[]
 
   @@map("events")
 }
@@ -597,6 +600,30 @@ model ApprovalAsset {
   createdAt         DateTime         @default(now()) @map("created_at")
 
   @@map("approval_assets")
+}
+
+model AssetLibraryAsset {
+  id                String       @id @default(uuid())
+  organizationId    String       @map("organization_id")
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  eventId           String?      @map("event_id")
+  event             Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  uploadedById      String       @map("uploaded_by_id")
+  uploadedBy        User         @relation("AssetLibraryAssetUploader", fields: [uploadedById], references: [id])
+
+  filename          String
+  originalName      String       @map("original_name")
+  mimeType          String       @map("mime_type")
+  size              Int
+  s3Key             String       @map("s3_key")
+  s3Url             String       @map("s3_url")
+  category          String?
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@index([organizationId, createdAt])
+  @@index([eventId])
+  @@map("asset_library_assets")
 }
 
 model ApprovalReviewer {

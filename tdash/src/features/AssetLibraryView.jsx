@@ -18,7 +18,6 @@ import {
     Upload,
     Video,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import {
     DashboardButton,
@@ -86,6 +85,7 @@ const SORT_OPTIONS = [
 ];
 
 const extractApprovals = (response) => response?.approvals || response?.data?.approvals || [];
+const extractDirectAssets = (response) => response?.assets || response?.data?.assets || [];
 
 const formatDate = (value, options = {}) => {
     if (!value) {
@@ -265,6 +265,41 @@ const flattenAssets = (approvals) => approvals
         );
     })
     .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+
+const flattenDirectAssets = (assets) => assets.map((asset) => {
+    const uploader = asset?.uploadedBy || null;
+    const item = {
+        id: `direct-${asset.id}`,
+        directAssetId: asset.id,
+        approvalId: '',
+        approvalTitle: 'Direct library upload',
+        approvalStatus: 'APPROVED',
+        approvalDescription: 'Creative asset uploaded directly to the asset library.',
+        eventId: asset.event?.id || asset.eventId || '',
+        eventName: asset.event?.name || 'Unassigned event',
+        revisionId: '',
+        revisionNumber: 'Library',
+        isLatestRevision: true,
+        createdAt: asset.createdAt,
+        filename: asset.filename,
+        originalName: asset.originalName || asset.filename || 'Untitled asset',
+        mimeType: asset.mimeType || '',
+        kind: getAssetKind(asset.mimeType),
+        size: asset.size || 0,
+        s3Url: asset.s3Url,
+        approvedForLibraryAt: asset.createdAt,
+        approvedForLibraryById: uploader?.id || '',
+        reviewers: [],
+        uploaderName: formatUserName(uploader),
+        uploaderEmail: uploader?.email || '',
+    };
+
+    return {
+        ...item,
+        category: asset.category || deriveCategory(item),
+        tags: buildAssetTags(item),
+    };
+});
 
 const withinDateFilter = (value, range) => {
     if (!range) {
@@ -721,12 +756,13 @@ const AssetInspector = ({
 };
 
 const AssetLibraryView = ({ isDark }) => {
-    const navigate = useNavigate();
     const uiTheme = getDashboardTheme(isDark);
     const uploadInputRef = useRef(null);
     const [approvals, setApprovals] = useState([]);
+    const [directAssets, setDirectAssets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const [searchValue, setSearchValue] = useState('');
     const [activeCategory, setActiveCategory] = useState('all');
@@ -750,8 +786,21 @@ const AssetLibraryView = ({ isDark }) => {
                 setLoading(true);
             }
 
-            const response = await api.get('/approvals?limit=100&includeArchived=true');
-            setApprovals(extractApprovals(response));
+            const [directAssetsResponse, approvalsResponse] = await Promise.allSettled([
+                api.get('/assets'),
+                api.get('/approvals?limit=100&includeArchived=true'),
+            ]);
+
+            if (directAssetsResponse.status === 'rejected') {
+                throw directAssetsResponse.reason;
+            }
+
+            if (approvalsResponse.status === 'rejected') {
+                throw approvalsResponse.reason;
+            }
+
+            setDirectAssets(extractDirectAssets(directAssetsResponse.value));
+            setApprovals(extractApprovals(approvalsResponse.value));
         } catch (requestError) {
             setError(requestError?.response?.data?.message || requestError.message || 'Failed to load uploaded assets.');
         } finally {
@@ -764,7 +813,10 @@ const AssetLibraryView = ({ isDark }) => {
         loadAssets();
     }, []);
 
-    const assets = useMemo(() => flattenAssets(approvals), [approvals]);
+    const assets = useMemo(() => [
+        ...flattenDirectAssets(directAssets),
+        ...flattenAssets(approvals),
+    ], [approvals, directAssets]);
     const totalLibrarySize = useMemo(() => assets.reduce((sum, asset) => sum + asset.size, 0), [assets]);
 
     const tagOptions = useMemo(() => {
@@ -914,13 +966,27 @@ const AssetLibraryView = ({ isDark }) => {
         [filteredAssets, selectedAssetIds]
     );
 
-    const handleUploadIntent = (files = []) => {
-        if (files.length > 0) {
-            toast.success(`${files.length} file${files.length === 1 ? '' : 's'} captured. Opening approvals to submit them.`);
-        } else {
-            toast.success('Opening approvals to submit new creative assets.');
+    const handleUploadIntent = async (files = []) => {
+        if (files.length === 0) {
+            return;
         }
-        navigate('/approvals');
+
+        const payload = new FormData();
+        files.forEach((file) => payload.append('files', file));
+
+        try {
+            setUploading(true);
+            const response = await api.upload('/assets', payload);
+            const uploadedAssets = extractDirectAssets(response);
+            setDirectAssets((current) => [...uploadedAssets, ...current]);
+            setError('');
+            toast.success(`${files.length} file${files.length === 1 ? '' : 's'} uploaded to the asset library.`);
+        } catch (requestError) {
+            setError(requestError?.response?.data?.message || requestError.message || 'Failed to upload asset.');
+            toast.error('Failed to upload asset.');
+        } finally {
+            setUploading(false);
+        }
     };
 
     const toggleSelection = (assetId) => {
@@ -984,11 +1050,11 @@ const AssetLibraryView = ({ isDark }) => {
         <DashboardEmptyState
             isDark={isDark}
             title="No assets match these filters"
-            description="Widen the filter set, switch categories, or route a new creative submission through approvals."
+            description="Widen the filter set, switch categories, or upload files directly to this library."
             action={(
-                <DashboardButton isDark={isDark} onClick={() => handleUploadIntent()}>
+                <DashboardButton isDark={isDark} onClick={() => uploadInputRef.current?.click()} disabled={uploading}>
                     <Upload className="h-4 w-4" />
-                    Upload through approvals
+                    Upload Files
                 </DashboardButton>
             )}
         />
@@ -1007,6 +1073,7 @@ const AssetLibraryView = ({ isDark }) => {
                         <DashboardChip isDark={isDark}>{assets.length} approved assets</DashboardChip>
                         <DashboardChip isDark={isDark}>{selectedAssetIds.length} selected</DashboardChip>
                         {refreshing ? <DashboardChip isDark={isDark}>Refreshing</DashboardChip> : null}
+                        {uploading ? <DashboardChip isDark={isDark}>Uploading</DashboardChip> : null}
                     </>
                 )}
             />
@@ -1131,9 +1198,9 @@ const AssetLibraryView = ({ isDark }) => {
                                 <List className="h-4 w-4" />
                             </DashboardIconButton>
                         </div>
-                        <DashboardButton isDark={isDark} onClick={() => uploadInputRef.current?.click()}>
+                        <DashboardButton isDark={isDark} onClick={() => uploadInputRef.current?.click()} disabled={uploading}>
                             <Upload className="h-4 w-4" />
-                            Upload Files
+                            {uploading ? 'Uploading' : 'Upload Files'}
                         </DashboardButton>
                         <DashboardButton isDark={isDark} variant="secondary" onClick={() => toast.success('Folder organization is not wired yet. This stays in the flat library for now.')}>
                             <Plus className="h-4 w-4" />
@@ -1215,10 +1282,10 @@ const AssetLibraryView = ({ isDark }) => {
                                         Drag and drop files here
                                     </h3>
                                     <p className={cn('mt-2 text-sm font-light leading-6', uiTheme.textSecondary)}>
-                                        PNG, JPG, GIF, MP4, MOV, PDF. Direct library uploads still route through the approvals workflow.
+                                        PNG, JPG, GIF, MP4, MOV, PDF. Files upload directly to this library.
                                     </p>
-                                    <DashboardButton isDark={isDark} className="mt-5" onClick={() => uploadInputRef.current?.click()}>
-                                        Browse Files
+                                    <DashboardButton isDark={isDark} className="mt-5" onClick={() => uploadInputRef.current?.click()} disabled={uploading}>
+                                        {uploading ? 'Uploading' : 'Browse Files'}
                                     </DashboardButton>
                                 </div>
                             </DashboardSurface>
