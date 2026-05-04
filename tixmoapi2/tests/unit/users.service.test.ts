@@ -99,4 +99,31 @@ describe('UserService Security', () => {
     // The current implementation (vulnerable) will fail this check because it uses Math.random
     expect(generatedPassword).toMatch(/^[0-9a-f]{16}$/);
   });
+
+  it('should build invitation login links from the trusted request origin when provided', async () => {
+    const mockUser = {
+      id: 'user-123',
+      email: 'newuser@example.com',
+      firstName: 'New',
+      lastName: 'User',
+      role: 'TEAM_MEMBER',
+    };
+
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.user.create as jest.Mock).mockResolvedValue(mockUser);
+    (transporter.sendMail as jest.Mock).mockResolvedValue({});
+
+    await userService.createUser({
+      email: 'newuser@example.com',
+      firstName: 'New',
+      lastName: 'User',
+      role: 'TEAM_MEMBER',
+    } as any, {
+      clientOrigin: 'https://mightyquinton.tixmo.co',
+    });
+
+    expect(userInvitationEmail).toHaveBeenCalledWith(expect.objectContaining({
+      loginUrl: 'https://mightyquinton.tixmo.co/login',
+    }));
+  });
 });
