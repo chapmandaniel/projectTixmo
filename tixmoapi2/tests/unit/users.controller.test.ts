@@ -1,4 +1,4 @@
-import { listUsers } from '../../src/api/users/controller';
+import { createUser, listUsers } from '../../src/api/users/controller';
 import { userService } from '../../src/api/users/service';
 import prisma from '../../src/config/prisma';
 import { AuthRequest } from '../../src/middleware/auth';
@@ -17,6 +17,7 @@ jest.mock('../../src/config/prisma', () => ({
 
 jest.mock('../../src/api/users/service', () => ({
     userService: {
+        createUser: jest.fn(),
         listUsers: jest.fn(),
     },
 }));
@@ -110,5 +111,79 @@ describe('Users Controller - listUsers', () => {
             limit: '10',
             organizationId: explicitOrgId,
         });
+    });
+});
+
+describe('Users Controller - createUser', () => {
+    let mockReq: Partial<AuthRequest>;
+    let mockRes: Partial<Response>;
+    let jsonMock: jest.Mock;
+    const nextMock = jest.fn();
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        jsonMock = jest.fn();
+        mockRes = {
+            json: jsonMock,
+            status: jest.fn().mockReturnThis(),
+        };
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: 'org-123' });
+        (userService.createUser as jest.Mock).mockResolvedValue({
+            id: 'new-user',
+            email: 'member@example.com',
+            firstName: 'Team',
+            lastName: 'Member',
+            role: 'TEAM_MEMBER',
+            organizationId: 'org-123',
+        });
+    });
+
+    it('passes the trusted dashboard origin to team invitation emails', async () => {
+        mockReq = {
+            user: { userId: 'owner-id', role: 'OWNER' },
+            body: {
+                email: 'member@example.com',
+                firstName: 'Team',
+                lastName: 'Member',
+                role: 'TEAM_MEMBER',
+            },
+            get: jest.fn((header: string) => (
+                header.toLowerCase() === 'origin' ? 'https://mightyquinton.tixmo.co' : undefined
+            )),
+        } as any;
+
+        await createUser(mockReq as AuthRequest, mockRes as Response, nextMock);
+        await new Promise(resolve => setImmediate(resolve));
+
+        expect(userService.createUser).toHaveBeenCalledWith(
+            expect.objectContaining({
+                email: 'member@example.com',
+                organizationId: 'org-123',
+            }),
+            { clientOrigin: 'https://mightyquinton.tixmo.co' }
+        );
+    });
+
+    it('does not trust Railway request origins for team invitation emails', async () => {
+        mockReq = {
+            user: { userId: 'owner-id', role: 'OWNER' },
+            body: {
+                email: 'member@example.com',
+                firstName: 'Team',
+                lastName: 'Member',
+                role: 'TEAM_MEMBER',
+            },
+            get: jest.fn((header: string) => (
+                header.toLowerCase() === 'origin' ? 'https://dash-production-589d.up.railway.app' : undefined
+            )),
+        } as any;
+
+        await createUser(mockReq as AuthRequest, mockRes as Response, nextMock);
+        await new Promise(resolve => setImmediate(resolve));
+
+        expect(userService.createUser).toHaveBeenCalledWith(
+            expect.objectContaining({ email: 'member@example.com' }),
+            { clientOrigin: undefined }
+        );
     });
 });

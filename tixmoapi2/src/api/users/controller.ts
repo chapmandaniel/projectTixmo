@@ -5,6 +5,7 @@ import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { userService, CreateUserInput, UpdateUserInput, ListUsersParams } from './service';
 import prisma from '../../config/prisma';
+import { resolveTrustedClientOrigin } from '../../utils/clientOrigin';
 
 const getCallerOrganizationId = async (userId: string) => {
   const callerDetails = await prisma.user.findUnique({
@@ -62,7 +63,8 @@ export const createUser = catchAsync(async (req: AuthRequest, res: Response) => 
     }
   }
 
-  const user = await userService.createUser(payload);
+  const clientOrigin = resolveTrustedClientOrigin(req.get('origin'), req.get('referer'));
+  const user = await userService.createUser(payload, { clientOrigin });
   res.status(201).json(successResponse(user, 'User created successfully'));
 });
 

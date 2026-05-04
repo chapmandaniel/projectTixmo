@@ -22,6 +22,10 @@ export interface CreateUserInput {
   password?: string;
 }
 
+export interface CreateUserOptions {
+  clientOrigin?: string;
+}
+
 export interface UpdateUserInput {
   firstName?: string;
   lastName?: string;
@@ -48,10 +52,15 @@ interface PaginatedUsers {
 }
 
 export class UserService {
+  private buildLoginUrl(clientOrigin?: string): string {
+    const baseUrl = clientOrigin || config.clientUrl;
+    return new URL('/login', baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`).toString();
+  }
+
   /**
    * Create a new user
    */
-  async createUser(data: CreateUserInput): Promise<SafeUser> {
+  async createUser(data: CreateUserInput, options: CreateUserOptions = {}): Promise<SafeUser> {
     const { email, password, ...rest } = data;
 
     // Check if user exists
@@ -97,7 +106,7 @@ export class UserService {
 
     // Send invitation email
     try {
-      const loginUrl = `${config.clientUrl}/login`;
+      const loginUrl = this.buildLoginUrl(options.clientOrigin);
       const emailContent = userInvitationEmail({
         name: user.firstName,
         email: user.email,
