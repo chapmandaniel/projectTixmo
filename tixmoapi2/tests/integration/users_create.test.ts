@@ -10,6 +10,8 @@ describe('User Creation Authorization (RBAC)', () => {
     let adminWithOrgToken: string;
     let promoterUser: any;
     let promoterToken: string;
+    let managerUser: any;
+    let managerToken: string;
     let otherOrgId: string;
     let scopedOrgId: string;
 
@@ -107,6 +109,21 @@ describe('User Creation Authorization (RBAC)', () => {
             password: 'SecurePass123!',
         });
         promoterToken = promoterLogin.body.data.accessToken;
+
+        const managerData = await registerUser(app, {
+            email: 'manager@test.com',
+            firstName: 'Manager',
+            lastName: 'User',
+        });
+        managerUser = await prisma.user.update({
+            where: { id: managerData.user.id },
+            data: { role: UserRole.MANAGER, organizationId: org.id },
+        });
+        const managerLogin = await request(app).post('/api/v1/auth/login').send({
+            email: 'manager@test.com',
+            password: 'SecurePass123!',
+        });
+        managerToken = managerLogin.body.data.accessToken;
     });
 
     afterAll(async () => {
@@ -129,6 +146,22 @@ describe('User Creation Authorization (RBAC)', () => {
             expect(res.body.data.role).toBe('PROMOTER');
         });
 
+        it('should allow ADMIN to create a MANAGER', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${adminWithOrgToken}`)
+                .send({
+                    email: 'new_manager@test.com',
+                    firstName: 'New',
+                    lastName: 'Manager',
+                    role: 'MANAGER',
+                });
+
+            expect(res.status).toBe(201);
+            expect(res.body.data.role).toBe('MANAGER');
+            expect(res.body.data.organizationId).toBe(scopedOrgId);
+        });
+
         it('should allow PROMOTER to create a TEAM_MEMBER', async () => {
             const res = await request(app)
                 .post('/api/v1/users')
@@ -145,6 +178,42 @@ describe('User Creation Authorization (RBAC)', () => {
             expect(res.body.data.organizationId).toBe(promoterUser.organizationId);
         });
 
+        it('should allow MANAGER to create a TEAM_MEMBER in their own organization', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${managerToken}`)
+                .send({
+                    email: 'manager_team@test.com',
+                    firstName: 'Manager',
+                    lastName: 'Team',
+                    role: 'TEAM_MEMBER',
+                    organizationId: otherOrgId,
+                });
+
+            expect(res.status).toBe(201);
+            expect(res.body.data.role).toBe('TEAM_MEMBER');
+            expect(res.body.data.organizationId).toBe(managerUser.organizationId);
+            expect(res.body.data.organizationId).not.toBe(otherOrgId);
+        });
+
+        it('should allow MANAGER to create a PROMOTER in their own organization', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${managerToken}`)
+                .send({
+                    email: 'manager_promoter@test.com',
+                    firstName: 'Manager',
+                    lastName: 'Promoter',
+                    role: 'PROMOTER',
+                    organizationId: otherOrgId,
+                });
+
+            expect(res.status).toBe(201);
+            expect(res.body.data.role).toBe('PROMOTER');
+            expect(res.body.data.organizationId).toBe(managerUser.organizationId);
+            expect(res.body.data.organizationId).not.toBe(otherOrgId);
+        });
+
         it('should forbid PROMOTER from creating an ADMIN (Privilege Escalation)', async () => {
             const res = await request(app)
                 .post('/api/v1/users')
@@ -152,6 +221,51 @@ describe('User Creation Authorization (RBAC)', () => {
                 .send({
                     email: 'hacker_admin@test.com',
                     firstName: 'Hacker',
+                    lastName: 'Admin',
+                    role: 'ADMIN',
+                });
+
+            expect(res.status).toBe(403);
+            expect(res.body.message).toContain('cannot create a user with role ADMIN');
+        });
+
+        it('should forbid PROMOTER from creating a MANAGER', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${promoterToken}`)
+                .send({
+                    email: 'manager_escalation@test.com',
+                    firstName: 'Manager',
+                    lastName: 'Escalation',
+                    role: 'MANAGER',
+                });
+
+            expect(res.status).toBe(403);
+            expect(res.body.message).toContain('cannot create a user with role MANAGER');
+        });
+
+        it('should forbid MANAGER from creating another MANAGER', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${managerToken}`)
+                .send({
+                    email: 'peer_manager@test.com',
+                    firstName: 'Peer',
+                    lastName: 'Manager',
+                    role: 'MANAGER',
+                });
+
+            expect(res.status).toBe(403);
+            expect(res.body.message).toContain('cannot create a user with role MANAGER');
+        });
+
+        it('should forbid ADMIN from creating another ADMIN', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${adminWithOrgToken}`)
+                .send({
+                    email: 'peer_admin@test.com',
+                    firstName: 'Peer',
                     lastName: 'Admin',
                     role: 'ADMIN',
                 });

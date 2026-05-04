@@ -61,6 +61,30 @@ const TeamMemberWizard = ({ onClose, onSuccess, isDark, currentUser }) => {
         return true;
     };
 
+    const roleLevels = {
+        OWNER: 5,
+        ADMIN: 4,
+        MANAGER: 3,
+        PROMOTER: 2,
+        TEAM_MEMBER: 1,
+        SCANNER: 1,
+        CUSTOMER: 0,
+    };
+
+    const canAssignRole = (role) => {
+        if (!currentUser?.role) {
+            return role === 'TEAM_MEMBER';
+        }
+
+        if (currentUser?.role === 'OWNER') {
+            return true;
+        }
+
+        const currentLevel = roleLevels[currentUser?.role] || 0;
+        const targetLevel = roleLevels[role] || 0;
+        return targetLevel < currentLevel;
+    };
+
     const nextStep = () => {
         if (validateStep(step)) {
             if (step === 2 && formData.role !== 'TEAM_MEMBER') {
@@ -110,12 +134,30 @@ const TeamMemberWizard = ({ onClose, onSuccess, isDark, currentUser }) => {
             icon: Shield
         },
         {
+            id: 'MANAGER',
+            label: 'Manager',
+            description: 'Operational lead for events, venues, tickets, scanners, and reports.',
+            icon: Shield
+        },
+        {
+            id: 'PROMOTER',
+            label: 'Promoter',
+            description: 'Event operator with access to events, scanners, reports, and promotions.',
+            icon: User
+        },
+        {
+            id: 'SCANNER',
+            label: 'Scanner',
+            description: 'Entry staff focused on validation and check-in workflows.',
+            icon: User
+        },
+        {
             id: 'TEAM_MEMBER',
             label: 'Team Member',
             description: 'Custom access based on specific permissions.',
             icon: User
         }
-    ];
+    ].filter((role) => canAssignRole(role.id));
 
     const permissionOptions = [
         { key: 'manageEvents', label: 'Manage Events', description: 'Create and edit events' },

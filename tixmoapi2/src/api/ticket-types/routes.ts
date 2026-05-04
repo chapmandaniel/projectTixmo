@@ -15,7 +15,7 @@ router.use(authenticate);
  * /ticket-types:
  *   post:
  *     summary: Create a new ticket type
- *     description: Create a new ticket type for an event. Requires ADMIN or PROMOTER role.
+ *     description: Create a new ticket type for an event. Requires owner, admin, manager, or promoter role.
  *     tags: [Ticket Types]
  *     security:
  *       - bearerAuth: []
@@ -71,7 +71,7 @@ router.use(authenticate);
  */
 router.post(
   '/',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.createTicketTypeSchema),
   controller.createTicketType
 );
@@ -155,7 +155,7 @@ router.get('/:id', controller.getTicketType);
  */
 router.put(
   '/:id',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.updateTicketTypeSchema),
   controller.updateTicketType
 );
@@ -165,7 +165,7 @@ router.put(
  * /ticket-types/{id}:
  *   delete:
  *     summary: Delete ticket type
- *     description: Delete a ticket type (admin only). Cannot delete if tickets have been sold.
+ *     description: Delete a ticket type (owner/admin only). Cannot delete if tickets have been sold.
  *     tags: [Ticket Types]
  *     security:
  *       - bearerAuth: []
@@ -184,11 +184,11 @@ router.put(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - owner/admin only
  *       404:
  *         description: Ticket type not found
  */
-router.delete('/:id', authorize('ADMIN'), controller.deleteTicketType);
+router.delete('/:id', authorize('OWNER', 'ADMIN'), controller.deleteTicketType);
 
 /**
  * @swagger

@@ -61,10 +61,16 @@ const TeamView = ({ isDark, user: currentUser }) => {
         }
 
         try {
-            await api.delete(`/users/${userId}`);
+            if (scopedUser?.role === 'OWNER' || scopedUser?.role === 'ADMIN') {
+                await api.delete(`/users/${userId}`);
+            } else if (scopedUser?.organizationId) {
+                await api.delete(`/organizations/${scopedUser.organizationId}/members/${userId}`);
+            } else {
+                throw new Error('Missing organization context');
+            }
             fetchUsers();
         } catch (err) {
-            alert('Failed to delete user');
+            alert('Failed to remove member');
         }
     };
 
@@ -79,6 +85,8 @@ const TeamView = ({ isDark, user: currentUser }) => {
                 return { icon: Lock, color: isDark ? 'bg-pink-500/12 text-pink-300' : 'bg-pink-50 text-pink-700' };
             case 'ADMIN':
                 return { icon: Shield, color: isDark ? 'bg-orange-500/12 text-orange-300' : 'bg-orange-50 text-orange-700' };
+            case 'MANAGER':
+                return { icon: Shield, color: isDark ? 'bg-cyan-500/12 text-cyan-300' : 'bg-cyan-50 text-cyan-700' };
             case 'TEAM_MEMBER':
                 return { icon: User, color: isDark ? 'bg-indigo-500/12 text-indigo-300' : 'bg-blue-50 text-blue-700' };
             default:
@@ -90,12 +98,14 @@ const TeamView = ({ isDark, user: currentUser }) => {
         const active = users.filter((member) => member.emailVerified).length;
         const pending = users.filter((member) => !member.emailVerified).length;
         const admins = users.filter((member) => member.role === 'OWNER' || member.role === 'ADMIN').length;
+        const managers = users.filter((member) => member.role === 'MANAGER').length;
 
         return [
             { id: 'total', label: 'Members', value: users.length, icon: Users, accent: 'brand', iconClassName: 'text-pink-300' },
             { id: 'active', label: 'Active', value: active, icon: CheckCircle2, accent: 'green', iconClassName: 'text-emerald-300' },
             { id: 'pending', label: 'Pending', value: pending, icon: Clock3, accent: 'amber', iconClassName: 'text-amber-300' },
             { id: 'admins', label: 'Admins', value: admins, icon: Shield, accent: 'violet', iconClassName: 'text-violet-300' },
+            { id: 'managers', label: 'Managers', value: managers, icon: Shield, accent: 'blue', iconClassName: 'text-cyan-300' },
         ];
     }, [users]);
 
@@ -138,7 +148,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                 </div>
             )}
 
-            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 {stats.map((stat) => {
                     const Icon = stat.icon;
                     return (
@@ -198,6 +208,19 @@ const TeamView = ({ isDark, user: currentUser }) => {
                             const badge = getRoleBadge(member.role);
                             const Icon = badge.icon;
                             const isCurrentUser = scopedUser?.id === member.id;
+                            const roleLevels = {
+                                OWNER: 5,
+                                ADMIN: 4,
+                                MANAGER: 3,
+                                PROMOTER: 2,
+                                TEAM_MEMBER: 1,
+                                SCANNER: 1,
+                                CUSTOMER: 0,
+                            };
+                            const canRemoveMember = !isCurrentUser && (
+                                scopedUser?.role === 'OWNER'
+                                    || ((roleLevels[member.role] || 0) < (roleLevels[scopedUser?.role] || 0))
+                            );
 
                             return (
                                 <DashboardStripedRow
@@ -257,13 +280,13 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                         <div className="flex justify-end lg:justify-center">
                                             <button
                                                 onClick={() => handleDeleteUser(member.id)}
-                                                disabled={isCurrentUser}
+                                                disabled={!canRemoveMember}
                                                 className={`inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                                                    isCurrentUser
+                                                    !canRemoveMember
                                                         ? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')
                                                         : (isDark ? 'hover:bg-red-900/20 text-gray-500 hover:text-red-400' : 'hover:bg-rose-50 text-gray-500 hover:text-rose-600')
                                                 }`}
-                                                title={isCurrentUser ? 'You cannot remove your own account' : 'Remove member'}
+                                                title={canRemoveMember ? 'Remove member' : 'You cannot remove this member'}
                                             >
                                                 <Trash2 size={16} />
                                             </button>

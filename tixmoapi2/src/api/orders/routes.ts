@@ -111,7 +111,7 @@ router.get('/:id', controller.getOrder);
  *       404:
  *         description: Order not found
  */
-router.post('/:id/confirm', authorize('ADMIN', 'PROMOTER'), controller.confirmOrder);
+router.post('/:id/confirm', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.confirmOrder);
 
 /**
  * @swagger
@@ -148,7 +148,7 @@ router.post('/:id/cancel', controller.cancelOrder);
  * /orders/{id}/refund:
  *   post:
  *     summary: Refund order
- *     description: Refund a paid order. Admin only. Cancels all tickets and restores inventory.
+ *     description: Refund a paid order. owner/admin only. Cancels all tickets and restores inventory.
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -167,11 +167,11 @@ router.post('/:id/cancel', controller.cancelOrder);
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - owner/admin only
  *       404:
  *         description: Order not found
  */
-router.post('/:id/refund', authorize('ADMIN'), controller.refundOrder);
+router.post('/:id/refund', authorize('OWNER', 'ADMIN'), controller.refundOrder);
 
 /**
  * @swagger

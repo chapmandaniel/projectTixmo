@@ -5,8 +5,10 @@ import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { ticketService } from './service';
 
+const canManageTickets = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
+
 export const listTickets = catchAsync(async (req: AuthRequest, res: Response) => {
-  const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;
+  const userId = canManageTickets(req.user!.role) ? undefined : req.user!.userId;
 
   const result = await ticketService.listTickets({
     ...req.query,
@@ -18,7 +20,7 @@ export const listTickets = catchAsync(async (req: AuthRequest, res: Response) =>
 
 export const getTicket = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;
+  const userId = canManageTickets(req.user!.role) ? undefined : req.user!.userId;
 
   const ticket = await ticketService.getTicketById(id, userId);
 
@@ -63,7 +65,7 @@ export const checkInTicket = catchAsync(async (req: AuthRequest, res: Response) 
 
 export const getTicketQRCode = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;
+  const userId = canManageTickets(req.user!.role) ? undefined : req.user!.userId;
 
   const qrCodeDataUrl = await ticketService.getTicketQRCode(id, userId);
 
@@ -72,7 +74,7 @@ export const getTicketQRCode = catchAsync(async (req: AuthRequest, res: Response
 
 export const regenerateTicketQRCode = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;
+  const userId = canManageTickets(req.user!.role) ? undefined : req.user!.userId;
 
   const qrCodeDataUrl = await ticketService.regenerateTicketQRCode(id, userId);
 

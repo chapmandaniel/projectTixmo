@@ -56,6 +56,7 @@ const UserModal = ({ user, onClose, onSave, isDark }) => {
                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                         options={[
                             { value: 'ADMIN', label: 'Admin (Full Access)' },
+                            { value: 'MANAGER', label: 'Manager (Operations)' },
                             { value: 'PROMOTER', label: 'Promoter (Events & Scanners)' },
                             { value: 'SCANNER', label: 'Scanner (Check-in Only)' }
                         ]}

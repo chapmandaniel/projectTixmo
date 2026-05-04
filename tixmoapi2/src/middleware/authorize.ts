@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import { AuthRequest } from './auth';
 import { ApiError } from '../utils/ApiError';
 
-type UserRole = 'OWNER' | 'ADMIN' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
+type UserRole = 'OWNER' | 'ADMIN' | 'MANAGER' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
 
 export const authorize = (...allowedRoles: UserRole[]) => {
   return (req: AuthRequest, _res: Response, next: NextFunction) => {

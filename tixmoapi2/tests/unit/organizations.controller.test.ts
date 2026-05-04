@@ -75,7 +75,36 @@ describe('Organizations Controller - removeMember', () => {
     expect(organizationService.removeMember).not.toHaveBeenCalled();
   });
 
-  it('should ALLOW PROMOTER to remove a member', async () => {
+  it('should ALLOW MANAGER to remove a member', async () => {
+    const orgId = 'org-123';
+    const victimId = 'victim-456';
+    const managerId = 'manager-789';
+
+    mockReq = {
+      params: { id: orgId, userId: victimId },
+      user: { userId: managerId, role: 'MANAGER' },
+    };
+
+    (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
+      organizationId: orgId,
+      role: 'MANAGER',
+    }).mockResolvedValueOnce({
+      id: victimId,
+      role: 'TEAM_MEMBER',
+    });
+
+    await removeMember(mockReq as AuthRequest, mockRes as Response, nextMock);
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(organizationService.removeMember).toHaveBeenCalledWith(orgId, victimId);
+    expect(jsonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Member removed successfully',
+      })
+    );
+  });
+
+  it('should FORBID PROMOTER from removing a member', async () => {
     const orgId = 'org-123';
     const victimId = 'victim-456';
     const promoterId = 'promoter-789';
@@ -90,15 +119,20 @@ describe('Organizations Controller - removeMember', () => {
       role: 'PROMOTER',
     });
 
-    await removeMember(mockReq as AuthRequest, mockRes as Response, nextMock);
+    let error;
+    try {
+      await removeMember(mockReq as AuthRequest, mockRes as Response, nextMock);
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).toBeDefined();
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).statusCode).toBe(403);
+    expect((error as ApiError).message).toContain('sufficient privileges');
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(organizationService.removeMember).toHaveBeenCalledWith(orgId, victimId);
-    expect(jsonMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'Member removed successfully',
-      })
-    );
+    expect(organizationService.removeMember).not.toHaveBeenCalled();
   });
 
   it('should ALLOW OWNER to remove a member', async () => {
@@ -112,8 +146,8 @@ describe('Organizations Controller - removeMember', () => {
     };
 
     (prisma.user.findUnique as jest.Mock).mockResolvedValue({
-      organizationId: orgId,
-      role: 'OWNER',
+      id: victimId,
+      role: 'ADMIN',
     });
 
     await removeMember(mockReq as AuthRequest, mockRes as Response, nextMock);

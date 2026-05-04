@@ -50,7 +50,7 @@ const router = Router();
 router.post(
   '/register',
   authenticate,
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.registerScannerSchema),
   controller.registerScanner
 );
@@ -213,7 +213,7 @@ router.post(
 router.get(
   '/',
   authenticate,
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.listScannersSchema),
   controller.listScanners
 );
@@ -308,7 +308,7 @@ router.post(
 router.get(
   '/logs',
   authenticate,
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.getScanLogsSchema),
   controller.getScanLogs
 );
@@ -337,7 +337,7 @@ router.get(
  *       404:
  *         description: Scanner not found
  */
-router.get('/:id', authenticate, authorize('ADMIN', 'PROMOTER'), controller.getScanner);
+router.get('/:id', authenticate, authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.getScanner);
 
 /**
  * @swagger
@@ -382,7 +382,7 @@ router.get('/:id', authenticate, authorize('ADMIN', 'PROMOTER'), controller.getS
 router.put(
   '/:id',
   authenticate,
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.updateScannerSchema),
   controller.updateScanner
 );
@@ -411,6 +411,6 @@ router.put(
  *       404:
  *         description: Scanner not found
  */
-router.delete('/:id', authenticate, authorize('ADMIN', 'PROMOTER'), controller.deleteScanner);
+router.delete('/:id', authenticate, authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.deleteScanner);
 
 export default router;

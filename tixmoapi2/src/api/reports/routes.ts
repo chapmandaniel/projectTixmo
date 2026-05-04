@@ -51,7 +51,7 @@ const router = Router();
 router.get(
   '/sales',
   authenticate,
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.getSalesReportSchema),
   controller.getSalesReport
 );
@@ -81,7 +81,7 @@ router.get(
 router.get(
   '/attendance',
   authenticate,
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.getAttendanceReportSchema),
   controller.getAttendanceReport
 );
@@ -110,7 +110,7 @@ router.get(
 router.get(
   '/dashboard',
   authenticate,
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.getDashboardStatsSchema),
   controller.getDashboardStats
 );

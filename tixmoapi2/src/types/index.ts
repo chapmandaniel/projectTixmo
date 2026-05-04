@@ -12,10 +12,13 @@ export interface User {
 }
 
 export enum UserRole {
+  OWNER = 'owner',
   ADMIN = 'admin',
+  MANAGER = 'manager',
   PROMOTER = 'promoter',
   CUSTOMER = 'customer',
   SCANNER = 'scanner',
+  TEAM_MEMBER = 'team_member',
 }
 
 export interface Organization {

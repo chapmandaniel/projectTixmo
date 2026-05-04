@@ -13,8 +13,11 @@ export const API_ENUMS = {
     CANCELLED: 'CANCELLED'
   },
   UserRole: {
+    OWNER: 'OWNER',
     ADMIN: 'ADMIN',
+    MANAGER: 'MANAGER',
     PROMOTER: 'PROMOTER',
+    TEAM_MEMBER: 'TEAM_MEMBER',
     SCANNER: 'SCANNER',
     CUSTOMER: 'CUSTOMER'
   }
@@ -30,6 +33,7 @@ export const CURRENT_USER = {
 
 export const MOCK_USERS = [
   { id: 'u1', firstName: 'Sarah', lastName: 'Jenkins', email: 'sarah@tixmo.com', role: 'ADMIN', status: 'ACTIVE', lastActive: 'Now' },
+  { id: 'u6', firstName: 'Jordan', lastName: 'Lee', email: 'jordan.lee@tixmo.com', role: 'MANAGER', status: 'ACTIVE', lastActive: '30m ago' },
   { id: 'u2', firstName: 'Alex', lastName: 'Rivera', email: 'alex.r@tixmo.com', role: 'PROMOTER', status: 'ACTIVE', lastActive: '2h ago' },
   { id: 'u3', firstName: 'Mike', lastName: 'Chen', email: 'mike.c@tixmo.com', role: 'SCANNER', status: 'ACTIVE', lastActive: '1d ago' },
   { id: 'u4', firstName: 'Emma', lastName: 'Watson', email: 'emma.w@tixmo.com', role: 'SCANNER', status: 'PENDING', lastActive: '-' },

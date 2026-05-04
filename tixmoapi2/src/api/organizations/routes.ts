@@ -15,7 +15,7 @@ router.use(authenticate);
  * /organizations:
  *   post:
  *     summary: Create a new organization
- *     description: Create a new organization (promoter, venue, or reseller). Requires ADMIN or PROMOTER role.
+ *     description: Create a new organization (promoter, venue, or reseller). Requires owner, admin, manager, or promoter role.
  *     tags: [Organizations]
  *     security:
  *       - bearerAuth: []
@@ -49,13 +49,13 @@ router.use(authenticate);
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Requires ADMIN or PROMOTER role
+ *         description: Forbidden - Requires owner, admin, manager, or promoter role
  *       409:
  *         description: Organization with this slug already exists
  */
 router.post(
   '/',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.createOrganizationSchema),
   controller.createOrganization
 );
@@ -138,7 +138,7 @@ router.get('/:id', controller.getOrganization);
  */
 router.put(
   '/:id',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.updateOrganizationSchema),
   controller.updateOrganization
 );
@@ -148,7 +148,7 @@ router.put(
  * /organizations/{id}:
  *   delete:
  *     summary: Delete organization
- *     description: Delete an organization (admin only). Cannot delete if organization has events or venues.
+ *     description: Delete an organization (owner/admin only). Cannot delete if organization has events or venues.
  *     tags: [Organizations]
  *     security:
  *       - bearerAuth: []
@@ -167,11 +167,11 @@ router.put(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - owner/admin only
  *       404:
  *         description: Organization not found
  */
-router.delete('/:id', authorize('ADMIN'), controller.deleteOrganization);
+router.delete('/:id', authorize('OWNER', 'ADMIN'), controller.deleteOrganization);
 
 /**
  * @swagger
@@ -209,11 +209,11 @@ router.delete('/:id', authorize('ADMIN'), controller.deleteOrganization);
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - owner/admin only
  */
 router.get(
   '/',
-  authorize('ADMIN'),
+  authorize('OWNER', 'ADMIN'),
   validate(validation.listOrganizationsSchema),
   controller.listOrganizations
 );

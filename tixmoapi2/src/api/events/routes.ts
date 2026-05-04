@@ -15,7 +15,7 @@ router.use(authenticate);
  * /events:
  *   post:
  *     summary: Create a new event
- *     description: Create a new event for an organization. Requires ADMIN or PROMOTER role.
+ *     description: Create a new event for an organization. Requires owner, admin, manager, or promoter role.
  *     tags: [Events]
  *     security:
  *       - bearerAuth: []
@@ -79,7 +79,7 @@ router.use(authenticate);
  */
 router.post(
   '/',
-  authorize('OWNER', 'ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.createEventSchema),
   controller.createEvent
 );
@@ -172,7 +172,7 @@ router.get('/:id', controller.getEvent);
 
 router.put(
   '/:id',
-  authorize('OWNER', 'ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.updateEventSchema),
   controller.updateEvent
 );
@@ -182,7 +182,7 @@ router.put(
  * /events/{id}:
  *   delete:
  *     summary: Delete event
- *     description: Delete an event (admin only). Cannot delete if event has tickets.
+ *     description: Delete an event (owner/admin only). Cannot delete if event has tickets.
  *     tags: [Events]
  *     security:
  *       - bearerAuth: []
@@ -201,7 +201,7 @@ router.put(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - owner/admin only
  *       404:
  *         description: Event not found
  */
@@ -313,7 +313,7 @@ router.delete('/:id', authorize('OWNER', 'ADMIN'), controller.deleteEvent);
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - owner/admin only
  *       404:
  *         description: Event not found
  */
@@ -345,7 +345,7 @@ router.post('/:id/restore', authorize('OWNER', 'ADMIN'), controller.restoreEvent
  *       404:
  *         description: Event not found
  */
-router.post('/:id/publish', authorize('OWNER', 'ADMIN', 'PROMOTER'), validate(validation.publishEventSchema), controller.publishEvent);
+router.post('/:id/publish', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), validate(validation.publishEventSchema), controller.publishEvent);
 
 /**
  * @swagger
@@ -373,7 +373,7 @@ router.post('/:id/publish', authorize('OWNER', 'ADMIN', 'PROMOTER'), validate(va
  *       404:
  *         description: Event not found
  */
-router.post('/:id/cancel', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.cancelEvent);
+router.post('/:id/cancel', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.cancelEvent);
 
 /**
  * @swagger
@@ -399,7 +399,7 @@ router.post('/:id/cancel', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.c
  *       404:
  *         description: Event not found
  */
-router.get('/:id/stats', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.getEventStats);
+router.get('/:id/stats', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.getEventStats);
 
 /**
  * @swagger
@@ -425,7 +425,7 @@ router.get('/:id/stats', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.get
  *       404:
  *         description: Event not found
  */
-router.get('/:id/occupancy', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.getEventOccupancy);
+router.get('/:id/occupancy', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.getEventOccupancy);
 
 /**
  * @swagger
@@ -457,7 +457,7 @@ router.get('/:id/occupancy', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller
  *       404:
  *         description: Event not found
  */
-router.get('/:id/timeline', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.getEntryTimeline);
+router.get('/:id/timeline', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.getEntryTimeline);
 
 /**
  * @swagger
@@ -483,17 +483,17 @@ router.get('/:id/timeline', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.
  *       404:
  *         description: Event not found
  */
-router.get('/:id/scanner-stats', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.getScannerStats);
+router.get('/:id/scanner-stats', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.getScannerStats);
 
 // Event status transition (generic endpoint)
 router.post(
   '/:id/status',
-  authorize('OWNER', 'ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.updateEventStatusSchema),
   controller.updateEventStatus
 );
 
 // Clone event
-router.post('/:id/clone', authorize('OWNER', 'ADMIN', 'PROMOTER'), controller.cloneEvent);
+router.post('/:id/clone', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.cloneEvent);
 
 export default router;

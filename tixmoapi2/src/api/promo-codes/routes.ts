@@ -15,7 +15,7 @@ router.use(authenticate);
  * /promo-codes:
  *   post:
  *     summary: Create promo code
- *     description: Create a new promotional discount code. Requires ADMIN or PROMOTER role.
+ *     description: Create a new promotional discount code. Requires owner, admin, manager, or promoter role.
  *     tags: [Promo Codes]
  *     security:
  *       - bearerAuth: []
@@ -72,7 +72,7 @@ router.use(authenticate);
  */
 router.post(
   '/',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.createPromoCodeSchema),
   controller.createPromoCode
 );
@@ -101,7 +101,7 @@ router.post(
  *       404:
  *         description: Promo code not found
  */
-router.get('/:id', authorize('ADMIN', 'PROMOTER'), controller.getPromoCode);
+router.get('/:id', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.getPromoCode);
 
 /**
  * @swagger
@@ -158,7 +158,7 @@ router.get('/:id', authorize('ADMIN', 'PROMOTER'), controller.getPromoCode);
  */
 router.put(
   '/:id',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.updatePromoCodeSchema),
   controller.updatePromoCode
 );
@@ -168,7 +168,7 @@ router.put(
  * /promo-codes/{id}:
  *   delete:
  *     summary: Delete promo code
- *     description: Delete a promo code (admin only). Cannot delete if it has been used.
+ *     description: Delete a promo code (owner/admin only). Cannot delete if it has been used.
  *     tags: [Promo Codes]
  *     security:
  *       - bearerAuth: []
@@ -187,11 +187,11 @@ router.put(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - owner/admin only
  *       404:
  *         description: Promo code not found
  */
-router.delete('/:id', authorize('ADMIN', 'PROMOTER'), controller.deletePromoCode);
+router.delete('/:id', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.deletePromoCode);
 
 /**
  * @swagger
@@ -236,7 +236,7 @@ router.delete('/:id', authorize('ADMIN', 'PROMOTER'), controller.deletePromoCode
  */
 router.get(
   '/',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.listPromoCodesSchema),
   controller.listPromoCodes
 );

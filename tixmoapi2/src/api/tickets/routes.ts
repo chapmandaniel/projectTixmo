@@ -77,7 +77,7 @@ router.get('/', validate(validation.listTicketsSchema), controller.listTickets);
  *       401:
  *         description: Unauthorized
  */
-router.post('/validate', authorize('ADMIN', 'PROMOTER'), controller.validateTicket);
+router.post('/validate', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.validateTicket);
 
 /**
  * @swagger
@@ -108,7 +108,7 @@ router.post('/validate', authorize('ADMIN', 'PROMOTER'), controller.validateTick
  *       401:
  *         description: Unauthorized
  */
-router.post('/check-in', authorize('ADMIN', 'PROMOTER'), controller.checkInTicket);
+router.post('/check-in', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.checkInTicket);
 
 // ── PARAMETERIZED routes (/:id) ─────────────────────────────
 

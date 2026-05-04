@@ -13,6 +13,7 @@ datasource db {
 enum UserRole {
   OWNER
   ADMIN
+  MANAGER
   PROMOTER
   CUSTOMER
   SCANNER

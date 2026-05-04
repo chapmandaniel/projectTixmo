@@ -45,7 +45,7 @@ const options: swaggerJsdoc.Options = {
             phone: { type: 'string', nullable: true, description: 'User phone number' },
             role: {
               type: 'string',
-              enum: ['ADMIN', 'PROMOTER', 'CUSTOMER', 'SCANNER'],
+              enum: ['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER', 'CUSTOMER', 'SCANNER', 'TEAM_MEMBER'],
               description: 'User role',
             },
             organizationId: {

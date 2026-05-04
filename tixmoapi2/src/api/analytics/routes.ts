@@ -8,7 +8,7 @@ import * as validation from './validation';
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('ADMIN', 'PROMOTER'));
+router.use(authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'));
 
 /**
  * @swagger

@@ -145,7 +145,7 @@ router.put('/:id', validate(validation.updateUserSchema), controller.updateUser)
  * /users/{id}:
  *   delete:
  *     summary: Delete user account
- *     description: Soft delete a user account (admin only). This anonymizes the user's data.
+ *     description: Soft delete a user account (owner/admin only). This anonymizes the user's data.
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -167,7 +167,7 @@ router.put('/:id', validate(validation.updateUserSchema), controller.updateUser)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - owner/admin only
  *         content:
  *           application/json:
  *             schema:
@@ -179,14 +179,14 @@ router.put('/:id', validate(validation.updateUserSchema), controller.updateUser)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', authorize('ADMIN'), controller.deleteUser);
+router.delete('/:id', authorize('OWNER', 'ADMIN'), controller.deleteUser);
 
 /**
  * @swagger
  * /users:
  *   get:
  *     summary: List all users
- *     description: Get a paginated list of all users (admin only)
+ *     description: Get a paginated list of users with organization scoping for managers and promoters
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -207,7 +207,7 @@ router.delete('/:id', authorize('ADMIN'), controller.deleteUser);
  *         name: role
  *         schema:
  *           type: string
- *           enum: [OWNER, ADMIN, PROMOTER, CUSTOMER, SCANNER, TEAM_MEMBER]
+ *           enum: [OWNER, ADMIN, MANAGER, PROMOTER, CUSTOMER, SCANNER, TEAM_MEMBER]
  *         description: Filter by user role
  *     responses:
  *       200:
@@ -249,20 +249,20 @@ router.delete('/:id', authorize('ADMIN'), controller.deleteUser);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       403:
- *         description: Forbidden - Admin/Owner only
+ *         description: Forbidden - Owner/admin/manager/promoter, hierarchy restricted
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/', authorize('OWNER', 'ADMIN', 'PROMOTER'), validate(validation.listUsersSchema), controller.listUsers);
+router.get('/', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), validate(validation.listUsersSchema), controller.listUsers);
 
 /**
  * @swagger
  * /users:
  *   post:
  *     summary: Create a new user (Team Member)
- *     description: Create a new user account with specific role and permissions. (Owner/Admin only)
+ *     description: Create a new user account with specific role and permissions. (Owner/admin/manager/promoter, hierarchy restricted)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -283,7 +283,7 @@ router.get('/', authorize('OWNER', 'ADMIN', 'PROMOTER'), validate(validation.lis
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [OWNER, ADMIN, PROMOTER, TEAM_MEMBER, SCANNER]
+ *                 enum: [OWNER, ADMIN, MANAGER, PROMOTER, TEAM_MEMBER, SCANNER]
  *               title:
  *                 type: string
  *               permissions:
@@ -301,6 +301,6 @@ router.get('/', authorize('OWNER', 'ADMIN', 'PROMOTER'), validate(validation.lis
  *       403:
  *         description: Forbidden
  */
-router.post('/', authorize('OWNER', 'ADMIN', 'PROMOTER'), validate(validation.createUserSchema), controller.createUser);
+router.post('/', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), validate(validation.createUserSchema), controller.createUser);
 
 export default router;

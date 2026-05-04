@@ -57,7 +57,7 @@ router.use(authenticate);
  */
 router.post(
     '/',
-    authorize('OWNER', 'ADMIN', 'PROMOTER'),
+    authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
     validate(validation.createTierSchema),
     controller.createTier
 );
@@ -137,7 +137,7 @@ router.get('/active', validate(validation.listTiersSchema), controller.getActive
  */
 router.post(
     '/reorder',
-    authorize('OWNER', 'ADMIN', 'PROMOTER'),
+    authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
     validate(validation.reorderTiersSchema),
     controller.reorderTiers
 );
@@ -210,7 +210,7 @@ router.get('/:id', validate(validation.tierIdSchema), controller.getTier);
  */
 router.put(
     '/:id',
-    authorize('OWNER', 'ADMIN', 'PROMOTER'),
+    authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
     validate(validation.updateTierSchema),
     controller.updateTier
 );
@@ -237,7 +237,7 @@ router.put(
  */
 router.delete(
     '/:id',
-    authorize('OWNER', 'ADMIN', 'PROMOTER'),
+    authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
     validate(validation.tierIdSchema),
     controller.deleteTier
 );

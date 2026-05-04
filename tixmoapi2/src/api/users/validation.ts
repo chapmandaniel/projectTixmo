@@ -1,12 +1,14 @@
 import { z } from 'zod';
 
+const userRoleSchema = z.enum(['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER', 'CUSTOMER', 'SCANNER', 'TEAM_MEMBER']);
+
 // Schema for creating a new user (Team Member)
 export const createUserSchema = z.object({
   body: z.object({
     email: z.string().email(),
     firstName: z.string().min(1),
     lastName: z.string().min(1),
-    role: z.enum(['OWNER', 'ADMIN', 'PROMOTER', 'CUSTOMER', 'SCANNER', 'TEAM_MEMBER']),
+    role: userRoleSchema,
     organizationId: z.string().uuid().optional(),
     title: z.string().optional(),
     permissions: z.record(z.boolean()).optional(),
@@ -26,7 +28,7 @@ export const listUsersSchema = z.object({
   query: z.object({
     page: z.string().transform(Number).default('1'),
     limit: z.string().transform(Number).default('20'),
-    role: z.enum(['OWNER', 'ADMIN', 'PROMOTER', 'CUSTOMER', 'SCANNER', 'TEAM_MEMBER']).optional(),
+    role: userRoleSchema.optional(),
     organizationId: z.string().uuid().optional(),
   }),
 });

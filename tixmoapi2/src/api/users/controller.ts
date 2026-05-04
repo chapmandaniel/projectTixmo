@@ -15,22 +15,25 @@ const getCallerOrganizationId = async (userId: string) => {
   return callerDetails?.organizationId ?? null;
 };
 
+const roleHierarchy = {
+  OWNER: 5,
+  ADMIN: 4,
+  MANAGER: 3,
+  PROMOTER: 2,
+  TEAM_MEMBER: 1,
+  SCANNER: 1,
+  CUSTOMER: 0,
+};
+
+const getRoleLevel = (role?: string) => roleHierarchy[role as keyof typeof roleHierarchy] ?? 0;
+
 export const createUser = catchAsync(async (req: AuthRequest, res: Response) => {
   const payload = req.body as CreateUserInput;
   const caller = req.user!;
 
   // 1. Role Hierarchy Check
-  const roleHierarchy = {
-    OWNER: 4,
-    ADMIN: 3,
-    PROMOTER: 2,
-    TEAM_MEMBER: 1,
-    SCANNER: 1,
-    CUSTOMER: 0,
-  };
-
-  const callerLevel = roleHierarchy[caller.role as keyof typeof roleHierarchy] || 0;
-  const targetLevel = roleHierarchy[payload.role as keyof typeof roleHierarchy] || 0;
+  const callerLevel = getRoleLevel(caller.role);
+  const targetLevel = getRoleLevel(payload.role);
 
   // Cannot create a user with a role equal to or higher than your own (unless OWNER)
   if (caller.role !== 'OWNER' && targetLevel >= callerLevel) {
@@ -38,8 +41,8 @@ export const createUser = catchAsync(async (req: AuthRequest, res: Response) => 
   }
 
   // 2. Organization Scoping
-  // If caller is PROMOTER, they can only create users in their own organization
-  if (caller.role === 'PROMOTER') {
+  // Organization-scoped operators can only create users in their own organization.
+  if (caller.role === 'MANAGER' || caller.role === 'PROMOTER') {
     const callerOrganizationId = await getCallerOrganizationId(caller.userId);
 
     if (!callerOrganizationId) {
@@ -72,8 +75,8 @@ export const getUser = catchAsync(async (req: AuthRequest, res: Response) => {
     throw ApiError.notFound('User not found');
   }
 
-  // Users can only view their own profile unless they're admin
-  if (req.user!.userId !== id && req.user!.role !== 'ADMIN') {
+  // Users can only view their own profile unless they're an elevated admin role.
+  if (req.user!.userId !== id && req.user!.role !== 'ADMIN' && req.user!.role !== 'OWNER') {
     throw ApiError.forbidden('You can only view your own profile');
   }
 
@@ -83,8 +86,8 @@ export const getUser = catchAsync(async (req: AuthRequest, res: Response) => {
 export const updateUser = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  // Users can only update their own profile unless they're admin
-  if (req.user!.userId !== id && req.user!.role !== 'ADMIN') {
+  // Users can only update their own profile unless they're an elevated admin role.
+  if (req.user!.userId !== id && req.user!.role !== 'ADMIN' && req.user!.role !== 'OWNER') {
     throw ApiError.forbidden('You can only update your own profile');
   }
 
@@ -95,6 +98,22 @@ export const updateUser = catchAsync(async (req: AuthRequest, res: Response) => 
 
 export const deleteUser = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const caller = req.user!;
+
+  if (caller.role !== 'OWNER') {
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true },
+    });
+
+    if (!targetUser) {
+      throw ApiError.notFound('User not found');
+    }
+
+    if (getRoleLevel(targetUser.role) >= getRoleLevel(caller.role)) {
+      throw ApiError.forbidden(`Your role (${caller.role}) cannot delete a user with role ${targetUser.role}`);
+    }
+  }
 
   await userService.deleteUser(id);
   res.status(204).send();
@@ -104,8 +123,8 @@ export const listUsers = catchAsync(async (req: AuthRequest, res: Response) => {
   const query = req.query as unknown as ListUsersParams;
   const caller = req.user!;
 
-  // Security check: PROMOTERs can only list users in their organization
-  if (caller.role === 'PROMOTER') {
+  // Security check: organization-scoped operators can only list users in their organization
+  if (caller.role === 'MANAGER' || caller.role === 'PROMOTER') {
     const callerDetails = await prisma.user.findUnique({
       where: { id: caller.userId },
       select: { organizationId: true },

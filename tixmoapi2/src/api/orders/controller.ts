@@ -5,6 +5,8 @@ import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { orderService } from './service';
 
+const canManageOrders = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
+
 export const createOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.userId;
   const payload = req.body as Parameters<typeof orderService.createOrder>[1];
@@ -61,7 +63,7 @@ export const createOrder = catchAsync(async (req: AuthRequest, res: Response) =>
 
 export const getOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;
+  const userId = canManageOrders(req.user!.role) ? undefined : req.user!.userId;
 
   const order = await orderService.getOrderById(id, userId);
 
@@ -87,14 +89,14 @@ export const confirmOrder = catchAsync(async (req: AuthRequest, res: Response) =
 
 export const cancelOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;
+  const userId = canManageOrders(req.user!.role) ? undefined : req.user!.userId;
 
   const order = await orderService.cancelOrder(id, userId);
   res.json(successResponse(order, 'Order cancelled successfully'));
 });
 
 export const listOrders = catchAsync(async (req: AuthRequest, res: Response) => {
-  const userId = req.user!.role === 'ADMIN' ? undefined : req.user!.userId;
+  const userId = canManageOrders(req.user!.role) ? undefined : req.user!.userId;
 
   const query = { ...(req.query as Record<string, unknown>), userId };
 

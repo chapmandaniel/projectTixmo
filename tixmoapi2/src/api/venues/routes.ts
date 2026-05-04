@@ -15,7 +15,7 @@ router.use(authenticate);
  * /venues:
  *   post:
  *     summary: Create a new venue
- *     description: Create a new venue for an organization. Requires ADMIN or PROMOTER role.
+ *     description: Create a new venue for an organization. Requires owner, admin, manager, or promoter role.
  *     tags: [Venues]
  *     security:
  *       - bearerAuth: []
@@ -86,7 +86,7 @@ router.use(authenticate);
  */
 router.post(
   '/',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.createVenueSchema),
   controller.createVenue
 );
@@ -164,7 +164,7 @@ router.get('/:id', controller.getVenue);
  */
 router.put(
   '/:id',
-  authorize('ADMIN', 'PROMOTER'),
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.updateVenueSchema),
   controller.updateVenue
 );
@@ -174,7 +174,7 @@ router.put(
  * /venues/{id}:
  *   delete:
  *     summary: Delete venue
- *     description: Delete a venue (admin only). Cannot delete if venue has events.
+ *     description: Delete a venue (owner/admin only). Cannot delete if venue has events.
  *     tags: [Venues]
  *     security:
  *       - bearerAuth: []
@@ -193,11 +193,11 @@ router.put(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - Admin only
+ *         description: Forbidden - owner/admin only
  *       404:
  *         description: Venue not found
  */
-router.delete('/:id', authorize('ADMIN'), controller.deleteVenue);
+router.delete('/:id', authorize('OWNER', 'ADMIN'), controller.deleteVenue);
 
 /**
  * @swagger

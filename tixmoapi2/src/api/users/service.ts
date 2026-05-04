@@ -15,7 +15,7 @@ export interface CreateUserInput {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'OWNER' | 'ADMIN' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
+  role: 'OWNER' | 'ADMIN' | 'MANAGER' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
   organizationId?: string;
   title?: string;
   permissions?: Record<string, boolean>;
@@ -31,7 +31,7 @@ export interface UpdateUserInput {
 export interface ListUsersParams {
   page?: number;
   limit?: number;
-  role?: 'OWNER' | 'ADMIN' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
+  role?: 'OWNER' | 'ADMIN' | 'MANAGER' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
   organizationId?: string;
 }
 
