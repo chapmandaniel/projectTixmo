@@ -4,12 +4,14 @@ import { MemoryRouter } from 'react-router-dom';
 import AssetLibraryView from '../features/AssetLibraryView';
 
 const apiGet = vi.fn();
+const apiUpload = vi.fn();
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
 
 vi.mock('../lib/api', () => ({
     api: {
         get: (...args) => apiGet(...args),
+        upload: (...args) => apiUpload(...args),
     },
 }));
 
@@ -93,6 +95,7 @@ describe('AssetLibraryView', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         apiGet.mockResolvedValue({ approvals: approvalsResponse });
+        apiUpload.mockResolvedValue({ assets: [] });
         Object.defineProperty(navigator, 'clipboard', {
             configurable: true,
             value: {
@@ -188,5 +191,49 @@ describe('AssetLibraryView', () => {
 
         expect(screen.queryByText('Hidden approved poster.png')).not.toBeInTheDocument();
         expect(screen.getByText('No assets match these filters')).toBeInTheDocument();
+    });
+
+    it('uploads directly to the asset library without opening approvals', async () => {
+        const uploadedAsset = {
+            id: 'direct-asset-1',
+            originalName: 'Door Poster.png',
+            filename: 'door-poster.png',
+            mimeType: 'image/png',
+            size: 2048,
+            s3Url: 'https://cdn.example.com/assets/door-poster.png',
+            createdAt: '2026-04-25T09:00:00.000Z',
+            uploadedBy: {
+                id: 'user-1',
+                firstName: 'Nina',
+                lastName: 'Lopez',
+                email: 'nina@example.com',
+            },
+        };
+        apiUpload.mockResolvedValue({ assets: [uploadedAsset] });
+
+        let container;
+        await act(async () => {
+            ({ container } = render(
+                <MemoryRouter>
+                    <AssetLibraryView isDark />
+                </MemoryRouter>
+            ));
+        });
+
+        await act(async () => {
+            fireEvent.change(container.querySelector('input[type="file"]'), {
+                target: {
+                    files: [new File(['image'], 'Door Poster.png', { type: 'image/png' })],
+                },
+            });
+        });
+
+        expect(apiUpload).toHaveBeenCalledWith('/assets', expect.any(FormData));
+        expect(apiUpload).not.toHaveBeenCalledWith(expect.stringContaining('/approvals'), expect.anything());
+        expect(toastSuccess).toHaveBeenCalledWith('1 file uploaded to the asset library.');
+
+        await waitFor(() => {
+            expect(screen.getAllByText('Door Poster.png').length).toBeGreaterThan(0);
+        });
     });
 });

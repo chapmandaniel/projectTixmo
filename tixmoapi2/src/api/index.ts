@@ -21,6 +21,7 @@ import waitlistRoutes from './waitlists/routes';
 import taskRoutes from './tasks/routes';
 import approvalRoutes from './approvals/routes';
 import reviewRoutes from './review/routes';
+import assetRoutes from './assets/routes';
 
 const router = Router();
 
@@ -58,6 +59,7 @@ versionRouter.use('/waitlists', waitlistRoutes);
 versionRouter.use('/tasks', taskRoutes);
 versionRouter.use('/docs', docsRoutes);
 versionRouter.use('/approvals', approvalRoutes);
+versionRouter.use('/assets', assetRoutes);
 versionRouter.use('/review', reviewRoutes);
 
 // Mount versioned routes
