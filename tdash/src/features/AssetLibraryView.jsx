@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    BadgeCheck,
+    CalendarDays,
     Copy,
     Download,
     FileImage,
@@ -10,7 +10,6 @@ import {
     Link2,
     List,
     MoreHorizontal,
-    Plus,
     RefreshCcw,
     Search,
     Share2,
@@ -36,22 +35,12 @@ import { getDashboardTheme } from '../lib/dashboardTheme';
 import { cn } from '../lib/utils';
 
 const LIBRARY_CAPACITY_BYTES = 500 * 1024 * 1024 * 1024;
+const BRAND_COLLECTION_KEY = 'brand';
+const UNASSIGNED_COLLECTION_KEY = 'unassigned';
 const KEYWORD_CATEGORY_RULES = [
     { id: 'posters', patterns: ['poster', 'flyer', 'banner'] },
     { id: 'logos', patterns: ['logo', 'wordmark', 'lockup'] },
     { id: 'social', patterns: ['social', 'story', 'carousel', 'tile', 'post'] },
-];
-
-const CATEGORY_DEFINITIONS = [
-    { id: 'all', label: 'All Assets', icon: FolderOpen },
-    { id: 'posters', label: 'Posters', icon: Sparkles },
-    { id: 'photography', label: 'Photography', icon: FileImage },
-    { id: 'logos', label: 'Logos', icon: BadgeCheck },
-    { id: 'social', label: 'Social', icon: Share2 },
-    { id: 'videos', label: 'Videos', icon: Video },
-    { id: 'documents', label: 'Documents', icon: FileText },
-    { id: 'approved', label: 'Approved', icon: BadgeCheck },
-    { id: 'share-ready', label: 'Share Ready', icon: Link2 },
 ];
 
 const TYPE_OPTIONS = [
@@ -77,6 +66,7 @@ const MORE_FILTER_OPTIONS = [
 ];
 
 const SORT_OPTIONS = [
+    { value: 'likely', label: 'Likely used' },
     { value: 'newest', label: 'Newest' },
     { value: 'oldest', label: 'Oldest' },
     { value: 'largest', label: 'Largest' },
@@ -86,6 +76,7 @@ const SORT_OPTIONS = [
 
 const extractApprovals = (response) => response?.approvals || response?.data?.approvals || [];
 const extractDirectAssets = (response) => response?.assets || response?.data?.assets || [];
+const extractEvents = (response) => response?.events || response?.data?.events || [];
 
 const formatDate = (value, options = {}) => {
     if (!value) {
@@ -187,6 +178,42 @@ const formatUserName = (user) => {
     return joined || user?.email || 'Unknown uploader';
 };
 
+const getEventCollectionKey = (eventId) => `event:${eventId}`;
+
+const normalizeUsageType = (value, eventId = '') => {
+    const usageType = String(value || '').trim().toUpperCase();
+
+    if (usageType === 'EVENT' || eventId) {
+        return 'EVENT';
+    }
+
+    return 'BRAND';
+};
+
+const getCollectionMeta = ({ usageType, eventId, eventName }) => {
+    if (usageType === 'EVENT') {
+        if (eventId) {
+            return {
+                collectionKey: getEventCollectionKey(eventId),
+                collectionLabel: eventName || 'Untitled event',
+                collectionType: 'EVENT',
+            };
+        }
+
+        return {
+            collectionKey: UNASSIGNED_COLLECTION_KEY,
+            collectionLabel: 'Unassigned event',
+            collectionType: 'EVENT',
+        };
+    }
+
+    return {
+        collectionKey: BRAND_COLLECTION_KEY,
+        collectionLabel: 'Brand library',
+        collectionType: 'BRAND',
+    };
+};
+
 const deriveCategory = (asset) => {
     const haystack = normalizeToken(`${asset.originalName} ${asset.approvalTitle}`);
     const keywordMatch = KEYWORD_CATEGORY_RULES.find((rule) => rule.patterns.some((pattern) => haystack.includes(pattern)));
@@ -208,6 +235,7 @@ const deriveCategory = (asset) => {
 
 const buildAssetTags = (asset) => {
     const candidateText = [
+        asset.collectionLabel,
         asset.eventName,
         asset.approvalTitle,
         asset.originalName.replace(/\.[^.]+$/, ''),
@@ -231,14 +259,22 @@ const flattenAssets = (approvals) => approvals
         return (approval?.revisions || []).flatMap((revision) =>
             (revision?.assets || []).filter((asset) => asset?.approvedForLibraryAt).map((asset) => {
                 const uploader = revision?.uploadedBy || approval?.createdBy || null;
+                const eventId = approval.event?.id || '';
+                const eventName = approval.event?.name || 'Unassigned event';
+                const collectionMeta = getCollectionMeta({
+                    usageType: 'EVENT',
+                    eventId,
+                    eventName,
+                });
                 const item = {
                     id: asset.id,
                     approvalId: approval.id,
                     approvalTitle: approval.title || 'Untitled approval',
                     approvalStatus: approval.status || 'PENDING_REVIEW',
                     approvalDescription: approval.description || '',
-                    eventId: approval.event?.id || '',
-                    eventName: approval.event?.name || 'Unassigned event',
+                    eventId,
+                    eventName,
+                    ...collectionMeta,
                     revisionId: revision.id,
                     revisionNumber: revision.revisionNumber,
                     isLatestRevision: revision.id === latestRevisionId,
@@ -268,6 +304,14 @@ const flattenAssets = (approvals) => approvals
 
 const flattenDirectAssets = (assets) => assets.map((asset) => {
     const uploader = asset?.uploadedBy || null;
+    const eventId = asset.event?.id || asset.eventId || '';
+    const eventName = asset.event?.name || '';
+    const usageType = normalizeUsageType(asset.usageType, eventId);
+    const collectionMeta = getCollectionMeta({
+        usageType,
+        eventId,
+        eventName,
+    });
     const item = {
         id: `direct-${asset.id}`,
         directAssetId: asset.id,
@@ -275,8 +319,9 @@ const flattenDirectAssets = (assets) => assets.map((asset) => {
         approvalTitle: 'Direct library upload',
         approvalStatus: 'APPROVED',
         approvalDescription: 'Creative asset uploaded directly to the asset library.',
-        eventId: asset.event?.id || asset.eventId || '',
-        eventName: asset.event?.name || 'Unassigned event',
+        eventId,
+        eventName: collectionMeta.collectionType === 'BRAND' ? 'Brand library' : collectionMeta.collectionLabel,
+        ...collectionMeta,
         revisionId: '',
         revisionNumber: 'Library',
         isLatestRevision: true,
@@ -319,6 +364,53 @@ const withinDateFilter = (value, range) => {
     };
 
     return now - createdAt.getTime() <= limits[range] * 24 * 60 * 60 * 1000;
+};
+
+const buildCollectionFilters = (assets) => {
+    const collections = new Map();
+    const totalSize = assets.reduce((sum, asset) => sum + asset.size, 0);
+
+    const ensureCollection = (asset) => {
+        const key = asset.collectionKey || UNASSIGNED_COLLECTION_KEY;
+        const existing = collections.get(key) || {
+            id: key,
+            label: asset.collectionLabel || 'Unassigned event',
+            type: asset.collectionType || 'EVENT',
+            icon: key === BRAND_COLLECTION_KEY ? Sparkles : key === UNASSIGNED_COLLECTION_KEY ? FolderOpen : CalendarDays,
+            count: 0,
+            size: 0,
+            lastUsedAt: 0,
+        };
+
+        const createdAt = new Date(asset.createdAt).getTime();
+        existing.count += 1;
+        existing.size += asset.size;
+        existing.lastUsedAt = Math.max(existing.lastUsedAt, Number.isNaN(createdAt) ? 0 : createdAt);
+        collections.set(key, existing);
+    };
+
+    assets.forEach(ensureCollection);
+
+    const sortedCollections = [...collections.values()].sort((left, right) => {
+        if (left.id === BRAND_COLLECTION_KEY) return -1;
+        if (right.id === BRAND_COLLECTION_KEY) return 1;
+        if (left.id === UNASSIGNED_COLLECTION_KEY) return 1;
+        if (right.id === UNASSIGNED_COLLECTION_KEY) return -1;
+        return right.count - left.count || right.lastUsedAt - left.lastUsedAt || left.label.localeCompare(right.label);
+    });
+
+    return [
+        {
+            id: 'all',
+            label: 'All assets',
+            type: 'ALL',
+            icon: FolderOpen,
+            count: assets.length,
+            size: totalSize,
+            lastUsedAt: Math.max(0, ...assets.map((asset) => new Date(asset.createdAt).getTime()).filter(Number.isFinite)),
+        },
+        ...sortedCollections,
+    ];
 };
 
 const AssetSelectionToggle = ({ checked, isDark, onToggle }) => (
@@ -509,12 +601,12 @@ const AssetCard = ({
                     {asset.originalName}
                 </p>
                 <p className={cn('mt-1 truncate text-sm font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
-                    {asset.approvalTitle}
+                    {asset.collectionLabel}
                 </p>
             </div>
             <div className={cn('space-y-1 text-xs font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
                 <div className="flex items-center justify-between gap-3">
-                    <span>{asset.eventName}</span>
+                    <span>{asset.approvalTitle}</span>
                     <span>{formatFileSize(asset.size)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
@@ -569,11 +661,11 @@ const AssetRow = ({
                 {asset.originalName}
             </p>
             <p className={cn('mt-1 truncate text-xs font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
-                {asset.approvalTitle}
+                {asset.collectionLabel}
             </p>
         </div>
         <p className={cn('truncate text-xs font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
-            {titleCase(asset.category)}
+            {asset.collectionLabel}
         </p>
         <p className={cn('truncate text-xs font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
             {formatFileSize(asset.size)}
@@ -636,6 +728,10 @@ const AssetInspector = ({
                     <div className="flex items-center justify-between gap-4">
                         <span>By</span>
                         <span className={cn('truncate text-right', uiTheme.textPrimary)}>{asset.uploaderName}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                        <span>Collection</span>
+                        <span className={cn('truncate text-right', uiTheme.textPrimary)}>{asset.collectionLabel}</span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
                         <span>Revision</span>
@@ -755,11 +851,72 @@ const AssetInspector = ({
     );
 };
 
+const UploadContextPanel = ({
+    events,
+    isDark,
+    uploadUsageType,
+    uploadEventId,
+    onUsageTypeChange,
+    onEventChange,
+    onBrowse,
+    uploading,
+}) => {
+    const uiTheme = getDashboardTheme(isDark);
+
+    return (
+        <div className="mt-5 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end">
+            <div>
+                <label className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)} htmlFor="asset-upload-destination">
+                    Upload destination
+                </label>
+                <DashboardSelect
+                    id="asset-upload-destination"
+                    isDark={isDark}
+                    aria-label="Upload destination"
+                    value={uploadUsageType}
+                    onChange={(event) => onUsageTypeChange(event.target.value)}
+                    className="mt-2"
+                >
+                    <option value="BRAND">Brand library</option>
+                    <option value="EVENT">Event assets</option>
+                </DashboardSelect>
+            </div>
+
+            <div>
+                <label className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)} htmlFor="asset-upload-event">
+                    Event
+                </label>
+                <DashboardSelect
+                    id="asset-upload-event"
+                    isDark={isDark}
+                    aria-label="Upload event"
+                    value={uploadEventId}
+                    onChange={(event) => onEventChange(event.target.value)}
+                    className="mt-2"
+                    disabled={uploadUsageType !== 'EVENT'}
+                >
+                    <option value="">{events.length === 0 ? 'No events available' : 'Select event'}</option>
+                    {events.map((event) => (
+                        <option key={event.id} value={event.id}>
+                            {event.name || event.title || 'Untitled event'}
+                        </option>
+                    ))}
+                </DashboardSelect>
+            </div>
+
+            <DashboardButton isDark={isDark} className="md:mb-0" onClick={onBrowse} disabled={uploading}>
+                {uploading ? 'Uploading' : 'Browse Files'}
+            </DashboardButton>
+        </div>
+    );
+};
+
 const AssetLibraryView = ({ isDark }) => {
     const uiTheme = getDashboardTheme(isDark);
     const uploadInputRef = useRef(null);
     const [approvals, setApprovals] = useState([]);
     const [directAssets, setDirectAssets] = useState([]);
+    const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -770,12 +927,14 @@ const AssetLibraryView = ({ isDark }) => {
     const [tagFilter, setTagFilter] = useState('');
     const [dateFilter, setDateFilter] = useState('');
     const [moreFilter, setMoreFilter] = useState('');
-    const [sortBy, setSortBy] = useState('newest');
+    const [sortBy, setSortBy] = useState('likely');
     const [viewMode, setViewMode] = useState('grid');
     const [selectedAssetId, setSelectedAssetId] = useState(null);
     const [selectedAssetIds, setSelectedAssetIds] = useState([]);
     const [isDraggingUpload, setIsDraggingUpload] = useState(false);
     const [assetMetrics, setAssetMetrics] = useState({});
+    const [uploadUsageType, setUploadUsageType] = useState('BRAND');
+    const [uploadEventId, setUploadEventId] = useState('');
 
     const loadAssets = async ({ background = false } = {}) => {
         try {
@@ -786,9 +945,10 @@ const AssetLibraryView = ({ isDark }) => {
                 setLoading(true);
             }
 
-            const [directAssetsResponse, approvalsResponse] = await Promise.allSettled([
+            const [directAssetsResponse, approvalsResponse, eventsResponse] = await Promise.allSettled([
                 api.get('/assets'),
                 api.get('/approvals?limit=100&includeArchived=true'),
+                api.get('/events?limit=100'),
             ]);
 
             if (directAssetsResponse.status === 'rejected') {
@@ -801,6 +961,7 @@ const AssetLibraryView = ({ isDark }) => {
 
             setDirectAssets(extractDirectAssets(directAssetsResponse.value));
             setApprovals(extractApprovals(approvalsResponse.value));
+            setEvents(eventsResponse.status === 'fulfilled' ? extractEvents(eventsResponse.value) : []);
         } catch (requestError) {
             setError(requestError?.response?.data?.message || requestError.message || 'Failed to load uploaded assets.');
         } finally {
@@ -813,6 +974,12 @@ const AssetLibraryView = ({ isDark }) => {
         loadAssets();
     }, []);
 
+    useEffect(() => {
+        if (uploadUsageType === 'EVENT' && !uploadEventId && events.length === 1) {
+            setUploadEventId(events[0].id);
+        }
+    }, [events, uploadEventId, uploadUsageType]);
+
     const assets = useMemo(() => [
         ...flattenDirectAssets(directAssets),
         ...flattenAssets(approvals),
@@ -824,15 +991,19 @@ const AssetLibraryView = ({ isDark }) => {
         return [...new Set(allTags)].sort();
     }, [assets]);
 
-    const categories = useMemo(() => CATEGORY_DEFINITIONS.map((definition) => ({
-        ...definition,
-        count: assets.filter((asset) => {
-            if (definition.id === 'all') return true;
-            if (definition.id === 'approved') return asset.approvalStatus === 'APPROVED';
-            if (definition.id === 'share-ready') return getShareReadyReviewers(asset.reviewers).length > 0;
-            return asset.category === definition.id;
-        }).length,
-    })), [assets]);
+    const categories = useMemo(() => buildCollectionFilters(assets), [assets]);
+    const collectionStats = useMemo(() => (
+        categories.reduce((stats, category) => ({
+            ...stats,
+            [category.id]: category,
+        }), {})
+    ), [categories]);
+
+    useEffect(() => {
+        if (categories.length > 0 && !categories.some((category) => category.id === activeCategory)) {
+            setActiveCategory('all');
+        }
+    }, [activeCategory, categories]);
 
     const filteredAssets = useMemo(() => {
         const query = searchValue.trim().toLowerCase();
@@ -842,15 +1013,7 @@ const AssetLibraryView = ({ isDark }) => {
                 return true;
             }
 
-            if (activeCategory === 'approved') {
-                return asset.approvalStatus === 'APPROVED';
-            }
-
-            if (activeCategory === 'share-ready') {
-                return getShareReadyReviewers(asset.reviewers).length > 0;
-            }
-
-            return asset.category === activeCategory;
+            return asset.collectionKey === activeCategory;
         });
 
         const valueFiltered = categoryFiltered.filter((asset) => {
@@ -886,12 +1049,23 @@ const AssetLibraryView = ({ isDark }) => {
                 asset.originalName,
                 asset.approvalTitle,
                 asset.eventName,
+                asset.collectionLabel,
                 asset.category,
                 ...asset.tags,
             ].some((value) => value?.toLowerCase().includes(query));
         });
 
         return [...valueFiltered].sort((left, right) => {
+            if (sortBy === 'likely') {
+                const leftStats = collectionStats[left.collectionKey] || {};
+                const rightStats = collectionStats[right.collectionKey] || {};
+                return (
+                    (rightStats.count || 0) - (leftStats.count || 0) ||
+                    (rightStats.lastUsedAt || 0) - (leftStats.lastUsedAt || 0) ||
+                    new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+                );
+            }
+
             if (sortBy === 'oldest') {
                 return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
             }
@@ -910,7 +1084,7 @@ const AssetLibraryView = ({ isDark }) => {
 
             return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
         });
-    }, [activeCategory, assets, dateFilter, kindFilter, moreFilter, searchValue, sortBy, tagFilter]);
+    }, [activeCategory, assets, collectionStats, dateFilter, kindFilter, moreFilter, searchValue, sortBy, tagFilter]);
 
     useEffect(() => {
         if (filteredAssets.length === 0) {
@@ -966,13 +1140,44 @@ const AssetLibraryView = ({ isDark }) => {
         [filteredAssets, selectedAssetIds]
     );
 
+    const handleSelectCollection = (collectionId) => {
+        setActiveCategory(collectionId);
+
+        if (collectionId === BRAND_COLLECTION_KEY) {
+            setUploadUsageType('BRAND');
+            return;
+        }
+
+        if (collectionId.startsWith('event:')) {
+            setUploadUsageType('EVENT');
+            setUploadEventId(collectionId.replace('event:', ''));
+        }
+    };
+
+    const handleUploadUsageTypeChange = (value) => {
+        setUploadUsageType(value);
+        if (value === 'BRAND') {
+            setUploadEventId('');
+        }
+    };
+
     const handleUploadIntent = async (files = []) => {
         if (files.length === 0) {
             return;
         }
 
+        if (uploadUsageType === 'EVENT' && !uploadEventId) {
+            toast.error('Select an event or switch to Brand library before uploading.');
+            return;
+        }
+
         const payload = new FormData();
         files.forEach((file) => payload.append('files', file));
+        payload.append('usageType', uploadUsageType);
+        payload.append('category', uploadUsageType === 'BRAND' ? 'branding' : 'event');
+        if (uploadUsageType === 'EVENT') {
+            payload.append('eventId', uploadEventId);
+        }
 
         try {
             setUploading(true);
@@ -1050,7 +1255,7 @@ const AssetLibraryView = ({ isDark }) => {
         <DashboardEmptyState
             isDark={isDark}
             title="No assets match these filters"
-            description="Widen the filter set, switch categories, or upload files directly to this library."
+            description="Widen the filters, switch collections, or upload files into Brand library or an event."
             action={(
                 <DashboardButton isDark={isDark} onClick={() => uploadInputRef.current?.click()} disabled={uploading}>
                     <Upload className="h-4 w-4" />
@@ -1065,7 +1270,7 @@ const AssetLibraryView = ({ isDark }) => {
             <DashboardPageHeader
                 isDark={isDark}
                 title="Asset Library"
-                description="Browse, organize, and download assets promoted from fully approved creative reviews."
+                description="Browse, organize, and download assets by the event or brand library they belong to."
                 className="min-h-[132px]"
                 descriptionClassName="text-base"
                 badges={(
@@ -1102,7 +1307,7 @@ const AssetLibraryView = ({ isDark }) => {
                             isDark={isDark}
                             aria-label="Asset collection filter"
                             value={activeCategory}
-                            onChange={(event) => setActiveCategory(event.target.value)}
+                            onChange={(event) => handleSelectCollection(event.target.value)}
                             className="min-w-[160px]"
                         >
                             {categories.map((category) => (
@@ -1202,10 +1407,6 @@ const AssetLibraryView = ({ isDark }) => {
                             <Upload className="h-4 w-4" />
                             {uploading ? 'Uploading' : 'Upload Files'}
                         </DashboardButton>
-                        <DashboardButton isDark={isDark} variant="secondary" onClick={() => toast.success('Folder organization is not wired yet. This stays in the flat library for now.')}>
-                            <Plus className="h-4 w-4" />
-                            New Folder
-                        </DashboardButton>
                         <DashboardButton isDark={isDark} variant="primary" onClick={downloadSelected} disabled={selectedAssetIds.length === 0}>
                             <Download className="h-4 w-4" />
                             Download Selected ({selectedAssetIds.length})
@@ -1247,7 +1448,7 @@ const AssetLibraryView = ({ isDark }) => {
                         <CategoryRail
                             categories={categories}
                             activeCategory={activeCategory}
-                            onSelect={setActiveCategory}
+                            onSelect={handleSelectCollection}
                             isDark={isDark}
                             totalSize={totalLibrarySize}
                         />
@@ -1282,11 +1483,18 @@ const AssetLibraryView = ({ isDark }) => {
                                         Drag and drop files here
                                     </h3>
                                     <p className={cn('mt-2 text-sm font-light leading-6', uiTheme.textSecondary)}>
-                                        PNG, JPG, GIF, MP4, MOV, PDF. Files upload directly to this library.
+                                        Choose Brand library or an event before upload. Files stay in the asset library and do not open an approval.
                                     </p>
-                                    <DashboardButton isDark={isDark} className="mt-5" onClick={() => uploadInputRef.current?.click()} disabled={uploading}>
-                                        {uploading ? 'Uploading' : 'Browse Files'}
-                                    </DashboardButton>
+                                    <UploadContextPanel
+                                        events={events}
+                                        isDark={isDark}
+                                        uploadUsageType={uploadUsageType}
+                                        uploadEventId={uploadEventId}
+                                        onUsageTypeChange={handleUploadUsageTypeChange}
+                                        onEventChange={setUploadEventId}
+                                        onBrowse={() => uploadInputRef.current?.click()}
+                                        uploading={uploading}
+                                    />
                                 </div>
                             </DashboardSurface>
 
@@ -1310,7 +1518,7 @@ const AssetLibraryView = ({ isDark }) => {
                                         <span>Select</span>
                                         <span>Preview</span>
                                         <span>Name</span>
-                                        <span>Type</span>
+                                        <span>Collection</span>
                                         <span>Size</span>
                                         <span>Status</span>
                                         <span />

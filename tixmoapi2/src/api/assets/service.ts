@@ -10,6 +10,20 @@ type AssetUserContext = {
   role: string;
 };
 
+type AssetLibraryUsageType = 'BRAND' | 'EVENT';
+
+type AssetUploadContext = {
+  usageType?: string;
+  eventId?: string;
+  category?: string;
+};
+
+type NormalizedAssetUploadContext = {
+  usageType: AssetLibraryUsageType;
+  eventId: string | null;
+  category: string | null;
+};
+
 class AssetLibraryService {
   private async getUserContext(userId: string): Promise<AssetUserContext> {
     const user = await prisma.user.findUnique({
@@ -49,6 +63,7 @@ class AssetLibraryService {
     s3Key: string;
     s3Url: string;
     category: string | null;
+    usageType: string;
     createdAt: Date;
     updatedAt: Date;
     uploadedBy: {
@@ -74,9 +89,55 @@ class AssetLibraryService {
       s3Key: asset.s3Key,
       s3Url: await uploadService.resolveFileUrl(asset.s3Key, asset.s3Url),
       category: asset.category,
+      usageType: asset.usageType,
       createdAt: asset.createdAt,
       updatedAt: asset.updatedAt,
       uploadedBy: asset.uploadedBy,
+    };
+  }
+
+  private async normalizeUploadContext(
+    user: AssetUserContext,
+    context: AssetUploadContext
+  ): Promise<NormalizedAssetUploadContext> {
+    const usageType = String(context.usageType || '').trim().toUpperCase();
+
+    if (usageType !== 'BRAND' && usageType !== 'EVENT') {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Choose Brand library or Event assets before uploading');
+    }
+
+    const category = context.category?.trim() || (usageType === 'BRAND' ? 'branding' : null);
+
+    if (usageType === 'BRAND') {
+      return {
+        usageType,
+        eventId: null,
+        category,
+      };
+    }
+
+    const eventId = context.eventId?.trim();
+    if (!eventId) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Select an event before uploading event assets');
+    }
+
+    const event = await prisma.event.findFirst({
+      where: {
+        id: eventId,
+        organizationId: user.organizationId,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (!event) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Event not found for this organization');
+    }
+
+    return {
+      usageType,
+      eventId,
+      category,
     };
   }
 
@@ -98,7 +159,7 @@ class AssetLibraryService {
     };
   }
 
-  async upload(userId: string, files: Express.Multer.File[]) {
+  async upload(userId: string, files: Express.Multer.File[], context: AssetUploadContext) {
     const user = await this.getUserContext(userId);
     this.assertCanManageAssets(user);
 
@@ -106,6 +167,7 @@ class AssetLibraryService {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'At least one file is required');
     }
 
+    const uploadContext = await this.normalizeUploadContext(user, context);
     const uploadedAssets = await uploadService.uploadMultiple(files, `assets/${user.organizationId}`);
 
     try {
@@ -115,12 +177,15 @@ class AssetLibraryService {
             data: {
               organizationId: user.organizationId,
               uploadedById: user.id,
+              eventId: uploadContext.eventId,
               filename: asset.filename,
               originalName: asset.originalName,
               mimeType: asset.mimeType,
               size: asset.size,
               s3Key: asset.s3Key,
               s3Url: asset.s3Url,
+              usageType: uploadContext.usageType,
+              category: uploadContext.category,
             },
             include: {
               uploadedBy: { select: { id: true, firstName: true, lastName: true, email: true } },
