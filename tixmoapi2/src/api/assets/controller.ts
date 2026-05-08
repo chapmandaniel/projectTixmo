@@ -5,6 +5,7 @@ import { NextFunction, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { AuthRequest } from '../../middleware/auth';
 import { ApiError } from '../../utils/ApiError';
+import { resolveTrustedClientOrigin } from '../../utils/clientOrigin';
 import { assetLibraryService } from './service';
 
 const upload = multer({
@@ -151,6 +152,69 @@ export const AssetLibraryController = {
         category: req.body?.category,
       });
       return res.status(StatusCodes.CREATED).json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async listFolderShares(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const result = await assetLibraryService.listFolderShares(
+        userId,
+        req.params.folderId,
+        resolveTrustedClientOrigin(req.get('origin'), req.get('referer'))
+      );
+      return res.json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async createFolderShare(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const result = await assetLibraryService.createFolderShare(userId, req.params.folderId, {
+        recipientLabel: req.body?.recipientLabel,
+        expiresInDays: req.body?.expiresInDays,
+        dashboardOrigin: resolveTrustedClientOrigin(req.get('origin'), req.get('referer')),
+      });
+      return res.status(StatusCodes.CREATED).json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async revokeFolderShare(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const result = await assetLibraryService.revokeFolderShare(
+        userId,
+        req.params.folderId,
+        req.params.shareId
+      );
+      return res.json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async getSharedFolder(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await assetLibraryService.getSharedFolder(req.params.token);
+      return res.json(result);
     } catch (error) {
       return next(error);
     }
