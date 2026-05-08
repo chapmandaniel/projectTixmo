@@ -157,11 +157,12 @@ describe('SharedAssetFolderPage', () => {
         fireEvent.click(screen.getByRole('button', { name: /Artist Photos/i }));
 
         expect(screen.getByRole('heading', { name: 'Artist Photos' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Back to Press Kit' })).toBeInTheDocument();
         expect(screen.getByText('Headliner portrait.png')).toBeInTheDocument();
         expect(screen.queryByText('Press release.pdf')).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Stage Shots/i })).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: /^Press Kit$/i }));
+        fireEvent.click(screen.getByRole('button', { name: 'Back to Press Kit' }));
 
         expect(screen.getByRole('heading', { name: 'Press Kit' })).toBeInTheDocument();
         expect(screen.getByText('Press release.pdf')).toBeInTheDocument();
@@ -192,9 +193,10 @@ describe('SharedAssetFolderPage', () => {
         fireEvent.click(screen.getByRole('button', { name: /Sponsor Logos/i }));
 
         expect(screen.getByRole('heading', { name: 'Sponsor Logos' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Back to main share' })).toBeInTheDocument();
         expect(screen.getByText('Sponsor lockup.svg')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: /^Agency Drop$/i }));
+        fireEvent.click(screen.getByRole('button', { name: 'Back to main share' }));
 
         expect(screen.getByRole('heading', { name: 'Agency Drop' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Press Kit/i })).toBeInTheDocument();
