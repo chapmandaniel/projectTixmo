@@ -185,6 +185,7 @@ export const AssetLibraryController = {
       const result = await assetLibraryService.createFolderShare(userId, req.params.folderId, {
         recipientLabel: req.body?.recipientLabel,
         expiresInDays: req.body?.expiresInDays,
+        folderIds: Array.isArray(req.body?.folderIds) ? req.body.folderIds : [],
         dashboardOrigin: resolveTrustedClientOrigin(req.get('origin'), req.get('referer')),
       });
       return res.status(StatusCodes.CREATED).json(result);

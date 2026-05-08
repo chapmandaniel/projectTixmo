@@ -81,6 +81,53 @@ const sharedFolderResponse = {
     ],
 };
 
+const sharedPackageResponse = {
+    ...sharedFolderResponse,
+    share: {
+        id: 'share-2',
+        recipientLabel: 'Agency Drop',
+        expiresAt: '2026-05-18T12:00:00.000Z',
+    },
+    rootFolders: [
+        {
+            id: 'folder-root',
+            name: 'Press Kit',
+            parentId: null,
+            assetCount: 1,
+        },
+        {
+            id: 'folder-sponsor',
+            name: 'Sponsor Logos',
+            parentId: null,
+            assetCount: 1,
+        },
+    ],
+    folders: [
+        ...sharedFolderResponse.folders,
+        {
+            id: 'folder-sponsor',
+            name: 'Sponsor Logos',
+            parentId: null,
+            assetCount: 1,
+        },
+    ],
+    assets: [
+        ...sharedFolderResponse.assets,
+        {
+            id: 'asset-sponsor',
+            folderId: 'folder-sponsor',
+            originalName: 'Sponsor lockup.svg',
+            mimeType: 'image/svg+xml',
+            size: 4096,
+            s3Url: 'https://cdn.example.com/sponsor.svg',
+            folder: {
+                id: 'folder-sponsor',
+                name: 'Sponsor Logos',
+            },
+        },
+    ],
+};
+
 describe('SharedAssetFolderPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -118,5 +165,38 @@ describe('SharedAssetFolderPage', () => {
 
         expect(screen.getByRole('heading', { name: 'Press Kit' })).toBeInTheDocument();
         expect(screen.getByText('Press release.pdf')).toBeInTheDocument();
+    });
+
+    it('shows multiple selected folders as one shared package', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve(sharedPackageResponse),
+        });
+
+        render(
+            <MemoryRouter initialEntries={['/assets/shared/package-token']}>
+                <Routes>
+                    <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByRole('heading', { name: 'Agency Drop' })).toBeInTheDocument();
+        });
+
+        expect(screen.getByRole('button', { name: /Press Kit/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Sponsor Logos/i })).toBeInTheDocument();
+        expect(screen.queryByText('Sponsor lockup.svg')).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /Sponsor Logos/i }));
+
+        expect(screen.getByRole('heading', { name: 'Sponsor Logos' })).toBeInTheDocument();
+        expect(screen.getByText('Sponsor lockup.svg')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /^Agency Drop$/i }));
+
+        expect(screen.getByRole('heading', { name: 'Agency Drop' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Press Kit/i })).toBeInTheDocument();
     });
 });

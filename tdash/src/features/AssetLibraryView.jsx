@@ -1392,6 +1392,7 @@ const ShareFolderModal = ({
     activeFolder,
     creatingShare,
     expiresInDays,
+    folderOptions,
     folderShares,
     isDark,
     loadingShares,
@@ -1401,12 +1402,15 @@ const ShareFolderModal = ({
     onExpiresChange,
     onRecipientChange,
     onRevokeShare,
+    onToggleFolderSelection,
     recipientLabel,
     revokingShareId,
+    selectedFolderIds,
 }) => {
     const uiTheme = getDashboardTheme(isDark);
     const activeShares = folderShares.filter((share) => share.active);
     const inactiveShares = folderShares.filter((share) => !share.active);
+    const selectedFolderSet = new Set(selectedFolderIds);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="asset-share-folder-title">
@@ -1458,10 +1462,54 @@ const ShareFolderModal = ({
                 </div>
 
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-                    <DashboardButton isDark={isDark} onClick={onCreateShare} disabled={creatingShare}>
+                    <DashboardButton isDark={isDark} onClick={onCreateShare} disabled={creatingShare || selectedFolderIds.length === 0}>
                         <ShieldCheck className="h-4 w-4" />
-                        {creatingShare ? 'Creating' : 'Create secure link'}
+                        {creatingShare ? 'Creating' : `Create secure link (${selectedFolderIds.length})`}
                     </DashboardButton>
+                </div>
+
+                <div className={cn('mt-6 border-t pt-5', uiTheme.divider)}>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                        <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>
+                            Folders in this link
+                        </p>
+                        <DashboardChip isDark={isDark}>
+                            {selectedFolderIds.length} selected
+                        </DashboardChip>
+                    </div>
+                    <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                        {folderOptions.map((folder) => {
+                            const checked = selectedFolderSet.has(folder.id);
+                            return (
+                                <label
+                                    key={folder.id}
+                                    className={cn(
+                                        'flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 transition',
+                                        checked
+                                            ? isDark ? 'border-fuchsia-400/40 bg-fuchsia-500/10' : 'border-slate-300 bg-slate-100'
+                                            : isDark ? 'border-white/10 bg-white/5 hover:bg-white/10' : 'border-slate-200 bg-white hover:bg-slate-50'
+                                    )}
+                                >
+                                    <span className="flex min-w-0 items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => onToggleFolderSelection(folder.id)}
+                                            className="h-4 w-4 rounded border-dashboard-border bg-dashboard-panel text-dashboard-accent focus:ring-dashboard-accent/40"
+                                        />
+                                        <span className="min-w-0">
+                                            <span className={cn('block truncate text-sm font-light', uiTheme.textPrimary)}>
+                                                {'  '.repeat(Math.max(folder.depth - 2, 0))}{folder.label}
+                                            </span>
+                                            <span className={cn('block text-xs font-light', uiTheme.textSecondary)}>
+                                                {folder.count || 0} asset{folder.count === 1 ? '' : 's'}
+                                            </span>
+                                        </span>
+                                    </span>
+                                </label>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 <div className={cn('mt-6 border-t pt-5', uiTheme.divider)}>
@@ -1490,7 +1538,7 @@ const ShareFolderModal = ({
                                                 {share.recipientLabel || 'Shared folder link'}
                                             </p>
                                             <p className={cn('mt-1 text-xs font-light', uiTheme.textSecondary)}>
-                                                Expires {formatDate(share.expiresAt)} • {share.viewCount || 0} view{share.viewCount === 1 ? '' : 's'}
+                                                {share.folderCount || 1} folder{share.folderCount === 1 ? '' : 's'} • Expires {formatDate(share.expiresAt)} • {share.viewCount || 0} view{share.viewCount === 1 ? '' : 's'}
                                             </p>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2">
@@ -1567,6 +1615,7 @@ const AssetLibraryView = ({ isDark }) => {
     const [revokingShareId, setRevokingShareId] = useState('');
     const [shareRecipientLabel, setShareRecipientLabel] = useState('');
     const [shareExpiresInDays, setShareExpiresInDays] = useState(14);
+    const [shareFolderIds, setShareFolderIds] = useState([]);
 
     const loadAssets = async ({ background = false } = {}) => {
         try {
@@ -1990,8 +2039,19 @@ const AssetLibraryView = ({ isDark }) => {
 
         setShareRecipientLabel('');
         setShareExpiresInDays(14);
+        setShareFolderIds([activeFolder.id]);
         setShowShareModal(true);
         loadFolderShares(activeFolder.id);
+    };
+
+    const toggleShareFolderSelection = (folderId) => {
+        setShareFolderIds((current) => {
+            if (current.includes(folderId)) {
+                return current.filter((id) => id !== folderId);
+            }
+
+            return [...current, folderId];
+        });
     };
 
     const handleCreateShare = async () => {
@@ -2000,11 +2060,17 @@ const AssetLibraryView = ({ isDark }) => {
             return;
         }
 
+        if (shareFolderIds.length === 0) {
+            toast.error('Choose at least one folder for this link.');
+            return;
+        }
+
         try {
             setCreatingShare(true);
             const response = await api.post(`/assets/folders/${activeFolder.id}/shares`, {
                 recipientLabel: shareRecipientLabel.trim() || undefined,
                 expiresInDays: shareExpiresInDays,
+                folderIds: shareFolderIds,
             });
             const createdShare = response?.share || response?.data?.share;
 
@@ -2413,6 +2479,7 @@ const AssetLibraryView = ({ isDark }) => {
                     activeFolder={activeFolder}
                     creatingShare={creatingShare}
                     expiresInDays={shareExpiresInDays}
+                    folderOptions={persistedFolderOptions}
                     folderShares={folderShares}
                     isDark={isDark}
                     loadingShares={loadingShares}
@@ -2422,8 +2489,10 @@ const AssetLibraryView = ({ isDark }) => {
                     onExpiresChange={setShareExpiresInDays}
                     onRecipientChange={setShareRecipientLabel}
                     onRevokeShare={handleRevokeShare}
+                    onToggleFolderSelection={toggleShareFolderSelection}
                     recipientLabel={shareRecipientLabel}
                     revokingShareId={revokingShareId}
+                    selectedFolderIds={shareFolderIds}
                 />
             ) : null}
         </DashboardPage>

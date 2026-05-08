@@ -97,6 +97,7 @@ describe('assetLibraryService.upload', () => {
     });
     (prisma.event.findFirst as jest.Mock).mockResolvedValue({ id: 'event-1' });
     (prisma.assetLibraryFolder.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([]);
     (uploadService.uploadMultiple as jest.Mock).mockResolvedValue([uploadedAsset]);
     (uploadService.resolveFileUrl as jest.Mock).mockImplementation((key, url) => Promise.resolve(url || key));
     (prisma.assetLibraryAsset.findFirst as jest.Mock).mockResolvedValue({ id: 'asset-1' });
@@ -361,14 +362,14 @@ describe('assetLibraryService.upload', () => {
   });
 
   it('creates revocable external share links for saved folders', async () => {
-    (prisma.assetLibraryFolder.findFirst as jest.Mock).mockResolvedValue({
+    (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([{
       id: 'folder-1',
       parentId: null,
       eventId: null,
       name: 'Brand Photos',
       category: 'branding',
       usageType: 'BRAND',
-    });
+    }]);
 
     const result = await assetLibraryService.createFolderShare('user-1', 'folder-1', {
       recipientLabel: 'Agency',
@@ -376,17 +377,88 @@ describe('assetLibraryService.upload', () => {
       dashboardOrigin: 'https://mightyquinton.tixmo.co',
     });
 
-    expect((prisma as any).assetLibraryFolderShare.create).toHaveBeenCalledWith({
+    expect((prisma as any).assetLibraryFolderShare.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
         organizationId: 'org-1',
         folderId: 'folder-1',
         createdById: 'user-1',
         recipientLabel: 'Agency',
+        folders: {
+          create: [{ folderId: 'folder-1' }],
+        },
       }),
-    });
+      include: {
+        folders: {
+          select: { folderId: true },
+        },
+      },
+    }));
     expect((prisma as any).assetLibraryFolderShare.create.mock.calls[0][0].data.tokenHash).toHaveLength(64);
     expect(result.share.shareUrl).toContain('https://mightyquinton.tixmo.co/assets/shared/');
     expect(result.share.active).toBe(true);
+  });
+
+  it('creates one external link for multiple selected root folders', async () => {
+    (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([
+      {
+        id: 'folder-1',
+        parentId: null,
+        eventId: null,
+        name: 'Brand Photos',
+        category: 'branding',
+        usageType: 'BRAND',
+      },
+      {
+        id: 'folder-2',
+        parentId: null,
+        eventId: null,
+        name: 'Sponsor Logos',
+        category: 'logos',
+        usageType: 'BRAND',
+      },
+      {
+        id: 'folder-child',
+        parentId: 'folder-1',
+        eventId: null,
+        name: 'Nested Photos',
+        category: 'branding',
+        usageType: 'BRAND',
+      },
+    ]);
+    ((prisma as any).assetLibraryFolderShare.create as jest.Mock).mockResolvedValue({
+      id: 'share-1',
+      folderId: 'folder-1',
+      recipientLabel: 'Agency',
+      expiresAt: new Date('2026-05-18T12:00:00.000Z'),
+      revokedAt: null,
+      lastViewedAt: null,
+      viewCount: 0,
+      createdAt: new Date('2026-05-04T12:00:00.000Z'),
+      updatedAt: new Date('2026-05-04T12:00:00.000Z'),
+      folders: [
+        { folderId: 'folder-1' },
+        { folderId: 'folder-2' },
+      ],
+    });
+
+    const result = await assetLibraryService.createFolderShare('user-1', 'folder-1', {
+      recipientLabel: 'Agency',
+      folderIds: ['folder-2', 'folder-child'],
+    });
+
+    expect((prisma as any).assetLibraryFolderShare.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        folderId: 'folder-1',
+        folders: {
+          create: [
+            { folderId: 'folder-1' },
+            { folderId: 'folder-2' },
+          ],
+        },
+      }),
+    }));
+    expect(result.share.folderIds).toEqual(['folder-1', 'folder-2']);
+    expect(result.share.folderCount).toBe(2);
   });
 
   it('revokes folder shares only inside the user organization', async () => {
@@ -401,8 +473,11 @@ describe('assetLibraryService.upload', () => {
     expect((prisma as any).assetLibraryFolderShare.findFirst).toHaveBeenCalledWith({
       where: {
         id: 'share-1',
-        folderId: 'folder-1',
         organizationId: 'org-1',
+        OR: [
+          { folderId: 'folder-1' },
+          { folders: { some: { folderId: 'folder-1' } } },
+        ],
       },
     });
     expect((prisma as any).assetLibraryFolderShare.update).toHaveBeenCalledWith({
