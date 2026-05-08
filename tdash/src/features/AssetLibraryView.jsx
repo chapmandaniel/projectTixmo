@@ -586,23 +586,31 @@ const AssetSelectionToggle = ({ checked, isDark, onToggle }) => (
     </button>
 );
 
-const AssetPreview = ({ asset, isDark, compact = false }) => {
+const AssetPreview = ({ asset, isDark, compact = false, fullscreen = false }) => {
     const kind = asset?.kind;
     const Icon = getAssetIcon(kind);
 
     return (
         <div
             className={cn(
-                'flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border',
-                isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-100'
+                fullscreen
+                    ? 'flex h-full w-full items-center justify-center overflow-hidden rounded-md'
+                    : 'flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border',
+                fullscreen
+                    ? 'bg-transparent'
+                    : isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-100'
             )}
         >
             {!asset ? null : kind === 'image' ? (
-                <img src={asset.s3Url} alt={asset.originalName} className="h-full w-full object-cover" />
+                <img
+                    src={asset.s3Url}
+                    alt={asset.originalName}
+                    className={cn('h-full w-full', fullscreen ? 'object-contain' : 'object-cover')}
+                />
             ) : kind === 'video' ? (
                 <video
                     src={asset.s3Url}
-                    className="h-full w-full object-cover"
+                    className={cn('h-full w-full', fullscreen ? 'object-contain' : 'object-cover')}
                     muted
                     playsInline
                     controls={!compact}
@@ -1026,66 +1034,98 @@ const AssetPreviewModal = ({
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="asset-preview-title">
-            <DashboardSurface isDark={isDark} accent="violet" className="max-h-[90vh] w-full max-w-5xl overflow-y-auto p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                        <h2 id="asset-preview-title" className={cn('truncate text-2xl font-light tracking-tight', uiTheme.textPrimary)}>
+        <div
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="asset-preview-title"
+            onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                    onClose();
+                }
+            }}
+        >
+            <div className="flex h-full flex-col">
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-4 p-4 sm:p-6">
+                    <DashboardSurface
+                        isDark={isDark}
+                        accent={null}
+                        className="pointer-events-auto max-w-[min(720px,calc(100vw-7rem))] bg-black/45 px-4 py-3 backdrop-blur-md"
+                    >
+                        <h2 id="asset-preview-title" className={cn('truncate text-lg font-light tracking-tight sm:text-xl', uiTheme.textPrimary)}>
                             {asset.originalName}
                         </h2>
                         <p className={cn('mt-1 text-sm font-light', uiTheme.textSecondary)}>
                             {getAssetKindLabel(asset.kind)} • {formatFileSize(asset.size)}
+                            {metrics?.dimensions ? ` • ${metrics.dimensions}` : ''}
                         </p>
-                    </div>
-                    <DashboardIconButton isDark={isDark} aria-label="Close asset preview" onClick={onClose}>
+                    </DashboardSurface>
+                    <DashboardIconButton
+                        isDark={isDark}
+                        aria-label="Close asset preview"
+                        onClick={onClose}
+                        className="pointer-events-auto bg-black/45 backdrop-blur-md"
+                    >
                         <X className="h-4 w-4" />
                     </DashboardIconButton>
                 </div>
 
-                <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_320px]">
-                    <AssetPreview asset={asset} isDark={isDark} />
-
-                    <div className="space-y-5">
-                        <div className={cn('grid gap-2 text-sm font-light', uiTheme.textSecondary)}>
-                            <div className="flex items-center justify-between gap-4">
-                                <span>Uploaded</span>
-                                <span className={uiTheme.textPrimary}>{formatDate(asset.createdAt, { hour: 'numeric', minute: '2-digit' })}</span>
-                            </div>
-                            <div className="flex items-center justify-between gap-4">
-                                <span>By</span>
-                                <span className={cn('truncate text-right', uiTheme.textPrimary)}>{asset.uploaderName}</span>
-                            </div>
-                            <div className="flex items-center justify-between gap-4">
-                                <span>Folder</span>
-                                <span className={cn('truncate text-right', uiTheme.textPrimary)}>{getAssetLocationLabel(asset)}</span>
-                            </div>
-                            {metrics?.dimensions ? (
-                                <div className="flex items-center justify-between gap-4">
-                                    <span>Dimensions</span>
-                                    <span className={uiTheme.textPrimary}>{metrics.dimensions}</span>
-                                </div>
-                            ) : null}
-                        </div>
-
-                        <div className="grid gap-2">
-                            {asset.directAssetId ? (
-                                <DashboardButton isDark={isDark} variant="danger" className="w-full justify-center" onClick={onDeleteAsset} disabled={deletingAsset}>
-                                    <Trash2 className="h-4 w-4" />
-                                    {deletingAsset ? 'Deleting' : 'Delete Asset'}
-                                </DashboardButton>
-                            ) : null}
-                            <DashboardButton isDark={isDark} className="w-full justify-center" onClick={onOpen}>
-                                <Download className="h-4 w-4" />
-                                Download
-                            </DashboardButton>
-                            <DashboardButton isDark={isDark} variant="secondary" className="w-full justify-center" onClick={onCopyAssetLink}>
-                                <Link2 className="h-4 w-4" />
-                                Copy asset link
-                            </DashboardButton>
-                        </div>
+                <div className="flex min-h-0 flex-1 items-center justify-center px-4 pb-36 pt-24 sm:px-6 sm:pb-40 sm:pt-28">
+                    <div className="h-full w-full">
+                        <AssetPreview asset={asset} isDark={isDark} fullscreen />
                     </div>
                 </div>
-            </DashboardSurface>
+
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6">
+                    <DashboardSurface
+                        isDark={isDark}
+                        accent={null}
+                        className="pointer-events-auto mx-auto w-full max-w-6xl bg-black/45 p-4 backdrop-blur-md sm:p-5"
+                    >
+                        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                            <div className="grid gap-2 text-sm font-light sm:grid-cols-2 xl:grid-cols-4">
+                                <div>
+                                    <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textMuted)}>Uploaded</p>
+                                    <p className={cn('mt-1', uiTheme.textPrimary)}>
+                                        {formatDate(asset.createdAt, { hour: 'numeric', minute: '2-digit' })}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textMuted)}>By</p>
+                                    <p className={cn('mt-1 truncate', uiTheme.textPrimary)}>{asset.uploaderName}</p>
+                                </div>
+                                <div>
+                                    <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textMuted)}>Folder</p>
+                                    <p className={cn('mt-1 truncate', uiTheme.textPrimary)}>{getAssetLocationLabel(asset)}</p>
+                                </div>
+                                {metrics?.dimensions ? (
+                                    <div>
+                                        <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textMuted)}>Dimensions</p>
+                                        <p className={cn('mt-1', uiTheme.textPrimary)}>{metrics.dimensions}</p>
+                                    </div>
+                                ) : null}
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3">
+                                {asset.directAssetId ? (
+                                    <DashboardButton isDark={isDark} variant="danger" onClick={onDeleteAsset} disabled={deletingAsset}>
+                                        <Trash2 className="h-4 w-4" />
+                                        {deletingAsset ? 'Deleting' : 'Delete Asset'}
+                                    </DashboardButton>
+                                ) : null}
+                                <DashboardButton isDark={isDark} variant="secondary" onClick={onCopyAssetLink}>
+                                    <Link2 className="h-4 w-4" />
+                                    Copy asset link
+                                </DashboardButton>
+                                <DashboardButton isDark={isDark} onClick={onOpen}>
+                                    <Download className="h-4 w-4" />
+                                    Download
+                                </DashboardButton>
+                            </div>
+                        </div>
+                    </DashboardSurface>
+                </div>
+            </div>
         </div>
     );
 };
