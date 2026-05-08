@@ -3,7 +3,9 @@ import {
     CalendarDays,
     ChevronDown,
     ChevronRight,
+    Copy,
     Download,
+    ExternalLink,
     FileImage,
     FileText,
     FolderPlus,
@@ -14,6 +16,7 @@ import {
     Plus,
     RefreshCcw,
     Search,
+    ShieldCheck,
     Sparkles,
     Trash2,
     Upload,
@@ -65,6 +68,15 @@ const SORT_OPTIONS = [
 const extractApprovals = (response) => response?.approvals || response?.data?.approvals || [];
 const extractDirectAssets = (response) => response?.assets || response?.data?.assets || [];
 const extractFolders = (response) => response?.folders || response?.data?.folders || [];
+const extractShares = (response) => response?.shares || response?.data?.shares || [];
+
+const SHARE_EXPIRY_OPTIONS = [
+    { value: 7, label: '7 days' },
+    { value: 14, label: '14 days' },
+    { value: 30, label: '30 days' },
+    { value: 60, label: '60 days' },
+    { value: 90, label: '90 days' },
+];
 
 const formatDate = (value, options = {}) => {
     if (!value) {
@@ -805,6 +817,7 @@ const FolderWorkspaceHeader = ({
     isDark,
     onCreate,
     onDeleteFolder,
+    onShareFolder,
     onSelectFolder,
     onUpload,
     uploading,
@@ -851,10 +864,16 @@ const FolderWorkspaceHeader = ({
 
                 <div className="flex flex-wrap items-center gap-3">
                     {isSavedFolder ? (
-                        <DashboardButton isDark={isDark} variant="danger" onClick={onDeleteFolder} disabled={deletingFolder}>
-                            <Trash2 className="h-4 w-4" />
-                            {deletingFolder ? 'Deleting' : 'Delete Folder'}
-                        </DashboardButton>
+                        <>
+                            <DashboardButton isDark={isDark} variant="secondary" onClick={onShareFolder}>
+                                <ShieldCheck className="h-4 w-4" />
+                                Share Folder
+                            </DashboardButton>
+                            <DashboardButton isDark={isDark} variant="danger" onClick={onDeleteFolder} disabled={deletingFolder}>
+                                <Trash2 className="h-4 w-4" />
+                                {deletingFolder ? 'Deleting' : 'Delete Folder'}
+                            </DashboardButton>
+                        </>
                     ) : null}
                     <DashboardButton isDark={isDark} variant="secondary" onClick={onCreate} disabled={creatingFolder}>
                         <FolderPlus className="h-4 w-4" />
@@ -1369,6 +1388,144 @@ const CreateFolderModal = ({
     );
 };
 
+const ShareFolderModal = ({
+    activeFolder,
+    creatingShare,
+    expiresInDays,
+    folderShares,
+    isDark,
+    loadingShares,
+    onClose,
+    onCopyShare,
+    onCreateShare,
+    onExpiresChange,
+    onRecipientChange,
+    onRevokeShare,
+    recipientLabel,
+    revokingShareId,
+}) => {
+    const uiTheme = getDashboardTheme(isDark);
+    const activeShares = folderShares.filter((share) => share.active);
+    const inactiveShares = folderShares.filter((share) => !share.active);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="asset-share-folder-title">
+            <DashboardSurface isDark={isDark} accent="violet" className="max-h-[90vh] w-full max-w-3xl overflow-y-auto p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 id="asset-share-folder-title" className={cn('text-2xl font-light tracking-tight', uiTheme.textPrimary)}>
+                            Share {activeFolder?.label || 'folder'}
+                        </h2>
+                        <p className={cn('mt-2 text-sm font-light leading-6', uiTheme.textSecondary)}>
+                            Create a private read-only link for people outside Tixmo Dash. Links expire automatically and can be revoked anytime.
+                        </p>
+                    </div>
+                    <DashboardIconButton isDark={isDark} aria-label="Close share folder modal" onClick={onClose}>
+                        <X className="h-4 w-4" />
+                    </DashboardIconButton>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
+                    <div>
+                        <label className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)} htmlFor="asset-share-recipient">
+                            Recipient label
+                        </label>
+                        <DashboardTextInput
+                            id="asset-share-recipient"
+                            isDark={isDark}
+                            value={recipientLabel}
+                            onChange={(event) => onRecipientChange(event.target.value)}
+                            placeholder="Example: Venue partner"
+                            className="mt-2"
+                        />
+                    </div>
+                    <div>
+                        <label className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)} htmlFor="asset-share-expiry">
+                            Expires
+                        </label>
+                        <DashboardSelect
+                            id="asset-share-expiry"
+                            isDark={isDark}
+                            value={expiresInDays}
+                            onChange={(event) => onExpiresChange(Number(event.target.value))}
+                            className="mt-2"
+                        >
+                            {SHARE_EXPIRY_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </DashboardSelect>
+                    </div>
+                </div>
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    <DashboardButton isDark={isDark} onClick={onCreateShare} disabled={creatingShare}>
+                        <ShieldCheck className="h-4 w-4" />
+                        {creatingShare ? 'Creating' : 'Create secure link'}
+                    </DashboardButton>
+                </div>
+
+                <div className={cn('mt-6 border-t pt-5', uiTheme.divider)}>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                        <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>
+                            Active links
+                        </p>
+                        {loadingShares ? <DashboardChip isDark={isDark}>Loading</DashboardChip> : <DashboardChip isDark={isDark}>{activeShares.length} active</DashboardChip>}
+                    </div>
+
+                    {loadingShares ? (
+                        <div className={cn('rounded-md border p-4 text-sm font-light', isDark ? 'border-white/10 bg-white/5 text-zinc-300' : 'border-slate-200 bg-slate-50 text-slate-600')}>
+                            Loading folder links...
+                        </div>
+                    ) : activeShares.length === 0 ? (
+                        <div className={cn('rounded-md border p-4 text-sm font-light', isDark ? 'border-white/10 bg-white/5 text-zinc-300' : 'border-slate-200 bg-slate-50 text-slate-600')}>
+                            No active links for this folder.
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {activeShares.map((share) => (
+                                <div key={share.id} className={cn('rounded-md border p-4', isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-white')}>
+                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                        <div className="min-w-0">
+                                            <p className={cn('truncate text-sm font-light', uiTheme.textPrimary)}>
+                                                {share.recipientLabel || 'Shared folder link'}
+                                            </p>
+                                            <p className={cn('mt-1 text-xs font-light', uiTheme.textSecondary)}>
+                                                Expires {formatDate(share.expiresAt)} • {share.viewCount || 0} view{share.viewCount === 1 ? '' : 's'}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {share.shareUrl ? (
+                                                <>
+                                                    <DashboardIconButton isDark={isDark} aria-label="Copy folder share link" onClick={() => onCopyShare(share.shareUrl)}>
+                                                        <Copy className="h-4 w-4" />
+                                                    </DashboardIconButton>
+                                                    <DashboardIconButton isDark={isDark} aria-label="Open folder share link" onClick={() => window.open(share.shareUrl, '_blank', 'noopener,noreferrer')}>
+                                                        <ExternalLink className="h-4 w-4" />
+                                                    </DashboardIconButton>
+                                                </>
+                                            ) : null}
+                                            <DashboardButton isDark={isDark} variant="danger" onClick={() => onRevokeShare(share.id)} disabled={revokingShareId === share.id}>
+                                                <Trash2 className="h-4 w-4" />
+                                                {revokingShareId === share.id ? 'Revoking' : 'Revoke'}
+                                            </DashboardButton>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {inactiveShares.length > 0 ? (
+                        <p className={cn('mt-4 text-xs font-light', uiTheme.textSecondary)}>
+                            {inactiveShares.length} expired or revoked link{inactiveShares.length === 1 ? '' : 's'} hidden from active sharing.
+                        </p>
+                    ) : null}
+                </div>
+            </DashboardSurface>
+        </div>
+    );
+};
+
 const AssetLibraryView = ({ isDark }) => {
     const uiTheme = getDashboardTheme(isDark);
     const uploadInputRef = useRef(null);
@@ -1403,6 +1560,13 @@ const AssetLibraryView = ({ isDark }) => {
     const [creatingFolder, setCreatingFolder] = useState(false);
     const [folderName, setFolderName] = useState('');
     const [folderParentId, setFolderParentId] = useState('');
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [folderShares, setFolderShares] = useState([]);
+    const [loadingShares, setLoadingShares] = useState(false);
+    const [creatingShare, setCreatingShare] = useState(false);
+    const [revokingShareId, setRevokingShareId] = useState('');
+    const [shareRecipientLabel, setShareRecipientLabel] = useState('');
+    const [shareExpiresInDays, setShareExpiresInDays] = useState(14);
 
     const loadAssets = async ({ background = false } = {}) => {
         try {
@@ -1466,6 +1630,33 @@ const AssetLibraryView = ({ isDark }) => {
             setActiveFolderId(ROOT_FOLDER_ID);
         }
     }, [activeFolderId, folderMap]);
+
+    const loadFolderShares = async (folderId) => {
+        if (!folderId) {
+            setFolderShares([]);
+            return;
+        }
+
+        try {
+            setLoadingShares(true);
+            const response = await api.get(`/assets/folders/${folderId}/shares`);
+            setFolderShares(extractShares(response));
+        } catch (requestError) {
+            setFolderShares([]);
+            setError(requestError?.response?.data?.message || requestError.message || 'Failed to load folder sharing links.');
+        } finally {
+            setLoadingShares(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeFolder?.source !== 'persisted') {
+            setFolderShares([]);
+            return;
+        }
+
+        loadFolderShares(activeFolder.id);
+    }, [activeFolder?.id, activeFolder?.source]);
 
     const filteredAssets = useMemo(() => {
         const query = searchValue.trim().toLowerCase();
@@ -1791,6 +1982,74 @@ const AssetLibraryView = ({ isDark }) => {
         }
     };
 
+    const openShareFolderModal = () => {
+        if (!activeFolder || activeFolder.source !== 'persisted') {
+            toast.error('Only saved folders can be shared.');
+            return;
+        }
+
+        setShareRecipientLabel('');
+        setShareExpiresInDays(14);
+        setShowShareModal(true);
+        loadFolderShares(activeFolder.id);
+    };
+
+    const handleCreateShare = async () => {
+        if (!activeFolder || activeFolder.source !== 'persisted') {
+            toast.error('Choose a saved folder first.');
+            return;
+        }
+
+        try {
+            setCreatingShare(true);
+            const response = await api.post(`/assets/folders/${activeFolder.id}/shares`, {
+                recipientLabel: shareRecipientLabel.trim() || undefined,
+                expiresInDays: shareExpiresInDays,
+            });
+            const createdShare = response?.share || response?.data?.share;
+
+            if (createdShare) {
+                setFolderShares((current) => [createdShare, ...current]);
+                if (createdShare.shareUrl) {
+                    await copyText(createdShare.shareUrl, 'Secure folder link copied');
+                } else {
+                    toast.success('Secure folder link created.');
+                }
+            }
+
+            setShareRecipientLabel('');
+        } catch (requestError) {
+            setError(requestError?.response?.data?.message || requestError.message || 'Failed to create folder share link.');
+            toast.error('Failed to create folder share link.');
+        } finally {
+            setCreatingShare(false);
+        }
+    };
+
+    const handleRevokeShare = async (shareId) => {
+        if (!activeFolder || activeFolder.source !== 'persisted') {
+            return;
+        }
+
+        try {
+            setRevokingShareId(shareId);
+            const response = await api.delete(`/assets/folders/${activeFolder.id}/shares/${shareId}`);
+            const revokedShare = response?.share || response?.data?.share;
+
+            setFolderShares((current) => current.map((share) => (
+                share.id === shareId
+                    ? { ...share, ...(revokedShare || {}), active: false, revokedAt: revokedShare?.revokedAt || new Date().toISOString() }
+                    : share
+            )));
+            toast.success('Folder link revoked.');
+        } catch (requestError) {
+            setError(requestError?.response?.data?.message || requestError.message || 'Failed to revoke folder share link.');
+            toast.error('Failed to revoke folder share link.');
+        } finally {
+            setRevokingShareId('');
+        }
+    };
+
     const handleDeleteAsset = async () => {
         if (!previewAsset?.directAssetId) {
             return;
@@ -1956,6 +2215,7 @@ const AssetLibraryView = ({ isDark }) => {
                                 isDark={isDark}
                                 onCreate={openCreateFolderModal}
                                 onDeleteFolder={handleDeleteFolder}
+                                onShareFolder={openShareFolderModal}
                                 onSelectFolder={handleSelectFolder}
                                 onUpload={openUploadModal}
                                 uploading={uploading}
@@ -2145,6 +2405,25 @@ const AssetLibraryView = ({ isDark }) => {
                     onParentChange={handleFolderParentChange}
                     onSubmit={handleCreateFolder}
                     saving={creatingFolder}
+                />
+            ) : null}
+
+            {showShareModal ? (
+                <ShareFolderModal
+                    activeFolder={activeFolder}
+                    creatingShare={creatingShare}
+                    expiresInDays={shareExpiresInDays}
+                    folderShares={folderShares}
+                    isDark={isDark}
+                    loadingShares={loadingShares}
+                    onClose={() => setShowShareModal(false)}
+                    onCopyShare={(value) => copyText(value, 'Secure folder link copied')}
+                    onCreateShare={handleCreateShare}
+                    onExpiresChange={setShareExpiresInDays}
+                    onRecipientChange={setShareRecipientLabel}
+                    onRevokeShare={handleRevokeShare}
+                    recipientLabel={shareRecipientLabel}
+                    revokingShareId={revokingShareId}
                 />
             ) : null}
         </DashboardPage>

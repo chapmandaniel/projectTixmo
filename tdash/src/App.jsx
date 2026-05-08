@@ -31,6 +31,7 @@ import { BrainCircuit, MessageCircle, Wand2 } from 'lucide-react';
 import WaitingRoomView from './features/WaitingRoomView';
 import GlobalErrorNotification from './components/GlobalErrorNotification';
 import ExternalReviewPage from './pages/ExternalReviewPage';
+import SharedAssetFolderPage from './pages/SharedAssetFolderPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setGlobalError }) => {
@@ -238,6 +239,7 @@ const App = () => {
         <Routes>
             {/* External unauthenticated routes */}
             <Route path="/review/*" element={<ExternalReviewPage />} />
+            <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />
 
             {/* Main Application */}
             <Route path="*" element={

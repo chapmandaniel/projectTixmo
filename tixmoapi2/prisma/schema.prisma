@@ -89,6 +89,7 @@ model User {
   approvalAssetsApproved ApprovalAsset[] @relation("ApprovalAssetLibraryApprover")
   assetLibraryUploads AssetLibraryAsset[] @relation("AssetLibraryAssetUploader")
   assetLibraryFoldersCreated AssetLibraryFolder[] @relation("AssetLibraryFolderCreator")
+  assetLibraryFolderSharesCreated AssetLibraryFolderShare[] @relation("AssetLibraryFolderShareCreator")
 
   @@map("users")
 }
@@ -114,6 +115,7 @@ model Organization {
   approvalRequests ApprovalRequest[]
   assetLibraryAssets AssetLibraryAsset[]
   assetLibraryFolders AssetLibraryFolder[]
+  assetLibraryFolderShares AssetLibraryFolderShare[]
 
   @@map("organizations")
 }
@@ -651,10 +653,33 @@ model AssetLibraryFolder {
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
   assets            AssetLibraryAsset[]
+  shares            AssetLibraryFolderShare[]
 
   @@index([organizationId, parentId])
   @@index([eventId])
   @@map("asset_library_folders")
+}
+
+model AssetLibraryFolderShare {
+  id                String       @id @default(uuid())
+  organizationId    String       @map("organization_id")
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  folderId          String       @map("folder_id")
+  folder            AssetLibraryFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  createdById       String       @map("created_by_id")
+  createdBy         User         @relation("AssetLibraryFolderShareCreator", fields: [createdById], references: [id])
+  tokenHash         String       @unique @map("token_hash")
+  recipientLabel    String?      @map("recipient_label")
+  expiresAt         DateTime     @map("expires_at")
+  revokedAt         DateTime?    @map("revoked_at")
+  lastViewedAt      DateTime?    @map("last_viewed_at")
+  viewCount         Int          @default(0) @map("view_count")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@index([folderId, revokedAt, expiresAt])
+  @@index([organizationId, createdAt])
+  @@map("asset_library_folder_shares")
 }
 
 model ApprovalReviewer {

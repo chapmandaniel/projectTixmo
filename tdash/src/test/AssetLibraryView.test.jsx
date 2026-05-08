@@ -845,4 +845,68 @@ describe('AssetLibraryView', () => {
             expect(screen.queryByRole('button', { name: /Delete Folder/i })).not.toBeInTheDocument();
         });
     });
+
+    it('creates secure share links for saved folders', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url === '/assets') {
+                return Promise.resolve({
+                    assets: [],
+                    folders: [
+                        {
+                            id: 'folder-1',
+                            name: 'Brand Photos',
+                            category: 'photography',
+                            usageType: 'BRAND',
+                            eventId: null,
+                            parentId: null,
+                            createdAt: '2026-04-25T09:00:00.000Z',
+                            updatedAt: '2026-04-25T09:00:00.000Z',
+                        },
+                    ],
+                });
+            }
+
+            if (url === '/assets/folders/folder-1/shares') {
+                return Promise.resolve({ shares: [] });
+            }
+
+            return Promise.resolve({ approvals: [] });
+        });
+        apiPost.mockResolvedValue({
+            share: {
+                id: 'share-1',
+                folderId: 'folder-1',
+                recipientLabel: 'Venue partner',
+                expiresAt: '2026-05-10T12:00:00.000Z',
+                active: true,
+                viewCount: 0,
+                shareUrl: 'https://dashboard.example.com/assets/shared/folder-token',
+            },
+        });
+
+        await act(async () => {
+            render(
+                <MemoryRouter>
+                    <AssetLibraryView isDark />
+                </MemoryRouter>
+            );
+        });
+
+        fireEvent.click(screen.getAllByText('Brand Photos')[0]);
+        fireEvent.click(screen.getByRole('button', { name: /Share Folder/i }));
+        fireEvent.change(screen.getByLabelText('Recipient label'), {
+            target: { value: 'Venue partner' },
+        });
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /Create secure link/i }));
+        });
+
+        expect(apiPost).toHaveBeenCalledWith('/assets/folders/folder-1/shares', {
+            recipientLabel: 'Venue partner',
+            expiresInDays: 14,
+        });
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://dashboard.example.com/assets/shared/folder-token');
+        expect(toastSuccess).toHaveBeenCalledWith('Secure folder link copied');
+    });
 });
