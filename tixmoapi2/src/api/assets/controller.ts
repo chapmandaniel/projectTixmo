@@ -129,8 +129,74 @@ export const AssetLibraryController = {
         usageType: req.body?.usageType || req.body?.collectionType,
         eventId: req.body?.eventId,
         category: req.body?.category,
+        folderId: req.body?.folderId,
       });
       return res.status(StatusCodes.CREATED).json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async createFolder(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const result = await assetLibraryService.createFolder(userId, {
+        name: req.body?.name,
+        parentId: req.body?.parentId,
+        eventId: req.body?.eventId,
+        category: req.body?.category,
+      });
+      return res.status(StatusCodes.CREATED).json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async moveAssetToFolder(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const result = await assetLibraryService.moveAssetToFolder(
+        userId,
+        req.params.assetId,
+        req.body?.folderId
+      );
+      return res.json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async deleteAsset(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const result = await assetLibraryService.deleteAsset(userId, req.params.assetId);
+      return res.json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
+
+  async deleteFolder(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+      }
+
+      const result = await assetLibraryService.deleteFolder(userId, req.params.folderId);
+      return res.json(result);
     } catch (error) {
       return next(error);
     }

@@ -1,21 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     CalendarDays,
-    Copy,
+    ChevronDown,
+    ChevronRight,
     Download,
     FileImage,
     FileText,
+    FolderPlus,
     FolderOpen,
     LayoutGrid,
     Link2,
     List,
-    MoreHorizontal,
+    Plus,
     RefreshCcw,
     Search,
-    Share2,
     Sparkles,
+    Trash2,
     Upload,
     Video,
+    X,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import {
@@ -25,7 +28,6 @@ import {
     DashboardIconButton,
     DashboardPage,
     DashboardPageHeader,
-    DashboardSection,
     DashboardSelect,
     DashboardSurface,
     DashboardTextInput,
@@ -34,7 +36,7 @@ import { api } from '../lib/api';
 import { getDashboardTheme } from '../lib/dashboardTheme';
 import { cn } from '../lib/utils';
 
-const LIBRARY_CAPACITY_BYTES = 500 * 1024 * 1024 * 1024;
+const ROOT_FOLDER_ID = 'root';
 const BRAND_COLLECTION_KEY = 'brand';
 const UNASSIGNED_COLLECTION_KEY = 'unassigned';
 const KEYWORD_CATEGORY_RULES = [
@@ -51,20 +53,6 @@ const TYPE_OPTIONS = [
     { value: 'file', label: 'Other files' },
 ];
 
-const DATE_OPTIONS = [
-    { value: '', label: 'Date' },
-    { value: '7d', label: 'Last 7 days' },
-    { value: '30d', label: 'Last 30 days' },
-    { value: '90d', label: 'Last 90 days' },
-];
-
-const MORE_FILTER_OPTIONS = [
-    { value: '', label: 'More Filters' },
-    { value: 'share-ready', label: 'Share ready' },
-    { value: 'latest', label: 'Latest revision' },
-    { value: 'approved', label: 'Approved only' },
-];
-
 const SORT_OPTIONS = [
     { value: 'likely', label: 'Likely used' },
     { value: 'newest', label: 'Newest' },
@@ -76,7 +64,7 @@ const SORT_OPTIONS = [
 
 const extractApprovals = (response) => response?.approvals || response?.data?.approvals || [];
 const extractDirectAssets = (response) => response?.assets || response?.data?.assets || [];
-const extractEvents = (response) => response?.events || response?.data?.events || [];
+const extractFolders = (response) => response?.folders || response?.data?.folders || [];
 
 const formatDate = (value, options = {}) => {
     if (!value) {
@@ -153,24 +141,6 @@ const getAssetIcon = (kind) => {
     return FileText;
 };
 
-const getApprovalStatusTone = (status) => {
-    if (status === 'APPROVED') {
-        return 'bg-emerald-500/15 text-emerald-300';
-    }
-
-    if (status === 'CHANGES_REQUESTED' || status === 'UPDATED') {
-        return 'bg-amber-500/15 text-amber-300';
-    }
-
-    if (status === 'DECLINED' || status === 'CANCELLED') {
-        return 'bg-rose-500/15 text-rose-300';
-    }
-
-    return 'bg-sky-500/15 text-sky-300';
-};
-
-const getShareReadyReviewers = (reviewers = []) => reviewers.filter((reviewer) => reviewer?.reviewUrl);
-
 const formatUserName = (user) => {
     const first = user?.firstName?.trim() || '';
     const last = user?.lastName?.trim() || '';
@@ -179,6 +149,8 @@ const formatUserName = (user) => {
 };
 
 const getEventCollectionKey = (eventId) => `event:${eventId}`;
+const getCollectionFolderId = (collectionKey) => `collection:${collectionKey}`;
+const getCategoryFolderId = (collectionKey, category) => `collection:${collectionKey}:category:${category}`;
 
 const normalizeUsageType = (value, eventId = '') => {
     const usageType = String(value || '').trim().toUpperCase();
@@ -315,6 +287,8 @@ const flattenDirectAssets = (assets) => assets.map((asset) => {
     const item = {
         id: `direct-${asset.id}`,
         directAssetId: asset.id,
+        folderId: asset.folderId || asset.folder?.id || '',
+        folder: asset.folder || null,
         approvalId: '',
         approvalTitle: 'Direct library upload',
         approvalStatus: 'APPROVED',
@@ -346,72 +320,253 @@ const flattenDirectAssets = (assets) => assets.map((asset) => {
     };
 });
 
-const withinDateFilter = (value, range) => {
-    if (!range) {
-        return true;
-    }
+const buildCollectionFilters = (assets, persistedFolders = []) => {
+    const folderMap = new Map();
 
-    const createdAt = new Date(value);
-    if (Number.isNaN(createdAt.getTime())) {
-        return false;
-    }
+    const ensureFolder = (folder) => {
+        if (folderMap.has(folder.id)) {
+            const existingFolder = folderMap.get(folder.id);
+            Object.assign(existingFolder, {
+                ...folder,
+                count: existingFolder.count,
+                directCount: existingFolder.directCount,
+                childIds: existingFolder.childIds,
+                lastUsedAt: Math.max(existingFolder.lastUsedAt || 0, folder.lastUsedAt || 0),
+            });
+            return existingFolder;
+        }
 
-    const now = Date.now();
-    const limits = {
-        '7d': 7,
-        '30d': 30,
-        '90d': 90,
+        const nextFolder = {
+            count: 0,
+            directCount: 0,
+            childIds: [],
+            ...folder,
+        };
+
+        folderMap.set(folder.id, nextFolder);
+
+        return nextFolder;
     };
 
-    return now - createdAt.getTime() <= limits[range] * 24 * 60 * 60 * 1000;
+    const ensureCollectionFolder = ({ collectionKey, collectionLabel, collectionType, lastUsedAt = 0 }) => ensureFolder({
+        id: getCollectionFolderId(collectionKey),
+        label: collectionLabel || 'Unassigned event',
+        type: collectionType || 'EVENT',
+        icon: collectionKey === BRAND_COLLECTION_KEY ? Sparkles : collectionKey === UNASSIGNED_COLLECTION_KEY ? FolderOpen : CalendarDays,
+        parentId: ROOT_FOLDER_ID,
+        depth: 1,
+        collectionKey,
+        source: 'virtual',
+        lastUsedAt,
+    });
+
+    ensureFolder({
+        id: ROOT_FOLDER_ID,
+        label: 'All assets',
+        type: 'ROOT',
+        icon: FolderOpen,
+        parentId: null,
+        depth: 0,
+        source: 'virtual',
+        lastUsedAt: 0,
+    });
+
+    persistedFolders.forEach((folder) => {
+        const usageType = normalizeUsageType(folder.usageType, folder.eventId);
+        const eventName = folder.event?.name || '';
+        const collectionMeta = getCollectionMeta({
+            usageType,
+            eventId: folder.eventId || '',
+            eventName,
+        });
+        const collectionFolder = ensureCollectionFolder(collectionMeta);
+
+        ensureFolder({
+            id: folder.id,
+            label: folder.name || 'Untitled folder',
+            type: 'FOLDER',
+            icon: FolderOpen,
+            parentId: folder.parentId || ROOT_FOLDER_ID,
+            persistedParentId: folder.parentId || '',
+            depth: folder.parentId ? 3 : 2,
+            collectionKey: collectionMeta.collectionKey,
+            collectionLabel: collectionMeta.collectionLabel,
+            collectionType: collectionMeta.collectionType,
+            category: normalizeToken(folder.category || folder.name || 'folder'),
+            source: 'persisted',
+            eventId: folder.eventId || '',
+            eventName: eventName || collectionMeta.collectionLabel,
+            lastUsedAt: new Date(folder.createdAt).getTime() || 0,
+        });
+    });
+
+    assets.forEach((asset) => {
+        const collectionKey = asset.collectionKey || UNASSIGNED_COLLECTION_KEY;
+        const collectionId = getCollectionFolderId(collectionKey);
+        const category = normalizeToken(asset.category || 'uncategorized');
+        const fallbackFolderId = getCategoryFolderId(collectionKey, category);
+        const directFolderId = asset.folderId || fallbackFolderId;
+        const createdAt = new Date(asset.createdAt).getTime();
+        const lastUsedAt = Number.isNaN(createdAt) ? 0 : createdAt;
+
+        const root = ensureFolder({
+            id: ROOT_FOLDER_ID,
+            label: 'All assets',
+            type: 'ROOT',
+            icon: FolderOpen,
+            parentId: null,
+            depth: 0,
+            lastUsedAt: 0,
+        });
+        const collection = ensureCollectionFolder({
+            collectionKey,
+            collectionLabel: asset.collectionLabel || 'Unassigned event',
+            collectionType: asset.collectionType || 'EVENT',
+            lastUsedAt,
+        });
+        const directFolder = folderMap.has(directFolderId)
+            ? folderMap.get(directFolderId)
+            : ensureFolder({
+            id: directFolderId,
+            label: titleCase(category),
+            type: 'CATEGORY',
+            icon: FolderOpen,
+            parentId: collectionId,
+            depth: 2,
+            collectionKey,
+            category,
+            source: 'virtual',
+            lastUsedAt,
+        });
+
+        let currentFolder = directFolder;
+        while (currentFolder) {
+            currentFolder.count += 1;
+            currentFolder.lastUsedAt = Math.max(currentFolder.lastUsedAt, lastUsedAt);
+            currentFolder = currentFolder.parentId ? folderMap.get(currentFolder.parentId) : null;
+        }
+        directFolder.directCount += 1;
+    });
+
+    folderMap.forEach((folder) => {
+        folder.childIds = [];
+    });
+
+    folderMap.forEach((folder) => {
+        if (!folder.parentId || !folderMap.has(folder.parentId)) return;
+        const parent = folderMap.get(folder.parentId);
+        if (!parent.childIds.includes(folder.id)) {
+            parent.childIds.push(folder.id);
+        }
+    });
+
+    const updateDepth = (folderId, depth = 0) => {
+        const folder = folderMap.get(folderId);
+        if (!folder) return;
+        folder.depth = depth;
+        folder.childIds.forEach((childId) => updateDepth(childId, depth + 1));
+    };
+
+    updateDepth(ROOT_FOLDER_ID, 0);
+
+    folderMap.forEach((folder) => {
+        folder.childIds.sort((leftId, rightId) => {
+            const left = folderMap.get(leftId);
+            const right = folderMap.get(rightId);
+            if (left?.type === 'BRAND' && right?.type !== 'BRAND') return -1;
+            if (right?.type === 'BRAND' && left?.type !== 'BRAND') return 1;
+            return (right?.count || 0) - (left?.count || 0) || (right?.lastUsedAt || 0) - (left?.lastUsedAt || 0) || (left?.label || '').localeCompare(right?.label || '');
+        });
+    });
+
+    return folderMap;
 };
 
-const buildCollectionFilters = (assets) => {
-    const collections = new Map();
-    const totalSize = assets.reduce((sum, asset) => sum + asset.size, 0);
+const getAssetFolderIds = (asset, folderMap = null) => {
+    const collectionKey = asset.collectionKey || UNASSIGNED_COLLECTION_KEY;
+    const category = normalizeToken(asset.category || 'uncategorized');
+    const collectionFolderId = getCollectionFolderId(collectionKey);
+    const categoryFolderId = getCategoryFolderId(collectionKey, category);
+    const directFolderId = asset.folderId && folderMap?.has(asset.folderId) ? asset.folderId : categoryFolderId;
 
-    const ensureCollection = (asset) => {
-        const key = asset.collectionKey || UNASSIGNED_COLLECTION_KEY;
-        const existing = collections.get(key) || {
-            id: key,
-            label: asset.collectionLabel || 'Unassigned event',
-            type: asset.collectionType || 'EVENT',
-            icon: key === BRAND_COLLECTION_KEY ? Sparkles : key === UNASSIGNED_COLLECTION_KEY ? FolderOpen : CalendarDays,
+    return {
+        collectionFolderId,
+        categoryFolderId,
+        directFolderId,
+        ancestorFolderIds: [ROOT_FOLDER_ID, collectionFolderId, categoryFolderId],
+    };
+};
+
+const getFolderPathIds = (folderMap, folderId) => {
+    const path = [];
+    let current = folderMap.get(folderId);
+
+    while (current) {
+        path.unshift(current.id);
+        current = current.parentId ? folderMap.get(current.parentId) : null;
+    }
+
+    return path.length > 0 ? path : [ROOT_FOLDER_ID];
+};
+
+const getFolderPath = (folderMap, folderId) => getFolderPathIds(folderMap, folderId)
+    .map((pathId) => folderMap.get(pathId))
+    .filter(Boolean);
+
+const buildPersistedFolderOptions = (folderMap) => {
+    const options = [];
+
+    const visit = (folderId) => {
+        const folder = folderMap.get(folderId);
+        if (!folder) return;
+
+        if (folder.source === 'persisted') {
+            options.push(folder);
+        }
+
+        folder.childIds.forEach(visit);
+    };
+
+    visit(ROOT_FOLDER_ID);
+    return options;
+};
+
+const assetBelongsToFolder = (asset, folderId, folderMap) => {
+    if (folderId === ROOT_FOLDER_ID) return true;
+    return getFolderPathIds(folderMap, getAssetFolderIds(asset, folderMap).directFolderId).includes(folderId);
+};
+
+const assetIsDirectlyInFolder = (asset, folderId, folderMap) => {
+    if (folderId === ROOT_FOLDER_ID) return getFolderPathIds(folderMap, getAssetFolderIds(asset, folderMap).directFolderId).length <= 3;
+    return getAssetFolderIds(asset, folderMap).directFolderId === folderId;
+};
+
+const buildRecentCategoryOptions = (assets) => {
+    const categories = new Map();
+
+    assets.forEach((asset) => {
+        const category = normalizeToken(asset.category || '');
+        if (!category) return;
+
+        const createdAt = new Date(asset.createdAt).getTime();
+        const current = categories.get(category) || {
+            value: category,
+            label: titleCase(category),
             count: 0,
-            size: 0,
             lastUsedAt: 0,
         };
 
-        const createdAt = new Date(asset.createdAt).getTime();
-        existing.count += 1;
-        existing.size += asset.size;
-        existing.lastUsedAt = Math.max(existing.lastUsedAt, Number.isNaN(createdAt) ? 0 : createdAt);
-        collections.set(key, existing);
-    };
-
-    assets.forEach(ensureCollection);
-
-    const sortedCollections = [...collections.values()].sort((left, right) => {
-        if (left.id === BRAND_COLLECTION_KEY) return -1;
-        if (right.id === BRAND_COLLECTION_KEY) return 1;
-        if (left.id === UNASSIGNED_COLLECTION_KEY) return 1;
-        if (right.id === UNASSIGNED_COLLECTION_KEY) return -1;
-        return right.count - left.count || right.lastUsedAt - left.lastUsedAt || left.label.localeCompare(right.label);
+        current.count += 1;
+        current.lastUsedAt = Math.max(current.lastUsedAt, Number.isNaN(createdAt) ? 0 : createdAt);
+        categories.set(category, current);
     });
 
-    return [
-        {
-            id: 'all',
-            label: 'All assets',
-            type: 'ALL',
-            icon: FolderOpen,
-            count: assets.length,
-            size: totalSize,
-            lastUsedAt: Math.max(0, ...assets.map((asset) => new Date(asset.createdAt).getTime()).filter(Number.isFinite)),
-        },
-        ...sortedCollections,
-    ];
+    return [...categories.values()]
+        .sort((left, right) => right.lastUsedAt - left.lastUsedAt || right.count - left.count || left.label.localeCompare(right.label))
+        .slice(0, 8);
 };
+
+const getAssetLocationLabel = (asset) => asset.folder?.name || asset.collectionLabel || 'Asset library';
 
 const AssetSelectionToggle = ({ checked, isDark, onToggle }) => (
     <button
@@ -478,32 +633,87 @@ const AssetPreview = ({ asset, isDark, compact = false }) => {
     );
 };
 
-const CategoryRail = ({ categories, activeCategory, onSelect, isDark, totalSize }) => {
+const FolderRail = ({
+    activeFolderId,
+    expandedFolderIds,
+    folderMap,
+    isDark,
+    movingAssetId,
+    onDropAsset,
+    onSelect,
+    onToggleFolder,
+}) => {
     const uiTheme = getDashboardTheme(isDark);
-    const usageRatio = Math.min(totalSize / LIBRARY_CAPACITY_BYTES, 1);
+    const visibleFolders = [];
+    const expandedSet = new Set(expandedFolderIds);
+
+    const pushFolder = (folderId) => {
+        const folder = folderMap.get(folderId);
+        if (!folder) return;
+
+        visibleFolders.push(folder);
+        if (folder.id === ROOT_FOLDER_ID || expandedSet.has(folder.id)) {
+            folder.childIds.forEach(pushFolder);
+        }
+    };
+
+    pushFolder(ROOT_FOLDER_ID);
 
     return (
         <DashboardSurface isDark={isDark} accent="slate" className="p-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
+                <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Folders</p>
+            </div>
             <div className="space-y-2">
-                {categories.map((category) => {
-                    const active = category.id === activeCategory;
-                    const Icon = category.icon;
+                {visibleFolders.map((folder) => {
+                    const active = folder.id === activeFolderId;
+                    const Icon = active ? FolderOpen : folder.icon;
+                    const hasChildren = folder.childIds.length > 0;
+                    const expanded = folder.id === ROOT_FOLDER_ID || expandedSet.has(folder.id);
+                    const canDrop = movingAssetId && folder.source === 'persisted';
 
                     return (
-                        <button
-                            key={category.id}
-                            type="button"
-                            onClick={() => onSelect(category.id)}
+                        <div
+                            key={folder.id}
+                            onDragOver={(event) => {
+                                if (!canDrop) return;
+                                event.preventDefault();
+                            }}
+                            onDrop={(event) => {
+                                if (!canDrop) return;
+                                event.preventDefault();
+                                onDropAsset(folder.id);
+                            }}
                             className={cn(
-                                'flex w-full items-center justify-between rounded-md border px-3 py-2.5 text-left transition',
+                                'flex w-full items-center justify-between rounded-md border px-2 py-2 text-left transition',
                                 active
                                     ? 'border-pink-400/40 bg-gradient-to-r from-fuchsia-500/20 to-violet-500/15 text-white'
                                     : isDark
                                         ? cn('border-transparent bg-transparent hover:border-white/10 hover:bg-white/5 hover:text-white', uiTheme.textSecondary)
-                                        : 'border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                                        : 'border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900',
+                                canDrop && 'border-cyan-300/40 bg-cyan-400/10'
                             )}
                         >
-                            <span className="flex min-w-0 items-center gap-3">
+                            <span className="flex min-w-0 flex-1 items-center gap-2">
+                                <button
+                                    type="button"
+                                    aria-label={`${expanded ? 'Collapse' : 'Expand'} ${folder.label}`}
+                                    disabled={!hasChildren}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (hasChildren) {
+                                            onToggleFolder(folder.id);
+                                        }
+                                    }}
+                                    className={cn(
+                                        'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition',
+                                        hasChildren
+                                            ? isDark ? 'text-zinc-300 hover:bg-white/10 hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                                            : 'text-transparent'
+                                    )}
+                                >
+                                    {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                                </button>
                                 <span
                                     className={cn(
                                         'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md',
@@ -516,35 +726,137 @@ const CategoryRail = ({ categories, activeCategory, onSelect, isDark, totalSize 
                                 >
                                     <Icon className="h-4 w-4" />
                                 </span>
-                                <span className="truncate text-sm font-light">{category.label}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => onSelect(folder.id)}
+                                    className="min-w-0 flex-1 truncate text-left text-sm font-light"
+                                    style={{ paddingLeft: `${Math.max(folder.depth - 1, 0) * 8}px` }}
+                                >
+                                    {folder.label}
+                                </button>
                             </span>
-                            <span className={cn('text-xs font-light', active ? 'text-white' : uiTheme.textSecondary)}>
-                                {category.count}
-                            </span>
-                        </button>
+                        </div>
                     );
                 })}
             </div>
+        </DashboardSurface>
+    );
+};
 
-            <div className={cn('mt-6 rounded-md border p-4', isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50')}>
-                <div className="flex items-center justify-between gap-3">
-                    <div>
-                        <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Storage</p>
-                        <p className={cn('mt-1 text-sm font-light', uiTheme.textPrimary)}>
-                            {formatFileSize(totalSize)} of {formatFileSize(LIBRARY_CAPACITY_BYTES)}
-                        </p>
+const FolderTile = ({ folder, isDark, movingAssetId, onDropAsset, onOpen }) => {
+    const uiTheme = getDashboardTheme(isDark);
+    const Icon = folder.type === 'BRAND' ? Sparkles : folder.type === 'EVENT' ? CalendarDays : FolderOpen;
+    const canDrop = movingAssetId && folder.source === 'persisted';
+
+    return (
+        <DashboardSurface
+            role="button"
+            tabIndex={0}
+            isDark={isDark}
+            accent={folder.type === 'BRAND' ? 'brand' : folder.type === 'EVENT' ? 'violet' : 'slate'}
+            interactive
+            aria-label={`Open folder ${folder.label}`}
+            onClick={() => onOpen(folder.id)}
+            onDragOver={(event) => {
+                if (!canDrop) return;
+                event.preventDefault();
+            }}
+            onDrop={(event) => {
+                if (!canDrop) return;
+                event.preventDefault();
+                onDropAsset(folder.id);
+            }}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onOpen(folder.id);
+                }
+            }}
+            className={cn('group overflow-hidden p-4 text-left', canDrop && 'ring-2 ring-cyan-400/40')}
+        >
+            <div className="flex items-start justify-between gap-3">
+                <span className={cn('inline-flex h-11 w-11 items-center justify-center rounded-md', isDark ? 'bg-white/10 text-fuchsia-200' : 'bg-slate-100 text-slate-700')}>
+                    <Icon className="h-5 w-5" />
+                </span>
+            </div>
+            <div className="mt-4 min-w-0">
+                <p className={cn('truncate text-base font-light', uiTheme.textPrimary)}>{folder.label}</p>
+                <p className={cn('mt-1 text-sm font-light', uiTheme.textSecondary)}>
+                    {folder.count} asset{folder.count === 1 ? '' : 's'}
+                </p>
+            </div>
+        </DashboardSurface>
+    );
+};
+
+const FolderWorkspaceHeader = ({
+    activeFolder,
+    creatingFolder,
+    deletingFolder,
+    folderMap,
+    isDark,
+    onCreate,
+    onDeleteFolder,
+    onSelectFolder,
+    onUpload,
+    uploading,
+}) => {
+    const uiTheme = getDashboardTheme(isDark);
+    const folderPath = getFolderPath(folderMap, activeFolder?.id || ROOT_FOLDER_ID);
+    const isSavedFolder = activeFolder?.source === 'persisted';
+
+    return (
+        <DashboardSurface isDark={isDark} accent="violet" className="p-4">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-light">
+                        {folderPath.map((folder, index) => (
+                            <React.Fragment key={folder.id}>
+                                {index > 0 ? <span className={uiTheme.textMuted}>/</span> : null}
+                                <button
+                                    type="button"
+                                    onClick={() => onSelectFolder(folder.id)}
+                                    className={cn(
+                                        'max-w-[180px] truncate transition',
+                                        index === folderPath.length - 1
+                                            ? uiTheme.textPrimary
+                                            : cn(uiTheme.textSecondary, isDark ? 'hover:text-white' : 'hover:text-slate-900')
+                                    )}
+                                >
+                                    {folder.label}
+                                </button>
+                            </React.Fragment>
+                        ))}
                     </div>
-                    <DashboardChip isDark={isDark}>{Math.round(usageRatio * 100)}%</DashboardChip>
+                    <div className="mt-2 flex flex-wrap items-end gap-3">
+                        <h2 className={cn('truncate text-2xl font-light tracking-tight', uiTheme.textPrimary)}>
+                            {activeFolder?.label || 'All assets'}
+                        </h2>
+                        <DashboardChip isDark={isDark}>
+                            {activeFolder?.count || 0} asset{activeFolder?.count === 1 ? '' : 's'}
+                        </DashboardChip>
+                        {isSavedFolder ? (
+                            <DashboardChip isDark={isDark}>Saved folder</DashboardChip>
+                        ) : null}
+                    </div>
                 </div>
-                <div className={cn('mt-4 h-2 overflow-hidden rounded-full', isDark ? 'bg-white/10' : 'bg-slate-200')}>
-                    <div
-                        className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400"
-                        style={{ width: `${Math.max(6, usageRatio * 100)}%` }}
-                    />
+
+                <div className="flex flex-wrap items-center gap-3">
+                    {isSavedFolder ? (
+                        <DashboardButton isDark={isDark} variant="danger" onClick={onDeleteFolder} disabled={deletingFolder}>
+                            <Trash2 className="h-4 w-4" />
+                            {deletingFolder ? 'Deleting' : 'Delete Folder'}
+                        </DashboardButton>
+                    ) : null}
+                    <DashboardButton isDark={isDark} variant="secondary" onClick={onCreate} disabled={creatingFolder}>
+                        <FolderPlus className="h-4 w-4" />
+                        New Folder
+                    </DashboardButton>
+                    <DashboardButton isDark={isDark} onClick={onUpload} disabled={uploading}>
+                        <Upload className="h-4 w-4" />
+                        {uploading ? 'Uploading' : 'Upload Assets'}
+                    </DashboardButton>
                 </div>
-                <DashboardButton isDark={isDark} variant="secondary" className="mt-4 w-full justify-center">
-                    Upgrade Storage
-                </DashboardButton>
             </div>
         </DashboardSurface>
     );
@@ -556,16 +868,29 @@ const AssetCard = ({
     isActive,
     isSelected,
     onActivate,
+    onDragEnd,
+    onDragStart,
     onToggleSelection,
 }) => (
     <DashboardSurface
         role="button"
         tabIndex={0}
+        draggable={Boolean(asset.directAssetId)}
         isDark={isDark}
         accent={asset.kind === 'image' ? 'brand' : asset.kind === 'video' ? 'violet' : 'blue'}
         interactive
         aria-label={`Open asset ${asset.originalName}`}
         onClick={() => onActivate(asset.id)}
+        onDragStart={(event) => {
+            if (!asset.directAssetId) {
+                event.preventDefault();
+                return;
+            }
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', asset.id);
+            onDragStart(asset.id);
+        }}
+        onDragEnd={onDragEnd}
         onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
@@ -589,11 +914,6 @@ const AssetCard = ({
                     }}
                 />
             </div>
-            <div className="absolute right-3 top-3">
-                <DashboardIconButton isDark={isDark} className="h-8 w-8 bg-black/25 text-white/80 hover:bg-black/45 hover:text-white">
-                    <MoreHorizontal className="h-4 w-4" />
-                </DashboardIconButton>
-            </div>
         </div>
         <div className="space-y-3 p-4">
             <div className="min-w-0">
@@ -601,16 +921,16 @@ const AssetCard = ({
                     {asset.originalName}
                 </p>
                 <p className={cn('mt-1 truncate text-sm font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
-                    {asset.collectionLabel}
+                    {getAssetLocationLabel(asset)}
                 </p>
             </div>
             <div className={cn('space-y-1 text-xs font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
                 <div className="flex items-center justify-between gap-3">
-                    <span>{asset.approvalTitle}</span>
+                    <span>{getAssetKindLabel(asset.kind)}</span>
                     <span>{formatFileSize(asset.size)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                    <span>{asset.category === 'posters' ? 'Poster' : titleCase(asset.category)}</span>
+                    <span>{asset.directAssetId ? 'Uploaded asset' : 'Library asset'}</span>
                     <span>{formatDate(asset.createdAt)}</span>
                 </div>
             </div>
@@ -624,13 +944,26 @@ const AssetRow = ({
     isActive,
     isSelected,
     onActivate,
+    onDragEnd,
+    onDragStart,
     onToggleSelection,
 }) => (
     <div
         role="button"
         tabIndex={0}
+        draggable={Boolean(asset.directAssetId)}
         aria-label={`Open asset ${asset.originalName}`}
         onClick={() => onActivate(asset.id)}
+        onDragStart={(event) => {
+            if (!asset.directAssetId) {
+                event.preventDefault();
+                return;
+            }
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', asset.id);
+            onDragStart(asset.id);
+        }}
+        onDragEnd={onDragEnd}
         onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
@@ -638,7 +971,7 @@ const AssetRow = ({
             }
         }}
         className={cn(
-            'grid w-full grid-cols-[44px_72px_minmax(0,1.5fr)_0.8fr_0.8fr_0.9fr_40px] items-center gap-3 border-b px-4 py-3 text-left transition last:border-b-0',
+            'grid w-full grid-cols-[44px_72px_minmax(0,1.5fr)_0.7fr_0.7fr_0.8fr] items-center gap-3 border-b px-4 py-3 text-left transition last:border-b-0',
             isDark
                 ? 'border-white/10 hover:bg-white/5'
                 : 'border-slate-200 hover:bg-slate-50',
@@ -661,252 +994,337 @@ const AssetRow = ({
                 {asset.originalName}
             </p>
             <p className={cn('mt-1 truncate text-xs font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
-                {asset.collectionLabel}
+                {getAssetLocationLabel(asset)}
             </p>
         </div>
         <p className={cn('truncate text-xs font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
-            {asset.collectionLabel}
+            {getAssetKindLabel(asset.kind)}
         </p>
         <p className={cn('truncate text-xs font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
             {formatFileSize(asset.size)}
         </p>
-        <div>
-            <span className={cn('rounded-full px-2 py-1 text-[11px]', getApprovalStatusTone(asset.approvalStatus))}>
-                {asset.approvalStatus.replace(/_/g, ' ')}
-            </span>
-        </div>
-        <DashboardIconButton isDark={isDark} className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-        </DashboardIconButton>
+        <p className={cn('truncate text-xs font-light', isDark ? 'text-zinc-400' : 'text-slate-500')}>
+            {formatDate(asset.createdAt)}
+        </p>
     </div>
 );
 
-const AssetInspector = ({
+const AssetPreviewModal = ({
     asset,
+    deletingAsset,
     isDark,
     metrics,
+    onClose,
+    onDeleteAsset,
     onOpen,
     onCopyAssetLink,
-    onCopyShareLinks,
-    onShare,
-    onMove,
-    onDelete,
 }) => {
     const uiTheme = getDashboardTheme(isDark);
-    const shareReadyReviewers = getShareReadyReviewers(asset?.reviewers);
 
     if (!asset) {
-        return (
-            <DashboardSurface isDark={isDark} accent="violet" className="p-5 xl:sticky xl:top-24">
-                <DashboardEmptyState
-                    isDark={isDark}
-                    compact
-                    title="Select an asset"
-                    description="Use the grid or list to inspect metadata, links, and handoff actions."
-                />
-            </DashboardSurface>
-        );
+        return null;
     }
 
     return (
-        <DashboardSurface isDark={isDark} accent="violet" className="space-y-5 p-5 xl:sticky xl:top-24">
-            <AssetPreview asset={asset} isDark={isDark} />
-
-            <div className="space-y-3">
-                <div>
-                    <h3 className={cn('text-[1.3rem] font-light tracking-tight', uiTheme.textPrimary)}>{asset.originalName}</h3>
-                    <p className={cn('mt-1 text-sm font-light', uiTheme.textSecondary)}>
-                        {getAssetKindLabel(asset.kind)} • {formatFileSize(asset.size)}
-                    </p>
-                </div>
-
-                <div className={cn('grid gap-2 text-sm font-light', uiTheme.textSecondary)}>
-                    <div className="flex items-center justify-between gap-4">
-                        <span>Uploaded</span>
-                        <span className={uiTheme.textPrimary}>{formatDate(asset.createdAt, { hour: 'numeric', minute: '2-digit' })}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                        <span>By</span>
-                        <span className={cn('truncate text-right', uiTheme.textPrimary)}>{asset.uploaderName}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                        <span>Collection</span>
-                        <span className={cn('truncate text-right', uiTheme.textPrimary)}>{asset.collectionLabel}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                        <span>Revision</span>
-                        <span className={uiTheme.textPrimary}>v{asset.revisionNumber}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                        <span>Status</span>
-                        <span className={cn('rounded-full px-2 py-1 text-[11px]', getApprovalStatusTone(asset.approvalStatus))}>
-                            {asset.approvalStatus.replace(/_/g, ' ')}
-                        </span>
-                    </div>
-                    {metrics?.dimensions ? (
-                        <div className="flex items-center justify-between gap-4">
-                            <span>Dimensions</span>
-                            <span className={uiTheme.textPrimary}>{metrics.dimensions}</span>
-                        </div>
-                    ) : null}
-                </div>
-            </div>
-
-            <div>
-                <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Tags</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                    {asset.tags.map((tag) => (
-                        <DashboardChip key={tag} isDark={isDark}>
-                            {tag}
-                        </DashboardChip>
-                    ))}
-                </div>
-            </div>
-
-            <div>
-                <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Description</p>
-                <p className={cn('mt-3 text-sm font-light leading-6', uiTheme.textSecondary)}>
-                    {asset.approvalDescription || 'Creative asset routed through the approval workflow.'}
-                </p>
-            </div>
-
-            <div className="space-y-2">
-                <DashboardButton isDark={isDark} className="w-full justify-center" onClick={onOpen}>
-                    <Download className="h-4 w-4" />
-                    Download
-                </DashboardButton>
-                <DashboardButton isDark={isDark} variant="secondary" className="w-full justify-center" onClick={onShare}>
-                    <Share2 className="h-4 w-4" />
-                    Share
-                </DashboardButton>
-                <DashboardButton isDark={isDark} variant="secondary" className="w-full justify-center" onClick={onMove}>
-                    <FolderOpen className="h-4 w-4" />
-                    Move
-                </DashboardButton>
-                <DashboardButton isDark={isDark} variant="danger" className="w-full justify-center" onClick={onDelete}>
-                    Delete
-                </DashboardButton>
-            </div>
-
-            <div className={cn('rounded-md border p-4', isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50')}>
-                <div className="flex items-start justify-between gap-3">
-                    <div>
-                        <p className={cn('text-sm font-light', uiTheme.textPrimary)}>External review links</p>
-                        <p className={cn('mt-1 text-xs font-light leading-5', uiTheme.textSecondary)}>
-                            {shareReadyReviewers.length > 0
-                                ? `${shareReadyReviewers.length} stable review link${shareReadyReviewers.length === 1 ? '' : 's'} ready for external handoff.`
-                                : 'No stable review links available for this asset yet.'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="asset-preview-title">
+            <DashboardSurface isDark={isDark} accent="violet" className="max-h-[90vh] w-full max-w-5xl overflow-y-auto p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                        <h2 id="asset-preview-title" className={cn('truncate text-2xl font-light tracking-tight', uiTheme.textPrimary)}>
+                            {asset.originalName}
+                        </h2>
+                        <p className={cn('mt-1 text-sm font-light', uiTheme.textSecondary)}>
+                            {getAssetKindLabel(asset.kind)} • {formatFileSize(asset.size)}
                         </p>
                     </div>
-                    {shareReadyReviewers.length > 1 ? (
-                        <DashboardButton isDark={isDark} variant="secondary" className="px-3 py-2 text-xs" onClick={onCopyShareLinks}>
-                            <Copy className="h-3.5 w-3.5" />
-                            Copy all
-                        </DashboardButton>
-                    ) : null}
+                    <DashboardIconButton isDark={isDark} aria-label="Close asset preview" onClick={onClose}>
+                        <X className="h-4 w-4" />
+                    </DashboardIconButton>
                 </div>
 
-                <div className="mt-3 space-y-2">
-                    {shareReadyReviewers.length === 0 ? (
-                        <DashboardButton isDark={isDark} variant="secondary" className="w-full justify-center" onClick={onCopyAssetLink}>
-                            <Link2 className="h-4 w-4" />
-                            Copy signed asset URL
-                        </DashboardButton>
-                    ) : (
-                        shareReadyReviewers.map((reviewer) => (
-                            <div
-                                key={reviewer.id}
-                                className={cn('rounded-md border p-3', isDark ? 'border-white/10 bg-black/10' : 'border-slate-200 bg-white')}
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                        <p className={cn('truncate text-sm font-light', uiTheme.textPrimary)}>
-                                            {reviewer.name || reviewer.email}
-                                        </p>
-                                        <p className={cn('truncate text-xs font-light', uiTheme.textSecondary)}>
-                                            {reviewer.email}
-                                        </p>
-                                    </div>
-                                    <DashboardButton
-                                        isDark={isDark}
-                                        variant="secondary"
-                                        className="px-3 py-2 text-xs"
-                                        aria-label={`Copy review link for ${reviewer.email}`}
-                                        onClick={() => onCopyShareLinks(reviewer.reviewUrl)}
-                                    >
-                                        <Copy className="h-3.5 w-3.5" />
-                                        Copy
-                                    </DashboardButton>
-                                </div>
-                                <div className={cn('mt-3 flex items-center justify-between gap-3 text-xs font-light', uiTheme.textSecondary)}>
-                                    <span>{reviewer.association || reviewer.reviewerType}</span>
-                                    <span>Expires {formatDate(reviewer.tokenExpiresAt)}</span>
-                                </div>
+                <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_320px]">
+                    <AssetPreview asset={asset} isDark={isDark} />
+
+                    <div className="space-y-5">
+                        <div className={cn('grid gap-2 text-sm font-light', uiTheme.textSecondary)}>
+                            <div className="flex items-center justify-between gap-4">
+                                <span>Uploaded</span>
+                                <span className={uiTheme.textPrimary}>{formatDate(asset.createdAt, { hour: 'numeric', minute: '2-digit' })}</span>
                             </div>
-                        ))
-                    )}
+                            <div className="flex items-center justify-between gap-4">
+                                <span>By</span>
+                                <span className={cn('truncate text-right', uiTheme.textPrimary)}>{asset.uploaderName}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                                <span>Folder</span>
+                                <span className={cn('truncate text-right', uiTheme.textPrimary)}>{getAssetLocationLabel(asset)}</span>
+                            </div>
+                            {metrics?.dimensions ? (
+                                <div className="flex items-center justify-between gap-4">
+                                    <span>Dimensions</span>
+                                    <span className={uiTheme.textPrimary}>{metrics.dimensions}</span>
+                                </div>
+                            ) : null}
+                        </div>
+
+                        <div className="grid gap-2">
+                            {asset.directAssetId ? (
+                                <DashboardButton isDark={isDark} variant="danger" className="w-full justify-center" onClick={onDeleteAsset} disabled={deletingAsset}>
+                                    <Trash2 className="h-4 w-4" />
+                                    {deletingAsset ? 'Deleting' : 'Delete Asset'}
+                                </DashboardButton>
+                            ) : null}
+                            <DashboardButton isDark={isDark} className="w-full justify-center" onClick={onOpen}>
+                                <Download className="h-4 w-4" />
+                                Download
+                            </DashboardButton>
+                            <DashboardButton isDark={isDark} variant="secondary" className="w-full justify-center" onClick={onCopyAssetLink}>
+                                <Link2 className="h-4 w-4" />
+                                Copy asset link
+                            </DashboardButton>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </DashboardSurface>
+            </DashboardSurface>
+        </div>
     );
 };
 
-const UploadContextPanel = ({
-    events,
+const AssetUploadModal = ({
+    files,
+    folderOptions,
     isDark,
-    uploadUsageType,
-    uploadEventId,
-    onUsageTypeChange,
-    onEventChange,
-    onBrowse,
+    isDragging,
+    onAddFiles,
+    onClose,
+    onCreateFolder,
+    onDropFiles,
+    onRemoveFile,
+    onSubmit,
+    onToggleDragging,
+    uploadFolderId,
+    uploadInputRef,
     uploading,
+    onFolderChange,
+}) => {
+    const uiTheme = getDashboardTheme(isDark);
+    const selectedFolder = folderOptions.find((folder) => folder.id === uploadFolderId);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="asset-upload-title">
+            <DashboardSurface isDark={isDark} accent="violet" className="max-h-[90vh] w-full max-w-3xl overflow-y-auto p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 id="asset-upload-title" className={cn('text-2xl font-light tracking-tight', uiTheme.textPrimary)}>
+                            Upload assets
+                        </h2>
+                        <p className={cn('mt-2 text-sm font-light leading-6', uiTheme.textSecondary)}>
+                            Choose the folder these files belong to. Create a folder first when the right destination does not exist yet.
+                        </p>
+                    </div>
+                    <DashboardIconButton isDark={isDark} aria-label="Close upload modal" onClick={onClose}>
+                        <X className="h-4 w-4" />
+                    </DashboardIconButton>
+                </div>
+
+                <div
+                    className={cn(
+                        'mt-5 rounded-md border border-dashed p-6 text-center transition',
+                        isDragging
+                            ? 'border-fuchsia-400/60 bg-fuchsia-500/10'
+                            : isDark
+                                ? 'border-white/15 bg-white/5'
+                                : 'border-slate-200 bg-slate-50'
+                    )}
+                    onDragOver={(event) => {
+                        event.preventDefault();
+                        onToggleDragging(true);
+                    }}
+                    onDragLeave={(event) => {
+                        event.preventDefault();
+                        onToggleDragging(false);
+                    }}
+                    onDrop={(event) => {
+                        event.preventDefault();
+                        onToggleDragging(false);
+                        onDropFiles(Array.from(event.dataTransfer.files || []));
+                    }}
+                >
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-fuchsia-300">
+                        <Upload className="h-6 w-6" />
+                    </div>
+                    <p className={cn('mt-3 text-lg font-light', uiTheme.textPrimary)}>Drop files here</p>
+                    <p className={cn('mt-1 text-sm font-light', uiTheme.textSecondary)}>PNG, JPG, GIF, MP4, MOV, WEBP, or PDF.</p>
+                    <DashboardButton isDark={isDark} className="mt-4" onClick={() => uploadInputRef.current?.click()} disabled={uploading}>
+                        <Plus className="h-4 w-4" />
+                        Add Files
+                    </DashboardButton>
+                    <input
+                        ref={uploadInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(event) => {
+                            onAddFiles(Array.from(event.target.files || []));
+                            event.target.value = '';
+                        }}
+                    />
+                </div>
+
+                {files.length > 0 ? (
+                    <div className="mt-4 space-y-2">
+                        {files.map((file, index) => (
+                            <div
+                                key={`${file.name}-${file.size}-${index}`}
+                                className={cn('flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm', isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-white')}
+                            >
+                                <div className="min-w-0">
+                                    <p className={cn('truncate font-light', uiTheme.textPrimary)}>{file.name}</p>
+                                    <p className={cn('text-xs font-light', uiTheme.textSecondary)}>{formatFileSize(file.size)}</p>
+                                </div>
+                                <DashboardIconButton isDark={isDark} aria-label={`Remove ${file.name}`} className="h-8 w-8" onClick={() => onRemoveFile(index)}>
+                                    <X className="h-3.5 w-3.5" />
+                                </DashboardIconButton>
+                            </div>
+                        ))}
+                    </div>
+                ) : null}
+
+                <div className="mt-5">
+                        <div className="flex items-center justify-between gap-3">
+                            <label className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)} htmlFor="asset-upload-folder">
+                                Destination folder
+                            </label>
+                            <button
+                                type="button"
+                                onClick={onCreateFolder}
+                                className={cn('inline-flex items-center gap-1.5 text-xs font-light transition', isDark ? 'text-fuchsia-200 hover:text-white' : 'text-slate-600 hover:text-slate-900')}
+                            >
+                                <FolderPlus className="h-3.5 w-3.5" />
+                                Create folder
+                            </button>
+                        </div>
+                        <DashboardSelect
+                            id="asset-upload-folder"
+                            isDark={isDark}
+                            aria-label="Upload folder"
+                            value={uploadFolderId}
+                            onChange={(event) => onFolderChange(event.target.value)}
+                            className="mt-2"
+                        >
+                            <option value="">Choose a folder...</option>
+                            {folderOptions.map((folder) => (
+                                <option key={folder.id} value={folder.id}>
+                                    {'  '.repeat(Math.max(folder.depth - 2, 0) * 2)}{folder.label}
+                                </option>
+                            ))}
+                        </DashboardSelect>
+                    {selectedFolder ? (
+                        <p className={cn('mt-2 text-xs font-light', uiTheme.textSecondary)}>
+                            Files will be added to {selectedFolder.label}.
+                        </p>
+                    ) : (
+                        <p className={cn('mt-2 text-xs font-light', uiTheme.textSecondary)}>
+                            Uploads require a saved folder so assets remain browsable later.
+                        </p>
+                    )}
+                </div>
+
+                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    <DashboardButton isDark={isDark} variant="secondary" onClick={onClose}>
+                        Cancel
+                    </DashboardButton>
+                    <DashboardButton isDark={isDark} onClick={onSubmit} disabled={uploading || files.length === 0 || !uploadFolderId}>
+                        <Upload className="h-4 w-4" />
+                        {uploading ? 'Uploading' : `Upload ${files.length || ''} Asset${files.length === 1 ? '' : 's'}`}
+                    </DashboardButton>
+                </div>
+            </DashboardSurface>
+        </div>
+    );
+};
+
+const CreateFolderModal = ({
+    activeFolder,
+    folderOptions,
+    folderName,
+    folderParentId,
+    isDark,
+    onClose,
+    onNameChange,
+    onParentChange,
+    onSubmit,
+    saving,
 }) => {
     const uiTheme = getDashboardTheme(isDark);
 
     return (
-        <div className="mt-5 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto] md:items-end">
-            <div>
-                <label className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)} htmlFor="asset-upload-destination">
-                    Upload destination
-                </label>
-                <DashboardSelect
-                    id="asset-upload-destination"
-                    isDark={isDark}
-                    aria-label="Upload destination"
-                    value={uploadUsageType}
-                    onChange={(event) => onUsageTypeChange(event.target.value)}
-                    className="mt-2"
-                >
-                    <option value="BRAND">Brand library</option>
-                    <option value="EVENT">Event assets</option>
-                </DashboardSelect>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="asset-create-folder-title">
+            <DashboardSurface isDark={isDark} accent="brand" className="w-full max-w-xl p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 id="asset-create-folder-title" className={cn('text-2xl font-light tracking-tight', uiTheme.textPrimary)}>
+                            Create folder
+                        </h2>
+                        <p className={cn('mt-2 text-sm font-light leading-6', uiTheme.textSecondary)}>
+                            Choose the location first, then name the folder so it appears in the right part of the library.
+                        </p>
+                    </div>
+                    <DashboardIconButton isDark={isDark} aria-label="Close create folder modal" onClick={onClose}>
+                        <X className="h-4 w-4" />
+                    </DashboardIconButton>
+                </div>
 
-            <div>
-                <label className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)} htmlFor="asset-upload-event">
-                    Event
-                </label>
-                <DashboardSelect
-                    id="asset-upload-event"
-                    isDark={isDark}
-                    aria-label="Upload event"
-                    value={uploadEventId}
-                    onChange={(event) => onEventChange(event.target.value)}
-                    className="mt-2"
-                    disabled={uploadUsageType !== 'EVENT'}
-                >
-                    <option value="">{events.length === 0 ? 'No events available' : 'Select event'}</option>
-                    {events.map((event) => (
-                        <option key={event.id} value={event.id}>
-                            {event.name || event.title || 'Untitled event'}
-                        </option>
-                    ))}
-                </DashboardSelect>
-            </div>
+                <div className="mt-5 space-y-4">
+                    <div>
+                        <label className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)} htmlFor="asset-folder-parent">
+                            Location
+                        </label>
+                        <DashboardSelect
+                            id="asset-folder-parent"
+                            isDark={isDark}
+                            aria-label="Folder location"
+                            value={folderParentId}
+                            onChange={(event) => onParentChange(event.target.value)}
+                            className="mt-2"
+                        >
+                            <option value="">All assets</option>
+                            {folderOptions.map((folder) => (
+                                <option key={folder.id} value={folder.id}>
+                                    {'  '.repeat(Math.max(folder.depth - 2, 0) * 2)}{folder.label}
+                                </option>
+                            ))}
+                        </DashboardSelect>
+                    </div>
 
-            <DashboardButton isDark={isDark} className="md:mb-0" onClick={onBrowse} disabled={uploading}>
-                {uploading ? 'Uploading' : 'Browse Files'}
-            </DashboardButton>
+                    <div>
+                        <label className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)} htmlFor="asset-folder-name">
+                            Folder name
+                        </label>
+                        <DashboardTextInput
+                            id="asset-folder-name"
+                            isDark={isDark}
+                            aria-label="Folder name"
+                            value={folderName}
+                            onChange={(event) => onNameChange(event.target.value)}
+                            placeholder="Example: Artist press photos"
+                            className="mt-2"
+                            autoFocus
+                        />
+                    </div>
+
+                </div>
+
+                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    <DashboardButton isDark={isDark} variant="secondary" onClick={onClose} disabled={saving}>
+                        Cancel
+                    </DashboardButton>
+                    <DashboardButton isDark={isDark} onClick={onSubmit} disabled={saving || !folderName.trim()}>
+                        <FolderPlus className="h-4 w-4" />
+                        {saving ? 'Creating' : 'Create Folder'}
+                    </DashboardButton>
+                </div>
+            </DashboardSurface>
         </div>
     );
 };
@@ -916,25 +1334,35 @@ const AssetLibraryView = ({ isDark }) => {
     const uploadInputRef = useRef(null);
     const [approvals, setApprovals] = useState([]);
     const [directAssets, setDirectAssets] = useState([]);
-    const [events, setEvents] = useState([]);
+    const [libraryFolders, setLibraryFolders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const [searchValue, setSearchValue] = useState('');
-    const [activeCategory, setActiveCategory] = useState('all');
+    const [activeFolderId, setActiveFolderId] = useState(ROOT_FOLDER_ID);
     const [kindFilter, setKindFilter] = useState('');
-    const [tagFilter, setTagFilter] = useState('');
-    const [dateFilter, setDateFilter] = useState('');
-    const [moreFilter, setMoreFilter] = useState('');
     const [sortBy, setSortBy] = useState('likely');
     const [viewMode, setViewMode] = useState('grid');
     const [selectedAssetId, setSelectedAssetId] = useState(null);
+    const [previewAssetId, setPreviewAssetId] = useState(null);
     const [selectedAssetIds, setSelectedAssetIds] = useState([]);
-    const [isDraggingUpload, setIsDraggingUpload] = useState(false);
     const [assetMetrics, setAssetMetrics] = useState({});
-    const [uploadUsageType, setUploadUsageType] = useState('BRAND');
+    const [expandedFolderIds, setExpandedFolderIds] = useState([ROOT_FOLDER_ID]);
+    const [draggingAssetId, setDraggingAssetId] = useState('');
+    const [movingAssetId, setMovingAssetId] = useState('');
+    const [deletingAssetId, setDeletingAssetId] = useState('');
+    const [deletingFolderId, setDeletingFolderId] = useState('');
     const [uploadEventId, setUploadEventId] = useState('');
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [uploadFiles, setUploadFiles] = useState([]);
+    const [uploadCategory, setUploadCategory] = useState('');
+    const [uploadFolderId, setUploadFolderId] = useState('');
+    const [isDraggingUploadModal, setIsDraggingUploadModal] = useState(false);
+    const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
+    const [creatingFolder, setCreatingFolder] = useState(false);
+    const [folderName, setFolderName] = useState('');
+    const [folderParentId, setFolderParentId] = useState('');
 
     const loadAssets = async ({ background = false } = {}) => {
         try {
@@ -945,10 +1373,9 @@ const AssetLibraryView = ({ isDark }) => {
                 setLoading(true);
             }
 
-            const [directAssetsResponse, approvalsResponse, eventsResponse] = await Promise.allSettled([
+            const [directAssetsResponse, approvalsResponse] = await Promise.allSettled([
                 api.get('/assets'),
                 api.get('/approvals?limit=100&includeArchived=true'),
-                api.get('/events?limit=100'),
             ]);
 
             if (directAssetsResponse.status === 'rejected') {
@@ -960,8 +1387,8 @@ const AssetLibraryView = ({ isDark }) => {
             }
 
             setDirectAssets(extractDirectAssets(directAssetsResponse.value));
+            setLibraryFolders(extractFolders(directAssetsResponse.value));
             setApprovals(extractApprovals(approvalsResponse.value));
-            setEvents(eventsResponse.status === 'fulfilled' ? extractEvents(eventsResponse.value) : []);
         } catch (requestError) {
             setError(requestError?.response?.data?.message || requestError.message || 'Failed to load uploaded assets.');
         } finally {
@@ -974,70 +1401,41 @@ const AssetLibraryView = ({ isDark }) => {
         loadAssets();
     }, []);
 
-    useEffect(() => {
-        if (uploadUsageType === 'EVENT' && !uploadEventId && events.length === 1) {
-            setUploadEventId(events[0].id);
-        }
-    }, [events, uploadEventId, uploadUsageType]);
-
     const assets = useMemo(() => [
         ...flattenDirectAssets(directAssets),
         ...flattenAssets(approvals),
     ], [approvals, directAssets]);
-    const totalLibrarySize = useMemo(() => assets.reduce((sum, asset) => sum + asset.size, 0), [assets]);
-
-    const tagOptions = useMemo(() => {
-        const allTags = assets.flatMap((asset) => asset.tags);
-        return [...new Set(allTags)].sort();
-    }, [assets]);
-
-    const categories = useMemo(() => buildCollectionFilters(assets), [assets]);
+    const folderMap = useMemo(() => buildCollectionFilters(assets, libraryFolders), [assets, libraryFolders]);
+    const recentCategories = useMemo(() => buildRecentCategoryOptions(assets), [assets]);
     const collectionStats = useMemo(() => (
-        categories.reduce((stats, category) => ({
+        [...folderMap.values()].reduce((stats, folder) => ({
             ...stats,
-            [category.id]: category,
+            [folder.id]: folder,
         }), {})
-    ), [categories]);
+    ), [folderMap]);
+    const activeFolder = folderMap.get(activeFolderId) || folderMap.get(ROOT_FOLDER_ID);
+    const childFolders = useMemo(() => (
+        (activeFolder?.childIds || []).map((folderId) => folderMap.get(folderId)).filter(Boolean)
+    ), [activeFolder, folderMap]);
+    const persistedFolderOptions = useMemo(() => (
+        buildPersistedFolderOptions(folderMap)
+    ), [folderMap]);
 
     useEffect(() => {
-        if (categories.length > 0 && !categories.some((category) => category.id === activeCategory)) {
-            setActiveCategory('all');
+        if (!folderMap.has(activeFolderId)) {
+            setActiveFolderId(ROOT_FOLDER_ID);
         }
-    }, [activeCategory, categories]);
+    }, [activeFolderId, folderMap]);
 
     const filteredAssets = useMemo(() => {
         const query = searchValue.trim().toLowerCase();
 
-        const categoryFiltered = assets.filter((asset) => {
-            if (activeCategory === 'all') {
-                return true;
-            }
+        const folderFiltered = assets.filter((asset) => (
+            query ? assetBelongsToFolder(asset, activeFolderId, folderMap) : assetIsDirectlyInFolder(asset, activeFolderId, folderMap)
+        ));
 
-            return asset.collectionKey === activeCategory;
-        });
-
-        const valueFiltered = categoryFiltered.filter((asset) => {
+        const valueFiltered = folderFiltered.filter((asset) => {
             if (kindFilter && asset.kind !== kindFilter) {
-                return false;
-            }
-
-            if (tagFilter && !asset.tags.includes(tagFilter)) {
-                return false;
-            }
-
-            if (!withinDateFilter(asset.createdAt, dateFilter)) {
-                return false;
-            }
-
-            if (moreFilter === 'share-ready' && getShareReadyReviewers(asset.reviewers).length === 0) {
-                return false;
-            }
-
-            if (moreFilter === 'latest' && !asset.isLatestRevision) {
-                return false;
-            }
-
-            if (moreFilter === 'approved' && asset.approvalStatus !== 'APPROVED') {
                 return false;
             }
 
@@ -1047,18 +1445,17 @@ const AssetLibraryView = ({ isDark }) => {
 
             return [
                 asset.originalName,
-                asset.approvalTitle,
                 asset.eventName,
                 asset.collectionLabel,
-                asset.category,
-                ...asset.tags,
+                asset.folder?.name,
+                getAssetKindLabel(asset.kind),
             ].some((value) => value?.toLowerCase().includes(query));
         });
 
         return [...valueFiltered].sort((left, right) => {
             if (sortBy === 'likely') {
-                const leftStats = collectionStats[left.collectionKey] || {};
-                const rightStats = collectionStats[right.collectionKey] || {};
+                const leftStats = collectionStats[getAssetFolderIds(left, folderMap).collectionFolderId] || {};
+                const rightStats = collectionStats[getAssetFolderIds(right, folderMap).collectionFolderId] || {};
                 return (
                     (rightStats.count || 0) - (leftStats.count || 0) ||
                     (rightStats.lastUsedAt || 0) - (leftStats.lastUsedAt || 0) ||
@@ -1084,17 +1481,22 @@ const AssetLibraryView = ({ isDark }) => {
 
             return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
         });
-    }, [activeCategory, assets, collectionStats, dateFilter, kindFilter, moreFilter, searchValue, sortBy, tagFilter]);
+    }, [activeFolderId, assets, collectionStats, folderMap, kindFilter, searchValue, sortBy]);
 
     useEffect(() => {
         if (filteredAssets.length === 0) {
             setSelectedAssetId(null);
+            setPreviewAssetId(null);
             setSelectedAssetIds([]);
             return;
         }
 
         setSelectedAssetId((current) => (
-            filteredAssets.some((asset) => asset.id === current) ? current : filteredAssets[0].id
+            filteredAssets.some((asset) => asset.id === current) ? current : null
+        ));
+
+        setPreviewAssetId((current) => (
+            filteredAssets.some((asset) => asset.id === current) ? current : null
         ));
 
         setSelectedAssetIds((current) => {
@@ -1103,81 +1505,296 @@ const AssetLibraryView = ({ isDark }) => {
         });
     }, [filteredAssets]);
 
-    const selectedAsset = filteredAssets.find((asset) => asset.id === selectedAssetId) || null;
+    const previewAsset = filteredAssets.find((asset) => asset.id === previewAssetId) || null;
 
     useEffect(() => {
-        if (!selectedAsset || assetMetrics[selectedAsset.id]) {
+        if (!previewAsset || assetMetrics[previewAsset.id]) {
             return;
         }
 
-        if (selectedAsset.kind === 'image') {
+        if (previewAsset.kind === 'image') {
             const image = new window.Image();
             image.onload = () => {
                 setAssetMetrics((current) => ({
                     ...current,
-                    [selectedAsset.id]: {
+                    [previewAsset.id]: {
                         dimensions: `${image.naturalWidth} × ${image.naturalHeight}`,
                     },
                 }));
             };
-            image.src = selectedAsset.s3Url;
-        } else if (selectedAsset.kind === 'video') {
+            image.src = previewAsset.s3Url;
+        } else if (previewAsset.kind === 'video') {
             const video = document.createElement('video');
             video.onloadedmetadata = () => {
                 setAssetMetrics((current) => ({
                     ...current,
-                    [selectedAsset.id]: {
+                    [previewAsset.id]: {
                         dimensions: `${video.videoWidth} × ${video.videoHeight}`,
                     },
                 }));
             };
-            video.src = selectedAsset.s3Url;
+            video.src = previewAsset.s3Url;
         }
-    }, [assetMetrics, selectedAsset]);
+    }, [assetMetrics, previewAsset]);
 
     const selectedAssets = useMemo(
         () => filteredAssets.filter((asset) => selectedAssetIds.includes(asset.id)),
         [filteredAssets, selectedAssetIds]
     );
 
-    const handleSelectCollection = (collectionId) => {
-        setActiveCategory(collectionId);
+    const openAssetPreview = (assetId) => {
+        setSelectedAssetId(assetId);
+        setPreviewAssetId(assetId);
+    };
 
-        if (collectionId === BRAND_COLLECTION_KEY) {
-            setUploadUsageType('BRAND');
+    const handleSelectFolder = (folderId) => {
+        setActiveFolderId(folderId);
+        setExpandedFolderIds((current) => [...new Set([...current, ...getFolderPathIds(folderMap, folderId)])]);
+    };
+
+    const toggleFolderExpanded = (folderId) => {
+        if (folderId === ROOT_FOLDER_ID) return;
+        setExpandedFolderIds((current) => (
+            current.includes(folderId)
+                ? current.filter((id) => id !== folderId)
+                : [...current, folderId]
+        ));
+    };
+
+    const startAssetDrag = (assetId) => {
+        setDraggingAssetId(assetId);
+    };
+
+    const endAssetDrag = () => {
+        setDraggingAssetId('');
+    };
+
+    const moveAssetToFolder = async (folderId) => {
+        const asset = assets.find((item) => item.id === draggingAssetId);
+        const folder = folderMap.get(folderId);
+
+        if (!asset || !asset.directAssetId || !folder || folder.source !== 'persisted') {
+            toast.error('Only uploaded library assets can be moved into saved folders.');
+            setDraggingAssetId('');
             return;
         }
 
-        if (collectionId.startsWith('event:')) {
-            setUploadUsageType('EVENT');
-            setUploadEventId(collectionId.replace('event:', ''));
-        }
-    };
-
-    const handleUploadUsageTypeChange = (value) => {
-        setUploadUsageType(value);
-        if (value === 'BRAND') {
-            setUploadEventId('');
-        }
-    };
-
-    const handleUploadIntent = async (files = []) => {
-        if (files.length === 0) {
+        if (asset.folderId === folderId) {
+            setDraggingAssetId('');
             return;
         }
 
-        if (uploadUsageType === 'EVENT' && !uploadEventId) {
-            toast.error('Select an event or switch to Brand library before uploading.');
+        try {
+            setMovingAssetId(asset.id);
+            const response = await api.patch(`/assets/${asset.directAssetId}/folder`, { folderId });
+            const movedAsset = response?.asset || response?.data?.asset;
+
+            setDirectAssets((current) => current.map((item) => (
+                item.id === asset.directAssetId
+                    ? {
+                        ...item,
+                        ...(movedAsset || {}),
+                        folderId,
+                        folder: movedAsset?.folder || {
+                            id: folder.id,
+                            name: folder.label,
+                            parentId: folder.persistedParentId || null,
+                            category: folder.category || null,
+                        },
+                    }
+                    : item
+            )));
+            setExpandedFolderIds((current) => [...new Set([...current, ...getFolderPathIds(folderMap, folderId)])]);
+            toast.success(`Moved ${asset.originalName} to ${folder.label}.`);
+        } catch (requestError) {
+            setError(requestError?.response?.data?.message || requestError.message || 'Failed to move asset.');
+            toast.error('Failed to move asset.');
+        } finally {
+            setDraggingAssetId('');
+            setMovingAssetId('');
+        }
+    };
+
+    const getFolderEventId = (folder) => {
+        if (!folder) return '';
+        if (folder.eventId) return folder.eventId;
+        if (String(folder.collectionKey || '').startsWith('event:')) {
+            return String(folder.collectionKey).replace('event:', '');
+        }
+        return '';
+    };
+
+    const openUploadModal = () => {
+        const collectionFolder = activeFolder?.type === 'EVENT'
+            ? activeFolder
+            : folderMap.get(activeFolder?.parentId);
+        const inheritedEventId = getFolderEventId(activeFolder) || (collectionFolder?.type === 'EVENT'
+            ? String(collectionFolder.collectionKey || '').replace('event:', '')
+            : '');
+
+        setUploadFolderId(activeFolder?.source === 'persisted' ? activeFolder.id : '');
+        setUploadEventId(inheritedEventId);
+        setUploadCategory((current) => activeFolder?.category || current || recentCategories[0]?.value || '');
+        setShowUploadModal(true);
+    };
+
+    const closeUploadModal = () => {
+        if (uploading) return;
+
+        setShowUploadModal(false);
+        setUploadFiles([]);
+        setIsDraggingUploadModal(false);
+    };
+
+    const openCreateFolderModal = () => {
+        setFolderName('');
+        setFolderParentId(activeFolder?.source === 'persisted' ? activeFolder.id : '');
+        setShowCreateFolderModal(true);
+    };
+
+    const closeCreateFolderModal = () => {
+        if (creatingFolder) return;
+        setShowCreateFolderModal(false);
+    };
+
+    const handleUploadFolderChange = (folderId) => {
+        setUploadFolderId(folderId);
+        const folder = folderMap.get(folderId);
+        if (!folder) return;
+
+        setUploadCategory(folder.category || '');
+        setUploadEventId(getFolderEventId(folder));
+    };
+
+    const handleFolderParentChange = (folderId) => {
+        setFolderParentId(folderId);
+    };
+
+    const addUploadFiles = (files = []) => {
+        if (files.length === 0) return;
+
+        setUploadFiles((current) => [...current, ...files]);
+    };
+
+    const removeUploadFile = (indexToRemove) => {
+        setUploadFiles((current) => current.filter((_file, index) => index !== indexToRemove));
+    };
+
+    const handleCreateFolder = async () => {
+        const name = folderName.trim();
+        if (!name) {
+            toast.error('Add a folder name first.');
+            return;
+        }
+
+        const parentId = folderParentId || undefined;
+        const parentFolder = folderMap.get(folderParentId);
+        const payload = {
+            name,
+            category: normalizeToken(parentFolder?.category || name),
+            eventId: getFolderEventId(parentFolder) || undefined,
+            parentId,
+        };
+
+        try {
+            setCreatingFolder(true);
+            const response = await api.post('/assets/folders', payload);
+            const createdFolder = response?.folder || response?.data?.folder;
+
+            if (createdFolder) {
+                setLibraryFolders((current) => [...current, createdFolder]);
+                setActiveFolderId(createdFolder.id);
+                setUploadFolderId(createdFolder.id);
+                setUploadCategory(createdFolder.category || payload.category);
+                setUploadEventId(createdFolder.eventId || '');
+            }
+
+            setShowCreateFolderModal(false);
+            toast.success('Folder created.');
+        } catch (requestError) {
+            setError(requestError?.response?.data?.message || requestError.message || 'Failed to create folder.');
+            toast.error('Failed to create folder.');
+        } finally {
+            setCreatingFolder(false);
+        }
+    };
+
+    const handleDeleteFolder = async () => {
+        if (!activeFolder || activeFolder.source !== 'persisted') {
+            return;
+        }
+
+        if ((activeFolder.count || 0) > 0 || (activeFolder.childIds || []).length > 0) {
+            toast.error('Delete assets and subfolders before deleting this folder.');
+            return;
+        }
+
+        if (!window.confirm(`Delete folder "${activeFolder.label}"? This cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            setDeletingFolderId(activeFolder.id);
+            await api.delete(`/assets/folders/${activeFolder.id}`);
+            setLibraryFolders((current) => current.filter((folder) => folder.id !== activeFolder.id));
+            setExpandedFolderIds((current) => current.filter((id) => id !== activeFolder.id));
+            setActiveFolderId(activeFolder.parentId || ROOT_FOLDER_ID);
+            setUploadFolderId((current) => (current === activeFolder.id ? '' : current));
+            setFolderParentId((current) => (current === activeFolder.id ? '' : current));
+            setError('');
+            toast.success('Folder deleted.');
+        } catch (requestError) {
+            setError(requestError?.response?.data?.message || requestError.message || 'Failed to delete folder.');
+            toast.error('Failed to delete folder.');
+        } finally {
+            setDeletingFolderId('');
+        }
+    };
+
+    const handleDeleteAsset = async () => {
+        if (!previewAsset?.directAssetId) {
+            return;
+        }
+
+        if (!window.confirm(`Delete asset "${previewAsset.originalName}"? This cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            setDeletingAssetId(previewAsset.id);
+            await api.delete(`/assets/${previewAsset.directAssetId}`);
+            setDirectAssets((current) => current.filter((asset) => asset.id !== previewAsset.directAssetId));
+            setSelectedAssetIds((current) => current.filter((assetId) => assetId !== previewAsset.id));
+            setSelectedAssetId((current) => (current === previewAsset.id ? null : current));
+            setPreviewAssetId((current) => (current === previewAsset.id ? null : current));
+            setAssetMetrics((current) => {
+                const next = { ...current };
+                delete next[previewAsset.id];
+                return next;
+            });
+            setError('');
+            toast.success('Asset deleted.');
+        } catch (requestError) {
+            setError(requestError?.response?.data?.message || requestError.message || 'Failed to delete asset.');
+            toast.error('Failed to delete asset.');
+        } finally {
+            setDeletingAssetId('');
+        }
+    };
+
+    const handleUploadIntent = async () => {
+        if (uploadFiles.length === 0) {
+            return;
+        }
+
+        if (!uploadFolderId) {
+            toast.error('Choose a folder before uploading.');
             return;
         }
 
         const payload = new FormData();
-        files.forEach((file) => payload.append('files', file));
-        payload.append('usageType', uploadUsageType);
-        payload.append('category', uploadUsageType === 'BRAND' ? 'branding' : 'event');
-        if (uploadUsageType === 'EVENT') {
-            payload.append('eventId', uploadEventId);
-        }
+        uploadFiles.forEach((file) => payload.append('files', file));
+        payload.append('folderId', uploadFolderId);
 
         try {
             setUploading(true);
@@ -1185,7 +1802,9 @@ const AssetLibraryView = ({ isDark }) => {
             const uploadedAssets = extractDirectAssets(response);
             setDirectAssets((current) => [...uploadedAssets, ...current]);
             setError('');
-            toast.success(`${files.length} file${files.length === 1 ? '' : 's'} uploaded to the asset library.`);
+            setShowUploadModal(false);
+            setUploadFiles([]);
+            toast.success(`${uploadFiles.length} file${uploadFiles.length === 1 ? '' : 's'} uploaded to the asset library.`);
         } catch (requestError) {
             setError(requestError?.response?.data?.message || requestError.message || 'Failed to upload asset.');
             toast.error('Failed to upload asset.');
@@ -1211,34 +1830,6 @@ const AssetLibraryView = ({ isDark }) => {
         }
     };
 
-    const copyShareLinks = (singleValue = null) => {
-        if (singleValue) {
-            copyText(singleValue, 'Review link copied');
-            return;
-        }
-
-        const links = getShareReadyReviewers(selectedAsset?.reviewers)
-            .map((reviewer) => `${reviewer.name || reviewer.email}: ${reviewer.reviewUrl}`)
-            .join('\n');
-
-        if (!links) {
-            toast.error('No external review links available for this asset.');
-            return;
-        }
-
-        copyText(links, 'Review links copied');
-    };
-
-    const shareSelectedAsset = () => {
-        const shareReady = getShareReadyReviewers(selectedAsset?.reviewers);
-        if (shareReady.length > 0) {
-            copyShareLinks();
-            return;
-        }
-
-        copyText(selectedAsset?.s3Url || '', 'Signed asset URL copied');
-    };
-
     const downloadSelected = () => {
         if (selectedAssets.length === 0) {
             toast.error('Select at least one asset to download.');
@@ -1254,13 +1845,21 @@ const AssetLibraryView = ({ isDark }) => {
     const emptyState = (
         <DashboardEmptyState
             isDark={isDark}
-            title="No assets match these filters"
-            description="Widen the filters, switch collections, or upload files into Brand library or an event."
+            title={searchValue || kindFilter ? 'No assets match these filters' : 'This folder is empty'}
+            description={searchValue || kindFilter
+                ? 'Widen the filters or switch folders.'
+                : 'Create a subfolder or upload files into a saved folder to keep the library navigable.'}
             action={(
-                <DashboardButton isDark={isDark} onClick={() => uploadInputRef.current?.click()} disabled={uploading}>
-                    <Upload className="h-4 w-4" />
-                    Upload Files
-                </DashboardButton>
+                <div className="flex flex-wrap justify-center gap-3">
+                    <DashboardButton isDark={isDark} variant="secondary" onClick={openCreateFolderModal} disabled={creatingFolder}>
+                        <FolderPlus className="h-4 w-4" />
+                        New Folder
+                    </DashboardButton>
+                    <DashboardButton isDark={isDark} onClick={openUploadModal} disabled={uploading}>
+                        <Upload className="h-4 w-4" />
+                        Upload Assets
+                    </DashboardButton>
+                </div>
             )}
         />
     );
@@ -1275,231 +1874,151 @@ const AssetLibraryView = ({ isDark }) => {
                 descriptionClassName="text-base"
                 badges={(
                     <>
-                        <DashboardChip isDark={isDark}>{assets.length} approved assets</DashboardChip>
-                        <DashboardChip isDark={isDark}>{selectedAssetIds.length} selected</DashboardChip>
+                        <DashboardChip isDark={isDark}>{assets.length} assets</DashboardChip>
+                        <DashboardChip isDark={isDark}>{persistedFolderOptions.length} folders</DashboardChip>
+                        {selectedAssetIds.length > 0 ? <DashboardChip isDark={isDark}>{selectedAssetIds.length} selected</DashboardChip> : null}
                         {refreshing ? <DashboardChip isDark={isDark}>Refreshing</DashboardChip> : null}
                         {uploading ? <DashboardChip isDark={isDark}>Uploading</DashboardChip> : null}
                     </>
                 )}
             />
 
-            <DashboardSection
-                isDark={isDark}
-                accent="violet"
-                title={null}
-                description={null}
-                className="overflow-visible"
-            >
-                <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
-                    <div className="flex flex-1 flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center">
-                        <div className="relative min-w-[280px] flex-1">
-                            <Search className={cn('pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2', uiTheme.textMuted)} />
-                            <DashboardTextInput
-                                isDark={isDark}
-                                aria-label="Search assets"
-                                value={searchValue}
-                                onChange={(event) => setSearchValue(event.target.value)}
-                                placeholder="Search assets..."
-                                className="pl-11"
-                            />
-                        </div>
-                        <DashboardSelect
-                            isDark={isDark}
-                            aria-label="Asset collection filter"
-                            value={activeCategory}
-                            onChange={(event) => handleSelectCollection(event.target.value)}
-                            className="min-w-[160px]"
-                        >
-                            {categories.map((category) => (
-                                <option key={category.id} value={category.id}>
-                                    {category.label}
-                                </option>
-                            ))}
-                        </DashboardSelect>
-                        <DashboardSelect
-                            isDark={isDark}
-                            aria-label="Asset type filter"
-                            value={kindFilter}
-                            onChange={(event) => setKindFilter(event.target.value)}
-                            className="min-w-[132px]"
-                        >
-                            {TYPE_OPTIONS.map((option) => (
-                                <option key={option.label} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </DashboardSelect>
-                        <DashboardSelect
-                            isDark={isDark}
-                            aria-label="Asset tag filter"
-                            value={tagFilter}
-                            onChange={(event) => setTagFilter(event.target.value)}
-                            className="min-w-[132px]"
-                        >
-                            <option value="">Tags</option>
-                            {tagOptions.map((tag) => (
-                                <option key={tag} value={tag}>
-                                    {tag}
-                                </option>
-                            ))}
-                        </DashboardSelect>
-                        <DashboardSelect
-                            isDark={isDark}
-                            aria-label="Asset date filter"
-                            value={dateFilter}
-                            onChange={(event) => setDateFilter(event.target.value)}
-                            className="min-w-[132px]"
-                        >
-                            {DATE_OPTIONS.map((option) => (
-                                <option key={option.label} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </DashboardSelect>
-                        <DashboardSelect
-                            isDark={isDark}
-                            aria-label="More asset filters"
-                            value={moreFilter}
-                            onChange={(event) => setMoreFilter(event.target.value)}
-                            className="min-w-[148px]"
-                        >
-                            {MORE_FILTER_OPTIONS.map((option) => (
-                                <option key={option.label} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </DashboardSelect>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                        <DashboardSelect
-                            isDark={isDark}
-                            aria-label="Sort assets"
-                            value={sortBy}
-                            onChange={(event) => setSortBy(event.target.value)}
-                            className="min-w-[160px]"
-                        >
-                            {SORT_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    Sort by: {option.label}
-                                </option>
-                            ))}
-                        </DashboardSelect>
-                        <div className={cn('flex items-center gap-2 rounded-md border p-1', isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50')}>
-                            <DashboardIconButton
-                                isDark={isDark}
-                                aria-label="Grid view"
-                                className={cn('h-9 w-9', viewMode === 'grid' && 'bg-white/10 text-white')}
-                                onClick={() => setViewMode('grid')}
-                            >
-                                <LayoutGrid className="h-4 w-4" />
-                            </DashboardIconButton>
-                            <DashboardIconButton
-                                isDark={isDark}
-                                aria-label="List view"
-                                className={cn('h-9 w-9', viewMode === 'list' && 'bg-white/10 text-white')}
-                                onClick={() => setViewMode('list')}
-                            >
-                                <List className="h-4 w-4" />
-                            </DashboardIconButton>
-                        </div>
-                        <DashboardButton isDark={isDark} onClick={() => uploadInputRef.current?.click()} disabled={uploading}>
-                            <Upload className="h-4 w-4" />
-                            {uploading ? 'Uploading' : 'Upload Files'}
-                        </DashboardButton>
-                        <DashboardButton isDark={isDark} variant="primary" onClick={downloadSelected} disabled={selectedAssetIds.length === 0}>
-                            <Download className="h-4 w-4" />
-                            Download Selected ({selectedAssetIds.length})
-                        </DashboardButton>
-                        <DashboardIconButton isDark={isDark} aria-label="Refresh assets" onClick={() => loadAssets({ background: true })}>
-                            <RefreshCcw className="h-4 w-4" />
-                        </DashboardIconButton>
-                    </div>
+            {error ? (
+                <div className={cn('rounded-md border px-4 py-3 text-sm', isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700')}>
+                    {error}
                 </div>
+            ) : null}
 
-                <input
-                    ref={uploadInputRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={(event) => {
-                        const files = Array.from(event.target.files || []);
-                        handleUploadIntent(files);
-                        event.target.value = '';
-                    }}
-                />
-
-                {error ? (
-                    <div className={cn('mt-4 rounded-md border px-4 py-3 text-sm', isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-rose-200 bg-rose-50 text-rose-700')}>
-                        {error}
-                    </div>
-                ) : null}
-
-                {loading ? (
-                    <div className="mt-6 grid gap-5 xl:grid-cols-[220px_minmax(0,1fr)_320px]">
-                        <DashboardSurface isDark={isDark} accent="slate" className="h-[680px] animate-pulse" />
-                        <DashboardSurface isDark={isDark} accent="violet" className="h-[680px] animate-pulse" />
-                        <DashboardSurface isDark={isDark} accent="brand" className="h-[680px] animate-pulse" />
-                    </div>
-                ) : filteredAssets.length === 0 ? (
-                    <div className="mt-6">{emptyState}</div>
-                ) : (
-                    <div className="mt-6 grid gap-5 xl:grid-cols-[220px_minmax(0,1fr)_320px]">
-                        <CategoryRail
-                            categories={categories}
-                            activeCategory={activeCategory}
-                            onSelect={handleSelectCollection}
+            {loading ? (
+                <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
+                    <DashboardSurface isDark={isDark} accent="slate" className="h-[680px] animate-pulse" />
+                    <DashboardSurface isDark={isDark} accent="violet" className="h-[680px] animate-pulse" />
+                </div>
+            ) : (
+                <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
+                        <FolderRail
+                            activeFolderId={activeFolder?.id || ROOT_FOLDER_ID}
+                            expandedFolderIds={expandedFolderIds}
+                            folderMap={folderMap}
+                            movingAssetId={draggingAssetId}
+                            onDropAsset={moveAssetToFolder}
+                            onSelect={handleSelectFolder}
+                            onToggleFolder={toggleFolderExpanded}
                             isDark={isDark}
-                            totalSize={totalLibrarySize}
                         />
 
                         <div className="space-y-5">
-                            <DashboardSurface
+                            <FolderWorkspaceHeader
+                                activeFolder={activeFolder}
+                                creatingFolder={creatingFolder}
+                                deletingFolder={deletingFolderId === activeFolder?.id}
+                                folderMap={folderMap}
                                 isDark={isDark}
-                                accent="violet"
-                                className={cn(
-                                    'border-dashed p-8 text-center transition',
-                                    isDraggingUpload && 'border-fuchsia-400/60 bg-fuchsia-500/10'
-                                )}
-                                onDragOver={(event) => {
-                                    event.preventDefault();
-                                    setIsDraggingUpload(true);
-                                }}
-                                onDragLeave={(event) => {
-                                    event.preventDefault();
-                                    setIsDraggingUpload(false);
-                                }}
-                                onDrop={(event) => {
-                                    event.preventDefault();
-                                    setIsDraggingUpload(false);
-                                    handleUploadIntent(Array.from(event.dataTransfer.files || []));
-                                }}
-                            >
-                                <div className="mx-auto max-w-xl">
-                                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-fuchsia-300">
-                                        <Upload className="h-7 w-7" />
+                                onCreate={openCreateFolderModal}
+                                onDeleteFolder={handleDeleteFolder}
+                                onSelectFolder={handleSelectFolder}
+                                onUpload={openUploadModal}
+                                uploading={uploading}
+                            />
+
+                            <DashboardSurface isDark={isDark} accent={null} className="p-3">
+                                <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
+                                    <div className="flex min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-center">
+                                        <div className="relative min-w-[240px] flex-1">
+                                            <Search className={cn('pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2', uiTheme.textMuted)} />
+                                            <DashboardTextInput
+                                                isDark={isDark}
+                                                aria-label="Search assets"
+                                                value={searchValue}
+                                                onChange={(event) => setSearchValue(event.target.value)}
+                                                placeholder="Search assets..."
+                                                className="pl-11"
+                                            />
+                                        </div>
+                                        <DashboardSelect
+                                            isDark={isDark}
+                                            aria-label="Asset type filter"
+                                            value={kindFilter}
+                                            onChange={(event) => setKindFilter(event.target.value)}
+                                            className="min-w-[132px] lg:w-auto"
+                                        >
+                                            {TYPE_OPTIONS.map((option) => (
+                                                <option key={option.label} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </DashboardSelect>
+                                        <DashboardSelect
+                                            isDark={isDark}
+                                            aria-label="Sort assets"
+                                            value={sortBy}
+                                            onChange={(event) => setSortBy(event.target.value)}
+                                            className="min-w-[160px] lg:w-auto"
+                                        >
+                                            {SORT_OPTIONS.map((option) => (
+                                                <option key={option.value} value={option.value}>
+                                                    Sort by: {option.label}
+                                                </option>
+                                            ))}
+                                        </DashboardSelect>
                                     </div>
-                                    <h3 className={cn('mt-4 text-2xl font-light tracking-tight', uiTheme.textPrimary)}>
-                                        Drag and drop files here
-                                    </h3>
-                                    <p className={cn('mt-2 text-sm font-light leading-6', uiTheme.textSecondary)}>
-                                        Choose Brand library or an event before upload. Files stay in the asset library and do not open an approval.
-                                    </p>
-                                    <UploadContextPanel
-                                        events={events}
-                                        isDark={isDark}
-                                        uploadUsageType={uploadUsageType}
-                                        uploadEventId={uploadEventId}
-                                        onUsageTypeChange={handleUploadUsageTypeChange}
-                                        onEventChange={setUploadEventId}
-                                        onBrowse={() => uploadInputRef.current?.click()}
-                                        uploading={uploading}
-                                    />
+
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className={cn('flex items-center gap-2 rounded-md border p-1', isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50')}>
+                                            <DashboardIconButton
+                                                isDark={isDark}
+                                                aria-label="Grid view"
+                                                className={cn('h-9 w-9', viewMode === 'grid' && 'bg-white/10 text-white')}
+                                                onClick={() => setViewMode('grid')}
+                                            >
+                                                <LayoutGrid className="h-4 w-4" />
+                                            </DashboardIconButton>
+                                            <DashboardIconButton
+                                                isDark={isDark}
+                                                aria-label="List view"
+                                                className={cn('h-9 w-9', viewMode === 'list' && 'bg-white/10 text-white')}
+                                                onClick={() => setViewMode('list')}
+                                            >
+                                                <List className="h-4 w-4" />
+                                            </DashboardIconButton>
+                                        </div>
+                                        <DashboardButton isDark={isDark} variant="primary" onClick={downloadSelected} disabled={selectedAssetIds.length === 0}>
+                                            <Download className="h-4 w-4" />
+                                            Download Selected ({selectedAssetIds.length})
+                                        </DashboardButton>
+                                        <DashboardIconButton isDark={isDark} aria-label="Refresh assets" onClick={() => loadAssets({ background: true })}>
+                                            <RefreshCcw className="h-4 w-4" />
+                                        </DashboardIconButton>
+                                    </div>
                                 </div>
                             </DashboardSurface>
 
-                            {viewMode === 'grid' ? (
-                                <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                            {childFolders.length > 0 ? (
+                                <div>
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <p className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>
+                                            Folders in {activeFolder?.label || 'All assets'}
+                                        </p>
+                                    </div>
+                                    <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                                        {childFolders.map((folder) => (
+                                            <FolderTile
+                                                key={folder.id}
+                                                folder={folder}
+                                                isDark={isDark}
+                                                movingAssetId={draggingAssetId}
+                                                onDropAsset={moveAssetToFolder}
+                                                onOpen={handleSelectFolder}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : null}
+
+                            {filteredAssets.length === 0 && childFolders.length === 0 ? (
+                                <div>{emptyState}</div>
+                            ) : viewMode === 'grid' ? (
+                                <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
                                     {filteredAssets.map((asset) => (
                                         <AssetCard
                                             key={asset.id}
@@ -1507,21 +2026,22 @@ const AssetLibraryView = ({ isDark }) => {
                                             isDark={isDark}
                                             isActive={asset.id === selectedAssetId}
                                             isSelected={selectedAssetIds.includes(asset.id)}
-                                            onActivate={setSelectedAssetId}
+                                            onActivate={openAssetPreview}
+                                            onDragEnd={endAssetDrag}
+                                            onDragStart={startAssetDrag}
                                             onToggleSelection={toggleSelection}
                                         />
                                     ))}
                                 </div>
                             ) : (
                                 <DashboardSurface isDark={isDark} accent={null} className="overflow-hidden">
-                                    <div className={cn('grid grid-cols-[44px_72px_minmax(0,1.5fr)_0.8fr_0.8fr_0.9fr_40px] gap-3 border-b px-4 py-3 text-[11px] uppercase tracking-[0.16em]', isDark ? cn('border-white/10', uiTheme.textMuted) : 'border-slate-200 text-slate-400')}>
+                                    <div className={cn('grid grid-cols-[44px_72px_minmax(0,1.5fr)_0.7fr_0.7fr_0.8fr] gap-3 border-b px-4 py-3 text-[11px] uppercase tracking-[0.16em]', isDark ? cn('border-white/10', uiTheme.textMuted) : 'border-slate-200 text-slate-400')}>
                                         <span>Select</span>
                                         <span>Preview</span>
                                         <span>Name</span>
-                                        <span>Collection</span>
+                                        <span>Type</span>
                                         <span>Size</span>
-                                        <span>Status</span>
-                                        <span />
+                                        <span>Date</span>
                                     </div>
                                     {filteredAssets.map((asset) => (
                                         <AssetRow
@@ -1530,28 +2050,63 @@ const AssetLibraryView = ({ isDark }) => {
                                             isDark={isDark}
                                             isActive={asset.id === selectedAssetId}
                                             isSelected={selectedAssetIds.includes(asset.id)}
-                                            onActivate={setSelectedAssetId}
+                                            onActivate={openAssetPreview}
+                                            onDragEnd={endAssetDrag}
+                                            onDragStart={startAssetDrag}
                                             onToggleSelection={toggleSelection}
                                         />
                                     ))}
                                 </DashboardSurface>
                             )}
                         </div>
+                </div>
+            )}
 
-                        <AssetInspector
-                            asset={selectedAsset}
-                            isDark={isDark}
-                            metrics={selectedAsset ? assetMetrics[selectedAsset.id] : null}
-                            onOpen={() => window.open(selectedAsset?.s3Url, '_blank', 'noopener,noreferrer')}
-                            onCopyAssetLink={() => copyText(selectedAsset?.s3Url || '', 'Signed asset URL copied')}
-                            onCopyShareLinks={copyShareLinks}
-                            onShare={shareSelectedAsset}
-                            onMove={() => toast.success('Move is not connected yet. Use categories and approvals to keep assets organized.')}
-                            onDelete={() => toast.error('Delete is not available from the library yet.')}
-                        />
-                    </div>
-                )}
-            </DashboardSection>
+            <AssetPreviewModal
+                asset={previewAsset}
+                deletingAsset={deletingAssetId === previewAsset?.id}
+                isDark={isDark}
+                metrics={previewAsset ? assetMetrics[previewAsset.id] : null}
+                onClose={() => setPreviewAssetId(null)}
+                onDeleteAsset={handleDeleteAsset}
+                onOpen={() => window.open(previewAsset?.s3Url, '_blank', 'noopener,noreferrer')}
+                onCopyAssetLink={() => copyText(previewAsset?.s3Url || '', 'Signed asset URL copied')}
+            />
+
+            {showUploadModal ? (
+                <AssetUploadModal
+                    files={uploadFiles}
+                    folderOptions={persistedFolderOptions}
+                    isDark={isDark}
+                    isDragging={isDraggingUploadModal}
+                    onAddFiles={addUploadFiles}
+                    onClose={closeUploadModal}
+                    onCreateFolder={openCreateFolderModal}
+                    onDropFiles={addUploadFiles}
+                    onFolderChange={handleUploadFolderChange}
+                    onRemoveFile={removeUploadFile}
+                    onSubmit={handleUploadIntent}
+                    onToggleDragging={setIsDraggingUploadModal}
+                    uploadFolderId={uploadFolderId}
+                    uploadInputRef={uploadInputRef}
+                    uploading={uploading}
+                />
+            ) : null}
+
+            {showCreateFolderModal ? (
+                <CreateFolderModal
+                    activeFolder={activeFolder}
+                    folderOptions={persistedFolderOptions}
+                    folderName={folderName}
+                    folderParentId={folderParentId}
+                    isDark={isDark}
+                    onClose={closeCreateFolderModal}
+                    onNameChange={setFolderName}
+                    onParentChange={handleFolderParentChange}
+                    onSubmit={handleCreateFolder}
+                    saving={creatingFolder}
+                />
+            ) : null}
         </DashboardPage>
     );
 };
