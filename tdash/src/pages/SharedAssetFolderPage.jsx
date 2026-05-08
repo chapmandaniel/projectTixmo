@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
     AlertTriangle,
+    ArrowLeft,
     CalendarDays,
     ChevronRight,
     Download,
@@ -189,6 +190,14 @@ const SharedAssetFolderPage = () => {
         return totals;
     }, [foldersById, payload]);
 
+    const previousFolder = folderPath.length > 1 ? folderPath[folderPath.length - 2] : null;
+    const backTarget = rootFolders.length > 1 && currentFolder?.id !== PACKAGE_ROOT_ID
+        ? packageRoot
+        : previousFolder;
+    const backLabel = backTarget
+        ? backTarget.id === PACKAGE_ROOT_ID ? 'Back to main share' : `Back to ${backTarget.name}`
+        : '';
+
     return (
         <main className="min-h-screen bg-dashboard-shell text-zinc-100">
             <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
@@ -233,6 +242,20 @@ const SharedAssetFolderPage = () => {
                     </div>
                 ) : (
                     <>
+                        {backTarget ? (
+                            <div className="mt-5">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveFolderId(backTarget.id)}
+                                    className="inline-flex items-center gap-2 rounded-md border border-dashboard-border bg-dashboard-panelAlt px-4 py-2.5 text-sm font-light text-zinc-100 transition hover:border-dashboard-borderStrong hover:bg-dashboard-panel focus:outline-none focus:ring-2 focus:ring-dashboard-accent/40"
+                                    aria-label={backLabel}
+                                >
+                                    <ArrowLeft className="h-4 w-4" />
+                                    {backLabel}
+                                </button>
+                            </div>
+                        ) : null}
+
                         <div className="mt-5 flex flex-wrap items-center gap-2 text-xs font-light text-dashboard-muted">
                             {folderPath.map((folder, index) => (
                                 <React.Fragment key={folder.id}>
