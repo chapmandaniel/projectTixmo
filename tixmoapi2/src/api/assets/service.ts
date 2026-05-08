@@ -39,6 +39,7 @@ type CreateFolderShareInput = {
   recipientLabel?: string;
   expiresInDays?: number;
   dashboardOrigin?: string;
+  folderIds?: string[];
 };
 
 const normalizeUsageType = (value: string | null | undefined, eventId?: string | null): AssetLibraryUsageType => {
@@ -185,12 +186,18 @@ class AssetLibraryService {
     createdAt: Date;
     updatedAt: Date;
     token?: string;
+    folders?: Array<{ folderId: string }>;
   }, dashboardOrigin?: string) {
     const active = !share.revokedAt && share.expiresAt > new Date();
+    const rootFolderIds = share.folders?.length
+      ? share.folders.map((folder) => folder.folderId)
+      : [share.folderId];
 
     return {
       id: share.id,
       folderId: share.folderId,
+      folderIds: rootFolderIds,
+      folderCount: rootFolderIds.length,
       recipientLabel: share.recipientLabel,
       expiresAt: share.expiresAt,
       revokedAt: share.revokedAt,
@@ -258,6 +265,59 @@ class AssetLibraryService {
         usageType: true,
       },
     });
+  }
+
+  private async normalizeShareRootFolderIds(folderIds: string[], organizationId: string) {
+    const uniqueFolderIds = [...new Set(folderIds.map((id) => id?.trim()).filter(Boolean))];
+    if (uniqueFolderIds.length === 0) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'At least one folder is required');
+    }
+
+    if (uniqueFolderIds.length > 20) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'A share link can include up to 20 folders');
+    }
+
+    const allFolders = await prisma.assetLibraryFolder.findMany({
+      where: {
+        organizationId,
+      },
+      select: {
+        id: true,
+        parentId: true,
+        eventId: true,
+        name: true,
+        category: true,
+        usageType: true,
+      },
+    });
+
+    const folderById = new Map(allFolders.map((folder) => [folder.id, folder]));
+    const folders = uniqueFolderIds
+      .map((folderId) => folderById.get(folderId))
+      .filter(Boolean);
+
+    if (folders.length !== uniqueFolderIds.length) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'One or more folders were not found for this organization');
+    }
+
+    const rootFolderIds = uniqueFolderIds.filter((folderId) => {
+      let parentId = folderById.get(folderId)?.parentId || null;
+
+      while (parentId) {
+        if (uniqueFolderIds.includes(parentId)) {
+          return false;
+        }
+
+        parentId = folderById.get(parentId)?.parentId || null;
+      }
+
+      return true;
+    });
+
+    return {
+      folders,
+      rootFolderIds,
+    };
   }
 
   private async normalizeUploadContext(
@@ -549,8 +609,14 @@ class AssetLibraryService {
 
     const shares = await assetLibraryFolderShare.findMany({
       where: {
-        folderId: normalizedFolderId,
         organizationId: user.organizationId,
+        OR: [
+          { folderId: normalizedFolderId },
+          { folders: { some: { folderId: normalizedFolderId } } },
+        ],
+      },
+      include: {
+        folders: { select: { folderId: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: 25,
@@ -570,20 +636,31 @@ class AssetLibraryService {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Folder is required');
     }
 
-    const folder = await this.getFolderForOrganization(normalizedFolderId, user.organizationId);
-    if (!folder) {
-      throw new ApiError(StatusCodes.NOT_FOUND, 'Folder not found for this organization');
-    }
+    const { rootFolderIds } = await this.normalizeShareRootFolderIds(
+      [normalizedFolderId, ...(input.folderIds || [])],
+      user.organizationId
+    );
+    const primaryFolderId = rootFolderIds[0];
 
     const token = randomBytes(32).toString('base64url');
     const share = await assetLibraryFolderShare.create({
       data: {
         organizationId: user.organizationId,
-        folderId: normalizedFolderId,
+        folderId: primaryFolderId,
         createdById: user.id,
         tokenHash: hashShareToken(token),
         recipientLabel: input.recipientLabel?.trim() || null,
         expiresAt: normalizeShareExpiry(input.expiresInDays),
+        folders: {
+          create: rootFolderIds.map((rootFolderId) => ({
+            folderId: rootFolderId,
+          })),
+        },
+      },
+      include: {
+        folders: {
+          select: { folderId: true },
+        },
       },
     });
 
@@ -605,8 +682,11 @@ class AssetLibraryService {
     const share = await assetLibraryFolderShare.findFirst({
       where: {
         id: normalizedShareId,
-        folderId: normalizedFolderId,
         organizationId: user.organizationId,
+        OR: [
+          { folderId: normalizedFolderId },
+          { folders: { some: { folderId: normalizedFolderId } } },
+        ],
       },
     });
 
@@ -664,6 +744,17 @@ class AssetLibraryService {
             _count: { select: { assets: true, children: true } },
           },
         },
+        folders: {
+          include: {
+            folder: {
+              include: {
+                event: { select: { id: true, name: true } },
+                _count: { select: { assets: true, children: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     });
 
@@ -671,7 +762,13 @@ class AssetLibraryService {
       throw new ApiError(StatusCodes.NOT_FOUND, 'Invalid or expired folder share link');
     }
 
-    const folderIds = await this.collectDescendantFolderIds(share.folderId, share.organizationId);
+    const rootFolders = share.folders?.length
+      ? share.folders.map((item: any) => item.folder)
+      : [share.folder];
+    const rootFolderIds = rootFolders.map((folder: any) => folder.id);
+    const folderIds = [...new Set((await Promise.all(
+      rootFolderIds.map((folderId: string) => this.collectDescendantFolderIds(folderId, share.organizationId))
+    )).flat())];
 
     const [folders, assets] = await Promise.all([
       prisma.assetLibraryFolder.findMany({
@@ -717,6 +814,7 @@ class AssetLibraryService {
         name: share.organization.name,
       },
       folder: this.serializeFolder(share.folder),
+      rootFolders: rootFolders.map((folder: any) => this.serializeFolder(folder)),
       folders: folders.map((folder) => this.serializeFolder(folder)),
       assets: await Promise.all(assets.map((asset) => this.serializePublicAsset(asset))),
     };

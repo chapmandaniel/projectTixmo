@@ -14,6 +14,8 @@ import {
 import { getApiBaseUrl } from '../lib/runtimeConfig';
 import { cn } from '../lib/utils';
 
+const PACKAGE_ROOT_ID = 'shared-package-root';
+
 const formatDate = (value) => {
     if (!value) return 'Unknown date';
 
@@ -96,7 +98,8 @@ const SharedAssetFolderPage = () => {
                 const body = await response.json();
                 if (!cancelled) {
                     setPayload(body);
-                    setActiveFolderId(body.folder?.id || '');
+                    const rootFolders = body.rootFolders?.length ? body.rootFolders : body.folder ? [body.folder] : [];
+                    setActiveFolderId(rootFolders.length > 1 ? PACKAGE_ROOT_ID : rootFolders[0]?.id || '');
                 }
             } catch (requestError) {
                 if (!cancelled) {
@@ -121,12 +124,26 @@ const SharedAssetFolderPage = () => {
         return new Map(payload.folders.map((folder) => [folder.id, folder]));
     }, [payload]);
 
+    const rootFolders = useMemo(() => {
+        if (!payload) return [];
+        return payload.rootFolders?.length ? payload.rootFolders : payload.folder ? [payload.folder] : [];
+    }, [payload]);
+
+    const packageRoot = useMemo(() => ({
+        id: PACKAGE_ROOT_ID,
+        name: payload?.share?.recipientLabel || 'Shared package',
+        parentId: null,
+    }), [payload]);
+
     const currentFolder = useMemo(() => {
         if (!payload?.folder) return null;
+        if (activeFolderId === PACKAGE_ROOT_ID) return packageRoot;
         return foldersById.get(activeFolderId) || payload.folder;
-    }, [activeFolderId, foldersById, payload]);
+    }, [activeFolderId, foldersById, packageRoot, payload]);
 
     const getFolderPath = (folderId) => {
+        if (folderId === PACKAGE_ROOT_ID) return [packageRoot];
+
         const path = [];
         let current = foldersById.get(folderId);
 
@@ -135,7 +152,11 @@ const SharedAssetFolderPage = () => {
             current = current.parentId ? foldersById.get(current.parentId) : null;
         }
 
-        return path.length > 0 ? path : payload?.folder ? [payload.folder] : [];
+        if (path.length === 0) {
+            return payload?.folder ? [payload.folder] : [];
+        }
+
+        return rootFolders.length > 1 ? [packageRoot, ...path] : path;
     };
 
     const folderPath = useMemo(() => {
@@ -145,11 +166,13 @@ const SharedAssetFolderPage = () => {
 
     const childFolders = useMemo(() => {
         if (!currentFolder || !payload?.folders) return [];
+        if (currentFolder.id === PACKAGE_ROOT_ID) return rootFolders;
         return payload.folders.filter((folder) => folder.parentId === currentFolder.id);
-    }, [currentFolder, payload]);
+    }, [currentFolder, payload, rootFolders]);
 
     const visibleAssets = useMemo(() => {
         if (!currentFolder || !payload?.assets) return [];
+        if (currentFolder.id === PACKAGE_ROOT_ID) return [];
         return payload.assets.filter((asset) => asset.folderId === currentFolder.id);
     }, [currentFolder, payload]);
 
@@ -265,7 +288,7 @@ const SharedAssetFolderPage = () => {
 
                             {visibleAssets.length === 0 ? (
                                 <div className="rounded-md border border-dashboard-border bg-dashboard-panel p-5 text-sm font-light text-dashboard-muted">
-                                    This folder has no direct assets.
+                                    {currentFolder?.id === PACKAGE_ROOT_ID ? 'Open a folder to view its assets.' : 'This folder has no direct assets.'}
                                 </div>
                             ) : (
                                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

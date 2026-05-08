@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import AssetLibraryView from '../features/AssetLibraryView';
 
@@ -862,6 +862,16 @@ describe('AssetLibraryView', () => {
                             createdAt: '2026-04-25T09:00:00.000Z',
                             updatedAt: '2026-04-25T09:00:00.000Z',
                         },
+                        {
+                            id: 'folder-2',
+                            name: 'Sponsor Logos',
+                            category: 'logos',
+                            usageType: 'BRAND',
+                            eventId: null,
+                            parentId: null,
+                            createdAt: '2026-04-25T09:10:00.000Z',
+                            updatedAt: '2026-04-25T09:10:00.000Z',
+                        },
                     ],
                 });
             }
@@ -894,6 +904,8 @@ describe('AssetLibraryView', () => {
 
         fireEvent.click(screen.getAllByText('Brand Photos')[0]);
         fireEvent.click(screen.getByRole('button', { name: /Share Folder/i }));
+        const dialog = screen.getByRole('dialog');
+        fireEvent.click(within(dialog).getByText('Sponsor Logos').closest('label'));
         fireEvent.change(screen.getByLabelText('Recipient label'), {
             target: { value: 'Venue partner' },
         });
@@ -905,6 +917,7 @@ describe('AssetLibraryView', () => {
         expect(apiPost).toHaveBeenCalledWith('/assets/folders/folder-1/shares', {
             recipientLabel: 'Venue partner',
             expiresInDays: 14,
+            folderIds: ['folder-1', 'folder-2'],
         });
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://dashboard.example.com/assets/shared/folder-token');
         expect(toastSuccess).toHaveBeenCalledWith('Secure folder link copied');

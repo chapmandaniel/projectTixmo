@@ -654,6 +654,7 @@ model AssetLibraryFolder {
   updatedAt         DateTime     @updatedAt @map("updated_at")
   assets            AssetLibraryAsset[]
   shares            AssetLibraryFolderShare[]
+  shareFolders      AssetLibraryFolderShareFolder[]
 
   @@index([organizationId, parentId])
   @@index([eventId])
@@ -676,10 +677,24 @@ model AssetLibraryFolderShare {
   viewCount         Int          @default(0) @map("view_count")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
+  folders           AssetLibraryFolderShareFolder[]
 
   @@index([folderId, revokedAt, expiresAt])
   @@index([organizationId, createdAt])
   @@map("asset_library_folder_shares")
+}
+
+model AssetLibraryFolderShareFolder {
+  id                String                  @id @default(uuid())
+  shareId           String                  @map("share_id")
+  share             AssetLibraryFolderShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  folderId          String                  @map("folder_id")
+  folder            AssetLibraryFolder      @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  createdAt         DateTime                @default(now()) @map("created_at")
+
+  @@unique([shareId, folderId])
+  @@index([folderId])
+  @@map("asset_library_folder_share_folders")
 }
 
 model ApprovalReviewer {
