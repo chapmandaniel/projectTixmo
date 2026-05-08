@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import {
     AlertTriangle,
     CalendarDays,
+    ChevronRight,
     Download,
     FileImage,
     FileText,
@@ -76,6 +77,7 @@ const SharedAssetFolderPage = () => {
     const [payload, setPayload] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [activeFolderId, setActiveFolderId] = useState('');
 
     useEffect(() => {
         let cancelled = false;
@@ -94,6 +96,7 @@ const SharedAssetFolderPage = () => {
                 const body = await response.json();
                 if (!cancelled) {
                     setPayload(body);
+                    setActiveFolderId(body.folder?.id || '');
                 }
             } catch (requestError) {
                 if (!cancelled) {
@@ -113,25 +116,55 @@ const SharedAssetFolderPage = () => {
         };
     }, [token]);
 
-    const folderPath = useMemo(() => {
-        if (!payload?.folder || !payload?.folders) return [];
+    const foldersById = useMemo(() => {
+        if (!payload?.folders) return new Map();
+        return new Map(payload.folders.map((folder) => [folder.id, folder]));
+    }, [payload]);
 
-        const foldersById = new Map(payload.folders.map((folder) => [folder.id, folder]));
+    const currentFolder = useMemo(() => {
+        if (!payload?.folder) return null;
+        return foldersById.get(activeFolderId) || payload.folder;
+    }, [activeFolderId, foldersById, payload]);
+
+    const getFolderPath = (folderId) => {
         const path = [];
-        let current = payload.folder;
+        let current = foldersById.get(folderId);
 
         while (current) {
             path.unshift(current);
             current = current.parentId ? foldersById.get(current.parentId) : null;
         }
 
-        return path;
-    }, [payload]);
+        return path.length > 0 ? path : payload?.folder ? [payload.folder] : [];
+    };
+
+    const folderPath = useMemo(() => {
+        if (!currentFolder) return [];
+        return getFolderPath(currentFolder.id);
+    }, [currentFolder, foldersById, payload]);
 
     const childFolders = useMemo(() => {
-        if (!payload?.folder || !payload?.folders) return [];
-        return payload.folders.filter((folder) => folder.parentId === payload.folder.id);
-    }, [payload]);
+        if (!currentFolder || !payload?.folders) return [];
+        return payload.folders.filter((folder) => folder.parentId === currentFolder.id);
+    }, [currentFolder, payload]);
+
+    const visibleAssets = useMemo(() => {
+        if (!currentFolder || !payload?.assets) return [];
+        return payload.assets.filter((asset) => asset.folderId === currentFolder.id);
+    }, [currentFolder, payload]);
+
+    const folderAssetTotals = useMemo(() => {
+        const totals = new Map();
+        if (!payload?.assets) return totals;
+
+        payload.assets.forEach((asset) => {
+            getFolderPath(asset.folderId).forEach((folder) => {
+                totals.set(folder.id, (totals.get(folder.id) || 0) + 1);
+            });
+        });
+
+        return totals;
+    }, [foldersById, payload]);
 
     return (
         <main className="min-h-screen bg-dashboard-shell text-zinc-100">
@@ -144,7 +177,7 @@ const SharedAssetFolderPage = () => {
                                 Secure folder share
                             </div>
                             <h1 className="text-3xl font-light tracking-tight sm:text-4xl">
-                                {payload?.folder?.name || 'Shared assets'}
+                                {currentFolder?.name || payload?.folder?.name || 'Shared assets'}
                             </h1>
                             <p className="mt-2 max-w-3xl text-sm font-light leading-6 text-dashboard-muted">
                                 {loading ? 'Loading shared assets...' : `${payload?.organization?.name || 'Tixmo'} shared this read-only folder.`}
@@ -180,8 +213,17 @@ const SharedAssetFolderPage = () => {
                         <div className="mt-5 flex flex-wrap items-center gap-2 text-xs font-light text-dashboard-muted">
                             {folderPath.map((folder, index) => (
                                 <React.Fragment key={folder.id}>
-                                    {index > 0 ? <span>/</span> : null}
-                                    <span className={cn(index === folderPath.length - 1 && 'text-zinc-100')}>{folder.name}</span>
+                                    {index > 0 ? <ChevronRight className="h-3.5 w-3.5" /> : null}
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveFolderId(folder.id)}
+                                        className={cn(
+                                            'max-w-[180px] truncate rounded-sm transition hover:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-dashboard-accent/40',
+                                            index === folderPath.length - 1 && 'text-zinc-100'
+                                        )}
+                                    >
+                                        {folder.name}
+                                    </button>
                                 </React.Fragment>
                             ))}
                         </div>
@@ -191,15 +233,23 @@ const SharedAssetFolderPage = () => {
                                 <p className="mb-3 text-xs uppercase tracking-[0.16em] text-dashboard-muted">Included folders</p>
                                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                                     {childFolders.map((folder) => (
-                                        <div key={folder.id} className="rounded-md border border-dashboard-border bg-dashboard-panel p-4">
-                                            <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-dashboard-panelAlt text-fuchsia-200">
-                                                <FolderOpen className="h-5 w-5" />
-                                            </span>
+                                        <button
+                                            key={folder.id}
+                                            type="button"
+                                            onClick={() => setActiveFolderId(folder.id)}
+                                            className="group rounded-md border border-dashboard-border bg-dashboard-panel p-4 text-left transition hover:border-dashboard-borderStrong hover:bg-dashboard-panelAlt focus:outline-none focus:ring-2 focus:ring-dashboard-accent/40"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-dashboard-panelAlt text-fuchsia-200 transition group-hover:bg-dashboard-panel">
+                                                    <FolderOpen className="h-5 w-5" />
+                                                </span>
+                                                <ChevronRight className="mt-3 h-4 w-4 text-dashboard-muted transition group-hover:translate-x-0.5 group-hover:text-zinc-100" />
+                                            </div>
                                             <p className="mt-4 truncate text-base font-light">{folder.name}</p>
                                             <p className="mt-1 text-sm font-light text-dashboard-muted">
-                                                {folder.assetCount || 0} asset{folder.assetCount === 1 ? '' : 's'}
+                                                {folderAssetTotals.get(folder.id) || 0} asset{folderAssetTotals.get(folder.id) === 1 ? '' : 's'}
                                             </p>
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             </section>
@@ -209,17 +259,17 @@ const SharedAssetFolderPage = () => {
                             <div className="mb-3 flex items-center justify-between gap-3">
                                 <p className="text-xs uppercase tracking-[0.16em] text-dashboard-muted">Assets</p>
                                 <span className="rounded-full border border-dashboard-border bg-dashboard-panelAlt px-3 py-1 text-xs font-light text-dashboard-muted">
-                                    {payload.assets.length} file{payload.assets.length === 1 ? '' : 's'}
+                                    {visibleAssets.length} file{visibleAssets.length === 1 ? '' : 's'}
                                 </span>
                             </div>
 
-                            {payload.assets.length === 0 ? (
+                            {visibleAssets.length === 0 ? (
                                 <div className="rounded-md border border-dashboard-border bg-dashboard-panel p-5 text-sm font-light text-dashboard-muted">
-                                    This shared folder is empty.
+                                    This folder has no direct assets.
                                 </div>
                             ) : (
                                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                                    {payload.assets.map((asset) => {
+                                    {visibleAssets.map((asset) => {
                                         const kind = getAssetKind(asset.mimeType);
                                         const Icon = getAssetIcon(kind);
 
