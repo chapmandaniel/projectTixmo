@@ -52,6 +52,8 @@ describe('Smoke Tests', () => {
             );
         });
         expect(screen.getByText('Content')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /Home/i })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /Assets/i })).toBeInTheDocument();
     });
 
     it('renders App without crashing', async () => {
