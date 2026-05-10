@@ -11,14 +11,14 @@ import { DashboardIconButton } from '../components/dashboard/DashboardPrimitives
 import { cn } from '../lib/utils';
 
 const navItems = [
-    { id: 'dashboard', icon: Home, label: 'HOME' },
-    { id: 'events', icon: Calendar, label: 'EVENTS' },
-    { id: 'todo', icon: CheckSquare, label: 'TASKS' },
-    { id: 'team', icon: Users, label: 'TEAM' },
-    { id: 'assets', icon: Image, label: 'ASSETS' },
+    { id: 'dashboard', icon: Home, label: 'Home' },
+    { id: 'events', icon: Calendar, label: 'Events' },
+    { id: 'todo', icon: CheckSquare, label: 'Tasks' },
+    { id: 'team', icon: Users, label: 'Team' },
+    { id: 'assets', icon: Image, label: 'Assets' },
     { id: 'approvals', icon: CheckCircle, label: 'Review Portal' },
-    { id: 'analytics', icon: BarChart3, label: 'ANALYTICS' },
-    { id: 'settings', icon: Settings, label: 'SETTINGS' },
+    { id: 'analytics', icon: BarChart3, label: 'Analytics' },
+    { id: 'settings', icon: Settings, label: 'Settings' },
 ];
 
 const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
@@ -31,14 +31,15 @@ const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
         <Link
             to={`/${item.id}`}
             className={cn(
-                'group relative flex h-10 w-10 items-center justify-center rounded-[10px] transition-all duration-200',
+                'group relative flex h-10 shrink-0 items-center justify-center gap-2 rounded-[10px] px-3.5 text-sm font-light transition-all duration-200',
                 active
                     ? (isDark ? 'bg-[#2a2b40] text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-slate-900 text-white shadow-sm')
                     : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
             )}
+            aria-current={active ? 'page' : undefined}
         >
             <div className="relative flex items-center justify-center">
-                <item.icon size={20} className={active ? 'drop-shadow-sm' : ''} />
+                <item.icon size={18} className={cn('shrink-0', active ? 'drop-shadow-sm' : '')} />
                 {badge && (
                     <span className={cn(
                         'absolute -right-3 -top-2 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[9px] font-medium text-white shadow-sm',
@@ -48,6 +49,7 @@ const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
                     </span>
                 )}
             </div>
+            <span className="whitespace-nowrap leading-none">{item.label}</span>
         </Link>
     );
 };
