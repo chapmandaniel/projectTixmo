@@ -2,6 +2,8 @@ const GOOGLE_ANALYTICS_PROPERTY_ID = import.meta.env.VITE_GOOGLE_ANALYTICS_PROPE
 const GOOGLE_ANALYTICS_MEASUREMENT_ID = import.meta.env.VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID || '';
 
 export const EVENT_GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY = 'googleAnalyticsMeasurementId';
+export const EVENT_GOOGLE_ANALYTICS_TAGS_KEY = 'googleAnalyticsTags';
+export const EVENT_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY = 'selectedGoogleAnalyticsTagId';
 
 export const ANALYTICS_TIMEFRAMES = [
     { id: '7d', label: '7D', days: 7 },
@@ -47,9 +49,39 @@ export const getEventGoogleAnalyticsMeasurementId = (event) => {
     return typeof measurementId === 'string' ? measurementId.trim() : '';
 };
 
+export const normalizeEventGoogleAnalyticsTags = (event) => {
+    const metadataTags = event?.metadata?.[EVENT_GOOGLE_ANALYTICS_TAGS_KEY];
+    const normalizedTags = Array.isArray(metadataTags)
+        ? metadataTags
+            .map((tag, index) => ({
+                id: typeof tag?.id === 'string' && tag.id ? tag.id : `tag-${index + 1}`,
+                title: typeof tag?.title === 'string' && tag.title.trim() ? tag.title.trim() : `GA tag ${index + 1}`,
+                measurementId: typeof tag?.measurementId === 'string' ? tag.measurementId.trim() : '',
+            }))
+            .filter((tag) => tag.title || tag.measurementId)
+        : [];
+
+    if (normalizedTags.length > 0) {
+        return normalizedTags;
+    }
+
+    const legacyMeasurementId = getEventGoogleAnalyticsMeasurementId(event);
+    return legacyMeasurementId
+        ? [{ id: 'primary', title: 'Primary tag', measurementId: legacyMeasurementId }]
+        : [];
+};
+
+export const getSelectedEventGoogleAnalyticsTag = (event) => {
+    const tags = normalizeEventGoogleAnalyticsTags(event);
+    const selectedTagId = event?.metadata?.[EVENT_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY];
+
+    return tags.find((tag) => tag.id === selectedTagId) || tags[0] || null;
+};
+
 export const getEventGoogleAnalyticsIntegrationMeta = (event) => {
     const baseMeta = getGoogleAnalyticsIntegrationMeta();
-    const eventMeasurementId = getEventGoogleAnalyticsMeasurementId(event);
+    const eventTag = getSelectedEventGoogleAnalyticsTag(event);
+    const eventMeasurementId = eventTag?.measurementId || getEventGoogleAnalyticsMeasurementId(event);
 
     if (!event) {
         return baseMeta;
@@ -61,6 +93,7 @@ export const getEventGoogleAnalyticsIntegrationMeta = (event) => {
         ...baseMeta,
         measurementId: eventMeasurementId || baseMeta.measurementId,
         eventMeasurementId,
+        tagTitle: eventTag?.title || '',
         connected,
         statusLabel: connected ? 'Event GA details detected' : 'Event GA ID needed',
         statusTone: connected ? 'ready' : 'pending',

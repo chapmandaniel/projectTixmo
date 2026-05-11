@@ -6,16 +6,20 @@ import { ResponsiveBar } from '@nivo/bar';
 import { ResponsiveHeatMap } from '@nivo/heatmap';
 import {
     TrendingUp, DollarSign, Ticket, ShoppingCart,
-    BarChart3, ChevronDown, Loader2, AlertCircle, Flame, Link2, RefreshCcw
+    BarChart3, ChevronDown, Loader2, Flame, Link2, RefreshCcw, Plus, Save
 } from 'lucide-react';
 import api from '../lib/api';
 import {
     ANALYTICS_TIMEFRAMES,
+    EVENT_GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY,
+    EVENT_GOOGLE_ANALYTICS_TAGS_KEY,
+    EVENT_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY,
     GOOGLE_ANALYTICS_DIMENSION_BLUEPRINT,
     GOOGLE_ANALYTICS_METRIC_BLUEPRINT,
     buildAnalyticsQueryString,
     getEventGoogleAnalyticsIntegrationMeta,
     getGoogleAnalyticsIntegrationMeta,
+    normalizeEventGoogleAnalyticsTags,
 } from '../lib/analyticsSources';
 import {
     DashboardButton,
@@ -23,8 +27,10 @@ import {
     DashboardEmptyState,
     DashboardPage,
     DashboardSection,
+    DashboardSelect,
     DashboardStat,
     DashboardSurface,
+    DashboardTextInput,
     DashboardTitleBar,
 } from '../components/dashboard/DashboardPrimitives';
 import { dashboardColorTokens, getDashboardTheme } from '../lib/dashboardTheme';
@@ -155,6 +161,8 @@ const InlineEmptyState = ({ isDark, title, description, compact = false }) => (
     </div>
 );
 
+const createAnalyticsTagId = () => `tag-${Date.now().toString(36)}`;
+
 const buildHeatmapData = (salesByDay) => {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
@@ -201,6 +209,11 @@ const AnalyticsView = ({ isDark }) => {
     const [salesData, setSalesData] = useState(null);
     const [eventData, setEventData] = useState(null);
     const [customerData, setCustomerData] = useState(null);
+    const [selectedAnalyticsTagId, setSelectedAnalyticsTagId] = useState('');
+    const [analyticsTagTitle, setAnalyticsTagTitle] = useState('');
+    const [analyticsTagMeasurementId, setAnalyticsTagMeasurementId] = useState('');
+    const [isSavingAnalyticsTag, setIsSavingAnalyticsTag] = useState(false);
+    const [analyticsTagMessage, setAnalyticsTagMessage] = useState('');
 
     const chartTheme = isDark ? nivoDarkTheme : nivoLightTheme;
     const uiTheme = getDashboardTheme(isDark);
@@ -323,10 +336,53 @@ const AnalyticsView = ({ isDark }) => {
     const selectedEvent = selectedEventId === 'all'
         ? null
         : events.find((event) => event.id === selectedEventId) || null;
+    const analyticsTags = useMemo(() => normalizeEventGoogleAnalyticsTags(selectedEvent), [selectedEvent]);
     const googleAnalyticsMeta = useMemo(
-        () => (selectedEvent ? getEventGoogleAnalyticsIntegrationMeta(selectedEvent) : getGoogleAnalyticsIntegrationMeta()),
-        [selectedEvent]
+        () => {
+            const meta = selectedEvent ? getEventGoogleAnalyticsIntegrationMeta(selectedEvent) : getGoogleAnalyticsIntegrationMeta();
+
+            if (!selectedEvent) return meta;
+
+            const measurementId = analyticsTagMeasurementId.trim() || meta.measurementId;
+            return {
+                ...meta,
+                measurementId,
+                eventMeasurementId: measurementId,
+                tagTitle: analyticsTagTitle.trim() || meta.tagTitle,
+                connected: Boolean(measurementId || meta.propertyId),
+                statusLabel: measurementId || meta.propertyId ? 'Event GA details detected' : 'Event GA ID needed',
+            };
+        },
+        [analyticsTagMeasurementId, analyticsTagTitle, selectedEvent]
     );
+
+    useEffect(() => {
+        if (!selectedEvent) {
+            setSelectedAnalyticsTagId('');
+            setAnalyticsTagTitle('');
+            setAnalyticsTagMeasurementId('');
+            setAnalyticsTagMessage('');
+            return;
+        }
+
+        const requestedTagId = searchParams.get('tagId');
+        const requestedUnsavedTag = requestedTagId && requestedTagId === selectedAnalyticsTagId
+            && !analyticsTags.some((tag) => tag.id === requestedTagId);
+
+        if (requestedUnsavedTag) {
+            return;
+        }
+
+        const nextTag = analyticsTags.find((tag) => tag.id === requestedTagId)
+            || analyticsTags.find((tag) => tag.id === selectedAnalyticsTagId)
+            || analyticsTags[0]
+            || { id: '', title: '', measurementId: '' };
+
+        setSelectedAnalyticsTagId(nextTag.id);
+        setAnalyticsTagTitle(nextTag.title);
+        setAnalyticsTagMeasurementId(nextTag.measurementId);
+        setAnalyticsTagMessage('');
+    }, [analyticsTags, searchParams, selectedAnalyticsTagId, selectedEvent]);
 
     const handleEventSelection = (eventId) => {
         setSelectedEventId(eventId);
@@ -335,11 +391,90 @@ const AnalyticsView = ({ isDark }) => {
 
         if (eventId === 'all') {
             nextParams.delete('eventId');
+            nextParams.delete('tagId');
         } else {
             nextParams.set('eventId', eventId);
         }
 
         setSearchParams(nextParams, { replace: true });
+    };
+
+    const handleAnalyticsTagSelection = (tagId) => {
+        const nextTag = analyticsTags.find((tag) => tag.id === tagId);
+        setSelectedAnalyticsTagId(tagId);
+        setAnalyticsTagTitle(nextTag?.title || '');
+        setAnalyticsTagMeasurementId(nextTag?.measurementId || '');
+        setAnalyticsTagMessage('');
+
+        const nextParams = new URLSearchParams(searchParams);
+        if (tagId) {
+            nextParams.set('tagId', tagId);
+        } else {
+            nextParams.delete('tagId');
+        }
+        setSearchParams(nextParams, { replace: true });
+    };
+
+    const handleAddAnalyticsTag = () => {
+        const tagId = createAnalyticsTagId();
+        setSelectedAnalyticsTagId(tagId);
+        setAnalyticsTagTitle('');
+        setAnalyticsTagMeasurementId('');
+        setAnalyticsTagMessage('');
+
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.set('tagId', tagId);
+        setSearchParams(nextParams, { replace: true });
+    };
+
+    const handleSaveAnalyticsTag = async () => {
+        if (!selectedEvent) {
+            setAnalyticsTagMessage('Select an event before adding a GA tag.');
+            return;
+        }
+
+        const title = analyticsTagTitle.trim();
+        const measurementId = analyticsTagMeasurementId.trim();
+
+        if (!title || !measurementId) {
+            setAnalyticsTagMessage('Add a tag title and GA measurement ID.');
+            return;
+        }
+
+        setIsSavingAnalyticsTag(true);
+        setAnalyticsTagMessage('');
+
+        const tagId = selectedAnalyticsTagId || createAnalyticsTagId();
+        const nextTag = { id: tagId, title, measurementId };
+        const nextTags = [
+            ...analyticsTags.filter((tag) => tag.id !== tagId),
+            nextTag,
+        ];
+        const metadata = {
+            ...(selectedEvent.metadata || {}),
+            [EVENT_GOOGLE_ANALYTICS_TAGS_KEY]: nextTags,
+            [EVENT_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY]: tagId,
+            [EVENT_GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY]: measurementId,
+        };
+
+        try {
+            const response = await api.put(`/events/${selectedEvent.id}`, { metadata });
+            const updatedEvent = response.data?.data || response.data?.event || response.data;
+
+            if (updatedEvent?.id) {
+                setEvents((currentEvents) => currentEvents.map((event) => (
+                    event.id === updatedEvent.id ? updatedEvent : event
+                )));
+            }
+
+            setSelectedAnalyticsTagId(tagId);
+            setAnalyticsTagMessage('GA tag saved.');
+        } catch (requestError) {
+            console.error('Failed to save GA tag', requestError);
+            setAnalyticsTagMessage(requestError.response?.data?.message || 'Could not save this GA tag.');
+        } finally {
+            setIsSavingAnalyticsTag(false);
+        }
     };
 
     if (loading) {
@@ -422,6 +557,90 @@ const AnalyticsView = ({ isDark }) => {
                         detail={selectedEvent ? 'Saved on this event' : 'Global web stream'}
                     />
                 </div>
+
+                <DashboardSurface isDark={isDark} accent="blue" className="mt-4 p-4 sm:p-5">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                            <p className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textTertiary)}>GA tags</p>
+                            <h3 className={cn('mt-2 text-lg font-light tracking-tight', uiTheme.textPrimary)}>
+                                {selectedEvent ? selectedEventName : 'Select an event'}
+                            </h3>
+                        </div>
+                        <DashboardButton
+                            isDark={isDark}
+                            variant="secondary"
+                            onClick={handleAddAnalyticsTag}
+                            disabled={!selectedEvent}
+                        >
+                            <Plus size={16} />
+                            Add Tag
+                        </DashboardButton>
+                    </div>
+
+                    <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(180px,0.75fr)_minmax(180px,1fr)_minmax(220px,1fr)_auto] xl:items-end">
+                        <label className="block">
+                            <span className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Switch tag</span>
+                            <DashboardSelect
+                                isDark={isDark}
+                                className="mt-2"
+                                value={selectedAnalyticsTagId}
+                                onChange={(event) => handleAnalyticsTagSelection(event.target.value)}
+                                disabled={!selectedEvent || analyticsTags.length === 0}
+                            >
+                                {analyticsTags.length === 0 ? (
+                                    <option value="">No tags yet</option>
+                                ) : analyticsTags.map((tag) => (
+                                    <option key={tag.id} value={tag.id}>{tag.title}</option>
+                                ))}
+                            </DashboardSelect>
+                        </label>
+                        <label className="block">
+                            <span className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Title</span>
+                            <DashboardTextInput
+                                isDark={isDark}
+                                className="mt-2"
+                                placeholder="Festival web tag"
+                                value={analyticsTagTitle}
+                                onChange={(event) => {
+                                    setAnalyticsTagTitle(event.target.value);
+                                    setAnalyticsTagMessage('');
+                                }}
+                                disabled={!selectedEvent}
+                            />
+                        </label>
+                        <label className="block">
+                            <span className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>GA measurement ID</span>
+                            <DashboardTextInput
+                                isDark={isDark}
+                                className="mt-2"
+                                placeholder="G-XXXXXXXXXX"
+                                value={analyticsTagMeasurementId}
+                                onChange={(event) => {
+                                    setAnalyticsTagMeasurementId(event.target.value);
+                                    setAnalyticsTagMessage('');
+                                }}
+                                disabled={!selectedEvent}
+                            />
+                        </label>
+                        <DashboardButton
+                            isDark={isDark}
+                            onClick={handleSaveAnalyticsTag}
+                            disabled={!selectedEvent || isSavingAnalyticsTag}
+                        >
+                            {isSavingAnalyticsTag ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                            Save Tag
+                        </DashboardButton>
+                    </div>
+
+                    {analyticsTagMessage ? (
+                        <p className={cn(
+                            'mt-3 text-sm font-light',
+                            analyticsTagMessage.includes('saved') ? (isDark ? 'text-emerald-300' : 'text-emerald-700') : (isDark ? 'text-rose-300' : 'text-rose-700')
+                        )}>
+                            {analyticsTagMessage}
+                        </p>
+                    ) : null}
+                </DashboardSurface>
 
                 <DashboardSurface isDark={isDark} accent="slate" className="mt-4 p-4 sm:p-5">
                     <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
