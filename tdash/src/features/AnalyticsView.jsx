@@ -416,6 +416,11 @@ const AnalyticsView = ({ isDark }) => {
     };
 
     const handleAddAnalyticsTag = () => {
+        if (!selectedEvent) {
+            setAnalyticsTagMessage('Select an event before adding a GA tag.');
+            return;
+        }
+
         const tagId = createAnalyticsTagId();
         setSelectedAnalyticsTagId(tagId);
         setAnalyticsTagTitle('');
@@ -570,14 +575,27 @@ const AnalyticsView = ({ isDark }) => {
                             isDark={isDark}
                             variant="secondary"
                             onClick={handleAddAnalyticsTag}
-                            disabled={!selectedEvent}
                         >
                             <Plus size={16} />
                             Add Tag
                         </DashboardButton>
                     </div>
 
-                    <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(180px,0.75fr)_minmax(180px,1fr)_minmax(220px,1fr)_auto] xl:items-end">
+                    <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(180px,0.85fr)_minmax(180px,0.75fr)_minmax(180px,1fr)_minmax(220px,1fr)_auto] xl:items-end">
+                        <label className="block">
+                            <span className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Event</span>
+                            <DashboardSelect
+                                isDark={isDark}
+                                className="mt-2"
+                                value={selectedEventId}
+                                onChange={(event) => handleEventSelection(event.target.value)}
+                            >
+                                <option value="all">All Events</option>
+                                {events.map((event) => (
+                                    <option key={event.id} value={event.id}>{event.name}</option>
+                                ))}
+                            </DashboardSelect>
+                        </label>
                         <label className="block">
                             <span className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Switch tag</span>
                             <DashboardSelect
