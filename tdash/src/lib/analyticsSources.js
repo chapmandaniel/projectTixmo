@@ -1,6 +1,8 @@
 const GOOGLE_ANALYTICS_PROPERTY_ID = import.meta.env.VITE_GOOGLE_ANALYTICS_PROPERTY_ID || '';
 const GOOGLE_ANALYTICS_MEASUREMENT_ID = import.meta.env.VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID || '';
 
+export const EVENT_GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY = 'googleAnalyticsMeasurementId';
+
 export const ANALYTICS_TIMEFRAMES = [
     { id: '7d', label: '7D', days: 7 },
     { id: '30d', label: '30D', days: 30 },
@@ -37,7 +39,35 @@ export const getGoogleAnalyticsIntegrationMeta = () => {
     };
 };
 
-export const buildAnalyticsQueryString = (timeframeId) => {
+export const getEventGoogleAnalyticsMeasurementId = (event) => {
+    const directValue = event?.googleAnalyticsMeasurementId;
+    const metadataValue = event?.metadata?.[EVENT_GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY];
+    const measurementId = directValue || metadataValue || '';
+
+    return typeof measurementId === 'string' ? measurementId.trim() : '';
+};
+
+export const getEventGoogleAnalyticsIntegrationMeta = (event) => {
+    const baseMeta = getGoogleAnalyticsIntegrationMeta();
+    const eventMeasurementId = getEventGoogleAnalyticsMeasurementId(event);
+
+    if (!event) {
+        return baseMeta;
+    }
+
+    const connected = Boolean(eventMeasurementId || baseMeta.propertyId);
+
+    return {
+        ...baseMeta,
+        measurementId: eventMeasurementId || baseMeta.measurementId,
+        eventMeasurementId,
+        connected,
+        statusLabel: connected ? 'Event GA details detected' : 'Event GA ID needed',
+        statusTone: connected ? 'ready' : 'pending',
+    };
+};
+
+export const buildAnalyticsQueryString = (timeframeId, eventId = 'all') => {
     const timeframe = ANALYTICS_TIMEFRAMES.find((item) => item.id === timeframeId) || ANALYTICS_TIMEFRAMES[1];
     const endDate = new Date();
     const startDate = new Date(endDate);
@@ -47,6 +77,10 @@ export const buildAnalyticsQueryString = (timeframeId) => {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
     });
+
+    if (eventId && eventId !== 'all') {
+        params.set('eventId', eventId);
+    }
 
     return `?${params.toString()}`;
 };

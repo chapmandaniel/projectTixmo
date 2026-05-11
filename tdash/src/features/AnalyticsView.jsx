@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ResponsiveLine } from '@nivo/line';
 import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveBar } from '@nivo/bar';
@@ -13,6 +14,7 @@ import {
     GOOGLE_ANALYTICS_DIMENSION_BLUEPRINT,
     GOOGLE_ANALYTICS_METRIC_BLUEPRINT,
     buildAnalyticsQueryString,
+    getEventGoogleAnalyticsIntegrationMeta,
     getGoogleAnalyticsIntegrationMeta,
 } from '../lib/analyticsSources';
 import {
@@ -188,8 +190,9 @@ const buildHeatmapData = (salesByDay) => {
 };
 
 const AnalyticsView = ({ isDark }) => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [events, setEvents] = useState([]);
-    const [selectedEventId, setSelectedEventId] = useState('all');
+    const [selectedEventId, setSelectedEventId] = useState(() => searchParams.get('eventId') || 'all');
     const [selectedTimeframe, setSelectedTimeframe] = useState('30d');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -201,8 +204,12 @@ const AnalyticsView = ({ isDark }) => {
 
     const chartTheme = isDark ? nivoDarkTheme : nivoLightTheme;
     const uiTheme = getDashboardTheme(isDark);
-    const googleAnalyticsMeta = useMemo(() => getGoogleAnalyticsIntegrationMeta(), []);
-    const analyticsQuery = useMemo(() => buildAnalyticsQueryString(selectedTimeframe), [selectedTimeframe]);
+    const analyticsQuery = useMemo(() => buildAnalyticsQueryString(selectedTimeframe, selectedEventId), [selectedEventId, selectedTimeframe]);
+
+    useEffect(() => {
+        const eventIdParam = searchParams.get('eventId') || 'all';
+        setSelectedEventId((current) => (current === eventIdParam ? current : eventIdParam));
+    }, [searchParams]);
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -310,6 +317,30 @@ const AnalyticsView = ({ isDark }) => {
     const selectedEventName = selectedEventId === 'all'
         ? 'All Events'
         : events.find((event) => event.id === selectedEventId)?.name || 'Selected Event';
+    const selectedEventLabel = selectedEventName.length > 32
+        ? `${selectedEventName.slice(0, 29)}...`
+        : selectedEventName;
+    const selectedEvent = selectedEventId === 'all'
+        ? null
+        : events.find((event) => event.id === selectedEventId) || null;
+    const googleAnalyticsMeta = useMemo(
+        () => (selectedEvent ? getEventGoogleAnalyticsIntegrationMeta(selectedEvent) : getGoogleAnalyticsIntegrationMeta()),
+        [selectedEvent]
+    );
+
+    const handleEventSelection = (eventId) => {
+        setSelectedEventId(eventId);
+        setIsDropdownOpen(false);
+        const nextParams = new URLSearchParams(searchParams);
+
+        if (eventId === 'all') {
+            nextParams.delete('eventId');
+        } else {
+            nextParams.set('eventId', eventId);
+        }
+
+        setSearchParams(nextParams, { replace: true });
+    };
 
     if (loading) {
         return (
@@ -372,7 +403,7 @@ const AnalyticsView = ({ isDark }) => {
                 isDark={isDark}
                 accent="violet"
                 title="GA4 readiness"
-                description="Keep the source configuration visible while the analytics workspace continues to run against the current query model."
+                description="Keep the source configuration visible while event selection filters the dashboard data and reads the selected event's saved GA ID."
                 actions={(
                     <DashboardButton isDark={isDark} variant="secondary" onClick={() => setRefreshKey((current) => current + 1)}>
                         <RefreshCcw size={16} />
@@ -380,10 +411,16 @@ const AnalyticsView = ({ isDark }) => {
                     </DashboardButton>
                 )}
             >
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <DashboardStat isDark={isDark} label="Primary source" value={googleAnalyticsMeta.label} detail="Current analytics backend" />
+                    <DashboardStat isDark={isDark} label="View scope" value={selectedEventLabel} detail={selectedEvent ? 'Selected event' : 'Aggregate dashboard'} />
                     <DashboardStat isDark={isDark} label="Property ID" value={googleAnalyticsMeta.propertyId || 'Not configured'} detail="GA property target" />
-                    <DashboardStat isDark={isDark} label="Measurement ID" value={googleAnalyticsMeta.measurementId || 'Not configured'} detail="Web stream measurement" />
+                    <DashboardStat
+                        isDark={isDark}
+                        label="Measurement ID"
+                        value={googleAnalyticsMeta.measurementId || 'Not configured'}
+                        detail={selectedEvent ? 'Saved on this event' : 'Global web stream'}
+                    />
                 </div>
 
                 <DashboardSurface isDark={isDark} accent="slate" className="mt-4 p-4 sm:p-5">
@@ -452,7 +489,7 @@ const AnalyticsView = ({ isDark }) => {
                                 >
                                     <button
                                         type="button"
-                                        onClick={() => { setSelectedEventId('all'); setIsDropdownOpen(false); }}
+                                        onClick={() => handleEventSelection('all')}
                                         className={cn(
                                             'w-full px-4 py-3 text-left text-sm font-light transition-colors',
                                             selectedEventId === 'all'
@@ -468,7 +505,7 @@ const AnalyticsView = ({ isDark }) => {
                                         <button
                                             key={event.id}
                                             type="button"
-                                            onClick={() => { setSelectedEventId(event.id); setIsDropdownOpen(false); }}
+                                            onClick={() => handleEventSelection(event.id)}
                                             className={cn(
                                                 'w-full px-4 py-2.5 text-left text-sm transition-colors',
                                                 selectedEventId === event.id
