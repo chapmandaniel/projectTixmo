@@ -5,6 +5,7 @@ export const analyticsQuerySchema = z.object({
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional(),
     organizationId: z.string().uuid().optional(),
+    eventId: z.string().uuid().optional(),
   }),
 });
 

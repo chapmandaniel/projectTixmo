@@ -63,7 +63,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
             case 'marketing':
                 return <ECC_Marketing event={event} isDark={isDark} />;
             case 'settings':
-                return <ECC_Settings event={event} isDark={isDark} onEdit={() => setShowEditModal(true)} />;
+                return <ECC_Settings event={event} isDark={isDark} onEdit={() => setShowEditModal(true)} onUpdate={onUpdate} />;
             default:
                 return <ECC_Overview event={event} isDark={isDark} />;
         }

@@ -5,6 +5,7 @@ import prisma from '../../config/prisma';
 interface DateRangeParams {
   startDate?: Date;
   endDate?: Date;
+  eventId?: string;
 }
 
 interface SalesAnalytics {
@@ -22,6 +23,7 @@ interface SalesAnalytics {
     eventId: string;
     eventName: string;
     revenue: number;
+    orders: number;
     ticketsSold: number;
   }>;
 }
@@ -68,13 +70,17 @@ export class AnalyticsService {
   async getSalesAnalytics(
     params: DateRangeParams & { organizationId?: string }
   ): Promise<SalesAnalytics> {
-    const { startDate, endDate, organizationId } = params;
+    const { startDate, endDate, organizationId, eventId } = params;
+    const createdAtRange = {
+      ...(startDate ? { gte: startDate } : {}),
+      ...(endDate ? { lte: endDate } : {}),
+    };
 
     // Build where clause
     const where: Prisma.OrderWhereInput = {
       status: 'PAID',
-      ...(startDate && { createdAt: { gte: startDate } }),
-      ...(endDate && { createdAt: { lte: endDate } }),
+      ...(Object.keys(createdAtRange).length ? { createdAt: createdAtRange } : {}),
+      ...(eventId && { eventId }),
       ...(organizationId && {
         event: {
           organizationId,
@@ -124,18 +130,20 @@ export class AnalyticsService {
     // Group by event
     const salesByEventMap = new Map<
       string,
-      { eventName: string; revenue: number; ticketsSold: number }
+      { eventName: string; revenue: number; orders: number; ticketsSold: number }
     >();
     orders.forEach((order) => {
       const eventId = order.event.id;
       const existing = salesByEventMap.get(eventId) || {
         eventName: order.event.name,
         revenue: 0,
+        orders: 0,
         ticketsSold: 0,
       };
       salesByEventMap.set(eventId, {
         eventName: existing.eventName,
         revenue: existing.revenue + Number(order.totalAmount),
+        orders: existing.orders + 1,
         ticketsSold: existing.ticketsSold + order.tickets.length,
       });
     });
@@ -160,11 +168,15 @@ export class AnalyticsService {
   async getEventAnalytics(
     params: DateRangeParams & { organizationId?: string }
   ): Promise<EventAnalytics> {
-    const { startDate, endDate, organizationId } = params;
+    const { startDate, endDate, organizationId, eventId } = params;
+    const createdAtRange = {
+      ...(startDate ? { gte: startDate } : {}),
+      ...(endDate ? { lte: endDate } : {}),
+    };
 
     const where: Prisma.EventWhereInput = {
-      ...(startDate && { createdAt: { gte: startDate } }),
-      ...(endDate && { createdAt: { lte: endDate } }),
+      ...(eventId && { id: eventId }),
+      ...(Object.keys(createdAtRange).length ? { createdAt: createdAtRange } : {}),
       ...(organizationId && { organizationId }),
     };
 
@@ -228,17 +240,26 @@ export class AnalyticsService {
   async getCustomerAnalytics(
     params: DateRangeParams & { organizationId?: string }
   ): Promise<CustomerAnalytics> {
-    const { startDate, endDate, organizationId } = params;
+    const { startDate, endDate, organizationId, eventId } = params;
+    const createdAtRange = {
+      ...(startDate ? { gte: startDate } : {}),
+      ...(endDate ? { lte: endDate } : {}),
+    };
+    const paidOrderEventFilter: Prisma.OrderWhereInput = {
+      status: 'PAID',
+      ...(eventId && { eventId }),
+      ...(organizationId && {
+        event: {
+          organizationId,
+        },
+      }),
+    };
+
     const customerWhere: Prisma.UserWhereInput = {
       role: 'CUSTOMER',
-      ...(organizationId && {
+      ...((organizationId || eventId) && {
         orders: {
-          some: {
-            status: 'PAID',
-            event: {
-              organizationId,
-            },
-          },
+          some: paidOrderEventFilter,
         },
       }),
     };
@@ -252,8 +273,7 @@ export class AnalyticsService {
     const newCustomersInPeriod = await prisma.user.count({
       where: {
         ...customerWhere,
-        ...(startDate && { createdAt: { gte: startDate } }),
-        ...(endDate && { createdAt: { lte: endDate } }),
+        ...(Object.keys(createdAtRange).length ? { createdAt: createdAtRange } : {}),
       },
     });
 
@@ -262,26 +282,12 @@ export class AnalyticsService {
       where: {
         ...customerWhere,
         orders: {
-          some: {
-            status: 'PAID',
-            ...(organizationId && {
-              event: {
-                organizationId,
-              },
-            }),
-          },
+          some: paidOrderEventFilter,
         },
       },
       include: {
         orders: {
-          where: {
-            status: 'PAID',
-            ...(organizationId && {
-              event: {
-                organizationId,
-              },
-            }),
-          },
+          where: paidOrderEventFilter,
         },
       },
     });
@@ -307,8 +313,7 @@ export class AnalyticsService {
     const customers = await prisma.user.findMany({
       where: {
         ...customerWhere,
-        ...(startDate && { createdAt: { gte: startDate } }),
-        ...(endDate && { createdAt: { lte: endDate } }),
+        ...(Object.keys(createdAtRange).length ? { createdAt: createdAtRange } : {}),
       },
       select: {
         createdAt: true,

@@ -16,6 +16,7 @@ interface CreateEventInput {
   capacity?: number;
   imageUrl?: string;
   metadata?: Prisma.InputJsonValue | null | undefined;
+  googleAnalyticsMeasurementId?: string;
   category?: string;
   timezone?: string;
   tags?: string[];
@@ -31,6 +32,7 @@ interface UpdateEventInput {
   capacity?: number;
   imageUrl?: string;
   metadata?: Prisma.InputJsonValue | null | undefined;
+  googleAnalyticsMeasurementId?: string;
   category?: string;
   timezone?: string;
   tags?: string[];
@@ -68,6 +70,36 @@ const VALID_STATUS_TRANSITIONS: Record<EventStatus, Set<EventStatus>> = {
   CANCELLED: new Set([]), // Terminal state
   COMPLETED: new Set([]), // Terminal state
   DELETED: new Set(['DRAFT']), // Can be restored to DRAFT
+};
+
+const GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY = 'googleAnalyticsMeasurementId';
+
+const normalizeMetadataObject = (metadata: Prisma.JsonValue | Prisma.InputJsonValue | null | undefined) => {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return {};
+  }
+
+  return { ...(metadata as Record<string, unknown>) };
+};
+
+const withGoogleAnalyticsMeasurementId = (
+  metadata: Prisma.JsonValue | Prisma.InputJsonValue | null | undefined,
+  measurementId: string | undefined
+) => {
+  if (measurementId === undefined) {
+    return metadata;
+  }
+
+  const nextMetadata = normalizeMetadataObject(metadata);
+  const normalizedMeasurementId = measurementId.trim();
+
+  if (normalizedMeasurementId) {
+    nextMetadata[GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY] = normalizedMeasurementId;
+  } else {
+    delete nextMetadata[GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY];
+  }
+
+  return nextMetadata as Prisma.InputJsonValue;
 };
 
 export class EventService {
@@ -169,6 +201,8 @@ export class EventService {
     // Generate unique slug from title (handles collisions)
     const slug = await this.generateUniqueSlug(data.title);
 
+    const metadata = withGoogleAnalyticsMeasurementId(data.metadata, data.googleAnalyticsMeasurementId);
+
     // Create event
     return await prisma.event.create({
       data: {
@@ -187,10 +221,7 @@ export class EventService {
         images: data.imageUrl
           ? ({ main: data.imageUrl } as unknown as Prisma.InputJsonValue)
           : undefined,
-        metadata:
-          data.metadata !== undefined
-            ? (data.metadata as unknown as Prisma.InputJsonValue)
-            : undefined,
+        metadata: metadata !== undefined ? (metadata as Prisma.InputJsonValue) : undefined,
       },
     });
   }
@@ -283,8 +314,13 @@ export class EventService {
     if (data.capacity) updateData.capacity = data.capacity;
     if (data.category) updateData.category = data.category;
     if (data.timezone) updateData.timezone = data.timezone;
-    if (data.metadata !== undefined)
-      updateData.metadata = data.metadata as unknown as Prisma.InputJsonValue;
+    if (data.metadata !== undefined || data.googleAnalyticsMeasurementId !== undefined) {
+      const metadataBase = data.metadata !== undefined ? data.metadata : existingEvent.metadata;
+      updateData.metadata = withGoogleAnalyticsMeasurementId(
+        metadataBase,
+        data.googleAnalyticsMeasurementId
+      ) as Prisma.InputJsonValue;
+    }
     if (data.imageUrl)
       updateData.images = { main: data.imageUrl } as unknown as Prisma.InputJsonValue;
 

@@ -25,8 +25,9 @@ const EventManagementDashboard = ({ isDark, user }) => {
         try {
             setIsLoading(true);
             const response = await api.get(`/events/${eventId}`);
-            if (response.data && response.data.event) {
-                setEventData(response.data.event);
+            const event = response.data?.data || response.data?.event || response.data;
+            if (event?.id) {
+                setEventData(event);
             } else {
                 navigate('/events'); // fallback
             }
@@ -55,7 +56,11 @@ const EventManagementDashboard = ({ isDark, user }) => {
             isDark={isDark}
             user={user}
             onUpdate={(updatedEvent) => {
-                setEventData(updatedEvent);
+                if (updatedEvent?.id) {
+                    setEventData(updatedEvent);
+                } else {
+                    fetchEvent();
+                }
             }}
         />
     );
