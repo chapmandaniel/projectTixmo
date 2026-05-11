@@ -1,24 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Settings, Calendar, MapPin, Globe, Edit3, AlertTriangle, BarChart3, CheckCircle2, Loader2, Save } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import {
-    DashboardButton,
-    DashboardChip,
-    DashboardSurface,
-    DashboardTextInput,
-} from '../components/dashboard/DashboardPrimitives';
-import { getDashboardTheme } from '../lib/dashboardTheme';
-import { getEventGoogleAnalyticsMeasurementId } from '../lib/analyticsSources';
-import { cn } from '../lib/utils';
-import api from '../lib/api';
+import React from 'react';
+import { Settings, Calendar, MapPin, Globe, Edit3, AlertTriangle } from 'lucide-react';
 
-const ECC_Settings = ({ event, isDark, onEdit, onUpdate }) => {
-    const navigate = useNavigate();
-    const uiTheme = getDashboardTheme(isDark);
-    const [googleAnalyticsMeasurementId, setGoogleAnalyticsMeasurementId] = useState(() => getEventGoogleAnalyticsMeasurementId(event));
-    const [isSavingAnalytics, setIsSavingAnalytics] = useState(false);
-    const [analyticsMessage, setAnalyticsMessage] = useState('');
-
+const ECC_Settings = ({ event, isDark, onEdit }) => {
     const formatDate = (isoString) => {
         if (!isoString) return 'TBA';
         return new Date(isoString).toLocaleDateString('en-US', {
@@ -30,40 +13,6 @@ const ECC_Settings = ({ event, isDark, onEdit, onUpdate }) => {
             minute: '2-digit'
         });
     };
-
-    useEffect(() => {
-        setGoogleAnalyticsMeasurementId(getEventGoogleAnalyticsMeasurementId(event));
-    }, [event]);
-
-    const handleSaveAnalytics = async () => {
-        setIsSavingAnalytics(true);
-        setAnalyticsMessage('');
-
-        try {
-            const response = await api.put(`/events/${event.id}`, {
-                googleAnalyticsMeasurementId,
-            });
-            const updatedEvent = response.data?.data || response.data?.event || response.data;
-
-            setGoogleAnalyticsMeasurementId(getEventGoogleAnalyticsMeasurementId(updatedEvent));
-            setAnalyticsMessage('Analytics ID saved.');
-
-            if (onUpdate && updatedEvent?.id) {
-                onUpdate(updatedEvent);
-            }
-        } catch (error) {
-            console.error('Failed to save Google Analytics ID', error);
-            setAnalyticsMessage(error.response?.data?.message || 'Could not save the analytics ID.');
-        } finally {
-            setIsSavingAnalytics(false);
-        }
-    };
-
-    const openAnalyticsForEvent = () => {
-        navigate(`/analytics?eventId=${event.id}`);
-    };
-
-    const hasAnalyticsId = Boolean(googleAnalyticsMeasurementId.trim());
 
     return (
         <div className="max-w-4xl space-y-8 animate-fade-in">
@@ -136,74 +85,6 @@ const ECC_Settings = ({ event, isDark, onEdit, onUpdate }) => {
                     </p>
                 </div>
             </div>
-
-            <DashboardSurface isDark={isDark} accent="blue" className="p-6">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <div className={cn('rounded-md p-2', isDark ? 'bg-dashboard-shell text-cyan-300' : 'bg-sky-50 text-sky-700')}>
-                                <BarChart3 size={20} />
-                            </div>
-                            <h4 className={cn('font-normal tracking-wide', uiTheme.textPrimary)}>Google Analytics</h4>
-                        </div>
-                        <p className={cn('mt-3 max-w-2xl text-sm font-light leading-6', uiTheme.textSecondary)}>
-                            Attach this event to its GA stream so the Analytics dashboard can show the configured source when this event is selected.
-                        </p>
-                    </div>
-                    <DashboardChip
-                        isDark={isDark}
-                        className={cn(
-                            'gap-2 border',
-                            hasAnalyticsId
-                                ? (isDark ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700')
-                                : (isDark ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-700')
-                        )}
-                    >
-                        <CheckCircle2 size={14} />
-                        {hasAnalyticsId ? 'Configured' : 'Not set'}
-                    </DashboardChip>
-                </div>
-
-                <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-                    <label className="block">
-                        <span className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>GA measurement ID</span>
-                        <DashboardTextInput
-                            isDark={isDark}
-                            className="mt-2"
-                            placeholder="G-XXXXXXXXXX"
-                            value={googleAnalyticsMeasurementId}
-                            onChange={(inputEvent) => {
-                                setGoogleAnalyticsMeasurementId(inputEvent.target.value);
-                                setAnalyticsMessage('');
-                            }}
-                        />
-                    </label>
-                    <div className="flex flex-wrap gap-3">
-                        <DashboardButton
-                            isDark={isDark}
-                            variant="secondary"
-                            onClick={openAnalyticsForEvent}
-                        >
-                            <BarChart3 size={16} />
-                            View Analytics
-                        </DashboardButton>
-                        <DashboardButton
-                            isDark={isDark}
-                            onClick={handleSaveAnalytics}
-                            disabled={isSavingAnalytics}
-                        >
-                            {isSavingAnalytics ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                            Save ID
-                        </DashboardButton>
-                    </div>
-                </div>
-
-                {analyticsMessage ? (
-                    <p className={cn('mt-3 text-sm font-light', analyticsMessage.includes('saved') ? (isDark ? 'text-emerald-300' : 'text-emerald-700') : (isDark ? 'text-rose-300' : 'text-rose-700'))}>
-                        {analyticsMessage}
-                    </p>
-                ) : null}
-            </DashboardSurface>
 
             {/* Visibility & Status */}
             <div className={`p-6 rounded-md border ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60' : 'bg-white border-gray-200/60 shadow-sm'}`}>
