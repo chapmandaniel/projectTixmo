@@ -2,6 +2,5 @@
 . "$(dirname "$0")/_/husky.sh"
 
 # Run typecheck and tests before pushing (this runs locally; CI runs full coverage)
-npm run typecheck || exit 1
-npm test -- --runInBand || exit 1
-
+npm --prefix tixmoapi2 run typecheck || exit 1
+npm --prefix tixmoapi2 test -- --runInBand || exit 1

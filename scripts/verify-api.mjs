@@ -149,6 +149,27 @@ const waitForPort = ({ host, port, label }, timeoutMs = 45000) => new Promise((r
   attempt();
 });
 
+const waitForCommand = ({ command, args, label }, timeoutMs = 45000) => new Promise((resolve, reject) => {
+  const startedAt = Date.now();
+
+  const attempt = () => {
+    const result = run(command, args, { capture: true });
+    if (result.status === 0) {
+      resolve();
+      return;
+    }
+
+    if (Date.now() - startedAt >= timeoutMs) {
+      reject(new Error(`${label} did not become ready.\n${result.stdout || ''}${result.stderr || ''}`));
+      return;
+    }
+
+    setTimeout(attempt, 1000);
+  };
+
+  attempt();
+});
+
 const tailColimaLog = () => {
   const logPath = path.join(process.env.HOME || '', '.colima/_lima/colima/ha.stderr.log');
   if (!fs.existsSync(logPath)) {
@@ -198,6 +219,16 @@ const redis = getHostPort(process.env.REDIS_URL, 6379);
 try {
   await waitForPort({ ...database, label: 'Postgres' });
   await waitForPort({ ...redis, label: 'Redis' });
+  await waitForCommand({
+    command: 'docker',
+    args: ['exec', 'tixmo_postgres', 'pg_isready', '-U', 'tixmo', '-d', 'tixmoapi'],
+    label: 'Postgres',
+  });
+  await waitForCommand({
+    command: 'docker',
+    args: ['exec', 'tixmo_redis', 'redis-cli', 'ping'],
+    label: 'Redis',
+  });
 } catch (error) {
   fail((error instanceof Error ? error.message : String(error)));
 }
