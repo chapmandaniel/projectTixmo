@@ -38,7 +38,7 @@ jest.mock('../../src/config/logger', () => ({
   },
 }));
 
-describe('Event Public API Caching Benchmark', () => {
+describe('Event Public API Detail Freshness Benchmark', () => {
   let eventService: EventService;
   const SLUG = 'test-event-slug';
   const MOCK_EVENT = {
@@ -75,9 +75,9 @@ describe('Event Public API Caching Benchmark', () => {
     const duration1 = end1 - start1;
     console.log(`1. First Call (Cold): ${duration1.toFixed(2)}ms`);
 
-    // If implementation is present, simulate cache hit for next call
+    // Detailed checkout event payloads intentionally stay uncached so ticket IDs
+    // and live availability cannot survive event resets or ticket mutations.
     if (mockSet.mock.calls.length > 0) {
-        // Implementation is present, simulate cache hit for next call
         const storedValue = mockSet.mock.calls[0][1];
         mockGet.mockResolvedValue(storedValue);
         console.log('   (Cache was populated)');
@@ -85,7 +85,7 @@ describe('Event Public API Caching Benchmark', () => {
         console.log('   (Cache was NOT populated - Baseline)');
     }
 
-    // 2. Second Call (Hot / Cache Hit expected)
+    // 2. Second Call (Fresh DB read expected)
     const start2 = performance.now();
     await eventService.getPublicEventBySlug(SLUG);
     const end2 = performance.now();
@@ -93,9 +93,9 @@ describe('Event Public API Caching Benchmark', () => {
     console.log(`2. Second Call (Hot): ${duration2.toFixed(2)}ms`);
 
     if (duration2 < 10 && duration1 > 40) {
-        console.log('✅ CACHING DETECTED: Significant speedup!');
+        console.log('⚠️ DETAIL CACHE DETECTED: Re-check checkout freshness.');
     } else {
-        console.log('⚠️ NO CACHING DETECTED: Similar duration.');
+        console.log('✅ FRESH DETAIL READ: Similar duration.');
     }
     console.log('--- END BENCHMARK ---');
   });

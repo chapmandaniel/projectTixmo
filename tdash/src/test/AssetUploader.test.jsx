@@ -35,6 +35,12 @@ describe('AssetUploader Validation Logic', () => {
         expect(validateFile(invalidFile, maxSize, '.pdf')).toContain('not allowed');
     });
 
+    it('should allow EPS files by extension when MIME type is generic', () => {
+        const epsFile = { size: 100, type: 'application/octet-stream', name: 'brand-logo.eps' };
+
+        expect(validateFile(epsFile, maxSize, '.eps')).toBeNull();
+    });
+
     it('should return null if accept is not provided or set to *', () => {
         const file = { size: 100, type: 'text/plain', name: 'test.txt' };
         expect(validateFile(file, maxSize, '*')).toBeNull();

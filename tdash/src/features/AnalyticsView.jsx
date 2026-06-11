@@ -6,20 +6,19 @@ import { ResponsiveBar } from '@nivo/bar';
 import { ResponsiveHeatMap } from '@nivo/heatmap';
 import {
     TrendingUp, DollarSign, Ticket, ShoppingCart,
-    BarChart3, ChevronDown, Loader2, Flame, Link2, RefreshCcw, Plus, Save
+    BarChart3, ChevronDown, Loader2, Flame, Link2, RefreshCcw, Plus, Save, Users, Eye, MousePointerClick
 } from 'lucide-react';
 import api from '../lib/api';
 import {
     ANALYTICS_TIMEFRAMES,
-    EVENT_GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY,
-    EVENT_GOOGLE_ANALYTICS_TAGS_KEY,
-    EVENT_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY,
     GOOGLE_ANALYTICS_DIMENSION_BLUEPRINT,
     GOOGLE_ANALYTICS_METRIC_BLUEPRINT,
+    ORGANIZATION_GOOGLE_ANALYTICS_TAGS_KEY,
+    ORGANIZATION_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY,
     buildAnalyticsQueryString,
-    getEventGoogleAnalyticsIntegrationMeta,
     getGoogleAnalyticsIntegrationMeta,
-    normalizeEventGoogleAnalyticsTags,
+    getOrganizationGoogleAnalyticsIntegrationMeta,
+    normalizeOrganizationGoogleAnalyticsTags,
 } from '../lib/analyticsSources';
 import {
     DashboardButton,
@@ -96,9 +95,15 @@ const formatCurrency = (v) => {
 };
 
 const formatNumber = (v) => {
+    if (v === null || v === undefined) return 'Not synced';
     if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
     if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
     return v.toString();
+};
+
+const formatPercent = (v) => {
+    if (v === null || v === undefined) return 'Not synced';
+    return `${v.toFixed(1)}%`;
 };
 
 const analyticsTooltipClass = (isDark) => cn(
@@ -163,6 +168,16 @@ const InlineEmptyState = ({ isDark, title, description, compact = false }) => (
 
 const createAnalyticsTagId = () => `tag-${Date.now().toString(36)}`;
 
+const buildEmptyTrafficAnalytics = () => ({
+    sessions: null,
+    visitors: null,
+    pageViews: null,
+    bounceRate: null,
+    visitorsByDay: [],
+    channelBreakdown: [],
+    deviceBreakdown: [],
+});
+
 const buildHeatmapData = (salesByDay) => {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
@@ -197,7 +212,7 @@ const buildHeatmapData = (salesByDay) => {
     }));
 };
 
-const AnalyticsView = ({ isDark }) => {
+const AnalyticsView = ({ isDark, user }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [events, setEvents] = useState([]);
     const [selectedEventId, setSelectedEventId] = useState(() => searchParams.get('eventId') || 'all');
@@ -209,6 +224,7 @@ const AnalyticsView = ({ isDark }) => {
     const [salesData, setSalesData] = useState(null);
     const [eventData, setEventData] = useState(null);
     const [customerData, setCustomerData] = useState(null);
+    const [organization, setOrganization] = useState(null);
     const [selectedAnalyticsTagId, setSelectedAnalyticsTagId] = useState('');
     const [analyticsTagTitle, setAnalyticsTagTitle] = useState('');
     const [analyticsTagMeasurementId, setAnalyticsTagMeasurementId] = useState('');
@@ -229,19 +245,22 @@ const AnalyticsView = ({ isDark }) => {
             setLoading(true);
             setError(null);
             try {
-                const [eventsRes, salesRes, eventsAnalyticsRes, customersRes] = await Promise.all([
+                const [eventsRes, salesRes, eventsAnalyticsRes, customersRes, organizationRes] = await Promise.all([
                     api.get('/events?limit=100').catch(() => null),
                     api.get(`/analytics/sales${analyticsQuery}`).catch(() => null),
                     api.get(`/analytics/events${analyticsQuery}`).catch(() => null),
                     api.get(`/analytics/customers${analyticsQuery}`).catch(() => null),
+                    user?.organizationId ? api.get(`/organizations/${user.organizationId}`).catch(() => null) : Promise.resolve(null),
                 ]);
 
                 const eventsPayload = eventsRes?.data?.data || eventsRes?.data || {};
                 const eventsList = eventsPayload?.events || (Array.isArray(eventsPayload) ? eventsPayload : []);
+                const organizationPayload = organizationRes?.data?.data || organizationRes?.data || null;
                 setEvents(eventsList);
                 setSalesData(salesRes?.data?.data || salesRes?.data || null);
                 setEventData(eventsAnalyticsRes?.data?.data || eventsAnalyticsRes?.data || null);
                 setCustomerData(customersRes?.data?.data || customersRes?.data || null);
+                setOrganization(organizationPayload);
             } catch (requestError) {
                 setError('Failed to load analytics data. Please try again.');
                 console.error(requestError);
@@ -251,7 +270,7 @@ const AnalyticsView = ({ isDark }) => {
         };
 
         fetchAll();
-    }, [analyticsQuery, refreshKey]);
+    }, [analyticsQuery, refreshKey, user?.organizationId]);
 
     const filteredSalesData = useMemo(() => {
         if (!salesData || selectedEventId === 'all') return salesData;
@@ -327,6 +346,23 @@ const AnalyticsView = ({ isDark }) => {
         return buildHeatmapData(filteredSalesData.salesByDay);
     }, [filteredSalesData]);
 
+    const trafficData = useMemo(() => buildEmptyTrafficAnalytics(), [selectedAnalyticsTagId]);
+
+    const visitorsLineData = useMemo(() => {
+        if (!trafficData.visitorsByDay?.length) return [];
+        return [{
+            id: 'Visitors',
+            color: '#06b6d4',
+            data: trafficData.visitorsByDay.map((day) => ({
+                x: day.date,
+                y: day.visitors,
+            })),
+        }];
+    }, [trafficData]);
+
+    const trafficChannelData = useMemo(() => trafficData.channelBreakdown || [], [trafficData]);
+    const trafficDeviceData = useMemo(() => trafficData.deviceBreakdown || [], [trafficData]);
+
     const selectedEventName = selectedEventId === 'all'
         ? 'All Events'
         : events.find((event) => event.id === selectedEventId)?.name || 'Selected Event';
@@ -336,12 +372,16 @@ const AnalyticsView = ({ isDark }) => {
     const selectedEvent = selectedEventId === 'all'
         ? null
         : events.find((event) => event.id === selectedEventId) || null;
-    const analyticsTags = useMemo(() => normalizeEventGoogleAnalyticsTags(selectedEvent), [selectedEvent]);
+    const analyticsTags = useMemo(() => normalizeOrganizationGoogleAnalyticsTags(organization), [organization]);
+    const selectedAnalyticsTag = useMemo(
+        () => analyticsTags.find((tag) => tag.id === selectedAnalyticsTagId) || analyticsTags[0] || null,
+        [analyticsTags, selectedAnalyticsTagId]
+    );
     const googleAnalyticsMeta = useMemo(
         () => {
-            const meta = selectedEvent ? getEventGoogleAnalyticsIntegrationMeta(selectedEvent) : getGoogleAnalyticsIntegrationMeta();
-
-            if (!selectedEvent) return meta;
+            const meta = organization
+                ? getOrganizationGoogleAnalyticsIntegrationMeta(organization, selectedAnalyticsTag)
+                : getGoogleAnalyticsIntegrationMeta();
 
             const measurementId = analyticsTagMeasurementId.trim() || meta.measurementId;
             return {
@@ -350,14 +390,14 @@ const AnalyticsView = ({ isDark }) => {
                 eventMeasurementId: measurementId,
                 tagTitle: analyticsTagTitle.trim() || meta.tagTitle,
                 connected: Boolean(measurementId || meta.propertyId),
-                statusLabel: measurementId || meta.propertyId ? 'Event GA details detected' : 'Event GA ID needed',
+                statusLabel: measurementId || meta.propertyId ? 'Organization GA tag selected' : 'Organization GA tag needed',
             };
         },
-        [analyticsTagMeasurementId, analyticsTagTitle, selectedEvent]
+        [analyticsTagMeasurementId, analyticsTagTitle, organization, selectedAnalyticsTag]
     );
 
     useEffect(() => {
-        if (!selectedEvent) {
+        if (!organization) {
             setSelectedAnalyticsTagId('');
             setAnalyticsTagTitle('');
             setAnalyticsTagMeasurementId('');
@@ -382,7 +422,7 @@ const AnalyticsView = ({ isDark }) => {
         setAnalyticsTagTitle(nextTag.title);
         setAnalyticsTagMeasurementId(nextTag.measurementId);
         setAnalyticsTagMessage('');
-    }, [analyticsTags, searchParams, selectedAnalyticsTagId, selectedEvent]);
+    }, [analyticsTags, organization, searchParams, selectedAnalyticsTagId]);
 
     const handleEventSelection = (eventId) => {
         setSelectedEventId(eventId);
@@ -416,8 +456,8 @@ const AnalyticsView = ({ isDark }) => {
     };
 
     const handleAddAnalyticsTag = () => {
-        if (!selectedEvent) {
-            setAnalyticsTagMessage('Select an event before adding a GA tag.');
+        if (!organization) {
+            setAnalyticsTagMessage('Your organization profile is required before adding a GA tag.');
             return;
         }
 
@@ -433,8 +473,8 @@ const AnalyticsView = ({ isDark }) => {
     };
 
     const handleSaveAnalyticsTag = async () => {
-        if (!selectedEvent) {
-            setAnalyticsTagMessage('Select an event before adding a GA tag.');
+        if (!organization) {
+            setAnalyticsTagMessage('Your organization profile is required before adding a GA tag.');
             return;
         }
 
@@ -455,21 +495,18 @@ const AnalyticsView = ({ isDark }) => {
             ...analyticsTags.filter((tag) => tag.id !== tagId),
             nextTag,
         ];
-        const metadata = {
-            ...(selectedEvent.metadata || {}),
-            [EVENT_GOOGLE_ANALYTICS_TAGS_KEY]: nextTags,
-            [EVENT_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY]: tagId,
-            [EVENT_GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY]: measurementId,
+        const settings = {
+            ...(organization.settings || {}),
+            [ORGANIZATION_GOOGLE_ANALYTICS_TAGS_KEY]: nextTags,
+            [ORGANIZATION_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY]: tagId,
         };
 
         try {
-            const response = await api.put(`/events/${selectedEvent.id}`, { metadata });
-            const updatedEvent = response.data?.data || response.data?.event || response.data;
+            const response = await api.put(`/organizations/${organization.id}`, { settings });
+            const updatedOrganization = response.data?.data || response.data?.organization || response.data;
 
-            if (updatedEvent?.id) {
-                setEvents((currentEvents) => currentEvents.map((event) => (
-                    event.id === updatedEvent.id ? updatedEvent : event
-                )));
+            if (updatedOrganization?.id) {
+                setOrganization(updatedOrganization);
             }
 
             setSelectedAnalyticsTagId(tagId);
@@ -518,7 +555,7 @@ const AnalyticsView = ({ isDark }) => {
             <DashboardTitleBar
                 isDark={isDark}
                 title="Analytics"
-                description="Review revenue, event, and customer performance from the same control-center shell used across the dashboard."
+                description="Review Tixmo commerce reporting separately from GA4 web-traffic readiness."
                 icon={BarChart3}
                 iconClassName={isDark ? 'text-cyan-300' : 'text-sky-700'}
                 glowTopClassName="bg-cyan-400/10"
@@ -543,7 +580,7 @@ const AnalyticsView = ({ isDark }) => {
                 isDark={isDark}
                 accent="violet"
                 title="GA4 readiness"
-                description="Keep the source configuration visible while event selection filters the dashboard data and reads the selected event's saved GA ID."
+                description="Manage organization-level GA tags for traffic reporting. Event selection still filters the commerce charts below."
                 actions={(
                     <DashboardButton isDark={isDark} variant="secondary" onClick={() => setRefreshKey((current) => current + 1)}>
                         <RefreshCcw size={16} />
@@ -552,14 +589,14 @@ const AnalyticsView = ({ isDark }) => {
                 )}
             >
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <DashboardStat isDark={isDark} label="Primary source" value={googleAnalyticsMeta.label} detail="Current analytics backend" />
-                    <DashboardStat isDark={isDark} label="View scope" value={selectedEventLabel} detail={selectedEvent ? 'Selected event' : 'Aggregate dashboard'} />
+                    <DashboardStat isDark={isDark} label="Traffic source" value={googleAnalyticsMeta.label} detail="GA4 web metrics only" />
+                    <DashboardStat isDark={isDark} label="Sales scope" value={selectedEventLabel} detail={selectedEvent ? 'Selected Tixmo event' : 'All Tixmo events'} />
                     <DashboardStat isDark={isDark} label="Property ID" value={googleAnalyticsMeta.propertyId || 'Not configured'} detail="GA property target" />
                     <DashboardStat
                         isDark={isDark}
                         label="Measurement ID"
                         value={googleAnalyticsMeta.measurementId || 'Not configured'}
-                        detail={selectedEvent ? 'Saved on this event' : 'Global web stream'}
+                        detail={selectedAnalyticsTag ? 'Organization tag' : 'Global web stream'}
                     />
                 </div>
 
@@ -568,7 +605,7 @@ const AnalyticsView = ({ isDark }) => {
                         <div>
                             <p className={cn('text-[10px] uppercase tracking-[0.16em]', uiTheme.textTertiary)}>GA tags</p>
                             <h3 className={cn('mt-2 text-lg font-light tracking-tight', uiTheme.textPrimary)}>
-                                {selectedEvent ? selectedEventName : 'Select an event'}
+                                {organization?.name || 'Organization tags'}
                             </h3>
                         </div>
                         <DashboardButton
@@ -581,21 +618,7 @@ const AnalyticsView = ({ isDark }) => {
                         </DashboardButton>
                     </div>
 
-                    <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(180px,0.85fr)_minmax(180px,0.75fr)_minmax(180px,1fr)_minmax(220px,1fr)_auto] xl:items-end">
-                        <label className="block">
-                            <span className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Event</span>
-                            <DashboardSelect
-                                isDark={isDark}
-                                className="mt-2"
-                                value={selectedEventId}
-                                onChange={(event) => handleEventSelection(event.target.value)}
-                            >
-                                <option value="all">All Events</option>
-                                {events.map((event) => (
-                                    <option key={event.id} value={event.id}>{event.name}</option>
-                                ))}
-                            </DashboardSelect>
-                        </label>
+                    <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(180px,0.75fr)_minmax(180px,1fr)_minmax(220px,1fr)_auto] xl:items-end">
                         <label className="block">
                             <span className={cn('text-xs uppercase tracking-[0.16em]', uiTheme.textTertiary)}>Switch tag</span>
                             <DashboardSelect
@@ -603,7 +626,7 @@ const AnalyticsView = ({ isDark }) => {
                                 className="mt-2"
                                 value={selectedAnalyticsTagId}
                                 onChange={(event) => handleAnalyticsTagSelection(event.target.value)}
-                                disabled={!selectedEvent || analyticsTags.length === 0}
+                                disabled={!organization || analyticsTags.length === 0}
                             >
                                 {analyticsTags.length === 0 ? (
                                     <option value="">No tags yet</option>
@@ -623,7 +646,7 @@ const AnalyticsView = ({ isDark }) => {
                                     setAnalyticsTagTitle(event.target.value);
                                     setAnalyticsTagMessage('');
                                 }}
-                                disabled={!selectedEvent}
+                                disabled={!organization}
                             />
                         </label>
                         <label className="block">
@@ -637,13 +660,13 @@ const AnalyticsView = ({ isDark }) => {
                                     setAnalyticsTagMeasurementId(event.target.value);
                                     setAnalyticsTagMessage('');
                                 }}
-                                disabled={!selectedEvent}
+                                disabled={!organization}
                             />
                         </label>
                         <DashboardButton
                             isDark={isDark}
                             onClick={handleSaveAnalyticsTag}
-                            disabled={!selectedEvent || isSavingAnalyticsTag}
+                            disabled={!organization || isSavingAnalyticsTag}
                         >
                             {isSavingAnalyticsTag ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                             Save Tag
@@ -682,7 +705,154 @@ const AnalyticsView = ({ isDark }) => {
                 </DashboardSurface>
             </DashboardSection>
 
-            <DashboardSurface isDark={isDark} accent="blue" className="p-4 sm:p-5">
+            <section className="space-y-5" aria-labelledby="web-traffic-title">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h2 id="web-traffic-title" className={cn('text-[1.35rem] font-light tracking-tight', uiTheme.textPrimary)}>
+                            Web traffic (GA4)
+                        </h2>
+                        <p className={cn('mt-2 max-w-2xl text-sm font-light leading-6', uiTheme.textSecondary)}>
+                            Visitor, session, page-view, channel, and device metrics come from the selected Google Analytics tag.
+                        </p>
+                    </div>
+                    <DashboardChip isDark={isDark}>Traffic source</DashboardChip>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <KpiCard label="Visitors" value={formatNumber(trafficData.visitors)} icon={Users} accent="blue" iconClassName="text-cyan-300" isDark={isDark} />
+                    <KpiCard label="Sessions" value={formatNumber(trafficData.sessions)} icon={MousePointerClick} accent="violet" iconClassName="text-violet-300" isDark={isDark} />
+                    <KpiCard label="Page Views" value={formatNumber(trafficData.pageViews)} icon={Eye} accent="brand" iconClassName="text-pink-400" isDark={isDark} />
+                    <KpiCard label="Bounce Rate" value={formatPercent(trafficData.bounceRate)} icon={TrendingUp} accent="amber" iconClassName="text-orange-300" isDark={isDark} />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                    <ChartCard
+                        title="Visitors over time"
+                        description="Standard GA4 traffic data for the selected organization tag."
+                        isDark={isDark}
+                        colSpan="lg:col-span-2"
+                        accent="blue"
+                    >
+                        <div className="h-[300px]">
+                            {visitorsLineData.length > 0 ? (
+                                <ResponsiveLine
+                                    data={visitorsLineData}
+                                    theme={chartTheme}
+                                    margin={{ top: 20, right: 20, bottom: 50, left: 56 }}
+                                    xScale={{ type: 'point' }}
+                                    yScale={{ type: 'linear', min: 0, max: 'auto', stacked: false }}
+                                    curve="catmullRom"
+                                    axisBottom={{
+                                        tickSize: 0,
+                                        tickPadding: 12,
+                                        tickRotation: -45,
+                                        format: (value) => value.substring(5),
+                                    }}
+                                    axisLeft={{
+                                        tickSize: 0,
+                                        tickPadding: 8,
+                                        format: (value) => formatNumber(value),
+                                    }}
+                                    enableArea
+                                    areaOpacity={0.12}
+                                    colors={['#06b6d4']}
+                                    lineWidth={2.5}
+                                    pointSize={5}
+                                    pointColor={isDark ? dashboardColorTokens.panel : '#ffffff'}
+                                    pointBorderWidth={2}
+                                    pointBorderColor="#06b6d4"
+                                    useMesh
+                                    tooltip={({ point }) => (
+                                        <div className={analyticsTooltipClass(isDark)}>
+                                            <strong>{point.data.xFormatted}</strong>
+                                            <div className="mt-1">{formatNumber(point.data.y)} visitors</div>
+                                        </div>
+                                    )}
+                                />
+                            ) : (
+                                <InlineEmptyState
+                                    isDark={isDark}
+                                    title={selectedAnalyticsTag ? 'Traffic data not synced' : 'Select a GA tag'}
+                                    description={selectedAnalyticsTag ? 'This dashboard is ready for visitors, sessions, page views, and channel data once GA4 reporting is connected.' : 'Add or select an organization GA tag to prepare traffic reporting.'}
+                                />
+                            )}
+                        </div>
+                    </ChartCard>
+
+                    <ChartCard title="Traffic channels" isDark={isDark} accent="green">
+                        <div className="h-[300px]">
+                            {trafficChannelData.length > 0 ? (
+                                <ResponsivePie
+                                    data={trafficChannelData}
+                                    theme={chartTheme}
+                                    margin={{ top: 20, right: 20, bottom: 40, left: 20 }}
+                                    innerRadius={0.6}
+                                    padAngle={2}
+                                    cornerRadius={4}
+                                    colors={{ datum: 'data.color' }}
+                                    enableArcLinkLabels={false}
+                                    tooltip={({ datum }) => (
+                                        <div className={analyticsTooltipClass(isDark)}>
+                                            <strong>{datum.label}</strong>
+                                            <div className="mt-1">{formatNumber(datum.value)} sessions</div>
+                                        </div>
+                                    )}
+                                />
+                            ) : (
+                                <InlineEmptyState isDark={isDark} title="No channel data" description="Organic, direct, referral, social, and paid channels will appear here after GA4 data is available." compact />
+                            )}
+                        </div>
+                    </ChartCard>
+                </div>
+
+                <ChartCard
+                    title="Device traffic"
+                    description="Visitors split by device category for the selected organization GA tag."
+                    isDark={isDark}
+                    accent="slate"
+                >
+                    <div className="h-[260px]">
+                        {trafficDeviceData.length > 0 ? (
+                            <ResponsiveBar
+                                data={trafficDeviceData}
+                                theme={chartTheme}
+                                keys={['sessions']}
+                                indexBy="device"
+                                margin={{ top: 10, right: 30, bottom: 45, left: 56 }}
+                                padding={0.35}
+                                colors={['#8b5cf6']}
+                                borderRadius={0}
+                                axisBottom={{ tickSize: 0, tickPadding: 10 }}
+                                axisLeft={{ tickSize: 0, tickPadding: 8, format: (value) => formatNumber(value) }}
+                                enableGridY
+                                tooltip={({ indexValue, value }) => (
+                                    <div className={analyticsTooltipClass(isDark)}>
+                                        <strong>{indexValue}</strong>
+                                        <div className="mt-1">{formatNumber(value)} sessions</div>
+                                    </div>
+                                )}
+                            />
+                        ) : (
+                            <InlineEmptyState isDark={isDark} title="No device data" description="Desktop, mobile, and tablet traffic will populate once GA4 reporting is connected." />
+                        )}
+                    </div>
+                </ChartCard>
+            </section>
+
+            <section className="space-y-5" aria-labelledby="ticket-sales-title">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h2 id="ticket-sales-title" className={cn('text-[1.35rem] font-light tracking-tight', uiTheme.textPrimary)}>
+                            Ticket sales (Tixmo data)
+                        </h2>
+                        <p className={cn('mt-2 max-w-2xl text-sm font-light leading-6', uiTheme.textSecondary)}>
+                            Revenue, orders, tickets, customers, and purchase timing come from Tixmo orders and event records.
+                        </p>
+                    </div>
+                    <DashboardChip isDark={isDark}>{selectedEventLabel}</DashboardChip>
+                </div>
+
+                <DashboardSurface isDark={isDark} accent="blue" className="p-4 sm:p-5">
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                     <div className={cn('inline-flex flex-wrap gap-2 rounded-md border p-1', isDark ? 'border-dashboard-borderStrong bg-dashboard-panelMuted' : 'border-slate-200 bg-slate-50')}>
                         {ANALYTICS_TIMEFRAMES.map((timeframe) => (
@@ -762,7 +932,7 @@ const AnalyticsView = ({ isDark }) => {
                         ) : null}
                     </div>
                 </div>
-            </DashboardSurface>
+                </DashboardSurface>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <KpiCard label="Total Revenue" value={formatCurrency(filteredSalesData?.totalRevenue || 0)} icon={DollarSign} accent="violet" iconClassName="text-indigo-400" isDark={isDark} />
@@ -1038,6 +1208,7 @@ const AnalyticsView = ({ isDark }) => {
                     )}
                 </div>
             </ChartCard>
+            </section>
         </DashboardPage>
     );
 };

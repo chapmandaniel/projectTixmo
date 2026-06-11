@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
     LayoutDashboard, Ticket, Users, Settings, ChevronLeft, Menu, LogOut,
-    Calendar, MapPin, Globe, CreditCard, Megaphone, Bell
+    Calendar, MapPin, Globe, CreditCard, Megaphone, Bell, Copy, ExternalLink
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { generateEventSlug } from '../lib/utils';
 import StatusBadge from '../components/StatusBadge';
+import { DashboardButton, DashboardIconButton } from '../components/dashboard/DashboardPrimitives';
 import ECC_Overview from './ECC_Overview';
 import ECC_Orders from './ECC_Orders';
 import ECC_Attendees from './ECC_Attendees';
 import ECC_Tickets from './ECC_Tickets';
-import ECC_Marketing from './ECC_Marketing';
 import ECC_Settings from './ECC_Settings';
 import EventStudio from './EventStudio';
+import DashboardPlaceholderView from './DashboardPlaceholderView';
 
 /**
  * Event Command Center (ECC)
@@ -29,6 +30,12 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [checkoutCopyStatus, setCheckoutCopyStatus] = useState('');
+    const eventName = event.name || event.title || 'Event';
+    const checkoutSlug = event.slug || generateEventSlug(eventName, event.id);
+    const checkoutUrl = `${window.location.origin}/checkout/${checkoutSlug}`;
+    const publicCheckoutStatuses = new Set(['PUBLISHED', 'ON_SALE', 'SOLD_OUT']);
+    const canUseCheckoutLink = publicCheckoutStatuses.has(event.status);
 
     // Navigation Items
     const navItems = [
@@ -36,7 +43,6 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
         { id: 'orders', label: 'Orders', icon: CreditCard },
         { id: 'attendees', label: 'Attendees', icon: Users },
         { id: 'tickets', label: 'Tickets', icon: Ticket },
-        { id: 'marketing', label: 'Marketing', icon: Megaphone },
         { id: 'settings', label: 'Settings', icon: Settings },
     ];
 
@@ -47,6 +53,27 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
             // For now, let's assume the parent handles data reload or we just close for now.
             onUpdate(); // Signal parent to refresh
         }
+    };
+
+    const handleCopyCheckoutLink = async () => {
+        if (!canUseCheckoutLink) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(checkoutUrl);
+            setCheckoutCopyStatus('Checkout link copied');
+        } catch {
+            setCheckoutCopyStatus('Copy failed');
+        }
+    };
+
+    const handleOpenCheckoutLink = () => {
+        if (!canUseCheckoutLink) {
+            return;
+        }
+
+        window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
     };
 
     // Render the active view component
@@ -61,7 +88,15 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
             case 'tickets':
                 return <ECC_Tickets event={event} isDark={isDark} />;
             case 'marketing':
-                return <ECC_Marketing event={event} isDark={isDark} />;
+                return (
+                    <DashboardPlaceholderView
+                        isDark={isDark}
+                        title="Marketing"
+                        icon={Megaphone}
+                        description="This event module is outside the V1 beta scope and is hidden from the event command center until the launch path is stable."
+                        badgeLabel="Outside V1 beta"
+                    />
+                );
             case 'settings':
                 return <ECC_Settings event={event} isDark={isDark} onEdit={() => setShowEditModal(true)} />;
             default:
@@ -70,13 +105,13 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
     };
 
     return (
-        <div className={`flex flex-col w-full h-[calc(100vh-64px)] overflow-hidden -m-6 sm:-m-8 px-4 sm:px-6 pt-6 pb-0 ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>
+        <div className={`flex min-h-[calc(100vh-72px)] w-full flex-col overflow-visible -m-4 px-4 pb-6 pt-4 sm:-m-6 sm:px-6 sm:pt-6 lg:-m-8 lg:h-[calc(100vh-72px)] lg:overflow-hidden lg:px-6 lg:pb-0 ${isDark ? 'bg-dashboard-shell' : 'bg-gray-50'}`}>
 
             {/* Unified Top Header Bar/Card */}
-            <div className="mb-6 shrink-0 relative z-10 w-full">
-                <div className={`flex items-center justify-between px-4 sm:px-5 py-3 rounded-md shadow-sm w-full ${isDark ? 'bg-[#1e1e2d] border border-[#2b2b40]/60' : 'bg-white border border-gray-200/60'}`}>
+            <div className="relative z-10 mb-4 w-full shrink-0 sm:mb-6">
+                <div className={`flex w-full flex-col gap-4 rounded-md px-4 py-3 shadow-sm sm:px-5 lg:flex-row lg:items-center lg:justify-between ${isDark ? 'border border-dashboard-border bg-dashboard-panel' : 'bg-white border border-gray-200/60'}`}>
                     {/* Left Side: Event Identity */}
-                    <div className="flex flex-1 items-center space-x-4 overflow-hidden mr-4">
+                    <div className="flex min-w-0 flex-1 items-center space-x-3 overflow-hidden sm:space-x-4 lg:mr-4">
                         <button
                             onClick={onBack}
                             className={`p-2 rounded-md shrink-0 transition-colors ${isDark ? 'bg-[#1e1e2d] text-[#a1a5b7] hover:text-white hover:bg-[#232336]' : 'bg-white border border-gray-200/60 text-gray-500 hover:text-gray-900'} shadow-sm`}
@@ -85,17 +120,17 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                             <ChevronLeft size={20} />
                         </button>
 
-                        <div className="flex flex-col overflow-hidden">
+                        <div className="flex min-w-0 flex-col overflow-hidden">
                             <h2 className={`text-xl sm:text-2xl tracking-tight truncate font-normal ${isDark ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-orange-400' : 'text-indigo-600'}`}>
-                                {event.name}
+                                {eventName}
                             </h2>
-                            <div className={`flex items-center space-x-3 text-[11px] sm:text-xs tracking-wide uppercase mt-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'} overflow-hidden`}>
+                            <div className={`mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-wide sm:text-xs ${isDark ? 'text-dashboard-muted' : 'text-gray-500'}`}>
                                 <span className="flex items-center whitespace-nowrap shrink-0">
                                     <Calendar size={12} className="mr-1.5 opacity-70" />
                                     {event.startDateTime ? new Date(event.startDateTime).toLocaleDateString() : 'Date TBA'}
                                 </span>
-                                <span className="opacity-40 shrink-0">•</span>
-                                <span className="flex items-center truncate">
+                                <span className="hidden opacity-40 sm:inline">•</span>
+                                <span className="flex min-w-0 items-center truncate">
                                     <MapPin size={12} className="mr-1.5 opacity-70 shrink-0" />
                                     <span className="truncate">{event.venue?.name || 'Venue TBA'}</span>
                                 </span>
@@ -104,31 +139,56 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                     </div>
 
                     {/* Right Side: Status & Actions */}
-                    <div className="flex items-center space-x-4 shrink-0">
-                        <div className="hidden sm:block">
+                    <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 sm:justify-end">
+                        <div className="block">
                             <StatusBadge status={event.status} isDark={isDark} />
                         </div>
-                        <div className={`hidden sm:block h-6 w-[1px] ${isDark ? 'bg-[#2b2b40]' : 'bg-gray-200'}`}></div>
+                        <div className={`hidden h-6 w-[1px] sm:block ${isDark ? 'bg-dashboard-border' : 'bg-gray-200'}`}></div>
 
-                        <button className={`p-2 rounded-md transition-colors ${isDark ? 'hover:bg-[#232336] text-[#a1a5b7]' : 'hover:bg-gray-100 text-gray-500'}`}>
+                        <button className={`p-2 rounded-md transition-colors ${isDark ? 'hover:bg-dashboard-panelAlt text-dashboard-muted' : 'hover:bg-gray-100 text-gray-500'}`}>
                             <Bell size={20} />
                         </button>
 
-                        <button className={`hidden md:flex items-center space-x-2 px-4 py-2 rounded-md text-sm border font-light tracking-wide transition-colors ${isDark ? 'border-[#2b2b40]/60 text-gray-300 hover:bg-[#232336]' : 'border-gray-200/60 text-gray-600 hover:bg-gray-50'}`}>
-                            <Globe size={14} />
-                            <span>Public Page</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <DashboardIconButton
+                                isDark={isDark}
+                                aria-label="Copy checkout link"
+                                title={canUseCheckoutLink ? 'Copy checkout link' : 'Checkout link available after publish'}
+                                disabled={!canUseCheckoutLink}
+                                onClick={handleCopyCheckoutLink}
+                                className="disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                <Copy size={17} />
+                            </DashboardIconButton>
+                            <DashboardButton
+                                isDark={isDark}
+                                variant="secondary"
+                                onClick={handleOpenCheckoutLink}
+                                disabled={!canUseCheckoutLink}
+                                className="hidden h-10 px-3 text-xs disabled:cursor-not-allowed disabled:opacity-40 md:inline-flex"
+                                title={canUseCheckoutLink ? checkoutUrl : 'Checkout link available after publish'}
+                            >
+                                <Globe size={14} />
+                                Checkout
+                                <ExternalLink size={13} />
+                            </DashboardButton>
+                        </div>
+                        {checkoutCopyStatus ? (
+                            <span className={`basis-full text-right text-[11px] font-light ${checkoutCopyStatus === 'Copy failed' ? 'text-rose-300' : 'text-emerald-300'}`}>
+                                {checkoutCopyStatus}
+                            </span>
+                        ) : null}
                     </div>
                 </div>
             </div>
 
             {/* Split View (Sidebar + Main Content) */}
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-visible lg:flex-row lg:gap-0 lg:overflow-hidden">
                 {/* Sidebar */}
-                <aside className={`flex flex-col transition-all duration-300 shrink-0 ${isSidebarOpen ? 'w-56' : 'w-20'}`}>
+                <aside className={`flex shrink-0 flex-col transition-all duration-300 lg:${isSidebarOpen ? 'w-56' : 'w-20'}`}>
 
                     {/* Navigation Links */}
-                    <nav className="flex-1 overflow-y-auto py-2 pr-4 space-y-1">
+                    <nav className="hide-scrollbar flex gap-2 overflow-x-auto pb-1 lg:flex-1 lg:flex-col lg:space-y-1 lg:overflow-y-auto lg:py-2 lg:pr-4">
                         {navItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = activeView === item.id;
@@ -136,7 +196,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                                 <button
                                     key={item.id}
                                     onClick={() => navigate(`/events/${generateEventSlug(event.name, event.id)}/${item.id}`, { replace: true, state: location.state })}
-                                    className={`w-full flex items-center px-4 py-2.5 rounded-r-md transition-colors group relative
+                                    className={`group relative flex min-w-max items-center rounded-md px-4 py-2.5 transition-colors lg:w-full lg:rounded-r-md
                                         ${isActive
                                             ? (isDark ? 'bg-[#2b2b40] text-gray-100 shadow-sm' : 'bg-indigo-50 text-indigo-600')
                                             : (isDark ? 'text-[#a1a5b7] hover:bg-[#232336] hover:text-gray-200' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900')
@@ -144,10 +204,10 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                                     `}
                                     title={!isSidebarOpen ? item.label : ''}
                                 >
-                                    <Icon size={18} className={`${isSidebarOpen ? 'mr-3' : 'mx-auto'} ${isActive && isDark ? 'text-pink-500' : ''}`} />
-                                    {isSidebarOpen && <span className="font-light tracking-wide text-sm">{item.label}</span>}
-                                    {isActive && isSidebarOpen && (
-                                        <div className="absolute left-0 top-0 bottom-0 w-[4px] rounded-r-md bg-gradient-to-b from-pink-500 to-orange-400"></div>
+                                    <Icon size={18} className={`${isSidebarOpen ? 'mr-3' : 'lg:mx-auto'} ${isActive && isDark ? 'text-pink-500' : ''}`} />
+                                    <span className={`${isSidebarOpen ? 'inline' : 'lg:hidden'} text-sm font-light tracking-wide`}>{item.label}</span>
+                                    {isActive && (
+                                        <div className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-md bg-gradient-to-r from-pink-500 to-orange-400 lg:inset-x-auto lg:bottom-0 lg:left-0 lg:top-0 lg:h-auto lg:w-[4px] lg:rounded-r-md lg:bg-gradient-to-b"></div>
                                     )}
                                 </button>
                             );
@@ -155,7 +215,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                     </nav>
 
                     {/* Sidebar Footer */}
-                    <div className="p-4 space-y-2 border-t border-gray-200/5">
+                    <div className="hidden space-y-2 border-t border-gray-200/5 p-4 lg:block">
                         <button
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                             className={`w-full flex items-center justify-center p-2 rounded-md transition-colors ${isDark ? 'hover:bg-[#232336] text-[#a1a5b7]' : 'hover:bg-gray-200 text-gray-400'}`}
@@ -175,9 +235,9 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="flex-1 flex flex-col overflow-hidden relative">
+                <main className="relative flex min-h-0 flex-1 flex-col overflow-visible lg:overflow-hidden">
                     {/* View Content */}
-                    <div className="flex-1 overflow-y-auto pb-6 relative">
+                    <div className="relative flex-1 overflow-visible pb-6 lg:overflow-y-auto">
                         {renderContent()}
                     </div>
                 </main>

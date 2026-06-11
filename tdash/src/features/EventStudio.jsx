@@ -7,6 +7,35 @@ import InputField from '../components/InputField';
 import TicketBuilder from '../components/TicketBuilder';
 import api from '../lib/api';
 
+const extractCollection = (response, key) => {
+    const payload = response?.data?.data || response?.data;
+    if (Array.isArray(payload)) return payload;
+    return payload?.[key] || [];
+};
+
+const toDateTimeLocalValue = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toISOString().slice(0, 16);
+};
+
+const normalizeTier = (tier) => ({
+    ...tier,
+    price: tier.price ?? '',
+    quantityLimit: tier.quantityLimit ?? '',
+    startsAt: toDateTimeLocalValue(tier.startsAt),
+    endsAt: toDateTimeLocalValue(tier.endsAt),
+});
+
+const normalizeTicketType = (ticketType, tiers = []) => ({
+    ...ticketType,
+    price: ticketType.price ?? '',
+    quantity: ticketType.quantity ?? ticketType.quantityTotal ?? ticketType.quantityAvailable ?? '',
+    status: ticketType.status || 'ACTIVE',
+    tiers: tiers.map(normalizeTier),
+});
+
 /**
  * Tixmo Studio - Unified Event Creator
  * Replaces the old EventWizard with a modern, split-screen interface.
@@ -32,6 +61,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
 
     const [tickets, setTickets] = useState([]);
     const [venues, setVenues] = useState([]);
+    const [deletedTierIds, setDeletedTierIds] = useState([]);
     const [notification, setNotification] = useState(null); // { type: 'success'|'error', message: '' }
 
     // Fetch Venues
@@ -71,25 +101,40 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
             if (initialData.id) {
                 fetchTickets(initialData.id);
             }
+        } else {
+            setTickets([]);
+            setDeletedTierIds([]);
         }
     }, [initialData]);
 
     const fetchTickets = async (eventId) => {
         try {
             const res = await api.get(`/ticket-types?eventId=${eventId}`);
-            const data = Array.isArray(res.data) ? res.data : (res.data.data || []);
-            // TODO: Fetch tiers for each ticket type if needed
-            // For now assuming basic tickets, or need to expand API to return tiers?
-            // The getPublicEventBySlug returns tiers, but listTicketTypes might not deeply.
-            // Let's assume we might need to fetch tiers individually or the list endpoint is updated.
-            // For this MVP, we'll basic map.
-            setTickets(data.map(t => ({
-                ...t,
-                tiers: t.tiers || []
-            })));
+            const data = extractCollection(res, 'ticketTypes');
+            const ticketsWithTiers = await Promise.all(data.map(async (ticketType) => {
+                if (Array.isArray(ticketType.tiers)) {
+                    return normalizeTicketType(ticketType, ticketType.tiers);
+                }
+
+                try {
+                    const tierRes = await api.get(`/ticket-tiers?ticketTypeId=${ticketType.id}`);
+                    return normalizeTicketType(ticketType, extractCollection(tierRes, 'tiers'));
+                } catch (tierError) {
+                    console.error("Failed to load ticket tiers", tierError);
+                    return normalizeTicketType(ticketType, []);
+                }
+            }));
+            setTickets(ticketsWithTiers);
+            setDeletedTierIds([]);
         } catch (err) {
             console.error("Failed to load tickets", err);
         }
+    };
+
+    const handleTierDelete = (tierId) => {
+        setDeletedTierIds((current) => (
+            current.includes(tierId) ? current : [...current, tierId]
+        ));
     };
 
     // Calculate total capacity from tickets if any exist
@@ -140,15 +185,22 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
             };
 
             let eventId = initialData?.id;
+            let savedEvent = null;
 
             if (initialData) {
-                await api.put(`/events/${initialData.id}`, payload);
+                const res = await api.put(`/events/${initialData.id}`, payload);
+                savedEvent = res.data?.data || res.data?.event || res.data || { ...initialData, ...payload, id: initialData.id };
             } else {
                 const res = await api.post('/events', payload);
-                eventId = res.data.data?.id || res.data.id;
+                savedEvent = res.data?.data || res.data?.event || res.data;
+                eventId = savedEvent?.id;
             }
 
             // 2. Handle Tickets (Create/Update)
+            if (deletedTierIds.length > 0) {
+                await Promise.all(deletedTierIds.map((tierId) => api.delete(`/ticket-tiers/${tierId}`)));
+            }
+
             if (eventId && tickets.length > 0) {
                 await Promise.all(tickets.map(async (t) => {
                     const ticketPayload = {
@@ -174,8 +226,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
 
                     // 3. Handle Tiers for this Ticket Type
                     if (t.tiers && t.tiers.length > 0 && ticketTypeId) {
-                        // Deleting old tiers not implemented for simplicity, just adding new ones or updating
-                        await Promise.all(t.tiers.map(tier => {
+                        await Promise.all(t.tiers.map((tier, index) => {
                             const tierPayload = {
                                 ticketTypeId, // Use the real ID
                                 name: tier.name,
@@ -183,7 +234,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                                 quantityLimit: tier.quantityLimit ? parseInt(tier.quantityLimit, 10) : null,
                                 startsAt: tier.startsAt ? new Date(tier.startsAt).toISOString() : null,
                                 endsAt: tier.endsAt ? new Date(tier.endsAt).toISOString() : null,
-                                sortOrder: tier.sortOrder || 0
+                                sortOrder: tier.sortOrder ?? index
                             };
 
                             if (tier.id && !tier.id.toString().startsWith('temp_')) {
@@ -200,9 +251,10 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                 type: 'success',
                 message: publish ? "Event Published Successfully!" : "Draft Saved Successfully."
             });
+            setDeletedTierIds([]);
             setTimeout(() => {
                 setNotification(null);
-                if (onSuccess) onSuccess();
+                if (onSuccess) onSuccess(savedEvent);
                 if (!embedded && onClose) onClose();
             }, 1500);
 
@@ -419,6 +471,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                             <TicketBuilder
                                 tickets={tickets}
                                 onChange={setTickets}
+                                onTierDelete={handleTierDelete}
                                 isDark={isDark}
                             />
 

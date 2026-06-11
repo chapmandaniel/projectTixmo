@@ -1,9 +1,8 @@
 const GOOGLE_ANALYTICS_PROPERTY_ID = import.meta.env.VITE_GOOGLE_ANALYTICS_PROPERTY_ID || '';
 const GOOGLE_ANALYTICS_MEASUREMENT_ID = import.meta.env.VITE_GOOGLE_ANALYTICS_MEASUREMENT_ID || '';
 
-export const EVENT_GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY = 'googleAnalyticsMeasurementId';
-export const EVENT_GOOGLE_ANALYTICS_TAGS_KEY = 'googleAnalyticsTags';
-export const EVENT_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY = 'selectedGoogleAnalyticsTagId';
+export const ORGANIZATION_GOOGLE_ANALYTICS_TAGS_KEY = 'googleAnalyticsTags';
+export const ORGANIZATION_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY = 'selectedGoogleAnalyticsTagId';
 
 export const ANALYTICS_TIMEFRAMES = [
     { id: '7d', label: '7D', days: 7 },
@@ -41,18 +40,11 @@ export const getGoogleAnalyticsIntegrationMeta = () => {
     };
 };
 
-export const getEventGoogleAnalyticsMeasurementId = (event) => {
-    const directValue = event?.googleAnalyticsMeasurementId;
-    const metadataValue = event?.metadata?.[EVENT_GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY];
-    const measurementId = directValue || metadataValue || '';
+export const normalizeOrganizationGoogleAnalyticsTags = (organization) => {
+    const settingsTags = organization?.settings?.[ORGANIZATION_GOOGLE_ANALYTICS_TAGS_KEY];
 
-    return typeof measurementId === 'string' ? measurementId.trim() : '';
-};
-
-export const normalizeEventGoogleAnalyticsTags = (event) => {
-    const metadataTags = event?.metadata?.[EVENT_GOOGLE_ANALYTICS_TAGS_KEY];
-    const normalizedTags = Array.isArray(metadataTags)
-        ? metadataTags
+    return Array.isArray(settingsTags)
+        ? settingsTags
             .map((tag, index) => ({
                 id: typeof tag?.id === 'string' && tag.id ? tag.id : `tag-${index + 1}`,
                 title: typeof tag?.title === 'string' && tag.title.trim() ? tag.title.trim() : `GA tag ${index + 1}`,
@@ -60,42 +52,28 @@ export const normalizeEventGoogleAnalyticsTags = (event) => {
             }))
             .filter((tag) => tag.title || tag.measurementId)
         : [];
-
-    if (normalizedTags.length > 0) {
-        return normalizedTags;
-    }
-
-    const legacyMeasurementId = getEventGoogleAnalyticsMeasurementId(event);
-    return legacyMeasurementId
-        ? [{ id: 'primary', title: 'Primary tag', measurementId: legacyMeasurementId }]
-        : [];
 };
 
-export const getSelectedEventGoogleAnalyticsTag = (event) => {
-    const tags = normalizeEventGoogleAnalyticsTags(event);
-    const selectedTagId = event?.metadata?.[EVENT_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY];
+export const getSelectedOrganizationGoogleAnalyticsTag = (organization) => {
+    const tags = normalizeOrganizationGoogleAnalyticsTags(organization);
+    const selectedTagId = organization?.settings?.[ORGANIZATION_SELECTED_GOOGLE_ANALYTICS_TAG_ID_KEY];
 
     return tags.find((tag) => tag.id === selectedTagId) || tags[0] || null;
 };
 
-export const getEventGoogleAnalyticsIntegrationMeta = (event) => {
+export const getOrganizationGoogleAnalyticsIntegrationMeta = (organization, selectedTag) => {
     const baseMeta = getGoogleAnalyticsIntegrationMeta();
-    const eventTag = getSelectedEventGoogleAnalyticsTag(event);
-    const eventMeasurementId = eventTag?.measurementId || getEventGoogleAnalyticsMeasurementId(event);
-
-    if (!event) {
-        return baseMeta;
-    }
-
-    const connected = Boolean(eventMeasurementId || baseMeta.propertyId);
+    const organizationTag = selectedTag || getSelectedOrganizationGoogleAnalyticsTag(organization);
+    const measurementId = organizationTag?.measurementId || baseMeta.measurementId;
+    const connected = Boolean(measurementId || baseMeta.propertyId);
 
     return {
         ...baseMeta,
-        measurementId: eventMeasurementId || baseMeta.measurementId,
-        eventMeasurementId,
-        tagTitle: eventTag?.title || '',
+        measurementId,
+        organizationMeasurementId: organizationTag?.measurementId || '',
+        tagTitle: organizationTag?.title || '',
         connected,
-        statusLabel: connected ? 'Event GA details detected' : 'Event GA ID needed',
+        statusLabel: connected ? 'GA tag selected' : 'GA tag needed',
         statusTone: connected ? 'ready' : 'pending',
     };
 };

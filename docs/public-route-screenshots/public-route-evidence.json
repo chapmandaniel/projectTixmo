@@ -1,0 +1,101 @@
+{
+  "startedAt": "2026-06-09T21:58:46.500Z",
+  "finishedAt": "2026-06-09T22:00:16.719Z",
+  "dashboardUrl": "http://127.0.0.1:5173",
+  "chromePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "result": "pass",
+  "captures": [
+    {
+      "route": "checkout",
+      "url": "http://127.0.0.1:5173/checkout/market-demo-harborlight-summer-session",
+      "viewport": {
+        "id": "desktop",
+        "width": 1440,
+        "height": 1100
+      },
+      "screenshot": "/Users/danielchapman/Desktop/Project Tixmo/docs/public-route-screenshots/checkout-desktop.png",
+      "bytes": 126854,
+      "checkedText": [
+        "Harborlight Summer Session",
+        "Order summary"
+      ],
+      "policyLinksRequired": false
+    },
+    {
+      "route": "checkout",
+      "url": "http://127.0.0.1:5173/checkout/market-demo-harborlight-summer-session",
+      "viewport": {
+        "id": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "/Users/danielchapman/Desktop/Project Tixmo/docs/public-route-screenshots/checkout-mobile.png",
+      "bytes": 54221,
+      "checkedText": [
+        "Harborlight Summer Session",
+        "Order summary"
+      ],
+      "policyLinksRequired": false
+    },
+    {
+      "route": "review",
+      "url": "http://127.0.0.1:5173/review/market-demo-approval-token",
+      "viewport": {
+        "id": "desktop",
+        "width": 1440,
+        "height": 1100
+      },
+      "screenshot": "/Users/danielchapman/Desktop/Project Tixmo/docs/public-route-screenshots/review-desktop.png",
+      "bytes": 124819,
+      "checkedText": [
+        "Review Portal",
+        "Harborlight campaign artwork"
+      ]
+    },
+    {
+      "route": "review",
+      "url": "http://127.0.0.1:5173/review/market-demo-approval-token",
+      "viewport": {
+        "id": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "/Users/danielchapman/Desktop/Project Tixmo/docs/public-route-screenshots/review-mobile.png",
+      "bytes": 39381,
+      "checkedText": [
+        "Review Portal",
+        "Harborlight campaign artwork"
+      ]
+    },
+    {
+      "route": "shared-assets",
+      "url": "http://127.0.0.1:5173/assets/shared/market-demo-share-token",
+      "viewport": {
+        "id": "desktop",
+        "width": 1440,
+        "height": 1100
+      },
+      "screenshot": "/Users/danielchapman/Desktop/Project Tixmo/docs/public-route-screenshots/shared-assets-desktop.png",
+      "bytes": 48136,
+      "checkedText": [
+        "Secure folder share",
+        "Assets"
+      ]
+    },
+    {
+      "route": "shared-assets",
+      "url": "http://127.0.0.1:5173/assets/shared/market-demo-share-token",
+      "viewport": {
+        "id": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "/Users/danielchapman/Desktop/Project Tixmo/docs/public-route-screenshots/shared-assets-mobile.png",
+      "bytes": 29667,
+      "checkedText": [
+        "Secure folder share",
+        "Assets"
+      ]
+    }
+  ]
+}

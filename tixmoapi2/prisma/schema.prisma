@@ -284,6 +284,23 @@ model Order {
   @@map("orders")
 }
 
+model PaymentWebhookEvent {
+  id              String    @id
+  type            String
+  paymentIntentId String?   @map("payment_intent_id")
+  orderId         String?   @map("order_id")
+  status          String    @default("PROCESSING")
+  errorMessage    String?   @map("error_message") @db.Text
+  processingStartedAt DateTime @default(now()) @map("processing_started_at")
+  processedAt     DateTime? @map("processed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([paymentIntentId])
+  @@index([orderId])
+  @@map("payment_webhook_events")
+}
+
 enum TicketStatus {
   VALID
   USED
@@ -670,6 +687,7 @@ model AssetLibraryFolderShare {
   createdById       String       @map("created_by_id")
   createdBy         User         @relation("AssetLibraryFolderShareCreator", fields: [createdById], references: [id])
   tokenHash         String       @unique @map("token_hash")
+  tokenCiphertext   String?      @map("token_ciphertext")
   recipientLabel    String?      @map("recipient_label")
   expiresAt         DateTime     @map("expires_at")
   revokedAt         DateTime?    @map("revoked_at")

@@ -5,6 +5,8 @@ import { AuthRequest } from '../../src/middleware/auth';
 import { ApiError } from '../../src/utils/ApiError';
 import { Response } from 'express';
 
+const flushAsync = () => new Promise(resolve => setImmediate(resolve));
+
 // Mock dependencies
 jest.mock('../../src/config/prisma', () => ({
     __esModule: true,
@@ -37,21 +39,26 @@ describe('Users Controller - listUsers', () => {
         };
     });
 
-    it('should list users for ADMIN without organization filter restriction', async () => {
+    it('should list users for global ADMIN without organization filter restriction', async () => {
         mockReq = {
             user: { userId: 'admin-id', role: 'ADMIN' },
             query: { page: '1', limit: '10' } as any,
         };
 
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: null, role: 'ADMIN' });
         (userService.listUsers as jest.Mock).mockResolvedValue({ users: [], pagination: {} });
 
         await listUsers(mockReq as AuthRequest, mockRes as Response, nextMock);
+        await flushAsync();
 
         expect(userService.listUsers).toHaveBeenCalledWith({
             page: '1',
             limit: '10',
         });
-        expect(prisma.user.findUnique).not.toHaveBeenCalled();
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+            where: { id: 'admin-id' },
+            select: { organizationId: true, role: true },
+        });
     });
 
     it('should force organization filter for PROMOTER', async () => {
@@ -61,14 +68,15 @@ describe('Users Controller - listUsers', () => {
             query: { page: '1', limit: '10' } as any,
         };
 
-        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: mockOrgId });
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: mockOrgId, role: 'PROMOTER' });
         (userService.listUsers as jest.Mock).mockResolvedValue({ users: [], pagination: {} });
 
         await listUsers(mockReq as AuthRequest, mockRes as Response, nextMock);
+        await flushAsync();
 
         expect(prisma.user.findUnique).toHaveBeenCalledWith({
             where: { id: 'promoter-id' },
-            select: { organizationId: true },
+            select: { organizationId: true, role: true },
         });
         expect(userService.listUsers).toHaveBeenCalledWith(expect.objectContaining({
             page: '1',
@@ -83,12 +91,12 @@ describe('Users Controller - listUsers', () => {
             query: { page: '1', limit: '10' } as any,
         };
 
-        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: null });
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: null, role: 'PROMOTER' });
 
         await listUsers(mockReq as AuthRequest, mockRes as Response, nextMock);
 
         // Wait for the async operation to complete
-        await new Promise(resolve => setImmediate(resolve));
+        await flushAsync();
 
         expect(nextMock).toHaveBeenCalledWith(expect.any(ApiError));
         expect(nextMock.mock.calls[0][0].message).toContain('Your account must be associated with an organization');
@@ -102,14 +110,35 @@ describe('Users Controller - listUsers', () => {
             query: { page: '1', limit: '10', organizationId: explicitOrgId } as any,
         };
 
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: null, role: 'ADMIN' });
         (userService.listUsers as jest.Mock).mockResolvedValue({ users: [], pagination: {} });
 
         await listUsers(mockReq as AuthRequest, mockRes as Response, nextMock);
+        await flushAsync();
 
         expect(userService.listUsers).toHaveBeenCalledWith({
             page: '1',
             limit: '10',
             organizationId: explicitOrgId,
+        });
+    });
+
+    it('should force organization filter for scoped ADMIN', async () => {
+        mockReq = {
+            user: { userId: 'admin-id', role: 'ADMIN' },
+            query: { page: '1', limit: '10', organizationId: 'other-org' } as any,
+        };
+
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: 'org-123', role: 'ADMIN' });
+        (userService.listUsers as jest.Mock).mockResolvedValue({ users: [], pagination: {} });
+
+        await listUsers(mockReq as AuthRequest, mockRes as Response, nextMock);
+        await flushAsync();
+
+        expect(userService.listUsers).toHaveBeenCalledWith({
+            page: '1',
+            limit: '10',
+            organizationId: 'org-123',
         });
     });
 });
@@ -127,7 +156,7 @@ describe('Users Controller - createUser', () => {
             json: jsonMock,
             status: jest.fn().mockReturnThis(),
         };
-        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: 'org-123' });
+        (prisma.user.findUnique as jest.Mock).mockResolvedValue({ organizationId: 'org-123', role: 'OWNER' });
         (userService.createUser as jest.Mock).mockResolvedValue({
             id: 'new-user',
             email: 'member@example.com',
@@ -153,7 +182,7 @@ describe('Users Controller - createUser', () => {
         } as any;
 
         await createUser(mockReq as AuthRequest, mockRes as Response, nextMock);
-        await new Promise(resolve => setImmediate(resolve));
+        await flushAsync();
 
         expect(userService.createUser).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -179,7 +208,7 @@ describe('Users Controller - createUser', () => {
         } as any;
 
         await createUser(mockReq as AuthRequest, mockRes as Response, nextMock);
-        await new Promise(resolve => setImmediate(resolve));
+        await flushAsync();
 
         expect(userService.createUser).toHaveBeenCalledWith(
             expect.objectContaining({ email: 'member@example.com' }),

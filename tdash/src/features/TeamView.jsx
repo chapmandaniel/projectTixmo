@@ -6,8 +6,10 @@ import {
     Shield,
     Trash2,
     User,
+    UserCheck,
     UserPlus,
     Users,
+    X,
 } from 'lucide-react';
 import TeamMemberWizard from './TeamMemberWizard';
 import api from '../lib/api';
@@ -26,6 +28,27 @@ import {
 import { getDashboardTheme } from '../lib/dashboardTheme';
 import { cn } from '../lib/utils';
 
+const ROLE_LEVELS = {
+    OWNER: 5,
+    ADMIN: 4,
+    MANAGER: 3,
+    PROMOTER: 2,
+    TEAM_MEMBER: 1,
+    SCANNER: 1,
+    CUSTOMER: 0,
+};
+
+const ROLE_OPTIONS = [
+    { id: 'OWNER', label: 'Owner' },
+    { id: 'ADMIN', label: 'Admin' },
+    { id: 'MANAGER', label: 'Manager' },
+    { id: 'PROMOTER', label: 'Promoter' },
+    { id: 'TEAM_MEMBER', label: 'Team Member' },
+    { id: 'SCANNER', label: 'Scanner' },
+];
+
+const getRoleLevel = (role) => ROLE_LEVELS[role] || 0;
+
 const TeamView = ({ isDark, user: currentUser }) => {
     const uiTheme = getDashboardTheme(isDark);
     const scopedUser = currentUser || getStoredUser();
@@ -33,6 +56,9 @@ const TeamView = ({ isDark, user: currentUser }) => {
     const [loading, setLoading] = useState(true);
     const [isWizardOpen, setIsWizardOpen] = useState(false);
     const [error, setError] = useState('');
+    const [editingRoleUserId, setEditingRoleUserId] = useState(null);
+    const [roleDrafts, setRoleDrafts] = useState({});
+    const [savingRoleUserId, setSavingRoleUserId] = useState(null);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -77,6 +103,64 @@ const TeamView = ({ isDark, user: currentUser }) => {
     const handleWizardSuccess = () => {
         fetchUsers();
         setIsWizardOpen(false);
+    };
+
+    const canManageMember = (member) => {
+        if (!member || scopedUser?.id === member.id) {
+            return false;
+        }
+
+        if (scopedUser?.role === 'OWNER') {
+            return true;
+        }
+
+        return getRoleLevel(member.role) < getRoleLevel(scopedUser?.role);
+    };
+
+    const getAssignableRoles = () => {
+        if (scopedUser?.role === 'OWNER') {
+            return ROLE_OPTIONS;
+        }
+
+        const currentLevel = getRoleLevel(scopedUser?.role);
+        return ROLE_OPTIONS.filter((role) => getRoleLevel(role.id) < currentLevel);
+    };
+
+    const startRoleEdit = (member) => {
+        setEditingRoleUserId(member.id);
+        setRoleDrafts((current) => ({ ...current, [member.id]: member.role }));
+    };
+
+    const cancelRoleEdit = (memberId) => {
+        setEditingRoleUserId(null);
+        setRoleDrafts((current) => {
+            const next = { ...current };
+            delete next[memberId];
+            return next;
+        });
+    };
+
+    const saveRoleEdit = async (member) => {
+        const nextRole = roleDrafts[member.id];
+        if (!nextRole || nextRole === member.role) {
+            cancelRoleEdit(member.id);
+            return;
+        }
+
+        setSavingRoleUserId(member.id);
+        try {
+            await api.put(`/users/${member.id}`, { role: nextRole });
+            setUsers((current) => current.map((candidate) => (
+                candidate.id === member.id ? { ...candidate, role: nextRole } : candidate
+            )));
+            cancelRoleEdit(member.id);
+            setError('');
+        } catch (err) {
+            console.error(err);
+            setError(err.response?.data?.message || 'Failed to update member role');
+        } finally {
+            setSavingRoleUserId(null);
+        }
     };
 
     const getRoleBadge = (role) => {
@@ -208,19 +292,10 @@ const TeamView = ({ isDark, user: currentUser }) => {
                             const badge = getRoleBadge(member.role);
                             const Icon = badge.icon;
                             const isCurrentUser = scopedUser?.id === member.id;
-                            const roleLevels = {
-                                OWNER: 5,
-                                ADMIN: 4,
-                                MANAGER: 3,
-                                PROMOTER: 2,
-                                TEAM_MEMBER: 1,
-                                SCANNER: 1,
-                                CUSTOMER: 0,
-                            };
-                            const canRemoveMember = !isCurrentUser && (
-                                scopedUser?.role === 'OWNER'
-                                    || ((roleLevels[member.role] || 0) < (roleLevels[scopedUser?.role] || 0))
-                            );
+                            const canEditMemberRole = canManageMember(member);
+                            const canRemoveMember = canEditMemberRole;
+                            const isEditingRole = editingRoleUserId === member.id;
+                            const assignableRoles = getAssignableRoles();
 
                             return (
                                 <DashboardStripedRow
@@ -251,11 +326,61 @@ const TeamView = ({ isDark, user: currentUser }) => {
 
                                         <div className="min-w-0 text-left">
                                             <div className={cn('text-[10px] uppercase tracking-[0.16em] lg:hidden', uiTheme.textTertiary)}>Role</div>
-                                            <div className="mt-2 lg:mt-0">
-                                                <div className={`inline-flex items-center justify-start gap-1.5 rounded-full px-2.5 py-1 text-xs font-light tracking-wide w-fit ${badge.color}`}>
-                                                    <Icon size={12} />
-                                                    {member.role.replace('_', ' ')}
-                                                </div>
+                                            <div className="mt-2 flex flex-wrap items-center gap-2 lg:mt-0">
+                                                {isEditingRole ? (
+                                                    <>
+                                                        <select
+                                                            aria-label={`Role for ${member.firstName} ${member.lastName}`}
+                                                            value={roleDrafts[member.id] || member.role}
+                                                            onChange={(event) => setRoleDrafts((current) => ({ ...current, [member.id]: event.target.value }))}
+                                                            className={cn(
+                                                                'h-9 rounded-md border px-2 text-xs font-light outline-none transition',
+                                                                isDark ? 'border-dashboard-borderStrong bg-dashboard-panelAlt text-zinc-100 focus:border-pink-400' : 'border-slate-200 bg-white text-slate-900 focus:border-slate-400'
+                                                            )}
+                                                        >
+                                                            {assignableRoles.map((role) => (
+                                                                <option key={role.id} value={role.id}>{role.label}</option>
+                                                            ))}
+                                                        </select>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => saveRoleEdit(member)}
+                                                            disabled={savingRoleUserId === member.id}
+                                                            className={cn(
+                                                                'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                                                                isDark ? 'bg-pink-500 text-white hover:bg-pink-400' : 'bg-slate-900 text-white hover:bg-slate-800'
+                                                            )}
+                                                            title="Save role"
+                                                        >
+                                                            <UserCheck size={15} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => cancelRoleEdit(member.id)}
+                                                            className={cn(
+                                                                'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors',
+                                                                isDark ? 'text-dashboard-nav hover:bg-dashboard-panelAlt hover:text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                                                            )}
+                                                            title="Cancel role edit"
+                                                        >
+                                                            <X size={15} />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => canEditMemberRole && startRoleEdit(member)}
+                                                        disabled={!canEditMemberRole}
+                                                        className={cn(
+                                                            `inline-flex w-fit items-center justify-start gap-1.5 rounded-full px-2.5 py-1 text-xs font-light tracking-wide ${badge.color}`,
+                                                            canEditMemberRole ? 'transition-opacity hover:opacity-80' : 'cursor-default'
+                                                        )}
+                                                        title={canEditMemberRole ? 'Change role' : 'Role locked'}
+                                                    >
+                                                        <Icon size={12} />
+                                                        {member.role.replace('_', ' ')}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
 

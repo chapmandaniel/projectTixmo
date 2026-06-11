@@ -1031,7 +1031,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                     const isInternalComment = item.visibility === 'INTERNAL';
                                     const cardTone = isInternalComment
                                         ? 'border-amber-400/20 bg-amber-500/[0.08]'
-                                        : 'border-[#2b2b40] bg-[#151521]';
+                                        : 'border-dashboard-border bg-dashboard-shell';
                                     const avatarTone = isInternalComment
                                         ? 'border-amber-400/30 bg-amber-500/12 text-amber-100'
                                         : 'border-sky-400/20 bg-sky-500/10 text-sky-100';
@@ -1041,7 +1041,7 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
                                             key={item.id}
                                             data-pending-block-root="panel"
                                             data-testid="approval-comment-card"
-                                            className={`relative rounded-lg border px-4 py-4 ${cardTone} ${item.pending ? optimisticItemClass : ''} ${index !== visibleComments.length - 1 ? 'border-b border-[#2b2b40]' : ''}`}
+                                            className={`relative rounded-lg border px-4 py-4 ${cardTone} ${item.pending ? optimisticItemClass : ''} ${index !== visibleComments.length - 1 ? 'border-b border-dashboard-border' : ''}`}
                                         >
                                             <div className="flex flex-wrap items-start justify-between gap-3">
                                                 <div className="flex items-start gap-3">
@@ -1177,13 +1177,13 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
 
                         <form onSubmit={(event) => submitComment(event, 'GLOBAL')} className="mt-5 space-y-4">
                             {!isTeamMember && (
-                                <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-light text-[#d7d9e4]">
+                                <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-light text-zinc-200">
                                     This note will be sent to the global approval thread.
                                 </div>
                             )}
 
                             <div>
-                                <label htmlFor="approval-comment" className="mb-2 block text-xs uppercase tracking-[0.16em] text-[#8f94aa]">
+                                <label htmlFor="approval-comment" className="mb-2 block text-xs uppercase tracking-[0.16em] text-dashboard-nav">
                                     Message
                                 </label>
                                 <textarea

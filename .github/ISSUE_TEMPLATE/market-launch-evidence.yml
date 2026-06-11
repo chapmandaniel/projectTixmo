@@ -1,0 +1,222 @@
+name: Market Launch Evidence
+description: Track the evidence required before Tixmo can be treated as market launch ready.
+title: "Market launch evidence: <environment> <release>"
+labels:
+  - launch
+  - market-readiness
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this ticket for the external launch gates. Do not mark market launch ready until every required evidence section is complete or explicitly accepted as out of scope by the release owner.
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Staging, production-like, production, or demo.
+      placeholder: staging
+    validations:
+      required: true
+
+  - type: input
+    id: release_sha
+    attributes:
+      label: Release commit SHA
+      description: Commit or release identifier being evaluated.
+      placeholder: abc1234
+    validations:
+      required: true
+
+  - type: input
+    id: dashboard_url
+    attributes:
+      label: Dashboard URL
+      placeholder: https://app.example.com
+    validations:
+      required: true
+
+  - type: input
+    id: api_url
+    attributes:
+      label: API URL
+      placeholder: https://api.example.com
+    validations:
+      required: true
+
+  - type: textarea
+    id: local_gates
+    attributes:
+      label: Local and CI gates
+      description: Attach terminal output or GitHub Actions run URL.
+      value: |
+        - [ ] `npm run verify:market` passed.
+        - [ ] `npm run evidence:dependency-audit` passed.
+        - [ ] `.github/workflows/market-readiness-local.yml` passed.
+        - [ ] `.github/workflows/dependency-audit-evidence.yml` uploaded JSON evidence.
+        - [ ] `npm run evidence:status` reviewed for missing target artifacts.
+        - [ ] `npm run evidence:status:strict` passes for go/no-go.
+        - [ ] Manual evidence artifact paths follow `docs/MANUAL_LAUNCH_EVIDENCE_ARTIFACTS.md`.
+        Evidence:
+        - Dependency audit artifact:
+    validations:
+      required: true
+
+  - type: textarea
+    id: smoke
+    attributes:
+      label: Staging or production-like V1 smoke
+      description: Attach full smoke evidence plus optional seeded smoke artifact.
+      value: |
+        - [ ] Full V1 smoke from `docs/PRODUCTION_LAUNCH_CHECKLIST.md` passed.
+        - [ ] `npm run smoke:external` passed when using seeded demo data.
+        - [ ] `.github/workflows/external-smoke-evidence.yml` uploaded JSON evidence.
+        - [ ] `.github/workflows/checkout-runtime-config-evidence.yml` uploaded JSON evidence.
+        - [ ] `.github/workflows/public-route-screenshot-evidence.yml` uploaded screenshot evidence.
+        Evidence:
+        - Operator account:
+        - Organization ID/name:
+        - Event ID/name:
+        - Public checkout event ID/slug/name:
+        - Order number:
+        - Stripe PaymentIntent ID:
+        - Stripe webhook event ID:
+        - Scanner ID:
+        - Approval request ID/token reference:
+        - Asset folder/share ID/token reference:
+        - External smoke artifact URL:
+        - Checkout runtime-config artifact URL:
+        - Public-route screenshot artifact URL:
+    validations:
+      required: true
+
+  - type: textarea
+    id: scanner
+    attributes:
+      label: Real-device scanner/offline field test
+      description: Use `docs/SCANNER_SETUP_AND_FIELD_TEST.md`.
+      value: |
+        - [ ] Valid scan passed.
+        - [ ] Duplicate scan denied clearly.
+        - [ ] Wrong-event ticket denied.
+        - [ ] Cancelled ticket denied.
+        - [ ] Invalid payload denied.
+        - [ ] Offline scan path tested.
+        - [ ] Offline upload tested.
+        - [ ] Revocation/replacement tested.
+        Evidence:
+        - Device/OS/browser/app:
+        - Scanner ID/name:
+        - Event ID/name:
+        - Sync timestamp:
+        - Scanner field-test JSON artifact:
+    validations:
+      required: true
+
+  - type: textarea
+    id: external_reviewer
+    attributes:
+      label: External reviewer and shared asset flow
+      description: Public links must be tested on the production-like domain in a logged-out/private browser.
+      value: |
+        - [ ] External review link opened logged out.
+        - [ ] Reviewer comment or decision submitted.
+        - [ ] Dashboard reflected reviewer action.
+        - [ ] Shared asset link opened logged out.
+        - [ ] Shared asset revocation or expiry behavior verified.
+        - [ ] `npm run evidence:public-routes` passed against the target dashboard.
+        Evidence:
+        - Approval request ID/title:
+        - Reviewer token reference, not raw token:
+        - Asset share ID/token reference, not raw token:
+        - Public-route screenshot manifest:
+        - External reviewer/share JSON artifact:
+        - Screenshots/logs:
+    validations:
+      required: true
+
+  - type: textarea
+    id: backup_rollback
+    attributes:
+      label: Backup, migration, and rollback evidence
+      description: Use `docs/DB_BACKUP_AND_MIGRATION_ROLLBACK.md`.
+      value: |
+        - [ ] Scheduled backups enabled.
+        - [ ] Manual pre-migration backup taken.
+        - [ ] Migration command and SHA recorded.
+        - [ ] Restore tested outside production.
+        - [ ] Rollback owner named.
+        Evidence:
+        - Latest scheduled backup timestamp:
+        - Manual backup ID/timestamp:
+        - Restore target:
+        - Rollback owner:
+        - Backup/rollback JSON artifact:
+    validations:
+      required: true
+
+  - type: textarea
+    id: policy
+    attributes:
+      label: Policy approval and publication
+      description: Use `docs/POLICY_PUBLICATION_CHECKLIST.md`.
+      value: |
+        - [ ] Privacy Policy approved.
+        - [ ] Terms approved.
+        - [ ] Refund Policy approved.
+        - [ ] Organizer Terms approved.
+        - [ ] Data Retention notes approved.
+        - [ ] Checkout links to Terms and Refund Policy.
+        - [ ] Runtime config includes approved Privacy, Terms, and Refund URLs.
+        - [ ] Runtime config includes Stripe publishable key for paid checkout.
+        - [ ] Runtime config payment currency matches API `PAYMENT_CURRENCY`.
+        - [ ] `npm run evidence:checkout-config` passed against the target dashboard.
+        - [ ] `npm run evidence:public-routes` passed with `TIXMO_PUBLIC_EVIDENCE_REQUIRE_POLICIES=true`.
+        Evidence:
+        - Privacy Policy URL/artifact:
+        - Terms URL/artifact:
+        - Refund Policy URL/artifact:
+        - Organizer Terms URL/artifact:
+        - Checkout runtime-config evidence:
+        - Checkout policy-link screenshot:
+        - Checkout Stripe PaymentElement screenshot:
+        - Public route screenshot manifest:
+        - Policy approval JSON artifact:
+        - Approvers:
+    validations:
+      required: true
+
+  - type: textarea
+    id: monitoring
+    attributes:
+      label: Uptime, status, and Sentry monitoring
+      description: Use `docs/UPTIME_STATUS_MONITORING.md`.
+      value: |
+        - [ ] API/dashboard status checks configured.
+        - [ ] Manual monitor run passed.
+        - [ ] Scheduled monitor run passed.
+        - [ ] Failed monitor alerts route to launch/support owner.
+        - [ ] Sentry staging test event received with release and alert-route tags.
+        Evidence:
+        - Monitor targets:
+        - Manual run URL:
+        - Scheduled run URL:
+        - Alert destination:
+        - Sentry test event:
+        - Uptime/status JSON artifact:
+    validations:
+      required: true
+
+  - type: textarea
+    id: go_no_go
+    attributes:
+      label: Go / no-go decision
+      value: |
+        - [ ] Go
+        - [ ] No-go
+        - [ ] `npm run evidence:status:strict` passed with zero open evidence gaps.
+        Decision owner:
+        Decision timestamp:
+        Notes:
+    validations:
+      required: true

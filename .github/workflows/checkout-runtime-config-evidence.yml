@@ -1,0 +1,88 @@
+name: Tixmo Checkout Runtime Config Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Environment to check
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+          - both
+      verify_policy_urls:
+        description: Fetch policy URLs and require a successful response
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  checkout-runtime-config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      TARGET: ${{ inputs.target }}
+      VERIFY_POLICY_URLS: ${{ inputs.verify_policy_urls }}
+
+      STAGING_DASHBOARD_URL: ${{ secrets.STAGING_DASHBOARD_URL }}
+      STAGING_EXPECTED_API_URL: ${{ secrets.STAGING_EXPECTED_API_URL }}
+      STAGING_EXPECTED_PAYMENT_CURRENCY: ${{ secrets.STAGING_EXPECTED_PAYMENT_CURRENCY }}
+
+      PRODUCTION_DASHBOARD_URL: ${{ secrets.PRODUCTION_DASHBOARD_URL }}
+      PRODUCTION_EXPECTED_API_URL: ${{ secrets.PRODUCTION_EXPECTED_API_URL }}
+      PRODUCTION_EXPECTED_PAYMENT_CURRENCY: ${{ secrets.PRODUCTION_EXPECTED_PAYMENT_CURRENCY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prepare evidence directory
+        run: mkdir -p docs/checkout-config-evidence
+
+      - name: Check staging checkout runtime config
+        if: ${{ inputs.target == 'staging' || inputs.target == 'both' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${STAGING_DASHBOARD_URL:-}" ]; then
+            echo "::error::STAGING_DASHBOARD_URL is required for staging checkout runtime config evidence."
+            exit 1
+          fi
+
+          TIXMO_DASHBOARD_URL="${STAGING_DASHBOARD_URL}" \
+          TIXMO_EXPECTED_API_URL="${STAGING_EXPECTED_API_URL:-}" \
+          TIXMO_EXPECTED_PAYMENT_CURRENCY="${STAGING_EXPECTED_PAYMENT_CURRENCY:-usd}" \
+          TIXMO_VERIFY_POLICY_URLS="${VERIFY_POLICY_URLS}" \
+          TIXMO_CHECKOUT_CONFIG_EVIDENCE_PATH="docs/checkout-config-evidence/staging-${GITHUB_RUN_ID}.json" \
+          npm run evidence:checkout-config
+
+      - name: Check production checkout runtime config
+        if: ${{ inputs.target == 'production' || inputs.target == 'both' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${PRODUCTION_DASHBOARD_URL:-}" ]; then
+            echo "::error::PRODUCTION_DASHBOARD_URL is required for production checkout runtime config evidence."
+            exit 1
+          fi
+
+          TIXMO_DASHBOARD_URL="${PRODUCTION_DASHBOARD_URL}" \
+          TIXMO_EXPECTED_API_URL="${PRODUCTION_EXPECTED_API_URL:-}" \
+          TIXMO_EXPECTED_PAYMENT_CURRENCY="${PRODUCTION_EXPECTED_PAYMENT_CURRENCY:-usd}" \
+          TIXMO_VERIFY_POLICY_URLS="${VERIFY_POLICY_URLS}" \
+          TIXMO_CHECKOUT_CONFIG_EVIDENCE_PATH="docs/checkout-config-evidence/production-${GITHUB_RUN_ID}.json" \
+          npm run evidence:checkout-config
+
+      - name: Upload checkout config evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tixmo-checkout-runtime-config-evidence-${{ inputs.target }}-${{ github.run_id }}
+          path: docs/checkout-config-evidence/*.json
+          if-no-files-found: warn

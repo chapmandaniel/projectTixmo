@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, X, DollarSign, Users, GripVertical, AlertCircle } from 'lucide-react';
 
-const TicketBuilder = ({ tickets, onChange, isDark }) => {
+const TicketBuilder = ({ tickets, onChange, isDark, onTierDelete }) => {
     const [isAdding, setIsAdding] = useState(false);
     // State for new ticket
     const [newTicket, setNewTicket] = useState({
@@ -78,6 +78,24 @@ const TicketBuilder = ({ tickets, onChange, isDark }) => {
             return t;
         });
         onChange(updatedTickets);
+        if (tierId && !tierId.toString().startsWith('temp_')) {
+            onTierDelete?.(tierId);
+        }
+    };
+
+    const handleUpdateTier = (ticketId, tierId, updates) => {
+        const updatedTickets = tickets.map(t => {
+            if (t.id === ticketId) {
+                return {
+                    ...t,
+                    tiers: (t.tiers || []).map(tier => (
+                        tier.id === tierId ? { ...tier, ...updates } : tier
+                    ))
+                };
+            }
+            return t;
+        });
+        onChange(updatedTickets);
     };
 
     return (
@@ -132,17 +150,59 @@ const TicketBuilder = ({ tickets, onChange, isDark }) => {
                                         <p className="text-xs text-gray-400 italic">No special pricing tiers added.</p>
                                     )}
 
-                                    {ticket.tiers && ticket.tiers.map((tier, idx) => (
-                                        <div key={idx} className={`flex items-center justify-between p-2 rounded border ${isDark ? 'bg-[#252525] border-[#333]' : 'bg-white border-gray-200'}`}>
-                                            <div>
-                                                <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{tier.name}</span>
-                                                <span className="mx-2 text-gray-400">•</span>
-                                                <span className="font-mono">${tier.price}</span>
-                                                {tier.quantityLimit && <span className="text-xs text-gray-500 ml-2">(Limit: {tier.quantityLimit})</span>}
+                                    {ticket.tiers && ticket.tiers.map((tier) => (
+                                        <div key={tier.id} className={`grid gap-2 rounded border p-2 ${isDark ? 'border-dashboard-borderStrong bg-dashboard-control' : 'border-gray-200 bg-white'}`}>
+                                            <div className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_110px_130px_36px]">
+                                                <input
+                                                    type="text"
+                                                    aria-label={`${tier.name || 'Tier'} name`}
+                                                    value={tier.name || ''}
+                                                    onChange={e => handleUpdateTier(ticket.id, tier.id, { name: e.target.value })}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-none transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 focus:border-indigo-500'}`}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    aria-label={`${tier.name || 'Tier'} price`}
+                                                    value={tier.price || ''}
+                                                    onChange={e => handleUpdateTier(ticket.id, tier.id, { price: e.target.value })}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-none transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 focus:border-indigo-500'}`}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    aria-label={`${tier.name || 'Tier'} quantity limit`}
+                                                    placeholder="No limit"
+                                                    value={tier.quantityLimit || ''}
+                                                    onChange={e => handleUpdateTier(ticket.id, tier.id, { quantityLimit: e.target.value })}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-none transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 placeholder:text-dashboard-muted focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-indigo-500'}`}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Remove ${tier.name || 'pricing tier'}`}
+                                                    onClick={() => handleRemoveTier(ticket.id, tier.id)}
+                                                    className="flex h-8 w-8 items-center justify-center rounded text-gray-400 transition-colors hover:text-rose-500"
+                                                >
+                                                    <X size={14} />
+                                                </button>
                                             </div>
-                                            <button onClick={() => handleRemoveTier(ticket.id, tier.id)} className="text-gray-400 hover:text-rose-500">
-                                                <X size={14} />
-                                            </button>
+                                            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                                                <input
+                                                    type="datetime-local"
+                                                    aria-label={`${tier.name || 'Tier'} starts at`}
+                                                    value={tier.startsAt || ''}
+                                                    onChange={e => handleUpdateTier(ticket.id, tier.id, { startsAt: e.target.value })}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-none transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 focus:border-indigo-500'}`}
+                                                />
+                                                <input
+                                                    type="datetime-local"
+                                                    aria-label={`${tier.name || 'Tier'} ends at`}
+                                                    value={tier.endsAt || ''}
+                                                    onChange={e => handleUpdateTier(ticket.id, tier.id, { endsAt: e.target.value })}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-none transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 focus:border-indigo-500'}`}
+                                                />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

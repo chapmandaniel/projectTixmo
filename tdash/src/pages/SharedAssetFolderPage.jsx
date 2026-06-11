@@ -43,7 +43,7 @@ const formatFileSize = (value) => {
 const getAssetKind = (mimeType = '') => {
     if (mimeType.startsWith('image/')) return 'image';
     if (mimeType.startsWith('video/')) return 'video';
-    if (mimeType === 'application/pdf') return 'document';
+    if (mimeType === 'application/pdf' || mimeType === 'application/postscript') return 'document';
     return 'file';
 };
 

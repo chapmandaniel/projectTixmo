@@ -110,7 +110,7 @@ describe('assetLibraryService.upload', () => {
       id: 'share-1',
       folderId: 'folder-1',
       recipientLabel: 'Agency',
-      expiresAt: new Date('2026-05-18T12:00:00.000Z'),
+      expiresAt: new Date('2026-06-18T12:00:00.000Z'),
       revokedAt: null,
       lastViewedAt: null,
       viewCount: 0,
@@ -386,6 +386,7 @@ describe('assetLibraryService.upload', () => {
         folders: {
           create: [{ folderId: 'folder-1' }],
         },
+        tokenCiphertext: expect.stringMatching(/^v1:/),
       }),
       include: {
         folders: {
@@ -396,6 +397,53 @@ describe('assetLibraryService.upload', () => {
     expect((prisma as any).assetLibraryFolderShare.create.mock.calls[0][0].data.tokenHash).toHaveLength(64);
     expect(result.share.shareUrl).toContain('https://mightyquinton.tixmo.co/assets/shared/');
     expect(result.share.active).toBe(true);
+  });
+
+  it('lists persisted folder share links with copyable URLs when the token can be recovered', async () => {
+    (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([{
+      id: 'folder-1',
+      parentId: null,
+      eventId: null,
+      name: 'Brand Photos',
+      category: 'branding',
+      usageType: 'BRAND',
+    }]);
+
+    const created = await assetLibraryService.createFolderShare('user-1', 'folder-1', {
+      recipientLabel: 'Agency',
+      dashboardOrigin: 'https://mightyquinton.tixmo.co',
+    });
+    const tokenCiphertext = ((prisma as any).assetLibraryFolderShare.create as jest.Mock).mock.calls[0][0].data.tokenCiphertext;
+
+    (prisma.assetLibraryFolder.findFirst as jest.Mock).mockResolvedValue({
+      id: 'folder-1',
+      parentId: null,
+      eventId: null,
+      name: 'Brand Photos',
+      category: 'branding',
+      usageType: 'BRAND',
+    });
+    ((prisma as any).assetLibraryFolderShare.findMany as jest.Mock).mockResolvedValue([{
+      id: 'share-1',
+      folderId: 'folder-1',
+      recipientLabel: 'Agency',
+      expiresAt: new Date('2026-06-18T12:00:00.000Z'),
+      revokedAt: null,
+      lastViewedAt: null,
+      viewCount: 0,
+      createdAt: new Date('2026-05-04T12:00:00.000Z'),
+      updatedAt: new Date('2026-05-04T12:00:00.000Z'),
+      tokenCiphertext,
+      folders: [{ folderId: 'folder-1' }],
+    }]);
+
+    const result = await assetLibraryService.listFolderShares(
+      'user-1',
+      'folder-1',
+      'https://mightyquinton.tixmo.co'
+    );
+
+    expect(result.shares[0].shareUrl).toBe(created.share.shareUrl);
   });
 
   it('creates one external link for multiple selected root folders', async () => {
@@ -485,5 +533,164 @@ describe('assetLibraryService.upload', () => {
       data: { revokedAt: expect.any(Date) },
     });
     expect(result.share.active).toBe(false);
+  });
+
+  it('rejects expired public folder share links', async () => {
+    ((prisma as any).assetLibraryFolderShare.findUnique as jest.Mock).mockResolvedValue({
+      id: 'share-1',
+      organizationId: 'org-1',
+      recipientLabel: 'Agency',
+      expiresAt: new Date('2000-01-01T00:00:00.000Z'),
+      revokedAt: null,
+      organization: { id: 'org-1', name: 'Mighty Quinton' },
+      folder: {
+        id: 'folder-1',
+        organizationId: 'org-1',
+        parentId: null,
+        eventId: null,
+        name: 'Brand Photos',
+        category: 'branding',
+        usageType: 'BRAND',
+        createdAt: new Date('2026-05-04T12:00:00.000Z'),
+        updatedAt: new Date('2026-05-04T12:00:00.000Z'),
+        event: null,
+        _count: { assets: 0, children: 0 },
+      },
+      folders: [],
+    });
+
+    await expect(assetLibraryService.getSharedFolder('expired-token')).rejects.toMatchObject({
+      statusCode: 404,
+      message: 'Invalid or expired folder share link',
+    });
+
+    expect((prisma as any).assetLibraryFolderShare.update).not.toHaveBeenCalled();
+    expect(prisma.assetLibraryAsset.findMany).not.toHaveBeenCalled();
+  });
+
+  it('rejects revoked public folder share links', async () => {
+    ((prisma as any).assetLibraryFolderShare.findUnique as jest.Mock).mockResolvedValue({
+      id: 'share-1',
+      organizationId: 'org-1',
+      recipientLabel: 'Agency',
+      expiresAt: new Date('2999-01-01T00:00:00.000Z'),
+      revokedAt: new Date('2026-05-05T12:00:00.000Z'),
+      organization: { id: 'org-1', name: 'Mighty Quinton' },
+      folder: {
+        id: 'folder-1',
+        organizationId: 'org-1',
+        parentId: null,
+        eventId: null,
+        name: 'Brand Photos',
+        category: 'branding',
+        usageType: 'BRAND',
+        createdAt: new Date('2026-05-04T12:00:00.000Z'),
+        updatedAt: new Date('2026-05-04T12:00:00.000Z'),
+        event: null,
+        _count: { assets: 0, children: 0 },
+      },
+      folders: [],
+    });
+
+    await expect(assetLibraryService.getSharedFolder('revoked-token')).rejects.toMatchObject({
+      statusCode: 404,
+      message: 'Invalid or expired folder share link',
+    });
+
+    expect((prisma as any).assetLibraryFolderShare.update).not.toHaveBeenCalled();
+    expect(prisma.assetLibraryAsset.findMany).not.toHaveBeenCalled();
+  });
+
+  it('returns nested shared folders with freshly resolved asset URLs', async () => {
+    const rootFolder = {
+      id: 'folder-1',
+      organizationId: 'org-1',
+      parentId: null,
+      eventId: null,
+      name: 'Press Kit',
+      category: 'press',
+      usageType: 'BRAND',
+      createdAt: new Date('2026-05-04T12:00:00.000Z'),
+      updatedAt: new Date('2026-05-04T12:00:00.000Z'),
+      event: null,
+      _count: { assets: 1, children: 1 },
+    };
+    const childFolder = {
+      id: 'folder-child',
+      organizationId: 'org-1',
+      parentId: 'folder-1',
+      eventId: null,
+      name: 'Artist Photos',
+      category: 'photography',
+      usageType: 'BRAND',
+      createdAt: new Date('2026-05-04T12:10:00.000Z'),
+      updatedAt: new Date('2026-05-04T12:10:00.000Z'),
+      event: null,
+      _count: { assets: 1, children: 0 },
+    };
+
+    ((prisma as any).assetLibraryFolderShare.findUnique as jest.Mock).mockResolvedValue({
+      id: 'share-1',
+      organizationId: 'org-1',
+      recipientLabel: 'Agency',
+      expiresAt: new Date('2999-01-01T00:00:00.000Z'),
+      revokedAt: null,
+      organization: { id: 'org-1', name: 'Mighty Quinton' },
+      folder: rootFolder,
+      folders: [],
+    });
+    (prisma.assetLibraryFolder.findMany as jest.Mock)
+      .mockResolvedValueOnce([{ id: 'folder-child' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([rootFolder, childFolder]);
+    (prisma.assetLibraryAsset.findMany as jest.Mock).mockResolvedValue([{
+      id: 'asset-1',
+      folderId: 'folder-child',
+      eventId: null,
+      filename: 'artist-photo.png',
+      originalName: 'Artist photo.png',
+      mimeType: 'image/png',
+      size: 2048,
+      s3Key: 'assets/org-1/artist-photo.png',
+      s3Url: 'https://cdn.example.com/artist-photo.png',
+      category: 'photography',
+      usageType: 'BRAND',
+      createdAt: new Date('2026-05-04T12:15:00.000Z'),
+      updatedAt: new Date('2026-05-04T12:15:00.000Z'),
+      event: null,
+      folder: {
+        id: 'folder-child',
+        name: 'Artist Photos',
+        parentId: 'folder-1',
+        category: 'photography',
+      },
+    }]);
+    (uploadService.resolveFileUrl as jest.Mock).mockResolvedValue('https://signed.example.com/artist-photo.png');
+
+    const result = await assetLibraryService.getSharedFolder('active-token');
+
+    expect(prisma.assetLibraryAsset.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        organizationId: 'org-1',
+        folderId: { in: ['folder-1', 'folder-child'] },
+      }),
+    }));
+    expect(uploadService.resolveFileUrl).toHaveBeenCalledWith(
+      'assets/org-1/artist-photo.png',
+      'https://cdn.example.com/artist-photo.png'
+    );
+    expect((prisma as any).assetLibraryFolderShare.update).toHaveBeenCalledWith({
+      where: { id: 'share-1' },
+      data: {
+        lastViewedAt: expect.any(Date),
+        viewCount: { increment: 1 },
+      },
+    });
+    expect(result.folders).toHaveLength(2);
+    expect(result.assets[0]).toMatchObject({
+      id: 'asset-1',
+      folderId: 'folder-child',
+      s3Url: 'https://signed.example.com/artist-photo.png',
+    });
   });
 });

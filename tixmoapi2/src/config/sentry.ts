@@ -10,11 +10,15 @@ export function initSentry() {
   if (dsn === '' || dsn.toLowerCase().startsWith('your_') || !dsn.includes('://')) return;
 
   try {
+    const release = config.release || undefined;
+    const deploymentEnvironment = config.deploymentEnvironment || config.nodeEnv;
+    const alertRoute = config.sentryAlertRoute || 'unassigned';
+
     Sentry.init({
       dsn: dsn,
-      environment: config.nodeEnv,
+      environment: deploymentEnvironment,
       tracesSampleRate: config.sentryTracesSampleRate ?? 0.0,
-      release: config.release || undefined,
+      release,
       integrations: [
         // enable automatic tracing for outbound HTTP requests
         new Sentry.Integrations.Http({ tracing: true }),
@@ -23,11 +27,22 @@ export function initSentry() {
         // via Sentry.Handlers.requestHandler()/tracingHandler().
       ],
       beforeSend(event: unknown) {
+        const ev = event as Sentry.Event;
+        ev.tags = {
+          ...(ev.tags || {}),
+          service: config.serviceName,
+          deployment_environment: deploymentEnvironment,
+          alert_route: alertRoute,
+          ...(release ? { release } : {}),
+        };
+        if (release && !ev.release) {
+          ev.release = release;
+        }
+
         // Scrub PII or large payloads here if needed
         try {
-          if (event && typeof event === 'object' && 'request' in event) {
-            const ev = event as Record<string, unknown>;
-            const req = ev.request;
+          if (ev && typeof ev === 'object' && 'request' in ev) {
+            const req = (ev as Record<string, unknown>).request;
             if (req && typeof req === 'object' && 'data' in req) {
               const data = (req as Record<string, unknown>).data;
               if (
@@ -44,8 +59,21 @@ export function initSentry() {
         } catch (e) {
           // ignore any errors during scrubbing
         }
-        return event as Sentry.Event;
+        return ev;
       },
+    });
+
+    Sentry.setTags({
+      service: config.serviceName,
+      deployment_environment: deploymentEnvironment,
+      alert_route: alertRoute,
+      ...(release ? { release } : {}),
+    });
+    Sentry.setContext('deployment', {
+      service: config.serviceName,
+      environment: deploymentEnvironment,
+      release: release || 'unreleased',
+      alertRoute,
     });
   } catch (e) {
     // Don't allow Sentry init failures to crash or spam test output

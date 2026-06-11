@@ -289,7 +289,10 @@ describe('AssetLibraryView', () => {
         });
 
         await act(async () => {
-            fireEvent.change(screen.getByRole('dialog').querySelector('input[type="file"]'), {
+            const uploadInput = screen.getByRole('dialog').querySelector('input[type="file"]');
+            expect(uploadInput).toHaveAttribute('accept', expect.stringContaining('.eps'));
+
+            fireEvent.change(uploadInput, {
                 target: {
                     files: [new File(['image'], 'Door Poster.png', { type: 'image/png' })],
                 },
@@ -921,5 +924,141 @@ describe('AssetLibraryView', () => {
         });
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://dashboard.example.com/assets/shared/folder-token');
         expect(toastSuccess).toHaveBeenCalledWith('Secure folder link copied');
+    });
+
+    it('copies an existing active folder share link without creating a new link', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url === '/assets') {
+                return Promise.resolve({
+                    assets: [],
+                    folders: [
+                        {
+                            id: 'folder-1',
+                            name: 'Brand Photos',
+                            category: 'photography',
+                            usageType: 'BRAND',
+                            eventId: null,
+                            parentId: null,
+                            createdAt: '2026-04-25T09:00:00.000Z',
+                            updatedAt: '2026-04-25T09:00:00.000Z',
+                        },
+                    ],
+                });
+            }
+
+            if (url === '/assets/folders/folder-1/shares') {
+                return Promise.resolve({
+                    shares: [
+                        {
+                            id: 'share-1',
+                            folderId: 'folder-1',
+                            recipientLabel: 'Venue partner',
+                            expiresAt: '2026-06-10T12:00:00.000Z',
+                            active: true,
+                            viewCount: 3,
+                            folderCount: 1,
+                            shareUrl: 'https://dashboard.example.com/assets/shared/existing-folder-token',
+                        },
+                    ],
+                });
+            }
+
+            return Promise.resolve({ approvals: [] });
+        });
+
+        await act(async () => {
+            render(
+                <MemoryRouter>
+                    <AssetLibraryView isDark />
+                </MemoryRouter>
+            );
+        });
+
+        fireEvent.click(screen.getAllByText('Brand Photos')[0]);
+        fireEvent.click(screen.getByRole('button', { name: /Share Folder/i }));
+        const dialog = screen.getByRole('dialog');
+
+        expect(await within(dialog).findByDisplayValue('https://dashboard.example.com/assets/shared/existing-folder-token')).toBeInTheDocument();
+
+        await act(async () => {
+            fireEvent.click(within(dialog).getByRole('button', { name: /Copy folder share link/i }));
+        });
+
+        expect(apiPost).not.toHaveBeenCalled();
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('https://dashboard.example.com/assets/shared/existing-folder-token');
+        expect(toastSuccess).toHaveBeenCalledWith('Secure folder link copied');
+    });
+
+    it('revokes an existing active folder share link', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url === '/assets') {
+                return Promise.resolve({
+                    assets: [],
+                    folders: [
+                        {
+                            id: 'folder-1',
+                            name: 'Brand Photos',
+                            category: 'photography',
+                            usageType: 'BRAND',
+                            eventId: null,
+                            parentId: null,
+                            createdAt: '2026-04-25T09:00:00.000Z',
+                            updatedAt: '2026-04-25T09:00:00.000Z',
+                        },
+                    ],
+                });
+            }
+
+            if (url === '/assets/folders/folder-1/shares') {
+                return Promise.resolve({
+                    shares: [
+                        {
+                            id: 'share-1',
+                            folderId: 'folder-1',
+                            recipientLabel: 'Venue partner',
+                            expiresAt: '2026-06-10T12:00:00.000Z',
+                            active: true,
+                            viewCount: 3,
+                            folderCount: 1,
+                            shareUrl: 'https://dashboard.example.com/assets/shared/existing-folder-token',
+                        },
+                    ],
+                });
+            }
+
+            return Promise.resolve({ approvals: [] });
+        });
+        apiDelete.mockResolvedValue({
+            share: {
+                id: 'share-1',
+                active: false,
+                revokedAt: '2026-05-05T12:00:00.000Z',
+            },
+        });
+
+        await act(async () => {
+            render(
+                <MemoryRouter>
+                    <AssetLibraryView isDark />
+                </MemoryRouter>
+            );
+        });
+
+        fireEvent.click(screen.getAllByText('Brand Photos')[0]);
+        fireEvent.click(screen.getByRole('button', { name: /Share Folder/i }));
+        const dialog = screen.getByRole('dialog');
+
+        expect(await within(dialog).findByText('Venue partner')).toBeInTheDocument();
+
+        await act(async () => {
+            fireEvent.click(within(dialog).getByRole('button', { name: /Revoke/i }));
+        });
+
+        expect(apiDelete).toHaveBeenCalledWith('/assets/folders/folder-1/shares/share-1');
+        expect(toastSuccess).toHaveBeenCalledWith('Folder link revoked.');
+        await waitFor(() => {
+            expect(within(dialog).queryByText('Venue partner')).not.toBeInTheDocument();
+        });
+        expect(within(dialog).getByText('1 expired or revoked link hidden from active sharing.')).toBeInTheDocument();
     });
 });

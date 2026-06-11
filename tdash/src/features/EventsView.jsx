@@ -12,7 +12,7 @@ import {
     Zap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import EventWizard from './EventWizard';
+import EventStudio from './EventStudio';
 import OrdersView from './OrdersView';
 import ScannersView from './ScannersView';
 import VenuesView from './VenuesView';
@@ -37,7 +37,7 @@ const TOOL_DEFINITIONS = [
     {
         id: 'create',
         label: 'Create New Event',
-        description: 'Answer the core launch questions, create the draft, and jump straight into the event dashboard.',
+        description: 'Use Event Studio for the V1 event setup path: basics, venue, tickets, preview, draft, and publish.',
         icon: Sparkles,
         accent: 'violet',
         iconClassName: 'text-fuchsia-400',
@@ -492,19 +492,20 @@ const EventsView = ({ isDark, user }) => {
     const renderActiveTool = () => {
         if (activeTool === 'create') {
             return (
-                <EventWizard
+                <EventStudio
                     isDark={isDark}
                     user={user}
+                    embedded
                     onClose={() => setActiveTool(null)}
                     onSuccess={(createdEvent) => {
-                        if (!createdEvent?.id) {
-                            fetchDashboardData();
-                            setLibraryFilter('all');
-                            setActiveTool('library');
+                        if (createdEvent?.id) {
+                            openEventWorkspace(createdEvent);
                             return;
                         }
 
-                        openEventWorkspace(createdEvent);
+                        fetchDashboardData();
+                        setLibraryFilter('all');
+                        setActiveTool('library');
                     }}
                 />
             );
@@ -521,7 +522,7 @@ const EventsView = ({ isDark, user }) => {
                     onNavigate={navigate}
                     onCreateEvent={() => setActiveTool('create')}
                     onAutoGenerate={handleAutoGenerate}
-                    showAutoGenerate={devSettings.enableAutoEventGeneration && (user?.role === 'OWNER' || user?.role === 'ADMIN')}
+                    showAutoGenerate={import.meta.env.DEV && devSettings.enableAutoEventGeneration && (user?.role === 'OWNER' || user?.role === 'ADMIN')}
                     autoGenerating={isAutoGenerating}
                 />
             );

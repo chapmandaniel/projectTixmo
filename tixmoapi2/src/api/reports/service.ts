@@ -31,37 +31,11 @@ export class ReportService {
     };
 
     if (organizationId) {
-      // Find events for this org first
-      const events = await prisma.event.findMany({
-        where: { organizationId },
-        select: { id: true },
-      });
-      const eventIds = events.map((e) => e.id);
-
-      // Orders don't have organizationId directly, but tickets do (via event)
-      // Actually, Order has no direct link to Event/Org except through items -> TicketType -> Event
-      // This makes querying tricky without raw SQL or complex joins.
-      // For simplicity in this phase, let's assume we filter by eventId if provided,
-      // or if organizationId is provided, we find all orders containing tickets for that org's events.
-
-      // Optimization: If we have eventIds, we can filter orders that have tickets with ticketTypes in those events.
-      where.tickets = {
-        some: {
-          ticketType: {
-            eventId: { in: eventIds },
-          },
-        },
-      };
+      where.event = { organizationId };
     }
 
     if (eventId) {
-      where.tickets = {
-        some: {
-          ticketType: {
-            eventId,
-          },
-        },
-      };
+      where.eventId = eventId;
     }
 
     if (startDate) {
@@ -88,6 +62,9 @@ export class ReportService {
             },
           },
         },
+        event: {
+          select: { id: true, name: true },
+        },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -103,10 +80,7 @@ export class ReportService {
       const date = new Date(order.createdAt);
 
       if (groupBy === 'event') {
-        // If grouping by event, we need to split the order if it has tickets from multiple events (rare but possible)
-        // For now, take the first ticket's event
-        const eventName = order.tickets[0]?.ticketType?.event?.name || 'Unknown Event';
-        key = eventName;
+        key = order.event?.name || 'Unknown Event';
       } else {
         if (groupBy === 'day') key = date.toISOString().split('T')[0];
         else if (groupBy === 'month')
@@ -153,6 +127,7 @@ export class ReportService {
       where: {
         eventId,
         status: { in: ['VALID', 'USED'] },
+        order: { status: 'PAID' },
       },
     });
 
@@ -161,6 +136,7 @@ export class ReportService {
       where: {
         eventId,
         status: 'USED',
+        order: { status: 'PAID' },
       },
     });
 
@@ -170,6 +146,9 @@ export class ReportService {
         eventId,
         scanType: 'ENTRY',
         success: true,
+        ticket: {
+          order: { status: 'PAID' },
+        },
       },
       orderBy: { scannedAt: 'asc' },
     });
@@ -206,12 +185,7 @@ export class ReportService {
     // Need to filter orders by org events
     const orderWhere: Prisma.OrderWhereInput = { status: 'PAID' };
     if (organizationId) {
-      const events = await prisma.event.findMany({
-        where: { organizationId },
-        select: { id: true },
-      });
-      const eventIds = events.map((e) => e.id);
-      orderWhere.tickets = { some: { ticketType: { eventId: { in: eventIds } } } };
+      orderWhere.event = { organizationId };
     }
 
     const result = await prisma.order.aggregate({
@@ -224,6 +198,7 @@ export class ReportService {
 
     // 2. Tickets Sold
     const ticketWhere: Prisma.TicketWhereInput = { status: { in: ['VALID', 'USED'] } };
+    ticketWhere.order = { status: 'PAID' };
     if (organizationId) {
       ticketWhere.event = { organizationId };
     }
@@ -233,7 +208,7 @@ export class ReportService {
     const activeEvents = await prisma.event.count({
       where: {
         ...eventWhere,
-        status: 'PUBLISHED',
+        status: { in: ['PUBLISHED', 'ON_SALE'] },
         endDatetime: { gte: new Date() },
       },
     });

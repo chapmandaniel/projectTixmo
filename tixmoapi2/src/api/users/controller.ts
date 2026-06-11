@@ -7,13 +7,13 @@ import { userService, CreateUserInput, UpdateUserInput, ListUsersParams } from '
 import prisma from '../../config/prisma';
 import { resolveTrustedClientOrigin } from '../../utils/clientOrigin';
 
-const getCallerOrganizationId = async (userId: string) => {
+const getCallerDetails = async (userId: string) => {
   const callerDetails = await prisma.user.findUnique({
     where: { id: userId },
-    select: { organizationId: true },
+    select: { organizationId: true, role: true },
   });
 
-  return callerDetails?.organizationId ?? null;
+  return callerDetails ?? { organizationId: null, role: undefined };
 };
 
 const roleHierarchy = {
@@ -27,6 +27,27 @@ const roleHierarchy = {
 };
 
 const getRoleLevel = (role?: string) => roleHierarchy[role as keyof typeof roleHierarchy] ?? 0;
+
+const canManageRole = (callerRole: string, targetRole?: string) => {
+  if (callerRole === 'OWNER') {
+    return true;
+  }
+
+  return getRoleLevel(targetRole) < getRoleLevel(callerRole);
+};
+
+const assertScopedOrganizationAccess = (
+  callerOrganizationId: string | null,
+  targetOrganizationId?: string | null
+) => {
+  if (!callerOrganizationId) {
+    return;
+  }
+
+  if (targetOrganizationId !== callerOrganizationId) {
+    throw ApiError.forbidden('You can only manage users in your organization');
+  }
+};
 
 export const createUser = catchAsync(async (req: AuthRequest, res: Response) => {
   const payload = req.body as CreateUserInput;
@@ -43,8 +64,12 @@ export const createUser = catchAsync(async (req: AuthRequest, res: Response) => 
 
   // 2. Organization Scoping
   // Organization-scoped operators can only create users in their own organization.
-  if (caller.role === 'MANAGER' || caller.role === 'PROMOTER') {
-    const callerOrganizationId = await getCallerOrganizationId(caller.userId);
+  const callerDetails = await getCallerDetails(caller.userId);
+
+  if (callerDetails.organizationId) {
+    payload.organizationId = callerDetails.organizationId;
+  } else if (caller.role === 'MANAGER' || caller.role === 'PROMOTER') {
+    const callerOrganizationId = callerDetails.organizationId;
 
     if (!callerOrganizationId) {
       throw ApiError.forbidden('Your account must be associated with an organization to create users');
@@ -53,7 +78,7 @@ export const createUser = catchAsync(async (req: AuthRequest, res: Response) => 
     // Force organizationId to match caller's
     payload.organizationId = callerOrganizationId;
   } else if ((caller.role === 'ADMIN' || caller.role === 'OWNER') && !payload.organizationId) {
-    const callerOrganizationId = await getCallerOrganizationId(caller.userId);
+    const callerOrganizationId = callerDetails.organizationId;
 
     // Team dashboard invites omit organizationId, so inherit the caller's organization
     // when one exists. Global admins without an organization still retain the ability
@@ -82,18 +107,62 @@ export const getUser = catchAsync(async (req: AuthRequest, res: Response) => {
     throw ApiError.forbidden('You can only view your own profile');
   }
 
+  if (req.user!.userId !== id) {
+    const callerDetails = await getCallerDetails(req.user!.userId);
+    assertScopedOrganizationAccess(callerDetails.organizationId, user.organizationId);
+  }
+
   res.json(successResponse(user));
 });
 
 export const updateUser = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const payload = req.body as UpdateUserInput;
+  const caller = req.user!;
 
-  // Users can only update their own profile unless they're an elevated admin role.
-  if (req.user!.userId !== id && req.user!.role !== 'ADMIN' && req.user!.role !== 'OWNER') {
+  if (caller.userId === id) {
+    if (payload.role || payload.organizationId !== undefined || payload.permissions !== undefined) {
+      throw ApiError.forbidden('You cannot change your own role, organization, or permissions');
+    }
+
+    const user = await userService.updateUser(id, payload);
+    res.json(successResponse(user, 'User updated successfully'));
+    return;
+  }
+
+  if (!['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'].includes(caller.role)) {
     throw ApiError.forbidden('You can only update your own profile');
   }
 
-  const payload = req.body as UpdateUserInput;
+  const [callerDetails, targetUser] = await Promise.all([
+    getCallerDetails(caller.userId),
+    prisma.user.findUnique({
+      where: { id },
+      select: { role: true, organizationId: true },
+    }),
+  ]);
+
+  if (!targetUser) {
+    throw ApiError.notFound('User not found');
+  }
+
+  assertScopedOrganizationAccess(callerDetails.organizationId, targetUser.organizationId);
+
+  if (!canManageRole(caller.role, targetUser.role)) {
+    throw ApiError.forbidden(`Your role (${caller.role}) cannot update a user with role ${targetUser.role}`);
+  }
+
+  if (payload.role && !canManageRole(caller.role, payload.role)) {
+    throw ApiError.forbidden(`Your role (${caller.role}) cannot assign role ${payload.role}`);
+  }
+
+  if (callerDetails.organizationId) {
+    if (payload.organizationId !== undefined && payload.organizationId !== callerDetails.organizationId) {
+      throw ApiError.forbidden('You can only manage users in your organization');
+    }
+    payload.organizationId = callerDetails.organizationId;
+  }
+
   const user = await userService.updateUser(id, payload);
   res.json(successResponse(user, 'User updated successfully'));
 });
@@ -102,19 +171,22 @@ export const deleteUser = catchAsync(async (req: AuthRequest, res: Response) => 
   const { id } = req.params;
   const caller = req.user!;
 
-  if (caller.role !== 'OWNER') {
-    const targetUser = await prisma.user.findUnique({
+  const [callerDetails, targetUser] = await Promise.all([
+    getCallerDetails(caller.userId),
+    prisma.user.findUnique({
       where: { id },
-      select: { role: true },
-    });
+      select: { role: true, organizationId: true },
+    }),
+  ]);
 
-    if (!targetUser) {
-      throw ApiError.notFound('User not found');
-    }
+  if (!targetUser) {
+    throw ApiError.notFound('User not found');
+  }
 
-    if (getRoleLevel(targetUser.role) >= getRoleLevel(caller.role)) {
-      throw ApiError.forbidden(`Your role (${caller.role}) cannot delete a user with role ${targetUser.role}`);
-    }
+  assertScopedOrganizationAccess(callerDetails.organizationId, targetUser.organizationId);
+
+  if (!canManageRole(caller.role, targetUser.role)) {
+    throw ApiError.forbidden(`Your role (${caller.role}) cannot delete a user with role ${targetUser.role}`);
   }
 
   await userService.deleteUser(id);
@@ -125,13 +197,12 @@ export const listUsers = catchAsync(async (req: AuthRequest, res: Response) => {
   const query = req.query as unknown as ListUsersParams;
   const caller = req.user!;
 
-  // Security check: organization-scoped operators can only list users in their organization
-  if (caller.role === 'MANAGER' || caller.role === 'PROMOTER') {
-    const callerDetails = await prisma.user.findUnique({
-      where: { id: caller.userId },
-      select: { organizationId: true },
-    });
+  const callerDetails = await getCallerDetails(caller.userId);
 
+  // Security check: organization-scoped operators can only list users in their organization.
+  if (callerDetails.organizationId) {
+    query.organizationId = callerDetails.organizationId;
+  } else if (caller.role === 'MANAGER' || caller.role === 'PROMOTER') {
     if (!callerDetails?.organizationId) {
       throw ApiError.forbidden('Your account must be associated with an organization to list users');
     }

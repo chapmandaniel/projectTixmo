@@ -223,6 +223,21 @@ export async function cleanupTestData() {
     await prisma.scanner.deleteMany();
   } catch (e) {}
   try {
+    await prisma.paymentWebhookEvent.deleteMany();
+  } catch (e) {}
+  try {
+    await prisma.assetLibraryFolderShareFolder.deleteMany();
+  } catch (e) {}
+  try {
+    await prisma.assetLibraryFolderShare.deleteMany();
+  } catch (e) {}
+  try {
+    await prisma.assetLibraryAsset.deleteMany();
+  } catch (e) {}
+  try {
+    await prisma.assetLibraryFolder.deleteMany();
+  } catch (e) {}
+  try {
     await prisma.notification.deleteMany();
   } catch (e) {}
   try {

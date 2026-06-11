@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Calendar, BarChart3,
     Users, CheckSquare,
-    MessageCircle, Wand2, Settings, CheckCircle, BrainCircuit, Image
+    Settings, CheckCircle, Image
 } from 'lucide-react';
 import api from '../lib/api';
 import {
@@ -17,11 +17,8 @@ const gridItems = [
     { id: 'events', icon: Calendar, label: 'Event Manager', description: 'Create events and manage sales, scanners, and venues from one dashboard.', accent: 'from-pink-500 to-orange-400', iconClassName: 'text-pink-500' },
     { id: 'todo', icon: CheckSquare, label: 'Task Manager', description: 'Collaborate, assign work, and track operational follow-through.', accent: 'from-indigo-400 to-purple-500', iconClassName: 'text-indigo-400' },
     { id: 'team', icon: Users, label: 'Team Members', description: 'Manage organization access.', accent: 'from-gray-600 to-gray-700', iconClassName: 'text-gray-500' },
-    { id: 'social', icon: MessageCircle, label: 'Social', description: 'Placeholder reserved for future audience tools.', accent: 'slate', iconClassName: 'text-slate-400' },
-    { id: 'creative', icon: Wand2, label: 'ProMo', description: 'Placeholder reserved for future campaign tools.', accent: 'slate', iconClassName: 'text-slate-400' },
     { id: 'assets', icon: Image, label: 'Asset Library', description: 'Browse uploaded creative, preview versions, and copy share links for internal or external handoff.', accent: 'from-sky-500 to-cyan-400', iconClassName: 'text-sky-400' },
     { id: 'approvals', icon: CheckCircle, label: 'Review Portal', description: 'Review pending requests.', accent: 'from-lime-400 to-emerald-500', iconClassName: 'text-lime-400' },
-    { id: 'quantmo', icon: BrainCircuit, label: 'QuantMo', description: 'Placeholder reserved for future intelligence tools.', accent: 'slate', iconClassName: 'text-slate-400' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics', description: 'Deep dive into your metrics.', accent: 'from-blue-400 to-indigo-600', iconClassName: 'text-blue-400' },
     { id: 'settings', icon: Settings, label: 'Settings', description: 'Configure application preferences.', accent: 'from-gray-700 to-gray-800', iconClassName: 'text-gray-500' },
 ];

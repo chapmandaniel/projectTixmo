@@ -8,6 +8,20 @@
     "dev:web": "npm --prefix tdash run dev",
     "dev:api": "npm --prefix tixmoapi2 run dev",
     "dev:services": "docker compose -f tixmoapi2/docker-compose.yml up -d || docker-compose -f tixmoapi2/docker-compose.yml up -d",
-    "dev:services:down": "docker compose -f tixmoapi2/docker-compose.yml down || docker-compose -f tixmoapi2/docker-compose.yml down"
+    "dev:services:down": "docker compose -f tixmoapi2/docker-compose.yml down || docker-compose -f tixmoapi2/docker-compose.yml down",
+    "verify:api": "node ./scripts/verify-api.mjs",
+    "verify:market": "node ./scripts/verify-market-local.mjs",
+    "status:check": "node ./scripts/check-status.mjs",
+    "smoke:external": "node ./scripts/external-smoke-evidence.mjs",
+    "smoke:checkout:local": "node ./scripts/local-checkout-smoke.mjs",
+    "evidence:public-routes": "node ./scripts/capture-public-route-evidence.mjs",
+    "evidence:checkout-config": "node ./scripts/check-checkout-runtime-config.mjs",
+    "evidence:dependency-audit": "node ./scripts/dependency-audit-evidence.mjs",
+    "evidence:manual-template": "node ./scripts/create-manual-evidence-template.mjs",
+    "evidence:status": "node ./scripts/evidence-status.mjs",
+    "evidence:status:strict": "node ./scripts/evidence-status.mjs --strict",
+    "demo:market": "npm --prefix tixmoapi2 run demo:market",
+    "demo:market:verify": "npm --prefix tixmoapi2 run demo:market:verify",
+    "demo:market:reset": "npm --prefix tixmoapi2 run demo:market:reset"
   }
 }

@@ -2,8 +2,6 @@ import { ApiError } from '@utils/ApiError';
 import { Event, Prisma, EventStatus } from '@prisma/client';
 
 import prisma from '../../config/prisma';
-import { getRedisClient } from '../../config/redis';
-import { logger } from '../../config/logger';
 
 interface CreateEventInput {
   title: string;
@@ -16,7 +14,6 @@ interface CreateEventInput {
   capacity?: number;
   imageUrl?: string;
   metadata?: Prisma.InputJsonValue | null | undefined;
-  googleAnalyticsMeasurementId?: string;
   category?: string;
   timezone?: string;
   tags?: string[];
@@ -32,7 +29,6 @@ interface UpdateEventInput {
   capacity?: number;
   imageUrl?: string;
   metadata?: Prisma.InputJsonValue | null | undefined;
-  googleAnalyticsMeasurementId?: string;
   category?: string;
   timezone?: string;
   tags?: string[];
@@ -70,36 +66,6 @@ const VALID_STATUS_TRANSITIONS: Record<EventStatus, Set<EventStatus>> = {
   CANCELLED: new Set([]), // Terminal state
   COMPLETED: new Set([]), // Terminal state
   DELETED: new Set(['DRAFT']), // Can be restored to DRAFT
-};
-
-const GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY = 'googleAnalyticsMeasurementId';
-
-const normalizeMetadataObject = (metadata: Prisma.JsonValue | Prisma.InputJsonValue | null | undefined) => {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    return {};
-  }
-
-  return { ...(metadata as Record<string, unknown>) };
-};
-
-const withGoogleAnalyticsMeasurementId = (
-  metadata: Prisma.JsonValue | Prisma.InputJsonValue | null | undefined,
-  measurementId: string | undefined
-) => {
-  if (measurementId === undefined) {
-    return metadata;
-  }
-
-  const nextMetadata = normalizeMetadataObject(metadata);
-  const normalizedMeasurementId = measurementId.trim();
-
-  if (normalizedMeasurementId) {
-    nextMetadata[GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY] = normalizedMeasurementId;
-  } else {
-    delete nextMetadata[GOOGLE_ANALYTICS_MEASUREMENT_ID_KEY];
-  }
-
-  return nextMetadata as Prisma.InputJsonValue;
 };
 
 export class EventService {
@@ -201,8 +167,6 @@ export class EventService {
     // Generate unique slug from title (handles collisions)
     const slug = await this.generateUniqueSlug(data.title);
 
-    const metadata = withGoogleAnalyticsMeasurementId(data.metadata, data.googleAnalyticsMeasurementId);
-
     // Create event
     return await prisma.event.create({
       data: {
@@ -221,7 +185,10 @@ export class EventService {
         images: data.imageUrl
           ? ({ main: data.imageUrl } as unknown as Prisma.InputJsonValue)
           : undefined,
-        metadata: metadata !== undefined ? (metadata as Prisma.InputJsonValue) : undefined,
+        metadata:
+          data.metadata !== undefined
+            ? (data.metadata as unknown as Prisma.InputJsonValue)
+            : undefined,
       },
     });
   }
@@ -314,13 +281,8 @@ export class EventService {
     if (data.capacity) updateData.capacity = data.capacity;
     if (data.category) updateData.category = data.category;
     if (data.timezone) updateData.timezone = data.timezone;
-    if (data.metadata !== undefined || data.googleAnalyticsMeasurementId !== undefined) {
-      const metadataBase = data.metadata !== undefined ? data.metadata : existingEvent.metadata;
-      updateData.metadata = withGoogleAnalyticsMeasurementId(
-        metadataBase,
-        data.googleAnalyticsMeasurementId
-      ) as Prisma.InputJsonValue;
-    }
+    if (data.metadata !== undefined)
+      updateData.metadata = data.metadata as unknown as Prisma.InputJsonValue;
     if (data.imageUrl)
       updateData.images = { main: data.imageUrl } as unknown as Prisma.InputJsonValue;
 
@@ -812,28 +774,11 @@ export class EventService {
   /**
    * Get a single public event by slug (no auth required)
    * Returns full event detail with ticket types and their tiers.
+   * Keep this uncached for V1 checkout: the payload contains ticket type IDs,
+   * active tiers, and live availability that must not survive event resets or
+   * ticket mutations.
    */
   async getPublicEventBySlug(slug: string): Promise<Event | null> {
-    const cacheKey = `public_event:slug:${slug}`;
-
-    try {
-      const cachedEvent = await getRedisClient().get(cacheKey);
-      if (cachedEvent) {
-        return JSON.parse(cachedEvent, (_key, value) => {
-          if (
-            typeof value === 'string' &&
-            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/.test(value)
-          ) {
-            return new Date(value);
-          }
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          return value;
-        }) as Event;
-      }
-    } catch (error) {
-      logger.error('Redis cache error (getPublicEventBySlug):', error);
-    }
-
     const publicStatuses: EventStatus[] = [
       EventStatus.PUBLISHED,
       EventStatus.ON_SALE,
@@ -864,14 +809,6 @@ export class EventService {
         },
       },
     });
-
-    if (event) {
-      try {
-        await getRedisClient().set(cacheKey, JSON.stringify(event), { EX: 300 }); // 5 minutes TTL
-      } catch (error) {
-        logger.error('Redis cache error (set getPublicEventBySlug):', error);
-      }
-    }
 
     return event;
   }

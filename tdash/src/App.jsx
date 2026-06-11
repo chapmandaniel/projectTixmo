@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from './lib/auth';
 import {
@@ -10,29 +10,42 @@ import {
     createInactivityManager,
 } from './lib/session';
 import DashboardLayout from './layouts/DashboardLayout';
-import DashboardHome from './features/DashboardHome';
-import EventsView from './features/EventsView';
-import AnalyticsView from './features/AnalyticsView';
-import TodoView from './features/TodoView';
-import TeamView from './features/TeamView';
-import ComingSoonView from './features/ComingSoonView';
-import EventManagementDashboard from './features/EventManagementDashboard';
 import DashboardPlaceholderView from './features/DashboardPlaceholderView';
-import AssetLibraryView from './features/AssetLibraryView';
-import SettingsView from './features/SettingsView';
 import LoginView from './features/LoginView';
-import VenuesView from './features/VenuesView';
-import ApprovalsDashboard from './features/ApprovalsDashboard';
-import OrdersView from './features/OrdersView';
-import DevDashboard from './features/DevDashboard';
-import ScannersView from './features/ScannersView';
 import { BrainCircuit, MessageCircle, Wand2 } from 'lucide-react';
 
-import WaitingRoomView from './features/WaitingRoomView';
 import GlobalErrorNotification from './components/GlobalErrorNotification';
-import ExternalReviewPage from './pages/ExternalReviewPage';
-import SharedAssetFolderPage from './pages/SharedAssetFolderPage';
 import ErrorBoundary from './components/ErrorBoundary';
+
+const DashboardHome = lazy(() => import('./features/DashboardHome'));
+const EventsView = lazy(() => import('./features/EventsView'));
+const AnalyticsView = lazy(() => import('./features/AnalyticsView'));
+const TodoView = lazy(() => import('./features/TodoView'));
+const TeamView = lazy(() => import('./features/TeamView'));
+const EventManagementDashboard = lazy(() => import('./features/EventManagementDashboard'));
+const AssetLibraryView = lazy(() => import('./features/AssetLibraryView'));
+const SettingsView = lazy(() => import('./features/SettingsView'));
+const VenuesView = lazy(() => import('./features/VenuesView'));
+const ApprovalsDashboard = lazy(() => import('./features/ApprovalsDashboard'));
+const OrdersView = lazy(() => import('./features/OrdersView'));
+const DevDashboard = lazy(() => import('./features/DevDashboard'));
+const ScannersView = lazy(() => import('./features/ScannersView'));
+const WaitingRoomView = lazy(() => import('./features/WaitingRoomView'));
+const ExternalReviewPage = lazy(() => import('./pages/ExternalReviewPage'));
+const SharedAssetFolderPage = lazy(() => import('./pages/SharedAssetFolderPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+
+const RouteFallback = ({ isDark = true }) => (
+    <div className={`flex min-h-[280px] items-center justify-center rounded-md border text-sm font-light ${isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-dashboard-muted' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
+        Loading workspace...
+    </div>
+);
+
+const PublicRouteFallback = ({ isDark = true }) => (
+    <div className={`flex min-h-screen items-center justify-center text-sm font-light ${isDark ? 'bg-dashboard-shell text-dashboard-muted' : 'bg-slate-50 text-slate-500'}`}>
+        Loading...
+    </div>
+);
 
 const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setGlobalError }) => {
     const location = useLocation();
@@ -47,6 +60,8 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
         navigate(`/${view}`);
     };
 
+    const betaHoldDescription = 'This module is outside the V1 beta scope and is hidden from the main workspace until the launch path is stable.';
+
     return (
         <ErrorBoundary isDark={isDark}>
             <DashboardLayout
@@ -57,33 +72,35 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                 user={user}
                 onLogout={handleLogout}
             >
-                <Routes>
-                    <Route path="/dashboard" element={<DashboardHome user={user} onNavigate={handleNavigationEvent} isDark={isDark} />} />
-                    <Route path="/events" element={<EventsView user={user} isDark={isDark} />} />
-                    <Route path="/events/:eventId/*" element={<EventManagementDashboard user={user} isDark={isDark} />} />
-                    <Route path="/analytics" element={<AnalyticsView isDark={isDark} />} />
-                    <Route path="/quantmo" element={<DashboardPlaceholderView isDark={isDark} title="QuantMo" icon={BrainCircuit} />} />
-                    <Route path="/todo" element={<TodoView isDark={isDark} />} />
-                    <Route path="/personal-todo" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/team" element={<TeamView isDark={isDark} />} />
-                    <Route path="/social" element={<DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} />} />
-                    <Route path="/orders" element={<OrdersView isDark={isDark} />} />
-                    <Route path="/settings" element={<SettingsView isDark={isDark} />} />
-                    <Route path="/creative" element={<DashboardPlaceholderView isDark={isDark} title="ProMo" icon={Wand2} />} />
-                    <Route path="/assets" element={<AssetLibraryView isDark={isDark} />} />
-                    <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />
-                    <Route path="/approvals" element={<ApprovalsDashboard isDark={isDark} user={user} />} />
-                    <Route path="/dev" element={<DevDashboard isDark={isDark} user={user} />} />
+                <Suspense fallback={<RouteFallback isDark={isDark} />}>
+                    <Routes>
+                        <Route path="/dashboard" element={<DashboardHome user={user} onNavigate={handleNavigationEvent} isDark={isDark} />} />
+                        <Route path="/events" element={<EventsView user={user} isDark={isDark} />} />
+                        <Route path="/events/:eventId/*" element={<EventManagementDashboard user={user} isDark={isDark} />} />
+                        <Route path="/analytics" element={<AnalyticsView isDark={isDark} user={user} />} />
+                        <Route path="/quantmo" element={<DashboardPlaceholderView isDark={isDark} title="QuantMo" icon={BrainCircuit} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
+                        <Route path="/todo" element={<TodoView isDark={isDark} />} />
+                        <Route path="/personal-todo" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="/team" element={<TeamView isDark={isDark} />} />
+                        <Route path="/social" element={<DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
+                        <Route path="/orders" element={<OrdersView isDark={isDark} />} />
+                        <Route path="/settings" element={<SettingsView isDark={isDark} />} />
+                        <Route path="/creative" element={<DashboardPlaceholderView isDark={isDark} title="ProMo" icon={Wand2} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
+                        <Route path="/assets" element={<AssetLibraryView isDark={isDark} />} />
+                        <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />
+                        <Route path="/approvals" element={<ApprovalsDashboard isDark={isDark} user={user} />} />
+                        <Route path="/dev" element={<DevDashboard isDark={isDark} user={user} />} />
 
-                    {/* Coming Soon hubs */}
-                    <Route path="/marketing" element={<ComingSoonView title="Marketing Hub" icon="Megaphone" isDark={isDark} />} />
-                    <Route path="/scanners" element={<ScannersView isDark={isDark} user={user} />} />
-                    <Route path="/promo" element={<Navigate to="/dashboard" replace />} />
+                        {/* Coming Soon hubs */}
+                        <Route path="/marketing" element={<DashboardPlaceholderView isDark={isDark} title="Marketing Hub" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
+                        <Route path="/scanners" element={<ScannersView isDark={isDark} user={user} />} />
+                        <Route path="/promo" element={<Navigate to="/dashboard" replace />} />
 
-                    {/* Fallback to dashboard */}
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
+                        {/* Fallback to dashboard */}
+                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                    </Routes>
+                </Suspense>
 
                 <GlobalErrorNotification
                     error={globalError}
@@ -221,6 +238,12 @@ const App = () => {
         setUser(userData);
     };
 
+    const handleCheckoutAuthenticated = (userData) => {
+        setAuthNotice('');
+        setRedirectToDashboardAfterLogin(false);
+        setUser(userData);
+    };
+
     const handleLogout = () => {
         setAuthNotice('');
         setRedirectToDashboardAfterLogin(false);
@@ -236,31 +259,34 @@ const App = () => {
     }
 
     return (
-        <Routes>
-            {/* External unauthenticated routes */}
-            <Route path="/review/*" element={<ExternalReviewPage />} />
-            <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />
+        <Suspense fallback={<PublicRouteFallback isDark={isDark} />}>
+            <Routes>
+                {/* External unauthenticated routes */}
+                <Route path="/review/*" element={<ExternalReviewPage />} />
+                <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />
+                <Route path="/checkout/:slug" element={<CheckoutPage user={user} onAuthenticated={handleCheckoutAuthenticated} />} />
 
-            {/* Main Application */}
-            <Route path="*" element={
-                showWaitingRoom ? (
-                    <WaitingRoomView onRetry={() => setShowWaitingRoom(false)} />
-                ) : !user ? (
-                    <LoginView onLogin={handleLogin} notice={authNotice} />
-                ) : redirectToDashboardAfterLogin && location.pathname !== '/dashboard' ? (
-                    <Navigate to="/dashboard" replace />
-                ) : (
-                    <AppContent
-                        user={user}
-                        handleLogout={handleLogout}
-                        isDark={isDark}
-                        toggleTheme={toggleTheme}
-                        globalError={globalError}
-                        setGlobalError={setGlobalError}
-                    />
-                )
-            } />
-        </Routes>
+                {/* Main Application */}
+                <Route path="*" element={
+                    showWaitingRoom ? (
+                        <WaitingRoomView onRetry={() => setShowWaitingRoom(false)} />
+                    ) : !user ? (
+                        <LoginView onLogin={handleLogin} notice={authNotice} />
+                    ) : redirectToDashboardAfterLogin && location.pathname !== '/dashboard' ? (
+                        <Navigate to="/dashboard" replace />
+                    ) : (
+                        <AppContent
+                            user={user}
+                            handleLogout={handleLogout}
+                            isDark={isDark}
+                            toggleTheme={toggleTheme}
+                            globalError={globalError}
+                            setGlobalError={setGlobalError}
+                        />
+                    )
+                } />
+            </Routes>
+        </Suspense>
     );
 };
 

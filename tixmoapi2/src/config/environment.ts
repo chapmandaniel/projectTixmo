@@ -4,14 +4,46 @@ dotenv.config();
 
 const isTest = process.env.NODE_ENV === 'test';
 const isDevelopment = process.env.NODE_ENV === 'development';
+const nodeEnv = process.env.NODE_ENV || 'development';
+const adminEmail = process.env.ADMIN_EMAIL || 'admin@tixmo.co';
+const serviceName = process.env.SERVICE_NAME || process.env.RAILWAY_SERVICE_NAME || 'tixmo-api';
+const release =
+  process.env.SENTRY_RELEASE ||
+  process.env.RELEASE ||
+  process.env.RAILWAY_GIT_COMMIT_SHA ||
+  undefined;
+const deploymentEnvironment =
+  process.env.SENTRY_ENVIRONMENT ||
+  process.env.RAILWAY_ENVIRONMENT_NAME ||
+  process.env.RAILWAY_ENVIRONMENT ||
+  nodeEnv;
 
 const rateLimitWindowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10);
 const legacyRateLimitMax =
   process.env.RATE_LIMIT_MAX || process.env.RATE_LIMIT_MAX_REQUESTS || undefined;
 
+export const normalizeOptionalCredential = (value?: string) => {
+  const trimmedValue = value?.trim() || '';
+  const lowerValue = trimmedValue.toLowerCase();
+
+  if (
+    !trimmedValue ||
+    lowerValue.includes('your_') ||
+    lowerValue.includes('_your') ||
+    lowerValue.includes('change-this') ||
+    lowerValue.includes('placeholder')
+  ) {
+    return '';
+  }
+
+  return trimmedValue;
+};
+
 export const config = {
   // Application
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
+  serviceName,
+  deploymentEnvironment,
   port: parseInt(process.env.PORT || '3000', 10),
   apiVersion: process.env.API_VERSION || 'v1',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:3001',
@@ -31,9 +63,10 @@ export const config = {
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
 
   // Stripe
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
-  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
-  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+  stripeSecretKey: normalizeOptionalCredential(process.env.STRIPE_SECRET_KEY),
+  stripePublishableKey: normalizeOptionalCredential(process.env.STRIPE_PUBLISHABLE_KEY),
+  stripeWebhookSecret: normalizeOptionalCredential(process.env.STRIPE_WEBHOOK_SECRET),
+  paymentCurrency: (process.env.PAYMENT_CURRENCY || 'usd').toLowerCase(),
 
   // Email
   postmarkServerToken: process.env.POSTMARK_SERVER_TOKEN || '',
@@ -70,7 +103,8 @@ export const config = {
   // Sentry
   sentryDsn: process.env.SENTRY_DSN,
   sentryTracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.0'),
-  release: process.env.RELEASE || undefined,
+  sentryAlertRoute: process.env.SENTRY_ALERT_ROUTE || adminEmail,
+  release,
 
   // Rate Limiting
   rateLimitWindowMs,
@@ -102,7 +136,7 @@ export const config = {
   // Cart Settings
   cartExpiryMinutes: parseInt(process.env.CART_EXPIRY_MINUTES || '10', 10),
   seatLockDurationSeconds: parseInt(process.env.SEAT_LOCK_DURATION_SECONDS || '600', 10),
-  adminEmail: process.env.ADMIN_EMAIL || 'admin@tixmo.co',
+  adminEmail,
 } as const;
 
 // Validate required environment variables

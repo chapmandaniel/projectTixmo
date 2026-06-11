@@ -133,6 +133,48 @@ describe('Orders API', () => {
 
       expect(res.status).toBe(201);
       expect(parseFloat(res.body.data.totalAmount)).toBe(150.0);
+
+      const tickets = await prisma.ticket.findMany({
+        where: { orderId: res.body.data.id },
+        select: { ticketTypeId: true },
+      });
+      expect(tickets).toHaveLength(2);
+      expect(tickets.map((ticket) => ticket.ticketTypeId).sort()).toEqual(
+        [ticketTypeId, vipTicketTypeId].sort()
+      );
+
+      const ticketTypes = await prisma.ticketType.findMany({
+        where: { id: { in: [ticketTypeId, vipTicketTypeId] } },
+        select: { id: true, quantityAvailable: true, quantityHeld: true, quantitySold: true },
+      });
+      const inventoryById = new Map(ticketTypes.map((ticketType) => [ticketType.id, ticketType]));
+
+      expect(inventoryById.get(ticketTypeId)?.quantityHeld).toBeGreaterThanOrEqual(1);
+      expect(inventoryById.get(vipTicketTypeId)).toMatchObject({
+        quantityAvailable: 49,
+        quantityHeld: 1,
+        quantitySold: 0,
+      });
+
+      const confirmRes = await request(app)
+        .post(`/api/v1/orders/${res.body.data.id}/confirm`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(confirmRes.status).toBe(200);
+
+      const confirmedTicketTypes = await prisma.ticketType.findMany({
+        where: { id: { in: [ticketTypeId, vipTicketTypeId] } },
+        select: { id: true, quantityAvailable: true, quantityHeld: true, quantitySold: true },
+      });
+      const confirmedInventoryById = new Map(
+        confirmedTicketTypes.map((ticketType) => [ticketType.id, ticketType])
+      );
+
+      expect(confirmedInventoryById.get(vipTicketTypeId)).toMatchObject({
+        quantityAvailable: 49,
+        quantityHeld: 0,
+        quantitySold: 1,
+      });
     });
 
     it('should fail if ticket type not found', async () => {

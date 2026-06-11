@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Terminal, Database, Zap, ShieldAlert } from 'lucide-react';
 
 const DevDashboard = ({ isDark, user }) => {
+    const isDevelopmentBuild = import.meta.env.DEV;
     const [settings, setSettings] = useState(() => {
         try {
             const saved = localStorage.getItem('tixmo_dev_settings');
@@ -53,6 +54,7 @@ const DevDashboard = ({ isDark, user }) => {
                         <h3 className={`text-lg font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Test Features</h3>
                     </div>
 
+                    {isDevelopmentBuild ? (
                     <div className="space-y-4">
                         <label className={`flex items-center justify-between p-4 rounded-md border cursor-pointer transition-colors ${settings.enableAutoEventGeneration
                                 ? (isDark ? 'bg-[#232336] border-indigo-500/50' : 'bg-indigo-50 border-indigo-200')
@@ -73,6 +75,13 @@ const DevDashboard = ({ isDark, user }) => {
                             </div>
                         </label>
                     </div>
+                    ) : (
+                    <div className={`rounded-md border p-4 ${isDark ? 'border-dashboard-border text-dashboard-nav' : 'border-gray-200 text-gray-500'}`}>
+                        <span className="text-sm font-light">
+                            Test data generators are disabled in beta and production builds.
+                        </span>
+                    </div>
+                    )}
                 </div>
 
                 {/* System Info */}

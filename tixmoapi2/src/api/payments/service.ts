@@ -1,9 +1,19 @@
 import Stripe from 'stripe';
+import { Prisma } from '@prisma/client';
 import { config } from '../../config/environment';
 import { logger } from '../../config/logger';
 import { ApiError } from '../../utils/ApiError';
 import { orderService } from '../orders/service';
 import { notificationService } from '../../utils/notificationService';
+import prisma from '../../config/prisma';
+
+const getPaymentIntentContext = (event: Stripe.Event) => {
+  const value = event.data.object as Partial<Stripe.PaymentIntent>;
+  return {
+    paymentIntentId: value.id,
+    orderId: value.metadata?.orderId,
+  };
+};
 
 export class PaymentService {
   private stripe: Stripe | null = null;
@@ -43,7 +53,7 @@ export class PaymentService {
 
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount,
-      currency: 'usd', // Default to USD for now
+      currency: config.paymentCurrency,
       metadata: {
         orderId: order.id,
         orderNumber: order.orderNumber,
@@ -57,6 +67,14 @@ export class PaymentService {
     if (!paymentIntent.client_secret) {
       throw new ApiError(500, 'Failed to create payment intent');
     }
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        paymentIntentId: paymentIntent.id,
+        paymentStatus: 'PROCESSING',
+      },
+    });
 
     return {
       clientSecret: paymentIntent.client_secret,
@@ -80,21 +98,101 @@ export class PaymentService {
       throw new ApiError(400, `Webhook Error: ${err.message}`);
     }
 
-    switch (event.type) {
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object;
-        await this.handlePaymentSuccess(paymentIntent);
-        break;
-      }
-      case 'payment_intent.payment_failed': {
-        const paymentFailed = event.data.object;
-        await this.handlePaymentFailure(paymentFailed);
-        break;
-      }
-      default:
-        // Unhandled event type
-        logger.info(`Unhandled event type ${event.type}`);
+    const shouldProcess = await this.beginWebhookEvent(event);
+    if (!shouldProcess) {
+      return;
     }
+
+    try {
+      switch (event.type) {
+        case 'payment_intent.succeeded': {
+          const paymentIntent = event.data.object;
+          await this.handlePaymentSuccess(paymentIntent);
+          break;
+        }
+        case 'payment_intent.payment_failed': {
+          const paymentFailed = event.data.object;
+          await this.handlePaymentFailure(paymentFailed);
+          break;
+        }
+        default:
+          logger.info(`Unhandled event type ${event.type}`);
+      }
+
+      await this.finishWebhookEvent(event, 'PROCESSED');
+    } catch (error) {
+      await this.finishWebhookEvent(event, 'FAILED', error);
+      throw error;
+    }
+  }
+
+  private async beginWebhookEvent(event: Stripe.Event): Promise<boolean> {
+    if (!event.id) {
+      return true;
+    }
+
+    const context = getPaymentIntentContext(event);
+
+    try {
+      const existingEvent = await prisma.paymentWebhookEvent.findUnique({
+        where: { id: event.id },
+        select: { status: true },
+      });
+
+      if (existingEvent) {
+        if (existingEvent.status === 'FAILED') {
+          await prisma.paymentWebhookEvent.update({
+            where: { id: event.id },
+            data: {
+              status: 'PROCESSING',
+              errorMessage: null,
+              processingStartedAt: new Date(),
+            },
+          });
+          return true;
+        }
+
+        logger.info(`Skipping already processed Stripe webhook event ${event.id}`);
+        return false;
+      }
+
+      await prisma.paymentWebhookEvent.create({
+        data: {
+          id: event.id,
+          type: event.type,
+          paymentIntentId: context.paymentIntentId || null,
+          orderId: context.orderId || null,
+          status: 'PROCESSING',
+        },
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        logger.info(`Skipping already processed Stripe webhook event ${event.id}`);
+        return false;
+      }
+
+      throw error;
+    }
+  }
+
+  private async finishWebhookEvent(
+    event: Stripe.Event,
+    status: 'PROCESSED' | 'FAILED',
+    error?: unknown
+  ): Promise<void> {
+    if (!event.id) {
+      return;
+    }
+
+    await prisma.paymentWebhookEvent.update({
+      where: { id: event.id },
+      data: {
+        status,
+        processedAt: new Date(),
+        errorMessage: error ? String(error instanceof Error ? error.message : error) : null,
+      },
+    });
   }
 
   /**
@@ -108,17 +206,52 @@ export class PaymentService {
       return;
     }
 
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        status: true,
+        paymentStatus: true,
+        paymentIntentId: true,
+      },
+    });
+
+    if (!order) {
+      logger.error(`Missing order ${orderId} for payment intent ${paymentIntent.id}`);
+      return;
+    }
+
+    if (order.paymentIntentId && order.paymentIntentId !== paymentIntent.id) {
+      const message = `Payment intent ${paymentIntent.id} does not match order ${orderId}`;
+      logger.error(message);
+      await notificationService.sendAdminAlert('Payment Intent Mismatch', message);
+      throw ApiError.badRequest('Payment intent does not match order');
+    }
+
+    if (!order.paymentIntentId) {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { paymentIntentId: paymentIntent.id, paymentStatus: 'PROCESSING' },
+      });
+    }
+
+    if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED') {
+      logger.info(`Skipping already confirmed order ${orderId}`);
+      return;
+    }
+
     try {
       const { withRetry } = await import('../../utils/retry');
 
       // Retry up to 5 times with exponential backoff
       await withRetry(async () => {
         await orderService.confirmOrder(orderId);
-        await orderService.sendOrderConfirmationEmail(orderId);
       }, {
         maxRetries: 5,
         initialDelay: process.env.NODE_ENV === 'test' ? 10 : 2000,
       });
+
+      await orderService.sendOrderConfirmationEmail(orderId);
 
       logger.info(`Successfully confirmed order ${orderId} after payment success`);
     } catch (error) {
@@ -142,11 +275,35 @@ export class PaymentService {
       `Payment failed for order ${orderId}: ${paymentIntent.last_payment_error?.message}`
     );
 
+    const order = orderId
+      ? await prisma.order.findUnique({
+        where: { id: orderId },
+        include: { user: { select: { email: true } } },
+      })
+      : null;
+
+    if (order && order.status !== 'PAID') {
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          paymentStatus: 'FAILED',
+          paymentIntentId: order.paymentIntentId || paymentIntent.id,
+        },
+      });
+    }
+
     // Notify user of payment failure
-    if (userId) {
+    const recipientEmail = order?.user.email || (userId
+      ? (await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      }))?.email
+      : undefined);
+
+    if (recipientEmail) {
       try {
         await notificationService.sendEmail({
-          to: userId, // In production, look up user email from userId
+          to: recipientEmail,
           subject: 'Payment Failed',
           html: `<p>Your payment for order ${orderId} could not be processed. Please try again or use a different payment method.</p>`,
           text: `Your payment for order ${orderId} could not be processed. Please try again or use a different payment method.`,

@@ -392,8 +392,8 @@ export class ScannerService {
       failureReason = 'Ticket has already been used';
     } else if (ticket.eventId !== eventId) {
       failureReason = 'Ticket is for a different event';
-    } else if (ticket.event.status !== 'PUBLISHED') {
-      failureReason = 'Event is not published';
+    } else if (!['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(ticket.event.status)) {
+      failureReason = 'Event is not active for scanning';
     }
 
     // Create scan log

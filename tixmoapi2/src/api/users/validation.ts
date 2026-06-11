@@ -21,6 +21,10 @@ export const updateUserSchema = z.object({
     firstName: z.string().min(1, 'First name is required').optional(),
     lastName: z.string().min(1, 'Last name is required').optional(),
     phone: z.string().optional(),
+    title: z.string().nullable().optional(),
+    role: userRoleSchema.optional(),
+    organizationId: z.string().uuid().nullable().optional(),
+    permissions: z.record(z.boolean()).nullable().optional(),
   }),
 });
 

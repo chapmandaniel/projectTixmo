@@ -13,6 +13,7 @@ const DashboardPlaceholderView = ({
     title,
     description = 'This module has been cleared out and reserved for future development.',
     icon: Icon = Archive,
+    badgeLabel = 'Future module',
 }) => {
     const theme = getDashboardTheme(isDark);
 
@@ -26,7 +27,7 @@ const DashboardPlaceholderView = ({
                 iconClassName="text-fuchsia-300"
                 badges={(
                     <DashboardChip isDark={isDark} className="uppercase tracking-[0.18em]">
-                        Future module
+                        {badgeLabel}
                     </DashboardChip>
                 )}
             />

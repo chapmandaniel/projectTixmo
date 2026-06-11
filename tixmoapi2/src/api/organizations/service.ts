@@ -19,6 +19,7 @@ interface UpdateOrganizationInput {
   slug?: string;
   status?: OrganizationStatus;
   stripeAccountId?: string;
+  settings?: Prisma.InputJsonValue | undefined;
 }
 
 interface ListOrganizationsParams {

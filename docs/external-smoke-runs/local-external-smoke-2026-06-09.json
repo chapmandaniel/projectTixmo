@@ -1,0 +1,190 @@
+{
+  "startedAt": "2026-06-09T13:49:40.997Z",
+  "apiBaseUrl": "http://127.0.0.1:3000",
+  "dashboardUrl": "http://127.0.0.1:5173",
+  "operatorEmail": "demo.admin@tixmo.test",
+  "steps": [
+    {
+      "name": "api root health",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.015Z",
+      "httpStatus": 200,
+      "durationMs": 16,
+      "summary": "200 16ms"
+    },
+    {
+      "name": "api version health",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.022Z",
+      "httpStatus": 200,
+      "durationMs": 7,
+      "summary": "200 7ms"
+    },
+    {
+      "name": "operator login",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.106Z",
+      "httpStatus": 200,
+      "durationMs": 83,
+      "summary": "200 83ms"
+    },
+    {
+      "name": "current user",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.112Z",
+      "httpStatus": 200,
+      "durationMs": 6,
+      "summary": "200 6ms"
+    },
+    {
+      "name": "organization lookup",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.128Z",
+      "httpStatus": 200,
+      "durationMs": 16,
+      "summary": "200 16ms"
+    },
+    {
+      "name": "events list",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.161Z",
+      "httpStatus": 200,
+      "durationMs": 33,
+      "summary": "200 33ms"
+    },
+    {
+      "name": "public checkout event",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.181Z",
+      "httpStatus": 200,
+      "durationMs": 20,
+      "summary": "200 20ms"
+    },
+    {
+      "name": "dashboard report",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.203Z",
+      "httpStatus": 200,
+      "durationMs": 22,
+      "summary": "200 22ms"
+    },
+    {
+      "name": "sales report",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.214Z",
+      "httpStatus": 200,
+      "durationMs": 11,
+      "summary": "200 11ms"
+    },
+    {
+      "name": "attendance report",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.232Z",
+      "httpStatus": 200,
+      "durationMs": 18,
+      "summary": "200 18ms"
+    },
+    {
+      "name": "scanner auth",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.241Z",
+      "httpStatus": 200,
+      "durationMs": 9,
+      "summary": "200 9ms"
+    },
+    {
+      "name": "scanner sync",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.252Z",
+      "httpStatus": 200,
+      "durationMs": 6,
+      "summary": "200 6ms"
+    },
+    {
+      "name": "public review token",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.281Z",
+      "httpStatus": 200,
+      "durationMs": 29,
+      "summary": "200 29ms"
+    },
+    {
+      "name": "public asset share token",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.300Z",
+      "httpStatus": 200,
+      "durationMs": 18,
+      "summary": "200 18ms"
+    },
+    {
+      "name": "dashboard root",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.305Z",
+      "httpStatus": 200,
+      "durationMs": 5,
+      "summary": "200 5ms"
+    },
+    {
+      "name": "dashboard checkout route",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.308Z",
+      "httpStatus": 200,
+      "durationMs": 2,
+      "summary": "200 2ms"
+    },
+    {
+      "name": "dashboard review route",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.310Z",
+      "httpStatus": 200,
+      "durationMs": 2,
+      "summary": "200 2ms"
+    },
+    {
+      "name": "dashboard shared asset route",
+      "status": "pass",
+      "at": "2026-06-09T13:49:41.311Z",
+      "httpStatus": 200,
+      "durationMs": 0,
+      "summary": "200 0ms"
+    }
+  ],
+  "ids": {
+    "userId": "eb8a477d-d637-44d1-97e3-ba35c7f08883",
+    "organizationId": "8c8c16fd-a8f9-4c6b-bc2e-7af5736b2f66",
+    "currentUserRole": "OWNER",
+    "organizationName": "Tixmo Market Demo",
+    "organizationSlug": "tixmo-market-demo",
+    "eventCount": 4,
+    "eventNames": [
+      "Founders Circle Showcase",
+      "Harborlight Summer Session",
+      "Afterglow Warehouse",
+      "Sponsor Preview Night"
+    ],
+    "checkoutEventId": "62057a5a-4c65-4732-b07e-0007b4bf6729",
+    "checkoutEventSlug": "market-demo-harborlight-summer-session",
+    "checkoutEventName": "Harborlight Summer Session",
+    "checkoutTicketTypeCount": 3,
+    "checkoutAvailableTicketTypeIds": [
+      "10f18525-7af5-4128-94b9-b4c2efe90356",
+      "affcdffd-7c11-4663-afed-042a113320f3",
+      "aa1ff079-dcad-4273-b722-e9fa88d3c256"
+    ],
+    "attendanceEventId": "5cb9f56f-ffac-44b5-9104-f0e38f763a9d",
+    "attendanceEventName": "Founders Circle Showcase",
+    "attendanceEventStatus": "COMPLETED",
+    "scannerId": "2d897382-d5b7-4755-93ec-a2956311d161",
+    "scannerName": "Harborlight Main Gate",
+    "scannerKeyReference": "sk_s...gate",
+    "scannerEventId": "62057a5a-4c65-4732-b07e-0007b4bf6729",
+    "reviewTokenReference": "mark...oken",
+    "approvalId": "112ecc53-c9db-4571-88a7-6173e7931938",
+    "approvalTitle": "Harborlight campaign artwork",
+    "shareTokenReference": "mark...oken",
+    "shareFolderId": "70124ec5-67d3-43dd-8dbf-2a7f35eeedcb",
+    "shareAssetCount": 3
+  },
+  "result": "pass",
+  "finishedAt": "2026-06-09T13:49:41.311Z"
+}

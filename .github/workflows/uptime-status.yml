@@ -1,0 +1,53 @@
+name: Tixmo Uptime Status
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+
+jobs:
+  status-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      STAGING_API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
+      STAGING_DASHBOARD_URL: ${{ secrets.STAGING_DASHBOARD_URL }}
+      PRODUCTION_API_BASE_URL: ${{ secrets.PRODUCTION_API_BASE_URL }}
+      PRODUCTION_DASHBOARD_URL: ${{ secrets.PRODUCTION_DASHBOARD_URL }}
+      TIXMO_STATUS_TIMEOUT_MS: 8000
+      TIXMO_STATUS_RETRIES: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check staging status
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${STAGING_API_BASE_URL:-}" ] && [ -z "${STAGING_DASHBOARD_URL:-}" ]; then
+            echo "::notice::Staging status monitor skipped because STAGING_API_BASE_URL and STAGING_DASHBOARD_URL are not configured."
+            exit 0
+          fi
+
+          TIXMO_API_BASE_URL="${STAGING_API_BASE_URL:-}" \
+          TIXMO_DASHBOARD_URL="${STAGING_DASHBOARD_URL:-}" \
+          npm run status:check
+
+      - name: Check production status
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${PRODUCTION_API_BASE_URL:-}" ] && [ -z "${PRODUCTION_DASHBOARD_URL:-}" ]; then
+            echo "::notice::Production status monitor skipped because PRODUCTION_API_BASE_URL and PRODUCTION_DASHBOARD_URL are not configured."
+            exit 0
+          fi
+
+          TIXMO_API_BASE_URL="${PRODUCTION_API_BASE_URL:-}" \
+          TIXMO_DASHBOARD_URL="${PRODUCTION_DASHBOARD_URL:-}" \
+          npm run status:check
+

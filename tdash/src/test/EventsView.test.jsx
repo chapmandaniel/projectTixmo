@@ -27,8 +27,18 @@ vi.mock('../lib/api', () => ({
     },
 }));
 
-vi.mock('../features/EventWizard', () => ({
-    default: () => <div>Event Wizard</div>,
+vi.mock('../features/EventStudio', () => ({
+    default: ({ embedded, onSuccess }) => (
+        <div>
+            <span>{embedded ? 'Embedded Event Studio' : 'Event Studio'}</span>
+            <button
+                type="button"
+                onClick={() => onSuccess?.({ id: 'event-5', title: 'Studio Launch Night' })}
+            >
+                Complete event studio
+            </button>
+        </div>
+    ),
 }));
 
 vi.mock('../features/OrdersView', () => ({
@@ -170,6 +180,34 @@ describe('EventsView', () => {
                 event: expect.objectContaining({
                     id: 'event-1',
                     title: 'Harbour Lights Festival',
+                }),
+            },
+        });
+    });
+
+    it('uses Event Studio as the canonical event creation path', async () => {
+        await act(async () => {
+            render(
+                <MemoryRouter>
+                    <EventsView isDark user={{ role: 'ADMIN', organizationId: 'org-1' }} />
+                </MemoryRouter>
+            );
+        });
+
+        await waitFor(() => expect(screen.getByText('Create New Event')).toBeInTheDocument());
+
+        fireEvent.click(screen.getByText('Create New Event'));
+
+        expect(screen.getByText('Embedded Event Studio')).toBeInTheDocument();
+        expect(screen.queryByText('Event Wizard')).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByText('Complete event studio'));
+
+        expect(navigate).toHaveBeenCalledWith('/events/studio-launch-night-event-5', {
+            state: {
+                event: expect.objectContaining({
+                    id: 'event-5',
+                    title: 'Studio Launch Night',
                 }),
             },
         });

@@ -30,6 +30,10 @@ export interface UpdateUserInput {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  title?: string | null;
+  role?: 'OWNER' | 'ADMIN' | 'MANAGER' | 'PROMOTER' | 'CUSTOMER' | 'SCANNER' | 'TEAM_MEMBER';
+  organizationId?: string | null;
+  permissions?: Record<string, boolean> | null;
 }
 
 export interface ListUsersParams {
@@ -178,6 +182,7 @@ export class UserService {
       where: { id },
       data: {
         ...data,
+        permissions: data.permissions as Prisma.InputJsonValue | undefined,
         updatedAt: new Date(),
       },
       select: {

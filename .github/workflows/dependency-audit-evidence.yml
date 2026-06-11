@@ -1,0 +1,41 @@
+name: Dependency Audit Evidence
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            tdash/package-lock.json
+            tixmoapi2/package-lock.json
+
+      - name: Install dashboard dependencies
+        run: npm ci
+        working-directory: tdash
+
+      - name: Install API dependencies
+        run: npm ci
+        working-directory: tixmoapi2
+
+      - name: Run production dependency audits
+        run: npm run evidence:dependency-audit
+
+      - name: Upload dependency audit evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-audit-evidence
+          path: docs/dependency-audit/production-dependency-audit.json
+          if-no-files-found: error

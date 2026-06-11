@@ -1,0 +1,116 @@
+name: Tixmo Public Route Screenshot Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Environment to capture
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+          - both
+      require_policy_links:
+        description: Require visible Terms, Refund Policy, and Privacy Policy links on checkout
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  public-route-screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      TARGET: ${{ inputs.target }}
+      REQUIRE_POLICY_LINKS: ${{ inputs.require_policy_links }}
+
+      STAGING_DASHBOARD_URL: ${{ secrets.STAGING_DASHBOARD_URL }}
+      STAGING_SMOKE_REVIEW_TOKEN: ${{ secrets.STAGING_SMOKE_REVIEW_TOKEN }}
+      STAGING_SMOKE_SHARE_TOKEN: ${{ secrets.STAGING_SMOKE_SHARE_TOKEN }}
+      STAGING_SMOKE_CHECKOUT_SLUG: ${{ secrets.STAGING_SMOKE_CHECKOUT_SLUG }}
+      STAGING_PUBLIC_CHECKOUT_TEXT: ${{ secrets.STAGING_PUBLIC_CHECKOUT_TEXT }}
+      STAGING_PUBLIC_REVIEW_TEXT: ${{ secrets.STAGING_PUBLIC_REVIEW_TEXT }}
+      STAGING_PUBLIC_SHARE_TEXT: ${{ secrets.STAGING_PUBLIC_SHARE_TEXT }}
+
+      PRODUCTION_DASHBOARD_URL: ${{ secrets.PRODUCTION_DASHBOARD_URL }}
+      PRODUCTION_SMOKE_REVIEW_TOKEN: ${{ secrets.PRODUCTION_SMOKE_REVIEW_TOKEN }}
+      PRODUCTION_SMOKE_SHARE_TOKEN: ${{ secrets.PRODUCTION_SMOKE_SHARE_TOKEN }}
+      PRODUCTION_SMOKE_CHECKOUT_SLUG: ${{ secrets.PRODUCTION_SMOKE_CHECKOUT_SLUG }}
+      PRODUCTION_PUBLIC_CHECKOUT_TEXT: ${{ secrets.PRODUCTION_PUBLIC_CHECKOUT_TEXT }}
+      PRODUCTION_PUBLIC_REVIEW_TEXT: ${{ secrets.PRODUCTION_PUBLIC_REVIEW_TEXT }}
+      PRODUCTION_PUBLIC_SHARE_TEXT: ${{ secrets.PRODUCTION_PUBLIC_SHARE_TEXT }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v google-chrome >/dev/null 2>&1; then
+            echo "::error::google-chrome is required on the runner for screenshot evidence."
+            exit 1
+          fi
+          google-chrome --version
+
+      - name: Prepare evidence directory
+        run: mkdir -p docs/public-route-screenshots
+
+      - name: Capture staging public routes
+        if: ${{ inputs.target == 'staging' || inputs.target == 'both' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${STAGING_DASHBOARD_URL:-}" ]; then
+            echo "::error::STAGING_DASHBOARD_URL is required for staging public-route evidence."
+            exit 1
+          fi
+
+          TIXMO_CHROME_PATH="$(command -v google-chrome)" \
+          TIXMO_DASHBOARD_URL="${STAGING_DASHBOARD_URL}" \
+          TIXMO_SMOKE_REVIEW_TOKEN="${STAGING_SMOKE_REVIEW_TOKEN:-market-demo-approval-token}" \
+          TIXMO_SMOKE_SHARE_TOKEN="${STAGING_SMOKE_SHARE_TOKEN:-market-demo-share-token}" \
+          TIXMO_SMOKE_CHECKOUT_SLUG="${STAGING_SMOKE_CHECKOUT_SLUG:-market-demo-harborlight-summer-session}" \
+          TIXMO_PUBLIC_CHECKOUT_TEXT="${STAGING_PUBLIC_CHECKOUT_TEXT:-Harborlight Summer Session}" \
+          TIXMO_PUBLIC_REVIEW_TEXT="${STAGING_PUBLIC_REVIEW_TEXT:-Harborlight campaign artwork}" \
+          TIXMO_PUBLIC_SHARE_TEXT="${STAGING_PUBLIC_SHARE_TEXT:-Secure folder share}" \
+          TIXMO_PUBLIC_EVIDENCE_REQUIRE_POLICIES="${REQUIRE_POLICY_LINKS}" \
+          TIXMO_PUBLIC_EVIDENCE_PATH="docs/public-route-screenshots/staging-${GITHUB_RUN_ID}" \
+          npm run evidence:public-routes
+
+      - name: Capture production public routes
+        if: ${{ inputs.target == 'production' || inputs.target == 'both' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${PRODUCTION_DASHBOARD_URL:-}" ]; then
+            echo "::error::PRODUCTION_DASHBOARD_URL is required for production public-route evidence."
+            exit 1
+          fi
+
+          TIXMO_CHROME_PATH="$(command -v google-chrome)" \
+          TIXMO_DASHBOARD_URL="${PRODUCTION_DASHBOARD_URL}" \
+          TIXMO_SMOKE_REVIEW_TOKEN="${PRODUCTION_SMOKE_REVIEW_TOKEN:-market-demo-approval-token}" \
+          TIXMO_SMOKE_SHARE_TOKEN="${PRODUCTION_SMOKE_SHARE_TOKEN:-market-demo-share-token}" \
+          TIXMO_SMOKE_CHECKOUT_SLUG="${PRODUCTION_SMOKE_CHECKOUT_SLUG:-market-demo-harborlight-summer-session}" \
+          TIXMO_PUBLIC_CHECKOUT_TEXT="${PRODUCTION_PUBLIC_CHECKOUT_TEXT:-Harborlight Summer Session}" \
+          TIXMO_PUBLIC_REVIEW_TEXT="${PRODUCTION_PUBLIC_REVIEW_TEXT:-Harborlight campaign artwork}" \
+          TIXMO_PUBLIC_SHARE_TEXT="${PRODUCTION_PUBLIC_SHARE_TEXT:-Secure folder share}" \
+          TIXMO_PUBLIC_EVIDENCE_REQUIRE_POLICIES="${REQUIRE_POLICY_LINKS}" \
+          TIXMO_PUBLIC_EVIDENCE_PATH="docs/public-route-screenshots/production-${GITHUB_RUN_ID}" \
+          npm run evidence:public-routes
+
+      - name: Upload screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tixmo-public-route-screenshot-evidence-${{ inputs.target }}-${{ github.run_id }}
+          path: docs/public-route-screenshots/**
+          if-no-files-found: warn

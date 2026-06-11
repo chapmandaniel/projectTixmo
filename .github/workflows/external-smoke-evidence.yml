@@ -1,0 +1,101 @@
+name: Tixmo External Smoke Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Environment to smoke
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+          - both
+
+jobs:
+  external-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      TARGET: ${{ inputs.target }}
+      TIXMO_SMOKE_TIMEOUT_MS: 12000
+
+      STAGING_API_BASE_URL: ${{ secrets.STAGING_API_BASE_URL }}
+      STAGING_DASHBOARD_URL: ${{ secrets.STAGING_DASHBOARD_URL }}
+      STAGING_SMOKE_EMAIL: ${{ secrets.STAGING_SMOKE_EMAIL }}
+      STAGING_SMOKE_PASSWORD: ${{ secrets.STAGING_SMOKE_PASSWORD }}
+      STAGING_SMOKE_REVIEW_TOKEN: ${{ secrets.STAGING_SMOKE_REVIEW_TOKEN }}
+      STAGING_SMOKE_SHARE_TOKEN: ${{ secrets.STAGING_SMOKE_SHARE_TOKEN }}
+      STAGING_SMOKE_SCANNER_KEY: ${{ secrets.STAGING_SMOKE_SCANNER_KEY }}
+      STAGING_SMOKE_CHECKOUT_SLUG: ${{ secrets.STAGING_SMOKE_CHECKOUT_SLUG }}
+
+      PRODUCTION_API_BASE_URL: ${{ secrets.PRODUCTION_API_BASE_URL }}
+      PRODUCTION_DASHBOARD_URL: ${{ secrets.PRODUCTION_DASHBOARD_URL }}
+      PRODUCTION_SMOKE_EMAIL: ${{ secrets.PRODUCTION_SMOKE_EMAIL }}
+      PRODUCTION_SMOKE_PASSWORD: ${{ secrets.PRODUCTION_SMOKE_PASSWORD }}
+      PRODUCTION_SMOKE_REVIEW_TOKEN: ${{ secrets.PRODUCTION_SMOKE_REVIEW_TOKEN }}
+      PRODUCTION_SMOKE_SHARE_TOKEN: ${{ secrets.PRODUCTION_SMOKE_SHARE_TOKEN }}
+      PRODUCTION_SMOKE_SCANNER_KEY: ${{ secrets.PRODUCTION_SMOKE_SCANNER_KEY }}
+      PRODUCTION_SMOKE_CHECKOUT_SLUG: ${{ secrets.PRODUCTION_SMOKE_CHECKOUT_SLUG }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prepare evidence directory
+        run: mkdir -p docs/external-smoke-runs
+
+      - name: Run staging external smoke
+        if: ${{ inputs.target == 'staging' || inputs.target == 'both' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${STAGING_API_BASE_URL:-}" ] || [ -z "${STAGING_DASHBOARD_URL:-}" ]; then
+            echo "::error::STAGING_API_BASE_URL and STAGING_DASHBOARD_URL are required for staging smoke evidence."
+            exit 1
+          fi
+
+          TIXMO_API_BASE_URL="${STAGING_API_BASE_URL}" \
+          TIXMO_DASHBOARD_URL="${STAGING_DASHBOARD_URL}" \
+          TIXMO_SMOKE_EMAIL="${STAGING_SMOKE_EMAIL:-demo.admin@tixmo.test}" \
+          TIXMO_SMOKE_PASSWORD="${STAGING_SMOKE_PASSWORD:-DemoPass123!}" \
+          TIXMO_SMOKE_REVIEW_TOKEN="${STAGING_SMOKE_REVIEW_TOKEN:-market-demo-approval-token}" \
+          TIXMO_SMOKE_SHARE_TOKEN="${STAGING_SMOKE_SHARE_TOKEN:-market-demo-share-token}" \
+          TIXMO_SMOKE_SCANNER_KEY="${STAGING_SMOKE_SCANNER_KEY:-sk_scanner_market_demo_main_gate}" \
+          TIXMO_SMOKE_CHECKOUT_SLUG="${STAGING_SMOKE_CHECKOUT_SLUG:-market-demo-harborlight-summer-session}" \
+          TIXMO_SMOKE_EVIDENCE_PATH="docs/external-smoke-runs/staging-${GITHUB_RUN_ID}.json" \
+          npm run smoke:external
+
+      - name: Run production external smoke
+        if: ${{ inputs.target == 'production' || inputs.target == 'both' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${PRODUCTION_API_BASE_URL:-}" ] || [ -z "${PRODUCTION_DASHBOARD_URL:-}" ]; then
+            echo "::error::PRODUCTION_API_BASE_URL and PRODUCTION_DASHBOARD_URL are required for production smoke evidence."
+            exit 1
+          fi
+
+          TIXMO_API_BASE_URL="${PRODUCTION_API_BASE_URL}" \
+          TIXMO_DASHBOARD_URL="${PRODUCTION_DASHBOARD_URL}" \
+          TIXMO_SMOKE_EMAIL="${PRODUCTION_SMOKE_EMAIL:-demo.admin@tixmo.test}" \
+          TIXMO_SMOKE_PASSWORD="${PRODUCTION_SMOKE_PASSWORD:-DemoPass123!}" \
+          TIXMO_SMOKE_REVIEW_TOKEN="${PRODUCTION_SMOKE_REVIEW_TOKEN:-market-demo-approval-token}" \
+          TIXMO_SMOKE_SHARE_TOKEN="${PRODUCTION_SMOKE_SHARE_TOKEN:-market-demo-share-token}" \
+          TIXMO_SMOKE_SCANNER_KEY="${PRODUCTION_SMOKE_SCANNER_KEY:-sk_scanner_market_demo_main_gate}" \
+          TIXMO_SMOKE_CHECKOUT_SLUG="${PRODUCTION_SMOKE_CHECKOUT_SLUG:-market-demo-harborlight-summer-session}" \
+          TIXMO_SMOKE_EVIDENCE_PATH="docs/external-smoke-runs/production-${GITHUB_RUN_ID}.json" \
+          npm run smoke:external
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tixmo-external-smoke-evidence-${{ inputs.target }}-${{ github.run_id }}
+          path: docs/external-smoke-runs/*.json
+          if-no-files-found: warn

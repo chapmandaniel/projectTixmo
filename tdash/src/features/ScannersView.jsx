@@ -1,7 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, RefreshCw, Smartphone, History, Trash2, Power, PowerOff } from 'lucide-react';
+import { Plus, Smartphone, History, PowerOff } from 'lucide-react';
 import api from '../lib/api';
+import {
+    DashboardButton,
+    DashboardChip,
+    DashboardEmptyState,
+    DashboardPage,
+    DashboardPageHeader,
+    DashboardSurface,
+} from '../components/dashboard/DashboardPrimitives';
 import RegisterScannerModal from './RegisterScannerModal';
+import { cn } from '../lib/utils';
+
+const extractScannerPayload = (body) => {
+    const payload = body?.data || body || {};
+
+    if (Array.isArray(payload)) {
+        return { items: payload, pages: body?.pagination?.pages || 1 };
+    }
+
+    return {
+        items: payload.scanners || payload.data?.scanners || [],
+        pages: payload.pagination?.pages || body?.pagination?.pages || 1,
+    };
+};
+
+const extractLogPayload = (body) => {
+    const payload = body?.data || body || {};
+
+    if (Array.isArray(payload)) {
+        return { items: payload, pages: body?.pagination?.pages || 1 };
+    }
+
+    return {
+        items: payload.scanLogs || payload.logs || payload.data?.scanLogs || [],
+        pages: payload.pagination?.pages || body?.pagination?.pages || 1,
+    };
+};
+
+const formatDateTime = (value) => {
+    if (!value) return 'Never';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Never';
+
+    return date.toLocaleString();
+};
+
+const ScannerStatusChip = ({ scanner, isDark }) => (
+    <DashboardChip
+        isDark={isDark}
+        className={scanner.status === 'ACTIVE'
+            ? (isDark ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300' : 'border-emerald-100 bg-emerald-50 text-emerald-700')
+            : (isDark ? 'border-rose-500/20 bg-rose-500/10 text-rose-300' : 'border-rose-100 bg-rose-50 text-rose-700')}
+    >
+        {scanner.status}
+    </DashboardChip>
+);
+
+const ScanResultChip = ({ log, isDark }) => (
+    <DashboardChip
+        isDark={isDark}
+        className={log.success
+            ? (isDark ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300' : 'border-emerald-100 bg-emerald-50 text-emerald-700')
+            : (isDark ? 'border-rose-500/20 bg-rose-500/10 text-rose-300' : 'border-rose-100 bg-rose-50 text-rose-700')}
+    >
+        {log.success ? 'SUCCESS' : 'DENIED'}
+    </DashboardChip>
+);
 
 const ScannersView = ({
     isDark,
@@ -34,14 +100,9 @@ const ScannersView = ({
             // Usually API filters by user's permission scope automatically.
             const response = await api.get('/scanners', { params });
             if (response.data.success) {
-                setScanners(response.data.data); // Assuming array or {scanners: [], pagination: {}}
-                // Adjust if response structure is nested
-                if (response.data.pagination) {
-                    setTotalPages(response.data.pagination.pages);
-                } else if (response.data.data.pagination) {
-                    setScanners(response.data.data.scanners || response.data.data); // heuristic
-                    setTotalPages(response.data.data.pagination.pages);
-                }
+                const payload = extractScannerPayload(response.data);
+                setScanners(payload.items);
+                setTotalPages(payload.pages);
             }
         } catch (error) {
             console.error('Failed to fetch scanners:', error);
@@ -56,12 +117,9 @@ const ScannersView = ({
             const params = { page, limit: 20 };
             const response = await api.get('/scanners/logs', { params });
             if (response.data.success) {
-                setLogs(response.data.data); // structure might vary
-                if (response.data.pagination) setTotalPages(response.data.pagination.pages);
-                else if (response.data.data.scanLogs) {
-                    setLogs(response.data.data.scanLogs);
-                    setTotalPages(response.data.data.pagination.pages);
-                }
+                const payload = extractLogPayload(response.data);
+                setLogs(payload.items);
+                setTotalPages(payload.pages);
             }
         } catch (error) {
             console.error('Failed to fetch logs:', error);
@@ -80,12 +138,10 @@ const ScannersView = ({
         }
     };
 
-    const wrapperClassName = embedded
-        ? 'space-y-6 animate-fade-in'
-        : 'space-y-6 animate-fade-in max-w-7xl mx-auto';
+    const wrapperClassName = embedded ? 'space-y-6 animate-fade-in' : 'mx-auto max-w-7xl';
 
     return (
-        <div className={wrapperClassName}>
+        <DashboardPage className={wrapperClassName}>
             {isRegisterModalOpen && (
                 <RegisterScannerModal
                     onClose={() => setIsRegisterModalOpen(false)}
@@ -94,176 +150,240 @@ const ScannersView = ({
                 />
             )}
 
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{title}</h2>
-                    <p className={`mt-1 text-lg font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
-                        {description}
-                    </p>
-                </div>
-                <button
-                    onClick={() => setIsRegisterModalOpen(true)}
-                    className="flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 shadow-md shadow-pink-500/20 text-white rounded-md transition-colors font-light tracking-wide text-sm"
-                >
-                    <Plus size={18} />
-                    <span>Register New Scanner</span>
-                </button>
-            </div>
+            <DashboardPageHeader
+                isDark={isDark}
+                eyebrow="Field ops"
+                title={title}
+                description={description}
+                icon={Smartphone}
+                iconClassName={isDark ? 'text-pink-300' : 'text-rose-700'}
+                actions={(
+                    <DashboardButton
+                        isDark={isDark}
+                        className="w-full sm:w-auto"
+                        onClick={() => setIsRegisterModalOpen(true)}
+                    >
+                        <Plus size={18} />
+                        Register New Scanner
+                    </DashboardButton>
+                )}
+            />
 
-            {/* Tabs */}
-            <div className={`border-b border-[#2b2b40] ${isDark ? 'border-[#2b2b40]' : 'border-gray-200'}`}>
-                <div className="flex space-x-8">
+            <DashboardSurface isDark={isDark} accent="brand" className="p-4 sm:p-5">
+                <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
                     <button
                         onClick={() => { setActiveTab('scanners'); setPage(1); }}
-                        className={`pb-4 text-sm font-light tracking-wide transition-colors relative ${activeTab === 'scanners'
-                            ? (isDark ? 'text-white' : 'text-pink-600')
-                            : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
-                            }`}
-                    >
-                        <div className="flex items-center space-x-2">
-                            <Smartphone size={18} />
-                            <span>Active Scanners</span>
-                        </div>
-                        {activeTab === 'scanners' && (
-                            <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 to-orange-400 ${isDark ? '' : ''}`} />
+                        className={cn(
+                            'relative inline-flex min-w-max items-center gap-2 rounded-md px-4 py-2.5 text-sm font-light tracking-wide transition-colors',
+                            activeTab === 'scanners'
+                                ? (isDark ? 'bg-dashboard-control text-white' : 'bg-slate-900 text-white')
+                                : (isDark ? 'text-dashboard-muted hover:bg-dashboard-panelAlt hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
                         )}
+                    >
+                        <Smartphone size={18} />
+                        <span>Active Scanners</span>
                     </button>
                     <button
                         onClick={() => { setActiveTab('logs'); setPage(1); }}
-                        className={`pb-4 text-sm font-light tracking-wide transition-colors relative ${activeTab === 'logs'
-                            ? (isDark ? 'text-white' : 'text-pink-600')
-                            : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')
-                            }`}
-                    >
-                        <div className="flex items-center space-x-2">
-                            <History size={18} />
-                            <span>Scan Logs</span>
-                        </div>
-                        {activeTab === 'logs' && (
-                            <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 to-orange-400 ${isDark ? '' : ''}`} />
+                        className={cn(
+                            'relative inline-flex min-w-max items-center gap-2 rounded-md px-4 py-2.5 text-sm font-light tracking-wide transition-colors',
+                            activeTab === 'logs'
+                                ? (isDark ? 'bg-dashboard-control text-white' : 'bg-slate-900 text-white')
+                                : (isDark ? 'text-dashboard-muted hover:bg-dashboard-panelAlt hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
                         )}
+                    >
+                        <History size={18} />
+                        <span>Scan Logs</span>
                     </button>
                 </div>
-            </div>
+            </DashboardSurface>
 
-            {/* Content */}
-            <div className={`overflow-hidden rounded-md border ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
+            <DashboardSurface isDark={isDark} accent={activeTab === 'scanners' ? 'brand' : 'blue'} className="p-0">
                 {isLoading ? (
-                    <div className="p-20 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 mx-auto"></div>
-                        <p className={`mt-4 text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Loading...</p>
+                    <div className="p-12 text-center sm:p-20">
+                        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-dashboard-accent"></div>
+                        <p className={cn('mt-4 text-sm font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>Loading...</p>
                     </div>
+                ) : activeTab === 'scanners' ? (
+                    scanners.length === 0 ? (
+                        <DashboardEmptyState
+                            isDark={isDark}
+                            title="No scanners registered"
+                            description="Register a device to start scanning tickets."
+                            className="m-4"
+                        />
+                    ) : (
+                        <>
+                            <div className="grid gap-3 p-4 md:hidden" data-testid="scanner-mobile-cards">
+                                {scanners.map((scanner) => (
+                                    <article
+                                        key={scanner.id}
+                                        className={cn('rounded-md border p-4', isDark ? 'border-dashboard-border bg-dashboard-panelMuted' : 'border-slate-200 bg-slate-50')}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <h3 className={cn('truncate text-base font-light', isDark ? 'text-zinc-100' : 'text-slate-900')}>
+                                                    {scanner.name}
+                                                </h3>
+                                                <p className={cn('mt-1 truncate font-mono text-xs', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>
+                                                    {scanner.deviceId || 'No device ID'}
+                                                </p>
+                                            </div>
+                                            <ScannerStatusChip scanner={scanner} isDark={isDark} />
+                                        </div>
+                                        <div className={cn('mt-4 grid gap-1 text-xs font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>
+                                            <span>Last active</span>
+                                            <span className={isDark ? 'text-zinc-100' : 'text-slate-800'}>
+                                                {formatDateTime(scanner.lastUsedAt || scanner.lastActiveAt)}
+                                            </span>
+                                        </div>
+                                        <DashboardButton
+                                            isDark={isDark}
+                                            variant="danger"
+                                            className="mt-4 w-full"
+                                            onClick={() => handleRevoke(scanner.id)}
+                                        >
+                                            <PowerOff size={16} />
+                                            Revoke access
+                                        </DashboardButton>
+                                    </article>
+                                ))}
+                            </div>
+                            <div className="hidden overflow-x-auto md:block">
+                                <table className="w-full text-left">
+                                    <thead className={cn('border-b text-xs uppercase tracking-wider', isDark ? 'border-dashboard-borderStrong bg-dashboard-control text-dashboard-muted' : 'border-slate-200 bg-slate-50 text-slate-500')}>
+                                        <tr>
+                                            <th className="p-4 font-light tracking-wide">Name</th>
+                                            <th className="p-4 font-light tracking-wide">Device ID</th>
+                                            <th className="p-4 font-light tracking-wide">Status</th>
+                                            <th className="p-4 font-light tracking-wide">Last Active</th>
+                                            <th className="p-4 text-right font-light tracking-wide">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className={cn('divide-y text-sm font-light tracking-wide', isDark ? 'divide-dashboard-border text-zinc-300' : 'divide-slate-100 text-slate-600')}>
+                                        {scanners.map((scanner) => (
+                                            <tr key={scanner.id} className={cn('group transition-colors', isDark ? 'hover:bg-dashboard-panelAlt' : 'hover:bg-slate-50')}>
+                                                <td className="p-4">{scanner.name}</td>
+                                                <td className="p-4 font-mono text-xs opacity-70">{scanner.deviceId || 'N/A'}</td>
+                                                <td className="p-4"><ScannerStatusChip scanner={scanner} isDark={isDark} /></td>
+                                                <td className="p-4 text-xs">{formatDateTime(scanner.lastUsedAt || scanner.lastActiveAt)}</td>
+                                                <td className="p-4 text-right">
+                                                    <button
+                                                        onClick={() => handleRevoke(scanner.id)}
+                                                        className={cn('rounded-md p-2 transition-colors', isDark ? 'text-rose-300 hover:bg-rose-500/10' : 'text-rose-600 hover:bg-rose-50')}
+                                                        title="Revoke Access"
+                                                    >
+                                                        <PowerOff size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    )
+                ) : logs.length === 0 ? (
+                    <DashboardEmptyState
+                        isDark={isDark}
+                        title="No scan logs found"
+                        description="Successful and denied scans will appear here after devices start validating tickets."
+                        className="m-4"
+                    />
                 ) : (
                     <>
-                        {activeTab === 'scanners' ? (
-                            // SCANNERS LIST
-                            scanners.length === 0 ? (
-                                <div className="p-20 text-center">
-                                    <Smartphone className={`mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} size={48} />
-                                    <p className={`text-lg font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No scanners registered</p>
-                                    <p className={`text-sm ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Register a device to start scanning tickets.</p>
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead className={`text-xs uppercase tracking-wider border-b ${isDark ? 'bg-[#2b2b40] text-[#a1a5b7] border-[#3a3a5a]' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                                            <tr>
-                                                <th className="p-4 font-light tracking-wide">Name</th>
-                                                <th className="p-4 font-light tracking-wide">Device ID</th>
-                                                <th className="p-4 font-light tracking-wide">Status</th>
-                                                <th className="p-4 font-light tracking-wide">Last Active</th>
-                                                <th className="p-4 font-light tracking-wide text-right">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className={`text-sm divide-y font-light tracking-wide ${isDark ? 'divide-[#2b2b40] text-gray-300' : 'divide-gray-100 text-gray-600'}`}>
-                                            {scanners.map((scanner) => (
-                                                <tr key={scanner.id} className={`group transition-colors ${isDark ? 'hover:bg-[#232336]' : 'hover:bg-gray-50'}`}>
-                                                    <td className="p-4">{scanner.name}</td>
-                                                    <td className="p-4 font-mono text-xs opacity-70">{scanner.deviceId || 'N/A'}</td>
-                                                    <td className="p-4">
-                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${scanner.status === 'ACTIVE'
-                                                            ? (isDark ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-green-50 text-green-700 border-green-100')
-                                                            : (isDark ? 'bg-red-900/20 text-red-400 border-red-900/30' : 'bg-red-50 text-red-600 border-red-100')
-                                                            }`}>
-                                                            {scanner.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-4 text-xs">
-                                                        {scanner.lastActiveAt ? new Date(scanner.lastActiveAt).toLocaleString() : 'Never'}
-                                                    </td>
-                                                    <td className="p-4 text-right">
-                                                        <button
-                                                            onClick={() => handleRevoke(scanner.id)}
-                                                            className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-red-900/20 text-red-400' : 'hover:bg-red-50 text-red-600'}`}
-                                                            title="Revoke Access"
-                                                        >
-                                                            <PowerOff size={16} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )
-                        ) : (
-                            // LOGS LIST
-                            logs.length === 0 ? (
-                                <div className="p-20 text-center">
-                                    <History className={`mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} size={48} />
-                                    <p className={`text-lg font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No scan logs found</p>
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead className={`text-xs uppercase tracking-wider border-b ${isDark ? 'bg-[#2b2b40] text-[#a1a5b7] border-[#3a3a5a]' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                                            <tr>
-                                                <th className="p-4 font-light tracking-wide">Time</th>
-                                                <th className="p-4 font-light tracking-wide">Type</th>
-                                                <th className="p-4 font-light tracking-wide">Scanner</th>
-                                                <th className="p-4 font-light tracking-wide">Ticket</th>
-                                                <th className="p-4 font-light tracking-wide">Result</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className={`text-sm divide-y font-light tracking-wide ${isDark ? 'divide-[#2b2b40] text-gray-300' : 'divide-gray-100 text-gray-600'}`}>
-                                            {Array.isArray(logs) && logs.map((log) => (
-                                                <tr key={log.id} className={`group transition-colors ${isDark ? 'hover:bg-[#232336]' : 'hover:bg-gray-50'}`}>
-                                                    <td className="p-4 whitespace-nowrap">
-                                                        {new Date(log.scannedAt).toLocaleString()}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <span className={`font-medium ${log.scanType === 'ENTRY' ? 'text-blue-500' : 'text-orange-500'
-                                                            }`}>
-                                                            {log.scanType}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-4">{log.scanner?.name || 'Unknown'}</td>
-                                                    <td className="p-4 font-mono text-xs max-w-[100px] truncate" title={log.ticketId}>
-                                                        {log.ticketId}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <span className={`px-2 py-1 rounded text-xs font-medium ${log.success
-                                                            ? (isDark ? 'bg-green-500/10 text-green-400' : 'bg-green-50 text-green-700')
-                                                            : (isDark ? 'bg-red-500/10 text-red-400' : 'bg-red-50 text-red-600')
-                                                            }`}>
-                                                            {log.success ? 'SUCCESS' : 'DENIED'}
-                                                        </span>
-                                                        {!log.success && log.metadata?.reason && (
-                                                            <span className="ml-2 text-xs opacity-60">({log.metadata.reason})</span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )
-                        )}
+                        <div className="grid gap-3 p-4 md:hidden" data-testid="scan-log-mobile-cards">
+                            {Array.isArray(logs) && logs.map((log) => (
+                                <article
+                                    key={log.id}
+                                    className={cn('rounded-md border p-4', isDark ? 'border-dashboard-border bg-dashboard-panelMuted' : 'border-slate-200 bg-slate-50')}
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className={cn('text-sm font-light', isDark ? 'text-zinc-100' : 'text-slate-900')}>
+                                                {formatDateTime(log.scannedAt)}
+                                            </p>
+                                            <p className={cn('mt-1 text-xs font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>
+                                                {log.scanner?.name || 'Unknown scanner'}
+                                            </p>
+                                        </div>
+                                        <ScanResultChip log={log} isDark={isDark} />
+                                    </div>
+                                    <div className={cn('mt-4 grid grid-cols-2 gap-3 text-xs font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>
+                                        <div>
+                                            <span>Type</span>
+                                            <p className={isDark ? 'text-sky-300' : 'text-sky-700'}>{log.scanType}</p>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <span>Ticket</span>
+                                            <p className={cn('truncate font-mono', isDark ? 'text-zinc-100' : 'text-slate-800')} title={log.ticketId}>
+                                                {log.ticketId}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {!log.success && log.metadata?.reason ? (
+                                        <p className={cn('mt-3 text-xs font-light', isDark ? 'text-rose-200' : 'text-rose-700')}>
+                                            {log.metadata.reason}
+                                        </p>
+                                    ) : null}
+                                </article>
+                            ))}
+                        </div>
+                        <div className="hidden overflow-x-auto md:block">
+                            <table className="w-full text-left">
+                                <thead className={cn('border-b text-xs uppercase tracking-wider', isDark ? 'border-dashboard-borderStrong bg-dashboard-control text-dashboard-muted' : 'border-slate-200 bg-slate-50 text-slate-500')}>
+                                    <tr>
+                                        <th className="p-4 font-light tracking-wide">Time</th>
+                                        <th className="p-4 font-light tracking-wide">Type</th>
+                                        <th className="p-4 font-light tracking-wide">Scanner</th>
+                                        <th className="p-4 font-light tracking-wide">Ticket</th>
+                                        <th className="p-4 font-light tracking-wide">Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody className={cn('divide-y text-sm font-light tracking-wide', isDark ? 'divide-dashboard-border text-zinc-300' : 'divide-slate-100 text-slate-600')}>
+                                    {Array.isArray(logs) && logs.map((log) => (
+                                        <tr key={log.id} className={cn('group transition-colors', isDark ? 'hover:bg-dashboard-panelAlt' : 'hover:bg-slate-50')}>
+                                            <td className="whitespace-nowrap p-4">{formatDateTime(log.scannedAt)}</td>
+                                            <td className="p-4">
+                                                <span className={cn('font-medium', log.scanType === 'ENTRY' ? 'text-sky-500' : 'text-orange-500')}>
+                                                    {log.scanType}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">{log.scanner?.name || 'Unknown'}</td>
+                                            <td className="max-w-[100px] truncate p-4 font-mono text-xs" title={log.ticketId}>
+                                                {log.ticketId}
+                                            </td>
+                                            <td className="p-4">
+                                                <ScanResultChip log={log} isDark={isDark} />
+                                                {!log.success && log.metadata?.reason && (
+                                                    <span className="ml-2 text-xs opacity-60">({log.metadata.reason})</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </>
                 )}
-            </div>
-        </div>
+            </DashboardSurface>
+
+            {totalPages > 1 ? (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className={cn('text-sm font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>
+                        Page {page} of {totalPages}
+                    </p>
+                    <div className="flex gap-2">
+                        <DashboardButton isDark={isDark} variant="secondary" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+                            Previous
+                        </DashboardButton>
+                        <DashboardButton isDark={isDark} variant="secondary" disabled={page >= totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
+                            Next
+                        </DashboardButton>
+                    </div>
+                </div>
+            ) : null}
+        </DashboardPage>
     );
 };
 

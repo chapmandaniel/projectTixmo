@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { createHash, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
 import prisma from '../../config/prisma';
 import { config } from '../../config/environment';
 import { logger } from '../../config/logger';
@@ -53,6 +53,51 @@ const FOLDER_SHARE_MAX_DAYS = 90;
 const assetLibraryFolderShare = (prisma as any).assetLibraryFolderShare;
 
 const hashShareToken = (token: string) => createHash('sha256').update(token).digest('hex');
+
+const getShareTokenEncryptionKey = () => createHash('sha256')
+  .update(config.jwtRefreshSecret || config.jwtSecret || config.sessionSecret || 'development-folder-share-token-key')
+  .digest();
+
+const encryptShareToken = (token: string) => {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', getShareTokenEncryptionKey(), iv);
+  const encrypted = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+
+  return [
+    'v1',
+    iv.toString('base64url'),
+    tag.toString('base64url'),
+    encrypted.toString('base64url'),
+  ].join(':');
+};
+
+const decryptShareToken = (ciphertext?: string | null) => {
+  if (!ciphertext) {
+    return undefined;
+  }
+
+  const [version, ivValue, tagValue, encryptedValue] = ciphertext.split(':');
+  if (version !== 'v1' || !ivValue || !tagValue || !encryptedValue) {
+    return undefined;
+  }
+
+  try {
+    const decipher = createDecipheriv(
+      'aes-256-gcm',
+      getShareTokenEncryptionKey(),
+      Buffer.from(ivValue, 'base64url')
+    );
+    decipher.setAuthTag(Buffer.from(tagValue, 'base64url'));
+
+    return Buffer.concat([
+      decipher.update(Buffer.from(encryptedValue, 'base64url')),
+      decipher.final(),
+    ]).toString('utf8');
+  } catch {
+    return undefined;
+  }
+};
 
 const buildFolderShareUrl = (token: string, dashboardOrigin?: string) => {
   const baseUrl = dashboardOrigin || config.clientUrl;
@@ -186,12 +231,14 @@ class AssetLibraryService {
     createdAt: Date;
     updatedAt: Date;
     token?: string;
+    tokenCiphertext?: string | null;
     folders?: Array<{ folderId: string }>;
   }, dashboardOrigin?: string) {
     const active = !share.revokedAt && share.expiresAt > new Date();
     const rootFolderIds = share.folders?.length
       ? share.folders.map((folder) => folder.folderId)
       : [share.folderId];
+    const token = share.token || decryptShareToken(share.tokenCiphertext);
 
     return {
       id: share.id,
@@ -206,7 +253,7 @@ class AssetLibraryService {
       createdAt: share.createdAt,
       updatedAt: share.updatedAt,
       active,
-      shareUrl: share.token ? buildFolderShareUrl(share.token, dashboardOrigin) : undefined,
+      shareUrl: token ? buildFolderShareUrl(token, dashboardOrigin) : undefined,
     };
   }
 
@@ -649,6 +696,7 @@ class AssetLibraryService {
         folderId: primaryFolderId,
         createdById: user.id,
         tokenHash: hashShareToken(token),
+        tokenCiphertext: encryptShareToken(token),
         recipientLabel: input.recipientLabel?.trim() || null,
         expiresAt: normalizeShareExpiry(input.expiresInDays),
         folders: {

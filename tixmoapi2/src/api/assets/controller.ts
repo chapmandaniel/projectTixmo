@@ -8,6 +8,48 @@ import { ApiError } from '../../utils/ApiError';
 import { resolveTrustedClientOrigin } from '../../utils/clientOrigin';
 import { assetLibraryService } from './service';
 
+const STANDARD_ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'application/pdf',
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
+]);
+
+const EPS_MIME_TYPES = new Set([
+  'application/postscript',
+  'application/eps',
+  'image/x-eps',
+  'image/eps',
+]);
+
+const FALLBACK_MIME_TYPES = new Set(['application/octet-stream', '']);
+
+const hasEpsExtension = (filename = '') => filename.toLowerCase().endsWith('.eps');
+
+export const isAllowedAssetUploadType = (file: Pick<Express.Multer.File, 'mimetype' | 'originalname'>) => {
+  if (STANDARD_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    return true;
+  }
+
+  return hasEpsExtension(file.originalname) && (EPS_MIME_TYPES.has(file.mimetype) || FALLBACK_MIME_TYPES.has(file.mimetype));
+};
+
+const getExpectedMimeType = (file: Pick<Express.Multer.File, 'mimetype' | 'originalname'>) => {
+  if (file.mimetype === 'video/quicktime') {
+    return 'video/mp4';
+  }
+
+  if (hasEpsExtension(file.originalname) && (EPS_MIME_TYPES.has(file.mimetype) || FALLBACK_MIME_TYPES.has(file.mimetype))) {
+    return 'application/postscript';
+  }
+
+  return file.mimetype;
+};
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: os.tmpdir(),
@@ -21,18 +63,7 @@ const upload = multer({
     files: 10,
   },
   fileFilter: (_req, file, cb) => {
-    const allowedMimeTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'application/pdf',
-      'video/mp4',
-      'video/quicktime',
-      'video/webm',
-    ];
-
-    if (!allowedMimeTypes.includes(file.mimetype)) {
+    if (!isAllowedAssetUploadType(file)) {
       cb(new Error(`File type ${file.mimetype} is not allowed`));
       return;
     }
@@ -46,7 +77,7 @@ export const assetLibraryUploadMiddleware = upload.array('files', 10);
 const hasSignature = (buffer: Buffer, signature: number[], offset = 0) =>
   signature.every((byte, index) => buffer[offset + index] === byte);
 
-const sniffMimeType = (buffer: Buffer) => {
+export const sniffAssetMimeType = (buffer: Buffer) => {
   if (hasSignature(buffer, [0xff, 0xd8, 0xff])) return 'image/jpeg';
   if (hasSignature(buffer, [0x89, 0x50, 0x4e, 0x47])) return 'image/png';
   if (buffer.subarray(0, 6).toString('ascii') === 'GIF87a') return 'image/gif';
@@ -58,6 +89,10 @@ const sniffMimeType = (buffer: Buffer) => {
     return 'image/webp';
   }
   if (buffer.subarray(0, 5).toString('ascii') === '%PDF-') return 'application/pdf';
+  const postscriptHeader = buffer.subarray(0, 512).toString('latin1');
+  if (postscriptHeader.startsWith('%!PS-Adobe') && /\bEPSF\b/.test(postscriptHeader)) {
+    return 'application/postscript';
+  }
   if (buffer.subarray(4, 8).toString('ascii') === 'ftyp') return 'video/mp4';
   if (hasSignature(buffer, [0x1a, 0x45, 0xdf, 0xa3])) return 'video/webm';
 
@@ -86,12 +121,12 @@ const validateUploadedFiles = async (files: Express.Multer.File[]) => {
         throw ApiError.badRequest('Uploaded file content is empty');
       }
 
-      const detectedMimeType = sniffMimeType(sample);
+      const detectedMimeType = sniffAssetMimeType(sample);
       if (!detectedMimeType) {
         throw ApiError.badRequest(`Unable to verify file type for ${file.originalname}`);
       }
 
-      const expectedMimeType = file.mimetype === 'video/quicktime' ? 'video/mp4' : file.mimetype;
+      const expectedMimeType = getExpectedMimeType(file);
       if (detectedMimeType !== expectedMimeType) {
         throw ApiError.badRequest(`File type mismatch for ${file.originalname}`);
       }

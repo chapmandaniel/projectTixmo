@@ -21,6 +21,7 @@ export const updateOrganizationSchema = z.object({
       .optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'PENDING']).optional(),
     stripeAccountId: z.string().optional(),
+    settings: z.record(z.unknown()).optional(),
   }),
 });
 

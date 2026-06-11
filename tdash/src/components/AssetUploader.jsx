@@ -39,7 +39,7 @@ const AssetUploader = ({
     onUpload,
     isDark,
     disabled = false,
-    accept = 'image/*,.pdf,.psd,.ai,.svg',
+    accept = 'image/*,.pdf,.psd,.ai,.svg,.eps',
     maxSize = 50 * 1024 * 1024, // 50MB
     multiple = true
 }) => {
@@ -139,7 +139,7 @@ const AssetUploader = ({
 
     const getFileIcon = (type) => {
         if (type.startsWith('image/')) return Image;
-        if (type === 'application/pdf') return FileText;
+        if (type === 'application/pdf' || type === 'application/postscript') return FileText;
         return File;
     };
 
@@ -176,7 +176,7 @@ const AssetUploader = ({
                     Drop files here or click to browse
                 </p>
                 <p className={`text-sm mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                    Images, PDFs, PSD, AI, SVG (max {maxSize / 1024 / 1024}MB each)
+                    Images, PDFs, PSD, AI, SVG, EPS (max {maxSize / 1024 / 1024}MB each)
                 </p>
             </div>
 

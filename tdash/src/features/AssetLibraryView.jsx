@@ -42,6 +42,7 @@ import { cn } from '../lib/utils';
 const ROOT_FOLDER_ID = 'root';
 const BRAND_COLLECTION_KEY = 'brand';
 const UNASSIGNED_COLLECTION_KEY = 'unassigned';
+const ASSET_UPLOAD_ACCEPT = 'image/jpeg,image/png,image/gif,image/webp,application/pdf,video/mp4,video/quicktime,video/webm,application/postscript,.jpg,.jpeg,.png,.gif,.webp,.pdf,.mp4,.mov,.webm,.eps';
 const KEYWORD_CATEGORY_RULES = [
     { id: 'posters', patterns: ['poster', 'flyer', 'banner'] },
     { id: 'logos', patterns: ['logo', 'wordmark', 'lockup'] },
@@ -69,6 +70,34 @@ const extractApprovals = (response) => response?.approvals || response?.data?.ap
 const extractDirectAssets = (response) => response?.assets || response?.data?.assets || [];
 const extractFolders = (response) => response?.folders || response?.data?.folders || [];
 const extractShares = (response) => response?.shares || response?.data?.shares || [];
+
+const writeClipboardText = async (value) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        return;
+    }
+
+    if (typeof document === 'undefined') {
+        throw new Error('Clipboard unavailable');
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-9999px';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    const copied = document.execCommand?.('copy');
+    document.body.removeChild(textarea);
+
+    if (!copied) {
+        throw new Error('Clipboard unavailable');
+    }
+};
 
 const SHARE_EXPIRY_OPTIONS = [
     { value: 7, label: '7 days' },
@@ -133,7 +162,7 @@ const getAssetKind = (mimeType = '') => {
         return 'video';
     }
 
-    if (mimeType === 'application/pdf' || mimeType.includes('illustrator') || mimeType.includes('photoshop')) {
+    if (mimeType === 'application/pdf' || mimeType === 'application/postscript' || mimeType.includes('illustrator') || mimeType.includes('photoshop')) {
         return 'document';
     }
 
@@ -1213,7 +1242,7 @@ const AssetUploadModal = ({
                         <Upload className="h-6 w-6" />
                     </div>
                     <p className={cn('mt-3 text-lg font-light', uiTheme.textPrimary)}>Drop files here</p>
-                    <p className={cn('mt-1 text-sm font-light', uiTheme.textSecondary)}>PNG, JPG, GIF, MP4, MOV, WEBP, or PDF.</p>
+                    <p className={cn('mt-1 text-sm font-light', uiTheme.textSecondary)}>PNG, JPG, GIF, MP4, MOV, WEBP, PDF, or EPS.</p>
                     <DashboardButton isDark={isDark} className="mt-4" onClick={() => uploadInputRef.current?.click()} disabled={uploading}>
                         <Plus className="h-4 w-4" />
                         Add Files
@@ -1222,6 +1251,7 @@ const AssetUploadModal = ({
                         ref={uploadInputRef}
                         type="file"
                         multiple
+                        accept={ASSET_UPLOAD_ACCEPT}
                         className="hidden"
                         onChange={(event) => {
                             onAddFiles(Array.from(event.target.files || []));
@@ -1540,17 +1570,40 @@ const ShareFolderModal = ({
                                             <p className={cn('mt-1 text-xs font-light', uiTheme.textSecondary)}>
                                                 {share.folderCount || 1} folder{share.folderCount === 1 ? '' : 's'} • Expires {formatDate(share.expiresAt)} • {share.viewCount || 0} view{share.viewCount === 1 ? '' : 's'}
                                             </p>
+                                            {share.shareUrl ? (
+                                                <div className="mt-3 flex min-w-0 items-stretch gap-2">
+                                                    <input
+                                                        aria-label={`Share link for ${share.recipientLabel || 'shared folder link'}`}
+                                                        className={cn(
+                                                            'h-10 min-w-0 flex-1 rounded-md border px-3 text-xs font-light outline-none',
+                                                            isDark
+                                                                ? 'border-white/10 bg-black/20 text-zinc-200'
+                                                                : 'border-slate-200 bg-slate-50 text-slate-700'
+                                                        )}
+                                                        readOnly
+                                                        value={share.shareUrl}
+                                                        onFocus={(event) => event.target.select()}
+                                                    />
+                                                    <DashboardIconButton
+                                                        isDark={isDark}
+                                                        aria-label="Copy folder share link"
+                                                        title="Copy folder share link"
+                                                        onClick={() => onCopyShare(share.shareUrl)}
+                                                    >
+                                                        <Copy className="h-4 w-4" />
+                                                    </DashboardIconButton>
+                                                </div>
+                                            ) : (
+                                                <p className={cn('mt-3 text-xs font-light', uiTheme.textSecondary)}>
+                                                    Copy unavailable for this older link.
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2">
                                             {share.shareUrl ? (
-                                                <>
-                                                    <DashboardIconButton isDark={isDark} aria-label="Copy folder share link" onClick={() => onCopyShare(share.shareUrl)}>
-                                                        <Copy className="h-4 w-4" />
-                                                    </DashboardIconButton>
-                                                    <DashboardIconButton isDark={isDark} aria-label="Open folder share link" onClick={() => window.open(share.shareUrl, '_blank', 'noopener,noreferrer')}>
-                                                        <ExternalLink className="h-4 w-4" />
-                                                    </DashboardIconButton>
-                                                </>
+                                                <DashboardIconButton isDark={isDark} aria-label="Open folder share link" title="Open folder share link" onClick={() => window.open(share.shareUrl, '_blank', 'noopener,noreferrer')}>
+                                                    <ExternalLink className="h-4 w-4" />
+                                                </DashboardIconButton>
                                             ) : null}
                                             <DashboardButton isDark={isDark} variant="danger" onClick={() => onRevokeShare(share.id)} disabled={revokingShareId === share.id}>
                                                 <Trash2 className="h-4 w-4" />
@@ -2188,7 +2241,7 @@ const AssetLibraryView = ({ isDark }) => {
 
     const copyText = async (value, label) => {
         try {
-            await navigator.clipboard.writeText(value);
+            await writeClipboardText(value);
             toast.success(label);
         } catch {
             toast.error('Clipboard unavailable');

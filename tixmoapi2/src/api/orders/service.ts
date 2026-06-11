@@ -163,97 +163,92 @@ export class OrderService {
 
     // Create order and hold inventory in a transaction
     const order = await prisma.$transaction(async (tx) => {
-      // Hold inventory (with optimistic concurrency check)
       for (const item of sortedItems) {
-        try {
-          await tx.ticketType.update({
-            where: {
-              id: item.ticketTypeId,
-              quantityAvailable: { gte: item.quantity },
-            },
-              data: {
-                quantityHeld: { increment: item.quantity },
-                quantityAvailable: { decrement: item.quantity },
-              },
-            });
-          } catch (error) {
-            throw ApiError.badRequest('Not enough tickets available');
-          }
-        }
-
-        // Create order
-        const newOrder = await tx.order.create({
-          data: {
-            orderNumber,
-            userId,
-            eventId,
-            status: 'PENDING',
-            totalAmount: finalAmount,
-            discountAmount,
-            promoCodeId: promoCodeId || null,
-            expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+        const holdResult = await tx.ticketType.updateMany({
+          where: {
+            id: item.ticketTypeId,
+            quantityAvailable: { gte: item.quantity },
           },
-          include: {
-            event: {
-              select: {
-                name: true,
-                startDatetime: true,
-                venue: {
-                  select: {
-                    name: true,
-                  },
+          data: {
+            quantityHeld: { increment: item.quantity },
+            quantityAvailable: { decrement: item.quantity },
+          },
+        });
+
+        if (holdResult.count !== 1) {
+          throw ApiError.badRequest('Not enough tickets available');
+        }
+      }
+
+      const newOrder = await tx.order.create({
+        data: {
+          orderNumber,
+          userId,
+          eventId,
+          status: 'PENDING',
+          totalAmount: finalAmount,
+          discountAmount,
+          promoCodeId: promoCodeId || null,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+        },
+        include: {
+          event: {
+            select: {
+              name: true,
+              startDatetime: true,
+              venue: {
+                select: {
+                  name: true,
                 },
               },
             },
           },
-        });
-
-        // Create tickets with secure barcodes
-        const ticketsToCreate: Prisma.TicketCreateManyInput[] = [];
-
-        for (const item of sortedItems) {
-          const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
-          // Calculate price once per item (ticket type)
-          const pricePaid = tierPriceMap.get(item.ticketTypeId) ?? ticketType.price;
-
-          for (let j = 0; j < item.quantity; j++) {
-            const secureBarcode = `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`;
-
-            ticketsToCreate.push({
-              orderId: newOrder.id,
-              userId,
-              eventId,
-              ticketTypeId: item.ticketTypeId,
-              pricePaid,
-              barcode: secureBarcode,
-              status: 'VALID',
-            });
-          }
-        }
-
-        if (ticketsToCreate.length > 0) {
-          await tx.ticket.createMany({
-            data: ticketsToCreate,
-          });
-        }
-
-        // Increment promo code usage if used
-        if (promoCodeId) {
-          await tx.promoCode.update({
-            where: { id: promoCodeId },
-            data: { usesCount: { increment: 1 } },
-          });
-        }
-
-        return newOrder;
+        },
       });
 
-      // Auto-confirm free orders (no payment needed)
-      if (finalAmount.eq(0)) {
-        return this.confirmOrder(order.id);
+      const ticketsToCreate: Prisma.TicketCreateManyInput[] = [];
+
+      for (const item of sortedItems) {
+        const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
+        const pricePaid = tierPriceMap.get(item.ticketTypeId) ?? ticketType.price;
+
+        for (let j = 0; j < item.quantity; j++) {
+          const secureBarcode = `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`;
+
+          ticketsToCreate.push({
+            orderId: newOrder.id,
+            userId,
+            eventId,
+            ticketTypeId: item.ticketTypeId,
+            pricePaid,
+            barcode: secureBarcode,
+            status: 'VALID',
+          });
+        }
       }
 
-      return order;
+      if (ticketsToCreate.length > 0) {
+        await tx.ticket.createMany({
+          data: ticketsToCreate,
+        });
+      }
+
+      if (promoCodeId) {
+        await tx.promoCode.update({
+          where: { id: promoCodeId },
+          data: { usesCount: { increment: 1 } },
+        });
+      }
+
+      return newOrder;
+    });
+
+    // Auto-confirm free orders (no payment needed)
+    if (finalAmount.eq(0)) {
+      return this.confirmOrder(order.id);
+    }
+
+    return order;
   }
 
   /**
@@ -350,13 +345,20 @@ export class OrderService {
 
       // Update inventory
       for (const [ticketTypeId, quantity] of ticketTypeCounts.entries()) {
-        await tx.ticketType.update({
-          where: { id: ticketTypeId },
+        const inventoryResult = await tx.ticketType.updateMany({
+          where: {
+            id: ticketTypeId,
+            quantityHeld: { gte: quantity },
+          },
           data: {
             quantityHeld: { decrement: quantity },
             quantitySold: { increment: quantity },
           },
         });
+
+        if (inventoryResult.count !== 1) {
+          throw ApiError.internal('Order inventory hold is inconsistent');
+        }
       }
 
       // Update order status
@@ -480,13 +482,20 @@ export class OrderService {
 
       // Release held inventory
       for (const [ticketTypeId, quantity] of ticketTypeCounts.entries()) {
-        await tx.ticketType.update({
-          where: { id: ticketTypeId },
+        const inventoryResult = await tx.ticketType.updateMany({
+          where: {
+            id: ticketTypeId,
+            quantityHeld: { gte: quantity },
+          },
           data: {
             quantityHeld: { decrement: quantity },
             quantityAvailable: { increment: quantity },
           },
         });
+
+        if (inventoryResult.count !== 1) {
+          throw ApiError.internal('Order inventory hold is inconsistent');
+        }
       }
 
       // Cancel tickets
@@ -621,4 +630,3 @@ export class OrderService {
 }
 
 export const orderService = new OrderService();
-

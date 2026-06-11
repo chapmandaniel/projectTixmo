@@ -1,0 +1,50 @@
+{
+  "startedAt": "2026-06-09T23:36:12.008Z",
+  "dashboardUrl": "http://127.0.0.1:5173",
+  "runtimeConfigUrl": "http://127.0.0.1:5173/runtime-config.js",
+  "checks": [
+    {
+      "name": "runtime config fetch",
+      "status": "pass",
+      "at": "2026-06-09T23:36:12.046Z",
+      "httpStatus": 200,
+      "durationMs": 36,
+      "summary": "200 36ms"
+    },
+    {
+      "name": "privacyPolicyUrl skipped",
+      "status": "pass",
+      "at": "2026-06-09T23:36:12.048Z",
+      "summary": "not required"
+    },
+    {
+      "name": "termsUrl skipped",
+      "status": "pass",
+      "at": "2026-06-09T23:36:12.048Z",
+      "summary": "not required"
+    },
+    {
+      "name": "refundPolicyUrl skipped",
+      "status": "pass",
+      "at": "2026-06-09T23:36:12.048Z",
+      "summary": "not required"
+    },
+    {
+      "name": "paymentCurrency matches expected",
+      "status": "pass",
+      "at": "2026-06-09T23:36:12.048Z",
+      "summary": "usd"
+    }
+  ],
+  "config": {
+    "apiUrl": "",
+    "privacyPolicyUrl": "",
+    "termsUrl": "",
+    "refundPolicyUrl": "",
+    "organizerTermsUrl": "",
+    "stripePublishableKey": "",
+    "paymentCurrency": ""
+  },
+  "result": "pass",
+  "finishedAt": "2026-06-09T23:36:12.048Z"
+}

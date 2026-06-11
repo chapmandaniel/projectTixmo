@@ -331,6 +331,40 @@ describe('User Creation Authorization (RBAC)', () => {
             expect(res.status).toBe(201);
             expect(res.body.data.organizationId).toBe(scopedOrgId);
         });
+
+        it('should force scoped ADMIN invites into their own organization', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${adminWithOrgToken}`)
+                .send({
+                    email: 'admin_cross_org_attempt@test.com',
+                    firstName: 'Admin',
+                    lastName: 'Cross Org',
+                    role: 'TEAM_MEMBER',
+                    organizationId: otherOrgId,
+                });
+
+            expect(res.status).toBe(201);
+            expect(res.body.data.organizationId).toBe(scopedOrgId);
+            expect(res.body.data.organizationId).not.toBe(otherOrgId);
+        });
+
+        it('should force scoped OWNER invites into their own organization', async () => {
+            const res = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${ownerWithOrgToken}`)
+                .send({
+                    email: 'owner_cross_org_attempt@test.com',
+                    firstName: 'Owner',
+                    lastName: 'Cross Org',
+                    role: 'TEAM_MEMBER',
+                    organizationId: otherOrgId,
+                });
+
+            expect(res.status).toBe(201);
+            expect(res.body.data.organizationId).toBe(scopedOrgId);
+            expect(res.body.data.organizationId).not.toBe(otherOrgId);
+        });
     });
 
     describe('POST /api/v1/users (Organization Scoping)', () => {
@@ -350,6 +384,55 @@ describe('User Creation Authorization (RBAC)', () => {
             // Even if they passed otherOrgId, it should be overridden by promoter's orgId
             expect(res.body.data.organizationId).toBe(promoterUser.organizationId);
             expect(res.body.data.organizationId).not.toBe(otherOrgId);
+        });
+
+        it('should force scoped ADMIN user listing to their own organization', async () => {
+            const res = await request(app)
+                .get(`/api/v1/users?organizationId=${otherOrgId}`)
+                .set('Authorization', `Bearer ${adminWithOrgToken}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.data.users.length).toBeGreaterThan(0);
+            expect(res.body.data.users.every((user: any) => user.organizationId === scopedOrgId)).toBe(true);
+        });
+
+        it('should allow scoped ADMIN to downgrade a lower-role member', async () => {
+            const createRes = await request(app)
+                .post('/api/v1/users')
+                .set('Authorization', `Bearer ${adminWithOrgToken}`)
+                .send({
+                    email: 'downgrade_promoter@test.com',
+                    firstName: 'Downgrade',
+                    lastName: 'Promoter',
+                    role: 'PROMOTER',
+                });
+
+            expect(createRes.status).toBe(201);
+
+            const updateRes = await request(app)
+                .put(`/api/v1/users/${createRes.body.data.id}`)
+                .set('Authorization', `Bearer ${adminWithOrgToken}`)
+                .send({
+                    role: 'TEAM_MEMBER',
+                    title: 'Door Ops',
+                    permissions: { scanTickets: true },
+                });
+
+            expect(updateRes.status).toBe(200);
+            expect(updateRes.body.data.role).toBe('TEAM_MEMBER');
+            expect(updateRes.body.data.title).toBe('Door Ops');
+            expect(updateRes.body.data.permissions).toMatchObject({ scanTickets: true });
+            expect(updateRes.body.data.organizationId).toBe(scopedOrgId);
+        });
+
+        it('should forbid users from changing their own role', async () => {
+            const res = await request(app)
+                .put(`/api/v1/users/${promoterUser.id}`)
+                .set('Authorization', `Bearer ${promoterToken}`)
+                .send({ role: 'OWNER' });
+
+            expect(res.status).toBe(403);
+            expect(res.body.message).toContain('cannot change your own role');
         });
     });
 });
