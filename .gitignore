@@ -1,1 +1,8 @@
 .DS_Store
+
+# One-off local debugging and generated reports
+curl_output.json
+**/test_output.txt
+**/sourcecode.txt
+**/lint_report.txt
+**/eslint-output.json
