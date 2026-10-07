@@ -193,7 +193,7 @@ export class VenueService {
       (where as unknown as Record<string, unknown>).address = {
         path: ['city'],
         equals: city,
-      } as unknown;
+      };
     }
 
     const [venues, total] = await Promise.all([

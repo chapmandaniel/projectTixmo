@@ -1,9 +1,4 @@
-import {
-  Organization,
-  OrganizationType,
-  OrganizationStatus,
-  Prisma,
-} from '@prisma/client';
+import { Organization, OrganizationType, OrganizationStatus, Prisma } from '@prisma/client';
 import { ApiError } from '@utils/ApiError';
 
 import prisma from '../../config/prisma';
@@ -238,6 +233,8 @@ export class OrganizationService {
       where: { id: userId },
       data: {
         organizationId: orgId,
+        sessionVersion: { increment: 1 },
+        isPlatformAdmin: false,
       },
     });
   }
@@ -273,6 +270,10 @@ export class OrganizationService {
       where: { id: userId },
       data: {
         organizationId: null,
+        role: 'CUSTOMER',
+        permissions: Prisma.JsonNull,
+        sessionVersion: { increment: 1 },
+        isPlatformAdmin: false,
       },
     });
   }

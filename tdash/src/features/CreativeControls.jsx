@@ -29,7 +29,7 @@ const CreativeControls = ({ prompt, setPrompt, weights, setWeights, onGenerate, 
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Describe the content you want to generate (e.g., 'A promotional post for our summer festival lineup...')"
-                    className={`w-full h-32 p-4 rounded-xl resize-none outline-none transition-all border ${isDark
+                    className={`w-full h-32 p-4 rounded-xl resize-none outline-hidden transition-all border ${isDark
                             ? 'bg-[#252525] border-[#333] text-gray-200 focus:border-indigo-500/50'
                             : 'bg-gray-50 border-gray-200 text-gray-800 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10'
                         }`}

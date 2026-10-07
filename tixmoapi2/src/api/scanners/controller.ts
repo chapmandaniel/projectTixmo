@@ -222,6 +222,8 @@ export const syncTickets = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    await scannerService.authorizeSync(req.scanner!.id, req.query.eventId as string);
+    const timestamp = new Date().toISOString();
     const stream = scannerService.syncTicketsStream(
       req.scanner!.id,
       req.query.eventId as string,
@@ -244,7 +246,6 @@ export const syncTickets = async (
       res.write(json.substring(1, json.length - 1));
     }
 
-    const timestamp = new Date().toISOString();
     res.write(`],"timestamp":"${timestamp}"},"message":"Tickets synced successfully"}`);
     res.end();
   } catch (error) {

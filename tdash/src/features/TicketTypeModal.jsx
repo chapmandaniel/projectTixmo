@@ -108,7 +108,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             placeholder="e.g. General Admission, VIP"
-                            className={`w-full px-4 py-2 rounded-lg outline-none border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
+                            className={`w-full px-4 py-2 rounded-lg outline-hidden border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
                         />
                     </div>
 
@@ -119,7 +119,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             placeholder="What's included in this ticket?"
                             rows="2"
-                            className={`w-full px-4 py-2 rounded-lg outline-none border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
+                            className={`w-full px-4 py-2 rounded-lg outline-hidden border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
                         />
                     </div>
 
@@ -128,7 +128,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                         <select
                             value={formData.status}
                             onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                            className={`w-full px-4 py-2 rounded-lg outline-none border transition-colors appearance-none ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
+                            className={`w-full px-4 py-2 rounded-lg outline-hidden border transition-colors appearance-none ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
                         >
                             <option value="ACTIVE">Active (On Sale)</option>
                             <option value="HIDDEN">Hidden (Not visible)</option>
@@ -149,7 +149,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                                     step="0.01"
                                     value={formData.price}
                                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                    className={`w-full pl-9 pr-4 py-2 rounded-lg outline-none border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
+                                    className={`w-full pl-9 pr-4 py-2 rounded-lg outline-hidden border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
                                 />
                             </div>
                         </div>
@@ -163,7 +163,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                                     min="1"
                                     value={formData.quantity}
                                     onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                                    className={`w-full pl-9 pr-4 py-2 rounded-lg outline-none border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
+                                    className={`w-full pl-9 pr-4 py-2 rounded-lg outline-hidden border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
                                 />
                             </div>
                         </div>
@@ -176,7 +176,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                                 type="datetime-local"
                                 value={formData.salesStart}
                                 onChange={(e) => setFormData({ ...formData, salesStart: e.target.value })}
-                                className={`w-full px-4 py-2 rounded-lg outline-none border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
+                                className={`w-full px-4 py-2 rounded-lg outline-hidden border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
                             />
                         </div>
                         <div>
@@ -185,7 +185,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                                 type="datetime-local"
                                 value={formData.salesEnd}
                                 onChange={(e) => setFormData({ ...formData, salesEnd: e.target.value })}
-                                className={`w-full px-4 py-2 rounded-lg outline-none border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
+                                className={`w-full px-4 py-2 rounded-lg outline-hidden border transition-colors ${isDark ? 'bg-[#252525] border-[#333] text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'}`}
                             />
                         </div>
                     </div>

@@ -74,9 +74,6 @@ Thumbs.db
 # Output of 'npm pack'
 *.tgz
 
-# Docker
-*.dockerignore
-
 # Terraform
 .terraform/
 *.tfstate

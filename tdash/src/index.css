@@ -1,10 +1,90 @@
 @import url('https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss' source(none);
+@config '../tailwind.config.js';
+@source './';
+@source '../index.html';
+
+/* Keep existing input, focus and pointer behavior while using the new compiler. */
+@custom-variant hover (&:hover);
+@theme {
+  --default-ring-width: 3px;
+  --default-ring-color: #3b82f6;
+}
+@utility flex-shrink-0 {
+  flex-shrink: 0;
+}
+@utility flex-shrink {
+  flex-shrink: 1;
+}
+@utility flex-grow {
+  flex-grow: 1;
+}
+@utility flex-grow-0 {
+  flex-grow: 0;
+}
+
+/* These screens use the v3 sibling spacing contract, including decorative
+   children in shared surfaces. Preserve it instead of moving their margins. */
+@utility space-y-* {
+  & > :not(:last-child) {
+    margin-block-start: 0;
+    margin-block-end: 0;
+  }
+  & > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(--spacing(--value(number)) * (1 - var(--tw-space-y-reverse)));
+    margin-block-start: calc(--value([length]) * (1 - var(--tw-space-y-reverse)));
+    margin-block-end: calc(--spacing(--value(number)) * var(--tw-space-y-reverse));
+    margin-block-end: calc(--value([length]) * var(--tw-space-y-reverse));
+  }
+}
+@utility space-x-* {
+  & > :not(:last-child) {
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+  }
+  & > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 0;
+    margin-inline-start: calc(--spacing(--value(number)) * (1 - var(--tw-space-x-reverse)));
+    margin-inline-start: calc(--value([length]) * (1 - var(--tw-space-x-reverse)));
+    margin-inline-end: calc(--spacing(--value(number)) * var(--tw-space-x-reverse));
+    margin-inline-end: calc(--value([length]) * var(--tw-space-x-reverse));
+  }
+}
+@utility space-x-reverse {
+  & > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 1;
+  }
+}
+@utility space-y-reverse {
+  & > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-y-reverse: 1;
+  }
+}
 
 @layer base {
+  *,
+  ::before,
+  ::after,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  dialog {
+    margin: auto;
+  }
   html {
     font-size: 17px;
   }

@@ -1,3 +1,4 @@
+import { assertDevelopmentClient } from '../utils/development-client';
 import {
   PrismaClient,
   OrderStatus,
@@ -18,6 +19,7 @@ export async function seedOrders(
   ticketTypes: TicketType[],
   promoCodes: PromoCode[]
 ) {
+  assertDevelopmentClient(prisma);
   seedLogger.info('Seeding orders...');
 
   const orders = [];

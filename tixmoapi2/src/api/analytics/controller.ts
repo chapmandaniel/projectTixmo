@@ -3,10 +3,14 @@ import { AuthRequest } from '../../middleware/auth';
 import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { analyticsService } from './service';
-import { assertEventAccess, getActorScope, resolveOrganizationFilter } from '../../utils/tenantScope';
+import {
+  assertEventAccess,
+  getActorScope,
+  resolveOrganizationFilter,
+} from '../../utils/tenantScope';
 
 export const getSalesAnalytics = catchAsync(async (req: AuthRequest, res: Response) => {
-  const { startDate, endDate, organizationId, eventId } = req.query;
+  const { startDate, endDate, organizationId, eventId, currency } = req.query;
   const actor = await getActorScope(req);
   const scopedOrganizationId = resolveOrganizationFilter(
     actor,
@@ -21,13 +25,14 @@ export const getSalesAnalytics = catchAsync(async (req: AuthRequest, res: Respon
     endDate: endDate ? new Date(endDate as string) : undefined,
     organizationId: scopedOrganizationId,
     eventId: eventId as string | undefined,
+    currency: currency as string | undefined,
   });
 
   res.json(successResponse(analytics));
 });
 
 export const getEventAnalytics = catchAsync(async (req: AuthRequest, res: Response) => {
-  const { startDate, endDate, organizationId, eventId } = req.query;
+  const { startDate, endDate, organizationId, eventId, currency } = req.query;
   const actor = await getActorScope(req);
   const scopedOrganizationId = resolveOrganizationFilter(
     actor,
@@ -42,13 +47,14 @@ export const getEventAnalytics = catchAsync(async (req: AuthRequest, res: Respon
     endDate: endDate ? new Date(endDate as string) : undefined,
     organizationId: scopedOrganizationId,
     eventId: eventId as string | undefined,
+    currency: currency as string | undefined,
   });
 
   res.json(successResponse(analytics));
 });
 
 export const getCustomerAnalytics = catchAsync(async (req: AuthRequest, res: Response) => {
-  const { startDate, endDate, organizationId, eventId } = req.query;
+  const { startDate, endDate, organizationId, eventId, currency } = req.query;
   const actor = await getActorScope(req);
   const scopedOrganizationId = resolveOrganizationFilter(
     actor,
@@ -63,6 +69,7 @@ export const getCustomerAnalytics = catchAsync(async (req: AuthRequest, res: Res
     endDate: endDate ? new Date(endDate as string) : undefined,
     organizationId: scopedOrganizationId,
     eventId: eventId as string | undefined,
+    currency: currency as string | undefined,
   });
 
   res.json(successResponse(analytics));

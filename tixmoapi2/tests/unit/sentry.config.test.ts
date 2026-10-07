@@ -53,12 +53,14 @@ describe('Sentry configuration', () => {
 
     initSentry();
 
-    expect(init).toHaveBeenCalledWith(expect.objectContaining({
-      dsn: 'https://public@example.com/1',
-      environment: 'staging',
-      release: 'api@abc123',
-      tracesSampleRate: 0.1,
-    }));
+    expect(init).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dsn: 'https://public@example.com/1',
+        environment: 'staging',
+        release: 'api@abc123',
+        tracesSampleRate: 0.1,
+      })
+    );
     expect(setTags).toHaveBeenCalledWith({
       service: 'tixmo-api',
       deployment_environment: 'staging',
@@ -78,7 +80,9 @@ describe('Sentry configuration', () => {
 
     initSentry();
 
-    const beforeSend = init.mock.calls[0][0].beforeSend as (event: Record<string, any>) => Record<string, any>;
+    const beforeSend = init.mock.calls[0][0].beforeSend as (
+      event: Record<string, any>
+    ) => Record<string, any>;
     const event = beforeSend({
       tags: { existing: 'tag' },
       request: {

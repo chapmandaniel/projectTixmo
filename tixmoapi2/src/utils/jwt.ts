@@ -8,21 +8,30 @@ interface TokenPayload {
   role: string;
   organizationId?: string | null;
   emailVerified?: boolean;
+  sessionVersion?: number;
   iat?: number;
   exp?: number;
 }
 
 export const generateAccessToken = (payload: TokenPayload): string => {
-  const token = jwt.sign(payload, config.jwtSecret, {
-    expiresIn: config.jwtExpiresIn,
-  } as SignOptions);
+  const token = jwt.sign(
+    { ...payload, sessionVersion: payload.sessionVersion ?? 0 },
+    config.jwtSecret,
+    {
+      expiresIn: config.jwtExpiresIn,
+    } as SignOptions
+  );
   return token;
 };
 
 export const generateRefreshToken = (payload: TokenPayload): string => {
-  const token = jwt.sign(payload, config.jwtRefreshSecret, {
-    expiresIn: config.jwtRefreshExpiresIn,
-  } as SignOptions);
+  const token = jwt.sign(
+    { ...payload, sessionVersion: payload.sessionVersion ?? 0 },
+    config.jwtRefreshSecret,
+    {
+      expiresIn: config.jwtRefreshExpiresIn,
+    } as SignOptions
+  );
   return token;
 };
 

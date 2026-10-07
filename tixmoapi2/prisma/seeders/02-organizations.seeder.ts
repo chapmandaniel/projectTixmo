@@ -1,8 +1,10 @@
+import { assertDevelopmentClient } from '../utils/development-client';
 import { PrismaClient, OrganizationType } from '@prisma/client';
 import { seedLogger } from '../utils/seed-logger';
 import { createOrganizationData } from '../factories/organization.factory';
 
 export async function seedOrganizations(prisma: PrismaClient) {
+  assertDevelopmentClient(prisma);
   seedLogger.info('Seeding organizations...');
 
   const organizations = [];

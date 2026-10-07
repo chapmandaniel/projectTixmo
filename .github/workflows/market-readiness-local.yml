@@ -27,14 +27,12 @@ jobs:
 
     env:
       NODE_ENV: test
-      DATABASE_URL: postgresql://tixmo:tixmo_dev_password@localhost:5432/tixmoapi?schema=public
-      REDIS_URL: redis://localhost:6379
       JWT_SECRET: ci_jwt_secret_32_chars_minimum_value
       JWT_REFRESH_SECRET: ci_refresh_secret_32_chars_minimum
       SESSION_SECRET: ci_session_secret_32_chars_minimum
       STRIPE_SECRET_KEY: sk_test_market_readiness
       STRIPE_WEBHOOK_SECRET: whsec_market_readiness
-      PAYMENT_CURRENCY: usd
+      PAYMENT_CURRENCY: cad
       ADMIN_EMAIL: ci-admin@tixmo.test
 
     steps:
@@ -42,7 +40,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '24.21.0'
           cache: npm
           cache-dependency-path: |
             tixmoapi2/package-lock.json

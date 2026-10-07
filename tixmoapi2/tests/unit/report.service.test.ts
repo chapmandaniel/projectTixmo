@@ -1,4 +1,3 @@
-
 import { reportService } from '../../src/api/reports/service';
 import prisma from '../../src/config/prisma';
 
@@ -40,9 +39,11 @@ describe('ReportService', () => {
 
       // Verify aggregate was called
       expect(prisma.order.aggregate).toHaveBeenCalledTimes(1);
-      expect(prisma.order.aggregate).toHaveBeenCalledWith(expect.objectContaining({
-        _sum: { totalAmount: true },
-      }));
+      expect(prisma.order.aggregate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _sum: { totalAmount: true },
+        })
+      );
 
       // Verify result
       expect(stats.totalRevenue).toBe(5000);

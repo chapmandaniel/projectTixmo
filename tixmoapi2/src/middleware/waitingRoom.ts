@@ -1,60 +1,96 @@
 import { Request, Response, NextFunction } from 'express';
+import { randomUUID } from 'crypto';
 import { getRedisClient } from '../config/redis';
 import { logger } from '../config/logger';
 import { StatusCodes } from 'http-status-codes';
 
-const MAX_CONCURRENT_USERS = 5000; // Configurable limit
-const ACTIVE_USERS_KEY = 'tixmo:active_users';
+export const ACTIVE_REQUESTS_KEY = 'tixmo:active-request-leases:v1';
+export const ACQUIRE_REQUEST_LEASE = `
+local clock = redis.call('TIME')
+local now = clock[1] * 1000 + math.floor(clock[2] / 1000)
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now)
+if not redis.call('ZSCORE', KEYS[1], ARGV[1]) and redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[2]) then return 0 end
+redis.call('ZADD', KEYS[1], now + tonumber(ARGV[3]), ARGV[1])
+redis.call('PEXPIRE', KEYS[1], tonumber(ARGV[3]) * 2)
+return 1
+`;
+const RENEW_REQUEST_LEASE = `
+local clock = redis.call('TIME')
+local now = clock[1] * 1000 + math.floor(clock[2] / 1000)
+local expiry = redis.call('ZSCORE', KEYS[1], ARGV[1])
+if not expiry or tonumber(expiry) <= now then return 0 end
+redis.call('ZADD', KEYS[1], 'XX', now + tonumber(ARGV[2]), ARGV[1])
+redis.call('PEXPIRE', KEYS[1], tonumber(ARGV[2]) * 2)
+return 1
+`;
 
 export const waitingRoom = async (req: Request, res: Response, next: NextFunction) => {
-    // Skip for health checks or assets if any
-    if (req.path === '/health' || req.path === '/metrics') {
-        return next();
-    }
-
+  if (req.path === '/health' || req.path === '/ready' || req.path === '/metrics') return next();
+  const token = randomUUID(),
+    leaseMs = 120_000;
+  let terminated = Boolean(req.aborted || res.destroyed || res.writableEnded);
+  let acquired = false,
+    released = false;
+  let timer: ReturnType<typeof setInterval> | undefined;
+  let client: ReturnType<typeof getRedisClient>;
+  const release = async (uncertain = false) => {
+    if (timer) clearInterval(timer);
+    if ((!acquired && !uncertain) || released) return;
+    released = true;
+    // Removal is idempotent by request identity. Crash/network ambiguity also
+    // expires instead of leaving a permanently poisoned shared counter.
+    if (!client || client.isReady === false) return;
     try {
-        const client = getRedisClient();
-
-        // Increment active user count
-        const activeUsers = await client.incr(ACTIVE_USERS_KEY);
-
-        // If load is too high, reject
-        if (activeUsers > MAX_CONCURRENT_USERS) {
-            // Decrement immediately since we are rejecting
-            await client.decr(ACTIVE_USERS_KEY);
-
-            logger.warn('Waiting Room Active: Rejected request due to high load', { activeUsers });
-
-            return res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
-                message: 'High traffic volume. Please try again in a moment.',
-                retryAfter: 5 // Suggest retry in 5 seconds
-            });
-        }
-
-        // Capture response finish to decrement count
-        res.on('finish', () => {
-            client.decr(ACTIVE_USERS_KEY).catch(err => {
-                logger.error('Failed to decrement active user count', err);
-            });
-        });
-
-        // Also handle close in case connection is terminated prematurely
-        res.on('close', () => {
-            // NOTE: 'finish' and 'close' might both emit, but DECR operates on an atomic counter.
-            // Ideally we want to decrement exactly once per increment.
-            // Express 'finish' event is reliable for completed responses.
-            // 'close' handles aborted connections.
-            // We rely on 'finish' primarily. To handle 'close' without double-decrementing is tricky without unique request IDs.
-            // For a simple waiting room, 'finish' is usually sufficient. 
-            // If we implement unique request tracking, we could be more precise.
-            // For now, we trust 'finish'.
-        });
-
-        next();
+      await client.zRem(ACTIVE_REQUESTS_KEY, token);
     } catch (error) {
-        logger.error('Waiting Room Check Failed:', error);
-        // Fail open: If Redis is down, let them in (or fail closed depending on strategy)
-        // Here we choose to fail open to not block traffic if Redis blips.
-        next();
+      logger.error('Waiting room lease release failed', error);
     }
+  };
+  const terminal = () => {
+    terminated = true;
+    void release();
+  };
+  // Register before Redis acquisition: the client can disconnect during await.
+  res.on('finish', terminal);
+  res.on('close', terminal);
+  req.on?.('aborted', terminal);
+  try {
+    client = getRedisClient();
+    if (client.isReady === false) {
+      if (!terminated) next();
+      return;
+    }
+    const accepted = await client.eval(ACQUIRE_REQUEST_LEASE, {
+      keys: [ACTIVE_REQUESTS_KEY],
+      arguments: [token, '5000', String(leaseMs)],
+    });
+    acquired = Number(accepted) === 1;
+    if (terminated) {
+      await release();
+      return;
+    }
+    if (!acquired) {
+      logger.warn('Waiting Room Active: Rejected request due to high load');
+      return res
+        .status(StatusCodes.SERVICE_UNAVAILABLE)
+        .json({ message: 'High traffic volume. Please try again in a moment.', retryAfter: 5 });
+    }
+    timer = setInterval(() => {
+      if (terminated || client.isReady === false) return;
+      void client
+        .eval(RENEW_REQUEST_LEASE, {
+          keys: [ACTIVE_REQUESTS_KEY],
+          arguments: [token, String(leaseMs)],
+        })
+        .catch((error) => logger.error('Waiting room lease renewal failed', error));
+    }, 30_000);
+    timer.unref();
+    next();
+  } catch (error) {
+    await release(true);
+    logger.error('Waiting Room Check Failed:', error);
+    // Preserve the existing Redis fail-open policy without queued acquisition
+    // when the client is known to be unavailable.
+    if (!terminated) next();
+  }
 };

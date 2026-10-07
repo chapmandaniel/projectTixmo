@@ -1,204 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import { Trash2, RotateCcw, Search, AlertCircle, RefreshCw, Settings } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Settings } from 'lucide-react';
 import api from '../lib/api';
-import { DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
+import { DashboardButton, DashboardEmptyState, DashboardSelect, DashboardSurface, DashboardTextInput, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
+import { getDashboardTheme } from '../lib/dashboardTheme';
 
-const SettingsView = ({ isDark }) => {
-    const [activeTab, setActiveTab] = useState('recycleBit');
-    const [deletedEvents, setDeletedEvents] = useState([]);
-    const [loading, setLoading] = useState(true);
+const SettingsView = ({ isDark, user }) => {
+    const theme = getDashboardTheme(isDark);
+    const allowed = ['OWNER', 'ADMIN'].includes(user?.role);
+    const [organizationId, setOrganizationId] = useState(user?.organizationId || '');
+    const [organizations, setOrganizations] = useState([]);
+    const [events, setEvents] = useState([]);
+    const [page, setPage] = useState(1);
+    const [pages, setPages] = useState(0);
+    const [search, setSearch] = useState('');
+    const [query, setQuery] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [actionError, setActionError] = useState('');
     const [restoringId, setRestoringId] = useState(null);
-
-    const fetchDeletedEvents = async () => {
-        try {
-            setLoading(true);
-            // Assuming organizationId is available or hardcoded for now, mimicking other views
-            // Ideally should come from auth context/user profile
-            // For now, I'll assume the backend infers organization or I need to fetch it.
-            // If backend requires organizationId, I might need to fetch user profile first.
-            // But let's try fetching without it first if the backend allows, or use a placeholder if I can't get it easily.
-            // Wait, listDeletedEvents endpoint REQUIRES organizationId.
-            // I'll check if I can get it from localStorage or existing state.
-            // If not, I'll assume a hardcoded one for this task scope or fetch user. 
-            // In a real app, this would be in a context.
-            // I'll try to fetch user/org first or just use a placeholder UUID if the user didn't specify context.
-            // But looking at api.js, it just adds token. 
-            // I'll try to fetch with a known org ID if possible, or just mock it if I can't.
-            // Actually, let's use a mock implementation for the initial list to ensure UI works, 
-            // but the goal is to "flesh out".
-            // I'll call the API but if it fails (due to missing org), I'll handle it.
-            // Let's assume the user has an organization.
-
-            // To make this robust without full auth context:
-            // I will use a placeholder fetch or just mock data if API fails.
-
-            const response = await api.get('/events/deleted', {
-                params: { organizationId: '00000000-0000-0000-0000-000000000000' } // Placeholder
-            });
-            setDeletedEvents(response.data.data.events);
-        } catch (error) {
-            console.error('Failed to fetch deleted events:', error);
-            // Fallback to mock data for demonstration if API fails (e.g. 404 or auth)
-            // setDeletedEvents([]); 
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [notice, setNotice] = useState('');
+    const [refresh, setRefresh] = useState(0);
 
     useEffect(() => {
-        fetchDeletedEvents();
+        if (!allowed || user?.organizationId) return;
+        let active = true;
+        const fetchOrganizations = async () => {
+            try {
+                const list = [];
+                let current = 1, last = 1;
+                do {
+                    const response = await api.get('/organizations', { params: { page: current, limit: 100 } });
+                    const data = response.data.data || response.data;
+                    list.push(...(data.organizations || []));
+                    last = data.pagination?.pages || 1;
+                    current += 1;
+                } while (current <= last && active);
+                if (active) setOrganizations(list);
+            } catch (requestError) {
+                if (active) setError(requestError.response?.data?.message || 'Unable to load organizations.');
+            }
+        };
+        fetchOrganizations();
+        return () => { active = false; };
+    }, [allowed, user?.organizationId]);
+
+    useEffect(() => {
+        if (!allowed || !organizationId) return;
+        let active = true;
+        setLoading(true);
+        setError('');
+        api.get('/events/deleted', { params: { organizationId, page, limit: 20, search: query || undefined } })
+            .then((response) => {
+                if (!active) return;
+                const data = response.data.data || response.data;
+                setEvents(data.events || []);
+                setPages(data.pagination?.pages || 0);
+            }).catch((requestError) => {
+                if (active) { setEvents([]); setError(requestError.response?.data?.message || 'Unable to load deleted events.'); }
+            }).finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, [allowed, organizationId, page, query, refresh]);
+
+    const restore = useCallback(async (id) => {
+        setRestoringId(id);
+        setActionError('');
+        setNotice('');
+        try {
+            await api.post(`/events/${id}/restore`);
+            setNotice('Event restored as a draft.');
+            setPage(1);
+            setRefresh((value) => value + 1);
+        } catch (requestError) {
+            setActionError(requestError.response?.data?.message || 'Unable to restore this event.');
+        } finally { setRestoringId(null); }
     }, []);
 
-    const handleRestore = async (id) => {
-        try {
-            setRestoringId(id);
-            await api.post(`/events/${id}/restore`);
-            await fetchDeletedEvents();
-        } catch (error) {
-            console.error('Failed to restore event:', error);
-            // Show error toast
-        } finally {
-            setRestoringId(null);
-        }
-    };
-
     return (
-        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
-            <div className="flex flex-col space-y-4">
-                <DashboardTitleBar
-                    isDark={isDark}
-                    title="Settings"
-                    description="Manage your account and application preferences."
-                    icon={Settings}
-                    iconClassName={isDark ? 'text-indigo-300' : 'text-indigo-700'}
-                    glowTopClassName="bg-indigo-500/10"
-                    glowBottomClassName="bg-sky-400/10"
-                />
-
-                <div className={`flex items-center space-x-6 border-b ${isDark ? 'border-[#2a2a2a]' : 'border-gray-200'}`}>
-                    <button
-                        className={`pb-3 text-sm font-medium relative transition-colors ${activeTab === 'recycleBit'
-                            ? (isDark ? 'text-white' : 'text-indigo-600')
-                            : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-800')
-                            }`}
-                        onClick={() => setActiveTab('recycleBit')}
-                    >
-                        Recycle Bin
-                        {activeTab === 'recycleBit' && (
-                            <div className={`absolute bottom-0 left-0 w-full h-0.5 ${isDark ? 'bg-indigo-500' : 'bg-indigo-600'}`}></div>
-                        )}
-                    </button>
-                    <button
-                        className={`pb-3 text-sm font-medium relative transition-colors ${activeTab === 'general'
-                            ? (isDark ? 'text-white' : 'text-indigo-600')
-                            : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-800')
-                            }`}
-                        onClick={() => setActiveTab('general')}
-                    >
-                        General
-                        {activeTab === 'general' && (
-                            <div className={`absolute bottom-0 left-0 w-full h-0.5 ${isDark ? 'bg-indigo-500' : 'bg-indigo-600'}`}></div>
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            {activeTab === 'recycleBit' && (
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <div className={`flex items-center px-3 py-2 rounded-lg border ${isDark ? 'bg-[#252525] border-[#333]' : 'bg-white border-gray-200'}`}>
-                            <Search size={16} className={`mr-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                            <input
-                                type="text"
-                                placeholder="Search deleted items..."
-                                className={`bg-transparent outline-none text-sm ${isDark ? 'text-gray-200 placeholder-gray-600' : 'text-gray-800 placeholder-gray-400'}`}
-                            />
-                        </div>
-                        <button
-                            onClick={fetchDeletedEvents}
-                            className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-[#333] text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
-                        >
-                            <RefreshCw size={16} />
-                        </button>
-                    </div>
-
-                    <div className={`rounded-xl overflow-hidden ${isDark ? 'bg-[#1e1e1e] shadow-lg shadow-black/20' : 'bg-white shadow-sm shadow-gray-200/50'}`}>
-                        {loading ? (
-                            <div className="p-8 text-center text-gray-500">Loading deleted items...</div>
-                        ) : deletedEvents.length === 0 ? (
-                            <div className="p-12 text-center flex flex-col items-center justify-center space-y-3">
-                                <div className={`p-3 rounded-full ${isDark ? 'bg-[#252525]' : 'bg-gray-100'}`}>
-                                    <Trash2 size={24} className={isDark ? 'text-gray-600' : 'text-gray-400'} />
-                                </div>
-                                <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>Recycle bin is empty</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className={`w-full text-left text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    <thead className={`${isDark ? 'bg-[#252525] text-gray-500' : 'bg-gray-50 text-gray-400'} text-xs uppercase font-normal`}>
-                                        <tr>
-                                            <th className="px-6 py-3 font-medium">Event Name</th>
-                                            <th className="px-6 py-3 font-medium">Deleted Date</th>
-                                            <th className="px-6 py-3 font-medium">Tickets Sold</th>
-                                            <th className="px-6 py-3 text-right font-medium">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className={`divide-y ${isDark ? 'divide-[#252525]' : 'divide-gray-50'}`}>
-                                        {deletedEvents.map((event) => (
-                                            <tr key={event.id} className={`transition-colors ${isDark ? 'hover:bg-[#252525]' : 'hover:bg-gray-50'}`}>
-                                                <td className={`px-6 py-4 font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-                                                    {event.name}
-                                                    <span className={`block text-xs mt-0.5 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{event.venue?.name}</span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {new Date(event.deletedAt).toLocaleDateString()}
-                                                    <span className={`block text-xs mt-0.5 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
-                                                        {new Date(event.deletedAt).toLocaleTimeString()}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {event._count?.tickets || 0}
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <button
-                                                        onClick={() => handleRestore(event.id)}
-                                                        disabled={restoringId === event.id}
-                                                        className={`flex items-center space-x-2 ml-auto px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${isDark
-                                                                ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
-                                                                : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                                                            }`}
-                                                    >
-                                                        {restoringId === event.id ? (
-                                                            <RefreshCw size={14} className="animate-spin" />
-                                                        ) : (
-                                                            <RotateCcw size={14} />
-                                                        )}
-                                                        <span>{restoringId === event.id ? 'Restoring...' : 'Restore'}</span>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                    {deletedEvents.length > 0 && (
-                        <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'} flex items-center space-x-2`}>
-                            <AlertCircle size={14} />
-                            <span>Items in the recycle bin are automatically permanently deleted after 30 days.</span>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {activeTab === 'general' && (
-                <div className="flex items-center justify-center h-[300px]">
-                    <p className={`${isDark ? 'text-gray-500' : 'text-gray-400'}`}>General settings content...</p>
-                </div>
-            )}
+        <div className={`mx-auto max-w-7xl space-y-6 ${theme.textPrimary}`}>
+            <DashboardTitleBar isDark={isDark} title="Settings" description="Restore deleted events for your organization." icon={Settings} />
+            <DashboardSurface isDark={isDark} className="space-y-5 p-5 sm:p-6">
+                <h2 className="text-xl font-light">Recycle bin</h2>
+                {!allowed ? <DashboardEmptyState isDark={isDark} title="Owner or administrator access required" description="Ask your organization owner to restore a deleted event." /> : <>
+                    {!user?.organizationId && <label className="block space-y-2 text-sm">Organization
+                        <DashboardSelect isDark={isDark} aria-label="Organization" value={organizationId} onChange={(e) => { setOrganizationId(e.target.value); setPage(1); setEvents([]); setActionError(''); setNotice(''); }}>
+                            <option value="">Choose an organization</option>
+                            {organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}
+                        </DashboardSelect>
+                    </label>}
+                    <form className="flex flex-wrap items-center gap-3" onSubmit={(e) => { e.preventDefault(); setQuery(search.trim()); setPage(1); }}>
+                        <DashboardTextInput isDark={isDark} aria-label="Search deleted events" placeholder="Search event name" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" maxLength={200} />
+                        <DashboardButton isDark={isDark} type="submit" disabled={!organizationId || loading}>Search</DashboardButton>
+                        <DashboardButton isDark={isDark} variant="secondary" disabled={!organizationId || loading} onClick={() => setRefresh((value) => value + 1)}>Refresh</DashboardButton>
+                    </form>
+                    {(error || actionError) && <p role="alert">{actionError || error}</p>}
+                    {notice && <p role="status">{notice}</p>}
+                    {!organizationId ? <p className={theme.textSecondary}>Select an organization to load its deleted events.</p> : loading ? <p role="status">Loading deleted events…</p> : !error && events.length === 0 ? <DashboardEmptyState isDark={isDark} title="No deleted events found" description={query ? 'Try another event name.' : 'Deleted events appear here until they are restored.'} /> : !error && <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm"><thead><tr><th className="p-3">Event</th><th className="p-3">Deleted</th><th className="p-3">Action</th></tr></thead><tbody>
+                            {events.map((event) => <tr key={event.id} className={`border-t ${theme.divider}`}>
+                                <td className="p-3">{event.name}<p className={theme.textSecondary}>{event.venue?.name}</p></td>
+                                <td className="p-3">{new Date(event.deletedAt).toLocaleString()}</td>
+                                <td className="p-3"><DashboardButton isDark={isDark} variant="secondary" disabled={Boolean(restoringId)} onClick={() => restore(event.id)}>{restoringId === event.id ? 'Restoring…' : 'Restore'}</DashboardButton></td>
+                            </tr>)}
+                        </tbody></table>
+                    </div>}
+                    {pages > 1 && <div className="flex items-center gap-3"><DashboardButton isDark={isDark} variant="secondary" disabled={loading || page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</DashboardButton><span>Page {page} of {pages}</span><DashboardButton isDark={isDark} variant="secondary" disabled={loading || page >= pages} onClick={() => setPage((value) => value + 1)}>Next</DashboardButton></div>}
+                    <p className={`text-xs ${theme.textSecondary}`}>Restoring an event makes it a draft. Review its dates and tickets before publishing.</p>
+                </>}
+            </DashboardSurface>
         </div>
     );
 };
-
 export default SettingsView;

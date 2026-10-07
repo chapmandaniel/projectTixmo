@@ -4,6 +4,7 @@ import { connectDatabase } from '@config/database';
 import { connectRedis } from '@config/redis';
 import { startApprovalReminderJob } from './jobs/approval-reminder.job';
 import { startOrderExpiryJob } from './jobs/order-expiry.job';
+import { startPaymentRecoveryJob } from './jobs/payment-recovery.job';
 
 // app imported dynamically after connection
 
@@ -29,6 +30,7 @@ void (async () => {
 
       // Start background jobs
       startOrderExpiryJob();
+      startPaymentRecoveryJob();
       startApprovalReminderJob();
     });
   } catch (err) {

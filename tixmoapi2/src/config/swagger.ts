@@ -349,13 +349,17 @@ const options: swaggerJsdoc.Options = {
             description: { type: 'string', nullable: true },
             status: { type: 'string', enum: ['TO_DO', 'IN_PROGRESS', 'REVIEW', 'DONE'] },
             priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
-            tag: { type: 'string', enum: ['DESIGN', 'LEGAL', 'GENERAL', 'OPS', 'MARKETING', 'DEV'], nullable: true },
+            tag: {
+              type: 'string',
+              enum: ['DESIGN', 'LEGAL', 'GENERAL', 'OPS', 'MARKETING', 'DEV'],
+              nullable: true,
+            },
             attachments: { type: 'array', items: { type: 'object' }, nullable: true },
             dueDate: { type: 'string', format: 'date-time', nullable: true },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
             comments: { type: 'array', items: { $ref: '#/components/schemas/TaskComment' } },
-          }
+          },
         },
         TaskInput: {
           type: 'object',
@@ -365,11 +369,14 @@ const options: swaggerJsdoc.Options = {
             description: { type: 'string' },
             status: { type: 'string', enum: ['TO_DO', 'IN_PROGRESS', 'REVIEW', 'DONE'] },
             priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
-            tag: { type: 'string', enum: ['DESIGN', 'LEGAL', 'GENERAL', 'OPS', 'MARKETING', 'DEV'] },
+            tag: {
+              type: 'string',
+              enum: ['DESIGN', 'LEGAL', 'GENERAL', 'OPS', 'MARKETING', 'DEV'],
+            },
             assigneeId: { type: 'string', format: 'uuid' },
             dueDate: { type: 'string', format: 'date-time' },
-            attachments: { type: 'array', items: { type: 'object' } }
-          }
+            attachments: { type: 'array', items: { type: 'object' } },
+          },
         },
         TaskComment: {
           type: 'object',
@@ -385,10 +392,10 @@ const options: swaggerJsdoc.Options = {
               properties: {
                 id: { type: 'string', format: 'uuid' },
                 firstName: { type: 'string' },
-                lastName: { type: 'string' }
-              }
-            }
-          }
+                lastName: { type: 'string' },
+              },
+            },
+          },
         },
         // Common patterns
         PaginationMeta: {

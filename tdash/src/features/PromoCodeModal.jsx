@@ -76,7 +76,7 @@ const PromoCodeModal = ({ promoCode, onClose, onSuccess, isDark, eventId, organi
         }
     };
 
-    const inputClass = `w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isDark
+    const inputClass = `w-full px-4 py-2 rounded-lg border focus:outline-hidden focus:ring-2 focus:ring-indigo-500 ${isDark
         ? 'bg-[#252525] border-[#333] text-white'
         : 'bg-white border-gray-300 text-gray-900'
         }`;

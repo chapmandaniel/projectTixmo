@@ -1,4 +1,3 @@
-
 import app from '../../src/app';
 
 describe('App Boot Verification', () => {

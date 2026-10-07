@@ -154,61 +154,24 @@ describe('Authentication Endpoints', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('should bootstrap a tenant organization and make the first tenant user owner', async () => {
-      process.env.RAILWAY_SERVICE_DASH_URL = `${tenantBootstrapSlug}.tixmo.co`;
-      process.env.RAILWAY_PROJECT_NAME = `tixmo ${tenantBootstrapSlug}`;
-
-      const response = await request(app)
-        .post('/api/v1/auth/register')
-        .send({
-          email: 'tenant-bootstrap-owner@example.com',
-          password: 'SecurePass123!',
-          firstName: 'Tenant',
-          lastName: 'Owner',
-        })
-        .expect(201);
-
-      expect(response.body.data.user.role).toBe('OWNER');
-      expect(response.body.data.user.organizationId).toBeTruthy();
-
-      const organization = await prisma.organization.findUnique({
-        where: { slug: tenantBootstrapSlug },
-      });
-
-      expect(organization).toBeTruthy();
-      expect(organization?.name).toBe('Mighty Quinton Bootstrap');
-    });
-
-    it('should reuse the tenant organization for later tenant registrations', async () => {
-      process.env.RAILWAY_SERVICE_DASH_URL = `${tenantBootstrapSlug}.tixmo.co`;
-      process.env.RAILWAY_PROJECT_NAME = `tixmo ${tenantBootstrapSlug}`;
-
-      const firstResponse = await request(app)
-        .post('/api/v1/auth/register')
-        .send({
-          email: 'tenant-bootstrap-first@example.com',
-          password: 'SecurePass123!',
-          firstName: 'Tenant',
-          lastName: 'First',
-        })
-        .expect(201);
-
-      const secondResponse = await request(app)
-        .post('/api/v1/auth/register')
-        .send({
-          email: 'tenant-bootstrap-second@example.com',
-          password: 'SecurePass123!',
-          firstName: 'Tenant',
-          lastName: 'Second',
-        })
-        .expect(201);
-
-      expect(firstResponse.body.data.user.role).toBe('OWNER');
-      expect(secondResponse.body.data.user.role).toBe('TEAM_MEMBER');
-      expect(secondResponse.body.data.user.organizationId).toBe(
-        firstResponse.body.data.user.organizationId
-      );
-    });
+    it.each(['evil.tixmo.co', 'demo.tixmo.co', 'api-production.up.railway.app', 'localhost:3000'])(
+      'keeps signup CUSTOMER under host %s and deployment metadata',
+      async (host) => {
+        process.env.RAILWAY_SERVICE_DASH_URL = `${tenantBootstrapSlug}.tixmo.co`;
+        process.env.RAILWAY_PROJECT_NAME = `tixmo ${tenantBootstrapSlug}`;
+        const response = await request(app)
+          .post('/api/v1/auth/register')
+          .set('Host', host)
+          .set('X-Forwarded-Host', 'attacker-owned.tixmo.co')
+          .send({ ...validUser, email: 'tenant-bootstrap-customer@example.com', role: 'OWNER' })
+          .expect(201);
+        expect(response.body.data.user.role).toBe('CUSTOMER');
+        expect(response.body.data.user.organizationId).toBeNull();
+        expect(
+          await prisma.organization.findUnique({ where: { slug: tenantBootstrapSlug } })
+        ).toBeNull();
+      }
+    );
   });
 
   describe('POST /api/v1/auth/login', () => {

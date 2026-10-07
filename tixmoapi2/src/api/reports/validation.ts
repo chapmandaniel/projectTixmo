@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+const currency = z
+  .string()
+  .regex(/^[a-zA-Z]{3}$/)
+  .transform((value) => value.toLowerCase())
+  .optional()
+  .default('cad');
+
 /**
  * Get sales report validation schema
  */
@@ -10,6 +17,7 @@ export const getSalesReportSchema = z.object({
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional(),
     groupBy: z.enum(['day', 'week', 'month', 'event']).optional().default('day'),
+    currency,
   }),
 });
 
@@ -28,5 +36,6 @@ export const getAttendanceReportSchema = z.object({
 export const getDashboardStatsSchema = z.object({
   query: z.object({
     organizationId: z.string().uuid().optional(),
+    currency,
   }),
 });

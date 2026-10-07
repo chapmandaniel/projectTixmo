@@ -2,7 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { parseRuntimeConfig } from './runtime-config-parser.mjs';
 
 const timeoutMs = Number(process.env.TIXMO_CHECKOUT_CONFIG_TIMEOUT_MS || 12000);
 
@@ -13,7 +13,7 @@ Optional environment:
   TIXMO_DASHBOARD_URL                     Dashboard origin. Default: http://127.0.0.1:5173
   TIXMO_CHECKOUT_CONFIG_EVIDENCE_PATH     JSON output path. Default: docs/checkout-config-evidence/runtime-config-evidence.json
   TIXMO_EXPECTED_API_URL                  Expected runtime apiUrl. Optional.
-  TIXMO_EXPECTED_PAYMENT_CURRENCY         Expected payment currency. Default: usd
+  TIXMO_EXPECTED_PAYMENT_CURRENCY         Expected payment currency. Default: cad
   TIXMO_REQUIRE_POLICY_URLS               Require privacy/terms/refund URLs. Default: true
   TIXMO_REQUIRE_STRIPE_PUBLISHABLE_KEY    Require stripePublishableKey. Default: true
   TIXMO_VERIFY_POLICY_URLS                Fetch policy URLs and require 2xx/3xx. Default: false
@@ -63,7 +63,7 @@ const config = {
     'docs/checkout-config-evidence/runtime-config-evidence.json',
   expectedApiUrl: process.env.TIXMO_EXPECTED_API_URL || '',
   expectedPaymentCurrency: normalizeCurrency(
-    process.env.TIXMO_EXPECTED_PAYMENT_CURRENCY || process.env.PAYMENT_CURRENCY || 'usd'
+    process.env.TIXMO_EXPECTED_PAYMENT_CURRENCY || process.env.PAYMENT_CURRENCY || 'cad'
   ),
   requirePolicyUrls: booleanEnv('TIXMO_REQUIRE_POLICY_URLS', true),
   requireStripePublishableKey: booleanEnv('TIXMO_REQUIRE_STRIPE_PUBLISHABLE_KEY', true),
@@ -122,20 +122,6 @@ const requestText = async (name, url, options = {}) => {
   } finally {
     clearTimeout(timeout);
   }
-};
-
-const parseRuntimeConfig = (source) => {
-  const sandbox = {
-    window: {},
-  };
-  sandbox.window.__TIXMO_CONFIG__ = {};
-  vm.createContext(sandbox);
-  vm.runInContext(source, sandbox, {
-    timeout: 1000,
-    displayErrors: false,
-  });
-
-  return sandbox.window.__TIXMO_CONFIG__ || {};
 };
 
 const requireTruthy = (name, value) => {
@@ -218,7 +204,7 @@ try {
     record('stripePublishableKey format', 'pass', { summary: redactKey(runtimeConfig.stripePublishableKey) });
   }
 
-  const actualCurrency = normalizeCurrency(runtimeConfig.paymentCurrency || 'usd');
+  const actualCurrency = normalizeCurrency(runtimeConfig.paymentCurrency || 'cad');
   if (actualCurrency !== config.expectedPaymentCurrency) {
     throw new Error(
       `paymentCurrency mismatch: expected ${config.expectedPaymentCurrency}, got ${actualCurrency || '<empty>'}`

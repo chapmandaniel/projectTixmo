@@ -337,7 +337,12 @@ router.get(
  *       404:
  *         description: Scanner not found
  */
-router.get('/:id', authenticate, authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.getScanner);
+router.get(
+  '/:id',
+  authenticate,
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  controller.getScanner
+);
 
 /**
  * @swagger
@@ -411,6 +416,11 @@ router.put(
  *       404:
  *         description: Scanner not found
  */
-router.delete('/:id', authenticate, authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.deleteScanner);
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  controller.deleteScanner
+);
 
 export default router;

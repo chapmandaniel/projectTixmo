@@ -28,7 +28,6 @@ const getRateLimitKey = (req: Request) => {
 const createStore = (prefix: string) =>
   new RedisStore({
     prefix,
-    // @ts-ignore - Known issue with rate-limit-redis types and redis v4
     sendCommand: (...args: string[]) => getRedisClient().sendCommand(args),
   });
 

@@ -114,7 +114,7 @@ describe('Security Fixes Verification', () => {
         passwordHash: 'realhash',
         role: 'USER',
         organizationId: null,
-        emailVerified: true
+        emailVerified: true,
       };
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
       (comparePassword as jest.Mock).mockResolvedValue(true);

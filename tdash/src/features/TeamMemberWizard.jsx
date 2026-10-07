@@ -109,8 +109,8 @@ const TeamMemberWizard = ({ onClose, onSuccess, isDark, currentUser }) => {
                 ...formData,
                 ...(currentUser?.organizationId ? { organizationId: currentUser.organizationId } : {}),
             };
-            await api.post('/users', payload);
-            if (onSuccess) onSuccess();
+            const response = await api.post('/users', payload);
+            if (onSuccess) onSuccess(response.data?.data);
             onClose();
         } catch (err) {
             console.error(err);
@@ -183,7 +183,7 @@ const TeamMemberWizard = ({ onClose, onSuccess, isDark, currentUser }) => {
                 </div>
 
                 {/* Steps Progress */}
-                <div className={`px-8 py-4 bg-opacity-50 ${isDark ? 'bg-[#1a1a1a]' : 'bg-gray-50'}`}>
+                <div className={`px-8 py-4 ${isDark ? 'bg-dashboard-memberFooter/50' : 'bg-gray-50/50'}`}>
                     <div className="flex items-center justify-between relative">
                         <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 ${isDark ? 'bg-[#333]' : 'bg-gray-200'} -z-10`} />
                         {steps.map((s) => {

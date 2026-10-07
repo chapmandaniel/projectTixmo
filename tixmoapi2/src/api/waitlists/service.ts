@@ -156,4 +156,3 @@ export class WaitlistService {
 }
 
 export const waitlistService = new WaitlistService();
-

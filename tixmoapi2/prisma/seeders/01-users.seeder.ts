@@ -1,8 +1,10 @@
+import { assertDevelopmentClient } from '../utils/development-client';
 import { PrismaClient, UserRole } from '@prisma/client';
 import { seedLogger } from '../utils/seed-logger';
 import { createUserData } from '../factories/user.factory';
 
 export async function seedUsers(prisma: PrismaClient) {
+  assertDevelopmentClient(prisma);
   seedLogger.info('Seeding users...');
 
   const users = [];

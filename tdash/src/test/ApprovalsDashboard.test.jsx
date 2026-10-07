@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
+import { getUserCacheIdentity } from '../lib/session';
 import ApprovalsDashboard from '../features/ApprovalsDashboard';
 
 const apiGet = vi.fn();
@@ -382,7 +383,7 @@ describe('ApprovalsDashboard', () => {
 
     it('renders cached approvals immediately while refreshing in the background', async () => {
         window.sessionStorage.setItem(
-            'tixmo:approvals-dashboard-cache',
+            `tixmo:approvals-dashboard-cache:${getUserCacheIdentity({ email: 'designer@example.com' })}:`,
             JSON.stringify({
                 approvals: [
                     {
@@ -620,4 +621,38 @@ describe('ApprovalsDashboard', () => {
 
         vi.useRealTimers();
     });
+    it('does not reuse legacy staff cache for a customer whose API access is denied', async () => {
+        window.sessionStorage.setItem('tixmo:approvals-dashboard-cache', JSON.stringify({
+            approvals: [{ id: 'private', title: 'Secret staff poster' }], events: [],
+        }));
+        apiGet.mockRejectedValue({ response: { status: 403, data: { message: 'Access denied' } } });
+        render(<MemoryRouter><ApprovalsDashboard user={{ id: 'customer', role: 'CUSTOMER' }} /></MemoryRouter>);
+        await waitFor(() => expect(screen.getByText('Access denied')).toBeInTheDocument());
+        expect(screen.queryByText('Secret staff poster')).not.toBeInTheDocument();
+    });
+
+    it('clears cached content after an authorization denial', async () => {
+        const user = { id: 'staff', role: 'OWNER', email: 'staff@example.com' };
+        window.sessionStorage.setItem(`tixmo:approvals-dashboard-cache:${getUserCacheIdentity(user)}:`, JSON.stringify({
+            approvals: [{ id: 'private', title: 'Previously visible poster', latestRevision: { assets: [] } }], events: [],
+        }));
+        apiGet.mockRejectedValue({ response: { status: 403, data: { message: 'Access denied' } } });
+        render(<MemoryRouter><ApprovalsDashboard user={user} /></MemoryRouter>);
+        expect(screen.getByText('Previously visible poster')).toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByText('Previously visible poster')).not.toBeInTheDocument());
+        expect(screen.getByText('Access denied')).toBeInTheDocument();
+    });
+
+    it('discards a pending former-account load after switching accounts', async () => {
+        let finishOld;
+        apiGet.mockImplementation(() => new Promise((resolve) => { finishOld = resolve; }));
+        const view = render(<MemoryRouter><ApprovalsDashboard user={{ id: 'old-staff', role: 'OWNER' }} /></MemoryRouter>);
+        const oldFinisher = finishOld;
+        apiGet.mockResolvedValue({ approvals: [], events: [] });
+        view.rerender(<MemoryRouter><ApprovalsDashboard user={{ id: 'customer', role: 'CUSTOMER' }} /></MemoryRouter>);
+        await act(async () => { oldFinisher({ approvals: [{ id: 'private', title: 'Late private poster' }] }); });
+        expect(screen.queryByText('Late private poster')).not.toBeInTheDocument();
+        expect(Object.values(window.sessionStorage).join('')).not.toContain('Late private poster');
+    });
+
 });

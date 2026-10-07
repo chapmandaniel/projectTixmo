@@ -2,6 +2,8 @@ import { ApiError } from '@utils/ApiError';
 import { Event, Prisma, EventStatus } from '@prisma/client';
 
 import prisma from '../../config/prisma';
+import { lockOrder } from '../../services/order-inventory.service';
+import { orderService } from '../orders/service';
 
 interface CreateEventInput {
   title: string;
@@ -33,7 +35,6 @@ interface UpdateEventInput {
   timezone?: string;
   tags?: string[];
 }
-
 
 interface ListEventsParams {
   page?: number;
@@ -69,6 +70,16 @@ const VALID_STATUS_TRANSITIONS: Record<EventStatus, Set<EventStatus>> = {
 };
 
 export class EventService {
+  private assertTimeZone(zone?: string) {
+    if (zone !== undefined) {
+      try {
+        if (!zone) throw new Error();
+        new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format();
+      } catch {
+        throw ApiError.badRequest('Invalid IANA event timezone');
+      }
+    }
+  }
   /**
    * Get user's organization ID
    */
@@ -83,7 +94,11 @@ export class EventService {
   /**
    * Generate a unique slug from a title, appending a suffix on collision.
    */
-  private async generateUniqueSlug(baseTitle: string, excludeId?: string): Promise<string> {
+  private async generateUniqueSlug(
+    baseTitle: string,
+    excludeId?: string,
+    db: Prisma.TransactionClient = prisma
+  ): Promise<string> {
     const baseSlug = baseTitle
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -92,8 +107,8 @@ export class EventService {
     let slug = baseSlug;
     let counter = 0;
 
-    while (true) {
-      const existing = await prisma.event.findUnique({
+    for (;;) {
+      const existing = await db.event.findUnique({
         where: { slug },
         select: { id: true },
       });
@@ -115,10 +130,11 @@ export class EventService {
     if (!allowedTransitions || !allowedTransitions.has(newStatus)) {
       throw ApiError.badRequest(
         `Invalid status transition: ${currentStatus} → ${newStatus}. ` +
-        `Allowed transitions from ${currentStatus}: ${allowedTransitions && allowedTransitions.size > 0
-          ? Array.from(allowedTransitions).join(', ')
-          : 'none (terminal state)'
-        }`
+          `Allowed transitions from ${currentStatus}: ${
+            allowedTransitions && allowedTransitions.size > 0
+              ? Array.from(allowedTransitions).join(', ')
+              : 'none (terminal state)'
+          }`
       );
     }
   }
@@ -126,9 +142,12 @@ export class EventService {
   /**
    * Create a new event
    */
-  async createEvent(data: CreateEventInput): Promise<Event> {
+  async createEvent(data: CreateEventInput, db: Prisma.TransactionClient = prisma): Promise<Event> {
+    if (data.status && data.status !== 'DRAFT')
+      throw ApiError.badRequest('New events must start as drafts');
+    this.assertTimeZone(data.timezone);
     // Check if organization exists
-    const organization = await prisma.organization.findUnique({
+    const organization = await db.organization.findUnique({
       where: { id: data.organizationId },
     });
 
@@ -138,7 +157,7 @@ export class EventService {
 
     // Check if venue exists (only if provided)
     if (data.venueId) {
-      const venue = await prisma.venue.findUnique({
+      const venue = await db.venue.findUnique({
         where: { id: data.venueId },
       });
 
@@ -165,10 +184,10 @@ export class EventService {
     }
 
     // Generate unique slug from title (handles collisions)
-    const slug = await this.generateUniqueSlug(data.title);
+    const slug = await this.generateUniqueSlug(data.title, undefined, db);
 
     // Create event
-    return await prisma.event.create({
+    return await db.event.create({
       data: {
         name: data.title,
         slug: slug,
@@ -182,9 +201,7 @@ export class EventService {
         capacity: data.capacity || null,
         category: data.category || null,
         tags: data.tags || [],
-        images: data.imageUrl
-          ? ({ main: data.imageUrl } as unknown as Prisma.InputJsonValue)
-          : undefined,
+        images: data.imageUrl ? { main: data.imageUrl } : undefined,
         metadata:
           data.metadata !== undefined
             ? (data.metadata as unknown as Prisma.InputJsonValue)
@@ -229,9 +246,13 @@ export class EventService {
   /**
    * Update event
    */
-  async updateEvent(id: string, data: UpdateEventInput): Promise<Event> {
+  async updateEvent(
+    id: string,
+    data: UpdateEventInput,
+    db: Prisma.TransactionClient = prisma
+  ): Promise<Event> {
     // Check if event exists
-    const existingEvent = await prisma.event.findUnique({
+    const existingEvent = await db.event.findUnique({
       where: { id },
     });
 
@@ -239,9 +260,13 @@ export class EventService {
       throw ApiError.notFound('Event not found');
     }
 
+    if (existingEvent.deletedAt) throw ApiError.badRequest('Cannot edit a deleted event');
+    if (data.status && data.status !== existingEvent.status)
+      throw ApiError.badRequest('Use the dedicated event status action');
+    this.assertTimeZone(data.timezone);
     // If updating venue, check if it exists
     if (data.venueId) {
-      const venue = await prisma.venue.findUnique({
+      const venue = await db.venue.findUnique({
         where: { id: data.venueId },
       });
 
@@ -256,7 +281,9 @@ export class EventService {
     }
 
     // Validate dates if both are provided or combined with existing
-    const newStart = data.startDateTime ? new Date(data.startDateTime) : existingEvent.startDatetime;
+    const newStart = data.startDateTime
+      ? new Date(data.startDateTime)
+      : existingEvent.startDatetime;
     const newEnd = data.endDateTime ? new Date(data.endDateTime) : existingEvent.endDatetime;
 
     if (newStart && newEnd) {
@@ -272,7 +299,7 @@ export class EventService {
       updateData.name = data.title;
       // Only regenerate slug if event is still in DRAFT (preserve URLs for published events)
       if (existingEvent.status === 'DRAFT') {
-        updateData.slug = await this.generateUniqueSlug(data.title, id);
+        updateData.slug = await this.generateUniqueSlug(data.title, id, db);
       }
     }
     if (data.description !== undefined) updateData.description = data.description;
@@ -280,11 +307,10 @@ export class EventService {
     if (data.status) updateData.status = data.status;
     if (data.capacity) updateData.capacity = data.capacity;
     if (data.category) updateData.category = data.category;
+    if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.timezone) updateData.timezone = data.timezone;
-    if (data.metadata !== undefined)
-      updateData.metadata = data.metadata as unknown as Prisma.InputJsonValue;
-    if (data.imageUrl)
-      updateData.images = { main: data.imageUrl } as unknown as Prisma.InputJsonValue;
+    if (data.metadata !== undefined) updateData.metadata = data.metadata;
+    if (data.imageUrl) updateData.images = { main: data.imageUrl };
 
     if (data.startDateTime) {
       updateData.startDatetime = new Date(data.startDateTime);
@@ -298,7 +324,7 @@ export class EventService {
       ...updateData,
     } as unknown as Prisma.EventUpdateInput;
 
-    return await prisma.event.update({
+    return await db.event.update({
       where: { id },
       data: updatePayload,
     });
@@ -308,61 +334,27 @@ export class EventService {
    * Delete event
    */
   async deleteEvent(id: string): Promise<void> {
-    // Check if event exists
-    const existingEvent = await prisma.event.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            tickets: true,
-          },
-        },
-      },
-    });
-
-    if (!existingEvent) {
-      throw ApiError.notFound('Event not found');
-    }
-
-    // Check if event has any tickets
-    if (existingEvent._count.tickets > 0) {
-      throw ApiError.badRequest(
-        'Cannot delete event with existing tickets. Consider cancelling instead.'
-      );
-    }
-
-    // Delete event (Soft Delete)
-    await prisma.event.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        status: 'DELETED',
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
+      const event = await tx.event.findUnique({ where: { id } });
+      if (!event) throw ApiError.notFound('Event not found');
+      if (await tx.ticket.count({ where: { eventId: id } })) {
+        throw ApiError.badRequest(
+          'Cannot delete event with existing tickets. Consider cancelling instead.'
+        );
+      }
+      await tx.event.update({ where: { id }, data: { deletedAt: new Date(), status: 'DELETED' } });
     });
   }
 
-  /**
-   * Restore deleted event
-   */
+  /** Restore as a draft under the same event lock used by checkout and configuration. */
   async restoreEvent(id: string): Promise<Event> {
-    const event = await prisma.event.findUnique({
-      where: { id },
-    });
-
-    if (!event) {
-      throw ApiError.notFound('Event not found');
-    }
-
-    if (!event.deletedAt) {
-      throw ApiError.badRequest('Event is not deleted');
-    }
-
-    return await prisma.event.update({
-      where: { id },
-      data: {
-        deletedAt: null,
-        status: 'DRAFT', // Restore as DRAFT for safety
-      },
+    return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
+      const event = await tx.event.findUnique({ where: { id } });
+      if (!event) throw ApiError.notFound('Event not found');
+      if (!event.deletedAt) throw ApiError.badRequest('Event is not deleted');
+      return tx.event.update({ where: { id }, data: { deletedAt: null, status: 'DRAFT' } });
     });
   }
 
@@ -372,7 +364,8 @@ export class EventService {
   async listDeletedEvents(
     organizationId: string,
     page = 1,
-    limit = 20
+    limit = 20,
+    search?: string
   ): Promise<PaginatedEvents> {
     // Cap limit to prevent unbounded queries
     const cappedLimit = Math.min(Math.max(1, limit), 100);
@@ -382,6 +375,7 @@ export class EventService {
     const where: Prisma.EventWhereInput = {
       organizationId,
       deletedAt: { not: null },
+      ...(search && { name: { contains: search, mode: 'insensitive' as const } }),
     };
 
     const [events, total] = await Promise.all([
@@ -501,6 +495,10 @@ export class EventService {
     // Delegate to existing methods for PUBLISHED and CANCELLED
     if (newStatus === EventStatus.PUBLISHED) return this.publishEvent(id);
     if (newStatus === EventStatus.CANCELLED) return this.cancelEvent(id);
+    if (newStatus === EventStatus.DELETED)
+      throw ApiError.badRequest('Use the dedicated delete action');
+    if (newStatus === EventStatus.DRAFT)
+      throw ApiError.badRequest('Use the dedicated restore action');
 
     const event = await prisma.event.findUnique({ where: { id } });
     if (!event) throw ApiError.notFound('Event not found');
@@ -517,8 +515,8 @@ export class EventService {
   /**
    * Publish event (change status from DRAFT to PUBLISHED)
    */
-  async publishEvent(id: string): Promise<Event> {
-    const event = await prisma.event.findUnique({
+  async publishEvent(id: string, db: Prisma.TransactionClient = prisma): Promise<Event> {
+    const event = await db.event.findUnique({
       where: { id },
     });
 
@@ -541,10 +539,25 @@ export class EventService {
     if (!event.capacity) missingFields.push('Capacity');
 
     if (missingFields.length > 0) {
-      throw ApiError.badRequest(`Cannot publish event. Missing required fields: ${missingFields.join(', ')}`);
+      throw ApiError.badRequest(
+        `Cannot publish event. Missing required fields: ${missingFields.join(', ')}`
+      );
     }
 
-    return await prisma.event.update({
+    const activeTypes = await db.ticketType.count({
+      where: {
+        eventId: id,
+        status: 'ACTIVE',
+        quantityTotal: { gt: 0 },
+        tierInventoryStatus: 'READY',
+      },
+    });
+    if (!activeTypes)
+      throw ApiError.badRequest('Cannot publish event without available ticket configuration');
+    if (event.endDatetime! <= event.startDatetime! || event.startDatetime! <= new Date())
+      throw ApiError.badRequest('Cannot publish an event with invalid or past dates');
+    this.assertTimeZone(event.timezone || undefined);
+    return await db.event.update({
       where: { id },
       data: {
         status: 'PUBLISHED',
@@ -556,85 +569,36 @@ export class EventService {
    * Cancel event — also invalidates all tickets and handles orders
    */
   async cancelEvent(id: string): Promise<Event> {
-    const event = await prisma.event.findUnique({
-      where: { id },
-      include: {
-        orders: {
-          where: { status: { in: ['PENDING', 'PAID'] } },
-          include: { tickets: true },
-        },
-        ticketTypes: true,
-      },
+    // Close sales first under the same event lock used by checkout and
+    // admission. The resumable per-order pass takes no event-first order locks.
+    const cancelled = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
+      const event = await tx.event.findUnique({ where: { id } });
+      if (!event) throw ApiError.notFound('Event not found');
+      if (event.deletedAt) throw ApiError.badRequest('Cannot cancel a deleted event');
+      if (event.status !== 'CANCELLED') this.validateStatusTransition(event.status, 'CANCELLED');
+      return tx.event.update({ where: { id }, data: { status: 'CANCELLED' } });
     });
-
-    if (!event) {
-      throw ApiError.notFound('Event not found');
-    }
-
-    if (event.deletedAt) {
-      throw ApiError.badRequest('Cannot cancel a deleted event');
-    }
-
-    // Validate status transition
-    this.validateStatusTransition(event.status, 'CANCELLED');
-
-    // Cancel event and cascade to tickets/orders in a transaction
-    return await prisma.$transaction(async (tx) => {
-      // 1. Cancel all VALID/TRANSFERRED tickets for this event
-      await tx.ticket.updateMany({
-        where: {
-          eventId: id,
-          status: { in: ['VALID', 'TRANSFERRED'] },
-        },
-        data: { status: 'CANCELLED' },
-      });
-
-      // 2. Handle PENDING orders — release held inventory
-      for (const order of event.orders) {
-        if (order.status === 'PENDING') {
-          // Release held inventory
-          const ticketTypeCounts = new Map<string, number>();
-          for (const ticket of order.tickets) {
-            const count = ticketTypeCounts.get(ticket.ticketTypeId) || 0;
-            ticketTypeCounts.set(ticket.ticketTypeId, count + 1);
-          }
-
-          for (const [ticketTypeId, quantity] of ticketTypeCounts.entries()) {
-            await tx.ticketType.update({
-              where: { id: ticketTypeId },
-              data: {
-                quantityHeld: { decrement: quantity },
-                quantityAvailable: { increment: quantity },
-              },
-            });
-          }
-
-          // Cancel the order
-          await tx.order.update({
-            where: { id: order.id },
-            data: { status: 'CANCELLED' },
-          });
-
-          // Cancel associated tickets
+    const orders = await prisma.order.findMany({
+      where: { eventId: id, status: { in: ['PENDING', 'PAID'] } },
+      select: { id: true },
+    });
+    for (const order of orders) {
+      await prisma.$transaction(async (tx) => {
+        await lockOrder(tx, order.id);
+        const current = await tx.order.findUniqueOrThrow({ where: { id: order.id } });
+        if (current.status === 'PAID')
           await tx.ticket.updateMany({
-            where: { orderId: order.id },
+            where: { orderId: order.id, status: { in: ['VALID', 'TRANSFERRED'] } },
             data: { status: 'CANCELLED' },
           });
-        }
-
-        // Note: PAID orders are kept as-is for refund processing.
-        // They should be refunded separately via the refund flow.
-        // Mark them as needing attention by keeping their status.
-      }
-
-      // 3. Update event status
-      return await tx.event.update({
-        where: { id },
-        data: {
-          status: 'CANCELLED',
-        },
       });
-    });
+      // Pending orders release their own holds exactly once. Paid tickets keep
+      // SOLD accounting until an actual refund succeeds.
+      const current = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+      if (current.status === 'PENDING') await orderService.cancelOrder(order.id);
+    }
+    return cancelled;
   }
 
   /**

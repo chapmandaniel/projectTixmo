@@ -7,6 +7,7 @@ import {
   createEvent,
   createTicketType,
   createOrder,
+  confirmOrderForTest,
   createOrganization,
   createVenue,
 } from '../utils/testUtils';
@@ -17,13 +18,17 @@ describe('Scanner Offline Sync', () => {
   let scannerApiKey: string;
   let eventId: string;
   let ticket: any;
+  let unpaidTicket: any;
 
   beforeAll(async () => {
     await cleanupTestData();
 
     // Create admin
     const adminData = await registerUser(app, { email: 'admin@test.com' });
-    await prisma.user.update({ where: { id: adminData.user.id }, data: { role: UserRole.ADMIN } });
+    await prisma.user.update({
+      where: { id: adminData.user.id },
+      data: { role: UserRole.ADMIN, isPlatformAdmin: true },
+    });
 
     // Login to get fresh token
     const loginRes = await request(app)
@@ -73,15 +78,17 @@ describe('Scanner Offline Sync', () => {
       items: [{ ticketTypeId: ticketType.id, quantity: 1 }],
     });
 
-    // Confirm order (simulate payment)
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { status: 'PAID' },
+    await confirmOrderForTest(order.id);
+
+    const unpaidOrder = await createOrder(app, userData.accessToken, {
+      items: [{ ticketTypeId: ticketType.id, quantity: 1 }],
     });
 
     // Get ticket
     const tickets = await prisma.ticket.findMany({ where: { orderId: order.id } });
     ticket = tickets[0];
+    const unpaidTickets = await prisma.ticket.findMany({ where: { orderId: unpaidOrder.id } });
+    unpaidTicket = unpaidTickets[0];
   });
 
   afterAll(async () => {
@@ -97,9 +104,15 @@ describe('Scanner Offline Sync', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.tickets).toHaveLength(1);
-      expect(res.body.data.tickets[0].barcode).toBe(ticket.barcode);
-      expect(res.body.data.tickets[0].hash).toBeDefined();
+      const active = res.body.data.tickets.filter((t: any) => t.status === 'VALID');
+      expect(active).toHaveLength(1);
+      expect(active[0].barcode).toBe(ticket.barcode);
+      expect(active[0].hash).toBeDefined();
+      expect(
+        res.body.data.tickets
+          .filter((t: any) => t.status === 'CANCELLED')
+          .every((t: any) => t.barcode === '')
+      ).toBe(true);
     });
 
     it('should filter by since timestamp', async () => {
@@ -118,6 +131,28 @@ describe('Scanner Offline Sync', () => {
   });
 
   describe('POST /scanners/validate', () => {
+    it('should reject unpaid tickets', async () => {
+      const scans = [
+        {
+          qrData: `TICKET:${unpaidTicket.id}:${unpaidTicket.barcode}:${eventId}`,
+          scannedAt: new Date().toISOString(),
+          scanType: 'ENTRY',
+        },
+      ];
+
+      const res = await request(app)
+        .post('/api/v1/scanners/validate')
+        .set('Authorization', `Bearer ${scannerApiKey}`)
+        .send({ scans });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.processed).toBe(1);
+      expect(res.body.data.success).toBe(0);
+      expect(res.body.data.failed).toBe(1);
+      expect(res.body.data.results[0].reason).toContain('payment is completed');
+    });
+
     it('should process offline scans', async () => {
       const scans = [
         {

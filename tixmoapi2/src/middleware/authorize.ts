@@ -28,7 +28,9 @@ export const requireEmailVerification = (req: AuthRequest, _res: Response, next:
   }
 
   if (!req.user.emailVerified) {
-    return next(ApiError.forbidden('Email verification required. Please verify your email before proceeding.'));
+    return next(
+      ApiError.forbidden('Email verification required. Please verify your email before proceeding.')
+    );
   }
 
   next();

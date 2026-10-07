@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { PrismaClient, User, PromoCode } from '@prisma/client';
+import { User, PromoCode } from '@prisma/client';
 import { seedLogger } from './utils/seed-logger';
 import { cleanupDatabase } from './utils/cleanup';
 import { seedUsers } from './seeders/01-users.seeder';
@@ -11,7 +11,9 @@ import { seedPromoCodes } from './seeders/06-promo-codes.seeder';
 import { seedOrders } from './seeders/07-orders.seeder';
 import { seedScanners } from './seeders/08-scanners.seeder';
 
-const prisma = new PrismaClient();
+import { createDevelopmentClient } from './utils/development-client';
+
+const prisma = createDevelopmentClient();
 
 async function main() {
   seedLogger.info('🌱 Starting database seed...\n');
@@ -76,7 +78,6 @@ async function main() {
 function printDemoCredentials(users: User[], promoCodes: PromoCode[]) {
   seedLogger.info('🔑 Demo Credentials:');
   seedLogger.info('─'.repeat(60));
-  seedLogger.info('All users have password: Password123!');
   seedLogger.info('─'.repeat(60));
 
   const admin = users.find((u) => u.role === 'ADMIN');

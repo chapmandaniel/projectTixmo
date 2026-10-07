@@ -205,7 +205,7 @@ const CreateApprovalModal = ({ isDark, events, onClose, onCreate, initialEventId
                                 className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${isDark
                                     ? 'bg-[#0A0A0A] border-gray-800 text-white focus:border-indigo-500'
                                     : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'
-                                    } focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${formErrors.eventId ? 'border-red-500 focus:border-red-500' : ''}`}
+                                    } focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 ${formErrors.eventId ? 'border-red-500 focus:border-red-500' : ''}`}
                             >
                                 <option value="">Select an event</option>
                                 {events.map((event) => (
@@ -232,7 +232,7 @@ const CreateApprovalModal = ({ isDark, events, onClose, onCreate, initialEventId
                                 className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${isDark
                                     ? 'bg-[#0A0A0A] border-gray-800 text-white placeholder-gray-600 focus:border-indigo-500'
                                     : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-indigo-500'
-                                    } focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${formErrors.title ? 'border-red-500 focus:border-red-500' : ''}`}
+                                    } focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 ${formErrors.title ? 'border-red-500 focus:border-red-500' : ''}`}
                             />
                             {formErrors.title && <p className="text-xs text-red-500 mt-1">{formErrors.title}</p>}
                         </div>
@@ -251,7 +251,7 @@ const CreateApprovalModal = ({ isDark, events, onClose, onCreate, initialEventId
                             className={`w-full px-4 py-3 rounded-lg border transition-colors resize-none ${isDark
                                 ? 'bg-[#0A0A0A] border-gray-800 text-white placeholder-gray-600 focus:border-indigo-500'
                                 : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-indigo-500'
-                                } focus:outline-none focus:ring-2 focus:ring-indigo-500/20`}
+                                } focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20`}
                         />
                     </div>
 
@@ -343,7 +343,7 @@ const CreateApprovalModal = ({ isDark, events, onClose, onCreate, initialEventId
                                 className={`flex-1 px-4 py-2.5 rounded-lg border transition-colors ${isDark
                                     ? 'bg-[#0A0A0A] border-gray-800 text-white placeholder-gray-600 focus:border-indigo-500'
                                     : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-indigo-500'
-                                    } focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${formErrors.reviewer ? 'border-red-500' : ''}`}
+                                    } focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 ${formErrors.reviewer ? 'border-red-500' : ''}`}
                                 onKeyDown={(e) => e.key === 'Enter' && addReviewer(e)}
                             />
                             <button
@@ -383,7 +383,7 @@ const CreateApprovalModal = ({ isDark, events, onClose, onCreate, initialEventId
                             className={`w-full px-4 py-3 rounded-lg border transition-colors resize-none ${isDark
                                 ? 'bg-[#0A0A0A] border-gray-800 text-white placeholder-gray-600 focus:border-indigo-500'
                                 : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-indigo-500'
-                                } focus:outline-none focus:ring-2 focus:ring-indigo-500/20`}
+                                } focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20`}
                         />
                     </div>
 
@@ -399,7 +399,7 @@ const CreateApprovalModal = ({ isDark, events, onClose, onCreate, initialEventId
                                 className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${isDark
                                     ? 'bg-[#0A0A0A] border-gray-800 text-white focus:border-indigo-500'
                                     : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'
-                                    } focus:outline-none focus:ring-2 focus:ring-indigo-500/20`}
+                                    } focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20`}
                             >
                                 {PRIORITIES.map((p) => (
                                     <option key={p.value} value={p.value}>{p.label}</option>
@@ -419,7 +419,7 @@ const CreateApprovalModal = ({ isDark, events, onClose, onCreate, initialEventId
                                 className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${isDark
                                     ? 'bg-[#0A0A0A] border-gray-800 text-white focus:border-indigo-500'
                                     : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-indigo-500'
-                                    } focus:outline-none focus:ring-2 focus:ring-indigo-500/20`}
+                                    } focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20`}
                             />
                         </div>
                     </div>

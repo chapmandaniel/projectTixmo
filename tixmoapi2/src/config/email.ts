@@ -2,6 +2,7 @@ import * as https from 'node:https';
 import nodemailer, { TransportOptions } from 'nodemailer';
 import { config } from './environment';
 import { logger } from './logger';
+import { MailDeliveryError } from '../services/email-delivery';
 
 type EmailAddress = string | { name?: string; address: string };
 
@@ -12,6 +13,8 @@ type SendMailOptions = {
   html?: string;
   text?: string;
   headers?: Record<string, string>;
+  metadata?: Record<string, string>;
+  tag?: string;
 };
 
 type MailTransport = {
@@ -40,8 +43,13 @@ const formatRecipients = (value: EmailAddress | EmailAddress[]) => {
   return recipients.map(formatAddress).join(',');
 };
 
-const postmarkRequest = <T>(method: 'GET' | 'POST', path: string, body?: Record<string, unknown>) =>
-  new Promise<T>((resolve, reject) => {
+const postmarkRequest = <T>(
+  method: 'GET' | 'POST',
+  path: string,
+  body?: Record<string, unknown>
+) => {
+  let deadline: ReturnType<typeof setTimeout> | undefined;
+  return new Promise<T>((resolve, reject) => {
     const payload = body ? JSON.stringify(body) : undefined;
     const request = https.request(
       {
@@ -62,33 +70,87 @@ const postmarkRequest = <T>(method: 'GET' | 'POST', path: string, body?: Record<
       },
       (response) => {
         let raw = '';
+        let responseBytes = 0;
 
         response.setEncoding('utf8');
+        response.on('error', () =>
+          reject(
+            new MailDeliveryError(
+              'Postmark response failed before acceptance was established.',
+              'UNCERTAIN'
+            )
+          )
+        );
+        response.on('aborted', () =>
+          reject(new MailDeliveryError('Postmark response was interrupted.', 'UNCERTAIN'))
+        );
         response.on('data', (chunk) => {
-          raw += chunk;
+          const text = String(chunk);
+          responseBytes += Buffer.byteLength(text);
+          if (responseBytes > 1024 * 1024) {
+            const failure = new MailDeliveryError(
+              'Postmark response exceeded its allowed size.',
+              'UNCERTAIN'
+            );
+            reject(failure);
+            request.destroy(failure);
+          } else raw += text;
         });
         response.on('end', () => {
           const statusCode = response.statusCode ?? 500;
-          const parsed = raw ? (JSON.parse(raw) as T | PostmarkSendResponse) : ({} as T);
+          let parsed: T | PostmarkSendResponse;
+          try {
+            parsed = raw ? (JSON.parse(raw) as T | PostmarkSendResponse) : {};
+          } catch {
+            reject(
+              new MailDeliveryError(
+                'Postmark returned an invalid response.',
+                statusCode >= 400 && statusCode < 500 ? 'REJECTED' : 'UNCERTAIN',
+                statusCode === 429
+              )
+            );
+            return;
+          }
 
           if (statusCode >= 200 && statusCode < 300) {
             resolve(parsed as T);
             return;
           }
 
-          const message =
-            typeof parsed === 'object' && parsed && 'Message' in parsed && typeof parsed.Message === 'string'
-              ? parsed.Message
-              : `Postmark API request failed with status ${statusCode}`;
-
-          reject(new Error(message));
+          reject(
+            new MailDeliveryError(
+              `Postmark API request failed (${statusCode}).`,
+              statusCode >= 400 && statusCode < 500 ? 'REJECTED' : 'UNCERTAIN',
+              statusCode === 429
+            )
+          );
         });
       }
     );
 
-    request.on('error', reject);
+    request.on('error', (error) =>
+      reject(
+        error instanceof MailDeliveryError
+          ? error
+          : new MailDeliveryError(
+              'Postmark request failed before acceptance was established.',
+              'UNCERTAIN'
+            )
+      )
+    );
+    deadline = setTimeout(() => {
+      const failure = new MailDeliveryError(
+        'Postmark API request exceeded its total deadline; acceptance is unknown.',
+        'UNCERTAIN'
+      );
+      reject(failure);
+      request.destroy(failure);
+    }, 10000);
+    deadline.unref();
     request.setTimeout(10000, () => {
-      request.destroy(new Error('Postmark API request timed out'));
+      request.destroy(
+        new MailDeliveryError('Postmark API request timed out; acceptance is unknown.', 'UNCERTAIN')
+      );
     });
 
     if (payload) {
@@ -96,7 +158,10 @@ const postmarkRequest = <T>(method: 'GET' | 'POST', path: string, body?: Record<
     }
 
     request.end();
+  }).finally(() => {
+    if (deadline) clearTimeout(deadline);
   });
+};
 
 const wrapNodemailerTransport = (
   transport: ReturnType<typeof nodemailer.createTransport>
@@ -135,7 +200,9 @@ function createTransport(): MailTransport {
   const isTest = config.nodeEnv === 'test';
 
   if (isTest) {
-    logger.info(`Email transport using jsonTransport (env=${config.nodeEnv}, hasCreds=${hasSmtpCreds})`);
+    logger.info(
+      `Email transport using jsonTransport (env=${config.nodeEnv}, hasCreds=${hasSmtpCreds})`
+    );
     return createJsonTransport();
   }
 
@@ -152,10 +219,30 @@ function createTransport(): MailTransport {
           TextBody: options.text,
           MessageStream: config.postmarkMessageStream || 'outbound',
           Headers: Object.entries(options.headers || {}).map(([Name, Value]) => ({ Name, Value })),
+          Metadata: options.metadata,
+          Tag: options.tag,
         });
 
-        if (response.ErrorCode && response.ErrorCode !== 0) {
-          throw new Error(response.Message || `Postmark API error ${response.ErrorCode}`);
+        if (response && Number.isInteger(response.ErrorCode) && (response.ErrorCode || 0) > 0) {
+          throw new MailDeliveryError(
+            `Postmark explicitly rejected the message (${response.ErrorCode}).`,
+            'REJECTED'
+          );
+        }
+        if (
+          !response ||
+          response.ErrorCode !== 0 ||
+          typeof response.MessageID !== 'string' ||
+          !response.MessageID.trim() ||
+          response.MessageID.length > 255 ||
+          [...response.MessageID].some(
+            (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127
+          )
+        ) {
+          throw new MailDeliveryError(
+            'Postmark email acceptance was not confirmed by a message ID.',
+            'UNCERTAIN'
+          );
         }
 
         return {
@@ -170,6 +257,17 @@ function createTransport(): MailTransport {
   }
 
   if (!hasSmtpCreds) {
+    if (config.nodeEnv === 'production') {
+      logger.warn('Production email transport is disabled because no provider is configured.');
+      return {
+        async sendMail() {
+          throw new MailDeliveryError('No production email provider is configured.', 'REJECTED');
+        },
+        async verify() {
+          throw new MailDeliveryError('No production email provider is configured.', 'REJECTED');
+        },
+      };
+    }
     logger.info(
       `Email transport using jsonTransport (env=${config.nodeEnv}, hasCreds=${hasSmtpCreds}, hasPostmark=${hasPostmarkServerToken})`
     );
@@ -181,6 +279,9 @@ function createTransport(): MailTransport {
     host: config.emailHost || 'smtp.gmail.com',
     port: config.emailPort || 587,
     secure: false,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
     auth: {
       user: config.emailUser,
       pass: config.emailPassword,

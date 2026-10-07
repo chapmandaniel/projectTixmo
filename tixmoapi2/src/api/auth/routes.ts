@@ -2,10 +2,21 @@ import { Router } from 'express';
 import * as authController from './controller';
 import { validate } from '../../middleware/validate';
 import { authenticate } from '../../middleware/auth';
-import { registerSchema, loginSchema, refreshTokenSchema } from './validation';
+import {
+  registerSchema,
+  loginSchema,
+  refreshTokenSchema,
+  acceptInvitationSchema,
+} from './validation';
 import { authRateLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
+router.post(
+  '/accept-invitation',
+  authRateLimiter,
+  validate(acceptInvitationSchema),
+  authController.acceptInvitation
+);
 
 /**
  * @swagger

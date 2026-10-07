@@ -2,6 +2,24 @@ export const ACCESS_TOKEN_KEY = 'access_token';
 export const REFRESH_TOKEN_KEY = 'refresh_token';
 export const USER_STORAGE_KEY = 'user';
 export const SESSION_LAST_ACTIVITY_KEY = 'tixmo_last_activity_at';
+export const SESSION_GENERATION_KEY = 'tixmo_session_generation';
+export const getSessionGeneration = () => getStoredValue(SESSION_GENERATION_KEY) || '';
+
+export const getUserCacheIdentity = (user) => JSON.stringify([
+    user?.id || user?.email || '', user?.organizationId || '', user?.role || '',
+]);
+
+export const clearPrivateCaches = () => {
+    if (typeof window === 'undefined') return;
+    for (const storage of [window.localStorage, window.sessionStorage]) {
+        for (const key of Object.keys(storage)) {
+            if (key.startsWith('tixmo:approvals-dashboard-cache') || key.startsWith('tixmo_personal_todos')) {
+                storage.removeItem(key);
+            }
+        }
+    }
+};
+
 export const AUTH_EXPIRED_EVENT = 'tixmo:auth-expired';
 
 export const AUTH_EXPIRED_REASONS = {
@@ -87,6 +105,8 @@ export const clearSessionActivity = () => {
 };
 
 export const storeSession = ({ accessToken, refreshToken, user }) => {
+    clearPrivateCaches();
+    setStoredValue(SESSION_GENERATION_KEY, window.crypto.randomUUID());
     if (accessToken) {
         setStoredValue(ACCESS_TOKEN_KEY, accessToken);
     }
@@ -115,6 +135,8 @@ export const updateStoredTokens = ({ accessToken, refreshToken }) => {
 };
 
 export const clearStoredSession = () => {
+    clearPrivateCaches();
+    removeStoredValue(SESSION_GENERATION_KEY);
     removeStoredValue(ACCESS_TOKEN_KEY);
     removeStoredValue(REFRESH_TOKEN_KEY);
     removeStoredValue(USER_STORAGE_KEY);

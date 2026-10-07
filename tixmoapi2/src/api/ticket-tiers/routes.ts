@@ -56,10 +56,10 @@ router.use(authenticate);
  *         description: Tier created successfully
  */
 router.post(
-    '/',
-    authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
-    validate(validation.createTierSchema),
-    controller.createTier
+  '/',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  validate(validation.createTierSchema),
+  controller.createTier
 );
 
 /**
@@ -136,10 +136,10 @@ router.get('/active', validate(validation.listTiersSchema), controller.getActive
  *         description: Tiers reordered successfully
  */
 router.post(
-    '/reorder',
-    authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
-    validate(validation.reorderTiersSchema),
-    controller.reorderTiers
+  '/reorder',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  validate(validation.reorderTiersSchema),
+  controller.reorderTiers
 );
 
 /**
@@ -209,10 +209,10 @@ router.get('/:id', validate(validation.tierIdSchema), controller.getTier);
  *         description: Tier updated successfully
  */
 router.put(
-    '/:id',
-    authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
-    validate(validation.updateTierSchema),
-    controller.updateTier
+  '/:id',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  validate(validation.updateTierSchema),
+  controller.updateTier
 );
 
 /**
@@ -236,10 +236,10 @@ router.put(
  *         description: Tier deleted successfully
  */
 router.delete(
-    '/:id',
-    authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
-    validate(validation.tierIdSchema),
-    controller.deleteTier
+  '/:id',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  validate(validation.tierIdSchema),
+  controller.deleteTier
 );
 
 export default router;

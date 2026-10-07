@@ -22,7 +22,10 @@ describe('Advanced Features API', () => {
 
     // Create admin
     const adminData = await registerUser(app, { email: 'admin@test.com' });
-    await prisma.user.update({ where: { id: adminData.user.id }, data: { role: UserRole.ADMIN } });
+    await prisma.user.update({
+      where: { id: adminData.user.id },
+      data: { role: UserRole.ADMIN, isPlatformAdmin: true },
+    });
 
     const loginRes = await request(app)
       .post('/api/v1/auth/login')

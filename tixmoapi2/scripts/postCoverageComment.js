@@ -20,7 +20,7 @@ const fs = require('fs');
             // As a simple approach, run jest --coverage --coverageReporters=text to get text summary
             let coverageText;
             try {
-              coverageText = execSync('npm run test:coverage -- --coverageReporters=text --testPathPattern=^$', { stdio: 'pipe' }).toString();
+              coverageText = execSync('npm run test:coverage -- --coverageReporters=text --testPathPatterns=^$', { stdio: 'pipe' }).toString();
             } catch (e) {
               coverageText = 'Coverage summary not available in CI run.';
             }

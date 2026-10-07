@@ -59,7 +59,9 @@ export const createUser = catchAsync(async (req: AuthRequest, res: Response) => 
 
   // Cannot create a user with a role equal to or higher than your own (unless OWNER)
   if (caller.role !== 'OWNER' && targetLevel >= callerLevel) {
-    throw ApiError.forbidden(`Your role (${caller.role}) cannot create a user with role ${payload.role}`);
+    throw ApiError.forbidden(
+      `Your role (${caller.role}) cannot create a user with role ${payload.role}`
+    );
   }
 
   // 2. Organization Scoping
@@ -72,7 +74,9 @@ export const createUser = catchAsync(async (req: AuthRequest, res: Response) => 
     const callerOrganizationId = callerDetails.organizationId;
 
     if (!callerOrganizationId) {
-      throw ApiError.forbidden('Your account must be associated with an organization to create users');
+      throw ApiError.forbidden(
+        'Your account must be associated with an organization to create users'
+      );
     }
 
     // Force organizationId to match caller's
@@ -89,8 +93,17 @@ export const createUser = catchAsync(async (req: AuthRequest, res: Response) => 
   }
 
   const clientOrigin = resolveTrustedClientOrigin(req.get('origin'), req.get('referer'));
-  const user = await userService.createUser(payload, { clientOrigin });
+  const user = await userService.createUser(payload, { clientOrigin, inviterId: caller.userId });
   res.status(201).json(successResponse(user, 'User created successfully'));
+});
+
+export const resendInvitation = catchAsync(async (req: AuthRequest, res: Response) => {
+  const clientOrigin = resolveTrustedClientOrigin(req.get('origin'), req.get('referer'));
+  const result = await userService.resendInvitation(req.params.id, {
+    clientOrigin,
+    inviterId: req.user!.userId,
+  });
+  res.json(successResponse(result, 'Invitation sent'));
 });
 
 export const getUser = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -149,7 +162,9 @@ export const updateUser = catchAsync(async (req: AuthRequest, res: Response) => 
   assertScopedOrganizationAccess(callerDetails.organizationId, targetUser.organizationId);
 
   if (!canManageRole(caller.role, targetUser.role)) {
-    throw ApiError.forbidden(`Your role (${caller.role}) cannot update a user with role ${targetUser.role}`);
+    throw ApiError.forbidden(
+      `Your role (${caller.role}) cannot update a user with role ${targetUser.role}`
+    );
   }
 
   if (payload.role && !canManageRole(caller.role, payload.role)) {
@@ -157,7 +172,10 @@ export const updateUser = catchAsync(async (req: AuthRequest, res: Response) => 
   }
 
   if (callerDetails.organizationId) {
-    if (payload.organizationId !== undefined && payload.organizationId !== callerDetails.organizationId) {
+    if (
+      payload.organizationId !== undefined &&
+      payload.organizationId !== callerDetails.organizationId
+    ) {
       throw ApiError.forbidden('You can only manage users in your organization');
     }
     payload.organizationId = callerDetails.organizationId;
@@ -186,7 +204,9 @@ export const deleteUser = catchAsync(async (req: AuthRequest, res: Response) => 
   assertScopedOrganizationAccess(callerDetails.organizationId, targetUser.organizationId);
 
   if (!canManageRole(caller.role, targetUser.role)) {
-    throw ApiError.forbidden(`Your role (${caller.role}) cannot delete a user with role ${targetUser.role}`);
+    throw ApiError.forbidden(
+      `Your role (${caller.role}) cannot delete a user with role ${targetUser.role}`
+    );
   }
 
   await userService.deleteUser(id);
@@ -204,7 +224,9 @@ export const listUsers = catchAsync(async (req: AuthRequest, res: Response) => {
     query.organizationId = callerDetails.organizationId;
   } else if (caller.role === 'MANAGER' || caller.role === 'PROMOTER') {
     if (!callerDetails?.organizationId) {
-      throw ApiError.forbidden('Your account must be associated with an organization to list users');
+      throw ApiError.forbidden(
+        'Your account must be associated with an organization to list users'
+      );
     }
 
     // Force organizationId to match caller's

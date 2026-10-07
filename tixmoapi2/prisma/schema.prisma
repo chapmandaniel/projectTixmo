@@ -63,6 +63,9 @@ model User {
   title             String?       // Custom job title
   permissions       Json?         // Granular permissions for TEAM_MEMBER
   phone             String?
+  disabledAt        DateTime?     @map("disabled_at")
+  sessionVersion    Int           @default(0) @map("session_version")
+  isPlatformAdmin   Boolean       @default(false) @map("is_platform_admin")
 
   role              UserRole      @default(CUSTOMER)
   organizationId    String?       @map("organization_id")
@@ -90,8 +93,26 @@ model User {
   assetLibraryUploads AssetLibraryAsset[] @relation("AssetLibraryAssetUploader")
   assetLibraryFoldersCreated AssetLibraryFolder[] @relation("AssetLibraryFolderCreator")
   assetLibraryFolderSharesCreated AssetLibraryFolderShare[] @relation("AssetLibraryFolderShareCreator")
+  invitationsReceived StaffInvitation[] @relation("InvitationRecipient")
+  invitationsIssued StaffInvitation[] @relation("InvitationIssuer")
 
   @@map("users")
+}
+
+model StaffInvitation {
+  id                String   @id @default(uuid())
+  userId            String   @map("user_id")
+  issuerId          String   @map("issuer_id")
+  tokenHash         String   @unique @map("token_hash")
+  sessionVersion    Int      @map("session_version")
+  expiresAt         DateTime @map("expires_at")
+  acceptedAt        DateTime? @map("accepted_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  user              User @relation("InvitationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  issuer            User @relation("InvitationIssuer", fields: [issuerId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("staff_invitations")
 }
 
 model Organization {
@@ -205,6 +226,7 @@ model TicketType {
   quantityAvailable     Int               @map("quantity_available")
   quantitySold          Int               @default(0) @map("quantity_sold")
   quantityHeld          Int               @default(0) @map("quantity_held")
+  tierInventoryStatus   String            @default("READY") @map("tier_inventory_status")
   salesStart            DateTime?         @map("sales_start")
   salesEnd              DateTime?         @map("sales_end")
   maxPerOrder           Int               @default(10) @map("max_per_order")
@@ -230,6 +252,8 @@ model TicketTier {
   price           Decimal    @db.Decimal(10, 2)
   quantityLimit   Int?       @map("quantity_limit")  // null = unlimited within this tier
   quantitySold    Int        @default(0) @map("quantity_sold")
+  quantityHeld    Int        @default(0) @map("quantity_held")
+  tickets         Ticket[]
   startsAt        DateTime?  @map("starts_at")       // null = starts immediately
   endsAt          DateTime?  @map("ends_at")         // null = no end
   sortOrder       Int        @default(0) @map("sort_order")
@@ -238,6 +262,23 @@ model TicketTier {
   updatedAt       DateTime   @updatedAt @map("updated_at")
 
   @@map("ticket_tiers")
+}
+
+// Operator evidence is separate from public ticket-type metadata.
+// Snapshot identifiers remain meaningful if the original actor/type is removed.
+model TicketInventoryReconciliation {
+  id                  String   @id @default(uuid())
+  ticketTypeId        String   @map("ticket_type_id")
+  actorId             String   @map("actor_id")
+  evidence            String   @db.Text
+  snapshotFingerprint String   @map("snapshot_fingerprint")
+  planFingerprint     String   @map("plan_fingerprint")
+  before              Json
+  after               Json
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@index([ticketTypeId, createdAt])
+  @@map("ticket_inventory_reconciliations")
 }
 
 enum OrderStatus {
@@ -270,6 +311,14 @@ model Order {
   paymentStatus     PaymentStatus  @default(PENDING) @map("payment_status")
   paymentIntentId   String?        @map("payment_intent_id")
   paymentMethod     String?        @map("payment_method")
+  currency          String         @default("usd")
+  refundStatus      String         @default("NONE") @map("refund_status")
+  receiptSentAt     DateTime?      @map("receipt_sent_at")
+  receiptStatus     String         @default("PENDING") @map("receipt_status")
+  receiptLeaseToken String?        @map("receipt_lease_token")
+  receiptStartedAt  DateTime?      @map("receipt_started_at")
+  paymentClosedAt   DateTime?      @map("payment_closed_at")
+  promoReservation  String         @default("NONE") @map("promo_reservation")
   promoCodeId       String?        @map("promo_code_id")
   promoCode         PromoCode?     @relation(fields: [promoCodeId], references: [id])
   ipAddress         String?        @map("ip_address")
@@ -280,6 +329,8 @@ model Order {
 
   // Relations
   tickets           Ticket[]
+  paymentAttempt    PaymentAttempt?
+  refunds           PaymentRefund[]
 
   @@map("orders")
 }
@@ -292,6 +343,8 @@ model PaymentWebhookEvent {
   status          String    @default("PROCESSING")
   errorMessage    String?   @map("error_message") @db.Text
   processingStartedAt DateTime @default(now()) @map("processing_started_at")
+  leaseToken      String?   @map("lease_token")
+  attempts        Int       @default(0)
   processedAt     DateTime? @map("processed_at")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
@@ -299,6 +352,42 @@ model PaymentWebhookEvent {
   @@index([paymentIntentId])
   @@index([orderId])
   @@map("payment_webhook_events")
+}
+
+model PaymentAttempt {
+  id              String   @id @default(uuid())
+  orderId         String   @unique @map("order_id")
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount          Int
+  currency        String
+  paymentIntentId String?  @unique @map("payment_intent_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  @@map("payment_attempts")
+}
+
+model PaymentRefund {
+  id              String   @id @default(uuid())
+  orderId         String   @map("order_id")
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paymentIntentId String   @unique @map("payment_intent_id")
+  amount          Int
+  currency        String
+  reason          String
+  status          String   @default("REQUESTED")
+  stripeRefundId  String?  @unique @map("stripe_refund_id")
+  errorMessage    String?  @map("error_message") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  @@index([status, updatedAt])
+  @@map("payment_refunds")
+}
+
+enum TicketInventoryState {
+  HELD
+  SOLD
+  RELEASED
+  UNKNOWN
 }
 
 enum TicketStatus {
@@ -316,6 +405,9 @@ model Ticket {
   event           Event         @relation(fields: [eventId], references: [id])
   ticketTypeId    String        @map("ticket_type_id")
   ticketType      TicketType    @relation(fields: [ticketTypeId], references: [id])
+  tierId          String?       @map("tier_id")
+  tier            TicketTier?   @relation(fields: [tierId], references: [id])
+  inventoryState  TicketInventoryState @default(HELD) @map("inventory_state")
   userId          String        @map("user_id")
   user            User          @relation(fields: [userId], references: [id])
   barcode         String        @unique
@@ -357,6 +449,7 @@ model PromoCode {
   discountValue     Decimal          @map("discount_value") @db.Decimal(10, 2)
   maxUses           Int?             @map("max_uses")
   usesCount         Int              @default(0) @map("uses_count")
+  usesHeld          Int              @default(0) @map("uses_held")
   validFrom         DateTime         @map("valid_from")
   validUntil        DateTime         @map("valid_until")
   applicableEvents  String[]         @map("applicable_events")
@@ -402,9 +495,9 @@ model ScanLog {
   id              String    @id @default(uuid())
   scannerId       String    @map("scanner_id")
   scanner         Scanner   @relation(fields: [scannerId], references: [id])
-  ticketId        String    @map("ticket_id")
-  ticket          Ticket    @relation(fields: [ticketId], references: [id])
-  eventId         String    @map("event_id")
+  ticketId        String?   @map("ticket_id")
+  ticket          Ticket?   @relation(fields: [ticketId], references: [id])
+  eventId         String?   @map("event_id")
   scanType        String    @default("ENTRY") @map("scan_type") // ENTRY, EXIT, VALIDATION
   success         Boolean   @default(true)
   failureReason   String?   @map("failure_reason")
@@ -784,6 +877,14 @@ model ApprovalComment {
   @@map("approval_comments")
 }
 
+enum ApprovalReminderDeliveryStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  UNCERTAIN
+}
+
 model ApprovalReminder {
   id                String             @id @default(uuid())
   approvalRevisionId String            @map("approval_revision_id")
@@ -791,8 +892,18 @@ model ApprovalReminder {
   reviewerId        String             @map("reviewer_id")
   reviewer          ApprovalReviewer   @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
   reminderType      ApprovalReminderType @map("reminder_type")
-  sentAt            DateTime           @default(now()) @map("sent_at")
+  sentAt            DateTime?          @default(now()) @map("sent_at")
+  status            ApprovalReminderDeliveryStatus @default(SENT)
+  leaseToken        String?           @map("lease_token")
+  claimedAt         DateTime?         @map("claimed_at")
+  attempts          Int               @default(0)
+  nextAttemptAt     DateTime?         @map("next_attempt_at")
+  providerMessageId String?           @map("provider_message_id")
+  lastError         String?           @map("last_error") @db.Text
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
 
   @@unique([approvalRevisionId, reviewerId, reminderType])
+  @@index([status, claimedAt])
   @@map("approval_reminders")
 }

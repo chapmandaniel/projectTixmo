@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { generateEventSlug } from '../lib/utils';
+import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import StatusBadge from '../components/StatusBadge';
 import { DashboardButton, DashboardIconButton } from '../components/dashboard/DashboardPrimitives';
 import ECC_Overview from './ECC_Overview';
@@ -80,7 +81,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
     const renderContent = () => {
         switch (activeView) {
             case 'overview':
-                return <ECC_Overview event={event} isDark={isDark} />;
+                return <ECC_Overview event={event} isDark={isDark} onViewOrders={() => navigate(`/events/${event.id}/orders`)} />;
             case 'orders':
                 return <ECC_Orders event={event} isDark={isDark} />;
             case 'attendees':
@@ -98,9 +99,9 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                     />
                 );
             case 'settings':
-                return <ECC_Settings event={event} isDark={isDark} onEdit={() => setShowEditModal(true)} />;
+                return <ECC_Settings event={event} isDark={isDark} user={user} onEdit={() => setShowEditModal(true)} onDeleted={() => { onUpdate?.(); onBack?.(); }} />;
             default:
-                return <ECC_Overview event={event} isDark={isDark} />;
+                return <ECC_Overview event={event} isDark={isDark} onViewOrders={() => navigate(`/events/${event.id}/orders`)} />;
         }
     };
 
@@ -127,7 +128,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                             <div className={`mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-wide sm:text-xs ${isDark ? 'text-dashboard-muted' : 'text-gray-500'}`}>
                                 <span className="flex items-center whitespace-nowrap shrink-0">
                                     <Calendar size={12} className="mr-1.5 opacity-70" />
-                                    {event.startDateTime ? new Date(event.startDateTime).toLocaleDateString() : 'Date TBA'}
+                                    {formatEventDate(event.startDatetime || event.startDateTime, event.timezone || DEFAULT_EVENT_TIMEZONE, { hour: undefined, minute: undefined })}
                                 </span>
                                 <span className="hidden opacity-40 sm:inline">•</span>
                                 <span className="flex min-w-0 items-center truncate">
@@ -145,9 +146,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                         </div>
                         <div className={`hidden h-6 w-[1px] sm:block ${isDark ? 'bg-dashboard-border' : 'bg-gray-200'}`}></div>
 
-                        <button className={`p-2 rounded-md transition-colors ${isDark ? 'hover:bg-dashboard-panelAlt text-dashboard-muted' : 'hover:bg-gray-100 text-gray-500'}`}>
-                            <Bell size={20} />
-                        </button>
+
 
                         <div className="flex items-center gap-2">
                             <DashboardIconButton
@@ -235,12 +234,12 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="relative flex min-h-0 flex-1 flex-col overflow-visible lg:overflow-hidden">
+                <section aria-label="Event workspace" className="relative flex min-h-0 flex-1 flex-col overflow-visible lg:overflow-hidden">
                     {/* View Content */}
                     <div className="relative flex-1 overflow-visible pb-6 lg:overflow-y-auto">
                         {renderContent()}
                     </div>
-                </main>
+                </section>
             </div>
 
             {/* Edit Modal */}

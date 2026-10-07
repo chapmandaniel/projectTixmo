@@ -1,49 +1,64 @@
 import { PrismaClient } from '@prisma/client';
 import { seedLogger } from './seed-logger';
+import { assertDevelopmentClient } from './development-client';
 
 export async function cleanupDatabase(prisma: PrismaClient) {
+  assertDevelopmentClient(prisma);
   seedLogger.warn('Cleaning database...');
 
-  // Delete in reverse dependency order — all 17 models
-  // Approval system
-  await prisma.approvalComment.deleteMany();
-  await prisma.approvalAsset.deleteMany();
-  await prisma.approvalReviewer.deleteMany();
-  await prisma.approvalRequest.deleteMany();
+  // Delete in reverse dependency order in one transaction.
+  await prisma.$transaction([
+    prisma.staffInvitation.deleteMany(),
+    prisma.assetLibraryFolderShareFolder.deleteMany(),
+    prisma.assetLibraryFolderShare.deleteMany(),
+    prisma.assetLibraryAsset.deleteMany(),
+    prisma.assetLibraryFolder.deleteMany(),
+    prisma.approvalReminder.deleteMany(),
+    prisma.approvalReviewDecision.deleteMany(),
+    // Approval system
+    prisma.approvalComment.deleteMany(),
+    prisma.approvalAsset.deleteMany(),
+    prisma.approvalRevision.deleteMany(),
+    prisma.approvalReviewer.deleteMany(),
+    prisma.approvalRequest.deleteMany(),
 
-  // Tasks
-  await prisma.taskComment.deleteMany();
-  await prisma.task.deleteMany();
+    // Tasks
+    prisma.taskComment.deleteMany(),
+    prisma.task.deleteMany(),
 
-  // Waitlist
-  await prisma.waitlist.deleteMany();
+    // Waitlist
+    prisma.waitlist.deleteMany(),
 
-  // Notifications
-  await prisma.notification.deleteMany();
-  await prisma.notificationPreference.deleteMany();
+    // Notifications
+    prisma.notification.deleteMany(),
+    prisma.notificationPreference.deleteMany(),
 
-  // Scanning
-  await prisma.scanLog.deleteMany();
-  await prisma.scanner.deleteMany();
+    // Scanning
+    prisma.scanLog.deleteMany(),
+    prisma.scanner.deleteMany(),
 
-  // Orders & Tickets
-  await prisma.ticket.deleteMany();
-  await prisma.order.deleteMany();
+    // Orders & Tickets
+    prisma.paymentAttempt.deleteMany(),
+    prisma.paymentRefund.deleteMany(),
+    prisma.paymentWebhookEvent.deleteMany(),
+    prisma.ticket.deleteMany(),
+    prisma.order.deleteMany(),
 
-  // Promo codes
-  await prisma.promoCode.deleteMany();
+    // Promo codes
+    prisma.promoCode.deleteMany(),
 
-  // Ticket tiers & types
-  await prisma.ticketTier.deleteMany();
-  await prisma.ticketType.deleteMany();
+    // Ticket tiers & types
+    prisma.ticketTier.deleteMany(),
+    prisma.ticketType.deleteMany(),
 
-  // Events & venues
-  await prisma.event.deleteMany();
-  await prisma.venue.deleteMany();
+    // Events & venues
+    prisma.event.deleteMany(),
+    prisma.venue.deleteMany(),
 
-  // Orgs & users
-  await prisma.organization.deleteMany();
-  await prisma.user.deleteMany();
+    // Orgs & users
+    prisma.user.deleteMany(),
+    prisma.organization.deleteMany(),
+  ]);
 
   seedLogger.success('Database cleaned — all tables emptied');
 }

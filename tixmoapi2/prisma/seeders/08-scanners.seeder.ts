@@ -1,3 +1,4 @@
+import { assertDevelopmentClient } from '../utils/development-client';
 import { PrismaClient, User, Organization, Event } from '@prisma/client';
 import { seedLogger } from '../utils/seed-logger';
 import { createScannerData } from '../factories/scanner.factory';
@@ -8,6 +9,7 @@ export async function seedScanners(
   organizations: Organization[],
   events: Event[]
 ) {
+  assertDevelopmentClient(prisma);
   seedLogger.info('Seeding scanners...');
 
   const scanners = [];

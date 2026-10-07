@@ -81,10 +81,26 @@ describe('email transport configuration', () => {
       host: 'smtp.example.com',
       port: 2525,
       secure: false,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
       auth: {
         user: 'smtp-user',
         pass: 'smtp-pass',
       },
     });
+  });
+
+  it('refuses production delivery without a provider instead of reporting JSON simulation as sent', async () => {
+    const module = loadEmailModule();
+    expect(createTransport).not.toHaveBeenCalled();
+    await expect(
+      module.transporter.sendMail({
+        to: 'fixture@test.invalid',
+        subject: 'Fixture',
+        text: 'Fixture',
+      })
+    ).rejects.toMatchObject({ delivery: 'REJECTED', retryable: false });
+    await expect(module.transporter.verify()).rejects.toThrow('No production email provider');
   });
 });

@@ -29,10 +29,13 @@ const tinyPng = Buffer.from(
 jest.mock('stripe', () => {
   return jest.fn().mockImplementation(() => ({
     paymentIntents: {
-      create: jest.fn().mockImplementation(async ({ metadata }) => ({
+      create: jest.fn().mockImplementation(async ({ metadata, amount, currency }) => ({
         id: `pi_v1_smoke_${metadata.orderId}`,
         client_secret: `pi_v1_smoke_${metadata.orderId}_secret`,
         metadata,
+        amount,
+        currency,
+        status: 'requires_payment_method',
       })),
     },
     webhooks: {
@@ -53,18 +56,15 @@ jest.mock('../../src/services/upload.service', () => ({
         size: file.size,
       }))
     ),
-    resolveFileUrl: jest.fn().mockImplementation(async (key, url) => url || `https://test-storage.local/${key}`),
+    resolveFileUrl: jest
+      .fn()
+      .mockImplementation(async (key, url) => url || `https://test-storage.local/${key}`),
     deleteFile: jest.fn().mockResolvedValue(undefined),
   },
 }));
 
 const app = require('../../src/app').default;
-const {
-  cleanupTestData,
-  createOrganization,
-  prisma,
-  registerUser,
-} = require('../utils/testUtils');
+const { cleanupTestData, createOrganization, prisma, registerUser } = require('../utils/testUtils');
 
 const expectSuccess = (response: request.Response, status: number, label: string) => {
   if (response.status !== status) {
@@ -103,7 +103,7 @@ describe('V1 market readiness smoke', () => {
         name: 'V1 Smoke Venue',
         address: {
           street: '10 Market Street',
-          city: 'St. John\'s',
+          city: "St. John's",
           state: 'NL',
           country: 'Canada',
           postalCode: 'A1A 1A1',
@@ -123,7 +123,9 @@ describe('V1 market readiness smoke', () => {
         title: 'V1 Smoke Event',
         description: 'End-to-end smoke event for market readiness.',
         startDateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        endDateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+        endDateTime: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000
+        ).toISOString(),
         capacity: 500,
       });
     expectSuccess(eventResponse, 201, 'Create event');
@@ -170,7 +172,9 @@ describe('V1 market readiness smoke', () => {
       .get('/api/v1/events/public')
       .query({ search: 'V1 Smoke Event' });
     expectSuccess(publicEventsResponse, 200, 'List public events');
-    expect(publicEventsResponse.body.data.events.some((item: { id: string }) => item.id === event.id)).toBe(true);
+    expect(
+      publicEventsResponse.body.data.events.some((item: { id: string }) => item.id === event.id)
+    ).toBe(true);
 
     const attendee = await registerUser(app, {
       email: 'v1-smoke-attendee@test.com',
@@ -205,6 +209,10 @@ describe('V1 market readiness smoke', () => {
       data: {
         object: {
           id: paymentIntentResponse.body.data.paymentIntentId,
+          status: 'succeeded',
+          amount: 8500,
+          amount_received: 8500,
+          currency: 'cad',
           metadata: {
             orderId: orderResponse.body.data.id,
           },

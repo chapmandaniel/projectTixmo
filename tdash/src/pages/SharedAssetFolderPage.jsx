@@ -247,7 +247,7 @@ const SharedAssetFolderPage = () => {
                                 <button
                                     type="button"
                                     onClick={() => setActiveFolderId(backTarget.id)}
-                                    className="inline-flex items-center gap-2 rounded-md border border-dashboard-border bg-dashboard-panelAlt px-4 py-2.5 text-sm font-light text-zinc-100 transition hover:border-dashboard-borderStrong hover:bg-dashboard-panel focus:outline-none focus:ring-2 focus:ring-dashboard-accent/40"
+                                    className="inline-flex items-center gap-2 rounded-md border border-dashboard-border bg-dashboard-panelAlt px-4 py-2.5 text-sm font-light text-zinc-100 transition hover:border-dashboard-borderStrong hover:bg-dashboard-panel focus:outline-hidden focus:ring-2 focus:ring-dashboard-accent/40"
                                     aria-label={backLabel}
                                 >
                                     <ArrowLeft className="h-4 w-4" />
@@ -264,7 +264,7 @@ const SharedAssetFolderPage = () => {
                                         type="button"
                                         onClick={() => setActiveFolderId(folder.id)}
                                         className={cn(
-                                            'max-w-[180px] truncate rounded-sm transition hover:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-dashboard-accent/40',
+                                            'max-w-[180px] truncate rounded-sm transition hover:text-zinc-100 focus:outline-hidden focus:ring-2 focus:ring-dashboard-accent/40',
                                             index === folderPath.length - 1 && 'text-zinc-100'
                                         )}
                                     >
@@ -283,7 +283,7 @@ const SharedAssetFolderPage = () => {
                                             key={folder.id}
                                             type="button"
                                             onClick={() => setActiveFolderId(folder.id)}
-                                            className="group rounded-md border border-dashboard-border bg-dashboard-panel p-4 text-left transition hover:border-dashboard-borderStrong hover:bg-dashboard-panelAlt focus:outline-none focus:ring-2 focus:ring-dashboard-accent/40"
+                                            className="group rounded-md border border-dashboard-border bg-dashboard-panel p-4 text-left transition hover:border-dashboard-borderStrong hover:bg-dashboard-panelAlt focus:outline-hidden focus:ring-2 focus:ring-dashboard-accent/40"
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-dashboard-panelAlt text-fuchsia-200 transition group-hover:bg-dashboard-panel">

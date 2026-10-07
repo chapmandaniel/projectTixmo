@@ -56,7 +56,7 @@ const DECISION_NOTE_META = {
 
 const panelClass = 'rounded-md border border-[#2b2b40] bg-[#1e1e2d]';
 const surfaceClass = 'rounded-md border border-[#2b2b40] bg-[#151521]';
-const inputClass = 'w-full rounded-md border border-[#2b2b40] bg-[#151521] px-4 py-3 text-sm font-light text-gray-100 outline-none transition focus:border-sky-400 placeholder:text-[#5e6278]';
+const inputClass = 'w-full rounded-md border border-[#2b2b40] bg-[#151521] px-4 py-3 text-sm font-light text-gray-100 outline-hidden transition focus:border-sky-400 placeholder:text-[#5e6278]';
 const reviewerAssociationOptions = [
     { value: 'ARTIST', label: 'Artist' },
     { value: 'AGENT', label: 'Agent' },

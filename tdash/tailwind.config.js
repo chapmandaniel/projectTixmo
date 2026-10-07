@@ -1,3 +1,5 @@
+import legacyTheme from './tailwind-compat.config.js';
+
 /** @type {import('tailwindcss').Config} */
 export default {
     content: [
@@ -5,6 +7,7 @@ export default {
         "./src/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
+        ...legacyTheme,
         extend: {
             fontFamily: {
                 sans: ['Exo', 'ui-sans-serif', 'system-ui', 'sans-serif'],
@@ -28,6 +31,7 @@ export default {
                     icon: '#4a4d64',
                     accent: '#ff3366',
                     accentSoft: '#ff8a3d',
+                    memberFooter: '#1a1a1a',
                 },
             },
             boxShadow: {

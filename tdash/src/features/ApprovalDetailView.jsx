@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import { api } from '../lib/api';
+import { getUserCacheIdentity, getSessionGeneration } from '../lib/session';
 import {
     APPROVAL_STATUS_META,
     DECISION_OPTIONS,
@@ -40,7 +41,7 @@ const DECISION_CARD_STYLES = {
 
 const panelClass = 'rounded-md border border-[#2b2b40] bg-[#1e1e2d]';
 const surfaceClass = 'rounded-md border border-[#2b2b40] bg-[#151521]';
-const inputClass = 'w-full rounded-md border border-[#2b2b40] bg-[#151521] px-4 py-3 text-sm font-light text-gray-100 outline-none transition focus:border-sky-400 placeholder:text-[#5e6278]';
+const inputClass = 'w-full rounded-md border border-[#2b2b40] bg-[#151521] px-4 py-3 text-sm font-light text-gray-100 outline-hidden transition focus:border-sky-400 placeholder:text-[#5e6278]';
 const reviewerAssociationOptions = [
     { value: 'ARTIST', label: 'Artist' },
     { value: 'AGENT', label: 'Agent' },
@@ -246,7 +247,7 @@ const ApprovalDetailLoadingSkeleton = () => (
     </SkeletonTheme>
 );
 
-const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdated }) => {
+const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdated }) => {
     const fileInputRef = useRef(null);
     const isMountedRef = useRef(true);
     const requestSequenceRef = useRef(0);
@@ -293,6 +294,11 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         } catch (requestError) {
             if (!isMountedRef.current || requestSequenceRef.current !== requestId) {
                 return null;
+            }
+            if ([401, 403, 404].includes(requestError.response?.status)) {
+                setApproval(null);
+                setOptimisticComments([]);
+                setOptimisticReviewers([]);
             }
             setError(requestError.response?.data?.message || requestError.message || 'Failed to load approval.');
         } finally {
@@ -343,10 +349,11 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         [approval?.reviewers, optimisticReviewers]
     );
     const isTeamMember = useMemo(() => {
-        if (user?.role || user?.organizationId) {
+        if (['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER', 'TEAM_MEMBER'].includes(user?.role)) {
             return true;
         }
 
+        if (user?.role) return false;
         const currentEmail = normalizeEmail(user?.email);
         if (!currentEmail) {
             return false;
@@ -1325,5 +1332,9 @@ const ApprovalDetailView = ({ approvalId, initialApproval, user, onBack, onUpdat
         </div>
     );
 };
+
+const ApprovalDetailView = (props) => (
+    <ScopedApprovalDetailView key={`${props.approvalId}:${getUserCacheIdentity(props.user)}:${getSessionGeneration()}`} {...props} />
+);
 
 export default ApprovalDetailView;

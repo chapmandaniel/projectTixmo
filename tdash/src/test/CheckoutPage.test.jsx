@@ -105,6 +105,7 @@ describe('CheckoutPage', () => {
         apiPost
             .mockResolvedValueOnce({
                 id: 'order-1',
+                status: 'PENDING', eventId: 'event-1', currency: 'usd',
                 totalAmount: '25.00',
             })
             .mockResolvedValueOnce({
