@@ -56,6 +56,8 @@ const TeamView = ({ isDark, user: currentUser }) => {
     const [loading, setLoading] = useState(true);
     const [isWizardOpen, setIsWizardOpen] = useState(false);
     const [error, setError] = useState('');
+    const [invitationNotice, setInvitationNotice] = useState('');
+    const [resendingId, setResendingId] = useState(null);
     const [editingRoleUserId, setEditingRoleUserId] = useState(null);
     const [roleDrafts, setRoleDrafts] = useState({});
     const [savingRoleUserId, setSavingRoleUserId] = useState(null);
@@ -100,9 +102,25 @@ const TeamView = ({ isDark, user: currentUser }) => {
         }
     };
 
-    const handleWizardSuccess = () => {
+    const handleWizardSuccess = (created) => {
+        setInvitationNotice(created?.invitationDelivered === false
+            ? 'Member created, but the invitation email could not be sent. Use Resend invitation to retry.'
+            : 'Invitation sent.');
         fetchUsers();
         setIsWizardOpen(false);
+    };
+
+    const resendInvitation = async (member) => {
+        setResendingId(member.id);
+        setInvitationNotice('');
+        try {
+            await api.post(`/users/${member.id}/invitation`);
+            setInvitationNotice('Invitation sent. Previous invitation links have expired.');
+        } catch (err) {
+            setInvitationNotice(err.response?.data?.message || 'Invitation could not be sent. Please retry.');
+        } finally {
+            setResendingId(null);
+        }
     };
 
     const canManageMember = (member) => {
@@ -232,6 +250,8 @@ const TeamView = ({ isDark, user: currentUser }) => {
                 </div>
             )}
 
+            {invitationNotice && <DashboardSurface isDark={isDark} className="px-4 py-3 text-sm" role="status">{invitationNotice}</DashboardSurface>}
+
             <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 {stats.map((stat) => {
                     const Icon = stat.icon;
@@ -334,7 +354,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                                             value={roleDrafts[member.id] || member.role}
                                                             onChange={(event) => setRoleDrafts((current) => ({ ...current, [member.id]: event.target.value }))}
                                                             className={cn(
-                                                                'h-9 rounded-md border px-2 text-xs font-light outline-none transition',
+                                                                'h-9 rounded-md border px-2 text-xs font-light outline-hidden transition',
                                                                 isDark ? 'border-dashboard-borderStrong bg-dashboard-panelAlt text-zinc-100 focus:border-pink-400' : 'border-slate-200 bg-white text-slate-900 focus:border-slate-400'
                                                             )}
                                                         >
@@ -400,6 +420,12 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                                 }`}>
                                                 {member.emailVerified ? 'Active' : 'Pending'}
                                             </div>
+                                            {member.invitationPending && canEditMemberRole && (
+                                                <DashboardButton isDark={isDark} variant="secondary" className="mt-2" disabled={resendingId === member.id}
+                                                    onClick={() => resendInvitation(member)}>
+                                                    {resendingId === member.id ? 'Sending…' : 'Resend invitation'}
+                                                </DashboardButton>
+                                            )}
                                         </div>
 
                                         <div className="flex justify-end lg:justify-center">

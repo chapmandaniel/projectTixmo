@@ -1,10 +1,7 @@
 import { Router } from 'express';
 import { ApprovalController } from '../approvals/controller';
 import { validate } from '../../middleware/validate';
-import {
-  tokenCommentParamsSchema,
-  tokenParamsSchema,
-} from '../approvals/validation';
+import { tokenCommentParamsSchema, tokenParamsSchema } from '../approvals/validation';
 
 const router = Router();
 

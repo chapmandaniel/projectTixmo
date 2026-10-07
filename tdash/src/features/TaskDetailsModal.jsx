@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Users, Check, X, Edit3, Download, Plus, Paperclip, Send } from 'lucide-react';
-import { MOCK_USERS } from '../data/mockData';
 
 import api from '../lib/api';
 
@@ -71,18 +70,6 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
         setMessage('');
     };
 
-    const handleAttach = () => {
-        const newAttachment = {
-            id: Date.now(),
-            url: `https://picsum.photos/seed/${Date.now()}/200/200`,
-            name: `Image-${Date.now()}.jpg`
-        };
-        onUpdate({
-            ...task,
-            attachments: [...(task.attachments || []), newAttachment]
-        });
-    };
-
     const [showMentions, setShowMentions] = useState(false);
     const [mentionQuery, setMentionQuery] = useState('');
     const inputRef = useRef(null);
@@ -130,12 +117,12 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                                     <input
                                         value={editTag}
                                         onChange={(e) => setEditTag(e.target.value)}
-                                        className={`text-xs px-2 py-0.5 rounded font-medium outline-none border ${isDark ? 'bg-[#252525] border-[#333] text-indigo-300' : 'bg-white border-gray-200 text-indigo-600'} w-24`}
+                                        className={`text-xs px-2 py-0.5 rounded font-medium outline-hidden border ${isDark ? 'bg-[#252525] border-[#333] text-indigo-300' : 'bg-white border-gray-200 text-indigo-600'} w-24`}
                                     />
                                     <select
                                         value={editPriority}
                                         onChange={(e) => setEditPriority(e.target.value)}
-                                        className={`text-xs px-2 py-0.5 rounded font-medium outline-none border ${isDark ? 'bg-[#252525] border-[#333] text-gray-300' : 'bg-white border-gray-200 text-gray-700'}`}
+                                        className={`text-xs px-2 py-0.5 rounded font-medium outline-hidden border ${isDark ? 'bg-[#252525] border-[#333] text-gray-300' : 'bg-white border-gray-200 text-gray-700'}`}
                                     >
                                         <option value="High">High</option>
                                         <option value="Medium">Medium</option>
@@ -162,7 +149,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                                 <select
                                     value={task.assignee || ''}
                                     onChange={(e) => handleAssign(e.target.value)}
-                                    className={`appearance-none pl-8 pr-4 py-1.5 rounded-lg text-xs font-medium outline-none cursor-pointer transition-colors ${isDark ? 'bg-[#252525] text-gray-300 hover:bg-[#333]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                    className={`appearance-none pl-8 pr-4 py-1.5 rounded-lg text-xs font-medium outline-hidden cursor-pointer transition-colors ${isDark ? 'bg-[#252525] text-gray-300 hover:bg-[#333]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                 >
                                     <option value="" disabled>Unassigned</option>
                                     {users.map(user => (
@@ -204,12 +191,12 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                                     type="text"
                                     value={editTitle}
                                     onChange={(e) => setEditTitle(e.target.value)}
-                                    className={`w-full text-xl font-semibold bg-transparent outline-none border-b pb-1 ${isDark ? 'text-gray-100 border-indigo-500' : 'text-gray-900 border-indigo-600'}`}
+                                    className={`w-full text-xl font-semibold bg-transparent outline-hidden border-b pb-1 ${isDark ? 'text-gray-100 border-indigo-500' : 'text-gray-900 border-indigo-600'}`}
                                 />
                                 <textarea
                                     value={editDescription}
                                     onChange={(e) => setEditDescription(e.target.value)}
-                                    className={`w-full text-sm bg-transparent outline-none resize-none h-24 p-2 rounded-lg ${isDark ? 'text-gray-300 bg-[#252525]' : 'text-gray-600 bg-gray-50'}`}
+                                    className={`w-full text-sm bg-transparent outline-hidden resize-none h-24 p-2 rounded-lg ${isDark ? 'text-gray-300 bg-[#252525]' : 'text-gray-600 bg-gray-50'}`}
                                     placeholder="Add a description..."
                                 />
                             </div>
@@ -240,7 +227,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                                 </div>
                             ))}
                             <button
-                                onClick={handleAttach}
+                                disabled title="Task attachments are unavailable in this beta"
                                 className={`aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center transition-colors ${isDark ? 'border-[#333] hover:border-indigo-500/50 hover:bg-[#252525]' : 'border-gray-200 hover:border-indigo-400 hover:bg-indigo-50'}`}
                             >
                                 <Plus size={24} className={isDark ? 'text-gray-600' : 'text-gray-300'} />
@@ -304,7 +291,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
 
                     <div className={`flex items-center p-2 rounded-xl border ${isDark ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-200'}`}>
                         <button
-                            onClick={handleAttach}
+                            disabled title="Task attachments are unavailable in this beta"
                             className={`p-2 rounded-lg transition-colors ${isDark ? 'text-gray-500 hover:text-indigo-400 hover:bg-[#333]' : 'text-gray-400 hover:text-indigo-600 hover:bg-gray-100'}`}
                         >
                             <Paperclip size={20} />
@@ -313,7 +300,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                             ref={inputRef}
                             type="text"
                             placeholder="Write a comment... (Type @ to mention)"
-                            className={`flex-1 bg-transparent border-none outline-none px-3 text-sm ${isDark ? 'text-gray-200 placeholder-gray-600' : 'text-gray-700 placeholder-gray-400'}`}
+                            className={`flex-1 bg-transparent border-none outline-hidden px-3 text-sm ${isDark ? 'text-gray-200 placeholder-gray-600' : 'text-gray-700 placeholder-gray-400'}`}
                             value={message}
                             onChange={handleMessageChange}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}

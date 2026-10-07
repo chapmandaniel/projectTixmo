@@ -20,5 +20,6 @@ export const listOrdersSchema = z.object({
     limit: z.string().transform(Number).default('20'),
     status: z.enum(['PENDING', 'PAID', 'CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED']).optional(),
     eventId: z.string().uuid().optional(),
+    search: z.string().trim().max(200).optional(),
   }),
 });

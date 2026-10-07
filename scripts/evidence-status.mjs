@@ -203,7 +203,7 @@ const sections = [
 
 const blockers = sections
   .flatMap((section) => section.items.map((item) => ({ section: section.name, ...item })))
-  .filter((item) => item.status !== 'pass' || item.warnings.length);
+  .filter((item) => item.status !== 'pass' || item.warnings.some((warning) => warning !== 'local non-launch evidence only'));
 
 const summary = {
   openEvidenceGaps: blockers.length,

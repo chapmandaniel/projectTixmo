@@ -2,6 +2,7 @@ import request from 'supertest';
 import app from '../../src/app';
 import {
   cleanupTestData,
+  confirmOrderForTest,
   createEvent,
   createOrganization,
   createVenue,
@@ -156,11 +157,7 @@ describe('Orders API', () => {
         quantitySold: 0,
       });
 
-      const confirmRes = await request(app)
-        .post(`/api/v1/orders/${res.body.data.id}/confirm`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(confirmRes.status).toBe(200);
+      await confirmOrderForTest(res.body.data.id);
 
       const confirmedTicketTypes = await prisma.ticketType.findMany({
         where: { id: { in: [ticketTypeId, vipTicketTypeId] } },
@@ -332,26 +329,12 @@ describe('Orders API', () => {
       orderId = orderRes.body.data.id;
     });
 
-    it('should confirm an order', async () => {
+    it('should not expose direct order confirmation over HTTP', async () => {
       const res = await request(app)
         .post(`/api/v1/orders/${orderId}/confirm`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.status).toBe('PAID');
-    });
-
-    it('should fail to confirm already confirmed order', async () => {
-      await request(app)
-        .post(`/api/v1/orders/${orderId}/confirm`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      const res = await request(app)
-        .post(`/api/v1/orders/${orderId}/confirm`)
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(404);
     });
 
     it('should fail without authentication', async () => {
@@ -385,9 +368,7 @@ describe('Orders API', () => {
     });
 
     it('should fail to cancel confirmed order', async () => {
-      await request(app)
-        .post(`/api/v1/orders/${orderId}/confirm`)
-        .set('Authorization', `Bearer ${authToken}`);
+      await confirmOrderForTest(orderId);
 
       const res = await request(app)
         .post(`/api/v1/orders/${orderId}/cancel`)

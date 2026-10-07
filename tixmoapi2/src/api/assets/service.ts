@@ -42,8 +42,13 @@ type CreateFolderShareInput = {
   folderIds?: string[];
 };
 
-const normalizeUsageType = (value: string | null | undefined, eventId?: string | null): AssetLibraryUsageType => {
-  const usageType = String(value || '').trim().toUpperCase();
+const normalizeUsageType = (
+  value: string | null | undefined,
+  eventId?: string | null
+): AssetLibraryUsageType => {
+  const usageType = String(value || '')
+    .trim()
+    .toUpperCase();
   return usageType === 'EVENT' || eventId ? 'EVENT' : 'BRAND';
 };
 
@@ -54,9 +59,15 @@ const assetLibraryFolderShare = (prisma as any).assetLibraryFolderShare;
 
 const hashShareToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
-const getShareTokenEncryptionKey = () => createHash('sha256')
-  .update(config.jwtRefreshSecret || config.jwtSecret || config.sessionSecret || 'development-folder-share-token-key')
-  .digest();
+const getShareTokenEncryptionKey = () =>
+  createHash('sha256')
+    .update(
+      config.jwtRefreshSecret ||
+        config.jwtSecret ||
+        config.sessionSecret ||
+        'development-folder-share-token-key'
+    )
+    .digest();
 
 const encryptShareToken = (token: string) => {
   const iv = randomBytes(12);
@@ -101,7 +112,10 @@ const decryptShareToken = (ciphertext?: string | null) => {
 
 const buildFolderShareUrl = (token: string, dashboardOrigin?: string) => {
   const baseUrl = dashboardOrigin || config.clientUrl;
-  return new URL(`/assets/shared/${token}`, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`).toString();
+  return new URL(
+    `/assets/shared/${token}`,
+    baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+  ).toString();
 };
 
 const normalizeShareExpiry = (value?: number) => {
@@ -134,7 +148,10 @@ class AssetLibraryService {
 
   private assertCanManageAssets(user: AssetUserContext): void {
     if (!['ADMIN', 'OWNER', 'MANAGER', 'PROMOTER'].includes(user.role)) {
-      throw new ApiError(StatusCodes.FORBIDDEN, 'Only organization operators can manage asset library uploads');
+      throw new ApiError(
+        StatusCodes.FORBIDDEN,
+        'Only organization operators can manage asset library uploads'
+      );
     }
   }
 
@@ -220,20 +237,23 @@ class AssetLibraryService {
     };
   }
 
-  private serializeFolderShare(share: {
-    id: string;
-    folderId: string;
-    recipientLabel: string | null;
-    expiresAt: Date;
-    revokedAt: Date | null;
-    lastViewedAt: Date | null;
-    viewCount: number;
-    createdAt: Date;
-    updatedAt: Date;
-    token?: string;
-    tokenCiphertext?: string | null;
-    folders?: Array<{ folderId: string }>;
-  }, dashboardOrigin?: string) {
+  private serializeFolderShare(
+    share: {
+      id: string;
+      folderId: string;
+      recipientLabel: string | null;
+      expiresAt: Date;
+      revokedAt: Date | null;
+      lastViewedAt: Date | null;
+      viewCount: number;
+      createdAt: Date;
+      updatedAt: Date;
+      token?: string;
+      tokenCiphertext?: string | null;
+      folders?: Array<{ folderId: string }>;
+    },
+    dashboardOrigin?: string
+  ) {
     const active = !share.revokedAt && share.expiresAt > new Date();
     const rootFolderIds = share.folders?.length
       ? share.folders.map((folder) => folder.folderId)
@@ -339,12 +359,13 @@ class AssetLibraryService {
     });
 
     const folderById = new Map(allFolders.map((folder) => [folder.id, folder]));
-    const folders = uniqueFolderIds
-      .map((folderId) => folderById.get(folderId))
-      .filter(Boolean);
+    const folders = uniqueFolderIds.map((folderId) => folderById.get(folderId)).filter(Boolean);
 
     if (folders.length !== uniqueFolderIds.length) {
-      throw new ApiError(StatusCodes.NOT_FOUND, 'One or more folders were not found for this organization');
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        'One or more folders were not found for this organization'
+      );
     }
 
     const rootFolderIds = uniqueFolderIds.filter((folderId) => {
@@ -372,7 +393,10 @@ class AssetLibraryService {
     context: AssetUploadContext
   ): Promise<NormalizedAssetUploadContext> {
     if (context.folderId?.trim()) {
-      const folder = await this.getFolderForOrganization(context.folderId.trim(), user.organizationId);
+      const folder = await this.getFolderForOrganization(
+        context.folderId.trim(),
+        user.organizationId
+      );
 
       if (!folder) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Folder not found for this organization');
@@ -386,10 +410,15 @@ class AssetLibraryService {
       };
     }
 
-    const usageType = String(context.usageType || '').trim().toUpperCase();
+    const usageType = String(context.usageType || '')
+      .trim()
+      .toUpperCase();
 
     if (usageType !== 'BRAND' && usageType !== 'EVENT') {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'Choose Brand library or Event assets before uploading');
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Choose Brand library or Event assets before uploading'
+      );
     }
 
     const category = context.category?.trim() || (usageType === 'BRAND' ? 'branding' : null);
@@ -470,7 +499,10 @@ class AssetLibraryService {
 
     let parentFolder: Awaited<ReturnType<AssetLibraryService['getFolderForOrganization']>> = null;
     if (input.parentId?.trim()) {
-      parentFolder = await this.getFolderForOrganization(input.parentId.trim(), user.organizationId);
+      parentFolder = await this.getFolderForOrganization(
+        input.parentId.trim(),
+        user.organizationId
+      );
       if (!parentFolder) {
         throw new ApiError(StatusCodes.NOT_FOUND, 'Parent folder not found for this organization');
       }
@@ -594,7 +626,9 @@ class AssetLibraryService {
     try {
       await uploadService.deleteFile(asset.s3Key);
     } catch (error) {
-      logger.error(`Failed to delete asset library file ${asset.s3Key}: ${(error as Error).message}`);
+      logger.error(
+        `Failed to delete asset library file ${asset.s3Key}: ${(error as Error).message}`
+      );
     }
 
     return { id: normalizedAssetId, deleted: true };
@@ -630,7 +664,10 @@ class AssetLibraryService {
     }
 
     if (folder._count.assets > 0 || folder._count.children > 0) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'Delete assets and subfolders before deleting this folder');
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Delete assets and subfolders before deleting this folder'
+      );
     }
 
     await prisma.assetLibraryFolder.delete({
@@ -766,9 +803,7 @@ class AssetLibraryService {
         take: 250,
       });
 
-      pendingIds = children
-        .map((folder) => folder.id)
-        .filter((id) => !folderIds.includes(id));
+      pendingIds = children.map((folder) => folder.id).filter((id) => !folderIds.includes(id));
       folderIds.push(...pendingIds);
     }
 
@@ -814,9 +849,17 @@ class AssetLibraryService {
       ? share.folders.map((item: any) => item.folder)
       : [share.folder];
     const rootFolderIds = rootFolders.map((folder: any) => folder.id);
-    const folderIds = [...new Set((await Promise.all(
-      rootFolderIds.map((folderId: string) => this.collectDescendantFolderIds(folderId, share.organizationId))
-    )).flat())];
+    const folderIds = [
+      ...new Set(
+        (
+          await Promise.all(
+            rootFolderIds.map((folderId: string) =>
+              this.collectDescendantFolderIds(folderId, share.organizationId)
+            )
+          )
+        ).flat()
+      ),
+    ];
 
     const [folders, assets] = await Promise.all([
       prisma.assetLibraryFolder.findMany({
@@ -877,7 +920,10 @@ class AssetLibraryService {
     }
 
     const uploadContext = await this.normalizeUploadContext(user, context);
-    const uploadedAssets = await uploadService.uploadMultiple(files, `assets/${user.organizationId}`);
+    const uploadedAssets = await uploadService.uploadMultiple(
+      files,
+      `assets/${user.organizationId}`
+    );
 
     try {
       const createdAssets = await prisma.$transaction(
@@ -916,13 +962,17 @@ class AssetLibraryService {
   }
 
   private async deleteUploadedFiles(uploadedAssets: UploadResult[]) {
-    await Promise.all(uploadedAssets.map(async (asset) => {
-      try {
-        await uploadService.deleteFile(asset.s3Key);
-      } catch (error) {
-        logger.error(`Failed to roll back asset library upload ${asset.s3Key}: ${(error as Error).message}`);
-      }
-    }));
+    await Promise.all(
+      uploadedAssets.map(async (asset) => {
+        try {
+          await uploadService.deleteFile(asset.s3Key);
+        } catch (error) {
+          logger.error(
+            `Failed to roll back asset library upload ${asset.s3Key}: ${(error as Error).message}`
+          );
+        }
+      })
+    );
   }
 }
 

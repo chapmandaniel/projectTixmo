@@ -7,6 +7,12 @@ import { ticketService } from './service';
 
 const canManageTickets = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
 
+export const listMyTickets = catchAsync(async (req: AuthRequest, res: Response) => {
+  res.json(
+    successResponse(await ticketService.listTickets({ ...req.query, userId: req.user!.userId }))
+  );
+});
+
 export const listTickets = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = canManageTickets(req.user!.role) ? undefined : req.user!.userId;
 
@@ -45,7 +51,14 @@ export const cancelTicket = catchAsync(async (req: AuthRequest, res: Response) =
   const userId = req.user!.userId;
 
   const ticket = await ticketService.cancelTicket(id, userId);
-  res.json(successResponse(ticket, 'Ticket cancelled successfully'));
+  res.json(
+    successResponse(
+      ticket,
+      ticket.status === 'CANCELLED'
+        ? 'Ticket cancelled and order refunded successfully'
+        : 'Refund submitted; awaiting processor confirmation'
+    )
+  );
 });
 
 export const validateTicket = catchAsync(async (req: AuthRequest, res: Response) => {

@@ -98,7 +98,7 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [] }) => {
                             onChange={handleDescriptionChange}
                             placeholder="Detailed explanation... (Type @ to mention)"
                             rows={4}
-                            className={`w-full p-3 rounded-lg outline-none transition-all text-sm resize-none ${isDark ? 'bg-[#252525] text-gray-200 placeholder-gray-600 focus:bg-[#2a2a2a]' : 'bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white shadow-sm'}`}
+                            className={`w-full p-3 rounded-lg outline-hidden transition-all text-sm resize-none ${isDark ? 'bg-[#252525] text-gray-200 placeholder-gray-600 focus:bg-[#2a2a2a]' : 'bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white shadow-sm'}`}
                         />
                         {/* Mention Suggestions */}
                         {showMentions && filteredUsers.length > 0 && (

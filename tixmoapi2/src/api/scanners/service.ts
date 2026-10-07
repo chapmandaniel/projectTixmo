@@ -4,6 +4,11 @@ import { parseTicketQRData } from '../../utils/qrcode';
 import crypto from 'crypto';
 
 import prisma from '../../config/prisma';
+import {
+  lockedTicket,
+  ticketFailure,
+  consumeTicket,
+} from '../../services/ticket-admission.service';
 
 interface RegisterScannerData {
   name: string;
@@ -321,119 +326,41 @@ export class ScannerService {
     scanLog: ScanLog;
     reason?: string;
   }> {
-    // Parse QR code data
-    const qrParsed = parseTicketQRData(data.qrData);
-
-    if (!qrParsed) {
-      // Log failed scan
-      const failedLog = await prisma.scanLog.create({
+    const parsed = parseTicketQRData(data.qrData);
+    return prisma.$transaction(async (tx) => {
+      const ticket = parsed ? await lockedTicket(tx, parsed.ticketId) : null;
+      // Recheck scope and active status at the use boundary, including offline
+      // uploads and internal callers that don't pass through HTTP middleware.
+      await tx.$queryRaw`SELECT id FROM scanners WHERE id = ${data.scannerId} FOR UPDATE`;
+      const scanner = await tx.scanner.findUnique({ where: { id: data.scannerId } });
+      if (!scanner || scanner.status !== 'ACTIVE')
+        throw ApiError.forbidden('Scanner is not active');
+      let reason: string | undefined;
+      if (!parsed) reason = 'Invalid QR code format';
+      else if (!ticket) reason = 'Ticket not found';
+      else if (
+        scanner.organizationId !== ticket.event.organizationId ||
+        (scanner.eventId && scanner.eventId !== ticket.eventId)
+      ) {
+        throw ApiError.forbidden('Scanner is not assigned to this event');
+      } else if (parsed.eventId !== ticket.eventId || parsed.barcode !== ticket.barcode) {
+        reason = 'Ticket credential is no longer valid';
+      } else reason = ticketFailure(ticket, data.scanType === 'ENTRY', false);
+      if (!reason && ticket && data.scanType === 'ENTRY')
+        await consumeTicket(tx, ticket.id, data.scannerId);
+      const scanLog = await tx.scanLog.create({
         data: {
           scannerId: data.scannerId,
-          ticketId: '00000000-0000-0000-0000-000000000000', // Invalid ticket
-          eventId: '00000000-0000-0000-0000-000000000000', // Invalid event
+          ticketId: ticket?.id ?? null,
+          eventId: ticket?.eventId ?? null,
           scanType: data.scanType,
-          success: false,
-          failureReason: 'Invalid QR code format',
+          success: !reason,
+          failureReason: reason,
           metadata: data.metadata as Prisma.InputJsonValue,
         },
       });
-
-      return {
-        success: false,
-        reason: 'Invalid QR code format',
-        scanLog: failedLog,
-      };
-    }
-
-    const { ticketId, eventId } = qrParsed;
-
-    // Get ticket
-    const ticket = await prisma.ticket.findUnique({
-      where: { id: ticketId },
-      include: {
-        event: true,
-        ticketType: true,
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
+      return { success: !reason, reason, ticket: ticket || undefined, scanLog };
     });
-
-    if (!ticket) {
-      const failedLog = await prisma.scanLog.create({
-        data: {
-          scannerId: data.scannerId,
-          ticketId,
-          eventId,
-          scanType: data.scanType,
-          success: false,
-          failureReason: 'Ticket not found',
-          metadata: data.metadata as Prisma.InputJsonValue,
-        },
-      });
-
-      return {
-        success: false,
-        reason: 'Ticket not found',
-        scanLog: failedLog,
-      };
-    }
-
-    // Validate ticket
-    let failureReason: string | undefined;
-
-    if (ticket.status === 'CANCELLED') {
-      failureReason = 'Ticket has been cancelled';
-    } else if (ticket.status === 'USED' && data.scanType === 'ENTRY') {
-      failureReason = 'Ticket has already been used';
-    } else if (ticket.eventId !== eventId) {
-      failureReason = 'Ticket is for a different event';
-    } else if (!['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(ticket.event.status)) {
-      failureReason = 'Event is not active for scanning';
-    }
-
-    // Create scan log
-    const scanLog = await prisma.scanLog.create({
-      data: {
-        scannerId: data.scannerId,
-        ticketId,
-        eventId,
-        scanType: data.scanType,
-        success: !failureReason,
-        failureReason,
-        metadata: data.metadata as Prisma.InputJsonValue,
-      },
-    });
-
-    if (failureReason) {
-      return {
-        success: false,
-        reason: failureReason,
-        ticket,
-        scanLog,
-      };
-    }
-
-    // Mark ticket as used for ENTRY scans
-    if (data.scanType === 'ENTRY' && ticket.status === 'VALID') {
-      await prisma.ticket.update({
-        where: { id: ticketId },
-        data: {
-          status: 'USED',
-          checkedInAt: new Date(),
-        },
-      });
-    }
-
-    return {
-      success: true,
-      ticket,
-      scanLog,
-    };
   }
 
   /**
@@ -496,6 +423,35 @@ export class ScannerService {
    * Sync tickets for offline validation
    * @deprecated Use syncTicketsStream instead for better performance
    */
+  async authorizeSync(scannerId: string, eventId?: string): Promise<string> {
+    const scanner = await prisma.scanner.findUnique({ where: { id: scannerId } });
+    if (!scanner || scanner.status !== 'ACTIVE') throw ApiError.forbidden('Scanner is not active');
+    const target = eventId || scanner.eventId;
+    if (!target) throw ApiError.badRequest('Event ID is required for sync');
+    const event = await prisma.event.findUnique({ where: { id: target } });
+    if (
+      !event ||
+      event.organizationId !== scanner.organizationId ||
+      (scanner.eventId && scanner.eventId !== target)
+    ) {
+      throw ApiError.forbidden('Scanner is not assigned to this event');
+    }
+    return target;
+  }
+
+  private syncStatus(ticket: {
+    status: string;
+    order: { status: string; refundStatus: string };
+    event: { status: string; deletedAt: Date | null };
+  }): string {
+    return ticket.order.status === 'PAID' &&
+      ticket.order.refundStatus !== 'PROCESSING' &&
+      !ticket.event.deletedAt &&
+      ['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(ticket.event.status)
+      ? ticket.status
+      : 'CANCELLED';
+  }
+
   async syncTickets(
     scannerId: string,
     eventId?: string,
@@ -510,36 +466,15 @@ export class ScannerService {
     }>;
     timestamp: Date;
   }> {
-    // Get scanner to verify permissions
-    const scanner = await prisma.scanner.findUnique({
-      where: { id: scannerId },
-    });
-
-    if (!scanner) {
-      throw ApiError.notFound('Scanner not found');
-    }
-
-    // Determine event ID
-    const targetEventId = eventId || scanner.eventId;
-    if (!targetEventId) {
-      throw ApiError.badRequest('Event ID is required for sync');
-    }
-
-    // Verify scanner access to event
-    if (scanner.eventId && scanner.eventId !== targetEventId) {
-      throw ApiError.forbidden('Scanner is not assigned to this event');
-    }
-
-    // Fetch tickets
-    const where: Prisma.TicketWhereInput = {
-      eventId: targetEventId,
-      status: { in: ['VALID', 'USED'] }, // Only sync relevant tickets
-    };
-
-    if (since) {
-      where.updatedAt = { gte: since };
-    }
-
+    const targetEventId = await this.authorizeSync(scannerId, eventId);
+    const timestamp = new Date();
+    const where: Prisma.TicketWhereInput = { eventId: targetEventId };
+    if (since)
+      where.OR = [
+        { updatedAt: { gte: since } },
+        { order: { updatedAt: { gte: since } } },
+        { event: { updatedAt: { gte: since } } },
+      ];
     const tickets = await prisma.ticket.findMany({
       where,
       select: {
@@ -548,25 +483,29 @@ export class ScannerService {
         status: true,
         ticketTypeId: true,
         updatedAt: true,
+        order: { select: { status: true, refundStatus: true } },
+        event: { select: { status: true, deletedAt: true } },
       },
     });
 
     // Map to minimal format
     const mappedTickets = tickets.map((t) => ({
       id: t.id,
-      barcode: t.barcode,
-      status: t.status,
+      barcode: this.syncStatus(t) === 'CANCELLED' ? '' : t.barcode,
+      status: this.syncStatus(t),
       ticketTypeId: t.ticketTypeId,
       hash: crypto
         .createHash('sha256')
-        .update(`${t.id}:${t.barcode}:${t.status}`)
+        .update(
+          `${t.id}:${this.syncStatus(t) === 'CANCELLED' ? '' : t.barcode}:${this.syncStatus(t)}`
+        )
         .digest('hex')
         .substring(0, 16),
     }));
 
     return {
       tickets: mappedTickets,
-      timestamp: new Date(),
+      timestamp,
     };
   }
 
@@ -587,58 +526,32 @@ export class ScannerService {
       hash: string;
     }>
   > {
-    // Get scanner to verify permissions
-    const scanner = await prisma.scanner.findUnique({
-      where: { id: scannerId },
-    });
-
-    if (!scanner) {
-      throw ApiError.notFound('Scanner not found');
-    }
-
-    // Determine event ID
-    const targetEventId = eventId || scanner.eventId;
-    if (!targetEventId) {
-      throw ApiError.badRequest('Event ID is required for sync');
-    }
-
-    // Verify scanner access to event
-    if (scanner.eventId && scanner.eventId !== targetEventId) {
-      throw ApiError.forbidden('Scanner is not assigned to this event');
-    }
-
-    // Fetch tickets
-    const where: Prisma.TicketWhereInput = {
-      eventId: targetEventId,
-      status: { in: ['VALID', 'USED'] }, // Only sync relevant tickets
-    };
-
-    if (since) {
-      where.updatedAt = { gte: since };
-    }
-
+    const targetEventId = await this.authorizeSync(scannerId, eventId);
+    const where: Prisma.TicketWhereInput = { eventId: targetEventId };
+    if (since)
+      where.OR = [
+        { updatedAt: { gte: since } },
+        { order: { updatedAt: { gte: since } } },
+        { event: { updatedAt: { gte: since } } },
+      ];
     let cursor: string | undefined;
 
     while (true) {
-      const params: Prisma.TicketFindManyArgs = {
+      await this.authorizeSync(scannerId, targetEventId);
+      const tickets = await prisma.ticket.findMany({
         where,
         take: batchSize,
         orderBy: { id: 'asc' },
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         select: {
           id: true,
           barcode: true,
           status: true,
           ticketTypeId: true,
-          updatedAt: true,
+          order: { select: { status: true, refundStatus: true } },
+          event: { select: { status: true, deletedAt: true } },
         },
-      };
-
-      if (cursor) {
-        params.cursor = { id: cursor };
-        params.skip = 1;
-      }
-
-      const tickets = await prisma.ticket.findMany(params);
+      });
 
       if (tickets.length === 0) {
         break;
@@ -650,12 +563,14 @@ export class ScannerService {
       // Map to minimal format
       const mappedTickets = tickets.map((t) => ({
         id: t.id,
-        barcode: t.barcode,
-        status: t.status,
+        barcode: this.syncStatus(t) === 'CANCELLED' ? '' : t.barcode,
+        status: this.syncStatus(t),
         ticketTypeId: t.ticketTypeId,
         hash: crypto
           .createHash('sha256')
-          .update(`${t.id}:${t.barcode}:${t.status}`)
+          .update(
+            `${t.id}:${this.syncStatus(t) === 'CANCELLED' ? '' : t.barcode}:${this.syncStatus(t)}`
+          )
           .digest('hex')
           .substring(0, 16),
       }));
@@ -695,11 +610,12 @@ export class ScannerService {
 
     for (const scan of scans) {
       try {
-        // Reuse scanTicket logic but with specific timestamp
-        // Note: scanTicket uses current time for check-in, we might need to adjust it or accept it's "synced at" time
-        // For accurate history, we should ideally respect scannedAt.
-        // However, scanTicket method doesn't accept timestamp override currently.
-        // Let's call scanTicket and if successful, update the log's timestamp manually.
+        // The server records when admission is accepted. Client timestamps are
+        // claims retained in metadata and must not rewrite committed history.
+        const claimedTime = new Date(scan.scannedAt).getTime();
+        if (!Number.isFinite(claimedTime) || claimedTime > Date.now() + 300_000) {
+          throw ApiError.badRequest('Invalid offline scan timestamp');
+        }
 
         const result = await this.scanTicket({
           scannerId,
@@ -710,21 +626,6 @@ export class ScannerService {
 
         if (result.success) {
           successCount++;
-          // Update the log timestamp to reflect actual scan time
-          await prisma.scanLog.update({
-            where: { id: result.scanLog.id },
-            data: { scannedAt: new Date(scan.scannedAt) },
-          });
-
-          // Also update ticket checkedInAt if it was an entry scan
-          if (scan.scanType === 'ENTRY' && result.ticket) {
-            // We can't easily access the ticket update from here without re-querying or modifying scanTicket return
-            // But scanTicket updates checkedInAt to NOW. We should correct it.
-            await prisma.ticket.update({
-              where: { id: (result.ticket as any).id },
-              data: { checkedInAt: new Date(scan.scannedAt) },
-            });
-          }
         } else {
           failedCount++;
         }

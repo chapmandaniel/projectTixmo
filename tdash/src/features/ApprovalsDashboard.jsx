@@ -17,6 +17,7 @@ import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import { toast } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
+import { getUserCacheIdentity, getSessionGeneration } from '../lib/session';
 import ApprovalDetailView from './ApprovalDetailView';
 import { formatApprovalDate } from './approvalConstants';
 import { DashboardButton, DashboardChip, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
@@ -36,15 +37,16 @@ const reviewerAssociationOptions = [
 ];
 
 const APPROVALS_DASHBOARD_CACHE_KEY = 'tixmo:approvals-dashboard-cache';
+const cacheKeyFor = (user) => `${APPROVALS_DASHBOARD_CACHE_KEY}:${getUserCacheIdentity(user)}:${getSessionGeneration()}`;
 const APPROVAL_CURATOR_ROLES = new Set(['ADMIN', 'OWNER']);
 
-const readApprovalsDashboardCache = () => {
+const readApprovalsDashboardCache = (user) => {
     if (typeof window === 'undefined') {
         return null;
     }
 
     try {
-        const raw = window.sessionStorage.getItem(APPROVALS_DASHBOARD_CACHE_KEY);
+        const raw = window.sessionStorage.getItem(cacheKeyFor(user));
         if (!raw) {
             return null;
         }
@@ -63,14 +65,14 @@ const readApprovalsDashboardCache = () => {
     }
 };
 
-const writeApprovalsDashboardCache = ({ approvals, events }) => {
+const writeApprovalsDashboardCache = (user, { approvals, events }) => {
     if (typeof window === 'undefined') {
         return;
     }
 
     try {
         window.sessionStorage.setItem(
-            APPROVALS_DASHBOARD_CACHE_KEY,
+            cacheKeyFor(user),
             JSON.stringify({
                 approvals,
                 events,
@@ -252,7 +254,7 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                             <select
                                 value={form.eventId}
                                 onChange={(e) => setForm((current) => ({ ...current, eventId: e.target.value }))}
-                                className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                                className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-hidden focus:border-sky-400"
                             >
                                 <option value="">Select an event</option>
                                 {events.map((event) => (
@@ -269,7 +271,7 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                                 type="datetime-local"
                                 value={form.deadline}
                                 onChange={(e) => setForm((current) => ({ ...current, deadline: e.target.value }))}
-                                className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                                className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-hidden focus:border-sky-400"
                             />
                         </label>
                     </div>
@@ -281,7 +283,7 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                             value={form.title}
                             onChange={(e) => setForm((current) => ({ ...current, title: e.target.value }))}
                             placeholder="Festival poster, VIP reel, stage motion graphic..."
-                            className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                            className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-hidden focus:border-sky-400"
                         />
                     </label>
 
@@ -292,7 +294,7 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                             value={form.description}
                             onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))}
                             placeholder="Context for reviewers, distribution notes, or what changed."
-                            className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                            className="w-full rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-hidden focus:border-sky-400"
                         />
                     </label>
 
@@ -305,12 +307,12 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                                     value={reviewerInput}
                                     onChange={(e) => setReviewerInput(e.target.value)}
                                     placeholder="reviewer@example.com"
-                                    className="flex-1 rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                                    className="flex-1 rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-hidden focus:border-sky-400"
                                 />
                                 <select
                                     value={reviewerAssociation}
                                     onChange={(e) => setReviewerAssociation(e.target.value)}
-                                    className="rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-none focus:border-sky-400"
+                                    className="rounded-2xl border border-white/10 bg-[#0b1118] px-4 py-3 text-sm outline-hidden focus:border-sky-400"
                                 >
                                     {reviewerAssociationOptions.map((option) => (
                                         <option key={option.value} value={option.value}>
@@ -385,9 +387,9 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
     );
 };
 
-const ApprovalsDashboard = ({ user, isDark = true }) => {
+const ScopedApprovalsDashboard = ({ user, isDark = true }) => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const initialCacheRef = useRef(readApprovalsDashboardCache());
+    const initialCacheRef = useRef(readApprovalsDashboardCache(user));
     const [approvals, setApprovals] = useState(initialCacheRef.current?.approvals || []);
     const [events, setEvents] = useState(initialCacheRef.current?.events || []);
     const [loading, setLoading] = useState(!initialCacheRef.current);
@@ -401,6 +403,12 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
     const deepLinkedApprovalId = searchParams.get('approvalId');
     const approvalsRef = useRef(approvals);
     const eventsRef = useRef(events);
+    const mountedRef = useRef(true);
+    const sessionGeneration = useRef(getSessionGeneration());
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => { mountedRef.current = false; };
+    }, []);
     const canCurateApprovals = APPROVAL_CURATOR_ROLES.has(user?.role);
 
     const syncApprovalIdParam = (approvalId) => {
@@ -502,6 +510,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                 api.get('/events?limit=100'),
             ]);
 
+            if (!mountedRef.current || sessionGeneration.current !== getSessionGeneration()) return;
             let nextApprovals = approvalsRef.current;
             let nextEvents = eventsRef.current;
             let nextError = '';
@@ -510,6 +519,15 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                 nextApprovals = approvalsResponse.value.approvals || [];
                 setApprovals(nextApprovals);
             } else {
+                if ([401, 403, 404].includes(approvalsResponse.reason?.response?.status)) {
+                    nextApprovals = [];
+                    nextEvents = [];
+                    initialCacheRef.current = null;
+                    setApprovals([]);
+                    setEvents([]);
+                    setSelectedApproval(null);
+                    window.sessionStorage.removeItem(cacheKeyFor(user));
+                }
                 nextError =
                     approvalsResponse.reason?.response?.data?.message ||
                     approvalsResponse.reason?.message ||
@@ -522,7 +540,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
             }
 
             if (approvalsResponse.status === 'fulfilled' || eventsResponse.status === 'fulfilled') {
-                writeApprovalsDashboardCache({
+                writeApprovalsDashboardCache(user, {
                     approvals: nextApprovals,
                     events: nextEvents,
                 });
@@ -554,7 +572,8 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
             return;
         }
 
-        writeApprovalsDashboardCache({ approvals, events });
+        if (!mountedRef.current || sessionGeneration.current !== getSessionGeneration()) return;
+        writeApprovalsDashboardCache(user, { approvals, events });
     }, [approvals, events, loading]);
 
     useEffect(() => {
@@ -674,7 +693,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                         aria-label="Event filter"
                                         value={eventFilter}
                                         onChange={(e) => setEventFilter(e.target.value)}
-                                        className="min-w-[11rem] bg-transparent outline-none"
+                                        className="min-w-[11rem] bg-transparent outline-hidden"
                                     >
                                         <option value="">Filter by event</option>
                                         {events.map((event) => (
@@ -691,7 +710,7 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
                                         aria-label="Status filter"
                                         value={statusFilter}
                                         onChange={(e) => setStatusFilter(e.target.value)}
-                                        className="min-w-[10rem] bg-transparent outline-none"
+                                        className="min-w-[10rem] bg-transparent outline-hidden"
                                     >
                                         {DASHBOARD_STATUS_OPTIONS.map((option) => (
                                             <option key={option.value || 'all'} value={option.value}>
@@ -864,5 +883,9 @@ const ApprovalsDashboard = ({ user, isDark = true }) => {
         </div>
     );
 };
+
+const ApprovalsDashboard = (props) => (
+    <ScopedApprovalsDashboard key={`${getUserCacheIdentity(props.user)}:${getSessionGeneration()}`} {...props} />
+);
 
 export default ApprovalsDashboard;

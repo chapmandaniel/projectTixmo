@@ -7,31 +7,34 @@ jest.mock('../../src/api/assets/service', () => ({
   assetLibraryService: {},
 }));
 
-import {
-  isAllowedAssetUploadType,
-  sniffAssetMimeType,
-} from '../../src/api/assets/controller';
+import { isAllowedAssetUploadType, sniffAssetMimeType } from '../../src/api/assets/controller';
 
 describe('Asset library upload validation', () => {
   it('allows EPS logo uploads declared as PostScript', () => {
-    expect(isAllowedAssetUploadType({
-      originalname: 'brand-logo.eps',
-      mimetype: 'application/postscript',
-    })).toBe(true);
+    expect(
+      isAllowedAssetUploadType({
+        originalname: 'brand-logo.eps',
+        mimetype: 'application/postscript',
+      })
+    ).toBe(true);
   });
 
   it('allows EPS logo uploads with a generic MIME type', () => {
-    expect(isAllowedAssetUploadType({
-      originalname: 'brand-logo.eps',
-      mimetype: 'application/octet-stream',
-    })).toBe(true);
+    expect(
+      isAllowedAssetUploadType({
+        originalname: 'brand-logo.eps',
+        mimetype: 'application/octet-stream',
+      })
+    ).toBe(true);
   });
 
   it('rejects generic MIME uploads without an EPS extension', () => {
-    expect(isAllowedAssetUploadType({
-      originalname: 'brand-logo.bin',
-      mimetype: 'application/octet-stream',
-    })).toBe(false);
+    expect(
+      isAllowedAssetUploadType({
+        originalname: 'brand-logo.bin',
+        mimetype: 'application/octet-stream',
+      })
+    ).toBe(false);
   });
 
   it('detects EPS content from its PostScript EPS header', () => {

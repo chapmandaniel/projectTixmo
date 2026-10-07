@@ -1,4 +1,3 @@
-
 import { EventService } from '../../src/api/events/service';
 import prisma from '../../src/config/prisma';
 
@@ -56,7 +55,7 @@ describe('Event Public API Detail Freshness Benchmark', () => {
 
     // Default Prisma Mock: Slow Query
     (prisma.event.findFirst as jest.Mock).mockImplementation(async () => {
-      await new Promise(resolve => setTimeout(resolve, 50)); // 50ms DB latency
+      await new Promise((resolve) => setTimeout(resolve, 50)); // 50ms DB latency
       return MOCK_EVENT;
     });
 
@@ -78,11 +77,11 @@ describe('Event Public API Detail Freshness Benchmark', () => {
     // Detailed checkout event payloads intentionally stay uncached so ticket IDs
     // and live availability cannot survive event resets or ticket mutations.
     if (mockSet.mock.calls.length > 0) {
-        const storedValue = mockSet.mock.calls[0][1];
-        mockGet.mockResolvedValue(storedValue);
-        console.log('   (Cache was populated)');
+      const storedValue = mockSet.mock.calls[0][1];
+      mockGet.mockResolvedValue(storedValue);
+      console.log('   (Cache was populated)');
     } else {
-        console.log('   (Cache was NOT populated - Baseline)');
+      console.log('   (Cache was NOT populated - Baseline)');
     }
 
     // 2. Second Call (Fresh DB read expected)
@@ -93,9 +92,9 @@ describe('Event Public API Detail Freshness Benchmark', () => {
     console.log(`2. Second Call (Hot): ${duration2.toFixed(2)}ms`);
 
     if (duration2 < 10 && duration1 > 40) {
-        console.log('⚠️ DETAIL CACHE DETECTED: Re-check checkout freshness.');
+      console.log('⚠️ DETAIL CACHE DETECTED: Re-check checkout freshness.');
     } else {
-        console.log('✅ FRESH DETAIL READ: Similar duration.');
+      console.log('✅ FRESH DETAIL READ: Similar duration.');
     }
     console.log('--- END BENCHMARK ---');
   });

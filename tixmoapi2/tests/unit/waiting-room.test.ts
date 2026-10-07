@@ -1,87 +1,89 @@
+import { EventEmitter } from 'events';
 import { Request, Response, NextFunction } from 'express';
 import { waitingRoom } from '../../src/middleware/waitingRoom';
 import { getRedisClient } from '../../src/config/redis';
+jest.mock('../../src/config/redis', () => ({ getRedisClient: jest.fn() }));
 
-// Mock getRedisClient
-jest.mock('../../src/config/redis', () => ({
-    getRedisClient: jest.fn(),
-}));
-
-describe('Waiting Room Middleware', () => {
-    let mockIncr: jest.Mock;
-    let mockDecr: jest.Mock;
-    let req: Partial<Request>;
-    let res: Partial<Response>;
-    let next: NextFunction;
-
-    beforeEach(() => {
-        mockIncr = jest.fn();
-        mockDecr = jest.fn();
-        (getRedisClient as jest.Mock).mockReturnValue({
-            incr: mockIncr,
-            decr: mockDecr,
-        });
-
-        req = {};
-        res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            on: jest.fn(), // for response 'finish' event
-        };
-        next = jest.fn();
+describe('Waiting room request leases', () => {
+  let client: any, req: any, res: any, next: jest.Mock;
+  beforeEach(() => {
+    client = {
+      isReady: true,
+      eval: jest.fn().mockResolvedValue(1),
+      zRem: jest.fn().mockResolvedValue(1),
+    };
+    jest.mocked(getRedisClient).mockReturnValue(client);
+    req = Object.assign(new EventEmitter(), { path: '/orders', aborted: false });
+    res = Object.assign(new EventEmitter(), {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
     });
-
-    afterEach(() => {
-        jest.clearAllMocks();
+    next = jest.fn();
+  });
+  afterEach(async () => {
+    res.emit('finish');
+    await Promise.resolve();
+    jest.clearAllMocks();
+  });
+  const enter = () => waitingRoom(req as Request, res as Response, next as NextFunction);
+  it('admits requests and releases once across finish and close', async () => {
+    await enter();
+    expect(next).toHaveBeenCalledTimes(1);
+    res.emit('finish');
+    res.emit('close');
+    res.emit('finish');
+    expect(client.zRem).toHaveBeenCalledTimes(1);
+  });
+  it('releases a close-only request', async () => {
+    await enter();
+    res.emit('close');
+    expect(client.zRem).toHaveBeenCalledTimes(1);
+  });
+  it('handles aborts while acquisition is unresolved without entering a closed request', async () => {
+    let acknowledge!: (value: number) => void;
+    client.eval.mockReturnValueOnce(
+      new Promise((resolve) => {
+        acknowledge = resolve;
+      })
+    );
+    const pending = enter();
+    res.emit('close');
+    req.emit('aborted');
+    acknowledge(1);
+    await pending;
+    expect(next).not.toHaveBeenCalled();
+    expect(client.zRem).toHaveBeenCalledTimes(1);
+  });
+  it('preserves overload responses without allocating capacity', async () => {
+    client.eval.mockResolvedValueOnce(0);
+    await enter();
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'High traffic volume. Please try again in a moment.',
+      retryAfter: 5,
     });
-
-    it('should allow request if user count is within limit', async () => {
-        mockIncr.mockResolvedValue(100); // 100 active users
-
-        await waitingRoom(req as Request, res as Response, next);
-
-        expect(mockIncr).toHaveBeenCalled();
-        expect(next).toHaveBeenCalled(); // Should proceed
-        expect(res.status).not.toHaveBeenCalledWith(503);
-    });
-
-    it('should block request if user count exceeds limit', async () => {
-        mockIncr.mockResolvedValue(5001); // Limit is 5000
-
-        await waitingRoom(req as Request, res as Response, next);
-
-        expect(mockIncr).toHaveBeenCalled();
-        expect(res.status).toHaveBeenCalledWith(503);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-            message: expect.stringContaining('High traffic'),
-        }));
-        // Should NOT call next()
-        expect(next).not.toHaveBeenCalled();
-        // Should decrement immediately since request is rejected
-        expect(mockDecr).toHaveBeenCalled();
-    });
-
-    it('should setup cleanup on response finish', async () => {
-        mockIncr.mockResolvedValue(100);
-
-        await waitingRoom(req as Request, res as Response, next);
-
-        expect(res.on).toHaveBeenCalledWith('finish', expect.any(Function));
-
-        // Simulate finish event
-        mockDecr.mockResolvedValue(0);
-        const finishCallback = (res.on as jest.Mock).mock.calls[0][1];
-        await finishCallback();
-
-        expect(mockDecr).toHaveBeenCalled();
-    });
-
-    it('should bypass waiting room if Redis fails', async () => {
-        mockIncr.mockRejectedValue(new Error('Redis down'));
-
-        await waitingRoom(req as Request, res as Response, next);
-
-        // Fail open - should proceed
-        expect(next).toHaveBeenCalled();
-    });
+    expect(next).not.toHaveBeenCalled();
+    expect(client.zRem).not.toHaveBeenCalled();
+  });
+  it('fails open on acquisition errors and bounds uncertain ownership by token', async () => {
+    client.eval.mockRejectedValueOnce(new Error('Redis unavailable'));
+    client.zRem.mockRejectedValueOnce(new Error('Release unavailable'));
+    await enter();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(client.zRem).toHaveBeenCalledTimes(1);
+  });
+  it('avoids queued acquisition when Redis is known to be unready', async () => {
+    client.isReady = false;
+    await enter();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(client.eval).not.toHaveBeenCalled();
+  });
+  it('preserves health and metrics bypasses', async () => {
+    for (const path of ['/health', '/metrics']) {
+      req.path = path;
+      await enter();
+    }
+    expect(next).toHaveBeenCalledTimes(2);
+    expect(client.eval).not.toHaveBeenCalled();
+  });
 });

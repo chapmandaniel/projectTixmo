@@ -175,7 +175,7 @@ const ApprovalsView = ({ isDark, user }) => {
                             <select
                                 value={eventFilter}
                                 onChange={(e) => setEventFilter(e.target.value)}
-                                className={`w-full bg-transparent appearance-none focus:outline-none cursor-pointer pr-8 font-medium ${!eventFilter ? 'text-indigo-500' : ''}`}
+                                className={`w-full bg-transparent appearance-none focus:outline-hidden cursor-pointer pr-8 font-medium ${!eventFilter ? 'text-indigo-500' : ''}`}
                             >
                                 <option value="">All Events</option>
                                 {Array.isArray(events) && events.map((event) => (
@@ -205,7 +205,7 @@ const ApprovalsView = ({ isDark, user }) => {
                                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm ${isDark
                                     ? 'bg-[#1A1A1A] border-gray-800 text-white placeholder-gray-600'
                                     : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
-                                    } focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all`}
+                                    } focus:outline-hidden focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all`}
                             />
                         </div>
 
@@ -265,7 +265,7 @@ const ApprovalsView = ({ isDark, user }) => {
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="bg-transparent appearance-none focus:outline-none cursor-pointer pr-4"
+                                className="bg-transparent appearance-none focus:outline-hidden cursor-pointer pr-4"
                             >
                                 {SORT_OPTIONS.map(opt => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>

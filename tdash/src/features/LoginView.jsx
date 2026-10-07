@@ -133,14 +133,7 @@ const LoginView = ({ onLogin, notice = '' }) => {
                             </div>
 
                             <div className="flex items-center justify-between gap-4 border-t border-dashboard-border pt-5">
-                                <label className="inline-flex items-center gap-2 text-xs font-light text-dashboard-muted">
-                                    <input
-                                        type="checkbox"
-                                        defaultChecked
-                                        className="h-3.5 w-3.5 rounded border-dashboard-border bg-dashboard-panel text-dashboard-accent focus:ring-dashboard-accent"
-                                    />
-                                    Keep me signed in
-                                </label>
+                                <span className="text-xs font-light text-dashboard-muted">30 minute inactivity timeout</span>
                                 <span className="text-xs font-light text-dashboard-subtleAlt">
                                     Secure session
                                 </span>

@@ -171,7 +171,7 @@ const FieldLabel = ({ isDark, children, meta }) => (
 );
 
 const inputClassName = (isDark) => cn(
-    'w-full rounded-md border px-4 py-3 text-sm font-light outline-none transition-colors',
+    'w-full rounded-md border px-4 py-3 text-sm font-light outline-hidden transition-colors',
     isDark
         ? 'border-dashboard-border bg-dashboard-panelMuted text-zinc-100 placeholder:text-dashboard-subtle focus:border-dashboard-borderStrong focus:bg-dashboard-panelAlt'
         : 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-slate-300'

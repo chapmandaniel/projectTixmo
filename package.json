@@ -23,5 +23,8 @@
     "demo:market": "npm --prefix tixmoapi2 run demo:market",
     "demo:market:verify": "npm --prefix tixmoapi2 run demo:market:verify",
     "demo:market:reset": "npm --prefix tixmoapi2 run demo:market:reset"
+  },
+  "engines": {
+    "node": ">=24.21.0 <25"
   }
 }

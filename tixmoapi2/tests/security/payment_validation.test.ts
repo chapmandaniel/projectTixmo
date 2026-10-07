@@ -42,9 +42,7 @@ describe('Payment Validation Security', () => {
   });
 
   it('should return 400 Bad Request when orderId is missing', async () => {
-    const res = await request(app)
-      .post('/api/v1/payments/create-intent')
-      .send({}); // Empty body
+    const res = await request(app).post('/api/v1/payments/create-intent').send({}); // Empty body
 
     console.log('Missing orderId response:', res.status, res.body);
 
@@ -53,9 +51,7 @@ describe('Payment Validation Security', () => {
   });
 
   it('should return 400 Bad Request when orderId is invalid type', async () => {
-    const res = await request(app)
-      .post('/api/v1/payments/create-intent')
-      .send({ orderId: 12345 });
+    const res = await request(app).post('/api/v1/payments/create-intent').send({ orderId: 12345 });
 
     console.log('Invalid orderId response:', res.status, res.body);
     expect(res.status).toBe(400);

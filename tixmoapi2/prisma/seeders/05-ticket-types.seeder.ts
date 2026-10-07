@@ -1,8 +1,10 @@
+import { assertDevelopmentClient } from '../utils/development-client';
 import { PrismaClient, TicketTypeStatus, Event } from '@prisma/client';
 import { seedLogger } from '../utils/seed-logger';
 import { createTicketTypeData } from '../factories/ticket-type.factory';
 
 export async function seedTicketTypes(prisma: PrismaClient, events: Event[]) {
+  assertDevelopmentClient(prisma);
   seedLogger.info('Seeding ticket types...');
 
   const ticketTypes = [];

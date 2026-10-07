@@ -1,8 +1,7 @@
 import React from 'react';
 import { Trash2, MessageSquare, Paperclip, Maximize2 } from 'lucide-react';
-import { MOCK_USERS } from '../data/mockData';
 
-const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact }) => {
+const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact, users = [] }) => {
     const priorityColors = {
         High: isDark ? 'text-rose-400 bg-rose-400/10' : 'text-rose-600 bg-rose-50',
         Medium: isDark ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50',
@@ -10,7 +9,7 @@ const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact }) => {
     };
 
     // Find assignee user object
-    const assignee = MOCK_USERS.find(u => u.id === item.assignee);
+    const assignee = users.find(u => u.id === item.assignee) || (item.assigneeDetails?.id === item.assignee ? item.assigneeDetails : null);
 
     // Compact View
     if (isCompact) {
@@ -71,8 +70,8 @@ const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact }) => {
                         <span className="font-light">{item.priority}</span>
                     </div>
                     {assignee && (
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium border ${isDark ? 'bg-[#2b2b40] text-gray-300 border-[#3a3a5a]' : 'bg-gray-100 text-gray-600 border-gray-200'}`} title={`Assigned to ${assignee.firstName}`}>
-                            {assignee.firstName[0]}{assignee.lastName[0]}
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium border ${isDark ? 'bg-dashboard-panelAlt text-gray-300 border-dashboard-border' : 'bg-gray-100 text-gray-600 border-gray-200'}`} title={`Assigned to ${[assignee.firstName, assignee.lastName].filter(Boolean).join(' ') || assignee.email}`}>
+                            {assignee.firstName?.[0] || '?'}{assignee.lastName?.[0] || ''}
                         </div>
                     )}
                 </div>

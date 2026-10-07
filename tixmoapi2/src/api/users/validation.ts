@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
-const userRoleSchema = z.enum(['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER', 'CUSTOMER', 'SCANNER', 'TEAM_MEMBER']);
+const userRoleSchema = z.enum([
+  'OWNER',
+  'ADMIN',
+  'MANAGER',
+  'PROMOTER',
+  'CUSTOMER',
+  'SCANNER',
+  'TEAM_MEMBER',
+]);
 
 // Schema for creating a new user (Team Member)
 export const createUserSchema = z.object({
@@ -35,4 +43,8 @@ export const listUsersSchema = z.object({
     role: userRoleSchema.optional(),
     organizationId: z.string().uuid().optional(),
   }),
+});
+
+export const resendInvitationSchema = z.object({
+  params: z.object({ id: z.string().uuid() }),
 });

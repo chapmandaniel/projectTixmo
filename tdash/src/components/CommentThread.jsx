@@ -135,7 +135,7 @@ const CommentThread = ({
                             onKeyDown={handleKeyDown}
                             placeholder={placeholder}
                             rows={1}
-                            className={`w-full px-4 py-3 pr-12 bg-transparent resize-none focus:outline-none text-sm ${isDark
+                            className={`w-full px-4 py-3 pr-12 bg-transparent resize-none focus:outline-hidden text-sm ${isDark
                                     ? 'text-white placeholder-gray-500'
                                     : 'text-gray-900 placeholder-gray-400'
                                 }`}

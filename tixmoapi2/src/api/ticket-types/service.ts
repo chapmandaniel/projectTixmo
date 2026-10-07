@@ -32,12 +32,15 @@ export class TicketTypeService {
   /**
    * Create a new ticket type
    */
-  async createTicketType(data: CreateTicketTypeInput): Promise<TicketType> {
+  async createTicketType(
+    data: CreateTicketTypeInput,
+    db: Prisma.TransactionClient = prisma
+  ): Promise<TicketType> {
     // Validate event exists
-    const event = await prisma.event.findUnique({ where: { id: data.eventId } });
+    const event = await db.event.findUnique({ where: { id: data.eventId } });
     if (!event) throw ApiError.notFound('Event not found');
 
-    return await prisma.ticketType.create({
+    return await db.ticketType.create({
       data: {
         eventId: data.eventId,
         name: data.name,
@@ -48,7 +51,7 @@ export class TicketTypeService {
         maxPerOrder: data.maxPerOrder ?? 10,
         salesStart: data.salesStart ? new Date(data.salesStart) : null,
         salesEnd: data.salesEnd ? new Date(data.salesEnd) : null,
-        metadata: data.metadata as any ?? null,
+        metadata: (data.metadata as any) ?? null,
         status: data.status ?? 'ACTIVE',
       },
     });
@@ -78,8 +81,17 @@ export class TicketTypeService {
    * Update ticket type
    */
   async updateTicketType(id: string, data: UpdateTicketTypeInput): Promise<TicketType> {
-    // Check if ticket type exists
-    const existingTicketType = await prisma.ticketType.findUnique({
+    return prisma.$transaction((tx) => this.updateTicketTypeInTransaction(tx, id, data));
+  }
+
+  async updateTicketTypeInTransaction(
+    tx: Prisma.TransactionClient,
+    id: string,
+    data: UpdateTicketTypeInput & { status?: 'ACTIVE' | 'HIDDEN' | 'SOLD_OUT' }
+  ): Promise<TicketType> {
+    await tx.$queryRaw`SELECT id FROM ticket_types WHERE id = ${id} FOR UPDATE`;
+    // Read counters while reservations and transitions are excluded.
+    const existingTicketType = await tx.ticketType.findUnique({
       where: { id },
     });
 
@@ -100,12 +112,12 @@ export class TicketTypeService {
     // Prepare update data
     const updateData: Record<string, unknown> = {};
 
+    if (data.status !== undefined) updateData.status = data.status;
     if (data.name) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.price !== undefined) updateData.price = new Decimal(data.price);
     if (data.maxPerOrder !== undefined) updateData.maxPerOrder = data.maxPerOrder;
-    if (data.metadata !== undefined)
-      updateData.metadata = data.metadata as unknown as Prisma.InputJsonValue;
+    if (data.metadata !== undefined) updateData.metadata = data.metadata;
 
     if (data.salesStart !== undefined) {
       updateData.salesStart = data.salesStart ? new Date(data.salesStart) : null;
@@ -130,7 +142,7 @@ export class TicketTypeService {
     }
 
     // Update ticket type
-    return await prisma.ticketType.update({
+    return await tx.ticketType.update({
       where: { id },
       data: {
         ...updateData,

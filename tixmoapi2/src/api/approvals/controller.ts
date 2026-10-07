@@ -1,5 +1,5 @@
 import multer from 'multer';
-import os from 'os';
+import { stagedUploadStorage } from '../../services/staged-upload-storage';
 import { readFile, unlink } from 'fs/promises';
 import { NextFunction, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
@@ -18,16 +18,12 @@ import {
 import { approvalService } from './service';
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: os.tmpdir(),
-    filename: (_req, file, cb) => {
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      cb(null, `${file.fieldname}-${uniqueSuffix}`);
-    },
-  }),
+  storage: stagedUploadStorage(),
   limits: {
     fileSize: 25 * 1024 * 1024,
     files: 10,
+    // Bound bracket indexes before append-field can allocate/iterate sparse arrays.
+    fieldArrayIndexLimit: 1000,
   },
   fileFilter: (_req, file, cb) => {
     const allowedMimeTypes = [
@@ -166,7 +162,10 @@ export const ApprovalController = {
 
       return res.status(StatusCodes.CREATED).json(approval);
     } catch (error) {
+      await cleanupUploadedFiles((req.files as Express.Multer.File[]) || []);
       return next(error);
+    } finally {
+      await cleanupUploadedFiles((req.files as Express.Multer.File[]) || []);
     }
   },
 
@@ -177,7 +176,7 @@ export const ApprovalController = {
         return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
       }
 
-      const result = await approvalService.list(userId, req.query as any);
+      const result = await approvalService.list(userId, req.query);
       return res.json(result);
     } catch (error) {
       return next(error);
@@ -340,7 +339,10 @@ export const ApprovalController = {
 
       return res.status(StatusCodes.CREATED).json(approval);
     } catch (error) {
+      await cleanupUploadedFiles((req.files as Express.Multer.File[]) || []);
       return next(error);
+    } finally {
+      await cleanupUploadedFiles((req.files as Express.Multer.File[]) || []);
     }
   },
 

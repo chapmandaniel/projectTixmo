@@ -1,250 +1,80 @@
-import fs from 'node:fs';
+#!/usr/bin/env node
+import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import net from 'node:net';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
-const apiRoot = path.join(repoRoot, 'tixmoapi2');
-
-const log = (message) => process.stdout.write(`[verify:api] ${message}\n`);
-const fail = (message, extra = '') => {
-  process.stderr.write(`[verify:api] ${message}\n`);
-  if (extra) {
-    process.stderr.write(`${extra}\n`);
-  }
-  process.exit(1);
+const require = createRequire(import.meta.url);
+const { assertDisposableTestTarget } = require('./test-target.cjs');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const owned = [];
+const docker = (args) => {
+  const result = spawnSync('docker', args, { encoding: 'utf8' });
+  if (result.status !== 0) throw new Error('Disposable Docker operation failed. Start Docker Desktop or the project Colima profile.');
+  return result.stdout.trim();
 };
-
-const run = (command, args, options = {}) => {
-  const { capture = false, ...spawnOptions } = options;
-  const result = spawnSync(command, args, {
-    cwd: repoRoot,
-    env: process.env,
-    encoding: 'utf8',
-    stdio: capture ? 'pipe' : 'inherit',
-    shell: false,
-    ...spawnOptions,
-  });
-
-  return result;
+const run = (command, args, env, cwd = root) => {
+  const result = spawnSync(command, args, { cwd, env, stdio: 'inherit' });
+  if (result.status !== 0) throw new Error(command + ' verification failed.');
 };
-
-const runShell = (command, options = {}) => {
-  const { capture = false, ...spawnOptions } = options;
-  return spawnSync(command, {
-    cwd: repoRoot,
-    env: process.env,
-    encoding: 'utf8',
-    stdio: capture ? 'pipe' : 'inherit',
-    shell: true,
-    ...spawnOptions,
-  });
-};
-
-const parseEnvFile = (filePath) => {
-  if (!fs.existsSync(filePath)) {
-    return {};
-  }
-
-  return fs.readFileSync(filePath, 'utf8').split(/\r?\n/).reduce((env, line) => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) {
-      return env;
-    }
-
-    const separatorIndex = trimmed.indexOf('=');
-    if (separatorIndex === -1) {
-      return env;
-    }
-
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const value = trimmed.slice(separatorIndex + 1).trim().replace(/^['"]|['"]$/g, '');
-    env[key] = value;
-    return env;
-  }, {});
-};
-
-const envFile = parseEnvFile(path.join(apiRoot, '.env'));
-for (const [key, value] of Object.entries(envFile)) {
-  process.env[key] ||= value;
-}
-
-process.env.NODE_ENV = 'test';
-process.env.DATABASE_URL ||= 'postgresql://tixmo:tixmo_dev_password@localhost:5432/tixmoapi?schema=public';
-process.env.REDIS_URL ||= 'redis://localhost:6379';
-
-const isPlaceholderCredential = (value) => {
-  const lowerValue = String(value || '').trim().toLowerCase();
-  return (
-    !lowerValue ||
-    lowerValue.includes('your_') ||
-    lowerValue.includes('_your') ||
-    lowerValue.includes('change-this') ||
-    lowerValue.includes('placeholder')
-  );
-};
-
-const setTestCredential = (key, value) => {
-  if (isPlaceholderCredential(process.env[key])) {
-    process.env[key] = value;
-  }
-};
-
-setTestCredential('STRIPE_SECRET_KEY', 'sk_test_verify_api');
-setTestCredential('STRIPE_PUBLISHABLE_KEY', 'pk_test_verify_api');
-setTestCredential('STRIPE_WEBHOOK_SECRET', 'whsec_verify_api');
-
-const redactDatabaseUrl = (value) => {
-  try {
-    const url = new URL(value);
-    if (url.password) {
-      url.password = '***';
-    }
-    return url.toString();
-  } catch {
-    return '<invalid DATABASE_URL>';
-  }
-};
-
-const getHostPort = (value, fallbackPort) => {
-  try {
-    const url = new URL(value);
-    return {
-      host: url.hostname || 'localhost',
-      port: Number(url.port || fallbackPort),
-    };
-  } catch {
-    return { host: 'localhost', port: fallbackPort };
-  }
-};
-
-const waitForPort = ({ host, port, label }, timeoutMs = 45000) => new Promise((resolve, reject) => {
-  const startedAt = Date.now();
-
-  const attempt = () => {
-    const socket = net.createConnection({ host, port });
-    socket.setTimeout(1500);
-
-    socket.on('connect', () => {
-      socket.destroy();
-      resolve();
+const waitForPort = async (url, defaultPort) => {
+  const target = new URL(url);
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const ready = await new Promise((resolve) => {
+      const socket = net.connect(Number(target.port) || defaultPort, target.hostname);
+      socket.setTimeout(500);
+      socket.once('connect', () => { socket.destroy(); resolve(true); });
+      socket.once('error', () => { socket.destroy(); resolve(false); });
+      socket.once('timeout', () => { socket.destroy(); resolve(false); });
     });
-
-    const retry = () => {
-      socket.destroy();
-      if (Date.now() - startedAt >= timeoutMs) {
-        reject(new Error(`${label} did not become reachable at ${host}:${port}`));
-        return;
-      }
-      setTimeout(attempt, 1000);
-    };
-
-    socket.on('timeout', retry);
-    socket.on('error', retry);
-  };
-
-  attempt();
-});
-
-const waitForCommand = ({ command, args, label }, timeoutMs = 45000) => new Promise((resolve, reject) => {
-  const startedAt = Date.now();
-
-  const attempt = () => {
-    const result = run(command, args, { capture: true });
-    if (result.status === 0) {
-      resolve();
-      return;
-    }
-
-    if (Date.now() - startedAt >= timeoutMs) {
-      reject(new Error(`${label} did not become ready.\n${result.stdout || ''}${result.stderr || ''}`));
-      return;
-    }
-
-    setTimeout(attempt, 1000);
-  };
-
-  attempt();
-});
-
-const tailColimaLog = () => {
-  const logPath = path.join(process.env.HOME || '', '.colima/_lima/colima/ha.stderr.log');
-  if (!fs.existsSync(logPath)) {
-    return '';
+    if (ready) return;
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
-
-  return fs.readFileSync(logPath, 'utf8').split(/\r?\n/).slice(-20).join('\n');
+  throw new Error('Disposable database service did not become ready.');
 };
-
-log(`DATABASE_URL ${redactDatabaseUrl(process.env.DATABASE_URL)}`);
-log(`REDIS_URL ${process.env.REDIS_URL}`);
-
-let dockerInfo = run('docker', ['info'], { capture: true });
-if (dockerInfo.status !== 0) {
-  const dockerContext = run('docker', ['context', 'show'], { capture: true });
-  const activeContext = dockerContext.status === 0 ? dockerContext.stdout.trim() : '';
-
-  if (activeContext === 'colima') {
-    log('Docker uses the colima context and Docker is unavailable; attempting `colima start`.');
-    const colimaStart = run('colima', ['start'], { capture: true });
-    if (colimaStart.status !== 0) {
-      fail(
-        'Unable to start Colima. Repair Colima or switch Docker contexts before running API verification.',
-        `${colimaStart.stdout || ''}${colimaStart.stderr || ''}\nRecent Colima log:\n${tailColimaLog()}`
-      );
-    }
-  }
-
-  dockerInfo = run('docker', ['info'], { capture: true });
-  if (dockerInfo.status !== 0) {
-    fail('Docker is unavailable. Start Docker Desktop or Colima before running API verification.', dockerInfo.stderr);
-  }
-}
-
-log('Starting Postgres and Redis via Docker Compose.');
-const composeResult = runShell('docker compose -f tixmoapi2/docker-compose.yml up -d', { capture: true });
-if (composeResult.status !== 0) {
-  const legacyComposeResult = runShell('docker-compose -f tixmoapi2/docker-compose.yml up -d', { capture: true });
-  if (legacyComposeResult.status !== 0) {
-    fail('Failed to start Docker Compose services.', `${composeResult.stderr}\n${legacyComposeResult.stderr}`);
-  }
-}
-
-const database = getHostPort(process.env.DATABASE_URL, 5432);
-const redis = getHostPort(process.env.REDIS_URL, 6379);
 
 try {
-  await waitForPort({ ...database, label: 'Postgres' });
-  await waitForPort({ ...redis, label: 'Redis' });
-  await waitForCommand({
-    command: 'docker',
-    args: ['exec', 'tixmo_postgres', 'pg_isready', '-U', 'tixmo', '-d', 'tixmoapi'],
-    label: 'Postgres',
-  });
-  await waitForCommand({
-    command: 'docker',
-    args: ['exec', 'tixmo_redis', 'redis-cli', 'ping'],
-    label: 'Redis',
-  });
+  const env = { ...process.env, NODE_ENV: 'test' };
+  // Never load application dotenv files or inherit real provider credentials for local gates.
+  for (const key of Object.keys(env)) if (/^(AWS_|S3_|POSTMARK_|SMTP_|STRIPE_|SENTRY_)/.test(key)) delete env[key];
+  env.STRIPE_SECRET_KEY = 'sk_test_local_gate_mock';
+  env.STRIPE_WEBHOOK_SECRET = 'whsec_local_gate_mock';
+  env.JWT_SECRET = 'disposable_local_jwt_secret_32_characters';
+  env.JWT_REFRESH_SECRET = 'disposable_local_refresh_secret_32_characters';
+  env.SESSION_SECRET = 'disposable_local_session_secret_32_characters';
+  if (!env.TIXMO_TEST_DATABASE_URL) {
+    const suffix = randomUUID().slice(0, 8);
+    const pg = 'tixmo-verify-pg-' + suffix;
+    const redis = 'tixmo-verify-redis-' + suffix;
+    const password = randomUUID();
+    docker(['run', '--rm', '-d', '--name', pg, '-p', '127.0.0.1::5432', '-e', 'POSTGRES_USER=tixmo_test', '-e', 'POSTGRES_PASSWORD=' + password, '-e', 'POSTGRES_DB=tixmo_test', 'postgres:17-alpine']);
+    owned.push(pg);
+    docker(['run', '--rm', '-d', '--name', redis, '-p', '127.0.0.1::6379', 'redis:7-alpine']);
+    owned.push(redis);
+    const pgPort = JSON.parse(docker(['inspect', pg]))[0].NetworkSettings.Ports['5432/tcp'][0].HostPort;
+    const redisPort = JSON.parse(docker(['inspect', redis]))[0].NetworkSettings.Ports['6379/tcp'][0].HostPort;
+    env.TIXMO_TEST_DATABASE_URL = 'postgresql://tixmo_test:' + password + '@127.0.0.1:' + pgPort + '/tixmo_test';
+    env.TIXMO_TEST_REDIS_URL = 'redis://127.0.0.1:' + redisPort;
+    env.TIXMO_ALLOW_TEST_RESET = 'true';
+    env.DATABASE_URL = env.TIXMO_TEST_DATABASE_URL;
+  }
+  env.DATABASE_URL = assertDisposableTestTarget(env);
+  if (!env.TIXMO_TEST_REDIS_URL || !['127.0.0.1', 'localhost', '[::1]'].includes(new URL(env.TIXMO_TEST_REDIS_URL).hostname)) throw new Error('An explicit loopback TIXMO_TEST_REDIS_URL is required.');
+  env.REDIS_URL = env.TIXMO_TEST_REDIS_URL;
+  await waitForPort(env.DATABASE_URL, 5432);
+  await waitForPort(env.REDIS_URL, 6379);
+  process.stdout.write('[verify:api] Using authorized disposable loopback services. Connection credentials omitted.\n');
+  run('node', ['--test', 'scripts/test-target.test.cjs'], env);
+  run('npm', ['run', 'build'], env, path.join(root, 'tixmoapi2'));
+  run('npm', ['run', 'migrate'], env, path.join(root, 'tixmoapi2'));
+  run('node', ['--test', 'scripts/runtime-config-parser.test.mjs', 'scripts/waiting-room-redis.test.cjs', 'scripts/evidence-status.test.mjs', 'scripts/check-status.test.mjs'], env);
+  run('npm', ['test', '--', '--runInBand'], env, path.join(root, 'tixmoapi2'));
+  process.stdout.write('[verify:api] API verification passed.\n');
 } catch (error) {
-  fail((error instanceof Error ? error.message : String(error)));
+  process.stderr.write('[verify:api] ' + error.message + '\n');
+  process.exitCode = 1;
+} finally {
+  for (const name of owned.reverse()) spawnSync('docker', ['rm', '-f', name], { stdio: 'ignore' });
 }
-
-log('Applying Prisma schema to the test database.');
-const dbPush = run('npx', ['prisma', 'db', 'push', '--accept-data-loss', '--skip-generate'], {
-  cwd: apiRoot,
-});
-if (dbPush.status !== 0) {
-  fail('Prisma db push failed.');
-}
-
-log('Running API tests.');
-const testResult = run('npm', ['--prefix', 'tixmoapi2', 'test', '--', '--runInBand']);
-if (testResult.status !== 0) {
-  fail('API tests failed.');
-}
-
-log('API verification passed.');

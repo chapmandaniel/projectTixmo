@@ -8,8 +8,12 @@ import { transporter, emailFrom } from '../../config/email';
 import { userInvitationEmail } from '../../utils/emailTemplates';
 
 import prisma from '../../config/prisma';
+import { hasValidStaffScope } from '../../utils/accountSession';
 
-type SafeUser = Omit<User, 'passwordHash' | 'twoFactorSecret'>;
+type SafeUser = Omit<
+  User,
+  'passwordHash' | 'twoFactorSecret' | 'disabledAt' | 'sessionVersion' | 'isPlatformAdmin'
+> & { invitationPending?: boolean; invitationDelivered?: boolean };
 
 export interface CreateUserInput {
   email: string;
@@ -24,6 +28,7 @@ export interface CreateUserInput {
 
 export interface CreateUserOptions {
   clientOrigin?: string;
+  inviterId?: string;
 }
 
 export interface UpdateUserInput {
@@ -65,7 +70,9 @@ export class UserService {
    * Create a new user
    */
   async createUser(data: CreateUserInput, options: CreateUserOptions = {}): Promise<SafeUser> {
-    const { email, password, ...rest } = data;
+    const { password, ...restWithEmail } = data;
+    const email = data.email.trim().toLowerCase();
+    const { email: _email, ...rest } = restWithEmail;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -76,45 +83,86 @@ export class UserService {
       throw ApiError.conflict('User with this email already exists');
     }
 
+    if (rest.role === 'ADMIN' && !rest.organizationId) {
+      throw ApiError.badRequest('Administrator accounts require a business membership');
+    }
     // Hash password (or generate random if not provided)
-    const passwordToHash = password || crypto.randomBytes(8).toString('hex');
+    const invitationToken = !password ? crypto.randomBytes(32).toString('hex') : null;
+    if (invitationToken && !options.inviterId) {
+      throw ApiError.forbidden('An authorized inviter is required');
+    }
+    const passwordToHash = password || crypto.randomBytes(32).toString('hex');
     const passwordHash = await bcrypt.hash(passwordToHash, 10);
 
     // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        ...rest,
-        permissions: rest.permissions as Prisma.InputJsonValue,
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        title: true,
-        permissions: true,
-        phone: true,
-        role: true,
-        organizationId: true,
-        emailVerified: true,
-        twoFactorEnabled: true,
-        lastLogin: true,
-        createdAt: true,
-        updatedAt: true,
-        passwordHash: false,
-        twoFactorSecret: false,
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      if (invitationToken) {
+        const issuer = await tx.user.findUnique({ where: { id: options.inviterId! } });
+        this.assertInvitationAuthority(issuer, rest);
+      }
+      const created = await tx.user.create({
+        data: {
+          email: email.trim().toLowerCase(),
+          passwordHash,
+          disabledAt: invitationToken ? new Date() : null,
+          ...rest,
+          permissions: rest.permissions as Prisma.InputJsonValue,
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          title: true,
+          permissions: true,
+          phone: true,
+          role: true,
+          organizationId: true,
+          emailVerified: true,
+          twoFactorEnabled: true,
+          lastLogin: true,
+          createdAt: true,
+          updatedAt: true,
+          passwordHash: false,
+          twoFactorSecret: false,
+        },
+      });
+      if (invitationToken) {
+        await tx.staffInvitation.create({
+          data: {
+            userId: created.id,
+            issuerId: options.inviterId!,
+            tokenHash: crypto.createHash('sha256').update(invitationToken).digest('hex'),
+            sessionVersion: 0,
+            expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+          },
+        });
+      }
+      return created;
     });
 
-    // Send invitation email
+    const invitationDelivered = await this.sendInvitationEmail(
+      user,
+      invitationToken,
+      options.clientOrigin
+    );
+    return { ...user, invitationPending: Boolean(invitationToken), invitationDelivered };
+  }
+
+  private async sendInvitationEmail(
+    user: { email: string; firstName: string },
+    invitationToken: string | null,
+    clientOrigin?: string
+  ): Promise<boolean> {
     try {
-      const loginUrl = this.buildLoginUrl(options.clientOrigin);
+      const loginUrl = invitationToken
+        ? new URL(`/invite#${invitationToken}`, clientOrigin || config.clientUrl).toString()
+        : this.buildLoginUrl(clientOrigin);
       const emailContent = userInvitationEmail({
         name: user.firstName,
         email: user.email,
-        password: passwordToHash,
+        // Passwords are never sent by email; passwordless invites expire after 48 hours.
+        password: undefined,
         loginUrl,
       });
 
@@ -126,13 +174,135 @@ export class UserService {
         text: emailContent.text,
       });
 
-      logger.info(`Invitation email sent to ${user.email}`);
+      return true;
     } catch (error) {
-      logger.error(`Failed to send invitation email to ${user.email}: ${(error as Error).message}`);
-      // meaningful error logging but don't fail the request
+      logger.error('Failed to deliver staff invitation email');
+      return false;
     }
+  }
 
-    return user;
+  async resendInvitation(id: string, options: CreateUserOptions) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const target = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${options.inviterId!} FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${id} FOR UPDATE`;
+      const [user, issuer] = await Promise.all([
+        tx.user.findUnique({ where: { id } }),
+        tx.user.findUnique({ where: { id: options.inviterId! } }),
+      ]);
+      if (!user) throw ApiError.notFound('User not found');
+      this.assertInvitationAuthority(issuer, user);
+      const pending = await tx.staffInvitation.findFirst({
+        where: { userId: id, acceptedAt: null },
+      });
+      if (!user.disabledAt || /^deleted_.+@deleted\.com$/i.test(user.email) || !pending) {
+        throw ApiError.badRequest('This account has no pending invitation');
+      }
+      const updated = await tx.user.update({
+        where: { id },
+        data: { sessionVersion: { increment: 1 } },
+      });
+      await tx.staffInvitation.updateMany({
+        where: { userId: id, acceptedAt: null },
+        data: { acceptedAt: new Date() },
+      });
+      await tx.staffInvitation.create({
+        data: {
+          userId: id,
+          issuerId: options.inviterId!,
+          tokenHash: crypto.createHash('sha256').update(token).digest('hex'),
+          sessionVersion: updated.sessionVersion,
+          expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+        },
+      });
+      return { email: user.email, firstName: user.firstName };
+    });
+    if (!(await this.sendInvitationEmail(target, token, options.clientOrigin))) {
+      throw ApiError.internal(
+        'Invitation email could not be sent. Please retry Resend invitation.'
+      );
+    }
+    return { invitationPending: true, invitationDelivered: true };
+  }
+
+  private assertInvitationAuthority(
+    issuer: User | null,
+    target: { role: string; organizationId?: string | null }
+  ) {
+    const levels: Record<string, number> = {
+      OWNER: 5,
+      ADMIN: 4,
+      MANAGER: 3,
+      PROMOTER: 2,
+      TEAM_MEMBER: 1,
+      SCANNER: 1,
+      CUSTOMER: 0,
+    };
+    if (
+      !issuer ||
+      issuer.disabledAt ||
+      !hasValidStaffScope(issuer) ||
+      /^deleted_.+@deleted\.com$/i.test(issuer.email) ||
+      !['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'].includes(issuer.role) ||
+      (issuer.role !== 'OWNER' && levels[target.role] >= levels[issuer.role]) ||
+      (issuer.organizationId && target.organizationId !== issuer.organizationId) ||
+      (!issuer.organizationId && ['MANAGER', 'PROMOTER'].includes(issuer.role))
+    ) {
+      throw ApiError.forbidden('Invitation is no longer authorized');
+    }
+  }
+
+  async acceptInvitation(token: string, password: string) {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const passwordHash = await bcrypt.hash(password, 10);
+    return prisma.$transaction(async (tx) => {
+      const invite = await tx.staffInvitation.findUnique({
+        where: { tokenHash },
+        include: { user: true, issuer: true },
+      });
+      if (
+        !invite ||
+        invite.acceptedAt ||
+        invite.expiresAt <= new Date() ||
+        invite.user.sessionVersion !== invite.sessionVersion ||
+        !invite.user.disabledAt ||
+        /^deleted_.+@deleted\.com$/i.test(invite.user.email)
+      ) {
+        throw ApiError.unauthorized('Invitation is invalid or expired');
+      }
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${invite.issuerId} FOR UPDATE`;
+      const issuer = await tx.user.findUnique({ where: { id: invite.issuerId } });
+      this.assertInvitationAuthority(issuer, invite.user);
+      // Claim and activate in the same transaction; racing or replayed links cannot both succeed.
+      const claimed = await tx.staffInvitation.updateMany({
+        where: { id: invite.id, acceptedAt: null, expiresAt: { gt: new Date() } },
+        data: { acceptedAt: new Date() },
+      });
+      if (claimed.count !== 1) throw ApiError.unauthorized('Invitation is invalid or expired');
+      const activated = await tx.user.updateMany({
+        where: {
+          id: invite.userId,
+          sessionVersion: invite.sessionVersion,
+          disabledAt: { not: null },
+        },
+        data: {
+          passwordHash,
+          disabledAt: null,
+          emailVerified: true,
+          sessionVersion: { increment: 1 },
+        },
+      });
+      if (activated.count !== 1) throw ApiError.unauthorized('Invitation is invalid or expired');
+      const user = await tx.user.findUniqueOrThrow({ where: { id: invite.userId } });
+      const {
+        passwordHash: _hash,
+        twoFactorSecret: _secret,
+        disabledAt: _disabled,
+        isPlatformAdmin: _platform,
+        ...safeUser
+      } = user;
+      return safeUser;
+    });
   }
 
   /**
@@ -177,12 +347,25 @@ export class UserService {
       throw ApiError.notFound('User not found');
     }
 
+    const authorityChanged =
+      (data.role !== undefined && data.role !== existingUser.role) ||
+      (data.organizationId !== undefined && data.organizationId !== existingUser.organizationId) ||
+      data.permissions !== undefined;
+    // Losing organization membership must never manufacture global staff authority.
+    const role =
+      data.organizationId === null && existingUser.organizationId
+        ? ('CUSTOMER' as const)
+        : data.role;
+
     // Update user
     return await prisma.user.update({
       where: { id },
       data: {
         ...data,
+        ...(role ? { role } : {}),
+        ...(authorityChanged ? { sessionVersion: { increment: 1 }, isPlatformAdmin: false } : {}),
         permissions: data.permissions as Prisma.InputJsonValue | undefined,
+        ...(role === 'CUSTOMER' ? { organizationId: null, permissions: Prisma.JsonNull } : {}),
         updatedAt: new Date(),
       },
       select: {
@@ -227,6 +410,17 @@ export class UserService {
         firstName: 'Deleted',
         lastName: 'User',
         phone: null,
+        title: null,
+        role: 'CUSTOMER',
+        isPlatformAdmin: false,
+        organizationId: null,
+        permissions: Prisma.JsonNull,
+        disabledAt: new Date(),
+        passwordHash: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
+        sessionVersion: { increment: 1 },
+        emailVerified: false,
+        twoFactorEnabled: false,
+        twoFactorSecret: null,
         updatedAt: new Date(),
       },
     });
@@ -279,13 +473,17 @@ export class UserService {
           updatedAt: true,
           passwordHash: false,
           twoFactorSecret: false,
+          invitationsReceived: { where: { acceptedAt: null }, take: 1, select: { id: true } },
         },
       }),
       prisma.user.count({ where }),
     ]);
 
     return {
-      users,
+      users: users.map(({ invitationsReceived, ...user }) => ({
+        ...user,
+        invitationPending: invitationsReceived.length > 0,
+      })),
       pagination: {
         page,
         limit,

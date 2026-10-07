@@ -25,15 +25,22 @@ export const auth = {
         return user;
     },
 
+    acceptInvitation: async (token, password) => {
+        const response = await api.post('/auth/accept-invitation', { token, password });
+        const { accessToken, refreshToken, user } = response.data.data;
+        storeSession({ accessToken, refreshToken, user });
+        return user;
+    },
+
     logout: async ({ notifyServer = true } = {}) => {
+        const token = getAccessToken();
+        clearStoredSession();
         try {
             if (notifyServer) {
-                await api.post('/auth/logout');
+                await api.post('/auth/logout', undefined, { headers: { Authorization: `Bearer ${token}` } });
             }
         } catch (error) {
             console.error('Logout failed on server', error);
-        } finally {
-            clearStoredSession();
         }
     },
 

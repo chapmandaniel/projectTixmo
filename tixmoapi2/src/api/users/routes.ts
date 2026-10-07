@@ -10,6 +10,13 @@ const router = Router();
 // All routes require authentication
 router.use(authenticate);
 
+router.post(
+  '/:id/invitation',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  validate(validation.resendInvitationSchema),
+  controller.resendInvitation
+);
+
 /**
  * @swagger
  * /users/{id}:
@@ -255,7 +262,12 @@ router.delete('/:id', authorize('OWNER', 'ADMIN'), controller.deleteUser);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), validate(validation.listUsersSchema), controller.listUsers);
+router.get(
+  '/',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  validate(validation.listUsersSchema),
+  controller.listUsers
+);
 
 /**
  * @swagger
@@ -288,7 +300,7 @@ router.get('/', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), validate(val
  *                 type: string
  *               permissions:
  *                 type: object
- *               password: 
+ *               password:
  *                 type: string
  *                 description: Initial password (optional, creates random if not provided)
  *     responses:
@@ -301,6 +313,11 @@ router.get('/', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), validate(val
  *       403:
  *         description: Forbidden
  */
-router.post('/', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), validate(validation.createUserSchema), controller.createUser);
+router.post(
+  '/',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  validate(validation.createUserSchema),
+  controller.createUser
+);
 
 export default router;

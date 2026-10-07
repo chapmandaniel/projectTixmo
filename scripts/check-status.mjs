@@ -10,7 +10,7 @@ const usage = `Usage:
   node ./scripts/check-status.mjs https://api.example.com/health https://app.example.com
 
 Environment:
-  TIXMO_API_BASE_URL       Base API origin. Checks /health and /api/v1/health.
+  TIXMO_API_BASE_URL       Base API origin. Checks /ready, /health and /api/v1/health.
   TIXMO_DASHBOARD_URL     Dashboard origin to check.
   TIXMO_STATUS_URLS       Comma-separated explicit URLs.
   TIXMO_STATUS_TIMEOUT_MS Request timeout in milliseconds. Default: 8000.
@@ -45,6 +45,7 @@ const buildTargets = () => {
   const dashboardUrl = process.env.TIXMO_DASHBOARD_URL || process.env.DASHBOARD_URL;
 
   if (apiBaseUrl) {
+    targets.push(new URL('/ready', apiBaseUrl).toString());
     targets.push(new URL('/health', apiBaseUrl).toString());
     targets.push(new URL('/api/v1/health', apiBaseUrl).toString());
   }
@@ -87,7 +88,8 @@ const fetchWithTimeout = async (url) => {
     }
 
     return {
-      ok: response.status >= 200 && response.status < 400,
+      ok: response.status >= 200 && response.status < 400 &&
+        (new URL(url).pathname !== '/ready' || (json?.status === 'ready' && json?.checks?.database === true && json?.checks?.redis === true)),
       status: response.status,
       durationMs,
       json,

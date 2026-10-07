@@ -5,6 +5,7 @@ import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { eventService } from './service';
 import { eventStatsService } from './stats.service';
+import { saveEventConfiguration } from './configuration.service';
 import {
   assertEventAccess,
   assertVenueBelongsToOrganization,
@@ -24,6 +25,20 @@ export const createEvent = catchAsync(async (req: AuthRequest, res: Response) =>
 
   const event = await eventService.createEvent(payload);
   res.status(201).json(successResponse(event, 'Event created successfully'));
+});
+
+export const configureEvent = catchAsync(async (req: AuthRequest, res: Response) => {
+  const actor = await getActorScope(req);
+  const payload = req.body as Parameters<typeof saveEventConfiguration>[0];
+  const id = req.params.id;
+  const organizationId = id
+    ? (await assertEventAccess(actor, id)).organizationId
+    : requireOrganizationId(actor, payload.event.organizationId);
+  payload.event.organizationId = organizationId;
+  if (payload.event.venueId)
+    await assertVenueBelongsToOrganization(payload.event.venueId, organizationId);
+  const event = await saveEventConfiguration(payload, id);
+  res.status(id ? 200 : 201).json(successResponse(event, 'Event configuration saved successfully'));
 });
 
 export const getEvent = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -79,7 +94,12 @@ export const listDeletedEvents = catchAsync(async (req: AuthRequest, res: Respon
   const actor = await getActorScope(req);
   const targetOrgId = requireOrganizationId(actor, raw.organizationId as string | undefined);
 
-  const result = await eventService.listDeletedEvents(targetOrgId, page, limit);
+  const result = await eventService.listDeletedEvents(
+    targetOrgId,
+    page,
+    limit,
+    raw.search as string | undefined
+  );
   res.json(successResponse(result));
 });
 

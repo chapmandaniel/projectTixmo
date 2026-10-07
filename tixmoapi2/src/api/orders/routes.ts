@@ -9,6 +9,8 @@ const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
+router.get('/mine', validate(validation.listOrdersSchema), controller.listMyOrders);
+router.post('/:id/receipt', controller.resendReceipt);
 
 /**
  * @swagger
@@ -87,34 +89,6 @@ router.get('/:id', controller.getOrder);
 
 /**
  * @swagger
- * /orders/{id}/confirm:
- *   post:
- *     summary: Confirm order
- *     description: Confirm order after successful payment. This converts held inventory to sold and generates tickets.
- *     tags: [Orders]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Order confirmed successfully
- *       400:
- *         description: Cannot confirm order in current status
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Order not found
- */
-router.post('/:id/confirm', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.confirmOrder);
-
-/**
- * @swagger
  * /orders/{id}/cancel:
  *   post:
  *     summary: Cancel order
@@ -172,6 +146,7 @@ router.post('/:id/cancel', controller.cancelOrder);
  *         description: Order not found
  */
 router.post('/:id/refund', authorize('OWNER', 'ADMIN'), controller.refundOrder);
+router.post('/:id/request-refund', controller.requestRefund);
 
 /**
  * @swagger

@@ -13,7 +13,8 @@ interface OrganizationWithUsers {
 }
 
 const isElevatedAdminRole = (role?: string) => role === 'OWNER' || role === 'ADMIN';
-const isOrganizationManagerRole = (role?: string) => role === 'OWNER' || role === 'ADMIN' || role === 'MANAGER';
+const isOrganizationManagerRole = (role?: string) =>
+  role === 'OWNER' || role === 'ADMIN' || role === 'MANAGER';
 const roleHierarchy = {
   OWNER: 5,
   ADMIN: 4,
@@ -24,7 +25,8 @@ const roleHierarchy = {
   CUSTOMER: 0,
 };
 const getRoleLevel = (role?: string) => roleHierarchy[role as keyof typeof roleHierarchy] ?? 0;
-const canManageTargetRole = (actorRole?: string, targetRole?: string) => actorRole === 'OWNER' || getRoleLevel(targetRole) < getRoleLevel(actorRole);
+const canManageTargetRole = (actorRole?: string, targetRole?: string) =>
+  actorRole === 'OWNER' || getRoleLevel(targetRole) < getRoleLevel(actorRole);
 
 export const createOrganization = catchAsync(async (req: AuthRequest, res: Response) => {
   const payload = req.body as Parameters<typeof organizationService.createOrganization>[0];
@@ -120,7 +122,9 @@ export const addMember = catchAsync(async (req: AuthRequest, res: Response) => {
   }
 
   if (!canManageTargetRole(req.user!.role, targetUser.role)) {
-    throw ApiError.forbidden(`Your role (${req.user!.role}) cannot add a member with role ${targetUser.role}`);
+    throw ApiError.forbidden(
+      `Your role (${req.user!.role}) cannot add a member with role ${targetUser.role}`
+    );
   }
 
   await organizationService.addMember(id, userId);
@@ -157,7 +161,9 @@ export const removeMember = catchAsync(async (req: AuthRequest, res: Response) =
   }
 
   if (!canManageTargetRole(req.user!.role, targetUser.role)) {
-    throw ApiError.forbidden(`Your role (${req.user!.role}) cannot remove a member with role ${targetUser.role}`);
+    throw ApiError.forbidden(
+      `Your role (${req.user!.role}) cannot remove a member with role ${targetUser.role}`
+    );
   }
 
   await organizationService.removeMember(id, userId);

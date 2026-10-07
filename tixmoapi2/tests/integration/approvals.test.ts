@@ -76,6 +76,80 @@ describe('Creative approvals API', () => {
     expect(response.body.latestRevision.assets).toHaveLength(1);
   });
 
+  it('redacts peer capabilities on every external approval response', async () => {
+    const created = await request(app)
+      .post('/api/v1/approvals')
+      .set('Authorization', `Bearer ${authToken}`)
+      .field('eventId', eventId)
+      .field('title', 'Peer capability boundary')
+      .field('deadline', new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString())
+      .field(
+        'reviewers',
+        JSON.stringify([
+          { email: 'test-capability-reviewer@example.com', association: 'MANAGEMENT' },
+        ])
+      )
+      .attach('files', tinyPng, { filename: 'boundary.png', contentType: 'image/png' })
+      .expect(201);
+    const approval = await prisma.approvalRequest.findUniqueOrThrow({
+      where: { id: created.body.id },
+      include: { reviewers: true },
+    });
+    const ownToken = approval.reviewers[0].token;
+    const assertSafe = async (body: any) => {
+      const reviewers = await prisma.approvalReviewer.findMany({
+        where: { approvalRequestId: approval.id },
+      });
+      expect(
+        body.approval.reviewers.every(
+          (reviewer: any) => !('reviewUrl' in reviewer) && !('token' in reviewer)
+        )
+      ).toBe(true);
+      const serialized = JSON.stringify(body);
+      for (const reviewer of reviewers) expect(serialized).not.toContain(reviewer.token);
+    };
+    const fetched = await request(app).get(`/api/v1/review/${ownToken}`).expect(200);
+    await assertSafe(fetched.body);
+    const added = await request(app)
+      .post(`/api/v1/review/${ownToken}/reviewers`)
+      .send({ reviewers: [{ email: 'test-public-peer@example.com', association: 'AGENT' }] })
+      .expect(201);
+    await assertSafe(added.body);
+    const comment = await request(app)
+      .post(`/api/v1/review/${ownToken}/comments`)
+      .send({ content: 'External message' })
+      .expect(201);
+    const deleted = await request(app)
+      .delete(`/api/v1/review/${ownToken}/comments/${comment.body.id}`)
+      .expect(200);
+    await assertSafe(deleted.body);
+    const decision = await request(app)
+      .post(`/api/v1/review/${ownToken}/decisions`)
+      .send({ decision: 'APPROVED' })
+      .expect(200);
+    expect(decision.body.decision).toBe('APPROVED');
+    const internal = await request(app)
+      .get(`/api/v1/approvals/${approval.id}`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+    expect(
+      internal.body.reviewers.every((reviewer: any) => typeof reviewer.reviewUrl === 'string')
+    ).toBe(true);
+    const rotated = await request(app)
+      .post(`/api/v1/approvals/${approval.id}/reviewers/${approval.reviewers[0].id}/resend`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200);
+    const replacementUrl = rotated.body.reviewers.find(
+      (reviewer: any) => reviewer.id === approval.reviewers[0].id
+    ).reviewUrl;
+    const replacementToken = replacementUrl.split('/review/')[1];
+    expect(replacementToken).not.toBe(ownToken);
+    await request(app).get(`/api/v1/review/${ownToken}`).expect(404);
+    const replacement = await request(app).get(`/api/v1/review/${replacementToken}`).expect(200);
+    await assertSafe(replacement.body);
+    await prisma.approvalRequest.delete({ where: { id: approval.id } });
+  });
+
   it('lists approval requests with creative workflow fields', async () => {
     const response = await request(app)
       .get('/api/v1/approvals?status=PENDING_REVIEW')
@@ -432,7 +506,10 @@ describe('Creative approvals API', () => {
       .field('eventId', eventId)
       .field('title', 'Library-ready key art')
       .field('deadline', new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString())
-      .field('reviewers', JSON.stringify([{ email: 'library-reviewer@example.com', association: 'MANAGEMENT' }]))
+      .field(
+        'reviewers',
+        JSON.stringify([{ email: 'library-reviewer@example.com', association: 'MANAGEMENT' }])
+      )
       .attach('files', tinyPng, {
         filename: 'library-key-art.png',
         contentType: 'image/png',
@@ -458,7 +535,9 @@ describe('Creative approvals API', () => {
 
     expect(promoteResponse.status).toBe(200);
     expect(promoteResponse.body.latestRevision.assets[0].approvedForLibraryAt).toBeTruthy();
-    expect(promoteResponse.body.latestRevision.assets[0].approvedForLibraryById).toBe(ownerAuth.user.id);
+    expect(promoteResponse.body.latestRevision.assets[0].approvedForLibraryById).toBe(
+      ownerAuth.user.id
+    );
 
     const archiveResponse = await request(app)
       .post(`/api/v1/approvals/${createResponse.body.id}/archive`)
@@ -471,18 +550,18 @@ describe('Creative approvals API', () => {
       .set('Authorization', `Bearer ${ownerAuth.accessToken}`);
 
     expect(listResponse.status).toBe(200);
-    expect(listResponse.body.approvals.map((approval: { id: string }) => approval.id)).not.toContain(
-      createResponse.body.id
-    );
+    expect(
+      listResponse.body.approvals.map((approval: { id: string }) => approval.id)
+    ).not.toContain(createResponse.body.id);
 
     const libraryListResponse = await request(app)
       .get('/api/v1/approvals?limit=100&includeArchived=true')
       .set('Authorization', `Bearer ${ownerAuth.accessToken}`);
 
     expect(libraryListResponse.status).toBe(200);
-    expect(libraryListResponse.body.approvals.map((approval: { id: string }) => approval.id)).toContain(
-      createResponse.body.id
-    );
+    expect(
+      libraryListResponse.body.approvals.map((approval: { id: string }) => approval.id)
+    ).toContain(createResponse.body.id);
 
     const deleteResponse = await request(app)
       .delete(`/api/v1/approvals/${createResponse.body.id}`)

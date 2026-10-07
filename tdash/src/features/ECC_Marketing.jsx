@@ -88,7 +88,7 @@ const ECC_Marketing = ({ event, isDark }) => {
                 <input
                     type="text"
                     placeholder="Search codes..."
-                    className={`w-full bg-transparent outline-none text-sm font-light tracking-wide ${isDark ? 'text-gray-200 placeholder-[#5a5c6e]' : 'text-gray-800 placeholder-gray-400'}`}
+                    className={`w-full bg-transparent outline-hidden text-sm font-light tracking-wide ${isDark ? 'text-gray-200 placeholder-[#5a5c6e]' : 'text-gray-800 placeholder-gray-400'}`}
                 />
             </div>
 

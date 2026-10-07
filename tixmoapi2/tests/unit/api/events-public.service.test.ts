@@ -36,13 +36,15 @@ describe('EventService public event detail', () => {
     const result = await eventService.getPublicEventBySlug('fresh-checkout-event');
 
     expect(result).toBe(event);
-    expect(prisma.event.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
-        slug: 'fresh-checkout-event',
-      }),
-      include: expect.objectContaining({
-        ticketTypes: expect.any(Object),
-      }),
-    }));
+    expect(prisma.event.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          slug: 'fresh-checkout-event',
+        }),
+        include: expect.objectContaining({
+          ticketTypes: expect.any(Object),
+        }),
+      })
+    );
   });
 });

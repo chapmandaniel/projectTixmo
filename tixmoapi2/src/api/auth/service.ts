@@ -2,10 +2,14 @@ import prisma from '../../config/prisma';
 import { hashPassword, comparePassword } from '../../utils/password';
 import { generateTokens } from '../../utils/jwt';
 import { ApiError } from '../../utils/ApiError';
-import { OrganizationStatus, OrganizationType, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { notificationService } from '../../utils/notificationService';
 import { logger } from '../../config/logger';
-import { resolveTenantOrganizationSeed } from './tenantOrganization';
+import {
+  isDisabledAccount,
+  hasValidStaffScope,
+  resolveAccountSession,
+} from '../../utils/accountSession';
 import { getRedisClient } from '../../config/redis';
 
 interface RegisterData {
@@ -22,69 +26,11 @@ interface LoginData {
   password: string;
 }
 
-interface RegisterContext {
-  requestHost?: string | null;
-}
-
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
-const canonicalizeOrganizationKey = (value: string) =>
-  value.toLowerCase().replace(/[^a-z0-9]/g, '');
-const REFRESH_REVOCATION_TTL_SECONDS = 31 * 24 * 60 * 60;
 const refreshRevokedBeforeKey = (userId: string) => `auth:refresh-revoked-before:${userId}`;
 
 export class AuthService {
-  private async resolveTenantOrganization(context?: RegisterContext) {
-    const seed = resolveTenantOrganizationSeed({
-      requestHost: context?.requestHost,
-      serviceDashUrl: process.env.RAILWAY_SERVICE_DASH_URL,
-      projectName: process.env.RAILWAY_PROJECT_NAME,
-    });
-
-    if (!seed) {
-      return null;
-    }
-
-    const existingOrganizations = await prisma.organization.findMany({
-      where: {
-        NOT: { slug: 'tixmo-hq' },
-      },
-      select: { id: true, name: true, slug: true },
-    });
-
-    const seedKey = canonicalizeOrganizationKey(seed.slug);
-    const matchedOrganization = existingOrganizations.find((organization) => {
-      const slugKey = canonicalizeOrganizationKey(organization.slug);
-      const nameKey = canonicalizeOrganizationKey(organization.name);
-      return slugKey === seedKey || nameKey === seedKey;
-    });
-
-    if (matchedOrganization) {
-      const organizationId = matchedOrganization.id;
-      const memberCount = await prisma.user.count({ where: { organizationId } });
-      return { organizationId, memberCount };
-    }
-
-    let organizationSlug = seed.slug;
-    let suffix = 1;
-    while (await prisma.organization.findUnique({ where: { slug: organizationSlug } })) {
-      suffix += 1;
-      organizationSlug = `${seed.slug}-${suffix}`;
-    }
-
-    const organization = await prisma.organization.create({
-      data: {
-        name: seed.name,
-        slug: organizationSlug,
-        type: OrganizationType.PROMOTER,
-        status: OrganizationStatus.ACTIVE,
-      },
-      select: { id: true },
-    });
-
-    return { organizationId: organization.id, memberCount: 0 };
-  }
-
-  async register(data: RegisterData, context?: RegisterContext) {
+  async register(data: RegisterData) {
     const normalizedEmail = normalizeEmail(data.email);
 
     // Check if user already exists
@@ -98,13 +44,6 @@ export class AuthService {
 
     // Hash password
     const passwordHash = await hashPassword(data.password);
-    const tenantOrganization = await this.resolveTenantOrganization(context);
-    const role = tenantOrganization
-      ? tenantOrganization.memberCount === 0
-        ? UserRole.OWNER
-        : UserRole.TEAM_MEMBER
-      : UserRole.CUSTOMER;
-
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -113,8 +52,8 @@ export class AuthService {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
-        role,
-        organizationId: tenantOrganization?.organizationId ?? null,
+        role: UserRole.CUSTOMER,
+        organizationId: null,
       },
       select: {
         id: true,
@@ -124,6 +63,7 @@ export class AuthService {
         role: true,
         organizationId: true,
         emailVerified: true,
+        sessionVersion: true,
         createdAt: true,
       },
     });
@@ -135,6 +75,7 @@ export class AuthService {
       role: user.role,
       organizationId: user.organizationId,
       emailVerified: user.emailVerified,
+      sessionVersion: user.sessionVersion,
     });
 
     // Send welcome email (async, don't wait)
@@ -159,7 +100,7 @@ export class AuthService {
       where: { email: normalizedEmail },
     });
 
-    if (!user) {
+    if (!user || isDisabledAccount(user) || !hasValidStaffScope(user)) {
       // Dummy comparison to prevent timing attacks
       await comparePassword(
         data.password,
@@ -188,6 +129,7 @@ export class AuthService {
       role: user.role,
       organizationId: user.organizationId,
       emailVerified: user.emailVerified,
+      sessionVersion: user.sessionVersion,
     });
 
     return {
@@ -199,6 +141,7 @@ export class AuthService {
         role: user.role,
         organizationId: user.organizationId,
         emailVerified: user.emailVerified,
+        sessionVersion: user.sessionVersion,
         lastLogin: new Date(),
       },
       ...tokens,
@@ -217,21 +160,7 @@ export class AuthService {
       throw ApiError.unauthorized('Refresh token has been revoked');
     }
 
-    // Check if user still exists
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        organizationId: true,
-        emailVerified: true,
-      },
-    });
-
-    if (!user) {
-      throw ApiError.unauthorized('User not found');
-    }
+    const user = await resolveAccountSession(decoded);
 
     // Generate new tokens
     const tokens = generateTokens({
@@ -240,13 +169,17 @@ export class AuthService {
       role: user.role,
       organizationId: user.organizationId,
       emailVerified: user.emailVerified,
+      sessionVersion: user.sessionVersion,
     });
 
     return tokens;
   }
 
   async logout(userId: string) {
-    await this.setRefreshRevokedBefore(userId, Math.floor(Date.now() / 1000));
+    await prisma.user.update({
+      where: { id: userId },
+      data: { sessionVersion: { increment: 1 } },
+    });
   }
 
   private async getRefreshRevokedBefore(userId: string): Promise<number | null> {
@@ -259,15 +192,20 @@ export class AuthService {
     }
   }
 
-  private async setRefreshRevokedBefore(userId: string, timestamp: number): Promise<void> {
-    try {
-      await getRedisClient().set(refreshRevokedBeforeKey(userId), String(timestamp), {
-        EX: REFRESH_REVOCATION_TTL_SECONDS,
-      });
-    } catch (error) {
-      logger.error(`Failed to revoke refresh tokens: ${(error as Error).message}`);
-      throw ApiError.internal('Unable to revoke refresh tokens');
-    }
+  async acceptInvitation(token: string, password: string) {
+    const { userService } = await import('../users/service');
+    const user = await userService.acceptInvitation(token, password);
+    return {
+      user,
+      ...generateTokens({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        organizationId: user.organizationId,
+        emailVerified: user.emailVerified,
+        sessionVersion: user.sessionVersion,
+      }),
+    };
   }
 
   async getCurrentUser(userId: string) {

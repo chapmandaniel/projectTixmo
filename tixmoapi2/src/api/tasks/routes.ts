@@ -80,15 +80,15 @@ router.get('/', TaskController.list);
  *               $ref: '#/components/schemas/Task'
  */
 router.post(
-    '/',
-    [
-        body('title').notEmpty().withMessage('Title is required'),
-        body('status').optional().isIn(['TO_DO', 'IN_PROGRESS', 'REVIEW', 'DONE']),
-        body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH']),
-        body('tag').optional().isIn(['DESIGN', 'LEGAL', 'GENERAL', 'OPS', 'MARKETING', 'DEV']),
-        validate,
-    ],
-    TaskController.create
+  '/',
+  [
+    body('title').notEmpty().withMessage('Title is required'),
+    body('status').optional().isIn(['TO_DO', 'IN_PROGRESS', 'REVIEW', 'DONE']),
+    body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH']),
+    body('tag').optional().isIn(['DESIGN', 'LEGAL', 'GENERAL', 'OPS', 'MARKETING', 'DEV']),
+    validate,
+  ],
+  TaskController.create
 );
 
 /**
@@ -198,13 +198,9 @@ router.delete('/:id', [param('id').isUUID(), validate], TaskController.delete);
  *         description: Comment added
  */
 router.post(
-    '/:id/comments',
-    [
-        param('id').isUUID(),
-        body('content').notEmpty().withMessage('Content is required'),
-        validate,
-    ],
-    TaskController.addComment
+  '/:id/comments',
+  [param('id').isUUID(), body('content').notEmpty().withMessage('Content is required'), validate],
+  TaskController.addComment
 );
 
 export default router;
