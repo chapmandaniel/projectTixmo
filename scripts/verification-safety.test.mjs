@@ -61,6 +61,49 @@ test('explicit disposable targets allow only schema and test commands', () => {
   safety.validateVerificationTargets({ ...safe, DATABASE_URL: 'postgresql://[::1]/tixmo_disposable_ipv6' });
 });
 
+for (const [label, value, useFallback] of [
+  ['absent', undefined, true],
+  ['empty', '', true],
+  ['spaces', '   ', true],
+  ['tabs', '\t\t', true],
+  ['mixed whitespace', ' \t\n ', true],
+  ['your-prefix placeholder', ' YOUR_synthetic ', true],
+  ['your-suffix placeholder', 'synthetic_YOUR', true],
+  ['change-this placeholder', ' CHANGE-THIS-synthetic ', true],
+  ['placeholder marker', 'synthetic_PLACEHOLDER', true],
+  ['nonblank synthetic', 'synthetic_nonblank_value', false],
+  ['padded nonblank synthetic', ' \tsynthetic_nonblank_value\t ', false],
+]) {
+  test(`Stripe ${label} credentials use original fallback rules without mutating parent env`, () => {
+    const fallbacks = {
+      STRIPE_SECRET_KEY: 'sk_test_verify_api',
+      STRIPE_PUBLISHABLE_KEY: 'pk_test_verify_api',
+      STRIPE_WEBHOOK_SECRET: 'whsec_verify_api',
+    };
+    const env = Object.freeze({
+      ...safe,
+      NODE_ENV: 'synthetic_parent',
+      ...(value === undefined ? {} : Object.fromEntries(Object.keys(fallbacks).map(key => [key, value]))),
+    });
+    const original = { ...env };
+    let calls = 0;
+    verifyApi({
+      env, log: () => {},
+      spawn: (_command, _args, options) => {
+        calls++;
+        assert.notEqual(options.env, env);
+        assert.equal(options.env.NODE_ENV, 'test');
+        for (const [key, fallback] of Object.entries(fallbacks)) {
+          assert.equal(options.env[key], useFallback ? fallback : value, key);
+        }
+        return { status: 0 };
+      },
+    });
+    assert.equal(calls, 2);
+    assert.deepEqual(env, original);
+  });
+}
+
 test('bootstrap failure propagates immediately and child secrets never surface', () => {
   const secret = 'synthetic_child_secret';
   for (const result of [{ status: 1, stderr: secret }, { status: null, error: new Error(secret) }]) {
