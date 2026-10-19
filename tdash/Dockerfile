@@ -1,8 +1,8 @@
 # Stage 1: Base image with dependencies
-FROM node:18-alpine AS base
+FROM node:24.21.0-alpine AS base
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Stage 2: Development
 FROM base AS dev
