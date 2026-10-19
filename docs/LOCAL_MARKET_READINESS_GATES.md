@@ -31,11 +31,30 @@ Triggers:
 - Pushes to `main` or `master` touching those paths.
 - Manual `workflow_dispatch`.
 
-The workflow installs API and dashboard dependencies, then runs the same root command:
+The workflow provisions job-scoped PostgreSQL 14 and Redis 7 services with
+health checks and dynamically assigned host ports bound to `127.0.0.1`.
+There are no shared container names or persistent volumes. Step-scoped
+`job.services.<service>.ports[...]` expressions supply the mapped ports to
+`DATABASE_URL` (`tixmo_disposable_ci`) and `REDIS_URL` (explicit `/1`), together
+with `TIXMO_ALLOW_DESTRUCTIVE_TESTS=1`. The database password and application
+keys in this workflow are synthetic throwaway CI values, not deployed secrets.
+The job installs dependencies with `npm ci` and runs the same root command:
 
 ```bash
 npm run verify:market
 ```
+
+Dependency-free synthetic CI contract checks (no services or schema actions):
+
+```bash
+node --test scripts/market-readiness-workflow.test.mjs scripts/verification-safety.test.mjs
+```
+
+These inspect the workflow source and substitute synthetic mapped ports into
+the real verifier with subprocesses stubbed. They do not emulate GitHub Actions,
+prove Docker port publication, or establish a successful full integration run.
+YAML syntax can be checked separately with an available YAML parser; an actual
+CI run remains required for runner/service integration evidence.
 
 ## Evidence To Capture
 
