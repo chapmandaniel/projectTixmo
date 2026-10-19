@@ -66,11 +66,12 @@ Observed 2026-10-19:
   conversation explicitly (`sessionTarget=current` with exact sessionKey),
   announcing meaningful results; unchanged cycles return NO_REPLY. Failure
   alert threshold is two failures, one-hour cooldown.
-- Initial full work cycle queued:
+- Initial full work cycle **running**:
   `manual:47becb15-dc97-43c5-b798-2a4e22d14896:1792441360930:4`.
-  Current-conversation jobs start after the owner's active turn. Admission is
-  recorded, not yet a completed product dispatch. Setup #20 is done, releasing
-  readiness assignments #21-25 for this cycle.
+  Observed actual dispatch notes on #21 and #22; native tech lead claimed
+  #21 and created isolated branch/worktree task-21. QA baseline #22 was
+  dispatched. This is execution-start evidence, not completion of those tasks.
+  Setup #20 is done; readiness tasks #21-25 are released.
 - A narrow tool allowlist suppressed native delegation on an intermediate
   trial; restored the known-working captured `toolsAllow=["*"]` policy. Role
   limits remain instructional, not a tool-enforced sandbox. Intermediate
