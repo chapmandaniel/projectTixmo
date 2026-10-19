@@ -16,12 +16,12 @@ const extractScannerPayload = (body) => {
     const payload = body?.data || body || {};
 
     if (Array.isArray(payload)) {
-        return { items: payload, pages: body?.pagination?.pages || 1 };
+        return { items: payload, pages: body?.pagination?.pages || body?.meta?.pages || 1 };
     }
 
     return {
         items: payload.scanners || payload.data?.scanners || [],
-        pages: payload.pagination?.pages || body?.pagination?.pages || 1,
+        pages: payload.pagination?.pages || body?.pagination?.pages || body?.meta?.pages || 1,
     };
 };
 
@@ -29,12 +29,12 @@ const extractLogPayload = (body) => {
     const payload = body?.data || body || {};
 
     if (Array.isArray(payload)) {
-        return { items: payload, pages: body?.pagination?.pages || 1 };
+        return { items: payload, pages: body?.pagination?.pages || body?.meta?.pages || 1 };
     }
 
     return {
         items: payload.scanLogs || payload.logs || payload.data?.scanLogs || [],
-        pages: payload.pagination?.pages || body?.pagination?.pages || 1,
+        pages: payload.pagination?.pages || body?.pagination?.pages || body?.meta?.pages || 1,
     };
 };
 
