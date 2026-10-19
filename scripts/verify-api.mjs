@@ -17,7 +17,8 @@ export function verifyApi({ env = process.env, spawn = spawnSync, log = console.
     STRIPE_PUBLISHABLE_KEY: 'pk_test_verify_api',
     STRIPE_WEBHOOK_SECRET: 'whsec_verify_api',
   })) {
-    if (!testEnv[key] || /your_|_your|change-this|placeholder/i.test(testEnv[key])) testEnv[key] = fallback;
+    const normalized = String(testEnv[key] || '').trim().toLowerCase();
+    if (!normalized || /your_|_your|change-this|placeholder/.test(normalized)) testEnv[key] = fallback;
   }
   log(`[verify:api] DATABASE_URL ${safety.redactConnectionUrl(env.DATABASE_URL)}`);
   log(`[verify:api] REDIS_URL ${safety.redactConnectionUrl(env.REDIS_URL)}`);
