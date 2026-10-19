@@ -1,250 +1,42 @@
-import fs from 'node:fs';
-import net from 'node:net';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import safety from './verification-safety.cjs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
-const apiRoot = path.join(repoRoot, 'tixmoapi2');
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const log = (message) => process.stdout.write(`[verify:api] ${message}\n`);
-const fail = (message, extra = '') => {
-  process.stderr.write(`[verify:api] ${message}\n`);
-  if (extra) {
-    process.stderr.write(`${extra}\n`);
+// Services must already be provisioned in isolation. Never start the shared
+// development Compose stack or infer disposability from a localhost URL alone.
+export function verifyApi({ env = process.env, spawn = spawnSync, log = console.log } = {}) {
+  safety.validateVerificationTargets(env); // Before any subprocess or service action.
+  const testEnv = { ...env, NODE_ENV: 'test' };
+  // Preserve the existing verifier's synthetic test-key fallback, without
+  // loading implicit .env credentials or mutating the parent environment.
+  for (const [key, fallback] of Object.entries({
+    STRIPE_SECRET_KEY: 'sk_test_verify_api',
+    STRIPE_PUBLISHABLE_KEY: 'pk_test_verify_api',
+    STRIPE_WEBHOOK_SECRET: 'whsec_verify_api',
+  })) {
+    if (!testEnv[key] || /your_|_your|change-this|placeholder/i.test(testEnv[key])) testEnv[key] = fallback;
   }
-  process.exit(1);
-};
-
-const run = (command, args, options = {}) => {
-  const { capture = false, ...spawnOptions } = options;
-  const result = spawnSync(command, args, {
-    cwd: repoRoot,
-    env: process.env,
-    encoding: 'utf8',
-    stdio: capture ? 'pipe' : 'inherit',
-    shell: false,
-    ...spawnOptions,
-  });
-
-  return result;
-};
-
-const runShell = (command, options = {}) => {
-  const { capture = false, ...spawnOptions } = options;
-  return spawnSync(command, {
-    cwd: repoRoot,
-    env: process.env,
-    encoding: 'utf8',
-    stdio: capture ? 'pipe' : 'inherit',
-    shell: true,
-    ...spawnOptions,
-  });
-};
-
-const parseEnvFile = (filePath) => {
-  if (!fs.existsSync(filePath)) {
-    return {};
-  }
-
-  return fs.readFileSync(filePath, 'utf8').split(/\r?\n/).reduce((env, line) => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) {
-      return env;
-    }
-
-    const separatorIndex = trimmed.indexOf('=');
-    if (separatorIndex === -1) {
-      return env;
-    }
-
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const value = trimmed.slice(separatorIndex + 1).trim().replace(/^['"]|['"]$/g, '');
-    env[key] = value;
-    return env;
-  }, {});
-};
-
-const envFile = parseEnvFile(path.join(apiRoot, '.env'));
-for (const [key, value] of Object.entries(envFile)) {
-  process.env[key] ||= value;
-}
-
-process.env.NODE_ENV = 'test';
-process.env.DATABASE_URL ||= 'postgresql://tixmo:tixmo_dev_password@localhost:5432/tixmoapi?schema=public';
-process.env.REDIS_URL ||= 'redis://localhost:6379';
-
-const isPlaceholderCredential = (value) => {
-  const lowerValue = String(value || '').trim().toLowerCase();
-  return (
-    !lowerValue ||
-    lowerValue.includes('your_') ||
-    lowerValue.includes('_your') ||
-    lowerValue.includes('change-this') ||
-    lowerValue.includes('placeholder')
-  );
-};
-
-const setTestCredential = (key, value) => {
-  if (isPlaceholderCredential(process.env[key])) {
-    process.env[key] = value;
-  }
-};
-
-setTestCredential('STRIPE_SECRET_KEY', 'sk_test_verify_api');
-setTestCredential('STRIPE_PUBLISHABLE_KEY', 'pk_test_verify_api');
-setTestCredential('STRIPE_WEBHOOK_SECRET', 'whsec_verify_api');
-
-const redactDatabaseUrl = (value) => {
-  try {
-    const url = new URL(value);
-    if (url.password) {
-      url.password = '***';
-    }
-    return url.toString();
-  } catch {
-    return '<invalid DATABASE_URL>';
-  }
-};
-
-const getHostPort = (value, fallbackPort) => {
-  try {
-    const url = new URL(value);
-    return {
-      host: url.hostname || 'localhost',
-      port: Number(url.port || fallbackPort),
-    };
-  } catch {
-    return { host: 'localhost', port: fallbackPort };
-  }
-};
-
-const waitForPort = ({ host, port, label }, timeoutMs = 45000) => new Promise((resolve, reject) => {
-  const startedAt = Date.now();
-
-  const attempt = () => {
-    const socket = net.createConnection({ host, port });
-    socket.setTimeout(1500);
-
-    socket.on('connect', () => {
-      socket.destroy();
-      resolve();
-    });
-
-    const retry = () => {
-      socket.destroy();
-      if (Date.now() - startedAt >= timeoutMs) {
-        reject(new Error(`${label} did not become reachable at ${host}:${port}`));
-        return;
-      }
-      setTimeout(attempt, 1000);
-    };
-
-    socket.on('timeout', retry);
-    socket.on('error', retry);
+  log(`[verify:api] DATABASE_URL ${safety.redactConnectionUrl(env.DATABASE_URL)}`);
+  log(`[verify:api] REDIS_URL ${safety.redactConnectionUrl(env.REDIS_URL)}`);
+  const run = (command, args, cwd, label) => {
+    let result;
+    try {
+      // Capture and suppress raw child output: Prisma/Jest failures may embed URLs.
+      result = spawn(command, args, { cwd, env: testEnv, encoding: 'utf8', stdio: 'pipe', shell: false });
+    } catch { throw new Error(`${label} failed (child output suppressed).`); }
+    if (result.error || result.status !== 0) throw new Error(`${label} failed (child output suppressed).`);
   };
+  run('npx', ['prisma', 'db', 'push', '--accept-data-loss', '--skip-generate'], path.join(repoRoot, 'tixmoapi2'), 'Schema bootstrap');
+  run('npm', ['--prefix', 'tixmoapi2', 'test', '--', '--runInBand'], repoRoot, 'API tests');
+  log('[verify:api] API verification passed.');
+}
 
-  attempt();
-});
-
-const waitForCommand = ({ command, args, label }, timeoutMs = 45000) => new Promise((resolve, reject) => {
-  const startedAt = Date.now();
-
-  const attempt = () => {
-    const result = run(command, args, { capture: true });
-    if (result.status === 0) {
-      resolve();
-      return;
-    }
-
-    if (Date.now() - startedAt >= timeoutMs) {
-      reject(new Error(`${label} did not become ready.\n${result.stdout || ''}${result.stderr || ''}`));
-      return;
-    }
-
-    setTimeout(attempt, 1000);
-  };
-
-  attempt();
-});
-
-const tailColimaLog = () => {
-  const logPath = path.join(process.env.HOME || '', '.colima/_lima/colima/ha.stderr.log');
-  if (!fs.existsSync(logPath)) {
-    return '';
-  }
-
-  return fs.readFileSync(logPath, 'utf8').split(/\r?\n/).slice(-20).join('\n');
-};
-
-log(`DATABASE_URL ${redactDatabaseUrl(process.env.DATABASE_URL)}`);
-log(`REDIS_URL ${process.env.REDIS_URL}`);
-
-let dockerInfo = run('docker', ['info'], { capture: true });
-if (dockerInfo.status !== 0) {
-  const dockerContext = run('docker', ['context', 'show'], { capture: true });
-  const activeContext = dockerContext.status === 0 ? dockerContext.stdout.trim() : '';
-
-  if (activeContext === 'colima') {
-    log('Docker uses the colima context and Docker is unavailable; attempting `colima start`.');
-    const colimaStart = run('colima', ['start'], { capture: true });
-    if (colimaStart.status !== 0) {
-      fail(
-        'Unable to start Colima. Repair Colima or switch Docker contexts before running API verification.',
-        `${colimaStart.stdout || ''}${colimaStart.stderr || ''}\nRecent Colima log:\n${tailColimaLog()}`
-      );
-    }
-  }
-
-  dockerInfo = run('docker', ['info'], { capture: true });
-  if (dockerInfo.status !== 0) {
-    fail('Docker is unavailable. Start Docker Desktop or Colima before running API verification.', dockerInfo.stderr);
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try { verifyApi(); } catch (error) {
+    console.error(`[verify:api] ${error.message}`);
+    process.exitCode = 1;
   }
 }
-
-log('Starting Postgres and Redis via Docker Compose.');
-const composeResult = runShell('docker compose -f tixmoapi2/docker-compose.yml up -d', { capture: true });
-if (composeResult.status !== 0) {
-  const legacyComposeResult = runShell('docker-compose -f tixmoapi2/docker-compose.yml up -d', { capture: true });
-  if (legacyComposeResult.status !== 0) {
-    fail('Failed to start Docker Compose services.', `${composeResult.stderr}\n${legacyComposeResult.stderr}`);
-  }
-}
-
-const database = getHostPort(process.env.DATABASE_URL, 5432);
-const redis = getHostPort(process.env.REDIS_URL, 6379);
-
-try {
-  await waitForPort({ ...database, label: 'Postgres' });
-  await waitForPort({ ...redis, label: 'Redis' });
-  await waitForCommand({
-    command: 'docker',
-    args: ['exec', 'tixmo_postgres', 'pg_isready', '-U', 'tixmo', '-d', 'tixmoapi'],
-    label: 'Postgres',
-  });
-  await waitForCommand({
-    command: 'docker',
-    args: ['exec', 'tixmo_redis', 'redis-cli', 'ping'],
-    label: 'Redis',
-  });
-} catch (error) {
-  fail((error instanceof Error ? error.message : String(error)));
-}
-
-log('Applying Prisma schema to the test database.');
-const dbPush = run('npx', ['prisma', 'db', 'push', '--accept-data-loss', '--skip-generate'], {
-  cwd: apiRoot,
-});
-if (dbPush.status !== 0) {
-  fail('Prisma db push failed.');
-}
-
-log('Running API tests.');
-const testResult = run('npm', ['--prefix', 'tixmoapi2', 'test', '--', '--runInBand']);
-if (testResult.status !== 0) {
-  fail('API tests failed.');
-}
-
-log('API verification passed.');

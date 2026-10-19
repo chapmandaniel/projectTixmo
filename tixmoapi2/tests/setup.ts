@@ -3,14 +3,9 @@
 import { execSync } from 'child_process';
 import path from 'path';
 
-try {
-    execSync('npx prisma db push --accept-data-loss --skip-generate', {
-        cwd: path.resolve(__dirname, '..'),
-        stdio: 'ignore',
-    });
-} catch (error) {
-    // Surface schema bootstrap failures through the tests that depend on the database.
-}
+// Shared pure guard runs before schema bootstrap or test-module cleanup imports.
+const { bootstrapTestDatabase } = require('../../scripts/verification-safety.cjs');
+bootstrapTestDatabase(process.env, execSync, path.resolve(__dirname, '..'));
 
 // Mock Redis client globally
 jest.mock('../src/config/redis', () => {
