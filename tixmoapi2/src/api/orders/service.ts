@@ -113,6 +113,15 @@ export class OrderService {
       throw ApiError.badRequest('Event has already started');
     }
 
+    // Enforce per-order limits across duplicate lines before pricing or holds.
+    const quantityByTicketType = new Map<string, number>();
+    for (const item of data.items) {
+      quantityByTicketType.set(
+        item.ticketTypeId,
+        (quantityByTicketType.get(item.ticketTypeId) ?? 0) + item.quantity
+      );
+    }
+
     // Validate availability and per-order limits
     for (const item of data.items) {
       const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
@@ -121,7 +130,7 @@ export class OrderService {
           `Only ${ticketType.quantityAvailable} tickets available for ${ticketType.name}`
         );
       }
-      if (item.quantity > ticketType.maxPerOrder) {
+      if (quantityByTicketType.get(item.ticketTypeId)! > ticketType.maxPerOrder) {
         throw ApiError.badRequest(
           `Maximum ${ticketType.maxPerOrder} tickets per order for ${ticketType.name}`
         );
