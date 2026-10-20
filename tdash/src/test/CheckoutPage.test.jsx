@@ -18,6 +18,7 @@ const stripeMocks = vi.hoisted(() => ({
 }));
 
 const apiPost = vi.fn();
+const apiGet = vi.fn();
 const registerMock = vi.fn();
 const loginMock = vi.fn();
 
@@ -31,6 +32,7 @@ vi.mock('../lib/runtimeConfig', () => ({
 vi.mock('../lib/api', () => ({
     api: {
         post: (...args) => apiPost(...args),
+        get: (...args) => apiGet(...args),
     },
 }));
 
@@ -78,7 +80,7 @@ const eventPayload = {
 };
 
 const renderCheckout = (props = {}) => render(
-    <MemoryRouter initialEntries={['/checkout/neon-nights']}>
+    <MemoryRouter initialEntries={[props.entry || '/checkout/neon-nights']}>
         <Routes>
             <Route
                 path="/checkout/:slug"
@@ -148,6 +150,23 @@ describe('CheckoutPage', () => {
                 redirect: 'if_required',
             });
         });
+    });
+
+    // Diagnostic baseline proof, not acceptance of the future recovery contract.
+    it('currently ignores a Stripe return orderId and remounts fresh checkout without status recovery', async () => {
+        renderCheckout({
+            user: { id: 'buyer-1', email: 'buyer@example.com' },
+            entry: '/checkout/neon-nights?orderId=order-1&redirect_status=succeeded',
+        });
+
+        expect(await screen.findByText('Neon Nights')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /continue to secure payment/i })).toBeDisabled();
+        expect(screen.queryByText('Card payment details')).not.toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+        expect(global.fetch).toHaveBeenCalledWith('https://api.example.com/api/v1/events/public/neon-nights');
+        expect(apiGet).not.toHaveBeenCalled();
+        expect(apiPost).not.toHaveBeenCalled();
+        expect(stripeMocks.confirmPayment).not.toHaveBeenCalled();
     });
 
     it('blocks checkout when approved policy URLs are missing', async () => {
