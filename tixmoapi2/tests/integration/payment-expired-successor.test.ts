@@ -12,7 +12,9 @@ async function bounded<T>(promise: Promise<T>, timeoutMs = 5000): Promise<T> {
   finally { if (timer) clearTimeout(timer); }
 }
 afterAll(async () => { await prisma.$disconnect(); });
-(process.env.TIXMO_EXPERIMENTAL_RECOVERY === '1' ? test : test.skip).each(['before-handler', 'success', 'failure'])('real expired takeover phase=%s', async phase => {
+(process.env.TIXMO_EXPERIMENTAL_RECOVERY === '1' ? test : test.skip).each(['before-handler', 'success', 'failure', 'success-after-terminal', 'failure-after-terminal'])('real expired takeover phase=%s', async phase => {
+  const afterTerminal = phase.endsWith('-after-terminal');
+  const staleFailure = phase.startsWith('failure');
   const key = `successor143-${Date.now()}`;
   const org = await prisma.organization.create({ data: { name: key, slug: key, type: 'PROMOTER' } });
   const user = await prisma.user.create({ data: { email: `${key}@example.test`, passwordHash: 'test-only', firstName: 'Race', lastName: 'Fixture' } });
@@ -59,7 +61,7 @@ afterAll(async () => { await prisma.$disconnect(); });
     if (claimed) expect(claimed).toEqual({eventId,generation:1n});
     trace.push('A-paused-outside-transaction'); aReached.resolve();
     await bounded(aRelease.promise);
-    if (phase === 'failure') throw originalFailure;
+    if (staleFailure) throw originalFailure;
     return method === 'beginWebhookEvent' ? claimed : realA(...args);
   });
   const realB = (bService as any).finishWebhookEvent.bind(bService);
@@ -79,18 +81,25 @@ afterAll(async () => { await prisma.$disconnect(); });
     trace.push('fixture-only-expiration');
     bResult = bService.handleWebhook(signature,Buffer.from(payload)).then(() => undefined,error => error);
     await bounded(bReached.promise);
+    if (afterTerminal) {
+      bRelease.resolve(); expect(await bounded(bResult)).toBeUndefined();
+      staleCounts.length = 0; // Exclude B's completed terminal write from A-only observations.
+      trace.push('B-PROCESSED-before-A-resume');
+    }
     const successor = await snapshot();
-    expect(successor.event).toMatchObject({status:'PROCESSING',attemptGeneration:2n,processedAt:null});
+    expect(successor.event).toMatchObject({status:afterTerminal ? 'PROCESSED' : 'PROCESSING',attemptGeneration:2n});
+    if (!afterTerminal) expect(successor.event.processedAt).toBeNull();
+    else expect(successor.event.processedAt).toBeInstanceOf(Date);
     expect(successor.target).toMatchObject({status:'PAID',paymentStatus:'SUCCEEDED'});
     expect(successor.other).toEqual(otherBefore);
     expect(successor.target.tickets).toEqual(target.tickets);
     expect([successor.inventory.quantityAvailable,successor.inventory.quantityHeld,successor.inventory.quantitySold]).toEqual([6,2,2]);
     expect(successor.tickets).toBe(4); expect(successor.events).toBe(1);
     aRelease.resolve();
-    expect(await bounded(aResult)).toBe(phase === 'failure' ? originalFailure : undefined);
+    expect(await bounded(aResult)).toBe(staleFailure ? originalFailure : undefined);
     const afterStale = await snapshot();
     console.log('TASK143_PRE_RELEASE',JSON.stringify({phase,trace,successor,afterStale,staleCounts},(_,v)=>typeof v === 'bigint' ? v.toString() : v));
-    expect(afterStale).toEqual(successor); // BEFORE B release: full event timestamps/generation and all buyer/inventory state.
+    expect(afterStale).toEqual(successor); // PROCESSING proof is before B release; after-terminal controls separately isolate status fencing.
     expect(staleCounts).toEqual(phase === 'before-handler' ? [] : [0]);
     expect(email).toHaveBeenCalledTimes(1);
     bRelease.resolve(); expect(await bounded(bResult)).toBeUndefined();
