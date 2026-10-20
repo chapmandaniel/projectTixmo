@@ -15,7 +15,7 @@ async function bounded(promise: Promise<unknown>) {
 }
 
 afterAll(async () => { await prisma.$disconnect(); });
-test('overlapping confirm applies inventory once and preserves another pending hold', async () => {
+test.each([false, true])('overlapping confirm applies inventory once and preserves another pending hold (reverse reads=%s)', async reverseReads => {
   const key = `race68-${Date.now()}`;
   const org = await prisma.organization.create({ data: { name: key, slug: key, type: 'PROMOTER' } });
   const user = await prisma.user.create({ data: { email: `${key}@example.test`, passwordHash: 'test-only', firstName: 'Race', lastName: 'Fixture' } });
@@ -31,9 +31,12 @@ test('overlapping confirm applies inventory once and preserves another pending h
   const trace: string[] = [];
   let reads = 0;
   const spy = jest.spyOn(prisma.order, 'findFirst').mockImplementation((async (args: any) => {
+    // Bind the gate to invocation order, never database completion order.
+    const index = args.where.id === target.id && reads < 2 ? reads++ : -1;
+    // Force query 1 to complete before query 0 without sleeps or fake results.
+    if (reverseReads && index === 0) await bounded(arrived[1].promise);
     const snapshot = await original(args);
-    if (args.where.id === target.id && reads < 2) {
-      const index = reads++;
+    if (index >= 0) {
       expect(snapshot?.status).toBe('PENDING');
       trace.push(`read-${index}-PENDING`);
       arrived[index].resolve();
@@ -48,6 +51,7 @@ test('overlapping confirm applies inventory once and preserves another pending h
   const outcomes = Promise.allSettled([first, second]);
   try {
     await bounded(Promise.all(arrived.map(g => g.promise)));
+    if (reverseReads) expect(trace).toEqual(['read-1-PENDING', 'read-0-PENDING']);
     release[0].resolve();
     await first;
     trace.push('first-committed');

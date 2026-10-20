@@ -1,6 +1,6 @@
 # Task 68 double-confirm baseline reproduction
 
-Date: 2026-10-20 UTC (2026-10-19 America/St_Johns).
+Date: 2026-10-20 UTC (2026-10-20 America/St_Johns).
 Base: `e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe`.
 Branch: `tixmo/task-68-baseline`; isolated worktree `task-68-baseline`.
 Reused existing plan at `977848bcd5bbe5ce0377cae4916bf0966e088f59` in
@@ -81,3 +81,26 @@ A future conditional-transition fix may need admission-gate adaptation as the
 existing plan explains. Scope task68 remains TODO, pending independent exact-SHA
 review, authorized narrow fix and broader race acceptance. No active runtime owner
 or owned services remain after this slice.
+
+## QA110 followup: invocation-stable gates
+
+QA110 accepted the baseline finding but identified that assigning ordinals after
+awaiting the real read could swap first/second gates and deadlock on `await first`.
+Repaired by assigning the ordinal synchronously BEFORE any awaited read. Added
+parameterized reverse-read verification: invocation0 waits before its real query
+until invocation1 has read PENDING, then reads PENDING itself. An explicit trace
+assertion proves `read-1-PENDING`, `read-0-PENDING` before releasing invocation0.
+Both real snapshots still precede any transaction; all inventory/ticket/loser
+oracles are unchanged. This is harness-only, not an application lifecycle fix.
+Corrected local evidence date to October20.
+
+Actual repaired harness command: `bash /tmp/task68-runtime.sh >
+/tmp/task68-baseline-repair.log 2>&1` (same approved fresh owned lifecycle and
+focused Jest invocation documented above). Exit1: **1 suite failed, 2/2 tests
+failed**, 4.358s. Both natural and forced-reverse-read cases reached the inventory
+oracle and received `[6,0,4]` rather than `[6,2,2]`; both calls fulfilled in each.
+Reverse trace explicitly `read-1-PENDING`, `read-0-PENDING`, `first-committed`,
+`second-settled`; no timeout/harness failure. Exact cleanup completed again;
+PG stopped, Redis terminated, no postgres/redis-server TCP listeners remained.
+Historical first two executions above each had one case; this followup adds one
+execution containing two cases, not a green pass. Full task68 remains TODO.
