@@ -25,8 +25,12 @@ hashes differ only due to formatting).
 Read reviewed task57 lifecycle, verifier, pure safety guard, Jest setup/config,
 environment config and test mocks before execution. Ran reviewed lifecycle
 with unique mode0700 temp directories and randomly chosen loopback ports.
-Before TCP/database access, asserted process UID/executable/PID ownership,
+Before TCP/database access, asserted process executable/PID identity,
 unique Redis socket INFO PID and exact PID-owned loopback TCP listeners.
+Services were started by the invoking user; the script's explicit process
+UID assertion ran during owned-instance teardown, not before TCP/database
+access. This timing distinction corrects the original evidence wording; it
+does not add a startup UID check or establish a new runtime pass.
 Created only `tixmo_disposable_98` as user `tixmo98`; SQL verified actual
 DB/user/address/port, Redis PING succeeded, and the guard accepted explicit
 URLs with `TIXMO_ALLOW_DESTRUCTIVE_TESTS=1` before schema mutation.
