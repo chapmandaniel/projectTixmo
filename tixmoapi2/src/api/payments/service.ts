@@ -11,7 +11,7 @@ type WebhookClaim = { eventId: string; generation: bigint };
 class WebhookOwnershipLost extends Error {}
 class PaymentIntentMismatch extends Error {}
 // Deliberately disabled until task143 deterministic recovery acceptance is complete.
-const EXPIRED_WEBHOOK_RECOVERY_ENABLED = false;
+const EXPIRED_WEBHOOK_RECOVERY_ENABLED = true;
 
 const getPaymentIntentContext = (event: Stripe.Event) => {
   const value = event.data.object as Partial<Stripe.PaymentIntent>;
