@@ -25,7 +25,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '24.21.0'
           cache: npm
           cache-dependency-path: tdash/package-lock.json
 
@@ -35,8 +35,8 @@ jobs:
       - name: Design Guard
         run: npm run design:guard
 
-      - name: Targeted Tests
-        run: npm test -- --run src/test/Smoke.test.jsx src/test/NotificationResilience.test.jsx
+      - name: Dashboard tests
+        run: npm test -- --run
 
       - name: Build
         run: npm run build

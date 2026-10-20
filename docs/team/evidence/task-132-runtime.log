@@ -1,0 +1,121 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_57|tixmo57|127.0.0.1|36853
+PONG
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/projects/projectTixmo/worktrees/task-132/.jest-cache --runInBand --runTestsByPath tests/integration/payment-failed-retry.race.test.ts tests/integration/payment-distinct-success.race.test.ts
+
+FAIL tests/integration/payment-failed-retry.race.test.ts (6.994 s)
+  ● Console
+
+    console.log
+      TASK132_OBSERVED {"successLast":false,"trace":["claim-read-0-FAILED","claim-read-1-FAILED","write-0-PROCESSING","order-read-0-PENDING","write-1-PROCESSING","order-read-1-PENDING","write-0-PROCESSED","write-1-FAILED"],"claims":2,"outcomes":["fulfilled","rejected"],"row":{"id":"evt_race132-1792471956086","type":"payment_intent.succeeded","paymentIntentId":"pi_race132-1792471956086","orderId":"2754e1f3-c0a4-4eb2-96cd-70955afd1f3d","status":"FAILED","errorMessage":"Cannot confirm order with status PAID","processingStartedAt":"2026-10-20T04:52:36.167Z","processedAt":"2026-10-20T04:52:37.129Z","createdAt":"2026-10-20T04:52:36.155Z","updatedAt":"2026-10-20T04:52:37.130Z"},"counters":[6,2,2]}
+
+      at tests/integration/payment-failed-retry.race.test.ts:104:13
+
+    console.log
+      TASK132_OBSERVED {"successLast":true,"trace":["claim-read-0-FAILED","claim-read-1-FAILED","write-0-PROCESSING","order-read-0-PENDING","write-1-PROCESSING","order-read-1-PENDING","write-1-FAILED","write-0-PROCESSED"],"claims":2,"outcomes":["fulfilled","rejected"],"row":{"id":"evt_race132-1792471957196","type":"payment_intent.succeeded","paymentIntentId":"pi_race132-1792471957196","orderId":"dba091ee-e695-432e-b7c3-0a1790610546","status":"PROCESSED","errorMessage":null,"processingStartedAt":"2026-10-20T04:52:37.222Z","processedAt":"2026-10-20T04:52:37.229Z","createdAt":"2026-10-20T04:52:37.217Z","updatedAt":"2026-10-20T04:52:38.144Z"},"counters":[6,2,2]}
+
+      at tests/integration/payment-failed-retry.race.test.ts:104:13
+
+  ● FAILED same-ID retry has one claimant (success completion last=false)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 2
+
+      125 |     expect(email).toHaveBeenCalledTimes(1);
+      126 |     // Deliberately red regression: both stale FAILED readers must not own claims.
+    > 127 |     expect(claims).toBe(1);
+          |                    ^
+      128 |   } finally {
+      129 |     [...claimRelease, ...orderRelease, successRelease].forEach(g => g.resolve());
+      130 |     await outcomes;
+
+      at tests/integration/payment-failed-retry.race.test.ts:127:20
+
+  ● FAILED same-ID retry has one claimant (success completion last=true)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 2
+
+      125 |     expect(email).toHaveBeenCalledTimes(1);
+      126 |     // Deliberately red regression: both stale FAILED readers must not own claims.
+    > 127 |     expect(claims).toBe(1);
+          |                    ^
+      128 |   } finally {
+      129 |     [...claimRelease, ...orderRelease, successRelease].forEach(g => g.resolve());
+      130 |     await outcomes;
+
+      at tests/integration/payment-failed-retry.race.test.ts:127:20
+
+PASS tests/integration/payment-distinct-success.race.test.ts (5.489 s)
+  ● Console
+
+    console.log
+      TASK130_OBSERVED {"winnerIndex":0,"reverseReads":false,"trace":["read-0-PENDING","read-1-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","rejected"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:84:13
+
+    console.log
+      TASK130_EVENTS {"winnerIndex":0,"reverseReads":false,"initial":[{"id":"evt_race130-1792471959770_0","status":"PROCESSED","errorMessage":null},{"id":"evt_race130-1792471959770_1","status":"FAILED","errorMessage":"Cannot confirm order with status PAID"}],"recovered":[{"id":"evt_race130-1792471959770_0","status":"PROCESSED"},{"id":"evt_race130-1792471959770_1","status":"PROCESSED"}]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:123:13
+
+    console.log
+      TASK130_OBSERVED {"winnerIndex":0,"reverseReads":true,"trace":["read-1-PENDING","read-0-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","rejected"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:84:13
+
+    console.log
+      TASK130_EVENTS {"winnerIndex":0,"reverseReads":true,"initial":[{"id":"evt_race130-1792471960845_0","status":"PROCESSED","errorMessage":null},{"id":"evt_race130-1792471960845_1","status":"FAILED","errorMessage":"Cannot confirm order with status PAID"}],"recovered":[{"id":"evt_race130-1792471960845_0","status":"PROCESSED"},{"id":"evt_race130-1792471960845_1","status":"PROCESSED"}]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:123:13
+
+    console.log
+      TASK130_OBSERVED {"winnerIndex":1,"reverseReads":false,"trace":["read-0-PENDING","read-1-PENDING","call-1-committed","both-settled"],"outcomes":["rejected","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:84:13
+
+    console.log
+      TASK130_EVENTS {"winnerIndex":1,"reverseReads":false,"initial":[{"id":"evt_race130-1792471961809_0","status":"FAILED","errorMessage":"Cannot confirm order with status PAID"},{"id":"evt_race130-1792471961809_1","status":"PROCESSED","errorMessage":null}],"recovered":[{"id":"evt_race130-1792471961809_0","status":"PROCESSED"},{"id":"evt_race130-1792471961809_1","status":"PROCESSED"}]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:123:13
+
+    console.log
+      TASK130_OBSERVED {"winnerIndex":1,"reverseReads":true,"trace":["read-1-PENDING","read-0-PENDING","call-1-committed","both-settled"],"outcomes":["rejected","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:84:13
+
+    console.log
+      TASK130_EVENTS {"winnerIndex":1,"reverseReads":true,"initial":[{"id":"evt_race130-1792471962853_0","status":"FAILED","errorMessage":"Cannot confirm order with status PAID"},{"id":"evt_race130-1792471962853_1","status":"PROCESSED","errorMessage":null}],"recovered":[{"id":"evt_race130-1792471962853_0","status":"PROCESSED"},{"id":"evt_race130-1792471962853_1","status":"PROCESSED"}]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:123:13
+
+
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       2 failed, 4 passed, 6 total
+Snapshots:   0 total
+Time:        12.741 s
+Ran all test suites within paths "tests/integration/payment-failed-retry.race.test.ts", "tests/integration/payment-distinct-success.race.test.ts".
+TASK132_TEST_EXIT=1
+
+> tixmoapi2@0.1.0 build
+> prisma generate && tsc && tsc-alias
+
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v5.22.0) to ./../../task-65/tixmoapi2/node_modules/@prisma/client in 342ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Easily identify and fix slow SQL queries in your app. Optimize helps you enhance your visibility: https://pris.ly/--optimize
+
+TASK132_BUILD_EXIT=0
+waiting for server to shut down.... done
+server stopped
+TASK132_CLEANUP pg_pid=933418 redis_pid=933432 pgport=36853 redisport=41707

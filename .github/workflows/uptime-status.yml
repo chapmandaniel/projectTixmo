@@ -23,15 +23,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '24.21.0'
 
       - name: Check staging status
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${STAGING_API_BASE_URL:-}" ] && [ -z "${STAGING_DASHBOARD_URL:-}" ]; then
-            echo "::notice::Staging status monitor skipped because STAGING_API_BASE_URL and STAGING_DASHBOARD_URL are not configured."
-            exit 0
+          if [ -z "${STAGING_API_BASE_URL:-}" ] || [ -z "${STAGING_DASHBOARD_URL:-}" ]; then
+            echo "::error::STAGING_API_BASE_URL and STAGING_DASHBOARD_URL are both required."
+            exit 1
           fi
 
           TIXMO_API_BASE_URL="${STAGING_API_BASE_URL:-}" \
@@ -42,9 +42,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${PRODUCTION_API_BASE_URL:-}" ] && [ -z "${PRODUCTION_DASHBOARD_URL:-}" ]; then
-            echo "::notice::Production status monitor skipped because PRODUCTION_API_BASE_URL and PRODUCTION_DASHBOARD_URL are not configured."
-            exit 0
+          if [ -z "${PRODUCTION_API_BASE_URL:-}" ] || [ -z "${PRODUCTION_DASHBOARD_URL:-}" ]; then
+            echo "::error::PRODUCTION_API_BASE_URL and PRODUCTION_DASHBOARD_URL are both required."
+            exit 1
           fi
 
           TIXMO_API_BASE_URL="${PRODUCTION_API_BASE_URL:-}" \

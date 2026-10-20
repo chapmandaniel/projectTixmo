@@ -1,0 +1,3038 @@
+{
+  "documentType": "codex-security.findings",
+  "findings": [
+    {
+      "attackPath": {
+        "controls": [
+          "Role input is constrained by validation. demo/API Railway host and reserved project naming can resolve CUSTOMER; this does not secure accepted custom or forwarded hosts. Live enrollment was not executed."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "registration-staff-grant-source-0",
+            "registration-staff-grant-source-1",
+            "registration-staff-grant-source-2"
+          ],
+          "outcome": "Unauthenticated registration resolves an organization from the request host, prioritizing X-Forwarded-Host, then grants OWNER to its first account or TEAM_MEMBER thereafter. A caller able to supply an accepted tenant host can cross the customer-to-staff boundary without an invitation; ordinary same-business staff visibility is not itself a finding.",
+          "sink": "tixmoapi2/src/api/auth/service.ts",
+          "source": "Unauthenticated person able to supply a request host accepted by tenant resolution.",
+          "summary": "Public registration -> host-derived organization selection/create -> automatic staff role -> token issuance -> staff endpoints."
+        },
+        "evidenceRefs": [
+          "registration-staff-grant-source-0",
+          "registration-staff-grant-source-1",
+          "registration-staff-grant-source-2"
+        ],
+        "impact": "Unauthorized staff enrollment or privileged owner creation exposes business operations. High impact is conditional on an accepted tenant host; live proxy header sanitization was not tested.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "Unauthenticated person able to supply a request host accepted by tenant resolution."
+        ],
+        "summary": "Public registration -> host-derived organization selection/create -> automatic staff role -> token issuance -> staff endpoints."
+      },
+      "codeEvidence": [
+        {
+          "code": "    const tenantOrganization = await this.resolveTenantOrganization(context);\n    const role = tenantOrganization\n      ? tenantOrganization.memberCount === 0\n        ? UserRole.OWNER\n        : UserRole.TEAM_MEMBER\n      : UserRole.CUSTOMER;\n\n    // Create user\n    const user = await prisma.user.create({\n      data: {\n        email: normalizedEmail,\n        passwordHash,\n        firstName: data.firstName,\n        lastName: data.lastName,\n        phone: data.phone,\n        role,\n        organizationId: tenantOrganization?.organizationId ?? null,",
+          "endLine": 117,
+          "explanation": "Host naming and member count substitute for an authorized staff invitation.",
+          "id": "registration-staff-grant-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/auth/service.ts",
+          "role": "root_control",
+          "startLine": 101
+        },
+        {
+          "code": "export const register = catchAsync(async (req: AuthRequest, res: Response) => {\n  const payload = req.body as RegisterData;\n  const result = await authService.register(payload, {\n    requestHost:\n      (typeof req.headers['x-forwarded-host'] === 'string' && req.headers['x-forwarded-host']) ||\n      req.get('host'),\n  });",
+          "endLine": 26,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "registration-staff-grant-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/auth/controller.ts",
+          "role": "related",
+          "startLine": 20
+        },
+        {
+          "code": "export const resolveTenantOrganizationSeed = (input?: {\n  requestHost?: string | null;\n  serviceDashUrl?: string | null;\n  projectName?: string | null;\n}): TenantOrganizationSeed | null => {\n  const label =\n    extractTenantLabelFromHost(input?.requestHost) ||\n    extractTenantLabelFromHost(input?.serviceDashUrl) ||\n    extractTenantLabelFromProjectName(input?.projectName);\n\n  if (!label) {\n    return null;\n  }\n\n  return {\n    label,\n    name: formatTenantName(label),\n    slug: label.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),\n  };",
+          "endLine": 108,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "registration-staff-grant-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/auth/tenantOrganization.ts",
+          "role": "related",
+          "startLine": 90
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {},
+      "findingId": "csf_36cc4d95fffda29085375842",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:5910964714ffccbbcdc6c8674ffbbb12f3aead9f479c7f738ba05b39e51de0fd"
+      },
+      "identity": {
+        "anchor": "registration-staff-grant"
+      },
+      "locations": [
+        {
+          "endLine": 117,
+          "path": "tixmoapi2/src/api/auth/service.ts",
+          "role": "root_control",
+          "startLine": 101
+        }
+      ],
+      "occurrenceId": "occ_bc5a669fa7a5c51126462d1c",
+      "provenance": {
+        "candidateId": "registration-staff-grant",
+        "originalCandidates": [
+          {
+            "a": "registration-staff-grant",
+            "actor": "Unauthenticated person able to supply a request host accepted by tenant resolution.",
+            "counter": "Role input is constrained by validation. demo/API Railway host and reserved project naming can resolve CUSTOMER; this does not secure accepted custom or forwarded hosts. Live enrollment was not executed.",
+            "cwe": "CWE-269",
+            "fix": "Keep public enrollment CUSTOMER within a server-configured business; use owner-authorized, expiring invitations for staff. Trust only known deployment identity and sanitized proxy headers.",
+            "flow": "Public registration -> host-derived organization selection/create -> automatic staff role -> token issuance -> staff endpoints.",
+            "loc": [
+              "tixmoapi2/src/api/auth/service.ts",
+              101,
+              117
+            ],
+            "more": [
+              [
+                "tixmoapi2/src/api/auth/controller.ts",
+                20,
+                26
+              ],
+              [
+                "tixmoapi2/src/api/auth/tenantOrganization.ts",
+                90,
+                108
+              ]
+            ],
+            "r": "authorization.public_registration",
+            "risk": "Unauthorized staff enrollment or privileged owner creation exposes business operations. High impact is conditional on an accepted tenant host; live proxy header sanitization was not tested.",
+            "root": "Host naming and member count substitute for an authorized staff invitation.",
+            "s": "Unauthenticated registration resolves an organization from the request host, prioritizing X-Forwarded-Host, then grants OWNER to its first account or TEAM_MEMBER thereafter. A caller able to supply an accepted tenant host can cross the customer-to-staff boundary without an invitation; ordinary same-business staff visibility is not itself a finding.",
+            "sev": "high",
+            "t": "Public registration can grant staff and owner authority without invitation",
+            "tests": [
+              "Public buyer signup stays CUSTOMER for all Host/X-Forwarded-Host combinations.",
+              "No public request can create an OWNER or organization; invitation role limits are enforced."
+            ]
+          }
+        ],
+        "source": "Independent baseline review and parent validation; artifacts/02_discovery/baseline-review.json"
+      },
+      "remediation": "Keep public enrollment CUSTOMER within a server-configured business; use owner-authorized, expiring invitations for staff. Trust only known deployment identity and sanitized proxy headers.",
+      "remediationTests": [
+        "Public buyer signup stays CUSTOMER for all Host/X-Forwarded-Host combinations.",
+        "No public request can create an OWNER or organization; invitation role limits are enforced."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "registration-staff-grant-source-0",
+          "registration-staff-grant-source-1",
+          "registration-staff-grant-source-2"
+        ],
+        "summary": "Host naming and member count substitute for an authorized staff invitation."
+      },
+      "ruleId": "authorization.public_registration",
+      "severity": {
+        "level": "high",
+        "rationale": "Unauthorized staff enrollment or privileged owner creation exposes business operations. High impact is conditional on an accepted tenant host; live proxy header sanitization was not tested."
+      },
+      "summary": "Unauthenticated registration resolves an organization from the request host, prioritizing X-Forwarded-Host, then grants OWNER to its first account or TEAM_MEMBER thereafter. A caller able to supply an accepted tenant host can cross the customer-to-staff boundary without an invitation; ordinary same-business staff visibility is not itself a finding.",
+      "taxonomy": {
+        "category": "authorization",
+        "cwe": [
+          "CWE-269"
+        ]
+      },
+      "title": "Public registration can grant staff and owner authority without invitation",
+      "validation": {
+        "assertions": [
+          "Unauthenticated registration resolves an organization from the request host, prioritizing X-Forwarded-Host, then grants OWNER to its first account or TEAM_MEMBER thereafter. A caller able to supply an accepted tenant host can cross the customer-to-staff boundary without an invitation; ordinary same-business staff visibility is not itself a finding."
+        ],
+        "counterEvidence": [
+          "Role input is constrained by validation. demo/API Railway host and reserved project naming can resolve CUSTOMER; this does not secure accepted custom or forwarded hosts. Live enrollment was not executed."
+        ],
+        "evidenceRefs": [
+          "registration-staff-grant-source-0",
+          "registration-staff-grant-source-1",
+          "registration-staff-grant-source-2"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Internal comments are filtered and invalid/expired tokens are rejected. Those controls do not prevent peer-token disclosure."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "reviewer-peer-capabilities-source-0",
+            "reviewer-peer-capabilities-source-1",
+            "reviewer-peer-capabilities-source-2"
+          ],
+          "outcome": "A valid external reviewer link returns the shared approval serializer, whose reviewers array includes every reviewUrl. These URLs carry tokens used to submit decisions as those reviewers, enabling peer impersonation and falsified approval records.",
+          "sink": "tixmoapi2/src/api/approvals/service.ts",
+          "source": "An external reviewer holding one unexpired review token.",
+          "summary": "GET review/{own token} -> approval.reviewers[*].reviewUrl -> peer token -> reviewer decision mutation attributed to peer."
+        },
+        "evidenceRefs": [
+          "reviewer-peer-capabilities-source-0",
+          "reviewer-peer-capabilities-source-1",
+          "reviewer-peer-capabilities-source-2"
+        ],
+        "impact": "A legitimately invited external reviewer can act as other reviewers on the same approval, undermining approval authority.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "An external reviewer holding one unexpired review token."
+        ],
+        "summary": "GET review/{own token} -> approval.reviewers[*].reviewUrl -> peer token -> reviewer decision mutation attributed to peer."
+      },
+      "codeEvidence": [
+        {
+          "code": "      reviewers: approval.reviewers.map((reviewer) => {\n        const latestDecision = latestRevision.decisions.find(\n          (decision) => decision.reviewerId === reviewer.id\n        );\n        return {\n          id: reviewer.id,\n          email: reviewer.email,\n          name: reviewer.name,\n          association: reviewer.association,\n          reviewerType: reviewer.reviewerType,\n          tokenExpiresAt: reviewer.tokenExpiresAt,\n          reviewUrl: buildReviewUrl(reviewer.token),",
+          "endLine": 356,
+          "explanation": "The public response shares the staff serializer and does not remove peer bearer capabilities.",
+          "id": "reviewer-peer-capabilities-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/approvals/service.ts",
+          "role": "root_control",
+          "startLine": 345
+        },
+        {
+          "code": "    return {\n      reviewer: {\n        id: reviewer.id,\n        email: reviewer.email,\n        name: reviewer.name,\n        association: reviewer.association,\n        reviewerType: reviewer.reviewerType,\n        tokenExpiresAt: reviewer.tokenExpiresAt,\n      },\n      approval: await this.serializeApproval(reviewer.approvalRequest, {\n        reviewerId: reviewer.id,\n        email: reviewer.email,\n        canViewInternalComments: false,\n      }),",
+          "endLine": 1533,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "reviewer-peer-capabilities-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/approvals/service.ts",
+          "role": "related",
+          "startLine": 1520
+        },
+        {
+          "code": "    const decision = await prisma.approvalReviewDecision.upsert({\n      where: {\n        approvalRevisionId_reviewerId: {\n          approvalRevisionId: revision.id,\n          reviewerId: reviewer.id,\n        },\n      },\n      create: {\n        approvalRequestId: approval.id,\n        approvalRevisionId: revision.id,\n        reviewerId: reviewer.id,\n        decision: input.decision,\n        note: input.note,\n      },\n      update: {\n        decision: input.decision,\n        note: input.note,\n      },",
+          "endLine": 1767,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "reviewer-peer-capabilities-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/approvals/service.ts",
+          "role": "related",
+          "startLine": 1750
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {},
+      "findingId": "csf_3e1e2468bcec05833b01c9b6",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:ae48b62bfa3a1e11254991f6e0991e720072f836d2c9111ca1500cc39b3c222c"
+      },
+      "identity": {
+        "anchor": "reviewer-peer-capabilities"
+      },
+      "locations": [
+        {
+          "endLine": 356,
+          "path": "tixmoapi2/src/api/approvals/service.ts",
+          "role": "root_control",
+          "startLine": 345
+        }
+      ],
+      "occurrenceId": "occ_7655e6793337354531dbde72",
+      "provenance": {
+        "candidateId": "reviewer-peer-capabilities",
+        "originalCandidates": [
+          {
+            "a": "reviewer-peer-capabilities",
+            "actor": "An external reviewer holding one unexpired review token.",
+            "counter": "Internal comments are filtered and invalid/expired tokens are rejected. Those controls do not prevent peer-token disclosure.",
+            "cwe": "CWE-200",
+            "fix": "Use separate public serializers; return current-reviewer capability only, and redact all peer tokens/review URLs. Rotate affected links and inspect decision history.",
+            "flow": "GET review/{own token} -> approval.reviewers[*].reviewUrl -> peer token -> reviewer decision mutation attributed to peer.",
+            "loc": [
+              "tixmoapi2/src/api/approvals/service.ts",
+              345,
+              356
+            ],
+            "more": [
+              [
+                "tixmoapi2/src/api/approvals/service.ts",
+                1520,
+                1533
+              ],
+              [
+                "tixmoapi2/src/api/approvals/service.ts",
+                1750,
+                1767
+              ]
+            ],
+            "r": "authorization.reviewer_serialization",
+            "risk": "A legitimately invited external reviewer can act as other reviewers on the same approval, undermining approval authority.",
+            "root": "The public response shares the staff serializer and does not remove peer bearer capabilities.",
+            "s": "A valid external reviewer link returns the shared approval serializer, whose reviewers array includes every reviewUrl. These URLs carry tokens used to submit decisions as those reviewers, enabling peer impersonation and falsified approval records.",
+            "sev": "high",
+            "t": "External review responses expose other reviewers' bearer links",
+            "tests": [
+              "External response contains no peer bearer capability.",
+              "A reviewer cannot submit a decision for another reviewer."
+            ]
+          }
+        ],
+        "source": "Independent baseline review and parent validation; artifacts/02_discovery/baseline-review.json"
+      },
+      "remediation": "Use separate public serializers; return current-reviewer capability only, and redact all peer tokens/review URLs. Rotate affected links and inspect decision history.",
+      "remediationTests": [
+        "External response contains no peer bearer capability.",
+        "A reviewer cannot submit a decision for another reviewer."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "reviewer-peer-capabilities-source-0",
+          "reviewer-peer-capabilities-source-1",
+          "reviewer-peer-capabilities-source-2"
+        ],
+        "summary": "The public response shares the staff serializer and does not remove peer bearer capabilities."
+      },
+      "ruleId": "authorization.reviewer_serialization",
+      "severity": {
+        "level": "high",
+        "rationale": "A legitimately invited external reviewer can act as other reviewers on the same approval, undermining approval authority."
+      },
+      "summary": "A valid external reviewer link returns the shared approval serializer, whose reviewers array includes every reviewUrl. These URLs carry tokens used to submit decisions as those reviewers, enabling peer impersonation and falsified approval records.",
+      "taxonomy": {
+        "category": "authorization",
+        "cwe": [
+          "CWE-200"
+        ]
+      },
+      "title": "External review responses expose other reviewers' bearer links",
+      "validation": {
+        "assertions": [
+          "A valid external reviewer link returns the shared approval serializer, whose reviewers array includes every reviewUrl. These URLs carry tokens used to submit decisions as those reviewers, enabling peer impersonation and falsified approval records."
+        ],
+        "counterEvidence": [
+          "Internal comments are filtered and invalid/expired tokens are rejected. Those controls do not prevent peer-token disclosure."
+        ],
+        "evidenceRefs": [
+          "reviewer-peer-capabilities-source-0",
+          "reviewer-peer-capabilities-source-1",
+          "reviewer-peer-capabilities-source-2"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "The deletion controller enforces actor scope and role hierarchy; refresh revocation exists for logout but deletion never invokes it."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "deleted-user-authentication-source-0",
+            "deleted-user-authentication-source-1",
+            "deleted-user-authentication-source-2"
+          ],
+          "outcome": "Deleting a user only anonymizes identifying fields. The row retains passwordHash, role and organization; refresh authentication checks row existence and issues new tokens. Deleted staff can retain existing access, refresh it, and authenticate with the deterministic replacement email.",
+          "sink": "tixmoapi2/src/api/users/service.ts",
+          "source": "A former staff member with a previously issued token/password and known own user ID.",
+          "summary": "Authorized account deletion -> unchanged credential/authority row -> existing refresh token or replacement-email login -> fresh access."
+        },
+        "evidenceRefs": [
+          "deleted-user-authentication-source-0",
+          "deleted-user-authentication-source-1",
+          "deleted-user-authentication-source-2"
+        ],
+        "impact": "Offboarded privileged accounts can continue business access indefinitely through retained credentials and refresh.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "A former staff member with a previously issued token/password and known own user ID."
+        ],
+        "summary": "Authorized account deletion -> unchanged credential/authority row -> existing refresh token or replacement-email login -> fresh access."
+      },
+      "codeEvidence": [
+        {
+          "code": "    // Soft delete by anonymizing email\n    await prisma.user.update({\n      where: { id },\n      data: {\n        email: `deleted_${id}@deleted.com`,\n        firstName: 'Deleted',\n        lastName: 'User',\n        phone: null,\n        updatedAt: new Date(),\n      },\n    });",
+          "endLine": 232,
+          "explanation": "Deletion is implemented as PII anonymization without disabling authentication or revoking sessions.",
+          "id": "deleted-user-authentication-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/users/service.ts",
+          "role": "root_control",
+          "startLine": 222
+        },
+        {
+          "code": "    // Check if user still exists\n    const user = await prisma.user.findUnique({\n      where: { id: decoded.userId },\n      select: {\n        id: true,\n        email: true,\n        role: true,\n        organizationId: true,\n        emailVerified: true,\n      },\n    });\n\n    if (!user) {\n      throw ApiError.unauthorized('User not found');\n    }\n\n    // Generate new tokens\n    const tokens = generateTokens({\n      userId: user.id,\n      email: user.email,\n      role: user.role,\n      organizationId: user.organizationId,\n      emailVerified: user.emailVerified,\n    });",
+          "endLine": 243,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "deleted-user-authentication-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/auth/service.ts",
+          "role": "related",
+          "startLine": 220
+        },
+        {
+          "code": "    // Verify password\n    const isPasswordValid = await comparePassword(data.password, user.passwordHash);\n\n    if (!isPasswordValid) {\n      throw ApiError.unauthorized('Invalid credentials');\n    }\n\n    // Update last login\n    await prisma.user.update({\n      where: { id: user.id },\n      data: { lastLogin: new Date() },\n    });\n\n    // Generate tokens\n    const tokens = generateTokens({\n      userId: user.id,\n      email: user.email,\n      role: user.role,\n      organizationId: user.organizationId,\n      emailVerified: user.emailVerified,\n    });",
+          "endLine": 191,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "deleted-user-authentication-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/auth/service.ts",
+          "role": "related",
+          "startLine": 171
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {},
+      "findingId": "csf_bd701b7117c5a005e522560e",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:6963288eab7c2e0c361b79e394961c03b4d6e2df364a4537f5333032f7997ea5"
+      },
+      "identity": {
+        "anchor": "deleted-user-authentication"
+      },
+      "locations": [
+        {
+          "endLine": 232,
+          "path": "tixmoapi2/src/api/users/service.ts",
+          "role": "root_control",
+          "startLine": 222
+        }
+      ],
+      "occurrenceId": "occ_b77e6465805087ea20b00993",
+      "provenance": {
+        "candidateId": "deleted-user-authentication",
+        "originalCandidates": [
+          {
+            "a": "deleted-user-authentication",
+            "actor": "A former staff member with a previously issued token/password and known own user ID.",
+            "counter": "The deletion controller enforces actor scope and role hierarchy; refresh revocation exists for logout but deletion never invokes it.",
+            "cwe": "CWE-613",
+            "fix": "Add explicit disabled/deleted state enforced by login, refresh and every access check; revoke sessions/access versions on deletion, and remove authority while preserving necessary records.",
+            "flow": "Authorized account deletion -> unchanged credential/authority row -> existing refresh token or replacement-email login -> fresh access.",
+            "loc": [
+              "tixmoapi2/src/api/users/service.ts",
+              222,
+              232
+            ],
+            "more": [
+              [
+                "tixmoapi2/src/api/auth/service.ts",
+                220,
+                243
+              ],
+              [
+                "tixmoapi2/src/api/auth/service.ts",
+                171,
+                191
+              ]
+            ],
+            "r": "authentication.account_deletion",
+            "risk": "Offboarded privileged accounts can continue business access indefinitely through retained credentials and refresh.",
+            "root": "Deletion is implemented as PII anonymization without disabling authentication or revoking sessions.",
+            "s": "Deleting a user only anonymizes identifying fields. The row retains passwordHash, role and organization; refresh authentication checks row existence and issues new tokens. Deleted staff can retain existing access, refresh it, and authenticate with the deterministic replacement email.",
+            "sev": "high",
+            "t": "Deleted users retain credentials, roles and renewable access",
+            "tests": [
+              "Deleted users cannot login, refresh or use pre-deletion access tokens.",
+              "Historical business records remain intact without active credentials."
+            ]
+          }
+        ],
+        "source": "Independent baseline review and parent validation; artifacts/02_discovery/baseline-review.json"
+      },
+      "remediation": "Add explicit disabled/deleted state enforced by login, refresh and every access check; revoke sessions/access versions on deletion, and remove authority while preserving necessary records.",
+      "remediationTests": [
+        "Deleted users cannot login, refresh or use pre-deletion access tokens.",
+        "Historical business records remain intact without active credentials."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "deleted-user-authentication-source-0",
+          "deleted-user-authentication-source-1",
+          "deleted-user-authentication-source-2"
+        ],
+        "summary": "Deletion is implemented as PII anonymization without disabling authentication or revoking sessions."
+      },
+      "ruleId": "authentication.account_deletion",
+      "severity": {
+        "level": "high",
+        "rationale": "Offboarded privileged accounts can continue business access indefinitely through retained credentials and refresh."
+      },
+      "summary": "Deleting a user only anonymizes identifying fields. The row retains passwordHash, role and organization; refresh authentication checks row existence and issues new tokens. Deleted staff can retain existing access, refresh it, and authenticate with the deterministic replacement email.",
+      "taxonomy": {
+        "category": "authentication",
+        "cwe": [
+          "CWE-613"
+        ]
+      },
+      "title": "Deleted users retain credentials, roles and renewable access",
+      "validation": {
+        "assertions": [
+          "Deleting a user only anonymizes identifying fields. The row retains passwordHash, role and organization; refresh authentication checks row existence and issues new tokens. Deleted staff can retain existing access, refresh it, and authenticate with the deterministic replacement email."
+        ],
+        "counterEvidence": [
+          "The deletion controller enforces actor scope and role hierarchy; refresh revocation exists for logout but deletion never invokes it."
+        ],
+        "evidenceRefs": [
+          "deleted-user-authentication-source-0",
+          "deleted-user-authentication-source-1",
+          "deleted-user-authentication-source-2"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made.",
+          "Dynamic end-to-end offboarding exploit was not executed."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Member removal verifies current membership and is role-controlled; fresh actor lookup preserves the mistaken role rather than rejecting it."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "removed-admin-global-source-0",
+            "removed-admin-global-source-1",
+            "removed-admin-global-source-2"
+          ],
+          "outcome": "Removing a member clears organizationId but preserves ADMIN. The shared authorization helper defines an ADMIN without an organization as a global administrator. The removed account therefore remains privileged and bypasses controls meant to reject detached staff.",
+          "sink": "tixmoapi2/src/api/organizations/service.ts",
+          "source": "A removed administrative account possessing valid credentials or a refresh token.",
+          "summary": "Owner removes ADMIN membership -> organizationId null -> refreshed/current actor classified global ADMIN -> authorization bypass."
+        },
+        "evidenceRefs": [
+          "removed-admin-global-source-0",
+          "removed-admin-global-source-1",
+          "removed-admin-global-source-2"
+        ],
+        "impact": "A routine offboarding action promotes a business admin to global authority instead of revoking membership. This is an authority lifecycle flaw even with one business per deployment.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "A removed administrative account possessing valid credentials or a refresh token."
+        ],
+        "summary": "Owner removes ADMIN membership -> organizationId null -> refreshed/current actor classified global ADMIN -> authorization bypass."
+      },
+      "codeEvidence": [
+        {
+          "code": "    // Remove user from organization\n    await prisma.user.update({\n      where: { id: userId },\n      data: {\n        organizationId: null,\n      },",
+          "endLine": 271,
+          "explanation": "A nullable organization doubles as the marker for highest privilege, and removal does not reset role or disable access.",
+          "id": "removed-admin-global-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/organizations/service.ts",
+          "role": "root_control",
+          "startLine": 266
+        },
+        {
+          "code": "export const isGlobalAdmin = (actor: ActorScope) =>\n  actor.role === UserRole.ADMIN && !actor.organizationId;",
+          "endLine": 14,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "removed-admin-global-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/utils/tenantScope.ts",
+          "role": "related",
+          "startLine": 13
+        },
+        {
+          "code": "export const assertOrganizationAccess = (actor: ActorScope, organizationId: string) => {\n  if (isGlobalAdmin(actor)) {\n    return;\n  }\n\n  if (!actor.organizationId || organizationId !== actor.organizationId) {\n    throw ApiError.forbidden(\"You do not have access to this organization's resources\");\n  }",
+          "endLine": 84,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "removed-admin-global-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/utils/tenantScope.ts",
+          "role": "related",
+          "startLine": 77
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {},
+      "findingId": "csf_41bbc494bd49a4fc3a547760",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:3179d9915f8d535d264e29b87a6bd42106a8f240b72a849da72f83e05d30ea0f"
+      },
+      "identity": {
+        "anchor": "removed-admin-global"
+      },
+      "locations": [
+        {
+          "endLine": 271,
+          "path": "tixmoapi2/src/api/organizations/service.ts",
+          "role": "root_control",
+          "startLine": 266
+        }
+      ],
+      "occurrenceId": "occ_0ba107221e8194a59464a274",
+      "provenance": {
+        "candidateId": "removed-admin-global",
+        "originalCandidates": [
+          {
+            "a": "removed-admin-global",
+            "actor": "A removed administrative account possessing valid credentials or a refresh token.",
+            "counter": "Member removal verifies current membership and is role-controlled; fresh actor lookup preserves the mistaken role rather than rejecting it.",
+            "cwe": "CWE-269",
+            "fix": "Model global authority explicitly and independently of null membership. Removal must disable/reset business authority and revoke sessions atomically.",
+            "flow": "Owner removes ADMIN membership -> organizationId null -> refreshed/current actor classified global ADMIN -> authorization bypass.",
+            "loc": [
+              "tixmoapi2/src/api/organizations/service.ts",
+              266,
+              271
+            ],
+            "more": [
+              [
+                "tixmoapi2/src/utils/tenantScope.ts",
+                13,
+                14
+              ],
+              [
+                "tixmoapi2/src/utils/tenantScope.ts",
+                77,
+                84
+              ]
+            ],
+            "r": "authorization.member_removal",
+            "risk": "A routine offboarding action promotes a business admin to global authority instead of revoking membership. This is an authority lifecycle flaw even with one business per deployment.",
+            "root": "A nullable organization doubles as the marker for highest privilege, and removal does not reset role or disable access.",
+            "s": "Removing a member clears organizationId but preserves ADMIN. The shared authorization helper defines an ADMIN without an organization as a global administrator. The removed account therefore remains privileged and bypasses controls meant to reject detached staff.",
+            "sev": "high",
+            "t": "Removing an admin preserves and broadens administrative authority",
+            "tests": [
+              "Removing an ADMIN cannot make isGlobalAdmin true.",
+              "Offboarded members lose staff actions on existing and newly refreshed tokens."
+            ]
+          }
+        ],
+        "source": "Independent baseline review and parent validation; artifacts/02_discovery/baseline-review.json"
+      },
+      "remediation": "Model global authority explicitly and independently of null membership. Removal must disable/reset business authority and revoke sessions atomically.",
+      "remediationTests": [
+        "Removing an ADMIN cannot make isGlobalAdmin true.",
+        "Offboarded members lose staff actions on existing and newly refreshed tokens."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "removed-admin-global-source-0",
+          "removed-admin-global-source-1",
+          "removed-admin-global-source-2"
+        ],
+        "summary": "A nullable organization doubles as the marker for highest privilege, and removal does not reset role or disable access."
+      },
+      "ruleId": "authorization.member_removal",
+      "severity": {
+        "level": "high",
+        "rationale": "A routine offboarding action promotes a business admin to global authority instead of revoking membership. This is an authority lifecycle flaw even with one business per deployment."
+      },
+      "summary": "Removing a member clears organizationId but preserves ADMIN. The shared authorization helper defines an ADMIN without an organization as a global administrator. The removed account therefore remains privileged and bypasses controls meant to reject detached staff.",
+      "taxonomy": {
+        "category": "authorization",
+        "cwe": [
+          "CWE-269"
+        ]
+      },
+      "title": "Removing an admin preserves and broadens administrative authority",
+      "validation": {
+        "assertions": [
+          "Removing a member clears organizationId but preserves ADMIN. The shared authorization helper defines an ADMIN without an organization as a global administrator. The removed account therefore remains privileged and bypasses controls meant to reject detached staff."
+        ],
+        "counterEvidence": [
+          "Member removal verifies current membership and is role-controlled; fresh actor lookup preserves the mistaken role rather than rejecting it."
+        ],
+        "evidenceRefs": [
+          "removed-admin-global-source-0",
+          "removed-admin-global-source-1",
+          "removed-admin-global-source-2"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made.",
+          "Dynamic end-to-end offboarding exploit was not executed."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Several services reload current actor role, and refresh uses the current user row. Exposure is confined to routes trusting access-token role."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "demoted-token-role-source-0",
+            "demoted-token-role-source-1",
+            "demoted-token-role-source-2"
+          ],
+          "outcome": "Role changes update the user row but do not invalidate access tokens. authenticate copies role from the JWT, and authorize trusts that claim for routes without a subsequent current-actor lookup, including privileged order actions. Demoted users can retain their former authority for the token lifetime (default seven days).",
+          "sink": "tixmoapi2/src/middleware/auth.ts",
+          "source": "A staff member demoted after receiving a privileged access token.",
+          "summary": "Old JWT -> signature accepted -> old role copied to request -> role-only privileged route."
+        },
+        "evidenceRefs": [
+          "demoted-token-role-source-0",
+          "demoted-token-role-source-1",
+          "demoted-token-role-source-2"
+        ],
+        "impact": "Role revocation is delayed on claim-only routes; an already privileged user is required.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "A staff member demoted after receiving a privileged access token."
+        ],
+        "summary": "Old JWT -> signature accepted -> old role copied to request -> role-only privileged route."
+      },
+      "codeEvidence": [
+        {
+          "code": "    const payload = verifyAccessToken(token);\n    req.user = {\n      userId: payload.userId,\n      role: payload.role,\n      email: payload.email,\n      emailVerified: payload.emailVerified,\n      organizationId: payload.organizationId,\n    };",
+          "endLine": 50,
+          "explanation": "Access authorization lacks current account/session version enforcement across routes.",
+          "id": "demoted-token-role-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/middleware/auth.ts",
+          "role": "root_control",
+          "startLine": 43
+        },
+        {
+          "code": "    return await prisma.user.update({\n      where: { id },\n      data: {\n        ...data,\n        permissions: data.permissions as Prisma.InputJsonValue | undefined,\n        updatedAt: new Date(),",
+          "endLine": 186,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "demoted-token-role-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/users/service.ts",
+          "role": "related",
+          "startLine": 181
+        },
+        {
+          "code": "    try {\n      if (!req.user) {\n        throw ApiError.unauthorized('Authentication required');\n      }\n\n      if (!allowedRoles.includes(req.user.role as UserRole)) {\n        throw ApiError.forbidden('Insufficient permissions');\n      }\n\n      next();\n    } catch (error) {\n      next(error);",
+          "endLine": 20,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "demoted-token-role-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/middleware/authorize.ts",
+          "role": "related",
+          "startLine": 9
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {},
+      "findingId": "csf_f3359431e053b0953bf6936d",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:1a494ef01773a3667fcdc681f86fe320f232f238cba51ceb96f934a58381b430"
+      },
+      "identity": {
+        "anchor": "demoted-token-role"
+      },
+      "locations": [
+        {
+          "endLine": 50,
+          "path": "tixmoapi2/src/middleware/auth.ts",
+          "role": "root_control",
+          "startLine": 43
+        }
+      ],
+      "occurrenceId": "occ_34366dea3fb4ebb3b4a34bd0",
+      "provenance": {
+        "candidateId": "demoted-token-role",
+        "originalCandidates": [
+          {
+            "a": "demoted-token-role",
+            "actor": "A staff member demoted after receiving a privileged access token.",
+            "counter": "Several services reload current actor role, and refresh uses the current user row. Exposure is confined to routes trusting access-token role.",
+            "cwe": "CWE-863",
+            "fix": "Use centralized current-account/session-version checks and invalidate sessions on role changes. Shorten access lifetime as defense in depth.",
+            "flow": "Old JWT -> signature accepted -> old role copied to request -> role-only privileged route.",
+            "loc": [
+              "tixmoapi2/src/middleware/auth.ts",
+              43,
+              50
+            ],
+            "more": [
+              [
+                "tixmoapi2/src/api/users/service.ts",
+                181,
+                186
+              ],
+              [
+                "tixmoapi2/src/middleware/authorize.ts",
+                9,
+                20
+              ]
+            ],
+            "r": "authorization.current_role",
+            "risk": "Role revocation is delayed on claim-only routes; an already privileged user is required.",
+            "root": "Access authorization lacks current account/session version enforcement across routes.",
+            "s": "Role changes update the user row but do not invalidate access tokens. authenticate copies role from the JWT, and authorize trusts that claim for routes without a subsequent current-actor lookup, including privileged order actions. Demoted users can retain their former authority for the token lifetime (default seven days).",
+            "sev": "medium",
+            "t": "Role demotion leaves prior access-token authority usable",
+            "tests": [
+              "Previously issued privileged JWT is rejected for privileged routes immediately after demotion.",
+              "Current-role lookup and version checks apply consistently."
+            ]
+          }
+        ],
+        "source": "Independent baseline review and parent validation; artifacts/02_discovery/baseline-review.json"
+      },
+      "remediation": "Use centralized current-account/session-version checks and invalidate sessions on role changes. Shorten access lifetime as defense in depth.",
+      "remediationTests": [
+        "Previously issued privileged JWT is rejected for privileged routes immediately after demotion.",
+        "Current-role lookup and version checks apply consistently."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "demoted-token-role-source-0",
+          "demoted-token-role-source-1",
+          "demoted-token-role-source-2"
+        ],
+        "summary": "Access authorization lacks current account/session version enforcement across routes."
+      },
+      "ruleId": "authorization.current_role",
+      "severity": {
+        "level": "medium",
+        "rationale": "Role revocation is delayed on claim-only routes; an already privileged user is required."
+      },
+      "summary": "Role changes update the user row but do not invalidate access tokens. authenticate copies role from the JWT, and authorize trusts that claim for routes without a subsequent current-actor lookup, including privileged order actions. Demoted users can retain their former authority for the token lifetime (default seven days).",
+      "taxonomy": {
+        "category": "authorization",
+        "cwe": [
+          "CWE-863"
+        ]
+      },
+      "title": "Role demotion leaves prior access-token authority usable",
+      "validation": {
+        "assertions": [
+          "Role changes update the user row but do not invalidate access tokens. authenticate copies role from the JWT, and authorize trusts that claim for routes without a subsequent current-actor lookup, including privileged order actions. Demoted users can retain their former authority for the token lifetime (default seven days)."
+        ],
+        "counterEvidence": [
+          "Several services reload current actor role, and refresh uses the current user row. Exposure is confined to routes trusting access-token role."
+        ],
+        "evidenceRefs": [
+          "demoted-token-role-source-0",
+          "demoted-token-role-source-1",
+          "demoted-token-role-source-2"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made.",
+          "Dynamic end-to-end offboarding exploit was not executed."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "File count/size/type limits and rate limiting reduce individual request size/rate; cleanup exists once uploadService is reached."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "upload-temp-cleanup-source-0",
+            "upload-temp-cleanup-source-1",
+            "upload-temp-cleanup-source-2",
+            "upload-temp-cleanup-source-3"
+          ],
+          "outcome": "Multipart handlers stage files in the OS temp directory before business authorization and body/content validation. Failure paths before uploadService's cleanup do not unlink these files. An authenticated low-privilege caller can repeatedly stage up to ten 25 MiB files per request and cause durable temporary-disk growth.",
+          "sink": "tixmoapi2/src/api/assets/controller.ts",
+          "source": "An authenticated account allowed through upload route middleware but rejected by later role/context or content checks.",
+          "summary": "Authenticated multipart request -> disk staging -> validation/authorization rejection -> no cleanup -> repeated disk accumulation."
+        },
+        "evidenceRefs": [
+          "upload-temp-cleanup-source-0",
+          "upload-temp-cleanup-source-1",
+          "upload-temp-cleanup-source-2",
+          "upload-temp-cleanup-source-3"
+        ],
+        "impact": "Authenticated upload abuse can exhaust API storage and interrupt service; exact production tmp mount quota was not inspected.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "An authenticated account allowed through upload route middleware but rejected by later role/context or content checks."
+        ],
+        "summary": "Authenticated multipart request -> disk staging -> validation/authorization rejection -> no cleanup -> repeated disk accumulation."
+      },
+      "codeEvidence": [
+        {
+          "code": "      const files = (req.files as Express.Multer.File[]) || [];\n      await validateUploadedFiles(files);\n      const result = await assetLibraryService.upload(userId, files, {\n        usageType: req.body?.usageType || req.body?.collectionType,\n        eventId: req.body?.eventId,\n        category: req.body?.category,\n        folderId: req.body?.folderId,\n      });\n      return res.status(StatusCodes.CREATED).json(result);\n    } catch (error) {\n      return next(error);",
+          "endLine": 180,
+          "explanation": "Cleanup is attached to successful upload service execution instead of every request terminal path.",
+          "id": "upload-temp-cleanup-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/assets/controller.ts",
+          "role": "root_control",
+          "startLine": 170
+        },
+        {
+          "code": "const upload = multer({\n  storage: multer.diskStorage({\n    destination: os.tmpdir(),\n    filename: (_req, file, cb) => {\n      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;\n      cb(null, `${file.fieldname}-${uniqueSuffix}`);\n    },\n  }),\n  limits: {\n    fileSize: 25 * 1024 * 1024,\n    files: 10,\n  },\n  fileFilter: (_req, file, cb) => {\n    if (!isAllowedAssetUploadType(file)) {\n      cb(new Error(`File type ${file.mimetype} is not allowed`));\n      return;\n    }\n\n    cb(null, true);\n  },\n});\n\nexport const assetLibraryUploadMiddleware = upload.array('files', 10);",
+          "endLine": 83,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "upload-temp-cleanup-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/assets/controller.ts",
+          "role": "related",
+          "startLine": 61
+        },
+        {
+          "code": "  async upload(userId: string, files: Express.Multer.File[], context: AssetUploadContext) {\n    const user = await this.getUserContext(userId);\n    this.assertCanManageAssets(user);\n\n    if (files.length === 0) {\n      throw new ApiError(StatusCodes.BAD_REQUEST, 'At least one file is required');\n    }\n\n    const uploadContext = await this.normalizeUploadContext(user, context);\n    const uploadedAssets = await uploadService.uploadMultiple(",
+          "endLine": 923,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "upload-temp-cleanup-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/assets/service.ts",
+          "role": "related",
+          "startLine": 914
+        },
+        {
+          "code": "      const body = parseSchema(createApprovalBodySchema, req.body);\n      const files = (req.files as Express.Multer.File[]) || [];\n      await validateUploadedFiles(files);\n      const organizationId = await approvalService.getUserOrganizationId(userId);\n\n      if (!organizationId) {\n        return res\n          .status(StatusCodes.FORBIDDEN)\n          .json({ message: 'User does not belong to an organization' });\n      }\n\n      const approval = await approvalService.create({\n        organizationId,\n        createdById: userId,\n        eventId: body.eventId,\n        title: body.title,\n        description: body.description,\n        deadline: new Date(body.deadline),\n        reviewers: body.reviewers,\n        files,\n        dashboardOrigin: getDashboardOrigin(req),\n      });\n\n      return res.status(StatusCodes.CREATED).json(approval);\n    } catch (error) {\n      return next(error);",
+          "endLine": 169,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "upload-temp-cleanup-source-3",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/approvals/controller.ts",
+          "role": "related",
+          "startLine": 144
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {},
+      "findingId": "csf_87d9c7524889873c4185e921",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:1e7e0283467495eacdfde04321beb917917651aee2f561ecffa98b7916685697"
+      },
+      "identity": {
+        "anchor": "upload-temp-cleanup"
+      },
+      "locations": [
+        {
+          "endLine": 180,
+          "path": "tixmoapi2/src/api/assets/controller.ts",
+          "role": "root_control",
+          "startLine": 170
+        }
+      ],
+      "occurrenceId": "occ_01632429437d3a2243fcb282",
+      "provenance": {
+        "candidateId": "upload-temp-cleanup",
+        "originalCandidates": [
+          {
+            "a": "upload-temp-cleanup",
+            "actor": "An authenticated account allowed through upload route middleware but rejected by later role/context or content checks.",
+            "counter": "File count/size/type limits and rate limiting reduce individual request size/rate; cleanup exists once uploadService is reached.",
+            "cwe": "CWE-459",
+            "fix": "Authorize before multipart parsing where possible and guarantee request-scoped finally cleanup on validation, auth, upload, cancellation and error paths; enforce disk quota and sweeper.",
+            "flow": "Authenticated multipart request -> disk staging -> validation/authorization rejection -> no cleanup -> repeated disk accumulation.",
+            "loc": [
+              "tixmoapi2/src/api/assets/controller.ts",
+              170,
+              180
+            ],
+            "more": [
+              [
+                "tixmoapi2/src/api/assets/controller.ts",
+                61,
+                83
+              ],
+              [
+                "tixmoapi2/src/api/assets/service.ts",
+                914,
+                923
+              ],
+              [
+                "tixmoapi2/src/api/approvals/controller.ts",
+                144,
+                169
+              ]
+            ],
+            "r": "resources.rejected_upload_cleanup",
+            "risk": "Authenticated upload abuse can exhaust API storage and interrupt service; exact production tmp mount quota was not inspected.",
+            "root": "Cleanup is attached to successful upload service execution instead of every request terminal path.",
+            "s": "Multipart handlers stage files in the OS temp directory before business authorization and body/content validation. Failure paths before uploadService's cleanup do not unlink these files. An authenticated low-privilege caller can repeatedly stage up to ten 25 MiB files per request and cause durable temporary-disk growth.",
+            "sev": "medium",
+            "t": "Rejected multipart uploads leave staged files on API disk",
+            "tests": [
+              "Rejected body, magic bytes, role and folder context leave no staged files.",
+              "Aborted and partially successful uploads also clean all files."
+            ]
+          }
+        ],
+        "source": "Independent baseline review and parent validation; artifacts/02_discovery/baseline-review.json"
+      },
+      "remediation": "Authorize before multipart parsing where possible and guarantee request-scoped finally cleanup on validation, auth, upload, cancellation and error paths; enforce disk quota and sweeper.",
+      "remediationTests": [
+        "Rejected body, magic bytes, role and folder context leave no staged files.",
+        "Aborted and partially successful uploads also clean all files."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "upload-temp-cleanup-source-0",
+          "upload-temp-cleanup-source-1",
+          "upload-temp-cleanup-source-2",
+          "upload-temp-cleanup-source-3"
+        ],
+        "summary": "Cleanup is attached to successful upload service execution instead of every request terminal path."
+      },
+      "ruleId": "resources.rejected_upload_cleanup",
+      "severity": {
+        "level": "medium",
+        "rationale": "Authenticated upload abuse can exhaust API storage and interrupt service; exact production tmp mount quota was not inspected."
+      },
+      "summary": "Multipart handlers stage files in the OS temp directory before business authorization and body/content validation. Failure paths before uploadService's cleanup do not unlink these files. An authenticated low-privilege caller can repeatedly stage up to ten 25 MiB files per request and cause durable temporary-disk growth.",
+      "taxonomy": {
+        "category": "resources",
+        "cwe": [
+          "CWE-459"
+        ]
+      },
+      "title": "Rejected multipart uploads leave staged files on API disk",
+      "validation": {
+        "assertions": [
+          "Multipart handlers stage files in the OS temp directory before business authorization and body/content validation. Failure paths before uploadService's cleanup do not unlink these files. An authenticated low-privilege caller can repeatedly stage up to ten 25 MiB files per request and cause durable temporary-disk growth."
+        ],
+        "counterEvidence": [
+          "File count/size/type limits and rate limiting reduce individual request size/rate; cleanup exists once uploadService is reached."
+        ],
+        "evidenceRefs": [
+          "upload-temp-cleanup-source-0",
+          "upload-temp-cleanup-source-1",
+          "upload-temp-cleanup-source-2",
+          "upload-temp-cleanup-source-3"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Overflow rejection immediately decrements; completed requests release; Redis outage fails open. None recovers leaked reservations during healthy Redis service."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "waiting-room-leak-source-0",
+            "waiting-room-leak-source-1"
+          ],
+          "outcome": "The waiting room increments a persistent Redis counter and decrements only on response finish. Its close listener does nothing, and no lease/TTL is set. Aborted slow requests or process termination can leave reservations behind until ordinary requests are rejected at the 5,000 limit while health checks continue passing.",
+          "sink": "tixmoapi2/src/middleware/waitingRoom.ts",
+          "source": "Unauthenticated callers that terminate admitted requests before the response finishes.",
+          "summary": "Request INCR -> early connection close without finish -> persistent leaked count -> repeated aborts -> 503 for normal traffic."
+        },
+        "evidenceRefs": [
+          "waiting-room-leak-source-0",
+          "waiting-room-leak-source-1"
+        ],
+        "impact": "An unauthenticated client able to abort in-flight requests can accumulate stale capacity and deny normal API use.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "Unauthenticated callers that terminate admitted requests before the response finishes."
+        ],
+        "summary": "Request INCR -> early connection close without finish -> persistent leaked count -> repeated aborts -> 503 for normal traffic."
+      },
+      "codeEvidence": [
+        {
+          "code": "    // Capture response finish to decrement count\n    res.on('finish', () => {\n      client.decr(ACTIVE_USERS_KEY).catch((err) => {\n        logger.error('Failed to decrement active user count', err);\n      });\n    });\n\n    // Also handle close in case connection is terminated prematurely\n    res.on('close', () => {\n      // NOTE: 'finish' and 'close' might both emit, but DECR operates on an atomic counter.\n      // Ideally we want to decrement exactly once per increment.\n      // Express 'finish' event is reliable for completed responses.\n      // 'close' handles aborted connections.\n      // We rely on 'finish' primarily. To handle 'close' without double-decrementing is tricky without unique request IDs.\n      // For a simple waiting room, 'finish' is usually sufficient.\n      // If we implement unique request tracking, we could be more precise.\n      // For now, we trust 'finish'.\n    });",
+          "endLine": 51,
+          "explanation": "Reservations have no idempotent abort release or crash-expiring lease.",
+          "id": "waiting-room-leak-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/middleware/waitingRoom.ts",
+          "role": "root_control",
+          "startLine": 34
+        },
+        {
+          "code": "  try {\n    const client = getRedisClient();\n\n    // Increment active user count\n    const activeUsers = await client.incr(ACTIVE_USERS_KEY);\n\n    // If load is too high, reject\n    if (activeUsers > MAX_CONCURRENT_USERS) {\n      // Decrement immediately since we are rejecting\n      await client.decr(ACTIVE_USERS_KEY);\n\n      logger.warn('Waiting Room Active: Rejected request due to high load', { activeUsers });\n\n      return res.status(StatusCodes.SERVICE_UNAVAILABLE).json({\n        message: 'High traffic volume. Please try again in a moment.',\n        retryAfter: 5, // Suggest retry in 5 seconds\n      });",
+          "endLine": 31,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "waiting-room-leak-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/middleware/waitingRoom.ts",
+          "role": "related",
+          "startLine": 15
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {},
+      "findingId": "csf_bc4497050a8f3e98f5cf89a6",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:a7bc27170be40a8146851869c1ea83823587c7b3567c224212a73a3b03b0f598"
+      },
+      "identity": {
+        "anchor": "waiting-room-leak"
+      },
+      "locations": [
+        {
+          "endLine": 51,
+          "path": "tixmoapi2/src/middleware/waitingRoom.ts",
+          "role": "root_control",
+          "startLine": 34
+        }
+      ],
+      "occurrenceId": "occ_a5b89466637aed9f015dbd4a",
+      "provenance": {
+        "candidateId": "waiting-room-leak",
+        "originalCandidates": [
+          {
+            "a": "waiting-room-leak",
+            "actor": "Unauthenticated callers that terminate admitted requests before the response finishes.",
+            "counter": "Overflow rejection immediately decrements; completed requests release; Redis outage fails open. None recovers leaked reservations during healthy Redis service.",
+            "cwe": "CWE-772",
+            "fix": "Release exactly once on both finish and close and use expiring per-request leases or another crash-safe concurrency mechanism; expose saturation/recovery metrics.",
+            "flow": "Request INCR -> early connection close without finish -> persistent leaked count -> repeated aborts -> 503 for normal traffic.",
+            "loc": [
+              "tixmoapi2/src/middleware/waitingRoom.ts",
+              34,
+              51
+            ],
+            "more": [
+              [
+                "tixmoapi2/src/middleware/waitingRoom.ts",
+                15,
+                31
+              ]
+            ],
+            "r": "availability.waiting_room_release",
+            "risk": "An unauthenticated client able to abort in-flight requests can accumulate stale capacity and deny normal API use.",
+            "root": "Reservations have no idempotent abort release or crash-expiring lease.",
+            "s": "The waiting room increments a persistent Redis counter and decrements only on response finish. Its close listener does nothing, and no lease/TTL is set. Aborted slow requests or process termination can leave reservations behind until ordinary requests are rejected at the 5,000 limit while health checks continue passing.",
+            "sev": "medium",
+            "t": "Aborted requests permanently consume waiting-room capacity",
+            "tests": [
+              "finish plus close releases once, early close releases once.",
+              "Worker crash leases expire and normal service recovers without manual Redis edits."
+            ]
+          }
+        ],
+        "source": "Independent baseline review and parent validation; artifacts/02_discovery/baseline-review.json"
+      },
+      "remediation": "Release exactly once on both finish and close and use expiring per-request leases or another crash-safe concurrency mechanism; expose saturation/recovery metrics.",
+      "remediationTests": [
+        "finish plus close releases once, early close releases once.",
+        "Worker crash leases expire and normal service recovers without manual Redis edits."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "waiting-room-leak-source-0",
+          "waiting-room-leak-source-1"
+        ],
+        "summary": "Reservations have no idempotent abort release or crash-expiring lease."
+      },
+      "ruleId": "availability.waiting_room_release",
+      "severity": {
+        "level": "medium",
+        "rationale": "An unauthenticated client able to abort in-flight requests can accumulate stale capacity and deny normal API use."
+      },
+      "summary": "The waiting room increments a persistent Redis counter and decrements only on response finish. Its close listener does nothing, and no lease/TTL is set. Aborted slow requests or process termination can leave reservations behind until ordinary requests are rejected at the 5,000 limit while health checks continue passing.",
+      "taxonomy": {
+        "category": "availability",
+        "cwe": [
+          "CWE-772"
+        ]
+      },
+      "title": "Aborted requests permanently consume waiting-room capacity",
+      "validation": {
+        "assertions": [
+          "The waiting room increments a persistent Redis counter and decrements only on response finish. Its close listener does nothing, and no lease/TTL is set. Aborted slow requests or process termination can leave reservations behind until ordinary requests are rejected at the 5,000 limit while health checks continue passing."
+        ],
+        "counterEvidence": [
+          "Overflow rejection immediately decrements; completed requests release; Redis outage fails open. None recovers leaked reservations during healthy Redis service."
+        ],
+        "evidenceRefs": [
+          "waiting-room-leak-source-0",
+          "waiting-room-leak-source-1"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Password is stored hashed in the database and HTTP login is rate limited; neither makes a publicly defined credential secret."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "production-seed-password-source-0",
+            "production-seed-password-source-1"
+          ],
+          "outcome": "The minimal seed hashes a tracked fixed administrator password, upserts an ADMIN with organizationId null, resets its password on repeat runs, and prints the credential. Read-only Railway metadata confirms production startup invokes migrations, db:seed and npm start on every boot. This is an active deployment bootstrap risk, without testing the credential against production.",
+          "sink": "tixmoapi2/prisma/seed-minimal.js",
+          "source": "A person with source or seed-output access who can reach the deployed API login.",
+          "summary": "Production startup -> db:seed -> fixed credential ADMIN upsert/reset -> plaintext credential logging -> potential privileged login."
+        },
+        "evidenceRefs": [
+          "production-seed-password-source-0",
+          "production-seed-password-source-1"
+        ],
+        "impact": "Source/log readers can learn a privileged fixed credential, and service restarts restore it. The deployed start command was confirmed; successful production login was deliberately not attempted.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "A person with source or seed-output access who can reach the deployed API login."
+        ],
+        "summary": "Production startup -> db:seed -> fixed credential ADMIN upsert/reset -> plaintext credential logging -> potential privileged login."
+      },
+      "codeEvidence": [
+        {
+          "code": "    const admin = await prisma.user.upsert({\n        where: { email },\n        update: {\n            passwordHash,\n            role: 'ADMIN',\n            organizationId: org.id,\n        },\n        create: {\n            email,\n            firstName: 'Admin',\n            lastName: 'User',\n            role: 'ADMIN',\n            passwordHash,\n            phone: '555-0123',\n            emailVerified: true,\n            organizationId: org.id,",
+          "endLine": 42,
+          "explanation": "Repeatable development seed is included in the production start command.",
+          "id": "production-seed-password-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/prisma/seed-minimal.js",
+          "role": "root_control",
+          "startLine": 27
+        },
+        {
+          "code": "\n    console.log(`\u2713 Admin user created/updated: ${admin.email}`);\n    console.log(`\u2713 Password: ${password}`);\n}",
+          "endLine": 48,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "production-seed-password-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/prisma/seed-minimal.js",
+          "role": "related",
+          "startLine": 45
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {},
+      "findingId": "csf_aaeb6034fc2205e15c4cf000",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:ddcfc7db5aec2902b01308dcd4fbf4f4843c5e2b69dc401235a3446026911f9c"
+      },
+      "identity": {
+        "anchor": "production-seed-password"
+      },
+      "locations": [
+        {
+          "endLine": 42,
+          "path": "tixmoapi2/prisma/seed-minimal.js",
+          "role": "root_control",
+          "startLine": 27
+        }
+      ],
+      "occurrenceId": "occ_ef17f1d94b749e2b0c514c6e",
+      "provenance": {
+        "candidateId": "production-seed-password",
+        "originalCandidates": [
+          {
+            "a": "production-seed-password",
+            "actor": "A person with source or seed-output access who can reach the deployed API login.",
+            "counter": "Password is stored hashed in the database and HTTP login is rate limited; neither makes a publicly defined credential secret.",
+            "cwe": "CWE-798",
+            "fix": "Remove seeding from production startup. Use a guarded one-time bootstrap with a generated secret; rotate affected admin credentials, invalidate sessions and review access/log exposure.",
+            "flow": "Production startup -> db:seed -> fixed credential ADMIN upsert/reset -> plaintext credential logging -> potential privileged login.",
+            "loc": [
+              "tixmoapi2/prisma/seed-minimal.js",
+              27,
+              42
+            ],
+            "more": [
+              [
+                "tixmoapi2/prisma/seed-minimal.js",
+                45,
+                48
+              ]
+            ],
+            "r": "authentication.bootstrap_credentials",
+            "risk": "Source/log readers can learn a privileged fixed credential, and service restarts restore it. The deployed start command was confirmed; successful production login was deliberately not attempted.",
+            "root": "Repeatable development seed is included in the production start command.",
+            "s": "The minimal seed hashes a tracked fixed administrator password, upserts an ADMIN with organizationId null, resets its password on repeat runs, and prints the credential. Read-only Railway metadata confirms production startup invokes migrations, db:seed and npm start on every boot. This is an active deployment bootstrap risk, without testing the credential against production.",
+            "sev": "high",
+            "t": "Production startup reapplies and logs a fixed administrator credential",
+            "tests": [
+              "Production boot executes migrations and service only.",
+              "One-time bootstrap cannot overwrite existing credentials or log secrets."
+            ]
+          }
+        ],
+        "source": "Independent baseline review and parent validation; artifacts/02_discovery/baseline-review.json"
+      },
+      "remediation": "Remove seeding from production startup. Use a guarded one-time bootstrap with a generated secret; rotate affected admin credentials, invalidate sessions and review access/log exposure.",
+      "remediationTests": [
+        "Production boot executes migrations and service only.",
+        "One-time bootstrap cannot overwrite existing credentials or log secrets."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "production-seed-password-source-0",
+          "production-seed-password-source-1"
+        ],
+        "summary": "Repeatable development seed is included in the production start command."
+      },
+      "ruleId": "authentication.bootstrap_credentials",
+      "severity": {
+        "level": "high",
+        "rationale": "Source/log readers can learn a privileged fixed credential, and service restarts restore it. The deployed start command was confirmed; successful production login was deliberately not attempted."
+      },
+      "summary": "The minimal seed hashes a tracked fixed administrator password, upserts an ADMIN with organizationId null, resets its password on repeat runs, and prints the credential. Read-only Railway metadata confirms production startup invokes migrations, db:seed and npm start on every boot. This is an active deployment bootstrap risk, without testing the credential against production.",
+      "taxonomy": {
+        "category": "authentication",
+        "cwe": [
+          "CWE-798"
+        ]
+      },
+      "title": "Production startup reapplies and logs a fixed administrator credential",
+      "validation": {
+        "assertions": [
+          "The minimal seed hashes a tracked fixed administrator password, upserts an ADMIN with organizationId null, resets its password on repeat runs, and prints the credential. Read-only Railway metadata confirms production startup invokes migrations, db:seed and npm start on every boot. This is an active deployment bootstrap risk, without testing the credential against production."
+        ],
+        "counterEvidence": [
+          "Password is stored hashed in the database and HTTP login is rate limited; neither makes a publicly defined credential secret."
+        ],
+        "evidenceRefs": [
+          "production-seed-password-source-0",
+          "production-seed-password-source-1"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Transfer and QR endpoints check current ownership; unpaid orders and cancelled/used tickets are rejected by the relevant admission paths. These checks do not invalidate saved credentials."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "admission-credential-revocation-source-0",
+            "admission-credential-revocation-source-1",
+            "admission-credential-revocation-source-2",
+            "admission-credential-revocation-source-3"
+          ],
+          "outcome": "A former owner can consume the recipient's ticket or resell its saved QR code. The advertised compromise recovery endpoint does not revoke compromised copies. Customer saves QR \u2192 POST /tickets/:id/transfer changes owner \u2192 previous QR remains valid \u2192 gate redeems it before the recipient. POST /tickets/:id/regenerate-qr also reproduces the original payload.",
+          "sink": "tixmoapi2/src/api/tickets/service.ts",
+          "source": "A customer who saves a paid ticket's QR code before transferring it, or someone holding a compromised QR code.",
+          "summary": "Customer saves QR \u2192 POST /tickets/:id/transfer changes owner \u2192 previous QR remains valid \u2192 gate redeems it before the recipient. POST /tickets/:id/regenerate-qr also reproduces the original payload."
+        },
+        "evidenceRefs": [
+          "admission-credential-revocation-source-0",
+          "admission-credential-revocation-source-1",
+          "admission-credential-revocation-source-2",
+          "admission-credential-revocation-source-3"
+        ],
+        "impact": "A former owner can consume the recipient's ticket or resell its saved QR code. The advertised compromise recovery endpoint does not revoke compromised copies. Requires A customer who saves a paid ticket's QR code before transferring it, or someone holding a compromised QR code.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "A customer who saves a paid ticket's QR code before transferring it, or someone holding a compromised QR code."
+        ],
+        "summary": "Customer saves QR \u2192 POST /tickets/:id/transfer changes owner \u2192 previous QR remains valid \u2192 gate redeems it before the recipient. POST /tickets/:id/regenerate-qr also reproduces the original payload."
+      },
+      "codeEvidence": [
+        {
+          "code": "    // Transfer the ticket\n    const updatedTicket = await prisma.ticket.update({\n      where: { id },\n      data: {\n        userId: recipient.id,\n        transferredFrom: currentUserId,\n        transferredAt: new Date(),\n        status: 'VALID', // Reset to VALID so the recipient can actually use the ticket\n      },",
+          "endLine": 239,
+          "explanation": "Old admission credentials survive ownership changes and QR regeneration.",
+          "id": "admission-credential-revocation-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/tickets/service.ts",
+          "role": "root_control",
+          "startLine": 231
+        },
+        {
+          "code": "    // Generate new QR code\n    const qrData = generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId);\n    const qrCodeDataUrl = await generateQRCode(qrData, {\n      errorCorrectionLevel: 'H',\n      width: 300,\n      margin: 2,\n    });\n\n    // Update ticket\n    await prisma.ticket.update({\n      where: { id: ticketId },\n      data: {\n        qrCodeUrl: qrCodeDataUrl,\n        updatedAt: new Date(),\n      },",
+          "endLine": 553,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "admission-credential-revocation-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/tickets/service.ts",
+          "role": "related",
+          "startLine": 539
+        },
+        {
+          "code": "    const { ticketId, eventId } = qrParsed;\n\n    // Get ticket\n    const ticket = await prisma.ticket.findUnique({\n      where: { id: ticketId },",
+          "endLine": 352,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "admission-credential-revocation-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/scanners/service.ts",
+          "role": "related",
+          "startLine": 348
+        },
+        {
+          "code": "  async getOrderById(id: string, userId?: string): Promise<Order | null> {\n    if (userId) {\n      // when userId provided, findFirst with both id and userId\n      return await prisma.order.findFirst({\n        where: { id, userId },\n        include: {\n          tickets: {\n            include: {\n              ticketType: {\n                select: { name: true },\n              },\n            },\n          },\n          event: {\n            select: {\n              name: true,\n              startDatetime: true,\n              venue: { select: { name: true, address: true } },\n            },\n          },\n          user: { select: { email: true, firstName: true, lastName: true } },\n        },",
+          "endLine": 295,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "admission-credential-revocation-source-3",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/orders/service.ts",
+          "role": "related",
+          "startLine": 274
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {
+        "originalInvestigationPacket": {
+          "CWE": "CWE-613",
+          "attacker": "A customer who saves a paid ticket's QR code before transferring it, or someone holding a compromised QR code.",
+          "confidence": "high",
+          "counterevidence": "Transfer and QR endpoints check current ownership; unpaid orders and cancelled/used tickets are rejected by the relevant admission paths. These checks do not invalidate saved credentials.",
+          "evidence": [
+            {
+              "file": "tixmoapi2/src/api/tickets/service.ts",
+              "lines": "231-239",
+              "snippet": "The transfer update changes userId, transferredFrom, transferredAt, and status, but leaves barcode and qrCodeUrl unchanged."
+            },
+            {
+              "file": "tixmoapi2/src/api/tickets/service.ts",
+              "lines": "539-553",
+              "snippet": "generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId) reuses all existing identifiers; only qrCodeUrl and updatedAt change."
+            },
+            {
+              "file": "tixmoapi2/src/api/scanners/service.ts",
+              "lines": "348-352,394-404",
+              "snippet": "Only ticketId and eventId are taken from parsed QR data. The ticket lookup and validation never compare the QR barcode to the stored barcode."
+            },
+            {
+              "file": "tixmoapi2/src/api/orders/service.ts",
+              "lines": "274-295",
+              "snippet": "The original purchaser's order detail includes all ticket fields, including transferred tickets' admission data."
+            }
+          ],
+          "impact": "A former owner can consume the recipient's ticket or resell its saved QR code. The advertised compromise recovery endpoint does not revoke compromised copies.",
+          "invariant": "Transfer and compromise recovery must revoke prior holders' admission capabilities.",
+          "remediation": "Rotate an unpredictable admission token atomically on transfer/regeneration, clear the cached QR, require its match at every scanner path, and redact current admission tokens for tickets no longer owned by the order viewer. Propagate revocations to offline clients.",
+          "severity": "medium",
+          "source_to_sink": "Customer saves QR \u2192 POST /tickets/:id/transfer changes owner \u2192 previous QR remains valid \u2192 gate redeems it before the recipient. POST /tickets/:id/regenerate-qr also reproduces the original payload.",
+          "title": "Ticket transfers and QR regeneration preserve previous admission credentials"
+        }
+      },
+      "findingId": "csf_49c43e15044600a68698c270",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:4ce547a01bc819395afbfd800732fc181c367960721f3e89cfc604e12734af41"
+      },
+      "identity": {
+        "anchor": "admission-credential-revocation"
+      },
+      "locations": [
+        {
+          "endLine": 239,
+          "path": "tixmoapi2/src/api/tickets/service.ts",
+          "role": "root_control",
+          "startLine": 231
+        }
+      ],
+      "occurrenceId": "occ_8c6c281bfd1c67e58c611a2b",
+      "provenance": {
+        "candidateId": "admission-credential-revocation",
+        "originalCandidates": [
+          {
+            "CWE": "CWE-613",
+            "attacker": "A former ticket owner or holder of a compromised QR.",
+            "candidateId": "admission-credential-revocation",
+            "confidence": "high",
+            "counterevidence": "Ownership and payment controls exist; do not invalidate saved credentials.",
+            "evidence": [
+              {
+                "file": "tixmoapi2/src/api/tickets/service.ts",
+                "lines": "231-239",
+                "snippet": "Transfer changes ownership and status, leaves barcode and qrCodeUrl unchanged."
+              },
+              {
+                "file": "tixmoapi2/src/api/tickets/service.ts",
+                "lines": "539-553",
+                "snippet": "Regeneration reuses ticket.id, ticket.barcode, ticket.eventId."
+              },
+              {
+                "file": "tixmoapi2/src/api/scanners/service.ts",
+                "lines": "348-352,394-404",
+                "snippet": "Parsed QR barcode is never compared."
+              }
+            ],
+            "impact": "Former holders can consume a recipient's ticket.",
+            "invariant": "Transfer and compromise recovery must revoke prior admission capabilities.",
+            "remediation": "Rotate admission token, enforce it on all scan paths, redact credentials from former purchaser, synchronize revocations.",
+            "severity": "medium",
+            "source_to_sink": "Saved QR -> ownership transfer without barcode rotation -> old QR still admits; regeneration reuses identifiers.",
+            "title": "Ticket transfers and QR regeneration preserve previous admission credentials"
+          }
+        ],
+        "source": "Independent admission/payments review and parent validation; artifacts/02_discovery/payments-admission-review.json"
+      },
+      "remediation": "Rotate an unpredictable admission token atomically on transfer/regeneration, clear the cached QR, require its match at every scanner path, and redact current admission tokens for tickets no longer owned by the order viewer. Propagate revocations to offline clients.",
+      "remediationTests": [
+        "Transfer and compromise recovery must revoke prior holders' admission capabilities. under repeated, concurrent and unauthorized requests."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "admission-credential-revocation-source-0",
+          "admission-credential-revocation-source-1",
+          "admission-credential-revocation-source-2",
+          "admission-credential-revocation-source-3"
+        ],
+        "summary": "Old admission credentials survive ownership changes and QR regeneration."
+      },
+      "ruleId": "admission.credential_revocation",
+      "severity": {
+        "level": "medium",
+        "rationale": "A former owner can consume the recipient's ticket or resell its saved QR code. The advertised compromise recovery endpoint does not revoke compromised copies. Requires A customer who saves a paid ticket's QR code before transferring it, or someone holding a compromised QR code."
+      },
+      "summary": "A former owner can consume the recipient's ticket or resell its saved QR code. The advertised compromise recovery endpoint does not revoke compromised copies. Customer saves QR \u2192 POST /tickets/:id/transfer changes owner \u2192 previous QR remains valid \u2192 gate redeems it before the recipient. POST /tickets/:id/regenerate-qr also reproduces the original payload.",
+      "taxonomy": {
+        "category": "admission",
+        "cwe": [
+          "CWE-613"
+        ]
+      },
+      "title": "Ticket transfers and QR regeneration preserve previous admission credentials",
+      "validation": {
+        "assertions": [
+          "A former owner can consume the recipient's ticket or resell its saved QR code. The advertised compromise recovery endpoint does not revoke compromised copies. Customer saves QR \u2192 POST /tickets/:id/transfer changes owner \u2192 previous QR remains valid \u2192 gate redeems it before the recipient. POST /tickets/:id/regenerate-qr also reproduces the original payload."
+        ],
+        "counterEvidence": [
+          "Transfer and QR endpoints check current ownership; unpaid orders and cancelled/used tickets are rejected by the relevant admission paths. These checks do not invalidate saved credentials."
+        ],
+        "evidenceRefs": [
+          "admission-credential-revocation-source-0",
+          "admission-credential-revocation-source-1",
+          "admission-credential-revocation-source-2",
+          "admission-credential-revocation-source-3"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Inactive/revoked keys are rejected. Registration validates event organization. Offline ticket download checks assigned event at lines 615-618; online scans and uploaded offline scans lack the equivalent check."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "scanner-event-scope-source-0",
+            "scanner-event-scope-source-1",
+            "scanner-event-scope-source-2"
+          ],
+          "outcome": "An event-limited scanner can consume another event's tickets and retrieve its attendee/ticket details. This remains an event capability violation within one business. POST /scanners/scan or /scanners/validate authenticates event A's scanner \u2192 controller passes only scannerId and supplied QR \u2192 scanTicket reads event B's ticket without loading or checking scanner scope \u2192 writes a successful log and consumes event B's ticket.",
+          "sink": "tixmoapi2/src/middleware/scannerAuth.ts",
+          "source": "A person possessing an active scanner API key assigned to event A and a QR code from event B.",
+          "summary": "POST /scanners/scan or /scanners/validate authenticates event A's scanner \u2192 controller passes only scannerId and supplied QR \u2192 scanTicket reads event B's ticket without loading or checking scanner scope \u2192 writes a successful log and consumes event B's ticket."
+        },
+        "evidenceRefs": [
+          "scanner-event-scope-source-0",
+          "scanner-event-scope-source-1",
+          "scanner-event-scope-source-2"
+        ],
+        "impact": "An event-limited scanner can consume another event's tickets and retrieve its attendee/ticket details. This remains an event capability violation within one business. Requires A person possessing an active scanner API key assigned to event A and a QR code from event B.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "A person possessing an active scanner API key assigned to event A and a QR code from event B."
+        ],
+        "summary": "POST /scanners/scan or /scanners/validate authenticates event A's scanner \u2192 controller passes only scannerId and supplied QR \u2192 scanTicket reads event B's ticket without loading or checking scanner scope \u2192 writes a successful log and consumes event B's ticket."
+      },
+      "codeEvidence": [
+        {
+          "code": "    const scanner = await scannerService.authenticateScanner(apiKey);\n\n    // Attach scanner info to request\n    req.scanner = {\n      id: scanner.id,\n      name: scanner.name,\n      organizationId: scanner.organizationId,\n      eventId: scanner.eventId,\n    };\n    req.scannerId = scanner.id;",
+          "endLine": 48,
+          "explanation": "Scanner authentication identity is discarded at the shared admission operation.",
+          "id": "scanner-event-scope-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/middleware/scannerAuth.ts",
+          "role": "root_control",
+          "startLine": 39
+        },
+        {
+          "code": "    const result = await scannerService.scanTicket({\n      scannerId: req.scanner!.id,\n      qrData: req.body.qrData,\n      scanType: req.body.scanType,\n      metadata: req.body.metadata,\n    });",
+          "endLine": 174,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "scanner-event-scope-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/scanners/controller.ts",
+          "role": "related",
+          "startLine": 169
+        },
+        {
+          "code": "  async scanTicket(data: ScanTicketData): Promise<{\n    success: boolean;\n    ticket?: unknown;\n    scanLog: ScanLog;\n    reason?: string;\n  }> {\n    // Parse QR code data\n    const qrParsed = parseTicketQRData(data.qrData);\n\n    if (!qrParsed) {\n      // Log failed scan\n      const failedLog = await prisma.scanLog.create({\n        data: {\n          scannerId: data.scannerId,\n          ticketId: '00000000-0000-0000-0000-000000000000', // Invalid ticket\n          eventId: '00000000-0000-0000-0000-000000000000', // Invalid event\n          scanType: data.scanType,\n          success: false,\n          failureReason: 'Invalid QR code format',\n          metadata: data.metadata as Prisma.InputJsonValue,\n        },\n      });\n\n      return {\n        success: false,\n        reason: 'Invalid QR code format',\n        scanLog: failedLog,\n      };\n    }\n\n    const { ticketId, eventId } = qrParsed;\n\n    // Get ticket\n    const ticket = await prisma.ticket.findUnique({\n      where: { id: ticketId },\n      include: {\n        event: true,\n        ticketType: true,\n        order: {\n          select: {\n            status: true,\n          },\n        },\n        user: {\n          select: {\n            firstName: true,",
+          "endLine": 363,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "scanner-event-scope-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/scanners/service.ts",
+          "role": "related",
+          "startLine": 318
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {
+        "originalInvestigationPacket": {
+          "CWE": "CWE-863",
+          "attacker": "A person possessing an active scanner API key assigned to event A and a QR code from event B.",
+          "confidence": "high",
+          "counterevidence": "Inactive/revoked keys are rejected. Registration validates event organization. Offline ticket download checks assigned event at lines 615-618; online scans and uploaded offline scans lack the equivalent check.",
+          "evidence": [
+            {
+              "file": "tixmoapi2/src/middleware/scannerAuth.ts",
+              "lines": "39-48",
+              "snippet": "Authentication attaches both organizationId and eventId to req.scanner."
+            },
+            {
+              "file": "tixmoapi2/src/api/scanners/controller.ts",
+              "lines": "169-174,263-265",
+              "snippet": "Online and offline controllers forward scannerId, without enforcing the authenticated scanner's eventId."
+            },
+            {
+              "file": "tixmoapi2/src/api/scanners/service.ts",
+              "lines": "318-443",
+              "snippet": "scanTicket never loads the scanner. ticket.eventId !== eventId compares the ticket only with attacker-supplied QR data."
+            }
+          ],
+          "impact": "An event-limited scanner can consume another event's tickets and retrieve its attendee/ticket details. This remains an event capability violation within one business.",
+          "invariant": "A scanner's event assignment must constrain its admission authority.",
+          "remediation": "Resolve and enforce the scanner's active state, organization, and optional event assignment inside the shared admission service before returning ticket data or changing ticket state.",
+          "severity": "medium",
+          "source_to_sink": "POST /scanners/scan or /scanners/validate authenticates event A's scanner \u2192 controller passes only scannerId and supplied QR \u2192 scanTicket reads event B's ticket without loading or checking scanner scope \u2192 writes a successful log and consumes event B's ticket.",
+          "title": "Event-assigned scanner keys can scan tickets for other events"
+        }
+      },
+      "findingId": "csf_b63ac18bec88e28bd5661495",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:3184fe519d6ffbb46ed952f959b3360662a7b6548da1c509390077a0486bf952"
+      },
+      "identity": {
+        "anchor": "scanner-event-scope"
+      },
+      "locations": [
+        {
+          "endLine": 48,
+          "path": "tixmoapi2/src/middleware/scannerAuth.ts",
+          "role": "root_control",
+          "startLine": 39
+        }
+      ],
+      "occurrenceId": "occ_ad6a8b42976ca4a6ff4e9d7a",
+      "provenance": {
+        "candidateId": "scanner-event-scope",
+        "originalCandidates": [
+          {
+            "CWE": "CWE-863",
+            "attacker": "Holder of event A scanner key and event B QR.",
+            "candidateId": "scanner-event-scope",
+            "confidence": "high",
+            "counterevidence": "Revoked keys rejected; sync enforces assigned event.",
+            "evidence": [
+              {
+                "file": "tixmoapi2/src/middleware/scannerAuth.ts",
+                "lines": "39-48",
+                "snippet": "Scanner identity includes organization and event."
+              },
+              {
+                "file": "tixmoapi2/src/api/scanners/service.ts",
+                "lines": "318-443",
+                "snippet": "scanTicket never loads scanner to enforce scope."
+              }
+            ],
+            "impact": "Wrong-event admission and attendee detail disclosure.",
+            "invariant": "Scanner event assignment constrains authority.",
+            "remediation": "Enforce current scanner organization/event scope inside admission service.",
+            "severity": "medium",
+            "source_to_sink": "Authenticated scanner -> controller forwards ID -> scanTicket compares ticket to QR event only -> consumes another event's ticket.",
+            "title": "Event-assigned scanner keys can scan tickets for other events"
+          }
+        ],
+        "source": "Independent admission/payments review and parent validation; artifacts/02_discovery/payments-admission-review.json"
+      },
+      "remediation": "Resolve and enforce the scanner's active state, organization, and optional event assignment inside the shared admission service before returning ticket data or changing ticket state.",
+      "remediationTests": [
+        "A scanner's event assignment must constrain its admission authority. under repeated, concurrent and unauthorized requests."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "scanner-event-scope-source-0",
+          "scanner-event-scope-source-1",
+          "scanner-event-scope-source-2"
+        ],
+        "summary": "Scanner authentication identity is discarded at the shared admission operation."
+      },
+      "ruleId": "admission.scanner_event_scope",
+      "severity": {
+        "level": "medium",
+        "rationale": "An event-limited scanner can consume another event's tickets and retrieve its attendee/ticket details. This remains an event capability violation within one business. Requires A person possessing an active scanner API key assigned to event A and a QR code from event B."
+      },
+      "summary": "An event-limited scanner can consume another event's tickets and retrieve its attendee/ticket details. This remains an event capability violation within one business. POST /scanners/scan or /scanners/validate authenticates event A's scanner \u2192 controller passes only scannerId and supplied QR \u2192 scanTicket reads event B's ticket without loading or checking scanner scope \u2192 writes a successful log and consumes event B's ticket.",
+      "taxonomy": {
+        "category": "admission",
+        "cwe": [
+          "CWE-863"
+        ]
+      },
+      "title": "Event-assigned scanner keys can scan tickets for other events",
+      "validation": {
+        "assertions": [
+          "An event-limited scanner can consume another event's tickets and retrieve its attendee/ticket details. This remains an event capability violation within one business. POST /scanners/scan or /scanners/validate authenticates event A's scanner \u2192 controller passes only scannerId and supplied QR \u2192 scanTicket reads event B's ticket without loading or checking scanner scope \u2192 writes a successful log and consumes event B's ticket."
+        ],
+        "counterEvidence": [
+          "Inactive/revoked keys are rejected. Registration validates event organization. Offline ticket download checks assigned event at lines 615-618; online scans and uploaded offline scans lack the equivalent check."
+        ],
+        "evidenceRefs": [
+          "scanner-event-scope-source-0",
+          "scanner-event-scope-source-1",
+          "scanner-event-scope-source-2"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Sequential repeated ENTRY scans reject USED tickets. Scanner authentication and staff role restrictions control the calling gate. Redis lock code has ownership-safe release, but no runtime source calls acquireLock."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "concurrent-admission-source-0",
+            "concurrent-admission-source-1"
+          ],
+          "outcome": "One purchased ticket can admit multiple attendees when requests overlap. The same issue affects scanner and staff check-in endpoints. Two gate requests read VALID \u2192 both pass validation \u2192 each performs an unconditional update to USED \u2192 both return successful admission.",
+          "sink": "tixmoapi2/src/api/scanners/service.ts",
+          "source": "Attendees presenting copies of one valid paid QR simultaneously at different gates.",
+          "summary": "Two gate requests read VALID \u2192 both pass validation \u2192 each performs an unconditional update to USED \u2192 both return successful admission."
+        },
+        "evidenceRefs": [
+          "concurrent-admission-source-0",
+          "concurrent-admission-source-1"
+        ],
+        "impact": "One purchased ticket can admit multiple attendees when requests overlap. The same issue affects scanner and staff check-in endpoints. Requires Attendees presenting copies of one valid paid QR simultaneously at different gates.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "Attendees presenting copies of one valid paid QR simultaneously at different gates."
+        ],
+        "summary": "Two gate requests read VALID \u2192 both pass validation \u2192 each performs an unconditional update to USED \u2192 both return successful admission."
+      },
+      "codeEvidence": [
+        {
+          "code": "    // Get ticket\n    const ticket = await prisma.ticket.findUnique({\n      where: { id: ticketId },\n      include: {\n        event: true,\n        ticketType: true,\n        order: {\n          select: {\n            status: true,\n          },\n        },\n        user: {\n          select: {\n            firstName: true,\n            lastName: true,\n            email: true,\n          },\n        },\n      },\n    });",
+          "endLine": 369,
+          "explanation": "Eligibility checks and successful admission logs are separated from an unconditional state update.",
+          "id": "concurrent-admission-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/scanners/service.ts",
+          "role": "root_control",
+          "startLine": 350
+        },
+        {
+          "code": "  async checkInTicket(barcode: string, checkedInBy?: string): Promise<Ticket> {\n    // Validate first\n    const validation = await this.validateTicket(barcode);\n\n    if (!validation.valid) {\n      throw ApiError.badRequest(validation.reason || 'Ticket is not valid');\n    }\n\n    // Mark as used\n    const updatedTicket = await prisma.ticket.update({\n      where: { barcode },\n      data: {\n        status: 'USED',\n        checkedInAt: new Date(),\n        checkedInBy: checkedInBy || 'system',\n      },\n    });\n\n    return updatedTicket;",
+          "endLine": 451,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "concurrent-admission-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/tickets/service.ts",
+          "role": "related",
+          "startLine": 433
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {
+        "originalInvestigationPacket": {
+          "CWE": "CWE-367",
+          "attacker": "Attendees presenting copies of one valid paid QR simultaneously at different gates.",
+          "confidence": "high",
+          "counterevidence": "Sequential repeated ENTRY scans reject USED tickets. Scanner authentication and staff role restrictions control the calling gate. Redis lock code has ownership-safe release, but no runtime source calls acquireLock.",
+          "evidence": [
+            {
+              "file": "tixmoapi2/src/api/scanners/service.ts",
+              "lines": "350-369,394-404,407-417,428-443",
+              "snippet": "The ticket is read and a successful scan log is created before prisma.ticket.update({ where: { id: ticketId }, data: { status: 'USED' } })."
+            },
+            {
+              "file": "tixmoapi2/src/api/tickets/service.ts",
+              "lines": "433-451",
+              "snippet": "checkInTicket awaits validateTicket, then updates by barcode with no current-status predicate."
+            }
+          ],
+          "impact": "One purchased ticket can admit multiple attendees when requests overlap. The same issue affects scanner and staff check-in endpoints.",
+          "invariant": "At most one entry request may successfully consume a ticket.",
+          "remediation": "Atomically change VALID to USED using a guarded update and accept only one affected row. Include order/payment eligibility and successful log creation in the same transactional admission operation. Add a simultaneous two-gate test.",
+          "severity": "medium",
+          "source_to_sink": "Two gate requests read VALID \u2192 both pass validation \u2192 each performs an unconditional update to USED \u2192 both return successful admission.",
+          "title": "Concurrent entry scans can redeem one ticket more than once"
+        }
+      },
+      "findingId": "csf_c565091e76d2ca4c32e9de08",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:adfdb3375ede9f1fdb51bb245d6ca2c176937b7d4543c2f55f20fec9b1abf942"
+      },
+      "identity": {
+        "anchor": "concurrent-admission"
+      },
+      "locations": [
+        {
+          "endLine": 369,
+          "path": "tixmoapi2/src/api/scanners/service.ts",
+          "role": "root_control",
+          "startLine": 350
+        }
+      ],
+      "occurrenceId": "occ_744a21a99bc75a52547cdc54",
+      "provenance": {
+        "candidateId": "concurrent-admission",
+        "originalCandidates": [
+          {
+            "CWE": "CWE-367",
+            "attacker": "Attendees presenting copied paid QR simultaneously.",
+            "candidateId": "concurrent-admission",
+            "confidence": "high",
+            "counterevidence": "Sequential repeats rejected; locks not used by runtime callers.",
+            "evidence": [
+              {
+                "file": "tixmoapi2/src/api/scanners/service.ts",
+                "lines": "350-369,394-443",
+                "snippet": "Read and successful log precede unconditional ticket update."
+              },
+              {
+                "file": "tixmoapi2/src/api/tickets/service.ts",
+                "lines": "433-451",
+                "snippet": "checkInTicket validates then updates by barcode without state predicate."
+              }
+            ],
+            "impact": "Multiple admissions on one purchased ticket.",
+            "invariant": "One successful ticket redemption.",
+            "remediation": "Atomic guarded VALID-to-USED transition plus transactionally consistent logs.",
+            "severity": "medium",
+            "source_to_sink": "Parallel reads see VALID; unconditional updates mark USED; both succeed.",
+            "title": "Concurrent entry scans can redeem one ticket more than once"
+          }
+        ],
+        "source": "Independent admission/payments review and parent validation; artifacts/02_discovery/payments-admission-review.json"
+      },
+      "remediation": "Atomically change VALID to USED using a guarded update and accept only one affected row. Include order/payment eligibility and successful log creation in the same transactional admission operation. Add a simultaneous two-gate test.",
+      "remediationTests": [
+        "At most one entry request may successfully consume a ticket. under repeated, concurrent and unauthorized requests."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "concurrent-admission-source-0",
+          "concurrent-admission-source-1"
+        ],
+        "summary": "Eligibility checks and successful admission logs are separated from an unconditional state update."
+      },
+      "ruleId": "admission.atomic_redemption",
+      "severity": {
+        "level": "medium",
+        "rationale": "One purchased ticket can admit multiple attendees when requests overlap. The same issue affects scanner and staff check-in endpoints. Requires Attendees presenting copies of one valid paid QR simultaneously at different gates."
+      },
+      "summary": "One purchased ticket can admit multiple attendees when requests overlap. The same issue affects scanner and staff check-in endpoints. Two gate requests read VALID \u2192 both pass validation \u2192 each performs an unconditional update to USED \u2192 both return successful admission.",
+      "taxonomy": {
+        "category": "admission",
+        "cwe": [
+          "CWE-367"
+        ]
+      },
+      "title": "Concurrent entry scans can redeem one ticket more than once",
+      "validation": {
+        "assertions": [
+          "One purchased ticket can admit multiple attendees when requests overlap. The same issue affects scanner and staff check-in endpoints. Two gate requests read VALID \u2192 both pass validation \u2192 each performs an unconditional update to USED \u2192 both return successful admission."
+        ],
+        "counterEvidence": [
+          "Sequential repeated ENTRY scans reject USED tickets. Scanner authentication and staff role restrictions control the calling gate. Redis lock code has ownership-safe release, but no runtime source calls acquireLock."
+        ],
+        "evidenceRefs": [
+          "concurrent-admission-source-0",
+          "concurrent-admission-source-1"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made.",
+          "Race is source-backed; existing tests do not force overlapping scan/cancellation transactions."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Sequential cancellations reject already-cancelled records. Inventory hold creation uses atomic quantityAvailable guards. Transactions make each individual cancellation consistent but do not recheck its transition eligibility."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "concurrent-stock-release-source-0",
+            "concurrent-stock-release-source-1",
+            "concurrent-stock-release-source-2"
+          ],
+          "outcome": "Customers can inflate available stock beyond physical capacity, cause overselling, and corrupt held/sold counters. Pending-order cancellation can consume other orders' aggregate holds. Concurrent requests read a cancellable ticket/order before either transaction \u2192 both pass status checks \u2192 each transaction updates the same state unconditionally and increments available inventory.",
+          "sink": "tixmoapi2/src/api/tickets/service.ts",
+          "source": "An authenticated customer issuing simultaneous cancellation requests for their own ticket or pending order.",
+          "summary": "Concurrent requests read a cancellable ticket/order before either transaction \u2192 both pass status checks \u2192 each transaction updates the same state unconditionally and increments available inventory."
+        },
+        "evidenceRefs": [
+          "concurrent-stock-release-source-0",
+          "concurrent-stock-release-source-1",
+          "concurrent-stock-release-source-2"
+        ],
+        "impact": "Customers can inflate available stock beyond physical capacity, cause overselling, and corrupt held/sold counters. Pending-order cancellation can consume other orders' aggregate holds. Requires An authenticated customer issuing simultaneous cancellation requests for their own ticket or pending order.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "An authenticated customer issuing simultaneous cancellation requests for their own ticket or pending order."
+        ],
+        "summary": "Concurrent requests read a cancellable ticket/order before either transaction \u2192 both pass status checks \u2192 each transaction updates the same state unconditionally and increments available inventory."
+      },
+      "codeEvidence": [
+        {
+          "code": "    const ticket = await prisma.ticket.findUnique({\n      where: { id },\n      include: {\n        event: true,\n        order: true,\n      },\n    });\n\n    if (!ticket) {\n      throw ApiError.notFound('Ticket not found');\n    }\n\n    const ticketTyped2 = ticket as unknown as Ticket & {\n      event: { startDatetime: Date };\n      order: { status: string };\n      userId: string;\n      status: string;\n    };\n\n    // Check ownership\n    if (ticketTyped2.userId !== userId) {\n      throw ApiError.forbidden('You can only cancel your own tickets');\n    }\n\n    // Check if ticket is valid\n    if (ticketTyped2.status === 'CANCELLED') {\n      throw ApiError.badRequest('Ticket is already cancelled');\n    }\n\n    if (ticketTyped2.status === 'USED') {\n      throw ApiError.badRequest('Cannot cancel a used ticket');\n    }\n\n    // Check if order is paid\n    if (ticketTyped2.order.status !== 'PAID') {\n      throw ApiError.badRequest('Can only cancel tickets from paid orders');\n    }\n\n    // Check if event hasn't started\n    if (new Date() >= ticketTyped2.event.startDatetime) {\n      throw ApiError.badRequest('Cannot cancel tickets for events that have already started');\n    }",
+          "endLine": 319,
+          "explanation": "Transition eligibility is checked before the transaction rather than claimed once inside it.",
+          "id": "concurrent-stock-release-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/tickets/service.ts",
+          "role": "root_control",
+          "startLine": 278
+        },
+        {
+          "code": "    const order = await prisma.order.findUnique({\n      where: { id },\n      include: {\n        tickets: true,\n      },\n    });\n\n    if (!order) {\n      throw ApiError.notFound('Order not found');\n    }\n\n    const orderTyped2 = order as unknown as OrderWithTicketsAndUser;\n    if (userId && orderTyped2.userId !== userId) {\n      throw ApiError.forbidden('You can only cancel your own orders');\n    }\n\n    if (orderTyped2.status === 'CANCELLED') {\n      throw ApiError.badRequest('Order is already cancelled');\n    }\n\n    if (orderTyped2.status === 'PAID') {\n      throw ApiError.badRequest('Cannot cancel paid orders. Request a refund instead.');\n    }",
+          "endLine": 489,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "concurrent-stock-release-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/orders/service.ts",
+          "role": "related",
+          "startLine": 467
+        },
+        {
+          "code": "router.post('/:id/cancel', controller.cancelTicket);",
+          "endLine": 216,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "concurrent-stock-release-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/tickets/routes.ts",
+          "role": "related",
+          "startLine": 216
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {
+        "originalInvestigationPacket": {
+          "CWE": "CWE-367",
+          "attacker": "An authenticated customer issuing simultaneous cancellation requests for their own ticket or pending order.",
+          "confidence": "high",
+          "counterevidence": "Sequential cancellations reject already-cancelled records. Inventory hold creation uses atomic quantityAvailable guards. Transactions make each individual cancellation consistent but do not recheck its transition eligibility.",
+          "evidence": [
+            {
+              "file": "tixmoapi2/src/api/tickets/service.ts",
+              "lines": "278-319,322-338",
+              "snippet": "Ownership/status checks occur before the transaction; cancellation updates by id, then unconditionally decrements quantitySold and increments quantityAvailable."
+            },
+            {
+              "file": "tixmoapi2/src/api/orders/service.ts",
+              "lines": "467-489,492-529",
+              "snippet": "Order status checks occur before the transaction. Inventory checks only the ticket type's aggregate quantityHeld; final order update has no PENDING predicate."
+            },
+            {
+              "file": "tixmoapi2/src/api/tickets/routes.ts",
+              "lines": "216",
+              "snippet": "The customer-accessible cancellation route calls controller.cancelTicket."
+            }
+          ],
+          "impact": "Customers can inflate available stock beyond physical capacity, cause overselling, and corrupt held/sold counters. Pending-order cancellation can consume other orders' aggregate holds.",
+          "invariant": "Each ticket or order may restore inventory exactly once.",
+          "remediation": "Claim each state transition with a conditional update inside its transaction before moving inventory; only the winner may restore stock. Apply the same transition discipline to order confirmation, refund, and expiry.",
+          "severity": "medium",
+          "source_to_sink": "Concurrent requests read a cancellable ticket/order before either transaction \u2192 both pass status checks \u2192 each transaction updates the same state unconditionally and increments available inventory.",
+          "title": "Concurrent cancellation requests can release the same inventory repeatedly"
+        }
+      },
+      "findingId": "csf_d94ed632bec51acebabaaae0",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:33a8e70932015b8a8e290173b7d5b7c472590483a610c6a187e6277606eed6a7"
+      },
+      "identity": {
+        "anchor": "concurrent-stock-release"
+      },
+      "locations": [
+        {
+          "endLine": 319,
+          "path": "tixmoapi2/src/api/tickets/service.ts",
+          "role": "root_control",
+          "startLine": 278
+        }
+      ],
+      "occurrenceId": "occ_b0ef51da1e49ae228ac90e71",
+      "provenance": {
+        "candidateId": "concurrent-stock-release",
+        "originalCandidates": [
+          {
+            "CWE": "CWE-367",
+            "attacker": "Authenticated customer cancelling own order or ticket concurrently.",
+            "candidateId": "concurrent-stock-release",
+            "confidence": "high",
+            "counterevidence": "Sequential cancellation rejected; reservation itself guarded.",
+            "evidence": [
+              {
+                "file": "tixmoapi2/src/api/tickets/service.ts",
+                "lines": "278-338",
+                "snippet": "Checks before transaction then unconditional sold decrement/availability increment."
+              },
+              {
+                "file": "tixmoapi2/src/api/orders/service.ts",
+                "lines": "467-529",
+                "snippet": "Status read before transaction; only aggregate holds guarded."
+              }
+            ],
+            "impact": "Stock inflation, overselling, held/sold counter corruption.",
+            "invariant": "Inventory restored once per transition.",
+            "remediation": "Claim state transition conditionally inside transaction before moving inventory.",
+            "severity": "medium",
+            "source_to_sink": "Cancellable record read before transactions; unconditional updates and stock release repeated.",
+            "title": "Concurrent cancellation requests can release the same inventory repeatedly"
+          }
+        ],
+        "source": "Independent admission/payments review and parent validation; artifacts/02_discovery/payments-admission-review.json"
+      },
+      "remediation": "Claim each state transition with a conditional update inside its transaction before moving inventory; only the winner may restore stock. Apply the same transition discipline to order confirmation, refund, and expiry.",
+      "remediationTests": [
+        "Each ticket or order may restore inventory exactly once. under repeated, concurrent and unauthorized requests."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "concurrent-stock-release-source-0",
+          "concurrent-stock-release-source-1",
+          "concurrent-stock-release-source-2"
+        ],
+        "summary": "Transition eligibility is checked before the transaction rather than claimed once inside it."
+      },
+      "ruleId": "inventory.atomic_cancellation",
+      "severity": {
+        "level": "medium",
+        "rationale": "Customers can inflate available stock beyond physical capacity, cause overselling, and corrupt held/sold counters. Pending-order cancellation can consume other orders' aggregate holds. Requires An authenticated customer issuing simultaneous cancellation requests for their own ticket or pending order."
+      },
+      "summary": "Customers can inflate available stock beyond physical capacity, cause overselling, and corrupt held/sold counters. Pending-order cancellation can consume other orders' aggregate holds. Concurrent requests read a cancellable ticket/order before either transaction \u2192 both pass status checks \u2192 each transaction updates the same state unconditionally and increments available inventory.",
+      "taxonomy": {
+        "category": "inventory",
+        "cwe": [
+          "CWE-367"
+        ]
+      },
+      "title": "Concurrent cancellation requests can release the same inventory repeatedly",
+      "validation": {
+        "assertions": [
+          "Customers can inflate available stock beyond physical capacity, cause overselling, and corrupt held/sold counters. Pending-order cancellation can consume other orders' aggregate holds. Concurrent requests read a cancellable ticket/order before either transaction \u2192 both pass status checks \u2192 each transaction updates the same state unconditionally and increments available inventory."
+        ],
+        "counterEvidence": [
+          "Sequential cancellations reject already-cancelled records. Inventory hold creation uses atomic quantityAvailable guards. Transactions make each individual cancellation consistent but do not recheck its transition eligibility."
+        ],
+        "evidenceRefs": [
+          "concurrent-stock-release-source-0",
+          "concurrent-stock-release-source-1",
+          "concurrent-stock-release-source-2"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made.",
+          "Race is source-backed; existing tests do not force overlapping scan/cancellation transactions."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Draft/cancelled events, events that have started, and insufficient inventory are rejected. Public responses exclude currently hidden types, so the hidden-type variation requires a previously obtained ID."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "ticket-sellability-source-0",
+            "ticket-sellability-source-1",
+            "ticket-sellability-source-2"
+          ],
+          "outcome": "Customers can buy before release or after closure. Previously known HIDDEN or administratively SOLD_OUT types also remain directly purchasable when their inventory is positive. Public event payload supplies active ticket IDs and sales dates \u2192 customer submits an ID before salesStart or after salesEnd \u2192 createOrder checks event state, remaining quantity, and per-item limit but skips ticket status and sales dates \u2192 holds inventory and creates tickets \u2192 normal payment completes the purchase.",
+          "sink": "tixmoapi2/src/api/orders/service.ts",
+          "source": "An authenticated customer submitting a known ticket type ID directly to POST /orders.",
+          "summary": "Public event payload supplies active ticket IDs and sales dates \u2192 customer submits an ID before salesStart or after salesEnd \u2192 createOrder checks event state, remaining quantity, and per-item limit but skips ticket status and sales dates \u2192 holds inventory and creates tickets \u2192 normal payment completes the purchase."
+        },
+        "evidenceRefs": [
+          "ticket-sellability-source-0",
+          "ticket-sellability-source-1",
+          "ticket-sellability-source-2"
+        ],
+        "impact": "Customers can buy before release or after closure. Previously known HIDDEN or administratively SOLD_OUT types also remain directly purchasable when their inventory is positive. Requires An authenticated customer submitting a known ticket type ID directly to POST /orders.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "An authenticated customer submitting a known ticket type ID directly to POST /orders."
+        ],
+        "summary": "Public event payload supplies active ticket IDs and sales dates \u2192 customer submits an ID before salesStart or after salesEnd \u2192 createOrder checks event state, remaining quantity, and per-item limit but skips ticket status and sales dates \u2192 holds inventory and creates tickets \u2192 normal payment completes the purchase."
+      },
+      "codeEvidence": [
+        {
+          "code": "    // Validate event status \u2014 accept PUBLISHED and ON_SALE\n    if (!['PUBLISHED', 'ON_SALE'].includes(event.status)) {\n      throw ApiError.badRequest('Event is not available for purchase');\n    }\n\n    // Validate event hasn't started\n    if (event.startDatetime && new Date() >= event.startDatetime) {\n      throw ApiError.badRequest('Event has already started');\n    }\n\n    // Validate availability and per-order limits\n    for (const item of data.items) {\n      const ticketType = ticketTypeMap.get(item.ticketTypeId)!;\n      if (ticketType.quantityAvailable < item.quantity) {\n        throw ApiError.badRequest(\n          `Only ${ticketType.quantityAvailable} tickets available for ${ticketType.name}`\n        );\n      }\n      if (item.quantity > ticketType.maxPerOrder) {\n        throw ApiError.badRequest(\n          `Maximum ${ticketType.maxPerOrder} tickets per order for ${ticketType.name}`\n        );\n      }\n    }",
+          "endLine": 112,
+          "explanation": "Reservation enforces availability but omits authoritative status and sales-window eligibility.",
+          "id": "ticket-sellability-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/orders/service.ts",
+          "role": "root_control",
+          "startLine": 89
+        },
+        {
+          "code": "    // Check ticket type status (reject HIDDEN and SOLD_OUT)\n    if (ticketType.status === 'HIDDEN' || ticketType.status === 'SOLD_OUT') {\n      return false;\n    }\n\n    // Check if event hasn't started yet\n    // Ensure both event and startDatetime are present and not null\n    if (ticketType.event && ticketType.event.startDatetime) {\n      if (new Date() >= ticketType.event.startDatetime) {\n        return false;\n      }\n    }\n\n    // Check sales window\n    const now = new Date();\n    if (ticketType.salesStart && now < ticketType.salesStart) {\n      return false;\n    }\n    if (ticketType.salesEnd && now > ticketType.salesEnd) {\n      return false;",
+          "endLine": 231,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "ticket-sellability-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/ticket-types/service.ts",
+          "role": "related",
+          "startLine": 212
+        },
+        {
+          "code": "          ticketTypes: {\n            where: { status: 'ACTIVE' },\n            select: {\n              id: true,\n              name: true,\n              price: true,\n              quantityAvailable: true,\n              salesStart: true,\n              salesEnd: true,\n            },",
+          "endLine": 756,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "ticket-sellability-source-2",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/events/service.ts",
+          "role": "related",
+          "startLine": 747
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {
+        "originalInvestigationPacket": {
+          "CWE": "CWE-841",
+          "attacker": "An authenticated customer submitting a known ticket type ID directly to POST /orders.",
+          "confidence": "high",
+          "counterevidence": "Draft/cancelled events, events that have started, and insufficient inventory are rejected. Public responses exclude currently hidden types, so the hidden-type variation requires a previously obtained ID.",
+          "evidence": [
+            {
+              "file": "tixmoapi2/src/api/orders/service.ts",
+              "lines": "89-112,167-229",
+              "snippet": "Checkout validation checks event status/start, quantityAvailable, and maxPerOrder. The transactional hold predicate contains only id and quantityAvailable."
+            },
+            {
+              "file": "tixmoapi2/src/api/ticket-types/service.ts",
+              "lines": "212-231",
+              "snippet": "checkAvailability explicitly rejects HIDDEN/SOLD_OUT and salesStart/salesEnd violations, but createOrder does not call it."
+            },
+            {
+              "file": "tixmoapi2/src/api/events/service.ts",
+              "lines": "747-756,801-809",
+              "snippet": "Public event responses expose active ticket IDs and sales dates without excluding types outside their sales window."
+            }
+          ],
+          "impact": "Customers can buy before release or after closure. Previously known HIDDEN or administratively SOLD_OUT types also remain directly purchasable when their inventory is positive.",
+          "invariant": "Purchases must respect the ticket type's sellable state and sales window.",
+          "remediation": "Enforce the shared sellability policy in authoritative checkout and include relevant state in the inventory reservation transaction.",
+          "severity": "medium",
+          "source_to_sink": "Public event payload supplies active ticket IDs and sales dates \u2192 customer submits an ID before salesStart or after salesEnd \u2192 createOrder checks event state, remaining quantity, and per-item limit but skips ticket status and sales dates \u2192 holds inventory and creates tickets \u2192 normal payment completes the purchase.",
+          "title": "Checkout bypasses ticket status and sales-window restrictions"
+        }
+      },
+      "findingId": "csf_4830cb9cfd688141167d9d65",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:69bb48da2ff5234092c8c55242287e5c266f443541567bc086ad27acc37fa7a3"
+      },
+      "identity": {
+        "anchor": "ticket-sellability"
+      },
+      "locations": [
+        {
+          "endLine": 112,
+          "path": "tixmoapi2/src/api/orders/service.ts",
+          "role": "root_control",
+          "startLine": 89
+        }
+      ],
+      "occurrenceId": "occ_3f4ebfff00105016e73fc24b",
+      "provenance": {
+        "candidateId": "ticket-sellability",
+        "originalCandidates": [
+          {
+            "CWE": "CWE-841",
+            "attacker": "Customer directly posting known ticket type ID.",
+            "candidateId": "ticket-sellability",
+            "confidence": "high",
+            "counterevidence": "Draft events, started events, shortage rejected. Hidden type requires prior ID.",
+            "evidence": [
+              {
+                "file": "tixmoapi2/src/api/orders/service.ts",
+                "lines": "89-112,167-229",
+                "snippet": "No ticket status/sales date check."
+              },
+              {
+                "file": "tixmoapi2/src/api/ticket-types/service.ts",
+                "lines": "212-231",
+                "snippet": "Availability helper enforces policy but checkout never uses it."
+              }
+            ],
+            "impact": "Purchase outside allowed release windows or hidden inventory.",
+            "invariant": "Authoritative purchases obey sellability policy.",
+            "remediation": "Authoritative sellability enforcement in reservation transaction.",
+            "severity": "medium",
+            "source_to_sink": "POST orders checks event status/start and quantity; omits ticket state and sales window; creates purchase.",
+            "title": "Checkout bypasses ticket status and sales-window restrictions"
+          }
+        ],
+        "source": "Independent admission/payments review and parent validation; artifacts/02_discovery/payments-admission-review.json"
+      },
+      "remediation": "Enforce the shared sellability policy in authoritative checkout and include relevant state in the inventory reservation transaction.",
+      "remediationTests": [
+        "Purchases must respect the ticket type's sellable state and sales window. under repeated, concurrent and unauthorized requests."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "ticket-sellability-source-0",
+          "ticket-sellability-source-1",
+          "ticket-sellability-source-2"
+        ],
+        "summary": "Reservation enforces availability but omits authoritative status and sales-window eligibility."
+      },
+      "ruleId": "inventory.sellability_policy",
+      "severity": {
+        "level": "medium",
+        "rationale": "Customers can buy before release or after closure. Previously known HIDDEN or administratively SOLD_OUT types also remain directly purchasable when their inventory is positive. Requires An authenticated customer submitting a known ticket type ID directly to POST /orders."
+      },
+      "summary": "Customers can buy before release or after closure. Previously known HIDDEN or administratively SOLD_OUT types also remain directly purchasable when their inventory is positive. Public event payload supplies active ticket IDs and sales dates \u2192 customer submits an ID before salesStart or after salesEnd \u2192 createOrder checks event state, remaining quantity, and per-item limit but skips ticket status and sales dates \u2192 holds inventory and creates tickets \u2192 normal payment completes the purchase.",
+      "taxonomy": {
+        "category": "inventory",
+        "cwe": [
+          "CWE-841"
+        ]
+      },
+      "title": "Checkout bypasses ticket status and sales-window restrictions",
+      "validation": {
+        "assertions": [
+          "Customers can buy before release or after closure. Previously known HIDDEN or administratively SOLD_OUT types also remain directly purchasable when their inventory is positive. Public event payload supplies active ticket IDs and sales dates \u2192 customer submits an ID before salesStart or after salesEnd \u2192 createOrder checks event state, remaining quantity, and per-item limit but skips ticket status and sales dates \u2192 holds inventory and creates tickets \u2192 normal payment completes the purchase."
+        ],
+        "counterEvidence": [
+          "Draft/cancelled events, events that have started, and insufficient inventory are rejected. Public responses exclude currently hidden types, so the hidden-type variation requires a previously obtained ID."
+        ],
+        "evidenceRefs": [
+          "ticket-sellability-source-0",
+          "ticket-sellability-source-1",
+          "ticket-sellability-source-2"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Tier activation dates and isActive are checked, and total ticket type stock is guarded. Runtime-source search found no increment of ticketTier.quantitySold. Exposure requires a configured quantity-limited discounted tier."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "tier-allocation-source-0",
+            "tier-allocation-source-1"
+          ],
+          "outcome": "A configured limited early-bird discount can apply to the entire ticket inventory, causing unauthorized price reductions beyond the intended allocation. getActiveTier selects a tier while quantitySold < quantityLimit \u2192 createOrder applies its price \u2192 confirmation increments only ticketType.quantitySold \u2192 tier.quantitySold remains unchanged \u2192 further orders continue receiving the limited price.",
+          "sink": "tixmoapi2/src/api/ticket-tiers/service.ts",
+          "source": "Customers purchasing while a cheaper quantity-limited tier is configured.",
+          "summary": "getActiveTier selects a tier while quantitySold < quantityLimit \u2192 createOrder applies its price \u2192 confirmation increments only ticketType.quantitySold \u2192 tier.quantitySold remains unchanged \u2192 further orders continue receiving the limited price."
+        },
+        "evidenceRefs": [
+          "tier-allocation-source-0",
+          "tier-allocation-source-1"
+        ],
+        "impact": "A configured limited early-bird discount can apply to the entire ticket inventory, causing unauthorized price reductions beyond the intended allocation. Requires Customers purchasing while a cheaper quantity-limited tier is configured.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "Customers purchasing while a cheaper quantity-limited tier is configured."
+        ],
+        "summary": "getActiveTier selects a tier while quantitySold < quantityLimit \u2192 createOrder applies its price \u2192 confirmation increments only ticketType.quantitySold \u2192 tier.quantitySold remains unchanged \u2192 further orders continue receiving the limited price."
+      },
+      "codeEvidence": [
+        {
+          "code": "  async getActiveTier(ticketTypeId: string): Promise<TicketTier | null> {\n    const now = new Date();\n\n    const tiers = await prisma.ticketTier.findMany({\n      where: {\n        ticketTypeId,\n        isActive: true,\n      },\n      orderBy: { sortOrder: 'asc' },\n    });\n\n    for (const tier of tiers) {\n      // Check date window\n      if (tier.startsAt && now < tier.startsAt) continue;\n      if (tier.endsAt && now >= tier.endsAt) continue;\n\n      // Check quantity limit\n      if (tier.quantityLimit !== null && tier.quantitySold >= tier.quantityLimit) continue;\n\n      return tier; // First qualifying tier wins\n    }\n\n    return null; // No active tier \u2014 use base price",
+          "endLine": 155,
+          "explanation": "Only tier price is recorded; the limited tier's allocation is never reserved or consumed.",
+          "id": "tier-allocation-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/ticket-tiers/service.ts",
+          "role": "root_control",
+          "startLine": 133
+        },
+        {
+          "code": "    for (const item of data.items) {\n      const ticketType = ticketTypeMap.get(item.ticketTypeId)!;\n      let unitPrice = ticketType.price;\n\n      // Check for active tier\n      const activeTier = await ticketTierService.getActiveTier(item.ticketTypeId);\n      if (activeTier) {\n        unitPrice = activeTier.price;\n        tierPriceMap.set(item.ticketTypeId, activeTier.price);\n      }\n\n      totalAmount = totalAmount.add(unitPrice.mul(item.quantity));",
+          "endLine": 128,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "tier-allocation-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "tixmoapi2/src/api/orders/service.ts",
+          "role": "related",
+          "startLine": 117
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Independent full-file review and parent inspection confirm the reachable source control failure. Production exploitation was not attempted."
+      },
+      "extensions": {
+        "originalInvestigationPacket": {
+          "CWE": "CWE-841",
+          "attacker": "Customers purchasing while a cheaper quantity-limited tier is configured.",
+          "confidence": "high",
+          "counterevidence": "Tier activation dates and isActive are checked, and total ticket type stock is guarded. Runtime-source search found no increment of ticketTier.quantitySold. Exposure requires a configured quantity-limited discounted tier.",
+          "evidence": [
+            {
+              "file": "tixmoapi2/src/api/ticket-tiers/service.ts",
+              "lines": "133-155",
+              "snippet": "Tier selection relies on tier.quantitySold >= tier.quantityLimit to reject exhausted tiers."
+            },
+            {
+              "file": "tixmoapi2/src/api/orders/service.ts",
+              "lines": "117-128,214-228,356-379",
+              "snippet": "Checkout retains only the selected tier price; ticket creation records ticketTypeId and pricePaid, and confirmation updates only ticketType counters."
+            }
+          ],
+          "impact": "A configured limited early-bird discount can apply to the entire ticket inventory, causing unauthorized price reductions beyond the intended allocation.",
+          "invariant": "A limited-price tier must stop supplying its price when its allocation is consumed.",
+          "remediation": "Persist the selected tier on the reservation/ticket, atomically reserve tier allocation during checkout, and maintain held/sold/released tier counters through every transition.",
+          "severity": "medium",
+          "source_to_sink": "getActiveTier selects a tier while quantitySold < quantityLimit \u2192 createOrder applies its price \u2192 confirmation increments only ticketType.quantitySold \u2192 tier.quantitySold remains unchanged \u2192 further orders continue receiving the limited price.",
+          "title": "Quantity-limited discounted tiers never exhaust through checkout"
+        }
+      },
+      "findingId": "csf_cf73934e449ffd42e44b268a",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:d788a33a0f6e020f00c846d9cb0ecad30f149507537ac7c09fc20a5fd86be1ae"
+      },
+      "identity": {
+        "anchor": "tier-allocation"
+      },
+      "locations": [
+        {
+          "endLine": 155,
+          "path": "tixmoapi2/src/api/ticket-tiers/service.ts",
+          "role": "root_control",
+          "startLine": 133
+        }
+      ],
+      "occurrenceId": "occ_9ff7de84975d4c1e0f416cd1",
+      "provenance": {
+        "candidateId": "tier-allocation",
+        "originalCandidates": [
+          {
+            "CWE": "CWE-841",
+            "attacker": "Buyers purchasing when a limited discounted tier is configured.",
+            "candidateId": "tier-allocation",
+            "confidence": "high",
+            "counterevidence": "Tier dates and active state enforced; overall stock guarded.",
+            "evidence": [
+              {
+                "file": "tixmoapi2/src/api/ticket-tiers/service.ts",
+                "lines": "133-155",
+                "snippet": "getActiveTier depends on tier quantitySold."
+              },
+              {
+                "file": "tixmoapi2/src/api/orders/service.ts",
+                "lines": "117-128,214-228,356-379",
+                "snippet": "No tier identity or counter transition."
+              }
+            ],
+            "impact": "Discount applies beyond allocation to full stock.",
+            "invariant": "Limited tier price stops when allocation consumed.",
+            "remediation": "Persist tier identity and atomically maintain tier held/sold/released allocation.",
+            "severity": "medium",
+            "source_to_sink": "Tier chosen by quantitySold; checkout stores price only; confirmation increments ticketType only; tier never exhausts.",
+            "title": "Quantity-limited discounted tiers never exhaust through checkout"
+          }
+        ],
+        "source": "Independent admission/payments review and parent validation; artifacts/02_discovery/payments-admission-review.json"
+      },
+      "remediation": "Persist the selected tier on the reservation/ticket, atomically reserve tier allocation during checkout, and maintain held/sold/released tier counters through every transition.",
+      "remediationTests": [
+        "A limited-price tier must stop supplying its price when its allocation is consumed. under repeated, concurrent and unauthorized requests."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "tier-allocation-source-0",
+          "tier-allocation-source-1"
+        ],
+        "summary": "Only tier price is recorded; the limited tier's allocation is never reserved or consumed."
+      },
+      "ruleId": "inventory.tier_allocation",
+      "severity": {
+        "level": "medium",
+        "rationale": "A configured limited early-bird discount can apply to the entire ticket inventory, causing unauthorized price reductions beyond the intended allocation. Requires Customers purchasing while a cheaper quantity-limited tier is configured."
+      },
+      "summary": "A configured limited early-bird discount can apply to the entire ticket inventory, causing unauthorized price reductions beyond the intended allocation. getActiveTier selects a tier while quantitySold < quantityLimit \u2192 createOrder applies its price \u2192 confirmation increments only ticketType.quantitySold \u2192 tier.quantitySold remains unchanged \u2192 further orders continue receiving the limited price.",
+      "taxonomy": {
+        "category": "inventory",
+        "cwe": [
+          "CWE-841"
+        ]
+      },
+      "title": "Quantity-limited discounted tiers never exhaust through checkout",
+      "validation": {
+        "assertions": [
+          "A configured limited early-bird discount can apply to the entire ticket inventory, causing unauthorized price reductions beyond the intended allocation. getActiveTier selects a tier while quantitySold < quantityLimit \u2192 createOrder applies its price \u2192 confirmation increments only ticketType.quantitySold \u2192 tier.quantitySold remains unchanged \u2192 further orders continue receiving the limited price."
+        ],
+        "counterEvidence": [
+          "Tier activation dates and isActive are checked, and total ticket type stock is guarded. Runtime-source search found no increment of ticketTier.quantitySold. Exposure requires a configured quantity-limited discounted tier."
+        ],
+        "evidenceRefs": [
+          "tier-allocation-source-0",
+          "tier-allocation-source-1"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing with counterevidence review",
+        "summary": "Source path and missing guard confirmed; general regression tests are not claimed as exploit reproductions."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "Manual workflow dispatch, local default and one-second timeout reduce reachability but do not prevent the demonstrated host-realm escape. Evidenced CI env contains URL/currency references, not established cloud/payment keys."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "runtime-config-vm-escape-source-0",
+            "runtime-config-vm-escape-source-1",
+            "runtime-config-vm-escape-source-2"
+          ],
+          "outcome": "The evidence helper executes fetched runtime-config.js inside node:vm with a host-realm window object. A harmless reproduction using the exact parser reached the host Function constructor and returned process.version. A party controlling the selected dashboard response can therefore gain the checker's host process authority when an operator or workflow invokes the check.",
+          "sink": "scripts/check-checkout-runtime-config.mjs",
+          "source": "A party controlling runtime-config.js at an operator-selected dashboard origin.",
+          "summary": "Selected dashboard URL -> fetch /runtime-config.js -> vm parser with outer-realm object -> host Function constructor -> process authority."
+        },
+        "evidenceRefs": [
+          "runtime-config-vm-escape-source-0",
+          "runtime-config-vm-escape-source-1",
+          "runtime-config-vm-escape-source-2"
+        ],
+        "impact": "Process authority is substantial, but exploitation requires control of the configured dashboard's script and a separate operator-triggered check. Medium reflects that prerequisite; no ordinary business-record input reaches this sink, and no actual secret or shell access was tested.",
+        "limitations": [
+          "No observed exploitation or production impact is claimed."
+        ],
+        "preconditions": [
+          "A party controlling runtime-config.js at an operator-selected dashboard origin."
+        ],
+        "summary": "Selected dashboard URL -> fetch /runtime-config.js -> vm parser with outer-realm object -> host Function constructor -> process authority."
+      },
+      "codeEvidence": [
+        {
+          "code": "const parseRuntimeConfig = (source) => {\n  const sandbox = {\n    window: {},\n  };\n  sandbox.window.__TIXMO_CONFIG__ = {};\n  vm.createContext(sandbox);\n  vm.runInContext(source, sandbox, {\n    timeout: 1000,\n    displayErrors: false,\n  });\n\n  return sandbox.window.__TIXMO_CONFIG__ || {};",
+          "endLine": 138,
+          "explanation": "A VM context containing host objects is treated as an isolation boundary for untrusted remote JavaScript.",
+          "id": "runtime-config-vm-escape-source-0",
+          "label": "Root control",
+          "language": "typescript",
+          "path": "scripts/check-checkout-runtime-config.mjs",
+          "role": "root_control",
+          "startLine": 127
+        },
+        {
+          "code": "try {\n  const runtime = await requestText('runtime config fetch', evidence.runtimeConfigUrl);\n  const runtimeConfig = parseRuntimeConfig(runtime.text);",
+          "endLine": 182,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "runtime-config-vm-escape-source-1",
+          "label": "Related control",
+          "language": "typescript",
+          "path": "scripts/check-checkout-runtime-config.mjs",
+          "role": "related",
+          "startLine": 180
+        },
+        {
+          "code": "      STAGING_DASHBOARD_URL: ${{ secrets.STAGING_DASHBOARD_URL }}\n      STAGING_EXPECTED_API_URL: ${{ secrets.STAGING_EXPECTED_API_URL }}\n      STAGING_EXPECTED_PAYMENT_CURRENCY: ${{ secrets.STAGING_EXPECTED_PAYMENT_CURRENCY }}\n\n      PRODUCTION_DASHBOARD_URL: ${{ secrets.PRODUCTION_DASHBOARD_URL }}\n      PRODUCTION_EXPECTED_API_URL: ${{ secrets.PRODUCTION_EXPECTED_API_URL }}\n      PRODUCTION_EXPECTED_PAYMENT_CURRENCY: ${{ secrets.PRODUCTION_EXPECTED_PAYMENT_CURRENCY }}",
+          "endLine": 36,
+          "explanation": "Source completes the entry point, authority/state check, or downstream effect described in this finding.",
+          "id": "runtime-config-vm-escape-source-2",
+          "label": "Related control",
+          "language": "yaml",
+          "path": ".github/workflows/checkout-runtime-config-evidence.yml",
+          "role": "related",
+          "startLine": 30
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Exact parser reproduced host-process access with a harmless synthetic payload; helper call chain was fully read."
+      },
+      "extensions": {
+        "originalInvestigationPacket": {
+          "attackerStartingCapability": "Control JavaScript returned by /runtime-config.js at the operator-configured dashboard origin, without already controlling the evidence-check host.",
+          "calibration": "High for conditional remote response control escalating to host process authority; not Critical, not automatic remote API execution, and no claim of observed exploitation. Specific production/cloud credentials, GitHub job-token permissions, downstream exfiltration, and actual compromised origins remain unverified.",
+          "callerPrerequisite": "An operator invokes npm run evidence:checkout-config against that origin, or manually dispatches the existing checkout-config workflow for a configured staging/production dashboard. The helper is not an unauthenticated API endpoint. A compromised dashboard/static-content publisher or tampered configured response is required; ordinary ticket/approval input does not establish this capability.",
+          "confidence": "high",
+          "counterEvidence": [
+            "The workflow is manual workflow_dispatch rather than a public API trigger.",
+            "The default local target is 127.0.0.1:5173.",
+            "The parser applies a one-second synchronous execution timeout, but that timeout does not isolate the host-realm constructor exposed through window.",
+            "Configured workflow environment values are URL/currency settings; no Stripe/AWS/payment secret is declared by this workflow.",
+            "An attacker controlling only business-record strings cannot reach the fetched script source based on inspected code."
+          ],
+          "demonstratedGain": "The exact parser's synthetic content reached the host realm's Function constructor through window.constructor.constructor and read host process.version.",
+          "evidence": [
+            "scripts/check-checkout-runtime-config.mjs:56-76",
+            "scripts/check-checkout-runtime-config.mjs:92-138",
+            "scripts/check-checkout-runtime-config.mjs:180-182",
+            ".github/workflows/checkout-runtime-config-evidence.yml:26-36",
+            ".github/workflows/checkout-runtime-config-evidence.yml:48-80"
+          ],
+          "id": "tooling-runtime-config-vm-escape",
+          "impact": "Escaped host-realm JavaScript can access process-scoped environment state and run with the evidence-check process's authority. In the source-declared workflow, the evidenced secret exposure sink is the six STAGING_/PRODUCTION_ dashboard/API URL and currency environment references. These are operational settings, not proven payment/cloud credentials. Local invocation additionally inherits the operator's environment and host account authority. File/shell effects were not executed in validation.",
+          "location": "scripts/check-checkout-runtime-config.mjs:127-138",
+          "mitigation": "Consume a JSON runtime-config endpoint or parse a strictly defined data format without evaluating downloaded JavaScript. Bind the inspected origin and expected configuration to the review request; do not use node:vm as the security boundary for remote code.",
+          "severity": "high",
+          "sourceToSink": [
+            "package.json:18 registers npm run evidence:checkout-config.",
+            "scripts/check-checkout-runtime-config.mjs:56-76 selects dashboard URL and fixed /runtime-config.js resource.",
+            "scripts/check-checkout-runtime-config.mjs:92-121 fetches response text without an integrity binding.",
+            "scripts/check-checkout-runtime-config.mjs:127-138 supplies an outer-realm ordinary window object to vm.createContext and vm.runInContext.",
+            "scripts/check-checkout-runtime-config.mjs:180-182 passes fetched response directly to that parser.",
+            ".github/workflows/checkout-runtime-config-evidence.yml:30-36 exposes both staging/production URL/currency secret references as job environment variables.",
+            ".github/workflows/checkout-runtime-config-evidence.yml:58-63,75-80 invokes the exact helper for the selected origin."
+          ],
+          "status": "validated source-backed with harmless offline reproduction",
+          "title": "Fetched runtime configuration can execute in the evidence checker's host Node realm",
+          "validation": {
+            "checked": "Returned version equals harness process.version.",
+            "harmlessPayload": "window.__TIXMO_CONFIG__ = { observedVersion: window.constructor.constructor(\"return process.version\")() };",
+            "limitations": "Test did not run the helper's fetch/write steps or inspect credentials; source inspection establishes that production helper passes fetched text to the tested parser.",
+            "observedOutput": {
+              "observedVersion": "v24.0.2"
+            },
+            "parserSourceSha256": "92d0651d4a3d44c1cba7c9d2b30223d055940b50dfb94d6e36843611d6c5db25",
+            "testHarness": "Read scripts/check-checkout-runtime-config.mjs; extract the exact const parseRuntimeConfig block preceding const requireTruthy; construct it with new Function('vm', block + return parser) using node:vm; call only the parser."
+          },
+          "violatedInvariant": "Configuration inspection of deployed browser content must not grant that content the local operator or CI runner's process authority."
+        }
+      },
+      "findingId": "csf_afeafad00ced5e600703284b",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:52db06762688e0974aaef2dbd6db2d20e22a2784e46ebaa14c19624017454f8f"
+      },
+      "identity": {
+        "anchor": "runtime-config-vm-escape"
+      },
+      "locations": [
+        {
+          "endLine": 138,
+          "path": "scripts/check-checkout-runtime-config.mjs",
+          "role": "root_control",
+          "startLine": 127
+        }
+      ],
+      "occurrenceId": "occ_ba5625ca96d71cba4b41be06",
+      "provenance": {
+        "candidateId": "runtime-config-vm-escape",
+        "source": "Architecture/tooling review and parent validation; artifacts/02_discovery/tooling-review.json"
+      },
+      "remediation": "Publish JSON configuration and validate a strict schema without executing downloaded JavaScript. Verify the expected origin and configuration as data.",
+      "remediationTests": [
+        "Malicious configuration is rejected without executing code.",
+        "Configuration checks run without host process access or secret-bearing context."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "runtime-config-vm-escape-source-0",
+          "runtime-config-vm-escape-source-1",
+          "runtime-config-vm-escape-source-2"
+        ],
+        "summary": "A VM context containing host objects is treated as an isolation boundary for untrusted remote JavaScript."
+      },
+      "ruleId": "tooling.untrusted_config_evaluation",
+      "severity": {
+        "level": "medium",
+        "rationale": "Process authority is substantial, but exploitation requires control of the configured dashboard's script and a separate operator-triggered check. Medium reflects that prerequisite; no ordinary business-record input reaches this sink, and no actual secret or shell access was tested."
+      },
+      "summary": "The evidence helper executes fetched runtime-config.js inside node:vm with a host-realm window object. A harmless reproduction using the exact parser reached the host Function constructor and returned process.version. A party controlling the selected dashboard response can therefore gain the checker's host process authority when an operator or workflow invokes the check.",
+      "taxonomy": {
+        "category": "tooling",
+        "cwe": [
+          "CWE-94"
+        ]
+      },
+      "title": "Runtime configuration inspection exposes the operator's Node process to downloaded JavaScript",
+      "validation": {
+        "assertions": [
+          "The evidence helper executes fetched runtime-config.js inside node:vm with a host-realm window object. A harmless reproduction using the exact parser reached the host Function constructor and returned process.version. A party controlling the selected dashboard response can therefore gain the checker's host process authority when an operator or workflow invokes the check."
+        ],
+        "counterEvidence": [
+          "Manual workflow dispatch, local default and one-second timeout reduce reachability but do not prevent the demonstrated host-realm escape. Evidenced CI env contains URL/currency references, not established cloud/payment keys."
+        ],
+        "evidenceRefs": [
+          "runtime-config-vm-escape-source-0",
+          "runtime-config-vm-escape-source-1",
+          "runtime-config-vm-escape-source-2"
+        ],
+        "limitations": [
+          "No malicious production requests or state changes were made."
+        ],
+        "method": "Static source tracing plus harmless offline exact-parser reproduction",
+        "summary": "Exact parser returned host process.version through downloaded-script payload; no credentials, filesystem writes or command execution were attempted."
+      }
+    },
+    {
+      "attackPath": {
+        "controls": [
+          "The cache is scoped to the browser tab and normally disappears when its page session ends; this is a local/shared-browser issue, not a remote cross-tenant disclosure. Successful authorized refresh replaces the cache, but rejection retains it. Server organization checks do not authorize cached content. Legitimate same-business staff visibility remains expected."
+        ],
+        "dataFlow": {
+          "evidenceRefs": [
+            "frontend-cache-isolation-source-0",
+            "frontend-cache-isolation-source-1",
+            "frontend-cache-isolation-source-2",
+            "frontend-cache-isolation-source-3",
+            "frontend-cache-isolation-source-4"
+          ],
+          "outcome": "Disclosure of the preceding staff session's internal comments, reviewer identities, revision assets and still-valid bearer review credentials on shared-browser reuse. The credentials can be replayed against public review endpoints.",
+          "sink": "Subsequent user's cached approval detail",
+          "source": "Previous authenticated staff API response",
+          "summary": "An authenticated staff GET /approvals returns INTERNAL comments, full revisions/assets and reviewer reviewUrl credentials. ApprovalsDashboard serializes the complete response in a global sessionStorage key without identity/expiry. clearStoredSession removes only localStorage auth/activity entries. The next logged-in user can enter /approvals; cached records are rendered immediately and retained when current API access fails. Clicking a card passes its cached record as initialApproval. ApprovalDetailView keeps initialApproval on failed refresh and treats any truthy user.role, including CUSTOMER, as staff for internal-comment visibility."
+        },
+        "impact": "Disclosure of the preceding staff session's internal comments, reviewer identities, revision assets and still-valid bearer review credentials on shared-browser reuse. The credentials can be replayed against public review endpoints.",
+        "limitations": [
+          "Requires prior staff cache and same-tab subsequent user."
+        ],
+        "preconditions": [
+          "Another person reusing the same browser tab after a staff member logs out, including a customer who subsequently signs in."
+        ],
+        "summary": "An authenticated staff GET /approvals returns INTERNAL comments, full revisions/assets and reviewer reviewUrl credentials. ApprovalsDashboard serializes the complete response in a global sessionStorage key without identity/expiry. clearStoredSession removes only localStorage auth/activity entries. The next logged-in user can enter /approvals; cached records are rendered immediately and retained when current API access fails. Clicking a card passes its cached record as initialApproval. ApprovalDetailView keeps initialApproval on failed refresh and treats any truthy user.role, including CUSTOMER, as staff for internal-comment visibility."
+      },
+      "codeEvidence": [
+        {
+          "code": "const writeApprovalsDashboardCache = ({ approvals, events }) => {\n    if (typeof window === 'undefined') {\n        return;\n    }\n\n    try {\n        window.sessionStorage.setItem(\n            APPROVALS_DASHBOARD_CACHE_KEY,\n            JSON.stringify({\n                approvals,\n                events,\n            })\n        );",
+          "endLine": 78,
+          "explanation": "Cache stores complete approval data without a user/session partition or expiry.",
+          "id": "frontend-cache-isolation-source-0",
+          "label": "Global sensitive cache write",
+          "language": "javascript",
+          "path": "tdash/src/features/ApprovalsDashboard.jsx",
+          "role": "root_control",
+          "startLine": 66
+        },
+        {
+          "code": "            let nextApprovals = approvalsRef.current;\n            let nextEvents = eventsRef.current;\n            let nextError = '';\n\n            if (approvalsResponse.status === 'fulfilled') {\n                nextApprovals = approvalsResponse.value.approvals || [];\n                setApprovals(nextApprovals);\n            } else {\n                nextError =\n                    approvalsResponse.reason?.response?.data?.message ||\n                    approvalsResponse.reason?.message ||\n                    'Failed to load approvals.';\n            }",
+          "endLine": 517,
+          "explanation": "Cached staff data survives the later identity/authorization boundary.",
+          "id": "frontend-cache-isolation-source-1",
+          "label": "Supporting lifecycle control",
+          "language": "javascript",
+          "path": "tdash/src/features/ApprovalsDashboard.jsx",
+          "role": "related",
+          "startLine": 505
+        },
+        {
+          "code": "    const isTeamMember = useMemo(() => {\n        if (user?.role || user?.organizationId) {\n            return true;\n        }\n\n        const currentEmail = normalizeEmail(user?.email);\n        if (!currentEmail) {\n            return false;\n        }\n\n        return reviewers.some((reviewer) => (\n            normalizeEmail(reviewer.email) === currentEmail &&\n            reviewer.reviewerType === 'INTERNAL'\n        ));\n    }, [reviewers, user?.email, user?.organizationId, user?.role]);\n    const sortedComments = useMemo(\n        () =>\n            [...comments].sort((left, right) => {\n                const leftTime = new Date(left.createdAt || 0).getTime();\n                const rightTime = new Date(right.createdAt || 0).getTime();\n                return rightTime - leftTime;\n            }),\n        [comments]\n    );\n    const internalComments = useMemo(\n        () => sortedComments.filter((item) => item.visibility === 'INTERNAL'),\n        [sortedComments]\n    );\n    const visibleComments = useMemo(\n        () => sortedComments.filter((item) => isTeamMember || item.visibility !== 'INTERNAL'),\n        [isTeamMember, sortedComments]",
+          "endLine": 375,
+          "explanation": "Cached staff data survives the later identity/authorization boundary.",
+          "id": "frontend-cache-isolation-source-2",
+          "label": "Supporting lifecycle control",
+          "language": "javascript",
+          "path": "tdash/src/features/ApprovalDetailView.jsx",
+          "role": "related",
+          "startLine": 345
+        },
+        {
+          "code": "};\n\nexport const clearStoredSession = () => {\n    removeStoredValue(ACCESS_TOKEN_KEY);\n    removeStoredValue(REFRESH_TOKEN_KEY);\n    removeStoredValue(USER_STORAGE_KEY);\n    clearSessionActivity();\n};\n\nexport const emitAuthExpired = (reason = AUTH_EXPIRED_REASONS.expired) => {",
+          "endLine": 124,
+          "explanation": "Cached staff data survives the later identity/authorization boundary.",
+          "id": "frontend-cache-isolation-source-3",
+          "label": "Supporting lifecycle control",
+          "language": "javascript",
+          "path": "tdash/src/lib/session.js",
+          "role": "related",
+          "startLine": 115
+        },
+        {
+          "code": "        } catch (requestError) {\n            if (!isMountedRef.current || requestSequenceRef.current !== requestId) {\n                return null;\n            }\n            setError(requestError.response?.data?.message || requestError.message || 'Failed to load approval.');\n        } finally {",
+          "endLine": 298,
+          "explanation": "Cached staff data survives the later identity/authorization boundary.",
+          "id": "frontend-cache-isolation-source-4",
+          "label": "Supporting lifecycle control",
+          "language": "javascript",
+          "path": "tdash/src/features/ApprovalDetailView.jsx",
+          "role": "related",
+          "startLine": 293
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "rationale": "Complete frontend dashboard/detail/session/router reads and parent source trace establish disclosure despite current API authorization denial."
+      },
+      "extensions": {
+        "originalInvestigationPacket": {
+          "attacker": "Another person reusing the same browser tab after a staff member logs out, including a customer who subsequently signs in.",
+          "confidence": "high",
+          "counterevidence": "The cache is scoped to the browser tab and normally disappears when its page session ends; this is a local/shared-browser issue, not a remote cross-tenant disclosure. Successful authorized refresh replaces the cache, but rejection retains it. Server organization checks do not authorize cached content. Legitimate same-business staff visibility remains expected.",
+          "cwe": "CWE-525",
+          "impact": "Disclosure of the preceding staff session's internal comments, reviewer identities, revision assets and still-valid bearer review credentials on shared-browser reuse. The credentials can be replayed against public review endpoints.",
+          "locations": [
+            {
+              "file": "tdash/src/features/ApprovalsDashboard.jsx",
+              "line": 38
+            },
+            {
+              "end": 78,
+              "file": "tdash/src/features/ApprovalsDashboard.jsx",
+              "start": 66
+            },
+            {
+              "end": 393,
+              "file": "tdash/src/features/ApprovalsDashboard.jsx",
+              "start": 390
+            },
+            {
+              "end": 517,
+              "file": "tdash/src/features/ApprovalsDashboard.jsx",
+              "start": 505
+            },
+            {
+              "end": 620,
+              "file": "tdash/src/features/ApprovalsDashboard.jsx",
+              "start": 615
+            },
+            {
+              "file": "tdash/src/features/ApprovalDetailView.jsx",
+              "line": 253
+            },
+            {
+              "end": 298,
+              "file": "tdash/src/features/ApprovalDetailView.jsx",
+              "start": 293
+            },
+            {
+              "end": 375,
+              "file": "tdash/src/features/ApprovalDetailView.jsx",
+              "start": 345
+            },
+            {
+              "end": 121,
+              "file": "tdash/src/lib/session.js",
+              "start": 117
+            },
+            {
+              "file": "tdash/src/App.jsx",
+              "line": 91
+            },
+            {
+              "end": 308,
+              "file": "tixmoapi2/src/api/approvals/service.ts",
+              "start": 302
+            },
+            {
+              "file": "tixmoapi2/src/api/approvals/service.ts",
+              "line": 356
+            },
+            {
+              "end": 880,
+              "file": "tixmoapi2/src/api/approvals/service.ts",
+              "start": 878
+            }
+          ],
+          "remediation": "Clear sensitive sessionStorage on every logout/expiry/account transition; partition caches by authenticated user and organization/session generation, enforce expiry, discard content on authorization errors, avoid caching bearer credentials, and derive isTeamMember from explicit staff roles.",
+          "rule": "Sensitive browser caches must be bound to the current session and cleared on logout",
+          "severity": "medium",
+          "source_to_sink": "An authenticated staff GET /approvals returns INTERNAL comments, full revisions/assets and reviewer reviewUrl credentials. ApprovalsDashboard serializes the complete response in a global sessionStorage key without identity/expiry. clearStoredSession removes only localStorage auth/activity entries. The next logged-in user can enter /approvals; cached records are rendered immediately and retained when current API access fails. Clicking a card passes its cached record as initialApproval. ApprovalDetailView keeps initialApproval on failed refresh and treats any truthy user.role, including CUSTOMER, as staff for internal-comment visibility.",
+          "supporting_evidence": [
+            "const APPROVALS_DASHBOARD_CACHE_KEY = 'tixmo:approvals-dashboard-cache';",
+            "JSON.stringify({ approvals, events })",
+            "const [approvals, setApprovals] = useState(initialCacheRef.current?.approvals || []);",
+            "let nextApprovals = approvalsRef.current;",
+            "const [approval, setApproval] = useState(initialApproval);",
+            "if (user?.role || user?.organizationId) { return true; }",
+            "Logout clears ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_STORAGE_KEY and local activity, but not sessionStorage."
+          ],
+          "title": "Approval cache survives logout and exposes the previous session to the next user",
+          "violated_invariant": "Signed-out staff approval data and bearer reviewer links must not remain available to the subsequent unauthorised session."
+        }
+      },
+      "findingId": "csf_d7f66a2351af6a3ffcc86006",
+      "fingerprints": {
+        "algorithm": "codex-security/v1",
+        "primary": "codex-security/v1:sha256:d34f52964888c8e3dc91bfc825ff9e6615b1c064dd7f7fdee3feab2532a60fe5"
+      },
+      "identity": {
+        "anchor": "frontend-cache-isolation"
+      },
+      "locations": [
+        {
+          "endLine": 78,
+          "path": "tdash/src/features/ApprovalsDashboard.jsx",
+          "role": "root_control",
+          "startLine": 72
+        }
+      ],
+      "occurrenceId": "occ_a33c94ffae0224ef4e9e1388",
+      "provenance": {
+        "candidateId": "frontend-cache-isolation",
+        "originalCandidates": [
+          [
+            {
+              "attacker": "Another person reusing the same browser tab after a staff member logs out, including a customer who subsequently signs in.",
+              "confidence": "high",
+              "counterevidence": "The cache is scoped to the browser tab and normally disappears when its page session ends; this is a local/shared-browser issue, not a remote cross-tenant disclosure. Successful authorized refresh replaces the cache, but rejection retains it. Server organization checks do not authorize cached content. Legitimate same-business staff visibility remains expected.",
+              "cwe": "CWE-525",
+              "impact": "Disclosure of the preceding staff session's internal comments, reviewer identities, revision assets and still-valid bearer review credentials on shared-browser reuse. The credentials can be replayed against public review endpoints.",
+              "locations": [
+                {
+                  "file": "tdash/src/features/ApprovalsDashboard.jsx",
+                  "line": 38
+                },
+                {
+                  "end": 78,
+                  "file": "tdash/src/features/ApprovalsDashboard.jsx",
+                  "start": 66
+                },
+                {
+                  "end": 393,
+                  "file": "tdash/src/features/ApprovalsDashboard.jsx",
+                  "start": 390
+                },
+                {
+                  "end": 517,
+                  "file": "tdash/src/features/ApprovalsDashboard.jsx",
+                  "start": 505
+                },
+                {
+                  "end": 620,
+                  "file": "tdash/src/features/ApprovalsDashboard.jsx",
+                  "start": 615
+                },
+                {
+                  "file": "tdash/src/features/ApprovalDetailView.jsx",
+                  "line": 253
+                },
+                {
+                  "end": 298,
+                  "file": "tdash/src/features/ApprovalDetailView.jsx",
+                  "start": 293
+                },
+                {
+                  "end": 375,
+                  "file": "tdash/src/features/ApprovalDetailView.jsx",
+                  "start": 345
+                },
+                {
+                  "end": 121,
+                  "file": "tdash/src/lib/session.js",
+                  "start": 117
+                },
+                {
+                  "file": "tdash/src/App.jsx",
+                  "line": 91
+                },
+                {
+                  "end": 308,
+                  "file": "tixmoapi2/src/api/approvals/service.ts",
+                  "start": 302
+                },
+                {
+                  "file": "tixmoapi2/src/api/approvals/service.ts",
+                  "line": 356
+                },
+                {
+                  "end": 880,
+                  "file": "tixmoapi2/src/api/approvals/service.ts",
+                  "start": 878
+                }
+              ],
+              "remediation": "Clear sensitive sessionStorage on every logout/expiry/account transition; partition caches by authenticated user and organization/session generation, enforce expiry, discard content on authorization errors, avoid caching bearer credentials, and derive isTeamMember from explicit staff roles.",
+              "rule": "Sensitive browser caches must be bound to the current session and cleared on logout",
+              "severity": "medium",
+              "source_to_sink": "An authenticated staff GET /approvals returns INTERNAL comments, full revisions/assets and reviewer reviewUrl credentials. ApprovalsDashboard serializes the complete response in a global sessionStorage key without identity/expiry. clearStoredSession removes only localStorage auth/activity entries. The next logged-in user can enter /approvals; cached records are rendered immediately and retained when current API access fails. Clicking a card passes its cached record as initialApproval. ApprovalDetailView keeps initialApproval on failed refresh and treats any truthy user.role, including CUSTOMER, as staff for internal-comment visibility.",
+              "supporting_evidence": [
+                "const APPROVALS_DASHBOARD_CACHE_KEY = 'tixmo:approvals-dashboard-cache';",
+                "JSON.stringify({ approvals, events })",
+                "const [approvals, setApprovals] = useState(initialCacheRef.current?.approvals || []);",
+                "let nextApprovals = approvalsRef.current;",
+                "const [approval, setApproval] = useState(initialApproval);",
+                "if (user?.role || user?.organizationId) { return true; }",
+                "Logout clears ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_STORAGE_KEY and local activity, but not sessionStorage."
+              ],
+              "title": "Approval cache survives logout and exposes the previous session to the next user",
+              "violated_invariant": "Signed-out staff approval data and bearer reviewer links must not remain available to the subsequent unauthorised session."
+            }
+          ],
+          {
+            "counterEvidence": "API authorization rejects the new customer; cache behavior needs validation.",
+            "originalPacket": "ApprovalsDashboard globally caches full approvals+events in sessionStorage key tixmo:approvals-dashboard-cache (38,66-78), without user/org identity or TTL. Logout clearStoredSession removes only localStorage tokens/user/activity (session.js:117-121). New logged-in customer can enter /approvals (App.jsx:91,269-285); dashboard immediately rehydrates old staff approvals (390-393) and retains them when current API request is denied (505-517). Possible internal comments/reviewer URL disclosure on same-tab/shared-browser reuse after logout; investigator finishing validation.",
+            "title": "Approval sessionStorage cache may disclose previous staff data after logout"
+          }
+        ],
+        "source": "Independent full frontend runtime review plus parent validation; artifacts/02_discovery/frontend-runtime-review.json"
+      },
+      "remediation": "Clear sensitive sessionStorage on every logout/expiry/account transition; partition caches by authenticated user and organization/session generation, enforce expiry, discard content on authorization errors, avoid caching bearer credentials, and derive isTeamMember from explicit staff roles.",
+      "remediationTests": [
+        "Staff logout then customer login in same tab yields no staff cache or internal content even when API returns 403.",
+        "All expiry, logout and account-switch paths clear or isolate sensitive caches and no bearer tokens are cached."
+      ],
+      "rootCause": {
+        "evidenceRefs": [
+          "frontend-cache-isolation-source-0",
+          "frontend-cache-isolation-source-1",
+          "frontend-cache-isolation-source-2",
+          "frontend-cache-isolation-source-3",
+          "frontend-cache-isolation-source-4"
+        ],
+        "summary": "Sensitive staff responses are persisted globally across authentication transitions and trusted on authorization failure."
+      },
+      "ruleId": "privacy.browser_cache_identity",
+      "severity": {
+        "level": "medium",
+        "rationale": "Disclosure of the preceding staff session's internal comments, reviewer identities, revision assets and still-valid bearer review credentials on shared-browser reuse. The credentials can be replayed against public review endpoints. Requires subsequent use of the same browser tab, limiting reachability."
+      },
+      "summary": "An authenticated staff GET /approvals returns INTERNAL comments, full revisions/assets and reviewer reviewUrl credentials. ApprovalsDashboard serializes the complete response in a global sessionStorage key without identity/expiry. clearStoredSession removes only localStorage auth/activity entries. The next logged-in user can enter /approvals; cached records are rendered immediately and retained when current API access fails. Clicking a card passes its cached record as initialApproval. ApprovalDetailView keeps initialApproval on failed refresh and treats any truthy user.role, including CUSTOMER, as staff for internal-comment visibility. Disclosure of the preceding staff session's internal comments, reviewer identities, revision assets and still-valid bearer review credentials on shared-browser reuse. The credentials can be replayed against public review endpoints.",
+      "taxonomy": {
+        "category": "privacy",
+        "cwe": [
+          "CWE-525"
+        ]
+      },
+      "title": "Approval cache survives logout and exposes the previous session to the next user",
+      "validation": {
+        "assertions": [
+          "Signed-out staff approval data and bearer reviewer links must not remain available to the subsequent unauthorised session."
+        ],
+        "counterEvidence": [
+          "The cache is scoped to the browser tab and normally disappears when its page session ends; this is a local/shared-browser issue, not a remote cross-tenant disclosure. Successful authorized refresh replaces the cache, but rejection retains it. Server organization checks do not authorize cached content. Legitimate same-business staff visibility remains expected."
+        ],
+        "evidenceRefs": [
+          "frontend-cache-isolation-source-0",
+          "frontend-cache-isolation-source-1",
+          "frontend-cache-isolation-source-2",
+          "frontend-cache-isolation-source-3",
+          "frontend-cache-isolation-source-4"
+        ],
+        "limitations": [
+          "Shared-browser/tab prerequisite; no remote disclosure or multi-tenant claim.",
+          "End-to-end exploit not executed."
+        ],
+        "method": "Static complete-file and parent source tracing",
+        "summary": "Cache write, retained logout storage, rehydration, denial behavior and internal-comment rendering traced. No production login or shared-browser exploitation executed."
+      }
+    }
+  ],
+  "scanId": "120c5ba5-cdd8-41a1-9221-fada01280788",
+  "schemaVersion": "1.0"
+}

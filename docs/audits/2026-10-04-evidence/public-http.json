@@ -1,0 +1,88 @@
+[
+  {
+    "url": "https://demo.tixmo.co/",
+    "status": 200,
+    "ms": 375,
+    "headers": {
+      "Content-Type": "text/html",
+      "Strict-Transport-Security": null,
+      "Content-Security-Policy": null,
+      "Referrer-Policy": null,
+      "X-Content-Type-Options": null
+    }
+  },
+  {
+    "url": "https://demo.tixmo.co/runtime-config.js",
+    "status": 200,
+    "ms": 193,
+    "headers": {
+      "Content-Type": "application/javascript",
+      "Strict-Transport-Security": null,
+      "Content-Security-Policy": null,
+      "Referrer-Policy": null,
+      "X-Content-Type-Options": null
+    },
+    "body": "window.__TIXMO_CONFIG__ = Object.assign({}, window.__TIXMO_CONFIG__, {\n  apiUrl: \"https://api-production-fbaf.up.railway.app/api/v1\",\n  privacyPolicyUrl: \"\",\n  termsUrl: \"\",\n  refundPolicyUrl: \"\",\n  organizerTermsUrl: \"\",\n  stripePublishableKey: \"\",\n  paymentCurrency: \"usd\"\n});\n"
+  },
+  {
+    "url": "https://dash-production-7487.up.railway.app/",
+    "status": 200,
+    "ms": 241,
+    "headers": {
+      "Content-Type": "text/html",
+      "Strict-Transport-Security": null,
+      "Content-Security-Policy": null,
+      "Referrer-Policy": null,
+      "X-Content-Type-Options": null
+    }
+  },
+  {
+    "url": "https://frontend-dash-production.up.railway.app/",
+    "status": 502,
+    "ms": 236,
+    "body": "{\"status\":\"error\",\"code\":502,\"message\":\"Application failed to respond\",\"request_id\":\"jq4kufLpScm_6fLmc9o55Q\"}"
+  },
+  {
+    "url": "https://api-production-fbaf.up.railway.app/health",
+    "status": 200,
+    "ms": 250,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Strict-Transport-Security": "max-age=15552000; includeSubDomains",
+      "Content-Security-Policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "body": "{\"status\":\"ok\",\"timestamp\":\"2026-10-04T22:14:52.044Z\",\"uptime\":9497669.596329404,\"environment\":\"production\"}"
+  },
+  {
+    "url": "https://api-production-fbaf.up.railway.app/api/v1/events/public",
+    "status": 200,
+    "ms": 967,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Strict-Transport-Security": "max-age=15552000; includeSubDomains",
+      "Content-Security-Policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff"
+    }
+  },
+  {
+    "url": "https://api-production-fbaf.up.railway.app/api/v1/events",
+    "status": 401,
+    "ms": 309,
+    "body": "{\"success\":false,\"message\":\"No token provided\"}"
+  },
+  {
+    "url": "https://api-production-fbaf.up.railway.app/api/v1/scanners",
+    "status": 401,
+    "ms": 308,
+    "body": "{\"success\":false,\"message\":\"No token provided\"}"
+  },
+  {
+    "url": "https://api-production-fbaf.up.railway.app/api/v1/review/invalid-audit-token",
+    "status": 404,
+    "ms": 421,
+    "body": "{\"success\":false,\"message\":\"Invalid review link\"}"
+  }
+]

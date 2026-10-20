@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../../src/app';
+import prisma from '../../src/config/prisma';
 import { generateAccessToken } from '../../src/utils/jwt';
 
 const createToken = (userId: string) =>
@@ -12,6 +13,26 @@ const createToken = (userId: string) =>
   });
 
 describe('API rate limiting', () => {
+  const ids = ['101', '102', '201', '301'].map(
+    (suffix) => `00000000-0000-0000-0000-000000000${suffix}`
+  );
+  beforeAll(async () => {
+    await prisma.user.createMany({
+      data: ids.map((id) => ({
+        id,
+        email: `${id}@example.com`,
+        firstName: 'Rate',
+        lastName: 'Test',
+        role: 'ADMIN',
+        isPlatformAdmin: true,
+        passwordHash: 'no-password-login-for-this-fixture',
+      })),
+      skipDuplicates: true,
+    });
+  });
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { id: { in: ids } } });
+  });
   it('uses separate read buckets for authenticated users on the same IP', async () => {
     const sharedIp = '203.0.113.30';
     const firstUserToken = createToken('00000000-0000-0000-0000-000000000101');

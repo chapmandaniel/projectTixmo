@@ -63,3 +63,10 @@ export const changePasswordSchema = z.object({
       .regex(/[0-9]/, 'Password must contain at least one number'),
   }),
 });
+
+export const acceptInvitationSchema = z.object({
+  body: z.object({
+    token: z.string().regex(/^[a-f0-9]{64}$/, 'Invalid invitation'),
+    password: registerSchema.shape.body.shape.password,
+  }),
+});

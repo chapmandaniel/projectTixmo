@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import React, { Suspense, lazy, useState, useEffect, useRef } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate, matchPath } from 'react-router-dom';
 import { auth } from './lib/auth';
 import {
     ACCESS_TOKEN_KEY,
@@ -8,10 +8,13 @@ import {
     SESSION_TIMEOUT_MINUTES,
     USER_STORAGE_KEY,
     createInactivityManager,
+    getUserCacheIdentity,
+    getSessionGeneration,
 } from './lib/session';
 import DashboardLayout from './layouts/DashboardLayout';
 import DashboardPlaceholderView from './features/DashboardPlaceholderView';
 import LoginView from './features/LoginView';
+import AcceptInvitationView from './features/AcceptInvitationView';
 import { BrainCircuit, MessageCircle, Wand2 } from 'lucide-react';
 
 import GlobalErrorNotification from './components/GlobalErrorNotification';
@@ -34,6 +37,7 @@ const WaitingRoomView = lazy(() => import('./features/WaitingRoomView'));
 const ExternalReviewPage = lazy(() => import('./pages/ExternalReviewPage'));
 const SharedAssetFolderPage = lazy(() => import('./pages/SharedAssetFolderPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const WalletPage = lazy(() => import('./pages/WalletPage'));
 
 const RouteFallback = ({ isDark = true }) => (
     <div className={`flex min-h-[280px] items-center justify-center rounded-md border text-sm font-light ${isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-dashboard-muted' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
@@ -79,12 +83,12 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         <Route path="/events/:eventId/*" element={<EventManagementDashboard user={user} isDark={isDark} />} />
                         <Route path="/analytics" element={<AnalyticsView isDark={isDark} user={user} />} />
                         <Route path="/quantmo" element={<DashboardPlaceholderView isDark={isDark} title="QuantMo" icon={BrainCircuit} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
-                        <Route path="/todo" element={<TodoView isDark={isDark} />} />
+                        <Route path="/todo" element={<TodoView isDark={isDark} user={user} />} />
                         <Route path="/personal-todo" element={<Navigate to="/dashboard" replace />} />
                         <Route path="/team" element={<TeamView isDark={isDark} />} />
                         <Route path="/social" element={<DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/orders" element={<OrdersView isDark={isDark} />} />
-                        <Route path="/settings" element={<SettingsView isDark={isDark} />} />
+                        <Route path="/settings" element={<SettingsView isDark={isDark} user={user} />} />
                         <Route path="/creative" element={<DashboardPlaceholderView isDark={isDark} title="ProMo" icon={Wand2} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/assets" element={<AssetLibraryView isDark={isDark} />} />
                         <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />
@@ -115,6 +119,15 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
 const App = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const latestLocation = useRef(location);
+    latestLocation.current = location;
+    const preserveCheckoutReturn = () => {
+        const current = latestLocation.current;
+        const query = new URLSearchParams(current.search);
+        return matchPath('/checkout/:slug', current.pathname)
+            && ['orderId', 'redirect_status', 'payment_intent', 'payment_intent_client_secret']
+                .some((field) => query.has(field));
+    };
     const [isDark, setIsDark] = useState(true);
     const [user, setUser] = useState(auth.getCurrentUser());
     const [loading, setLoading] = useState(true);
@@ -159,7 +172,7 @@ const App = () => {
             }
 
             setRedirectToDashboardAfterLogin(false);
-            navigate('/dashboard', { replace: true });
+            if (!preserveCheckoutReturn()) navigate('/dashboard', { replace: true });
             setUser(null);
         };
         window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
@@ -167,7 +180,7 @@ const App = () => {
         const handleStorage = (event) => {
             if (event.key === ACCESS_TOKEN_KEY && !event.newValue) {
                 setRedirectToDashboardAfterLogin(false);
-                navigate('/dashboard', { replace: true });
+                if (!preserveCheckoutReturn()) navigate('/dashboard', { replace: true });
                 setUser(null);
             }
 
@@ -263,8 +276,10 @@ const App = () => {
             <Routes>
                 {/* External unauthenticated routes */}
                 <Route path="/review/*" element={<ExternalReviewPage />} />
+                <Route path="/invite" element={<AcceptInvitationView onAccepted={(nextUser) => { handleLogin(nextUser); navigate('/dashboard', { replace: true }); }} />} />
                 <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />
-                <Route path="/checkout/:slug" element={<CheckoutPage user={user} onAuthenticated={handleCheckoutAuthenticated} />} />
+                <Route path="/checkout/:slug" element={<CheckoutPage key={`${getUserCacheIdentity(user)}:${getSessionGeneration()}`} user={user} onAuthenticated={handleCheckoutAuthenticated} />} />
+                <Route path="/wallet" element={<WalletPage key={`${getUserCacheIdentity(user)}:${getSessionGeneration()}`} user={user} onAuthenticated={handleCheckoutAuthenticated} />} />
 
                 {/* Main Application */}
                 <Route path="*" element={
@@ -276,6 +291,7 @@ const App = () => {
                         <Navigate to="/dashboard" replace />
                     ) : (
                         <AppContent
+                            key={`${getUserCacheIdentity(user)}:${getSessionGeneration()}`}
                             user={user}
                             handleLogout={handleLogout}
                             isDark={isDark}

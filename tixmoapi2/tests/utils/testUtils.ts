@@ -1,6 +1,7 @@
 import prisma from '../../src/config/prisma';
 import request from 'supertest';
 import { verifyAccessToken } from '../../src/utils/jwt';
+import { orderService } from '../../src/api/orders/service';
 export { prisma };
 
 export async function safeCleanupUsers(filter = 'test') {
@@ -55,7 +56,7 @@ export async function registerUser(
   if (overrides.role && overrides.role !== 'CUSTOMER') {
     await prisma.user.update({
       where: { id: res.body.data.user.id },
-      data: { role: overrides.role as any },
+      data: { role: overrides.role as any, isPlatformAdmin: overrides.role === 'ADMIN' },
     });
 
     const loginRes = await request(app).post('/api/v1/auth/login').send({
@@ -212,10 +213,17 @@ export async function createOrder(
   return res.body.data; // order object
 }
 
+export async function confirmOrderForTest(orderId: string) {
+  return orderService.confirmOrder(orderId);
+}
+
 // Cleanup helper to remove test data in the correct order
 export async function cleanupTestData() {
   // Order of deletion matters because of foreign keys
   // 1. Child tables (ScanLog, Scanner, Notification, etc.)
+  try {
+    await prisma.ticketInventoryReconciliation.deleteMany();
+  } catch (e) {}
   try {
     await prisma.scanLog.deleteMany();
   } catch (e) {}

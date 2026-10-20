@@ -191,7 +191,11 @@ router.put(
  *       404:
  *         description: Promo code not found
  */
-router.delete('/:id', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.deletePromoCode);
+router.delete(
+  '/:id',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  controller.deletePromoCode
+);
 
 /**
  * @swagger

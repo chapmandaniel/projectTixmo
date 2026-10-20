@@ -84,17 +84,19 @@ function tokenHash(value: string) {
 }
 
 function isProductionLikeDatabase(databaseUrl: string) {
-  const lower = databaseUrl.toLowerCase();
-  const localMarkers = [
-    'localhost',
-    '127.0.0.1',
-    'host.docker.internal',
-    'tixmo_dev',
-    'tixmo_test',
-    'project_tixmo',
-  ];
-
-  return !localMarkers.some((marker) => lower.includes(marker));
+  try {
+    const target = new URL(databaseUrl);
+    return (
+      !['postgres:', 'postgresql:'].includes(target.protocol) ||
+      !['localhost', '127.0.0.1', '[::1]', 'host.docker.internal'].includes(target.hostname) ||
+      target.hash !== '' ||
+      [...target.searchParams.keys()].some(
+        (key) => !['schema', 'connection_limit', 'pool_timeout', 'connect_timeout'].includes(key)
+      )
+    );
+  } catch {
+    return true;
+  }
 }
 
 function assertSafeToRun(command: DemoCommand) {
@@ -232,7 +234,12 @@ async function resetMarketDemo() {
       await tx.assetLibraryFolder.deleteMany({ where: { organizationId: org.id } });
 
       await tx.approvalComment.deleteMany({
-        where: { OR: [{ approvalRequestId: { in: approvalIds } }, { approvalRevisionId: { in: revisionIds } }] },
+        where: {
+          OR: [
+            { approvalRequestId: { in: approvalIds } },
+            { approvalRevisionId: { in: revisionIds } },
+          ],
+        },
       });
       await tx.approvalReviewDecision.deleteMany({
         where: {
@@ -244,7 +251,9 @@ async function resetMarketDemo() {
         },
       });
       await tx.approvalReminder.deleteMany({
-        where: { OR: [{ approvalRevisionId: { in: revisionIds } }, { reviewerId: { in: reviewerIds } }] },
+        where: {
+          OR: [{ approvalRevisionId: { in: revisionIds } }, { reviewerId: { in: reviewerIds } }],
+        },
       });
       await tx.approvalAsset.deleteMany({ where: { approvalRevisionId: { in: revisionIds } } });
       await tx.approvalReviewer.deleteMany({ where: { approvalRequestId: { in: approvalIds } } });
@@ -256,10 +265,18 @@ async function resetMarketDemo() {
 
       await tx.waitlist.deleteMany({ where: { eventId: { in: eventIds } } });
       await tx.notification.deleteMany({ where: { user: { email: { in: DEMO_USER_EMAILS } } } });
-      await tx.notificationPreference.deleteMany({ where: { user: { email: { in: DEMO_USER_EMAILS } } } });
+      await tx.notificationPreference.deleteMany({
+        where: { user: { email: { in: DEMO_USER_EMAILS } } },
+      });
 
       await tx.ticket.deleteMany({
-        where: { OR: [{ eventId: { in: eventIds } }, { orderId: { in: orderIds } }, { id: { in: ticketIds } }] },
+        where: {
+          OR: [
+            { eventId: { in: eventIds } },
+            { orderId: { in: orderIds } },
+            { id: { in: ticketIds } },
+          ],
+        },
       });
       await tx.order.deleteMany({ where: { id: { in: orderIds } } });
 
@@ -284,7 +301,10 @@ async function resetMarketDemo() {
   };
 }
 
-async function createDemoUsers(tx: Prisma.TransactionClient, organizationId: string): Promise<DemoUserMap & { customers: User[] }> {
+async function createDemoUsers(
+  tx: Prisma.TransactionClient,
+  organizationId: string
+): Promise<DemoUserMap & { customers: User[] }> {
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
 
   const admin = await tx.user.create({
@@ -471,7 +491,10 @@ async function createPaidOrder(
     eventId: string;
     customerId: string;
     createdAt: Date;
-    items: Array<{ ticketType: { id: string; name: string; price: Prisma.Decimal }; quantity: number }>;
+    items: Array<{
+      ticketType: { id: string; name: string; price: Prisma.Decimal };
+      quantity: number;
+    }>;
     promoCodeId?: string;
     discountRate?: number;
     status?: OrderStatus;
@@ -487,7 +510,9 @@ async function createPaidOrder(
   const tax = Math.max(subtotal - discount, 0) * 0.07;
   const total = subtotal + fees + tax - discount;
   const isPaid = (input.status || OrderStatus.PAID) === OrderStatus.PAID;
-  const paymentIntentId = isPaid ? `pi_market_demo_${String(input.orderIndex).padStart(4, '0')}` : null;
+  const paymentIntentId = isPaid
+    ? `pi_market_demo_${String(input.orderIndex).padStart(4, '0')}`
+    : null;
 
   const order = await tx.order.create({
     data: {
@@ -499,7 +524,8 @@ async function createPaidOrder(
       feesAmount: money(fees),
       taxAmount: money(tax),
       discountAmount: money(discount),
-      paymentStatus: input.paymentStatus || (isPaid ? PaymentStatus.SUCCEEDED : PaymentStatus.PENDING),
+      paymentStatus:
+        input.paymentStatus || (isPaid ? PaymentStatus.SUCCEEDED : PaymentStatus.PENDING),
       paymentIntentId,
       paymentMethod: isPaid ? 'card' : null,
       promoCodeId: input.promoCodeId || null,
@@ -664,7 +690,8 @@ async function seedMarketDemo() {
             venueId: warehouse.id,
             name: 'Afterglow Warehouse',
             slug: 'market-demo-afterglow-warehouse',
-            description: 'Late-night electronic showcase with steady sales and a smaller inventory profile.',
+            description:
+              'Late-night electronic showcase with steady sales and a smaller inventory profile.',
             category: 'CONCERT',
             tags: ['demo', 'electronic', 'late-night'],
             startDatetime: afterglowStart,
@@ -685,7 +712,8 @@ async function seedMarketDemo() {
             venueId: warehouse.id,
             name: 'Founders Circle Showcase',
             slug: 'market-demo-founders-circle-showcase',
-            description: 'Completed demo event with checked-in tickets and scan logs for attendance reporting.',
+            description:
+              'Completed demo event with checked-in tickets and scan logs for attendance reporting.',
             category: 'PRIVATE_EVENT',
             tags: ['demo', 'completed', 'vip'],
             startDatetime: showcaseStart,
@@ -706,7 +734,8 @@ async function seedMarketDemo() {
             venueId: venue.id,
             name: 'Sponsor Preview Night',
             slug: 'market-demo-sponsor-preview-night',
-            description: 'Published future event with no sales yet for pipeline and planning views.',
+            description:
+              'Published future event with no sales yet for pipeline and planning views.',
             category: 'SPECIAL_EVENT',
             tags: ['demo', 'sponsor', 'planning'],
             startDatetime: previewStart,
@@ -912,7 +941,9 @@ async function seedMarketDemo() {
         eventId: events.harbor.id,
         customerId: users.customers[2].id,
         createdAt: daysFromNow(-1, 12),
-        items: [{ ticketType: ticketTypesByEvent[events.harbor.id]['General Admission'], quantity: 2 }],
+        items: [
+          { ticketType: ticketTypesByEvent[events.harbor.id]['General Admission'], quantity: 2 },
+        ],
         status: OrderStatus.PENDING,
         paymentStatus: PaymentStatus.PENDING,
       });
@@ -1064,7 +1095,8 @@ async function seedMarketDemo() {
           eventId: events.harbor.id,
           createdById: users.manager.id,
           title: 'Harborlight campaign artwork',
-          description: 'External artist and sponsor review for the launch poster and social cutdowns.',
+          description:
+            'External artist and sponsor review for the launch poster and social cutdowns.',
           status: ApprovalStatus.CHANGES_REQUESTED,
           deadline: addDays(new Date(), 5),
           latestRevisionNumber: 2,
@@ -1191,7 +1223,8 @@ async function seedMarketDemo() {
             type: NotificationType.ANNOUNCEMENT,
             status: NotificationStatus.READ,
             subject: 'Market demo org is ready',
-            message: 'Sales, scanner, approval, and asset-share data are available for walkthroughs.',
+            message:
+              'Sales, scanner, approval, and asset-share data are available for walkthroughs.',
             sentAt: addDays(new Date(), -1),
             readAt: new Date(),
           },
@@ -1215,7 +1248,9 @@ async function seedMarketDemo() {
         skipDuplicates: true,
       });
 
-      const paidOrders = await tx.order.count({ where: { event: { organizationId: org.id }, status: OrderStatus.PAID } });
+      const paidOrders = await tx.order.count({
+        where: { event: { organizationId: org.id }, status: OrderStatus.PAID },
+      });
       const paidTickets = await tx.ticket.count({
         where: { event: { organizationId: org.id }, order: { status: OrderStatus.PAID } },
       });
@@ -1266,18 +1301,34 @@ async function verifyMarketDemo() {
   });
   const eventIds = demoEvents.map((event) => event.id);
 
-  const [events, activeEvents, paidOrders, paidTickets, scanners, scanLogs, assetShares, approvals, tasks] =
-    await Promise.all([
-      prisma.event.count({ where: { organizationId: org.id } }),
-      prisma.event.count({ where: { organizationId: org.id, status: { in: [EventStatus.PUBLISHED, EventStatus.ON_SALE] } } }),
-      prisma.order.count({ where: { event: { organizationId: org.id }, status: OrderStatus.PAID } }),
-      prisma.ticket.count({ where: { event: { organizationId: org.id }, order: { status: OrderStatus.PAID } } }),
-      prisma.scanner.count({ where: { organizationId: org.id } }),
-      prisma.scanLog.count({ where: { eventId: { in: eventIds } } }),
-      prisma.assetLibraryFolderShare.count({ where: { organizationId: org.id, revokedAt: null } }),
-      prisma.approvalRequest.count({ where: { organizationId: org.id } }),
-      prisma.task.count({ where: { organizationId: org.id } }),
-    ]);
+  const [
+    events,
+    activeEvents,
+    paidOrders,
+    paidTickets,
+    scanners,
+    scanLogs,
+    assetShares,
+    approvals,
+    tasks,
+  ] = await Promise.all([
+    prisma.event.count({ where: { organizationId: org.id } }),
+    prisma.event.count({
+      where: {
+        organizationId: org.id,
+        status: { in: [EventStatus.PUBLISHED, EventStatus.ON_SALE] },
+      },
+    }),
+    prisma.order.count({ where: { event: { organizationId: org.id }, status: OrderStatus.PAID } }),
+    prisma.ticket.count({
+      where: { event: { organizationId: org.id }, order: { status: OrderStatus.PAID } },
+    }),
+    prisma.scanner.count({ where: { organizationId: org.id } }),
+    prisma.scanLog.count({ where: { eventId: { in: eventIds } } }),
+    prisma.assetLibraryFolderShare.count({ where: { organizationId: org.id, revokedAt: null } }),
+    prisma.approvalRequest.count({ where: { organizationId: org.id } }),
+    prisma.task.count({ where: { organizationId: org.id } }),
+  ]);
 
   const revenue = await prisma.order.aggregate({
     where: { event: { organizationId: org.id }, status: OrderStatus.PAID },
@@ -1357,7 +1408,10 @@ Environment guard:
     return;
   }
 
-  const existing = await prisma.organization.findUnique({ where: { slug: DEMO_ORG_SLUG }, select: { id: true } });
+  const existing = await prisma.organization.findUnique({
+    where: { slug: DEMO_ORG_SLUG },
+    select: { id: true },
+  });
   if (existing && !resetFirst) {
     throw new Error(
       `Market demo org already exists. Re-run with --reset or use npm --prefix tixmoapi2 run demo:market:reseed.`

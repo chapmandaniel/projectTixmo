@@ -118,7 +118,6 @@ describe('Concurrency Tests', () => {
     const failCount = responses.filter((res) => res.status === 400).length;
     const conflictCount = responses.filter((res) => res.status === 409).length; // System busy
 
-
     console.log(`Success: ${successCount}, Fail: ${failCount}, Conflict: ${conflictCount}`);
 
     // Check that we didn't oversell

@@ -1,0 +1,15 @@
+--- .task170-admission-enabled-source	2026-10-20 06:02:39.818430987 -0230
++++ tixmoapi2/src/api/payments/service.ts	2026-10-20 06:02:44.954610091 -0230
+@@ -178,10 +178,10 @@
+             OR: [{ status: 'FAILED' }, ...(EXPIRED_WEBHOOK_RECOVERY_ENABLED
+               ? [{ status: 'PROCESSING', processingStartedAt: { lte: cutoff } }] : [])],
+           },
+-          data: { status: 'PROCESSING', attemptGeneration: { increment: 1 },
++          data: { status: 'PROCESSING', attemptGeneration: { increment: 0 },
+             processingStartedAt: now, processedAt: null, errorMessage: null },
+         });
+-        return admitted.count === 1 ? { eventId: event.id, generation: existing.attemptGeneration + 1n } : null;
++        return admitted.count === 1 ? { eventId: event.id, generation: existing.attemptGeneration } : null;
+       }
+       await prisma.paymentWebhookEvent.create({ data: {
+         id: event.id, type: event.type, paymentIntentId: context.paymentIntentId || null,

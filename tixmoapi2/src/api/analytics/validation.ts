@@ -6,6 +6,11 @@ export const analyticsQuerySchema = z.object({
     endDate: z.string().datetime().optional(),
     organizationId: z.string().uuid().optional(),
     eventId: z.string().uuid().optional(),
+    currency: z
+      .string()
+      .regex(/^[A-Za-z]{3}$/)
+      .transform((value) => value.toLowerCase())
+      .optional(),
   }),
 });
 

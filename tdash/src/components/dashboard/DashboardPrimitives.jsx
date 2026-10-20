@@ -105,7 +105,7 @@ export const DashboardButton = ({ isDark, variant = 'primary', className, childr
 export const DashboardTextInput = ({ isDark, className, ...props }) => (
     <input
         className={cn(
-            'h-11 w-full rounded-md border px-3 text-sm font-light outline-none transition focus:ring-2 focus:ring-pink-500/20',
+            'h-11 w-full rounded-md border px-3 text-sm font-light outline-hidden transition focus:ring-2 focus:ring-pink-500/20',
             isDark
                 ? 'border-white/10 bg-white/5 text-zinc-100 placeholder:text-zinc-500 focus:border-pink-400'
                 : 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-slate-400',
@@ -118,7 +118,7 @@ export const DashboardTextInput = ({ isDark, className, ...props }) => (
 export const DashboardSelect = ({ isDark, className, children, ...props }) => (
     <select
         className={cn(
-            'h-11 w-full rounded-md border px-3 text-sm font-light outline-none transition focus:ring-2 focus:ring-pink-500/20',
+            'h-11 w-full rounded-md border px-3 text-sm font-light outline-hidden transition focus:ring-2 focus:ring-pink-500/20',
             isDark
                 ? 'border-white/10 bg-white/5 text-zinc-100 focus:border-pink-400'
                 : 'border-slate-200 bg-white text-slate-900 focus:border-slate-400',
@@ -350,7 +350,7 @@ export const DashboardWorkspaceTile = ({
 }) => (
     <Component
         className={cn(
-            'group relative flex min-h-[196px] flex-col overflow-hidden rounded-md border px-7 pb-7 pt-7 text-left outline-none transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-fuchsia-500',
+            'group relative flex min-h-[196px] flex-col overflow-hidden rounded-md border px-7 pb-7 pt-7 text-left outline-hidden transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-fuchsia-500',
             isHidden
                 ? (isDark
                     ? 'border-[#242438] bg-[#171723] text-[#616579] opacity-55'
@@ -439,7 +439,7 @@ export const DashboardModuleTile = ({
                         onClick={onToggleHidden}
                         data-testid={item.id ? `dashboard-visibility-${item.id}` : undefined}
                         className={cn(
-                            'rounded-full p-1.5 outline-none transition-opacity duration-300',
+                            'rounded-full p-1.5 outline-hidden transition-opacity duration-300',
                             isHidden ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
                             isDark ? 'hover:bg-[#2b2b40]' : 'hover:bg-slate-100'
                         )}
@@ -457,7 +457,7 @@ export const DashboardModuleTile = ({
                         onClick={onToggleFavorite}
                         data-testid={item.id ? `dashboard-favorite-${item.id}` : undefined}
                         className={cn(
-                            'rounded-full p-1.5 outline-none transition-colors duration-300',
+                            'rounded-full p-1.5 outline-hidden transition-colors duration-300',
                             isDark ? 'hover:bg-[#2b2b40]' : 'hover:bg-slate-100'
                         )}
                         title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}

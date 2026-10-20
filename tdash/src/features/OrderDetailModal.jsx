@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { X, Calendar, User, CreditCard, Mail, Phone, ShoppingBag, AlertTriangle, CheckCircle } from 'lucide-react';
 import api from '../lib/api';
+import { DashboardButton, DashboardSurface } from '../components/dashboard/DashboardPrimitives';
 
 const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
     const [isRefunding, setIsRefunding] = useState(false);
     const [refundError, setRefundError] = useState(null);
     const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+    const [receiptStatus, setReceiptStatus] = useState('');
     if (!order) return null;
 
     const formatDate = (dateString) => {
@@ -15,7 +17,7 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: 'USD'
+            currency: (order.currency || 'usd').toUpperCase()
         }).format(amount);
     };
 
@@ -172,9 +174,25 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
                     </div>
                 </div>
 
+                {showRefundConfirm ? <DashboardSurface isDark={isDark} role="dialog" aria-label="Confirm order refund" className="mx-6 mb-4 p-4 space-y-3">
+                    <p>Refund the full {formatCurrency(order.totalAmount)} for this order?</p>
+                    <p>All tickets must be unused and untransferred. Pending refunds prevent ticket admission until the processor completes the request.</p>
+                    {refundError ? <p role="alert">{refundError}</p> : null}
+                    <DashboardButton isDark={isDark} disabled={isRefunding} onClick={handleRefund}>Confirm full refund</DashboardButton>
+                    <DashboardButton isDark={isDark} variant="secondary" disabled={isRefunding} onClick={() => setShowRefundConfirm(false)}>Keep order</DashboardButton>
+                </DashboardSurface> : null}
+                {refundError && !showRefundConfirm ? <p role="alert" className="px-6">{refundError}</p> : null}
+                {receiptStatus ? <p role="status" className="px-6">{receiptStatus}</p> : null}
+                {order.refundStatus && order.refundStatus !== 'NONE' ? <p className="px-6">Refund: {order.refundStatus.toLowerCase()}</p> : null}
                 {/* Footer Action Bar */}
                 <div className={`p-6 border-t flex justify-end space-x-3 ${isDark ? 'border-[#2a2a2a]' : 'border-gray-100'}`}>
                     <button
+                        disabled={isRefunding || order.status !== 'PAID'}
+                        onClick={async () => {
+                            setReceiptStatus('Sending receipt…');
+                            try { await api.post(`/orders/${order.id}/receipt`); setReceiptStatus('Receipt sent to the buyer.'); }
+                            catch (error) { setReceiptStatus(error.response?.data?.message || 'Receipt could not be sent.'); }
+                        }}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDark
                             ? 'bg-[#2a2a2a] text-gray-300 hover:bg-[#333]'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -185,7 +203,7 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
                     {order.status === 'PAID' && (
                         <button
                             onClick={() => setShowRefundConfirm(true)}
-                            disabled={showRefundConfirm || isRefunding}
+                            disabled={showRefundConfirm || isRefunding || order.refundStatus === 'PROCESSING'}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDark
                                 ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                                 : 'bg-red-50 text-red-600 hover:bg-red-100'

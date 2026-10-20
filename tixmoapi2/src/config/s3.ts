@@ -1,5 +1,10 @@
 import { S3Client } from '@aws-sdk/client-s3';
 
+const urlStyle = process.env.S3_URL_STYLE || process.env.AWS_S3_URL_STYLE || 'path';
+if (!['path', 'virtual'].includes(urlStyle)) {
+  throw new Error('S3_URL_STYLE must be path or virtual');
+}
+
 // S3 client for Railway S3 (or compatible S3 storage)
 export const s3Client = new S3Client({
   endpoint: process.env.S3_ENDPOINT || process.env.AWS_ENDPOINT,
@@ -8,7 +13,7 @@ export const s3Client = new S3Client({
     accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
   },
-  forcePathStyle: true, // Required for Railway S3 and most S3-compatible services
+  forcePathStyle: urlStyle === 'path',
 });
 
 export const S3_BUCKET =

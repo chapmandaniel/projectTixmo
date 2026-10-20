@@ -1,17 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
+import api from '../lib/api';
+import { DashboardButton, DashboardSurface } from '../components/dashboard/DashboardPrimitives';
+import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import { Settings, Calendar, MapPin, Globe, Edit3, AlertTriangle } from 'lucide-react';
 
-const ECC_Settings = ({ event, isDark, onEdit }) => {
-    const formatDate = (isoString) => {
-        if (!isoString) return 'TBA';
-        return new Date(isoString).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-        });
+const ECC_Settings = ({ event, isDark, onEdit, user, onDeleted }) => {
+    const [confirmDelete, setConfirmDelete] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [error, setError] = useState('');
+    const canDelete = ['OWNER', 'ADMIN'].includes(user?.role);
+    const formatDate = (instant) => formatEventDate(instant, event.timezone || DEFAULT_EVENT_TIMEZONE);
+    const deleteEvent = async () => {
+        setDeleting(true);
+        setError('');
+        try {
+            await api.delete(`/events/${event.id}`);
+            onDeleted?.();
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || 'Unable to delete this event.');
+        } finally { setDeleting(false); }
     };
 
     return (
@@ -100,37 +107,25 @@ const ECC_Settings = ({ event, isDark, onEdit }) => {
                         <p className={`font-normal tracking-wide ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>Event Status</p>
                         <p className={`text-sm font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
                             Current status is <span className="font-normal text-gray-200">{event.status}</span>.
-                            {event.status === 'PUBLISHED' ? ' Your event is live and visible to the public.' : ' Your event is hidden.'}
+                            {['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(event.status) ? ' Your event is live and visible to the public.' : ' Your event is hidden.'}
                         </p>
                     </div>
                 </div>
             </div>
 
 
-            {/* Danger Zone */}
-            <div className={`p-6 rounded-md border ${isDark ? 'bg-rose-900/10 border-rose-900/30' : 'bg-red-50/50 border-red-200/50'}`}>
-                <div className={`flex items-center space-x-2 mb-6 ${isDark ? 'text-rose-400' : 'text-rose-600'}`}>
-                    <div className={`p-2 rounded-md ${isDark ? 'bg-rose-900/20' : 'bg-rose-100'}`}>
-                        <AlertTriangle size={20} />
+            {canDelete && <DashboardSurface isDark={isDark} className="space-y-4 p-6">
+                <h4 className="text-lg font-light">Delete event</h4>
+                <p className="text-sm">Move an event without tickets to the recycle bin. An owner or administrator can restore it as a draft.</p>
+                {error && <p role="alert">{error}</p>}
+                {!confirmDelete ? <DashboardButton isDark={isDark} variant="danger" onClick={() => setConfirmDelete(true)}>Delete Event</DashboardButton> : <div role="dialog" aria-modal="false" aria-label="Confirm event deletion" className="space-y-4">
+                    <p>Move “{event.name}” to the recycle bin?</p>
+                    <div className="flex flex-wrap gap-3">
+                        <DashboardButton isDark={isDark} variant="danger" disabled={deleting} onClick={deleteEvent}>{deleting ? 'Deleting…' : 'Confirm deletion'}</DashboardButton>
+                        <DashboardButton isDark={isDark} variant="secondary" disabled={deleting} onClick={() => { setConfirmDelete(false); setError(''); }}>Keep event</DashboardButton>
                     </div>
-                    <h4 className="font-normal tracking-wide">Danger Zone</h4>
-                </div>
-
-                <div className="flex md:flex-row flex-col items-start md:items-center justify-between gap-4">
-                    <div>
-                        <p className={`font-normal tracking-wide ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>Delete Event</p>
-                        <p className={`text-sm font-light ${isDark ? 'text-rose-200/50' : 'text-gray-500'}`}>
-                            Permanently delete this event and all associated data. This action cannot be undone.
-                        </p>
-                    </div>
-                    <button
-                        className="px-4 py-2 bg-rose-600/90 hover:bg-rose-600 text-white text-sm font-light tracking-wide rounded-md transition-all shadow-lg shadow-rose-900/20"
-                        onClick={() => alert('Delete functionality not yet implemented safely.')}
-                    >
-                        Delete Event
-                    </button>
-                </div>
-            </div>
+                </div>}
+            </DashboardSurface>}
 
         </div>
     );

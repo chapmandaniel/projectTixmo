@@ -1,9 +1,4 @@
-import {
-  Notification,
-  NotificationPreference,
-  NotificationType,
-  Prisma,
-} from '@prisma/client';
+import { Notification, NotificationPreference, NotificationType, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 
 import prisma from '../../config/prisma';

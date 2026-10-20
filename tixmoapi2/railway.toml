@@ -1,0 +1,8 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "/bin/sh -c 'npm run migrate && exec node dist/index.js'"
+healthcheckPath = "/ready"
+restartPolicyType = "ON_FAILURE"

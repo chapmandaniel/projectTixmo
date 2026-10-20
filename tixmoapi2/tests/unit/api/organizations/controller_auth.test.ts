@@ -55,7 +55,7 @@ describe('Organization Controller Authorization', () => {
         role: 'TEAM_MEMBER',
       });
 
-      await (addMember as any)(req as AuthRequest, res, next);
+      await (addMember as any)(req, res, next);
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(organizationService.addMember).toHaveBeenCalledWith('org-123', 'new-member-1');
@@ -68,16 +68,18 @@ describe('Organization Controller Authorization', () => {
       req.body = { userId: 'new-member-1' };
 
       // Mock prisma response saying user is member of org-123
-      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
-        id: 'manager-1',
-        organizationId: 'org-123',
-        role: 'MANAGER',
-      }).mockResolvedValueOnce({
-        id: 'new-member-1',
-        role: 'TEAM_MEMBER',
-      });
+      (prisma.user.findUnique as jest.Mock)
+        .mockResolvedValueOnce({
+          id: 'manager-1',
+          organizationId: 'org-123',
+          role: 'MANAGER',
+        })
+        .mockResolvedValueOnce({
+          id: 'new-member-1',
+          role: 'TEAM_MEMBER',
+        });
 
-      await (addMember as any)(req as AuthRequest, res, next);
+      await (addMember as any)(req, res, next);
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(prisma.user.findUnique).toHaveBeenNthCalledWith(1, {
@@ -98,7 +100,7 @@ describe('Organization Controller Authorization', () => {
         role: 'PROMOTER',
       });
 
-      await (addMember as any)(req as AuthRequest, res, next);
+      await (addMember as any)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(ApiError));
       expect(next.mock.calls[0][0].statusCode).toBe(403);
@@ -114,7 +116,7 @@ describe('Organization Controller Authorization', () => {
         organizationId: 'org-999',
       });
 
-      await (addMember as any)(req as AuthRequest, res, next);
+      await (addMember as any)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(ApiError));
       const error = next.mock.calls[0][0];
@@ -130,7 +132,7 @@ describe('Organization Controller Authorization', () => {
         organizationId: null,
       });
 
-      await (addMember as any)(req as AuthRequest, res, next);
+      await (addMember as any)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(ApiError));
       expect(next.mock.calls[0][0].statusCode).toBe(403);
@@ -146,7 +148,7 @@ describe('Organization Controller Authorization', () => {
         role: 'TEAM_MEMBER',
       });
 
-      await (removeMember as any)(req as AuthRequest, res, next);
+      await (removeMember as any)(req, res, next);
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(organizationService.removeMember).toHaveBeenCalledWith('org-123', 'member-to-remove');
@@ -161,7 +163,7 @@ describe('Organization Controller Authorization', () => {
         organizationId: 'org-666',
       });
 
-      await (removeMember as any)(req as AuthRequest, res, next);
+      await (removeMember as any)(req, res, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(ApiError));
       expect(next.mock.calls[0][0].statusCode).toBe(403);

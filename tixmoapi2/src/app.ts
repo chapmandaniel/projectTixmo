@@ -1,3 +1,4 @@
+import { checkReadiness } from './services/readiness.service';
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -108,9 +109,23 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// Liveness stays cheap; readiness proves the dependencies needed to serve requests.
+app.get('/ready', async (_req, res) => {
+  const checks = await checkReadiness();
+  const ready = checks.database === true && checks.redis === true;
+  res
+    .set('Cache-Control', 'no-store')
+    .status(ready ? 200 : 503)
+    .json({
+      status: ready ? 'ready' : 'not_ready',
+      checks,
+      timestamp: new Date().toISOString(),
+    });
+});
+
 // Debug route to test Sentry (only enabled when SENTRY_DSN is configured)
 app.get('/api/v1/debug/sentry', (_req, _res, next) => {
-  if (!config.sentryDsn) return next();
+  if (config.nodeEnv !== 'development' || !config.sentryDsn) return next();
   // generating an error to test Sentry capture
   const err = new Error('Sentry test error');
   // capture and rethrow — Sentry's error handler will pick it up

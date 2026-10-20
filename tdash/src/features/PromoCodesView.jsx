@@ -90,7 +90,7 @@ const PromoCodesView = ({ isDark }) => {
                             placeholder="Search by Code..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-10 pr-4 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-pink-500 font-light tracking-wide ${isDark
+                            className={`w-full pl-10 pr-4 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-light tracking-wide ${isDark
                                 ? 'bg-[#151521] border-[#2b2b40] text-gray-200 placeholder-gray-500'
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                                 }`}
@@ -102,7 +102,7 @@ const PromoCodesView = ({ isDark }) => {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => { setPage(1); setStatusFilter(e.target.value); }}
-                                className={`pl-10 pr-8 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-pink-500 appearance-none font-light tracking-wide ${isDark
+                                className={`pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 appearance-none font-light tracking-wide ${isDark
                                     ? 'bg-[#151521] border-[#2b2b40] text-gray-200'
                                     : 'bg-white border-gray-300 text-gray-900'
                                     }`}

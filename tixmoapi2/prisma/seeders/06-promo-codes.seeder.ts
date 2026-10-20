@@ -1,8 +1,10 @@
+import { assertDevelopmentClient } from '../utils/development-client';
 import { PrismaClient, PromoCodeStatus, Organization } from '@prisma/client';
 import { seedLogger } from '../utils/seed-logger';
 import { createPromoCodeData } from '../factories/promo-code.factory';
 
 export async function seedPromoCodes(prisma: PrismaClient, organizations: Organization[]) {
+  assertDevelopmentClient(prisma);
   seedLogger.info('Seeding promo codes...');
 
   const promoCodes = [];

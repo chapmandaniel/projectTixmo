@@ -25,7 +25,7 @@ describe('Users Routes', () => {
     // Manually promote to ADMIN
     await prisma.user.update({
       where: { id: adminUser.id },
-      data: { role: UserRole.ADMIN },
+      data: { role: UserRole.ADMIN, isPlatformAdmin: true },
     });
 
     // Login to get new token with ADMIN role

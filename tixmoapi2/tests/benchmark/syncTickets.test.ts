@@ -9,6 +9,7 @@ jest.mock('../../src/config/prisma', () => {
       scanner: {
         findUnique: jest.fn(),
       },
+      event: { findUnique: jest.fn() },
       ticket: {
         findMany: jest.fn(),
       },
@@ -36,7 +37,6 @@ jest.mock('../../src/config/redis', () => ({
   getRedisClient: jest.fn(),
 }));
 
-
 describe('SyncTickets Benchmark', () => {
   let scannerService: ScannerService;
 
@@ -49,8 +49,9 @@ describe('SyncTickets Benchmark', () => {
       id: 'scanner-123',
       eventId: 'event-123',
       organizationId: 'org-123',
-      status: 'ACTIVE'
+      status: 'ACTIVE',
     });
+    (prisma.event.findUnique as jest.Mock).mockResolvedValue({ organizationId: 'org-123' });
   });
 
   it('should measure memory usage for syncTicketsStream with large dataset', async () => {
@@ -66,27 +67,31 @@ describe('SyncTickets Benchmark', () => {
       status: 'VALID',
       ticketTypeId: 'type-1',
       updatedAt: new Date(),
+      order: { status: 'PAID', refundStatus: 'NONE' },
+      event: { status: 'PUBLISHED', deletedAt: null },
     }));
 
     // Mock ticket finding to return slices (simulating cursor pagination)
     (prisma.ticket.findMany as jest.Mock).mockImplementation(async (args) => {
-        const { take, cursor } = args;
-        let startIndex = 0;
+      const { take, cursor } = args;
+      let startIndex = 0;
 
-        if (cursor) {
-            const cursorId = cursor.id;
-            // Simple linear search for mock, in real DB it's index scan
-            startIndex = allTickets.findIndex(t => t.id === cursorId) + 1;
-        }
+      if (cursor) {
+        const cursorId = cursor.id;
+        // Simple linear search for mock, in real DB it's index scan
+        startIndex = allTickets.findIndex((t) => t.id === cursorId) + 1;
+      }
 
-        // Return slice
-        // Note: The service uses 'orderBy: id asc', so our array generation must match or we sort it.
-        // Array generation index matches id order.
-        return allTickets.slice(startIndex, startIndex + (take || 1000));
+      // Return slice
+      // Note: The service uses 'orderBy: id asc', so our array generation must match or we sort it.
+      // Array generation index matches id order.
+      return allTickets.slice(startIndex, startIndex + (take || 1000));
     });
 
     // Force garbage collection if possible (not available in standard node without flag)
-    if (global.gc) { global.gc(); }
+    if (global.gc) {
+      global.gc();
+    }
 
     const startMemory = process.memoryUsage().heapUsed;
     const startTime = performance.now();
@@ -96,11 +101,11 @@ describe('SyncTickets Benchmark', () => {
     let processedCount = 0;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for await (const batch of stream) {
-        processedCount += batch.length;
-        // access items to ensure they are loaded
-        if (batch.length > 0) {
-            batch[0].hash;
-        }
+      processedCount += batch.length;
+      // access items to ensure they are loaded
+      if (batch.length > 0) {
+        batch[0].hash;
+      }
     }
 
     const endTime = performance.now();

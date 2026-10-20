@@ -2,11 +2,16 @@ import { Prisma, Order, OrderStatus } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { Decimal } from '@prisma/client/runtime/library';
 import { notificationService } from '../../utils/notificationService';
-import { promoCodeService } from '../promo-codes/service';
-import { ticketTierService } from '../ticket-tiers/service';
 import crypto from 'crypto';
+import { getActorScopeById, resolveOrganizationFilter } from '../../utils/tenantScope';
 
 import prisma from '../../config/prisma';
+import { config } from '../../config/environment';
+import {
+  lockOrder,
+  transitionInventory,
+  transitionPromo,
+} from '../../services/order-inventory.service';
 
 interface OrderItemInput {
   ticketTypeId: string;
@@ -24,6 +29,7 @@ interface ListOrdersParams {
   status?: OrderStatus;
   userId?: string;
   eventId?: string;
+  search?: string;
 }
 
 interface PaginatedOrders {
@@ -36,229 +42,208 @@ interface PaginatedOrders {
   };
 }
 
-// Helper types to avoid long inline type casts
-type OrderWithTickets = Order & {
-  tickets: Array<{ ticketTypeId: string }>;
-  status: Order['status'];
-};
-type OrderWithTicketsAndUser = Order & {
-  tickets: Array<{ ticketTypeId: string }>;
-  userId: string;
-  status: Order['status'];
-};
-
 export class OrderService {
+  // Only authenticated HTTP entrypoints pass actorId. Omission is reserved for
+  // trusted payment/free-order/expiry jobs; never populate it from query input.
+  private async actorOrderScope(
+    actorId: string,
+    action: 'read' | 'confirm' | 'refund' = 'read'
+  ): Promise<Prisma.OrderWhereInput> {
+    const actor = await getActorScopeById(actorId);
+    if (action === 'refund' && !['OWNER', 'ADMIN'].includes(actor.role)) {
+      throw ApiError.forbidden('Not authorized to refund orders');
+    }
+    if (action === 'confirm' && !['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'].includes(actor.role)) {
+      throw ApiError.forbidden('Not authorized to confirm orders');
+    }
+    if (!['OWNER', 'ADMIN', 'MANAGER'].includes(actor.role)) {
+      return { userId: actor.userId };
+    }
+    const organizationId = resolveOrganizationFilter(actor);
+    return organizationId ? { event: { organizationId } } : {};
+  }
+
   /**
    * Create a new order
    */
   async createOrder(userId: string, data: CreateOrderInput): Promise<Order> {
-    // 1. Batch-fetch ALL ticket types in one query (avoid N+1)
-    const ticketTypeIds = data.items.map(item => item.ticketTypeId);
-    const ticketTypes = await prisma.ticketType.findMany({
-      where: { id: { in: ticketTypeIds } },
-      include: {
-        event: {
-          select: {
-            id: true,
-            status: true,
-            startDatetime: true,
-          },
-        },
-      },
-    });
-
-    // Build a lookup map
-    const ticketTypeMap = new Map(ticketTypes.map(tt => [tt.id, tt]));
-
-    // Validate all ticket types exist
+    const quantities = new Map<string, number>();
     for (const item of data.items) {
-      if (!ticketTypeMap.has(item.ticketTypeId)) {
-        throw ApiError.notFound(`Ticket type ${item.ticketTypeId} not found`);
-      }
+      if (!Number.isSafeInteger(item.quantity) || item.quantity < 1)
+        throw ApiError.badRequest('Invalid quantity');
+      quantities.set(item.ticketTypeId, (quantities.get(item.ticketTypeId) || 0) + item.quantity);
     }
-
-    // Validate all belong to same event
-    const eventIds = new Set(ticketTypes.map(tt => tt.event.id));
-    if (eventIds.size !== 1) {
-      throw ApiError.badRequest('All tickets must be for the same event');
-    }
-    const eventId = ticketTypes[0].event.id;
-    const event = ticketTypes[0].event;
-
-    // Validate event status — accept PUBLISHED and ON_SALE
-    if (!['PUBLISHED', 'ON_SALE'].includes(event.status)) {
-      throw ApiError.badRequest('Event is not available for purchase');
-    }
-
-    // Validate event hasn't started
-    if (event.startDatetime && new Date() >= event.startDatetime) {
-      throw ApiError.badRequest('Event has already started');
-    }
-
-    // Validate availability and per-order limits
-    for (const item of data.items) {
-      const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
-      if (ticketType.quantityAvailable < item.quantity) {
-        throw ApiError.badRequest(
-          `Only ${ticketType.quantityAvailable} tickets available for ${ticketType.name}`
-        );
-      }
-      if (item.quantity > ticketType.maxPerOrder) {
-        throw ApiError.badRequest(
-          `Maximum ${ticketType.maxPerOrder} tickets per order for ${ticketType.name}`
-        );
-      }
-    }
-
-    // Calculate total amount (use active tier pricing when available)
-    let totalAmount = new Decimal(0);
-    const tierPriceMap = new Map<string, Decimal>();
-    for (const item of data.items) {
-      const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
-      let unitPrice = ticketType.price;
-
-      // Check for active tier
-      const activeTier = await ticketTierService.getActiveTier(item.ticketTypeId);
-      if (activeTier) {
-        unitPrice = activeTier.price;
-        tierPriceMap.set(item.ticketTypeId, activeTier.price);
-      }
-
-      totalAmount = totalAmount.add(unitPrice.mul(item.quantity));
-    }
-
-    // Apply promo code discount if provided
-    let discountAmount = new Decimal(0);
-    let promoCodeId: string | undefined;
-
-    if (data.promoCode) {
-      const promoResult = await promoCodeService.validatePromoCode(
-        data.promoCode,
-        userId,
-        eventId,
-        totalAmount.toNumber()
-      );
-
-      if (!promoResult.valid) {
-        throw ApiError.badRequest(promoResult.reason || 'Invalid promo code');
-      }
-
-      if (promoResult.discountAmount) {
-        discountAmount = new Decimal(promoResult.discountAmount);
-      }
-      if (promoResult.promoCode) {
-        promoCodeId = promoResult.promoCode.id;
-      }
-    }
-
-    const finalAmount = Decimal.max(totalAmount.sub(discountAmount), new Decimal(0));
-
-    // Generate cryptographically secure order number
-    const orderNumber = `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
-
-    // Sort items by ticketTypeId to prevent deadlocks
-    const sortedItems = [...data.items].sort((a, b) =>
-      a.ticketTypeId.localeCompare(b.ticketTypeId)
-    );
-
-    // Create order and hold inventory in a transaction
-    const order = await prisma.$transaction(async (tx) => {
-      for (const item of sortedItems) {
-        const holdResult = await tx.ticketType.updateMany({
-          where: {
-            id: item.ticketTypeId,
-            quantityAvailable: { gte: item.quantity },
-          },
-          data: {
-            quantityHeld: { increment: item.quantity },
-            quantityAvailable: { decrement: item.quantity },
-          },
+    if (!quantities.size) throw ApiError.badRequest('Order must contain tickets');
+    const items = [...quantities].sort(([a], [b]) => a.localeCompare(b));
+    const order = await prisma.$transaction(
+      async (tx) => {
+        const first = await tx.ticketType.findUnique({
+          where: { id: items[0][0] },
+          select: { eventId: true },
         });
-
-        if (holdResult.count !== 1) {
-          throw ApiError.badRequest('Not enough tickets available');
+        if (!first) throw ApiError.notFound('Ticket type not found');
+        // Event cancellation and checkout share this lock. Orders created before
+        // cancellation remain visible to its subsequent cancellation pass.
+        await tx.$queryRaw`SELECT id FROM events WHERE id = ${first.eventId} FOR UPDATE`;
+        const event = await tx.event.findUniqueOrThrow({ where: { id: first.eventId } });
+        const now = new Date();
+        if (
+          event.deletedAt ||
+          !['PUBLISHED', 'ON_SALE'].includes(event.status) ||
+          (event.startDatetime && now >= event.startDatetime)
+        ) {
+          throw ApiError.badRequest('Event is not available for purchase');
         }
-      }
-
-      const newOrder = await tx.order.create({
-        data: {
-          orderNumber,
-          userId,
-          eventId,
-          status: 'PENDING',
-          totalAmount: finalAmount,
-          discountAmount,
-          promoCodeId: promoCodeId || null,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
-        },
-        include: {
-          event: {
-            select: {
-              name: true,
-              startDatetime: true,
-              venue: {
-                select: {
-                  name: true,
-                },
-              },
+        let subtotal = new Decimal(0);
+        const allocations: Array<{
+          ticketTypeId: string;
+          quantity: number;
+          price: Decimal;
+          tierId: string | null;
+        }> = [];
+        for (const [ticketTypeId, quantity] of items) {
+          await tx.$queryRaw`SELECT id FROM ticket_types WHERE id = ${ticketTypeId} FOR UPDATE`;
+          const type = await tx.ticketType.findUnique({
+            where: { id: ticketTypeId },
+            include: { tiers: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] } },
+          });
+          if (!type) throw ApiError.notFound('Ticket type not found');
+          if (type.eventId !== event.id)
+            throw ApiError.badRequest('All tickets must be for the same event');
+          if (
+            type.status !== 'ACTIVE' ||
+            (type.salesStart && now < type.salesStart) ||
+            (type.salesEnd && now >= type.salesEnd)
+          )
+            throw ApiError.badRequest('Ticket type is not on sale');
+          if (quantity > type.quantityAvailable)
+            throw ApiError.badRequest('Not enough tickets available');
+          if (quantity > type.maxPerOrder)
+            throw ApiError.badRequest(
+              `Maximum ${type.maxPerOrder} tickets per order for ${type.name}`
+            );
+          if (type.tierInventoryStatus !== 'READY')
+            throw ApiError.conflict('Ticket pricing schedule requires inventory reconciliation');
+          const tier = type.tiers.find(
+            (t) =>
+              t.isActive &&
+              (!t.startsAt || now >= t.startsAt) &&
+              (!t.endsAt || now < t.endsAt) &&
+              (t.quantityLimit === null || t.quantitySold + t.quantityHeld < t.quantityLimit)
+          );
+          // A configured tier schedule must not silently fall back to the base price.
+          if (type.tiers.length && !tier)
+            throw ApiError.badRequest('No ticket pricing tier is currently available');
+          if (
+            tier &&
+            tier.quantityLimit !== null &&
+            tier.quantitySold + tier.quantityHeld + quantity > tier.quantityLimit
+          ) {
+            throw ApiError.badRequest(
+              'Requested quantity exceeds the remaining pricing tier; select fewer tickets'
+            );
+          }
+          const price = tier?.price ?? type.price;
+          subtotal = subtotal.add(price.mul(quantity));
+          allocations.push({ ticketTypeId, quantity, price, tierId: tier?.id ?? null });
+          await tx.ticketType.update({
+            where: { id: ticketTypeId },
+            data: {
+              quantityAvailable: { decrement: quantity },
+              quantityHeld: { increment: quantity },
             },
-          },
-        },
-      });
-
-      const ticketsToCreate: Prisma.TicketCreateManyInput[] = [];
-
-      for (const item of sortedItems) {
-        const ticketType = ticketTypeMap.get(item.ticketTypeId)!;
-        const pricePaid = tierPriceMap.get(item.ticketTypeId) ?? ticketType.price;
-
-        for (let j = 0; j < item.quantity; j++) {
-          const secureBarcode = `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`;
-
-          ticketsToCreate.push({
-            orderId: newOrder.id,
-            userId,
-            eventId,
-            ticketTypeId: item.ticketTypeId,
-            pricePaid,
-            barcode: secureBarcode,
-            status: 'VALID',
+          });
+          if (tier)
+            await tx.ticketTier.update({
+              where: { id: tier.id },
+              data: { quantityHeld: { increment: quantity } },
+            });
+        }
+        let discount = new Decimal(0);
+        let promoId: string | null = null;
+        if (data.promoCode) {
+          const code = data.promoCode.toUpperCase();
+          await tx.$queryRaw`SELECT id FROM promo_codes WHERE code = ${code} FOR UPDATE`;
+          const promo = await tx.promoCode.findUnique({ where: { code } });
+          if (
+            !promo ||
+            promo.organizationId !== event.organizationId ||
+            promo.status !== 'ACTIVE' ||
+            now < promo.validFrom ||
+            now >= promo.validUntil ||
+            (promo.applicableEvents.length && !promo.applicableEvents.includes(event.id)) ||
+            (promo.minOrderValue && subtotal.lessThan(promo.minOrderValue)) ||
+            (promo.maxUses !== null && promo.usesCount + promo.usesHeld >= promo.maxUses)
+          ) {
+            throw ApiError.badRequest('Promo code is unavailable for this order');
+          }
+          discount = Decimal.min(
+            subtotal,
+            promo.discountType === 'PERCENTAGE'
+              ? subtotal.mul(promo.discountValue).div(100).toDecimalPlaces(2)
+              : promo.discountValue
+          );
+          promoId = promo.id;
+          await tx.promoCode.update({
+            where: { id: promo.id },
+            data: { usesHeld: { increment: 1 } },
           });
         }
-      }
-
-      if (ticketsToCreate.length > 0) {
-        await tx.ticket.createMany({
-          data: ticketsToCreate,
+        const created = await tx.order.create({
+          data: {
+            orderNumber: `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,
+            userId,
+            eventId: event.id,
+            totalAmount: Decimal.max(subtotal.sub(discount), new Decimal(0)),
+            discountAmount: discount,
+            currency: config.paymentCurrency,
+            promoCodeId: promoId,
+            promoReservation: promoId ? 'HELD' : 'NONE',
+            expiresAt: new Date(Date.now() + config.cartExpiryMinutes * 60 * 1000),
+          },
         });
-      }
-
-      if (promoCodeId) {
-        await tx.promoCode.update({
-          where: { id: promoCodeId },
-          data: { usesCount: { increment: 1 } },
-        });
-      }
-
-      return newOrder;
-    });
-
-    // Auto-confirm free orders (no payment needed)
-    if (finalAmount.eq(0)) {
-      return this.confirmOrder(order.id);
-    }
-
-    return order;
+        const tickets: Prisma.TicketCreateManyInput[] = allocations.flatMap((a) =>
+          Array.from({ length: a.quantity }, () => ({
+            orderId: created.id,
+            userId,
+            eventId: event.id,
+            ticketTypeId: a.ticketTypeId,
+            tierId: a.tierId,
+            pricePaid: a.price,
+            inventoryState: 'HELD' as const,
+            barcode: `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,
+            status: 'VALID' as const,
+          }))
+        );
+        await tx.ticket.createMany({ data: tickets });
+        return created;
+      },
+      { timeout: 15000 }
+    );
+    return order.totalAmount.eq(0) ? this.confirmOrder(order.id) : order;
   }
 
   /**
    * Get order by ID
    */
-  async getOrderById(id: string, userId?: string): Promise<Order | null> {
-    if (userId) {
+  // Consumer checkout-return reads never inherit operator/tenant privileges.
+  async getConsumerOrderRecovery(
+    id: string,
+    ownerId: string
+  ): Promise<Pick<Order, 'id' | 'status' | 'paymentStatus'> | null> {
+    if (!ownerId) throw ApiError.unauthorized();
+    return prisma.order.findFirst({
+      where: { id, userId: ownerId },
+      select: { id: true, status: true, paymentStatus: true },
+    });
+  }
+
+  async getOrderById(id: string, userId?: string, actorId?: string): Promise<Order | null> {
+    if (userId || actorId) {
+      const scope = actorId ? await this.actorOrderScope(actorId) : { userId };
       // when userId provided, findFirst with both id and userId
-      return await prisma.order.findFirst({
-        where: { id, userId },
+      const order = await prisma.order.findFirst({
+        where: { id, ...scope },
         include: {
           tickets: {
             include: {
@@ -277,6 +262,20 @@ export class OrderService {
           user: { select: { email: true, firstName: true, lastName: true } },
         },
       });
+      if (!order) return null;
+      const result = {
+        ...order,
+        tickets: order.tickets.map((ticket) =>
+          ticket.userId === (userId || actorId)
+            ? ticket
+            : {
+                ...ticket,
+                barcode: '',
+                qrCodeUrl: null,
+              }
+        ),
+      };
+      return result;
     }
 
     return await prisma.order.findUnique({
@@ -317,208 +316,138 @@ export class OrderService {
   /**
    * Confirm order (after payment)
    */
-  async confirmOrder(id: string): Promise<Order> {
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        tickets: true,
-      },
-    });
-
-    if (!order) {
+  async confirmOrder(id: string, actorId?: string): Promise<Order> {
+    const scope = actorId ? await this.actorOrderScope(actorId, 'confirm') : {};
+    if (actorId && !(await prisma.order.findFirst({ where: { id, ...scope } })))
       throw ApiError.notFound('Order not found');
-    }
+    return prisma.$transaction((tx) => this.confirmOrderInTransaction(tx, id, scope));
+  }
 
-    const orderTyped = order as unknown as OrderWithTickets;
-    if (orderTyped.status !== 'PENDING') {
-      throw ApiError.badRequest(`Cannot confirm order with status ${orderTyped.status}`);
-    }
-
-    // Confirm order and move inventory from held to sold
-    return await prisma.$transaction(async (tx) => {
-      // Get unique ticket types from this order
-      const ticketTypeCounts = new Map<string, number>();
-      for (const ticket of orderTyped.tickets) {
-        const count = ticketTypeCounts.get(ticket.ticketTypeId) || 0;
-        ticketTypeCounts.set(ticket.ticketTypeId, count + 1);
-      }
-
-      // Update inventory
-      for (const [ticketTypeId, quantity] of ticketTypeCounts.entries()) {
-        const inventoryResult = await tx.ticketType.updateMany({
-          where: {
-            id: ticketTypeId,
-            quantityHeld: { gte: quantity },
-          },
-          data: {
-            quantityHeld: { decrement: quantity },
-            quantitySold: { increment: quantity },
-          },
-        });
-
-        if (inventoryResult.count !== 1) {
-          throw ApiError.internal('Order inventory hold is inconsistent');
-        }
-      }
-
-      // Update order status
-      const confirmedOrder = await tx.order.update({
-        where: { id },
-        data: {
-          status: 'PAID',
-          paymentStatus: 'SUCCEEDED',
-        },
-        include: {
-          tickets: {
-            include: {
-              ticketType: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-          event: {
-            select: {
-              name: true,
-              startDatetime: true,
-            },
-          },
-          user: {
-            select: {
-              email: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-        },
-      });
-
-      return confirmedOrder;
-    });
+  // Reused by the webhook while its event-generation fence owns the transaction.
+  // Inventory, tiers, promos, event eligibility and order state commit together.
+  async confirmOrderInTransaction(
+    tx: Prisma.TransactionClient,
+    id: string,
+    scope: Prisma.OrderWhereInput = {}
+  ): Promise<Order> {
+    await lockOrder(tx, id);
+    const order = await tx.order.findFirst({ where: { id, ...scope }, include: { event: true } });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED') return order;
+    await tx.$queryRaw`SELECT id FROM events WHERE id = ${order.eventId} FOR UPDATE`;
+    const currentEvent = await tx.event.findUniqueOrThrow({ where: { id: order.eventId } });
+    if (
+      order.status !== 'PENDING' ||
+      (order.expiresAt && order.expiresAt <= new Date()) ||
+      currentEvent.deletedAt ||
+      !['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(currentEvent.status)
+    )
+      throw ApiError.conflict('Order can no longer be fulfilled');
+    await transitionInventory(tx, id, 'HELD', 'SOLD');
+    await transitionPromo(tx, id, 'USED');
+    return tx.order.update({ where: { id }, data: { status: 'PAID', paymentStatus: 'SUCCEEDED' } });
   }
 
   /**
    * Send order confirmation email (called after confirmOrder)
    */
-  async sendOrderConfirmationEmail(orderId: string): Promise<void> {
+  async sendOrderConfirmationEmail(orderId: string, resend = false): Promise<void> {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: {
-        tickets: true,
-        event: {
-          select: {
-            name: true,
-            startDatetime: true,
-          },
-        },
-        user: {
-          select: {
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
+      include: { tickets: true, event: { include: { venue: true } }, user: true },
+    });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (
+      order.status !== 'PAID' ||
+      (!resend &&
+        (order.receiptSentAt ||
+          order.receiptStatus === 'LEGACY_UNKNOWN' ||
+          order.receiptStatus === 'SENT'))
+    )
+      return;
+    const leaseToken = crypto.randomUUID();
+    const stale = new Date(Date.now() - 5 * 60_000);
+    const claimed = await prisma.order.updateMany({
+      where: {
+        id: orderId,
+        status: 'PAID',
+        OR: [
+          resend ? { receiptStatus: { not: 'PROCESSING' } } : { receiptStatus: 'PENDING' },
+          { receiptStatus: 'PROCESSING', receiptStartedAt: { lt: stale } },
+        ],
+      },
+      data: {
+        receiptStatus: 'PROCESSING',
+        receiptLeaseToken: leaseToken,
+        receiptStartedAt: new Date(),
       },
     });
-
-    if (!order) {
-      throw ApiError.notFound('Order not found');
+    if (!claimed.count) {
+      if (resend) throw ApiError.conflict('Receipt delivery is already in progress');
+      return;
     }
-
-    // Send confirmation email (async, don't wait)
-    // Add check that event and startDatetime exist
-    if (order.event && order.event.startDatetime) {
-      notificationService
-        .sendOrderConfirmation({
-          to: order.user.email,
-          customerName: `${order.user.firstName} ${order.user.lastName}`,
-          orderNumber: order.orderNumber,
-          eventName: order.event.name,
-          eventDate: order.event.startDatetime.toLocaleDateString(),
-          ticketCount: order.tickets.length,
-          totalAmount: order.totalAmount.toString(),
-        })
-        .catch((error) => console.error('Failed to send order confirmation email:', error));
+    try {
+      const date = order.event.startDatetime
+        ? new Intl.DateTimeFormat('en-CA', {
+            dateStyle: 'long',
+            timeStyle: 'short',
+            timeZone: order.event.timezone || order.event.venue?.timezone || 'America/St_Johns',
+          }).format(order.event.startDatetime)
+        : 'Date to be announced';
+      const delivered = await notificationService.sendOrderConfirmation({
+        to: order.user.email,
+        customerName: `${order.user.firstName} ${order.user.lastName}`,
+        orderNumber: order.orderNumber,
+        eventName: order.event.name,
+        eventDate: date,
+        ticketCount: order.tickets.length,
+        totalAmount: `${order.currency.toUpperCase()} ${order.totalAmount.toFixed(2)}`,
+      });
+      if (!delivered) throw ApiError.internal('Receipt could not be delivered');
+      await prisma.order.updateMany({
+        where: { id: orderId, receiptLeaseToken: leaseToken },
+        data: { receiptSentAt: new Date(), receiptStatus: 'SENT', receiptLeaseToken: null },
+      });
+    } catch (error) {
+      await prisma.order.updateMany({
+        where: { id: orderId, receiptLeaseToken: leaseToken },
+        data: { receiptStatus: order.receiptSentAt ? 'SENT' : 'PENDING', receiptLeaseToken: null },
+      });
+      throw error;
     }
   }
 
   /**
    * Cancel order
    */
-  async cancelOrder(id: string, userId?: string): Promise<Order> {
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        tickets: true,
-      },
-    });
-
-    if (!order) {
+  async cancelOrder(id: string, userId?: string, actorId?: string): Promise<Order> {
+    const scope = actorId ? await this.actorOrderScope(actorId) : userId ? { userId } : {};
+    if ((actorId || userId) && !(await prisma.order.findFirst({ where: { id, ...scope } })))
       throw ApiError.notFound('Order not found');
-    }
+    return prisma.$transaction((tx) => this.cancelOrderInTransaction(tx, id, scope));
+  }
 
-    const orderTyped2 = order as unknown as OrderWithTicketsAndUser;
-    if (userId && orderTyped2.userId !== userId) {
-      throw ApiError.forbidden('You can only cancel your own orders');
-    }
-
-    if (orderTyped2.status === 'CANCELLED') {
-      throw ApiError.badRequest('Order is already cancelled');
-    }
-
-    if (orderTyped2.status === 'PAID') {
+  async cancelOrderInTransaction(
+    tx: Prisma.TransactionClient,
+    id: string,
+    scope: Prisma.OrderWhereInput = {}
+  ): Promise<Order> {
+    await lockOrder(tx, id);
+    const order = await tx.order.findFirst({ where: { id, ...scope } });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.status === 'CANCELLED') return order;
+    if (order.status !== 'PENDING')
       throw ApiError.badRequest('Cannot cancel paid orders. Request a refund instead.');
-    }
-
-    // Cancel order and release inventory
-    return await prisma.$transaction(async (tx) => {
-      // Get unique ticket types from this order
-      const ticketTypeCounts = new Map<string, number>();
-      for (const ticket of orderTyped2.tickets) {
-        const count = ticketTypeCounts.get(ticket.ticketTypeId) || 0;
-        ticketTypeCounts.set(ticket.ticketTypeId, count + 1);
-      }
-
-      // Release held inventory
-      for (const [ticketTypeId, quantity] of ticketTypeCounts.entries()) {
-        const inventoryResult = await tx.ticketType.updateMany({
-          where: {
-            id: ticketTypeId,
-            quantityHeld: { gte: quantity },
-          },
-          data: {
-            quantityHeld: { decrement: quantity },
-            quantityAvailable: { increment: quantity },
-          },
-        });
-
-        if (inventoryResult.count !== 1) {
-          throw ApiError.internal('Order inventory hold is inconsistent');
-        }
-      }
-
-      // Cancel tickets
-      await tx.ticket.updateMany({
-        where: { orderId: id },
-        data: { status: 'CANCELLED' },
-      });
-
-      // Update order status
-      return await tx.order.update({
-        where: { id },
-        data: {
-          status: 'CANCELLED',
-        },
-      });
-    });
+    await transitionInventory(tx, id, 'HELD', 'RELEASED');
+    await transitionPromo(tx, id, 'RELEASED');
+    return tx.order.update({ where: { id }, data: { status: 'CANCELLED' } });
   }
 
   /**
    * List orders with pagination
    */
-  async listOrders(params: ListOrdersParams): Promise<PaginatedOrders> {
-    const { page = 1, limit = 20, status, userId, eventId } = params;
+  async listOrders(params: ListOrdersParams, actorId?: string): Promise<PaginatedOrders> {
+    const { page = 1, limit = 20, status, userId, eventId, search } = params;
     const cappedLimit = Math.min(Math.max(1, limit), 100);
     const safePage = Math.max(1, page);
     const skip = (safePage - 1) * cappedLimit;
@@ -527,13 +456,23 @@ export class OrderService {
     if (status) where.status = status;
     if (userId) where.userId = userId;
     if (eventId) where.eventId = eventId;
+    if (search)
+      where.OR = [
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { user: { firstName: { contains: search, mode: 'insensitive' } } },
+        { user: { lastName: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ];
 
+    const scopedWhere: Prisma.OrderWhereInput = actorId
+      ? { AND: [where, await this.actorOrderScope(actorId)] }
+      : where;
     const [orders, total]: [Order[], number] = await Promise.all([
       prisma.order.findMany({
-        where,
+        where: scopedWhere,
         skip,
         take: cappedLimit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         include: {
           event: {
             select: {
@@ -560,7 +499,7 @@ export class OrderService {
           },
         },
       }),
-      prisma.order.count({ where }),
+      prisma.order.count({ where: scopedWhere }),
     ]);
 
     return {
@@ -577,53 +516,42 @@ export class OrderService {
   /**
    * Refund an order (ADMIN only)
    */
-  async refundOrder(id: string): Promise<Order> {
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: { tickets: true },
-    });
-
-    if (!order) throw ApiError.notFound('Order not found');
-    if (order.status !== 'PAID') {
-      throw ApiError.badRequest('Only PAID orders can be refunded');
+  async refundOrder(id: string, actorId?: string): Promise<Order> {
+    if (actorId) {
+      const scope = await this.actorOrderScope(actorId, 'refund');
+      if (!(await prisma.order.findFirst({ where: { id, ...scope } })))
+        throw ApiError.notFound('Order not found');
     }
+    const { paymentService } = await import('../payments/service');
+    return paymentService.refundOrder(id);
+  }
 
-    return await prisma.$transaction(async (tx) => {
-      // Cancel all valid tickets in one batch
-      const ticketsToCancel = order.tickets.filter(
-        (t) => t.status === 'VALID' || t.status === 'TRANSFERRED'
-      );
-
-      if (ticketsToCancel.length > 0) {
-        const ticketIds = ticketsToCancel.map((t) => t.id);
-
-        await tx.ticket.updateMany({
-          where: { id: { in: ticketIds } },
-          data: { status: 'CANCELLED' },
+  // Only the processor reconciliation path may finalize a monetary refund.
+  async finalizeRefund(id: string): Promise<Order> {
+    return prisma.$transaction(async (tx) => {
+      await lockOrder(tx, id);
+      const order = await tx.order.findUnique({ where: { id } });
+      if (!order) throw ApiError.notFound('Order not found');
+      if (order.status === 'REFUNDED') return order;
+      if (order.status !== 'PAID') throw ApiError.conflict('Order is not paid');
+      if (!order.totalAmount.eq(0)) {
+        const refund = await tx.paymentRefund.findUnique({
+          where: { paymentIntentId: order.paymentIntentId || '' },
         });
-
-        // Aggregate inventory updates by ticket type to avoid N+1 queries
-        const ticketTypeCounts = new Map<string, number>();
-        for (const ticket of ticketsToCancel) {
-          const count = ticketTypeCounts.get(ticket.ticketTypeId) || 0;
-          ticketTypeCounts.set(ticket.ticketTypeId, count + 1);
-        }
-
-        for (const [ticketTypeId, count] of ticketTypeCounts.entries()) {
-          await tx.ticketType.update({
-            where: { id: ticketTypeId },
-            data: {
-              quantitySold: { decrement: count },
-              quantityAvailable: { increment: count },
-            },
-          });
+        if (
+          !refund ||
+          refund.reason !== 'ORDER_REFUND' ||
+          refund.status !== 'SUCCEEDED' ||
+          refund.amount !== Math.round(order.totalAmount.toNumber() * 100) ||
+          refund.currency !== order.currency
+        ) {
+          throw ApiError.conflict('Processor refund has not been confirmed');
         }
       }
-
-      // Update order status
-      return await tx.order.update({
+      await transitionInventory(tx, id, 'SOLD', 'RELEASED');
+      return tx.order.update({
         where: { id },
-        data: { status: 'REFUNDED' },
+        data: { status: 'REFUNDED', refundStatus: 'SUCCEEDED' },
       });
     });
   }

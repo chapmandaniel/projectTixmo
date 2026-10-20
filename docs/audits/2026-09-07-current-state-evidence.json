@@ -1,0 +1,1038 @@
+{
+  "auditedAt": "2026-09-07T11:38:40.915Z",
+  "scope": "Current working tree plus read-only GitHub/Railway/public HTTP and unauthenticated browser checks",
+  "branch": "codex/current-state-audit-2026-09-07",
+  "head": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+  "initialWorkingTree": {
+    "trackedChangedFiles": 102,
+    "untrackedEntries": 4,
+    "originalBranch": "codex/review-portal-assets-plan"
+  },
+  "localRuntime": {
+    "node": "v24.0.2",
+    "npm": "11.3.0",
+    "postgres": "14-alpine isolated",
+    "redis": "7-alpine isolated; Jest globally mocks Redis"
+  },
+  "checks": {
+    "apiBuild": "pass",
+    "apiTypecheck": "pass",
+    "apiLint": {
+      "result": "pass",
+      "errors": 0,
+      "warnings": 291
+    },
+    "apiTests": {
+      "passedSuites": 52,
+      "failedSuites": 1,
+      "passedTests": 331,
+      "failedTests": 1,
+      "failedTest": "asset-library.service.test.ts creates revocable external share links for saved folders",
+      "cause": "Mock expiresAt fixed at 2026-06-18; suite passes 16/16 when Date alone is fixed at 2026-06-01"
+    },
+    "frontendBuild": "pass",
+    "frontendTests": {
+      "passedSuites": 23,
+      "failedSuites": 1,
+      "passedTests": 113,
+      "failedTests": 1,
+      "failedTest": "EventsView.test.jsx upcoming event rail",
+      "cause": "Fixed July/August event dates expired; suite passes 2/2 when Date alone is fixed at 2026-06-01"
+    },
+    "designGuard": {
+      "result": "pass",
+      "grandfatheredViolations": 1055
+    },
+    "migrations": {
+      "freshReplay": "pass",
+      "count": 26,
+      "database": "Postgres14",
+      "schemaDiffExitCode": 2,
+      "schemaDiff": "approval_reminders unique index name differs; no table/column changes reported"
+    },
+    "evidenceGate": {
+      "result": "fail",
+      "reportedGaps": 9,
+      "missingCategories": 8,
+      "permanentLocalWarning": 1
+    }
+  },
+  "dependencies": {
+    "api-production": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 3,
+        "high": 2,
+        "critical": 0,
+        "total": 5
+      },
+      "packages": [
+        {
+          "name": "body-parser",
+          "severity": "moderate",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "body-parser vulnerable to denial of service when invalid limit value silently disables size enforcement",
+              "url": "https://github.com/advisories/GHSA-v422-hmwv-36x6",
+              "severity": "low"
+            }
+          ]
+        },
+        {
+          "name": "brace-expansion",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "brace-expansion: DoS via exponential-time expansion of consecutive non-expanding {} groups",
+              "url": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp",
+              "severity": "high"
+            },
+            {
+              "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+              "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+              "severity": "high"
+            },
+            {
+              "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+              "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "express",
+          "severity": "moderate",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": []
+        },
+        {
+          "name": "js-yaml",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "js-yaml: YAML merge-key chains can force quadratic CPU consumption",
+              "url": "https://github.com/advisories/GHSA-52cp-r559-cp3m",
+              "severity": "high"
+            },
+            {
+              "title": "JS-YAML: Quadratic CPU consumption in !!omap resolution (3.x and 4.x) \u2014 CVE-2026-59870 fix not backported",
+              "url": "https://github.com/advisories/GHSA-5p4m-2wfm-xmqj",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "qs",
+          "severity": "moderate",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "qs array-limit bypass via bracket-key comma parsing",
+              "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
+              "severity": "moderate"
+            },
+            {
+              "title": "qs: Denial of Service via Attacker Controlled isBuffer",
+              "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+              "severity": "moderate"
+            }
+          ]
+        }
+      ]
+    },
+    "api-all": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 3,
+        "high": 10,
+        "critical": 0,
+        "total": 13
+      },
+      "packages": [
+        {
+          "name": "@faker-js/faker",
+          "severity": "high",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "Faker: helpers.fake exploitable into arbritary code execution",
+              "url": "https://github.com/advisories/GHSA-qxc2-j82w-r537",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "@typescript-eslint/eslint-plugin",
+          "severity": "high",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": []
+        },
+        {
+          "name": "@typescript-eslint/parser",
+          "severity": "high",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": []
+        },
+        {
+          "name": "@typescript-eslint/type-utils",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": []
+        },
+        {
+          "name": "@typescript-eslint/typescript-estree",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": []
+        },
+        {
+          "name": "@typescript-eslint/utils",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": []
+        },
+        {
+          "name": "body-parser",
+          "severity": "moderate",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "body-parser vulnerable to denial of service when invalid limit value silently disables size enforcement",
+              "url": "https://github.com/advisories/GHSA-v422-hmwv-36x6",
+              "severity": "low"
+            }
+          ]
+        },
+        {
+          "name": "brace-expansion",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "brace-expansion: DoS via exponential-time expansion of consecutive non-expanding {} groups",
+              "url": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp",
+              "severity": "high"
+            },
+            {
+              "title": "brace-expansion: DoS via exponential-time expansion of consecutive non-expanding {} groups",
+              "url": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp",
+              "severity": "high"
+            },
+            {
+              "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+              "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+              "severity": "high"
+            },
+            {
+              "title": "brace-expansion: DoS via unbounded expansion length causing an out-of-memory process crash",
+              "url": "https://github.com/advisories/GHSA-mh99-v99m-4gvg",
+              "severity": "high"
+            },
+            {
+              "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+              "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+              "severity": "high"
+            },
+            {
+              "title": "brace-expansion: DoS via unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation",
+              "url": "https://github.com/advisories/GHSA-rgw5-rvv9-x895",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "browserslist",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "Browserslist: Unbounded memory growth (no cache eviction) via distinct query results, leading to eventual OOM",
+              "url": "https://github.com/advisories/GHSA-c83g-rgw3-j3cx",
+              "severity": "high"
+            },
+            {
+              "title": "Browserslist: Uncaught crash / prototype write via untrusted browserslist-stats.json custom stats (normalizeStats)",
+              "url": "https://github.com/advisories/GHSA-73wf-gq98-2v4g",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "express",
+          "severity": "moderate",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": []
+        },
+        {
+          "name": "js-yaml",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "JS-YAML: Quadratic-complexity DoS in merge key handling via repeated aliases",
+              "url": "https://github.com/advisories/GHSA-h67p-54hq-rp68",
+              "severity": "moderate"
+            },
+            {
+              "title": "js-yaml: YAML merge-key chains can force quadratic CPU consumption",
+              "url": "https://github.com/advisories/GHSA-52cp-r559-cp3m",
+              "severity": "high"
+            },
+            {
+              "title": "js-yaml: YAML merge-key chains can force quadratic CPU consumption",
+              "url": "https://github.com/advisories/GHSA-52cp-r559-cp3m",
+              "severity": "high"
+            },
+            {
+              "title": "JS-YAML: Quadratic CPU consumption in !!omap resolution (3.x and 4.x) \u2014 CVE-2026-59870 fix not backported",
+              "url": "https://github.com/advisories/GHSA-5p4m-2wfm-xmqj",
+              "severity": "high"
+            },
+            {
+              "title": "JS-YAML: Quadratic CPU consumption in !!omap resolution (3.x and 4.x) \u2014 CVE-2026-59870 fix not backported",
+              "url": "https://github.com/advisories/GHSA-5p4m-2wfm-xmqj",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "minimatch",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "minimatch has a ReDoS via repeated wildcards with non-matching literal in pattern",
+              "url": "https://github.com/advisories/GHSA-3ppc-4f35-3m26",
+              "severity": "high"
+            },
+            {
+              "title": "minimatch has ReDoS: matchOne() combinatorial backtracking via multiple non-adjacent GLOBSTAR segments",
+              "url": "https://github.com/advisories/GHSA-7r86-cg39-jmmj",
+              "severity": "high"
+            },
+            {
+              "title": "minimatch ReDoS: nested *() extglobs generate catastrophically backtracking regular expressions",
+              "url": "https://github.com/advisories/GHSA-23c5-xmqv-rm74",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "qs",
+          "severity": "moderate",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "qs array-limit bypass via bracket-key comma parsing",
+              "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
+              "severity": "moderate"
+            },
+            {
+              "title": "qs: Denial of Service via Attacker Controlled isBuffer",
+              "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
+              "severity": "moderate"
+            }
+          ]
+        }
+      ]
+    },
+    "frontend-production": {
+      "counts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 1,
+        "high": 2,
+        "critical": 0,
+        "total": 3
+      },
+      "packages": [
+        {
+          "name": "axios",
+          "severity": "high",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "Axios form serializer maxDepth bypass via {} metatoken",
+              "url": "https://github.com/advisories/GHSA-hcpx-6fm6-wx23",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Prototype pollution auth subfields can inject Basic auth",
+              "url": "https://github.com/advisories/GHSA-xj6q-8x83-jv6g",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Prototype pollution gadgets can alter axios request construction",
+              "url": "https://github.com/advisories/GHSA-mmx7-hfxf-jppx",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Deep formToJSON Key Recursion Can Cause Denial of Service",
+              "url": "https://github.com/advisories/GHSA-pmv8-rq9r-6j72",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: HTTP/2 streamed uploads bypass `maxBodyLength`",
+              "url": "https://github.com/advisories/GHSA-mwf2-3pr3-8698",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios Node HTTP adapter can use an inherited proxy after interceptor config cloning",
+              "url": "https://github.com/advisories/GHSA-gcfj-64vw-6mp9",
+              "severity": "high"
+            },
+            {
+              "title": "Axios: Nested axios option objects can consume polluted prototype values",
+              "url": "https://github.com/advisories/GHSA-7q8q-rj6j-mhjq",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Fetch adapter `ReadableStream` uploads bypass `maxBodyLength`",
+              "url": "https://github.com/advisories/GHSA-jqh4-m9w3-8hp9",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: NO_PROXY bypass for 0.0.0.0 local addresses in axios",
+              "url": "https://github.com/advisories/GHSA-f4gw-2p7v-4548",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Excessive recursion in formDataToJSON can cause denial of service",
+              "url": "https://github.com/advisories/GHSA-42h9-826w-cgv3",
+              "severity": "moderate"
+            }
+          ]
+        },
+        {
+          "name": "react-router",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "React Router: Open redirect via backslash in <Link> and useNavigate (CVE-2025-68470 bypass)",
+              "url": "https://github.com/advisories/GHSA-wrjc-x8rr-h8h6",
+              "severity": "moderate"
+            },
+            {
+              "title": "React Router: RSCErrorHandler Missing Protocol Validation (XSS)",
+              "url": "https://github.com/advisories/GHSA-h8fp-f39c-q6mh",
+              "severity": "moderate"
+            },
+            {
+              "title": "React Router: Arbitrary Constructor Injection via deserializeErrors() in React Router SSR Hydration",
+              "url": "https://github.com/advisories/GHSA-337j-9hxr-rhxg",
+              "severity": "moderate"
+            },
+            {
+              "title": "React Router: Unauthenticated Denial of Service via Inefficient Route Matching",
+              "url": "https://github.com/advisories/GHSA-chx6-hx7r-mcp5",
+              "severity": "high"
+            },
+            {
+              "title": "React Router: RSC Mode CSRF Bypass Allows Action Execution Before 400 Response",
+              "url": "https://github.com/advisories/GHSA-qwww-vcr4-c8h2",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "react-router-dom",
+          "severity": "moderate",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": []
+        }
+      ]
+    },
+    "frontend-all": {
+      "counts": {
+        "info": 0,
+        "low": 1,
+        "moderate": 2,
+        "high": 7,
+        "critical": 0,
+        "total": 10
+      },
+      "packages": [
+        {
+          "name": "axios",
+          "severity": "high",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "Axios form serializer maxDepth bypass via {} metatoken",
+              "url": "https://github.com/advisories/GHSA-hcpx-6fm6-wx23",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Prototype pollution auth subfields can inject Basic auth",
+              "url": "https://github.com/advisories/GHSA-xj6q-8x83-jv6g",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Prototype pollution gadgets can alter axios request construction",
+              "url": "https://github.com/advisories/GHSA-mmx7-hfxf-jppx",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Deep formToJSON Key Recursion Can Cause Denial of Service",
+              "url": "https://github.com/advisories/GHSA-pmv8-rq9r-6j72",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: HTTP/2 streamed uploads bypass `maxBodyLength`",
+              "url": "https://github.com/advisories/GHSA-mwf2-3pr3-8698",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios Node HTTP adapter can use an inherited proxy after interceptor config cloning",
+              "url": "https://github.com/advisories/GHSA-gcfj-64vw-6mp9",
+              "severity": "high"
+            },
+            {
+              "title": "Axios: Nested axios option objects can consume polluted prototype values",
+              "url": "https://github.com/advisories/GHSA-7q8q-rj6j-mhjq",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Fetch adapter `ReadableStream` uploads bypass `maxBodyLength`",
+              "url": "https://github.com/advisories/GHSA-jqh4-m9w3-8hp9",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: NO_PROXY bypass for 0.0.0.0 local addresses in axios",
+              "url": "https://github.com/advisories/GHSA-f4gw-2p7v-4548",
+              "severity": "moderate"
+            },
+            {
+              "title": "Axios: Excessive recursion in formDataToJSON can cause denial of service",
+              "url": "https://github.com/advisories/GHSA-42h9-826w-cgv3",
+              "severity": "moderate"
+            }
+          ]
+        },
+        {
+          "name": "browserslist",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "Browserslist: Unbounded memory growth (no cache eviction) via distinct query results, leading to eventual OOM",
+              "url": "https://github.com/advisories/GHSA-c83g-rgw3-j3cx",
+              "severity": "high"
+            },
+            {
+              "title": "Browserslist: Uncaught crash / prototype write via untrusted browserslist-stats.json custom stats (normalizeStats)",
+              "url": "https://github.com/advisories/GHSA-73wf-gq98-2v4g",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "esbuild",
+          "severity": "moderate",
+          "direct": false,
+          "fixAvailable": {
+            "name": "vite",
+            "version": "8.2.2",
+            "isSemVerMajor": true
+          },
+          "advisories": [
+            {
+              "title": "esbuild enables any website to send any requests to the development server and read the response",
+              "url": "https://github.com/advisories/GHSA-67mh-4wv8-2f99",
+              "severity": "moderate"
+            }
+          ]
+        },
+        {
+          "name": "nanoid",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "nanoid: non-secure generators can loop indefinitely with negative size",
+              "url": "https://github.com/advisories/GHSA-28wg-ghj8-5hjv",
+              "severity": "high"
+            },
+            {
+              "title": "nanoid: custom generators can loop indefinitely when size is zero",
+              "url": "https://github.com/advisories/GHSA-2v37-7h3g-55p8",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "picomatch",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "Picomatch: Method Injection in POSIX Character Classes causes incorrect Glob Matching",
+              "url": "https://github.com/advisories/GHSA-3v7f-55p6-f55p",
+              "severity": "moderate"
+            },
+            {
+              "title": "Picomatch has a ReDoS vulnerability via extglob quantifiers",
+              "url": "https://github.com/advisories/GHSA-c2c7-rcm5-vvqj",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "postcss",
+          "severity": "high",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "PostCSS: incomplete fix of GHSA-6g55-p6wh-862q \u2014 attacker-controlled sourceMappingURL reads arbitrary .map files when `from` is unset",
+              "url": "https://github.com/advisories/GHSA-fxqj-rqcc-2cmp",
+              "severity": "moderate"
+            },
+            {
+              "title": "PostCSS: Path Traversal in Previous Source Map Auto-Loading (sourceMappingURL) leads to Arbitrary .map File Disclosure",
+              "url": "https://github.com/advisories/GHSA-r28c-9q8g-f849",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "postcss-selector-parser",
+          "severity": "low",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "postcss-selector-parser allows denial of service through uncontrolled AST recursion",
+              "url": "https://github.com/advisories/GHSA-w9m9-85wc-3x92",
+              "severity": "low"
+            }
+          ]
+        },
+        {
+          "name": "react-router",
+          "severity": "high",
+          "direct": false,
+          "fixAvailable": true,
+          "advisories": [
+            {
+              "title": "React Router: Open redirect via backslash in <Link> and useNavigate (CVE-2025-68470 bypass)",
+              "url": "https://github.com/advisories/GHSA-wrjc-x8rr-h8h6",
+              "severity": "moderate"
+            },
+            {
+              "title": "React Router: RSCErrorHandler Missing Protocol Validation (XSS)",
+              "url": "https://github.com/advisories/GHSA-h8fp-f39c-q6mh",
+              "severity": "moderate"
+            },
+            {
+              "title": "React Router: Arbitrary Constructor Injection via deserializeErrors() in React Router SSR Hydration",
+              "url": "https://github.com/advisories/GHSA-337j-9hxr-rhxg",
+              "severity": "moderate"
+            },
+            {
+              "title": "React Router: Unauthenticated Denial of Service via Inefficient Route Matching",
+              "url": "https://github.com/advisories/GHSA-chx6-hx7r-mcp5",
+              "severity": "high"
+            },
+            {
+              "title": "React Router: RSC Mode CSRF Bypass Allows Action Execution Before 400 Response",
+              "url": "https://github.com/advisories/GHSA-qwww-vcr4-c8h2",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "name": "react-router-dom",
+          "severity": "moderate",
+          "direct": true,
+          "fixAvailable": true,
+          "advisories": []
+        },
+        {
+          "name": "vite",
+          "severity": "high",
+          "direct": true,
+          "fixAvailable": {
+            "name": "vite",
+            "version": "8.2.2",
+            "isSemVerMajor": true
+          },
+          "advisories": [
+            {
+              "title": "Vite middleware may serve files starting with the same name with the public directory",
+              "url": "https://github.com/advisories/GHSA-g4jq-h2w9-997c",
+              "severity": "low"
+            },
+            {
+              "title": "Vite's `server.fs` settings were not applied to HTML files",
+              "url": "https://github.com/advisories/GHSA-jqfw-vq24-v9c3",
+              "severity": "low"
+            },
+            {
+              "title": "vite allows server.fs.deny bypass via backslash on Windows",
+              "url": "https://github.com/advisories/GHSA-93m4-6634-74q7",
+              "severity": "moderate"
+            },
+            {
+              "title": "Vite Vulnerable to Path Traversal in Optimized Deps `.map` Handling",
+              "url": "https://github.com/advisories/GHSA-4w7w-66w2-5vf9",
+              "severity": "moderate"
+            },
+            {
+              "title": "launch-editor vulnerable to command injection via the crafted request on Windows",
+              "url": "https://github.com/advisories/GHSA-c27g-q93r-2cwf",
+              "severity": "high"
+            },
+            {
+              "title": "launch-editor: NTLMv2 hash disclosure via UNC path handling on Windows",
+              "url": "https://github.com/advisories/GHSA-v6wh-96g9-6wx3",
+              "severity": "moderate"
+            },
+            {
+              "title": "vite: `server.fs.deny` bypass on Windows alternate paths",
+              "url": "https://github.com/advisories/GHSA-fx2h-pf6j-xcff",
+              "severity": "high"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "deployment": {
+    "project": "tixmo API and Dashboard",
+    "projectId": "8c5a1df6-dc6b-46ca-a516-dc1c25750921",
+    "environments": [
+      {
+        "name": "production",
+        "id": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+        "services": [
+          {
+            "name": "Postgres",
+            "id": "5bd12fde-0a8b-4bfe-85a1-000ba1d86480",
+            "status": "SUCCESS",
+            "createdAt": "2026-08-22T10:41:41.051Z",
+            "domains": {
+              "serviceDomains": [],
+              "customDomains": []
+            },
+            "healthcheckPath": null
+          },
+          {
+            "name": "frontend dash",
+            "id": "756bc4eb-b8f4-4156-9daf-fe0a55da829d",
+            "status": "SUCCESS",
+            "createdAt": "2026-07-26T16:29:26.508Z",
+            "commit": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+            "domains": {
+              "serviceDomains": [
+                {
+                  "id": "7b75f8b5-da79-4dc0-9257-61ccffb24971",
+                  "domain": "dash-production-7487.up.railway.app",
+                  "targetPort": 80
+                },
+                {
+                  "id": "61a3f1ce-b1a5-4eba-badf-5565cd21edd8",
+                  "domain": "frontend-dash-production.up.railway.app",
+                  "targetPort": null
+                }
+              ],
+              "customDomains": [
+                {
+                  "id": "e6a74507-b73b-43fe-9db8-fc487e7cc0ff",
+                  "domain": "demo.tixmo.co",
+                  "targetPort": 80
+                }
+              ]
+            },
+            "healthcheckPath": null
+          },
+          {
+            "name": "Redis",
+            "id": "92871e79-8373-4bc6-a7c2-6964a4637442",
+            "status": "SUCCESS",
+            "createdAt": "2026-01-01T19:50:43.113Z",
+            "domains": {
+              "serviceDomains": [],
+              "customDomains": []
+            },
+            "healthcheckPath": null
+          },
+          {
+            "name": "backend api",
+            "id": "c4f336bd-dd66-46e7-8bc3-db03ad08dd8c",
+            "status": "SUCCESS",
+            "createdAt": "2026-06-16T23:57:52.309Z",
+            "commit": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+            "domains": {
+              "serviceDomains": [
+                {
+                  "id": "6b71e890-3cf6-4e7b-b533-7bfda65f52ea",
+                  "domain": "api-production-fbaf.up.railway.app",
+                  "targetPort": 8080
+                }
+              ],
+              "customDomains": []
+            },
+            "node": {
+              "requestedVersion": ">=18.0.0",
+              "resolvedVersion": "18.20.8"
+            },
+            "startCommand": "npx prisma migrate deploy && npm run db:seed && npm start",
+            "healthcheckPath": null
+          }
+        ]
+      }
+    ]
+  },
+  "github": {
+    "workflows": [
+      {
+        "name": "Tixmo Checkout Runtime Config Evidence",
+        "state": "active",
+        "path": ".github/workflows/checkout-runtime-config-evidence.yml",
+        "url": "https://github.com/chapmandaniel/projectTixmo/blob/main/.github/workflows/checkout-runtime-config-evidence.yml"
+      },
+      {
+        "name": "Dependency Audit Evidence",
+        "state": "active",
+        "path": ".github/workflows/dependency-audit-evidence.yml",
+        "url": "https://github.com/chapmandaniel/projectTixmo/blob/main/.github/workflows/dependency-audit-evidence.yml"
+      },
+      {
+        "name": "Tixmo External Smoke Evidence",
+        "state": "active",
+        "path": ".github/workflows/external-smoke-evidence.yml",
+        "url": "https://github.com/chapmandaniel/projectTixmo/blob/main/.github/workflows/external-smoke-evidence.yml"
+      },
+      {
+        "name": "Tixmo Market Readiness Local Gates",
+        "state": "active",
+        "path": ".github/workflows/market-readiness-local.yml",
+        "url": "https://github.com/chapmandaniel/projectTixmo/blob/main/.github/workflows/market-readiness-local.yml"
+      },
+      {
+        "name": "Tixmo Public Route Screenshot Evidence",
+        "state": "active",
+        "path": ".github/workflows/public-route-screenshot-evidence.yml",
+        "url": "https://github.com/chapmandaniel/projectTixmo/blob/main/.github/workflows/public-route-screenshot-evidence.yml"
+      },
+      {
+        "name": "Tdash Design System",
+        "state": "active",
+        "path": ".github/workflows/tdash-design-system.yml",
+        "url": "https://github.com/chapmandaniel/projectTixmo/blob/main/.github/workflows/tdash-design-system.yml"
+      },
+      {
+        "name": "Tixmo Uptime Status",
+        "state": "disabled_inactivity",
+        "path": ".github/workflows/uptime-status.yml",
+        "url": "https://github.com/chapmandaniel/projectTixmo/blob/main/.github/workflows/uptime-status.yml"
+      }
+    ],
+    "recentReadinessRuns": [
+      {
+        "conclusion": "success",
+        "createdAt": "2026-06-16T23:57:53Z",
+        "headSha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+        "status": "completed",
+        "url": "https://github.com/chapmandaniel/projectTixmo/actions/runs/27656154242"
+      },
+      {
+        "conclusion": "success",
+        "createdAt": "2026-06-11T11:40:28Z",
+        "headSha": "a28a26e1241cd4616b0588c6a5136041f95ff29e",
+        "status": "completed",
+        "url": "https://github.com/chapmandaniel/projectTixmo/actions/runs/27344197628"
+      },
+      {
+        "conclusion": "failure",
+        "createdAt": "2026-06-11T11:35:01Z",
+        "headSha": "fda4fe35b6b0ad34814b276a83b9412f9f97c926",
+        "status": "completed",
+        "url": "https://github.com/chapmandaniel/projectTixmo/actions/runs/27343919922"
+      },
+      {
+        "conclusion": "failure",
+        "createdAt": "2026-06-11T11:32:16Z",
+        "headSha": "0f5e833e652be6234ef72ff3ad9d7c3440ba3a53",
+        "status": "completed",
+        "url": "https://github.com/chapmandaniel/projectTixmo/actions/runs/27343775482"
+      }
+    ],
+    "lastUptimeRun": {
+      "id": "32681987003",
+      "date": "2026-08-24T02:07:19Z",
+      "conclusion": "success",
+      "actualChecks": "Both staging and production skipped due to missing URL secrets"
+    }
+  },
+  "http": [
+    {
+      "service": "frontend dash",
+      "domain": "dash-production-7487.up.railway.app",
+      "path": "/",
+      "status": 200,
+      "ms": 299,
+      "type": "text/html"
+    },
+    {
+      "service": "frontend dash",
+      "domain": "dash-production-7487.up.railway.app",
+      "path": "/runtime-config.js",
+      "status": 200,
+      "ms": 236,
+      "type": "application/javascript",
+      "body": "window.__TIXMO_CONFIG__ = Object.assign({}, window.__TIXMO_CONFIG__, {\n  apiUrl: \"https://api-production-fbaf.up.railway.app/api/v1\",\n  privacyPolicyUrl: \"\",\n  termsUrl: \"\",\n  refundPolicyUrl: \"\",\n  organizerTermsUrl: \"\",\n  stripePublishableKey: \"\",\n  paymentCurrency: \"usd\"\n});\n"
+    },
+    {
+      "service": "frontend dash",
+      "domain": "dash-production-7487.up.railway.app",
+      "path": "/login",
+      "status": 200,
+      "ms": 220,
+      "type": "text/html"
+    },
+    {
+      "service": "frontend dash",
+      "domain": "frontend-dash-production.up.railway.app",
+      "path": "/",
+      "status": 502,
+      "ms": 291,
+      "type": "application/json"
+    },
+    {
+      "service": "frontend dash",
+      "domain": "frontend-dash-production.up.railway.app",
+      "path": "/runtime-config.js",
+      "status": 502,
+      "ms": 272,
+      "type": "application/json",
+      "body": "{\"status\":\"error\",\"code\":502,\"message\":\"Application failed to respond\",\"request_id\":\"EuJ_DSyrSlKDh3kaBhdwDg\"}"
+    },
+    {
+      "service": "frontend dash",
+      "domain": "frontend-dash-production.up.railway.app",
+      "path": "/login",
+      "status": 502,
+      "ms": 291,
+      "type": "application/json"
+    },
+    {
+      "service": "frontend dash",
+      "domain": "demo.tixmo.co",
+      "path": "/",
+      "status": 200,
+      "ms": 437,
+      "type": "text/html"
+    },
+    {
+      "service": "frontend dash",
+      "domain": "demo.tixmo.co",
+      "path": "/runtime-config.js",
+      "status": 200,
+      "ms": 431,
+      "type": "application/javascript",
+      "body": "window.__TIXMO_CONFIG__ = Object.assign({}, window.__TIXMO_CONFIG__, {\n  apiUrl: \"https://api-production-fbaf.up.railway.app/api/v1\",\n  privacyPolicyUrl: \"\",\n  termsUrl: \"\",\n  refundPolicyUrl: \"\",\n  organizerTermsUrl: \"\",\n  stripePublishableKey: \"\",\n  paymentCurrency: \"usd\"\n});\n"
+    },
+    {
+      "service": "frontend dash",
+      "domain": "demo.tixmo.co",
+      "path": "/login",
+      "status": 200,
+      "ms": 440,
+      "type": "text/html"
+    },
+    {
+      "service": "backend api",
+      "domain": "api-production-fbaf.up.railway.app",
+      "path": "/health",
+      "status": 200,
+      "ms": 509,
+      "type": "application/json; charset=utf-8",
+      "body": "{\"status\":\"ok\",\"timestamp\":\"2026-09-07T11:33:33.670Z\",\"uptime\":7126391.222205249,\"environment\":\"production\"}"
+    },
+    {
+      "service": "backend api",
+      "domain": "api-production-fbaf.up.railway.app",
+      "path": "/api/v1/health",
+      "status": 200,
+      "ms": 646,
+      "type": "application/json; charset=utf-8",
+      "body": "{\"success\":true,\"message\":\"TixMo API is running\",\"version\":\"v1\",\"timestamp\":\"2026-09-07T11:33:33.809Z\"}"
+    }
+  ],
+  "publicCatalog": {
+    "status": 200,
+    "success": true,
+    "pagination": {
+      "page": 1,
+      "limit": 1,
+      "total": 7,
+      "pages": 7
+    },
+    "event": [
+      {
+        "slug": "midnight-masquerade-MHP3K",
+        "status": "SOLD_OUT",
+        "name": "Midnight Masquerade"
+      }
+    ]
+  },
+  "browser": {
+    "login": "Rendered at demo.tixmo.co/login",
+    "checkout": "Sample published checkout rendered; policy configuration warning and disabled payment action; sample has no active ticket types",
+    "authenticatedFlows": "Not attempted"
+  },
+  "limitations": [
+    "No production credential login, signup, transaction, scanner write, review decision or external message attempted",
+    "No authenticated real Stripe/email/S3 flow, production database introspection, backup restore or physical scanner validation",
+    "Current npm audit counts describe working-tree lockfiles, not an SBOM of deployed containers",
+    "Full suites retain original date-dependent failures; only targeted diagnosis reruns used a temporary fixed Date"
+  ],
+  "architectureInterpretation": {
+    "source": "Owner clarification after the initial audit: this platform will be single tenant",
+    "deploymentModel": "Single tenant",
+    "assumption": "One operating business per deployment; deployment/database boundary provides tenant isolation",
+    "infrastructureIsolationVerified": false,
+    "withdrawnLaunchFinding": "Cross-organization visibility for OWNER/ADMIN/MANAGER is not classified as a tenant-isolation defect under this model",
+    "remainingAuthorizationScope": [
+      "Customer versus staff access",
+      "Explicit owner bootstrap",
+      "Individual reviewer identity",
+      "Assigned-event scanner restrictions"
+    ],
+    "onboardingQualification": "Automatic staff assignment is confirmed in the host/deployment mapping code path; whether live deployment activates it was not established",
+    "verificationResults": "Original test and deployment observations retained unchanged; this revision changes interpretation only"
+  }
+}

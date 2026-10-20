@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -30,6 +30,7 @@ import {
     getStripePublishableKey,
 } from '../lib/runtimeConfig';
 import { cn } from '../lib/utils';
+import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 
 const formatMoney = (value, currency = 'usd') => {
     const amount = Number(value) || 0;
@@ -144,7 +145,7 @@ const StripePaymentForm = ({ order, currency, returnUrl, onPaymentComplete }) =>
     );
 };
 
-const BuyerAuthPanel = ({ currentUser, onAuthenticated }) => {
+export const BuyerAuthPanel = ({ currentUser, onAuthenticated }) => {
     const [mode, setMode] = useState('register');
     const [form, setForm] = useState({
         firstName: '',
@@ -286,8 +287,10 @@ const BuyerAuthPanel = ({ currentUser, onAuthenticated }) => {
     );
 };
 
-const CheckoutPage = ({ user, onAuthenticated }) => {
+const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const { slug } = useParams();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const resumedOrderId = searchParams.get('reservation');
     const [event, setEvent] = useState(null);
     const [quantities, setQuantities] = useState({});
     const [loading, setLoading] = useState(true);
@@ -299,7 +302,8 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
 
     const policyLinks = useMemo(() => getPolicyLinks(), []);
     const stripePublishableKey = useMemo(() => getStripePublishableKey(), []);
-    const paymentCurrency = useMemo(() => getPaymentCurrency(), []);
+    const configuredCurrency = useMemo(() => getPaymentCurrency(), []);
+    const paymentCurrency = order?.currency || configuredCurrency;
     const stripePromise = useMemo(
         () => (stripePublishableKey ? loadStripe(stripePublishableKey) : null),
         [stripePublishableKey]
@@ -342,6 +346,55 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
         };
     }, [slug]);
 
+    useEffect(() => {
+        if (!user || !event || !resumedOrderId) return undefined;
+        if (order?.id === resumedOrderId) return undefined;
+        let cancelled = false;
+        const resume = async () => {
+            try {
+                const restored = unwrapApiPayload(await api.get(`/orders/${resumedOrderId}`));
+                if (restored.eventId !== event.id) throw new Error('This order belongs to another event.');
+                if (cancelled) return;
+                setOrder(restored);
+                if (restored.status === 'PENDING') {
+                    const session = unwrapApiPayload(await api.post('/payments/create-intent', { orderId: restored.id }));
+                    if (!cancelled) setPaymentSession(session);
+                }
+            } catch (requestError) {
+                if (!cancelled) setError(requestError.response?.data?.message || requestError.message);
+            }
+        };
+        void resume();
+        return () => { cancelled = true; };
+    }, [user?.id, event?.id, resumedOrderId]);
+
+    useEffect(() => {
+        if (!user || !order || order.status !== 'PENDING') return undefined;
+        let cancelled = false;
+        const refresh = async () => {
+            try {
+                const current = unwrapApiPayload(await api.get(`/orders/${order.id}`));
+                if (!cancelled) setOrder(current);
+            } catch (requestError) {
+                if (!cancelled) setError(requestError.response?.data?.message || requestError.message);
+            }
+        };
+        const timer = window.setInterval(refresh, 3000);
+        if (paymentComplete) void refresh();
+        return () => { cancelled = true; window.clearInterval(timer); };
+    }, [user?.id, order?.id, order?.status, paymentComplete]);
+
+    const clearReservation = async () => {
+        setSubmitting(true);
+        try {
+            if (order?.status === 'PENDING') await api.post(`/orders/${order.id}/cancel`);
+            setOrder(null); setPaymentSession(null); setPaymentComplete(null);
+            setSearchParams({}, { replace: true }); setError('');
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message);
+        } finally { setSubmitting(false); }
+    };
+
     const ticketTypes = event?.ticketTypes || [];
     const selectedItems = useMemo(() => (
         ticketTypes
@@ -355,9 +408,10 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
     const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const ticketCount = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
     const hasPolicyLinks = Boolean(policyLinks.privacyPolicyUrl && policyLinks.termsUrl && policyLinks.refundPolicyUrl);
-    const canPreparePayment = Boolean(user && selectedItems.length && hasPolicyLinks && (subtotal === 0 || stripePublishableKey));
+    const canPreparePayment = Boolean(user && (order?.status === 'PENDING' || selectedItems.length) && (!order || order.status === 'PENDING') && hasPolicyLinks && (subtotal === 0 || stripePublishableKey));
 
     const setTicketQuantity = (ticketType, nextQuantity) => {
+        if (order) return;
         const maxAllowed = Math.min(ticketType.maxPerOrder || 10, ticketType.quantityAvailable || 0);
         const quantity = Math.max(0, Math.min(maxAllowed, nextQuantity));
         setPaymentSession(null);
@@ -374,7 +428,7 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
         setPaymentComplete(null);
 
         try {
-            const orderResponse = await api.post('/orders', {
+            const orderResponse = order?.status === 'PENDING' ? { data: order } : await api.post('/orders', {
                 items: selectedItems.map((item) => ({
                     ticketTypeId: item.ticketType.id,
                     quantity: item.quantity,
@@ -382,8 +436,9 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
             });
             const createdOrder = unwrapApiPayload(orderResponse);
             setOrder(createdOrder);
+            setSearchParams({ reservation: createdOrder.id }, { replace: true });
 
-            if (Number(createdOrder.totalAmount || subtotal) <= 0) {
+            if (Number(createdOrder.totalAmount ?? subtotal) <= 0) {
                 setPaymentComplete({ status: 'free_order' });
                 return;
             }
@@ -455,7 +510,7 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
                             <div className="mt-6 grid gap-3 sm:grid-cols-2">
                                 <div className="min-w-0 rounded-md border border-dashboard-border bg-dashboard-panelMuted p-4">
                                     <CalendarDays className="h-5 w-5 text-pink-300" />
-                                    <p className="mt-3 break-words text-sm text-zinc-100">{formatDate(event?.startDatetime)}</p>
+                                    <p className="mt-3 break-words text-sm text-zinc-100">{formatEventDate(event?.startDatetime, event?.timezone || event?.venue?.timezone || DEFAULT_EVENT_TIMEZONE)}</p>
                                     <p className="mt-1 break-words text-xs text-dashboard-muted">{event?.timezone || 'Local venue time'}</p>
                                 </div>
                                 <div className="min-w-0 rounded-md border border-dashboard-border bg-dashboard-panelMuted p-4">
@@ -505,7 +560,7 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
                                                     aria-label={`Decrease ${ticketType.name}`}
                                                     onClick={() => setTicketQuantity(ticketType, quantity - 1)}
                                                     className="flex h-full w-12 items-center justify-center text-dashboard-muted transition hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
-                                                    disabled={quantity <= 0}
+                                                    disabled={Boolean(order) || quantity <= 0}
                                                 >
                                                     <Minus className="h-4 w-4" />
                                                 </button>
@@ -515,7 +570,7 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
                                                     aria-label={`Increase ${ticketType.name}`}
                                                     onClick={() => setTicketQuantity(ticketType, quantity + 1)}
                                                     className="flex h-full w-12 items-center justify-center text-dashboard-muted transition hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
-                                                    disabled={quantity >= maxAllowed}
+                                                    disabled={Boolean(order) || quantity >= maxAllowed}
                                                 >
                                                     <Plus className="h-4 w-4" />
                                                 </button>
@@ -603,7 +658,7 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
                                 </DashboardButton>
                             </div>
 
-                            {paymentSession?.clientSecret && stripePromise ? (
+                            {paymentSession?.clientSecret && stripePromise && order?.status === 'PENDING' ? (
                                 <div className="mt-6 border-t border-dashboard-border pt-5">
                                     <Elements stripe={stripePromise} options={{ clientSecret: paymentSession.clientSecret }}>
                                         <StripePaymentForm
@@ -616,11 +671,18 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
                                 </div>
                             ) : null}
 
+                            {order ? (
+                                <div className="mt-5 space-y-3">
+                                    <p className="text-sm text-dashboard-muted">Order {order.orderNumber}: {order.status === 'PAID' ? 'Confirmed' : order.status === 'PENDING' ? 'Reserved while payment is completed' : order.status}</p>
+                                    <Link className="text-sm underline" to="/wallet">View my tickets and orders</Link>
+                                    {order.status === 'PENDING' ? <DashboardButton isDark variant="secondary" disabled={submitting} onClick={clearReservation}>Cancel reservation and change selection</DashboardButton> : null}
+                                </div>
+                            ) : null}
                             {paymentComplete ? (
                                 <div className="mt-5 rounded-md border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm leading-6 text-emerald-50">
                                     {paymentComplete.status === 'free_order'
-                                        ? 'Order reserved. Your tickets are being confirmed.'
-                                        : 'Payment received. Your order is being confirmed.'}
+                                        ? 'Order confirmed. View your tickets in your wallet.'
+                                        : order?.status === 'PAID' ? 'Order confirmed. Your tickets are ready in your wallet.' : 'Payment submitted. Waiting for order confirmation; your wallet shows the current status.'}
                                 </div>
                             ) : null}
                         </DashboardSurface>
@@ -629,6 +691,72 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
             </div>
         </main>
     );
+};
+
+// Return fields identify a candidate only. Never mount purchase controls here.
+const RecoveryPage = ({ candidate, user, onAuthenticated }) => {
+    const [result, setResult] = useState(null);
+    const [attempt, setAttempt] = useState(0);
+    const valid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate || '');
+    useEffect(() => {
+        let active = true;
+        setResult(null);
+        if (valid && user?.id) {
+            api.get(`/orders/${encodeURIComponent(candidate)}/recovery`).then((response) => {
+                const data = unwrapApiPayload(response);
+                const exact = data && Object.keys(data).sort().join(',') === 'id,paymentStatus,status';
+                const known = exact && data.id === candidate
+                    && ['PENDING', 'PAID', 'CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED'].includes(data.status)
+                    && ['PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED'].includes(data.paymentStatus);
+                if (active) setResult({ kind: known ? 'loaded' : 'malformed', data: known ? data : null });
+            }).catch((error) => {
+                const status = error.response?.status;
+                if (active) setResult({ kind: status === 401 ? 'auth' : [403, 404].includes(status) ? 'unavailable' : 'network' });
+            });
+        }
+        return () => { active = false; };
+    }, [candidate, user, valid, attempt]);
+
+    const needsAuth = valid && (!user?.id || result?.kind === 'auth');
+    let message = 'Checking order status…';
+    if (!valid) message = 'Unable to check this return. A valid order reference is required.';
+    else if (needsAuth) message = 'Sign in to check your order. Payment has not been verified.';
+    else if (result?.kind === 'unavailable') message = 'This order is unavailable. No payment status could be verified.';
+    else if (result?.kind === 'network') message = 'Unable to check order status. Please retry; payment status is unknown.';
+    else if (result?.kind === 'malformed') message = 'Unable to verify the order response. Please retry.';
+    else if (result?.kind === 'loaded') {
+        const { status, paymentStatus } = result.data;
+        if (status === 'PAID' && paymentStatus === 'SUCCEEDED') message = 'Order confirmed. Payment succeeded.';
+        else if (status === 'PENDING' && ['PENDING', 'PROCESSING'].includes(paymentStatus)) message = 'Awaiting server confirmation. Do not purchase again.';
+        else if (status === 'PENDING' && paymentStatus === 'FAILED') message = 'Payment failed. This order is not confirmed.';
+        else if (['CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED'].includes(status)) message = 'This order is closed or refunded. No ticket entitlement is confirmed here.';
+        else message = 'Order status requires review. No payment or ticket entitlement is confirmed here.';
+    }
+    return (
+        <main className="min-h-screen bg-dashboard-shell px-5 py-8 text-zinc-100">
+            <DashboardSurface isDark className="mx-auto max-w-xl space-y-5 p-6">
+                <h1 className="text-2xl font-light">Order status</h1>
+                <p role="status" className="text-sm leading-6 text-dashboard-muted">{message}</p>
+                {needsAuth ? <BuyerAuthPanel currentUser={null} onAuthenticated={onAuthenticated} /> : null}
+                {valid && user?.id ? (
+                    <DashboardButton isDark type="button" onClick={() => setAttempt((value) => value + 1)}>
+                        Check status again
+                    </DashboardButton>
+                ) : null}
+            </DashboardSurface>
+        </main>
+    );
+};
+
+const CheckoutPage = (props) => {
+    const { search } = useLocation();
+    const query = new URLSearchParams(search);
+    const isReturn = ['orderId', 'redirect_status', 'payment_intent', 'payment_intent_client_secret']
+        .some((field) => query.has(field));
+    const candidate = query.getAll('orderId').length === 1 ? query.get('orderId') : null;
+    return isReturn
+        ? <RecoveryPage key={`${search}:${props.user?.id || 'anonymous'}`} {...props} candidate={candidate} />
+        : <FreshCheckoutPage {...props} />;
 };
 
 export default CheckoutPage;

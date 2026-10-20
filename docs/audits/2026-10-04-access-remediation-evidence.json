@@ -1,0 +1,93 @@
+{
+  "date": "2026-10-04",
+  "branch": "codex/tixmo-access-remediation-2026-10-04",
+  "outcome": "fixed_locally_production_pending",
+  "scope": "Access and production-bootstrap package; not full audit closure",
+  "checks": {
+    "apiBuild": "pass",
+    "apiTypecheck": "pass",
+    "apiLint": {
+      "errors": 0,
+      "warnings": 286
+    },
+    "apiFull": {
+      "suites": 55,
+      "tests": 355,
+      "status": "pass"
+    },
+    "dashboardFull": {
+      "suites": 26,
+      "tests": 126,
+      "status": "pass"
+    },
+    "dashboardBuild": "pass",
+    "designGuard": {
+      "status": "pass",
+      "existingBaselineViolations": 1055
+    },
+    "freshMigrations": {
+      "count": 27,
+      "status": "pass",
+      "database": "disposable PostgreSQL 17"
+    },
+    "populatedUpgrade": {
+      "beforeMigrations": 26,
+      "afterMigrations": 27,
+      "fixtureAccounts": 4,
+      "status": "pass",
+      "legacyCredentialBlocked": true,
+      "rotationRestoresLogin": true,
+      "previousPasswordRejected": true,
+      "noImplicitPlatformIdentity": true
+    },
+    "signupBeforeAfter": {
+      "baselineRoles": [
+        "OWNER",
+        "TEAM_MEMBER"
+      ],
+      "patchedRole": "CUSTOMER",
+      "patchedOrganizationId": null,
+      "legitimateSignupLogin": "pass"
+    },
+    "reviewerRotation": {
+      "tests": 13,
+      "status": "pass",
+      "oldLinkStatus": 404,
+      "replacementLinkStatus": 200
+    },
+    "operatorGuardCases": {
+      "count": 6,
+      "status": "pass"
+    },
+    "browser": {
+      "widths": [
+        390,
+        1440
+      ],
+      "invitationForm": "inspected",
+      "resendTeamUI": "inspected and clicked with mocked API",
+      "overflow": "none at sampled widths"
+    },
+    "diffCheck": "pass"
+  },
+  "preservation": {
+    "changedFromOriginalAuditWorkingTree": 47,
+    "addedImplementationFiles": 10,
+    "removedFiles": 0,
+    "existingDirtyChangesPreserved": true,
+    "dependencyLockfilesPreserved": true
+  },
+  "limitations": [
+    "No production deployment or mutation",
+    "Repository Redis mocks remain",
+    "Email delivery mocked or local json transport",
+    "Staging backup/restore/rollback and real-device acceptance pending",
+    "Remaining payment/admission/inventory/event/release findings open"
+  ],
+  "cleanup": {
+    "browser": "closed",
+    "localDashboardServer": "stopped",
+    "temporaryContainers": "removed",
+    "colimaTixmo": "returned to stopped"
+  }
+}

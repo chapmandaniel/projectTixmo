@@ -41,8 +41,8 @@ if (config.logToFile) {
     new winston.transports.File({
       filename: 'logs/error.log',
       level: 'error',
-    }) as winston.transport,
-    new winston.transports.File({ filename: 'logs/combined.log' }) as winston.transport
+    }),
+    new winston.transports.File({ filename: 'logs/combined.log' })
   );
 }
 

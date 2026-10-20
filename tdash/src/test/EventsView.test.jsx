@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import EventsView from '../features/EventsView';
@@ -56,6 +56,9 @@ vi.mock('../features/VenuesView', () => ({
 describe('EventsView', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // Keep the July/August fixtures upcoming without freezing async UI timers.
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-07-01T12:00:00.000Z'));
 
         apiGet.mockImplementation((url) => {
             if (url.startsWith('/events')) {
@@ -67,7 +70,7 @@ describe('EventsView', () => {
                                 title: 'Harbour Lights Festival',
                                 status: 'PUBLISHED',
                                 category: 'Festival',
-                                startDateTime: '2026-07-20T20:00:00.000Z',
+                                startDateTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
                                 venue: { name: 'Harbour Hall' },
                                 revenue: 12000,
                                 capacity: 500,
@@ -78,7 +81,7 @@ describe('EventsView', () => {
                                 title: 'Midnight Market',
                                 status: 'ON_SALE',
                                 category: 'Market',
-                                startDateTime: '2026-08-02T19:00:00.000Z',
+                                startDateTime: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
                                 venue: { name: 'Warehouse 9' },
                                 revenue: 8000,
                                 capacity: 300,
@@ -143,6 +146,10 @@ describe('EventsView', () => {
 
             return Promise.resolve({ data: {} });
         });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it('renders home-style tool cards with an active events rail and navigates into an event', async () => {

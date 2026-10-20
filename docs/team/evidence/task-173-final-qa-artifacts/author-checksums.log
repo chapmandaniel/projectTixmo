@@ -1,0 +1,7 @@
+build.log: OK
+migrate.log: OK
+product-sha.txt: OK
+regression.log: OK
+runtime.log: OK
+runtime.sh: OK
+validation.log: OK

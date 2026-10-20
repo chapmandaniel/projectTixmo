@@ -1575,7 +1575,7 @@ const ShareFolderModal = ({
                                                     <input
                                                         aria-label={`Share link for ${share.recipientLabel || 'shared folder link'}`}
                                                         className={cn(
-                                                            'h-10 min-w-0 flex-1 rounded-md border px-3 text-xs font-light outline-none',
+                                                            'h-10 min-w-0 flex-1 rounded-md border px-3 text-xs font-light outline-hidden',
                                                             isDark
                                                                 ? 'border-white/10 bg-black/20 text-zinc-200'
                                                                 : 'border-slate-200 bg-slate-50 text-slate-700'

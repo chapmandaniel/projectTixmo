@@ -6,12 +6,14 @@ import TeamView from '../features/TeamView';
 const apiGet = vi.fn();
 const apiPut = vi.fn();
 const apiDelete = vi.fn();
+const apiPost = vi.fn();
 
 vi.mock('../lib/api', () => ({
     default: {
         get: (...args) => apiGet(...args),
         put: (...args) => apiPut(...args),
         delete: (...args) => apiDelete(...args),
+        post: (...args) => apiPost(...args),
         interceptors: {
             request: { use: vi.fn() },
             response: { use: vi.fn() },
@@ -53,6 +55,7 @@ describe('TeamView', () => {
                             role: 'PROMOTER',
                             organizationId: 'org-1',
                             emailVerified: false,
+                            invitationPending: true,
                         },
                     ],
                 },
@@ -77,5 +80,17 @@ describe('TeamView', () => {
         });
 
         expect(screen.getByText('TEAM MEMBER')).toBeInTheDocument();
+    });
+
+    it('resends a pending invitation and reports delivery failure before retry', async () => {
+        apiPost.mockRejectedValueOnce({ response: { data: { message: 'Invitation email could not be sent. Please retry Resend invitation.' } } })
+            .mockResolvedValueOnce({ data: { success: true } });
+        render(<TeamView isDark user={adminUser} />);
+        fireEvent.click(await screen.findByText('Resend invitation'));
+        expect(await screen.findByRole('status')).toHaveTextContent('could not be sent');
+        await waitFor(() => expect(screen.getByText('Resend invitation')).not.toBeDisabled());
+        fireEvent.click(screen.getByText('Resend invitation'));
+        await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Invitation sent.'));
+        expect(apiPost).toHaveBeenCalledWith('/users/promoter-1/invitation');
     });
 });

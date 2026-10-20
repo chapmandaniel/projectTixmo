@@ -11,13 +11,17 @@ import {
   createVenue,
 } from '../utils/testUtils';
 import { UserRole } from '@prisma/client';
+import { orderService } from '../../src/api/orders/service';
 
 describe('Reports API', () => {
   let adminToken: string;
   let orgId: string;
   let eventId: string;
+  let secondEventId: string;
 
   const paidOrder = async (orderId: string, createdAt: string) => {
+    // Exercise the actual held-to-sold transition before setting historical report timestamps.
+    await orderService.confirmOrder(orderId);
     await prisma.order.update({
       where: { id: orderId },
       data: {
@@ -34,7 +38,10 @@ describe('Reports API', () => {
 
     // Create admin
     const adminData = await registerUser(app, { email: 'admin@test.com' });
-    await prisma.user.update({ where: { id: adminData.user.id }, data: { role: UserRole.ADMIN } });
+    await prisma.user.update({
+      where: { id: adminData.user.id },
+      data: { role: UserRole.ADMIN, isPlatformAdmin: true },
+    });
 
     const loginRes = await request(app)
       .post('/api/v1/auth/login')
@@ -67,6 +74,7 @@ describe('Reports API', () => {
       title: 'Harbor Afterparty',
       status: 'PUBLISHED',
     });
+    secondEventId = secondEvent.id;
 
     const otherOrg = await createOrganization(app, adminToken, { name: 'Other Report Org' });
     const otherVenue = await createVenue(app, adminToken, {
@@ -205,12 +213,16 @@ describe('Reports API', () => {
           revenue: 210,
           ticketsSold: 3,
           ordersCount: 1,
+          currency: 'cad',
+          aggregationTimezone: 'UTC',
         },
         {
           date: '2026-06-02',
           revenue: 150,
           ticketsSold: 2,
           ordersCount: 1,
+          currency: 'cad',
+          aggregationTimezone: 'UTC',
         },
       ]);
     });
@@ -225,15 +237,21 @@ describe('Reports API', () => {
       expect(byEvent.body.data).toEqual([
         {
           date: 'Neon Nights',
+          eventId,
           revenue: 210,
           ticketsSold: 3,
           ordersCount: 1,
+          currency: 'cad',
+          aggregationTimezone: 'UTC',
         },
         {
           date: 'Harbor Afterparty',
+          eventId: secondEventId,
           revenue: 150,
           ticketsSold: 2,
           ordersCount: 1,
+          currency: 'cad',
+          aggregationTimezone: 'UTC',
         },
       ]);
 
@@ -253,6 +271,8 @@ describe('Reports API', () => {
           revenue: 150,
           ticketsSold: 2,
           ordersCount: 1,
+          currency: 'cad',
+          aggregationTimezone: 'UTC',
         },
       ]);
     });

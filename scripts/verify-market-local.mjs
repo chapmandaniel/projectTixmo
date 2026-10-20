@@ -4,6 +4,31 @@ import { spawnSync } from 'node:child_process';
 
 const steps = [
   {
+    name: 'API dependency audit',
+    command: 'npm',
+    args: ['--prefix', 'tixmoapi2', 'audit'],
+  },
+  {
+    name: 'Dashboard dependency audit',
+    command: 'npm',
+    args: ['--prefix', 'tdash', 'audit'],
+  },
+  {
+    name: 'API tooling checks',
+    command: 'npm',
+    args: ['--prefix', 'tixmoapi2', 'run', 'test:tooling'],
+  },
+  {
+    name: 'Development helper safety checks',
+    command: 'npm',
+    args: ['--prefix', 'tixmoapi2', 'run', 'test:development'],
+  },
+  {
+    name: 'Root verification safety checks',
+    command: 'node',
+    args: ['--test', 'scripts/verification-safety.test.mjs', 'scripts/market-readiness-workflow.test.mjs', 'scripts/test-target.test.cjs'],
+  },
+  {
     name: 'API build',
     command: 'npm',
     args: ['--prefix', 'tixmoapi2', 'run', 'build'],
@@ -12,6 +37,11 @@ const steps = [
     name: 'API verification',
     command: 'npm',
     args: ['run', 'verify:api'],
+  },
+  {
+    name: 'API lint',
+    command: 'npm',
+    args: ['--prefix', 'tixmoapi2', 'run', 'lint'],
   },
   {
     name: 'Dashboard tests',
@@ -25,6 +55,7 @@ const steps = [
   },
   {
     name: 'Dashboard build',
+    environment: { NODE_ENV: 'production' },
     command: 'npm',
     args: ['--prefix', 'tdash', 'run', 'build'],
   },
@@ -45,11 +76,11 @@ const steps = [
   },
 ];
 
-const run = ({ name, command, args }) => {
+const run = ({ name, command, args, environment = {} }) => {
   process.stdout.write(`\n[verify:market] ${name}\n`);
   const result = spawnSync(command, args, {
     cwd: process.cwd(),
-    env: process.env,
+    env: { ...process.env, ...environment },
     stdio: 'inherit',
     shell: false,
   });
@@ -65,4 +96,3 @@ for (const step of steps) {
 }
 
 process.stdout.write('\n[verify:market] Market readiness local gates passed.\n');
-

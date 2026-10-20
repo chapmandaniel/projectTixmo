@@ -85,13 +85,15 @@ describe('Organizations Controller - removeMember', () => {
       user: { userId: managerId, role: 'MANAGER' },
     };
 
-    (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
-      organizationId: orgId,
-      role: 'MANAGER',
-    }).mockResolvedValueOnce({
-      id: victimId,
-      role: 'TEAM_MEMBER',
-    });
+    (prisma.user.findUnique as jest.Mock)
+      .mockResolvedValueOnce({
+        organizationId: orgId,
+        role: 'MANAGER',
+      })
+      .mockResolvedValueOnce({
+        id: victimId,
+        role: 'TEAM_MEMBER',
+      });
 
     await removeMember(mockReq as AuthRequest, mockRes as Response, nextMock);
 

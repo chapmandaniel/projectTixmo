@@ -226,7 +226,7 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isDark
+                    className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-hidden transition-all ${isDark
                         ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-600'
                         : 'bg-white border-gray-300 text-gray-900'
                         }`}
@@ -262,7 +262,7 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
                     <select
                         value={formData.eventId}
                         onChange={(e) => setFormData({ ...formData, eventId: e.target.value })}
-                        className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isDark
+                        className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-hidden transition-all ${isDark
                             ? 'bg-gray-900 border-gray-700 text-white'
                             : 'bg-white border-gray-300 text-gray-900'
                             }`}
@@ -283,7 +283,7 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
                     <select
                         value={formData.priority}
                         onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                        className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isDark
+                        className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-hidden transition-all ${isDark
                             ? 'bg-gray-900 border-gray-700 text-white'
                             : 'bg-white border-gray-300 text-gray-900'
                             }`}
@@ -302,7 +302,7 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
                         type="date"
                         value={formData.dueDate}
                         onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                        className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isDark
+                        className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-hidden transition-all ${isDark
                             ? 'bg-gray-900 border-gray-700 text-white'
                             : 'bg-white border-gray-300 text-gray-900'
                             }`}
@@ -318,7 +318,7 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={4}
-                    className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isDark
+                    className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-hidden transition-all ${isDark
                         ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-600'
                         : 'bg-white border-gray-300 text-gray-900'
                         }`}
@@ -372,7 +372,7 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
                                 content: { ...formData.content, caption: e.target.value }
                             })}
                             rows={4}
-                            className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isDark
+                            className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-hidden transition-all ${isDark
                                 ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-600'
                                 : 'bg-white border-gray-300 text-gray-900'
                                 }`}
@@ -445,7 +445,7 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
                         type="email"
                         value={reviewerInput}
                         onChange={(e) => setReviewerInput(e.target.value)}
-                        className={`flex-1 px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isDark
+                        className={`flex-1 px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-hidden transition-all ${isDark
                             ? 'bg-gray-900 border-gray-700 text-white'
                             : 'bg-white border-gray-300 text-gray-900'
                             }`}
@@ -500,7 +500,7 @@ const ApprovalStudio = ({ onClose, onSuccess, isDark, user, initialData = null }
                     value={formData.instructions}
                     onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
                     rows={8}
-                    className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all ${isDark
+                    className={`w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-hidden transition-all ${isDark
                         ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-600'
                         : 'bg-white border-gray-300 text-gray-900'
                         }`}

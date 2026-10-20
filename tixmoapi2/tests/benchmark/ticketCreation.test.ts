@@ -11,12 +11,14 @@ jest.mock('../../src/config/prisma', () => ({
       create: mockCreate,
       createMany: mockCreateMany,
     },
-    $transaction: jest.fn((cb) => cb({
+    $transaction: jest.fn((cb) =>
+      cb({
         ticket: {
-            create: mockCreate,
-            createMany: mockCreateMany,
-        }
-    })),
+          create: mockCreate,
+          createMany: mockCreateMany,
+        },
+      })
+    ),
   },
 }));
 
@@ -33,7 +35,6 @@ mockCreateMany.mockImplementation(async () => {
   await new Promise((resolve) => setTimeout(resolve, DELAY_PER_BATCH));
   return { count: 1 }; // Return value doesn't matter much for benchmark
 });
-
 
 describe('Ticket Creation Benchmark', () => {
   const sortedItems = [
