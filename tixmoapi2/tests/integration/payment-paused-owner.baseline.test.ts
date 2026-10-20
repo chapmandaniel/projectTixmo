@@ -37,7 +37,7 @@ test.each(['fresh', 'before-handler', 'before-finish'])('paused owner phase=%s',
     first = false;
     if (gateMethod === 'beginWebhookEvent') {
       const result = await realMethod(...args);
-      expect(result).toBe(true); trace.push('A-real-claim-committed'); reached.resolve();
+      expect(result).toEqual({eventId,generation:1n}); trace.push('A-real-claim-committed'); reached.resolve();
       await bounded(release.promise); return result;
     }
     trace.push('A-handler-returned-before-finish'); reached.resolve();
@@ -58,10 +58,17 @@ test.each(['fresh', 'before-handler', 'before-finish'])('paused owner phase=%s',
   // Attach a rejection handler immediately; finally always releases/drains A.
   const drained = Promise.allSettled([a]);
   try {
-    await bounded(reached.promise);
+    await bounded(Promise.race([reached.promise, a.then(() => { throw new Error('A completed before pause barrier'); })]));
     const paused = await snapshot();
-    expect(paused.event.status).toBe('PROCESSING');
+    expect(paused.event).toMatchObject({status:'PROCESSING',attemptGeneration:1n,processedAt:null});
+    expect(paused.event.processingStartedAt).toBeInstanceOf(Date);
+    expect(Number.isFinite(paused.event.processingStartedAt!.getTime())).toBe(true);
     expect(paused.target.status).toBe(phase === 'before-finish' ? 'PAID' : 'PENDING');
+    expect(paused.target.paymentStatus).toBe(phase === 'before-finish' ? 'SUCCEEDED' : 'PROCESSING');
+    expect(paused.target.tickets).toEqual(target.tickets); expect(paused.other).toEqual(otherBefore);
+    expect([paused.inventory.quantityAvailable,paused.inventory.quantityHeld,paused.inventory.quantitySold]).toEqual(phase === 'before-finish' ? [6,2,2] : [6,4,0]);
+    expect(paused.tickets).toBe(4); expect(paused.events).toBe(1);
+    expect(paused.emails).toBe(phase === 'before-finish' ? 1 : 0);
     if (phase !== 'fresh') {
       await prisma.paymentWebhookEvent.update({where:{id:eventId},data:{processingStartedAt:new Date('2000-01-01T00:00:00.000Z')}});
       trace.push('fixture-only-lease-timestamp-expired');
@@ -70,23 +77,37 @@ test.each(['fresh', 'before-handler', 'before-finish'])('paused owner phase=%s',
     await bounded(service.handleWebhook(signature, Buffer.from(payload)));
     trace.push('B-signed-redelivery-returned');
     const afterB = await snapshot();
-    if (process.env.TIXMO_ASSERT_PAUSED_RECOVERY !== '1' || phase === 'fresh') {
-      expect(afterB).toEqual(beforeB); // baseline observation only; not a candidate acceptance oracle
+    if (phase === 'fresh') {
+      expect(afterB).toEqual(beforeB);
+      expect(afterB.event.attemptGeneration).toBe(1n);
+    } else {
+      expect(afterB.event).toMatchObject({status:'PROCESSED',attemptGeneration:2n});
+      expect(afterB.event.processingStartedAt).toBeInstanceOf(Date);
+      expect(afterB.event.processedAt).toBeInstanceOf(Date);
+      expect(Number.isFinite(afterB.event.processingStartedAt!.getTime())).toBe(true);
+      expect(Number.isFinite(afterB.event.processedAt!.getTime())).toBe(true);
+      expect(afterB.event.processingStartedAt!.getTime()).toBeGreaterThan(beforeB.event.processingStartedAt!.getTime());
+      expect(afterB.event.processedAt!.getTime()).toBeGreaterThanOrEqual(afterB.event.processingStartedAt!.getTime());
+      expect(afterB.target).toMatchObject({status:'PAID',paymentStatus:'SUCCEEDED',paymentIntentId:target.paymentIntentId});
+      expect(afterB.target.tickets).toEqual(target.tickets); expect(afterB.other).toEqual(otherBefore);
+      expect([afterB.inventory.quantityAvailable,afterB.inventory.quantityHeld,afterB.inventory.quantitySold]).toEqual([6,2,2]);
+      expect(afterB.tickets).toBe(4); expect(afterB.events).toBe(1); expect(afterB.emails).toBe(1);
+      if (phase === 'before-finish') {
+        // Only event ownership/completion changes; already-fulfilled business does not repeat.
+        expect({...afterB,event:beforeB.event}).toEqual(beforeB);
+      }
     }
     release.resolve(); await bounded(a); trace.push('A-released-finished');
     const final = await snapshot();
-    console.log('TASK141_DURABLE', JSON.stringify({phase,trace,paused,beforeB,afterB,final}));
-    expect(final.event.status).toBe('PROCESSED');
+    console.log('TASK141_DURABLE', JSON.stringify({phase,trace,paused,beforeB,afterB,final},(_,value)=>typeof value === 'bigint' ? value.toString() : value));
+    expect(final.event).toMatchObject({status:'PROCESSED',attemptGeneration:phase === 'fresh' ? 1n : 2n});
+    expect(final.event.processedAt).toBeInstanceOf(Date);
+    expect(Number.isFinite(final.event.processedAt!.getTime())).toBe(true);
+    if (phase !== 'fresh') expect(final).toEqual(afterB);
     expect(final.target).toMatchObject({status:'PAID',paymentStatus:'SUCCEEDED',paymentIntentId:target.paymentIntentId});
     expect(final.target.tickets).toEqual(target.tickets); expect(final.other).toEqual(otherBefore);
     expect([final.inventory.quantityAvailable,final.inventory.quantityHeld,final.inventory.quantitySold]).toEqual([6,2,2]);
     expect(final.tickets).toBe(4); expect(final.events).toBe(1); expect(final.emails).toBe(1);
-    if (process.env.TIXMO_ASSERT_PAUSED_RECOVERY === '1' && phase !== 'fresh') {
-      // Phase-specific RED: before-handler needs recovered fulfillment; before-finish
-      // needs recovered event completion. No nonexistent generation is fabricated.
-      if (phase === 'before-handler') expect({phase, recoveredOrder:afterB.target.status}).toEqual({phase,recoveredOrder:'PAID'});
-      else expect({phase,recoveredEvent:afterB.event.status}).toEqual({phase,recoveredEvent:'PROCESSED'});
-    }
   } finally {
     release.resolve();
     try { await bounded(drained); }
