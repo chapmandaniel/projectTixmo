@@ -1,0 +1,1 @@
+PASS extracted fixture-local BigInt replacer lossless at signed64-bit max; native original unchanged. No product/Jest/SQL execution.

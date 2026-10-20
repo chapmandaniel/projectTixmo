@@ -1,0 +1,5 @@
+PASS exact SHA/two-file scope; unchanged product/schema/config/manifests/locks/other fixtures
+PASS byte-identical legacy seed omits generation; schema0n; fresh full equality0n; ancient1n not2n
+PASS full lifecycle/event identity, original intent/ordered tickets, unrelated buyer, cardinality, nonnegative conservation and exact inventory delta oracles
+PASS two signed public deliveries and complete terminal-repeat snapshot equality including email; no private ownership mock
+PASS byte-identical finally/15000ms and disconnect; no flag/skip added; task177 manifest/lock parity
