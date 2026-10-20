@@ -1,3 +1,5 @@
+> **Historical archive, not current acceptance.** Original 2026-10-20 deliverable `d2dc727b5b34acd8be756be03a3f218afd668c5d`; tested/reference product `0d193a6e8f8180d509f5cfdbb793203904047237`. Imported by task236; no gate rerun. Present-tense wording below belongs to the original capture. See [provenance and limits](HISTORICAL_DELIVERABLES_236.md).
+
 # Task213 scanner-integrated fresh local market gate
 
 Exact tested candidate `0d193a6e8f8180d509f5cfdbb793203904047237`, branch `tixmo/task-213-scanner-full-market`, isolated worktree `worktrees/task-213`. Owner tixmo-release, sole disposable runtime grant from PM on task213. Scanner71 integrated and independently reviewed at this candidate. This is fresh evidence, not borrowed207/209 results.

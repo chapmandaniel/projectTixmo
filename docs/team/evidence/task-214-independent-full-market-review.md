@@ -1,3 +1,5 @@
+> **Historical archive, not current acceptance.** Original 2026-10-20 deliverable `8d9f7b2ce020289b8f6a314b3e14837a2d7e9c5d`; tested/reference product `0d193a6e8f8180d509f5cfdbb793203904047237`. Imported by task236; no gate rerun. Present-tense wording below belongs to the original capture. See [provenance and limits](HISTORICAL_DELIVERABLES_236.md).
+
 # Task214 independent scanner-integrated full-market evidence review
 
 ## Verdict: APPROVE scoped task213 evidence

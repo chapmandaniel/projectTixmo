@@ -1,3 +1,5 @@
+> **Historical archive, not current acceptance.** Original 2026-10-19 deliverable `f75036662a7b097d20f0d2b920ca590ea5765c5f`; tested/reference product `c35a6f84512b274b2ae9563fda57169770f08c18`. Imported by task236; no gate rerun. Present-tense wording below belongs to the original capture. See [provenance and limits](evidence/HISTORICAL_DELIVERABLES_236.md).
+
 # Task 61: release-evidence execution handoff
 
 Status: **preparation only; NO-GO; independent review required**. Prepared

@@ -1,3 +1,5 @@
+> **Historical archive, not current acceptance.** Original 2026-10-20 deliverable `b4bb2753e5e6fe18d968c0b4789fa54e414833a6`; tested/reference product `e48e4a0069cdb25f8f524e0afdfcbf43b8eb55f7`. Imported by task236; no gate rerun. Present-tense wording below belongs to the original capture. See [provenance and limits](HISTORICAL_DELIVERABLES_236.md).
+
 # Task209 fresh complete API counts
 
 Owner tixmo-release; branch `tixmo/task-209-api-counts`, isolated `worktrees/task-209`. Exact tested candidate `e48e4a0069cdb25f8f524e0afdfcbf43b8eb55f7`. PM fresh sole-owner runtime grant recorded209 at11:02UTC2026-10-20. Evidence-only task; no product repair, source/assertion/schema/config/manifest/lock changes, or market rerun.

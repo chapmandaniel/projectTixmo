@@ -1,3 +1,5 @@
+> **Historical archive, not current acceptance.** Original 2026-10-20 deliverable `bd576356375e7ac107a99d4683475426341435e1`; tested/reference product `e48e4a0069cdb25f8f524e0afdfcbf43b8eb55f7`. Imported by task236; no gate rerun. Present-tense wording below belongs to the original capture. See [provenance and limits](HISTORICAL_DELIVERABLES_236.md).
+
 # Task210 independent API evidence and aggregate acceptance review
 
 ## Verdict: APPROVE scoped209 evidence;175/177 local successor closure eligible
