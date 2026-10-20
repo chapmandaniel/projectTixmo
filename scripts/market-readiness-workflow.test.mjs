@@ -33,7 +33,7 @@ test('workflow uses job services, random loopback ports and health checks', () =
 test('interpolated workflow env satisfies real verifier, with subprocesses stubbed', () => {
   const calls = [];
   verifyApi({ env, log: () => {}, spawn: (...args) => { calls.push(args); return { status: 0 }; } });
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 4);
   assert.equal(new URL(calls[0][2].env.DATABASE_URL).port, '49152');
   assert.equal(new URL(calls[0][2].env.REDIS_URL).port, '49153');
 });

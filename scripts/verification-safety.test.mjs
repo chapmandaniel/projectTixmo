@@ -49,10 +49,10 @@ for (const [index, env] of unsafe.entries()) {
   });
 }
 
-test('explicit disposable targets allow only schema and test commands', () => {
+test('explicit disposable targets allow build, migration, schema and test commands', () => {
   const calls = [];
   verifyApi({ env: safe, spawn: (...args) => { calls.push(args); return { status: 0 }; }, log: () => {} });
-  assert.deepEqual(calls.map(([command]) => command), ['npx', 'npm']);
+  assert.deepEqual(calls.map(([command]) => command), ['npm', 'npm', 'npx', 'npm']);
   assert.equal(calls[0][2].env.NODE_ENV, 'test');
   assert.equal(calls[0][2].stdio, 'pipe');
   let count = 0;
@@ -74,7 +74,7 @@ for (const [label, value, useFallback] of [
   ['nonblank synthetic', 'synthetic_nonblank_value', false],
   ['padded nonblank synthetic', ' \tsynthetic_nonblank_value\t ', false],
 ]) {
-  test(`Stripe ${label} credentials use original fallback rules without mutating parent env`, () => {
+  test(`Stripe ${label} credentials are isolated from parent providers without mutating parent env`, () => {
     const fallbacks = {
       STRIPE_SECRET_KEY: 'sk_test_verify_api',
       STRIPE_PUBLISHABLE_KEY: 'pk_test_verify_api',
@@ -94,22 +94,25 @@ for (const [label, value, useFallback] of [
         assert.notEqual(options.env, env);
         assert.equal(options.env.NODE_ENV, 'test');
         for (const [key, fallback] of Object.entries(fallbacks)) {
-          assert.equal(options.env[key], useFallback ? fallback : value, key);
+          assert.equal(options.env[key], fallback, key);
         }
         return { status: 0 };
       },
     });
-    assert.equal(calls, 2);
+    assert.equal(calls, 4);
     assert.deepEqual(env, original);
   });
 }
 
-test('bootstrap failure propagates immediately and child secrets never surface', () => {
+test('each build/migration/bootstrap failure stops immediately and child secrets never surface', () => {
   const secret = 'synthetic_child_secret';
-  for (const result of [{ status: 1, stderr: secret }, { status: null, error: new Error(secret) }]) {
-    let calls = 0;
-    assert.throws(() => verifyApi({ env: safe, spawn: () => { calls++; return result; }, log: () => {} }), error => /Schema bootstrap failed/.test(error.message) && !error.message.includes(secret));
-    assert.equal(calls, 1);
+  for (const [index, label] of ['API build', 'Migration rehearsal', 'Schema bootstrap'].entries()) {
+    for (const result of [{ status: 1, stderr: secret }, { status: null, error: new Error(secret) }]) {
+      let calls = 0;
+      assert.throws(() => verifyApi({ env: safe, spawn: () => ++calls > index ? result : { status: 0 }, log: () => {} }),
+        error => error.message.startsWith(label + ' failed') && !error.message.includes(secret));
+      assert.equal(calls, index + 1);
+    }
   }
   assert.throws(() => runSetup(safe, () => { throw new Error(secret); }), error => /bootstrap failed/.test(error.message) && !error.message.includes(secret));
 });
@@ -125,5 +128,5 @@ test('logs and redaction never retain credentials, query secrets or malformed in
 
 test('API test failure is not reported as success', () => {
   let count = 0;
-  assert.throws(() => verifyApi({ env: safe, spawn: () => ({ status: ++count === 1 ? 0 : 1 }), log: () => {} }), /API tests failed/);
+  assert.throws(() => verifyApi({ env: safe, spawn: () => ({ status: ++count < 4 ? 0 : 1 }), log: () => {} }), /API tests failed/);
 });

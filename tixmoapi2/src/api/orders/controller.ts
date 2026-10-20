@@ -61,7 +61,7 @@ export const createOrder = catchAsync(async (req: AuthRequest, res: Response) =>
 
 export const getConsumerOrderRecovery = catchAsync(async (req: AuthRequest, res: Response) => {
   if (!req.user?.userId) throw ApiError.unauthorized();
-  const order = await orderService.getConsumerOrderRecovery(req.params.id, req.user!.userId);
+  const order = await orderService.getConsumerOrderRecovery(req.params.id, req.user.userId);
   if (!order) throw ApiError.notFound('Order not found');
   res.json(successResponse(order));
 });
@@ -106,9 +106,41 @@ export const listOrders = catchAsync(async (req: AuthRequest, res: Response) => 
   res.json(successResponse(result));
 });
 
+export const listMyOrders = catchAsync(async (req: AuthRequest, res: Response) => {
+  res.json(
+    successResponse(await orderService.listOrders({ ...req.query, userId: req.user!.userId }))
+  );
+});
+
+export const resendReceipt = catchAsync(async (req: AuthRequest, res: Response) => {
+  const order = await orderService.getOrderById(req.params.id, undefined, req.user!.userId);
+  if (!order) throw ApiError.notFound('Order not found');
+  if (order.status !== 'PAID')
+    throw ApiError.badRequest('Receipts can only be sent for paid orders');
+  await orderService.sendOrderConfirmationEmail(order.id, true);
+  res.json(successResponse(null, 'Receipt sent to the buyer'));
+});
+
 export const refundOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
   const order = await orderService.refundOrder(id, req.user!.userId);
-  res.json(successResponse(order, 'Order refunded successfully'));
+  res.json(
+    successResponse(
+      order,
+      order.status === 'REFUNDED' ? 'Order refunded successfully' : 'Refund processing'
+    )
+  );
+});
+
+export const requestRefund = catchAsync(async (req: AuthRequest, res: Response) => {
+  const order = await orderService.getOrderById(req.params.id, req.user!.userId);
+  if (!order) throw ApiError.notFound('Order not found');
+  const result = await orderService.refundOrder(order.id);
+  res.json(
+    successResponse(
+      result,
+      result.status === 'REFUNDED' ? 'Order refunded successfully' : 'Refund processing'
+    )
+  );
 });

@@ -1,3 +1,4 @@
+import { clearStoredSession } from '../lib/session';
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
@@ -39,7 +40,7 @@ class ErrorBoundary extends React.Component {
 
                         <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
                         <p className={`text-sm mb-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                            An unexpected interface error occurred. We've been notified and are looking into it.
+                            An unexpected interface error occurred. Refresh the page to try again. If it continues, contact the organizer.
                         </p>
 
                         <div className="space-y-3">
@@ -53,6 +54,7 @@ class ErrorBoundary extends React.Component {
 
                             <button
                                 onClick={() => {
+                                    clearStoredSession();
                                     SESSION_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
                                     window.location.href = '/';
                                 }}

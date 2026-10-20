@@ -42,6 +42,12 @@ const router = Router();
  *         schema:
  *           type: string
  *           enum: [day, week, month, event]
+ *       - in: query
+ *         name: currency
+ *         description: Report one currency at a time; date groups use UTC and weeks start Sunday.
+ *         schema:
+ *           type: string
+ *           default: cad
  *     responses:
  *       200:
  *         description: Sales report retrieved successfully

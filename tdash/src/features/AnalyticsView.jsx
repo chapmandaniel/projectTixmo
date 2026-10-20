@@ -178,38 +178,13 @@ const buildEmptyTrafficAnalytics = () => ({
     deviceBreakdown: [],
 });
 
-const buildHeatmapData = (salesByDay) => {
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
-    const grid = {};
-
-    dayNames.forEach((day) => {
-        grid[day] = {};
-        hours.forEach((hour) => { grid[day][hour] = 0; });
-    });
-
-    const hourWeights = [
-        0.5, 0.3, 0.2, 0.1, 0.1, 0.2, 0.4, 0.8,
-        1.2, 2.0, 3.0, 3.5, 4.0, 3.2, 2.8, 3.0,
-        3.5, 4.5, 5.0, 4.8, 4.0, 3.0, 2.0, 1.0,
-    ];
-    const totalWeight = hourWeights.reduce((a, b) => a + b, 0);
-
-    (salesByDay || []).forEach((entry) => {
-        const date = new Date(`${entry.date}T12:00:00Z`);
-        const dayName = dayNames[date.getUTCDay()];
-        if (!grid[dayName]) return;
-
-        hours.forEach((hour, index) => {
-            const portion = (entry.orders || entry.tickets || 1) * (hourWeights[index] / totalWeight);
-            grid[dayName][hour] += Math.round(portion * 10) / 10;
-        });
-    });
-
-    return dayNames.map((day) => ({
-        id: day,
-        data: hours.map((hour) => ({ x: hour, y: Math.round(grid[day][hour]) })),
-    }));
+const buildHeatmapData = (ordersByHour) => {
+    if (!ordersByHour?.length) return [];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return days.map((day, index) => ({ id: day, data: Array.from({ length: 24 }, (_, hour) => ({
+        x: `${String(hour).padStart(2, '0')}:00`,
+        y: ordersByHour.filter((entry) => entry.day === index && entry.hour === hour).reduce((sum, entry) => sum + entry.orders, 0),
+    })) }));
 };
 
 const AnalyticsView = ({ isDark, user }) => {
@@ -217,6 +192,7 @@ const AnalyticsView = ({ isDark, user }) => {
     const [events, setEvents] = useState([]);
     const [selectedEventId, setSelectedEventId] = useState(() => searchParams.get('eventId') || 'all');
     const [selectedTimeframe, setSelectedTimeframe] = useState('30d');
+    const [selectedCurrency, setSelectedCurrency] = useState('cad');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -233,7 +209,7 @@ const AnalyticsView = ({ isDark, user }) => {
 
     const chartTheme = isDark ? nivoDarkTheme : nivoLightTheme;
     const uiTheme = getDashboardTheme(isDark);
-    const analyticsQuery = useMemo(() => buildAnalyticsQueryString(selectedTimeframe, selectedEventId), [selectedEventId, selectedTimeframe]);
+    const analyticsQuery = useMemo(() => `${buildAnalyticsQueryString(selectedTimeframe, selectedEventId)}&currency=${selectedCurrency}`, [selectedEventId, selectedTimeframe, selectedCurrency]);
 
     useEffect(() => {
         const eventIdParam = searchParams.get('eventId') || 'all';
@@ -285,6 +261,8 @@ const AnalyticsView = ({ isDark, user }) => {
             totalOrders: eventSales.orders,
             totalTicketsSold: eventSales.ticketsSold,
             averageOrderValue: eventSales.orders > 0 ? eventSales.revenue / eventSales.orders : 0,
+            currency: salesData.currency,
+            ordersByHour: salesData.ordersByHour,
             salesByDay: salesData.salesByDay,
             salesByEvent: [eventSales],
         };
@@ -342,8 +320,7 @@ const AnalyticsView = ({ isDark, user }) => {
     }, [customerData]);
 
     const heatmapData = useMemo(() => {
-        if (!filteredSalesData?.salesByDay?.length) return [];
-        return buildHeatmapData(filteredSalesData.salesByDay);
+        return buildHeatmapData(filteredSalesData?.ordersByHour);
     }, [filteredSalesData]);
 
     const trafficData = useMemo(() => buildEmptyTrafficAnalytics(), [selectedAnalyticsTagId]);
@@ -576,6 +553,11 @@ const AnalyticsView = ({ isDark, user }) => {
                 )}
             />
 
+            <label className="block max-w-xs text-sm">Commerce currency
+                <DashboardSelect isDark={isDark} aria-label="Commerce currency" value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value)}>
+                    <option value="cad">CAD</option><option value="usd">USD (historical orders)</option>
+                </DashboardSelect>
+            </label>
             <DashboardSection
                 isDark={isDark}
                 accent="violet"
@@ -935,7 +917,7 @@ const AnalyticsView = ({ isDark, user }) => {
                 </DashboardSurface>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <KpiCard label="Total Revenue" value={formatCurrency(filteredSalesData?.totalRevenue || 0)} icon={DollarSign} accent="violet" iconClassName="text-indigo-400" isDark={isDark} />
+                <KpiCard label={`Total Revenue (${selectedCurrency.toUpperCase()})`} value={formatCurrency(filteredSalesData?.totalRevenue || 0)} icon={DollarSign} accent="violet" iconClassName="text-indigo-400" isDark={isDark} />
                 <KpiCard label="Tickets Sold" value={formatNumber(filteredSalesData?.totalTicketsSold || 0)} icon={Ticket} accent="brand" iconClassName="text-pink-400" isDark={isDark} />
                 <KpiCard label="Total Orders" value={formatNumber(filteredSalesData?.totalOrders || 0)} icon={ShoppingCart} accent="violet" iconClassName="text-fuchsia-400" isDark={isDark} />
                 <KpiCard label="Avg Order Value" value={formatCurrency(filteredSalesData?.averageOrderValue || 0)} icon={TrendingUp} accent="green" iconClassName="text-emerald-400" isDark={isDark} />
@@ -1146,7 +1128,7 @@ const AnalyticsView = ({ isDark, user }) => {
                         </span>
                     </span>
                 )}
-                description="Shows when customers are most active so campaign pacing and ticket drops can align with peak windows."
+                description="Recorded paid orders by day of week and hour (UTC)."
                 isDark={isDark}
                 accent="amber"
             >
@@ -1204,7 +1186,7 @@ const AnalyticsView = ({ isDark, user }) => {
                             )}
                         />
                     ) : (
-                        <InlineEmptyState isDark={isDark} title="Heatmap not ready" description="More sales activity is needed before the activity map becomes useful." />
+                        <InlineEmptyState isDark={isDark} title="Hourly purchases unavailable" description="No recorded hourly purchase counts are available for this selection." />
                     )}
                 </div>
             </ChartCard>

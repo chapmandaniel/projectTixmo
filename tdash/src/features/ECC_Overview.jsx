@@ -1,210 +1,62 @@
-import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ArrowUp, ArrowDown, DollarSign, Ticket, Users, Activity, Clock } from 'lucide-react';
-import { MOCK_ANALYTICS_DATA } from '../data/mockData';
+import React, { useEffect, useState } from 'react';
+import api from '../lib/api';
+import { DashboardButton, DashboardEmptyState, DashboardSelect, DashboardStat, DashboardSurface } from '../components/dashboard/DashboardPrimitives';
+import { getDashboardTheme } from '../lib/dashboardTheme';
 
-const StatCard = ({ title, value, trend, trendUp, icon: Icon, isDark }) => (
-    <div className={`p-6 rounded-md border transition-all ${isDark ? 'bg-[#151521] border-[#2b2b40]/60 hover:border-[#3a3a5a]' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
-        <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-md ${isDark ? 'bg-[#1e1e2d] text-gray-300' : 'bg-indigo-50 text-indigo-600'}`}>
-                <Icon size={24} />
-            </div>
-            {trend && (
-                <div className={`flex items-center text-xs font-light tracking-wide px-2 py-1 rounded-sm ${trendUp ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                    {trendUp ? <ArrowUp size={12} className="mr-1" /> : <ArrowDown size={12} className="mr-1" />}
-                    {trend}
-                </div>
-            )}
+const payload = (response) => response.data.data || response.data;
+const ECC_Overview = ({ event, isDark, onViewOrders }) => {
+    const theme = getDashboardTheme(isDark);
+    const [days, setDays] = useState('7');
+    const [currency, setCurrency] = useState('cad');
+    const [refresh, setRefresh] = useState(0);
+    const [data, setData] = useState(null);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        let active = true;
+        setLoading(true);
+        setError('');
+        setData(null);
+        const end = new Date(), start = new Date(end.getTime() - Number(days) * 86400000);
+        Promise.all([
+            api.get('/analytics/sales', { params: { eventId: event.id, currency, startDate: start.toISOString(), endDate: end.toISOString() } }),
+            api.get(`/events/${event.id}/stats`),
+            api.get('/orders', { params: { eventId: event.id, status: 'PAID', limit: 10, page: 1 } }),
+        ]).then(([sales, stats, orders]) => {
+            if (active) setData({ sales: payload(sales), stats: payload(stats), orders: payload(orders).orders || [] });
+        }).catch((requestError) => {
+            if (active) setError(requestError.response?.data?.message || 'Unable to load event overview.');
+        }).finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, [event.id, days, currency, refresh]);
+    const money = (amount, code = currency) => new Intl.NumberFormat(undefined, { style: 'currency', currency: code.toUpperCase(), currencyDisplay: 'code' }).format(Number(amount));
+    return <div className={`space-y-6 ${theme.textPrimary}`}>
+        <div className="flex flex-wrap items-end gap-3">
+            <label className="space-y-2 text-sm">Sales period<DashboardSelect isDark={isDark} aria-label="Sales period" value={days} onChange={(e) => setDays(e.target.value)}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></DashboardSelect></label>
+            <label className="space-y-2 text-sm">Revenue currency<DashboardSelect isDark={isDark} aria-label="Revenue currency" value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="cad">CAD</option><option value="usd">USD (historical orders)</option></DashboardSelect></label>
+            <DashboardButton isDark={isDark} variant="secondary" disabled={loading} onClick={() => setRefresh((value) => value + 1)}>Refresh</DashboardButton>
         </div>
-        <h3 className={`text-xs font-light tracking-widest uppercase mb-1 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{title}</h3>
-        <p className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{value}</p>
-    </div>
-);
-
-const ActivityItem = ({ title, time, type, isDark }) => (
-    <div className={`flex items-start space-x-3 p-3 rounded-md transition-colors ${isDark ? 'hover:bg-[#232336]' : 'hover:bg-gray-50'}`}>
-        <div className={`mt-1.5 w-1.5 h-1.5 rounded-sm ${type === 'sale' ? 'bg-emerald-500' : type === 'checkin' ? 'bg-indigo-500' : 'bg-amber-500'}`}></div>
-        <div className="flex-1">
-            <p className={`text-sm font-light ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{title}</p>
-            <p className={`text-xs font-light tracking-wide ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>{time}</p>
-        </div>
-    </div>
-);
-
-const CustomTooltip = ({ active, payload, label, isDark }) => {
-    if (active && payload && payload.length) {
-        return (
-            <div className={`p-3 rounded-md border shadow-lg font-light ${isDark ? 'bg-[#151521] border-[#2b2b40]/60 text-gray-200' : 'bg-white border-gray-100 text-gray-700'}`}>
-                <p className="text-sm tracking-wide font-light mb-2">{label}</p>
-                {payload.map((entry, index) => (
-                    <div key={index} className="flex items-center space-x-2 text-xs">
-                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: entry.color }}></div>
-                        <span className="capitalize">{entry.name}:</span>
-                        <span className="font-normal">
-                            {entry.name === 'revenue' ? '$' : ''}{entry.value}
-                        </span>
-                    </div>
-                ))}
+        {loading ? <p role="status">Loading event overview…</p> : error ? <p role="alert">{error}</p> : data && <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <DashboardStat isDark={isDark} label="Paid revenue" value={money(data.sales.totalRevenue)} detail={`Last ${days} days · ${currency.toUpperCase()} only`} />
+                <DashboardStat isDark={isDark} label="Paid orders" value={data.sales.totalOrders} detail={`Last ${days} days · ${currency.toUpperCase()} only`} />
+                <DashboardStat isDark={isDark} label="Tickets sold" value={data.stats.ticketsSold} detail={event.capacity > 0 ? `Event total · capacity ${event.capacity}` : 'Event total · capacity not configured'} />
+                <DashboardStat isDark={isDark} label="Admitted tickets" value={data.stats.ticketsUsed} detail="Event total · recorded admissions" />
             </div>
-        );
-    }
-    return null;
+            <div className="grid gap-6 lg:grid-cols-3">
+                <DashboardSurface isDark={isDark} className="p-5 lg:col-span-2">
+                    <h3 className="text-xl font-light">Daily paid sales</h3>
+                    <p className={`mt-2 text-sm ${theme.textSecondary}`}>Recorded order dates in UTC. Refunds are excluded from paid revenue.</p>
+                    {!data.sales.salesByDay?.length ? <DashboardEmptyState isDark={isDark} title="No paid sales in this period" description="Change the period or currency to inspect other orders." className="mt-5" /> : <div className="mt-5 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th className="p-3">Date (UTC)</th><th className="p-3">Orders</th><th className="p-3">Tickets</th><th className="p-3">Revenue</th></tr></thead><tbody>{data.sales.salesByDay.map((day) => <tr key={day.date} className={`border-t ${theme.divider}`}><td className="p-3">{day.date}</td><td className="p-3">{day.orders}</td><td className="p-3">{day.tickets}</td><td className="p-3">{money(day.revenue)}</td></tr>)}</tbody></table></div>}
+                </DashboardSurface>
+                <DashboardSurface isDark={isDark} className="space-y-4 p-5">
+                    <h3 className="text-xl font-light">Recent paid orders</h3>
+                    {!data.orders.length ? <p className={`text-sm ${theme.textSecondary}`}>No paid orders recorded.</p> : <ul className="space-y-4">{data.orders.map((order) => <li key={order.id} className="text-sm"><p>{order.orderNumber} · {money(order.totalAmount, order.currency || 'usd')}</p><p className={theme.textSecondary}>{new Date(order.createdAt).toLocaleString()}</p></li>)}</ul>}
+                    {onViewOrders && <DashboardButton isDark={isDark} variant="secondary" onClick={onViewOrders}>View orders</DashboardButton>}
+                </DashboardSurface>
+            </div>
+            <p className={`text-sm ${theme.textSecondary}`}>Page views and conversion rate are unavailable until traffic reporting is connected.</p>
+        </>}
+    </div>;
 };
-
-const ECC_Overview = ({ event, isDark }) => {
-    // State for activity feed
-    const [loading, setLoading] = React.useState(true);
-    const [recentActivity, setRecentActivity] = React.useState([]);
-
-    // Fallback data
-    const revenue = event.revenue || 0;
-    const sold = event.sold || 0;
-    const capacity = event.capacity || 100;
-    const percentSold = Math.round((sold / capacity) * 100);
-
-    // Simulate fetching live activity
-    React.useEffect(() => {
-        let mounted = true;
-        const fetchActivity = async () => {
-            // In a real app, this would be: const res = await api.get(`/events/${event.id}/activity`);
-            // For now, we'll simulate a delay and use mock data or empty state
-            setTimeout(() => {
-                if (mounted) {
-                    setRecentActivity([
-                        { id: 1, user: 'Alex M.', details: 'VIP Ticket', amount: 150.00, time: new Date().toISOString(), type: 'sale' },
-                        { id: 2, user: 'Sarah K.', details: 'General Admission', amount: 45.00, time: new Date(Date.now() - 1000 * 60 * 5).toISOString(), type: 'sale' },
-                        { id: 3, user: 'Mike R.', details: 'Checked In', amount: 0, time: new Date(Date.now() - 1000 * 60 * 15).toISOString(), type: 'checkin' },
-                        { id: 4, user: 'Emily W.', details: 'General Admission', amount: 45.00, time: new Date(Date.now() - 1000 * 60 * 30).toISOString(), type: 'sale' },
-                    ]);
-                    setLoading(false);
-                }
-            }, 800);
-        };
-        fetchActivity();
-        return () => { mounted = false; };
-    }, [event.id]);
-
-    return (
-        <div className="space-y-6 animate-fade-in">
-            {/* Hero Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                    title="Total Revenue"
-                    value={`$${revenue.toLocaleString()}`}
-                    trend="12% vs last week"
-                    trendUp={true}
-                    icon={DollarSign}
-                    isDark={isDark}
-                />
-                <StatCard
-                    title="Tickets Sold"
-                    value={`${sold.toLocaleString()} / ${capacity.toLocaleString()}`}
-                    trend={`${percentSold}% sold`}
-                    trendUp={true}
-                    icon={Ticket}
-                    isDark={isDark}
-                />
-                <StatCard
-                    title="Page Views"
-                    value="12.5k"
-                    trend="5% vs last week"
-                    trendUp={true}
-                    icon={Users}
-                    isDark={isDark}
-                />
-                <StatCard
-                    title="Conversion Rate"
-                    value="4.2%"
-                    trend="1.1% vs last week"
-                    trendUp={false}
-                    icon={Activity}
-                    isDark={isDark}
-                />
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[500px]">
-
-                {/* Sales Chart (2/3 width) */}
-                <div className={`col-span-2 p-6 rounded-md border ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-white border-gray-100 shadow-sm'}`}>
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className={`text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Sales Velocity</h3>
-                        <select className={`text-sm font-light tracking-wide bg-transparent outline-none border rounded-md px-2 py-1 ${isDark ? 'border-[#2b2b40]/60 text-[#a1a5b7] focus:border-pink-500' : 'border-gray-200/60 text-gray-500'}`}>
-                            <option>Last 7 Days</option>
-                            <option>Last 30 Days</option>
-                        </select>
-                    </div>
-                    <div className="h-[400px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={MOCK_ANALYTICS_DATA}>
-                                <defs>
-                                    <linearGradient id="colorSalesECC" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2b2b40' : '#f3f4f6'} />
-                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: isDark ? '#a1a5b7' : '#9ca3af', fontSize: 12, fontWeight: 300 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: isDark ? '#a1a5b7' : '#9ca3af', fontSize: 12, fontWeight: 300 }} />
-                                <Tooltip content={<CustomTooltip isDark={isDark} />} />
-                                <Area type="monotone" dataKey="revenue" stroke="#ec4899" strokeWidth={3} fillOpacity={1} fill="url(#colorSalesECC)" />
-                                <Area type="monotone" dataKey="sales" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorSalesECC)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* Activity Feed (1/3 width) */}
-                <div className={`col-span-1 p-6 rounded-md border flex flex-col ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-white border-gray-100 shadow-sm'}`}>
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className={`text-xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Live Activity</h3>
-                        <div className={`p-1.5 rounded-sm ${isDark ? 'bg-emerald-500/10 text-emerald-500' : 'bg-emerald-50 text-emerald-600'}`}>
-                            <div className="w-1.5 h-1.5 rounded-sm bg-current animate-pulse"></div>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                        {loading ? (
-                            <div className="space-y-3">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="flex items-center space-x-3 opacity-50">
-                                        <div className={`w-8 h-8 rounded-md ${isDark ? 'bg-[#232336]' : 'bg-gray-100'}`}></div>
-                                        <div className="space-y-1">
-                                            <div className={`h-3 w-32 rounded-sm ${isDark ? 'bg-[#232336]' : 'bg-gray-100'}`}></div>
-                                            <div className={`h-2 w-20 rounded-sm ${isDark ? 'bg-[#232336]' : 'bg-gray-100'}`}></div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : recentActivity.length === 0 ? (
-                            <div className={`text-center py-6 text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                No recent activity
-                            </div>
-                        ) : (
-                            recentActivity.map(activity => (
-                                <ActivityItem
-                                    key={activity.id}
-                                    title={
-                                        <span>
-                                            <span className={`font-normal ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{activity.user}</span> purchased {activity.details} for ${Number(activity.amount).toFixed(2)}
-                                        </span>
-                                    }
-                                    time={new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    type={activity.type}
-                                    isDark={isDark}
-                                />
-                            ))
-                        )}
-                    </div>
-
-                    <button className={`w-full mt-4 py-2 text-sm tracking-wide font-light rounded-md border transition-colors ${isDark ? 'border-[#2b2b40]/60 text-[#a1a5b7] hover:bg-[#1e1e2d] hover:text-gray-200' : 'bg-gray-50 border-gray-200/60 text-gray-500 hover:text-gray-800 hover:border-gray-300'}`}>
-                        View All Activity
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    );
-};
-
 export default ECC_Overview;

@@ -11,18 +11,18 @@ const router = Router();
 // ── Validation ──────────────────────────────────────────────
 
 const listPublicEventsSchema = z.object({
-    query: z.object({
-        page: z.coerce.number().int().positive().optional().default(1),
-        limit: z.coerce.number().int().positive().max(100).optional().default(20),
-        category: z.string().max(100).optional(),
-        search: z.string().max(200).optional(),
-    }),
+  query: z.object({
+    page: z.coerce.number().int().positive().optional().default(1),
+    limit: z.coerce.number().int().positive().max(100).optional().default(20),
+    category: z.string().max(100).optional(),
+    search: z.string().max(200).optional(),
+  }),
 });
 
 const getPublicEventSchema = z.object({
-    params: z.object({
-        slug: z.string().min(1),
-    }),
+  params: z.object({
+    slug: z.string().min(1),
+  }),
 });
 
 // ── Controllers ─────────────────────────────────────────────
@@ -58,18 +58,18 @@ const getPublicEventSchema = z.object({
  *         description: Public events retrieved successfully
  */
 router.get(
-    '/',
-    validate(listPublicEventsSchema),
-    catchAsync(async (req: Request, res: Response) => {
-        const { page, limit, category, search } = req.query as Record<string, unknown>;
-        const result = await eventService.listPublicEvents({
-            page: page !== undefined ? Number(page) : undefined,
-            limit: limit !== undefined ? Number(limit) : undefined,
-            category: category as string | undefined,
-            search: search as string | undefined,
-        });
-        res.json(successResponse(result));
-    })
+  '/',
+  validate(listPublicEventsSchema),
+  catchAsync(async (req: Request, res: Response) => {
+    const { page, limit, category, search } = req.query as Record<string, unknown>;
+    const result = await eventService.listPublicEvents({
+      page: page !== undefined ? Number(page) : undefined,
+      limit: limit !== undefined ? Number(limit) : undefined,
+      category: category as string | undefined,
+      search: search as string | undefined,
+    });
+    res.json(successResponse(result));
+  })
 );
 
 /**
@@ -92,16 +92,16 @@ router.get(
  *         description: Event not found
  */
 router.get(
-    '/:slug',
-    validate(getPublicEventSchema),
-    catchAsync(async (req: Request, res: Response) => {
-        const { slug } = req.params;
-        const event = await eventService.getPublicEventBySlug(slug);
-        if (!event) {
-            throw ApiError.notFound('Event not found');
-        }
-        res.json(successResponse(event));
-    })
+  '/:slug',
+  validate(getPublicEventSchema),
+  catchAsync(async (req: Request, res: Response) => {
+    const { slug } = req.params;
+    const event = await eventService.getPublicEventBySlug(slug);
+    if (!event) {
+      throw ApiError.notFound('Event not found');
+    }
+    res.json(successResponse(event));
+  })
 );
 
 export default router;

@@ -1,4 +1,5 @@
 import { verifyAccessToken } from '@utils/jwt';
+import { resolveAccountSession } from '@utils/accountSession';
 import { ApiError } from '@utils/ApiError';
 import { Request, Response, NextFunction } from 'express';
 
@@ -26,10 +27,8 @@ const getAuthorizationHeader = (req: Request): string | undefined => {
   return undefined;
 };
 
-export const authenticate = (req: AuthRequest, _res: Response, next: NextFunction) => {
-  if (req.user) {
-    return next();
-  }
+export const authenticate = async (req: AuthRequest, _res: Response, next: NextFunction) => {
+  req.user = null;
 
   const headerValue = getAuthorizationHeader(req);
 
@@ -40,9 +39,9 @@ export const authenticate = (req: AuthRequest, _res: Response, next: NextFunctio
   const token = headerValue.startsWith('Bearer ') ? headerValue.slice(7) : headerValue;
 
   try {
-    const payload = verifyAccessToken(token);
+    const payload = await resolveAccountSession(verifyAccessToken(token));
     req.user = {
-      userId: payload.userId,
+      userId: payload.id,
       role: payload.role,
       email: payload.email,
       emailVerified: payload.emailVerified,
@@ -54,10 +53,12 @@ export const authenticate = (req: AuthRequest, _res: Response, next: NextFunctio
   }
 };
 
-export const optionalAuthenticate = (req: AuthRequest, _res: Response, next: NextFunction) => {
-  if (req.user) {
-    return next();
-  }
+export const optionalAuthenticate = async (
+  req: AuthRequest,
+  _res: Response,
+  next: NextFunction
+) => {
+  req.user = null;
 
   const headerValue = getAuthorizationHeader(req);
 
@@ -68,9 +69,9 @@ export const optionalAuthenticate = (req: AuthRequest, _res: Response, next: Nex
   const token = headerValue.startsWith('Bearer ') ? headerValue.slice(7) : headerValue;
 
   try {
-    const payload = verifyAccessToken(token);
+    const payload = await resolveAccountSession(verifyAccessToken(token));
     req.user = {
-      userId: payload.userId,
+      userId: payload.id,
       role: payload.role,
       email: payload.email,
       emailVerified: payload.emailVerified,

@@ -6,6 +6,7 @@ import {
 import InputField from '../components/InputField';
 import TicketBuilder from '../components/TicketBuilder';
 import api from '../lib/api';
+import { DEFAULT_EVENT_TIMEZONE, fromEventLocalInput, toEventLocalInput } from '../lib/eventTime';
 
 const extractCollection = (response, key) => {
     const payload = response?.data?.data || response?.data;
@@ -13,27 +14,22 @@ const extractCollection = (response, key) => {
     return payload?.[key] || [];
 };
 
-const toDateTimeLocalValue = (value) => {
-    if (!value) return '';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-    return date.toISOString().slice(0, 16);
-};
-
-const normalizeTier = (tier) => ({
+const normalizeTier = (tier, timezone) => ({
     ...tier,
     price: tier.price ?? '',
     quantityLimit: tier.quantityLimit ?? '',
-    startsAt: toDateTimeLocalValue(tier.startsAt),
-    endsAt: toDateTimeLocalValue(tier.endsAt),
+    originalStartsAt: tier.startsAt,
+    originalEndsAt: tier.endsAt,
+    startsAt: toEventLocalInput(tier.startsAt, timezone),
+    endsAt: toEventLocalInput(tier.endsAt, timezone),
 });
 
-const normalizeTicketType = (ticketType, tiers = []) => ({
+const normalizeTicketType = (ticketType, tiers = [], timezone = DEFAULT_EVENT_TIMEZONE) => ({
     ...ticketType,
     price: ticketType.price ?? '',
     quantity: ticketType.quantity ?? ticketType.quantityTotal ?? ticketType.quantityAvailable ?? '',
     status: ticketType.status || 'ACTIVE',
-    tiers: tiers.map(normalizeTier),
+    tiers: tiers.map(tier => normalizeTier(tier, timezone)),
 });
 
 /**
@@ -42,6 +38,8 @@ const normalizeTicketType = (ticketType, tiers = []) => ({
  */
 const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, embedded = false }) => {
     const [loading, setLoading] = useState(false);
+    const [configurationLoaded, setConfigurationLoaded] = useState(!initialData);
+    const [persistedEvent, setPersistedEvent] = useState(initialData);
     const [previewMode, setPreviewMode] = useState('mobile'); // mobile, desktop
 
     // Unified State
@@ -56,7 +54,8 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
         capacity: '', // Will be calculated from tickets if > 0
         imageUrl: '',
         tags: '',
-        status: 'DRAFT'
+        status: 'DRAFT',
+        timezone: DEFAULT_EVENT_TIMEZONE,
     });
 
     const [tickets, setTickets] = useState([]);
@@ -84,50 +83,59 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
     // Initialize Data
     useEffect(() => {
         if (initialData) {
+            setPersistedEvent(initialData);
+            setConfigurationLoaded(false);
+            const timezone = initialData.timezone || initialData.venue?.timezone || DEFAULT_EVENT_TIMEZONE;
             setEventData({
                 title: initialData.title || initialData.name || '',
                 hashtag: initialData.metadata?.hashtag || '',
                 category: initialData.category || 'Music',
                 description: initialData.description || '',
-                startDateTime: (initialData.startDateTime || initialData.startDatetime) ? new Date(initialData.startDateTime || initialData.startDatetime).toISOString().slice(0, 16) : '',
-                endDateTime: (initialData.endDateTime || initialData.endDatetime) ? new Date(initialData.endDateTime || initialData.endDatetime).toISOString().slice(0, 16) : '',
+                startDateTime: (initialData.startDateTime || initialData.startDatetime) ? toEventLocalInput(initialData.startDateTime || initialData.startDatetime, timezone) : '',
+                endDateTime: (initialData.endDateTime || initialData.endDatetime) ? toEventLocalInput(initialData.endDateTime || initialData.endDatetime, timezone) : '',
                 venueId: initialData.venueId || '',
                 capacity: initialData.capacity || '',
                 imageUrl: initialData.imageUrl || '',
                 tags: initialData.tags ? initialData.tags.join(', ') : '',
-                status: initialData.status || 'DRAFT'
+                status: initialData.status || 'DRAFT',
+                timezone
             });
             // TODO: Fetch existing tickets for this event if editing
             if (initialData.id) {
-                fetchTickets(initialData.id);
+                void fetchTickets(initialData.id, timezone).catch(() => {});
             }
         } else {
+            setPersistedEvent(null);
+            setConfigurationLoaded(true);
             setTickets([]);
             setDeletedTierIds([]);
         }
     }, [initialData]);
 
-    const fetchTickets = async (eventId) => {
+    const fetchTickets = async (eventId, timezone) => {
         try {
             const res = await api.get(`/ticket-types?eventId=${eventId}`);
             const data = extractCollection(res, 'ticketTypes');
             const ticketsWithTiers = await Promise.all(data.map(async (ticketType) => {
                 if (Array.isArray(ticketType.tiers)) {
-                    return normalizeTicketType(ticketType, ticketType.tiers);
+                    return normalizeTicketType(ticketType, ticketType.tiers, timezone);
                 }
 
                 try {
                     const tierRes = await api.get(`/ticket-tiers?ticketTypeId=${ticketType.id}`);
-                    return normalizeTicketType(ticketType, extractCollection(tierRes, 'tiers'));
+                    return normalizeTicketType(ticketType, extractCollection(tierRes, 'tiers'), timezone);
                 } catch (tierError) {
                     console.error("Failed to load ticket tiers", tierError);
-                    return normalizeTicketType(ticketType, []);
+                    throw tierError;
                 }
             }));
             setTickets(ticketsWithTiers);
+            setConfigurationLoaded(true);
             setDeletedTierIds([]);
         } catch (err) {
-            console.error("Failed to load tickets", err);
+            setNotification({ type: 'error', message: 'Ticket configuration could not be loaded. Reopen the event before saving.' });
+            setConfigurationLoaded(false);
+            throw err;
         }
     };
 
@@ -146,6 +154,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
     }, [tickets]);
 
     const handleSave = async (publish = false) => {
+        if (!configurationLoaded) { setNotification({ type: 'error', message: 'Wait for the complete ticket configuration before saving.' }); return; }
         // Validation for Publish
         if (publish) {
             const missing = [];
@@ -174,82 +183,38 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                 description: eventData.description,
                 organizationId: user.organizationId,
                 venueId: eventData.venueId || undefined,
-                startDateTime: eventData.startDateTime ? new Date(eventData.startDateTime).toISOString() : undefined,
-                endDateTime: eventData.endDateTime ? new Date(eventData.endDateTime).toISOString() : undefined,
-                status: publish ? 'PUBLISHED' : (eventData.status || 'DRAFT'),
+                startDateTime: eventData.startDateTime ? fromEventLocalInput(eventData.startDateTime, eventData.timezone, persistedEvent?.startDateTime || persistedEvent?.startDatetime) : undefined,
+                endDateTime: eventData.endDateTime ? fromEventLocalInput(eventData.endDateTime, eventData.timezone, persistedEvent?.endDateTime || persistedEvent?.endDatetime) : undefined,
+                timezone: eventData.timezone,
                 capacity: (parseInt(eventData.capacity, 10) > 0) ? parseInt(eventData.capacity, 10) : undefined,
                 imageUrl: eventData.imageUrl || undefined,
                 category: eventData.category,
-                metadata: { hashtag: eventData.hashtag },
+                metadata: { ...persistedEvent?.metadata, hashtag: eventData.hashtag },
                 tags: eventData.tags ? eventData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
             };
 
-            let eventId = initialData?.id;
-            let savedEvent = null;
-
-            if (initialData) {
-                const res = await api.put(`/events/${initialData.id}`, payload);
-                savedEvent = res.data?.data || res.data?.event || res.data || { ...initialData, ...payload, id: initialData.id };
-            } else {
-                const res = await api.post('/events', payload);
-                savedEvent = res.data?.data || res.data?.event || res.data;
-                eventId = savedEvent?.id;
-            }
-
-            // 2. Handle Tickets (Create/Update)
-            if (deletedTierIds.length > 0) {
-                await Promise.all(deletedTierIds.map((tierId) => api.delete(`/ticket-tiers/${tierId}`)));
-            }
-
-            if (eventId && tickets.length > 0) {
-                await Promise.all(tickets.map(async (t) => {
-                    const ticketPayload = {
-                        eventId,
-                        name: t.name,
-                        price: parseFloat(t.price),
-                        quantity: parseInt(t.quantity, 10),
-                        status: t.status || 'ACTIVE'
-                    };
-
-                    let ticketTypeId = t.id;
-                    let isNewTicket = !t.id || t.id.toString().length < 10 || t.id.toString().startsWith('temp_');
-
-                    if (!isNewTicket) {
-                        await api.put(`/ticket-types/${t.id}`, ticketPayload);
-                    } else {
-                        const res = await api.post('/ticket-types', ticketPayload);
-                        // Access the created ticket ID from the response properly
-                        // The API returns { data: { id: ... }, message: ... } or just the object
-                        const createdTicket = res.data.data || res.data;
-                        ticketTypeId = createdTicket.id;
-                    }
-
-                    // 3. Handle Tiers for this Ticket Type
-                    if (t.tiers && t.tiers.length > 0 && ticketTypeId) {
-                        await Promise.all(t.tiers.map((tier, index) => {
-                            const tierPayload = {
-                                ticketTypeId, // Use the real ID
-                                name: tier.name,
-                                price: parseFloat(tier.price),
-                                quantityLimit: tier.quantityLimit ? parseInt(tier.quantityLimit, 10) : null,
-                                startsAt: tier.startsAt ? new Date(tier.startsAt).toISOString() : null,
-                                endsAt: tier.endsAt ? new Date(tier.endsAt).toISOString() : null,
-                                sortOrder: tier.sortOrder ?? index
-                            };
-
-                            if (tier.id && !tier.id.toString().startsWith('temp_')) {
-                                return api.put(`/ticket-tiers/${tier.id}`, tierPayload);
-                            } else {
-                                return api.post('/ticket-tiers', tierPayload);
-                            }
-                        }));
-                    }
-                }));
-            }
-
+            const persistedId = (id) => id && !String(id).startsWith('temp_') && /^[0-9a-f-]{36}$/i.test(String(id)) ? id : undefined;
+            const ticketTypes = tickets.map(t => ({
+                id: persistedId(t.id), name: t.name, price: Number(t.price), quantity: Number(t.quantity),
+                status: t.status || 'ACTIVE', maxPerOrder: t.maxPerOrder,
+                tiers: (t.tiers || []).map((tier, index) => ({
+                    id: persistedId(tier.id), name: tier.name, price: Number(tier.price),
+                    quantityLimit: tier.quantityLimit === '' || tier.quantityLimit == null ? null : Number(tier.quantityLimit),
+                    startsAt: fromEventLocalInput(tier.startsAt, eventData.timezone, tier.originalStartsAt),
+                    endsAt: fromEventLocalInput(tier.endsAt, eventData.timezone, tier.originalEndsAt),
+                    sortOrder: tier.sortOrder ?? index, isActive: tier.isActive ?? true,
+                })),
+            }));
+            const request = { event: payload, ticketTypes, publish };
+            const res = persistedEvent?.id ? await api.put(`/events/${persistedEvent.id}/configuration`, request)
+                : await api.post('/events/configuration', request);
+            const savedEvent = res.data?.data || res.data;
+            setPersistedEvent(savedEvent);
+            setEventData(previous => ({ ...previous, status: savedEvent.status }));
+            await fetchTickets(savedEvent.id, eventData.timezone);
             setNotification({
                 type: 'success',
-                message: publish ? "Event Published Successfully!" : "Draft Saved Successfully."
+                message: publish ? "Event published." : savedEvent.status === 'DRAFT' ? "Draft saved." : "Changes saved."
             });
             setDeletedTierIds([]);
             setTimeout(() => {
@@ -419,6 +384,8 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                                 <h3 className="font-semibold uppercase tracking-wider text-xs">Time & Place</h3>
                             </div>
 
+                            <InputField label="Event timezone" value={eventData.timezone} onChange={e => setEventData({ ...eventData, timezone: e.target.value })} isDark={isDark} />
+                            <p className="text-sm text-dashboard-muted">Event and ticket sale times use {eventData.timezone}.</p>
                             <div className="grid grid-cols-2 gap-6">
                                 <InputField
                                     label="Start"
@@ -441,7 +408,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                                 <select
                                     value={eventData.venueId}
                                     onChange={(e) => setEventData({ ...eventData, venueId: e.target.value })}
-                                    className={`w-full px-4 py-3 rounded-xl outline-none border transition-all ${isDark
+                                    className={`w-full px-4 py-3 rounded-xl outline-hidden border transition-all ${isDark
                                         ? 'bg-[#1e1e1e] border-[#333] text-white focus:border-indigo-500'
                                         : 'bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
                                         }`}

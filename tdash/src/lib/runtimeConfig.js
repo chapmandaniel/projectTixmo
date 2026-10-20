@@ -28,5 +28,5 @@ export const getStripePublishableKey = () => (
 );
 
 export const getPaymentCurrency = () => (
-    getRuntimeConfigValue('paymentCurrency') || import.meta.env.VITE_PAYMENT_CURRENCY || 'usd'
+    getRuntimeConfigValue('paymentCurrency') || import.meta.env.VITE_PAYMENT_CURRENCY || 'cad'
 );

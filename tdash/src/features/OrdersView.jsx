@@ -156,7 +156,7 @@ const OrdersView = ({
                             placeholder="Search by order, customer, or event..."
                             value={searchTerm}
                             onChange={(event) => setSearchTerm(event.target.value)}
-                            className={`w-full pl-10 pr-4 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-pink-500 font-light ${isDark
+                            className={`w-full pl-10 pr-4 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-light ${isDark
                                 ? 'bg-[#151521] border-[#2b2b40] text-gray-200 placeholder-gray-500'
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                             }`}
@@ -171,7 +171,7 @@ const OrdersView = ({
                                     setPage(1);
                                     setEventFilter(event.target.value);
                                 }}
-                                className={`min-w-[220px] pl-10 pr-8 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-pink-500 appearance-none font-light ${isDark
+                                className={`min-w-[220px] pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 appearance-none font-light ${isDark
                                     ? 'bg-[#151521] border-[#2b2b40] text-gray-200'
                                     : 'bg-white border-gray-300 text-gray-900'
                                 }`}
@@ -192,7 +192,7 @@ const OrdersView = ({
                                     setPage(1);
                                     setStatusFilter(event.target.value);
                                 }}
-                                className={`min-w-[190px] pl-10 pr-8 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-pink-500 appearance-none font-light ${isDark
+                                className={`min-w-[190px] pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 appearance-none font-light ${isDark
                                     ? 'bg-[#151521] border-[#2b2b40] text-gray-200'
                                     : 'bg-white border-gray-300 text-gray-900'
                                 }`}
@@ -209,7 +209,7 @@ const OrdersView = ({
                             <select
                                 value={sortBy}
                                 onChange={(event) => setSortBy(event.target.value)}
-                                className={`min-w-[190px] pl-10 pr-8 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-pink-500 appearance-none font-light ${isDark
+                                className={`min-w-[190px] pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 appearance-none font-light ${isDark
                                     ? 'bg-[#151521] border-[#2b2b40] text-gray-200'
                                     : 'bg-white border-gray-300 text-gray-900'
                                 }`}
@@ -271,7 +271,7 @@ const OrdersView = ({
                                         </td>
                                         <td className="p-4">{normalizeEventName(order)}</td>
                                         <td className="p-4">
-                                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(order.totalAmount)}
+                                            {new Intl.NumberFormat('en-CA', { style: 'currency', currency: (order.currency || 'usd').toUpperCase() }).format(order.totalAmount)}
                                         </td>
                                         <td className="p-4 whitespace-nowrap">
                                             {new Date(order.createdAt).toLocaleDateString()}

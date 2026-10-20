@@ -8,10 +8,11 @@ export interface ActorScope {
   email: string;
   role: UserRole;
   organizationId: string | null;
+  isPlatformAdmin?: boolean;
 }
 
 export const isGlobalAdmin = (actor: ActorScope) =>
-  actor.role === UserRole.ADMIN && !actor.organizationId;
+  actor.role === UserRole.ADMIN && actor.isPlatformAdmin === true && !actor.organizationId;
 
 export const getActorScope = async (req: AuthRequest): Promise<ActorScope> => {
   if (!req.user?.userId) {
@@ -29,6 +30,7 @@ export const getActorScopeById = async (userId: string): Promise<ActorScope> => 
       email: true,
       role: true,
       organizationId: true,
+      isPlatformAdmin: true,
     },
   });
 
@@ -41,6 +43,7 @@ export const getActorScopeById = async (userId: string): Promise<ActorScope> => 
     email: user.email,
     role: user.role,
     organizationId: user.organizationId,
+    isPlatformAdmin: user.isPlatformAdmin,
   };
 };
 

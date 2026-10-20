@@ -47,11 +47,16 @@ export class EventStatsService {
         prisma.ticket.count({
           where: {
             eventId,
-            status: { in: ['VALID', 'USED', 'TRANSFERRED'] },
+            inventoryState: 'SOLD',
+            order: { status: 'PAID' },
           },
         }),
-        prisma.ticket.count({ where: { eventId, status: 'USED' } }),
-        prisma.ticket.count({ where: { eventId, status: 'VALID' } }),
+        prisma.ticket.count({
+          where: { eventId, status: 'USED', inventoryState: 'SOLD', order: { status: 'PAID' } },
+        }),
+        prisma.ticket.count({
+          where: { eventId, status: 'VALID', inventoryState: 'SOLD', order: { status: 'PAID' } },
+        }),
         prisma.ticket.count({ where: { eventId, status: 'CANCELLED' } }),
       ]);
 

@@ -15,10 +15,15 @@ jest.mock('../../src/config/prisma', () => ({
 jest.mock('../../src/utils/jwt', () => ({
   verifyAccessToken: jest.fn((token) => {
     if (token === 'admin-token') {
-      return { userId: 'admin-id', role: 'ADMIN', email: 'admin@test.com' };
+      return { sessionVersion: 0, userId: 'admin-id', role: 'ADMIN', email: 'admin@test.com' };
     }
     if (token === 'customer-token') {
-      return { userId: 'customer-id', role: 'CUSTOMER', email: 'customer@test.com' };
+      return {
+        sessionVersion: 0,
+        userId: 'customer-id',
+        role: 'CUSTOMER',
+        email: 'customer@test.com',
+      };
     }
     throw new Error('Invalid token');
   }),
@@ -31,6 +36,17 @@ import prisma from '../../src/config/prisma';
 
 describe('Organizations Routes Security', () => {
   beforeAll(() => {
+    (prisma.user.findUnique as jest.Mock).mockImplementation(({ where }) =>
+      Promise.resolve({
+        id: where.id,
+        email: `${where.id}@test.com`,
+        role: where.id === 'admin-id' ? 'ADMIN' : 'CUSTOMER',
+        organizationId: null,
+        disabledAt: null,
+        sessionVersion: 0,
+        isPlatformAdmin: true,
+      })
+    );
     // Setup default mock implementation for prisma
     (prisma.organization.findMany as jest.Mock).mockResolvedValue([]);
     (prisma.organization.count as jest.Mock).mockResolvedValue(0);

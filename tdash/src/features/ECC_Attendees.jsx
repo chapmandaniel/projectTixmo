@@ -115,7 +115,7 @@ const ECC_Attendees = ({ event, isDark }) => {
                     <input
                         type="text"
                         placeholder="Search guest name, email, order #..."
-                        className={`w-full bg-transparent outline-none text-sm font-light tracking-wide ${isDark ? 'text-gray-100 placeholder-[#5a5c6e]' : 'text-gray-800 placeholder-gray-400'}`}
+                        className={`w-full bg-transparent outline-hidden text-sm font-light tracking-wide ${isDark ? 'text-gray-100 placeholder-[#5a5c6e]' : 'text-gray-800 placeholder-gray-400'}`}
                     />
                 </div>
 

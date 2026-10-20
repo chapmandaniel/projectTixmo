@@ -77,6 +77,7 @@ export const getDashboardStats = async (
 
     const stats = await reportService.getDashboardStats({
       organizationId,
+      currency: req.query.currency as string | undefined,
     });
     res.json(successResponse(stats, 'Dashboard stats retrieved successfully'));
   } catch (error) {

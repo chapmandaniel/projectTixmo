@@ -37,44 +37,25 @@ import { notificationService } from '../../src/utils/notificationService';
 
 // Mock Stripe
 jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => {
-    const intents = new Map<string, any>();
-    return {
-      paymentIntents: {
-        create: jest.fn().mockImplementation(async ({ amount, currency, metadata }) => {
-          const intent = {
-            id: 'pi_mock_123456',
-            client_secret: 'pi_mock_123456_secret_123456',
-            amount,
-            currency,
-            status: 'requires_payment_method',
-            metadata,
-          };
-          intents.set(intent.id, intent);
-          return intent;
-        }),
-        retrieve: jest.fn().mockImplementation(async (id: string) => {
-          const intent = intents.get(id);
-          if (!intent) throw new Error('Unknown mock payment intent');
-          return intent;
-        }),
-      },
-      webhooks: {
-        constructEvent: jest.fn().mockReturnValue({
-          id: 'evt_mock_succeeded',
-          type: 'payment_intent.succeeded',
-          data: {
-            object: {
-              id: 'pi_mock_123456',
-              metadata: {
-                orderId: 'mock_order_id',
-              },
-            },
-          },
-        }),
-      },
-    };
-  });
+  const intents = new Map<string, any>();
+  return jest.fn().mockImplementation(() => ({
+    paymentIntents: {
+      create: jest.fn(async (params: any) => {
+        const id = intents.size ? `pi_${params.metadata.orderId}` : 'pi_mock_123456';
+        const intent = {
+          ...params,
+          id,
+          client_secret: id + '_secret',
+          status: 'requires_payment_method',
+          amount_received: 0,
+        };
+        intents.set(id, intent);
+        return intent;
+      }),
+      retrieve: jest.fn(async (id: string) => intents.get(id)),
+    },
+    webhooks: { constructEvent: jest.fn() },
+  }));
 });
 
 describe('Payment Routes', () => {
@@ -90,7 +71,10 @@ describe('Payment Routes', () => {
 
     // Create admin for setup
     const adminData = await registerUser(app, { email: 'admin@test.com' });
-    await prisma.user.update({ where: { id: adminData.user.id }, data: { role: UserRole.ADMIN } });
+    await prisma.user.update({
+      where: { id: adminData.user.id },
+      data: { role: UserRole.ADMIN, isPlatformAdmin: true },
+    });
 
     // Login to get fresh token with ADMIN role
     const loginRes = await request(app)
@@ -170,6 +154,10 @@ describe('Payment Routes', () => {
         data: {
           object: {
             id: 'pi_mock_123456',
+            status: 'succeeded',
+            amount: 1000,
+            amount_received: 1000,
+            currency: 'cad',
             metadata: {
               orderId: order.id,
             },
@@ -198,7 +186,10 @@ describe('Payment Routes', () => {
     it('should skip duplicate webhook event ids without double-processing', async () => {
       const { paymentService } = require('../../src/api/payments/service');
       const stripeMock = paymentService.stripe;
-      const confirmOrderSpy = jest.spyOn(require('../../src/api/orders/service').orderService, 'confirmOrder');
+      const confirmOrderSpy = jest.spyOn(
+        require('../../src/api/orders/service').orderService,
+        'confirmOrder'
+      );
 
       stripeMock.webhooks.constructEvent.mockReturnValue({
         id: 'evt_mock_duplicate_success',
@@ -206,6 +197,10 @@ describe('Payment Routes', () => {
         data: {
           object: {
             id: 'pi_mock_123456',
+            status: 'succeeded',
+            amount: 1000,
+            amount_received: 1000,
+            currency: 'cad',
             metadata: {
               orderId: order.id,
             },
@@ -225,9 +220,11 @@ describe('Payment Routes', () => {
 
       expect(secondRes.status).toBe(200);
       expect(confirmOrderSpy).not.toHaveBeenCalled();
-      expect(await prisma.paymentWebhookEvent.count({
-        where: { id: 'evt_mock_duplicate_success' },
-      })).toBe(1);
+      expect(
+        await prisma.paymentWebhookEvent.count({
+          where: { id: 'evt_mock_duplicate_success' },
+        })
+      ).toBe(1);
       confirmOrderSpy.mockRestore();
     });
 
@@ -240,12 +237,17 @@ describe('Payment Routes', () => {
         items: [{ ticketTypeId: ticketType.id, quantity: 1 }],
       });
 
+      const failedSession = await request(app)
+        .post('/api/v1/payments/create-intent')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ orderId: failedOrder.id });
+      expect(failedSession.status).toBe(200);
       stripeMock.webhooks.constructEvent.mockReturnValue({
         id: 'evt_mock_payment_failed',
         type: 'payment_intent.payment_failed',
         data: {
           object: {
-            id: 'pi_mock_failed',
+            id: failedSession.body.data.paymentIntentId,
             last_payment_error: { message: 'Card declined' },
             metadata: {
               orderId: failedOrder.id,
@@ -260,10 +262,12 @@ describe('Payment Routes', () => {
         .send({ type: 'payment_intent.payment_failed' });
 
       expect(res.status).toBe(200);
-      expect(sendEmailSpy).toHaveBeenCalledWith(expect.objectContaining({
-        to: 'payer@test.com',
-        subject: 'Payment Failed',
-      }));
+      expect(sendEmailSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'payer@test.com',
+          subject: 'Payment Failed',
+        })
+      );
 
       sendEmailSpy.mockRestore();
     });

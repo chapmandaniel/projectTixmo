@@ -72,7 +72,7 @@ const PersonalTodoView = ({ isDark }) => {
                     value={newTask}
                     onChange={(e) => setNewTask(e.target.value)}
                     placeholder="Add a new task..."
-                    className={`w-full p-4 pl-5 pt-5 rounded-md border font-light transition-all outline-none ${isDark
+                    className={`w-full p-4 pl-5 pt-5 rounded-md border font-light transition-all outline-hidden ${isDark
                         ? 'bg-[#1e1e2d] border-[#2b2b40]/60 text-gray-200 focus:border-indigo-500 placeholder-gray-500'
                         : 'bg-white border-gray-200/60 text-gray-800 focus:border-indigo-500 placeholder-gray-400'
                         }`}

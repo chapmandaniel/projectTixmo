@@ -52,8 +52,8 @@ describe('runtimeConfig', () => {
         expect(getStripePublishableKey()).toBe('pk_test_runtime');
     });
 
-    it('reads payment currency from runtime config and defaults to usd', () => {
-        expect(getPaymentCurrency()).toBe('usd');
+    it('reads payment currency from runtime config and defaults to cad', () => {
+        expect(getPaymentCurrency()).toBe('cad');
 
         window.__TIXMO_CONFIG__ = {
             paymentCurrency: 'cad',

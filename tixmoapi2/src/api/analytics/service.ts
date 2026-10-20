@@ -1,14 +1,19 @@
 import { Prisma } from '@prisma/client';
 
 import prisma from '../../config/prisma';
+import { paidSalesSource } from '../../services/paid-sales-query';
 
 interface DateRangeParams {
   startDate?: Date;
   endDate?: Date;
   eventId?: string;
+  currency?: string;
 }
 
 interface SalesAnalytics {
+  currency: string;
+  aggregationTimezone: string;
+  ordersByHour: Array<{ day: number; hour: number; orders: number }>;
   totalRevenue: number;
   totalOrders: number;
   totalTicketsSold: number;
@@ -70,95 +75,66 @@ export class AnalyticsService {
   async getSalesAnalytics(
     params: DateRangeParams & { organizationId?: string }
   ): Promise<SalesAnalytics> {
-    const { startDate, endDate, organizationId, eventId } = params;
-    const createdAtRange = {
-      ...(startDate ? { gte: startDate } : {}),
-      ...(endDate ? { lte: endDate } : {}),
+    const { startDate, endDate, organizationId, eventId, currency = 'cad' } = params;
+    const selectedCurrency = currency.toLowerCase();
+    const source = paidSalesSource({
+      startDate,
+      endDate,
+      organizationId,
+      eventId,
+      currency: selectedCurrency,
+    });
+    // Aggregate in PostgreSQL; never hydrate every order and ticket into API memory.
+    type Day = { date: string; revenue: Prisma.Decimal; orders: bigint; tickets: bigint };
+    type EventRow = {
+      eventId: string;
+      eventName: string;
+      revenue: Prisma.Decimal;
+      orders: bigint;
+      ticketsSold: bigint;
     };
-
-    // Build where clause
-    const where: Prisma.OrderWhereInput = {
-      status: 'PAID',
-      ...(Object.keys(createdAtRange).length ? { createdAt: createdAtRange } : {}),
-      ...(eventId && { eventId }),
-      ...(organizationId && {
-        event: {
-          organizationId,
-        },
-      }),
-    };
-
-    // Get orders with event data
-    const orders = await prisma.order.findMany({
-      where,
-      include: {
-        tickets: true,
-        event: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
-
-    // Calculate totals
-    const totalRevenue = orders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
-    const totalOrders = orders.length;
-    const totalTicketsSold = orders.reduce((sum, order) => sum + order.tickets.length, 0);
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-    // Group by day
-    const salesByDayMap = new Map<string, { revenue: number; orders: number; tickets: number }>();
-    orders.forEach((order) => {
-      const dateKey = order.createdAt.toISOString().split('T')[0];
-      const existing = salesByDayMap.get(dateKey) || { revenue: 0, orders: 0, tickets: 0 };
-      salesByDayMap.set(dateKey, {
-        revenue: existing.revenue + Number(order.totalAmount),
-        orders: existing.orders + 1,
-        tickets: existing.tickets + order.tickets.length,
-      });
-    });
-
-    const salesByDay = Array.from(salesByDayMap.entries())
-      .map(([date, data]) => ({ date, ...data }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    // Group by event
-    const salesByEventMap = new Map<
-      string,
-      { eventName: string; revenue: number; orders: number; ticketsSold: number }
-    >();
-    orders.forEach((order) => {
-      const eventId = order.event.id;
-      const existing = salesByEventMap.get(eventId) || {
-        eventName: order.event.name,
-        revenue: 0,
-        orders: 0,
-        ticketsSold: 0,
-      };
-      salesByEventMap.set(eventId, {
-        eventName: existing.eventName,
-        revenue: existing.revenue + Number(order.totalAmount),
-        orders: existing.orders + 1,
-        ticketsSold: existing.ticketsSold + order.tickets.length,
-      });
-    });
-
-    const salesByEvent = Array.from(salesByEventMap.entries())
-      .map(([eventId, data]) => ({ eventId, ...data }))
-      .sort((a, b) => b.revenue - a.revenue);
-
+    type Hour = { day: number; hour: number; orders: bigint };
+    const [days, events, hours] = await prisma.$transaction(
+      [
+        prisma.$queryRaw<Day[]>(Prisma.sql`${source}
+        SELECT to_char(created_at, 'YYYY-MM-DD') AS date, SUM(total_amount) AS revenue,
+          COUNT(*) AS orders, SUM(tickets) AS tickets FROM scoped GROUP BY date ORDER BY date`),
+        prisma.$queryRaw<EventRow[]>(Prisma.sql`${source}
+        SELECT event_id AS "eventId", event_name AS "eventName", SUM(total_amount) AS revenue,
+          COUNT(*) AS orders, SUM(tickets) AS "ticketsSold" FROM scoped
+        GROUP BY event_id, event_name ORDER BY revenue DESC, event_id`),
+        prisma.$queryRaw<Hour[]>(Prisma.sql`${source}
+        SELECT EXTRACT(DOW FROM created_at)::int AS day, EXTRACT(HOUR FROM created_at)::int AS hour,
+          COUNT(*) AS orders FROM scoped GROUP BY day, hour ORDER BY day, hour`),
+      ],
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead }
+    );
+    const salesByDay = days.map((row) => ({
+      date: row.date,
+      revenue: Number(row.revenue),
+      orders: Number(row.orders),
+      tickets: Number(row.tickets),
+    }));
+    const totalRevenue = days
+      .reduce((sum, day) => sum.plus(day.revenue), new Prisma.Decimal(0))
+      .toNumber();
+    const totalOrders = salesByDay.reduce((sum, day) => sum + day.orders, 0);
     return {
+      currency: selectedCurrency,
+      aggregationTimezone: 'UTC',
       totalRevenue,
       totalOrders,
-      totalTicketsSold,
-      averageOrderValue,
+      totalTicketsSold: salesByDay.reduce((sum, day) => sum + day.tickets, 0),
+      averageOrderValue: totalOrders ? totalRevenue / totalOrders : 0,
       salesByDay,
-      salesByEvent,
+      salesByEvent: events.map((row) => ({
+        eventId: row.eventId,
+        eventName: row.eventName,
+        revenue: Number(row.revenue),
+        orders: Number(row.orders),
+        ticketsSold: Number(row.ticketsSold),
+      })),
+      ordersByHour: hours.map((row) => ({ ...row, orders: Number(row.orders) })),
     };
   }
 
@@ -169,68 +145,35 @@ export class AnalyticsService {
     params: DateRangeParams & { organizationId?: string }
   ): Promise<EventAnalytics> {
     const { startDate, endDate, organizationId, eventId } = params;
-    const createdAtRange = {
-      ...(startDate ? { gte: startDate } : {}),
-      ...(endDate ? { lte: endDate } : {}),
-    };
-
     const where: Prisma.EventWhereInput = {
+      deletedAt: null,
       ...(eventId && { id: eventId }),
-      ...(Object.keys(createdAtRange).length ? { createdAt: createdAtRange } : {}),
       ...(organizationId && { organizationId }),
+      ...((startDate || endDate) && {
+        createdAt: { ...(startDate && { gte: startDate }), ...(endDate && { lte: endDate }) },
+      }),
     };
-
-    // Get event counts by status
-    const [totalEvents, events, eventsByStatus] = await Promise.all([
-      prisma.event.count({ where }),
-      prisma.event.findMany({
-        where,
-        include: {
-          tickets: {
-            where: {
-              status: { in: ['VALID', 'USED', 'TRANSFERRED'] },
-            },
-          },
-          orders: {
-            where: {
-              status: 'PAID',
-            },
-          },
-        },
-      }),
-      prisma.event.groupBy({
-        by: ['status'],
-        where,
-        _count: true,
-      }),
+    const [groups, sales] = await Promise.all([
+      prisma.event.groupBy({ by: ['status'], where, _count: true }),
+      this.getSalesAnalytics(params),
     ]);
-
-    const publishedEvents = events.filter((e) => e.status === 'PUBLISHED').length;
-    const draftEvents = events.filter((e) => e.status === 'DRAFT').length;
-    const cancelledEvents = events.filter((e) => e.status === 'CANCELLED').length;
-    const soldOutEvents = events.filter((e) => e.status === 'SOLD_OUT').length;
-
-    // Calculate top events by revenue and tickets sold
-    const eventsWithMetrics = events.map((event) => ({
-      id: event.id,
-      name: event.name,
-      ticketsSold: event.tickets.length,
-      revenue: event.orders.reduce((sum, order) => sum + Number(order.totalAmount), 0),
-    }));
-
-    const topEvents = eventsWithMetrics.sort((a, b) => b.revenue - a.revenue).slice(0, 10);
-
+    const count = (...statuses: string[]) =>
+      groups
+        .filter((group) => statuses.includes(group.status))
+        .reduce((sum, group) => sum + group._count, 0);
     return {
-      totalEvents,
-      publishedEvents,
-      draftEvents,
-      cancelledEvents,
-      soldOutEvents,
-      eventsByStatus: eventsByStatus.map((item) => ({
-        status: item.status,
-        count: item._count,
+      totalEvents: groups.reduce((sum, group) => sum + group._count, 0),
+      publishedEvents: count('PUBLISHED', 'ON_SALE', 'SOLD_OUT'),
+      draftEvents: count('DRAFT'),
+      cancelledEvents: count('CANCELLED'),
+      soldOutEvents: count('SOLD_OUT'),
+      eventsByStatus: groups.map((group) => ({ status: group.status, count: group._count })),
+      topEvents: sales.salesByEvent.slice(0, 10).map((event) => ({
+        id: event.eventId,
+        name: event.eventName,
+        revenue: event.revenue,
+        ticketsSold: event.ticketsSold,
       })),
-      topEvents,
     };
   }
 
@@ -240,102 +183,68 @@ export class AnalyticsService {
   async getCustomerAnalytics(
     params: DateRangeParams & { organizationId?: string }
   ): Promise<CustomerAnalytics> {
-    const { startDate, endDate, organizationId, eventId } = params;
-    const createdAtRange = {
-      ...(startDate ? { gte: startDate } : {}),
-      ...(endDate ? { lte: endDate } : {}),
+    const { startDate, endDate, organizationId, eventId, currency = 'cad' } = params;
+    const orderConditions = [
+      Prisma.sql`o.status = 'PAID'`,
+      Prisma.sql`o.currency = ${currency.toLowerCase()}`,
+    ];
+    if (eventId) orderConditions.push(Prisma.sql`o.event_id = ${eventId}`);
+    if (organizationId) orderConditions.push(Prisma.sql`e.organization_id = ${organizationId}`);
+    const periodConditions = [Prisma.sql`true`];
+    if (startDate) periodConditions.push(Prisma.sql`u.created_at >= ${startDate}`);
+    if (endDate) periodConditions.push(Prisma.sql`u.created_at <= ${endDate}`);
+    const period = Prisma.join(periodConditions, ' AND ');
+    const source = Prisma.sql`WITH paid AS (
+      SELECT o.user_id, o.total_amount FROM orders o JOIN events e ON e.id = o.event_id
+      WHERE ${Prisma.join(orderConditions, ' AND ')}
+    ), customers AS (
+      SELECT u.id, u.first_name, u.last_name, u.email, u.created_at FROM users u
+      WHERE u.role = 'CUSTOMER' ${organizationId || eventId ? Prisma.sql`AND EXISTS (SELECT 1 FROM paid p WHERE p.user_id = u.id)` : Prisma.empty}
+    )`;
+    type Totals = { total: bigint; recent: bigint };
+    type Top = {
+      id: string;
+      name: string;
+      email: string;
+      totalSpent: Prisma.Decimal;
+      totalOrders: bigint;
     };
-    const paidOrderEventFilter: Prisma.OrderWhereInput = {
-      status: 'PAID',
-      ...(eventId && { eventId }),
-      ...(organizationId && {
-        event: {
-          organizationId,
-        },
-      }),
-    };
-
-    const customerWhere: Prisma.UserWhereInput = {
-      role: 'CUSTOMER',
-      ...((organizationId || eventId) && {
-        orders: {
-          some: paidOrderEventFilter,
-        },
-      }),
-    };
-
-    // Get all customers
-    const totalCustomers = await prisma.user.count({
-      where: customerWhere,
-    });
-
-    // Get new customers in period
-    const newCustomersInPeriod = await prisma.user.count({
-      where: {
-        ...customerWhere,
-        ...(Object.keys(createdAtRange).length ? { createdAt: createdAtRange } : {}),
-      },
-    });
-
-    // Get customers with orders
-    const customersWithOrders = await prisma.user.findMany({
-      where: {
-        ...customerWhere,
-        orders: {
-          some: paidOrderEventFilter,
-        },
-      },
-      include: {
-        orders: {
-          where: paidOrderEventFilter,
-        },
-      },
-    });
-
-    // Calculate repeat customers (more than 1 order)
-    const repeatCustomers = customersWithOrders.filter(
-      (customer) => customer.orders.length > 1
-    ).length;
-
-    // Calculate top customers
-    const topCustomers = customersWithOrders
-      .map((customer) => ({
-        id: customer.id,
-        name: `${customer.firstName} ${customer.lastName}`,
-        email: customer.email,
-        totalSpent: customer.orders.reduce((sum, order) => sum + Number(order.totalAmount), 0),
-        totalOrders: customer.orders.length,
-      }))
-      .sort((a, b) => b.totalSpent - a.totalSpent)
-      .slice(0, 10);
-
-    // Get customers by registration date
-    const customers = await prisma.user.findMany({
-      where: {
-        ...customerWhere,
-        ...(Object.keys(createdAtRange).length ? { createdAt: createdAtRange } : {}),
-      },
-      select: {
-        createdAt: true,
-      },
-    });
-
-    const customersByDateMap = new Map<string, number>();
-    customers.forEach((customer) => {
-      const dateKey = customer.createdAt.toISOString().split('T')[0];
-      customersByDateMap.set(dateKey, (customersByDateMap.get(dateKey) || 0) + 1);
-    });
-
-    const customersByRegistrationDate = Array.from(customersByDateMap.entries())
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-
+    type Registration = { date: string; count: bigint };
+    const [totals, repeat, top, registrations] = await prisma.$transaction(
+      [
+        prisma.$queryRaw<Totals[]>(
+          Prisma.sql`${source} SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE ${period}) AS recent FROM customers u`
+        ),
+        prisma.$queryRaw<
+          Array<{ count: bigint }>
+        >(Prisma.sql`${source} SELECT COUNT(*) AS count FROM (
+        SELECT u.id FROM customers u JOIN paid p ON p.user_id = u.id GROUP BY u.id HAVING COUNT(*) > 1
+      ) repeated`),
+        prisma.$queryRaw<
+          Top[]
+        >(Prisma.sql`${source} SELECT u.id, concat_ws(' ', u.first_name, u.last_name) AS name, u.email,
+        SUM(p.total_amount) AS "totalSpent", COUNT(*) AS "totalOrders" FROM customers u JOIN paid p ON p.user_id = u.id
+        GROUP BY u.id, u.first_name, u.last_name, u.email ORDER BY "totalSpent" DESC, u.id LIMIT 10`),
+        prisma.$queryRaw<
+          Registration[]
+        >(Prisma.sql`${source} SELECT to_char(u.created_at, 'YYYY-MM-DD') AS date, COUNT(*) AS count
+        FROM customers u WHERE ${period} GROUP BY date ORDER BY date`),
+      ],
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead }
+    );
     return {
-      totalCustomers,
-      newCustomersInPeriod,
-      repeatCustomers,
-      topCustomers,
-      customersByRegistrationDate,
+      totalCustomers: Number(totals[0]?.total || 0),
+      newCustomersInPeriod: Number(totals[0]?.recent || 0),
+      repeatCustomers: Number(repeat[0]?.count || 0),
+      topCustomers: top.map((row) => ({
+        ...row,
+        totalSpent: Number(row.totalSpent),
+        totalOrders: Number(row.totalOrders),
+      })),
+      customersByRegistrationDate: registrations.map((row) => ({
+        date: row.date,
+        count: Number(row.count),
+      })),
     };
   }
 

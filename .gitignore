@@ -6,3 +6,10 @@ curl_output.json
 **/sourcecode.txt
 **/lint_report.txt
 **/eslint-output.json
+
+# Private operational backups and local execution evidence
+/backups/
+**/backups/
+**/*.dump
+**/*.backup
+/.tixmo-local-evidence/

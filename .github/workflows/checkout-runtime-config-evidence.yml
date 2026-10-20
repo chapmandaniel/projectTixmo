@@ -40,7 +40,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '24.21.0'
 
       - name: Prepare evidence directory
         run: mkdir -p docs/checkout-config-evidence
@@ -57,7 +57,7 @@ jobs:
 
           TIXMO_DASHBOARD_URL="${STAGING_DASHBOARD_URL}" \
           TIXMO_EXPECTED_API_URL="${STAGING_EXPECTED_API_URL:-}" \
-          TIXMO_EXPECTED_PAYMENT_CURRENCY="${STAGING_EXPECTED_PAYMENT_CURRENCY:-usd}" \
+          TIXMO_EXPECTED_PAYMENT_CURRENCY="${STAGING_EXPECTED_PAYMENT_CURRENCY:-cad}" \
           TIXMO_VERIFY_POLICY_URLS="${VERIFY_POLICY_URLS}" \
           TIXMO_CHECKOUT_CONFIG_EVIDENCE_PATH="docs/checkout-config-evidence/staging-${GITHUB_RUN_ID}.json" \
           npm run evidence:checkout-config
@@ -74,7 +74,7 @@ jobs:
 
           TIXMO_DASHBOARD_URL="${PRODUCTION_DASHBOARD_URL}" \
           TIXMO_EXPECTED_API_URL="${PRODUCTION_EXPECTED_API_URL:-}" \
-          TIXMO_EXPECTED_PAYMENT_CURRENCY="${PRODUCTION_EXPECTED_PAYMENT_CURRENCY:-usd}" \
+          TIXMO_EXPECTED_PAYMENT_CURRENCY="${PRODUCTION_EXPECTED_PAYMENT_CURRENCY:-cad}" \
           TIXMO_VERIFY_POLICY_URLS="${VERIFY_POLICY_URLS}" \
           TIXMO_CHECKOUT_CONFIG_EVIDENCE_PATH="docs/checkout-config-evidence/production-${GITHUB_RUN_ID}.json" \
           npm run evidence:checkout-config

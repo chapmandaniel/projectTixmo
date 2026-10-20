@@ -62,6 +62,7 @@ const TodoView = ({ isDark, user }) => {
                         ...task,
                         content: task.title,
                         assignee: task.assignee?.id,
+                        assigneeDetails: task.assignee,
                         assigneeName: task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : null,
                         messages: task.comments?.map(c => ({
                             id: c.id,
@@ -281,6 +282,7 @@ const TodoView = ({ isDark, user }) => {
                         <div className="flex-1 overflow-y-auto min-h-[100px] custom-scrollbar z-10 pr-2 -mr-2">
                             {col.items.map(item => (
                                 <KanbanCard
+                                    users={users}
                                     key={item.id}
                                     item={item}
                                     isDark={isDark}

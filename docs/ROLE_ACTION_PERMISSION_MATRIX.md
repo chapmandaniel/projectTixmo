@@ -19,13 +19,17 @@ Rules now enforced:
 - Non-owner users cannot create, assign, update, or delete users with a role equal to or higher than their own.
 - Users cannot change their own role, organization, or permissions.
 - Organization-scoped owners/admins/managers/promoters are forced to operate inside their own organization.
-- Global owners/admins with no organization can intentionally operate across organizations.
+- An administrator without an organization must have the explicit operator-managed platform-admin flag; losing organization membership never grants that flag.
+- Public registration always creates a `CUSTOMER` without staff membership. Deployment and host headers cannot choose staff authority.
+- Staff invitations last 48 hours, store only a token hash, require current inviter authority, and work once. Authorized operators can resend pending invitations; resend invalidates all previous links and reports delivery failure.
+- Removing business membership or explicitly demoting staff to `CUSTOMER` clears organization membership and custom permissions. Role, membership, permission changes and logout revoke existing access and refresh tokens. Disabled/deleted accounts cannot sign in or refresh.
+- Automatic seed commands no longer create/reset accounts. The access migration disables historical seeded administrator identities until an operator rotates credentials. Unscoped administrators require explicit identity review.
 
 ## Core Product Actions
 
 | Action | OWNER | ADMIN | MANAGER | PROMOTER | TEAM_MEMBER | SCANNER | CUSTOMER | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Register/sign in | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Role is assigned after auth or by team invite. |
+| Register/sign in | Invited | Invited | Invited | Invited | Invited | Invited | Public | Public signup grants customer access; staff accept authorized invitations or use explicitly provisioned credentials. |
 | View own profile | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Self only unless elevated and scoped access permits. |
 | Update own profile | Yes | Yes | Yes | Yes | Yes | Yes | Yes | Self role/org/permissions changes are blocked. |
 | List team members | Yes | Yes | Yes | Yes | No | No | No | Scoped users are forced to their own organization. |
@@ -46,9 +50,9 @@ Rules now enforced:
 | Register/revoke scanners | Yes | Yes | Yes | Yes | No | No | No | Scanner auth itself uses scanner API keys. |
 | Online scan via scanner key | Key | Key | Key | Key | Key | Key | Key | Requires active scanner API key, not user role. |
 | Offline sync/upload via scanner key | Key | Key | Key | Key | Key | Key | Key | Scanner must be active and assigned/authorized for event. |
-| Manage approvals | Auth | Auth | Auth | Auth | Auth | Auth | Auth | Approval routes require authentication and enforce ownership/scope in service logic. |
+| Manage approvals | Auth | Auth | Auth | Auth | Auth | Auth | No membership | Approval routes require authentication and business membership in service logic. Public customers and offboarded staff have no business membership. |
 | External review link actions | Public token | Public token | Public token | Public token | Public token | Public token | Public token | Token is treated as credential. |
-| Manage asset library | Auth | Auth | Auth | Auth | Auth | Auth | Auth | Asset service enforces organization scope from the authenticated user. |
+| Manage asset library | Auth | Auth | Auth | Auth | Auth | Auth | No membership | Asset service enforces organization scope. Public customers and offboarded staff have no business membership. |
 | Public asset share access | Public token | Public token | Public token | Public token | Public token | Public token | Public token | Revocation/expiry controls access. |
 
 Legend:

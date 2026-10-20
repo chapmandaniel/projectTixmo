@@ -87,10 +87,12 @@ const createdAsset = {
 };
 
 describe('assetLibraryService.upload', () => {
-  afterEach(() => { jest.useRealTimers(); });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   beforeEach(() => {
-    jest.useFakeTimers({ now: new Date("2026-06-08T12:00:00.000Z") });
+    jest.useFakeTimers({ now: new Date('2026-06-08T12:00:00.000Z') });
     jest.clearAllMocks();
 
     (prisma.user.findUnique as jest.Mock).mockResolvedValue({
@@ -102,7 +104,9 @@ describe('assetLibraryService.upload', () => {
     (prisma.assetLibraryFolder.findFirst as jest.Mock).mockResolvedValue(null);
     (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([]);
     (uploadService.uploadMultiple as jest.Mock).mockResolvedValue([uploadedAsset]);
-    (uploadService.resolveFileUrl as jest.Mock).mockImplementation((key, url) => Promise.resolve(url || key));
+    (uploadService.resolveFileUrl as jest.Mock).mockImplementation((key, url) =>
+      Promise.resolve(url || key)
+    );
     (prisma.assetLibraryAsset.findFirst as jest.Mock).mockResolvedValue({ id: 'asset-1' });
     (prisma.assetLibraryAsset.create as jest.Mock).mockResolvedValue(createdAsset);
     (prisma.assetLibraryAsset.update as jest.Mock).mockResolvedValue(createdAsset);
@@ -113,7 +117,7 @@ describe('assetLibraryService.upload', () => {
       id: 'share-1',
       folderId: 'folder-1',
       recipientLabel: 'Agency',
-      expiresAt: new Date('2026-06-18T12:00:00.000Z'),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       revokedAt: null,
       lastViewedAt: null,
       viewCount: 0,
@@ -144,7 +148,9 @@ describe('assetLibraryService.upload', () => {
   });
 
   it('requires an event id for event uploads', async () => {
-    await expect(assetLibraryService.upload('user-1', [file], { usageType: 'EVENT' })).rejects.toMatchObject({
+    await expect(
+      assetLibraryService.upload('user-1', [file], { usageType: 'EVENT' })
+    ).rejects.toMatchObject({
       statusCode: 400,
       message: 'Select an event before uploading event assets',
     });
@@ -167,16 +173,18 @@ describe('assetLibraryService.upload', () => {
       },
       select: { id: true },
     });
-    expect(prisma.assetLibraryAsset.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        organizationId: 'org-1',
-        uploadedById: 'user-1',
-        folderId: null,
-        eventId: 'event-1',
-        usageType: 'EVENT',
-        category: 'event',
-      }),
-    }));
+    expect(prisma.assetLibraryAsset.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: 'org-1',
+          uploadedById: 'user-1',
+          folderId: null,
+          eventId: 'event-1',
+          usageType: 'EVENT',
+          category: 'event',
+        }),
+      })
+    );
     expect(result.assets[0]).toMatchObject({
       id: 'asset-1',
       folderId: null,
@@ -216,14 +224,16 @@ describe('assetLibraryService.upload', () => {
         usageType: true,
       },
     });
-    expect(prisma.assetLibraryAsset.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        folderId: 'folder-1',
-        eventId: 'event-1',
-        usageType: 'EVENT',
-        category: 'photography',
-      }),
-    }));
+    expect(prisma.assetLibraryAsset.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          folderId: 'folder-1',
+          eventId: 'event-1',
+          usageType: 'EVENT',
+          category: 'photography',
+        }),
+      })
+    );
     expect(result.assets[0]).toMatchObject({
       folderId: 'folder-1',
       category: 'photography',
@@ -251,16 +261,18 @@ describe('assetLibraryService.upload', () => {
       eventId: 'event-1',
     });
 
-    expect(prisma.assetLibraryFolder.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        organizationId: 'org-1',
-        createdById: 'user-1',
-        name: 'Artist Photos',
-        category: 'photography',
-        eventId: 'event-1',
-        usageType: 'EVENT',
-      }),
-    }));
+    expect(prisma.assetLibraryFolder.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: 'org-1',
+          createdById: 'user-1',
+          name: 'Artist Photos',
+          category: 'photography',
+          eventId: 'event-1',
+          usageType: 'EVENT',
+        }),
+      })
+    );
     expect(result.folder).toMatchObject({
       id: 'folder-1',
       name: 'Artist Photos',
@@ -299,15 +311,17 @@ describe('assetLibraryService.upload', () => {
       },
       select: { id: true },
     });
-    expect(prisma.assetLibraryAsset.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'asset-1' },
-      data: expect.objectContaining({
-        folderId: 'folder-1',
-        eventId: 'event-1',
-        usageType: 'EVENT',
-        category: 'photography',
-      }),
-    }));
+    expect(prisma.assetLibraryAsset.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'asset-1' },
+        data: expect.objectContaining({
+          folderId: 'folder-1',
+          eventId: 'event-1',
+          usageType: 'EVENT',
+          category: 'photography',
+        }),
+      })
+    );
     expect(result.asset).toMatchObject({
       id: 'asset-1',
       folderId: 'folder-1',
@@ -365,14 +379,16 @@ describe('assetLibraryService.upload', () => {
   });
 
   it('creates revocable external share links for saved folders', async () => {
-    (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([{
-      id: 'folder-1',
-      parentId: null,
-      eventId: null,
-      name: 'Brand Photos',
-      category: 'branding',
-      usageType: 'BRAND',
-    }]);
+    (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([
+      {
+        id: 'folder-1',
+        parentId: null,
+        eventId: null,
+        name: 'Brand Photos',
+        category: 'branding',
+        usageType: 'BRAND',
+      },
+    ]);
 
     const result = await assetLibraryService.createFolderShare('user-1', 'folder-1', {
       recipientLabel: 'Agency',
@@ -380,43 +396,50 @@ describe('assetLibraryService.upload', () => {
       dashboardOrigin: 'https://mightyquinton.tixmo.co',
     });
 
-    expect((prisma as any).assetLibraryFolderShare.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        organizationId: 'org-1',
-        folderId: 'folder-1',
-        createdById: 'user-1',
-        recipientLabel: 'Agency',
-        folders: {
-          create: [{ folderId: 'folder-1' }],
+    expect((prisma as any).assetLibraryFolderShare.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          organizationId: 'org-1',
+          folderId: 'folder-1',
+          createdById: 'user-1',
+          recipientLabel: 'Agency',
+          folders: {
+            create: [{ folderId: 'folder-1' }],
+          },
+          tokenCiphertext: expect.stringMatching(/^v1:/),
+        }),
+        include: {
+          folders: {
+            select: { folderId: true },
+          },
         },
-        tokenCiphertext: expect.stringMatching(/^v1:/),
-      }),
-      include: {
-        folders: {
-          select: { folderId: true },
-        },
-      },
-    }));
-    expect((prisma as any).assetLibraryFolderShare.create.mock.calls[0][0].data.tokenHash).toHaveLength(64);
+      })
+    );
+    expect(
+      (prisma as any).assetLibraryFolderShare.create.mock.calls[0][0].data.tokenHash
+    ).toHaveLength(64);
     expect(result.share.shareUrl).toContain('https://mightyquinton.tixmo.co/assets/shared/');
     expect(result.share.active).toBe(true);
   });
 
   it('lists persisted folder share links with copyable URLs when the token can be recovered', async () => {
-    (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([{
-      id: 'folder-1',
-      parentId: null,
-      eventId: null,
-      name: 'Brand Photos',
-      category: 'branding',
-      usageType: 'BRAND',
-    }]);
+    (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([
+      {
+        id: 'folder-1',
+        parentId: null,
+        eventId: null,
+        name: 'Brand Photos',
+        category: 'branding',
+        usageType: 'BRAND',
+      },
+    ]);
 
     const created = await assetLibraryService.createFolderShare('user-1', 'folder-1', {
       recipientLabel: 'Agency',
       dashboardOrigin: 'https://mightyquinton.tixmo.co',
     });
-    const tokenCiphertext = ((prisma as any).assetLibraryFolderShare.create as jest.Mock).mock.calls[0][0].data.tokenCiphertext;
+    const tokenCiphertext = ((prisma as any).assetLibraryFolderShare.create as jest.Mock).mock
+      .calls[0][0].data.tokenCiphertext;
 
     (prisma.assetLibraryFolder.findFirst as jest.Mock).mockResolvedValue({
       id: 'folder-1',
@@ -426,19 +449,21 @@ describe('assetLibraryService.upload', () => {
       category: 'branding',
       usageType: 'BRAND',
     });
-    ((prisma as any).assetLibraryFolderShare.findMany as jest.Mock).mockResolvedValue([{
-      id: 'share-1',
-      folderId: 'folder-1',
-      recipientLabel: 'Agency',
-      expiresAt: new Date('2026-06-18T12:00:00.000Z'),
-      revokedAt: null,
-      lastViewedAt: null,
-      viewCount: 0,
-      createdAt: new Date('2026-05-04T12:00:00.000Z'),
-      updatedAt: new Date('2026-05-04T12:00:00.000Z'),
-      tokenCiphertext,
-      folders: [{ folderId: 'folder-1' }],
-    }]);
+    ((prisma as any).assetLibraryFolderShare.findMany as jest.Mock).mockResolvedValue([
+      {
+        id: 'share-1',
+        folderId: 'folder-1',
+        recipientLabel: 'Agency',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        revokedAt: null,
+        lastViewedAt: null,
+        viewCount: 0,
+        createdAt: new Date('2026-05-04T12:00:00.000Z'),
+        updatedAt: new Date('2026-05-04T12:00:00.000Z'),
+        tokenCiphertext,
+        folders: [{ folderId: 'folder-1' }],
+      },
+    ]);
 
     const result = await assetLibraryService.listFolderShares(
       'user-1',
@@ -486,10 +511,7 @@ describe('assetLibraryService.upload', () => {
       viewCount: 0,
       createdAt: new Date('2026-05-04T12:00:00.000Z'),
       updatedAt: new Date('2026-05-04T12:00:00.000Z'),
-      folders: [
-        { folderId: 'folder-1' },
-        { folderId: 'folder-2' },
-      ],
+      folders: [{ folderId: 'folder-1' }, { folderId: 'folder-2' }],
     });
 
     const result = await assetLibraryService.createFolderShare('user-1', 'folder-1', {
@@ -497,17 +519,16 @@ describe('assetLibraryService.upload', () => {
       folderIds: ['folder-2', 'folder-child'],
     });
 
-    expect((prisma as any).assetLibraryFolderShare.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        folderId: 'folder-1',
-        folders: {
-          create: [
-            { folderId: 'folder-1' },
-            { folderId: 'folder-2' },
-          ],
-        },
-      }),
-    }));
+    expect((prisma as any).assetLibraryFolderShare.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          folderId: 'folder-1',
+          folders: {
+            create: [{ folderId: 'folder-1' }, { folderId: 'folder-2' }],
+          },
+        }),
+      })
+    );
     expect(result.share.folderIds).toEqual(['folder-1', 'folder-2']);
     expect(result.share.folderCount).toBe(2);
   });
@@ -525,10 +546,7 @@ describe('assetLibraryService.upload', () => {
       where: {
         id: 'share-1',
         organizationId: 'org-1',
-        OR: [
-          { folderId: 'folder-1' },
-          { folders: { some: { folderId: 'folder-1' } } },
-        ],
+        OR: [{ folderId: 'folder-1' }, { folders: { some: { folderId: 'folder-1' } } }],
       },
     });
     expect((prisma as any).assetLibraryFolderShare.update).toHaveBeenCalledWith({
@@ -646,38 +664,44 @@ describe('assetLibraryService.upload', () => {
       .mockResolvedValueOnce([{ id: 'folder-child' }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([rootFolder, childFolder]);
-    (prisma.assetLibraryAsset.findMany as jest.Mock).mockResolvedValue([{
-      id: 'asset-1',
-      folderId: 'folder-child',
-      eventId: null,
-      filename: 'artist-photo.png',
-      originalName: 'Artist photo.png',
-      mimeType: 'image/png',
-      size: 2048,
-      s3Key: 'assets/org-1/artist-photo.png',
-      s3Url: 'https://cdn.example.com/artist-photo.png',
-      category: 'photography',
-      usageType: 'BRAND',
-      createdAt: new Date('2026-05-04T12:15:00.000Z'),
-      updatedAt: new Date('2026-05-04T12:15:00.000Z'),
-      event: null,
-      folder: {
-        id: 'folder-child',
-        name: 'Artist Photos',
-        parentId: 'folder-1',
+    (prisma.assetLibraryAsset.findMany as jest.Mock).mockResolvedValue([
+      {
+        id: 'asset-1',
+        folderId: 'folder-child',
+        eventId: null,
+        filename: 'artist-photo.png',
+        originalName: 'Artist photo.png',
+        mimeType: 'image/png',
+        size: 2048,
+        s3Key: 'assets/org-1/artist-photo.png',
+        s3Url: 'https://cdn.example.com/artist-photo.png',
         category: 'photography',
+        usageType: 'BRAND',
+        createdAt: new Date('2026-05-04T12:15:00.000Z'),
+        updatedAt: new Date('2026-05-04T12:15:00.000Z'),
+        event: null,
+        folder: {
+          id: 'folder-child',
+          name: 'Artist Photos',
+          parentId: 'folder-1',
+          category: 'photography',
+        },
       },
-    }]);
-    (uploadService.resolveFileUrl as jest.Mock).mockResolvedValue('https://signed.example.com/artist-photo.png');
+    ]);
+    (uploadService.resolveFileUrl as jest.Mock).mockResolvedValue(
+      'https://signed.example.com/artist-photo.png'
+    );
 
     const result = await assetLibraryService.getSharedFolder('active-token');
 
-    expect(prisma.assetLibraryAsset.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
-        organizationId: 'org-1',
-        folderId: { in: ['folder-1', 'folder-child'] },
-      }),
-    }));
+    expect(prisma.assetLibraryAsset.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: 'org-1',
+          folderId: { in: ['folder-1', 'folder-child'] },
+        }),
+      })
+    );
     expect(uploadService.resolveFileUrl).toHaveBeenCalledWith(
       'assets/org-1/artist-photo.png',
       'https://cdn.example.com/artist-photo.png'

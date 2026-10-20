@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Tests must not inherit application database or provider credentials from .env.
+if (process.env.NODE_ENV !== 'test') dotenv.config();
 
 const isTest = process.env.NODE_ENV === 'test';
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -66,18 +67,18 @@ export const config = {
   stripeSecretKey: normalizeOptionalCredential(process.env.STRIPE_SECRET_KEY),
   stripePublishableKey: normalizeOptionalCredential(process.env.STRIPE_PUBLISHABLE_KEY),
   stripeWebhookSecret: normalizeOptionalCredential(process.env.STRIPE_WEBHOOK_SECRET),
-  paymentCurrency: (process.env.PAYMENT_CURRENCY || 'usd').toLowerCase(),
+  paymentCurrency: (process.env.PAYMENT_CURRENCY || 'cad').toLowerCase(),
 
   // Email
   postmarkServerToken: process.env.POSTMARK_SERVER_TOKEN || '',
   postmarkMessageStream: process.env.POSTMARK_MESSAGE_STREAM || '',
-  fromEmail: process.env.FROM_EMAIL || 'noreply@tixmo.com',
+  fromEmail: process.env.FROM_EMAIL || 'noreply@tixmo.co',
   fromName: process.env.FROM_NAME || 'TixMo',
   emailHost: process.env.EMAIL_HOST || 'smtp.gmail.com',
   emailPort: parseInt(process.env.EMAIL_PORT || '587', 10),
   emailUser: process.env.EMAIL_USER || '',
   emailPassword: process.env.EMAIL_PASSWORD || '',
-  emailFrom: process.env.EMAIL_FROM || 'noreply@tixmo.com',
+  emailFrom: process.env.EMAIL_FROM || 'noreply@tixmo.co',
 
   // SMS
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
@@ -128,13 +129,14 @@ export const config = {
   // Feature Flags
   enableResaleMarket: process.env.ENABLE_RESALE_MARKET === 'true',
   enableAIGeneration: process.env.ENABLE_AI_GENERATION === 'true',
+  enableApprovalReminders: process.env.ENABLE_APPROVAL_REMINDERS === 'true',
 
   // Logging
   logLevel: process.env.LOG_LEVEL || 'info',
   logToFile: process.env.LOG_TO_FILE === 'true',
 
   // Cart Settings
-  cartExpiryMinutes: parseInt(process.env.CART_EXPIRY_MINUTES || '10', 10),
+  cartExpiryMinutes: parseInt(process.env.CART_EXPIRY_MINUTES || '15', 10),
   seatLockDurationSeconds: parseInt(process.env.SEAT_LOCK_DURATION_SECONDS || '600', 10),
   adminEmail,
 } as const;
@@ -145,8 +147,8 @@ const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'SE
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
-  // Only warn in development, throw in production
-  if (config.nodeEnv === 'production') {
+  // Test suites mock or inject credentials; every runnable app environment needs real secrets.
+  if (config.nodeEnv !== 'test') {
     throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
   } else {
     console.warn(`WARNING: Missing environment variables: ${missingEnvVars.join(', ')}`);

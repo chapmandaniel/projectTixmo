@@ -9,6 +9,7 @@ const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
+router.get('/mine', validate(validation.listTicketsSchema), controller.listMyTickets);
 
 /**
  * @swagger
@@ -77,7 +78,11 @@ router.get('/', validate(validation.listTicketsSchema), controller.listTickets);
  *       401:
  *         description: Unauthorized
  */
-router.post('/validate', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.validateTicket);
+router.post(
+  '/validate',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  controller.validateTicket
+);
 
 /**
  * @swagger
@@ -108,7 +113,11 @@ router.post('/validate', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), con
  *       401:
  *         description: Unauthorized
  */
-router.post('/check-in', authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'), controller.checkInTicket);
+router.post(
+  '/check-in',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  controller.checkInTicket
+);
 
 // ── PARAMETERIZED routes (/:id) ─────────────────────────────
 

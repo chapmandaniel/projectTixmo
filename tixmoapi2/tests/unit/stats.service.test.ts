@@ -33,9 +33,9 @@ describe('EventStatsService', () => {
       // Mock ticket counts (called 5 times)
       (prisma.ticket.count as jest.Mock)
         .mockResolvedValueOnce(100) // total
-        .mockResolvedValueOnce(80)  // sold
-        .mockResolvedValueOnce(50)  // used
-        .mockResolvedValueOnce(30)  // valid
+        .mockResolvedValueOnce(80) // sold
+        .mockResolvedValueOnce(50) // used
+        .mockResolvedValueOnce(30) // valid
         .mockResolvedValueOnce(20); // cancelled
 
       // Mock scan log counts

@@ -1,5 +1,5 @@
 import multer from 'multer';
-import os from 'os';
+import { stagedUploadStorage } from '../../services/staged-upload-storage';
 import { readFile, unlink } from 'fs/promises';
 import { NextFunction, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
@@ -30,12 +30,17 @@ const FALLBACK_MIME_TYPES = new Set(['application/octet-stream', '']);
 
 const hasEpsExtension = (filename = '') => filename.toLowerCase().endsWith('.eps');
 
-export const isAllowedAssetUploadType = (file: Pick<Express.Multer.File, 'mimetype' | 'originalname'>) => {
+export const isAllowedAssetUploadType = (
+  file: Pick<Express.Multer.File, 'mimetype' | 'originalname'>
+) => {
   if (STANDARD_ALLOWED_MIME_TYPES.has(file.mimetype)) {
     return true;
   }
 
-  return hasEpsExtension(file.originalname) && (EPS_MIME_TYPES.has(file.mimetype) || FALLBACK_MIME_TYPES.has(file.mimetype));
+  return (
+    hasEpsExtension(file.originalname) &&
+    (EPS_MIME_TYPES.has(file.mimetype) || FALLBACK_MIME_TYPES.has(file.mimetype))
+  );
 };
 
 const getExpectedMimeType = (file: Pick<Express.Multer.File, 'mimetype' | 'originalname'>) => {
@@ -43,7 +48,10 @@ const getExpectedMimeType = (file: Pick<Express.Multer.File, 'mimetype' | 'origi
     return 'video/mp4';
   }
 
-  if (hasEpsExtension(file.originalname) && (EPS_MIME_TYPES.has(file.mimetype) || FALLBACK_MIME_TYPES.has(file.mimetype))) {
+  if (
+    hasEpsExtension(file.originalname) &&
+    (EPS_MIME_TYPES.has(file.mimetype) || FALLBACK_MIME_TYPES.has(file.mimetype))
+  ) {
     return 'application/postscript';
   }
 
@@ -51,16 +59,12 @@ const getExpectedMimeType = (file: Pick<Express.Multer.File, 'mimetype' | 'origi
 };
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: os.tmpdir(),
-    filename: (_req, file, cb) => {
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      cb(null, `${file.fieldname}-${uniqueSuffix}`);
-    },
-  }),
+  storage: stagedUploadStorage(),
   limits: {
     fileSize: 25 * 1024 * 1024,
     files: 10,
+    // Bound bracket indexes before append-field can allocate/iterate sparse arrays.
+    fieldArrayIndexLimit: 1000,
   },
   fileFilter: (_req, file, cb) => {
     if (!isAllowedAssetUploadType(file)) {
@@ -169,7 +173,10 @@ export const AssetLibraryController = {
       });
       return res.status(StatusCodes.CREATED).json(result);
     } catch (error) {
+      await cleanupUploadedFiles((req.files as Express.Multer.File[]) || []);
       return next(error);
+    } finally {
+      await cleanupUploadedFiles((req.files as Express.Multer.File[]) || []);
     }
   },
 

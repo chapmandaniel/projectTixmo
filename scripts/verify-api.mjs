@@ -10,6 +10,10 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 export function verifyApi({ env = process.env, spawn = spawnSync, log = console.log } = {}) {
   safety.validateVerificationTargets(env); // Before any subprocess or service action.
   const testEnv = { ...env, NODE_ENV: 'test' };
+  // Never pass inherited real provider credentials to local test children.
+  for (const key of Object.keys(testEnv)) {
+    if (/^(AWS_|S3_|POSTMARK_|SMTP_|STRIPE_|SENTRY_)/.test(key)) delete testEnv[key];
+  }
   // Preserve the existing verifier's synthetic test-key fallback, without
   // loading implicit .env credentials or mutating the parent environment.
   for (const [key, fallback] of Object.entries({
@@ -30,6 +34,8 @@ export function verifyApi({ env = process.env, spawn = spawnSync, log = console.
     } catch { throw new Error(`${label} failed (child output suppressed).`); }
     if (result.error || result.status !== 0) throw new Error(`${label} failed (child output suppressed).`);
   };
+  run('npm', ['run', 'build'], path.join(repoRoot, 'tixmoapi2'), 'API build');
+  run('npm', ['run', 'migrate'], path.join(repoRoot, 'tixmoapi2'), 'Migration rehearsal');
   run('npx', ['prisma', 'db', 'push', '--accept-data-loss', '--skip-generate'], path.join(repoRoot, 'tixmoapi2'), 'Schema bootstrap');
   run('npm', ['--prefix', 'tixmoapi2', 'test', '--', '--runInBand'], repoRoot, 'API tests');
   log('[verify:api] API verification passed.');

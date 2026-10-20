@@ -7,9 +7,12 @@ import { userInvitationEmail } from '../../src/utils/emailTemplates';
 jest.mock('../../src/config/prisma', () => ({
   __esModule: true,
   default: {
+    staffInvitation: { create: jest.fn() },
+    $transaction: jest.fn(),
     user: {
       findUnique: jest.fn(),
       create: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
     },
   },
 }));
@@ -59,6 +62,7 @@ describe('UserService Security', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     userService = new UserService();
+    (prisma.$transaction as jest.Mock).mockImplementation((fn) => fn(prisma));
     randomSpy = jest.spyOn(Math, 'random');
   });
 
@@ -75,29 +79,47 @@ describe('UserService Security', () => {
       role: 'CUSTOMER',
     };
 
-    (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null).mockResolvedValue({
+      id: 'owner-1',
+      role: 'OWNER',
+      organizationId: null,
+      email: 'owner@example.com',
+      disabledAt: null,
+    });
     (prisma.user.create as jest.Mock).mockResolvedValue(mockUser);
     (transporter.sendMail as jest.Mock).mockResolvedValue({});
 
-    await userService.createUser({
-      email: 'newuser@example.com',
-      firstName: 'New',
-      lastName: 'User',
-      role: 'CUSTOMER',
-    } as any);
+    await userService.createUser(
+      {
+        email: 'newuser@example.com',
+        firstName: 'New',
+        lastName: 'User',
+        role: 'CUSTOMER',
+      } as any,
+      { inviterId: 'owner-1' }
+    );
 
     // Verify password was NOT generated using Math.random
     expect(randomSpy).not.toHaveBeenCalled();
 
-    // Verify userInvitationEmail was called with a secure password
-    expect(userInvitationEmail).toHaveBeenCalled();
+    expect(userInvitationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ password: undefined })
+    );
     const callArgs = (userInvitationEmail as jest.Mock).mock.calls[0][0];
-    const generatedPassword = callArgs.password;
-
-    // We expect a secure hex string (16 chars for 8 bytes)
-    // The previous implementation used Math.random().toString(36).slice(-8) -> length 8 alphanumeric
-    // The current implementation (vulnerable) will fail this check because it uses Math.random
-    expect(generatedPassword).toMatch(/^[0-9a-f]{16}$/);
+    expect(callArgs.loginUrl).toMatch(/\/invite#[a-f0-9]{64}$/);
+    expect(prisma.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ disabledAt: expect.any(Date) }),
+      })
+    );
+    expect(prisma.staffInvitation.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          issuerId: 'owner-1',
+          tokenHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        }),
+      })
+    );
   });
 
   it('should build invitation login links from the trusted request origin when provided', async () => {
@@ -109,21 +131,35 @@ describe('UserService Security', () => {
       role: 'TEAM_MEMBER',
     };
 
-    (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null).mockResolvedValue({
+      id: 'owner-1',
+      role: 'OWNER',
+      organizationId: null,
+      email: 'owner@example.com',
+      disabledAt: null,
+    });
     (prisma.user.create as jest.Mock).mockResolvedValue(mockUser);
     (transporter.sendMail as jest.Mock).mockResolvedValue({});
 
-    await userService.createUser({
-      email: 'newuser@example.com',
-      firstName: 'New',
-      lastName: 'User',
-      role: 'TEAM_MEMBER',
-    } as any, {
-      clientOrigin: 'https://mightyquinton.tixmo.co',
-    });
+    await userService.createUser(
+      {
+        email: 'newuser@example.com',
+        firstName: 'New',
+        lastName: 'User',
+        role: 'TEAM_MEMBER',
+      } as any,
+      {
+        clientOrigin: 'https://mightyquinton.tixmo.co',
+        inviterId: 'owner-1',
+      }
+    );
 
-    expect(userInvitationEmail).toHaveBeenCalledWith(expect.objectContaining({
-      loginUrl: 'https://mightyquinton.tixmo.co/login',
-    }));
+    expect(userInvitationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        loginUrl: expect.stringMatching(
+          /^https:\/\/mightyquinton\.tixmo\.co\/invite#[a-f0-9]{64}$/
+        ),
+      })
+    );
   });
 });

@@ -6,7 +6,9 @@ import { notificationService } from '../../src/utils/notificationService';
 import Stripe from 'stripe';
 
 jest.mock('stripe', () => jest.fn(() => ({ webhooks: { constructEvent: jest.fn() } })));
-jest.mock('@prisma/client', () => ({ Prisma: { PrismaClientKnownRequestError: class extends Error {} } }));
+jest.mock('@prisma/client', () => ({
+  Prisma: { PrismaClientKnownRequestError: class extends Error {} },
+}));
 jest.mock('../../src/config/environment', () => ({
   config: { stripeSecretKey: 'mock-only', stripeWebhookSecret: 'mock-webhook-secret' },
 }));
@@ -22,7 +24,11 @@ jest.mock('../../src/config/prisma', () => ({
   },
 }));
 jest.mock('../../src/api/orders/service', () => ({
-  orderService: { getOrderById: jest.fn(), confirmOrder: jest.fn(), sendOrderConfirmationEmail: jest.fn() },
+  orderService: {
+    getOrderById: jest.fn(),
+    confirmOrder: jest.fn(),
+    sendOrderConfirmationEmail: jest.fn(),
+  },
 }));
 jest.mock('../../src/utils/notificationService', () => ({
   notificationService: { sendAdminAlert: jest.fn(), sendEmail: jest.fn() },
@@ -40,11 +46,16 @@ describe('PaymentService webhook signature rejection (fully mocked)', () => {
   ])('rejects a thrown %s before all downstream effects', async (_label, thrown, message) => {
     const service = new PaymentService();
     const stripe = (Stripe as unknown as jest.Mock).mock.results.slice(-1)[0].value;
-    stripe.webhooks.constructEvent.mockImplementation(() => { throw thrown; });
+    stripe.webhooks.constructEvent.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- provider may throw any JS value.
+      throw thrown;
+    });
     const payload = Buffer.from([0x00, 0xff, 0x7b, 0x0a, 0x7d]);
     const signature = 't=123,v1=original-signature';
 
-    const rejection = await service.handleWebhook(signature, payload).catch((error: unknown) => error);
+    const rejection = await service
+      .handleWebhook(signature, payload)
+      .catch((error: unknown) => error);
 
     expect(rejection).toBeInstanceOf(ApiError);
     expect(rejection).toMatchObject({ statusCode: 400, message: `Webhook Error: ${message}` });

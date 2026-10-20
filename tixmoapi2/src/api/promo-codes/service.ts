@@ -156,16 +156,14 @@ export class PromoCodeService {
 
     if (data.discountType) updateData.discountType = data.discountType;
     if (data.discountValue !== undefined)
-      updateData.discountValue = new Decimal(data.discountValue) as unknown as Prisma.Decimal;
+      updateData.discountValue = new Decimal(data.discountValue);
     if (data.maxUses !== undefined) updateData.maxUses = data.maxUses;
     if (data.status) updateData.status = data.status;
 
     if (data.validFrom) updateData.validFrom = new Date(data.validFrom);
     if (data.validUntil) updateData.validUntil = new Date(data.validUntil);
     if (data.minOrderAmount !== undefined) {
-      updateData.minOrderValue = data.minOrderAmount
-        ? (new Decimal(data.minOrderAmount) as unknown as Prisma.Decimal)
-        : null;
+      updateData.minOrderValue = data.minOrderAmount ? new Decimal(data.minOrderAmount) : null;
     }
 
     return await prisma.promoCode.update({

@@ -1,3 +1,4 @@
+import { assertDevelopmentClient } from '../utils/development-client';
 import { PrismaClient, EventStatus, Organization, Venue } from '@prisma/client';
 import { seedLogger } from '../utils/seed-logger';
 import { createEventData } from '../factories/event.factory';
@@ -7,6 +8,7 @@ export async function seedEvents(
   organizations: Organization[],
   venues: Venue[]
 ) {
+  assertDevelopmentClient(prisma);
   seedLogger.info('Seeding events...');
 
   const events = [];

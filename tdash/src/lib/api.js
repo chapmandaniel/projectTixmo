@@ -5,6 +5,7 @@ import {
     emitAuthExpired,
     getAccessToken,
     getRefreshToken,
+    getSessionGeneration,
     updateStoredTokens,
 } from './session';
 
@@ -23,9 +24,12 @@ const refreshClient = axios.create({
 });
 
 let refreshRequest = null;
+let refreshingToken = null;
+
+const sessionChangedError = () => Object.assign(new Error('Session changed'), { sessionChanged: true });
 
 const isAuthRoute = (url = '') => (
-    ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout']
+    ['/auth/login', '/auth/register', '/auth/refresh', '/auth/logout', '/auth/accept-invitation']
         .some((route) => url.includes(route))
 );
 
@@ -36,17 +40,26 @@ const refreshAccessToken = async () => {
         throw new Error('Missing refresh token');
     }
 
-    if (!refreshRequest) {
-        refreshRequest = refreshClient
+    const generation = getSessionGeneration();
+    if (!refreshRequest || refreshingToken !== refreshToken) {
+        refreshingToken = refreshToken;
+        const request = refreshClient
             .post('/auth/refresh', { refreshToken })
             .then((response) => {
+                if (generation !== getSessionGeneration() || refreshToken !== getRefreshToken()) {
+                    throw sessionChangedError();
+                }
                 const tokens = response.data?.data || {};
                 updateStoredTokens(tokens);
                 return tokens;
             })
             .finally(() => {
-                refreshRequest = null;
+                if (refreshRequest === request) {
+                    refreshRequest = null;
+                    refreshingToken = null;
+                }
             });
+        refreshRequest = request;
     }
 
     return refreshRequest;
@@ -55,8 +68,10 @@ const refreshAccessToken = async () => {
 // Request interceptor to add auth token
 axiosInstance.interceptors.request.use(
     (config) => {
+        config._sessionGeneration ??= getSessionGeneration();
+        if (config._sessionGeneration !== getSessionGeneration()) throw sessionChangedError();
         const token = getAccessToken();
-        if (token) {
+        if (token && !config.headers.has('Authorization')) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -68,10 +83,17 @@ axiosInstance.interceptors.request.use(
 
 // Response interceptor to handle auth errors (401)
 axiosInstance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        if (response.config._sessionGeneration !== getSessionGeneration()) throw sessionChangedError();
+        return response;
+    },
     async (error) => {
         const status = error.response?.status;
         const originalRequest = error.config;
+
+        if (error.sessionChanged || (originalRequest && originalRequest._sessionGeneration !== getSessionGeneration())) {
+            return Promise.reject(sessionChangedError());
+        }
 
         if (status === 401) {
             if (!originalRequest || isAuthRoute(originalRequest.url)) {
@@ -95,6 +117,9 @@ axiosInstance.interceptors.response.use(
 
                 return axiosInstance(originalRequest);
             } catch (refreshError) {
+                if (refreshError.sessionChanged || originalRequest._sessionGeneration !== getSessionGeneration()) {
+                    return Promise.reject(sessionChangedError());
+                }
                 clearStoredSession();
                 emitAuthExpired();
                 return Promise.reject(refreshError);

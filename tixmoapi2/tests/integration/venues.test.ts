@@ -1,4 +1,3 @@
-
 // 1. Mock dependencies first
 const mockPrisma = {
   user: {
@@ -25,10 +24,10 @@ jest.mock('../../src/config/prisma', () => ({
 jest.mock('../../src/utils/jwt', () => ({
   verifyAccessToken: jest.fn((token) => {
     if (token === 'admin-token') {
-      return { userId: 'admin-id', role: 'ADMIN', email: 'admin@venues.com' };
+      return { sessionVersion: 0, userId: 'admin-id', role: 'ADMIN', email: 'admin@venues.com' };
     }
     if (token === 'user-token') {
-      return { userId: 'user-id', role: 'CUSTOMER', email: 'user@venues.com' };
+      return { sessionVersion: 0, userId: 'user-id', role: 'CUSTOMER', email: 'user@venues.com' };
     }
     throw new Error('Invalid token');
   }),
@@ -51,9 +50,12 @@ describe('Venues API', () => {
     // Default mock for user lookup (middleware)
     mockPrisma.user.findUnique.mockResolvedValue({
       id: 'admin-id',
+      sessionVersion: 0,
+      isPlatformAdmin: true,
+      disabledAt: null,
       role: 'ADMIN',
       email: 'admin@venues.com',
-      organizationId: orgId
+      organizationId: orgId,
     });
 
     // Default mock for org existence check
@@ -83,7 +85,7 @@ describe('Venues API', () => {
             city: 'Metropolis',
             state: 'NY',
             postalCode: '10001',
-            country: 'USA'
+            country: 'USA',
           },
         });
 
@@ -109,7 +111,7 @@ describe('Venues API', () => {
   describe('GET /api/v1/venues', () => {
     it('should list venues for an organization', async () => {
       mockPrisma.venue.findMany.mockResolvedValue([
-        { id: venueId, name: 'Grand Hall', organizationId: orgId }
+        { id: venueId, name: 'Grand Hall', organizationId: orgId },
       ]);
       mockPrisma.venue.count.mockResolvedValue(1);
 
@@ -130,7 +132,7 @@ describe('Venues API', () => {
         id: venueId,
         name: 'Grand Hall',
         organizationId: orgId,
-        _count: { events: 0 }
+        _count: { events: 0 },
       });
 
       const res = await request(app)
@@ -163,7 +165,7 @@ describe('Venues API', () => {
       mockPrisma.venue.update.mockResolvedValue({
         id: venueId,
         name: 'Grand Hall Updated',
-        capacity: 600
+        capacity: 600,
       });
 
       const res = await request(app)
@@ -171,7 +173,7 @@ describe('Venues API', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Grand Hall Updated',
-          capacity: 600
+          capacity: 600,
         });
 
       expect(res.status).toBe(200);
@@ -185,7 +187,7 @@ describe('Venues API', () => {
       mockPrisma.venue.findUnique.mockResolvedValue({
         id: venueId,
         organizationId: orgId,
-        _count: { events: 0 }
+        _count: { events: 0 },
       });
 
       mockPrisma.venue.delete.mockResolvedValue({ id: venueId });
