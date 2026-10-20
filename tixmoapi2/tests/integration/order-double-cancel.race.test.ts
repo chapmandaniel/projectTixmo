@@ -1,4 +1,4 @@
-// Task 115 baseline: intentionally RED until cancellation has an atomic transition claim.
+// Task 115 real-read reproduction; task 118 guards the cancellation transition.
 // Timeouts below bound harness failures; they never choose operation ordering.
 jest.mock('../../src/utils/notificationService', () => ({ notificationService: {} }));
 import prisma from '../../src/config/prisma';
@@ -88,3 +88,41 @@ test.each([false, true])('overlapping cancel applies inventory once and preserve
     spy.mockRestore();
   }
 }, 20000);
+
+
+test('inconsistent hold rolls back cancellation claim and leaves tickets and inventory unchanged', async () => {
+  const key = `rollback118-${Date.now()}`;
+  const org = await prisma.organization.create({ data: { name: key, slug: key, type: 'PROMOTER' } });
+  const user = await prisma.user.create({ data: { email: `${key}@example.test`, passwordHash: 'test-only', firstName: 'Rollback', lastName: 'Fixture' } });
+  const event = await prisma.event.create({ data: { organizationId: org.id, name: key, slug: key, tags: [] } });
+  const type = await prisma.ticketType.create({ data: { eventId: event.id, name: key, price: 10, quantityTotal: 10, quantityAvailable: 10, quantityHeld: 0 } });
+  const before = await prisma.order.create({ data: { orderNumber: key, userId: user.id, eventId: event.id, totalAmount: 10,
+    tickets: { create: [{ eventId: event.id, userId: user.id, ticketTypeId: type.id, barcode: key, pricePaid: 10 }] } }, include: { tickets: true } });
+  await expect(new OrderService().cancelOrder(before.id)).rejects.toMatchObject({ statusCode: 500, message: 'Order inventory hold is inconsistent' });
+  expect(await prisma.order.findUniqueOrThrow({ where: { id: before.id }, include: { tickets: true } })).toEqual(before);
+  expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
+});
+
+test.each(['PAID', 'PROCESSING'] as const)('stale cancellation cannot overwrite concurrent %s transition', async change => {
+  const key = `stale118-${change}-${Date.now()}`;
+  const org = await prisma.organization.create({ data: { name: key, slug: key, type: 'PROMOTER' } });
+  const user = await prisma.user.create({ data: { email: `${key}@example.test`, passwordHash: 'test-only', firstName: 'Stale', lastName: 'Fixture' } });
+  const event = await prisma.event.create({ data: { organizationId: org.id, name: key, slug: key, tags: [] } });
+  const type = await prisma.ticketType.create({ data: { eventId: event.id, name: key, price: 10, quantityTotal: 10, quantityAvailable: 9, quantityHeld: 1 } });
+  const order = await prisma.order.create({ data: { orderNumber: key, userId: user.id, eventId: event.id, totalAmount: 10,
+    tickets: { create: [{ eventId: event.id, userId: user.id, ticketTypeId: type.id, barcode: key, pricePaid: 10 }] } }, include: { tickets: true } });
+  const original = prisma.order.findFirst.bind(prisma.order);
+  let changed: unknown;
+  const spy = jest.spyOn(prisma.order, 'findFirst').mockImplementationOnce((async (args: any) => {
+    const snapshot = await original(args);
+    // Actual concurrent persisted transition after the real pending snapshot.
+    changed = await prisma.order.update({ where: { id: order.id },
+      data: change === 'PAID' ? { status: 'PAID', paymentStatus: 'SUCCEEDED' } : { paymentStatus: 'PROCESSING' }, include: { tickets: true } });
+    return snapshot;
+  }) as any);
+  try {
+    await expect(new OrderService().cancelOrder(order.id)).rejects.toMatchObject({ statusCode: 400 });
+  } finally { spy.mockRestore(); }
+  expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { tickets: true } })).toEqual(changed);
+  expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
+});

@@ -514,8 +514,22 @@ export class OrderService {
       throw ApiError.badRequest('Cannot cancel paid orders. Request a refund instead.');
     }
 
-    // Cancel order and release inventory
+    // Claim the observed cancellable state before releasing any holds. A stale
+    // reader must not release inventory owned by another order. The claim and
+    // all inventory/ticket changes roll back together on failure.
     return await prisma.$transaction(async (tx) => {
+      const transition = await tx.order.updateMany({
+        where: {
+          id, ...scope,
+          ...(userId ? { userId } : {}),
+          status: orderTyped2.status,
+          paymentStatus: orderTyped2.paymentStatus,
+        },
+        data: { status: 'CANCELLED' },
+      });
+      if (transition.count !== 1) {
+        throw ApiError.badRequest('Cannot cancel order that has changed');
+      }
       // Get unique ticket types from this order
       const ticketTypeCounts = new Map<string, number>();
       for (const ticket of orderTyped2.tickets) {
@@ -547,13 +561,7 @@ export class OrderService {
         data: { status: 'CANCELLED' },
       });
 
-      // Update order status
-      return await tx.order.update({
-        where: { id },
-        data: {
-          status: 'CANCELLED',
-        },
-      });
+      return await tx.order.findUniqueOrThrow({ where: { id } });
     });
   }
 

@@ -127,3 +127,40 @@ describe('HTTP handler actor forwarding', () => {
     expect(db.order.findMany.mock.calls[0][0].where.AND[1]).toEqual({ event: { organizationId: 'org-a' } });
   });
 });
+
+
+describe('cancellation transition contracts', () => {
+  test('stale scoped cancellation rejects before inventory, tickets or response', async () => {
+    db.order.findFirst.mockResolvedValue({ ...orders[0], paymentStatus: 'PENDING' });
+    const tx = {
+      order: { updateMany: jest.fn().mockResolvedValue({ count: 0 }), findUniqueOrThrow: jest.fn() },
+      ticketType: { updateMany: jest.fn() }, ticket: { updateMany: jest.fn() },
+    };
+    db.$transaction.mockImplementationOnce((callback: any) => callback(tx));
+    await expect(service.cancelOrder('a', 'buyer-a', 'actor')).rejects.toMatchObject({ statusCode: 400 });
+    expect(tx.order.updateMany).toHaveBeenCalledWith({
+      where: { id: 'a', event: { organizationId: 'org-a' }, userId: 'buyer-a', status: 'PENDING', paymentStatus: 'PENDING' },
+      data: { status: 'CANCELLED' },
+    });
+    expect(tx.ticketType.updateMany).not.toHaveBeenCalled();
+    expect(tx.ticket.updateMany).not.toHaveBeenCalled();
+    expect(tx.order.findUniqueOrThrow).not.toHaveBeenCalled();
+  });
+  test.each(['PAID', 'CANCELLED'])('%s rejection retains its pre-transaction contract', async status => {
+    db.order.findFirst.mockResolvedValue({ ...orders[0], status });
+    await expect(service.cancelOrder('a')).rejects.toMatchObject({ statusCode: 400 });
+    expect(db.$transaction).not.toHaveBeenCalled();
+  });
+  test('buyer mismatch remains forbidden before transaction', async () => {
+    await expect(service.cancelOrder('a', 'another-buyer')).rejects.toMatchObject({ statusCode: 403 });
+    expect(db.$transaction).not.toHaveBeenCalled();
+  });
+  test('successful cancellation returns the committed order without changing payment', async () => {
+    const result = { ...orders[0], status: 'CANCELLED', paymentStatus: 'PENDING' };
+    const tx = { order: { updateMany: jest.fn().mockResolvedValue({ count: 1 }), findUniqueOrThrow: jest.fn().mockResolvedValue(result) }, ticket: { updateMany: jest.fn() } };
+    db.$transaction.mockImplementationOnce((callback: any) => callback(tx));
+    await expect(service.cancelOrder('a')).resolves.toEqual(result);
+    expect(tx.ticket.updateMany).toHaveBeenCalledWith({ where: { orderId: 'a' }, data: { status: 'CANCELLED' } });
+    expect(tx.order.findUniqueOrThrow).toHaveBeenCalledWith({ where: { id: 'a' } });
+  });
+});
