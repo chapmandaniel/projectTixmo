@@ -645,10 +645,18 @@ export class OrderService {
     }
 
     return await prisma.$transaction(async (tx) => {
-      // Cancel all valid tickets in one batch
-      const ticketsToCancel = order.tickets.filter(
-        (t) => t.status === 'VALID' || t.status === 'TRANSFERRED'
-      );
+      // Claim before any ticket/inventory effect; stale callers lose without
+      // releasing inventory. This claim rolls back with every dependent write.
+      const transition = await tx.order.updateMany({
+        where: { id, ...scope, status: 'PAID', paymentStatus: order.paymentStatus },
+        data: { status: 'REFUNDED' },
+      });
+      if (transition.count !== 1) {
+        throw ApiError.badRequest('Only PAID orders can be refunded');
+      }
+      const ticketsToCancel = await tx.ticket.findMany({
+        where: { orderId: id, status: { in: ['VALID', 'TRANSFERRED'] } },
+      });
 
       if (ticketsToCancel.length > 0) {
         const ticketIds = ticketsToCancel.map((t) => t.id);
@@ -666,21 +674,20 @@ export class OrderService {
         }
 
         for (const [ticketTypeId, count] of ticketTypeCounts.entries()) {
-          await tx.ticketType.update({
-            where: { id: ticketTypeId },
+          const inventoryResult = await tx.ticketType.updateMany({
+            where: { id: ticketTypeId, quantitySold: { gte: count } },
             data: {
               quantitySold: { decrement: count },
               quantityAvailable: { increment: count },
             },
           });
+          if (inventoryResult.count !== 1) {
+            throw ApiError.internal('Order sold inventory is inconsistent');
+          }
         }
       }
 
-      // Update order status
-      return await tx.order.update({
-        where: { id },
-        data: { status: 'REFUNDED' },
-      });
+      return await tx.order.findUniqueOrThrow({ where: { id } });
     });
   }
 }

@@ -164,3 +164,21 @@ describe('cancellation transition contracts', () => {
     expect(tx.order.findUniqueOrThrow).toHaveBeenCalledWith({ where: { id: 'a' } });
   });
 });
+
+describe('refund transition scope', () => {
+  test.each(['org-a', null])('ADMIN claim retains organization fence (%s)', async organizationId => {
+    db.user.findUnique.mockResolvedValue({ ...actor, role: 'ADMIN', organizationId });
+    db.order.findFirst.mockResolvedValue({ ...orders[0], status: 'PAID', paymentStatus: 'SUCCEEDED' });
+    const tx = { order: { updateMany: jest.fn().mockResolvedValue({ count: 0 }), findUniqueOrThrow: jest.fn() }, ticket: { findMany: jest.fn(), updateMany: jest.fn() }, ticketType: { updateMany: jest.fn() } };
+    db.$transaction.mockImplementationOnce((callback: any) => callback(tx));
+    await expect(service.refundOrder('a', 'actor')).rejects.toMatchObject({ statusCode: 400 });
+    expect(tx.order.updateMany).toHaveBeenCalledWith({
+      where: { id: 'a', ...(organizationId ? { event: { organizationId } } : {}), status: 'PAID', paymentStatus: 'SUCCEEDED' },
+      data: { status: 'REFUNDED' },
+    });
+    expect(tx.ticket.findMany).not.toHaveBeenCalled();
+    expect(tx.ticket.updateMany).not.toHaveBeenCalled();
+    expect(tx.ticketType.updateMany).not.toHaveBeenCalled();
+    expect(tx.order.findUniqueOrThrow).not.toHaveBeenCalled();
+  });
+});

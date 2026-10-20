@@ -97,3 +97,49 @@ test.each([false, true])('overlapping refund applies inventory once and preserve
     spy.mockRestore();
   }
 }, 20000);
+
+async function refundFixture(sold = 2) {
+  const key = `guard123-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const org = await prisma.organization.create({ data: { name: key, slug: key, type: 'PROMOTER' } });
+  const user = await prisma.user.create({ data: { email: `${key}@example.test`, passwordHash: 'test-only', firstName: 'Refund', lastName: 'Fixture' } });
+  const event = await prisma.event.create({ data: { organizationId: org.id, name: key, slug: key, tags: [] } });
+  const type = await prisma.ticketType.create({ data: { eventId: event.id, name: key, price: 10, quantityTotal: 10, quantityAvailable: 10 - sold, quantitySold: sold } });
+  const order = await prisma.order.create({ data: { orderNumber: key, userId: user.id, eventId: event.id, totalAmount: 20, status: 'PAID', paymentStatus: 'SUCCEEDED',
+    tickets: { create: ['VALID', 'TRANSFERRED', 'USED'].map((status, i) => ({ eventId: event.id, userId: user.id, ticketTypeId: type.id, barcode: `${key}-${i}`, pricePaid: 10, status: status as 'VALID' | 'TRANSFERRED' | 'USED' })) } }, include: { tickets: { orderBy: { id: 'asc' } } } });
+  return { order, type };
+}
+
+test('insufficient sold inventory rolls back claim and ticket cancellation completely', async () => {
+  const { order, type } = await refundFixture(1);
+  await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({ statusCode: 500, message: 'Order sold inventory is inconsistent' });
+  expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { tickets: { orderBy: { id: 'asc' } } } })).toEqual(order);
+  expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
+});
+
+test('refund preserves scalar response/payment contract, cancels VALID/TRANSFERRED only and rejects retries', async () => {
+  const { order, type } = await refundFixture();
+  const result = await new OrderService().refundOrder(order.id);
+  const { tickets, ...scalar } = order;
+  expect(result).toEqual({ ...scalar, status: 'REFUNDED', updatedAt: expect.any(Date) });
+  const after = await prisma.ticket.findMany({ where: { orderId: order.id }, orderBy: { id: 'asc' } });
+  expect(after).toEqual(tickets.map(t => t.status === 'USED' ? t : { ...t, status: 'CANCELLED', updatedAt: expect.any(Date) }));
+  const inventory = await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } });
+  expect([inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold]).toEqual([10, 0, 0]);
+  await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({ statusCode: 400 });
+  expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(inventory);
+});
+
+test.each(['status', 'paymentStatus'] as const)('stale refund rejects concurrent %s change without dependent writes', async field => {
+  const { order, type } = await refundFixture();
+  const original = prisma.order.findFirst.bind(prisma.order);
+  let changed: unknown;
+  const spy = jest.spyOn(prisma.order, 'findFirst').mockImplementationOnce((async (args: any) => {
+    const snapshot = await original(args);
+    changed = await prisma.order.update({ where: { id: order.id }, data: field === 'status' ? { status: 'CANCELLED' } : { paymentStatus: 'FAILED' }, include: { tickets: { orderBy: { id: 'asc' } } } });
+    return snapshot;
+  }) as any);
+  try { await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({ statusCode: 400 }); }
+  finally { spy.mockRestore(); }
+  expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { tickets: { orderBy: { id: 'asc' } } } })).toEqual(changed);
+  expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
+});
