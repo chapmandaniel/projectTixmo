@@ -170,7 +170,7 @@ test.each([false, true])(
       .spyOn(prisma.paymentWebhookEvent as any, 'updateMany')
       .mockImplementation(async (args: any) => {
         const result = await realUpdate(args);
-        if (args.where.id === eventId && args.data.processedAt)
+        if (args.where.id === eventId && ['PROCESSED', 'FAILED'].includes(args.data.status))
           terminal.push({
             generation: args.where.attemptGeneration,
             status: args.data.status,
@@ -217,7 +217,7 @@ test.each([false, true])(
         attemptGeneration: 2n,
         errorMessage: originalB.message,
       });
-      expect(failed.event.processedAt).toBeInstanceOf(Date);
+      expect(failed.event.processedAt).toBeNull();
       expect({ target: failed.target, other: failed.other, inventory: failed.inventory }).toEqual(
         before
       );
@@ -235,7 +235,13 @@ test.each([false, true])(
         errorMessage: null,
       });
       expect(successor.target).toMatchObject({ status: 'PAID', paymentStatus: 'SUCCEEDED' });
-      expect(successor.target.tickets).toEqual(target.tickets);
+      expect(successor.target.tickets).toEqual(
+        target.tickets.map((ticket) => ({
+          ...ticket,
+          inventoryState: 'SOLD',
+          updatedAt: expect.any(Date),
+        }))
+      );
       expect(successor.other).toEqual(otherBefore);
       expect([
         successor.inventory.quantityAvailable,

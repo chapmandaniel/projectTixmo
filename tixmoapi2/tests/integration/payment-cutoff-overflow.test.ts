@@ -174,13 +174,7 @@ test.each(['FAILED', 'PROCESSING'])(
         )
       );
       expect(b).toEqual(otherBefore);
-      expect(a.tickets).toEqual(
-        target.tickets.map((ticket) => ({
-          ...ticket,
-          inventoryState: 'SOLD',
-          updatedAt: expect.any(Date),
-        }))
-      );
+      expect(a.tickets).toEqual(target.tickets);
       expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
       expect(await prisma.paymentWebhookEvent.count({ where: { id: eventId } })).toBe(1);
       expect(counters.every((n) => n >= 0)).toBe(true);

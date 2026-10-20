@@ -145,7 +145,7 @@ test.each(['success', 'failure'])(
       .spyOn(prisma.paymentWebhookEvent as any, 'updateMany')
       .mockImplementation(async (args: any) => {
         const result = await realUpdate(args);
-        if (args.where.id === eventId && args.data.processedAt) {
+        if (args.where.id === eventId && ['PROCESSED', 'FAILED'].includes(args.data.status)) {
           staleCounts.push(result.count);
           trace.push(`A-terminal-${args.data.status}-rows-${result.count}`);
         }

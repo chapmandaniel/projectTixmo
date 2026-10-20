@@ -147,7 +147,7 @@ test.each([
       .spyOn(prisma.paymentWebhookEvent as any, 'updateMany')
       .mockImplementation(async (args: any) => {
         const result = await realUpdate(args);
-        if (args.where.id === eventId && args.data.processedAt) {
+        if (args.where.id === eventId && ['PROCESSED', 'FAILED'].includes(args.data.status)) {
           staleCounts.push(result.count);
           trace.push(`A-terminal-${args.data.status}-rows-${result.count}`);
         }
@@ -230,7 +230,13 @@ test.each([
       else expect(successor.event.processedAt).toBeInstanceOf(Date);
       expect(successor.target).toMatchObject({ status: 'PAID', paymentStatus: 'SUCCEEDED' });
       expect(successor.other).toEqual(otherBefore);
-      expect(successor.target.tickets).toEqual(target.tickets);
+      expect(successor.target.tickets).toEqual(
+        target.tickets.map((ticket) => ({
+          ...ticket,
+          inventoryState: 'SOLD',
+          updatedAt: expect.any(Date),
+        }))
+      );
       expect([
         successor.inventory.quantityAvailable,
         successor.inventory.quantityHeld,

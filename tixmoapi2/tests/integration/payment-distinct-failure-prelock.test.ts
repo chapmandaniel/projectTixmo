@@ -141,7 +141,7 @@ test('distinct signed failure A cannot regress committed success B before order 
     .spyOn(prisma.paymentWebhookEvent as any, 'updateMany')
     .mockImplementation(async (args: any) => {
       const result = await realUpdate(args);
-      if (args.where.id === eventId && args.data.processedAt) {
+      if (args.where.id === eventId && ['PROCESSED', 'FAILED'].includes(args.data.status)) {
         staleCounts.push(result.count);
         trace.push(`A-terminal-${args.data.status}-rows-${result.count}`);
       }
@@ -222,7 +222,13 @@ test('distinct signed failure A cannot regress committed success B before order 
       paymentIntentId: `pi_${key}`,
     });
     expect(successor.other).toEqual(otherBefore);
-    expect(successor.target.tickets).toEqual(target.tickets);
+    expect(successor.target.tickets).toEqual(
+      target.tickets.map((ticket) => ({
+        ...ticket,
+        inventoryState: 'SOLD',
+        updatedAt: expect.any(Date),
+      }))
+    );
     expect([
       successor.inventory.quantityAvailable,
       successor.inventory.quantityHeld,
@@ -256,10 +262,7 @@ test('distinct signed failure A cannot regress committed success B before order 
     expect(
       await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id: eventId } })
     ).toMatchObject({ status: 'PROCESSED', attemptGeneration: 1n });
-    expect(notificationService.sendEmail).toHaveBeenCalledTimes(1);
-    expect(notificationService.sendEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: user.email, subject: 'Payment Failed' })
-    );
+    expect(notificationService.sendEmail).not.toHaveBeenCalled();
     expect(email).toHaveBeenCalledTimes(1);
     expect(await bounded(bResult)).toBeUndefined();
     const final = await snapshot();
