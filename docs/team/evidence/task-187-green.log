@@ -1,0 +1,10 @@
+PASS tixmoapi2/tests/unit/payments.prepare.test.ts
+PASS tixmoapi2/tests/unit/payments.webhook-recovery.test.ts
+PASS tixmoapi2/tests/integration/payments_retry.test.ts
+PASS tixmoapi2/tests/unit/payments.webhook-signature.test.ts
+
+Test Suites: 4 passed, 4 total
+Tests:       31 passed, 31 total
+Snapshots:   0 total
+Time:        5.044 s
+Ran all test suites.

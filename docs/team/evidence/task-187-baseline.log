@@ -1,0 +1,55 @@
+FAIL tixmoapi2/tests/integration/task-187-baseline.test.ts
+  Order Confirmation Retry Logic
+    ✕ should retry order confirmation on failure and alert admin after exhaustion (959 ms)
+    ✕ should stop retrying if it succeeds eventually (786 ms)
+
+  ● Order Confirmation Retry Logic › should retry order confirmation on failure and alert admin after exhaustion
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "DB Timeout"
+    Received message:   "Cannot read properties of undefined (reading 'eventId')"
+
+        [0m [90m 210 |[39m       [36mconst[39m rows [33m=[39m [36mawait[39m tx[33m.[39m$queryRaw[33m<[39m[33mArray[39m[33m<[39m{ status[33m:[39m string[33m;[39m attempt_generation[33m:[39m bigint }[33m>>[39m[32m`[39m
+         [90m 211 |[39m [32m        SELECT status, attempt_generation[39m
+        [31m[1m>[22m[39m[90m 212 |[39m [32m        FROM payment_webhook_events WHERE id = ${claim.eventId} FOR UPDATE`[39m[33m;[39m
+         [90m     |[39m                                                        [31m[1m^[22m[39m
+         [90m 213 |[39m       [90m// Sample live eligibility only AFTER acquiring the row lock (not before a lock wait).[39m
+         [90m 214 |[39m       [36mconst[39m lease [33m=[39m [36mawait[39m tx[33m.[39m$queryRaw[33m<[39m[33mArray[39m[33m<[39m{ live[33m:[39m boolean }[33m>>[39m[32m`[39m
+         [90m 215 |[39m [32m        SELECT processing_started_at > clock_timestamp() - interval '300 seconds' AS live[39m[0m
+
+      at src/api/payments/service.ts:212:56
+      at Object.<anonymous> (tests/integration/task-187-baseline.test.ts:39:20)
+      at PaymentService.withWebhookFence (src/api/payments/service.ts:209:19)
+      at withRetry.maxRetries (src/api/payments/service.ts:237:32)
+      at withRetry (src/utils/retry.ts:31:26)
+      at PaymentService.handlePaymentSuccess (src/api/payments/service.ts:236:7)
+      at Object.<anonymous> (tests/integration/task-187-baseline.test.ts:53:9)
+      at Object.toThrow (../../task-177/tixmoapi2/node_modules/expect/build/index.js:218:22)
+      at Object.<anonymous> (tests/integration/task-187-baseline.test.ts:55:28)
+
+  ● Order Confirmation Retry Logic › should stop retrying if it succeeds eventually
+
+    TypeError: Cannot read properties of undefined (reading 'eventId')
+
+    [0m [90m 210 |[39m       [36mconst[39m rows [33m=[39m [36mawait[39m tx[33m.[39m$queryRaw[33m<[39m[33mArray[39m[33m<[39m{ status[33m:[39m string[33m;[39m attempt_generation[33m:[39m bigint }[33m>>[39m[32m`[39m
+     [90m 211 |[39m [32m        SELECT status, attempt_generation[39m
+    [31m[1m>[22m[39m[90m 212 |[39m [32m        FROM payment_webhook_events WHERE id = ${claim.eventId} FOR UPDATE`[39m[33m;[39m
+     [90m     |[39m                                                        [31m[1m^[22m[39m
+     [90m 213 |[39m       [90m// Sample live eligibility only AFTER acquiring the row lock (not before a lock wait).[39m
+     [90m 214 |[39m       [36mconst[39m lease [33m=[39m [36mawait[39m tx[33m.[39m$queryRaw[33m<[39m[33mArray[39m[33m<[39m{ live[33m:[39m boolean }[33m>>[39m[32m`[39m
+     [90m 215 |[39m [32m        SELECT processing_started_at > clock_timestamp() - interval '300 seconds' AS live[39m[0m
+
+      at src/api/payments/service.ts:212:56
+      at Object.<anonymous> (tests/integration/task-187-baseline.test.ts:39:20)
+      at PaymentService.withWebhookFence (src/api/payments/service.ts:209:19)
+      at withRetry.maxRetries (src/api/payments/service.ts:237:32)
+      at withRetry (src/utils/retry.ts:31:26)
+      at PaymentService.handlePaymentSuccess (src/api/payments/service.ts:236:7)
+      at Object.<anonymous> (tests/integration/task-187-baseline.test.ts:91:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 2 total
+Snapshots:   0 total
+Time:        4.655 s
+Ran all test suites.
