@@ -1,0 +1,154 @@
+[
+  {
+    "status": "FAILED",
+    "winner": 0,
+    "successor": {
+      "attemptGeneration": "8",
+      "id": "evt_compete143_FAILED_0_1792485174441",
+      "type": "unhandled.test",
+      "paymentIntentId": null,
+      "orderId": null,
+      "status": "PROCESSING",
+      "errorMessage": null,
+      "processingStartedAt": "2026-10-20T08:32:54.479Z",
+      "processedAt": null,
+      "createdAt": "2026-10-20T08:32:54.474Z",
+      "updatedAt": "2026-10-20T08:32:54.492Z"
+    },
+    "afterLoser": {
+      "attemptGeneration": "9",
+      "id": "evt_compete143_FAILED_0_1792485174441",
+      "type": "unhandled.test",
+      "paymentIntentId": null,
+      "orderId": null,
+      "status": "PROCESSING",
+      "errorMessage": null,
+      "processingStartedAt": "2026-10-20T08:32:54.479Z",
+      "processedAt": null,
+      "createdAt": "2026-10-20T08:32:54.474Z",
+      "updatedAt": "2026-10-20T08:32:54.496Z"
+    },
+    "counts": [
+      1,
+      1
+    ],
+    "loser": {
+      "eventId": "evt_compete143_FAILED_0_1792485174441",
+      "generation": "8"
+    }
+  },
+  {
+    "status": "FAILED",
+    "winner": 1,
+    "successor": {
+      "attemptGeneration": "8",
+      "id": "evt_compete143_FAILED_1_1792485174535",
+      "type": "unhandled.test",
+      "paymentIntentId": null,
+      "orderId": null,
+      "status": "PROCESSING",
+      "errorMessage": null,
+      "processingStartedAt": "2026-10-20T08:32:54.537Z",
+      "processedAt": null,
+      "createdAt": "2026-10-20T08:32:54.536Z",
+      "updatedAt": "2026-10-20T08:32:54.545Z"
+    },
+    "afterLoser": {
+      "attemptGeneration": "9",
+      "id": "evt_compete143_FAILED_1_1792485174535",
+      "type": "unhandled.test",
+      "paymentIntentId": null,
+      "orderId": null,
+      "status": "PROCESSING",
+      "errorMessage": null,
+      "processingStartedAt": "2026-10-20T08:32:54.537Z",
+      "processedAt": null,
+      "createdAt": "2026-10-20T08:32:54.536Z",
+      "updatedAt": "2026-10-20T08:32:54.562Z"
+    },
+    "counts": [
+      1,
+      1
+    ],
+    "loser": {
+      "eventId": "evt_compete143_FAILED_1_1792485174535",
+      "generation": "8"
+    }
+  },
+  {
+    "status": "PROCESSING",
+    "winner": 0,
+    "successor": {
+      "attemptGeneration": "8",
+      "id": "evt_compete143_PROCESSING_0_1792485174573",
+      "type": "unhandled.test",
+      "paymentIntentId": null,
+      "orderId": null,
+      "status": "PROCESSING",
+      "errorMessage": null,
+      "processingStartedAt": "2026-10-20T08:32:54.576Z",
+      "processedAt": null,
+      "createdAt": "2026-10-20T08:32:54.574Z",
+      "updatedAt": "2026-10-20T08:32:54.581Z"
+    },
+    "afterLoser": {
+      "attemptGeneration": "9",
+      "id": "evt_compete143_PROCESSING_0_1792485174573",
+      "type": "unhandled.test",
+      "paymentIntentId": null,
+      "orderId": null,
+      "status": "PROCESSING",
+      "errorMessage": null,
+      "processingStartedAt": "2026-10-20T08:32:54.576Z",
+      "processedAt": null,
+      "createdAt": "2026-10-20T08:32:54.574Z",
+      "updatedAt": "2026-10-20T08:32:54.584Z"
+    },
+    "counts": [
+      1,
+      1
+    ],
+    "loser": {
+      "eventId": "evt_compete143_PROCESSING_0_1792485174573",
+      "generation": "8"
+    }
+  },
+  {
+    "status": "PROCESSING",
+    "winner": 1,
+    "successor": {
+      "attemptGeneration": "8",
+      "id": "evt_compete143_PROCESSING_1_1792485174587",
+      "type": "unhandled.test",
+      "paymentIntentId": null,
+      "orderId": null,
+      "status": "PROCESSING",
+      "errorMessage": null,
+      "processingStartedAt": "2026-10-20T08:32:54.588Z",
+      "processedAt": null,
+      "createdAt": "2026-10-20T08:32:54.588Z",
+      "updatedAt": "2026-10-20T08:32:54.592Z"
+    },
+    "afterLoser": {
+      "attemptGeneration": "9",
+      "id": "evt_compete143_PROCESSING_1_1792485174587",
+      "type": "unhandled.test",
+      "paymentIntentId": null,
+      "orderId": null,
+      "status": "PROCESSING",
+      "errorMessage": null,
+      "processingStartedAt": "2026-10-20T08:32:54.588Z",
+      "processedAt": null,
+      "createdAt": "2026-10-20T08:32:54.588Z",
+      "updatedAt": "2026-10-20T08:32:54.595Z"
+    },
+    "counts": [
+      1,
+      1
+    ],
+    "loser": {
+      "eventId": "evt_compete143_PROCESSING_1_1792485174587",
+      "generation": "8"
+    }
+  }
+]
