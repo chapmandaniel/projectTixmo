@@ -1,0 +1,261 @@
+{
+  "observedDate": "2026-10-20",
+  "projectId": "8c5a1df6-dc6b-46ca-a516-dc1c25750921",
+  "method": "Railway connector describe_service; no variable values requested",
+  "services": [
+    {
+      "environment": {
+        "id": "d21ebf73-4198-4483-9a16-1fc2fb3685e6",
+        "name": "staging-audit-20261005"
+      },
+      "service": {
+        "id": "13eafbe0-40da-41c1-8a24-d87ac36cb97d",
+        "name": "Tixmo Dashboard Candidate",
+        "state": "live"
+      },
+      "config": {
+        "source": {
+          "rootDirectory": "/tdash"
+        },
+        "networking": {
+          "serviceDomains": {
+            "tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app": {
+              "port": 80
+            }
+          },
+          "privateNetworkEndpoint": "tixmo-dashboard-candidate"
+        },
+        "build": {
+          "builder": "DOCKERFILE",
+          "buildEnvironment": "V3",
+          "dockerfilePath": "Dockerfile"
+        },
+        "deploy": {
+          "healthcheckPath": "/",
+          "healthcheckTimeout": 300,
+          "restartPolicyMaxRetries": 5,
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "us-west2": {
+              "numReplicas": 1
+            }
+          }
+        }
+      },
+      "domains": {
+        "serviceDomains": [
+          {
+            "id": "820db877-f01f-4e02-9f14-f97ce066c398",
+            "domain": "tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app",
+            "targetPort": 80
+          }
+        ],
+        "customDomains": []
+      },
+      "latestDeployment": {
+        "id": "068df481-3cba-47f9-a735-eb7f3fb7d78d",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-07T04:00:57.412Z",
+        "url": null
+      },
+      "staged": null
+    },
+    {
+      "environment": {
+        "id": "d21ebf73-4198-4483-9a16-1fc2fb3685e6",
+        "name": "staging-audit-20261005"
+      },
+      "service": {
+        "id": "5af658c7-72ee-4ec4-bf0f-81ead50aef58",
+        "name": "Tixmo API Candidate",
+        "state": "live"
+      },
+      "config": {
+        "source": {
+          "rootDirectory": "/tixmoapi2"
+        },
+        "networking": {
+          "serviceDomains": {
+            "tixmo-api-candidate-staging-audit-20261005.up.railway.app": {
+              "port": 3000
+            }
+          },
+          "privateNetworkEndpoint": "tixmo-api-candidate"
+        },
+        "build": {
+          "builder": "DOCKERFILE",
+          "buildEnvironment": "V3",
+          "dockerfilePath": "Dockerfile"
+        },
+        "deploy": {
+          "startCommand": "/bin/sh -c 'npm run migrate && exec node dist/index.js'",
+          "healthcheckPath": "/ready",
+          "healthcheckTimeout": 300,
+          "restartPolicyMaxRetries": 5,
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "us-west2": {
+              "numReplicas": 1
+            }
+          }
+        }
+      },
+      "domains": {
+        "serviceDomains": [
+          {
+            "id": "de50f63c-9d6e-4c47-a8fd-906237ab50f0",
+            "domain": "tixmo-api-candidate-staging-audit-20261005.up.railway.app",
+            "targetPort": 3000
+          }
+        ],
+        "customDomains": []
+      },
+      "latestDeployment": {
+        "id": "c8436e3e-07c3-4551-adfb-88a5344aa4fd",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-07T04:00:56.378Z",
+        "url": null
+      },
+      "staged": null
+    },
+    {
+      "environment": {
+        "id": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+        "name": "production"
+      },
+      "service": {
+        "id": "756bc4eb-b8f4-4156-9daf-fe0a55da829d",
+        "name": "frontend dash",
+        "state": "live"
+      },
+      "config": {
+        "source": {
+          "repo": "chapmandaniel/projectTixmo",
+          "branch": "main",
+          "rootDirectory": "/tdash",
+          "checkSuites": false
+        },
+        "networking": {
+          "serviceDomains": {
+            "dash-production-7487.up.railway.app": {
+              "port": 80
+            },
+            "frontend-dash-production.up.railway.app": {}
+          },
+          "customDomains": {
+            "demo.tixmo.co": {
+              "port": 80
+            }
+          },
+          "privateNetworkEndpoint": "dash"
+        },
+        "build": {
+          "builder": "DOCKERFILE",
+          "buildEnvironment": "V3",
+          "dockerfilePath": "/tdash/Dockerfile"
+        },
+        "deploy": {
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+              "numReplicas": 1
+            }
+          }
+        }
+      },
+      "domains": {
+        "serviceDomains": [
+          {
+            "id": "7b75f8b5-da79-4dc0-9257-61ccffb24971",
+            "domain": "dash-production-7487.up.railway.app",
+            "targetPort": 80
+          },
+          {
+            "id": "61a3f1ce-b1a5-4eba-badf-5565cd21edd8",
+            "domain": "frontend-dash-production.up.railway.app",
+            "targetPort": null
+          }
+        ],
+        "customDomains": [
+          {
+            "id": "e6a74507-b73b-43fe-9db8-fc487e7cc0ff",
+            "domain": "demo.tixmo.co",
+            "targetPort": 80
+          }
+        ]
+      },
+      "latestDeployment": {
+        "id": "0910a6b7-ce64-40e3-98c6-b8665d2c375a",
+        "status": "SUCCESS",
+        "createdAt": "2026-07-26T16:29:26.508Z",
+        "url": null
+      },
+      "staged": null
+    },
+    {
+      "environment": {
+        "id": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+        "name": "production"
+      },
+      "service": {
+        "id": "c4f336bd-dd66-46e7-8bc3-db03ad08dd8c",
+        "name": "backend api",
+        "state": "live"
+      },
+      "config": {
+        "source": {
+          "repo": "chapmandaniel/projectTixmo",
+          "branch": "main",
+          "rootDirectory": "/tixmoapi2",
+          "checkSuites": false
+        },
+        "networking": {
+          "serviceDomains": {
+            "api-production-fbaf.up.railway.app": {
+              "port": 8080
+            }
+          },
+          "privateNetworkEndpoint": "api"
+        },
+        "build": {
+          "builder": "RAILPACK",
+          "buildEnvironment": "V3"
+        },
+        "deploy": {
+          "startCommand": "npx prisma migrate deploy && npm run db:seed && npm start",
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+              "numReplicas": 1
+            }
+          }
+        }
+      },
+      "domains": {
+        "serviceDomains": [
+          {
+            "id": "6b71e890-3cf6-4e7b-b533-7bfda65f52ea",
+            "domain": "api-production-fbaf.up.railway.app",
+            "targetPort": 8080
+          }
+        ],
+        "customDomains": []
+      },
+      "latestDeployment": {
+        "id": "86b22bcd-2ca8-4754-8c23-8b4054af3c2d",
+        "status": "SUCCESS",
+        "createdAt": "2026-06-16T23:57:52.309Z",
+        "url": null
+      },
+      "staged": null
+    }
+  ]
+}
