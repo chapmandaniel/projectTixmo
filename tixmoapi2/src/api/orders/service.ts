@@ -355,7 +355,28 @@ export class OrderService {
    */
   async confirmOrder(id: string, actorId?: string): Promise<Order> {
     const scope = actorId ? await this.actorOrderScope(actorId, 'confirm') : {};
-    const order = await prisma.order.findFirst({
+    const order = await prisma.order.findFirst({ where: { id, ...scope }, include: { tickets: true } });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.status !== 'PENDING') {
+      throw ApiError.badRequest(`Cannot confirm order with status ${order.status}`);
+    }
+    return prisma.$transaction((tx) => this.confirmOrderInTransaction(tx, id, scope, order as unknown as OrderWithTickets));
+  }
+
+  /** Internal DB-only operation. Caller owns the transaction and authorization scope.
+   * Webhook callers must acquire their event fence before invoking this operation.
+   * Public confirmation may supply its already-authorized snapshot; the PENDING
+   * CAS remains authoritative. Fenced webhook callers must omit the snapshot
+   * and reread under their event lock.
+   * Never perform notifications or retry backoff inside this transaction.
+   */
+  async confirmOrderInTransaction(
+    tx: Prisma.TransactionClient,
+    id: string,
+    scope: Prisma.OrderWhereInput = {},
+    pendingSnapshot?: OrderWithTickets
+  ): Promise<Order> {
+    const order = pendingSnapshot ?? await tx.order.findFirst({
       where: { id, ...scope },
       include: {
         tickets: true,
@@ -374,70 +395,68 @@ export class OrderService {
     // Claim the transition before inventory effects. A stale PENDING snapshot
     // must not consume holds belonging to another order. Both changes roll back
     // together if inventory is inconsistent.
-    return await prisma.$transaction(async (tx) => {
-      const transition = await tx.order.updateMany({
-        where: { id, ...scope, status: 'PENDING' },
-        data: { status: 'PAID', paymentStatus: 'SUCCEEDED' },
-      });
-      if (transition.count !== 1) {
-        throw ApiError.badRequest('Cannot confirm order that is no longer pending');
-      }
-      // Get unique ticket types from this order
-      const ticketTypeCounts = new Map<string, number>();
-      for (const ticket of orderTyped.tickets) {
-        const count = ticketTypeCounts.get(ticket.ticketTypeId) || 0;
-        ticketTypeCounts.set(ticket.ticketTypeId, count + 1);
-      }
+    const transition = await tx.order.updateMany({
+      where: { id, ...scope, status: 'PENDING' },
+      data: { status: 'PAID', paymentStatus: 'SUCCEEDED' },
+    });
+    if (transition.count !== 1) {
+      throw ApiError.badRequest('Cannot confirm order that is no longer pending');
+    }
+    // Get unique ticket types from this order
+    const ticketTypeCounts = new Map<string, number>();
+    for (const ticket of orderTyped.tickets) {
+      const count = ticketTypeCounts.get(ticket.ticketTypeId) || 0;
+      ticketTypeCounts.set(ticket.ticketTypeId, count + 1);
+    }
 
-      // Update inventory
-      for (const [ticketTypeId, quantity] of ticketTypeCounts.entries()) {
-        const inventoryResult = await tx.ticketType.updateMany({
-          where: {
-            id: ticketTypeId,
-            quantityHeld: { gte: quantity },
-          },
-          data: {
-            quantityHeld: { decrement: quantity },
-            quantitySold: { increment: quantity },
-          },
-        });
-
-        if (inventoryResult.count !== 1) {
-          throw ApiError.internal('Order inventory hold is inconsistent');
-        }
-      }
-
-      // Preserve the confirmation response shape after the guarded transition.
-      const confirmedOrder = await tx.order.findUniqueOrThrow({
-        where: { id },
-        include: {
-          tickets: {
-            include: {
-              ticketType: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-          event: {
-            select: {
-              name: true,
-              startDatetime: true,
-            },
-          },
-          user: {
-            select: {
-              email: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
+    // Update inventory
+    for (const [ticketTypeId, quantity] of ticketTypeCounts.entries()) {
+      const inventoryResult = await tx.ticketType.updateMany({
+        where: {
+          id: ticketTypeId,
+          quantityHeld: { gte: quantity },
+        },
+        data: {
+          quantityHeld: { decrement: quantity },
+          quantitySold: { increment: quantity },
         },
       });
 
-      return confirmedOrder;
+      if (inventoryResult.count !== 1) {
+        throw ApiError.internal('Order inventory hold is inconsistent');
+      }
+    }
+
+    // Preserve the confirmation response shape after the guarded transition.
+    const confirmedOrder = await tx.order.findUniqueOrThrow({
+      where: { id },
+      include: {
+        tickets: {
+          include: {
+            ticketType: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        event: {
+          select: {
+            name: true,
+            startDatetime: true,
+          },
+        },
+        user: {
+          select: {
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
     });
+
+    return confirmedOrder;
   }
 
   /**
