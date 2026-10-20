@@ -68,22 +68,24 @@ test.each([false, true])('FAILED same-ID retry has one claimant (second delivery
   const claimSpy = jest.spyOn(prisma.paymentWebhookEvent, 'updateMany').mockImplementation((async (args: any) => {
     const result = await originalClaim(args);
     const index = invocation.getStore();
-    if (args.where.id === eventId && index !== undefined) {
+    if (args.where.id === eventId && index !== undefined && args.data.status === 'PROCESSING') {
       claims += result.count; trace.push(`claim-${index}-${result.count}`); claimDone[index].resolve();
     }
     return result;
   }) as any);
-  const orderSpy = jest.spyOn(prisma.order, 'findUnique').mockImplementation((async (args: any) => {
+  const service = new PaymentService();
+  const originalFence = (service as any).withWebhookFence.bind(service);
+  // Invocation gate runs BEFORE the transaction acquires event/order locks.
+  const orderSpy = jest.spyOn(service as any, 'withWebhookFence').mockImplementation((async (...args: any[]) => {
     const index = invocation.getStore();
-    const row = await originalOrder(args);
-    if (args.where.id === target.id && index !== undefined && !gated.has(index)) {
-      gated.add(index); expect(row?.status).toBe('PENDING');
-      trace.push(`order-read-${index}-PENDING`); orderRead[index].resolve();
+    if (index !== undefined && !gated.has(index)) {
+      gated.add(index);
+      expect((await originalOrder({ where: { id: target.id } }))?.status).toBe('PENDING');
+      trace.push(`pre-fence-${index}-PENDING`); orderRead[index].resolve();
       await bounded(orderRelease[index].promise);
     }
-    return row;
+    return originalFence(...args);
   }) as any);
-  const service = new PaymentService();
   const email = jest.spyOn(orderService, 'sendOrderConfirmationEmail').mockResolvedValue(undefined);
   const eventPayload = JSON.stringify({ id: eventId, object: 'event', type: 'payment_intent.succeeded', data: { object: { id: target.paymentIntentId, object: 'payment_intent', status: 'succeeded', metadata: { orderId: target.id, userId: user.id } } } });
   const signature = Stripe.webhooks.generateTestHeaderString({ payload: eventPayload, secret: config.stripeWebhookSecret });
@@ -107,8 +109,9 @@ test.each([false, true])('FAILED same-ID retry has one claimant (second delivery
     const a = await prisma.order.findUniqueOrThrow({ where: { id: target.id }, include: { tickets: { orderBy: { id: 'asc' } } } });
     const b = await prisma.order.findUniqueOrThrow({ where: { id: otherBefore.id }, include: { tickets: { orderBy: { id: 'asc' } } } });
     const inventory = await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } });
-    console.log('TASK132_OBSERVED', JSON.stringify({ secondFirst, trace, claims, outcomes: settled.map(r => r.status), row, counters: [inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold] }));
+    console.log('TASK132_OBSERVED', JSON.stringify({ secondFirst, trace, claims, outcomes: settled.map(r => r.status), row, counters: [inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold] }, (_, value) => typeof value === 'bigint' ? value.toString() : value));
     expect(claims).toBe(1);
+    expect(trace).toContain(`claim-${loser}-0`);
     expect(gated.size).toBe(1);
     expect(settled.map(r => r.status)).toEqual(['fulfilled', 'fulfilled']);
     expect(row).toMatchObject({ id: eventId, type: 'payment_intent.succeeded', orderId: target.id, paymentIntentId: target.paymentIntentId, status: 'PROCESSED', errorMessage: null, processedAt: expect.any(Date), processingStartedAt: expect.any(Date) });

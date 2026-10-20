@@ -37,23 +37,25 @@ test.each([[0, false], [0, true], [1, false], [1, true]] as const)('distinct suc
   let reads = 0;
   const invocation = new AsyncLocalStorage<number>();
   const gated = new Set<number>();
-  const spy = jest.spyOn(prisma.order, 'findUnique').mockImplementation((async (args: any) => {
+  const service = new PaymentService();
+  const originalFence = (service as any).withWebhookFence.bind(service);
+  // All scheduling waits precede transaction/event/order locks.
+  const spy = jest.spyOn(service as any, 'withWebhookFence').mockImplementation((async (...args: any[]) => {
     // Bind the gate to invocation order, never database completion order.
     const call = invocation.getStore();
-    const index = args.where.id === target.id && call !== undefined && !gated.has(call) ? call : -1;
+    const index = call !== undefined && !gated.has(call) ? call : -1;
     if (index >= 0) { gated.add(index); reads++; }
     // Force the selected real-query completion order without sleeps or fake results.
     if (index === (reverseReads ? 0 : 1)) await bounded(arrived[reverseReads ? 1 : 0].promise);
-    const snapshot = await original(args);
+    const snapshot = await original({ where: { id: target.id } });
     if (index >= 0) {
       expect(snapshot?.status).toBe('PENDING');
       trace.push(`read-${index}-PENDING`);
       arrived[index].resolve();
       await bounded(release[index].promise);
     }
-    return snapshot;
+    return originalFence(...args);
   }) as any);
-  const service = new PaymentService();
   const email = jest.spyOn(orderService, 'sendOrderConfirmationEmail').mockResolvedValue(undefined);
   const events = [0, 1].map(i => ({ id: `evt_${key}_${i}`, object: 'event', type: 'payment_intent.succeeded',
     data: { object: { id: target.paymentIntentId, object: 'payment_intent', status: 'succeeded', metadata: { orderId: target.id, userId: user.id } } } }));
@@ -94,23 +96,20 @@ test.each([[0, false], [0, true], [1, false], [1, true]] as const)('distinct suc
     expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
     expect(a.tickets).toEqual(target.tickets);
     expect(counters).toEqual([6, 2, 2]);
-    expect(settled[winnerIndex].status).toBe('fulfilled');
-    expect(settled[loserIndex].status).toBe('rejected');
-    expect(settled.filter(r => r.status === 'fulfilled')).toHaveLength(1);
-    expect(settled.filter(r => r.status === 'rejected')).toHaveLength(1);
-    const loser = settled.find(r => r.status === 'rejected');
-    if (loser?.status === 'rejected') expect(loser.reason).toMatchObject({ statusCode: 400, message: 'Cannot confirm order with status PAID' });
+    expect(settled.map(result => result.status)).toEqual(['fulfilled', 'fulfilled']);
     const initialRows = await prisma.paymentWebhookEvent.findMany({ where: { id: { in: events.map(e => e.id) } }, orderBy: { id: 'asc' } });
     expect(initialRows).toHaveLength(2);
     for (const [index, row] of initialRows.entries()) {
       expect(row).toMatchObject({ id: events[index].id, type: 'payment_intent.succeeded', orderId: target.id,
-        paymentIntentId: target.paymentIntentId, status: index === winnerIndex ? 'PROCESSED' : 'FAILED', processedAt: expect.any(Date), processingStartedAt: expect.any(Date) });
-      expect(row.errorMessage).toBe(index === winnerIndex ? null : 'Cannot confirm order with status PAID');
+        paymentIntentId: target.paymentIntentId, status: 'PROCESSED', processedAt: expect.any(Date), processingStartedAt: expect.any(Date) });
+      expect(row.errorMessage).toBeNull();
     }
     expect(email).toHaveBeenCalledTimes(1);
-    // Existing FAILED retry contract: reread PAID/same-intent and complete as a no-op.
+    // Per tasks139/146: serialized same-intent success is a paid no-op, not FAILED.
+    // Both same-ID duplicates must preserve complete event snapshots.
     await deliver(loserIndex);
     const recoveredRows = await prisma.paymentWebhookEvent.findMany({ where: { id: { in: events.map(e => e.id) } }, orderBy: { id: 'asc' } });
+    expect(recoveredRows).toEqual(initialRows);
     expect(recoveredRows.map(row => row.status)).toEqual(['PROCESSED', 'PROCESSED']);
     expect(recoveredRows.map(row => row.errorMessage)).toEqual([null, null]);
     await deliver(winnerIndex);
