@@ -1,0 +1,6 @@
+112131b08362bd7683a99a0a11f6a03dc5204e36e29826a3ed5735f860fba9c1  tixmoapi2/package-lock.json
+8dbdafad4f31fa2dee23763044666311d3550362f4e763457aa0698b4b17b98e  tixmoapi2/tests/integration/payment-paused-owner.baseline.test.ts
+14bf7f70d130997fcc2cb9f0efa477a65be7f173ff0fa03356f48a1f5bd9f67d  tixmoapi2/tests/integration/payment-expired-successor.test.ts
+ffeb7cc53cf3baea29cc01b692ef654b50ccebac837fcc93ee329d524e7022ef  tixmoapi2/src/api/payments/service.ts
+PASS source, fixtures/assertions, schema, scripts, config/manifests/locks unchanged versus52e504be4a902eac6c005d728fc75243f26350c1
+PASS: dependency API lock parity against existing177

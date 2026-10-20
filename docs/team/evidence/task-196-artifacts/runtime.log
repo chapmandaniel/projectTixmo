@@ -1,0 +1,13 @@
+waiting for server to start.... done
+server started
+runtime_mode=700 uid=1000
+runtime_fs=ext2/ext3
+tixmo_disposable_57|tixmo57|127.0.0.1|28984
+PONG
+TASK196_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task196.eT4pIt pg_pid=1338037 redis_pid=1338050 pgport=28984 redisport=59944
+TASK196_SCHEMA_EXIT=0
+TASK196_FOCUSED_EXIT=0
+FINAL_SOURCE_IDENTITY_OK
+waiting for server to shut down.... done
+server stopped
+TASK196_CLEANUP pg_pid=1338037 redis_pid=1338050 pgport=28984 redisport=59944

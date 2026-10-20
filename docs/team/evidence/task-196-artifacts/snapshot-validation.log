@@ -1,0 +1,8 @@
+PASS paused-owner fresh durable equality and final PROCESSED
+PASS paused-owner before-handler durable equality and final PROCESSED
+PASS paused-owner before-finish durable equality and final PROCESSED
+PASS successor before-handler full equality, gen2, actual status PROCESSING staleCounts=[]
+PASS successor success full equality, gen2, actual status PROCESSING staleCounts=[0]
+PASS successor failure full equality, gen2, actual status PROCESSING staleCounts=[0]
+PASS successor success-after-terminal full equality, gen2, actual status PROCESSED staleCounts=[0]
+PASS successor failure-after-terminal full equality, gen2, actual status PROCESSED staleCounts=[0]
