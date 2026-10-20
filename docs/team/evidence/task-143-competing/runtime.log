@@ -1,0 +1,8 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_57|tixmo57|127.0.0.1|37505
+PONG
+waiting for server to shut down.... done
+server stopped
+TASK143_CLEANUP pg_pid=1089074 redis_pid=1089087 pgport=37505 redisport=41808
+SOURCE_RESTORED status=0

@@ -1,0 +1,35 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/projects/projectTixmo/worktrees/task-143/.jest-cache143-competing --runInBand --runTestsByPath tests/integration/payment-competing-claims.test.ts
+
+  console.log
+    TASK143_COMPETING {"status":"FAILED","winner":0,"before":{"attemptGeneration":"7","id":"evt_compete143_FAILED_0_1792479324517","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"FAILED","errorMessage":"prior failure","processingStartedAt":"2000-01-01T00:00:00.000Z","processedAt":null,"createdAt":"2026-10-20T06:55:24.546Z","updatedAt":"2026-10-20T06:55:24.546Z"},"successor":{"attemptGeneration":"8","id":"evt_compete143_FAILED_0_1792479324517","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-20T06:55:24.558Z","processedAt":null,"createdAt":"2026-10-20T06:55:24.546Z","updatedAt":"2026-10-20T06:55:24.566Z"},"updates":[{"args":{"where":{"id":"evt_compete143_FAILED_0_1792479324517","attemptGeneration":"7","OR":[{"status":"FAILED"},{"status":"PROCESSING","processingStartedAt":{"lte":"2026-10-20T06:50:24.558Z"}}]},"data":{"status":"PROCESSING","attemptGeneration":{"increment":1},"processingStartedAt":"2026-10-20T06:55:24.558Z","processedAt":null,"errorMessage":null}},"count":1},{"args":{"where":{"id":"evt_compete143_FAILED_0_1792479324517","attemptGeneration":"7","OR":[{"status":"FAILED"},{"status":"PROCESSING","processingStartedAt":{"lte":"2026-10-20T06:50:24.558Z"}}]},"data":{"status":"PROCESSING","attemptGeneration":{"increment":1},"processingStartedAt":"2026-10-20T06:55:24.558Z","processedAt":null,"errorMessage":null}},"count":0}]}
+
+      at tests/integration/payment-competing-claims.test.ts:45:11
+
+  console.log
+    TASK143_COMPETING {"status":"FAILED","winner":1,"before":{"attemptGeneration":"7","id":"evt_compete143_FAILED_1_1792479324592","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"FAILED","errorMessage":"prior failure","processingStartedAt":"2000-01-01T00:00:00.000Z","processedAt":null,"createdAt":"2026-10-20T06:55:24.593Z","updatedAt":"2026-10-20T06:55:24.593Z"},"successor":{"attemptGeneration":"8","id":"evt_compete143_FAILED_1_1792479324592","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-20T06:55:24.595Z","processedAt":null,"createdAt":"2026-10-20T06:55:24.593Z","updatedAt":"2026-10-20T06:55:24.599Z"},"updates":[{"args":{"where":{"id":"evt_compete143_FAILED_1_1792479324592","attemptGeneration":"7","OR":[{"status":"FAILED"},{"status":"PROCESSING","processingStartedAt":{"lte":"2026-10-20T06:50:24.595Z"}}]},"data":{"status":"PROCESSING","attemptGeneration":{"increment":1},"processingStartedAt":"2026-10-20T06:55:24.595Z","processedAt":null,"errorMessage":null}},"count":0},{"args":{"where":{"id":"evt_compete143_FAILED_1_1792479324592","attemptGeneration":"7","OR":[{"status":"FAILED"},{"status":"PROCESSING","processingStartedAt":{"lte":"2026-10-20T06:50:24.595Z"}}]},"data":{"status":"PROCESSING","attemptGeneration":{"increment":1},"processingStartedAt":"2026-10-20T06:55:24.595Z","processedAt":null,"errorMessage":null}},"count":1}]}
+
+      at tests/integration/payment-competing-claims.test.ts:45:11
+
+  console.log
+    TASK143_COMPETING {"status":"PROCESSING","winner":0,"before":{"attemptGeneration":"7","id":"evt_compete143_PROCESSING_0_1792479324608","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"PROCESSING","errorMessage":"prior failure","processingStartedAt":"2000-01-01T00:00:00.000Z","processedAt":null,"createdAt":"2026-10-20T06:55:24.609Z","updatedAt":"2026-10-20T06:55:24.609Z"},"successor":{"attemptGeneration":"8","id":"evt_compete143_PROCESSING_0_1792479324608","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-20T06:55:24.610Z","processedAt":null,"createdAt":"2026-10-20T06:55:24.609Z","updatedAt":"2026-10-20T06:55:24.613Z"},"updates":[{"args":{"where":{"id":"evt_compete143_PROCESSING_0_1792479324608","attemptGeneration":"7","OR":[{"status":"FAILED"},{"status":"PROCESSING","processingStartedAt":{"lte":"2026-10-20T06:50:24.610Z"}}]},"data":{"status":"PROCESSING","attemptGeneration":{"increment":1},"processingStartedAt":"2026-10-20T06:55:24.610Z","processedAt":null,"errorMessage":null}},"count":1},{"args":{"where":{"id":"evt_compete143_PROCESSING_0_1792479324608","attemptGeneration":"7","OR":[{"status":"FAILED"},{"status":"PROCESSING","processingStartedAt":{"lte":"2026-10-20T06:50:24.610Z"}}]},"data":{"status":"PROCESSING","attemptGeneration":{"increment":1},"processingStartedAt":"2026-10-20T06:55:24.610Z","processedAt":null,"errorMessage":null}},"count":0}]}
+
+      at tests/integration/payment-competing-claims.test.ts:45:11
+
+  console.log
+    TASK143_COMPETING {"status":"PROCESSING","winner":1,"before":{"attemptGeneration":"7","id":"evt_compete143_PROCESSING_1_1792479324620","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"PROCESSING","errorMessage":"prior failure","processingStartedAt":"2000-01-01T00:00:00.000Z","processedAt":null,"createdAt":"2026-10-20T06:55:24.620Z","updatedAt":"2026-10-20T06:55:24.620Z"},"successor":{"attemptGeneration":"8","id":"evt_compete143_PROCESSING_1_1792479324620","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-20T06:55:24.621Z","processedAt":null,"createdAt":"2026-10-20T06:55:24.620Z","updatedAt":"2026-10-20T06:55:24.625Z"},"updates":[{"args":{"where":{"id":"evt_compete143_PROCESSING_1_1792479324620","attemptGeneration":"7","OR":[{"status":"FAILED"},{"status":"PROCESSING","processingStartedAt":{"lte":"2026-10-20T06:50:24.621Z"}}]},"data":{"status":"PROCESSING","attemptGeneration":{"increment":1},"processingStartedAt":"2026-10-20T06:55:24.621Z","processedAt":null,"errorMessage":null}},"count":0},{"args":{"where":{"id":"evt_compete143_PROCESSING_1_1792479324620","attemptGeneration":"7","OR":[{"status":"FAILED"},{"status":"PROCESSING","processingStartedAt":{"lte":"2026-10-20T06:50:24.621Z"}}]},"data":{"status":"PROCESSING","attemptGeneration":{"increment":1},"processingStartedAt":"2026-10-20T06:55:24.621Z","processedAt":null,"errorMessage":null}},"count":1}]}
+
+      at tests/integration/payment-competing-claims.test.ts:45:11
+
+PASS tests/integration/payment-competing-claims.test.ts
+  ✓ equal sampled DB time FAILED contenders winner 0 (76 ms)
+  ✓ equal sampled DB time FAILED contenders winner 1 (16 ms)
+  ✓ equal sampled DB time PROCESSING contenders winner 0 (11 ms)
+  ✓ equal sampled DB time PROCESSING contenders winner 1 (10 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        4.878 s
+Ran all test suites within paths "tests/integration/payment-competing-claims.test.ts".
