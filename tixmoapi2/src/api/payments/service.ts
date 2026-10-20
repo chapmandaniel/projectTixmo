@@ -318,7 +318,11 @@ export class PaymentService {
               return { receipt: false, refundId: record.id };
             };
             // Bind an early response only to the previously committed provider operation.
-            if (!order.paymentIntentId && order.paymentAttempt?.id === intent.metadata.attemptId) {
+            if (
+              !order.paymentIntentId &&
+              order.paymentAttempt &&
+              order.paymentAttempt.id === intent.metadata.attemptId
+            ) {
               await tx.order.update({
                 where: { id: orderId },
                 data: { paymentIntentId: intent.id },

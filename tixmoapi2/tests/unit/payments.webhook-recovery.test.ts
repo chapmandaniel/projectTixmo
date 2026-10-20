@@ -133,7 +133,10 @@ describe('public webhook fulfillment recovery (mocked boundaries)', () => {
       return [{ id: order.id }];
     });
     db.$transaction.mockImplementation(async (work: any) => {
-      const before = { ...order, paymentAttempt: { ...order.paymentAttempt } },
+      const before = {
+          ...order,
+          paymentAttempt: order.paymentAttempt ? { ...order.paymentAttempt } : null,
+        },
         beforeRefund = refund;
       const beforeHeld = held,
         beforeSold = sold;
@@ -149,7 +152,7 @@ describe('public webhook fulfillment recovery (mocked boundaries)', () => {
     });
     db.order.findUnique.mockImplementation(async () => ({
       ...order,
-      paymentAttempt: { ...order.paymentAttempt },
+      paymentAttempt: order.paymentAttempt ? { ...order.paymentAttempt } : null,
     }));
     db.order.update.mockImplementation(async ({ data }: any) => {
       Object.assign(order, data);
@@ -313,6 +316,30 @@ describe('public webhook fulfillment recovery (mocked boundaries)', () => {
     expect(orderService.sendOrderConfirmationEmail).not.toHaveBeenCalled();
     expect(stored.status).toBe('PROCESSED');
   });
+
+  it.each([undefined, 'attempt'])(
+    'an unbound legacy order without a committed attempt refunds safely (metadata=%s)',
+    async (attemptId) => {
+      order.paymentIntentId = null;
+      order.paymentAttempt = null;
+      if (attemptId === undefined) delete event.data.object.metadata.attemptId;
+      else event.data.object.metadata.attemptId = attemptId;
+      const reconcile = jest.spyOn(service as any, 'reconcileRefund').mockResolvedValue(undefined);
+      await deliver();
+      expect(order.paymentIntentId).toBeNull();
+      expect(order.paymentAttempt).toBeNull();
+      expect(db.paymentAttempt.update).not.toHaveBeenCalled();
+      expect(order.status).toBe('PENDING');
+      expect([held, sold]).toEqual([2, 0]);
+      expect(refund).toMatchObject({
+        reason: 'UNEXPECTED_PAYMENT',
+        paymentIntentId: 'pi_recovery',
+      });
+      expect(reconcile).toHaveBeenCalledWith('refund');
+      expect(orderService.confirmOrderInTransaction).not.toHaveBeenCalled();
+      expect(stored.status).toBe('PROCESSED');
+    }
+  );
 
   it('only a matching committed attempt may bind an early webhook response', async () => {
     order.paymentIntentId = null;
