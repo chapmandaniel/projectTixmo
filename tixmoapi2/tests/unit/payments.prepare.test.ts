@@ -2,13 +2,14 @@
 jest.mock('stripe', () => jest.fn(() => ({ paymentIntents: { create: jest.fn(), retrieve: jest.fn() } })));
 jest.mock('../../src/config/environment', () => ({ config: { stripeSecretKey: 'mock-only', paymentCurrency: 'CAD' } }));
 jest.mock('../../src/config/logger', () => ({ logger: { warn: jest.fn(), info: jest.fn(), error: jest.fn() } }));
-jest.mock('../../src/config/prisma', () => ({ __esModule: true, default: { order: { updateMany: jest.fn(), findUnique: jest.fn() } } }));
-jest.mock('../../src/api/orders/service', () => ({ orderService: { getOrderById: jest.fn(), confirmOrder: jest.fn() } }));
+jest.mock('../../src/config/prisma', () => ({ __esModule: true, default: { $transaction: jest.fn(), order: { updateMany: jest.fn(), findUnique: jest.fn() } } }));
+jest.mock('../../src/api/orders/service', () => ({ orderService: { getOrderById: jest.fn(), confirmOrder: jest.fn(), confirmOrderInTransaction: jest.fn(), sendOrderConfirmationEmail: jest.fn() } }));
 jest.mock('../../src/utils/notificationService', () => ({ notificationService: { sendAdminAlert: jest.fn() } }));
 import Stripe from 'stripe';
 import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
 import prisma from '../../src/config/prisma';
+import { notificationService } from '../../src/utils/notificationService';
 
 let service: PaymentService, stripe: any, order: any, intents: Map<string, any>;
 const db = prisma.order as any;
@@ -105,9 +106,37 @@ test('changed amount after lost response conflicts rather than minting a second 
   await expect(prepare()).rejects.toThrow('idempotency parameter conflict'); expect(intents.size).toBe(1);
 });
 test('successful webhook mismatch protection remains active', async () => {
-  db.findUnique.mockResolvedValue({ ...order, paymentIntentId: 'pi-existing' });
-  await expect((service as any).handlePaymentSuccess({ id: 'pi-other', metadata: { orderId: order.id } })).rejects.toMatchObject({ statusCode: 400 });
+  const claim = { eventId: 'evt-mismatch', generation: 1n };
+  const storedOrder = { ...order, paymentIntentId: 'pi-existing' };
+  const before = { ...storedOrder };
+  const tx = {
+    $queryRaw: jest.fn()
+      .mockResolvedValueOnce([{ status: 'PROCESSING', attempt_generation: claim.generation }])
+      .mockResolvedValueOnce([{ live: true }])
+      .mockResolvedValueOnce([{ id: order.id }]),
+    order: { findUnique: jest.fn().mockResolvedValue(storedOrder), updateMany: jest.fn(), update: jest.fn() },
+  };
+  (prisma.$transaction as jest.Mock).mockImplementation(async work => work(tx));
+  await expect((service as any).handlePaymentSuccess(
+    { id: 'pi-other', metadata: { orderId: order.id } }, claim
+  )).rejects.toMatchObject({ statusCode: 400 });
+  expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+  expect(tx.$queryRaw).toHaveBeenCalledTimes(3);
+  expect(tx.$queryRaw.mock.calls[0].slice(1)).toEqual([claim.eventId]);
+  expect(tx.$queryRaw.mock.calls[1].slice(1)).toEqual([claim.eventId]);
+  expect(tx.$queryRaw.mock.calls[2].slice(1)).toEqual([order.id]);
+  expect(tx.order.findUnique).toHaveBeenCalledWith({ where: { id: order.id } });
+  expect(db.findUnique).not.toHaveBeenCalled();
   expect(orderService.confirmOrder).not.toHaveBeenCalled();
+  expect(orderService.confirmOrderInTransaction).not.toHaveBeenCalled();
+  expect(tx.order.updateMany).not.toHaveBeenCalled();
+  expect(tx.order.update).not.toHaveBeenCalled();
+  expect(db.updateMany).not.toHaveBeenCalled();
+  expect(storedOrder).toEqual(before);
+  expect(orderService.sendOrderConfirmationEmail).not.toHaveBeenCalled();
+  expect(notificationService.sendAdminAlert).toHaveBeenCalledWith(
+    'Payment Intent Mismatch', expect.stringContaining('pi-other')
+  );
 });
 
 test('succeeded payment is rejected before contacting Stripe even if order is pending', async () => {
