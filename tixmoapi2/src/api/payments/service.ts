@@ -168,15 +168,15 @@ export class PaymentService {
 
       if (existingEvent) {
         if (existingEvent.status === 'FAILED') {
-          await prisma.paymentWebhookEvent.update({
-            where: { id: event.id },
+          const admitted = await prisma.paymentWebhookEvent.updateMany({
+            where: { id: event.id, status: 'FAILED' },
             data: {
               status: 'PROCESSING',
               errorMessage: null,
               processingStartedAt: new Date(),
             },
           });
-          return true;
+          return admitted.count === 1;
         }
 
         logger.info(`Skipping already processed Stripe webhook event ${event.id}`);

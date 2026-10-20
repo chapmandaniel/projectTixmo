@@ -19,7 +19,7 @@ async function bounded(promise: Promise<unknown>) {
 }
 
 afterAll(async () => { await prisma.$disconnect(); });
-test.each([false, true])('FAILED same-ID retry has one claimant (success completion last=%s)', async (successLast) => {
+test.each([false, true])('FAILED same-ID retry has one claimant (second delivery claims first=%s)', async (secondFirst) => {
   const key = `race132-${Date.now()}`;
   const org = await prisma.organization.create({ data: { name: key, slug: key, type: 'PROMOTER' } });
   const user = await prisma.user.create({ data: { email: `${key}@example.test`, passwordHash: 'test-only', firstName: 'Race', lastName: 'Fixture' } });
@@ -38,11 +38,11 @@ test.each([false, true])('FAILED same-ID retry has one claimant (success complet
   const claimRelease = [deferred(), deferred()];
   const orderRead = [deferred(), deferred()];
   const orderRelease = [deferred(), deferred()];
-  const successFinish = deferred();
-  const successRelease = deferred();
+  const claimDone = [deferred(), deferred()];
   const trace: string[] = [];
   const originalRead = prisma.paymentWebhookEvent.findUnique.bind(prisma.paymentWebhookEvent);
   const originalWrite = prisma.paymentWebhookEvent.update.bind(prisma.paymentWebhookEvent);
+  const originalClaim = prisma.paymentWebhookEvent.updateMany.bind(prisma.paymentWebhookEvent);
   const originalOrder = prisma.order.findUnique.bind(prisma.order);
   let claims = 0;
   const gated = new Set<number>();
@@ -58,15 +58,20 @@ test.each([false, true])('FAILED same-ID retry has one claimant (success complet
   }) as any);
   const writeSpy = jest.spyOn(prisma.paymentWebhookEvent, 'update').mockImplementation((async (args: any) => {
     const index = invocation.getStore();
-    if (args.where.id === eventId && args.data.status === 'PROCESSED' && successLast) {
-      successFinish.resolve(); await bounded(successRelease.promise);
-    }
     const row = await originalWrite(args);
     if (args.where.id === eventId) {
       trace.push(`write-${index}-${args.data.status}`);
-      if (args.data.status === 'PROCESSING') claims++;
+      if (args.data.status === 'PROCESSING') { claims++; if (index !== undefined) claimDone[index].resolve(); }
     }
     return row;
+  }) as any);
+  const claimSpy = jest.spyOn(prisma.paymentWebhookEvent, 'updateMany').mockImplementation((async (args: any) => {
+    const result = await originalClaim(args);
+    const index = invocation.getStore();
+    if (args.where.id === eventId && index !== undefined) {
+      claims += result.count; trace.push(`claim-${index}-${result.count}`); claimDone[index].resolve();
+    }
+    return result;
   }) as any);
   const orderSpy = jest.spyOn(prisma.order, 'findUnique').mockImplementation((async (args: any) => {
     const index = invocation.getStore();
@@ -87,24 +92,26 @@ test.each([false, true])('FAILED same-ID retry has one claimant (success complet
   const outcomes = Promise.allSettled(calls);
   try {
     await bounded(Promise.all(claimRead.map(g => g.promise)));
-    // Both return genuine FAILED snapshots, and both real claim writes complete.
-    claimRelease[0].resolve(); await bounded(orderRead[0].promise);
-    claimRelease[1].resolve(); await bounded(orderRead[1].promise);
-    orderRelease[0].resolve();
-    if (successLast) await bounded(successFinish.promise); else await calls[0];
-    orderRelease[1].resolve();
-    await calls[1].catch(() => undefined);
-    successRelease.resolve();
+    // Both retain real FAILED pre-reads. Reverse the atomic admission winner.
+    const winner = secondFirst ? 1 : 0;
+    const loser = 1 - winner;
+    claimRelease[winner].resolve(); await bounded(orderRead[winner].promise);
+    claimRelease[loser].resolve(); await bounded(claimDone[loser].promise);
+    orderRelease[winner].resolve(); await calls[winner];
+    // Original unconditional admission enters the second handler; release it so
+    // the single-owner oracle fails rather than timing out on an obsolete gate.
+    orderRelease[loser].resolve();
     const settled = await outcomes;
-    readSpy.mockRestore(); writeSpy.mockRestore(); orderSpy.mockRestore();
+    readSpy.mockRestore(); writeSpy.mockRestore(); claimSpy.mockRestore(); orderSpy.mockRestore();
     const row = await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id: eventId } });
     const a = await prisma.order.findUniqueOrThrow({ where: { id: target.id }, include: { tickets: { orderBy: { id: 'asc' } } } });
     const b = await prisma.order.findUniqueOrThrow({ where: { id: otherBefore.id }, include: { tickets: { orderBy: { id: 'asc' } } } });
     const inventory = await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } });
-    console.log('TASK132_OBSERVED', JSON.stringify({ successLast, trace, claims, outcomes: settled.map(r => r.status), row, counters: [inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold] }));
-    expect(settled.map(r => r.status)).toEqual(['fulfilled', 'rejected']);
-    if (settled[1].status === 'rejected') expect(settled[1].reason).toMatchObject({ statusCode: 400, message: 'Cannot confirm order with status PAID' });
-    expect(row).toMatchObject({ id: eventId, type: 'payment_intent.succeeded', orderId: target.id, paymentIntentId: target.paymentIntentId, status: successLast ? 'PROCESSED' : 'FAILED', errorMessage: successLast ? null : 'Cannot confirm order with status PAID', processedAt: expect.any(Date), processingStartedAt: expect.any(Date) });
+    console.log('TASK132_OBSERVED', JSON.stringify({ secondFirst, trace, claims, outcomes: settled.map(r => r.status), row, counters: [inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold] }));
+    expect(claims).toBe(1);
+    expect(gated.size).toBe(1);
+    expect(settled.map(r => r.status)).toEqual(['fulfilled', 'fulfilled']);
+    expect(row).toMatchObject({ id: eventId, type: 'payment_intent.succeeded', orderId: target.id, paymentIntentId: target.paymentIntentId, status: 'PROCESSED', errorMessage: null, processedAt: expect.any(Date), processingStartedAt: expect.any(Date) });
     expect(await prisma.paymentWebhookEvent.count({ where: { id: eventId } })).toBe(1);
     expect(a.status).toBe('PAID'); expect(a.paymentStatus).toBe('SUCCEEDED');
     expect(a.paymentIntentId).toBe(target.paymentIntentId); expect(a.tickets).toEqual(target.tickets);
@@ -112,6 +119,8 @@ test.each([false, true])('FAILED same-ID retry has one claimant (success complet
     expect([inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold]).toEqual([6, 2, 2]);
     expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
     expect(email).toHaveBeenCalledTimes(1);
+    // Explicit sequential FAILED recovery, then processed duplicate no-op.
+    await prisma.paymentWebhookEvent.update({ where: { id: eventId }, data: { status: 'FAILED', errorMessage: 'retry fixture' } });
     // Existing retry contract is a same-intent PAID no-op, not invented policy.
     const payload = Buffer.from(eventPayload);
     await service.handleWebhook(signature, payload);
@@ -123,11 +132,10 @@ test.each([false, true])('FAILED same-ID retry has one claimant (success complet
     expect(await prisma.order.findUniqueOrThrow({ where: { id: otherBefore.id }, include: { tickets: { orderBy: { id: 'asc' } } } })).toEqual(otherBefore);
     expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(inventory);
     expect(email).toHaveBeenCalledTimes(1);
-    // Deliberately red regression: both stale FAILED readers must not own claims.
-    expect(claims).toBe(1);
+
   } finally {
-    [...claimRelease, ...orderRelease, successRelease].forEach(g => g.resolve());
+    [...claimRelease, ...orderRelease].forEach(g => g.resolve());
     await outcomes;
-    readSpy.mockRestore(); writeSpy.mockRestore(); orderSpy.mockRestore(); email.mockRestore();
+    readSpy.mockRestore(); writeSpy.mockRestore(); claimSpy.mockRestore(); orderSpy.mockRestore(); email.mockRestore();
   }
 }, 20000);

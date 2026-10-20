@@ -15,7 +15,7 @@ jest.mock('../../src/config/logger', () => ({
 jest.mock('../../src/config/prisma', () => ({
   __esModule: true,
   default: {
-    paymentWebhookEvent: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+    paymentWebhookEvent: { findUnique: jest.fn(), create: jest.fn(), updateMany: jest.fn(), update: jest.fn() },
     order: { findUnique: jest.fn(), update: jest.fn() },
     user: { findUnique: jest.fn() },
   },
@@ -47,6 +47,10 @@ describe('public webhook fulfillment recovery (fully mocked)', () => {
     (prisma.paymentWebhookEvent.findUnique as jest.Mock).mockImplementation(async () => stored);
     (prisma.paymentWebhookEvent.create as jest.Mock).mockImplementation(async ({ data }) => { stored = { ...data }; return stored; });
     (prisma.paymentWebhookEvent.update as jest.Mock).mockImplementation(async ({ data }) => { Object.assign(stored, data); return stored; });
+    (prisma.paymentWebhookEvent.updateMany as jest.Mock).mockImplementation(async ({ where, data }) => {
+      if (stored?.status !== where.status) return { count: 0 };
+      Object.assign(stored, data); return { count: 1 };
+    });
     (prisma.order.findUnique as jest.Mock).mockImplementation(async () => ({ ...order }));
     (orderService.confirmOrder as jest.Mock).mockImplementation(async () => {
       order.status = 'PAID'; order.paymentStatus = 'SUCCEEDED'; return order;
