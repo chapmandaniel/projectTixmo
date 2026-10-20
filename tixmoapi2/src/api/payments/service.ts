@@ -7,6 +7,12 @@ import { orderService } from '../orders/service';
 import { notificationService } from '../../utils/notificationService';
 import prisma from '../../config/prisma';
 
+type WebhookClaim = { eventId: string; generation: bigint };
+class WebhookOwnershipLost extends Error {}
+class PaymentIntentMismatch extends Error {}
+// Deliberately disabled until task143 deterministic recovery acceptance is complete.
+const EXPIRED_WEBHOOK_RECOVERY_ENABLED = false;
+
 const getPaymentIntentContext = (event: Stripe.Event) => {
   const value = event.data.object as Partial<Stripe.PaymentIntent>;
   return {
@@ -125,8 +131,8 @@ export class PaymentService {
       throw new ApiError(400, `Webhook Error: ${message}`);
     }
 
-    const shouldProcess = await this.beginWebhookEvent(event);
-    if (!shouldProcess) {
+    const claim = await this.beginWebhookEvent(event);
+    if (!claim) {
       return;
     }
 
@@ -134,163 +140,131 @@ export class PaymentService {
       switch (event.type) {
         case 'payment_intent.succeeded': {
           const paymentIntent = event.data.object;
-          await this.handlePaymentSuccess(paymentIntent);
+          await this.handlePaymentSuccess(paymentIntent, claim);
           break;
         }
         case 'payment_intent.payment_failed': {
           const paymentFailed = event.data.object;
-          await this.handlePaymentFailure(paymentFailed);
+          await this.handlePaymentFailure(paymentFailed, claim);
           break;
         }
         default:
           logger.info(`Unhandled event type ${event.type}`);
       }
 
-      await this.finishWebhookEvent(event, 'PROCESSED');
+      await this.finishWebhookEvent(claim, 'PROCESSED');
     } catch (error) {
-      await this.finishWebhookEvent(event, 'FAILED', error);
+      if (error instanceof WebhookOwnershipLost) return;
+      await this.finishWebhookEvent(claim, 'FAILED', error);
       throw error;
     }
   }
 
-  private async beginWebhookEvent(event: Stripe.Event): Promise<boolean> {
-    if (!event.id) {
-      return true;
-    }
-
+  private async beginWebhookEvent(event: Stripe.Event): Promise<WebhookClaim | null> {
+    if (!event.id) throw ApiError.badRequest('Webhook event ID is required');
     const context = getPaymentIntentContext(event);
-
+    const [{ now }] = await prisma.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp() AS now`;
+    const cutoff = new Date(now.getTime() - 300_000);
     try {
-      const existingEvent = await prisma.paymentWebhookEvent.findUnique({
-        where: { id: event.id },
-        select: { status: true },
-      });
-
-      if (existingEvent) {
-        if (existingEvent.status === 'FAILED') {
-          const admitted = await prisma.paymentWebhookEvent.updateMany({
-            where: { id: event.id, status: 'FAILED' },
-            data: {
-              status: 'PROCESSING',
-              errorMessage: null,
-              processingStartedAt: new Date(),
-            },
-          });
-          return admitted.count === 1;
-        }
-
-        logger.info(`Skipping already processed Stripe webhook event ${event.id}`);
-        return false;
+      const existing = await prisma.paymentWebhookEvent.findUnique({ where: { id: event.id } });
+      if (existing) {
+        const expired = EXPIRED_WEBHOOK_RECOVERY_ENABLED && existing.status === 'PROCESSING' &&
+          existing.processingStartedAt <= cutoff;
+        if (existing.status !== 'FAILED' && !expired) return null;
+        if (existing.attemptGeneration === 9223372036854775807n) return null;
+        const admitted = await prisma.paymentWebhookEvent.updateMany({
+          where: {
+            id: event.id, attemptGeneration: existing.attemptGeneration,
+            OR: [{ status: 'FAILED' }, ...(EXPIRED_WEBHOOK_RECOVERY_ENABLED
+              ? [{ status: 'PROCESSING', processingStartedAt: { lte: cutoff } }] : [])],
+          },
+          data: { status: 'PROCESSING', attemptGeneration: { increment: 1 },
+            processingStartedAt: now, processedAt: null, errorMessage: null },
+        });
+        return admitted.count === 1 ? { eventId: event.id, generation: existing.attemptGeneration + 1n } : null;
       }
-
-      await prisma.paymentWebhookEvent.create({
-        data: {
-          id: event.id,
-          type: event.type,
-          paymentIntentId: context.paymentIntentId || null,
-          orderId: context.orderId || null,
-          status: 'PROCESSING',
-        },
-      });
-      return true;
+      await prisma.paymentWebhookEvent.create({ data: {
+        id: event.id, type: event.type, paymentIntentId: context.paymentIntentId || null,
+        orderId: context.orderId || null, status: 'PROCESSING', attemptGeneration: 1n,
+        processingStartedAt: now,
+      } });
+      return { eventId: event.id, generation: 1n };
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        logger.info(`Skipping already processed Stripe webhook event ${event.id}`);
-        return false;
-      }
-
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return null;
       throw error;
     }
   }
 
-  private async finishWebhookEvent(
-    event: Stripe.Event,
-    status: 'PROCESSED' | 'FAILED',
-    error?: unknown
-  ): Promise<void> {
-    if (!event.id) {
-      return;
-    }
+  private async finishWebhookEvent(claim: WebhookClaim, status: 'PROCESSED' | 'FAILED', error?: unknown): Promise<void> {
+    await prisma.paymentWebhookEvent.updateMany({
+      where: { id: claim.eventId, status: 'PROCESSING', attemptGeneration: claim.generation },
+      data: { status, processedAt: new Date(),
+        errorMessage: error ? String(error instanceof Error ? error.message : error) : null },
+    });
+  }
 
-    await prisma.paymentWebhookEvent.update({
-      where: { id: event.id },
-      data: {
-        status,
-        processedAt: new Date(),
-        errorMessage: error ? String(error instanceof Error ? error.message : error) : null,
-      },
+  /** Every webhook DB effect runs beneath the same event lock, then order lock.
+   * No notification, retry backoff or test gate may wait in this transaction. */
+  private async withWebhookFence<T>(claim: WebhookClaim, orderId: string, work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    return prisma.$transaction(async tx => {
+      const rows = await tx.$queryRaw<Array<{ status: string; attempt_generation: bigint }>>`
+        SELECT status, attempt_generation
+        FROM payment_webhook_events WHERE id = ${claim.eventId} FOR UPDATE`;
+      // Sample live eligibility only AFTER acquiring the row lock (not before a lock wait).
+      const lease = await tx.$queryRaw<Array<{ live: boolean }>>`
+        SELECT processing_started_at > clock_timestamp() - interval '300 seconds' AS live
+        FROM payment_webhook_events WHERE id = ${claim.eventId}`;
+      const row = rows[0];
+      if (!row || row.status !== 'PROCESSING' || row.attempt_generation !== claim.generation || !lease[0]?.live) {
+        throw new WebhookOwnershipLost('Webhook ownership lost');
+      }
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId} FOR UPDATE`;
+      return work(tx);
     });
   }
 
   /**
    * Handle successful payment
    */
-  private async handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  private async handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent, claim: WebhookClaim): Promise<void> {
     const orderId = paymentIntent.metadata.orderId;
-
-    if (!orderId) {
-      logger.error('Missing orderId in payment intent metadata');
-      return;
-    }
-
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      select: {
-        id: true,
-        status: true,
-        paymentStatus: true,
-        paymentIntentId: true,
-      },
-    });
-
-    if (!order) {
-      logger.error(`Missing order ${orderId} for payment intent ${paymentIntent.id}`);
-      return;
-    }
-
-    if (order.paymentIntentId && order.paymentIntentId !== paymentIntent.id) {
-      const message = `Payment intent ${paymentIntent.id} does not match order ${orderId}`;
-      logger.error(message);
-      await notificationService.sendAdminAlert('Payment Intent Mismatch', message);
-      throw ApiError.badRequest('Payment intent does not match order');
-    }
-
-    if (!order.paymentIntentId) {
-      await prisma.order.update({
-        where: { id: orderId },
-        data: { paymentIntentId: paymentIntent.id, paymentStatus: 'PROCESSING' },
-      });
-    }
-
-    if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED') {
-      logger.info(`Skipping already confirmed order ${orderId}`);
-      return;
-    }
-
+    if (!orderId) { logger.error('Missing orderId in payment intent metadata'); return; }
+    let confirmed = false;
+    let immediateFailure: WebhookOwnershipLost | PaymentIntentMismatch | undefined;
     try {
       const { withRetry } = await import('../../utils/retry');
-
-      // Retry up to 5 times with exponential backoff
       await withRetry(async () => {
-        await orderService.confirmOrder(orderId);
-      }, {
-        maxRetries: 5,
-        initialDelay: process.env.NODE_ENV === 'test' ? 10 : 2000,
-      });
-
+        confirmed = await this.withWebhookFence(claim, orderId, async tx => {
+          const order = await tx.order.findUnique({ where: { id: orderId } });
+          if (!order) { logger.error(`Missing order ${orderId}`); return false; }
+          if (order.paymentIntentId && order.paymentIntentId !== paymentIntent.id) {
+            throw new PaymentIntentMismatch(`Payment intent ${paymentIntent.id} does not match order ${orderId}`);
+          }
+          if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED') return false;
+          if (!order.paymentIntentId) {
+            await tx.order.updateMany({ where: { id: orderId, paymentIntentId: null, status: 'PENDING' },
+              data: { paymentIntentId: paymentIntent.id, paymentStatus: 'PROCESSING' } });
+          }
+          await orderService.confirmOrderInTransaction(tx, orderId);
+          return true;
+        }).catch(error => {
+          if (error instanceof WebhookOwnershipLost || error instanceof PaymentIntentMismatch) { immediateFailure = error; return false; }
+          throw error;
+        });
+      }, { maxRetries: 5, initialDelay: process.env.NODE_ENV === 'test' ? 10 : 2000 });
+      if (immediateFailure) throw immediateFailure;
     } catch (error) {
-      logger.error(`Critical: Failed to confirm order ${orderId} after multiple retries: ${error}`);
-      try {
-        await notificationService.sendAdminAlert(
-          'Order Confirmation Failure',
-          `Order ${orderId} failed to confirm after payment succeeded. Manual intervention required. Error: ${error}`
-        );
-      } catch (alertError) {
-        logger.error(`Failed to alert admin for order ${orderId}: ${alertError}`);
+      if (error instanceof WebhookOwnershipLost) throw error;
+      if (error instanceof PaymentIntentMismatch) {
+        await notificationService.sendAdminAlert('Payment Intent Mismatch', error.message);
+        throw ApiError.badRequest('Payment intent does not match order');
       }
-      // Alert delivery is not fulfillment. Preserve FAILED and Stripe retry semantics.
+      try { await notificationService.sendAdminAlert('Order Confirmation Failure',
+        `Order ${orderId} failed after payment succeeded. Manual intervention required. Error: ${error}`); }
+      catch (alertError) { logger.error(`Failed to alert admin: ${alertError}`); }
       throw error;
     }
+    if (!confirmed) return;
 
     // Inventory is committed. An email failure must not re-run confirmation.
     try {
@@ -312,29 +286,18 @@ export class PaymentService {
   /**
    * Handle failed payment
    */
-  private async handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  private async handlePaymentFailure(paymentIntent: Stripe.PaymentIntent, claim: WebhookClaim): Promise<void> {
     const orderId = paymentIntent.metadata.orderId;
     const userId = paymentIntent.metadata.userId;
-    logger.info(
-      `Payment failed for order ${orderId}: ${paymentIntent.last_payment_error?.message}`
-    );
-
-    const order = orderId
-      ? await prisma.order.findUnique({
-        where: { id: orderId },
-        include: { user: { select: { email: true } } },
-      })
-      : null;
-
-    if (order && order.status !== 'PAID') {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          paymentStatus: 'FAILED',
-          paymentIntentId: order.paymentIntentId || paymentIntent.id,
-        },
-      });
-    }
+    const order = orderId ? await this.withWebhookFence(claim, orderId, async tx => {
+      const current = await tx.order.findUnique({ where: { id: orderId }, include: { user: { select: { email: true } } } });
+      if (current && (!current.paymentIntentId || current.paymentIntentId === paymentIntent.id)) {
+        await tx.order.updateMany({ where: { id: orderId, status: { not: 'PAID' }, paymentStatus: { not: 'SUCCEEDED' },
+          OR: [{ paymentIntentId: null }, { paymentIntentId: paymentIntent.id }] },
+          data: { paymentStatus: 'FAILED', paymentIntentId: paymentIntent.id } });
+      }
+      return current;
+    }) : null;
 
     // Notify user of payment failure
     const recipientEmail = order?.user.email || (userId
