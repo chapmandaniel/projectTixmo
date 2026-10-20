@@ -27,10 +27,14 @@ export function verifyApi({ env = process.env, spawn = spawnSync, log = console.
   const run = (command, args, cwd, label, diagnostics = () => '') => {
     let result;
     try {
-      // Capture and suppress raw child output: Prisma/Jest failures may embed URLs.
-      result = spawn(command, args, { cwd, env: testEnv, encoding: 'utf8', stdio: 'pipe', shell: false });
+      // Discard raw output: it can contain secrets and exceed spawnSync buffers.
+      // Jest writes the separate report used for safe failure diagnostics.
+      result = spawn(command, args, { cwd, env: testEnv, encoding: 'utf8', stdio: 'ignore', shell: false });
     } catch { throw new Error(`${label} failed (child output suppressed).`); }
-    if (result.error || result.status !== 0) throw new Error(`${label} failed (child output suppressed).${diagnostics()}`);
+    if (result.error || result.status !== 0) {
+      const code = typeof result.error?.code === 'string' && /^[A-Z_]{1,24}$/.test(result.error.code) ? result.error.code : '';
+      throw new Error(`${label} failed (child output suppressed).${code ? ` Runner: ${code}.` : ''}${diagnostics()}`);
+    }
   };
   run('npx', ['prisma', 'db', 'push', '--accept-data-loss', '--skip-generate'], path.join(repoRoot, 'tixmoapi2'), 'Schema bootstrap');
   const reports = mkdtempSync(path.join(os.tmpdir(), 'tixmo-verification-'));

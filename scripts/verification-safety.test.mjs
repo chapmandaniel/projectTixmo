@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -54,7 +55,7 @@ test('explicit disposable targets allow only schema and test commands', () => {
   verifyApi({ env: safe, spawn: (...args) => { calls.push(args); return { status: 0 }; }, log: () => {} });
   assert.deepEqual(calls.map(([command]) => command), ['npx', 'npm']);
   assert.equal(calls[0][2].env.NODE_ENV, 'test');
-  assert.equal(calls[0][2].stdio, 'pipe');
+  assert.equal(calls[0][2].stdio, 'ignore');
   let count = 0;
   runSetup(safe, (_, options) => { count++; assert.equal(options.stdio, 'ignore'); });
   assert.equal(count, 1);
@@ -137,4 +138,19 @@ test('failure diagnostics expose suite filenames and counts without assertion or
   ] });
   assert.match(diagnostic, /Failed tests: 2; suites: payment-recovery.test.ts/);
   assert.doesNotMatch(diagnostic, /synthetic|private|postgresql|passed/);
+});
+
+
+test('large child output is discarded without buffer overflow or leaking diagnostics', () => {
+  let calls = 0;
+  verifyApi({ env: safe, log: () => {}, spawn: (_command, _args, options) => {
+    calls++;
+    const result = spawnSync(process.execPath, ['-e', "process.stdout.write('x'.repeat(2 * 1024 * 1024)); process.stderr.write('synthetic-child-secret'.repeat(100000));"], options);
+    assert.equal(result.status, 0);
+    assert.equal(result.error, undefined);
+    assert.equal(result.stdout, null);
+    assert.equal(result.stderr, null);
+    return result;
+  } });
+  assert.equal(calls, 2);
 });
