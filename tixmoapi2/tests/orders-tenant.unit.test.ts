@@ -34,6 +34,23 @@ beforeEach(() => {
   db.$transaction.mockResolvedValue({ id: 'a' });
 });
 
+describe('confirmation transition guard', () => {
+  test('stale scoped confirmation rejects before inventory and response reads', async () => {
+    const tx = {
+      order: { updateMany: jest.fn().mockResolvedValue({ count: 0 }), findUniqueOrThrow: jest.fn() },
+      ticketType: { updateMany: jest.fn() },
+    };
+    db.$transaction.mockImplementationOnce((callback: any) => callback(tx));
+    await expect(service.confirmOrder('a', 'actor')).rejects.toMatchObject({ statusCode: 400 });
+    expect(tx.order.updateMany).toHaveBeenCalledWith({
+      where: { id: 'a', event: { organizationId: 'org-a' }, status: 'PENDING' },
+      data: { status: 'PAID', paymentStatus: 'SUCCEEDED' },
+    });
+    expect(tx.ticketType.updateMany).not.toHaveBeenCalled();
+    expect(tx.order.findUniqueOrThrow).not.toHaveBeenCalled();
+  });
+});
+
 describe('actor-bound order service', () => {
   test.each(['OWNER', 'ADMIN', 'MANAGER'])('%s cannot get or list another organization', async role => {
     db.user.findUnique.mockResolvedValue({ ...actor, role });

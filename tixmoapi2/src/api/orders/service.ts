@@ -371,8 +371,17 @@ export class OrderService {
       throw ApiError.badRequest(`Cannot confirm order with status ${orderTyped.status}`);
     }
 
-    // Confirm order and move inventory from held to sold
+    // Claim the transition before inventory effects. A stale PENDING snapshot
+    // must not consume holds belonging to another order. Both changes roll back
+    // together if inventory is inconsistent.
     return await prisma.$transaction(async (tx) => {
+      const transition = await tx.order.updateMany({
+        where: { id, ...scope, status: 'PENDING' },
+        data: { status: 'PAID', paymentStatus: 'SUCCEEDED' },
+      });
+      if (transition.count !== 1) {
+        throw ApiError.badRequest('Cannot confirm order that is no longer pending');
+      }
       // Get unique ticket types from this order
       const ticketTypeCounts = new Map<string, number>();
       for (const ticket of orderTyped.tickets) {
@@ -398,13 +407,9 @@ export class OrderService {
         }
       }
 
-      // Update order status
-      const confirmedOrder = await tx.order.update({
+      // Preserve the confirmation response shape after the guarded transition.
+      const confirmedOrder = await tx.order.findUniqueOrThrow({
         where: { id },
-        data: {
-          status: 'PAID',
-          paymentStatus: 'SUCCEEDED',
-        },
         include: {
           tickets: {
             include: {
