@@ -1,0 +1,5 @@
+
+> tdash@0.1.0 design:guard
+> node ./scripts/design-system-guard.mjs
+
+Design-system guard passed with 1055 tracked baseline violation(s) and no regressions.

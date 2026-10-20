@@ -1,0 +1,3 @@
+verify-api syntax exit=0
+check-status syntax exit=0
+external-smoke syntax exit=0

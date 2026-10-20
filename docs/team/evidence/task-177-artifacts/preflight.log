@@ -1,0 +1,28 @@
+v24.21.0
+11.19.0
+Linux 7.0.0-38-generic
+uid=1000(daniel) gid=1000(daniel) groups=1000(daniel),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users),101(lxd)
+LISTEN 0      4096                100.86.142.123:443   0.0.0.0:*                                         
+LISTEN 0      4096                100.86.142.123:8443  0.0.0.0:*                                         
+LISTEN 0      5                        127.0.0.1:8787  0.0.0.0:* users:(("python3",pid=34223,fd=3))      
+LISTEN 0      4096                 127.0.0.53%lo:53    0.0.0.0:*                                         
+LISTEN 0      511                      127.0.0.1:18789 0.0.0.0:* users:(("MainThread",pid=580268,fd=139))
+LISTEN 0      4096                       0.0.0.0:22    0.0.0.0:*                                         
+LISTEN 0      511                      127.0.0.1:35529 0.0.0.0:* users:(("MainThread",pid=580268,fd=137))
+LISTEN 0      4096                     127.0.0.1:5434  0.0.0.0:*                                         
+LISTEN 0      511                      127.0.0.1:46395 0.0.0.0:* users:(("MainThread",pid=580268,fd=267))
+LISTEN 0      4096                     127.0.0.1:5433  0.0.0.0:*                                         
+LISTEN 0      511                      127.0.0.1:38261 0.0.0.0:* users:(("MainThread",pid=580268,fd=291))
+LISTEN 0      4096                100.86.142.123:38497 0.0.0.0:*                                         
+LISTEN 0      4096                    127.0.0.54:53    0.0.0.0:*                                         
+LISTEN 0      511                      127.0.0.1:40117 0.0.0.0:* users:(("MainThread",pid=580268,fd=271))
+LISTEN 0      4096                     127.0.0.1:6380  0.0.0.0:*                                         
+LISTEN 0      4096                     127.0.0.1:6381  0.0.0.0:*                                         
+LISTEN 0      128                      127.0.0.1:39423 0.0.0.0:* users:(("codex",pid=285737,fd=36))      
+LISTEN 0      4096                          [::]:22       [::]:*                                         
+LISTEN 0      4096   [fd7a:115c:a1e0::762d:8e7c]:443      [::]:*                                         
+LISTEN 0      4096   [fd7a:115c:a1e0::762d:8e7c]:8443     [::]:*                                         
+LISTEN 0      4096   [fd7a:115c:a1e0::762d:8e7c]:33907    [::]:*                                         
+LISTEN 0      511                          [::1]:18789    [::]:* users:(("MainThread",pid=580268,fd=140))
+Filesystem     Type 1K-blocks     Used Available Use% Mounted on
+/dev/nvme0n1p2 ext4 243937628 38626540 192846912  17% /

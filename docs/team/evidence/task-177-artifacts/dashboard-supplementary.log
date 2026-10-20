@@ -1,0 +1,57 @@
+
+> tdash@0.1.0 test
+> vitest --run
+
+
+ RUN  v4.0.18 /home/daniel/projects/projectTixmo/worktrees/task-177/tdash
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ✓ src/test/ApprovalsDashboard.test.jsx (9 tests) 1210ms
+     ✓ lets admins add approved images to the asset library and archive gallery approvals  459ms
+ ✓ src/test/CheckoutPage.test.jsx (27 tests) 1307ms
+     ✓ shows required checkout policy links before preparing payment  695ms
+ ✓ src/test/ExternalReviewPage.test.jsx (5 tests) 1342ms
+     ✓ renders the simplified external review workspace shell  475ms
+     ✓ opens a note modal for request changes and adds the note to discussion after submit  431ms
+ ✓ src/test/ApprovalDetailView.test.jsx (12 tests) 2250ms
+     ✓ renders version controls and reviewer actions for the latest version  629ms
+ ✓ src/test/EventsView.test.jsx (2 tests) 282ms
+ ✓ src/test/AssetLibraryView.test.jsx (15 tests) 3639ms
+     ✓ renders uploaded assets and filters by asset type  576ms
+     ✓ opens a basic asset preview and copies the asset link  503ms
+     ✓ uploads directly to the asset library without opening approvals  311ms
+     ✓ creates secure share links for saved folders  310ms
+ ✓ src/test/SharedAssetFolderPage.test.jsx (2 tests) 778ms
+     ✓ lets external visitors browse nested shared folders  515ms
+ ✓ src/test/AppCheckoutReturn.test.jsx (4 tests) 560ms
+     ✓ retains the candidate and restores only owner status after auth event  367ms
+ ✓ src/test/StatusBadge.test.jsx (21 tests) 121ms
+ ✓ src/test/AssetUploader.test.jsx (9 tests) 147ms
+ ✓ src/test/ScannersView.test.jsx (24 tests) 2506ms
+     ✓ uses API meta.pages for both tabs, keeps request limits, Previous and tab reset  678ms
+ ✓ src/test/AnalyticsView.test.jsx (1 test) 558ms
+     ✓ separates GA4 traffic language from Tixmo sales language  556ms
+ ✓ src/test/NotificationResilience.test.jsx (3 tests) 273ms
+ ✓ src/test/DashboardTruth.test.jsx (1 test) 400ms
+     ✓ renders the dashboard home in the pinned truth state by default  398ms
+ ✓ src/test/AppSession.test.jsx (2 tests) 490ms
+     ✓ lands on the main dashboard after signing in from a deep route  391ms
+ ✓ src/test/TeamView.test.jsx (1 test) 152ms
+ ✓ src/test/EventCommandCenter.test.jsx (2 tests) 761ms
+     ✓ copies and opens the buyer checkout link for on-sale events  532ms
+ ✓ src/test/TicketBuilder.test.jsx (2 tests) 105ms
+ ✓ src/test/runtimeConfig.test.jsx (5 tests) 8ms
+ ✓ src/test/Smoke.test.jsx (2 tests) 586ms
+     ✓ renders DashboardLayout without crashing  529ms
+ ✓ src/test/LoginView.test.jsx (2 tests) 380ms
+     ✓ renders the brand-only login surface without internal workspace data  302ms
+ ✓ src/test/ApprovalCard.test.jsx (6 tests) 83ms
+ ✓ src/test/session.test.js (1 test) 9ms
+ ✓ src/test/StatCard.test.jsx (5 tests) 50ms
+ ✓ src/test/DashboardPlaceholderView.test.jsx (1 test) 194ms
+
+ Test Files  25 passed (25)
+      Tests  164 passed (164)
+   Start at  06:45:39
+   Duration  12.13s (transform 3.38s, setup 1.68s, import 16.57s, tests 18.19s, environment 16.99s)
+

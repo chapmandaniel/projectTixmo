@@ -1,0 +1,71 @@
+
+> tdash@0.1.0 build
+> vite build
+
+vite v4.5.14 building for production...
+transforming...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2514 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                         0.50 kB │ gzip:   0.32 kB
+dist/app-assets/index-b865fee6.css                    110.90 kB │ gzip:  17.65 kB
+dist/app-assets/chevron-right-f4feaae3.js               0.13 kB │ gzip:   0.14 kB
+dist/app-assets/check-db2296c8.js                       0.13 kB │ gzip:   0.14 kB
+dist/app-assets/loader-2-a3f523b5.js                    0.14 kB │ gzip:   0.15 kB
+dist/app-assets/zap-c585022f.js                         0.15 kB │ gzip:   0.15 kB
+dist/app-assets/plus-abdc0562.js                        0.15 kB │ gzip:   0.15 kB
+dist/app-assets/arrow-left-cfebee2e.js                  0.16 kB │ gzip:   0.16 kB
+dist/app-assets/search-407ef758.js                      0.17 kB │ gzip:   0.16 kB
+dist/app-assets/clock-3-a268173c.js                     0.18 kB │ gzip:   0.17 kB
+dist/app-assets/smartphone-d9f0d87d.js                  0.19 kB │ gzip:   0.18 kB
+dist/app-assets/rotate-ccw-b6bfbdda.js                  0.20 kB │ gzip:   0.18 kB
+dist/app-assets/map-pin-78ce9aba.js                     0.20 kB │ gzip:   0.19 kB
+dist/app-assets/credit-card-db6ec042.js                 0.20 kB │ gzip:   0.18 kB
+dist/app-assets/dollar-sign-ecad297f.js                 0.22 kB │ gzip:   0.19 kB
+dist/app-assets/copy-9ac7b9d9.js                        0.23 kB │ gzip:   0.20 kB
+dist/app-assets/alert-circle-1b263e77.js                0.25 kB │ gzip:   0.18 kB
+dist/app-assets/user-check-ac38f30d.js                  0.25 kB │ gzip:   0.22 kB
+dist/app-assets/download-201713bd.js                    0.26 kB │ gzip:   0.21 kB
+dist/app-assets/external-link-738597e5.js               0.28 kB │ gzip:   0.23 kB
+dist/app-assets/save-49ab070f.js                        0.28 kB │ gzip:   0.21 kB
+dist/app-assets/user-plus-35c2097c.js                   0.31 kB │ gzip:   0.23 kB
+dist/app-assets/link-2-a53a7190.js                      0.31 kB │ gzip:   0.24 kB
+dist/app-assets/refresh-ccw-a7f96a2c.js                 0.32 kB │ gzip:   0.22 kB
+dist/app-assets/ticket-f42c041b.js                      0.32 kB │ gzip:   0.21 kB
+dist/app-assets/trash-2-4c9bd866.js                     0.35 kB │ gzip:   0.24 kB
+dist/app-assets/pen-line-aa73c3b2.js                    0.36 kB │ gzip:   0.25 kB
+dist/app-assets/file-text-97f4397d.js                   0.39 kB │ gzip:   0.25 kB
+dist/app-assets/calendar-days-4e88c325.js               0.55 kB │ gzip:   0.29 kB
+dist/app-assets/sparkles-6a3e40a6.js                    0.71 kB │ gzip:   0.34 kB
+dist/app-assets/video-a0bf4f6d.js                       0.72 kB │ gzip:   0.43 kB
+dist/app-assets/index-3d97a230.js                       0.79 kB │ gzip:   0.51 kB
+dist/app-assets/InputField-bec424a3.js                  1.38 kB │ gzip:   0.53 kB
+dist/app-assets/StatusBadge-c1aa8c77.js                 1.45 kB │ gzip:   0.58 kB
+dist/app-assets/WaitingRoomView-282b90f1.js             1.48 kB │ gzip:   0.73 kB
+dist/app-assets/mockData-22aaa1db.js                    1.50 kB │ gzip:   0.67 kB
+dist/app-assets/approvalConstants-5185068b.js           2.77 kB │ gzip:   1.38 kB
+dist/app-assets/DevDashboard-ed42637a.js                3.34 kB │ gzip:   1.30 kB
+dist/app-assets/DashboardHome-1ddf815d.js               4.10 kB │ gzip:   1.62 kB
+dist/app-assets/SettingsView-675a43f6.js                5.67 kB │ gzip:   1.84 kB
+dist/app-assets/index-ed2e6e3e.js                       9.05 kB │ gzip:   3.68 kB
+dist/app-assets/SharedAssetFolderPage-28add15b.js       9.55 kB │ gzip:   3.02 kB
+dist/app-assets/VenuesView-1d238769.js                 11.13 kB │ gzip:   3.32 kB
+dist/app-assets/EventsView-c301ea54.js                 12.68 kB │ gzip:   4.43 kB
+dist/app-assets/OrdersView-634fb9c5.js                 15.91 kB │ gzip:   4.04 kB
+dist/app-assets/ScannersView-db12be4e.js               17.08 kB │ gzip:   4.71 kB
+dist/app-assets/TeamView-cb2ab2a5.js                   20.58 kB │ gzip:   6.18 kB
+dist/app-assets/TodoView-bc56da98.js                   26.14 kB │ gzip:   7.07 kB
+dist/app-assets/EventStudio-f6cbde93.js                26.70 kB │ gzip:   6.98 kB
+dist/app-assets/ExternalReviewPage-dbdf29bd.js         27.23 kB │ gzip:   7.11 kB
+dist/app-assets/CheckoutPage-a3eeffb5.js               31.60 kB │ gzip:  10.29 kB
+dist/app-assets/AssetLibraryView-ee9b14ab.js           53.12 kB │ gzip:  14.71 kB
+dist/app-assets/ApprovalsDashboard-411c0cfc.js         55.01 kB │ gzip:  13.56 kB
+dist/app-assets/_baseSlice-54bcb006.js                 79.28 kB │ gzip:  28.51 kB
+dist/app-assets/index-4cf0dab1.js                     280.09 kB │ gzip:  92.17 kB
+dist/app-assets/EventManagementDashboard-8387de28.js  358.08 kB │ gzip:  88.01 kB
+dist/app-assets/AnalyticsView-30f0edec.js             398.23 kB │ gzip: 126.38 kB
+✓ built in 7.41s

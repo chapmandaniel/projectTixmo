@@ -1,0 +1,26 @@
+
+> project-tixmo@0.1.0 verify:market
+> node ./scripts/verify-market-local.mjs
+
+
+[verify:market] API build
+
+> tixmoapi2@0.1.0 build
+> prisma generate && tsc && tsc-alias
+
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 335ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Want to react to database changes in your app as they happen? Discover how with Pulse: https://pris.ly/tip-1-pulse
+
+
+[verify:market] API verification
+
+> project-tixmo@0.1.0 verify:api
+> node ./scripts/verify-api.mjs
+
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>

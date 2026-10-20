@@ -1,0 +1,1 @@
+Cleanup independently confirmed both owned /proc PIDs absent and both selected TCP listeners absent. Supplementary API stopped early after ~50s via UID/cwd/cmdline-validated owned timeout SIGTERM for PM handoff; exit124; observed PASS suite lines=26, FAIL suite lines=1; final suite/test totals unavailable, not a pass. Runtime cleanup preserved original market exit124.
