@@ -1,0 +1,3 @@
+PASS strict TypeError and native nested preservation ancient=false
+PASS strict TypeError and native nested preservation ancient=true
+PASS original BigInt failure and lossless candidate serialization, both controls
