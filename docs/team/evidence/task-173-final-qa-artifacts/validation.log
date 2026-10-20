@@ -1,0 +1,9 @@
+Runtime command exit=0 (observed terminal session completion)
+PRODUCT ed2a02b2f2ec5cafeb7428d47b150b00a25f368e
+CHECKOUT/AUTHOR-EVIDENCE 4e458a6e9e66f3b183759138ae7246649ac384a8
+All product paths tixmoapi2/scripts/package manifests byte-identical between PRODUCT and CHECKOUT (git diff exit0).
+Service SHA256 ffeb7cc53cf3baea29cc01b692ef654b50ccebac837fcc93ee329d524e7022ef
+Source bytes equal exact PRODUCT and CHECKOUT; helper before/after cmp and source diff exit0.
+Runtime directory mode0700, ext4 disk-backed; helper exit0 cleanup.
+PG1237880 Redis1237893 /proc absent; TCP34936/59518 empty after helper return.
+Inherited5433/5434/6380/6381 never used or altered.
