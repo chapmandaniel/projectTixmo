@@ -27,18 +27,33 @@ const tinyPng = Buffer.from(
 );
 
 jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => ({
-    paymentIntents: {
-      create: jest.fn().mockImplementation(async ({ metadata }) => ({
-        id: `pi_v1_smoke_${metadata.orderId}`,
-        client_secret: `pi_v1_smoke_${metadata.orderId}_secret`,
-        metadata,
-      })),
-    },
-    webhooks: {
-      constructEvent: jest.fn(),
-    },
-  }));
+  return jest.fn().mockImplementation(() => {
+    const intents = new Map<string, any>();
+    return {
+      paymentIntents: {
+        create: jest.fn().mockImplementation(async ({ amount, currency, metadata }) => {
+          const intent = {
+            id: `pi_v1_smoke_${metadata.orderId}`,
+            client_secret: `pi_v1_smoke_${metadata.orderId}_secret`,
+            amount,
+            currency,
+            status: 'requires_payment_method',
+            metadata,
+          };
+          intents.set(intent.id, intent);
+          return intent;
+        }),
+        retrieve: jest.fn().mockImplementation(async (id: string) => {
+          const intent = intents.get(id);
+          if (!intent) throw new Error('Unknown mock payment intent');
+          return intent;
+        }),
+      },
+      webhooks: {
+        constructEvent: jest.fn(),
+      },
+    };
+  });
 });
 
 jest.mock('../../src/services/upload.service', () => ({

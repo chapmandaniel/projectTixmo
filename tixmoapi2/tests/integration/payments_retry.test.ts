@@ -73,9 +73,9 @@ describe('Order Confirmation Retry Logic', () => {
         const { paymentService } = await import('../../src/api/payments/service');
 
         // @ts-ignore - accessing private method for testing
-        await paymentService.handlePaymentSuccess({
+        await expect(paymentService.handlePaymentSuccess({
             metadata: { orderId: order.id },
-        } as any);
+        } as any)).rejects.toThrow('DB Timeout');
 
         // Verify retries happened (6 attempts total: 1 initial + 5 retries)
         // withRetry logs warnings on retry

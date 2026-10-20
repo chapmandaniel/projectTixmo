@@ -37,31 +37,44 @@ import { notificationService } from '../../src/utils/notificationService';
 
 // Mock Stripe
 jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => ({
-    paymentIntents: {
-      create: jest.fn().mockResolvedValue({
-        id: 'pi_mock_123456',
-        client_secret: 'pi_mock_123456_secret_123456',
-        metadata: {
-          orderId: 'mock_order_id',
-        },
-      }),
-    },
-    webhooks: {
-      constructEvent: jest.fn().mockReturnValue({
-        id: 'evt_mock_succeeded',
-        type: 'payment_intent.succeeded',
-        data: {
-          object: {
+  return jest.fn().mockImplementation(() => {
+    const intents = new Map<string, any>();
+    return {
+      paymentIntents: {
+        create: jest.fn().mockImplementation(async ({ amount, currency, metadata }) => {
+          const intent = {
             id: 'pi_mock_123456',
-            metadata: {
-              orderId: 'mock_order_id',
+            client_secret: 'pi_mock_123456_secret_123456',
+            amount,
+            currency,
+            status: 'requires_payment_method',
+            metadata,
+          };
+          intents.set(intent.id, intent);
+          return intent;
+        }),
+        retrieve: jest.fn().mockImplementation(async (id: string) => {
+          const intent = intents.get(id);
+          if (!intent) throw new Error('Unknown mock payment intent');
+          return intent;
+        }),
+      },
+      webhooks: {
+        constructEvent: jest.fn().mockReturnValue({
+          id: 'evt_mock_succeeded',
+          type: 'payment_intent.succeeded',
+          data: {
+            object: {
+              id: 'pi_mock_123456',
+              metadata: {
+                orderId: 'mock_order_id',
+              },
             },
           },
-        },
-      }),
-    },
-  }));
+        }),
+      },
+    };
+  });
 });
 
 describe('Payment Routes', () => {

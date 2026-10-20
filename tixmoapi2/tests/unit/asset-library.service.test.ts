@@ -87,7 +87,10 @@ const createdAsset = {
 };
 
 describe('assetLibraryService.upload', () => {
+  afterEach(() => { jest.useRealTimers(); });
+
   beforeEach(() => {
+    jest.useFakeTimers({ now: new Date("2026-06-08T12:00:00.000Z") });
     jest.clearAllMocks();
 
     (prisma.user.findUnique as jest.Mock).mockResolvedValue({

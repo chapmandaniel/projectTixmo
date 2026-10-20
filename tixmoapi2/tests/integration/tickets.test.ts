@@ -12,6 +12,7 @@ import {
 describe('Tickets API', () => {
   let authToken: string;
   let promoterToken: string;
+  let confirmationToken: string;
   let userId: string;
   let secondUserId: string;
   let organizationId: string;
@@ -58,6 +59,15 @@ describe('Tickets API', () => {
       type: 'PROMOTER',
     });
     organizationId = org.id;
+
+    // MANAGER is already authorized to confirm customer orders in this tenant.
+    const manager = await registerUser(app, {
+      email: 'tickets-manager@example.com', role: 'MANAGER',
+    });
+    await prisma.user.update({
+      where: { id: manager.user.id }, data: { organizationId },
+    });
+    confirmationToken = manager.accessToken;
 
     const venue = await createVenue(app, promoterToken, {
       organizationId,
@@ -112,12 +122,14 @@ describe('Tickets API', () => {
     orderId = orderRes.body.data.id;
 
     // Confirm order to generate tickets
-    await request(app)
+    const confirmed = await request(app)
       .post(`/api/v1/orders/${orderId}/confirm`)
-      .set('Authorization', `Bearer ${promoterToken}`)
+      .set('Authorization', `Bearer ${confirmationToken}`)
       .send({
         paymentMethodId: 'pm_test_success',
       });
+    expect(confirmed.status).toBe(200);
+    expect(confirmed.body.data.status).toBe('PAID');
 
     // Get tickets from order
     const orderDetails = await request(app)
@@ -230,12 +242,14 @@ describe('Tickets API', () => {
         });
 
       // Confirm order to generate tickets
-      await request(app)
+      const confirmed = await request(app)
         .post(`/api/v1/orders/${orderRes.body.data.id}/confirm`)
-        .set('Authorization', `Bearer ${promoterToken}`)
+        .set('Authorization', `Bearer ${confirmationToken}`)
         .send({
           paymentMethodId: 'pm_test_success',
         });
+      expect(confirmed.status).toBe(200);
+      expect(confirmed.body.data.status).toBe('PAID');
 
       const orderDetails = await request(app)
         .get(`/api/v1/orders/${orderRes.body.data.id}`)
@@ -284,12 +298,15 @@ describe('Tickets API', () => {
     });
 
     it('should fail to transfer cancelled ticket', async () => {
-      await request(app)
+      const cancelled = await request(app)
         .post(`/api/v1/tickets/${transferTicketId}/cancel`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           paymentMethodId: 'pm_test_success',
         });
+
+      expect(cancelled.status).toBe(200);
+      expect(cancelled.body.data.status).toBe('CANCELLED');
 
       const res = await request(app)
         .post(`/api/v1/tickets/${transferTicketId}/transfer`)
@@ -336,12 +353,14 @@ describe('Tickets API', () => {
 
       cancelOrderId = orderRes.body.data.id;
 
-      await request(app)
+      const confirmed = await request(app)
         .post(`/api/v1/orders/${cancelOrderId}/confirm`)
-        .set('Authorization', `Bearer ${promoterToken}`)
+        .set('Authorization', `Bearer ${confirmationToken}`)
         .send({
           paymentMethodId: 'pm_test_success',
         });
+      expect(confirmed.status).toBe(200);
+      expect(confirmed.body.data.status).toBe('PAID');
 
       const orderDetails = await request(app)
         .get(`/api/v1/orders/${cancelOrderId}`)
@@ -361,9 +380,12 @@ describe('Tickets API', () => {
     });
 
     it('should fail to cancel already cancelled ticket', async () => {
-      await request(app)
+      const cancelled = await request(app)
         .post(`/api/v1/tickets/${cancelTicketId}/cancel`)
         .set('Authorization', `Bearer ${authToken}`);
+
+      expect(cancelled.status).toBe(200);
+      expect(cancelled.body.data.status).toBe('CANCELLED');
 
       const res = await request(app)
         .post(`/api/v1/tickets/${cancelTicketId}/cancel`)
@@ -438,10 +460,12 @@ describe('Tickets API', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send({ items: [{ ticketTypeId: ticketType2Id, quantity: 1 }] });
 
-      await request(app)
+      const confirmed = await request(app)
         .post(`/api/v1/orders/${orderValRes.body.data.id}/confirm`)
-        .set('Authorization', `Bearer ${promoterToken}`)
+        .set('Authorization', `Bearer ${confirmationToken}`)
         .send({ paymentMethodId: 'pm_test_success' });
+      expect(confirmed.status).toBe(200);
+      expect(confirmed.body.data.status).toBe('PAID');
 
       const orderValDetails = await request(app)
         .get(`/api/v1/orders/${orderValRes.body.data.id}`)
@@ -454,10 +478,12 @@ describe('Tickets API', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send({ items: [{ ticketTypeId: ticketType2Id, quantity: 1 }] });
 
-      await request(app)
+      const checkConfirmed = await request(app)
         .post(`/api/v1/orders/${orderCheckRes.body.data.id}/confirm`)
-        .set('Authorization', `Bearer ${promoterToken}`)
+        .set('Authorization', `Bearer ${confirmationToken}`)
         .send({ paymentMethodId: 'pm_test_success' });
+      expect(checkConfirmed.status).toBe(200);
+      expect(checkConfirmed.body.data.status).toBe('PAID');
 
       const orderCheckDetails = await request(app)
         .get(`/api/v1/orders/${orderCheckRes.body.data.id}`)
