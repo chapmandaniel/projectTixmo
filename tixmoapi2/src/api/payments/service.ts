@@ -51,30 +51,56 @@ export class PaymentService {
     // Assuming order.totalAmount is Decimal
     const amount = Math.round(Number(order.totalAmount) * 100);
 
-    const paymentIntent = await this.stripe.paymentIntents.create({
-      amount,
-      currency: config.paymentCurrency,
-      metadata: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        userId: userId,
-      },
-      automatic_payment_methods: {
-        enabled: true,
-      },
-    });
+    const currency = config.paymentCurrency.toLowerCase();
+    // Stripe retains keys for at least 24h. Refuse an unlinked old order:
+    // its earlier create may have succeeded even if neither response nor DB write did.
+    if (!order.paymentIntentId && Date.now() - order.createdAt.getTime() >= 23 * 60 * 60 * 1000) {
+      throw new ApiError(409, 'Payment preparation requires reconciliation');
+    }
 
+    const paymentIntent = order.paymentIntentId
+      ? await this.stripe.paymentIntents.retrieve(order.paymentIntentId)
+      : await this.stripe.paymentIntents.create({
+          amount,
+          currency,
+          metadata: {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            userId: order.userId,
+          },
+          automatic_payment_methods: { enabled: true },
+        }, {
+          // Deliberately order-only: changing amount/currency must conflict with
+          // the original request, not mint a second intent after a lost response.
+          idempotencyKey: `order-payment-v1:${order.id}`,
+        });
+
+    if (paymentIntent.amount !== amount || paymentIntent.currency !== currency ||
+        paymentIntent.metadata.orderId !== order.id || paymentIntent.metadata.userId !== order.userId) {
+      throw new ApiError(409, 'Payment intent does not match order');
+    }
+    if (!['requires_payment_method', 'requires_confirmation', 'requires_action'].includes(paymentIntent.status)) {
+      // Processing/succeeded/canceled intents must be reconciled, never replaced.
+      throw new ApiError(409, 'Payment intent is not available for preparation');
+    }
     if (!paymentIntent.client_secret) {
       throw new ApiError(500, 'Failed to create payment intent');
     }
 
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        paymentIntentId: paymentIntent.id,
-        paymentStatus: 'PROCESSING',
+    const saved = await prisma.order.updateMany({
+      where: {
+        id: order.id,
+        userId,
+        status: 'PENDING',
+        totalAmount: order.totalAmount,
+        paymentStatus: { in: [order.paymentStatus, 'PROCESSING'].filter(status => status !== 'SUCCEEDED') },
+        OR: [{ paymentIntentId: null }, { paymentIntentId: paymentIntent.id }],
       },
+      data: { paymentIntentId: paymentIntent.id, paymentStatus: 'PROCESSING' },
     });
+    if (saved.count !== 1) {
+      throw new ApiError(409, 'Order changed during payment preparation');
+    }
 
     return {
       clientSecret: paymentIntent.client_secret,
