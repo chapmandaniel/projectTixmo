@@ -5,8 +5,6 @@ import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { orderService } from './service';
 
-const canManageOrders = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
-
 export const createOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.userId;
   const payload = req.body as Parameters<typeof orderService.createOrder>[1];
@@ -63,9 +61,8 @@ export const createOrder = catchAsync(async (req: AuthRequest, res: Response) =>
 
 export const getOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = canManageOrders(req.user!.role) ? undefined : req.user!.userId;
 
-  const order = await orderService.getOrderById(id, userId);
+  const order = await orderService.getOrderById(id, undefined, req.user!.userId);
 
   if (!order) {
     throw ApiError.notFound('Order not found');
@@ -77,7 +74,7 @@ export const getOrder = catchAsync(async (req: AuthRequest, res: Response) => {
 export const confirmOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  const order = await orderService.confirmOrder(id);
+  const order = await orderService.confirmOrder(id, req.user!.userId);
 
   // Send confirmation email (async, don't block response)
   orderService.sendOrderConfirmationEmail(id).catch((error) => {
@@ -89,18 +86,15 @@ export const confirmOrder = catchAsync(async (req: AuthRequest, res: Response) =
 
 export const cancelOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = canManageOrders(req.user!.role) ? undefined : req.user!.userId;
 
-  const order = await orderService.cancelOrder(id, userId);
+  const order = await orderService.cancelOrder(id, undefined, req.user!.userId);
   res.json(successResponse(order, 'Order cancelled successfully'));
 });
 
 export const listOrders = catchAsync(async (req: AuthRequest, res: Response) => {
-  const userId = canManageOrders(req.user!.role) ? undefined : req.user!.userId;
+  const query = req.query as Parameters<typeof orderService.listOrders>[0];
 
-  const query = { ...(req.query as Record<string, unknown>), userId };
-
-  const result = await orderService.listOrders(query);
+  const result = await orderService.listOrders(query, req.user!.userId);
 
   res.json(successResponse(result));
 });
@@ -108,6 +102,6 @@ export const listOrders = catchAsync(async (req: AuthRequest, res: Response) => 
 export const refundOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
-  const order = await orderService.refundOrder(id);
+  const order = await orderService.refundOrder(id, req.user!.userId);
   res.json(successResponse(order, 'Order refunded successfully'));
 });

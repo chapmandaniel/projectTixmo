@@ -5,6 +5,7 @@ import { notificationService } from '../../utils/notificationService';
 import { promoCodeService } from '../promo-codes/service';
 import { ticketTierService } from '../ticket-tiers/service';
 import crypto from 'crypto';
+import { getActorScopeById, resolveOrganizationFilter } from '../../utils/tenantScope';
 
 import prisma from '../../config/prisma';
 
@@ -48,6 +49,23 @@ type OrderWithTicketsAndUser = Order & {
 };
 
 export class OrderService {
+  // Only authenticated HTTP entrypoints pass actorId. Omission is reserved for
+  // trusted payment/free-order/expiry jobs; never populate it from query input.
+  private async actorOrderScope(actorId: string, action: 'read' | 'confirm' | 'refund' = 'read'): Promise<Prisma.OrderWhereInput> {
+    const actor = await getActorScopeById(actorId);
+    if (action === 'refund' && !['OWNER', 'ADMIN'].includes(actor.role)) {
+      throw ApiError.forbidden('Not authorized to refund orders');
+    }
+    if (action === 'confirm' && !['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'].includes(actor.role)) {
+      throw ApiError.forbidden('Not authorized to confirm orders');
+    }
+    if (!['OWNER', 'ADMIN', 'MANAGER'].includes(actor.role)) {
+      return { userId: actor.userId };
+    }
+    const organizationId = resolveOrganizationFilter(actor);
+    return organizationId ? { event: { organizationId } } : {};
+  }
+
   /**
    * Create a new order
    */
@@ -254,11 +272,11 @@ export class OrderService {
   /**
    * Get order by ID
    */
-  async getOrderById(id: string, userId?: string): Promise<Order | null> {
-    if (userId) {
-      // when userId provided, findFirst with both id and userId
+  async getOrderById(id: string, userId?: string, actorId?: string): Promise<Order | null> {
+    if (userId || actorId) {
+      const scope = actorId ? await this.actorOrderScope(actorId) : { userId };
       return await prisma.order.findFirst({
-        where: { id, userId },
+        where: { id, ...scope },
         include: {
           tickets: {
             include: {
@@ -317,9 +335,10 @@ export class OrderService {
   /**
    * Confirm order (after payment)
    */
-  async confirmOrder(id: string): Promise<Order> {
-    const order = await prisma.order.findUnique({
-      where: { id },
+  async confirmOrder(id: string, actorId?: string): Promise<Order> {
+    const scope = actorId ? await this.actorOrderScope(actorId, 'confirm') : {};
+    const order = await prisma.order.findFirst({
+      where: { id, ...scope },
       include: {
         tickets: true,
       },
@@ -446,9 +465,10 @@ export class OrderService {
   /**
    * Cancel order
    */
-  async cancelOrder(id: string, userId?: string): Promise<Order> {
-    const order = await prisma.order.findUnique({
-      where: { id },
+  async cancelOrder(id: string, userId?: string, actorId?: string): Promise<Order> {
+    const scope = actorId ? await this.actorOrderScope(actorId) : {};
+    const order = await prisma.order.findFirst({
+      where: { id, ...scope },
       include: {
         tickets: true,
       },
@@ -517,7 +537,7 @@ export class OrderService {
   /**
    * List orders with pagination
    */
-  async listOrders(params: ListOrdersParams): Promise<PaginatedOrders> {
+  async listOrders(params: ListOrdersParams, actorId?: string): Promise<PaginatedOrders> {
     const { page = 1, limit = 20, status, userId, eventId } = params;
     const cappedLimit = Math.min(Math.max(1, limit), 100);
     const safePage = Math.max(1, page);
@@ -528,9 +548,13 @@ export class OrderService {
     if (userId) where.userId = userId;
     if (eventId) where.eventId = eventId;
 
+    // AND prevents buyer/event query filters from replacing the actor fence.
+    const scopedWhere: Prisma.OrderWhereInput = actorId
+      ? { AND: [where, await this.actorOrderScope(actorId)] } : where;
+
     const [orders, total]: [Order[], number] = await Promise.all([
       prisma.order.findMany({
-        where,
+        where: scopedWhere,
         skip,
         take: cappedLimit,
         orderBy: { createdAt: 'desc' },
@@ -560,7 +584,7 @@ export class OrderService {
           },
         },
       }),
-      prisma.order.count({ where }),
+      prisma.order.count({ where: scopedWhere }),
     ]);
 
     return {
@@ -577,9 +601,10 @@ export class OrderService {
   /**
    * Refund an order (ADMIN only)
    */
-  async refundOrder(id: string): Promise<Order> {
-    const order = await prisma.order.findUnique({
-      where: { id },
+  async refundOrder(id: string, actorId?: string): Promise<Order> {
+    const scope = actorId ? await this.actorOrderScope(actorId, 'refund') : {};
+    const order = await prisma.order.findFirst({
+      where: { id, ...scope },
       include: { tickets: true },
     });
 
