@@ -1,0 +1,9 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_57|tixmo57|127.0.0.1|29859
+PONG
+TASK170_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task143final.YUCP6a pg_pid=1226152 redis_pid=1226165 pgport=29859 redisport=58091
+FINAL_SOURCE_IDENTITY_OK
+waiting for server to shut down.... done
+server stopped
+TASK170_CLEANUP pg_pid=1226152 redis_pid=1226165 pgport=29859 redisport=58091
