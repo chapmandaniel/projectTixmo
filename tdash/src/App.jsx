@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import React, { Suspense, lazy, useState, useEffect, useRef } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate, matchPath } from 'react-router-dom';
 import { auth } from './lib/auth';
 import {
     ACCESS_TOKEN_KEY,
@@ -119,6 +119,15 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
 const App = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const latestLocation = useRef(location);
+    latestLocation.current = location;
+    const preserveCheckoutReturn = () => {
+        const current = latestLocation.current;
+        const query = new URLSearchParams(current.search);
+        return matchPath('/checkout/:slug', current.pathname)
+            && ['orderId', 'redirect_status', 'payment_intent', 'payment_intent_client_secret']
+                .some((field) => query.has(field));
+    };
     const [isDark, setIsDark] = useState(true);
     const [user, setUser] = useState(auth.getCurrentUser());
     const [loading, setLoading] = useState(true);
@@ -163,7 +172,7 @@ const App = () => {
             }
 
             setRedirectToDashboardAfterLogin(false);
-            navigate('/dashboard', { replace: true });
+            if (!preserveCheckoutReturn()) navigate('/dashboard', { replace: true });
             setUser(null);
         };
         window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
@@ -171,7 +180,7 @@ const App = () => {
         const handleStorage = (event) => {
             if (event.key === ACCESS_TOKEN_KEY && !event.newValue) {
                 setRedirectToDashboardAfterLogin(false);
-                navigate('/dashboard', { replace: true });
+                if (!preserveCheckoutReturn()) navigate('/dashboard', { replace: true });
                 setUser(null);
             }
 

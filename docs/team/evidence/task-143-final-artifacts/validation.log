@@ -1,0 +1,5 @@
+runtime_exit=0
+PG1226152 absent; Redis1226165 absent
+TCP29859 empty; TCP58091 empty
+HEAD source cmp/diff exit0
+19suites82tests passed; APIbuild0; migrate27 exit0

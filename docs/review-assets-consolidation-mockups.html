@@ -1,0 +1,1121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tixmo Assets Review Consolidation Mockups</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Exo:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --shell: #151521;
+      --panel: #1e1e2d;
+      --panel-alt: #232336;
+      --panel-deep: #171723;
+      --border: #2b2b40;
+      --border-strong: #31324a;
+      --text: #f2f2f7;
+      --muted: #a1a5b7;
+      --subtle: #70738a;
+      --pink: #ff3366;
+      --orange: #ff8a3d;
+      --sky: #38bdf8;
+      --green: #2dd4bf;
+      --amber: #f59e0b;
+      --rose: #fb7185;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--shell);
+      color: var(--text);
+      font-family: Exo, system-ui, sans-serif;
+      letter-spacing: 0;
+    }
+
+    .mockup-page {
+      min-height: 100vh;
+      padding: 34px;
+      background:
+        radial-gradient(circle at 16% 12%, rgba(255, 51, 102, 0.14), transparent 30%),
+        radial-gradient(circle at 90% 0%, rgba(56, 189, 248, 0.12), transparent 28%),
+        var(--shell);
+    }
+
+    .mockup-index {
+      max-width: 1440px;
+      margin: 0 auto 28px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .mockup-index h1 {
+      margin: 0;
+      font-size: 38px;
+      font-weight: 300;
+    }
+
+    .mockup-index p {
+      margin: 8px 0 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .screen {
+      width: 1440px;
+      min-height: 920px;
+      margin: 0 auto 48px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--shell);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
+    }
+
+    body.capture .mockup-page {
+      min-height: 0;
+      padding: 0;
+      background: var(--shell);
+    }
+
+    body.capture .mockup-index {
+      display: none;
+    }
+
+    body.capture .screen {
+      display: none;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    body.capture .screen.active-capture {
+      display: block;
+    }
+
+    .topbar {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding: 0 28px;
+      border-bottom: 1px solid rgba(49, 50, 74, 0.75);
+      background: rgba(30, 30, 45, 0.9);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 150px;
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .logo-mark {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #f2f2f7 0 52%, #b026ff 53% 100%);
+    }
+
+    .logo-mark::after {
+      content: "";
+      position: absolute;
+      right: -6px;
+      top: -7px;
+      width: 18px;
+      height: 18px;
+      border-top: 7px solid #b026ff;
+      border-right: 7px solid #b026ff;
+      transform: rotate(45deg);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .nav-item {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 38px;
+      padding: 0 13px;
+      border-radius: 8px;
+      color: #8e8fa6;
+      font-size: 14px;
+    }
+
+    .nav-item.active {
+      background: #2a2b40;
+      color: #fff;
+    }
+
+    .nav-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--pink);
+      color: white;
+      font-size: 11px;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      background: var(--panel-alt);
+      font-weight: 600;
+    }
+
+    .workspace {
+      padding: 28px;
+    }
+
+    .titlebar {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      justify-content: space-between;
+      gap: 28px;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background:
+        linear-gradient(105deg, rgba(255, 51, 102, 0.08), transparent 28%),
+        linear-gradient(160deg, rgba(56, 189, 248, 0.1), transparent 42%),
+        var(--panel);
+    }
+
+    .titlebar::before,
+    .panel::before,
+    .asset-card::before,
+    .drawer::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--pink), var(--orange));
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      background: var(--panel-alt);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 300;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+    }
+
+    .titlebar h2 {
+      margin: 14px 0 8px;
+      font-size: 48px;
+      font-weight: 300;
+      line-height: 1.05;
+    }
+
+    .titlebar p {
+      margin: 0;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel-alt);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .btn.primary {
+      border-color: var(--pink);
+      background: var(--pink);
+      color: #fff;
+    }
+
+    .btn.sky {
+      border-color: rgba(56, 189, 248, 0.55);
+      background: #0ea5e9;
+      color: #fff;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 22px 0;
+      padding: 6px;
+      width: fit-content;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-deep);
+    }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 38px;
+      padding: 0 14px;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tab.active {
+      background: var(--panel-alt);
+      color: #fff;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr) 360px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .panel.pad {
+      padding: 18px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel-title h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+    }
+
+    .folder-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .folder {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 42px;
+      padding: 0 12px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .folder.active {
+      border-color: rgba(255, 51, 102, 0.35);
+      background: rgba(255, 51, 102, 0.12);
+      color: #fff;
+    }
+
+    .folder small {
+      color: var(--subtle);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 150px 150px;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .input,
+    .select {
+      height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel-alt);
+      color: var(--muted);
+      padding: 0 13px;
+      font-size: 13px;
+    }
+
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .asset-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #1b1b2b;
+    }
+
+    .asset-card.selected {
+      border-color: rgba(56, 189, 248, 0.65);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2);
+    }
+
+    .thumb {
+      height: 176px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(56, 189, 248, 0.25), transparent 38%),
+        linear-gradient(45deg, #361629, #1b2a44 64%, #0e1322);
+    }
+
+    .thumb.poster-one::after,
+    .thumb.poster-two::after,
+    .thumb.poster-three::after {
+      content: "";
+      position: absolute;
+      inset: 24px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background:
+        linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent),
+        radial-gradient(circle at 64% 34%, rgba(255, 255, 255, 0.65) 0 3px, transparent 4px),
+        linear-gradient(160deg, rgba(255, 51, 102, 0.5), transparent 42%),
+        linear-gradient(20deg, rgba(56, 189, 248, 0.42), transparent 55%);
+    }
+
+    .thumb.poster-two {
+      background: linear-gradient(140deg, #121827, #353451 55%, #3f142e);
+    }
+
+    .thumb.poster-three {
+      background: linear-gradient(140deg, #1b1433, #2c3947 56%, #572c1e);
+    }
+
+    .asset-body {
+      padding: 14px;
+    }
+
+    .asset-body h4 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      font-weight: 400;
+    }
+
+    .asset-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: var(--panel-alt);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status.review {
+      border-color: rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.12);
+      color: #bae6fd;
+    }
+
+    .status.approved {
+      border-color: rgba(45, 212, 191, 0.35);
+      background: rgba(45, 212, 191, 0.12);
+      color: #99f6e4;
+    }
+
+    .status.changes {
+      border-color: rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.12);
+      color: #fde68a;
+    }
+
+    .inspector {
+      display: grid;
+      gap: 16px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .metric {
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-deep);
+    }
+
+    .metric small {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 24px;
+      font-weight: 300;
+    }
+
+    .review-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .review-row {
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-deep);
+    }
+
+    .review-row h4,
+    .comment h4 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .review-row p,
+    .comment p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .split-detail {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 420px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .preview-stage {
+      min-height: 590px;
+      padding: 22px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 18px;
+    }
+
+    .version-pills {
+      display: flex;
+      gap: 8px;
+    }
+
+    .version-pills span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      min-width: 58px;
+      border-radius: 6px;
+      background: var(--panel-alt);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .version-pills span.active {
+      background: #0ea5e9;
+      color: white;
+    }
+
+    .big-poster {
+      min-height: 420px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255, 51, 102, 0.45), transparent 33%),
+        linear-gradient(35deg, rgba(56, 189, 248, 0.35), transparent 55%),
+        linear-gradient(160deg, #0a0c17, #24314a 48%, #471633);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .big-poster::before {
+      content: "HARBORLIGHT";
+      position: absolute;
+      left: 42px;
+      top: 44px;
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .big-poster::after {
+      content: "LAUNCH ARTWORK V3";
+      position: absolute;
+      left: 44px;
+      bottom: 44px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 18px;
+      letter-spacing: 0.2em;
+    }
+
+    .drawer {
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .drawer h3 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      font-weight: 300;
+    }
+
+    .drawer p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .decision-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin: 18px 0;
+    }
+
+    .decision {
+      min-height: 44px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel-deep);
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .decision.approve {
+      border-color: rgba(45, 212, 191, 0.35);
+      background: rgba(45, 212, 191, 0.12);
+    }
+
+    .decision.change {
+      border-color: rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.12);
+    }
+
+    .decision.decline {
+      border-color: rgba(251, 113, 133, 0.35);
+      background: rgba(251, 113, 133, 0.12);
+    }
+
+    .comments {
+      display: grid;
+      gap: 10px;
+    }
+
+    .comment {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 13px;
+      background: var(--panel-deep);
+    }
+
+    .modal-screen {
+      position: relative;
+    }
+
+    .modal-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.58);
+    }
+
+    .modal {
+      position: absolute;
+      z-index: 2;
+      inset: 92px 0 auto;
+      width: 820px;
+      margin: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #111827;
+      box-shadow: 0 28px 80px rgba(0,0,0,0.55);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 300;
+    }
+
+    .modal-header p {
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    .modal-body {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .field .input {
+      width: 100%;
+      background: #0b1118;
+    }
+
+    .dropzone {
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      border: 1px dashed var(--border-strong);
+      border-radius: 8px;
+      background: #0b1118;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .reviewer-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .reviewer-chips span {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel-alt);
+      font-size: 12px;
+    }
+
+    .public-screen {
+      min-height: 900px;
+      padding: 30px;
+      background:
+        linear-gradient(135deg, rgba(255, 51, 102, 0.08), transparent 34%),
+        var(--shell);
+    }
+
+    .public-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .public-header h2 {
+      margin: 10px 0 0;
+      font-size: 42px;
+      font-weight: 300;
+    }
+
+    .public-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(380px, 0.9fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .footer-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <main class="mockup-page">
+    <div class="mockup-index">
+      <div>
+        <h1>Assets Review Consolidation Mockups</h1>
+        <p>Static screenshots for the proposed shift from a standalone Review Portal into an Assets-centered creative workspace.</p>
+      </div>
+      <span class="eyebrow">planning mockups</span>
+    </div>
+
+    <section id="workspace" class="screen" data-screen="workspace">
+      <div class="topbar">
+        <div class="logo"><span class="logo-mark"></span>tixmo</div>
+        <nav class="nav">
+          <span class="nav-item">Home</span>
+          <span class="nav-item">Events</span>
+          <span class="nav-item">Tasks</span>
+          <span class="nav-item">Team</span>
+          <span class="nav-item active">Assets <span class="nav-badge">4</span></span>
+          <span class="nav-item">Analytics</span>
+          <span class="nav-item">Settings</span>
+        </nav>
+        <div class="user-chip">AS</div>
+      </div>
+      <div class="workspace">
+        <header class="titlebar">
+          <div>
+            <span class="eyebrow">creative workspace</span>
+            <h2>Assets</h2>
+            <p>Browse approved files, manage review packages, and share event-ready creative from one workspace.</p>
+          </div>
+          <div class="actions">
+            <button class="btn">New folder</button>
+            <button class="btn sky">Request review</button>
+            <button class="btn primary">Upload assets</button>
+          </div>
+        </header>
+
+        <div class="tabs">
+          <span class="tab active">Library <span class="status">32</span></span>
+          <span class="tab">In Review <span class="status review">4</span></span>
+          <span class="tab">Shared <span class="status">6</span></span>
+        </div>
+
+        <div class="content-grid">
+          <aside class="panel pad">
+            <div class="panel-title"><h3>Folders</h3></div>
+            <div class="folder-list">
+              <div class="folder active"><span>All assets</span><small>32</small></div>
+              <div class="folder"><span>Brand library</span><small>8</small></div>
+              <div class="folder"><span>Harborlight Summer Session</span><small>17</small></div>
+              <div class="folder"><span>Sponsor preview night</span><small>5</small></div>
+              <div class="folder"><span>Archive</span><small>2</small></div>
+            </div>
+          </aside>
+
+          <section class="panel pad">
+            <div class="toolbar">
+              <div class="input">Search assets, reviewers, events...</div>
+              <div class="select">Type: All</div>
+              <div class="select">Sort: Latest</div>
+            </div>
+            <div class="asset-grid">
+              <article class="asset-card selected">
+                <div class="thumb poster-one"></div>
+                <div class="asset-body">
+                  <span class="status review">In review</span>
+                  <h4>Harborlight campaign artwork</h4>
+                  <div class="asset-meta"><span>Summer Session</span><span>v3</span></div>
+                </div>
+              </article>
+              <article class="asset-card">
+                <div class="thumb poster-two"></div>
+                <div class="asset-body">
+                  <span class="status approved">Approved review</span>
+                  <h4>Main poster lockup</h4>
+                  <div class="asset-meta"><span>Brand Kit</span><span>2.1 MB</span></div>
+                </div>
+              </article>
+              <article class="asset-card">
+                <div class="thumb poster-three"></div>
+                <div class="asset-body">
+                  <span class="status changes">Changes requested</span>
+                  <h4>VIP lounge social cutdowns</h4>
+                  <div class="asset-meta"><span>Sponsor preview</span><span>4 files</span></div>
+                </div>
+              </article>
+              <article class="asset-card">
+                <div class="thumb poster-two"></div>
+                <div class="asset-body">
+                  <span class="status">Shared</span>
+                  <h4>Market demo logo pack</h4>
+                  <div class="asset-meta"><span>Brand library</span><span>EPS, PNG</span></div>
+                </div>
+              </article>
+              <article class="asset-card">
+                <div class="thumb poster-one"></div>
+                <div class="asset-body">
+                  <span class="status approved">Ready</span>
+                  <h4>Artist announcement tile</h4>
+                  <div class="asset-meta"><span>Summer Session</span><span>Story crop</span></div>
+                </div>
+              </article>
+              <article class="asset-card">
+                <div class="thumb poster-three"></div>
+                <div class="asset-body">
+                  <span class="status">Draft upload</span>
+                  <h4>Stage motion reference</h4>
+                  <div class="asset-meta"><span>Video</span><span>18 MB</span></div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <aside class="inspector">
+            <section class="panel pad">
+              <div class="panel-title"><h3>Review status</h3><span class="status review">Active</span></div>
+              <div class="metrics">
+                <div class="metric"><small>Reviewers</small><strong>3</strong></div>
+                <div class="metric"><small>Decisions</small><strong>1/3</strong></div>
+                <div class="metric"><small>Due</small><strong>2d</strong></div>
+              </div>
+            </section>
+            <section class="panel pad">
+              <div class="panel-title"><h3>Active reviews</h3></div>
+              <div class="review-list">
+                <div class="review-row"><h4>Harborlight campaign artwork</h4><p>Rae Artist Management approved with one direction note.</p></div>
+                <div class="review-row"><h4>VIP lounge social cutdowns</h4><p>Agent requested safer logo contrast on mobile crop.</p></div>
+                <div class="review-row"><h4>Sponsor preview deck</h4><p>Waiting on internal marketing decision.</p></div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="review-detail" class="screen" data-screen="review-detail">
+      <div class="topbar">
+        <div class="logo"><span class="logo-mark"></span>tixmo</div>
+        <nav class="nav">
+          <span class="nav-item">Home</span>
+          <span class="nav-item">Events</span>
+          <span class="nav-item active">Assets <span class="nav-badge">4</span></span>
+          <span class="nav-item">Analytics</span>
+        </nav>
+        <div class="user-chip">AS</div>
+      </div>
+      <div class="workspace">
+        <header class="titlebar">
+          <div>
+            <span class="eyebrow">assets / in review / harborlight</span>
+            <h2>Harborlight campaign artwork</h2>
+            <p>Versioned review package with comments, reviewer status, and the final library promotion action in one place.</p>
+          </div>
+          <div class="actions">
+            <button class="btn">Back to assets</button>
+            <button class="btn">Upload revision</button>
+            <button class="btn primary">Add approved to library</button>
+          </div>
+        </header>
+
+        <div class="split-detail" style="margin-top: 22px;">
+          <section class="panel preview-stage">
+            <div class="version-pills"><span>v1</span><span>v2</span><span class="active">v3</span></div>
+            <div class="big-poster"></div>
+            <div class="asset-meta">
+              <span>Harborlight Summer Session / Jordan Vale / Due Jun 14, 2026</span>
+              <span>3 files in latest revision</span>
+            </div>
+          </section>
+          <aside class="drawer">
+            <span class="status changes">Changes requested</span>
+            <h3>Review thread</h3>
+            <p>External reviewer notes are mixed with internal actions, but visibility remains token-scoped.</p>
+            <div class="decision-grid">
+              <button class="decision approve">Approve</button>
+              <button class="decision change">Request changes</button>
+              <button class="decision decline">Decline</button>
+            </div>
+            <div class="comments">
+              <div class="comment"><h4>Rae Artist Management</h4><p>Approved directionally after contrast update.</p></div>
+              <div class="comment"><h4>Jordan Vale</h4><p>Uploaded v3 with sponsor mark moved away from the artist lockup.</p></div>
+              <div class="comment"><h4>Marketing Ops</h4><p>Ready to promote once management approves the latest crop.</p></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="request-review" class="screen modal-screen" data-screen="request-review">
+      <div class="topbar">
+        <div class="logo"><span class="logo-mark"></span>tixmo</div>
+        <nav class="nav"><span class="nav-item active">Assets <span class="nav-badge">4</span></span></nav>
+        <div class="user-chip">AS</div>
+      </div>
+      <div class="workspace">
+        <header class="titlebar">
+          <div>
+            <span class="eyebrow">creative workspace</span>
+            <h2>Assets</h2>
+            <p>Request review from selected files or upload a new package without leaving Assets.</p>
+          </div>
+          <div class="actions"><button class="btn sky">Request review</button><button class="btn primary">Upload assets</button></div>
+        </header>
+        <div class="tabs"><span class="tab active">Library</span><span class="tab">In Review</span><span class="tab">Shared</span></div>
+        <div class="asset-grid">
+          <article class="asset-card selected"><div class="thumb poster-one"></div><div class="asset-body"><span class="status">Selected</span><h4>Harborlight Campaign V3.png</h4></div></article>
+          <article class="asset-card selected"><div class="thumb poster-two"></div><div class="asset-body"><span class="status">Selected</span><h4>Story Crop 09x16.png</h4></div></article>
+          <article class="asset-card"><div class="thumb poster-three"></div><div class="asset-body"><span class="status">Library</span><h4>Logo lockup.eps</h4></div></article>
+        </div>
+      </div>
+      <div class="modal">
+        <div class="modal-header">
+          <div>
+            <h3>Request asset review</h3>
+            <p>Create a review package from selected assets, set a deadline, and invite reviewers.</p>
+          </div>
+          <button class="btn">Close</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field"><label>Event</label><div class="input">Harborlight Summer Session</div></div>
+            <div class="field"><label>Deadline</label><div class="input">Jun 14, 2026, 5:00 PM</div></div>
+            <div class="field"><label>Package title</label><div class="input">Harborlight campaign artwork</div></div>
+            <div class="field"><label>Review focus</label><div class="input">Logo contrast, date lockup, sponsor placement</div></div>
+          </div>
+          <div class="dropzone">
+            <strong>2 selected assets</strong>
+            <span>Harborlight Campaign V3.png and Story Crop 09x16.png</span>
+          </div>
+          <div class="reviewer-chips">
+            <span>artist.manager@example.test · Management</span>
+            <span>agent@example.test · Agent</span>
+            <span>marketing@example.test · Internal</span>
+          </div>
+          <div class="footer-actions">
+            <button class="btn">Save draft</button>
+            <button class="btn primary">Send review links</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="external-review" class="screen public-screen" data-screen="external-review">
+      <header class="public-header">
+        <div>
+          <span class="eyebrow">secure asset review</span>
+          <h2>Harborlight campaign artwork</h2>
+          <p style="color: var(--muted); margin: 8px 0 0;">Tixmo shared this versioned package for decision and comments.</p>
+        </div>
+        <span class="status review">Link expires Jun 19, 2026</span>
+      </header>
+      <div class="public-layout">
+        <section class="panel preview-stage">
+          <div class="version-pills"><span>v1</span><span>v2</span><span class="active">v3</span></div>
+          <div class="big-poster"></div>
+          <div class="asset-meta"><span>Harborlight Campaign V3.png</span><span><button class="btn">Download</button></span></div>
+        </section>
+        <aside class="drawer">
+          <span class="status changes">Current decision: changes requested</span>
+          <h3>Asset review</h3>
+          <p>Decision actions stay separate from read-only folder shares, but the visual language now matches Assets.</p>
+          <div class="decision-grid">
+            <button class="decision approve">Approve</button>
+            <button class="decision change">Request changes</button>
+            <button class="decision decline">Decline</button>
+          </div>
+          <section class="panel pad" style="margin-bottom: 14px;">
+            <div class="panel-title"><h3>Reviewers</h3><span class="status">3</span></div>
+            <div class="review-row"><h4>Rae Artist Management</h4><p>Management · you</p></div>
+            <div class="review-row" style="margin-top: 8px;"><h4>agent@example.test</h4><p>Agent · invited</p></div>
+          </section>
+          <div class="comments">
+            <div class="comment"><h4>Rae Artist Management</h4><p>Please increase artist logo contrast on the mobile story crop.</p></div>
+            <div class="comment"><h4>Jordan Vale</h4><p>Uploaded v3 and moved the sponsor mark below the date line.</p></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <script>
+    const target = window.location.hash.replace('#', '');
+    if (target) {
+      const screen = document.querySelector(`[data-screen="${target}"]`);
+      if (screen) {
+        document.body.classList.add('capture');
+        screen.classList.add('active-capture');
+      }
+    }
+  </script>
+</body>
+</html>

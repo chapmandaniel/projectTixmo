@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Smartphone, History, PowerOff } from 'lucide-react';
 import api from '../lib/api';
 import {
@@ -16,12 +16,12 @@ const extractScannerPayload = (body) => {
     const payload = body?.data || body || {};
 
     if (Array.isArray(payload)) {
-        return { items: payload, pages: body?.pagination?.pages || 1 };
+        return { items: payload, pages: body?.pagination?.pages || body?.meta?.pages || 1 };
     }
 
     return {
         items: payload.scanners || payload.data?.scanners || [],
-        pages: payload.pagination?.pages || body?.pagination?.pages || 1,
+        pages: payload.pagination?.pages || body?.pagination?.pages || body?.meta?.pages || 1,
     };
 };
 
@@ -29,12 +29,12 @@ const extractLogPayload = (body) => {
     const payload = body?.data || body || {};
 
     if (Array.isArray(payload)) {
-        return { items: payload, pages: body?.pagination?.pages || 1 };
+        return { items: payload, pages: body?.pagination?.pages || body?.meta?.pages || 1 };
     }
 
     return {
         items: payload.scanLogs || payload.logs || payload.data?.scanLogs || [],
-        pages: payload.pagination?.pages || body?.pagination?.pages || 1,
+        pages: payload.pagination?.pages || body?.pagination?.pages || body?.meta?.pages || 1,
     };
 };
 
@@ -80,6 +80,8 @@ const ScannersView = ({
     const [scanners, setScanners] = useState([]);
     const [logs, setLogs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [fetchError, setFetchError] = useState(null);
+    const latestRequest = useRef(0);
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -90,43 +92,35 @@ const ScannersView = ({
         } else {
             fetchLogs();
         }
+        return () => { latestRequest.current += 1; };
     }, [activeTab, page]);
 
-    const fetchScanners = async () => {
+    const fetchCollection = async (tab) => {
+        const request = ++latestRequest.current;
+        setIsLoading(true);
+        setFetchError(null);
         try {
-            setIsLoading(true);
-            const params = { page, limit: 10 };
-            // If user has organizationId, we could pass it, but admin might see all?
-            // Usually API filters by user's permission scope automatically.
-            const response = await api.get('/scanners', { params });
-            if (response.data.success) {
-                const payload = extractScannerPayload(response.data);
-                setScanners(payload.items);
-                setTotalPages(payload.pages);
-            }
-        } catch (error) {
-            console.error('Failed to fetch scanners:', error);
+            const response = await api.get(tab === 'scanners' ? '/scanners' : '/scanners/logs', {
+                params: { page, limit: tab === 'scanners' ? 10 : 20 },
+            });
+            if (!response.data?.success) throw new Error('Unsuccessful scanner response');
+            const payload = tab === 'scanners'
+                ? extractScannerPayload(response.data)
+                : extractLogPayload(response.data);
+            if (request !== latestRequest.current) return;
+            if (tab === 'scanners') setScanners(payload.items);
+            else setLogs(payload.items);
+            setTotalPages(payload.pages);
+        } catch {
+            if (request !== latestRequest.current) return;
+            setFetchError(tab === 'scanners' ? 'Unable to load scanners' : 'Unable to load scan logs');
         } finally {
-            setIsLoading(false);
+            if (request === latestRequest.current) setIsLoading(false);
         }
     };
 
-    const fetchLogs = async () => {
-        try {
-            setIsLoading(true);
-            const params = { page, limit: 20 };
-            const response = await api.get('/scanners/logs', { params });
-            if (response.data.success) {
-                const payload = extractLogPayload(response.data);
-                setLogs(payload.items);
-                setTotalPages(payload.pages);
-            }
-        } catch (error) {
-            console.error('Failed to fetch logs:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const fetchScanners = () => fetchCollection('scanners');
+    const fetchLogs = () => fetchCollection('logs');
 
     const handleRevoke = async (id) => {
         if (!window.confirm('Are you sure you want to revoke this scanner? It will no longer be able to scan tickets.')) return;
@@ -203,6 +197,20 @@ const ScannersView = ({
                     <div className="p-12 text-center sm:p-20">
                         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-dashboard-accent"></div>
                         <p className={cn('mt-4 text-sm font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>Loading...</p>
+                    </div>
+                ) : fetchError ? (
+                    <div role="alert">
+                        <DashboardEmptyState
+                            isDark={isDark}
+                            title={fetchError}
+                            description={`Page ${page} could not be loaded. Check your connection and try again.`}
+                            className="m-4"
+                            action={(
+                                <DashboardButton isDark={isDark} onClick={() => fetchCollection(activeTab)}>
+                                    Try again
+                                </DashboardButton>
+                            )}
+                        />
                     </div>
                 ) : activeTab === 'scanners' ? (
                     scanners.length === 0 ? (
@@ -368,7 +376,7 @@ const ScannersView = ({
                 )}
             </DashboardSurface>
 
-            {totalPages > 1 ? (
+            {!isLoading && !fetchError && totalPages > 1 ? (
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className={cn('text-sm font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>
                         Page {page} of {totalPages}

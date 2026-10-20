@@ -19,8 +19,12 @@ export const getActorScope = async (req: AuthRequest): Promise<ActorScope> => {
     throw ApiError.unauthorized('Authentication required');
   }
 
+  return getActorScopeById(req.user.userId);
+};
+
+export const getActorScopeById = async (userId: string): Promise<ActorScope> => {
   const user = await prisma.user.findUnique({
-    where: { id: req.user.userId },
+    where: { id: userId },
     select: {
       id: true,
       email: true,

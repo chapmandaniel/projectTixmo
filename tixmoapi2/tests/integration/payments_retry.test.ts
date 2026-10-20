@@ -69,7 +69,7 @@ describe('Order Confirmation Retry Logic', () => {
   it('should retry order confirmation on failure and alert admin after exhaustion', async () => {
     // Mock confirmOrder to ALWAYS fail
     const confirmOrderSpy = jest
-      .spyOn(orderService, 'confirmOrder')
+      .spyOn(orderService, 'confirmOrderInTransaction')
       .mockRejectedValue(new Error('DB Timeout'));
 
     // Trigger the webhook handler (manual call to service since we don't want to mock Stripe if possible)
@@ -108,7 +108,7 @@ describe('Order Confirmation Retry Logic', () => {
     // Mock confirmOrder to fail twice then succeed
     let attempts = 0;
     const confirmOrderSpy = jest
-      .spyOn(orderService, 'confirmOrder')
+      .spyOn(orderService, 'confirmOrderInTransaction')
       .mockImplementation(async () => {
         attempts++;
         if (attempts < 3) throw new Error('Flaky DB');

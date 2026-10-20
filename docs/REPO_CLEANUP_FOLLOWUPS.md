@@ -10,5 +10,5 @@ This file tracks ideas from deleted stale branches that may be worth re-implemen
 ## Conditional
 
 - [ ] If public event detail caching is reintroduced, add explicit invalidation for event update/delete/publish/cancel paths. Current V1 checkout keeps public event detail uncached for freshness, so the deleted `pr-43` cache-invalidation branch is not needed now.
-- [ ] Add focused payment webhook tests for Stripe signature failures, including non-`Error` thrown values, and tighten `PaymentService.handleWebhook` catch typing without reverting the newer webhook idempotency work.
+- [x] Cover Stripe signature failures, including non-`Error` thrown values, with focused tests and defensive webhook catch handling (October 2026 consolidation).
 - [ ] Add a regression test that importing API environment config does not write sensitive startup/debug values to `console.log`.

@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { Decimal } from '@prisma/client/runtime/library';
 import { notificationService } from '../../utils/notificationService';
 import crypto from 'crypto';
+import { getActorScopeById, resolveOrganizationFilter } from '../../utils/tenantScope';
 
 import prisma from '../../config/prisma';
 import { config } from '../../config/environment';
@@ -42,6 +43,26 @@ interface PaginatedOrders {
 }
 
 export class OrderService {
+  // Only authenticated HTTP entrypoints pass actorId. Omission is reserved for
+  // trusted payment/free-order/expiry jobs; never populate it from query input.
+  private async actorOrderScope(
+    actorId: string,
+    action: 'read' | 'confirm' | 'refund' = 'read'
+  ): Promise<Prisma.OrderWhereInput> {
+    const actor = await getActorScopeById(actorId);
+    if (action === 'refund' && !['OWNER', 'ADMIN'].includes(actor.role)) {
+      throw ApiError.forbidden('Not authorized to refund orders');
+    }
+    if (action === 'confirm' && !['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'].includes(actor.role)) {
+      throw ApiError.forbidden('Not authorized to confirm orders');
+    }
+    if (!['OWNER', 'ADMIN', 'MANAGER'].includes(actor.role)) {
+      return { userId: actor.userId };
+    }
+    const organizationId = resolveOrganizationFilter(actor);
+    return organizationId ? { event: { organizationId } } : {};
+  }
+
   /**
    * Create a new order
    */
@@ -205,11 +226,24 @@ export class OrderService {
   /**
    * Get order by ID
    */
-  async getOrderById(id: string, userId?: string): Promise<Order | null> {
-    if (userId) {
+  // Consumer checkout-return reads never inherit operator/tenant privileges.
+  async getConsumerOrderRecovery(
+    id: string,
+    ownerId: string
+  ): Promise<Pick<Order, 'id' | 'status' | 'paymentStatus'> | null> {
+    if (!ownerId) throw ApiError.unauthorized();
+    return prisma.order.findFirst({
+      where: { id, userId: ownerId },
+      select: { id: true, status: true, paymentStatus: true },
+    });
+  }
+
+  async getOrderById(id: string, userId?: string, actorId?: string): Promise<Order | null> {
+    if (userId || actorId) {
+      const scope = actorId ? await this.actorOrderScope(actorId) : { userId };
       // when userId provided, findFirst with both id and userId
       const order = await prisma.order.findFirst({
-        where: { id, userId },
+        where: { id, ...scope },
         include: {
           tickets: {
             include: {
@@ -232,7 +266,7 @@ export class OrderService {
       const result = {
         ...order,
         tickets: order.tickets.map((ticket) =>
-          ticket.userId === userId
+          ticket.userId === (userId || actorId)
             ? ticket
             : {
                 ...ticket,
@@ -282,29 +316,36 @@ export class OrderService {
   /**
    * Confirm order (after payment)
    */
-  async confirmOrder(id: string): Promise<Order> {
-    return prisma.$transaction(async (tx) => {
-      await lockOrder(tx, id);
-      const order = await tx.order.findUnique({ where: { id }, include: { event: true } });
-      if (!order) throw ApiError.notFound('Order not found');
-      if (order.status === 'PAID') return order;
-      await tx.$queryRaw`SELECT id FROM events WHERE id = ${order.eventId} FOR UPDATE`;
-      const currentEvent = await tx.event.findUniqueOrThrow({ where: { id: order.eventId } });
-      if (
-        order.status !== 'PENDING' ||
-        (order.expiresAt && order.expiresAt <= new Date()) ||
-        currentEvent.deletedAt ||
-        !['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(currentEvent.status)
-      ) {
-        throw ApiError.conflict('Order can no longer be fulfilled');
-      }
-      await transitionInventory(tx, id, 'HELD', 'SOLD');
-      await transitionPromo(tx, id, 'USED');
-      return tx.order.update({
-        where: { id },
-        data: { status: 'PAID', paymentStatus: 'SUCCEEDED' },
-      });
-    });
+  async confirmOrder(id: string, actorId?: string): Promise<Order> {
+    const scope = actorId ? await this.actorOrderScope(actorId, 'confirm') : {};
+    if (actorId && !(await prisma.order.findFirst({ where: { id, ...scope } })))
+      throw ApiError.notFound('Order not found');
+    return prisma.$transaction((tx) => this.confirmOrderInTransaction(tx, id, scope));
+  }
+
+  // Reused by the webhook while its event-generation fence owns the transaction.
+  // Inventory, tiers, promos, event eligibility and order state commit together.
+  async confirmOrderInTransaction(
+    tx: Prisma.TransactionClient,
+    id: string,
+    scope: Prisma.OrderWhereInput = {}
+  ): Promise<Order> {
+    await lockOrder(tx, id);
+    const order = await tx.order.findFirst({ where: { id, ...scope }, include: { event: true } });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED') return order;
+    await tx.$queryRaw`SELECT id FROM events WHERE id = ${order.eventId} FOR UPDATE`;
+    const currentEvent = await tx.event.findUniqueOrThrow({ where: { id: order.eventId } });
+    if (
+      order.status !== 'PENDING' ||
+      (order.expiresAt && order.expiresAt <= new Date()) ||
+      currentEvent.deletedAt ||
+      !['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(currentEvent.status)
+    )
+      throw ApiError.conflict('Order can no longer be fulfilled');
+    await transitionInventory(tx, id, 'HELD', 'SOLD');
+    await transitionPromo(tx, id, 'USED');
+    return tx.order.update({ where: { id }, data: { status: 'PAID', paymentStatus: 'SUCCEEDED' } });
   }
 
   /**
@@ -379,26 +420,33 @@ export class OrderService {
   /**
    * Cancel order
    */
-  async cancelOrder(id: string, userId?: string): Promise<Order> {
-    return prisma.$transaction(async (tx) => {
-      await lockOrder(tx, id);
-      const order = await tx.order.findUnique({ where: { id } });
-      if (!order) throw ApiError.notFound('Order not found');
-      if (userId && order.userId !== userId)
-        throw ApiError.forbidden('You can only cancel your own orders');
-      if (order.status === 'CANCELLED') return order;
-      if (order.status !== 'PENDING')
-        throw ApiError.badRequest('Cannot cancel paid orders. Request a refund instead.');
-      await transitionInventory(tx, id, 'HELD', 'RELEASED');
-      await transitionPromo(tx, id, 'RELEASED');
-      return tx.order.update({ where: { id }, data: { status: 'CANCELLED' } });
-    });
+  async cancelOrder(id: string, userId?: string, actorId?: string): Promise<Order> {
+    const scope = actorId ? await this.actorOrderScope(actorId) : userId ? { userId } : {};
+    if ((actorId || userId) && !(await prisma.order.findFirst({ where: { id, ...scope } })))
+      throw ApiError.notFound('Order not found');
+    return prisma.$transaction((tx) => this.cancelOrderInTransaction(tx, id, scope));
+  }
+
+  async cancelOrderInTransaction(
+    tx: Prisma.TransactionClient,
+    id: string,
+    scope: Prisma.OrderWhereInput = {}
+  ): Promise<Order> {
+    await lockOrder(tx, id);
+    const order = await tx.order.findFirst({ where: { id, ...scope } });
+    if (!order) throw ApiError.notFound('Order not found');
+    if (order.status === 'CANCELLED') return order;
+    if (order.status !== 'PENDING')
+      throw ApiError.badRequest('Cannot cancel paid orders. Request a refund instead.');
+    await transitionInventory(tx, id, 'HELD', 'RELEASED');
+    await transitionPromo(tx, id, 'RELEASED');
+    return tx.order.update({ where: { id }, data: { status: 'CANCELLED' } });
   }
 
   /**
    * List orders with pagination
    */
-  async listOrders(params: ListOrdersParams): Promise<PaginatedOrders> {
+  async listOrders(params: ListOrdersParams, actorId?: string): Promise<PaginatedOrders> {
     const { page = 1, limit = 20, status, userId, eventId, search } = params;
     const cappedLimit = Math.min(Math.max(1, limit), 100);
     const safePage = Math.max(1, page);
@@ -416,9 +464,12 @@ export class OrderService {
         { user: { email: { contains: search, mode: 'insensitive' } } },
       ];
 
+    const scopedWhere: Prisma.OrderWhereInput = actorId
+      ? { AND: [where, await this.actorOrderScope(actorId)] }
+      : where;
     const [orders, total]: [Order[], number] = await Promise.all([
       prisma.order.findMany({
-        where,
+        where: scopedWhere,
         skip,
         take: cappedLimit,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -448,7 +499,7 @@ export class OrderService {
           },
         },
       }),
-      prisma.order.count({ where }),
+      prisma.order.count({ where: scopedWhere }),
     ]);
 
     return {
@@ -465,7 +516,12 @@ export class OrderService {
   /**
    * Refund an order (ADMIN only)
    */
-  async refundOrder(id: string): Promise<Order> {
+  async refundOrder(id: string, actorId?: string): Promise<Order> {
+    if (actorId) {
+      const scope = await this.actorOrderScope(actorId, 'refund');
+      if (!(await prisma.order.findFirst({ where: { id, ...scope } })))
+        throw ApiError.notFound('Order not found');
+    }
     const { paymentService } = await import('../payments/service');
     return paymentService.refundOrder(id);
   }

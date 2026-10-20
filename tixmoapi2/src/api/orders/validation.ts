@@ -23,3 +23,7 @@ export const listOrdersSchema = z.object({
     search: z.string().trim().max(200).optional(),
   }),
 });
+
+export const consumerOrderRecoverySchema = z.object({
+  params: z.object({ id: z.string().uuid('Invalid order ID') }),
+});

@@ -24,6 +24,16 @@ const steps = [
     args: ['--prefix', 'tixmoapi2', 'run', 'test:development'],
   },
   {
+    name: 'Root verification safety checks',
+    command: 'node',
+    args: ['--test', 'scripts/verification-safety.test.mjs', 'scripts/market-readiness-workflow.test.mjs', 'scripts/test-target.test.cjs'],
+  },
+  {
+    name: 'API build',
+    command: 'npm',
+    args: ['--prefix', 'tixmoapi2', 'run', 'build'],
+  },
+  {
     name: 'API verification',
     command: 'npm',
     args: ['run', 'verify:api'],

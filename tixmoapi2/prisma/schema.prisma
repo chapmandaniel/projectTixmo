@@ -336,6 +336,7 @@ model Order {
 }
 
 model PaymentWebhookEvent {
+  attemptGeneration BigInt @default(0) @map("attempt_generation")
   id              String    @id
   type            String
   paymentIntentId String?   @map("payment_intent_id")

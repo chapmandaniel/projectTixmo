@@ -1,0 +1,11 @@
+--- .task170-admission-enabled-source	2026-10-20 06:02:39.818430987 -0230
++++ tixmoapi2/src/api/payments/service.ts	2026-10-20 06:02:39.840560087 -0230
+@@ -11,7 +11,7 @@
+ class WebhookOwnershipLost extends Error {}
+ class PaymentIntentMismatch extends Error {}
+ // Deliberately disabled until task143 deterministic recovery acceptance is complete.
+-const EXPIRED_WEBHOOK_RECOVERY_ENABLED = true;
++const EXPIRED_WEBHOOK_RECOVERY_ENABLED = false;
+ 
+ const getPaymentIntentContext = (event: Stripe.Event) => {
+   const value = event.data.object as Partial<Stripe.PaymentIntent>;

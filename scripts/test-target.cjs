@@ -7,7 +7,7 @@ function assertDisposableTestTarget(env = process.env) {
   let target;
   try { target = new URL(env.TIXMO_TEST_DATABASE_URL); } catch { throw new Error('Invalid disposable test database target.'); }
   if (!['postgres:', 'postgresql:'].includes(target.protocol) || !LOOPBACK.has(target.hostname) ||
-      !/^\/tixmo_test(?:_[a-zA-Z0-9_]+)?$/.test(target.pathname) ||
+      !/^\/(?:tixmo_test(?:_[a-zA-Z0-9_]+)?|tixmo_disposable_[a-z0-9_]+)$/.test(target.pathname) ||
       (env.DATABASE_URL && env.DATABASE_URL !== env.TIXMO_TEST_DATABASE_URL)) {
     throw new Error('Refusing database reset: use a matching loopback tixmo_test database, never an inherited application target.');
   }

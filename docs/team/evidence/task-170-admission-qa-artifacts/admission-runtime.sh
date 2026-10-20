@@ -1,0 +1,158 @@
+set -euo pipefail
+runtime_root="/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root"
+export LD_LIBRARY_PATH="$runtime_root/usr/lib/x86_64-linux-gnu"
+pgbin="$runtime_root/usr/lib/postgresql/18/bin"
+owned_run=$(mktemp -d /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task170admission.XXXXXX)
+pgport=$(shuf -i 20000-39999 -n 1)
+redisport=$(shuf -i 40000-59999 -n 1)
+redis_pid=''
+pg_pid=''
+alive() {
+  test -r "/proc/$1/stat" || return 1
+  # A zombie is stopped and cannot retain listeners; its parent reaps it.
+  case "$(ps -o stat= -p "$1")" in Z*|'') return 1;; esac
+  kill -0 "$1" 2>/dev/null
+}
+owned_identity() {
+  kind=$1; pid=$2
+  test "$(stat -c %u "/proc/$pid" 2>/dev/null)" = "$(id -u)" || return 1
+  if test "$kind" = pg; then
+    test "$(head -n 1 "$owned_run/pg/postmaster.pid" 2>/dev/null)" = "$pid" || return 1
+    test "$(readlink -f "/proc/$pid/exe")" = "$(readlink -f "$pgbin/postgres")" || return 1
+    tr '\0' '\n' < "/proc/$pid/cmdline" | grep -Fxq -- "$owned_run/pg"
+  else
+    # Unreaped direct child PID cannot be recycled before wait.
+    test "$pid" = "$redis_pid" || return 1
+    test "$(ps -o ppid= -p "$pid" | tr -d ' ')" = "$$" || return 1
+    test "$(readlink -f "/proc/$pid/exe")" = \
+      "$(readlink -f "$runtime_root/usr/bin/redis-server")"
+  fi
+}
+stop_exact() {
+  kind=$1; pid=$2
+  test -n "$pid" || return 0
+  alive "$pid" || return 0
+  for signal in TERM KILL; do
+    owned_identity "$kind" "$pid" || return 1
+    kill -"$signal" "$pid" 2>/dev/null || return 1
+    for poll in {1..20}; do
+      alive "$pid" || return 0
+      sleep 0.1
+    done
+  done
+  return 1 # bounded deadline expired; report leftovers, never hang in wait
+}
+cleanup() {
+  original_status=$?
+  trap - EXIT INT TERM
+  set +e # All failures are collected; neither service may skip the other.
+  cleanup_failed=0
+  if test -z "$pg_pid" && test -f "$owned_run/pg/postmaster.pid"; then
+    pg_pid=$(head -n 1 "$owned_run/pg/postmaster.pid")
+  fi
+  if test -n "$pg_pid" && alive "$pg_pid"; then
+    if owned_identity pg "$pg_pid"; then
+      "$pgbin/pg_ctl" -D "$owned_run/pg" -m fast -w -t 5 stop || cleanup_failed=1
+      stop_exact pg "$pg_pid" || cleanup_failed=1
+    else cleanup_failed=1; fi
+  fi
+  stop_exact redis "$redis_pid" || cleanup_failed=1
+  # wait only after observed stopped/zombie; never wait for a live process.
+  if test -n "$redis_pid" && ! alive "$redis_pid"; then
+    wait "$redis_pid" >/dev/null 2>&1
+  fi
+  if test "$cleanup_failed" -ne 0; then
+    echo "Owned-runtime cleanup FAILED; inspect $owned_run; do not run another gate" >&2
+    exit 1
+  fi
+  echo "TASK170_CLEANUP pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"
+  ss -H -ltnp "sport = :$pgport or sport = :$redisport"
+  if { test -n "$pg_pid" && alive "$pg_pid"; } || { test -n "$redis_pid" && alive "$redis_pid"; }; then exit 1; fi
+  exit "$original_status"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+"$pgbin/initdb" -D "$owned_run/pg" \
+  -L "$runtime_root/usr/share/postgresql/18" --auth=trust \
+  --username=tixmo57 --encoding=UTF8 --no-locale > "$owned_run/initdb.log"
+"$pgbin/pg_ctl" -D "$owned_run/pg" -l "$owned_run/postgres.log" \
+  -o "-h 127.0.0.1 -p $pgport -k $owned_run" -w -t 10 start
+pg_pid=$(head -n 1 "$owned_run/pg/postmaster.pid")
+test "$(readlink -f "/proc/$pg_pid/exe")" = "$(readlink -f "$pgbin/postgres")"
+# Foreground mode gives the shell an exact unreaped child PID. No daemonize race.
+"$runtime_root/usr/bin/redis-server" --bind 127.0.0.1 --port "$redisport" \
+  --save '' --appendonly no --daemonize no --dir "$owned_run" \
+  --pidfile "$owned_run/redis.pid" --logfile "$owned_run/redis.log" \
+  --unixsocket "$owned_run/redis.sock" --unixsocketperm 700 &
+redis_pid=$!
+redis_ready=0
+for attempt in {1..30}; do
+  kill -0 "$redis_pid" 2>/dev/null || break
+  if test -S "$owned_run/redis.sock" &&
+    test "$("$runtime_root/usr/bin/redis-cli" -s "$owned_run/redis.sock" ping)" = PONG; then
+    redis_ready=1
+    break
+  fi
+  sleep 0.1
+done
+test "$redis_ready" = 1
+info_pid=$("$runtime_root/usr/bin/redis-cli" -s "$owned_run/redis.sock" info server |
+  tr -d '\r' | sed -n 's/^process_id://p')
+test "$info_pid" = "$redis_pid"
+test "$(readlink -f "/proc/$redis_pid/exe")" = \
+  "$(readlink -f "$runtime_root/usr/bin/redis-server")"
+# Fail closed unless each exact PID owns its requested loopback TCP listener.
+# No TCP probe or database access is allowed before these assertions.
+for pair in "$pgport:$pg_pid" "$redisport:$redis_pid"; do
+  port=${pair%:*}; pid=${pair#*:}
+  listener=$(ss -H -ltnp "sport = :$port")
+  test "$(printf '%s\n' "$listener" | wc -l)" = 1
+  printf '%s\n' "$listener" | rg -q "127\.0\.0\.1:$port .*pid=$pid,"
+done
+"$pgbin/createdb" -h 127.0.0.1 -p "$pgport" -U tixmo57 tixmo_disposable_57
+"$pgbin/psql" -h 127.0.0.1 -p "$pgport" -U tixmo57 \
+  -d tixmo_disposable_57 -Atc \
+  'select current_database(), current_user, inet_server_addr(), inet_server_port();'
+"$runtime_root/usr/bin/redis-cli" -h 127.0.0.1 -p "$redisport" -n 1 ping
+DATABASE_URL="postgresql://tixmo57@127.0.0.1:$pgport/tixmo_disposable_57" \
+REDIS_URL="redis://127.0.0.1:$redisport/1" TIXMO_ALLOW_DESTRUCTIVE_TESTS=1 \
+node -e 'require("./scripts/verification-safety.cjs").validateVerificationTargets(process.env)'
+export DATABASE_URL="postgresql://tixmo57@127.0.0.1:$pgport/tixmo_disposable_57" REDIS_URL="redis://127.0.0.1:$redisport/1" TIXMO_ALLOW_DESTRUCTIVE_TESTS=1 NODE_ENV=test
+export STRIPE_SECRET_KEY=sk_test_verify_api STRIPE_PUBLISHABLE_KEY=pk_test_verify_api STRIPE_WEBHOOK_SECRET=whsec_verify_api
+export JWT_SECRET=qa124-synthetic-jwt-fixture-not-a-real-credential JWT_REFRESH_SECRET=qa124-synthetic-refresh-fixture-not-a-real-credential SESSION_SECRET=qa124-synthetic-session-fixture-not-a-real-credential
+echo "TASK170_RUNTIME path=$owned_run pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"
+export TMPDIR="$owned_run"
+# Independent upgrade observation in a second NEW owned database, same guarded service.
+"$pgbin/createdb" -h 127.0.0.1 -p "$pgport" -U tixmo57 tixmo_disposable_170_upgrade
+upgrade_sql() { timeout --signal=TERM --kill-after=5s 30s "$pgbin/psql" -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -p "$pgport" -U tixmo57 -d tixmo_disposable_170_upgrade "$@"; }
+for migration in tixmoapi2/prisma/migrations/*/migration.sql; do
+ case "$migration" in *20261020120000*) break;; esac
+ upgrade_sql -f "$migration" >> .task170-upgrade-migrations.log 2>&1
+done
+upgrade_sql -f .task170-upgrade.sql > .task170-upgrade.log 2>&1
+timeout --signal=TERM --kill-after=5s 30s tixmoapi2/node_modules/.bin/prisma migrate deploy --schema tixmoapi2/prisma/schema.prisma > .task170-admission-migrate.log 2>&1
+run_test() { timeout --signal=TERM --kill-after=5s 60s npm --prefix tixmoapi2 test -- --cacheDirectory "$owned_run/jest-cache" --runInBand --runTestsByPath "$@"; }
+run_test tests/integration/payment-expired-candidate.test.ts tests/integration/payment-sequential-generation.test.ts tests/integration/payment-competing-claims.test.ts > .task170-admission-controls.log 2>&1
+cp tixmoapi2/src/api/payments/service.ts .task170-admission-enabled-source
+for mode in a d e; do
+ python3 .task170-admission-mutate.py "$mode"
+ diff -u .task170-admission-enabled-source tixmoapi2/src/api/payments/service.ts > ".task170-admission-mutant-$mode.diff" || test "$?" = 1
+ case "$mode" in
+ a) fixture=payment-expired-candidate;;
+ d) fixture=payment-sequential-generation;;
+ e) fixture=payment-competing-claims;;
+ esac
+ set +e
+ run_test "tests/integration/$fixture.test.ts" > ".task170-admission-mutant-$mode.log" 2>&1
+ mutant_rc=$?
+ set -e
+ cp .task170-admission-enabled-source tixmoapi2/src/api/payments/service.ts
+ cmp .task170-admission-enabled-source tixmoapi2/src/api/payments/service.ts
+ echo "MUTANT_$mode status=$mutant_rc candidate_bytes_restored"
+ test "$mutant_rc" = 1
+ ! rg -q 'timeout|TS[0-9]{4}|Test suite failed to run' ".task170-admission-mutant-$mode.log"
+ rg -q 'expect\(received\)' ".task170-admission-mutant-$mode.log"
+done
+timeout --signal=TERM --kill-after=5s 65s npm --prefix tixmoapi2 test -- --cacheDirectory "$owned_run/jest-cache" --runInBand --runTestsByPath tests/integration/payment-sequential-generation.test.ts tests/integration/payment-handler-ownership.test.ts tests/integration/payment-distinct-failure-prelock.test.ts tests/integration/payment-prelock-missing-intent.test.ts tests/integration/payment-cutoff-overflow.test.ts tests/integration/payment-admission-aba.test.ts tests/integration/payment-competing-claims.test.ts tests/integration/payment-failed-successor.test.ts tests/integration/payment-expired-candidate.test.ts tests/integration/payment-expired-successor.test.ts tests/integration/payment-fenced-checkpoint.test.ts tests/integration/payment-failed-retry.race.test.ts tests/integration/payment-distinct-success.race.test.ts tests/unit/payments.webhook-signature.test.ts tests/unit/payments.webhook-recovery.test.ts tests/orders-tenant.unit.test.ts tests/integration/order-double-confirm.race.test.ts tests/integration/order-confirm-cancel.race.test.ts tests/integration/order-confirm-expiry.race.test.ts > .task170-admission-regression.log 2>&1
+timeout --signal=TERM --kill-after=5s 40s npm --prefix tixmoapi2 run build > .task170-admission-enabled-build.log 2>&1

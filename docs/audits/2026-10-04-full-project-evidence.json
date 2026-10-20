@@ -1,0 +1,202 @@
+{
+  "auditDate": "2026-10-04",
+  "userRequest": "do a full audit on Tixmo project, so we can start planning next steps",
+  "branch": "codex/tixmo-full-audit-2026-10-04",
+  "revision": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+  "scopeModel": "One business per deployment; legitimate staff visibility is expected.",
+  "preExistingWork": {
+    "trackedChanges": 102,
+    "untrackedTopLevelEntries": 5,
+    "preserved": true
+  },
+  "applicationCodeChanged": false,
+  "productionWrites": false,
+  "verification": {
+    "runtime": {
+      "localNode": "24.0.2",
+      "railwayApiNode": "18.20.8",
+      "frontendDockerNodeMajor": 18,
+      "ciNodeMajor": 20
+    },
+    "freshInstalls": {
+      "frontend": "pass",
+      "api": "pass",
+      "flags": [
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "limitation": "Does not exercise installation hooks"
+    },
+    "builds": {
+      "frontend": "pass",
+      "api": "pass"
+    },
+    "apiTypecheck": "pass",
+    "apiLint": {
+      "errors": 0,
+      "warnings": 291
+    },
+    "designGuard": {
+      "result": "pass",
+      "existingBaselineViolations": 1055
+    },
+    "fullTests": {
+      "finalFreshInstall": {
+        "api": {
+          "suitesPassed": 52,
+          "suitesTotal": 53,
+          "testsPassed": 331,
+          "testsTotal": 332,
+          "failure": "Expired asset-library share fixture"
+        },
+        "frontend": {
+          "suitesPassed": 23,
+          "suitesTotal": 24,
+          "testsPassed": 113,
+          "testsTotal": 114,
+          "failure": "Past EventsView date fixtures"
+        }
+      },
+      "firstInstalledDependencyRun": {
+        "apiTestsPassed": 330,
+        "apiTestsTotal": 332,
+        "additionalFailure": "V1 smoke socket hang up; isolated rerun and final fresh suite pass"
+      },
+      "diagnosticClockRuns": {
+        "result": "Affected date suites pass in temporary copy only; repository tests unchanged"
+      },
+      "invalidHarnessRun": {
+        "result": "Discarded",
+        "reason": "First fresh API run used incorrect disposable-database password. Corrected before final measured run; not a project regression."
+      }
+    },
+    "database": {
+      "testTarget": "Disposable PostgreSQL17 database on loopback port55444; no original .env loaded",
+      "redisTarget": "Disposable Redis7 on loopback port56444; tests globally mock Redis",
+      "migrationReplay": {
+        "passed": 26,
+        "total": 26
+      },
+      "schemaDifference": "Approval-reminder unique-index naming only"
+    },
+    "launchGate": {
+      "strict": "fail",
+      "reportedGaps": 9,
+      "missingTargetAndManualCategories": 8,
+      "permanentLocalWarning": 1
+    }
+  },
+  "live": {
+    "environment": "Railway production",
+    "deployedApiAndFrontendRevision": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+    "activeServices": [
+      "API",
+      "Dashboard",
+      "PostgreSQL17",
+      "Redis"
+    ],
+    "startupCommand": "npx prisma migrate deploy && npm run db:seed && npm start",
+    "runtimeConfig": {
+      "apiUrlPopulated": true,
+      "privacyUrlPopulated": false,
+      "termsUrlPopulated": false,
+      "refundPolicyUrlPopulated": false,
+      "organizerTermsUrlPopulated": false,
+      "stripePublishableKeyPopulated": false,
+      "paymentCurrency": "usd"
+    },
+    "backendVariablesPopulated": {
+      "DATABASE_URL": true,
+      "REDIS_URL": true,
+      "JWT_SECRET": true,
+      "JWT_REFRESH_SECRET": true,
+      "SESSION_SECRET": true,
+      "POSTMARK_SERVER_TOKEN": true,
+      "S3_ACCESS_KEY_ID": true,
+      "S3_SECRET_ACCESS_KEY": true,
+      "S3_BUCKET_NAME": true,
+      "CLIENT_URL": true,
+      "STRIPE_SECRET_KEY": false,
+      "STRIPE_WEBHOOK_SECRET": false,
+      "SENTRY_DSN": false,
+      "SENTRY_RELEASE": false
+    },
+    "github": {
+      "mainProtected": false,
+      "uptimeWorkflow": "disabled_inactivity",
+      "lastInspectedUptimeRunId": 32681987003,
+      "lastUptimeBehavior": "Skipped both environments because target URLs not configured"
+    }
+  },
+  "browser": {
+    "tested": [
+      "Desktop login",
+      "390px mobile login",
+      "390px mobile checkout",
+      "Invalid reviewer link"
+    ],
+    "horizontalOverflowAt390px": false,
+    "sampledConsoleErrors": 0,
+    "liveMutations": false
+  },
+  "security": {
+    "scanId": "120c5ba5-cdd8-41a1-9221-fada01280788",
+    "sourceValidatedFindings": 16,
+    "severity": {
+      "high": 5,
+      "medium": 11
+    },
+    "method": "Independent standard source review, parent validation, benign exact-parser VM reproduction. No production exploitation.",
+    "tokenUsage": {
+      "cacheWriteInputTokens": 0,
+      "cachedInputTokens": 40402432,
+      "coverage": "complete",
+      "inputTokens": 42163227,
+      "outputTokens": 170580,
+      "reasoningOutputTokens": 36925,
+      "source": "codex_rollout",
+      "threadCount": 5,
+      "totalTokens": 42333807
+    },
+    "coverage": {
+      "sourceFilesFullyRead": 376,
+      "apiRuntime": 118,
+      "frontendRuntime": 74,
+      "completeness": "partial",
+      "reason": "Unavailable external acceptance and disclosure prerequisites; all API/frontend runtime source covered."
+    },
+    "snapshotWarning": [
+      "Working-tree contents changed while the scan was running; results were saved for the original snapshot."
+    ]
+  },
+  "limitations": [
+    "No authenticated production flows",
+    "No real payment/refund",
+    "No actual scanner client field test",
+    "No live restore/rollback",
+    "No live email delivery or S3 IAM proof",
+    "No production proxy sanitization proof",
+    "No load or distributed concurrency acceptance",
+    "Sampled public pages only; no complete accessibility audit"
+  ],
+  "sources": {
+    "http": "2026-10-04-evidence/public-http.json",
+    "productionDependencies": [
+      "2026-10-04-evidence/frontend-audit.json",
+      "2026-10-04-evidence/api-audit.json"
+    ],
+    "allDependencies": [
+      "2026-10-04-evidence/frontend-audit-all.json",
+      "2026-10-04-evidence/api-audit-all.json"
+    ],
+    "securityReport": "2026-10-04-security-report.md",
+    "nextSteps": "2026-10-04-next-steps.md"
+  },
+  "cleanup": {
+    "browserClosed": true,
+    "disposableContainersRemoved": true,
+    "colimaProfileRestoredStopped": true,
+    "trackedSourceFilesMatchedInitialCopy": 457
+  }
+}

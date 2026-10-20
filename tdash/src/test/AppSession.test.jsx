@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import App from '../App';
 import { AUTH_EXPIRED_EVENT, AUTH_EXPIRED_REASONS } from '../lib/session';
+
+const LocationProbe = () => {
+    const location = useLocation();
+    return <div data-testid="session-location">{location.pathname}</div>;
+};
 
 const loginMock = vi.fn();
 const logoutMock = vi.fn().mockResolvedValue(undefined);
@@ -41,7 +46,8 @@ describe('App session messaging', () => {
     it('shows an inactivity notice when the session expires', async () => {
         await act(async () => {
             render(
-                <MemoryRouter>
+                <MemoryRouter initialEntries={['/events/protected-link']}>
+                    <LocationProbe />
                     <App />
                 </MemoryRouter>
             );
@@ -53,6 +59,7 @@ describe('App session messaging', () => {
             }));
         });
 
+        expect(screen.getByTestId('session-location')).toHaveTextContent('/dashboard');
         expect(screen.getByText(/signed out after 30 minutes of inactivity/i)).toBeInTheDocument();
         expect(screen.getByPlaceholderText(/name@example.com/i)).toBeInTheDocument();
     });

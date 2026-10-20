@@ -25,6 +25,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
+    # Job-scoped services are removed with the job; no shared names or volumes.
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: tixmo_ci
+          POSTGRES_PASSWORD: synthetic_ci_password
+          POSTGRES_DB: tixmo_disposable_ci
+        ports:
+          - '127.0.0.1::5432'
+        options: >-
+          --health-cmd "pg_isready -U tixmo_ci -d tixmo_disposable_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - '127.0.0.1::6379'
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       NODE_ENV: test
       JWT_SECRET: ci_jwt_secret_32_chars_minimum_value
@@ -53,5 +78,10 @@ jobs:
         run: npm ci --prefix tdash
 
       - name: Run market readiness gates
+        # job.services is available at step scope, not jobs.<job_id>.env.
+        env:
+          TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1'
+          DATABASE_URL: postgresql://tixmo_ci:synthetic_ci_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_ci?schema=public
+          REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/1
         run: npm run verify:market
 

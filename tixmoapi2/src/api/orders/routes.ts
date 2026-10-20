@@ -85,6 +85,13 @@ router.post('/', validate(validation.createOrderSchema), controller.createOrder)
  *       404:
  *         description: Order not found
  */
+// Status-only consumer read, independent of operator privileges and event sale state.
+router.get(
+  '/:id/recovery',
+  validate(validation.consumerOrderRecoverySchema),
+  controller.getConsumerOrderRecovery
+);
+
 router.get('/:id', controller.getOrder);
 
 /**

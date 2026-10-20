@@ -1,0 +1,28 @@
+# Task170 independent admission checkpoint QA
+
+2026-10-20. Scoped fresh runtime PASS at exact `2a0d097967788804a08cbac1f11b3d4c8742aa03` versus `bf7770c904b22ccdcb28bd0a5a122588857d9e66`. Initially detached `/home/daniel/projects/projectTixmo/worktrees/review-170`; evidence committed on task-owned branch `tixmo/review-170-evidence`. No product or test edits. Recovery remains DISABLED, task143 OPEN, release NO-GO. This is not final integrated task139 acceptance or activation approval.
+
+## Reproduction and executed results
+
+Read author checkpoint, independent lead169, finite lead168 gates, and actual helper source before execution. Reused author full141 runtime/outer/mutator with task170 artifact names and NEW runtime prefix; appended upgrade observation before normal migration deployment. Exact helpers, SQL, diffs, logs and CAS snapshots are retained under [task170 artifacts](task-170-admission-qa-artifacts/), with SHA256SUMS. Root originals remain `.task170-*` in review-170. Dependencies symlink to existing task143 node_modules; no dependency installation or lockfile change. Builds generated the same-schema Prisma client there.
+
+Executed `bash .task170-admission-outer.sh > .task170-admission-runtime.log 2>&1`, exit0. Outer temporarily activates isolated source and sets test opt-in; every mutant restores candidate bytes. Final outer trap restores committed disabled bytes and builds disabled output. Runtime helper contains every literal command and all19 regression test paths.
+
+- Controls: `npm --prefix tixmoapi2 test -- --cacheDirectory "$owned_run/jest-cache" --runInBand --runTestsByPath tests/integration/payment-expired-candidate.test.ts tests/integration/payment-sequential-generation.test.ts tests/integration/payment-competing-claims.test.ts`: **3 suites,7/7**.
+- Mutant(a), only expired flag disabled: **1 failed,1 passed**, durable generation Expected1 Received0. Signed ancient event/order/inventory snapshots retained in actual log; fresh duplicate no-op still passes.
+- Mutant(d), increment0 and consistent returned generation: **1 failed**. Real equal PostgreSQL sample, stored generations7 then7; tokens each match storage. Failure is strict durable generation increase, not token mismatch.
+- Mutant(e), admission WHERE reduced to ID: **4 failed**, FAILED/PROCESSING and both winners. Every actual affected-count array[1,1]; durable successor8 becomes9 with equal sampled processingStartedAt. Failure is count assertion at test line45 before row/token assertions. Independently parsed tracked CAS snapshots assert all four properties. No compile/token-only/timeout/skip failure accepted.
+- Restored consolidated regression: **19 suites,82/82**,30.771s. Relevant ownership/prelock/cutoff/ABA/contenders/successor/fenced/payment/unit/tenant/order-race suites all green.
+- Enabled `npm --prefix tixmoapi2 run build` exit0; final disabled build exit0. Final `cmp .task170-admission-disabled-source tixmoapi2/src/api/payments/service.ts` exit0; `git diff --exit-code -- tixmoapi2/src/api/payments/service.ts` exit0. Runtime log ends `SOURCE_RESTORED status=0`. HEAD source still false; disabled build replaces temporary enabled output.
+
+## Existing-row migration preservation: fresh observation
+
+A second NEW database `tixmo_disposable_170_upgrade` was created on the same owned/validated loopback PG (no inherited database). `upgrade_sql` executes bounded `psql -X -v ON_ERROR_STOP=1`; applied all26 preceding migration SQL files in order, stopping before `20261020120000`. This validates preceding schema SQL, not a second Prisma migration-history reconciliation. Normal test DB independently deployed all27 migrations using bounded `prisma migrate deploy`.
+
+[Exact SQL](task-170-admission-qa-artifacts/upgrade.sql) inserts three representative legacy rows PROCESSING/FAILED/PROCESSED, including nullable/non-null intent/order/error/processedAt values and distinct explicit millisecond processing/created/updated/processed timestamps. It copies every legacy column into a temporary snapshot, applies the exact additive generation migration via `\i`, and asserts rowcount3, full-join JSON equality of ALL preexisting columns (excluding only new generation), and every generation0. All assertions succeeded, final marker `UPGRADE_PRESERVED_ALL_VALUES_DEFAULT_ZERO | 3`; [before/after values](task-170-admission-qa-artifacts/upgrade.log) retained. This closes the narrow existing-row preservation observation; no production upgrade or broad rollback acceptance claim.
+
+## Ownership, deadlines and cleanup
+
+Sole PM runtime grant. NEW directory `/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task170admission.FMVJTU`, mode0700, `findmnt -T` ext4 `/` (disk-backed). PG PID1213376 port25634; Redis exact direct-child PID1213389 port59167. Exact UID/executable/PG datadir PID/direct-child Redis/readiness/loopback listener/target assertions and bounded TERM/KILL drain/cleanup preserved from author helper. Tests60s, consolidated65s, migrations30s, builds40s, kill-after5s. Upgrade psql each30s. No inherited service or unknown DATABASE_URL used.
+
+Helper cleanup succeeded for both services. Fresh post-run `ps -p 1213376,1213389 -o pid,args` showed header only; `ss -H -ltnp 'sport = :25634 or sport = :59167'` empty. Runtime data/logs intentionally retained under the restrictive owned directory; no service remains. No default merge, production, config, scheduler, spend, real secret or external action. Evidence changes require independent lead review at their exact new commit; prior lead169 applies to candidate tests, not this newly authored report. Final integrated139 lead+QA acceptance remains separate.

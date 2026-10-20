@@ -6,6 +6,7 @@ interface RetryOptions {
   maxDelay?: number;
   factor?: number;
   jitter?: boolean;
+  shouldRetry?: (error: unknown) => boolean;
 }
 
 /**
@@ -18,6 +19,7 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
     maxDelay = 10000,
     factor = 2,
     jitter = true,
+    shouldRetry = () => true,
   } = options;
 
   let lastError: any;
@@ -28,6 +30,7 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
       return await fn();
     } catch (error) {
       lastError = error;
+      if (!shouldRetry(error)) throw error;
 
       if (attempt > maxRetries) {
         break;

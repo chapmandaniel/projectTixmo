@@ -198,7 +198,7 @@ describe('Payment, admission and inventory integrity', () => {
     intent.status = 'succeeded';
     intent.amount_received = intent.amount;
     const failure = jest
-      .spyOn(orderService, 'confirmOrder')
+      .spyOn(orderService, 'confirmOrderInTransaction')
       .mockRejectedValue(new Error('Database unavailable'));
     const id = 'evt_failure_recovery';
     await expect(deliver(intent, id)).rejects.toThrow('Database unavailable');

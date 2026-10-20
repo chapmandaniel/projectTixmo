@@ -1,80 +1,46 @@
-#!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
-import net from 'node:net';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
+import safety from './verification-safety.cjs';
 
-const require = createRequire(import.meta.url);
-const { assertDisposableTestTarget } = require('./test-target.cjs');
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const owned = [];
-const docker = (args) => {
-  const result = spawnSync('docker', args, { encoding: 'utf8' });
-  if (result.status !== 0) throw new Error('Disposable Docker operation failed. Start Docker Desktop or the project Colima profile.');
-  return result.stdout.trim();
-};
-const run = (command, args, env, cwd = root) => {
-  const result = spawnSync(command, args, { cwd, env, stdio: 'inherit' });
-  if (result.status !== 0) throw new Error(command + ' verification failed.');
-};
-const waitForPort = async (url, defaultPort) => {
-  const target = new URL(url);
-  for (let attempt = 0; attempt < 100; attempt++) {
-    const ready = await new Promise((resolve) => {
-      const socket = net.connect(Number(target.port) || defaultPort, target.hostname);
-      socket.setTimeout(500);
-      socket.once('connect', () => { socket.destroy(); resolve(true); });
-      socket.once('error', () => { socket.destroy(); resolve(false); });
-      socket.once('timeout', () => { socket.destroy(); resolve(false); });
-    });
-    if (ready) return;
-    await new Promise(resolve => setTimeout(resolve, 200));
-  }
-  throw new Error('Disposable database service did not become ready.');
-};
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-try {
-  const env = { ...process.env, NODE_ENV: 'test' };
-  // Never load application dotenv files or inherit real provider credentials for local gates.
-  for (const key of Object.keys(env)) if (/^(AWS_|S3_|POSTMARK_|SMTP_|STRIPE_|SENTRY_)/.test(key)) delete env[key];
-  env.STRIPE_SECRET_KEY = 'sk_test_local_gate_mock';
-  env.STRIPE_WEBHOOK_SECRET = 'whsec_local_gate_mock';
-  env.JWT_SECRET = 'disposable_local_jwt_secret_32_characters';
-  env.JWT_REFRESH_SECRET = 'disposable_local_refresh_secret_32_characters';
-  env.SESSION_SECRET = 'disposable_local_session_secret_32_characters';
-  if (!env.TIXMO_TEST_DATABASE_URL) {
-    const suffix = randomUUID().slice(0, 8);
-    const pg = 'tixmo-verify-pg-' + suffix;
-    const redis = 'tixmo-verify-redis-' + suffix;
-    const password = randomUUID();
-    docker(['run', '--rm', '-d', '--name', pg, '-p', '127.0.0.1::5432', '-e', 'POSTGRES_USER=tixmo_test', '-e', 'POSTGRES_PASSWORD=' + password, '-e', 'POSTGRES_DB=tixmo_test', 'postgres:17-alpine']);
-    owned.push(pg);
-    docker(['run', '--rm', '-d', '--name', redis, '-p', '127.0.0.1::6379', 'redis:7-alpine']);
-    owned.push(redis);
-    const pgPort = JSON.parse(docker(['inspect', pg]))[0].NetworkSettings.Ports['5432/tcp'][0].HostPort;
-    const redisPort = JSON.parse(docker(['inspect', redis]))[0].NetworkSettings.Ports['6379/tcp'][0].HostPort;
-    env.TIXMO_TEST_DATABASE_URL = 'postgresql://tixmo_test:' + password + '@127.0.0.1:' + pgPort + '/tixmo_test';
-    env.TIXMO_TEST_REDIS_URL = 'redis://127.0.0.1:' + redisPort;
-    env.TIXMO_ALLOW_TEST_RESET = 'true';
-    env.DATABASE_URL = env.TIXMO_TEST_DATABASE_URL;
+// Services must already be provisioned in isolation. Never start the shared
+// development Compose stack or infer disposability from a localhost URL alone.
+export function verifyApi({ env = process.env, spawn = spawnSync, log = console.log } = {}) {
+  safety.validateVerificationTargets(env); // Before any subprocess or service action.
+  const testEnv = { ...env, NODE_ENV: 'test' };
+  // Preserve the existing verifier's synthetic test-key fallback, without
+  // loading implicit .env credentials or mutating the parent environment.
+  for (const [key, fallback] of Object.entries({
+    STRIPE_SECRET_KEY: 'sk_test_verify_api',
+    STRIPE_PUBLISHABLE_KEY: 'pk_test_verify_api',
+    STRIPE_WEBHOOK_SECRET: 'whsec_verify_api',
+  })) {
+    const normalized = String(testEnv[key] || '').trim().toLowerCase();
+    if (!normalized || /your_|_your|change-this|placeholder/.test(normalized)) testEnv[key] = fallback;
   }
-  env.DATABASE_URL = assertDisposableTestTarget(env);
-  if (!env.TIXMO_TEST_REDIS_URL || !['127.0.0.1', 'localhost', '[::1]'].includes(new URL(env.TIXMO_TEST_REDIS_URL).hostname)) throw new Error('An explicit loopback TIXMO_TEST_REDIS_URL is required.');
-  env.REDIS_URL = env.TIXMO_TEST_REDIS_URL;
-  await waitForPort(env.DATABASE_URL, 5432);
-  await waitForPort(env.REDIS_URL, 6379);
-  process.stdout.write('[verify:api] Using authorized disposable loopback services. Connection credentials omitted.\n');
-  run('node', ['--test', 'scripts/test-target.test.cjs'], env);
-  run('npm', ['run', 'build'], env, path.join(root, 'tixmoapi2'));
-  run('npm', ['run', 'migrate'], env, path.join(root, 'tixmoapi2'));
-  run('node', ['--test', 'scripts/runtime-config-parser.test.mjs', 'scripts/waiting-room-redis.test.cjs', 'scripts/evidence-status.test.mjs', 'scripts/check-status.test.mjs'], env);
-  run('npm', ['test', '--', '--runInBand'], env, path.join(root, 'tixmoapi2'));
-  process.stdout.write('[verify:api] API verification passed.\n');
-} catch (error) {
-  process.stderr.write('[verify:api] ' + error.message + '\n');
-  process.exitCode = 1;
-} finally {
-  for (const name of owned.reverse()) spawnSync('docker', ['rm', '-f', name], { stdio: 'ignore' });
+  log(`[verify:api] DATABASE_URL ${safety.redactConnectionUrl(env.DATABASE_URL)}`);
+  log(`[verify:api] REDIS_URL ${safety.redactConnectionUrl(env.REDIS_URL)}`);
+  const run = (command, args, cwd, label) => {
+    let result;
+    try {
+      // Capture and suppress raw child output: Prisma/Jest failures may embed URLs.
+      result = spawn(command, args, { cwd, env: testEnv, encoding: 'utf8', stdio: 'pipe', shell: false });
+    } catch { throw new Error(`${label} failed (child output suppressed).`); }
+    if (result.error || result.status !== 0) throw new Error(`${label} failed (child output suppressed).`);
+  };
+  run('npx', ['prisma', 'db', 'push', '--accept-data-loss', '--skip-generate'], path.join(repoRoot, 'tixmoapi2'), 'Schema bootstrap');
+  run('npm', ['--prefix', 'tixmoapi2', 'test', '--', '--runInBand'], repoRoot, 'API tests');
+  log('[verify:api] API verification passed.');
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    if (process.env.TIXMO_ALLOW_DESTRUCTIVE_TESTS === '1') verifyApi();
+    else await import('./verify-api-owned.mjs');
+  } catch (error) {
+    console.error(`[verify:api] ${error.message}`);
+    process.exitCode = 1;
+  }
 }

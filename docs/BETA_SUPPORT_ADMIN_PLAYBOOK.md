@@ -137,3 +137,36 @@ For production database backup and restore evidence, use `docs/DB_BACKUP_AND_MIG
 | User/org | User ID, organization ID, role, membership action |
 | Asset share | Folder ID, share ID, recipient label, expiry, revocation timestamp |
 | Approval | Approval ID, reviewer ID, token reference, decision/comment IDs |
+
+### Fulfillment retry exhaustion and confirmation email triage
+
+- A `payment_intent.succeeded` fulfillment failure exhausts the existing six
+  confirmation attempts, persists the event as `FAILED` with the original error,
+  and rejects webhook processing (non-success response for Stripe retry).
+  Admin alert success is not recovery; alert failure must not replace that error.
+- Follow the payment incident steps above: inspect Stripe payment evidence,
+  order/tickets/inventory and the event error; resolve the diagnosed dependency
+  or inconsistent hold before replaying the **same event** once using Stripe's
+  existing replay workflow. Verify `PROCESSED`, `PAID` / `SUCCEEDED` and inventory
+  after replay. A processed repeat is skipped; an already-paid order is not
+  reconfirmed. If that replay still fails, stop manual replay loops and escalate
+  with event/order IDs and sanitized error evidence. Do not reset event records,
+  create a replacement PaymentIntent or manually change inventory.
+- If replay is unavailable, the existing documented authorized confirmation
+  workflow above is a possible fallback only with reviewed organization-scoped
+  access and payment/hold evidence. This section does not approve the historical
+  role list above or resolve disputed authorization/paid-after-expiry policy
+  (task 73); escalate those cases for the pending decision. Never reconfirm a
+  paid order. Confirmed inventory must not be
+  rolled back or fulfilled again merely to repair email delivery.
+- A rejection from the confirmation-email call **after** confirmation is logged
+  separately as `Order Confirmation Email Failure`; the webhook is `PROCESSED`,
+  even if its admin alert also fails. Use the existing email support triage;
+  there is no order-email resend endpoint. Do not promise replay will resend it.
+  The underlying email sender also logs asynchronous delivery failures; webhook
+  success is not proof of inbox delivery. Escalate unresolved delivery through
+  existing support rather than introducing a retry worker or sending raw tokens.
+
+Scope: sequential retry recovery only. Concurrent claims, stale `PROCESSING`
+events, paid-after-expiry policy and real persistence/HTTP integration remain
+separate work; mocked tests do not establish production recovery evidence.

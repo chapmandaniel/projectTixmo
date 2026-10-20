@@ -4,6 +4,11 @@ import { execSync } from 'child_process';
 import path from 'path';
 import { AddressInfo, Server } from 'net';
 
+// Shared pure guard runs before schema bootstrap or test-module cleanup imports.
+const { bootstrapTestDatabase } = require('../../scripts/verification-safety.cjs');
+bootstrapTestDatabase(process.env, execSync, path.resolve(__dirname, '..'));
+
+// Mock Redis client globally
 // Supertest binds an unspecified address but always targets IPv4. On macOS an
 // IPv6 listener can share a port with an unrelated IPv4 listener. Connect to the
 // family we actually bound so test requests cannot reach that other service.
@@ -15,14 +20,6 @@ SupertestTest.prototype.serverAddress = function (app: Server, route: string) {
   return address?.family === 'IPv6' ? url.replace('://127.0.0.1:', '://[::1]:') : url;
 };
 
-const { assertDisposableTestTarget } = require('../../scripts/test-target.cjs');
-process.env.DATABASE_URL = assertDisposableTestTarget(process.env);
-execSync('npx prisma db push --accept-data-loss --skip-generate', {
-  cwd: path.resolve(__dirname, '..'),
-  stdio: 'ignore',
-});
-
-// Mock Redis client globally
 jest.mock('../src/config/redis', () => {
   const mockClient = {
     sendCommand: jest.fn().mockResolvedValue('OK'), // Generic success for unknown commands

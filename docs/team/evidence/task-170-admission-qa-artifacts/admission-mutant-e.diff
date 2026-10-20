@@ -1,0 +1,13 @@
+--- .task170-admission-enabled-source	2026-10-20 06:02:39.818430987 -0230
++++ tixmoapi2/src/api/payments/service.ts	2026-10-20 06:02:49.843059959 -0230
+@@ -174,9 +174,7 @@
+         if (existing.attemptGeneration === 9223372036854775807n) return null;
+         const admitted = await prisma.paymentWebhookEvent.updateMany({
+           where: {
+-            id: event.id, attemptGeneration: existing.attemptGeneration,
+-            OR: [{ status: 'FAILED' }, ...(EXPIRED_WEBHOOK_RECOVERY_ENABLED
+-              ? [{ status: 'PROCESSING', processingStartedAt: { lte: cutoff } }] : [])],
++            id: event.id,
+           },
+           data: { status: 'PROCESSING', attemptGeneration: { increment: 1 },
+             processingStartedAt: now, processedAt: null, errorMessage: null },

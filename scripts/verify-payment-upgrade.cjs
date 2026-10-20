@@ -54,6 +54,17 @@ const runPrisma = (args) => {
   await assert.rejects(orderService.createOrder('upgrade-buyer', { items: [{ ticketTypeId: known.id, quantity: 1 }] }), /pricing tier/);
   await assert.rejects(orderService.createOrder('upgrade-buyer', { items: [{ ticketTypeId: unclear.id, quantity: 1 }] }), /requires inventory reconciliation/);
   await require(path.join(api, 'dist/config/prisma.js')).default.$disconnect();
-  process.stdout.write('Populated upgrade passed: transfer revocation, tier limits, ambiguous-history gate, historical currency and receipt safety.\n');
+  // A real pre-generation ledger row must retain identity and receive generation zero.
+  await prisma.$executeRaw`INSERT INTO payment_webhook_events (id, type, status, created_at, updated_at) VALUES ('upgrade-legacy-webhook', 'payment_intent.succeeded', 'FAILED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+  for (const name of fs.readdirSync(source).sort()) {
+    if (name > migration) fs.cpSync(path.join(source, name), path.join(staged, 'migrations', name), { recursive: true });
+  }
+  runPrisma(['migrate', 'deploy', '--schema', path.join(staged, 'schema.prisma')]);
+  const legacy = await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id: 'upgrade-legacy-webhook' } });
+  assert.equal(legacy.attemptGeneration, 0n);
+  assert.equal(legacy.status, 'FAILED');
+  assert.equal((await prisma.paymentWebhookEvent.updateMany({ where: { id: legacy.id, attemptGeneration: 0n, status: 'FAILED' }, data: { attemptGeneration: { increment: 1 }, status: 'PROCESSING' } })).count, 1);
+  assert.equal((await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id: legacy.id } })).attemptGeneration, 1n);
+  process.stdout.write('Populated upgrade passed: transfer revocation, tier limits, ambiguous-history gate, historical currency, receipt safety and legacy webhook generation upgrade.\n');
 })().catch(error => { process.stderr.write(error.message + '\n'); process.exitCode = 1; })
   .finally(async () => { if (prisma) await prisma.$disconnect(); fs.rmSync(temp, { recursive: true, force: true }); });
