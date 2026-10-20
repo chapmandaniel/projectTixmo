@@ -1,0 +1,34 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task170admission.FMVJTU/jest-cache --runInBand --runTestsByPath tests/integration/payment-sequential-generation.test.ts
+
+  console.log
+    TASK143_SEQUENTIAL {"first":{"eventId":"evt_seq143_1792485169623","generation":"7"},"second":{"eventId":"evt_seq143_1792485169623","generation":"7"},"one":{"attemptGeneration":"7","id":"evt_seq143_1792485169623","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-20T08:32:49.664Z","processedAt":null,"createdAt":"2026-10-20T08:32:49.652Z","updatedAt":"2026-10-20T08:32:49.670Z"},"two":{"attemptGeneration":"7","id":"evt_seq143_1792485169623","type":"unhandled.test","paymentIntentId":null,"orderId":null,"status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-20T08:32:49.664Z","processedAt":null,"createdAt":"2026-10-20T08:32:49.652Z","updatedAt":"2026-10-20T08:32:49.683Z"}}
+
+      at Object.<anonymous> (tests/integration/payment-sequential-generation.test.ts:16:10)
+
+FAIL tests/integration/payment-sequential-generation.test.ts
+  ✕ sequential eligible retries at same real DB sample have strictly increasing durable generation (86 ms)
+
+  ● sequential eligible retries at same real DB sample have strictly increasing durable generation
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      17 |  expect(first).toEqual({eventId:id,generation:one.attemptGeneration});expect(second).toEqual({eventId:id,generation:two.attemptGeneration});
+      18 |  expect(two.processingStartedAt).toEqual(one.processingStartedAt);
+    > 19 |  expect(two.attemptGeneration>one.attemptGeneration).toBe(true);
+         |                                                      ^
+      20 |  expect([one.attemptGeneration,two.attemptGeneration]).toEqual([8n,9n]);
+      21 |  }finally{raw.mockRestore();}
+      22 | },15000);
+
+      at Object.<anonymous> (tests/integration/payment-sequential-generation.test.ts:19:54)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        4.34 s
+Ran all test suites within paths "tests/integration/payment-sequential-generation.test.ts".

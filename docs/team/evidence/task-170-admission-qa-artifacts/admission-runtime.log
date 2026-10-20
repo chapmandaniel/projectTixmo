@@ -1,0 +1,12 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_57|tixmo57|127.0.0.1|25634
+PONG
+TASK170_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task170admission.FMVJTU pg_pid=1213376 redis_pid=1213389 pgport=25634 redisport=59167
+MUTANT_a status=1 candidate_bytes_restored
+MUTANT_d status=1 candidate_bytes_restored
+MUTANT_e status=1 candidate_bytes_restored
+waiting for server to shut down.... done
+server stopped
+TASK170_CLEANUP pg_pid=1213376 redis_pid=1213389 pgport=25634 redisport=59167
+SOURCE_RESTORED status=0
