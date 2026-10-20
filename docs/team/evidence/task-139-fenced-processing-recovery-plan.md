@@ -153,16 +153,29 @@ commit. Restore spies/release gates in finally; timeout is harness failure.
    takes over and fulfills. Resume A. Assert no A handler mutation/notification,
    no second confirmation, and B's full event/target snapshot unchanged.
 3. Pause A AFTER committed fulfillment but BEFORE finish (outside event lock).
-   Expire lease; B takes over, sees PAID same intent and finishes without another
-   email. Resume A success finish, then separate variant with A forced error
-   finish: neither can alter B generation/status/error/processedAt. Compare full
-   snapshots and actual attempted write counts, not just final PROCESSED status.
+   Expire lease; B performs a real takeover and commits its newer generation.
+   Pause B outside any event/order-row-lock transaction, BEFORE terminal finish,
+   while its durable row is still PROCESSING. Read B's full successor event,
+   target/other-buyer orders+tickets and inventory through an ungated observer.
+   Resume A success finish; in a separate fresh-fixture variant resume A forced
+   error/failure finish instead. BEFORE releasing B, assert each stale terminal
+   update actually affects zero rows and every captured successor snapshot is
+   unchanged, including generation/status/error/processedAt/updatedAt. Capture
+   real updateMany result counts, not just attempted-call counts. Only then
+   release B: it sees PAID same intent and finishes PROCESSED without another
+   confirmation email. Assert final snapshots and one inventory transition.
+   Also retain the original AFTER-B-PROCESSED stale success/failure schedules as
+   terminal-status fence controls, not as proof of the generation predicate.
+   Gates never await a successor while holding a row lock; timeouts fail harness.
 4. Failed recovery: B owns expired event but fails before order commit (bounded
    injected handler error, not a DB mock); expect FAILED with B token/error,
    original inventory and propagated error. C retries, gets strictly greater
    generation, succeeds once; late A/B success/failure writes affect zero rows.
    Include simultaneous expired claim contenders, reversed winner, fresh cutoff
-   and exact cutoff, plus two FAILED claims with identical timestamps.
+   and exact cutoff, plus two FAILED claims with identical timestamps. Seed
+   generation 9223372036854775807 in a separate fixture: attempted increment
+   must fail closed with full event/order/inventory snapshots unchanged, no
+   notification and no wrapped/reused token.
 5. Handler TOCTOU: pause old failure worker after real order read; newer success
    commits, resume failure. Assert SUCCEEDED never overwritten. Under corrected
    lock placement gate BEFORE lock acquisition, not while holding event/order
@@ -174,8 +187,13 @@ traces and snapshots for schedules possible on 9ac6db3 (old PROCESSING blocks B;
 completion/failure remain unfenced). Do not pretend baseline can already acquire
 a nonexistent generation: phase-specific tests may fail at takeover first. Once
 candidate exists, prove later fencing assertions via bounded local mutations:
-(a) skip expired admission => ancient recovery RED; (b) remove generation from
-finish => stale success AND stale failure overwrite oracle RED; (c) remove
+(a) skip expired admission => ancient recovery RED; (b) remove ONLY generation
+from finish while KEEPING status=PROCESSING => BOTH stale success and stale
+failure variants against B still PROCESSING must affect a row and fail the
+pre-release durable snapshot/zero-row oracle (not timeout). Do not weaken the
+status predicate to manufacture a kill. The after-B-terminal controls should
+still pass this mutant and cannot substitute for the PROCESSING variants;
+(c) remove
 transactional handler fence => before-handler/missing-intent/failure-write RED;
 (d) reuse generation across attempts => equal-time retry RED; (e) remove claim
 CAS => two-claimant RED. A timeout is not a mutation kill. Run each mutation to
