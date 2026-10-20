@@ -17,6 +17,23 @@ Local gate before collecting external evidence:
 - Run `npm run evidence:status` to see which local and target evidence artifacts are currently present.
 - Run `npm run evidence:status:strict` only at go/no-go; it exits non-zero while any evidence gap remains.
 
+### Inventory checker contract
+
+`evidence:status:strict` checks the artifact inventory, not launch approval. A
+zero-gap result requires passing local artifacts and all eight target/manual
+artifacts with valid JSON, `result: "pass"`, and any required fields. Missing,
+failed, pending, invalid, or incomplete artifacts remain blocking. Local checkout
+config's `local non-launch evidence only` notice is informational (the JSON
+`information` list), not a validation warning. Its validation failures still
+block. Local passes never substitute for staging/production checkout config or
+any other target/manual artifact; validation warnings remain blocking.
+
+The checker does **not** establish deployed SHA, freshness, authenticity, or
+approval. Target artifacts are selected by lexicographic filename order, not
+verified capture time. Operators must independently confirm the deployment,
+evidence provenance and currency, and required approvals before launch. Synthetic
+test fixtures demonstrate checker behavior only and are never launch evidence.
+
 Target evidence can be collected from a shell when the target URLs and demo credentials are available:
 
 ```bash

@@ -39,11 +39,12 @@ const fileStatus = (label, filePath, options = {}) => {
   const body = exists ? readJson(absolutePath) : null;
   const result = body?.result;
   const warnings = [];
+  const information = [];
   const validationErrors = [];
 
   if (exists && !body) validationErrors.push('artifact is not valid JSON');
   if (exists && body && !result) validationErrors.push('artifact has no result field');
-  if (options.nonLaunchEvidence) warnings.push('local non-launch evidence only');
+  if (options.nonLaunchEvidence) information.push('local non-launch evidence only');
   if (exists && body && options.requiredFields?.length) {
     const missingFields = options.requiredFields.filter((field) => {
       const value = getValue(body, field);
@@ -66,6 +67,7 @@ const fileStatus = (label, filePath, options = {}) => {
     result: result || null,
     status: exists && passed ? 'pass' : exists && pending ? 'pending' : exists ? 'fail' : 'missing',
     warnings,
+    information,
     nextAction: options.nextAction || '',
   };
 };
@@ -93,6 +95,7 @@ const latestStatus = (label, dirPath, pattern, nextAction = '', options = {}) =>
       result: null,
       status: 'missing',
       warnings: [],
+      information: [],
       nextAction,
       requiredFields: options.requiredFields || [],
     };
@@ -217,7 +220,8 @@ if (wantsJson) {
   sections.forEach((section) => {
     process.stdout.write(`\n${section.name}\n`);
     section.items.forEach((item) => {
-      const warningText = item.warnings.length ? ` (${item.warnings.join('; ')})` : '';
+      const notices = [...item.warnings, ...item.information];
+      const warningText = notices.length ? ` (${notices.join('; ')})` : '';
       process.stdout.write(`- [${item.status}] ${item.label}${warningText}\n`);
       if (item.path) process.stdout.write(`  ${item.path}\n`);
     });
