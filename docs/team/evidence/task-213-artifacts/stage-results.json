@@ -1,0 +1,60 @@
+{
+  "candidate": "0d193a6e8f8180d509f5cfdbb793203904047237",
+  "marketExit": 0,
+  "marketWallSeconds": 167.61,
+  "stages": [
+    {
+      "name": "API build",
+      "exit": 0,
+      "basis": "sequential spawn status checks plus final market success marker",
+      "individualWallSeconds": null
+    },
+    {
+      "name": "API verification",
+      "exit": 0,
+      "basis": "sequential spawn status checks plus final market success marker",
+      "individualWallSeconds": null
+    },
+    {
+      "name": "Dashboard tests",
+      "exit": 0,
+      "basis": "sequential spawn status checks plus final market success marker",
+      "individualWallSeconds": null
+    },
+    {
+      "name": "Dashboard design guard",
+      "exit": 0,
+      "basis": "sequential spawn status checks plus final market success marker",
+      "individualWallSeconds": null
+    },
+    {
+      "name": "Dashboard build",
+      "exit": 0,
+      "basis": "sequential spawn status checks plus final market success marker",
+      "individualWallSeconds": null
+    },
+    {
+      "name": "Root helper syntax",
+      "exit": 0,
+      "basis": "sequential spawn status checks plus final market success marker",
+      "individualWallSeconds": null
+    },
+    {
+      "name": "Status checker syntax",
+      "exit": 0,
+      "basis": "sequential spawn status checks plus final market success marker",
+      "individualWallSeconds": null
+    },
+    {
+      "name": "External smoke syntax",
+      "exit": 0,
+      "basis": "sequential spawn status checks plus final market success marker",
+      "individualWallSeconds": null
+    }
+  ],
+  "apiCounts": null,
+  "apiCountReason": "existing verifier suppresses child output; no supplementary run",
+  "dashboardFiles": 25,
+  "dashboardTests": 170,
+  "migrationsApplied": 27
+}

@@ -1,0 +1,176 @@
+
+> project-tixmo@0.1.0 verify:market
+> node ./scripts/verify-market-local.mjs
+
+
+[verify:market] API build
+
+> tixmoapi2@0.1.0 build
+> prisma generate && tsc && tsc-alias
+
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v5.22.0) to ./../../task-177/tixmoapi2/node_modules/@prisma/client in 313ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+
+
+[verify:market] API verification
+
+> project-tixmo@0.1.0 verify:api
+> node ./scripts/verify-api.mjs
+
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+[verify:api] API verification passed.
+
+[verify:market] Dashboard tests
+
+> tdash@0.1.0 test
+> vitest --run
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/home/daniel/projects/projectTixmo/worktrees/task-213/tdash[39m
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ [32m✓[39m src/test/CheckoutPage.test.jsx [2m([22m[2m27 tests[22m[2m)[22m[33m 1099[2mms[22m[39m
+     [33m[2m✓[22m[39m shows required checkout policy links before preparing payment [33m 611[2mms[22m[39m
+ [32m✓[39m src/test/ApprovalsDashboard.test.jsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1247[2mms[22m[39m
+     [33m[2m✓[22m[39m lets admins add approved images to the asset library and archive gallery approvals [33m 458[2mms[22m[39m
+ [32m✓[39m src/test/ApprovalDetailView.test.jsx [2m([22m[2m12 tests[22m[2m)[22m[33m 2026[2mms[22m[39m
+     [33m[2m✓[22m[39m renders version controls and reviewer actions for the latest version [33m 514[2mms[22m[39m
+ [32m✓[39m src/test/ScannersView.test.jsx [2m([22m[2m30 tests[22m[2m)[22m[33m 2960[2mms[22m[39m
+     [33m[2m✓[22m[39m renders a scanner card layout for mobile while preserving the desktop table [33m 345[2mms[22m[39m
+     [33m[2m✓[22m[39m uses API meta.pages for both tabs, keeps request limits, Previous and tab reset [33m 724[2mms[22m[39m
+ [32m✓[39m src/test/AssetLibraryView.test.jsx [2m([22m[2m15 tests[22m[2m)[22m[33m 3083[2mms[22m[39m
+     [33m[2m✓[22m[39m renders uploaded assets and filters by asset type [33m 449[2mms[22m[39m
+     [33m[2m✓[22m[39m opens a basic asset preview and copies the asset link [33m 365[2mms[22m[39m
+ [32m✓[39m src/test/ExternalReviewPage.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[33m 966[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the simplified external review workspace shell [33m 368[2mms[22m[39m
+     [33m[2m✓[22m[39m opens a note modal for request changes and adds the note to discussion after submit [33m 324[2mms[22m[39m
+ [32m✓[39m src/test/EventCommandCenter.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 805[2mms[22m[39m
+     [33m[2m✓[22m[39m copies and opens the buyer checkout link for on-sale events [33m 621[2mms[22m[39m
+ [32m✓[39m src/test/SharedAssetFolderPage.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 677[2mms[22m[39m
+     [33m[2m✓[22m[39m lets external visitors browse nested shared folders [33m 467[2mms[22m[39m
+ [32m✓[39m src/test/Smoke.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 513[2mms[22m[39m
+     [33m[2m✓[22m[39m renders DashboardLayout without crashing [33m 474[2mms[22m[39m
+ [32m✓[39m src/test/AnalyticsView.test.jsx [2m([22m[2m1 test[22m[2m)[22m[33m 529[2mms[22m[39m
+     [33m[2m✓[22m[39m separates GA4 traffic language from Tixmo sales language [33m 527[2mms[22m[39m
+ [32m✓[39m src/test/AppSession.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 442[2mms[22m[39m
+     [33m[2m✓[22m[39m lands on the main dashboard after signing in from a deep route [33m 343[2mms[22m[39m
+ [32m✓[39m src/test/AppCheckoutReturn.test.jsx [2m([22m[2m4 tests[22m[2m)[22m[33m 558[2mms[22m[39m
+     [33m[2m✓[22m[39m retains the candidate and restores only owner status after auth event [33m 364[2mms[22m[39m
+ [32m✓[39m src/test/DashboardTruth.test.jsx [2m([22m[2m1 test[22m[2m)[22m[32m 299[2mms[22m[39m
+ [32m✓[39m src/test/LoginView.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[32m 281[2mms[22m[39m
+ [32m✓[39m src/test/DashboardPlaceholderView.test.jsx [2m([22m[2m1 test[22m[2m)[22m[32m 272[2mms[22m[39m
+ [32m✓[39m src/test/NotificationResilience.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[32m 165[2mms[22m[39m
+ [32m✓[39m src/test/AssetUploader.test.jsx [2m([22m[2m9 tests[22m[2m)[22m[32m 121[2mms[22m[39m
+ [32m✓[39m src/test/EventsView.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[32m 242[2mms[22m[39m
+ [32m✓[39m src/test/TeamView.test.jsx [2m([22m[2m1 test[22m[2m)[22m[32m 130[2mms[22m[39m
+ [32m✓[39m src/test/ApprovalCard.test.jsx [2m([22m[2m6 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+ [32m✓[39m src/test/StatusBadge.test.jsx [2m([22m[2m21 tests[22m[2m)[22m[32m 98[2mms[22m[39m
+ [32m✓[39m src/test/TicketBuilder.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+ [32m✓[39m src/test/StatCard.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[32m 50[2mms[22m[39m
+ [32m✓[39m src/test/session.test.js [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/test/runtimeConfig.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m25 passed[39m[22m[90m (25)[39m
+[2m      Tests [22m [1m[32m170 passed[39m[22m[90m (170)[39m
+[2m   Start at [22m 08:54:46
+[2m   Duration [22m 10.49s[2m (transform 2.40s, setup 1.35s, import 13.72s, tests 16.77s, environment 14.65s)[22m
+
+
+[verify:market] Dashboard design guard
+
+> tdash@0.1.0 design:guard
+> node ./scripts/design-system-guard.mjs
+
+Design-system guard passed with 1055 tracked baseline violation(s) and no regressions.
+
+[verify:market] Dashboard build
+
+> tdash@0.1.0 build
+> vite build
+
+vite v4.5.14 building for production...
+transforming...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2531 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                         0.50 kB │ gzip:   0.32 kB
+dist/app-assets/index-b865fee6.css                    110.90 kB │ gzip:  17.65 kB
+dist/app-assets/chevron-right-6de5eb3e.js               0.13 kB │ gzip:   0.14 kB
+dist/app-assets/check-aab507bc.js                       0.13 kB │ gzip:   0.14 kB
+dist/app-assets/loader-2-42740c80.js                    0.14 kB │ gzip:   0.15 kB
+dist/app-assets/zap-7c1f2126.js                         0.15 kB │ gzip:   0.15 kB
+dist/app-assets/plus-b7b06d96.js                        0.15 kB │ gzip:   0.15 kB
+dist/app-assets/arrow-left-e3f793a3.js                  0.16 kB │ gzip:   0.16 kB
+dist/app-assets/search-0a419b63.js                      0.17 kB │ gzip:   0.16 kB
+dist/app-assets/clock-3-30cf9427.js                     0.18 kB │ gzip:   0.17 kB
+dist/app-assets/smartphone-3e5c5e17.js                  0.19 kB │ gzip:   0.18 kB
+dist/app-assets/rotate-ccw-81943f34.js                  0.20 kB │ gzip:   0.18 kB
+dist/app-assets/map-pin-929dfac2.js                     0.20 kB │ gzip:   0.19 kB
+dist/app-assets/credit-card-438d1d2a.js                 0.20 kB │ gzip:   0.18 kB
+dist/app-assets/dollar-sign-6a7028e0.js                 0.22 kB │ gzip:   0.19 kB
+dist/app-assets/copy-2a0b5bb5.js                        0.23 kB │ gzip:   0.20 kB
+dist/app-assets/alert-circle-3c7daea2.js                0.25 kB │ gzip:   0.18 kB
+dist/app-assets/user-check-3beb47ea.js                  0.25 kB │ gzip:   0.22 kB
+dist/app-assets/download-f2b8ce33.js                    0.26 kB │ gzip:   0.21 kB
+dist/app-assets/external-link-d9baa5ab.js               0.28 kB │ gzip:   0.23 kB
+dist/app-assets/save-5847dc81.js                        0.28 kB │ gzip:   0.21 kB
+dist/app-assets/user-plus-2cce02b1.js                   0.31 kB │ gzip:   0.23 kB
+dist/app-assets/link-2-0645274c.js                      0.31 kB │ gzip:   0.24 kB
+dist/app-assets/refresh-ccw-d37394a7.js                 0.32 kB │ gzip:   0.22 kB
+dist/app-assets/ticket-eda3cfeb.js                      0.32 kB │ gzip:   0.21 kB
+dist/app-assets/trash-2-ffaa2480.js                     0.35 kB │ gzip:   0.24 kB
+dist/app-assets/pen-line-0ea346a8.js                    0.36 kB │ gzip:   0.24 kB
+dist/app-assets/file-text-74ce6c91.js                   0.39 kB │ gzip:   0.25 kB
+dist/app-assets/calendar-days-83957f04.js               0.55 kB │ gzip:   0.29 kB
+dist/app-assets/sparkles-53c4018c.js                    0.71 kB │ gzip:   0.34 kB
+dist/app-assets/video-3eab783b.js                       0.72 kB │ gzip:   0.43 kB
+dist/app-assets/mockData-e86ef4d7.js                    1.50 kB │ gzip:   0.67 kB
+dist/app-assets/StatusBadge-62f9b18b.js                 1.61 kB │ gzip:   0.68 kB
+dist/app-assets/InputField-110fbe4b.js                  2.61 kB │ gzip:   0.69 kB
+dist/app-assets/approvalConstants-abfb3682.js           2.77 kB │ gzip:   1.38 kB
+dist/app-assets/WaitingRoomView-76f2ccbe.js             3.55 kB │ gzip:   0.92 kB
+dist/app-assets/DashboardHome-66000d0d.js               4.74 kB │ gzip:   1.76 kB
+dist/app-assets/index-a5c340e9.js                       9.05 kB │ gzip:   3.68 kB
+dist/app-assets/DevDashboard-ad61f5fd.js                9.08 kB │ gzip:   1.96 kB
+dist/app-assets/index-845bcfb2.js                      12.01 kB │ gzip:   4.35 kB
+dist/app-assets/SettingsView-7845edb7.js               12.91 kB │ gzip:   2.25 kB
+dist/app-assets/SharedAssetFolderPage-f0adbfa5.js      19.66 kB │ gzip:   3.57 kB
+dist/app-assets/VenuesView-ae6feb8b.js                 23.74 kB │ gzip:   4.00 kB
+dist/app-assets/EventsView-cadf240c.js                 24.57 kB │ gzip:   5.10 kB
+dist/app-assets/OrdersView-cb9724f4.js                 36.76 kB │ gzip:   5.04 kB
+dist/app-assets/ScannersView-a01da51b.js               39.19 kB │ gzip:   5.95 kB
+dist/app-assets/TeamView-554d1854.js                   40.12 kB │ gzip:   7.24 kB
+dist/app-assets/TodoView-2663dc99.js                   50.25 kB │ gzip:   8.31 kB
+dist/app-assets/CheckoutPage-50a16517.js               51.05 kB │ gzip:  11.35 kB
+dist/app-assets/EventStudio-99df97da.js                51.64 kB │ gzip:   8.25 kB
+dist/app-assets/ExternalReviewPage-3d8dde13.js         56.58 kB │ gzip:   8.56 kB
+dist/app-assets/_baseSlice-bd5c541c.js                 79.28 kB │ gzip:  28.51 kB
+dist/app-assets/AssetLibraryView-575f2c49.js           99.44 kB │ gzip:  17.28 kB
+dist/app-assets/ApprovalsDashboard-b5650f43.js        114.19 kB │ gzip:  16.89 kB
+dist/app-assets/EventManagementDashboard-14249229.js  426.04 kB │ gzip:  92.50 kB
+dist/app-assets/AnalyticsView-73d75f2c.js             439.20 kB │ gzip: 133.52 kB
+dist/app-assets/index-915783ec.js                     506.21 kB │ gzip: 149.22 kB
+
+(!) Some chunks are larger than 500 kBs after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 7.77s
+
+[verify:market] Root helper syntax
+
+[verify:market] Status checker syntax
+
+[verify:market] External smoke syntax
+
+[verify:market] Market readiness local gates passed.
