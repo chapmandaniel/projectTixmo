@@ -1,0 +1,14 @@
+PASS exact HEAD, direct candidate parent, 16 evidence-only files; all other tracked source/assertion/deadline/schema/config/manifests/locks unchanged
+PASS all14 artifact SHA256SUMS
+PASS all4 source hashes, recorded product SHA, existing177 dependency lock parity
+PASS independently normalized182 prefix and141 cleanup/identity parity; task57 binary roots retained; pre-schema identity/target guard ordering, recovery1
+PASS raw paused phase=fresh full applicable equality, generations/timestamps, inventory/email/tickets/unrelated buyer/counts
+PASS raw paused phase=before-handler full applicable equality, generations/timestamps, inventory/email/tickets/unrelated buyer/counts
+PASS raw paused phase=before-finish full applicable equality, generations/timestamps, inventory/email/tickets/unrelated buyer/counts
+PASS raw successor phase=before-handler complete snapshot equality, gen2/status, actual staleCounts=[]
+PASS raw successor phase=success complete snapshot equality, gen2/status, actual staleCounts=[0]
+PASS raw successor phase=failure complete snapshot equality, gen2/status, actual staleCounts=[0]
+PASS raw successor phase=success-after-terminal complete snapshot equality, gen2/status, actual staleCounts=[0]
+PASS raw successor phase=failure-after-terminal complete snapshot equality, gen2/status, actual staleCounts=[0]
+PASS recorded schema/focused/runtime exits0; 2suites8tests no skips; raw records independently parsed, not trusting supplied snapshot-validation summary
+PASS current read-only exact PID/listener absence; no dependency link
