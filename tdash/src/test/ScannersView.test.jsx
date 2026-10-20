@@ -184,3 +184,68 @@ describe('ScannersView pagination response contracts', () => {
         expect(await screen.findByText('Page 1 of 3')).toBeInTheDocument();
     });
 });
+
+
+describe('ScannersView fetch recovery', () => {
+    beforeEach(() => vi.resetAllMocks());
+
+    it.each(['rejected', 'unsuccessful'])('shows an initial %s failure distinctly and retries the same request', async (failure) => {
+        if (failure === 'rejected') apiGet.mockRejectedValueOnce(new Error('offline'));
+        else apiGet.mockResolvedValueOnce({ data: { success: false } });
+        apiGet.mockResolvedValue({ data: { success: true, data: [scanner], meta: { pages: 3 } } });
+        render(<ScannersView isDark />);
+        expect(await screen.findByRole('alert')).toHaveTextContent('Unable to load scanners');
+        expect(screen.queryByText('No scanners registered')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+        await screen.findByTestId('scanner-mobile-cards');
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(apiGet).toHaveBeenLastCalledWith('/scanners', { params: { page: 1, limit: 10 } });
+    });
+
+    it.each(['scanners', 'logs'])('hides stale %s page data and retries the failed page without resetting tabs', async (tab) => {
+        apiGet.mockImplementation((url) => Promise.resolve({ data: {
+            success: true, data: url === '/scanners' ? [scanner] : [log], meta: { pages: 3 },
+        } }));
+        await showTab(tab);
+        apiGet.mockRejectedValueOnce(new Error('offline'));
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent('Page 2 could not be loaded');
+        expect(screen.queryByText('API Gate')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+        expect(await screen.findByText('Page 2 of 3')).toBeInTheDocument();
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(apiGet).toHaveBeenLastCalledWith(tab === 'scanners' ? '/scanners' : '/scanners/logs', {
+            params: { page: 2, limit: tab === 'scanners' ? 10 : 20 },
+        });
+    });
+
+    it('shows a failed tab load and clears it after successfully retrying', async () => {
+        apiGet.mockResolvedValue({ data: { success: true, data: [scanner] } });
+        await showTab('scanners');
+        apiGet.mockRejectedValueOnce(new Error('offline'));
+        fireEvent.click(screen.getByRole('button', { name: 'Scan Logs' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent('Unable to load scan logs');
+        expect(screen.queryByText('No scan logs found')).not.toBeInTheDocument();
+        apiGet.mockResolvedValueOnce({ data: { success: true, data: [log] } });
+        fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+        await screen.findByTestId('scan-log-mobile-cards');
+        expect(apiGet).toHaveBeenLastCalledWith('/scanners/logs', { params: { page: 1, limit: 20 } });
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+});
+
+
+it('ignores a late failure from a previous tab', async () => {
+    let rejectScanners;
+    apiGet.mockReset();
+    apiGet.mockImplementation((url) => url === '/scanners'
+        ? new Promise((_resolve, reject) => { rejectScanners = reject; })
+        : Promise.resolve({ data: { success: true, data: [log] } }));
+    render(<ScannersView isDark />);
+    fireEvent.click(screen.getByRole('button', { name: 'Scan Logs' }));
+    await screen.findByTestId('scan-log-mobile-cards');
+    await act(async () => rejectScanners(new Error('late failure')));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByTestId('scan-log-mobile-cards')).toHaveTextContent('API Gate');
+});
