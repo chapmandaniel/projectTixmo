@@ -1,0 +1,8 @@
+2026-10-20T11:05:17.580438+00:00
+PASS /proc/1397862 absent
+PASS /proc/1397875 absent
+PASS ports30480/56005 zero listeners
+PASS API link removed; dashboard link never created, absent
+PASS postmaster.pid absent
+PASS all439 source hashes unchanged
+PASS tracked product/config/manifests/locks diff empty

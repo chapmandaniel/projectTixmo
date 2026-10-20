@@ -1,0 +1,9 @@
+2026-10-20T11:03:24Z
+  UID     PID    PPID COMMAND
+ 1000 1397862    1523 /home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root/usr/lib/postgresql/18/bin/postgres -D /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task209.Rkyatx/pg -h 127.0.0.1 -p 30480 -k /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task209.Rkyatx
+ 1000 1397875 1397802 /home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root/usr/bin/redis-server 127.0.0.1:56005
+LISTEN 0      200    127.0.0.1:30480 0.0.0.0:* users:(("postgres",pid=1397862,fd=6))    
+LISTEN 0      511    127.0.0.1:56005 0.0.0.0:* users:(("redis-server",pid=1397875,fd=8))
+mode=700 uid=1000
+1397862 exe=/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root/usr/lib/postgresql/18/bin/postgres
+1397875 exe=/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root/usr/bin/redis-check-rdb

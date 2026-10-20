@@ -1,0 +1,19 @@
+{
+  "testedSha": "e48e4a0069cdb25f8f524e0afdfcbf43b8eb55f7",
+  "recovery": "1",
+  "suitePassed": 79,
+  "suiteFailed": 0,
+  "suiteSkipped": 0,
+  "suiteTotal": 79,
+  "testPassed": 493,
+  "testFailed": 0,
+  "testSkipped": 0,
+  "testTotal": 493,
+  "snapshots": 0,
+  "jestSeconds": 136.355,
+  "wallSeconds": 137.13,
+  "exit": 0,
+  "deadlineSeconds": 210,
+  "runtimeHelperExit": 0,
+  "skipInterpretation": "No skipped lines; all final suite/test totals passed."
+}
