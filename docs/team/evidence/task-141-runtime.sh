@@ -122,11 +122,11 @@ export DATABASE_URL="postgresql://tixmo57@127.0.0.1:$pgport/tixmo_disposable_57"
 export STRIPE_SECRET_KEY=sk_test_verify_api STRIPE_PUBLISHABLE_KEY=pk_test_verify_api STRIPE_WEBHOOK_SECRET=whsec_verify_api
 export JWT_SECRET=qa124-synthetic-jwt-fixture-not-a-real-credential JWT_REFRESH_SECRET=qa124-synthetic-refresh-fixture-not-a-real-credential SESSION_SECRET=qa124-synthetic-session-fixture-not-a-real-credential
 set +e
-npm --prefix tixmoapi2 test -- --cacheDirectory "$PWD/.jest-cache141" --runInBand --runTestsByPath tests/integration/payment-paused-owner.baseline.test.ts > .task141-green.log 2>&1
+timeout --signal=TERM --kill-after=5s 35s npm --prefix tixmoapi2 test -- --cacheDirectory "$PWD/.jest-cache141" --runInBand --runTestsByPath tests/integration/payment-paused-owner.baseline.test.ts > .task141-green.log 2>&1
 green=$?
-TIXMO_ASSERT_PAUSED_RECOVERY=1 npm --prefix tixmoapi2 test -- --cacheDirectory "$PWD/.jest-cache141" --runInBand --runTestsByPath tests/integration/payment-paused-owner.baseline.test.ts > .task141-red.log 2>&1
+TIXMO_ASSERT_PAUSED_RECOVERY=1 timeout --signal=TERM --kill-after=5s 35s npm --prefix tixmoapi2 test -- --cacheDirectory "$PWD/.jest-cache141" --runInBand --runTestsByPath tests/integration/payment-paused-owner.baseline.test.ts > .task141-red.log 2>&1
 red=$?
-npm --prefix tixmoapi2 run build > .task141-build.log 2>&1
+timeout --signal=TERM --kill-after=5s 35s npm --prefix tixmoapi2 run build > .task141-build.log 2>&1
 build=$?
 echo "TASK141_RESULTS green=$green red=$red build=$build"
 test "$green" = 0 && test "$red" = 1 && test "$build" = 0

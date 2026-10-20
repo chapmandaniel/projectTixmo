@@ -71,3 +71,30 @@ Initial PG PID981234/port32624, Redis PID981247/port48828. Final PG
 PID982055/port38183, Redis PID982068/port57306. Final ss output empty;
 helper checks both exact PIDs stopped. No inherited service touched.
 Runtime helper prefix normalized byte-equivalence assertion PASS; git diff --check PASS.
+
+## QA142 boundedness repair (supersedes prior exact93d024e)
+
+Formal REQUEST CHANGES correctly identified an unbounded finally drain. Retain
+immediate Promise.allSettled rejection handling, release A, then bound its drain
+at5s; nested finally restores spies even when drain rejects. Optional timeout
+argument exists solely to exercise this exact helper without waiting5s.
+Every test/build subprocess now uses GNU `timeout --signal=TERM --kill-after=5s 35s`.
+Default timeout process groups receive TERM and then KILL; the owning shell
+continues to its unchanged EXIT cleanup. Only exact GREEN0/RED1/build0 passes;
+124/137 or any other timeout exit is not an expected recovery RED.
+Runtime guard prefix preceding test tail verified byte-identical to93d024e.
+Prior QA PIDs984866/984879 absent and ports34569/47659 empty before new runtime.
+
+Meaningful isolated checks actually performed: extracted exact TypeScript bounded
+function, transpiled with installed TypeScript and executed against unresolved
+Promise with20ms deadline; rejected `Barrier timeout (harness failure)` within1s
+(PASS). GNU timeout0.1s/KILL+0.1s against a TERM-ignoring bash loop exited137
+(PASS); this status cannot satisfy helper's red=1 predicate. Probe used no DB.
+These probes are harness checks, not product failure/mutation proof.
+
+Actual repaired helper run exit0: GREEN suite1/tests3 passed, recovery RED
+suite1/tests2 deliberately failed and1 fresh passed; API build0. Six fresh full
+snapshots replace only task141 snapshot artifact. No barrier timeout.
+New exact PG986462/port30879 and Redis986494/port43162 stopped; empty postcleanup
+listeners. Historical137/source/schema unchanged. Exact repairedSHA requires
+independent QA rereview; no author closure or recovery/fencing success claimed.

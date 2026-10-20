@@ -6,9 +6,9 @@ import { orderService } from '../../src/api/orders/service';
 import { config } from '../../src/config/environment';
 
 function deferred() { let resolve!: () => void; const promise = new Promise<void>(r => { resolve = r; }); return {promise, resolve}; }
-async function bounded<T>(promise: Promise<T>): Promise<T> {
+async function bounded<T>(promise: Promise<T>, timeoutMs = 5000): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
-  try { return await Promise.race([promise, new Promise<T>((_, reject) => { timer = setTimeout(() => reject(new Error('Barrier timeout (harness failure)')), 5000); })]); }
+  try { return await Promise.race([promise, new Promise<T>((_, reject) => { timer = setTimeout(() => reject(new Error('Barrier timeout (harness failure)')), timeoutMs); })]); }
   finally { if (timer) clearTimeout(timer); }
 }
 afterAll(async () => { await prisma.$disconnect(); });
@@ -87,5 +87,9 @@ test.each(['fresh', 'before-handler', 'before-finish'])('paused owner phase=%s',
       if (phase === 'before-handler') expect({phase, recoveredOrder:afterB.target.status}).toEqual({phase,recoveredOrder:'PAID'});
       else expect({phase,recoveredEvent:afterB.event.status}).toEqual({phase,recoveredEvent:'PROCESSED'});
     }
-  } finally { release.resolve(); await drained; gate.mockRestore(); email.mockRestore(); }
+  } finally {
+    release.resolve();
+    try { await bounded(drained); }
+    finally { gate.mockRestore(); email.mockRestore(); }
+  }
 }, 15000);
