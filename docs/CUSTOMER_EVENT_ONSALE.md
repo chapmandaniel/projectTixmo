@@ -64,7 +64,15 @@ if inactive-only tier schedules are supported in the operator workflow.
 - `npm --prefix tdash run build`: passed; preview component excluded from
   production JavaScript.
 - Browser: desktop 1440px and mobile 390px layouts visually inspected;
-  quantity selection, sample checkout boundary and mobile CTA focus checked.
+  no horizontal overflow at 320, 390, 768, 1024 or 1440px. Quantity selection,
+  sample checkout boundary, keyboard skip link, reduced motion and mobile CTA
+  focus checked. A browser-mocked public event handed one selected ticket into
+  the actual checkout route and summary, without creating an order.
+- Independent review of implementation `bcc3194a962fe49204cb9fac315716cbd402e96f`:
+  5 focused test files / 50 tests passed in a separate checkout. One introduced
+  issue was found: CTA contrast. Dedicated action tokens now provide white-text
+  contrast of 4.70:1 (default) and 6.29:1 (hover); the bright brand accent stays
+  unchanged. The correction is submitted for exact-commit re-review.
 - Screenshots: local `output/playwright/event-onsale-desktop.png` and
   `output/playwright/event-onsale-mobile.png` (not source deliverables).
 
