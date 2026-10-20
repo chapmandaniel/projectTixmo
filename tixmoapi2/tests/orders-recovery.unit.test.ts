@@ -8,7 +8,7 @@ jest.mock('../src/api/ticket-tiers/service', () => ({ ticketTierService: {} }));
 jest.mock('../src/utils/jwt', () => ({ verifyAccessToken: jest.fn() }));
 import express from 'express';
 import request from 'supertest';
-import { UserRole } from '@prisma/client';
+import { OrderStatus, PaymentStatus, UserRole } from '@prisma/client';
 import prisma from '../src/config/prisma';
 import { verifyAccessToken } from '../src/utils/jwt';
 import { orderService } from '../src/api/orders/service';
@@ -34,6 +34,19 @@ beforeEach(() => {
 });
 
 const roles = Object.values(UserRole);
+// Both columns use the actual generated Prisma enums, including inconsistent
+// stored combinations: this read reports state, never repairs or transitions it.
+const storedStates: Array<[OrderStatus, PaymentStatus]> = [
+  [OrderStatus.PENDING, PaymentStatus.PENDING],
+  [OrderStatus.PENDING, PaymentStatus.PROCESSING],
+  [OrderStatus.PAID, PaymentStatus.SUCCEEDED],
+  [OrderStatus.PENDING, PaymentStatus.FAILED],
+  [OrderStatus.CANCELLED, PaymentStatus.PENDING],
+  [OrderStatus.CANCELLED, PaymentStatus.SUCCEEDED],
+  [OrderStatus.REFUNDED, PaymentStatus.SUCCEEDED],
+  [OrderStatus.PARTIALLY_REFUNDED, PaymentStatus.SUCCEEDED],
+  [OrderStatus.PAID, PaymentStatus.FAILED],
+];
 describe('consumer recovery route/controller/service', () => {
   test.each(roles)('%s reads own status without role/organization lookup', async role => {
     (verifyAccessToken as jest.Mock).mockReturnValue({ userId: 'buyer', role, organizationId: null });
@@ -70,7 +83,7 @@ describe('consumer recovery route/controller/service', () => {
     await expect(orderService.getConsumerOrderRecovery('11111111-1111-4111-8111-111111111111', owner as any)).rejects.toMatchObject({ statusCode: 401 });
     expect(db.order.findFirst).not.toHaveBeenCalled();
   });
-  test.each([['PENDING', 'PENDING'], ['PAID', 'PAID'], ['PENDING', 'FAILED'], ['CANCELLED', 'PENDING'], ['CANCELLED', 'PAID'], ['REFUNDED', 'REFUNDED']])('returns stored %s/%s without transition', async (status, paymentStatus) => {
+  test.each(storedStates)('returns stored %s/%s without transition', async (status, paymentStatus) => {
     db.order.findFirst.mockResolvedValue({ id: '11111111-1111-4111-8111-111111111111', status, paymentStatus });
     const response = await request(app).get('/api/v1/orders/11111111-1111-4111-8111-111111111111/recovery').set('Authorization', 'Bearer mock');
     expect(response.body.data).toEqual({ id: '11111111-1111-4111-8111-111111111111', status, paymentStatus });
