@@ -54,7 +54,7 @@ for archive in *.deb; do dpkg-deb -x "$archive" root; done
 Versions above are the actual observed run; recheck package versions if indexes
 change. Do not install packages system-wide or execute their maintainer scripts.
 
-The successful lifecycle below uses random candidates directly, never a
+The corrected lifecycle below uses random candidates directly, never a
 check-then-bind free-port probe. A bind collision must fail closed, not attach
 to an existing service or retry blindly. Services are unauthenticated disposable
 local-only test services, not a production deployment.
@@ -67,13 +67,26 @@ pgbin="$runtime_root/usr/lib/postgresql/18/bin"
 owned_run=$(mktemp -d /tmp/tixmo57.XXXXXX)
 pgport=$(shuf -i 20000-39999 -n 1)
 redisport=$(shuf -i 40000-59999 -n 1)
+redis_pid=''
 cleanup() {
+  original_status=$?
+  cleanup_failed=0
+  # Every command is guarded: errexit must not skip the other service.
   if test -f "$owned_run/pg/postmaster.pid"; then
-    "$pgbin/pg_ctl" -D "$owned_run/pg" -m fast -w -t 10 stop
+    "$pgbin/pg_ctl" -D "$owned_run/pg" -m fast -w -t 10 stop || cleanup_failed=1
   fi
-  if test -S "$owned_run/redis.sock"; then
-    "$runtime_root/usr/bin/redis-cli" -s "$owned_run/redis.sock" shutdown nosave
+  if test -n "$redis_pid"; then
+    # This is our unreaped direct child, never a PID inferred from a TCP peer.
+    if kill -0 "$redis_pid" 2>/dev/null; then
+      kill -TERM "$redis_pid" 2>/dev/null || cleanup_failed=1
+    fi
+    wait "$redis_pid" || cleanup_failed=1
   fi
+  if test "$cleanup_failed" -ne 0; then
+    echo "Owned-runtime cleanup FAILED; inspect $owned_run; do not run another gate" >&2
+    exit 1
+  fi
+  exit "$original_status"
 }
 trap cleanup EXIT
 "$pgbin/initdb" -D "$owned_run/pg" \
@@ -81,10 +94,38 @@ trap cleanup EXIT
   --username=tixmo57 --encoding=UTF8 --no-locale > "$owned_run/initdb.log"
 "$pgbin/pg_ctl" -D "$owned_run/pg" -l "$owned_run/postgres.log" \
   -o "-h 127.0.0.1 -p $pgport -k $owned_run" -w -t 10 start
+pg_pid=$(head -n 1 "$owned_run/pg/postmaster.pid")
+test "$(readlink -f "/proc/$pg_pid/exe")" = "$(readlink -f "$pgbin/postgres")"
+# Foreground mode gives the shell an exact unreaped child PID. No daemonize race.
 "$runtime_root/usr/bin/redis-server" --bind 127.0.0.1 --port "$redisport" \
-  --save '' --appendonly no --daemonize yes --dir "$owned_run" \
+  --save '' --appendonly no --daemonize no --dir "$owned_run" \
   --pidfile "$owned_run/redis.pid" --logfile "$owned_run/redis.log" \
-  --unixsocket "$owned_run/redis.sock" --unixsocketperm 700
+  --unixsocket "$owned_run/redis.sock" --unixsocketperm 700 &
+redis_pid=$!
+redis_ready=0
+for attempt in {1..30}; do
+  kill -0 "$redis_pid" 2>/dev/null || break
+  if test -S "$owned_run/redis.sock" &&
+    test "$("$runtime_root/usr/bin/redis-cli" -s "$owned_run/redis.sock" ping)" = PONG; then
+    redis_ready=1
+    break
+  fi
+  sleep 0.1
+done
+test "$redis_ready" = 1
+info_pid=$("$runtime_root/usr/bin/redis-cli" -s "$owned_run/redis.sock" info server |
+  tr -d '\r' | sed -n 's/^process_id://p')
+test "$info_pid" = "$redis_pid"
+test "$(readlink -f "/proc/$redis_pid/exe")" = \
+  "$(readlink -f "$runtime_root/usr/bin/redis-server")"
+# Fail closed unless each exact PID owns its requested loopback TCP listener.
+# No TCP probe or database access is allowed before these assertions.
+for pair in "$pgport:$pg_pid" "$redisport:$redis_pid"; do
+  port=${pair%:*}; pid=${pair#*:}
+  listener=$(ss -H -ltnp "sport = :$port")
+  test "$(printf '%s\n' "$listener" | wc -l)" = 1
+  printf '%s\n' "$listener" | rg -q "127\.0\.0\.1:$port .*pid=$pid,"
+done
 "$pgbin/createdb" -h 127.0.0.1 -p "$pgport" -U tixmo57 tixmo_disposable_57
 "$pgbin/psql" -h 127.0.0.1 -p "$pgport" -U tixmo57 \
   -d tixmo_disposable_57 -Atc \
@@ -103,3 +144,23 @@ ownership and listener addresses, and check teardown as above. Do not reuse
 this run's now-stopped URLs, connect to any inherited URLs, or delete unknown
 data directories. Native version parity with CI remains unverified; PM must
 sequence actual integration separately, without assuming parity from access.
+
+## QA97 correction and verification limits
+
+The initial observed smoke succeeded, but its daemonized Redis procedure did
+not fail closed on a port collision, and errexit could skip Redis cleanup if
+PostgreSQL shutdown failed. The corrected procedure uses a direct foreground
+Redis child, bounded unique-socket readiness, INFO PID/executable identity, and
+exact PID-owned loopback listener assertions before TCP or database access.
+Cleanup guards PostgreSQL failure, always attempts the exact Redis child, and
+reports failure without silently returning success. It never shuts down a
+service discovered at a colliding TCP port. No integration has been run.
+
+Correction checks: extracted lifecycle `bash -n` passed; service-free injected
+PostgreSQL-cleanup failure still attempted Redis cleanup and returned exit1.
+Corrected owned lifecycle smoke (createdb/SQL steps omitted) exited0: exact PID,
+Unix-socket INFO identity and listener assertions passed, PONG, guard accepted,
+then both shutdowns succeeded. An independently owned temporary Python TCP
+listener forced Redis bind collision: Redis exited nonzero, no unique socket
+appeared, original listener remained owned/alive; no TCP client contacted it.
+No Prisma or application database mutation occurred during correction checks.
