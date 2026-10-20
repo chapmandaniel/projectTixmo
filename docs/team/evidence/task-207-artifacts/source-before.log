@@ -1,0 +1,2 @@
+Exact candidate e48e4a0069cdb25f8f524e0afdfcbf43b8eb55f7 all 439 tracked product/test/schema/config/script/manifest paths byte-identical to HEAD. PASS
+Node v24.21.0 npm11.19.0; reused task177 dependencies, no npmci. Prisma API build regenerated client in reused dependency tree.

@@ -1,0 +1,92 @@
+Prisma schema loaded from tixmoapi2/prisma/schema.prisma
+Datasource "db": PostgreSQL database "tixmo_disposable_57", schema "public" at "127.0.0.1:27885"
+
+27 migrations found in prisma/migrations
+
+Applying migration `20251029024657_init`
+Applying migration `20251106234538_add_scanner_and_scan_log_models`
+Applying migration `20251107004712_add_notification_models`
+Applying migration `20251213132041_add_tasks`
+Applying migration `20251219023936_add_deleted_at_to_event`
+Applying migration `20260101000000_add_title_manual`
+Applying migration `20260101000001_add_permissions_manual`
+Applying migration `20260102000000_make_category_optional`
+Applying migration `20260102000001_make_timezone_optional`
+Applying migration `20260105153700_sync_schema_drift`
+Applying migration `20260105223709_add_task_mention_notification_type`
+Applying migration `20260201203653_add_approval_system`
+Applying migration `20260211210000_fix_ticket_types_and_tiers`
+Applying migration `20260216143335_add_approval_type`
+Applying migration `20260309120000_rebuild_creative_approval_system`
+Applying migration `20260403153000_add_approval_comment_visibility`
+Applying migration `20260403170000_add_approval_reviewer_association`
+Applying migration `20260502120000_add_approval_curation_fields`
+Applying migration `20260502133000_add_manager_role`
+Applying migration `20260504120000_add_direct_asset_library`
+Applying migration `20260504143000_add_asset_library_usage_type`
+Applying migration `20260508140000_add_asset_library_folders`
+Applying migration `20260508153000_add_asset_library_folder_shares`
+Applying migration `20260508173000_add_asset_library_share_folders`
+Applying migration `20260518120000_add_folder_share_token_ciphertext`
+Applying migration `20260602010000_add_payment_webhook_events`
+Applying migration `20261020120000_add_webhook_attempt_generation`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20251029024657_init/
+    └─ migration.sql
+  └─ 20251106234538_add_scanner_and_scan_log_models/
+    └─ migration.sql
+  └─ 20251107004712_add_notification_models/
+    └─ migration.sql
+  └─ 20251213132041_add_tasks/
+    └─ migration.sql
+  └─ 20251219023936_add_deleted_at_to_event/
+    └─ migration.sql
+  └─ 20260101000000_add_title_manual/
+    └─ migration.sql
+  └─ 20260101000001_add_permissions_manual/
+    └─ migration.sql
+  └─ 20260102000000_make_category_optional/
+    └─ migration.sql
+  └─ 20260102000001_make_timezone_optional/
+    └─ migration.sql
+  └─ 20260105153700_sync_schema_drift/
+    └─ migration.sql
+  └─ 20260105223709_add_task_mention_notification_type/
+    └─ migration.sql
+  └─ 20260201203653_add_approval_system/
+    └─ migration.sql
+  └─ 20260211210000_fix_ticket_types_and_tiers/
+    └─ migration.sql
+  └─ 20260216143335_add_approval_type/
+    └─ migration.sql
+  └─ 20260309120000_rebuild_creative_approval_system/
+    └─ migration.sql
+  └─ 20260403153000_add_approval_comment_visibility/
+    └─ migration.sql
+  └─ 20260403170000_add_approval_reviewer_association/
+    └─ migration.sql
+  └─ 20260502120000_add_approval_curation_fields/
+    └─ migration.sql
+  └─ 20260502133000_add_manager_role/
+    └─ migration.sql
+  └─ 20260504120000_add_direct_asset_library/
+    └─ migration.sql
+  └─ 20260504143000_add_asset_library_usage_type/
+    └─ migration.sql
+  └─ 20260508140000_add_asset_library_folders/
+    └─ migration.sql
+  └─ 20260508153000_add_asset_library_folder_shares/
+    └─ migration.sql
+  └─ 20260508173000_add_asset_library_share_folders/
+    └─ migration.sql
+  └─ 20260518120000_add_folder_share_token_ciphertext/
+    └─ migration.sql
+  └─ 20260602010000_add_payment_webhook_events/
+    └─ migration.sql
+  └─ 20261020120000_add_webhook_attempt_generation/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
