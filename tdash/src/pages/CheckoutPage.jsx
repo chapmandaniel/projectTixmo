@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -286,7 +286,7 @@ const BuyerAuthPanel = ({ currentUser, onAuthenticated }) => {
     );
 };
 
-const CheckoutPage = ({ user, onAuthenticated }) => {
+const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const { slug } = useParams();
     const [event, setEvent] = useState(null);
     const [quantities, setQuantities] = useState({});
@@ -629,6 +629,72 @@ const CheckoutPage = ({ user, onAuthenticated }) => {
             </div>
         </main>
     );
+};
+
+// Return fields identify a candidate only. Never mount purchase controls here.
+const RecoveryPage = ({ candidate, user, onAuthenticated }) => {
+    const [result, setResult] = useState(null);
+    const [attempt, setAttempt] = useState(0);
+    const valid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate || '');
+    useEffect(() => {
+        let active = true;
+        setResult(null);
+        if (valid && user?.id) {
+            api.get(`/orders/${encodeURIComponent(candidate)}/recovery`).then((response) => {
+                const data = unwrapApiPayload(response);
+                const exact = data && Object.keys(data).sort().join(',') === 'id,paymentStatus,status';
+                const known = exact && data.id === candidate
+                    && ['PENDING', 'PAID', 'CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED'].includes(data.status)
+                    && ['PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED'].includes(data.paymentStatus);
+                if (active) setResult({ kind: known ? 'loaded' : 'malformed', data: known ? data : null });
+            }).catch((error) => {
+                const status = error.response?.status;
+                if (active) setResult({ kind: status === 401 ? 'auth' : [403, 404].includes(status) ? 'unavailable' : 'network' });
+            });
+        }
+        return () => { active = false; };
+    }, [candidate, user, valid, attempt]);
+
+    const needsAuth = valid && (!user?.id || result?.kind === 'auth');
+    let message = 'Checking order status…';
+    if (!valid) message = 'Unable to check this return. A valid order reference is required.';
+    else if (needsAuth) message = 'Sign in to check your order. Payment has not been verified.';
+    else if (result?.kind === 'unavailable') message = 'This order is unavailable. No payment status could be verified.';
+    else if (result?.kind === 'network') message = 'Unable to check order status. Please retry; payment status is unknown.';
+    else if (result?.kind === 'malformed') message = 'Unable to verify the order response. Please retry.';
+    else if (result?.kind === 'loaded') {
+        const { status, paymentStatus } = result.data;
+        if (status === 'PAID' && paymentStatus === 'SUCCEEDED') message = 'Order confirmed. Payment succeeded.';
+        else if (status === 'PENDING' && ['PENDING', 'PROCESSING'].includes(paymentStatus)) message = 'Awaiting server confirmation. Do not purchase again.';
+        else if (status === 'PENDING' && paymentStatus === 'FAILED') message = 'Payment failed. This order is not confirmed.';
+        else if (['CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED'].includes(status)) message = 'This order is closed or refunded. No ticket entitlement is confirmed here.';
+        else message = 'Order status requires review. No payment or ticket entitlement is confirmed here.';
+    }
+    return (
+        <main className="min-h-screen bg-dashboard-shell px-5 py-8 text-zinc-100">
+            <DashboardSurface isDark className="mx-auto max-w-xl space-y-5 p-6">
+                <h1 className="text-2xl font-light">Order status</h1>
+                <p role="status" className="text-sm leading-6 text-dashboard-muted">{message}</p>
+                {needsAuth ? <BuyerAuthPanel currentUser={null} onAuthenticated={onAuthenticated} /> : null}
+                {valid && user?.id ? (
+                    <DashboardButton isDark type="button" onClick={() => setAttempt((value) => value + 1)}>
+                        Check status again
+                    </DashboardButton>
+                ) : null}
+            </DashboardSurface>
+        </main>
+    );
+};
+
+const CheckoutPage = (props) => {
+    const { search } = useLocation();
+    const query = new URLSearchParams(search);
+    const isReturn = ['orderId', 'redirect_status', 'payment_intent', 'payment_intent_client_secret']
+        .some((field) => query.has(field));
+    const candidate = query.getAll('orderId').length === 1 ? query.get('orderId') : null;
+    return isReturn
+        ? <RecoveryPage key={`${search}:${props.user?.id || 'anonymous'}`} {...props} candidate={candidate} />
+        : <FreshCheckoutPage {...props} />;
 };
 
 export default CheckoutPage;
