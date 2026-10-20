@@ -30,3 +30,59 @@ Task143 subsequently introduced generation-bearing ownership and enabled recover
 ## Checks and limitations
 
 Read required role/team docs; inspected board141/142/143/183, source, existing successor suite and actual182 failure log. Existing Jest/deferred/BigInt-replacer patterns already suffice; no custom library needed. Static inspection only, no mock execution, build, Jest or DB rerun claimed. Source identity and diff-whitespace checks are recorded in the board handoff. This diagnosis does not prove repaired fixtures pass, other four failures resolved, current full market readiness, exactly-once external email, or production acceptance.175/177 remain open; release NO-GO.
+
+
+## Task188 independent QA: APPROVE diagnosis only
+
+Exact reviewed commit `e245579998b81309e3b6ebb1efc9633111b0b421`, versus
+`4e3664d719c301159b40a58a2fc684c4d84ab905`, immutable source
+`7574eea362ea827c1da85a0bf60002352a355dd1`. Reviewer tixmo-qa; new isolated
+`tixmo/review-188` at `worktrees/review-188`. Entire diff is this one diagnosis
+file (32 original added lines); no repair implementation. Existing shared-main
+untracked AGENTS/docs-team files were inspected and preserved.
+
+Independent static inspection confirms fixture40 checks strict boolean true after
+real admission but before reached.resolve. Product beginWebhookEvent returns a
+claim object or null, so a successful real claim fails that assertion; handleWebhook
+awaits admission outside its try. Immediate allSettled attaches rejection handling
+but does not propagate it to the separately awaited reached promise. The 5s timeout
+therefore masks the assertion, not evidence of product deadlock. Before-finish uses
+a different seam, reaches its barrier, expires A's lease and lets B finish; old
+whole-snapshot equality then rejects enabled recovery's generation2/PROCESSED
+transition. Read actual182 api.log229-299 corroborates these distinct observations;
+this review does not re-execute them or infer all remaining assertions would pass.
+
+Read historical141 report and142/143 board records:141/142's three GREEN baseline
+observations plus two deliberate durable recovery REDs/one fresh PASS were test-only,
+not enabled-candidate acceptance.143's scoped independent enabled19suite82test
+acceptance is historical focused evidence, not current full-market green. The old
+baseline was not part of that acceptance. Runtime flags differ: paused-recovery
+flag alters old oracle, experimental-recovery flag enables successor test schedules;
+neither resolves strict boolean admission mismatch. Product recovery is already true
+regardless of its stale disabled comment. BigInt snapshot JSON diagnostic is also a
+real latent fixture hazard; local replacer is appropriate, native assertions retained.
+
+Minimal proposed fixture-only repair is technically correct with these explicit
+phase obligations: fresh B leaves full snapshot/gen1/business/email unchanged, then
+A completes once; expired before-handler starts PENDING/6,4,0/zero email and B
+fulfills once; expired before-finish starts PAID/SUCCEEDED/6,2,2/one email and B only
+completes recovery without repeating business effects. Both expired paths require
+B PROCESSED/gen2, valid new timestamps, unchanged unrelated buyer/tickets/counts,
+and full after-B versus after-stale-A durable equality. Claim seam must return real
+claim unchanged and race barrier with prompt rejection, retaining bounded drain and
+finally spy restoration. No deadline increases, skipped oracle, fabricated ownership
+or affected counts are warranted.
+
+Existing payment-expired-successor.test.ts was independently inspected60-109: B is
+actually held PROCESSING/gen2 outside locks, stale A success/failure terminal writes
+observe real zero-row counts, full snapshots stay equal before B release; before-handler
+correctly has no terminal attempt because handler fence rejects first. After-terminal
+controls are separate. Diagnosis preserves all of this rather than replacing it with
+terminal-only status checks. No new product defect or missing gate inferred.
+
+Checks actually performed: `git diff --stat 4e3664d e245579` one documentation file;
+`git diff --exit-code 7574eea362ea827c1da85a0bf60002352a355dd1 -- tixmoapi2/src tixmoapi2/tests tixmoapi2/prisma package.json package-lock.json tixmoapi2/package.json tixmoapi2/package-lock.json` exit0;
+`git diff --check` exit0. Review only appends evidence; no fixture/product edits,
+Jest/mock/build/DB/services/install/runtime verification performed. Future repair and
+fresh guarded sole-owner PM runtime grant/review remain required;175/177 nonpassing,
+release NO-GO.188 review complete;185 closure belongs to PM.
