@@ -68,19 +68,60 @@ owned_run=$(mktemp -d /tmp/tixmo57.XXXXXX)
 pgport=$(shuf -i 20000-39999 -n 1)
 redisport=$(shuf -i 40000-59999 -n 1)
 redis_pid=''
+pg_pid=''
+alive() {
+  test -r "/proc/$1/stat" || return 1
+  # A zombie is stopped and cannot retain listeners; its parent reaps it.
+  case "$(ps -o stat= -p "$1")" in Z*|'') return 1;; esac
+  kill -0 "$1" 2>/dev/null
+}
+owned_identity() {
+  kind=$1; pid=$2
+  test "$(stat -c %u "/proc/$pid" 2>/dev/null)" = "$(id -u)" || return 1
+  if test "$kind" = pg; then
+    test "$(head -n 1 "$owned_run/pg/postmaster.pid" 2>/dev/null)" = "$pid" || return 1
+    test "$(readlink -f "/proc/$pid/exe")" = "$(readlink -f "$pgbin/postgres")" || return 1
+    tr '\0' '\n' < "/proc/$pid/cmdline" | grep -Fxq -- "$owned_run/pg"
+  else
+    # Unreaped direct child PID cannot be recycled before wait.
+    test "$pid" = "$redis_pid" || return 1
+    test "$(ps -o ppid= -p "$pid" | tr -d ' ')" = "$$" || return 1
+    test "$(readlink -f "/proc/$pid/exe")" = \
+      "$(readlink -f "$runtime_root/usr/bin/redis-server")"
+  fi
+}
+stop_exact() {
+  kind=$1; pid=$2
+  test -n "$pid" || return 0
+  alive "$pid" || return 0
+  for signal in TERM KILL; do
+    owned_identity "$kind" "$pid" || return 1
+    kill -"$signal" "$pid" 2>/dev/null || return 1
+    for poll in {1..20}; do
+      alive "$pid" || return 0
+      sleep 0.1
+    done
+  done
+  return 1 # bounded deadline expired; report leftovers, never hang in wait
+}
 cleanup() {
   original_status=$?
+  trap - EXIT INT TERM
+  set +e # All failures are collected; neither service may skip the other.
   cleanup_failed=0
-  # Every command is guarded: errexit must not skip the other service.
-  if test -f "$owned_run/pg/postmaster.pid"; then
-    "$pgbin/pg_ctl" -D "$owned_run/pg" -m fast -w -t 10 stop || cleanup_failed=1
+  if test -z "$pg_pid" && test -f "$owned_run/pg/postmaster.pid"; then
+    pg_pid=$(head -n 1 "$owned_run/pg/postmaster.pid")
   fi
-  if test -n "$redis_pid"; then
-    # This is our unreaped direct child, never a PID inferred from a TCP peer.
-    if kill -0 "$redis_pid" 2>/dev/null; then
-      kill -TERM "$redis_pid" 2>/dev/null || cleanup_failed=1
-    fi
-    wait "$redis_pid" || cleanup_failed=1
+  if test -n "$pg_pid" && alive "$pg_pid"; then
+    if owned_identity pg "$pg_pid"; then
+      "$pgbin/pg_ctl" -D "$owned_run/pg" -m fast -w -t 5 stop || cleanup_failed=1
+      stop_exact pg "$pg_pid" || cleanup_failed=1
+    else cleanup_failed=1; fi
+  fi
+  stop_exact redis "$redis_pid" || cleanup_failed=1
+  # wait only after observed stopped/zombie; never wait for a live process.
+  if test -n "$redis_pid" && ! alive "$redis_pid"; then
+    wait "$redis_pid" >/dev/null 2>&1
   fi
   if test "$cleanup_failed" -ne 0; then
     echo "Owned-runtime cleanup FAILED; inspect $owned_run; do not run another gate" >&2
@@ -89,6 +130,8 @@ cleanup() {
   exit "$original_status"
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 "$pgbin/initdb" -D "$owned_run/pg" \
   -L "$runtime_root/usr/share/postgresql/18" --auth=trust \
   --username=tixmo57 --encoding=UTF8 --no-locale > "$owned_run/initdb.log"
@@ -164,3 +207,22 @@ then both shutdowns succeeded. An independently owned temporary Python TCP
 listener forced Redis bind collision: Redis exited nonzero, no unique socket
 appeared, original listener remained owned/alive; no TCP client contacted it.
 No Prisma or application database mutation occurred during correction checks.
+
+Final cleanup correction: both exact instances have bounded TERM/KILL grace
+polling (20 x 0.1 seconds each), with UID/executable identity rechecked before
+each signal; PostgreSQL additionally requires its exact PID file and datadir
+argument, Redis its unreaped direct-child PID and PPID. PostgreSQL graceful
+stop has a five-second deadline before the verified exact-instance fallback.
+Any graceful-stop failure is still reported even if fallback succeeds. A live
+process is never passed to unbounded wait; unresolved identities/leftovers
+cause failure without foreign signals. INT/TERM exit through the same EXIT
+cleanup; use a timeout grace longer than 15 seconds, never immediate SIGKILL.
+
+Final correction checks: ordinary owned smoke without createdb/SQL exited0,
+including identity/listener/readiness assertions and successful teardown.
+Service-free stalled-process fixture used the actual stop_exact function with
+liveness always true and signals/sleep mocked: both PG and Redis terminated
+their finite TERM/KILL loops with failure (four recorded signals total), under
+a two-second outer timeout; no live-process wait exists. No service/DB mutation
+was used for the failure fixture. This is bounded-control-flow evidence, not
+an actual OS-level unkillable-process claim.
