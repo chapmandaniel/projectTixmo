@@ -94,8 +94,9 @@ export class PaymentService {
 
     try {
       event = this.stripe.webhooks.constructEvent(payload, signature, config.stripeWebhookSecret);
-    } catch (err: any) {
-      throw new ApiError(400, `Webhook Error: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new ApiError(400, `Webhook Error: ${message}`);
     }
 
     const shouldProcess = await this.beginWebhookEvent(event);
