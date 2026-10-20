@@ -109,3 +109,9 @@ test('successful webhook mismatch protection remains active', async () => {
   await expect((service as any).handlePaymentSuccess({ id: 'pi-other', metadata: { orderId: order.id } })).rejects.toMatchObject({ statusCode: 400 });
   expect(orderService.confirmOrder).not.toHaveBeenCalled();
 });
+
+test('succeeded payment is rejected before contacting Stripe even if order is pending', async () => {
+  order.paymentStatus = 'SUCCEEDED';
+  await expect(prepare()).rejects.toMatchObject({ statusCode: 400 });
+  expect(stripe.paymentIntents.create).not.toHaveBeenCalled();
+});

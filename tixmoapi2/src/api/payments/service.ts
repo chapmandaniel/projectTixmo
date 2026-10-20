@@ -43,7 +43,7 @@ export class PaymentService {
       throw ApiError.notFound('Order not found');
     }
 
-    if (order.status !== 'PENDING') {
+    if (order.status !== 'PENDING' || order.paymentStatus === 'SUCCEEDED') {
       throw ApiError.badRequest('Order is not pending payment');
     }
 
@@ -93,7 +93,7 @@ export class PaymentService {
         userId,
         status: 'PENDING',
         totalAmount: order.totalAmount,
-        paymentStatus: { in: [order.paymentStatus, 'PROCESSING'].filter(status => status !== 'SUCCEEDED') },
+        paymentStatus: { in: [order.paymentStatus, 'PROCESSING'] },
         OR: [{ paymentIntentId: null }, { paymentIntentId: paymentIntent.id }],
       },
       data: { paymentIntentId: paymentIntent.id, paymentStatus: 'PROCESSING' },
