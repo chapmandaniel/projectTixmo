@@ -1,0 +1,10 @@
+PASS exact candidate195f96d source identity; no source/assertion/deadline/manifest/lock changes
+PASS existing177 API lock byte-identical, no installs/hooks/config
+ffeb7cc53cf3baea29cc01b692ef654b50ccebac837fcc93ee329d524e7022ef  tixmoapi2/src/api/payments/service.ts
+eae68a4a23c6cc5650cb4349126c872317b9f8006ca4d791fcc87348080bd87c  tixmoapi2/tests/integration/payment-old-processing.baseline.test.ts
+c2d3c285db4a9fbcbae3bab91f749ecba78ff16ca5a76348a0465830e6b5f129  tixmoapi2/prisma/schema.prisma
+2e2bd7f6358c3819e15c0202bedbc8ae11aead3e3591e00e5bcbb236defa1463  tixmoapi2/package.json
+112131b08362bd7683a99a0a11f6a03dc5204e36e29826a3ed5735f860fba9c1  tixmoapi2/package-lock.json
+07bcd6f3664fc093dd81ae82b5ea7d5f28d79a27bf90eb8a609d97377456e01d  package.json
+8fa8db0d72c618b40e5d3b63293643464201a0437de8de600f76a0289fbc24b0  scripts/verification-safety.cjs
+Root package-lock.json absent in candidate and worktree; initial hash pass assumed its presence, corrected file list only; no runtime rerun.

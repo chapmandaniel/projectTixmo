@@ -1,0 +1,7 @@
+PASS 2 durable schedule records + 1 signed terminal repeat record parsed from raw focused.log
+PASS fresh complete before==after, generation 0, no email
+PASS ancient legacy generation0 -> PROCESSED generation1, PAID/SUCCEEDED
+PASS inventory available/held/sold 6/2/2, email1, ticket/event counts4/1
+PASS unrelated full order/tickets unchanged; target tickets unchanged
+PASS second signed delivery full after==repeated equality including timestamps/generation/counts
+Native BigInt assertions remain unchanged in source; JSON serialization is strings for evidence only.

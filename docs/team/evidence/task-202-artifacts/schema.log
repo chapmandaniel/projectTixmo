@@ -1,0 +1,5 @@
+Prisma schema loaded from tixmoapi2/prisma/schema.prisma
+Datasource "db": PostgreSQL database "tixmo_disposable_57", schema "public" at "127.0.0.1:36207"
+
+🚀  Your database is now in sync with your Prisma schema. Done in 238ms
+
