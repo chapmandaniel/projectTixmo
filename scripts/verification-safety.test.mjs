@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import safety from './verification-safety.cjs';
-import { verifyApi } from './verify-api.mjs';
+import { verifyApi, formatTestFailures } from './verify-api.mjs';
 
 const safe = {
   TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1',
@@ -126,4 +126,15 @@ test('logs and redaction never retain credentials, query secrets or malformed in
 test('API test failure is not reported as success', () => {
   let count = 0;
   assert.throws(() => verifyApi({ env: safe, spawn: () => ({ status: ++count === 1 ? 0 : 1 }), log: () => {} }), /API tests failed/);
+});
+
+
+test('failure diagnostics expose suite filenames and counts without assertion or connection content', () => {
+  const diagnostic = formatTestFailures({ numFailedTests: 2, testResults: [
+    { status: 'failed', name: '/synthetic/private/payment-recovery.test.ts', message: 'postgresql://synthetic-secret', assertionResults: [{ fullName: 'synthetic-secret', failureMessages: ['synthetic-secret'] }] },
+    { status: 'passed', name: '/synthetic/private/passed.test.ts' },
+    { status: 'failed', name: 'postgresql://synthetic-secret' },
+  ] });
+  assert.match(diagnostic, /Failed tests: 2; suites: payment-recovery.test.ts/);
+  assert.doesNotMatch(diagnostic, /synthetic|private|postgresql|passed/);
 });

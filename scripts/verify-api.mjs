@@ -1,4 +1,6 @@
 import path from 'node:path';
+import os from 'node:os';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import safety from './verification-safety.cjs';
@@ -22,17 +24,33 @@ export function verifyApi({ env = process.env, spawn = spawnSync, log = console.
   }
   log(`[verify:api] DATABASE_URL ${safety.redactConnectionUrl(env.DATABASE_URL)}`);
   log(`[verify:api] REDIS_URL ${safety.redactConnectionUrl(env.REDIS_URL)}`);
-  const run = (command, args, cwd, label) => {
+  const run = (command, args, cwd, label, diagnostics = () => '') => {
     let result;
     try {
       // Capture and suppress raw child output: Prisma/Jest failures may embed URLs.
       result = spawn(command, args, { cwd, env: testEnv, encoding: 'utf8', stdio: 'pipe', shell: false });
     } catch { throw new Error(`${label} failed (child output suppressed).`); }
-    if (result.error || result.status !== 0) throw new Error(`${label} failed (child output suppressed).`);
+    if (result.error || result.status !== 0) throw new Error(`${label} failed (child output suppressed).${diagnostics()}`);
   };
   run('npx', ['prisma', 'db', 'push', '--accept-data-loss', '--skip-generate'], path.join(repoRoot, 'tixmoapi2'), 'Schema bootstrap');
-  run('npm', ['--prefix', 'tixmoapi2', 'test', '--', '--runInBand'], repoRoot, 'API tests');
+  const reports = mkdtempSync(path.join(os.tmpdir(), 'tixmo-verification-'));
+  const report = path.join(reports, 'jest.json');
+  try {
+    run('npm', ['--prefix', 'tixmoapi2', 'test', '--', '--runInBand', '--json', '--outputFile', report], repoRoot, 'API tests', () => {
+      try { return formatTestFailures(JSON.parse(readFileSync(report, 'utf8'))); } catch { return ''; }
+    });
+  } finally { rmSync(reports, { recursive: true, force: true }); }
   log('[verify:api] API verification passed.');
+}
+
+
+// Never surface assertion text, console output, URLs or test argument values.
+export function formatTestFailures(report) {
+  const suites = (report.testResults || []).filter(result => result.status === 'failed')
+    .map(result => path.basename(String(result.name || '')))
+    .filter(name => /^[A-Za-z0-9_.-]+\.test\.ts$/.test(name));
+  const failed = Number.isSafeInteger(report.numFailedTests) ? report.numFailedTests : 'unknown';
+  return ` Failed tests: ${failed}; suites: ${[...new Set(suites)].join(', ') || 'unavailable'}.`;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
