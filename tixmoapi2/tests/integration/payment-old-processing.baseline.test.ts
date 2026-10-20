@@ -40,7 +40,7 @@ test.each([false, true])('PROCESSING duplicate (crashed ancient owner=%s)', asyn
     const b = await prisma.order.findUniqueOrThrow({ where: { id: otherBefore.id }, include: { tickets: { orderBy: { id: 'asc' } } } });
     const inventory = await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } });
     const counters = [inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold];
-    console.log('TASK137_DURABLE', JSON.stringify({ ancient, before: { event: beforeEvent, target, other: otherBefore, inventory: beforeInventory }, after: { event: row, target: a, other: b, inventory }, emails: email.mock.calls.length }));
+    console.log('TASK137_DURABLE', JSON.stringify({ ancient, before: { event: beforeEvent, target, other: otherBefore, inventory: beforeInventory }, after: { event: row, target: a, other: b, inventory }, emails: email.mock.calls.length }, (_, value) => typeof value === 'bigint' ? value.toString() : value));
     expect(b).toEqual(otherBefore);
     expect(a.tickets).toEqual(target.tickets);
     expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
