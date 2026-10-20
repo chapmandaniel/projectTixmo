@@ -22,3 +22,7 @@ export const listOrdersSchema = z.object({
     eventId: z.string().uuid().optional(),
   }),
 });
+
+export const consumerOrderRecoverySchema = z.object({
+  params: z.object({ id: z.string().uuid('Invalid order ID') }),
+});

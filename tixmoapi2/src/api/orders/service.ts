@@ -281,6 +281,15 @@ export class OrderService {
   /**
    * Get order by ID
    */
+  // Consumer checkout-return reads never inherit operator/tenant privileges.
+  async getConsumerOrderRecovery(id: string, ownerId: string): Promise<Pick<Order, 'id' | 'status' | 'paymentStatus'> | null> {
+    if (!ownerId) throw ApiError.unauthorized();
+    return prisma.order.findFirst({
+      where: { id, userId: ownerId },
+      select: { id: true, status: true, paymentStatus: true },
+    });
+  }
+
   async getOrderById(id: string, userId?: string, actorId?: string): Promise<Order | null> {
     if (userId || actorId) {
       const scope = actorId ? await this.actorOrderScope(actorId) : { userId };

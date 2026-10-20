@@ -59,6 +59,13 @@ export const createOrder = catchAsync(async (req: AuthRequest, res: Response) =>
  *         description: Service Unavailable - High traffic (Waiting Room active)
  */
 
+export const getConsumerOrderRecovery = catchAsync(async (req: AuthRequest, res: Response) => {
+  if (!req.user?.userId) throw ApiError.unauthorized();
+  const order = await orderService.getConsumerOrderRecovery(req.params.id, req.user!.userId);
+  if (!order) throw ApiError.notFound('Order not found');
+  res.json(successResponse(order));
+});
+
 export const getOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
