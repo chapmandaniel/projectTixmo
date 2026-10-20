@@ -278,18 +278,35 @@ export class PaymentService {
         initialDelay: process.env.NODE_ENV === 'test' ? 10 : 2000,
       });
 
-      await orderService.sendOrderConfirmationEmail(orderId);
-
-      logger.info(`Successfully confirmed order ${orderId} after payment success`);
     } catch (error) {
       logger.error(`Critical: Failed to confirm order ${orderId} after multiple retries: ${error}`);
-
-      // Send alert to admin for manual intervention
-      await notificationService.sendAdminAlert(
-        'Order Confirmation Failure',
-        `Order ${orderId} failed to confirm after payment succeeded. Manual intervention required. Error: ${error}`
-      );
+      try {
+        await notificationService.sendAdminAlert(
+          'Order Confirmation Failure',
+          `Order ${orderId} failed to confirm after payment succeeded. Manual intervention required. Error: ${error}`
+        );
+      } catch (alertError) {
+        logger.error(`Failed to alert admin for order ${orderId}: ${alertError}`);
+      }
+      // Alert delivery is not fulfillment. Preserve FAILED and Stripe retry semantics.
+      throw error;
     }
+
+    // Inventory is committed. An email failure must not re-run confirmation.
+    try {
+      await orderService.sendOrderConfirmationEmail(orderId);
+    } catch (error) {
+      logger.error(`Order ${orderId} confirmed, but confirmation email failed: ${error}`);
+      try {
+        await notificationService.sendAdminAlert(
+          'Order Confirmation Email Failure',
+          `Order ${orderId} is confirmed; confirmation email failed. Do not reconfirm inventory. Error: ${error}`
+        );
+      } catch (alertError) {
+        logger.error(`Failed to alert admin for confirmed order ${orderId}: ${alertError}`);
+      }
+    }
+    logger.info(`Successfully confirmed order ${orderId} after payment success`);
   }
 
   /**
