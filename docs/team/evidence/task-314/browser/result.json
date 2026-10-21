@@ -1,0 +1,244 @@
+{
+  "status": "PASS target A actual browser process close/reopen wallet and confirmed URL, B isolation only",
+  "candidate": "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+  "audit": [
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login"
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/54837999-8f6b-44fc-a6c1-78eeaef0b68d/qr"
+    },
+    {
+      "responsePath": "/api/v1/tickets/54837999-8f6b-44fc-a6c1-78eeaef0b68d/qr",
+      "status": 200
+    },
+    {
+      "actualBrowserClosed": 2818750,
+      "profilePreserved": true
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "actualBrowserReopened": 2818966,
+      "path": "/wallet",
+      "ownerRestored": true
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/c54468a2-1b6c-4cb1-b102-5b8caba9d129/recovery"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/c54468a2-1b6c-4cb1-b102-5b8caba9d129/recovery"
+    },
+    {
+      "responsePath": "/api/v1/orders/c54468a2-1b6c-4cb1-b102-5b8caba9d129/recovery",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/c54468a2-1b6c-4cb1-b102-5b8caba9d129/recovery",
+      "status": 200
+    },
+    {
+      "actualBrowserClosed": 2818966,
+      "profilePreserved": true,
+      "confirmedPath": "/checkout/local294-1792568105804?orderId=c54468a2-1b6c-4cb1-b102-5b8caba9d129&redirect_status=succeeded"
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/c54468a2-1b6c-4cb1-b102-5b8caba9d129/recovery"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/c54468a2-1b6c-4cb1-b102-5b8caba9d129/recovery"
+    },
+    {
+      "responsePath": "/api/v1/orders/c54468a2-1b6c-4cb1-b102-5b8caba9d129/recovery",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/c54468a2-1b6c-4cb1-b102-5b8caba9d129/recovery",
+      "status": 200
+    },
+    {
+      "actualBrowserReopened": 2819034,
+      "confirmedCandidatePreserved": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login"
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    }
+  ],
+  "failures": [],
+  "limitations": [
+    "B native elapsed expiry not exercised",
+    "C receipt capture not exercised",
+    "No inbox/device/provider/recovery SLA acceptance"
+  ]
+}

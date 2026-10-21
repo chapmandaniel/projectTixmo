@@ -1,0 +1,95 @@
+[
+  {
+    "name": "01-real-a-wallet-qr",
+    "expectedText": [
+      "ORDER-local294-1792568105804"
+    ],
+    "selector": "h1,img[alt=\"Ticket admission QR code\"]",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ],
+      [
+        256.5,
+        547.8,
+        272,
+        272
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "02b-real-a-recovered",
+    "expectedText": [
+      "ORDER-local294-1792568105804"
+    ],
+    "selector": "h1",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "06-real-confirmed-wallet-link",
+    "expectedText": [
+      "Order confirmed. Payment succeeded.",
+      "View my tickets and orders"
+    ],
+    "selector": "h1",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        120.5,
+        81.8,
+        559,
+        34
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "03-real-b-reload-isolated",
+    "expectedText": [
+      "No tickets yet.",
+      "No orders yet.",
+      "local294-1792568105804-b@example.test"
+    ],
+    "selector": "h1",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  }
+]

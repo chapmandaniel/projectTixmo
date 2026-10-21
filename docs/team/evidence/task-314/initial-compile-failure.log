@@ -1,0 +1,55 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task314/run.YQ8jEs/jest-cache --runInBand --runTestsByPath tests/integration/wallet-reopen.local.test.ts
+
+FAIL tests/integration/wallet-reopen.local.test.ts
+  ● Test suite failed to run
+
+    [96mtests/integration/wallet-reopen.local.test.ts[0m:[93m11[0m:[93m1[0m - [91merror[0m[90m TS6133: [0m'jwt' is declared but its value is never read.
+
+    [7m11[0m import jwt from 'jsonwebtoken';
+    [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    [96mtests/integration/wallet-reopen.local.test.ts[0m:[93m44[0m:[93m9[0m - [91merror[0m[90m TS6133: [0m'ticket' is declared but its value is never read.
+
+    [7m44[0m   const ticket = await prisma.ticket.create({ data: { orderId: order.id, eventId: event.id, ticketTypeId: type.id, userId: a.id, barcode: key, pricePaid: 10, inventoryState: 'SOLD' } });
+    [7m  [0m [91m        ~~~~~~[0m
+    [96mtests/integration/wallet-reopen.local.test.ts[0m:[93m44[0m:[93m159[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'inventoryState' does not exist in type 'Without<TicketCreateInput, TicketUncheckedCreateInput> & TicketUncheckedCreateInput'.
+
+    [7m44[0m   const ticket = await prisma.ticket.create({ data: { orderId: order.id, eventId: event.id, ticketTypeId: type.id, userId: a.id, barcode: key, pricePaid: 10, inventoryState: 'SOLD' } });
+    [7m  [0m [91m                                                                                                                                                              ~~~~~~~~~~~~~~[0m
+
+      [96m../../task-65/tixmoapi2/node_modules/.prisma/client/index.d.ts[0m:[93m14771[0m:[93m5[0m
+        [7m14771[0m     data: XOR<TicketCreateInput, TicketUncheckedCreateInput>
+        [7m     [0m [96m    ~~~~[0m
+        The expected type comes from property 'data' which is declared here on type '{ select?: TicketSelect<DefaultArgs> | null | undefined; include?: TicketInclude<DefaultArgs> | null | undefined; data: (Without<...> & TicketUncheckedCreateInput) | (Without<...> & TicketCreateInput); }'
+    [96mtests/integration/wallet-reopen.local.test.ts[0m:[93m45[0m:[93m9[0m - [91merror[0m[90m TS6133: [0m'login' is declared but its value is never read.
+
+    [7m45[0m   const login = async (email: string) => { const r = await request(server).post('/api/v1/auth/login').send({ email, password }); expect(r.status).toBe(200); expect(r.body.data.accessToken).toBeTruthy(); return r.body.data.accessToken; };
+    [7m  [0m [91m        ~~~~~[0m
+    [96mtests/integration/wallet-reopen.local.test.ts[0m:[93m46[0m:[93m9[0m - [91merror[0m[90m TS6133: [0m'read' is declared but its value is never read.
+
+    [7m46[0m   const read = (path: string, token: string) => request(server).get(`/api/v1${path}`).set('Authorization', `Bearer ${token}`);
+    [7m  [0m [91m        ~~~~[0m
+    [96mtests/integration/wallet-reopen.local.test.ts[0m:[93m47[0m:[93m160[0m - [91merror[0m[90m TS2339: [0mProperty 'paymentAttempt' does not exist on type 'PrismaClient<{ log: ("query" | "warn" | "error")[]; }, never, DefaultArgs>'.
+
+    [7m47[0m   const state = async () => ({ order: await prisma.order.findUnique({ where: { id: order.id } }), tickets: await prisma.ticket.count(), attempts: await prisma.paymentAttempt.count(), refunds: await prisma.paymentRefund.count() });
+    [7m  [0m [91m                                                                                                                                                               ~~~~~~~~~~~~~~[0m
+    [96mtests/integration/wallet-reopen.local.test.ts[0m:[93m47[0m:[93m206[0m - [91merror[0m[90m TS2339: [0mProperty 'paymentRefund' does not exist on type 'PrismaClient<{ log: ("query" | "warn" | "error")[]; }, never, DefaultArgs>'.
+
+    [7m47[0m   const state = async () => ({ order: await prisma.order.findUnique({ where: { id: order.id } }), tickets: await prisma.ticket.count(), attempts: await prisma.paymentAttempt.count(), refunds: await prisma.paymentRefund.count() });
+    [7m  [0m [91m                                                                                                                                                                                                             ~~~~~~~~~~~~~[0m
+    [96mtests/integration/wallet-reopen.local.test.ts[0m:[93m52[0m:[93m105[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'sessionVersion' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+
+    [7m52[0m     child.on('message',async (m:any)=>{if(m.revoke){try{await prisma.user.update({where:{id:a.id},data:{sessionVersion:{increment:1}}});child.send({ok:true});}catch(e){child.send({ok:false,error:String(e)});}}});
+    [7m  [0m [91m                                                                                                        ~~~~~~~~~~~~~~[0m
+
+      [96m../../task-65/tixmoapi2/node_modules/.prisma/client/index.d.ts[0m:[93m5377[0m:[93m5[0m
+        [7m5377[0m     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+        [7m    [0m [96m    ~~~~[0m
+        The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs> | null | undefined; include?: UserInclude<DefaultArgs> | null | undefined; data: (Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput); where: UserWhereUniqueInput; }'
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        6.311 s
+Ran all test suites within paths "tests/integration/wallet-reopen.local.test.ts".
