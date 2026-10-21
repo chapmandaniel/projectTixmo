@@ -174,23 +174,51 @@ const runPrisma = (args) => {
     await assert.rejects(orderService.createOrder('upgrade-buyer', { items: [{ ticketTypeId: 'upgrade-' + label, quantity: 1 }] }), /requires inventory reconciliation/);
   }
   await require(path.join(api, 'dist/config/prisma.js')).default.$disconnect();
-  process.stdout.write('Populated upgrade passed: transfer revocation, tier limits, ambiguous-history gate, historical currency and receipt safety.\n');
   phase = 'complete';
 })().catch(error => { process.stderr.write(error.message + '\n'); process.exitCode = 1; })
   .finally(async () => {
+    const failures = [];
+    const fail = stage => {
+      failures.push(stage);
+      process.exitCode = 1;
+      // Fixed labels only: never persist raw errors/env/connection strings.
+      try { process.stderr.write('Upgrade finalization failed at ' + stage + '; retained evidence is partial.\n'); }
+      catch { /* Logging failure must not skip remaining cleanup. */ }
+    };
     try { if (prisma) await prisma.$disconnect(); }
-    catch { process.stderr.write('Prisma disconnect failed; retained evidence is partial.\n'); process.exitCode = 1; }
-    finally {
-      // No raw errors/env/connection strings are written to evidence. Earlier files
-      // survive failures and are never overwritten or removed with staging cleanup.
-      try {
-        persist('result.json', { passed: !process.exitCode, phase, finishedAt: new Date(), artifacts: { ...artifacts } });
-      } catch {
-        process.stderr.write('Evidence finalization failed; earlier artifacts retained.\n');
-        process.exitCode = 1;
-      } finally {
-        if (evidenceDir) fs.chmodSync(evidenceDir, 0o500);
-        fs.rmSync(temp, { recursive: true, force: true });
-      }
+    catch { fail('prisma-disconnect'); }
+    // Attempt every cleanup even if a previous operation failed. No exception
+    // here may reject finally() and replace the original runtime diagnostic.
+    try { fs.rmSync(temp, { recursive: true, force: true }); }
+    catch { fail('staging-removal'); }
+    try {
+      // This immutable record is explicitly PRE-seal, not overall success.
+      // A fallible chmod must never leave passed:true on disk. Overall success
+      // is reported only by exit status/stdout after the last required step.
+      persist('result.json', {
+        passed: process.exitCode ? false : null,
+        verificationPassed: phase === 'complete',
+        finalization: 'unconfirmed-until-process-exit',
+        phase, recordedAt: new Date(), failures: [...failures], artifacts: { ...artifacts },
+      });
+    } catch { fail('result-persistence'); }
+    if (failures.length) {
+      try { persist('finalization-failure.json', { passed: false, phase, failures: [...failures] }); }
+      catch { fail('failure-record-persistence'); }
     }
+    try { if (evidenceDir) fs.chmodSync(evidenceDir, 0o500); }
+    catch {
+      fail('directory-seal');
+      // Best effort only: a failed seal may also leave this directory unwritable.
+      // Existing pre-seal evidence is never overwritten or called successful.
+      try { persist('directory-seal-failure.json', { passed: false, phase, failures: [...failures] }); }
+      catch { fail('seal-failure-record-persistence'); }
+    }
+    if (!process.exitCode) {
+      process.stdout.write('Populated upgrade passed: transfer revocation, tier limits, ambiguous-history gate, historical currency and receipt safety.\n');
+    }
+  }).catch(() => {
+    // Terminal containment also covers output failures; retain the original
+    // runtime diagnostic already emitted by the first catch, never rethrow.
+    process.exitCode = 1;
   });
