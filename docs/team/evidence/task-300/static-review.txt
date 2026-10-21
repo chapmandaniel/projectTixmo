@@ -4,5 +4,5 @@ adc81d9:docs/team/evidence/task-291-webhook-pg/acceptance.log exists=True
 c0c41a07:docs/team/evidence/task-287-local-pressure/summary.json exists=True
 cb95d021:docs/team/evidence/task-276-local-restore/README.md exists=True
 0cac3d6:docs/team/evidence/task-295/README.md exists=True
-f6a1a8a0:docs/team/evidence/task-296 exists=False (path discovery required; not acceptance failure)
+f6a1a8a0:docs/team/evidence/task-296-r4/README.md exists=True; corrected reviewer guessed path
 9f2c6f01:docs/team/evidence/task-294/README.md exists=True
