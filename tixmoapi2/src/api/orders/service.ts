@@ -550,13 +550,11 @@ export class OrderService {
    * Refund an order (ADMIN only)
    */
   async refundOrder(id: string, actorId?: string): Promise<Order> {
-    if (actorId) {
-      const scope = await this.actorOrderScope(actorId, 'refund');
-      if (!(await prisma.order.findFirst({ where: { id, ...scope } })))
-        throw ApiError.notFound('Order not found');
-    }
+    const scope = actorId ? await this.actorOrderScope(actorId, 'refund') : {};
+    const observed = await prisma.order.findFirst({ where: { id, ...scope } });
+    if (!observed) throw ApiError.notFound('Order not found');
     const { paymentService } = await import('../payments/service');
-    return paymentService.refundOrder(id);
+    return paymentService.refundOrder(id, observed);
   }
 
   // Only the processor reconciliation path may finalize a monetary refund.

@@ -1,0 +1,31 @@
+FAIL tixmoapi2/tests/integration/order-refund-current-path.test.ts (6.473 s)
+  ✓ denied USED remains unchanged before provider operations (130 ms)
+  ✓ denied TRANSFERRED remains unchanged before provider operations (52 ms)
+  ✓ matching inert provider success finalizes SOLD inventory once and retry is idempotent (99 ms)
+  ✓ pending inert refund does not finalize financial or inventory state (26 ms)
+  ✕ stale scoped refund payment observation refuses before provider or ledger writes (44 ms)
+
+  ● stale scoped refund payment observation refuses before provider or ledger writes
+
+    expect(received).rejects.toMatchObject()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"createdAt": 2026-10-21T09:34:09.684Z, "currency": "cad", "discountAmount": "0", "eventId": "b4e4f7b6-4b20-400f-9c51-83b983a4db85", "expiresAt": null, "feesAmount": "0", "id": "b38d0228-9f33-48bc-96db-6b014439b62c", "ipAddress": null, "orderNumber": "refund325-1792575249678-py8bti4yow", "paymentClosedAt": null, "paymentIntentId": "pi_refund325-1792575249678-py8bti4yow", "paymentMethod": null, "paymentStatus": "FAILED", "promoCodeId": null, "promoReservation": "NONE", "receiptLeaseToken": null, "receiptSentAt": null, "receiptStartedAt": null, "receiptStatus": "PENDING", "refundStatus": "SUCCEEDED", "status": "REFUNDED", "taxAmount": "0", "totalAmount": "20", "updatedAt": 2026-10-21T09:34:09.713Z, "userAgent": null, "userId": "c92e8465-2716-4ecc-9eb1-ac72112b8a13"}
+
+      69 |   }) as any);
+      70 |   try {
+    > 71 |     await expect(new OrderService().refundOrder(order.id, order.userId)).rejects.toMatchObject({ statusCode: 400 });
+         |           ^
+      72 |   } finally { spy.mockRestore(); }
+      73 |   expect(changed).toBeDefined();
+      74 |   expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { tickets: { orderBy: { id: 'asc' } } } })).toEqual(changed);
+
+      at expect (node_modules/expect/build/index.js:2116:15)
+      at Object.<anonymous> (tests/integration/order-refund-current-path.test.ts:71:11)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 4 passed, 5 total
+Snapshots:   0 total
+Time:        6.729 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-refund-current-path.test.ts".
+Test results written to: docs/team/evidence/task-325-continuation/jest-result.json

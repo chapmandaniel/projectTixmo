@@ -1,0 +1,53 @@
+[
+  {
+    "log": "runtime-red.log",
+    "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325-continuation/run.GHobWH",
+    "mode": "0o700",
+    "pids": [
+      2987873,
+      2987888
+    ],
+    "livePids": [],
+    "ports": [
+      25477,
+      59707
+    ],
+    "listeners": "",
+    "sockets": [],
+    "pgPidfile": false,
+    "redisPidfile": false,
+    "workers": ""
+  },
+  {
+    "log": "runtime-green.log",
+    "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325-continuation/run.2PKfNI",
+    "mode": "0o700",
+    "pids": [
+      2989478,
+      2989491
+    ],
+    "livePids": [],
+    "ports": [
+      30934,
+      44235
+    ],
+    "listeners": "",
+    "sockets": [],
+    "pgPidfile": false,
+    "redisPidfile": false,
+    "workers": ""
+  },
+  {
+    "run": "intermediate pending-status assertion failure",
+    "pids": [
+      2988740,
+      2988753
+    ],
+    "livePids": [],
+    "ports": [
+      24539,
+      58207
+    ],
+    "listeners": ""
+  }
+]

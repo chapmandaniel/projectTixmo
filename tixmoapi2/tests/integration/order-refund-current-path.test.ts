@@ -51,6 +51,56 @@ test('pending inert refund does not finalize financial or inventory state', asyn
   const { order, type } = await fixture();
   provider.refunds.create.mockImplementation(async (p: any) => ({ id: 're_pending325', status: 'pending', amount: p.amount, currency: 'cad', payment_intent: p.payment_intent }));
   await expect(new OrderService().refundOrder(order.id)).resolves.toMatchObject({ status: 'PAID', refundStatus: 'PROCESSING' });
+  expect(await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId: order.paymentIntentId! } })).toMatchObject({ orderId: order.id, paymentIntentId: order.paymentIntentId, amount: 2000, currency: 'cad', reason: 'ORDER_REFUND', status: 'PROCESSING', stripeRefundId: 're_pending325', errorMessage: null });
   expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
   expect(await prisma.ticket.findMany({ where: { orderId: order.id }, orderBy: { id: 'asc' } })).toEqual(order.tickets);
+});
+
+// Actual authorized request observation followed by a committed competing write.
+test('stale scoped refund payment observation refuses before provider or ledger writes', async () => {
+  const { order, type } = await fixture();
+  await prisma.user.update({ where: { id: order.userId }, data: { role: 'ADMIN', organizationId: (await prisma.event.findUniqueOrThrow({ where: { id: order.eventId } })).organizationId } });
+  const original = prisma.order.findFirst.bind(prisma.order);
+  let changed: any;
+  const spy = jest.spyOn(prisma.order, 'findFirst').mockImplementationOnce((async (args: any) => {
+    const observed = await original(args);
+    expect(observed?.paymentStatus).toBe('SUCCEEDED');
+    changed = await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: 'FAILED' }, include: { tickets: { orderBy: { id: 'asc' } } } });
+    return observed;
+  }) as any);
+  try {
+    await expect(new OrderService().refundOrder(order.id, order.userId)).rejects.toMatchObject({ statusCode: 400 });
+  } finally { spy.mockRestore(); }
+  expect(changed).toBeDefined();
+  expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { tickets: { orderBy: { id: 'asc' } } } })).toEqual(changed);
+  expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
+  expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(0);
+  expect(provider.paymentIntents.retrieve).not.toHaveBeenCalled();
+  expect(provider.refunds.create).not.toHaveBeenCalled();
+});
+
+test('stable FAILED local payment status is not a new categorical refund prohibition', async () => {
+  const { order } = await fixture();
+  await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: 'FAILED' } });
+  await expect(new OrderService().refundOrder(order.id)).resolves.toMatchObject({ status: 'REFUNDED', paymentStatus: 'FAILED' });
+  expect(provider.refunds.create).toHaveBeenCalledTimes(1);
+});
+
+test('direct payment ingress refuses committed change after its real preflight', async () => {
+  const { order, type } = await fixture();
+  const original = prisma.order.findUnique.bind(prisma.order);
+  let changed: any;
+  const spy = jest.spyOn(prisma.order, 'findUnique').mockImplementationOnce((async (args: any) => {
+    const observed = await original(args);
+    changed = await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: 'FAILED' }, include: { tickets: { orderBy: { id: 'asc' } } } });
+    return observed;
+  }) as any);
+  try { await expect(paymentService.refundOrder(order.id)).rejects.toMatchObject({ statusCode: 400 }); }
+  finally { spy.mockRestore(); }
+  expect(changed).toBeDefined();
+  expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { tickets: { orderBy: { id: 'asc' } } } })).toEqual(changed);
+  expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
+  expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(0);
+  expect(provider.paymentIntents.retrieve).not.toHaveBeenCalled();
+  expect(provider.refunds.create).not.toHaveBeenCalled();
 });
