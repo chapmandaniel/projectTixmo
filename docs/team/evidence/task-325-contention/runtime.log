@@ -1,0 +1,10 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_325|tixmo325|127.0.0.1|26586
+PONG
+TASK325_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325/run.k8sYc3 pg_pid=3012577 redis_pid=3012609 pgport=26586 redisport=50814
+v24.21.0
+11.19.0
+waiting for server to shut down.... done
+server stopped
+TASK325_CLEANUP pg_pid=3012577 redis_pid=3012609 pgport=26586 redisport=50814

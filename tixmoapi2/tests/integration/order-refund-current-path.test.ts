@@ -104,3 +104,91 @@ test('direct payment ingress refuses committed change after its real preflight',
   expect(provider.paymentIntents.retrieve).not.toHaveBeenCalled();
   expect(provider.refunds.create).not.toHaveBeenCalled();
 });
+
+async function snapshot(orderId: string, typeId: string) {
+  return {
+    order: await prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: { tickets: { orderBy: { id: 'asc' } } } }),
+    stock: await prisma.ticketType.findUniqueOrThrow({ where: { id: typeId } }),
+    refunds: await prisma.paymentRefund.findMany({ where: { orderId }, orderBy: { id: 'asc' } }),
+  };
+}
+function gate() {
+  let release!: () => void;
+  const promise = new Promise<void>(resolve => { release = resolve; });
+  return { promise, release };
+}
+test('real SQL blocked row locks and overlapping provider calls share one key/effect and finalize once; foreign buyer unchanged', async () => {
+  const foreign = await fixture();
+  const foreignBefore = await snapshot(foreign.order.id, foreign.type.id);
+  const { order, type } = await fixture();
+  const locked = gate(), unlock = gate(), bothProviderCalls = gate(), finishProvider = gate();
+  const blocker = prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM orders WHERE id = ${order.id} FOR UPDATE`;
+    locked.release();
+    await unlock.promise;
+  }, { timeout: 15000 });
+  await locked.promise;
+  let calls = 0;
+  const effects = new Map<string, any>();
+  provider.refunds.create.mockImplementation(async (p: any, options: any) => {
+    calls++;
+    const key = options.idempotencyKey;
+    if (!effects.has(key)) effects.set(key, { id: 're_overlap325', status: 'succeeded', amount: p.amount, currency: 'cad', payment_intent: p.payment_intent, metadata: p.metadata });
+    if (calls === 2) bothProviderCalls.release();
+    await finishProvider.promise;
+    return effects.get(key);
+  });
+  const first = new OrderService().refundOrder(order.id);
+  const second = new OrderService().refundOrder(order.id);
+  const settled = Promise.allSettled([first, second]);
+  let blocked = 0;
+  try {
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline) {
+      const rows = await prisma.$queryRaw<Array<{ count: bigint }>>`SELECT count(*) AS count FROM pg_stat_activity WHERE cardinality(pg_blocking_pids(pid)) > 0 AND query LIKE '%SELECT id FROM orders%'`;
+      blocked = Number(rows[0].count);
+      if (blocked >= 2) break;
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    expect(blocked).toBeGreaterThanOrEqual(2);
+    expect(provider.refunds.create).not.toHaveBeenCalled();
+    unlock.release();
+    await blocker;
+    await bothProviderCalls.promise;
+    expect(effects.size).toBe(1);
+    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(1);
+    expect((await snapshot(order.id, type.id)).stock).toEqual(type);
+  } finally { unlock.release(); finishProvider.release(); await blocker; await settled; }
+  const results = await settled;
+  expect(results.map(r => r.status)).toEqual(['fulfilled', 'fulfilled']);
+  expect(calls).toBe(2);
+  const refund = await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId: order.paymentIntentId! } });
+  expect(provider.refunds.create.mock.calls.map((call: any[]) => call[1].idempotencyKey)).toEqual([`refund-${refund.id}`, `refund-${refund.id}`]);
+  const after = await snapshot(order.id, type.id);
+  expect(after.order).toMatchObject({ status: 'REFUNDED', refundStatus: 'SUCCEEDED' });
+  expect([after.stock.quantityAvailable, after.stock.quantityHeld, after.stock.quantitySold]).toEqual([10, 0, 0]);
+  expect(after.order.tickets.every(t => t.inventoryState === 'RELEASED' && t.status === 'CANCELLED')).toBe(true);
+  expect(after.refunds).toHaveLength(1);
+  expect(after.refunds[0]).toMatchObject({ status: 'SUCCEEDED', stripeRefundId: 're_overlap325', amount: 2000 });
+  await new OrderService().refundOrder(order.id);
+  expect(await snapshot(order.id, type.id)).toEqual(after);
+  expect(calls).toBe(2);
+  expect(await snapshot(foreign.order.id, foreign.type.id)).toEqual(foreignBefore);
+}, 15000);
+
+test('insufficient SOLD stock rolls back local finalization but preserves durable provider success and other buyer', async () => {
+  const foreign = await fixture();
+  const foreignBefore = await snapshot(foreign.order.id, foreign.type.id);
+  const { order, type } = await fixture();
+  await prisma.ticketType.update({ where: { id: type.id }, data: { quantitySold: 1 } });
+  const before = await snapshot(order.id, type.id);
+  await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({ statusCode: 409 });
+  const after = await snapshot(order.id, type.id);
+  expect(after.stock).toEqual(before.stock);
+  expect(after.order.tickets).toEqual(before.order.tickets);
+  expect(after.order).toEqual({ ...before.order, refundStatus: 'PROCESSING', updatedAt: expect.any(Date) });
+  expect(after.refunds).toHaveLength(1);
+  expect(after.refunds[0]).toMatchObject({ status: 'SUCCEEDED', orderId: order.id, paymentIntentId: order.paymentIntentId, amount: 2000, reason: 'ORDER_REFUND' });
+  expect(provider.refunds.create).toHaveBeenCalledTimes(1);
+  expect(await snapshot(foreign.order.id, foreign.type.id)).toEqual(foreignBefore);
+});

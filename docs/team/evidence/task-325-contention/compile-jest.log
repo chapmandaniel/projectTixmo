@@ -1,0 +1,14 @@
+FAIL tixmoapi2/tests/integration/order-refund-current-path.test.ts
+  ● Test suite failed to run
+
+    [96mtixmoapi2/tests/integration/order-refund-current-path.test.ts[0m:[93m125[0m:[93m7[0m - [91merror[0m[90m TS6133: [0m'blockerPid' is declared but its value is never read.
+
+    [7m125[0m   let blockerPid = 0;
+    [7m   [0m [91m      ~~~~~~~~~~[0m
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        5.692 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-refund-current-path.test.ts".
+Test results written to: docs/team/evidence/task-325-contention/jest-result.json
