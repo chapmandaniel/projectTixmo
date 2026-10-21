@@ -1,0 +1,85 @@
+PASS current producer / absent PID / empty exact IPv4 port
+PASS identity nonobject null
+PASS identity nonobject []
+PASS identity nonobject false
+PASS identity nonobject 7
+PASS identity nonobject "bad"
+PASS identity missing runId
+PASS identity missing runtimeRoot
+PASS identity missing pid
+PASS identity missing ppid
+PASS identity missing executable
+PASS identity missing startStat
+PASS identity invalid {"pid":-1}
+PASS identity invalid {"pid":1.1}
+PASS identity invalid {"pid":"45678"}
+PASS identity invalid {"pid":9007199254740992}
+PASS identity invalid {"ppid":0}
+PASS identity invalid {"ppid":45678}
+PASS identity invalid {"ppid":"51"}
+PASS identity invalid {"executable":"node"}
+PASS identity invalid {"executable":"/wrong/node"}
+PASS identity invalid {"runtimeRoot":"/qa/current-run/old"}
+PASS identity invalid {"runId":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}
+PASS identity invalid {"startStat":"garbage"}
+PASS identity invalid {"startStat":"45679 (jest (test worker)) S 51 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 789012 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS identity invalid {"startStat":"45678 (jest (test worker)) S 52 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 789012 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS identity invalid {"startStat":"45678 (jest (test worker)) S 51 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS identity invalid {"startStat":"45678 (jest (test worker)) S 51 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -99 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS identity invalid {"startStat":"45678 (jest (test worker)) S 51 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 789012 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"}
+PASS identity absent
+PASS identity malformed JSON
+PASS listener nonobject null
+PASS listener nonobject []
+PASS listener nonobject false
+PASS listener nonobject 7
+PASS listener nonobject "bad"
+PASS listener missing runId
+PASS listener missing runtimeRoot
+PASS listener missing pid
+PASS listener missing ppid
+PASS listener missing executable
+PASS listener missing startStat
+PASS listener invalid {"pid":-1}
+PASS listener invalid {"pid":1.1}
+PASS listener invalid {"pid":"45678"}
+PASS listener invalid {"pid":9007199254740992}
+PASS listener invalid {"ppid":0}
+PASS listener invalid {"ppid":45678}
+PASS listener invalid {"ppid":"51"}
+PASS listener invalid {"executable":"node"}
+PASS listener invalid {"executable":"/wrong/node"}
+PASS listener invalid {"runtimeRoot":"/qa/current-run/old"}
+PASS listener invalid {"runId":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}
+PASS listener invalid {"startStat":"garbage"}
+PASS listener invalid {"startStat":"45679 (jest (test worker)) S 51 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 789012 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS listener invalid {"startStat":"45678 (jest (test worker)) S 52 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 789012 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS listener invalid {"startStat":"45678 (jest (test worker)) S 51 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS listener invalid {"startStat":"45678 (jest (test worker)) S 51 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -99 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS listener invalid {"startStat":"45678 (jest (test worker)) S 51 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 789012 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"}
+PASS listener absent
+PASS listener malformed JSON
+PASS paired stale {"runtimeRoot":"/qa/previous-run"}
+PASS paired stale {"runId":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}
+PASS valid crossreceipt conflict {"startStat":"45678 (jest (test worker)) S 51 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 789013 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS valid crossreceipt conflict {"ppid":52,"startStat":"45678 (jest (test worker)) S 52 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 789012 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"}
+PASS bad endpoint null
+PASS bad endpoint {}
+PASS bad endpoint []
+PASS bad endpoint {"address":"localhost","family":"IPv4","port":61234}
+PASS bad endpoint {"address":"::1","family":"IPv4","port":61234}
+PASS bad endpoint {"address":"0.0.0.0","family":"IPv4","port":61234}
+PASS bad endpoint {"address":"127.0.0.1","family":"IPv6","port":61234}
+PASS bad endpoint {"address":"127.0.0.1","family":"IPv4","port":0}
+PASS bad endpoint {"address":"127.0.0.1","family":"IPv4","port":65536}
+PASS bad endpoint {"address":"127.0.0.1","family":"IPv4","port":0.5}
+PASS bad endpoint {"address":"127.0.0.1","family":"IPv4","port":"61234"}
+PASS expected invocation {}
+PASS expected invocation {"TASK379_RUN_ID":"bad"}
+PASS expected invocation {"TASK379_RUN_ID":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+PASS present or recycled PID
+PASS ss failclosed {"status":0,"stdout":"LISTEN occupied"}
+PASS ss failclosed {"status":1,"stdout":""}
+PASS ss failclosed {"status":null,"stdout":null}
+PASS ss failclosed {"status":0,"stdout":null}
+PASS 84 independent observer cases; exact producer success + 2 rejection cases; 2 fresh exact shell challenge assignments overwrite inherited value. No candidate real proc/ss/network/signals.
