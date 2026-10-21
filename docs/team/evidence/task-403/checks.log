@@ -1,0 +1,56 @@
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node --version
+exit=0
+v24.21.0
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node docs/team/evidence/task-403/before.cjs
+exit=1
+FIRST native normalized target={"host":"127.0.0.1","port":33333,"path":null}; transportCalls=0
+<anonymous_script>:33
+    throw new Error('Task379 network guard rejected non-owned TCP target');
+    ^
+
+Error: Task379 network guard rejected non-owned TCP target
+    at net.Socket.connect (eval at <anonymous> (/home/daniel/projects/projectTixmo/worktrees/review-403/docs/team/evidence/task-401/native-http-regression.cjs:11:1), <anonymous>:33:11)
+    at net.Socket.connect (/home/daniel/projects/projectTixmo/worktrees/review-403/docs/team/evidence/task-401/native-http-regression.cjs:20:16)
+    at Object.connect (node:net:261:17)
+    at Agent.createConnection (node:_http_agent:311:16)
+    at Agent.createSocket (node:_http_agent:480:26)
+    at Agent.addRequest (node:_http_agent:420:10)
+    at new ClientRequest (node:_http_client:575:16)
+    at request (node:http:108:10)
+    at Object.get (node:http:119:15)
+    at request (/home/daniel/projects/projectTixmo/worktrees/review-403/docs/team/evidence/task-401/native-http-regression.cjs:31:39)
+
+Node.js v24.21.0
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node docs/team/evidence/task-401/native-http-regression.cjs
+exit=0
+FIRST native normalized target={"host":"127.0.0.1","port":33333,"path":null}; transportCalls=0
+PROVED native http.get normalizes TCP path=null; reaches counting stub
+PASS native GET+POST transport stub calls=3; denied targets=11; UDP denied; close revokes; no network
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node docs/team/evidence/task-393/guard-regression.cjs
+exit=0
+PROVED Jest copied env adds 51001; native preload does not see it; exact HTTP target rejected without socket
+PASS explicit owned listener registration/revocation; normalized vectors; failclosed Unix UDP external IPv6 unowned ports; transport calls=2 stub only
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node docs/team/evidence/task-393/cleanup-regression.cjs
+exit=0
+PASS 46 cleanup receipt regressions; stub observations only, no signals/network/services
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node docs/team/evidence/task-403/adversarial.cjs
+exit=0
+PASS independent 27 denials, 1 null-vector admission; native provenance captured; duplicate registration, explicit revoke, close revoke; no sockets
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node --check docs/team/evidence/task-379/network-guard.cjs
+exit=0
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node --check docs/team/evidence/task-401/native-http-regression.cjs
+exit=0
+
+$ bash -n docs/team/evidence/task-379/runtime.sh
+exit=0
+
+$ git diff --check
+exit=0
+
