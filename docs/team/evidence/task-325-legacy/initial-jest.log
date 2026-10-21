@@ -1,0 +1,126 @@
+PASS tixmoapi2/tests/integration/order-refund-current-path.test.ts (7.452 s)
+FAIL tixmoapi2/tests/integration/order-double-refund.race.test.ts
+  ● Console
+
+    console.log
+      TASK121_OBSERVED {"trace":["read-0-PAID","read-1-PAID","call-0-committed","both-settled"],"outcomes":["fulfilled","rejected"],"counters":[6,2,2],"target":"REFUNDED","payment":"SUCCEEDED","otherPending":"PENDING","otherPaid":"PAID","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-double-refund.race.test.ts:164:15
+
+    console.log
+      TASK121_OBSERVED {"trace":["read-1-PAID","read-0-PAID","call-1-committed","both-settled"],"outcomes":["rejected","fulfilled"],"counters":[6,2,2],"target":"REFUNDED","payment":"SUCCEEDED","otherPending":"PENDING","otherPaid":"PAID","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-double-refund.race.test.ts:164:15
+
+  ● refund preserves scalar/payment fields, cancels refundable SOLD tickets and makes retry idempotent
+
+    expect(received).resolves.toEqual(expected) // deep equality
+
+    - Expected  -  0
+    + Received  + 66
+
+    @@ -1,9 +1,33 @@
+      Object {
+        "createdAt": 2026-10-21T10:34:03.436Z,
+        "currency": "cad",
+        "discountAmount": "0",
+    +   "event": Object {
+    +     "capacity": null,
+    +     "category": null,
+    +     "createdAt": 2026-10-21T10:34:03.428Z,
+    +     "deletedAt": null,
+    +     "description": null,
+    +     "endDatetime": null,
+    +     "id": "fe13522f-30a9-4480-99dd-ef8310a37f25",
+    +     "images": null,
+    +     "maxTicketPrice": null,
+    +     "metadata": null,
+    +     "minTicketPrice": null,
+    +     "name": "guard123-1792578843421-gg4ge0zgev4",
+    +     "organizationId": "6b1f4014-7f7d-460a-973e-d44554969f5a",
+    +     "salesEnd": null,
+    +     "salesStart": null,
+    +     "slug": "guard123-1792578843421-gg4ge0zgev4",
+    +     "startDatetime": null,
+    +     "status": "DRAFT",
+    +     "tags": Array [],
+    +     "timezone": null,
+    +     "updatedAt": 2026-10-21T10:34:03.428Z,
+    +     "venueId": null,
+    +   },
+        "eventId": "fe13522f-30a9-4480-99dd-ef8310a37f25",
+        "expiresAt": null,
+        "feesAmount": "0",
+        "id": "0a1608ab-1f1e-4edf-b9fb-347cba70183b",
+        "ipAddress": null,
+    @@ -19,10 +43,52 @@
+        "receiptStartedAt": null,
+        "receiptStatus": "PENDING",
+        "refundStatus": "SUCCEEDED",
+        "status": "REFUNDED",
+        "taxAmount": "0",
+    +   "tickets": Array [
+    +     Object {
+    +       "barcode": "guard123-1792578843421-gg4ge0zgev4-0",
+    +       "checkedInAt": null,
+    +       "checkedInBy": null,
+    +       "createdAt": 2026-10-21T10:34:03.436Z,
+    +       "eventId": "fe13522f-30a9-4480-99dd-ef8310a37f25",
+    +       "id": "ca891bdd-c740-4646-a0ea-121e816b7489",
+    +       "inventoryState": "RELEASED",
+    +       "orderId": "0a1608ab-1f1e-4edf-b9fb-347cba70183b",
+    +       "pricePaid": "10",
+    +       "qrCodeUrl": null,
+    +       "seatInfo": null,
+    +       "status": "CANCELLED",
+    +       "ticketTypeId": "a4262e6d-8b50-4c16-8a6c-98a7c558ac4f",
+    +       "tierId": null,
+    +       "transferredAt": null,
+    +       "transferredFrom": null,
+    +       "updatedAt": 2026-10-21T10:34:03.490Z,
+    +       "userId": "5d2a1a19-23b8-412c-a607-dbd83e650907",
+    +     },
+    +     Object {
+    +       "barcode": "guard123-1792578843421-gg4ge0zgev4-1",
+    +       "checkedInAt": null,
+    +       "checkedInBy": null,
+    +       "createdAt": 2026-10-21T10:34:03.436Z,
+    +       "eventId": "fe13522f-30a9-4480-99dd-ef8310a37f25",
+    +       "id": "9e9bd115-750e-4aa3-9ea0-2b560311953c",
+    +       "inventoryState": "RELEASED",
+    +       "orderId": "0a1608ab-1f1e-4edf-b9fb-347cba70183b",
+    +       "pricePaid": "10",
+    +       "qrCodeUrl": null,
+    +       "seatInfo": null,
+    +       "status": "CANCELLED",
+    +       "ticketTypeId": "a4262e6d-8b50-4c16-8a6c-98a7c558ac4f",
+    +       "tierId": null,
+    +       "transferredAt": null,
+    +       "transferredFrom": null,
+    +       "updatedAt": 2026-10-21T10:34:03.490Z,
+    +       "userId": "5d2a1a19-23b8-412c-a607-dbd83e650907",
+    +     },
+    +   ],
+        "totalAmount": "20",
+        "updatedAt": 2026-10-21T10:34:03.492Z,
+        "userAgent": null,
+        "userId": "5d2a1a19-23b8-412c-a607-dbd83e650907",
+      }
+
+      295 |     10, 0, 0,
+      296 |   ]);
+    > 297 |   await expect(new OrderService().refundOrder(order.id)).resolves.toEqual(result);
+          |                                                                   ^
+      298 |   expect(provider.refunds.create).toHaveBeenCalledTimes(1);
+      299 |   expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(inventory);
+      300 | });
+
+      at Object.toEqual (node_modules/expect/build/index.js:2140:20)
+      at Object.<anonymous> (tests/integration/order-double-refund.race.test.ts:297:67)
+
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       1 failed, 20 passed, 21 total
+Snapshots:   0 total
+Time:        9.978 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-double-refund.race.test.ts", "tixmoapi2/tests/integration/order-refund-current-path.test.ts".
+Test results written to: docs/team/evidence/task-325-legacy/jest-result.json

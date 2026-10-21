@@ -1,0 +1,26 @@
+[
+  {
+    "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325/run.r2NKHp",
+    "servicePidsAbsent": {
+      "3066623": true,
+      "3066636": true
+    },
+    "portsClosed": true,
+    "listenerOutput": "",
+    "remainingSocketFiles": [],
+    "postmasterPidfileAbsent": true,
+    "remainingWorkers": []
+  },
+  {
+    "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325/run.yCrQ97",
+    "servicePidsAbsent": {
+      "3067341": true,
+      "3067354": true
+    },
+    "portsClosed": true,
+    "listenerOutput": "",
+    "remainingSocketFiles": [],
+    "postmasterPidfileAbsent": true,
+    "remainingWorkers": []
+  }
+]

@@ -1,10 +1,22 @@
-// Task 121: local bookkeeping only; no payment-provider call.
+// Historical refund invariants on the current provider-confirmed finalization path.
+// All processor operations are inert in-process fixtures.
 // Timeouts below bound harness failures; they never choose operation ordering.
 jest.mock('../../src/utils/notificationService', () => ({ notificationService: {} }));
-import { Prisma } from '@prisma/client';
+jest.mock('stripe', () => jest.fn(() => ({
+  paymentIntents: { retrieve: jest.fn() },
+  refunds: { list: jest.fn(), create: jest.fn(), retrieve: jest.fn() },
+})));
+import { paymentService } from '../../src/api/payments/service';
 import prisma from '../../src/config/prisma';
 import { OrderService } from '../../src/api/orders/service';
 
+const provider = (paymentService as any).stripe;
+function bindProvider(order: { paymentIntentId: string | null }) {
+  provider.paymentIntents.retrieve.mockResolvedValue({ id: order.paymentIntentId, status: 'succeeded', amount: 2000, amount_received: 2000, currency: 'cad' });
+  provider.refunds.list.mockResolvedValue({ data: [] });
+  provider.refunds.create.mockImplementation(async (p: any) => ({ id: `re_${order.paymentIntentId}`, status: 'succeeded', amount: p.amount, currency: 'cad', payment_intent: p.payment_intent, metadata: p.metadata }));
+}
+beforeEach(() => jest.clearAllMocks());
 function deferred() {
   let resolve!: () => void;
   const promise = new Promise<void>((r) => {
@@ -71,6 +83,8 @@ test.each([false, true])(
           totalAmount: 20,
           status: paid ? 'PAID' : 'PENDING',
           paymentStatus: paid ? 'SUCCEEDED' : 'PENDING',
+          currency: 'cad',
+          paymentIntentId: paid ? `pi_${key}-${index}` : null,
           tickets: {
             create: [0, 1].map((i) => ({
               eventId: event.id,
@@ -78,12 +92,14 @@ test.each([false, true])(
               ticketTypeId: type.id,
               barcode: `${key}-${index}-${i}`,
               pricePaid: 10,
+              inventoryState: paid ? 'SOLD' : 'HELD',
             })),
           },
         },
         include: { tickets: { orderBy: { id: 'asc' } } },
       });
     const target = await makeOrder(0, true);
+    bindProvider(target);
     const paidBefore = await makeOrder(1, true);
     const pendingBefore = await makeOrder(2, false);
     expect(new Set([target.userId, paidBefore.userId, pendingBefore.userId]).size).toBe(3);
@@ -98,15 +114,12 @@ test.each([false, true])(
       const index = args.where.id === target.id && reads < 2 ? reads++ : -1;
       // Force query 1 to complete before query 0 without sleeps or fake results.
       if (reverseSchedule && index === 0) await bounded(arrived[1].promise);
-      const snapshot = (await original(args)) as Prisma.OrderGetPayload<{
-        include: { tickets: true };
-      }> | null;
+      const snapshot = await original(args);
       if (index >= 0) {
         expect(snapshot?.status).toBe('PAID');
-        expect(snapshot?.tickets).toHaveLength(2);
-        expect(
-          snapshot?.tickets.every((t: any) => ['VALID', 'TRANSFERRED'].includes(t.status))
-        ).toBe(true);
+        const tickets = await prisma.ticket.findMany({ where: { orderId: target.id } });
+        expect(tickets).toHaveLength(2);
+        expect(tickets.every(t => t.status === 'VALID' && t.inventoryState === 'SOLD')).toBe(true);
         trace.push(`read-${index}-PAID`);
         arrived[index].resolve();
         await bounded(release[index].promise);
@@ -172,10 +185,13 @@ test.each([false, true])(
         target.tickets.map((ticket) => ({
           ...ticket,
           status: 'CANCELLED',
+          inventoryState: 'RELEASED',
           updatedAt: expect.any(Date),
         }))
       );
       expect(counters).toEqual([6, 2, 2]);
+      expect(provider.refunds.create).toHaveBeenCalledTimes(1);
+      expect(await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId: target.paymentIntentId! } })).toMatchObject({ status: 'SUCCEEDED', amount: 2000, reason: 'ORDER_REFUND' });
       expect(settled[winnerIndex].status).toBe('fulfilled');
       expect(settled[loserIndex].status).toBe('rejected');
       expect(settled.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
@@ -191,7 +207,7 @@ test.each([false, true])(
   20000
 );
 
-async function refundFixture(sold = 2) {
+async function refundFixture(sold = 2, ticketStatus: 'VALID' | 'USED' | 'TRANSFERRED' = 'VALID') {
   const key = `guard123-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const org = await prisma.organization.create({
     data: { name: key, slug: key, type: 'PROMOTER' },
@@ -225,56 +241,65 @@ async function refundFixture(sold = 2) {
       totalAmount: 20,
       status: 'PAID',
       paymentStatus: 'SUCCEEDED',
+      currency: 'cad',
+      paymentIntentId: `pi_${key}`,
       tickets: {
-        create: ['VALID', 'TRANSFERRED', 'USED'].map((status, i) => ({
+        create: [0, 1].map((i) => ({
           eventId: event.id,
           userId: user.id,
           ticketTypeId: type.id,
           barcode: `${key}-${i}`,
           pricePaid: 10,
-          status: status as 'VALID' | 'TRANSFERRED' | 'USED',
+          status: ticketStatus,
+          inventoryState: 'SOLD',
         })),
       },
     },
     include: { tickets: { orderBy: { id: 'asc' } } },
   });
+  bindProvider(order);
   return { order, type };
 }
 
 test('insufficient sold inventory rolls back claim and ticket cancellation completely', async () => {
   const { order, type } = await refundFixture(1);
   await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({
-    statusCode: 500,
-    message: 'Order sold inventory is inconsistent',
+    statusCode: 409,
+    message: 'Order inventory is inconsistent',
   });
   expect(
     await prisma.order.findUniqueOrThrow({
       where: { id: order.id },
       include: { tickets: { orderBy: { id: 'asc' } } },
     })
-  ).toEqual(order);
+  ).toEqual({ ...order, refundStatus: 'PROCESSING', updatedAt: expect.any(Date) });
+  expect(await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId: order.paymentIntentId! } })).toMatchObject({ status: 'SUCCEEDED', amount: 2000 });
+  expect(provider.refunds.create).toHaveBeenCalledTimes(1);
   expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
 });
 
-test('refund preserves scalar response/payment contract, cancels VALID/TRANSFERRED only and rejects retries', async () => {
+test('refund preserves scalar/payment fields, cancels refundable SOLD tickets and makes retry idempotent', async () => {
   const { order, type } = await refundFixture();
   const result = await new OrderService().refundOrder(order.id);
   const { tickets, ...scalar } = order;
-  expect(result).toEqual({ ...scalar, status: 'REFUNDED', updatedAt: expect.any(Date) });
+  expect(result).toEqual({ ...scalar, status: 'REFUNDED', refundStatus: 'SUCCEEDED', updatedAt: expect.any(Date) });
   const after = await prisma.ticket.findMany({
     where: { orderId: order.id },
     orderBy: { id: 'asc' },
   });
   expect(after).toEqual(
-    tickets.map((t) =>
-      t.status === 'USED' ? t : { ...t, status: 'CANCELLED', updatedAt: expect.any(Date) }
-    )
+    tickets.map(t => ({ ...t, status: 'CANCELLED', inventoryState: 'RELEASED', updatedAt: expect.any(Date) }))
   );
   const inventory = await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } });
   expect([inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold]).toEqual([
     10, 0, 0,
   ]);
-  await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({ statusCode: 400 });
+  // The accepted retry DTO also includes relations; preserve exact scalar values.
+  const { tickets: retryTickets, event: retryEvent, ...retryScalar } = await new OrderService().refundOrder(order.id) as any;
+  expect(retryScalar).toEqual(result);
+  expect(retryTickets).toEqual(expect.arrayContaining(after));
+  expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toEqual(result);
+  expect(provider.refunds.create).toHaveBeenCalledTimes(1);
   expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(inventory);
 });
 
@@ -307,5 +332,19 @@ test.each(['status', 'paymentStatus'] as const)(
       })
     ).toEqual(changed);
     expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
+    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(0);
+    expect(provider.paymentIntents.retrieve).not.toHaveBeenCalled();
+    expect(provider.refunds.create).not.toHaveBeenCalled();
   }
 );
+
+// Nonrefundable states remain independent denial assertions, not success fixtures.
+test.each(['USED', 'TRANSFERRED'] as const)('denies %s without dependent or provider writes', async status => {
+  const { order, type } = await refundFixture(2, status);
+  await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({ statusCode: 400 });
+  expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { tickets: { orderBy: { id: 'asc' } } } })).toEqual(order);
+  expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
+  expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(0);
+  expect(provider.paymentIntents.retrieve).not.toHaveBeenCalled();
+  expect(provider.refunds.create).not.toHaveBeenCalled();
+});
