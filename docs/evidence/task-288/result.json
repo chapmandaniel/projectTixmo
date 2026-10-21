@@ -1,0 +1,75 @@
+{
+  "status": "PASS synthetic font/runtime only; NOT actual App acceptance",
+  "results": [
+    {
+      "ink": 2899,
+      "widths": [
+        28,
+        96,
+        240
+      ],
+      "external": "BLOCKED",
+      "text": "Wallet session refresh — café £ € Ω Ж\nEmail \n\nOrder confirmed. Tickets and orders\n\nTransfer ticket Transfer",
+      "font": true,
+      "refresh": 0
+    },
+    {
+      "ink": 2899,
+      "widths": [
+        28,
+        96,
+        240
+      ],
+      "external": "BLOCKED",
+      "text": "Wallet session refresh — café £ € Ω Ж\nEmail \n\nOrder confirmed. Tickets and orders\n\nTransfer ticket Transfer",
+      "font": true,
+      "refresh": 1
+    },
+    {
+      "ink": 2899,
+      "widths": [
+        28,
+        96,
+        240
+      ],
+      "external": "BLOCKED",
+      "text": "Wallet session refresh — café £ € Ω Ж\nEmail \n\nOrder confirmed. Tickets and orders\n\nTransfer ticket Transfer",
+      "font": true,
+      "refresh": 2
+    },
+    {
+      "ink": 2899,
+      "widths": [
+        28,
+        96,
+        240
+      ],
+      "external": "BLOCKED",
+      "text": "Wallet session refresh — café £ € Ω Ж\nEmail \n\nOrder confirmed. Tickets and orders\n\nTransfer ticket Transfer",
+      "font": true,
+      "refresh": 3
+    }
+  ],
+  "requests": [
+    "/?refresh=0",
+    "/?refresh=1",
+    "/?refresh=2",
+    "/?refresh=3"
+  ],
+  "cleanup": {
+    "browser": {
+      "pid": 2671946,
+      "stopped": true,
+      "exitCode": 143,
+      "signalCode": null
+    },
+    "liveProcessGroupMembers": [],
+    "listener": {
+      "port": 45475,
+      "closed": true
+    },
+    "profileRemoved": true
+  },
+  "errors": [],
+  "networkBoundary": "Application-level dead proxy/exact127.0.0.1 bypass/DNS failure; NOT kernel isolation"
+}

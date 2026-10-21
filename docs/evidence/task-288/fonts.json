@@ -1,0 +1,21 @@
+{
+  "matches": {
+    "sans-serif": "DejaVuSans.ttf: \"DejaVu Sans\" \"Book\"",
+    "serif": "DejaVuSerif.ttf: \"DejaVu Serif\" \"Book\"",
+    "monospace": "DejaVuSansMono.ttf: \"DejaVu Sans Mono\" \"Book\"",
+    "UnavailableFont": "DejaVuSans.ttf: \"DejaVu Sans\" \"Book\""
+  },
+  "binary": "/home/daniel/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell",
+  "binary_sha256": "ded93a9c9a53a1ae040f08124badcca95c938e9d5015ff340c3b5538c41bf39e",
+  "fonts": {
+    "root/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf": "e1d733afbbfce842a1b43dced0c9885a76a4e67290dc7e690c4e9b76ebfc7d23",
+    "root/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf": "b4c632e3cdf9acc7f28758fb5a323c8524d7fc6660d46904d9b6cbe2809c419c",
+    "root/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf": "2d67eed9b325ee2e69f906ce4f3f6264d5105230a13352c8494daad4f17b12c8",
+    "root/usr/share/fonts/truetype/dejavu/DejaVuSansMono-BoldOblique.ttf": "3e19ce950e77f59d5d3607c4a4ed6a5152933f88937a4e0e7586ee5d5319aa5c",
+    "root/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Oblique.ttf": "a033f17e7e42934146337ab2858f7bae5e10c59708d810f1fca0bc81dd543cae",
+    "root/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf": "a54dca07c76d6289e717e75e0a58c0128f6d7269ef3faf76417c9d7d3bba37ab",
+    "root/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf": "3f704f75238454f68a8202e5098cb0687887480dd63d3dc20b34bdbdfa9d9f3f",
+    "root/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf": "a52c2a69dfc93d0b511b98c1019a57eb3d6a62d328bdf1387f00851b02e3a315"
+  },
+  "config": "<?xml version=\"1.0\"?>\n<!DOCTYPE fontconfig SYSTEM \"urn:fontconfig:fonts.dtd\">\n<fontconfig>\n<dir>/home/daniel/projects/projectTixmo/runtime/task-288/root/usr/share/fonts/truetype/dejavu</dir>\n<cachedir>/home/daniel/projects/projectTixmo/runtime/task-288/cache/fontconfig</cachedir>\n<alias><family>sans-serif</family><prefer><family>DejaVu Sans</family></prefer></alias>\n<alias><family>serif</family><prefer><family>DejaVu Serif</family></prefer></alias>\n<alias><family>monospace</family><prefer><family>DejaVu Sans Mono</family></prefer></alias>\n</fontconfig>\n"
+}
