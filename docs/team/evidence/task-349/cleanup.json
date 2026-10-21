@@ -1,0 +1,18 @@
+{
+  "path": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task349/run.0HHTRI",
+  "mode": "0o700",
+  "pids": [
+    3025803,
+    3025816
+  ],
+  "ports": [
+    38287,
+    56316
+  ],
+  "pidAbsent": true,
+  "listenersAbsent": true,
+  "socketsAbsent": true,
+  "pidfilesAbsent": true,
+  "ownedRuntimeWorkers": [],
+  "blockedNetworkRecords": 0
+}
