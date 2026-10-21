@@ -1,0 +1,9 @@
+PID 2641638: ABSENT
+PID 2641651: ABSENT
+PORT 38385: NO LISTENER
+PORT 58251: NO LISTENER
+PORT 33289: NO LISTENER
+pg/postmaster.pid: ABSENT
+redis.sock: ABSENT
+runtime mode: 0o700
+filesystem: ext2/ext3
