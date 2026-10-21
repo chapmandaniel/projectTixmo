@@ -132,3 +132,11 @@ Verification on 2026-10-20: full frontend suite 35 files / 230 tests passed.
 Focused festival checks passed again after the admission-level copy was added.
 Production build and design guard passed with the unchanged 926-entry baseline.
 Desktop 1440px and mobile 390px festival layouts were visually inspected.
+Independent review of `51822e560ae598f272f9a8e2bb6ec74f0bccee2a` passed
+19 tests across 3 files, a production build and a production-JavaScript isolation
+scan. The one introduced finding was the hero link's text color overriding the
+button foreground. The follow-up sets button-style links explicitly to white,
+restoring 4.70:1 text contrast, and is submitted for exact-commit re-review.
+Browser checks confirm child pages open at the top, the pass-coverage return
+link focuses the pass panel, the event-only layout has six event links and no
+pass selector, and widths from 320px through 1440px have no horizontal overflow.
