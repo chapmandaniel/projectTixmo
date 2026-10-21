@@ -6,7 +6,7 @@ Task #240; inspected base `317754edc7b43eb8e27b60c5374679330326c575` (candidate2
 
 Source paths below are relative to `tixmoapi2/src/`.
 
-- `api/index.ts` mounts orders/payments; `api/orders/routes.ts` mounts authenticated cancel, OWNER/ADMIN refund and buyer request-refund. No order-confirm route is mounted, despite its exported controller. Actor/tenant checks remain mandatory; no global OWNER expansion.
+- `api/index.ts` mounts orders/payments; `api/orders/routes.ts` mounts authenticated cancel, OWNER/ADMIN refund and buyer request-refund. No order-confirm route is mounted, despite its exported controller. Actor/tenant checks remain mandatory; no global OWNER expansion. Authenticated `POST /api/v1/orders/:id/receipt` is mounted: `api/orders/controller.ts:resendReceipt` uses actor-scoped order lookup, requires `PAID`, and calls `sendOrderConfirmationEmail(order.id, true)` to resend to the buyer. It neither confirms orders nor changes inventory. Route existence does not authorize live messaging under #250, and API success is not inbox-delivery proof.
 - `api/orders/controller.ts:requestRefund` checks buyer ownership then invokes the refund service directly. This is not organizer review/approval. `api/orders/service.ts:refundOrder` delegates to `PaymentService`, not bookkeeping-only repair.
 - `api/payments/service.ts:refundOrder` accepts full PAID orders, unused/untransferred buyer-owned SOLD tickets, and pre-event timing (cancelled events have explicit code exceptions). It writes PROCESSING before provider verification. These observed restrictions/exceptions do not decide customer entitlement, fee treatment or commercial authority.
 - `reconcileRefund` verifies the payment amount/currency and finds a provider refund by stored ID or matching local `metadata.refundId`; absent a match within 23 hours it attempts a full refund using the local idempotency key. The list is limited to 100 without pagination. A provider refund performed outside this local identity is not automatically adopted.
@@ -50,3 +50,5 @@ env -i PATH="$PATH" node tixmoapi2/node_modules/jest/bin/jest.js --config /tmp/t
 ```
 
 Result exit0: 1 suite, 6/6 PASS (3.901s). Initial attempt with `/usr/bin/node` exit127 (binary absent); corrected to PATH node with same scrubbed environment. `git diff --check` exit0. No DB/runtime/build/full gate/live/provider check claimed. Author submits REVIEW, independent lead+QA required on exact resulting commit; full W03/commercial acceptance remains open.
+
+Review correction (#256/#257): corrected the false no-email-resend assertion in the playbook and cross-checked both changed guides against the mounted authenticated receipt route/controller. Documentation-only follow-up; source and six simulator tests unchanged. `git diff --check` exit0; earlier six-test PASS remains historical evidence for unchanged tests, not a rerun. Financial restrictions and full W03 open status remain unchanged.

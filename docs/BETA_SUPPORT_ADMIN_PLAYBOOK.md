@@ -29,7 +29,7 @@ The refund/recovery sections below describe candidate source at `317754edc7b43eb
 | Users | `GET/POST/PUT/DELETE /api/v1/users` | User lookup, team account creation, profile repair, soft delete |
 | Organizations | `GET/POST/PUT/DELETE /api/v1/organizations` | Org lookup, org status repair, Stripe account reference checks |
 | Org members | `POST /api/v1/organizations/:id/members`, `DELETE /api/v1/organizations/:id/members/:userId` | Add/remove users from organizations |
-| Orders | `GET /api/v1/orders`, `GET /api/v1/orders/:id`, `POST /api/v1/orders/:id/cancel`, `POST /api/v1/orders/:id/refund` | Order lookup and pending-order cancellation; refund routes can initiate processor money movement |
+| Orders | `GET /api/v1/orders`, `GET /api/v1/orders/:id`, `POST /api/v1/orders/:id/cancel`, `POST /api/v1/orders/:id/refund`, `POST /api/v1/orders/:id/receipt` | Order lookup and pending-order cancellation; refund routes can initiate processor money movement |
 | Payments | Stripe Dashboard, `POST /api/v1/payments/webhook` | PaymentIntent verification and webhook replay |
 | Scanners | `GET/POST/PUT/DELETE /api/v1/scanners`, `GET /api/v1/scanners/logs` | Scanner registration, update, revoke, and scan investigation |
 | Assets | `GET /api/v1/assets/folders/:folderId/shares`, `POST /api/v1/assets/folders/:folderId/shares`, `DELETE /api/v1/assets/folders/:folderId/shares/:shareId` | Share creation and revocation |
@@ -110,7 +110,7 @@ The refund/recovery sections below describe candidate source at `317754edc7b43eb
 
 1. Confirm the email address on the user, order, reviewer, or share recipient.
 2. Check provider delivery logs for bounce, suppression, spam complaint, or delayed delivery.
-3. Resend only through a supported product route where available, such as approval reviewer resend.
+3. Source-backed receipt resend exists at authenticated `POST /api/v1/orders/:id/receipt`: the controller performs actor-scoped order lookup, requires `PAID`, then calls `sendOrderConfirmationEmail(order.id, true)` to resend to the buyer. Approval reviewer resend is a separate supported surface. Route existence does not authorize sending live messages under this local-only task; any live resend needs separate authorization and delivery evidence.
 4. If no resend route exists, create a new supported action rather than manually sending secrets or raw tokens.
 
 ## Staging Or Production Smoke Failure
@@ -145,4 +145,4 @@ For production database backup and restore evidence, use `docs/DB_BACKUP_AND_MIG
 
 ### Fulfillment and confirmation email triage
 
-The older six-attempt retry/confirmation fallback instructions are superseded by the candidate's durable, generation-fenced recovery path. Inspect current event/lease/generation and error evidence; do not reset event records or invoke internal methods. Recovery can have financial effects, including the #73 conflict described above, so no generic webhook replay is authorized here. Confirmed inventory must not be rolled back or fulfilled again to repair email delivery. There is no order-email resend endpoint; webhook success is not proof of inbox delivery. Preserve an owned exception when delivery cannot be verified.
+The older six-attempt retry/confirmation fallback instructions are superseded by the candidate's durable, generation-fenced recovery path. Inspect current event/lease/generation and error evidence; do not reset event records or invoke internal methods. Recovery can have financial effects, including the #73 conflict described above, so no generic webhook replay is authorized here. Confirmed inventory must not be rolled back or fulfilled again to repair email delivery. Authenticated `POST /api/v1/orders/:id/receipt` is the mounted receipt-resend endpoint, with actor-scoped access and a `PAID` guard before confirmation-email resend. This is not an order-confirm endpoint and must not be used to reconfirm inventory. Source existence is not permission to send live messages; separately authorized resend/API success and webhook success are not proof of inbox delivery. Preserve an owned exception when delivery cannot be verified.
