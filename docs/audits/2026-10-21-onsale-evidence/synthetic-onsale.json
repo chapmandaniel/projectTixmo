@@ -1,0 +1,71 @@
+{
+  "kind": "synthetic-planning-specification",
+  "notSeeded": true,
+  "notProductionApproval": true,
+  "preparedOn": "2026-10-21",
+  "timezone": "America/St_Johns",
+  "event": {
+    "name": "Tixmo Onsale Rehearsal",
+    "slug": "synthetic-nov9-rehearsal",
+    "startsAt": "2026-12-05T20:00:00-03:30",
+    "saleStartsAt": "2026-11-09T10:00:00-03:30",
+    "saleStartsAtUtc": "2026-11-09T13:30:00Z",
+    "currency": "cad",
+    "totalCapacity": 2000,
+    "ticketTypes": [
+      {
+        "name": "General Admission",
+        "quantity": 1800,
+        "basePriceMinorUnits": 5000,
+        "maxPerOrder": 4
+      },
+      {
+        "name": "VIP",
+        "quantity": 200,
+        "basePriceMinorUnits": 9000,
+        "maxPerOrder": 4
+      }
+    ],
+    "taxAndFeeTreatment": "Unapproved; must be decided before customer publication."
+  },
+  "scenarios": {
+    "visitsFirstTenMinutes": 3000,
+    "peakConcurrentSessions": 500,
+    "stressConcurrentSessions": 1000,
+    "mobilePercent": 70,
+    "rampSessions": [
+      100,
+      250,
+      500
+    ],
+    "soak": {
+      "sessions": 200,
+      "minutes": 30
+    },
+    "burst": {
+      "orderAttemptsPerSecond": 30,
+      "seconds": 60,
+      "expectedSoldOutResponses": true
+    },
+    "lastTicketRace": {
+      "distinctBuyers": 100,
+      "availableUnits": 10
+    },
+    "poisonRecovery": {
+      "failingRecords": 50,
+      "healthySuccessors": 1
+    }
+  },
+  "safeguards": [
+    "Use disposable or explicitly approved staging only.",
+    "Use controllable test clock or relative windows before November 9.",
+    "No .test mail to external providers; local sink for bulk load.",
+    "Small authorized real test-inbox cohort separately.",
+    "Local provider simulator for bulk load; separate real Stripe test-mode matrix.",
+    "No production seed, bulk provider traffic or live payment.",
+    "Reset only owned disposable fixtures between independent scenarios."
+  ],
+  "replacementDeadline": "2026-10-30",
+  "actualDemandKnown": false,
+  "capacityProven": false
+}

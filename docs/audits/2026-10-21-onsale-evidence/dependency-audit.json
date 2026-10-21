@@ -1,0 +1,45 @@
+{
+  "startedAt": "2026-10-21T03:58:22.161Z",
+  "result": "pass",
+  "checks": [
+    {
+      "id": "dashboard",
+      "packagePath": "tdash",
+      "command": "npm --prefix tdash audit --omit=dev --json",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 631,
+      "vulnerabilityCounts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "vulnerabilities": {},
+      "parseError": "",
+      "stderr": ""
+    },
+    {
+      "id": "api",
+      "packagePath": "tixmoapi2",
+      "command": "npm --prefix tixmoapi2 audit --omit=dev --json",
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 450,
+      "vulnerabilityCounts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "vulnerabilities": {},
+      "parseError": "",
+      "stderr": ""
+    }
+  ],
+  "finishedAt": "2026-10-21T03:58:23.244Z"
+}
