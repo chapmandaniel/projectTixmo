@@ -1,0 +1,53 @@
+[
+  {
+    "log": "docs/team/evidence/task-322/attempt-1/runtime.log",
+    "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task322/run.uEw5n1",
+    "pids": [
+      "2880017",
+      "2880030"
+    ],
+    "ports": [
+      "21484",
+      "49547"
+    ],
+    "listeners": "",
+    "livePids": [],
+    "sockets": [],
+    "pgSocketPresent": false,
+    "pidfilePresent": false
+  },
+  {
+    "log": "docs/team/evidence/task-322/attempt-2/runtime.log",
+    "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task322/run.O45Unc",
+    "pids": [
+      "2882279",
+      "2882299"
+    ],
+    "ports": [
+      "35687",
+      "59963"
+    ],
+    "listeners": "",
+    "livePids": [],
+    "sockets": [],
+    "pgSocketPresent": false,
+    "pidfilePresent": false
+  },
+  {
+    "log": "docs/team/evidence/task-322/runtime.log",
+    "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task322/run.ZTZA0K",
+    "pids": [
+      "2885296",
+      "2885309"
+    ],
+    "ports": [
+      "36873",
+      "41136"
+    ],
+    "listeners": "",
+    "livePids": [],
+    "sockets": [],
+    "pgSocketPresent": false,
+    "pidfilePresent": false
+  }
+]

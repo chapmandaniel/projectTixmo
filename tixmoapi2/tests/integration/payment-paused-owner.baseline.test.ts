@@ -46,7 +46,7 @@ test.each(['fresh', 'before-handler', 'before-finish'])(
       },
     });
     const event = await prisma.event.create({
-      data: { organizationId: org.id, name: key, slug: key, tags: [] },
+      data: { organizationId: org.id, name: key, slug: key, tags: [], status: 'ON_SALE' },
     });
     const type = await prisma.ticketType.create({
       data: {
@@ -129,6 +129,9 @@ test.each(['fresh', 'before-handler', 'before-finish'])(
           id: target.paymentIntentId,
           object: 'payment_intent',
           status: 'succeeded',
+          amount: Number(target.totalAmount) * 100,
+          amount_received: Number(target.totalAmount) * 100,
+          currency: target.currency,
           metadata: { orderId: target.id, userId: user.id },
         },
       },
@@ -176,7 +179,13 @@ test.each(['fresh', 'before-handler', 'before-finish'])(
       expect(paused.target.paymentStatus).toBe(
         phase === 'before-finish' ? 'SUCCEEDED' : 'PROCESSING'
       );
-      expect(paused.target.tickets).toEqual(target.tickets);
+      expect(paused.target.tickets).toEqual(
+        target.tickets.map((ticket) =>
+          phase === 'before-finish'
+            ? { ...ticket, inventoryState: 'SOLD', updatedAt: expect.any(Date) }
+            : ticket
+        )
+      );
       expect(paused.other).toEqual(otherBefore);
       expect([
         paused.inventory.quantityAvailable,
@@ -217,7 +226,13 @@ test.each(['fresh', 'before-handler', 'before-finish'])(
           paymentStatus: 'SUCCEEDED',
           paymentIntentId: target.paymentIntentId,
         });
-        expect(afterB.target.tickets).toEqual(target.tickets);
+        expect(afterB.target.tickets).toEqual(
+          target.tickets.map((ticket) => ({
+            ...ticket,
+            inventoryState: 'SOLD',
+            updatedAt: expect.any(Date),
+          }))
+        );
         expect(afterB.other).toEqual(otherBefore);
         expect([
           afterB.inventory.quantityAvailable,
@@ -254,7 +269,13 @@ test.each(['fresh', 'before-handler', 'before-finish'])(
         paymentStatus: 'SUCCEEDED',
         paymentIntentId: target.paymentIntentId,
       });
-      expect(final.target.tickets).toEqual(target.tickets);
+      expect(final.target.tickets).toEqual(
+        target.tickets.map((ticket) => ({
+          ...ticket,
+          inventoryState: 'SOLD',
+          updatedAt: expect.any(Date),
+        }))
+      );
       expect(final.other).toEqual(otherBefore);
       expect([
         final.inventory.quantityAvailable,

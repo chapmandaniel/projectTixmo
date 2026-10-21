@@ -93,7 +93,7 @@ test('stale generation cannot confirm, cancel, bind, create refund or deliver re
   expect(orderService.sendOrderConfirmationEmail).not.toHaveBeenCalled();
   expect(db.$transaction).toHaveBeenCalledTimes(1);
 });
-test('late success durably records refund and releases inventory in owned tx before provider delivery', async () => {
+test('late success records a manual exception and releases inventory without provider delivery', async () => {
   order.expiresAt = new Date(0);
   const reconcile = jest.spyOn(service, 'reconcileRefund').mockResolvedValue(undefined);
   await service.handlePaymentSuccess(intent, claim);
@@ -103,7 +103,8 @@ test('late success durably records refund and releases inventory in owned tx bef
       create: expect.objectContaining({ reason: 'LATE_PAYMENT', amount: 1000 }),
     })
   );
-  expect(reconcile).toHaveBeenCalledWith('refund-owned');
+  expect(reconcile).not.toHaveBeenCalled();
+  expect(tx.order.update).not.toHaveBeenCalled();
   expect(orderService.confirmOrderInTransaction).not.toHaveBeenCalled();
   expect(orderService.sendOrderConfirmationEmail).not.toHaveBeenCalled();
 });
@@ -237,4 +238,14 @@ test('early failed event binds only a committed matching attempt under event own
       data: { paymentIntentId: intent.id, paymentStatus: 'FAILED' },
     })
   );
+});
+
+test('malformed success missing received amount rejects before any financial mutation', async () => {
+  const { amount_received, ...malformed } = intent;
+  await expect(service.handlePaymentSuccess(malformed, claim)).rejects.toMatchObject({
+    statusCode: 409,
+  });
+  expect(db.$transaction).not.toHaveBeenCalled();
+  expect(tx.paymentRefund.upsert).not.toHaveBeenCalled();
+  expect(orderService.confirmOrderInTransaction).not.toHaveBeenCalled();
 });

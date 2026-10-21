@@ -8,7 +8,6 @@ import prisma from '../../src/config/prisma';
 import Stripe from 'stripe';
 import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
-import { notificationService } from '../../src/utils/notificationService';
 import { config } from '../../src/config/environment';
 afterAll(async () => {
   await prisma.$disconnect();
@@ -27,7 +26,7 @@ test('FAILED retry generation, real transaction fulfillment, stale finish and fa
     },
   });
   const event = await prisma.event.create({
-    data: { organizationId: org.id, name: key, slug: key, tags: [] },
+    data: { organizationId: org.id, name: key, slug: key, tags: [], status: 'ON_SALE' },
   });
   const type = await prisma.ticketType.create({
     data: {
@@ -90,7 +89,14 @@ test('FAILED retry generation, real transaction fulfillment, stale finish and fa
       object: 'event',
       type: eventType,
       data: {
-        object: { id: target.paymentIntentId, metadata: { orderId: target.id, userId: user.id } },
+        object: {
+          id: target.paymentIntentId,
+          status: 'succeeded',
+          amount: Number(target.totalAmount) * 100,
+          amount_received: Number(target.totalAmount) * 100,
+          currency: target.currency,
+          metadata: { orderId: target.id, userId: user.id },
+        },
       },
     });
     await service.handleWebhook(
@@ -98,26 +104,42 @@ test('FAILED retry generation, real transaction fulfillment, stale finish and fa
       Buffer.from(payload)
     );
   };
+  const reconcile = jest.spyOn(service as any, 'reconcileRefund').mockResolvedValue(undefined);
   try {
     const mismatchPayload = JSON.stringify({
       id: `${eventId}-mismatch`,
       object: 'event',
       type: 'payment_intent.succeeded',
-      data: { object: { id: 'pi_wrong', metadata: { orderId: target.id, userId: user.id } } },
+      data: {
+        object: {
+          id: 'pi_wrong',
+          status: 'succeeded',
+          amount: Number(target.totalAmount) * 100,
+          amount_received: Number(target.totalAmount) * 100,
+          currency: target.currency,
+          metadata: { orderId: target.id, userId: user.id },
+        },
+      },
     });
-    await expect(
-      service.handleWebhook(
-        Stripe.webhooks.generateTestHeaderString({
-          payload: mismatchPayload,
-          secret: config.stripeWebhookSecret,
-        }),
-        Buffer.from(mismatchPayload)
-      )
-    ).rejects.toMatchObject({ statusCode: 400, message: 'Payment intent does not match order' });
-    expect(notificationService.sendAdminAlert).toHaveBeenCalledWith(
-      'Payment Intent Mismatch',
-      `Payment intent pi_wrong does not match order ${target.id}`
+    await service.handleWebhook(
+      Stripe.webhooks.generateTestHeaderString({
+        payload: mismatchPayload,
+        secret: config.stripeWebhookSecret,
+      }),
+      Buffer.from(mismatchPayload)
     );
+    const mismatchRefund = await prisma.paymentRefund.findUniqueOrThrow({
+      where: { paymentIntentId: 'pi_wrong' },
+    });
+    expect(mismatchRefund).toMatchObject({
+      orderId: target.id,
+      reason: 'UNEXPECTED_PAYMENT',
+      amount: Number(target.totalAmount) * 100,
+      currency: target.currency,
+      status: 'REQUESTED',
+    });
+    expect(reconcile).toHaveBeenCalledWith(mismatchRefund.id);
+    expect(email).not.toHaveBeenCalled();
     expect(
       await prisma.order.findUniqueOrThrow({
         where: { id: target.id },
@@ -190,6 +212,7 @@ test('FAILED retry generation, real transaction fulfillment, stale finish and fa
     ).rejects.toMatchObject({ statusCode: 400 });
     expect(await snapshot()).toEqual(before);
   } finally {
+    reconcile.mockRestore();
     email.mockRestore();
   }
 }, 15000);

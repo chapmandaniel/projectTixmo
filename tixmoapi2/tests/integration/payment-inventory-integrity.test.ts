@@ -198,7 +198,7 @@ describe('Payment, admission and inventory integrity', () => {
     intent.status = 'succeeded';
     intent.amount_received = intent.amount;
     const failure = jest
-      .spyOn(orderService, 'confirmOrder')
+      .spyOn(orderService, 'confirmOrderInTransaction')
       .mockRejectedValue(new Error('Database unavailable'));
     const id = 'evt_failure_recovery';
     await expect(deliver(intent, id)).rejects.toThrow('Database unavailable');
@@ -245,7 +245,7 @@ describe('Payment, admission and inventory integrity', () => {
     );
   });
 
-  it('refunds late payments without reviving expired tickets or stealing a newer hold', async () => {
+  it('records manual late payments without reviving expired tickets or stealing a newer hold', async () => {
     const order = await reserve(),
       session = await service.createPaymentIntent(order.id, user.id);
     await prisma.order.update({
@@ -259,7 +259,21 @@ describe('Payment, admission and inventory integrity', () => {
     intent.amount_received = intent.amount;
     await deliver(intent);
     await deliver(intent);
-    expect(fake.refunds.size).toBe(1);
+    expect(fake.refunds.size).toBe(0);
+    const manual = await prisma.paymentRefund.findUniqueOrThrow({
+      where: { paymentIntentId: intent.id },
+    });
+    expect(manual).toMatchObject({
+      reason: 'LATE_PAYMENT',
+      status: 'REQUESTED',
+      stripeRefundId: null,
+    });
+    expect(manual.errorMessage).toBe(
+      'Manual reconciliation required: late payment; automatic refund prohibited.'
+    );
+    expect(
+      (await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).paymentClosedAt
+    ).toBeNull();
     expect((await stock()).quantityHeld).toBe(2);
     expect((await stock()).quantitySold).toBe(0);
     expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe(
@@ -291,6 +305,12 @@ describe('Payment, admission and inventory integrity', () => {
     const sync = await scannerService.syncTickets(scanner.id, event.id);
     expect(sync.tickets.every((t) => t.status === 'CANCELLED' && t.barcode === '')).toBe(true);
     [...fake.refunds.values()][0].status = 'succeeded';
+    await service.recoverRefunds();
+    expect((await stock()).quantitySold).toBe(2); // Fresh refund is still cooling down.
+    await prisma.paymentRefund.updateMany({
+      where: { orderId: order.id },
+      data: { updatedAt: new Date(Date.now() - 60001) },
+    });
     await Promise.all([service.recoverRefunds(), service.recoverRefunds()]);
     expect((await stock()).quantitySold).toBe(0);
     expect((await stock()).quantityAvailable).toBe(20);
@@ -515,6 +535,12 @@ describe('Payment, admission and inventory integrity', () => {
     expect((await stock()).quantitySold).toBe(2);
     crash.mockRestore();
     await service.recoverRefunds();
+    expect((await stock()).quantitySold).toBe(2); // No early local finalization.
+    await prisma.paymentRefund.updateMany({
+      where: { orderId: order.id },
+      data: { updatedAt: new Date(Date.now() - 60001) },
+    });
+    await service.recoverRefunds();
     await service.recoverRefunds();
     expect(fake.refunds.size).toBe(1);
     expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe(
@@ -546,12 +572,19 @@ describe('Payment, admission and inventory integrity', () => {
     await service.recoverPayments();
     const recovered = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
     expect(recovered.status).toBe('CANCELLED');
-    expect(recovered.paymentClosedAt).not.toBeNull();
-    expect(fake.refunds.size).toBe(1);
+    expect(recovered.paymentClosedAt).toBeNull();
+    expect(fake.refunds.size).toBe(0);
+    expect(
+      await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId: intent.id } })
+    ).toMatchObject({ reason: 'LATE_PAYMENT', status: 'REQUESTED', stripeRefundId: null });
     expect((await stock()).quantityAvailable).toBe(20);
     fake.stripe.paymentIntents.retrieve.mockClear();
     await service.recoverPayments();
-    expect(fake.stripe.paymentIntents.retrieve).not.toHaveBeenCalled();
+    expect(fake.stripe.paymentIntents.retrieve).toHaveBeenCalledWith(intent.id);
+    expect(fake.refunds.size).toBe(0);
+    expect(
+      (await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).paymentClosedAt
+    ).toBeNull();
   });
 
   it('delivers new free-order receipts without Stripe and avoids replaying historical receipts', async () => {
