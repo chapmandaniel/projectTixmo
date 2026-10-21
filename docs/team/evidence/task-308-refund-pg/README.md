@@ -13,6 +13,7 @@ Only harness/evidence files changed; product src/Prisma diff empty.
 - `bash -n docs/team/evidence/task-308-refund-pg/runtime.sh`: exit 0.
 - `node --check docs/team/evidence/task-308-refund-pg/check.cjs`: exit 0.
 - Product source/schema `git diff BASE --exit-code -- tixmoapi2/src tixmoapi2/prisma`: exit 0.
+- Initial staged diff check flagged whitespace-only Prisma log line; normalized trailing log whitespace only, rerun diff check exit0.
 - Independent post-run PID/listener/socket/pidfile absence assertions: exit 0 (`cleanup.txt`).
 
 Runtime reexecs `env -i` before imports, makes a new restrictive disk-backed task308 directory, proves owned PG/Redis loopback listeners before clients, validates destructive verification targets before application imports. Dependencies symlinked temporarily to existing matching task235 cache; no install/config changes. Sole DB ownership after QA306 cleanup.

@@ -100,5 +100,5 @@ migrations/
     └─ migration.sql
   └─ 20261020120000_add_webhook_attempt_generation/
     └─ migration.sql
-      
+
 All migrations have been successfully applied.
