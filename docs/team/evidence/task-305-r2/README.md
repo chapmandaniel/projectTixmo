@@ -47,7 +47,7 @@ advisory selection, actual server POST /orders400; restore native Date + focus,
 observe real opening/closing with native timers, then -11s browser Date skew after
 actual closing enables advisory selection but actual server POST /orders400.
 Native Date restored afterward. Both rejected bodies and five observations/screens
-retained; early message sale not started, late message sale ended. No successful
+retained; both actual server messages `Event is not available for purchase` (generic guard response, not distinct reason codes). No successful
 reservation attempted. Whole inventory row + all order/ticket/paymentAttempt/
 paymentRefund rows exactly equal before/after; financial SQL invariant, not all
 DB invariance (real login updates user lastLogin). Stub Stripe methods uncalled.
