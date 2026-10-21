@@ -1,0 +1,18 @@
+{
+  "red": {
+    "success": false,
+    "numPassedTests": 6,
+    "numFailedTests": 1,
+    "numPendingTests": 0,
+    "numPassedTestSuites": 0,
+    "numFailedTestSuites": 1
+  },
+  "green": {
+    "success": true,
+    "numPassedTests": 7,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numPassedTestSuites": 1,
+    "numFailedTestSuites": 0
+  }
+}

@@ -1,0 +1,24 @@
+  console.log
+    prisma:error 
+    Invalid `prisma.$queryRawUnsafe()` invocation:
+    
+    
+    Raw query failed. Code: `55P03`. Message: `ERROR: could not obtain lock on row in relation "orders"`
+
+      at Object.mc (node_modules/@prisma/client/runtime/library.js:21:432)
+
+PASS tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts (5.821 s)
+  ✓ refuses committed PROCESSING transition after actual authorized public observation (81 ms)
+  ✓ refuses committed PAID transition after actual authorized public observation (75 ms)
+  ✓ stable PENDING remains eligible and repeat cancellation is idempotent (57 ms)
+  ✓ stable PROCESSING remains eligible and repeat cancellation is idempotent (42 ms)
+  ✓ scope denial cannot mutate another buyer (24 ms)
+  ✓ inverse schedule holds an actual SQL lock before cancellation effects (65 ms)
+  ✓ trusted transactional cancellation still releases expired holds (30 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       7 passed, 7 total
+Snapshots:   0 total
+Time:        6.058 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts".
+Test results written to: docs/team/evidence/task-328/jest-result.json

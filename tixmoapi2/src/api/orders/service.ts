@@ -437,10 +437,21 @@ export class OrderService {
       ...(actorId ? await this.actorOrderScope(actorId) : {}),
       ...(userId ? { userId } : {}),
     };
-    if (!(await prisma.order.findFirst({ where: { id, ...scope } })))
-      throw ApiError.notFound('Order not found');
+    const observed = await prisma.order.findFirst({ where: { id, ...scope } });
+    if (!observed) throw ApiError.notFound('Order not found');
     return prisma.$transaction(async (tx) => {
       await lockOrder(tx, id);
+      const current = await tx.order.findFirst({ where: { id, ...scope } });
+      if (!current) throw ApiError.notFound('Order not found');
+      // Preserve the public request's optimistic precondition without using its
+      // stale inventory. Trusted transactional callers keep their own fencing.
+      // A completed cancellation remains an effect-free idempotent replay.
+      if (
+        current.status !== 'CANCELLED' &&
+        (current.status !== observed.status || current.paymentStatus !== observed.paymentStatus)
+      ) {
+        throw ApiError.badRequest('Cannot cancel order that has changed');
+      }
       return this.cancelOrderInTransaction(tx, id, scope);
     });
   }
