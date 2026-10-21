@@ -1,0 +1,21 @@
+PASS 1 exact10 canonical order/rawNUL+Unicode and build-only override
+PASS 2 concurrent close one cleanup and closed run denial
+PASS 3 failfast local position 0
+PASS 4 failfast local position 1
+PASS 5 failfast local position 2
+PASS 6 failfast local position 3
+PASS 7 failfast local position 4
+PASS 8 failfast local position 5
+PASS 9 failfast local position 6
+PASS 10 failfast local position 7
+PASS 11 failfast local position 8
+PASS 12 failfast local position 9
+PASS 13 before source/authority zero-child denial
+PASS 14 after source/authority zero-child denial
+PASS 15 denied source/authority zero-child denial
+PASS 16 active run/run+close race denies duplicate work/early cleanup
+PASS 17 static capture before prepare; source recheck+exclusive fsync before initdb
+PASS 18 default12/exactstage table unchanged
+REPRODUCED canonical command TOCTOU: caller mutates step during awaited authority, mutated command+args execute
+OBSERVED returned Buffer receipt aliases adapter storage (default utf8 spawn returns strings; not standalone default-path blocker)
+TOTAL 18 independent checks PASS plus 1 reproduced canonical-execution defect and 1 alias observation
