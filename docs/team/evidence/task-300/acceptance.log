@@ -1,0 +1,55 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task300/run.R6r2pQ/jest-cache --runInBand --runTestsByPath tests/integration/readiness-fault.local.test.ts
+
+  console.log
+    TASK298_API_LISTENER 2742303 { address: '127.0.0.1', family: 'IPv4', port: 43591 }
+
+      at Object.<anonymous> (tests/integration/readiness-fault.local.test.ts:35:11)
+
+  console.log
+    TASK298_HTTP {"label":"healthy","path":"/ready","status":200,"elapsedMs":42,"cacheControl":"no-store","body":{"status":"ready","checks":{"database":true,"redis":true},"timestamp":"2026-10-21T06:36:05.562Z"}}
+
+      at get (tests/integration/readiness-fault.local.test.ts:39:13)
+
+  console.log
+    TASK298_HTTP {"label":"liveness-during-stall","path":"/health","status":200,"elapsedMs":7,"body":{"status":"ok","timestamp":"2026-10-21T06:36:06.678Z","uptime":13.693133635,"environment":"test"}}
+
+      at get (tests/integration/readiness-fault.local.test.ts:39:13)
+          at async Promise.all (index 2)
+
+  console.log
+    TASK298_HTTP {"label":"redis-stalled-1","path":"/ready","status":503,"elapsedMs":2012,"cacheControl":"no-store","body":{"status":"not_ready","checks":{"database":true,"redis":null},"timestamp":"2026-10-21T06:36:08.679Z"}}
+
+      at get (tests/integration/readiness-fault.local.test.ts:39:13)
+          at async Promise.all (index 0)
+
+  console.log
+    TASK298_HTTP {"label":"redis-stalled-2","path":"/ready","status":503,"elapsedMs":2013,"cacheControl":"no-store","body":{"status":"not_ready","checks":{"database":true,"redis":null},"timestamp":"2026-10-21T06:36:08.681Z"}}
+
+      at get (tests/integration/readiness-fault.local.test.ts:39:13)
+          at async Promise.all (index 1)
+
+  console.log
+    TASK298_HTTP {"label":"redis-resumed","path":"/ready","status":200,"elapsedMs":7,"cacheControl":"no-store","body":{"status":"ready","checks":{"database":true,"redis":true},"timestamp":"2026-10-21T06:36:09.894Z"}}
+
+      at get (tests/integration/readiness-fault.local.test.ts:39:13)
+
+  console.log
+    TASK298_ASSERTIONS PASS: actual stalled Redis ping remains pending, shared probe deadline returns null/503; resumed ping resolves; no dependency replacement
+
+      at Object.<anonymous> (tests/integration/readiness-fault.local.test.ts:59:11)
+
+  console.log
+    TASK298_API_CLOSED 2742303
+
+      at Object.<anonymous> (tests/integration/readiness-fault.local.test.ts:23:11)
+
+PASS tests/integration/readiness-fault.local.test.ts (16.445 s)
+  ✓ owned Redis stall gives bounded redacted readiness503, health200, then recovery200 (10362 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        16.685 s
+Ran all test suites within paths "tests/integration/readiness-fault.local.test.ts".

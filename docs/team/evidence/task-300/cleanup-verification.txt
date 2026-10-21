@@ -1,0 +1,9 @@
+PID 2742189 absent
+PID 2742202 absent
+PID 2742303 absent
+TCP 31167 absent
+TCP 46620 absent
+TCP 43591 absent
+postmaster, Redis socket, PG sockets absent
+runtime mode0700
+dependency symlink removed
