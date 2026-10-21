@@ -1,0 +1,93 @@
+[
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/w/wayland/libwayland-server0_1.24.0-2_amd64.deb",
+    "file": "libwayland-server0_1.24.0-2_amd64.deb",
+    "sha256": "9f0278d02d401c9fd0f2b4b06d37ea0b1e7cecbb6a8d2539427f810d80c409dc",
+    "metadata": "Package: libwayland-server0\nVersion: 1.24.0-2\nArchitecture: amd64\nDepends: libc6 (>= 2.38), libffi8 (>= 3.4)\n",
+    "apt_digest": "SHA512:a96b4e879a9d28028c656f18b186016cb4eb493ab800856474f965f721f77af78c27a1945acf871ddb0c450b507ce39486230505078cbf0fb0bb20ae24db79da"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/libx/libxcomposite/libxcomposite1_0.4.6-1build1_amd64.deb",
+    "file": "libxcomposite1_1%3a0.4.6-1build1_amd64.deb",
+    "sha256": "b8557d5aba1e575acfb169f47e798c449c8a5ca05846861f1480724d4cfc5ce3",
+    "metadata": "Package: libxcomposite1\nVersion: 1:0.4.6-1build1\nArchitecture: amd64\nDepends: libc6 (>= 2.4), libx11-6 (>= 2:1.4.99.1)\n",
+    "apt_digest": "SHA512:2a8ca83e6f64734cb0cb119fe5df4eb5698455450debf81658452c1280831a3cae14f7899aa7a1482ef17551156bed53eacd0166551707214f9017aa5427dd3a"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/libx/libxdamage/libxdamage1_1.1.7-1_amd64.deb",
+    "file": "libxdamage1_1%3a1.1.7-1_amd64.deb",
+    "sha256": "dd751597c6216105774a93769972d1cb6dad5fd1ba91f090197d7acc85c406cb",
+    "metadata": "Package: libxdamage1\nVersion: 1:1.1.7-1\nArchitecture: amd64\nDepends: libc6 (>= 2.4), libx11-6 (>= 2:1.4.99.1)\n",
+    "apt_digest": "SHA512:0e6e3621a30fd3c772c8733a292361a581865ad24e5d6c8e4d9f05ce7052bb52bea83ea878c9cfa34148b8eef60ca94dae72d6e12961585ba089f5e9b3317310"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/libx/libxfixes/libxfixes3_6.0.0-2build2_amd64.deb",
+    "file": "libxfixes3_1%3a6.0.0-2build2_amd64.deb",
+    "sha256": "f3a71f6aa12000480c419e44f3aa5bdca7eb862b720d0307661b4e886db1c5f8",
+    "metadata": "Package: libxfixes3\nVersion: 1:6.0.0-2build2\nArchitecture: amd64\nDepends: libc6 (>= 2.14), libx11-6 (>= 2:1.6.0)\n",
+    "apt_digest": "SHA512:6aa87b30c4286f63802a83c2f4396267447ec4d63693af72afe44e263133e4b86111ce64fc36393b0c9db24b87c3cc4d4e9f2c17454c9df79596581008742643"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/libx/libxi/libxi6_1.8.2-2_amd64.deb",
+    "file": "libxi6_2%3a1.8.2-2_amd64.deb",
+    "sha256": "b975dd89cac8c32a3cf622e1b7f5434db59f37eda87dfee399d0806d9953db0a",
+    "metadata": "Package: libxi6\nVersion: 2:1.8.2-2\nArchitecture: amd64\nDepends: libc6 (>= 2.14), libx11-6 (>= 2:1.6.0), libxext6\n",
+    "apt_digest": "SHA512:ec8caacbbe4e609e858a73c3613e8daea34afc5b8d60d8c54a865bf929f67482f447280c6789a25b057265cd6a9d0f2c4abf3b74c45c892e2623ec4f89c9d302"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/libx/libxrandr/libxrandr2_1.5.4-1build1_amd64.deb",
+    "file": "libxrandr2_2%3a1.5.4-1build1_amd64.deb",
+    "sha256": "d0052315ac1417234777c0872568a86fce4d3a3316c041e5a2200da70f43a855",
+    "metadata": "Package: libxrandr2\nVersion: 2:1.5.4-1build1\nArchitecture: amd64\nDepends: libc6 (>= 2.14), libx11-6 (>= 2:1.6.0), libxext6, libxrender1 (>= 1:0.9.12)\n",
+    "apt_digest": "SHA512:1eb20cb621ab4b3b75d345c56529705c1792a428e5ba963a7d2b0c778a044ea876accea35a1f402028abdd92da3a565a96291d492652b71d0b93b8345cc0a423"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/libx/libxrender/libxrender1_0.9.12-1build1_amd64.deb",
+    "file": "libxrender1_1%3a0.9.12-1build1_amd64.deb",
+    "sha256": "60b2f01e8124318e2a11049b82c764fd4c05c21adba11312e93ab116d6594f1e",
+    "metadata": "Package: libxrender1\nVersion: 1:0.9.12-1build1\nArchitecture: amd64\nDepends: libc6 (>= 2.14), libx11-6 (>= 2:1.6.0)\n",
+    "apt_digest": "SHA512:c7f6a17a4dd2fb078b17381b4028cb85e04f3c4a977204e6350c499dc4e51043b56fdfbbb73feccae2ff944ab3e758542559c37f70548359b59a9a7b98b77c07"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/libx/libxres/libxres1_1.2.1-1build2_amd64.deb",
+    "file": "libxres1_2%3a1.2.1-1build2_amd64.deb",
+    "sha256": "c7794a754880ef7bde4a73c0257dd48d8e3f387ee1618ba97f8e5cf5cdd7c80f",
+    "metadata": "Package: libxres1\nVersion: 2:1.2.1-1build2\nArchitecture: amd64\nDepends: libc6 (>= 2.4), libx11-6 (>= 2:1.6.0), libxext6\n",
+    "apt_digest": "SHA512:193fb6ff2c3f764d70de5386d69cdfd6aa74c728455d886f04af92c762beaebb91b9e42ae7d032e52fd04b6a19e6e3096d4c6808c646f9de6007014abd7185fa"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/a/alsa-lib/libasound2t64_1.2.15.3-1ubuntu1.1_amd64.deb",
+    "file": "libasound2t64_1.2.15.3-1ubuntu1.1_amd64.deb",
+    "sha256": "96e20cf5c9095ef54ba46fccffea5c01cf2de17a1012c5683a67e43504a6d726",
+    "metadata": "Package: libasound2t64\nVersion: 1.2.15.3-1ubuntu1.1\nArchitecture: amd64\nDepends: libasound2-data (>= 1.2.15.3-1ubuntu1.1), libc6 (>= 2.43)\n",
+    "apt_digest": "SHA512:21ff255b68cfc1af42881fc6e278126b49db613e48d91d6beabceccbe4c5f51f6fc650ada6157f4abfad17e5207048500b152bb4336ceab0fbc8f626bb2bdb12"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/a/at-spi2-core/libatk-bridge2.0-0t64_2.60.4-0ubuntu0.1_amd64.deb",
+    "file": "libatk-bridge2.0-0t64_2.60.4-0ubuntu0.1_amd64.deb",
+    "sha256": "c634e1fd25dff5d0ff5384bf3ac9d784725e776448591283cee67deaced29c27",
+    "metadata": "Package: libatk-bridge2.0-0t64\nVersion: 2.60.4-0ubuntu0.1\nArchitecture: amd64\nDepends: libatk1.0-0t64 (= 2.60.4-0ubuntu0.1), libatspi2.0-0t64 (= 2.60.4-0ubuntu0.1), libc6 (>= 2.38), libdbus-1-3 (>= 1.10), libglib2.0-0t64 (>= 2.80.0)\n",
+    "apt_digest": "SHA512:b35e84c60ffa4e6de787833f6053eeb87e8772b6883613980840aab15bf340a3b638ad62d7f5359398148d6bb00185334aa2cdf758a10ae74c4fd4fd7c1a046c"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/a/at-spi2-core/libatk1.0-0t64_2.60.4-0ubuntu0.1_amd64.deb",
+    "file": "libatk1.0-0t64_2.60.4-0ubuntu0.1_amd64.deb",
+    "sha256": "6308ae8c10599780f0e672a39930c07639523bf3f7406f90ee7dada6acd505a0",
+    "metadata": "Package: libatk1.0-0t64\nVersion: 2.60.4-0ubuntu0.1\nArchitecture: amd64\nDepends: libc6 (>= 2.4), libglib2.0-0t64 (>= 2.80.0), at-spi2-common\n",
+    "apt_digest": "SHA512:bd3d29810a1b1e90bcff69974c2bedf76e2a169f23ed5e58361b6b2f929c7e7e60a04f6075775a1e74168cc29bf8f44c8fe8593e27e85162268176ff3c8ff45e"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/a/at-spi2-core/libatspi2.0-0t64_2.60.4-0ubuntu0.1_amd64.deb",
+    "file": "libatspi2.0-0t64_2.60.4-0ubuntu0.1_amd64.deb",
+    "sha256": "6db6e1d7d40f15d38ab5ec302463ac502a057560294d9c73ede22998f733fbd8",
+    "metadata": "Package: libatspi2.0-0t64\nVersion: 2.60.4-0ubuntu0.1\nArchitecture: amd64\nDepends: libc6 (>= 2.38), libdbus-1-3 (>= 1.10), libglib2.0-0t64 (>= 2.80.0), libx11-6 (>= 2:1.2.99.901), libxi6 (>= 2:1.2.99.4), libxres1 (>= 2:1.2.1)\n",
+    "apt_digest": "SHA512:b6a0284f15446ac6aa6ef73930277b4eb181fd85dc4e1431ab7862989b616ec0db01c24b057a1cd5debfe260f123ea179c6cc0c2788d19b356d3bcfde47e1407"
+  },
+  {
+    "url": "https://ca.archive.ubuntu.com/ubuntu/pool/main/m/mesa/libgbm1_26.0.8-1ubuntu0.3_amd64.deb",
+    "file": "libgbm1_26.0.8-1ubuntu0.3_amd64.deb",
+    "sha256": "5d2d1eaf0f72c5a2c4aef692e5660c6fa61e46542c4d9cb5593ba8bd020b2eea",
+    "metadata": "Package: libgbm1\nVersion: 26.0.8-1ubuntu0.3\nArchitecture: amd64\nDepends: mesa-libgallium (= 26.0.8-1ubuntu0.3), libc6 (>= 2.38), libdrm2 (>= 2.4.125-1), libexpat1 (>= 2.0.1), libgcc-s1 (>= 3.4)\n",
+    "apt_digest": "SHA512:dc3efb8b2c956bc2296d6d528e967b21ad3912ac362119a67cea71d5314516f93c6a23827868334e8ca28a19cf379510973385ab9c97fa1d467beb49e9ad720a"
+  }
+]

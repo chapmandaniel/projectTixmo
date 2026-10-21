@@ -1,0 +1,15 @@
+{
+  "status": "PASS synthetic loopback DOM render; not Tixmo acceptance",
+  "version": "Google Chrome for Testing 153.0.8010.12",
+  "binary": "/home/daniel/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell",
+  "binary_sha256": "ded93a9c9a53a1ae040f08124badcca95c938e9d5015ff340c3b5538c41bf39e",
+  "requests": [
+    "/"
+  ],
+  "external_fetch": "BLOCKED via dead proxy; reserved .invalid hostname",
+  "browser_pid": 2655408,
+  "browser_exit": 0,
+  "owned_process_group_cleanup": true,
+  "loopback_server_closed": true,
+  "network_boundary": "Application-level dead proxy with exact 127.0.0.1 bypass and wildcard DNS failure; no OS network namespace; unshare denied by host"
+}
