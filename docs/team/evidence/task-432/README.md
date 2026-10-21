@@ -250,3 +250,52 @@ install/generation/config/CI/scheduler/cloud/spend/push/merge/deploy executed.
 Task432 remains REVIEW/INCOMPLETE pending actual427 all10-stage lifecycle,
 CLI callback wiring, enforced registry/DNS boundary, verified provenance and fresh
 independent final lead+QA review. This caller change supplies no real adapters.
+
+## Bounded CLI adapter successor (2026-10-21)
+
+Exact base `b45649abb438ec791f0c37a57bb42cdcfd928abb`, new isolated branch
+`tixmo/task-432-lifecycle`, worktree `worktrees/task-432-lifecycle`.
+Despite branch name, this checkpoint implements CLI callback wiring ONLY, not
+an all-ten-stage owned lifecycle. Existing npm/Node, verifyApi and reviewed379
+private disk/432 receipt helpers suffice; no dependency or orchestration added.
+
+`scripts/verify-api.mjs` executable entry now calls `runVerifyApiCli`. With no
+`TASK432_API_RECEIPTS`, existing verification receives the same environment,
+commands, safety checks, provider scrubbing, output suppression and fail-fast
+behavior. Opt-in names an existing379 private0700 disk run directory containing
+an owner-only regular nonsymlink `api-identity.json`: the exact JSON snapshot
+from `snapshot(sourceRoot)`. Opt-in fails before verifyApi unless cwd is the
+canonical script source root,427 native scope preload is present, artifact dir
+matches, fresh-format run challenge exists, and npm offline/no-auto-yes options
+are set. Source is checked against the full clean tracked snapshot before any
+verification and after each persisted nested receipt; drift stops the sequence.
+The actual CLI supplies the callback to the existing canonical raw transport.
+There is no command replacement, filtering, audit bypass, install, or default
+market runner change. Parent environment is not a source of authorization.
+
+Actual PASS `node docs/team/evidence/task-432/offline-cli.mjs`: real verifyApi
+with stubbed children through the adapter, all four failure positions, raw NUL
+receipt roundtrip/collector, seven preflight denials before verifier invocation,
+default callback-free parity, first-command source drift stops before migration,
+and a real subprocess invocation of the CLI rejects missing427 preload before
+verification or child execution. PASS all five prior offline suites
+(`offline-stub`, `offline-disk`, `offline-nested`, `offline-publication`,
+`offline-caller`), three changed JS syntax checks and `git diff --check`.
+These are tooling fixtures, not application tests or runtime qualification.
+
+OPEN:427 shell still runs its own API gate, does NOT create this identity file,
+select this adapter, execute all10 local stages, or implement compose.openLocal.
+A reviewed lifecycle owner must wire those pieces and create/check the identity
+within its own fresh scrubbed pre-import boundary; no shell/grant/config changed.
+Scope symbol, environment markers and owner-writable JSON are consistency
+checks, NOT authentic runtime ownership or security attestation. The adapter
+relies on the actual preloaded427/379 guards and independently verified owned
+services; it cannot establish freshness or scrub credentials on its own.
+Existing verifyApi target validation remains mandatory. Enforced registry443+
+necessaryDNS admission is still absent; policy alone is NOT a network grant.
+Dependency/generated-client/runtime-version provenance is still unverified.
+No runtime/network/audit/DB/Redis/HTTP/application tests/install/generation/
+shared-lock mutation/config/CI/scheduler/provider/spend/push/merge/deploy run.
+This successor requires independent exactSHA lead+QA review; earlier partial
+approvals do not cover it. Task432 INCOMPLETE, original424 failure retained,
+no full market PASS and no closure/runtime authorization.

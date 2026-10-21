@@ -47,7 +47,10 @@ export function verifyApi({ env = process.env, spawn = spawnSync, log = console.
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try { verifyApi(); } catch (error) {
+  try {
+    const { runVerifyApiCli } = await import('./verify-api-cli.mjs');
+    runVerifyApiCli({ verify: verifyApi });
+  } catch (error) {
     console.error(`[verify:api] ${error.message}`);
     process.exitCode = 1;
   }
