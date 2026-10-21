@@ -1,0 +1,19 @@
+PASS tixmoapi2/tests/integration/order-refund-current-path.test.ts (6.917 s)
+  ✓ denied USED remains unchanged before provider operations (74 ms)
+  ✓ denied TRANSFERRED remains unchanged before provider operations (19 ms)
+  ✓ matching inert provider success finalizes SOLD inventory once and retry is idempotent (46 ms)
+  ✓ pending inert refund does not finalize financial or inventory state (31 ms)
+  ✓ stale scoped refund payment observation refuses before provider or ledger writes (28 ms)
+  ✓ stable FAILED local payment status is not a new categorical refund prohibition (33 ms)
+  ✓ direct payment ingress refuses committed change after its real preflight (44 ms)
+  ✓ real SQL blocked row locks and overlapping provider calls share one key/effect and finalize once; foreign buyer unchanged (297 ms)
+  ✓ insufficient SOLD stock rolls back local finalization but preserves durable provider success and other buyer (180 ms)
+  ✓ slow pending response cannot regress terminal success (successful caller 0) (98 ms)
+  ✓ slow pending response cannot regress terminal success (successful caller 1) (64 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       11 passed, 11 total
+Snapshots:   0 total
+Time:        7.161 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-refund-current-path.test.ts".
+Test results written to: docs/team/evidence/task-325-terminal/jest-result.json

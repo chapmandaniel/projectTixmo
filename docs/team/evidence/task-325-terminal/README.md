@@ -1,0 +1,19 @@
+# Task325 bounded sensitivity and slow-provider continuation
+
+Base exact `2ac9a4b033638916f7fafe4fe49c1e07d76d0718`, existing isolated branch `tixmo/task-325-refund-races`. Test/evidence only; product source/schema and historical regression assertions unchanged. Prepared source-only while QA348 owned the database. PM subsequently granted sole disposable-local runtime after independent QA cleanup; author rechecked PIDs3021349/3021404 and ports36459/44086 absent before starting.
+
+## Scope and actual results
+
+Command: `bash docs/team/evidence/task-325-terminal/runtime.sh > docs/team/evidence/task-325-terminal/runtime.log 2>&1`, exit0. Fresh realSQL 1 suite **11PASS,0FAIL,0SKIP**,7.161s. `git diff --check` and `bash -n docs/team/evidence/task-325-terminal/runtime.sh` PASS.
+
+Concrete lead347 sensitivity fixes: existing overlapping contention case now asserts ticket cardinality, exact sorted ticket IDs and every full ticket row with only status CANCELLED, inventoryState RELEASED and updatedAt allowed to change. Foreign-buyer snapshots now include the entire event row as well as order/tickets/stock/refunds. Finally releases both gates and awaits allSettled of blocker and owned request settlement before propagating blocker failure, so blocker rejection cannot skip the drain. No injected blocker-failure runtime test or universal cleanup claim.
+
+Two controlled inverse response schedules: caller0 succeeds before caller1 returns pending, and caller1 succeeds before caller0 returns pending. Both requests reach inert provider creation while order still PAID/refundStatus PROCESSING, ledger REQUESTED/no processor refund ID and ticket/stock rows unchanged. Successful response durably establishes SUCCEEDED ledger and REFUNDED order, exact full ticket transitions and once-only counters. The slow pending response then completes, and the **entire terminal snapshot** (order/tickets/event/stock/refunds including timestamps) remains identical. Two provider calls share the same ledger-derived key. This tests current guarded terminal-success behavior; no new refund policy and no real-provider guarantee.
+
+Initial fresh run was **9PASS,2FAIL**,7.591s, exit1. Both new cases incorrectly expected ledger PROCESSING before any provider response; schema default is REQUESTED, while order refundStatus is PROCESSING. Preserved initial-jest-result.json, initial-jest.log and initial-runtime.log. Corrected that new assertion to explicit REQUESTED; no source repair, deletion or loosened assertion. Existing nine cases passed both runs. The new tests demonstrated success against current source, not a production defect or source red/green.
+
+## Isolation, cleanup and limits
+
+Inherited environment discarded before imports; preimport nonloopback denyguard; inert synthetic provider only; existing independently copied writable dependencies (generated index linkcount1). Fresh owned0700disk runtimes under `/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325`, loopback PG18+Redis. Both runs cleaned and independently corroborated: cleanup.json records all4 service PIDs/all4 ports absent, no sockets/pidfiles/owned runtime workers,0blocked network records. No .env/secrets/cloud/real provider/spend/config/scheduler/push/merge/deploy.
+
+Task325 remains **PARTIAL REVIEW**, not closure or full API acceptance. Shared-stock foreignbuyer isolation, broader rollback/tier/promo matrix, route-entry/actor matrix, manual/fairness regressions and fullAPI gate remain OPEN. Foreign controls are distinct-event, final snapshots; not transient isolation proof. Two inverse provider response orders are bounded schedule qualification, not exhaustive concurrency. Lock probe is not target-PID scoped. Existing exact2ac9a4b independent review does not approve this new candidate; fresh independent lead+QA exact final SHA required.

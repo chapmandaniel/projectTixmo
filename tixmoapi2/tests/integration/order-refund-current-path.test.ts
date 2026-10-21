@@ -108,6 +108,7 @@ test('direct payment ingress refuses committed change after its real preflight',
 async function snapshot(orderId: string, typeId: string) {
   return {
     order: await prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: { tickets: { orderBy: { id: 'asc' } } } }),
+    event: await prisma.event.findFirstOrThrow({ where: { orders: { some: { id: orderId } } } }),
     stock: await prisma.ticketType.findUniqueOrThrow({ where: { id: typeId } }),
     refunds: await prisma.paymentRefund.findMany({ where: { orderId }, orderBy: { id: 'asc' } }),
   };
@@ -158,7 +159,13 @@ test('real SQL blocked row locks and overlapping provider calls share one key/ef
     expect(effects.size).toBe(1);
     expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(1);
     expect((await snapshot(order.id, type.id)).stock).toEqual(type);
-  } finally { unlock.release(); finishProvider.release(); await blocker; await settled; }
+  } finally {
+    unlock.release();
+    finishProvider.release();
+    // A rejected blocker must not bypass draining either owned request.
+    const drained = await Promise.allSettled([blocker, settled]);
+    if (drained[0].status === 'rejected') throw drained[0].reason;
+  }
   const results = await settled;
   expect(results.map(r => r.status)).toEqual(['fulfilled', 'fulfilled']);
   expect(calls).toBe(2);
@@ -167,7 +174,11 @@ test('real SQL blocked row locks and overlapping provider calls share one key/ef
   const after = await snapshot(order.id, type.id);
   expect(after.order).toMatchObject({ status: 'REFUNDED', refundStatus: 'SUCCEEDED' });
   expect([after.stock.quantityAvailable, after.stock.quantityHeld, after.stock.quantitySold]).toEqual([10, 0, 0]);
-  expect(after.order.tickets.every(t => t.inventoryState === 'RELEASED' && t.status === 'CANCELLED')).toBe(true);
+  expect(after.order.tickets).toHaveLength(order.tickets.length);
+  expect(after.order.tickets.map(t => t.id)).toEqual(order.tickets.map(t => t.id));
+  expect(after.order.tickets).toEqual(order.tickets.map(t => ({
+    ...t, status: 'CANCELLED', inventoryState: 'RELEASED', updatedAt: expect.any(Date),
+  })));
   expect(after.refunds).toHaveLength(1);
   expect(after.refunds[0]).toMatchObject({ status: 'SUCCEEDED', stripeRefundId: 're_overlap325', amount: 2000 });
   await new OrderService().refundOrder(order.id);
@@ -192,3 +203,50 @@ test('insufficient SOLD stock rolls back local finalization but preserves durabl
   expect(provider.refunds.create).toHaveBeenCalledTimes(1);
   expect(await snapshot(foreign.order.id, foreign.type.id)).toEqual(foreignBefore);
 });
+
+// Both calls reach the real provider seam before success; only response order varies.
+test.each([0, 1])('slow pending response cannot regress terminal success (successful caller %i)', async fastIndex => {
+  const { order, type } = await fixture();
+  const entered = [gate(), gate()], finish = [gate(), gate()];
+  let calls = 0;
+  provider.refunds.create.mockImplementation(async (p: any) => {
+    const index = calls++;
+    entered[index].release();
+    await finish[index].promise;
+    return { id: `re_terminal325_${order.id}`, status: index === fastIndex ? 'succeeded' : 'pending', amount: p.amount, currency: 'cad', payment_intent: p.payment_intent, metadata: p.metadata };
+  });
+  const requests: Array<Promise<any>> = [];
+  // Attach rejection handlers immediately, including if an assertion later aborts.
+  const start = () => {
+    const request = new OrderService().refundOrder(order.id);
+    void request.catch(() => undefined);
+    requests.push(request);
+  };
+  let terminal: Awaited<ReturnType<typeof snapshot>> | undefined;
+  try {
+    start();
+    await entered[0].promise;
+    start();
+    await entered[1].promise;
+    const pending = await snapshot(order.id, type.id);
+    expect(pending.order).toMatchObject({ status: 'PAID', refundStatus: 'PROCESSING' });
+    expect(pending.order.tickets).toEqual(order.tickets);
+    expect(pending.stock).toEqual(type);
+    expect(pending.refunds).toHaveLength(1);
+    expect(pending.refunds[0]).toMatchObject({ status: 'REQUESTED', stripeRefundId: null });
+    finish[fastIndex].release();
+    await expect(requests[fastIndex]).resolves.toMatchObject({ status: 'REFUNDED', refundStatus: 'SUCCEEDED' });
+    terminal = await snapshot(order.id, type.id);
+    expect(terminal.refunds[0]).toMatchObject({ status: 'SUCCEEDED', stripeRefundId: `re_terminal325_${order.id}`, errorMessage: null });
+    expect(terminal.order.tickets).toEqual(order.tickets.map(t => ({ ...t, status: 'CANCELLED', inventoryState: 'RELEASED', updatedAt: expect.any(Date) })));
+    expect([terminal.stock.quantityAvailable, terminal.stock.quantitySold]).toEqual([10, 0]);
+    finish[1 - fastIndex].release();
+    await expect(requests[1 - fastIndex]).resolves.toMatchObject({ status: 'REFUNDED', refundStatus: 'SUCCEEDED' });
+    expect(await snapshot(order.id, type.id)).toEqual(terminal);
+    expect(calls).toBe(2);
+    expect(provider.refunds.create.mock.calls.map((call: any[]) => call[1].idempotencyKey)).toEqual([`refund-${terminal.refunds[0].id}`, `refund-${terminal.refunds[0].id}`]);
+  } finally {
+    finish.forEach(g => g.release());
+    await Promise.allSettled(requests);
+  }
+}, 15000);

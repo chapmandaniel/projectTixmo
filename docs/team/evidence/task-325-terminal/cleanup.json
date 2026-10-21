@@ -1,0 +1,40 @@
+{
+  "runs": [
+    {
+      "log": "initial-runtime.log",
+      "path": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325/run.QG3oQs",
+      "mode": "0o700",
+      "pids": [
+        3023482,
+        3023495
+      ],
+      "ports": [
+        38668,
+        42558
+      ],
+      "pidAbsent": true,
+      "listenersAbsent": true,
+      "socketsAbsent": true,
+      "pidfilesAbsent": true
+    },
+    {
+      "log": "runtime.log",
+      "path": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325/run.slQbtI",
+      "mode": "0o700",
+      "pids": [
+        3024051,
+        3024064
+      ],
+      "ports": [
+        22131,
+        50298
+      ],
+      "pidAbsent": true,
+      "listenersAbsent": true,
+      "socketsAbsent": true,
+      "pidfilesAbsent": true
+    }
+  ],
+  "ownedRuntimeWorkers": [],
+  "blockedNetworkRecords": 0
+}
