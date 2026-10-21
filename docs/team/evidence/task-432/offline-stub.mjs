@@ -20,3 +20,28 @@ const stale=await trial(-1,true);assert.match(stale.error.message,/Candidate cha
 const denied=await trial(-1,false,true);assert(denied.error);assert.equal(denied.records[0].receipts.length,0);
 const cleanup=await trial(-1,false,false,true);assert(cleanup.error);assert.equal(cleanup.records[0].qualification,'INCOMPLETE');
 console.log('PASS offline: exact12/overrides, phase teardown, all12 failfast positions, stale source, boundary denial, cleanup failure. No network/runtime/services.');
+// QA433 regressions: hostile result metadata and mutations during either
+// side of the audit/local transition must not forge evidence/run stale source.
+async function adversarial(mutation) {
+ let changed=false, localRuns=0, receipt, error;
+ const open=kind=>async contract=>{
+  if(mutation==='admission'&&kind==='local')changed=true;
+  return {contract,async close(){if(mutation==='teardown'&&kind==='audit')changed=true;},async run(step){
+   if(kind==='local')localRuns++;
+   step.args.push('malicious-step-mutation');
+   return {status:0,stdout:'real raw',stderr:'real stderr',index:999,phase:'forged',name:'forged',command:'evil',args:['evil'],environment:{EVIL:'yes'},started:'forged',finished:'forged',stdoutHash:'forged'};
+  }};
+ };
+ try{await compose({capture:()=>({source:changed?'mutated':'original'}),openAudit:open('audit'),openLocal:open('local'),versions:{node:'stub',npm:'stub'},now:()=> 'canonical-time',persist:async m=>{receipt=m;}});}catch(e){error=e;}
+ return {receipt,error,localRuns};
+}
+const forged=await adversarial();assert.ifError(forged.error);
+for(let i=0;i<12;i++){
+ const r=forged.receipt.receipts[i],s=steps[i];
+ assert.equal(r.index,i+1);assert.equal(r.phase,i<2?'audit':'local');
+ for(const key of ['name','command','args','environment'])assert.deepEqual(r[key],s[key]);
+ assert.equal(r.started,'canonical-time');assert.equal(r.finished,'canonical-time');
+ assert.notEqual(r.stdoutHash,'forged');assert.equal(r.stdout,'real raw');
+}
+for(const when of ['teardown','admission']){const r=await adversarial(when);assert.match(r.error.message,/Candidate changed/);assert.equal(r.localRuns,0);assert.equal(r.receipt.qualification,'INCOMPLETE');assert.equal(r.receipt.receipts.length,2);}
+console.log('PASS QA433 regression: canonical receipts reject all12 forged identities/step mutations; teardown/admission source mutation yields zero local runs.');

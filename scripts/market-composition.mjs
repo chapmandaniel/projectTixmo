@@ -38,7 +38,7 @@ export const boundaries = { audit: auditBoundary, local: localBoundary };
 // This core alone cannot enforce native/subprocess egress or validate ownership.
 export async function compose({ capture, openAudit, openLocal, persist, versions, now = () => new Date().toISOString() }) {
   if (!versions?.node || !versions?.npm) throw Error('Runtime versions required');
-  const identity = capture();
+  const identity = structuredClone(capture());
   const manifest = { schema: 'task432-source-core-v1', identity, versions,
     started: now(), qualification: 'INCOMPLETE', receipts: [] };
   const unchanged = () => { if (!equal(identity, capture())) throw Error('Candidate changed; qualification invalid'); };
@@ -48,6 +48,7 @@ export async function compose({ capture, openAudit, openLocal, persist, versions
       unchanged();
       if (index === 0 || index === 2) {
         if (session) { await session.close(); session = undefined; }
+        unchanged();
         const boundary = index === 0 ? auditBoundary : localBoundary;
         session = await (index === 0 ? openAudit : openLocal)(structuredClone(boundary), structuredClone(identity));
         if (!session || !equal(session.contract, boundary) || typeof session.run !== 'function' || typeof session.close !== 'function') {
@@ -58,10 +59,13 @@ export async function compose({ capture, openAudit, openLocal, persist, versions
       const started = now();
       // Adapter owns fresh env and mandatory pre-import guards; no parent env is
       // accepted/passed here. Dashboard production override remains exact.
-      const result = await session.run(step);
+      unchanged(); // Admission/teardown may have changed source; never run stale.
+      const result = await session.run(structuredClone(step));
       if (!Number.isInteger(result?.status) || typeof result.stdout !== 'string' || typeof result.stderr !== 'string') throw Error('Missing raw stage receipt');
       manifest.receipts.push({ index: index + 1, phase: index < 2 ? 'audit' : 'local',
-        ...step, started, finished: now(), ...result,
+        ...step, started, finished: now(),
+        status: result.status, signal: result.signal ?? null, error: result.error ?? null,
+        stdout: result.stdout, stderr: result.stderr,
         stdoutHash: digest(result.stdout), stderrHash: digest(result.stderr) });
       unchanged();
       if (result.status !== 0 || result.signal || result.error) throw Error('Market stage failed: ' + step.name);

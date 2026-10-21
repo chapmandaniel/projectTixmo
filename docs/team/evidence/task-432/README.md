@@ -77,3 +77,18 @@ No network/audits/build/Jest/DB/Redis/runtime/services/install/generation,
 provider/spend/config/CI/scheduler/production/push/merge/deploy performed.
 No default-branch changes. No full-market, parity, capacity, browser/provider
 acceptance, task424 closure or launch approval claimed.
+
+## QA433 original-author repair (source/offline only)
+
+QA found executor-result spread could forge canonical receipt fields and audit
+teardown mutation could allow one stale local stage. Replaced result spreading
+with explicit status/signal/error/raw-output fields; pass a separate cloned stage
+into adapter to preserve canonical command metadata. Clone captured identity.
+Revalidate immediately after teardown and immediately before run after admission.
+PASS extended offline-stub regressions: forged identity/commands/env/timestamps
+and adapter-mutated stage args rejected as canonical receipts on all12 stages;
+source mutation during either audit teardown or local admission yields exactly
+zero local runs, two retained audit receipts and INCOMPLETE. Original parity,
+all12 fail-fast, cleanup and invalidation stubs still PASS. Syntax and diff check
+PASS. No adapters/runtime/registry/services added or run. All remaining gaps
+above unchanged. Requires independent exact-successor re-review, not selfapproval.
