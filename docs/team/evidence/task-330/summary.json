@@ -1,0 +1,52 @@
+{
+  "startTime": 1792571061437,
+  "success": true,
+  "numTotalTestSuites": 7,
+  "numPassedTestSuites": 7,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 42,
+  "numPassedTests": 42,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "startTimeISO": "2026-10-21T08:24:21.437000+00:00",
+  "exitCode": 0,
+  "testResults": [
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-330/tixmoapi2/tests/integration/payment-inventory-integrity.test.ts",
+      "status": "passed",
+      "tests": 17
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-330/tixmoapi2/tests/integration/payment-failed-retry.race.test.ts",
+      "status": "passed",
+      "tests": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-330/tixmoapi2/tests/integration/payment-paused-owner.baseline.test.ts",
+      "status": "passed",
+      "tests": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-330/tixmoapi2/tests/integration/payment-distinct-success.race.test.ts",
+      "status": "passed",
+      "tests": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-330/tixmoapi2/tests/unit/release-integration.test.ts",
+      "status": "passed",
+      "tests": 13
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-330/tixmoapi2/tests/integration/payment-old-processing.baseline.test.ts",
+      "status": "passed",
+      "tests": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-330/tixmoapi2/tests/integration/payment-fenced-checkpoint.test.ts",
+      "status": "passed",
+      "tests": 1
+    }
+  ]
+}
