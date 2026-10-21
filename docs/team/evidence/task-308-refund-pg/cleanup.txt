@@ -1,0 +1,12 @@
+PID absent 2787284
+PID absent 2787297
+PID absent 2787406
+PID absent 2787428
+PID absent 2787462
+TCP listeners absent 39463 45429
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-308/run.B4JOaT/pg/postmaster.pid
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-308/run.B4JOaT/.s.PGSQL.39463
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-308/run.B4JOaT/.s.PGSQL.39463.lock
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-308/run.B4JOaT/redis.sock
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-308/run.B4JOaT/redis.pid
+runtime mode0700 disk-backed; parent and all 3 worker PIDs absent
