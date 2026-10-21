@@ -1,0 +1,10 @@
+PASS 1 installed limiter success full continuation + child block restoration/disconnect
+PASS 2 installed limiter error full continuation + child block restoration/disconnect
+PASS 3 non-promise middleware fails explicitly rather than attesting lifetime
+PASS 4 wrong caller cwd still binds executed SHA and real production dependency entry + digest
+PASS 5 production dependency main escaping modules rejected
+PASS 6 dependency directory symlink escaping modules rejected
+PASS 7 wrong SHA and executed source mutation fail closed
+PASS 8 EXECUTED emitted CommonJS rejects before supertest/product requires (not before Jest setup)
+PASS 9 all limiter exports/sendCommand instrumented pre-app and final join precedes restoration
+TOTAL 9 independent offline checks PASS

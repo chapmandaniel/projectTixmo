@@ -1,0 +1,30 @@
+# Independent lead447 exact source/offline review
+
+**APPROVE scoped continuation/provenance repairs**, target `510824df9e9bb7f5e57984862728b52929f7f849` versus `98adaa1b057f5feddd221d4ac8a39673e494df26`. No additional blocking source defect found in the bounded review. This is not approval to execute or close426.
+
+New isolated worktree `/home/daniel/projects/projectTixmo/worktrees/task-447`, branch `tixmo/task-447-independent-lead`, exact target base. Reviewer owns only this directory. Read actual task447/446/443/426 notes, repository/role/team instructions, immutable QA446 `cafe69864140bfdaf8c28ac7c7c69a59dec83400` and lead443 `70f56805520fb0029d4dedba4f52141fc6e1f9eb` reports, actual author repair notes and delta. Existing installed express-rate-limit/jest-mock/TypeScript from task434, no install or dependency links. No author edits.
+
+## Findings and architecture
+
+Lead443's two concrete blockers are addressed in this scope. All three exported limiters are wrapped before app imports capture exports. The installed limiter promise spans store increment and downstream next, unlike sendCommand alone. Iterative tracker joining then includes synchronously admitted nested child work. sendCommand, eval and zRem retain permanent tracked lifetimes. Final join precedes reverse spy restoration and disconnect; failed join deliberately retains instrumentation and skips disconnect. Existing phase-delegate reset does not remove the permanent Redis spy. This does not establish arbitrary library-background or future-request admission quiescence.
+
+Provenance now derives the real repository root from executed source, anchors Git there, requires expected exact SHA, tracked cleanliness and executed blob equality, rejects relevant untracked executable source, compares package/lock/schema, and requires the source's real node_modules to match the selected dependency root. Real production entry and package paths are confined and hashes recorded. Independent fixtures with a declared production dependency additionally exercise a valid resolved entry, an escaping main entry and an escaping package symlink, extending QA446's zero-dependency fixture coverage. The installed lock and entry digests record identity, not a trusted all-bytes attestation; package directory/entry confinement does not verify every transitive module, generated Prisma output or native binary.
+
+Executed transpiled CommonJS confirms rejecting guard runs before supertest or product requires. Earlier Jest unmock/mock calls and setup still exist: **not before-Jest-setup protection**, nor proof of whole-runner preload safety. Source/dependency mutation between guard and use remains possible without runner-owned immutable inputs.
+
+## Actual verification
+
+- `node docs/team/evidence/task-447/probes.cjs`: exit0; **9 independent offline checks PASS**, raw results.txt. Installed limiter success and rejected deferred store both block real finalize cleanup before store release, then continue to block after limiter settlement until nested child release; exact original limiter restored before synthetic disconnect. Non-promise middleware rejects explicitly. Wrong caller cwd binds executed fixture SHA and valid production dependency entry/digest; escaping entry/package symlink, wrong SHA and dirty executed source reject. Emitted JS guard executed in VM with rejecting sentinel before any app/dependency imports. Static all-three-limiter/sendCommand/pre-app and join/restoration ordering checked.
+- Existing `node docs/team/evidence/task-426/spy-probes.cjs`: PASS, installed jest-mock native-once three-phase/reset/fallback/zRem/exact restoration.
+- Existing `node docs/team/evidence/task-426/lifecycle-probes.cjs`: PASS, pending/stuck join, skipped disconnect, ENOSPC first-error/partial receipt and ACK ordering.
+- Existing `node docs/team/evidence/task-426/offline-check.cjs`: PASS, matched package/lock/schema, TypeScript5.9.3 syntax transpile/emitted parse, four unsafe paths and source invariants. Not typecheck/Jest/build.
+- Existing `node docs/team/evidence/task-427/transport-stub.cjs`: PASS, no native transport connections/listens.
+- `git diff --check`: exit0.
+
+Initial independent fixture assertion failed because modifying an already-resolved package main in the same Node process encounters Node resolution caching. Corrected the probe to perform each mutated dependency verification in a fresh owned Node subprocess, which is the intended launch boundary, and reran all9 PASS. This does not erase the documented mutate/revert/TOCTOU limitation. No production defect inferred from that fixture failure. Tests use temporary local Git fixtures, which are removed; no application imported or network used.
+
+## Required next step and limits
+
+PM should commission a bounded **source-only safe426 runner adaptation**, followed by independent exact-SHA review, before granting runtime. It must validate scrubbed environment/native preload and immutable exact source/dependency identity before spawning Jest/setup, retain exit/stderr even if evidence writes fail, and on timeout/failure terminate and reap the full owned qualification process tree BEFORE stopping its disposable DB/Redis. Unchanged427 runner remains379-specific and is not approved for426. Then obtain explicit sole disposable-service runtime grant and perform actual HTTP-abort/Lua/serverACK/inventory/foreign-buyer/healthy-admission qualification with raw counts and owned cleanup receipts. Review new source changes again where affected.
+
+Task426 remains REVIEW/OPEN. No actualHTTP/Jest/typecheck/build/Lua/DB/Redis/inventory qualification, full-market or launch PASS. No services/runtime/ports/application sockets/network/install/generation/config/scheduler/cloud/spend/push/merge/deploy or unrelated process interaction. Only owned offline Node/Git fixture processes ran and completed. No full generated/native attestation, no blanket whole-app quiescence claim. Review447 can close as an independent source-review deliverable only. Evidence commit uses invocation-only identity and hooksPath override; no persistent Git config changed or lint-staged claim.
