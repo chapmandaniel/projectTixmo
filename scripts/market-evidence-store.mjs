@@ -40,16 +40,24 @@ export function createEvidenceStore({ directory, runId }) {
     const joined = { schema: 'task432-disk-evidence-v1', runId, manifest: captured, raw };
     const bytes = json(joined);
     write(path.join(target, 'manifest.json'), bytes);
-    // Seal published last. An interrupted/failed writer leaves unsealed evidence,
-    // never a valid bundle. Read-only permissions are NOT tamper-proof storage.
+    // Before publication, failures leave unsealed evidence. Publication is the
+    // commit point: later housekeeping/durability failures must not reject a
+    // committed readable bundle. Read-only permissions are NOT tamper-proof.
     write(path.join(target, 'seal.pending'), hash(bytes) + '\n');
     syncDirectory(target);
     // Hard-link publishes the fully fsynced seal atomically, without overwrite.
     fs.linkSync(path.join(target, 'seal.pending'), path.join(target, 'manifest.sha256'));
-    fs.unlinkSync(path.join(target, 'seal.pending'));
-    fs.chmodSync(target, 0o500);
-    syncDirectory(target); syncDirectory(directory);
-    return { directory: target, manifestHash: hash(bytes) };
+    const warnings = [];
+    const afterCommit = (operation, action) => {
+      try { action(); return true; }
+      catch (error) { warnings.push({ operation, code: error.code ?? null, message: error.message }); return false; }
+    };
+    afterCommit('remove-pending-seal', () => fs.unlinkSync(path.join(target, 'seal.pending')));
+    afterCommit('read-only-directory', () => fs.chmodSync(target, 0o500));
+    const targetSynced = afterCommit('sync-run-directory', () => syncDirectory(target));
+    const parentSynced = afterCommit('sync-parent-directory', () => syncDirectory(directory));
+    return { directory: target, manifestHash: hash(bytes), committed: true,
+      durabilityConfirmed: targetSynced && parentSynced, warnings };
   };
 }
 export function verifyEvidence(directory) {

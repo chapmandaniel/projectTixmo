@@ -113,8 +113,9 @@ writes prevent overwrite, raw UTF-8 stdout/stderr bytes are fsynced and joined
 with canonical receipts/hash metadata in manifest.json. The full manifest seal
 is fsynced privately then hard-linked atomically to manifest.sha256 (no clobber),
 followed by directory fsync. Readers accept only sealed/hash-consistent bundles;
-failed writes deliberately leave unsealed reservations for inspection, never
-reuse/overwrite them. Read-only files/run directory discourage accidental edits.
+pre-publication failed writes deliberately leave unsealed reservations for
+inspection, never reuse/overwrite them. Post-publication outcomes are specified
+in the lead436 repair section below; publication is the commit point. Read-only files/run directory discourage accidental edits.
 This is append-only/content-verified **application scope**, NOT filesystem
 immutability against owning UID/root, authentication, WORM storage, or OS
 network isolation. Owner can rewrite both data and seals; hashes alone cannot
@@ -194,3 +195,27 @@ ownership. Do not treat DI transport as a functioning runtime adapter. No audit,
 network, DB, Redis, HTTP, application tests/build/install/generation/config/CI/
 scheduler/cloud/spend/push/merge/deploy execution. Final exactSHA independent
 lead+QA still required before separate admission; no PASS or432 closure.
+
+
+## Lead436 publication commit-point repair
+
+Read independent finding/repro a08b740157226f45b32e6492d5731dda96065dfa.
+The prior blanket failed-writer/unsealed guarantee was incorrect after hardlink
+publication. Seal link is now the explicit application commit point. Pre-link
+errors still reject and leave unreadable/unsealed reservations. After link,
+cleanup/permission/directory-fsync errors return `committed: true` plus explicit
+operation/code/message `warnings`; they never reject a readable committed bundle.
+`durabilityConfirmed` is true only when both post-publication directory fsyncs
+succeeded. A committed bundle with false durability or warnings is not durable
+completion evidence; callers must inspect and retain the returned outcome.
+No rollback/reuse or owning-UID immutability guarantee is introduced. Unexpected
+process death after publication can still leave a readable committed bundle; a
+reader validates content, not fsync history or authenticity. Store outcomes are
+not market qualification, and the composition core still never emits PASS.
+
+Actual `offline-publication.mjs` PASS: injected link EIO rejects with no accepted
+seal; injected post-link unlink, chmod and fsync EIO all return committed outcomes
+with exact warnings and explicit durability, reader-valid hashes, and duplicate
+reservation denial. Original offline-nested/offline-disk/offline-stub all PASS,
+store/regression syntax and diff checks PASS. No runtime/network/services.
+Independent lead436 fresh exact-successor review and QA438 still required.
