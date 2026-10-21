@@ -36,3 +36,17 @@ This preparation is not a browser PASS, backend ownership proof, account recover
 - `node --check scripts/browser/task-280-delivery.mjs`: exit 0 (syntax only).
 - `npm --prefix tdash test -- --run src/test/AppCheckoutReturn.test.jsx src/test/AppWalletSession.test.jsx src/test/api-session-races.test.js src/test/WalletPage.test.jsx src/test/CheckoutPage.test.jsx`: exit 0, **5 files / 53 tests passed**, 2.77 seconds. These remain component/unit tests, not browser acceptance.
 - `git diff --check`: exit 0 before commit.
+
+## Review correction (supersedes initial preparation)
+
+Lead #281 / QA #282 correctly rejected the initial fixture: `synthetic-order` could not pass the product UUID guard, and `/orders/:id` with a full order was not the actual return contract. Revised harness uses UUID `00000000-0000-4000-8000-000000000280`, `/orders/:uuid/recovery`, and exactly `{id,status,paymentStatus}` with PAID/SUCCEEDED. Product RecoveryPage UUID guard, endpoint expression and exact response keys are checked directly from candidate source in Node self-tests; no product validation was changed.
+
+The harness positively waits for the transfer dialog, asserts B's stored identity and both empty orders/tickets, and requires actual authenticated recovery requests before and after expiry. API method/route allowlist rejects unintended calls (only synthetic login/refresh POSTs and listed read GETs). Actual auth login and wallet routes were inspected against `auth.js` and `WalletPage.jsx`. CDP calls/connect/discovery have deadlines and pending calls reject on close/error. Owned-child shutdown escalates TERM to KILL within bounds, then verifies PID absence; cleanup independently attempts frontend closure, listener refusal verification and profile removal even when an earlier cleanup step fails. Future runs save `cleanup.json`, including error-path cleanup proof. Page Fetch external-request blocking is **not** a host/browser-wide network sandbox; no such guarantee is claimed.
+
+Checks run after corrections:
+
+- `node --test scripts/browser/task-280-support.test.mjs`: **5 passed**, zero failed. Includes actual loopback listener close/refusal, real stubborn owned-child TERM/KILL/PID verification, CDP lost response/late response/close rejection, source-derived recovery contract validation, and cleanup failure continuing profile removal.
+- `node --check scripts/browser/task-280-delivery.mjs`: exit 0.
+- `git diff --check`: exit 0.
+
+No Chromium launch retry, installs, downloads, DB/API runtime, provider or email occurred. Rendered interactions/screenshots remain **unverified**, not PASS. Initial 53 component tests are historical evidence on unchanged product base, not a new rendered check or re-run. Independent #281/#282 rereview remains required.
