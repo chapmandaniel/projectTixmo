@@ -1,0 +1,13 @@
+{
+  "independent": 0,
+  "retained": 0,
+  "extraction": 0,
+  "local-phase": 0,
+  "local-session": 0,
+  "stub": 0,
+  "syntax-probe": 0,
+  "syntax-helper": 0,
+  "syntax-retained": 0,
+  "syntax-runtime": 0,
+  "diffcheck": 0
+}
