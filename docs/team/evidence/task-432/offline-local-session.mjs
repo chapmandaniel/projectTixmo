@@ -59,3 +59,29 @@ console.log('PASS exact10/parity/override/rawNUL/all10failfast/admission/source/
   await Promise.all([session.close(), session.close()]);
   assert.equal(cleanups, 1); assert.equal(calls.length, 1);
 }
+
+// Lead455 regression: mutate all caller-owned command fields while admission
+// is pending. Test every stage, including existing production environment.
+for (let target = 2; target < steps.length; target++) {
+  let release;
+  let hold = false;
+  const { session, calls } = fixture({ assertOwnedRuntime: () => hold
+    ? new Promise(resolve => { release = resolve; }) : Promise.resolve() });
+  for (let i = 2; i < target; i++) await session.run(structuredClone(steps[i]));
+  hold = true;
+  const supplied = structuredClone(steps[target]);
+  const running = session.run(supplied);
+  supplied.command = 'unreviewed-command';
+  supplied.args.splice(0, supplied.args.length, 'unreviewed-argument');
+  supplied.environment ??= {};
+  supplied.environment.NODE_ENV = 'unreviewed-environment';
+  supplied.environment.INJECTED = 'must-not-execute';
+  release(); await running;
+  const actual = calls.at(-1);
+  assert.equal(actual.command, steps[target].command);
+  assert.deepEqual(actual.args, steps[target].args);
+  assert.equal(actual.options.env.NODE_ENV, steps[target].environment?.NODE_ENV ?? 'test');
+  assert.equal(actual.options.env.INJECTED, undefined);
+  await session.close();
+}
+console.log('PASS lead455 all10 in-flight command/args/environment mutation regressions');

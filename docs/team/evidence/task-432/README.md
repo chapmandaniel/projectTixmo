@@ -382,3 +382,24 @@ boundary, dependency/generated/native/runtime provenance. No fullmarketPASS,
 closure, execution authority or waiver of original424FAIL. Fresh exact-SHA
 independent lead and QA required. No services/runtime/DB/Redis/HTTP/network/
 audit/install/generation/config/scheduler/cloud/spend/push/merge/deploy.
+
+### Lead455 in-flight command mutation repair
+
+NEW isolated `tixmo/task-432-local-mutation-repair` from exact54d55c0b.
+Lead455 finding relayed by PM: canonical caller step was validated before
+awaited authority check, then mutable caller fields were reread afterward.
+Executor now copies the canonical table privately at session creation,
+freezes command objects/argument arrays/environment objects, and chooses the
+internal canonical command before its first await. Caller references are
+never consulted for execution. No scope expansion or Buffer-alias change.
+
+Actual `node docs/team/evidence/task-432/offline-local-session.mjs` PASS,
+including deterministic all10 pending-authority mutations of command, args,
+and environment (production override included): only canonical commands and
+environments reach stub spawn. Existing ordering/failfast/source/concurrency/
+cleanup probes still PASS. `node docs/team/evidence/task-432/offline-stub.mjs`
+PASS exact12 and previous canonical receipt/source regression checks.
+Both changed .mjs files `node --check` and `git diff --check` PASS.
+Read current455 board twice; immutable reviewer report not yet available at
+repair time. All prior source-only and incomplete-admission limits remain;
+no runtime/network/services. Fresh independent lead+QA exact successor needed.

@@ -8,6 +8,11 @@ export function localStageSession({ root, identity, env, capture = snapshot,
   spawn = spawnSync, assertOwnedRuntime, closeOwnedRuntime }) {
   if (typeof assertOwnedRuntime !== 'function' || typeof closeOwnedRuntime !== 'function')
     throw Error('Independent owned-runtime admission and cleanup required');
+  // Private canonical copy: never retain caller-owned command data across await.
+  const canonical = structuredClone(steps).map(step => Object.freeze({ ...step,
+    args: Object.freeze([...step.args]),
+    ...(step.environment ? { environment: Object.freeze({ ...step.environment }) } : {}),
+  }));
   const frozenIdentity = structuredClone(identity);
   const childEnv = { ...env };
   let next = 2, stopped = false, busy = false, closing;
@@ -17,8 +22,9 @@ export function localStageSession({ root, identity, env, capture = snapshot,
   return {
     // No contract booleans: this executor cannot satisfy compose.openLocal alone.
     async run(step) {
-      if (busy || stopped || next >= steps.length || JSON.stringify(step) !== JSON.stringify(steps[next]))
+      if (busy || stopped || next >= canonical.length || JSON.stringify(step) !== JSON.stringify(canonical[next]))
         throw Error('Out-of-order or noncanonical local command');
+      const approved = canonical[next];
       busy = true;
       try {
       unchanged();
@@ -27,8 +33,8 @@ export function localStageSession({ root, identity, env, capture = snapshot,
       unchanged();
       let result;
       try {
-        result = spawn(step.command, [...step.args], { cwd: root,
-          env: { ...childEnv, ...step.environment }, encoding: 'utf8', stdio: 'pipe',
+        result = spawn(approved.command, [...approved.args], { cwd: root,
+          env: { ...childEnv, ...approved.environment }, encoding: 'utf8', stdio: 'pipe',
           shell: false, maxBuffer: 64 * 1024 * 1024 });
       } catch (error) {
         stopped = true;
