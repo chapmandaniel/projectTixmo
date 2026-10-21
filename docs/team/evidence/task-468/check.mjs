@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { boundaries } from '../../../../scripts/market-composition.mjs';
+import { localPhaseOpener } from '../../../../scripts/market-local-phase.mjs';
+let captures=0,spawns=0;
+await assert.rejects(localPhaseOpener({capture:()=>{captures++;throw Error('must not capture');},spawn:()=>{spawns++;throw Error('must not spawn');}})(boundaries.local,{}),/provider unavailable/);
+assert.equal(captures,0);assert.equal(spawns,0);
+console.log('PASS 1 default missing-provider denial precedes source capture and spawn; no acquisition callback supplied');
+const shell=fs.readFileSync('docs/team/evidence/task-427/runtime.sh','utf8');
+assert(shell.indexOf('task432_identity=$(node')<shell.indexOf('"$pgbin/initdb"'));
+assert(shell.indexOf('fs.openSync(')<shell.indexOf('"$pgbin/initdb"'));
+assert(shell.indexOf('redis_pid=$!')<shell.indexOf('for pair in "$pgport:$pg_pid"'));
+assert(shell.indexOf('for pair in "$pgport:$pg_pid"')<shell.indexOf('"$pgbin/createdb"'));
+assert(shell.indexOf('export NODE_OPTIONS=')<shell.indexOf('360s node'));
+console.log('PASS 2 static shell source/publication/provision/listener/application order matches cited document');
+assert(shell.includes('trap cleanup EXIT'));assert(shell.includes('stop_exact()'));assert(shell.includes('owned_identity()'));assert(shell.includes('wait "$redis_pid"'));assert(shell.includes('run-gate.mjs'));
+console.log('PASS 3 existing shell cleanup/identity/gate operations present; no shell execution or enforcement inferred');

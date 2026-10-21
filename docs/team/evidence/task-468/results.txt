@@ -1,0 +1,3 @@
+PASS 1 default missing-provider denial precedes source capture and spawn; no acquisition callback supplied
+PASS 2 static shell source/publication/provision/listener/application order matches cited document
+PASS 3 existing shell cleanup/identity/gate operations present; no shell execution or enforcement inferred
