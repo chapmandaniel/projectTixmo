@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
+import { config } from '../config/environment';
 import { getRedisClient } from '../config/redis';
 import { logger } from '../config/logger';
 import { StatusCodes } from 'http-status-codes';
@@ -62,7 +63,7 @@ export const waitingRoom = async (req: Request, res: Response, next: NextFunctio
     }
     const accepted = await client.eval(ACQUIRE_REQUEST_LEASE, {
       keys: [ACTIVE_REQUESTS_KEY],
-      arguments: [token, '5000', String(leaseMs)],
+      arguments: [token, String(config.waitingRoomMaxConcurrentRequests), String(leaseMs)],
     });
     acquired = Number(accepted) === 1;
     if (terminated) {
@@ -71,9 +72,12 @@ export const waitingRoom = async (req: Request, res: Response, next: NextFunctio
     }
     if (!acquired) {
       logger.warn('Waiting Room Active: Rejected request due to high load');
+      const retryAfter = 5 + Math.floor(Math.random() * 3);
       return res
+        .set('Retry-After', String(retryAfter))
+        .set('Cache-Control', 'no-store')
         .status(StatusCodes.SERVICE_UNAVAILABLE)
-        .json({ message: 'High traffic volume. Please try again in a moment.', retryAfter: 5 });
+        .json({ code: 'WAITING_ROOM_ACTIVE', message: 'High traffic volume. Please try again in a moment.', retryAfter });
     }
     timer = setInterval(() => {
       if (terminated || client.isReady === false) return;
