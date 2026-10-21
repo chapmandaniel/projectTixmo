@@ -25,6 +25,7 @@ pgport=$(shuf -i 20000-39999 -n 1)
 redisport=$(shuf -i 40000-59999 -n 1)
 redis_pid=''
 pg_pid=''
+jest_attempted=0
 alive() {
   test -r "/proc/$1/stat" || return 1
   # A zombie is stopped and cannot retain listeners; its parent reaps it.
@@ -78,6 +79,9 @@ cleanup() {
   # wait only after observed stopped/zombie; never wait for a live process.
   if test -n "$redis_pid" && ! alive "$redis_pid"; then
     wait "$redis_pid" >/dev/null 2>&1
+  fi
+  if test "$jest_attempted" = 1; then
+    node "$PWD/docs/team/evidence/task-393/process-cleanup.cjs" "$owned_run" || cleanup_failed=1
   fi
   if test "$cleanup_failed" -ne 0; then
     echo "Owned-runtime cleanup FAILED; inspect $owned_run; do not run another gate" >&2
@@ -153,4 +157,5 @@ test -x tixmoapi2/node_modules/.bin/prisma
 test -x tixmoapi2/node_modules/.bin/jest
 export TMPDIR="$owned_run"
 timeout --signal=TERM --kill-after=5s 35s tixmoapi2/node_modules/.bin/prisma migrate deploy --schema tixmoapi2/prisma/schema.prisma > "$artifact_dir/migrate.log" 2>&1
+jest_attempted=1
 timeout --signal=TERM --kill-after=5s 110s npm --prefix tixmoapi2 test -- --cacheDirectory "$owned_run/jest-cache" --runInBand --runTestsByPath tests/integration/orders-http-pressure.local.test.ts > "$artifact_dir/acceptance.log" 2>&1

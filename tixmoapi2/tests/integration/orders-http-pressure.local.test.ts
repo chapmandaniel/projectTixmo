@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
+import net from 'net';
 import request from 'supertest';
 import prisma from '../../src/config/prisma';
 import { connectRedis, disconnectRedis } from '../../src/config/redis';
@@ -24,6 +25,10 @@ test('100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec', 
   require('../../../docs/team/evidence/task-379/runtime-path.cjs').validate(artifact);
   let redis: Awaited<ReturnType<typeof connectRedis>> | undefined;
   let server: http.Server | undefined;
+  let httpPort: number | undefined;
+  let revokeListener: (() => void) | undefined;
+  const identity = { pid: process.pid, ppid: process.ppid, executable: process.execPath, startStat: fs.readFileSync(`/proc/${process.pid}/stat`, 'utf8') };
+  fs.writeFileSync(path.join(artifact, 'jest-identity.json'), JSON.stringify(identity, null, 2));
   let ACTIVE_REQUESTS_KEY: string | undefined;
   let failure: unknown;
   let failed = false, stopping = false, monitorFailed = false;
@@ -49,7 +54,11 @@ test('100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec', 
       server!.listen(0, '127.0.0.1', () => { server!.off('error', reject); resolve(); });
     });
     const address = server.address() as import('net').AddressInfo;
-    process.env.TASK379_ALLOWED_PORTS += `,${address.port}`;
+    httpPort = address.port;
+    fs.writeFileSync(path.join(artifact, 'http-listener.json'), JSON.stringify({ ...identity, address }, null, 2));
+    const register = (net as any)[Symbol.for('tixmo.task379.registerListener')];
+    if (typeof register !== 'function') throw new Error('Require native task379 network guard');
+    revokeListener = register(server);
     expect(await redis.dbSize()).toBe(0); // Sole owned DB; no inherited limiter/lease state.
     const org = await prisma.organization.create({ data: { name: key, slug: key, type: 'PROMOTER' } });
     const buyers = Array.from({ length: 100 }, (_, i) => ({ id: crypto.randomUUID(), email: `${key}-${i}@example.test`, passwordHash: 'synthetic', firstName: 'Synthetic', lastName: `Buyer${i}`, disabledAt: null, sessionVersion: 0, emailVerified: true }));
@@ -151,9 +160,10 @@ test('100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec', 
     await attempt('server close', async () => {
       if (server?.listening) await new Promise<void>((resolve, reject) => server!.close(error => error ? reject(error) : resolve()));
     });
+    await attempt('listener revoke', () => { revokeListener?.(); });
     await attempt('Redis disconnect', () => disconnectRedis());
     await attempt('Prisma disconnect', () => prisma.$disconnect());
-    await attempt('cleanup artifact', () => fs.writeFileSync(path.join(artifact, 'cleanup.json'), JSON.stringify({ cleanupErrors, monitorError: monitorFailed ? String(monitorError) : undefined }, null, 2)));
+    await attempt('cleanup artifact', () => fs.writeFileSync(path.join(artifact, 'cleanup.json'), JSON.stringify({ identity, httpPort, serverListening: server?.listening ?? false, cleanupErrors, monitorError: monitorFailed ? String(monitorError) : undefined }, null, 2)));
   }
   // Cleanup diagnostics cannot replace the original measurement/setup failure.
   if (cleanupErrors.length) console.error('Task379 cleanup failures', cleanupErrors);
