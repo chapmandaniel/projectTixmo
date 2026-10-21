@@ -4,6 +4,9 @@
 const fs = require('node:fs');
 const {spawn} = require('node:child_process');
 const owned = new WeakSet();
+function errorRecord(error) {
+  return Object.fromEntries(['name','message','stack','code','errno','syscall','path','spawnargs'].map(key => [key, error[key] ?? null]));
+}
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 function stat(pid) {
   const text = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
@@ -22,7 +25,7 @@ function launch(command, args, options) {
   const record = {child, identity:null, result:null};
   owned.add(record);
   record.closed = new Promise(resolve => {
-    child.once('error', error => {record.result = {error}; resolve(record.result);});
+    child.once('error', error => {record.result = {error:errorRecord(error)}; resolve(record.result);});
     child.once('close', (code, signal) => {record.result = {...record.result, code, signal}; resolve(record.result);});
   });
   if (child.pid) record.identity = stat(child.pid);

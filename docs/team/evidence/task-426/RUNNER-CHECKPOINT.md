@@ -86,3 +86,16 @@ All prior remainder/limits above remain. No env-i shell or beforeJest full
 integration, escaped-tree containment, bounded service teardown or immutable
 transitive dependencies claim. No runtime/services/network. Fresh independent
 exact successor QA+lead required. This only repairs the two reported blockers.
+
+## QA452 serialization repair
+
+New isolated task-448-error-receipt / branch tixmo/task-448-error-receipt,
+base exactf28753c035489effa018b41abd346c0ce8a6f84d. Spawn errors now become
+explicit plain records with name/message/stack/code/errno/syscall/path/
+spawnargs (null for absent fields), retained when close adds code/signal.
+Actual runner-probes exit0: real ENOENT with fixture argument, awaited close,
+injected evidence ENOSPC and JSON stringify/parse roundtrip asserts all eight
+fields, original -2/null close status, false timeout and separate evidence
+error. Previous offline regressions also PASS; helper syntax/diff checks exit0.
+No other integration attempted. All full-runner/containment/TOCTOU limitations
+remain, no runtime or services executed. Independent exactSHA review required.
