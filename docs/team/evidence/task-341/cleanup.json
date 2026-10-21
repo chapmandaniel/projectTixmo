@@ -1,0 +1,19 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task341/run.oy9S4Y",
+  "mode": "0o700",
+  "pids": {
+    "3000903": false,
+    "3000916": false
+  },
+  "ports": [
+    20098,
+    44820
+  ],
+  "listeners": "",
+  "pgSocketExists": false,
+  "pgPidfileExists": false,
+  "redisSocketExists": false,
+  "redisPidfileExists": false,
+  "blockedNetworkBytes": 0,
+  "workers": []
+}
