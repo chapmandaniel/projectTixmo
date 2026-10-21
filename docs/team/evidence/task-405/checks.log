@@ -1,0 +1,17 @@
+REPORT_ONLY_ARTIFACT runner.log
+REPORT_ONLY_ARTIFACT provenance.json
+REPORT_ONLY_ARTIFACT exit.txt
+REPORT_ONLY_ARTIFACT started.txt
+REPORT_ONLY_ARTIFACT independent-cleanup.json
+REPORT_ONLY_ARTIFACT finished.txt
+REPORT_ONLY_ARTIFACT summary.json
+PASS 18 manifest hashes; 11 raw artifacts byte-identical retained owned0700 runtime
+PASS actual 100GET200+100POST201, 200results, unique100order IDs, percentiles recomputed, maxActive2 cap30, 63samples/peaks match
+PASS cross-receipt current run/root/process/IPv4-port binding and cleanup errors[]; exit0/JestPASS
+SOURCE_SHA256 932533930b5c6001af0cf0d26b445bdb13b8adfe0570c43fc429fd1f972c1192 docs/team/evidence/task-379/runtime.sh
+SOURCE_SHA256 7e6c6cc32361e14fb1c33b31c1a3be33a8ba8cc284121b0d51d50981cee1bb4d docs/team/evidence/task-379/network-guard.cjs
+SOURCE_SHA256 b6a32671c8e2254b719c3552c174f121fe9ec1d350f950c8fed01500929c8145 docs/team/evidence/task-393/process-cleanup.cjs
+SOURCE_SHA256 b81088fa205e66dfea26e71d8b032350499a8480327b000c349a8244464ad28a tixmoapi2/tests/integration/orders-http-pressure.local.test.ts
+PASS reviewed source files unchanged; actual installed exactlock/normalized generatedschema provenance
+PASS fresh live local /proc three exactPIDs absent; ss three exactports empty; postmaster and PGsocket absent (no connection/probe)
+PASS actual execution worktree four source files byte-identical exact reviewed source971275ba
