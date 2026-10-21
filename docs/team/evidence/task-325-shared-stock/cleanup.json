@@ -1,0 +1,18 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325/run.Ydmt2N",
+  "mode": "0o700",
+  "pids": [
+    3034718,
+    3034731
+  ],
+  "ports": [
+    29775,
+    43833
+  ],
+  "pidAbsent": true,
+  "listenersAbsent": true,
+  "socketsAbsent": true,
+  "pidfilesAbsent": true,
+  "ownedRuntimeWorkers": [],
+  "blockedNetworkRecords": 0
+}

@@ -1,0 +1,9 @@
+PASS tixmoapi2/tests/unit/payments.recovery-fairness.test.ts
+PASS tixmoapi2/tests/unit/payments.manual-late-paid.test.ts
+
+Test Suites: 2 passed, 2 total
+Tests:       17 passed, 17 total
+Snapshots:   0 total
+Time:        4.45 s
+Ran all test suites.
+Test results written to: docs/team/evidence/task-325-shared-stock/focused-result.json
