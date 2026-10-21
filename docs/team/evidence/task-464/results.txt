@@ -1,0 +1,16 @@
+PASS 1 missing provider denies
+PASS 2 invalid contract and source drift before acquisition deny with zero acquisition
+PASS 3 boolean admission rejected and acquired ownership cleaned once
+PASS 4 admission native denial cleans acquired owner before any child
+PASS 5 per-stage native revocation denies before child; concurrent close once
+PASS 6 admission provenance denial cleans acquired owner before any child
+PASS 7 per-stage provenance revocation denies before child; concurrent close once
+PASS 8 admission owned denial cleans acquired owner before any child
+PASS 9 per-stage owned revocation denies before child; concurrent close once
+PASS 10 admission plus cleanup failure both preserved
+PASS 11 held admission denies overlapping run/close; post-await drift zero child, later cleanup once
+PASS 12 spawn throw mapped, subsequent command denied, cleanup once
+PASS 13 rejected concurrent cleanup is retained and cannot restart stages
+PASS 14 all exact ten canonical commands and each of three verifiers repeated at every stage
+PASS 15 compose uses bridge across exact12 and reports not qualified
+TOTAL 15 independent offline checks PASS; stubs only, no subprocess/application/socket/service
