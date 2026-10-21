@@ -1,0 +1,34 @@
+QA466_PRIMARY_STDERR
+PASS 1 timeoutMs: eight invalid values deny without consuming authority
+PASS 2 graceMs: eight invalid values deny without consuming authority
+PASS 3 teardownMs: eight invalid values deny without consuming authority
+PASS 4 evidenceMs: eight invalid values deny without consuming authority
+PASS 5 invalid callbacks do not consume authority
+PASS 6 inclusive1..60000 accepted and both successful callback timers cleared
+PASS 7 successful completion one-shot
+QA466_PRIMARY_STDERR
+Error: EVIDENCE466
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-466/probes.cjs:27:294)
+    at /home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-426/process-cleanup.cjs:98:33
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-426/process-cleanup.cjs:39:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-426/process-cleanup.cjs:98:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-466/probes.cjs:28:78
+PASS 8 bounded teardown primary50 plus separate evidence failure and reentrant/concurrent denial
+PASS 9 late callback settlement does not relabel timeout as completion
+QA466_PRIMARY_STDERR
+Error: Evidence callback deadline exceeded; pending callback may have late effects
+    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-426/process-cleanup.cjs:42:23)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+PASS 10 pending evidence bounded with fallback1 and both concurrency/reentrancy denied
+PASS 11 late rejection handled without unhandled rejection
+QA466_PRIMARY_STDERR
+Error: SECONDARY_EVIDENCE466
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-466/probes.cjs:40:137)
+    at /home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-426/process-cleanup.cjs:98:33
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-426/process-cleanup.cjs:39:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-426/process-cleanup.cjs:98:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-466/docs/team/evidence/task-466/probes.cjs:40:21
+PASS 12 sync teardown throw and async evidence rejection clear both timers and retain errors
+TOTAL 12 checks PASS; all four direct owned children closed/reaped; no services/network
