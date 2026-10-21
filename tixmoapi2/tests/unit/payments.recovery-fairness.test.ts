@@ -2,6 +2,7 @@
 jest.mock('stripe', () =>
   jest.fn(() => ({
     paymentIntents: { retrieve: jest.fn() },
+    events: { retrieve: jest.fn() },
     refunds: { list: jest.fn(), create: jest.fn(), retrieve: jest.fn() },
   }))
 );
@@ -22,7 +23,9 @@ jest.mock('../../src/config/prisma', () => ({
       findMany: jest.fn(),
       updateMany: jest.fn(),
     },
-    order: { findUnique: jest.fn(), updateMany: jest.fn() },
+    order: { findUnique: jest.fn(), updateMany: jest.fn(), findMany: jest.fn() },
+    paymentWebhookEvent: { findMany: jest.fn(), updateMany: jest.fn() },
+    paymentAttempt: { findMany: jest.fn() },
   },
 }));
 jest.mock('../../src/api/orders/service', () => ({
@@ -140,4 +143,140 @@ test('old unlinked refund remains visible without creating beyond provider idemp
       data: expect.objectContaining({ errorMessage: expect.stringContaining('reconciliation') }),
     })
   );
+});
+
+test.each(['provider-event', 'reconcile-intent'])(
+  '%s retrieval poison rotates durably without processing failed retrieval twice',
+  async (kind) => {
+    const rows: any[] = Array.from({ length: 51 }, (_, i) => ({
+      id: kind === 'provider-event' ? `evt-${i}` : `reconcile-${i}`,
+      type: 'payment_intent.succeeded',
+      paymentIntentId: `pi-${i}`,
+      status: i % 2 ? 'FAILED' : 'PROCESSING',
+      attemptGeneration: BigInt(i),
+      processingStartedAt: new Date(0),
+      updatedAt: new Date(now.getTime() - 120000 + i),
+    }));
+    db.order.findMany.mockResolvedValue([]);
+    db.paymentAttempt.findMany.mockResolvedValue([]);
+    db.paymentRefund.findMany.mockResolvedValue([]);
+    db.paymentWebhookEvent.findMany.mockImplementation(async ({ where, take }: any) =>
+      rows
+        .filter((r) => !where.updatedAt || r.updatedAt <= where.updatedAt.lte)
+        .sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime())
+        .slice(0, take)
+        .map((r) => ({ ...r }))
+    );
+    db.paymentWebhookEvent.updateMany.mockImplementation(async ({ where, data }: any) => {
+      const r = rows.find(
+        (r) =>
+          r.id === where.id &&
+          r.updatedAt.getTime() === where.updatedAt.getTime() &&
+          r.status === where.status &&
+          r.attemptGeneration === where.attemptGeneration
+      );
+      if (!r) return { count: 0 };
+      Object.assign(r, data);
+      return { count: 1 };
+    });
+    // Constructors return separate mock transports: configure each instance explicitly.
+    const configure = () => {
+      const provider = (Stripe as unknown as jest.Mock).mock.results.slice(-1)[0].value;
+      const retrieve =
+        kind === 'provider-event' ? provider.events.retrieve : provider.paymentIntents.retrieve;
+      retrieve.mockImplementation(async (id: string) => {
+        if (!id.endsWith('-50')) throw new Error('private provider failure');
+        return { id: 'evt-50', status: 'succeeded' };
+      });
+      return retrieve;
+    };
+    const process = jest
+      .spyOn(PaymentService.prototype as any, 'processEvent')
+      .mockImplementation(async () => {
+        rows.splice(
+          rows.findIndex((r) => r.id.endsWith('-50')),
+          1
+        );
+      });
+    const reconcile = jest
+      .spyOn(PaymentService.prototype as any, 'reconcileSuccess')
+      .mockImplementation(async () => {
+        rows.splice(
+          rows.findIndex((r) => r.id.endsWith('-50')),
+          1
+        );
+      });
+    const firstRetrieve = configure();
+    await service.recoverPayments();
+    expect(firstRetrieve).toHaveBeenCalledTimes(50);
+    expect(process).not.toHaveBeenCalled();
+    expect(reconcile).not.toHaveBeenCalled();
+    const restarted = new PaymentService();
+    const secondRetrieve = configure();
+    await restarted.recoverPayments();
+    expect(secondRetrieve).toHaveBeenCalledTimes(1);
+    expect(kind === 'provider-event' ? process : reconcile).toHaveBeenCalledTimes(1);
+    await restarted.recoverPayments();
+    expect(secondRetrieve).toHaveBeenCalledTimes(1);
+    expect(rows.every((r) => r.errorMessage?.includes('owner=tixmo-backend'))).toBe(true);
+    expect(rows.every((r) => !r.errorMessage.includes('private provider'))).toBe(true);
+    expect(db.paymentWebhookEvent.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: rows[0].id,
+        updatedAt: expect.any(Date),
+        status: rows[0].status,
+        attemptGeneration: rows[0].attemptGeneration,
+      },
+      data: { updatedAt: now, errorMessage: expect.stringContaining('retry after 60 seconds') },
+    });
+    jest.advanceTimersByTime(60000);
+    await restarted.recoverPayments();
+    expect(secondRetrieve).toHaveBeenCalledTimes(51);
+    expect(kind === 'provider-event' ? process : reconcile).toHaveBeenCalledTimes(1);
+    process.mockRestore();
+    reconcile.mockRestore();
+  }
+);
+
+test('webhook retrieval failure cannot overwrite a newer generation or its financial result', async () => {
+  db.order.findMany.mockResolvedValue([]);
+  db.paymentAttempt.findMany.mockResolvedValue([]);
+  db.paymentRefund.findMany.mockResolvedValue([]);
+  const selected = {
+    id: 'evt-stale',
+    status: 'FAILED',
+    attemptGeneration: 1n,
+    updatedAt: new Date(0),
+  };
+  const current = { ...selected, status: 'PROCESSED', attemptGeneration: 2n, errorMessage: null };
+  db.paymentWebhookEvent.findMany.mockResolvedValue([selected]);
+  db.paymentWebhookEvent.updateMany.mockImplementation(async ({ where, data }: any) => {
+    if (where.attemptGeneration !== current.attemptGeneration || where.status !== current.status)
+      return { count: 0 };
+    Object.assign(current, data);
+    return { count: 1 };
+  });
+  const provider = (Stripe as unknown as jest.Mock).mock.results.slice(-1)[0].value;
+  provider.events.retrieve.mockRejectedValue(new Error('synthetic outage'));
+  const process = jest.spyOn(service as any, 'processEvent');
+  await service.recoverPayments();
+  expect(process).not.toHaveBeenCalled();
+  expect(db.paymentWebhookEvent.updateMany).toHaveBeenCalledWith({
+    where: {
+      id: selected.id,
+      status: selected.status,
+      attemptGeneration: 1n,
+      updatedAt: selected.updatedAt,
+    },
+    data: { updatedAt: now, errorMessage: expect.stringContaining('owner=tixmo-backend') },
+  });
+  expect(current).toEqual({
+    ...selected,
+    status: 'PROCESSED',
+    attemptGeneration: 2n,
+    errorMessage: null,
+  });
+  expect(orderService.confirmOrderInTransaction).not.toHaveBeenCalled();
+  expect(orderService.finalizeRefund).not.toHaveBeenCalled();
+  process.mockRestore();
 });
