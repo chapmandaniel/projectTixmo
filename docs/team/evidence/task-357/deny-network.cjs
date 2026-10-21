@@ -1,0 +1,1 @@
+const deny=()=>{throw new Error('source-only unit network forbidden')};require('net').Socket.prototype.connect=deny;require('net').Server.prototype.listen=deny;require('tls').connect=deny;require('dgram').createSocket=deny;global.fetch=deny;
