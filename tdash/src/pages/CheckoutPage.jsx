@@ -31,6 +31,7 @@ import {
 } from '../lib/runtimeConfig';
 import { cn } from '../lib/utils';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
+import { getPublicTicketOffer, initialTicketQuantities } from '../lib/publicEvent';
 
 const formatMoney = (value, currency = 'usd') => {
     const amount = Number(value) || 0;
@@ -57,16 +58,8 @@ const formatDate = (value) => {
 const unwrapApiPayload = (response) => response?.data?.data || response?.data || response;
 
 const getTicketPrice = (ticketType) => {
-    const activeTier = ticketType?.tiers?.find((tier) => tier.isActive !== false);
-    return Number(activeTier?.price ?? ticketType?.price ?? 0);
+    return getPublicTicketOffer(ticketType).price;
 };
-
-const buildInitialQuantities = (ticketTypes = []) => (
-    ticketTypes.reduce((next, ticketType) => {
-        next[ticketType.id] = 0;
-        return next;
-    }, {})
-);
 
 const PolicyLinks = ({ links, compact = false }) => (
     <div className={cn(
@@ -326,7 +319,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                 const payload = unwrapApiPayload(body);
                 if (!cancelled) {
                     setEvent(payload);
-                    setQuantities(buildInitialQuantities(payload.ticketTypes || []));
+                    setQuantities(initialTicketQuantities(payload.ticketTypes || [], searchParams.get('tickets') || ''));
                 }
             } catch (requestError) {
                 if (!cancelled) {

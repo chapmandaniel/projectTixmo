@@ -119,4 +119,22 @@ describe('App checkout return session recovery', () => {
         expect(screen.queryByText('Order confirmed. Payment succeeded.')).not.toBeInTheDocument();
         expect(screen.getByText('Sign in to check your order. Payment has not been verified.')).toBeInTheDocument();
     });
+
+    it.each(['auth event', 'storage logout'])('keeps a public event open after %s', async (reason) => {
+        const originalFetch = global.fetch;
+        global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: {
+            id: 'public-event', slug: 'public-show', name: 'Public Show', status: 'ON_SALE',
+            startDatetime: '2099-11-20T23:30:00Z', ticketTypes: [],
+        } }) });
+        try {
+            await mount('/e/public-show');
+            expect(await screen.findByRole('heading', { name: 'Public Show' })).toBeInTheDocument();
+            await act(async () => {
+                if (reason === 'auth event') emitAuthExpired();
+                else window.dispatchEvent(new StorageEvent('storage', { key: ACCESS_TOKEN_KEY, newValue: null }));
+            });
+            expect(screen.getByTestId('location')).toHaveTextContent('/e/public-show');
+            expect(screen.getByRole('heading', { name: 'Public Show' })).toBeInTheDocument();
+        } finally { global.fetch = originalFetch; }
+    });
 });

@@ -92,6 +92,13 @@ describe('EventCommandCenter checkout links', () => {
 
         expect(screen.getByRole('button', { name: 'Copy checkout link' })).toBeDisabled();
         expect(screen.getByRole('button', { name: /^Checkout$/ })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Event page' })).toBeDisabled();
         expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+    });
+
+    it('opens the customer event page for a published event', () => {
+        renderCommandCenter();
+        fireEvent.click(screen.getByRole('button', { name: 'Event page' }));
+        expect(window.open).toHaveBeenCalledWith('http://localhost:3000/e/market-demo-harborlight-summer-session', '_blank', 'noopener,noreferrer');
     });
 });
