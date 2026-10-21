@@ -1,0 +1,2 @@
+{"timezone":"UTC","checks":5,"nullAndOmittedBounds":"PASS","sameTenantEventExclusion":"PASS"}
+{"timezone":"America/St_Johns","checks":5,"nullAndOmittedBounds":"PASS","sameTenantEventExclusion":"PASS"}

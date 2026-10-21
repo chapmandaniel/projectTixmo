@@ -1,0 +1,28 @@
+[
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "4ec85948",
+      "b0bc7e8",
+      "--",
+      "tixmoapi2"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "4ec85948",
+      "b0bc7e8"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

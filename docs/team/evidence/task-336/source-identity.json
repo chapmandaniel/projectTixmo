@@ -1,0 +1,17 @@
+[
+  {
+    "path": "tixmoapi2/src/services/paid-sales-query.ts",
+    "sha256": "c614ecd06de218f974a80a35c8842cea65921243ac5993dba455ea4e597cfdfb",
+    "matchesExactImplementation": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/paid-sales-utc.test.ts",
+    "sha256": "d770e4f761d6d5d251ae13d2a2b8976b645c3b9bdfaa72da903e8e912f72fe89",
+    "matchesExactImplementation": true
+  },
+  {
+    "path": "tixmoapi2/tests/smoke/v1-market-smoke.test.ts",
+    "sha256": "998e65b9b456060cc6b37016c65ecdadea4ed75ecc7d5dbf438be258c5af7f36",
+    "matchesExactImplementation": true
+  }
+]

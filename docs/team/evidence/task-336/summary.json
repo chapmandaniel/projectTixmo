@@ -1,0 +1,70 @@
+{
+  "red-baseline/": {
+    "success": false,
+    "startTime": 1792572803787,
+    "numTotalTestSuites": 2,
+    "numPassedTestSuites": 0,
+    "numFailedTestSuites": 2,
+    "numPassedTests": 2,
+    "numFailedTests": 3,
+    "numPendingTests": 0,
+    "numTodoTests": 0,
+    "startISO": "2026-10-21T08:53:23.787000+00:00",
+    "assertions": [
+      {
+        "name": "V1 market readiness smoke runs the operator, checkout, scanner, asset, approval, and analytics path",
+        "status": "failed"
+      },
+      {
+        "name": "inclusive UTC instant bounds and millisecond exclusions in UTC",
+        "status": "passed"
+      },
+      {
+        "name": "inclusive UTC instant bounds and millisecond exclusions in America/St_Johns",
+        "status": "failed"
+      },
+      {
+        "name": "Newfoundland repeated 01:30 first/second instants stay distinct in UTC",
+        "status": "passed"
+      },
+      {
+        "name": "Newfoundland repeated 01:30 first/second instants stay distinct in America/St_Johns",
+        "status": "failed"
+      }
+    ]
+  },
+  "green": {
+    "success": true,
+    "startTime": 1792572869751,
+    "numTotalTestSuites": 2,
+    "numPassedTestSuites": 2,
+    "numFailedTestSuites": 0,
+    "numPassedTests": 5,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numTodoTests": 0,
+    "startISO": "2026-10-21T08:54:29.751000+00:00",
+    "assertions": [
+      {
+        "name": "V1 market readiness smoke runs the operator, checkout, scanner, asset, approval, and analytics path",
+        "status": "passed"
+      },
+      {
+        "name": "inclusive UTC instant bounds and millisecond exclusions in UTC",
+        "status": "passed"
+      },
+      {
+        "name": "inclusive UTC instant bounds and millisecond exclusions in America/St_Johns",
+        "status": "passed"
+      },
+      {
+        "name": "Newfoundland repeated 01:30 first/second instants stay distinct in UTC",
+        "status": "passed"
+      },
+      {
+        "name": "Newfoundland repeated 01:30 first/second instants stay distinct in America/St_Johns",
+        "status": "passed"
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_336|tixmo336|127.0.0.1|31008|America/St_Johns
+PONG
+TASK336_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task336/run.sPuSVc pg_pid=2935625 redis_pid=2935638 pgport=31008 redisport=53575
+v24.21.0
+11.19.0
+waiting for server to shut down.... done
+server stopped
+TASK336_CLEANUP pg_pid=2935625 redis_pid=2935638 pgport=31008 redisport=53575

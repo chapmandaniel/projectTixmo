@@ -1,0 +1,17 @@
+{
+  "baseline": "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+  "fixed": "b0bc7e833345d847efa84d2a4957e289a1494bfc",
+  "baselineSourceSHA256": "5b2883228e4e49dc1fee2c7264eb5625a96e1cd8f713be122dceac2f05ebe46c",
+  "fixedSourceSHA256": "c614ecd06de218f974a80a35c8842cea65921243ac5993dba455ea4e597cfdfb",
+  "testHashesBefore": {
+    "tixmoapi2/tests/integration/paid-sales-utc.test.ts": "d770e4f761d6d5d251ae13d2a2b8976b645c3b9bdfaa72da903e8e912f72fe89",
+    "tixmoapi2/tests/smoke/v1-market-smoke.test.ts": "998e65b9b456060cc6b37016c65ecdadea4ed75ecc7d5dbf438be258c5af7f36"
+  },
+  "exitCode": 1,
+  "sourceRestored": true,
+  "testHashesAfter": {
+    "tixmoapi2/tests/integration/paid-sales-utc.test.ts": "d770e4f761d6d5d251ae13d2a2b8976b645c3b9bdfaa72da903e8e912f72fe89",
+    "tixmoapi2/tests/smoke/v1-market-smoke.test.ts": "998e65b9b456060cc6b37016c65ecdadea4ed75ecc7d5dbf438be258c5af7f36"
+  },
+  "testsUnchanged": true
+}

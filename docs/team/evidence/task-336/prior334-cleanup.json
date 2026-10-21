@@ -1,0 +1,31 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task334/run.sHoDlh",
+  "rootMode": "0o700",
+  "servicePids": [
+    2922559,
+    2922572
+  ],
+  "pidsAbsent": true,
+  "ports": [
+    35689,
+    41418
+  ],
+  "listeners": "",
+  "postmasterAbsent": true,
+  "sockets": [],
+  "remainingOwnedNodeWorkers": [],
+  "remainingContextFiles": [],
+  "currentPids": {
+    "2922559": "",
+    "2922572": ""
+  },
+  "currentListeners": "",
+  "currentSockets": [],
+  "currentPidfile": false,
+  "currentWorkers": [],
+  "cachedTransformContextMatches": [
+    "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task334/run.sHoDlh/jest_rs/jest-transform-cache-2cb9e590de85ad66b0a1c407e6e83100-33e9a252a52783adb262261baf4dff05/75/contextsetup_7505bbb8f8b9514bf362a91bfac3ce4a"
+  ],
+  "currentContexts": [],
+  "contextQualification": "Glob matched stopped Jest transformed contextsetup cache, not a live runtime context file. Prior cleanup artifact reports context files absent; cache retained."
+}
