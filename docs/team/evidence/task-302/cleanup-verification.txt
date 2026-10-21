@@ -1,0 +1,3 @@
+first-run/runtime.log: independent post-run /proc PID, TCP listener, PG postmaster, Redis socket absence confirmed; runtime mode0700; {'pg_pid': '2750307', 'redis_pid': '2750320', 'pgport': '23646', 'redisport': '43357', 'api_pid': '2750422', 'api_port': '41415'}
+runtime.log: independent post-run /proc PID, TCP listener, PG postmaster, Redis socket absence confirmed; runtime mode0700; {'pg_pid': '2751387', 'redis_pid': '2751400', 'pgport': '28794', 'redisport': '56474', 'api_pid': '2751541', 'api_port': '39443'}
+Final boundary records 64; admits 20; rejects 44

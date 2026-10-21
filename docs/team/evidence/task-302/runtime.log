@@ -1,0 +1,16 @@
+tixmoapi2/src/api/orders/service.ts: OK
+tixmoapi2/src/app.ts: OK
+tixmoapi2/src/config/environment.ts: OK
+tixmoapi2/tests/setup.ts: OK
+scripts/verification-safety.cjs: OK
+tixmoapi2/tests/integration/orders-sale-windows.local.test.ts: OK
+docs/team/evidence/task-302/runtime.sh: OK
+waiting for server to start.... done
+server started
+tixmo_disposable_302|tixmo302|127.0.0.1|28794
+PONG
+TASK302_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task302/run.s3gjOp pg_pid=2751387 redis_pid=2751400 pgport=28794 redisport=56474
+waiting for server to shut down.... done
+server stopped
+TASK302_CLEANUP pg_pid=2751387 redis_pid=2751400 pgport=28794 redisport=56474
+TASK302_ALL_CLEAN api_pid=2751541 api_port=39443 socket_postmaster_absent=1
