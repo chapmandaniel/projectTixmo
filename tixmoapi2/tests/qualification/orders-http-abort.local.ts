@@ -36,30 +36,41 @@ test('real authenticated checkout socket aborts release each admission lease onc
   require('../../../docs/team/evidence/task-426/runtime-path.cjs').validate(artifact);
   const register = (net as any)[Symbol.for('tixmo.task379.registerListener')];
   if (typeof register !== 'function') throw new Error('Require native owned-listener guard');
-  const redis = await connectRedis();
-  const { default: app } = await import('../../src/app');
-  const { ACTIVE_REQUESTS_KEY, ACQUIRE_REQUEST_LEASE } = await import('../../src/middleware/waitingRoom');
-  const { orderService } = await import('../../src/api/orders/service');
-  const server = http.createServer(app);
+  let redis: Awaited<ReturnType<typeof connectRedis>> | undefined;
+  let server: http.Server | undefined;
+  const ownedSockets = new Set<net.Socket>();
+  let removal: jest.SpyInstance | undefined;
+  const terminalAcks = new Map<string, ReturnType<typeof deferred>>();
   let revoke: (() => void) | undefined;
   let gate: ReturnType<typeof deferred> | undefined;
   let socket: http.ClientRequest | undefined;
   let evalSpy: jest.SpyInstance | undefined, controllerSpy: jest.SpyInstance | undefined;
-  const removal = jest.spyOn(redis, 'zRem');
+
   const rows: any[] = [];
   const started = performance.now();
   let requested = 0, aborted = 0, settled = 0;
   const snapshot = async () => ({
-    leases: await redis.zRangeWithScores(ACTIVE_REQUESTS_KEY, 0, -1),
+    leases: await redis!.zRangeWithScores('tixmo:active-request-leases:v1', 0, -1),
     inventory: await prisma.ticketType.findMany({ orderBy: { id: 'asc' } }),
     orders: await prisma.order.findMany({ orderBy: { id: 'asc' } }),
     tickets: await prisma.ticket.findMany({ orderBy: { id: 'asc' } }),
   });
   try {
+    redis = await connectRedis();
+    const { default: app } = await import('../../src/app');
+    const { ACTIVE_REQUESTS_KEY, ACQUIRE_REQUEST_LEASE } = await import('../../src/middleware/waitingRoom');
+    const { orderService } = await import('../../src/api/orders/service');
+    removal = jest.spyOn(redis, 'zRem');
+    server = http.createServer(app);
+    server.on('connection', connection => { ownedSockets.add(connection); connection.once('close', () => ownedSockets.delete(connection)); });
+    server.prependListener('request', (req, res) => {
+      const ack = terminalAcks.get(String(req.headers['x-task426-phase']));
+      if (ack) { req.once('aborted', ack.resolve); res.once('close', ack.resolve); }
+    });
     expect(await redis.dbSize()).toBe(0);
-    await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
-    revoke = register(server);
-    const port = (server.address() as net.AddressInfo).port;
+    await new Promise<void>((resolve, reject) => { server!.once('error', reject); server!.listen(0, '127.0.0.1', resolve); });
+    revoke = register(server!);
+    const port = (server!.address() as net.AddressInfo).port;
     const key = `abort426-${crypto.randomUUID()}`;
     const org = await prisma.organization.create({ data: { name: key, slug: key, type: 'PROMOTER' } });
     const buyers = await Promise.all([0, 1].map(i => prisma.user.create({ data: { email: `${key}-${i}@example.test`, passwordHash: 'synthetic', firstName: 'Synthetic', lastName: 'Abort', emailVerified: true } })));
@@ -74,6 +85,7 @@ test('real authenticated checkout socket aborts release each admission lease onc
     const realEval = redis.eval.bind(redis);
     for (const point of ['before-acquire', 'after-acquire', 'controller'] as const) {
       const reached = deferred(); gate = deferred();
+      const terminal = deferred(); terminalAcks.set(point, terminal);
       const released = gate;
       let token: string | undefined;
       evalSpy = jest.spyOn(redis, 'eval').mockImplementation((async (script: string, options: any) => {
@@ -89,7 +101,7 @@ test('real authenticated checkout socket aborts release each admission lease onc
         throw new Error('Task426 deliberate post-abort test-only controller termination');
       });
       requested++;
-      socket = http.request({ host: '127.0.0.1', port, path: '/api/v1/orders', method: 'POST', agent: false, headers: { Authorization: `Bearer ${tokens[0]}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } });
+      socket = http.request({ host: '127.0.0.1', port, path: '/api/v1/orders', method: 'POST', agent: false, headers: { Authorization: `Bearer ${tokens[0]}`, 'X-Task426-Phase': point, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } });
       const closed = new Promise<void>(resolve => socket!.once('close', resolve));
       socket.on('error', () => {});
       socket.on('response', res => { res.resume(); });
@@ -98,32 +110,45 @@ test('real authenticated checkout socket aborts release each admission lease onc
       const inflight = await snapshot();
       expect(inflight.leases).toHaveLength(point === 'before-acquire' ? 0 : 1);
       socket.destroy(); aborted++; await closed;
+      // Local close is insufficient: observe server terminal before unblocking Lua.
+      await Promise.race([terminal.promise, sleep(3000).then(() => { throw new Error('Server terminal ACK deadline'); })]);
       gate.resolve();
-      await bounded(async () => (await redis.zCard(ACTIVE_REQUESTS_KEY)) === 0 && removal.mock.calls.filter(call => call[1] === token).length === 1);
+      await bounded(async () => (await redis.zCard(ACTIVE_REQUESTS_KEY)) === 0 && removal!.mock.calls.filter(call => call[1] === token).length === 1);
       await sleep(50); // Allow finish/close/aborted duplicate terminal events.
       const after = await snapshot();
       expect(after).toEqual(baseline);
-      expect(removal.mock.calls.filter(call => call[1] === token)).toHaveLength(1);
+      expect(removal!.mock.calls.filter(call => call[1] === token)).toHaveLength(1);
       settled++;
       rows.push({ point, requested, aborted, settled, token, inflight, after, ms: performance.now() - started });
       evalSpy.mockRestore(); evalSpy = undefined;
       controllerSpy?.mockRestore(); controllerSpy = undefined;
     }
-    const healthy = await request(server).post('/api/v1/orders').set('Authorization', `Bearer ${tokens[0]}`).send(JSON.parse(body)).timeout({ response: 3000, deadline: 5000 });
+    const healthy = await request(server!).post('/api/v1/orders').set('Authorization', `Bearer ${tokens[0]}`).send(JSON.parse(body)).timeout({ response: 3000, deadline: 5000 });
     requested++;
     expect(healthy.status).toBe(201);
     expect(healthy.body.data.paymentIntentId).toBeNull();
     await bounded(async () => (await redis.zCard(ACTIVE_REQUESTS_KEY)) === 0);
     expect(await prisma.order.findUnique({ where: { id: foreign.id } })).toEqual(baseline.orders.find(o => o.id === foreign.id));
     await orderService.cancelOrder(healthy.body.data.id, buyers[0].id);
-    expect(await prisma.ticketType.findUnique({ where: { id: ga.id } })).toEqual(baseline.inventory.find(t => t.id === ga.id));
+    const stable = (row: any) => { const { updatedAt: _volatile, ...business } = row; return business; };
+    expect(stable(await prisma.ticketType.findUnique({ where: { id: ga.id } }))).toEqual(stable(baseline.inventory.find(t => t.id === ga.id)));
     rows.push({ healthyStatus: healthy.status, requested, aborted, settled, final: await snapshot(), ms: performance.now() - started });
     expect({ requested, aborted, settled }).toEqual({ requested: 4, aborted: 3, settled: 3 });
   } finally {
-    gate?.resolve(); socket?.destroy();
-    evalSpy?.mockRestore(); controllerSpy?.mockRestore(); removal.mockRestore();
-    fs.writeFileSync(path.join(artifact, 'abort426.json'), JSON.stringify({ rows, requested, aborted, settled, elapsedMs: performance.now() - started }, null, 2));
-    try { if (server.listening) await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); }
-    finally { revoke?.(); try { await disconnectRedis(); } finally { await prisma.$disconnect(); } }
+    const { cleanupSteps } = require('../../../docs/team/evidence/task-426/cleanup.cjs');
+    const cleanup = await cleanupSteps([
+      ['unblock', () => { gate?.resolve(); socket?.destroy(); }],
+      ['drain owned sockets', async () => {
+        for (const connection of ownedSockets) connection.destroy();
+        if (server?.listening) await new Promise<void>((resolve, reject) => server!.close(error => error ? reject(error) : resolve()));
+      }],
+      ['restore instrumentation', () => { evalSpy?.mockRestore(); controllerSpy?.mockRestore(); removal?.mockRestore(); }],
+      ['revoke listener', () => revoke?.()],
+      ['Redis disconnect', () => disconnectRedis()],
+      ['Prisma disconnect', () => prisma.$disconnect()],
+    ]);
+    // Evidence I/O cannot bypass any cleanup action; exclusive write refuses overwrite.
+    fs.writeFileSync(path.join(artifact, `abort426-${crypto.randomUUID()}.json`), JSON.stringify({ rows, requested, aborted, settled, elapsedMs: performance.now() - started, cleanup }, null, 2), { flag: 'wx' });
+    if (cleanup.some((step: any) => !step.ok)) throw new Error('Owned cleanup incomplete: inspect receipt');
   }
 }), 45000);

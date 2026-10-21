@@ -16,7 +16,7 @@ const validate = require('./runtime-path.cjs').validate;
 for (const bad of ['/tmp/run.foo', '/dev/shm/run.foo', '/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.foo', '/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task426-abort/../run.foo']) assert.throws(() => validate(bad), /Invalid runtime location/);
 assert.match(text, /before-acquire.*after-acquire.*controller/);
 assert.match(text, /expect\(after\)\.toEqual\(baseline\)/);
-assert.match(text, /removal\.mock\.calls\.filter\(call => call\[1\] === token\)\)\.toHaveLength\(1\)/);
+assert.match(text, /removal!?\.mock\.calls\.filter\(call => call\[1\] === token\)\)\.toHaveLength\(1\)/);
 assert.match(text, /socket\.destroy\(\); aborted\+\+/);
 assert.match(text, /requested: 4, aborted: 3, settled: 3/);
 console.log('PASS exact package/lock/schema match; TypeScript syntax transpile + emitted JS parse; 4 unsafe runtime paths rejected; checkpoint invariant checks. NOT typecheck/Jest/HTTP/runtime. TypeScript=' + ts.version);
