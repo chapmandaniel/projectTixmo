@@ -1,0 +1,401 @@
+[
+  {
+    "id": 1,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "title": "Payment, admission and inventory integrity keeps failed fulfillment retryable, recovers an abandoned lease and never consumes another hold",
+    "failure": "Error: expect(received).rejects.toThrow()\n\nReceived promise resolved instead of rejected\nResolved to value: undefined\n    at expect (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/expect/build/index.js:2116:15)\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-inventory-integrity.test.ts:204:11)",
+    "locations": [
+      "tests/integration/payment-inventory-integrity.test.ts:204:11"
+    ]
+  },
+  {
+    "id": 2,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "title": "Payment, admission and inventory integrity refunds late payments without reviving expired tickets or stealing a newer hold",
+    "failure": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: 1\nReceived: 0\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-inventory-integrity.test.ts:262:31)",
+    "locations": [
+      "tests/integration/payment-inventory-integrity.test.ts:262:31"
+    ]
+  },
+  {
+    "id": 3,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "title": "Payment, admission and inventory integrity freezes pending refunds and finalizes processor success once across replay",
+    "failure": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: 0\nReceived: 2\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-inventory-integrity.test.ts:295:42)",
+    "locations": [
+      "tests/integration/payment-inventory-integrity.test.ts:295:42"
+    ]
+  },
+  {
+    "id": 4,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "title": "Payment, admission and inventory integrity finishes local refunds after a crash following the processor success commit",
+    "failure": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: \"REFUNDED\"\nReceived: \"PAID\"\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-inventory-integrity.test.ts:520:88)",
+    "locations": [
+      "tests/integration/payment-inventory-integrity.test.ts:520:88"
+    ]
+  },
+  {
+    "id": 5,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "title": "Payment, admission and inventory integrity recovers late charges after failed payments and reservation cancellation without a webhook",
+    "failure": "Error: expect(received).not.toBeNull()\n\nReceived: null\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-inventory-integrity.test.ts:549:43)",
+    "locations": [
+      "tests/integration/payment-inventory-integrity.test.ts:549:43"
+    ]
+  },
+  {
+    "id": 6,
+    "suite": "tests/integration/payment-failed-retry.race.test.ts",
+    "title": "FAILED same-ID retry has one claimant (second delivery claims first=false)",
+    "failure": "PrismaClientValidationError: \nInvalid `tx.paymentRefund.upsert()` invocation in\n/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:453:29\n\n  450   intent: Stripe.PaymentIntent,\n  451   reason: string\n  452 ) {\n\u2192 453   return tx.paymentRefund.upsert({\n          where: {\n            paymentIntentId: \"pi_race132-1792569452172\"\n          },\n          create: {\n            orderId: \"db061005-5029-44ae-9f79-70b7b0853111\",\n            paymentIntentId: \"pi_race132-1792569452172\",\n            currency: undefined,\n            reason: \"INCORRECT_AMOUNT\",\n        +   amount: Int\n          },\n          update: {}\n        })\n\nArgument `amount` is missing.\n    at wn (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:29:1363)\n    at $n.handleRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6958)\n    at $n.handleAndLogRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6623)\n    at $n.request (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6307)\n    at l (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:339:30\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at withRetry.maxRetries (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:318:21)\n    at withRetry (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/retry.ts:28:14)\n    at PaymentService.handlePaymentSuccess (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:316:7)\n    at PaymentService.processEvent (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:181:54)\n    at PaymentService.handleWebhook (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:173:5)",
+    "locations": [
+      "src/api/payments/service.ts:453:29",
+      "src/api/payments/service.ts:339:30",
+      "src/api/payments/service.ts:318:21",
+      "src/utils/retry.ts:28:14",
+      "src/api/payments/service.ts:316:7",
+      "src/api/payments/service.ts:181:54",
+      "src/api/payments/service.ts:173:5"
+    ]
+  },
+  {
+    "id": 7,
+    "suite": "tests/integration/payment-failed-retry.race.test.ts",
+    "title": "FAILED same-ID retry has one claimant (second delivery claims first=true)",
+    "failure": "PrismaClientValidationError: \nInvalid `tx.paymentRefund.upsert()` invocation in\n/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:453:29\n\n  450   intent: Stripe.PaymentIntent,\n  451   reason: string\n  452 ) {\n\u2192 453   return tx.paymentRefund.upsert({\n          where: {\n            paymentIntentId: \"pi_race132-1792569453093\"\n          },\n          create: {\n            orderId: \"fa45ed62-78ce-4289-9db6-516aed24af67\",\n            paymentIntentId: \"pi_race132-1792569453093\",\n            currency: undefined,\n            reason: \"INCORRECT_AMOUNT\",\n        +   amount: Int\n          },\n          update: {}\n        })\n\nArgument `amount` is missing.\n    at wn (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:29:1363)\n    at $n.handleRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6958)\n    at $n.handleAndLogRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6623)\n    at $n.request (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6307)\n    at l (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:339:30\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at withRetry.maxRetries (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:318:21)\n    at withRetry (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/retry.ts:28:14)\n    at PaymentService.handlePaymentSuccess (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:316:7)\n    at PaymentService.processEvent (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:181:54)\n    at PaymentService.handleWebhook (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:173:5)",
+    "locations": [
+      "src/api/payments/service.ts:453:29",
+      "src/api/payments/service.ts:339:30",
+      "src/api/payments/service.ts:318:21",
+      "src/utils/retry.ts:28:14",
+      "src/api/payments/service.ts:316:7",
+      "src/api/payments/service.ts:181:54",
+      "src/api/payments/service.ts:173:5"
+    ]
+  },
+  {
+    "id": 8,
+    "suite": "tests/integration/order-double-refund.race.test.ts",
+    "title": "overlapping refund applies inventory once and preserves other paid and pending buyers (reverse release=false)",
+    "failure": "Error: Barrier timeout (harness failure)\n    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-refund.race.test.ts:21:41)\n    at listOnTimeout (node:internal/timers:685:17)\n    at processTimers (node:internal/timers:618:7)",
+    "locations": [
+      "tests/integration/order-double-refund.race.test.ts:21:41"
+    ]
+  },
+  {
+    "id": 9,
+    "suite": "tests/integration/order-double-refund.race.test.ts",
+    "title": "overlapping refund applies inventory once and preserves other paid and pending buyers (reverse release=true)",
+    "failure": "Error: Barrier timeout (harness failure)\n    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-refund.race.test.ts:21:41)\n    at listOnTimeout (node:internal/timers:685:17)\n    at processTimers (node:internal/timers:618:7)",
+    "locations": [
+      "tests/integration/order-double-refund.race.test.ts:21:41"
+    ]
+  },
+  {
+    "id": 10,
+    "suite": "tests/integration/order-double-refund.race.test.ts",
+    "title": "insufficient sold inventory rolls back claim and ticket cancellation completely",
+    "failure": "Error: expect(received).rejects.toMatchObject(expected)\n\n- Expected  - 2\n+ Received  + 1\n\n  Object {\n-   \"message\": \"Order sold inventory is inconsistent\",\n-   \"statusCode\": 500,\n+   \"statusCode\": 400,\n  }\n    at Object.toMatchObject (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/expect/build/index.js:2155:20)\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-refund.race.test.ts:246:66)",
+    "locations": [
+      "tests/integration/order-double-refund.race.test.ts:246:66"
+    ]
+  },
+  {
+    "id": 11,
+    "suite": "tests/integration/order-double-refund.race.test.ts",
+    "title": "refund preserves scalar response/payment contract, cancels VALID/TRANSFERRED only and rejects retries",
+    "failure": "ApiError: Full refunds require unused, untransferred tickets\n    at ApiError.badRequest (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/ApiError.ts:16:12)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:504:24\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at PaymentService.refundOrder (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:482:19)\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-refund.race.test.ts:261:18)",
+    "locations": [
+      "src/utils/ApiError.ts:16:12",
+      "src/api/payments/service.ts:504:24",
+      "src/api/payments/service.ts:482:19",
+      "tests/integration/order-double-refund.race.test.ts:261:18"
+    ]
+  },
+  {
+    "id": 12,
+    "suite": "tests/integration/order-double-refund.race.test.ts",
+    "title": "stale refund rejects concurrent status change without dependent writes",
+    "failure": "Error: expect(received).toEqual(expected) // deep equality\n\nExpected: undefined\nReceived: {\"createdAt\": 2026-10-21T07:57:46.071Z, \"currency\": \"usd\", \"discountAmount\": \"0\", \"eventId\": \"755f1b21-1af5-4b0b-b5c9-fa22257bb05d\", \"expiresAt\": null, \"feesAmount\": \"0\", \"id\": \"5b4fded8-9749-4749-aab0-25e7e1ba12c1\", \"ipAddress\": null, \"orderNumber\": \"guard123-1792569466064-5x7yohenxik\", \"paymentClosedAt\": null, \"paymentIntentId\": null, \"paymentMethod\": null, \"paymentStatus\": \"SUCCEEDED\", \"promoCodeId\": null, \"promoReservation\": \"NONE\", \"receiptLeaseToken\": null, \"receiptSentAt\": null, \"receiptStartedAt\": null, \"receiptStatus\": \"PENDING\", \"refundStatus\": \"NONE\", \"status\": \"PAID\", \"taxAmount\": \"0\", \"tickets\": [{\"barcode\": \"guard123-1792569466064-5x7yohenxik-2\", \"checkedInAt\": null, \"checkedInBy\": null, \"createdAt\": 2026-10-21T07:57:46.071Z, \"eventId\": \"755f1b21-1af5-4b0b-b5c9-fa22257bb05d\", \"id\": \"134c0717-8026-4840-8b95-5626a1a709a2\", \"inventoryState\": \"HELD\", \"orderId\": \"5b4fded8-9749-4749-aab0-25e7e1ba12c1\", \"pricePaid\": \"10\", \"qrCodeUrl\": null, \"seatInfo\": null, \"status\": \"USED\", \"ticketTypeId\": \"f667dc43-487b-4cd2-9405-db287285e545\", \"tierId\": null, \"transferredAt\": null, \"transferredFrom\": null, \"updatedAt\": 2026-10-21T07:57:46.071Z, \"userId\": \"67fe7074-a53a-4ab6-a664-98d182aea857\"}, {\"barcode\": \"guard123-1792569466064-5x7yohenxik-1\", \"checkedInAt\": null, \"checkedInBy\": null, \"createdAt\": 2026-10-21T07:57:46.071Z, \"eventId\": \"755f1b21-1af5-4b0b-b5c9-fa22257bb05d\", \"id\": \"2f407467-c623-44c3-972f-c94305decc61\", \"inventoryState\": \"HELD\", \"orderId\": \"5b4fded8-9749-4749-aab0-25e7e1ba12c1\", \"pricePaid\": \"10\", \"qrCodeUrl\": null, \"seatInfo\": null, \"status\": \"TRANSFERRED\", \"ticketTypeId\": \"f667dc43-487b-4cd2-9405-db287285e545\", \"tierId\": null, \"transferredAt\": null, \"transferredFrom\": null, \"updatedAt\": 2026-10-21T07:57:46.071Z, \"userId\": \"67fe7074-a53a-4ab6-a664-98d182aea857\"}, {\"barcode\": \"guard123-1792569466064-5x7yohenxik-0\", \"checkedInAt\": null, \"checkedInBy\": null, \"createdAt\": 2026-10-21T07:57:46.071Z, \"eventId\": \"755f1b21-1af5-4b0b-b5c9-fa22257bb05d\", \"id\": \"c4ad7227-dfb8-4c6d-87ec-9395ec94ebb4\", \"inventoryState\": \"HELD\", \"orderId\": \"5b4fded8-9749-4749-aab0-25e7e1ba12c1\", \"pricePaid\": \"10\", \"qrCodeUrl\": null, \"seatInfo\": null, \"status\": \"VALID\", \"ticketTypeId\": \"f667dc43-487b-4cd2-9405-db287285e545\", \"tierId\": null, \"transferredAt\": null, \"transferredFrom\": null, \"updatedAt\": 2026-10-21T07:57:46.071Z, \"userId\": \"67fe7074-a53a-4ab6-a664-98d182aea857\"}], \"totalAmount\": \"20\", \"updatedAt\": 2026-10-21T07:57:46.071Z, \"userAgent\": null, \"userId\": \"67fe7074-a53a-4ab6-a664-98d182aea857\"}\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-refund.race.test.ts:308:7",
+    "locations": [
+      "tests/integration/order-double-refund.race.test.ts:308:7"
+    ]
+  },
+  {
+    "id": 13,
+    "suite": "tests/integration/order-double-refund.race.test.ts",
+    "title": "stale refund rejects concurrent paymentStatus change without dependent writes",
+    "failure": "Error: expect(received).toEqual(expected) // deep equality\n\nExpected: undefined\nReceived: {\"createdAt\": 2026-10-21T07:57:46.090Z, \"currency\": \"usd\", \"discountAmount\": \"0\", \"eventId\": \"a3ac0a6f-389f-487e-949f-f70a5441e06f\", \"expiresAt\": null, \"feesAmount\": \"0\", \"id\": \"604a4668-7e4a-4238-ab3c-f709baabe8b5\", \"ipAddress\": null, \"orderNumber\": \"guard123-1792569466083-hf3khkt5ht\", \"paymentClosedAt\": null, \"paymentIntentId\": null, \"paymentMethod\": null, \"paymentStatus\": \"SUCCEEDED\", \"promoCodeId\": null, \"promoReservation\": \"NONE\", \"receiptLeaseToken\": null, \"receiptSentAt\": null, \"receiptStartedAt\": null, \"receiptStatus\": \"PENDING\", \"refundStatus\": \"NONE\", \"status\": \"PAID\", \"taxAmount\": \"0\", \"tickets\": [{\"barcode\": \"guard123-1792569466083-hf3khkt5ht-1\", \"checkedInAt\": null, \"checkedInBy\": null, \"createdAt\": 2026-10-21T07:57:46.090Z, \"eventId\": \"a3ac0a6f-389f-487e-949f-f70a5441e06f\", \"id\": \"4c5919e6-a027-4923-8d0f-150852d5c047\", \"inventoryState\": \"HELD\", \"orderId\": \"604a4668-7e4a-4238-ab3c-f709baabe8b5\", \"pricePaid\": \"10\", \"qrCodeUrl\": null, \"seatInfo\": null, \"status\": \"TRANSFERRED\", \"ticketTypeId\": \"01a793ff-71d1-461e-bb62-643ad509367c\", \"tierId\": null, \"transferredAt\": null, \"transferredFrom\": null, \"updatedAt\": 2026-10-21T07:57:46.090Z, \"userId\": \"c68c7242-6374-4201-b48a-80a169e80a42\"}, {\"barcode\": \"guard123-1792569466083-hf3khkt5ht-0\", \"checkedInAt\": null, \"checkedInBy\": null, \"createdAt\": 2026-10-21T07:57:46.090Z, \"eventId\": \"a3ac0a6f-389f-487e-949f-f70a5441e06f\", \"id\": \"a190f9cb-1fd4-4ac2-acb9-be55571045f9\", \"inventoryState\": \"HELD\", \"orderId\": \"604a4668-7e4a-4238-ab3c-f709baabe8b5\", \"pricePaid\": \"10\", \"qrCodeUrl\": null, \"seatInfo\": null, \"status\": \"VALID\", \"ticketTypeId\": \"01a793ff-71d1-461e-bb62-643ad509367c\", \"tierId\": null, \"transferredAt\": null, \"transferredFrom\": null, \"updatedAt\": 2026-10-21T07:57:46.090Z, \"userId\": \"c68c7242-6374-4201-b48a-80a169e80a42\"}, {\"barcode\": \"guard123-1792569466083-hf3khkt5ht-2\", \"checkedInAt\": null, \"checkedInBy\": null, \"createdAt\": 2026-10-21T07:57:46.090Z, \"eventId\": \"a3ac0a6f-389f-487e-949f-f70a5441e06f\", \"id\": \"f83c145d-5127-4d02-81f3-e52f6d66716f\", \"inventoryState\": \"HELD\", \"orderId\": \"604a4668-7e4a-4238-ab3c-f709baabe8b5\", \"pricePaid\": \"10\", \"qrCodeUrl\": null, \"seatInfo\": null, \"status\": \"USED\", \"ticketTypeId\": \"01a793ff-71d1-461e-bb62-643ad509367c\", \"tierId\": null, \"transferredAt\": null, \"transferredFrom\": null, \"updatedAt\": 2026-10-21T07:57:46.090Z, \"userId\": \"c68c7242-6374-4201-b48a-80a169e80a42\"}], \"totalAmount\": \"20\", \"updatedAt\": 2026-10-21T07:57:46.090Z, \"userAgent\": null, \"userId\": \"c68c7242-6374-4201-b48a-80a169e80a42\"}\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-refund.race.test.ts:308:7",
+    "locations": [
+      "tests/integration/order-double-refund.race.test.ts:308:7"
+    ]
+  },
+  {
+    "id": 14,
+    "suite": "tests/integration/payment-distinct-success.race.test.ts",
+    "title": "distinct successful webhook IDs preserve single fulfillment (winner=0, reverse reads=false)",
+    "failure": "PrismaClientValidationError: \nInvalid `tx.paymentRefund.upsert()` invocation in\n/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:453:29\n\n  450   intent: Stripe.PaymentIntent,\n  451   reason: string\n  452 ) {\n\u2192 453   return tx.paymentRefund.upsert({\n          where: {\n            paymentIntentId: \"pi_race130-1792569472077\"\n          },\n          create: {\n            orderId: \"22d4e470-1fda-4034-8a7f-de677880996b\",\n            paymentIntentId: \"pi_race130-1792569472077\",\n            currency: undefined,\n            reason: \"INCORRECT_AMOUNT\",\n        +   amount: Int\n          },\n          update: {}\n        })\n\nArgument `amount` is missing.\n    at wn (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:29:1363)\n    at $n.handleRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6958)\n    at $n.handleAndLogRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6623)\n    at $n.request (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6307)\n    at l (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:339:30\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at withRetry.maxRetries (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:318:21)\n    at withRetry (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/retry.ts:28:14)\n    at PaymentService.handlePaymentSuccess (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:316:7)\n    at PaymentService.processEvent (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:181:54)\n    at PaymentService.handleWebhook (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:173:5)",
+    "locations": [
+      "src/api/payments/service.ts:453:29",
+      "src/api/payments/service.ts:339:30",
+      "src/api/payments/service.ts:318:21",
+      "src/utils/retry.ts:28:14",
+      "src/api/payments/service.ts:316:7",
+      "src/api/payments/service.ts:181:54",
+      "src/api/payments/service.ts:173:5"
+    ]
+  },
+  {
+    "id": 15,
+    "suite": "tests/integration/payment-distinct-success.race.test.ts",
+    "title": "distinct successful webhook IDs preserve single fulfillment (winner=0, reverse reads=true)",
+    "failure": "PrismaClientValidationError: \nInvalid `tx.paymentRefund.upsert()` invocation in\n/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:453:29\n\n  450   intent: Stripe.PaymentIntent,\n  451   reason: string\n  452 ) {\n\u2192 453   return tx.paymentRefund.upsert({\n          where: {\n            paymentIntentId: \"pi_race130-1792569473787\"\n          },\n          create: {\n            orderId: \"6199a7ee-c05a-4de4-b556-b74cca88b949\",\n            paymentIntentId: \"pi_race130-1792569473787\",\n            currency: undefined,\n            reason: \"INCORRECT_AMOUNT\",\n        +   amount: Int\n          },\n          update: {}\n        })\n\nArgument `amount` is missing.\n    at wn (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:29:1363)\n    at $n.handleRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6958)\n    at $n.handleAndLogRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6623)\n    at $n.request (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6307)\n    at l (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:339:30\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at withRetry.maxRetries (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:318:21)\n    at withRetry (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/retry.ts:28:14)\n    at PaymentService.handlePaymentSuccess (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:316:7)\n    at PaymentService.processEvent (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:181:54)\n    at PaymentService.handleWebhook (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:173:5)",
+    "locations": [
+      "src/api/payments/service.ts:453:29",
+      "src/api/payments/service.ts:339:30",
+      "src/api/payments/service.ts:318:21",
+      "src/utils/retry.ts:28:14",
+      "src/api/payments/service.ts:316:7",
+      "src/api/payments/service.ts:181:54",
+      "src/api/payments/service.ts:173:5"
+    ]
+  },
+  {
+    "id": 16,
+    "suite": "tests/integration/payment-distinct-success.race.test.ts",
+    "title": "distinct successful webhook IDs preserve single fulfillment (winner=1, reverse reads=false)",
+    "failure": "PrismaClientValidationError: \nInvalid `tx.paymentRefund.upsert()` invocation in\n/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:453:29\n\n  450   intent: Stripe.PaymentIntent,\n  451   reason: string\n  452 ) {\n\u2192 453   return tx.paymentRefund.upsert({\n          where: {\n            paymentIntentId: \"pi_race130-1792569475668\"\n          },\n          create: {\n            orderId: \"36ac03b6-e442-49ba-8754-2261cd7d2b72\",\n            paymentIntentId: \"pi_race130-1792569475668\",\n            currency: undefined,\n            reason: \"INCORRECT_AMOUNT\",\n        +   amount: Int\n          },\n          update: {}\n        })\n\nArgument `amount` is missing.\n    at wn (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:29:1363)\n    at $n.handleRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6958)\n    at $n.handleAndLogRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6623)\n    at $n.request (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6307)\n    at l (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:339:30\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at withRetry.maxRetries (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:318:21)\n    at withRetry (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/retry.ts:28:14)\n    at PaymentService.handlePaymentSuccess (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:316:7)\n    at PaymentService.processEvent (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:181:54)\n    at PaymentService.handleWebhook (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:173:5)",
+    "locations": [
+      "src/api/payments/service.ts:453:29",
+      "src/api/payments/service.ts:339:30",
+      "src/api/payments/service.ts:318:21",
+      "src/utils/retry.ts:28:14",
+      "src/api/payments/service.ts:316:7",
+      "src/api/payments/service.ts:181:54",
+      "src/api/payments/service.ts:173:5"
+    ]
+  },
+  {
+    "id": 17,
+    "suite": "tests/integration/payment-distinct-success.race.test.ts",
+    "title": "distinct successful webhook IDs preserve single fulfillment (winner=1, reverse reads=true)",
+    "failure": "PrismaClientValidationError: \nInvalid `tx.paymentRefund.upsert()` invocation in\n/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:453:29\n\n  450   intent: Stripe.PaymentIntent,\n  451   reason: string\n  452 ) {\n\u2192 453   return tx.paymentRefund.upsert({\n          where: {\n            paymentIntentId: \"pi_race130-1792569477530\"\n          },\n          create: {\n            orderId: \"7791d530-00d5-4b26-b78d-323d7de06d98\",\n            paymentIntentId: \"pi_race130-1792569477530\",\n            currency: undefined,\n            reason: \"INCORRECT_AMOUNT\",\n        +   amount: Int\n          },\n          update: {}\n        })\n\nArgument `amount` is missing.\n    at wn (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:29:1363)\n    at $n.handleRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6958)\n    at $n.handleAndLogRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6623)\n    at $n.request (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6307)\n    at l (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:339:30\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at withRetry.maxRetries (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:318:21)\n    at withRetry (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/retry.ts:28:14)\n    at PaymentService.handlePaymentSuccess (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:316:7)\n    at PaymentService.processEvent (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:181:54)\n    at PaymentService.handleWebhook (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:173:5)",
+    "locations": [
+      "src/api/payments/service.ts:453:29",
+      "src/api/payments/service.ts:339:30",
+      "src/api/payments/service.ts:318:21",
+      "src/utils/retry.ts:28:14",
+      "src/api/payments/service.ts:316:7",
+      "src/api/payments/service.ts:181:54",
+      "src/api/payments/service.ts:173:5"
+    ]
+  },
+  {
+    "id": 18,
+    "suite": "tests/unit/release-integration.test.ts",
+    "title": "late success durably records refund and releases inventory in owned tx before provider delivery",
+    "failure": "Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)\n\nExpected: \"refund-owned\"\n\nNumber of calls: 0\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/unit/release-integration.test.ts:106:21)",
+    "locations": [
+      "tests/unit/release-integration.test.ts:106:21"
+    ]
+  },
+  {
+    "id": 19,
+    "suite": "tests/integration/payment-paused-owner.baseline.test.ts",
+    "title": "paused owner phase=fresh",
+    "failure": "PrismaClientValidationError: \nInvalid `tx.paymentRefund.upsert()` invocation in\n/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:453:29\n\n  450   intent: Stripe.PaymentIntent,\n  451   reason: string\n  452 ) {\n\u2192 453   return tx.paymentRefund.upsert({\n          where: {\n            paymentIntentId: \"pi_paused141-1792569482076\"\n          },\n          create: {\n            orderId: \"778b5771-6fbd-4e9e-a858-ea3d16885225\",\n            paymentIntentId: \"pi_paused141-1792569482076\",\n            currency: undefined,\n            reason: \"INCORRECT_AMOUNT\",\n        +   amount: Int\n          },\n          update: {}\n        })\n\nArgument `amount` is missing.\n    at wn (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:29:1363)\n    at $n.handleRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6958)\n    at $n.handleAndLogRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6623)\n    at $n.request (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6307)\n    at l (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:339:30\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at withRetry.maxRetries (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:318:21)\n    at withRetry (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/retry.ts:28:14)\n    at PaymentService.handlePaymentSuccess (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:316:7)\n    at PaymentService.processEvent (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:181:54)\n    at PaymentService.handleWebhook (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:173:5)",
+    "locations": [
+      "src/api/payments/service.ts:453:29",
+      "src/api/payments/service.ts:339:30",
+      "src/api/payments/service.ts:318:21",
+      "src/utils/retry.ts:28:14",
+      "src/api/payments/service.ts:316:7",
+      "src/api/payments/service.ts:181:54",
+      "src/api/payments/service.ts:173:5"
+    ]
+  },
+  {
+    "id": 20,
+    "suite": "tests/integration/payment-paused-owner.baseline.test.ts",
+    "title": "paused owner phase=before-handler",
+    "failure": "PrismaClientValidationError: \nInvalid `tx.paymentRefund.upsert()` invocation in\n/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:453:29\n\n  450   intent: Stripe.PaymentIntent,\n  451   reason: string\n  452 ) {\n\u2192 453   return tx.paymentRefund.upsert({\n          where: {\n            paymentIntentId: \"pi_paused141-1792569482804\"\n          },\n          create: {\n            orderId: \"b29bd5ae-02c6-4a02-abff-33a58ad4dc75\",\n            paymentIntentId: \"pi_paused141-1792569482804\",\n            currency: undefined,\n            reason: \"INCORRECT_AMOUNT\",\n        +   amount: Int\n          },\n          update: {}\n        })\n\nArgument `amount` is missing.\n    at wn (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:29:1363)\n    at $n.handleRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6958)\n    at $n.handleAndLogRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6623)\n    at $n.request (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6307)\n    at l (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:339:30\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at withRetry.maxRetries (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:318:21)\n    at withRetry (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/retry.ts:28:14)\n    at PaymentService.handlePaymentSuccess (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:316:7)\n    at PaymentService.processEvent (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:181:54)\n    at PaymentService.handleWebhook (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:173:5)\n    at bounded (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-paused-owner.baseline.test.ts:20:12)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-paused-owner.baseline.test.ts:197:7",
+    "locations": [
+      "src/api/payments/service.ts:453:29",
+      "src/api/payments/service.ts:339:30",
+      "src/api/payments/service.ts:318:21",
+      "src/utils/retry.ts:28:14",
+      "src/api/payments/service.ts:316:7",
+      "src/api/payments/service.ts:181:54",
+      "src/api/payments/service.ts:173:5",
+      "tests/integration/payment-paused-owner.baseline.test.ts:20:12",
+      "tests/integration/payment-paused-owner.baseline.test.ts:197:7"
+    ]
+  },
+  {
+    "id": 21,
+    "suite": "tests/integration/payment-paused-owner.baseline.test.ts",
+    "title": "paused owner phase=before-finish",
+    "failure": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: \"PAID\"\nReceived: \"PENDING\"\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-paused-owner.baseline.test.ts:175:36",
+    "locations": [
+      "tests/integration/payment-paused-owner.baseline.test.ts:175:36"
+    ]
+  },
+  {
+    "id": 22,
+    "suite": "tests/integration/order-double-cancel.race.test.ts",
+    "title": "overlapping cancel applies inventory once and preserves another pending hold (reverse release=false)",
+    "failure": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  - 2\n+ Received  + 2\n\n@@ -4,11 +4,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:06.525Z,\n      \"eventId\": \"f46c2a3c-90a9-42fe-a69b-c17758768308\",\n      \"id\": \"68b8539e-617b-4ee4-8ffa-32c832692d38\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"58e74306-bb7d-4101-a5e6-0a54a910d590\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n@@ -24,11 +24,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:06.525Z,\n      \"eventId\": \"f46c2a3c-90a9-42fe-a69b-c17758768308\",\n      \"id\": \"e5af9929-48cd-47cf-a21a-2c50aefa6962\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"58e74306-bb7d-4101-a5e6-0a54a910d590\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-cancel.race.test.ts:148:25",
+    "locations": [
+      "tests/integration/order-double-cancel.race.test.ts:148:25"
+    ]
+  },
+  {
+    "id": 23,
+    "suite": "tests/integration/order-double-cancel.race.test.ts",
+    "title": "overlapping cancel applies inventory once and preserves another pending hold (reverse release=true)",
+    "failure": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  - 2\n+ Received  + 2\n\n@@ -4,11 +4,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:06.580Z,\n      \"eventId\": \"85ac0a1b-4c09-408c-b0ca-18816aafd859\",\n      \"id\": \"72a58c69-eb60-4a10-a4e3-24c5c81155fe\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"1020ffb2-bfa4-4e9c-9c06-1032d24c7d4a\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n@@ -24,11 +24,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:06.580Z,\n      \"eventId\": \"85ac0a1b-4c09-408c-b0ca-18816aafd859\",\n      \"id\": \"75001a22-ddc1-4b5a-be6a-961beaa62d04\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"1020ffb2-bfa4-4e9c-9c06-1032d24c7d4a\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-cancel.race.test.ts:148:25",
+    "locations": [
+      "tests/integration/order-double-cancel.race.test.ts:148:25"
+    ]
+  },
+  {
+    "id": 24,
+    "suite": "tests/integration/order-double-cancel.race.test.ts",
+    "title": "inconsistent hold rolls back cancellation claim and leaves tickets and inventory unchanged",
+    "failure": "Error: expect(received).rejects.toMatchObject(expected)\n\n- Expected  - 2\n+ Received  + 1\n\n  Object {\n-   \"message\": \"Order inventory hold is inconsistent\",\n-   \"statusCode\": 500,\n+   \"statusCode\": 409,\n  }\n    at Object.toMatchObject (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/expect/build/index.js:2155:20)\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-cancel.race.test.ts:217:67)",
+    "locations": [
+      "tests/integration/order-double-cancel.race.test.ts:217:67"
+    ]
+  },
+  {
+    "id": 25,
+    "suite": "tests/integration/order-double-cancel.race.test.ts",
+    "title": "stale cancellation cannot overwrite concurrent PROCESSING transition",
+    "failure": "Error: expect(received).rejects.toMatchObject()\n\nReceived promise resolved instead of rejected\nResolved to value: {\"createdAt\": 2026-10-21T07:58:06.700Z, \"currency\": \"usd\", \"discountAmount\": \"0\", \"eventId\": \"b8abb257-0e6c-4137-b60f-f09476f98dac\", \"expiresAt\": null, \"feesAmount\": \"0\", \"id\": \"5f45ea41-8047-4349-a67e-203fdfc3cb54\", \"ipAddress\": null, \"orderNumber\": \"stale118-PROCESSING-1792569486693\", \"paymentClosedAt\": null, \"paymentIntentId\": null, \"paymentMethod\": null, \"paymentStatus\": \"PROCESSING\", \"promoCodeId\": null, \"promoReservation\": \"NONE\", \"receiptLeaseToken\": null, \"receiptSentAt\": null, \"receiptStartedAt\": null, \"receiptStatus\": \"PENDING\", \"refundStatus\": \"NONE\", \"status\": \"CANCELLED\", \"taxAmount\": \"0\", \"totalAmount\": \"10\", \"updatedAt\": 2026-10-21T07:58:06.710Z, \"userAgent\": null, \"userId\": \"db2e4d6e-eb60-4abc-b7de-19c0e960ea81\"}\n    at expect (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/expect/build/index.js:2116:15)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-double-cancel.race.test.ts:291:13",
+    "locations": [
+      "tests/integration/order-double-cancel.race.test.ts:291:13"
+    ]
+  },
+  {
+    "id": 26,
+    "suite": "tests/integration/order-confirm-expiry.race.test.ts",
+    "title": "confirm versus actual expiry job preserves single winner (winner=0, reverse reads=false)",
+    "failure": "ApiError: Order can no longer be fulfilled\n    at ApiError.conflict (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/ApiError.ts:32:12)\n    at OrderService.confirmOrderInTransaction (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/orders/service.ts:350:22)\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)",
+    "locations": [
+      "src/utils/ApiError.ts:32:12",
+      "src/api/orders/service.ts:350:22"
+    ]
+  },
+  {
+    "id": 27,
+    "suite": "tests/integration/order-confirm-expiry.race.test.ts",
+    "title": "confirm versus actual expiry job preserves single winner (winner=0, reverse reads=true)",
+    "failure": "ApiError: Order can no longer be fulfilled\n    at ApiError.conflict (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/ApiError.ts:32:12)\n    at OrderService.confirmOrderInTransaction (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/orders/service.ts:350:22)\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)",
+    "locations": [
+      "src/utils/ApiError.ts:32:12",
+      "src/api/orders/service.ts:350:22"
+    ]
+  },
+  {
+    "id": 28,
+    "suite": "tests/integration/order-confirm-expiry.race.test.ts",
+    "title": "confirm versus actual expiry job preserves single winner (winner=1, reverse reads=false)",
+    "failure": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  - 2\n+ Received  + 2\n\n@@ -4,11 +4,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:18.981Z,\n      \"eventId\": \"ae7a7b63-5e3b-4497-851e-6f506eede31d\",\n      \"id\": \"98491710-7976-4568-b731-788d3d3f4d06\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"362e5ef8-21eb-4106-8ecf-8679cca4b847\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n@@ -24,11 +24,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:18.981Z,\n      \"eventId\": \"ae7a7b63-5e3b-4497-851e-6f506eede31d\",\n      \"id\": \"bcc2de7c-b278-4655-9343-16b8f7fbfc42\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"362e5ef8-21eb-4106-8ecf-8679cca4b847\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-confirm-expiry.race.test.ts:200:25",
+    "locations": [
+      "tests/integration/order-confirm-expiry.race.test.ts:200:25"
+    ]
+  },
+  {
+    "id": 29,
+    "suite": "tests/integration/order-confirm-expiry.race.test.ts",
+    "title": "confirm versus actual expiry job preserves single winner (winner=1, reverse reads=true)",
+    "failure": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  - 2\n+ Received  + 2\n\n@@ -4,11 +4,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:19.093Z,\n      \"eventId\": \"0844dbaa-843a-414f-89a4-bd7b5252afac\",\n      \"id\": \"abfe5336-f9db-4862-884f-68f168a221e8\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"3fd8d3d2-7b00-49fd-a21f-14715ab83061\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n@@ -24,11 +24,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:19.093Z,\n      \"eventId\": \"0844dbaa-843a-414f-89a4-bd7b5252afac\",\n      \"id\": \"d12a3e1b-bef9-46e9-82b2-b60eb2653f65\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"3fd8d3d2-7b00-49fd-a21f-14715ab83061\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-confirm-expiry.race.test.ts:200:25",
+    "locations": [
+      "tests/integration/order-confirm-expiry.race.test.ts:200:25"
+    ]
+  },
+  {
+    "id": 30,
+    "suite": "tests/integration/payment-old-processing.baseline.test.ts",
+    "title": "PROCESSING duplicate (crashed ancient owner=true)",
+    "failure": "PrismaClientValidationError: \nInvalid `tx.paymentRefund.upsert()` invocation in\n/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:453:29\n\n  450   intent: Stripe.PaymentIntent,\n  451   reason: string\n  452 ) {\n\u2192 453   return tx.paymentRefund.upsert({\n          where: {\n            paymentIntentId: \"pi_crash137-1792569504300\"\n          },\n          create: {\n            orderId: \"03483652-1bab-403c-9438-729afa9903d4\",\n            paymentIntentId: \"pi_crash137-1792569504300\",\n            currency: undefined,\n            reason: \"INCORRECT_AMOUNT\",\n        +   amount: Int\n          },\n          update: {}\n        })\n\nArgument `amount` is missing.\n    at wn (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:29:1363)\n    at $n.handleRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6958)\n    at $n.handleAndLogRequestError (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6623)\n    at $n.request (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:121:6307)\n    at l (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:9633)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:339:30\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at withRetry.maxRetries (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:318:21)\n    at withRetry (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/retry.ts:28:14)\n    at PaymentService.handlePaymentSuccess (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:316:7)\n    at PaymentService.processEvent (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:181:54)\n    at PaymentService.handleWebhook (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/payments/service.ts:173:5)\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-old-processing.baseline.test.ts:144:7",
+    "locations": [
+      "src/api/payments/service.ts:453:29",
+      "src/api/payments/service.ts:339:30",
+      "src/api/payments/service.ts:318:21",
+      "src/utils/retry.ts:28:14",
+      "src/api/payments/service.ts:316:7",
+      "src/api/payments/service.ts:181:54",
+      "src/api/payments/service.ts:173:5",
+      "tests/integration/payment-old-processing.baseline.test.ts:144:7"
+    ]
+  },
+  {
+    "id": 31,
+    "suite": "tests/integration/payment-fenced-checkpoint.test.ts",
+    "title": "FAILED retry generation, real transaction fulfillment, stale finish and failure immunity",
+    "failure": "Error: expect(received).rejects.toMatchObject(expected)\n\n- Expected  - 2\n+ Received  + 1\n\n  Object {\n-   \"message\": \"Payment intent does not match order\",\n-   \"statusCode\": 400,\n+   \"statusCode\": 409,\n  }\n    at Object.toMatchObject (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/expect/build/index.js:2155:20)\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/payment-fenced-checkpoint.test.ts:116:15)",
+    "locations": [
+      "tests/integration/payment-fenced-checkpoint.test.ts:116:15"
+    ]
+  },
+  {
+    "id": 32,
+    "suite": "tests/integration/order-confirm-cancel.race.test.ts",
+    "title": "confirm versus cancel preserves single winner (winner=0, reverse reads=false)",
+    "failure": "ApiError: Order can no longer be fulfilled\n    at ApiError.conflict (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/ApiError.ts:32:12)\n    at OrderService.confirmOrderInTransaction (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/orders/service.ts:350:22)\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)",
+    "locations": [
+      "src/utils/ApiError.ts:32:12",
+      "src/api/orders/service.ts:350:22"
+    ]
+  },
+  {
+    "id": 33,
+    "suite": "tests/integration/order-confirm-cancel.race.test.ts",
+    "title": "confirm versus cancel preserves single winner (winner=0, reverse reads=true)",
+    "failure": "ApiError: Order can no longer be fulfilled\n    at ApiError.conflict (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/ApiError.ts:32:12)\n    at OrderService.confirmOrderInTransaction (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/orders/service.ts:350:22)\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)",
+    "locations": [
+      "src/utils/ApiError.ts:32:12",
+      "src/api/orders/service.ts:350:22"
+    ]
+  },
+  {
+    "id": 34,
+    "suite": "tests/integration/order-confirm-cancel.race.test.ts",
+    "title": "confirm versus cancel preserves single winner (winner=1, reverse reads=false)",
+    "failure": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  - 2\n+ Received  + 2\n\n@@ -4,11 +4,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:36.753Z,\n      \"eventId\": \"d3665585-0be0-429e-ac38-26923d9afa4d\",\n      \"id\": \"0d6c0cf0-cc63-4369-bb1c-1b7172c25b7a\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"9cedfa7e-a586-45eb-8c95-5237e88d591a\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n@@ -24,11 +24,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:36.753Z,\n      \"eventId\": \"d3665585-0be0-429e-ac38-26923d9afa4d\",\n      \"id\": \"f076b502-0110-4064-bbd9-17f51718fa34\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"9cedfa7e-a586-45eb-8c95-5237e88d591a\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-confirm-cancel.race.test.ts:163:25",
+    "locations": [
+      "tests/integration/order-confirm-cancel.race.test.ts:163:25"
+    ]
+  },
+  {
+    "id": 35,
+    "suite": "tests/integration/order-confirm-cancel.race.test.ts",
+    "title": "confirm versus cancel preserves single winner (winner=1, reverse reads=true)",
+    "failure": "Error: expect(received).toEqual(expected) // deep equality\n\n- Expected  - 2\n+ Received  + 2\n\n@@ -4,11 +4,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:36.797Z,\n      \"eventId\": \"bde1bde8-57ff-4ae6-9115-3bc3095e69a7\",\n      \"id\": \"9283aa88-7045-4512-872b-e768f237bc3a\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"e8039dca-3f1b-464e-b2df-5fb8a9b45a25\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n@@ -24,11 +24,11 @@\n      \"checkedInAt\": null,\n      \"checkedInBy\": null,\n      \"createdAt\": 2026-10-21T07:58:36.797Z,\n      \"eventId\": \"bde1bde8-57ff-4ae6-9115-3bc3095e69a7\",\n      \"id\": \"98e0bb18-40b4-41bb-b5ab-e8330f4129b9\",\n-     \"inventoryState\": \"HELD\",\n+     \"inventoryState\": \"RELEASED\",\n      \"orderId\": \"e8039dca-3f1b-464e-b2df-5fb8a9b45a25\",\n      \"pricePaid\": \"10\",\n      \"qrCodeUrl\": null,\n      \"seatInfo\": null,\n      \"status\": \"CANCELLED\",\n    at /home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/tests/integration/order-confirm-cancel.race.test.ts:163:25",
+    "locations": [
+      "tests/integration/order-confirm-cancel.race.test.ts:163:25"
+    ]
+  },
+  {
+    "id": 36,
+    "suite": "tests/integration/order-double-confirm.race.test.ts",
+    "title": "overlapping confirm applies inventory once and preserves another pending hold (reverse reads=false)",
+    "failure": "ApiError: Order can no longer be fulfilled\n    at ApiError.conflict (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/ApiError.ts:32:12)\n    at OrderService.confirmOrderInTransaction (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/orders/service.ts:350:22)\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)",
+    "locations": [
+      "src/utils/ApiError.ts:32:12",
+      "src/api/orders/service.ts:350:22"
+    ]
+  },
+  {
+    "id": 37,
+    "suite": "tests/integration/order-double-confirm.race.test.ts",
+    "title": "overlapping confirm applies inventory once and preserves another pending hold (reverse reads=true)",
+    "failure": "ApiError: Order can no longer be fulfilled\n    at ApiError.conflict (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/utils/ApiError.ts:32:12)\n    at OrderService.confirmOrderInTransaction (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/src/api/orders/service.ts:350:22)\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-318/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)",
+    "locations": [
+      "src/utils/ApiError.ts:32:12",
+      "src/api/orders/service.ts:350:22"
+    ]
+  }
+]
