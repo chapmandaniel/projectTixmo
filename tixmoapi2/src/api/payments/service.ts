@@ -28,6 +28,7 @@ const LATE_PAYMENT_MANUAL_RECONCILIATION =
 const LEASE_MS = 5 * 60_000;
 // Fixed durable cooldown: at most one background attempt per minute per refund.
 const REFUND_RECOVERY_BACKOFF_MS = 60_000;
+const WEBHOOK_RECOVERY_BACKOFF_MS = 60_000;
 const IDEMPOTENCY_SAFE_MS = 23 * 60 * 60_000;
 const cents = (value: { toString(): string }) => {
   const amount = Math.round(Number(value.toString()) * 100);
@@ -777,6 +778,7 @@ export class PaymentService {
     if (!this.stripe) return;
     const events = await prisma.paymentWebhookEvent.findMany({
       where: {
+        updatedAt: { lte: new Date(Date.now() - WEBHOOK_RECOVERY_BACKOFF_MS) },
         OR: [
           { status: { in: ['RECEIVED', 'FAILED'] } },
           { status: 'PROCESSING', processingStartedAt: { lt: new Date(Date.now() - LEASE_MS) } },
@@ -796,6 +798,22 @@ export class PaymentService {
         } else await this.processEvent(await this.stripe.events.retrieve(event.id));
       } catch (error) {
         logger.error(`Webhook reconciliation failed for ${event.id}: ${error}`);
+        // Provider retrieval can fail before processEvent claims the event. Rotate
+        // that poison work without claiming effects or modifying lease/status.
+        // A newer claim/result must never be overwritten by this stale selection.
+        await prisma.paymentWebhookEvent.updateMany({
+          where: {
+            id: event.id,
+            updatedAt: event.updatedAt,
+            status: event.status,
+            attemptGeneration: event.attemptGeneration,
+          },
+          data: {
+            updatedAt: new Date(),
+            errorMessage:
+              'Webhook recovery reconciliation required; owner=tixmo-backend; retry after 60 seconds.',
+          },
+        });
       }
     }
     const lost = await prisma.paymentAttempt.findMany({
