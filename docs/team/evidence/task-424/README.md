@@ -82,7 +82,7 @@ duplicate release. Random uniquely scoped key cleaned in finally. No blocked
 network entries. Missing-env warning expected: this Redis-only probe receives
 no database or JWT settings. This is not real HTTP pressure/abort-load evidence.
 Runtime binaries:PostgreSQL18.6(Ubuntu18.6-0ubuntu0.26.04.1),Redis8.0.5;
-not production-like target PostgreSQL14/Redis7 parity.
+not task245 target PostgreSQL17/Redis8.2.10 parity (verified against current board245).
 
 ## Final supplementary API result: FAIL
 
