@@ -1,0 +1,7 @@
+1e1d3771327a956150ab58af1be37bcd949e01f40f4aae4d4ac119d535873c0b  scripts/browser/task-316-reopen.mjs
+0c56ff7596ab68b79ef7c77bb3f28ed6148ff37b0dc5297ee1e37ed4ecbd2d5d  scripts/browser/task-316-elapsed.mjs
+9c083f76467177b8e7eefacc7041e10fa87c49d0d67d8ec1b791e8404978d57e  scripts/browser/task-294-support.mjs
+828f94da12dd9fe466fdae2fc16601e694634e8683dd393c5a25c8a7c80f8225  tixmoapi2/tests/integration/wallet-reopen.qa316.local.test.ts
+8f899442c6a565a11d92771b75f02a39ca4a117e9c7023dc57a432b65e673f00  tixmoapi2/tests/integration/wallet-elapsed-receipt.qa316.local.test.ts
+935611da7e522201931686282d8707a41cb7c7e41a54d40e73063cae2823a9d5  docs/team/evidence/task-316-A/runtime.sh
+7e8b12f87ff52652273f56d029cd56c3f443acee54f76643c3079950b940fe77  docs/team/evidence/task-316-BC/runtime.sh

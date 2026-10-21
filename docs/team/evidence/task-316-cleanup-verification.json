@@ -1,0 +1,34 @@
+{
+  "pidsAbsent": {
+    "2830819": true,
+    "2830832": true,
+    "2830916": true,
+    "2831232": true,
+    "2831378": true,
+    "2831506": true,
+    "2831944": true,
+    "2831957": true,
+    "2832059": true,
+    "2832390": true
+  },
+  "listeners": "",
+  "ports": [
+    26471,
+    29759,
+    34945,
+    39345,
+    42297,
+    45073,
+    46015,
+    46833,
+    51659,
+    57573
+  ],
+  "profilesRemaining": [],
+  "socketsRemaining": [],
+  "postmasterPidfilesRemaining": [],
+  "rootModes": {
+    "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task316-A": "0o700",
+    "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task316-BC": "0o700"
+  }
+}

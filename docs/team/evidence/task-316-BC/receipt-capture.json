@@ -1,0 +1,96 @@
+{
+  "scope": "inert local transport capture ONLY not inbox/provider acceptance",
+  "statuses": {
+    "A": 200,
+    "B": 404,
+    "unpaid": 400
+  },
+  "mail": {
+    "from": "Synthetic local <sender@synthetic.test>",
+    "to": "local294-1792568736231-a@synthetic.test",
+    "subject": "Order Confirmation - <img src=x onerror=bad>& event",
+    "html": "\n      <!DOCTYPE html>\n      <html>\n        <head>\n          <style>\n            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n            .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n            .header { background-color: #4F46E5; color: white; padding: 20px; text-align: center; }\n            .content { padding: 20px; background-color: #f9fafb; }\n            .details { background-color: white; padding: 15px; margin: 10px 0; border-radius: 5px; }\n            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }\n          </style>\n        </head>\n        <body>\n          <div class=\"container\">\n            <div class=\"header\">\n              <h1>Order Confirmed!</h1>\n            </div>\n            <div class=\"content\">\n              <p>Hi &lt;script&gt;A&amp; Fixture,</p>\n              <p>Thank you for your order! Your tickets are confirmed.</p>\n              <div class=\"details\">\n                <p><strong>Order Number:</strong> ORDER-local294-1792568736231</p>\n                <p><strong>Event:</strong> &lt;img src=x onerror=bad&gt;&amp; event</p>\n                <p><strong>Date:</strong> October 22, 2026 at 5:15 a.m.</p>\n                <p><strong>Tickets:</strong> 1</p>\n                <p><strong>Total:</strong> $USD 10.00</p>\n              </div>\n              <p>Your tickets will be available in your account shortly.</p>\n              <p><a href=\"http://127.0.0.1:45073/wallet\">View your tickets</a>. Sign in with the account used for this order.</p>\n            </div>\n            <div class=\"footer\">\n              <p>TixMo - Event Ticketing Platform</p>\n              <p>This is an automated message, please do not reply.</p>\n            </div>\n          </div>\n        </body>\n      </html>\n    ",
+    "text": "\n      Order Confirmed!\n      \n      Hi <script>A& Fixture,\n      \n      Thank you for your order! Your tickets are confirmed.\n      \n      Order Number: ORDER-local294-1792568736231\n      Event: <img src=x onerror=bad>& event\n      Date: October 22, 2026 at 5:15 a.m.\n      Tickets: 1\n      Total: $USD 10.00\n      \n      Your tickets will be available in your account shortly.\n      View your tickets: http://127.0.0.1:45073/wallet\n      Sign in with the account used for this order.\n      \n      TixMo - Event Ticketing Platform\n    "
+  },
+  "sendCount": 1,
+  "financialBefore": {
+    "orders": [
+      {
+        "id": "149335bd-11ae-4c20-b727-1902503d2ac9",
+        "status": "PENDING",
+        "paymentStatus": "PENDING",
+        "totalAmount": "10"
+      },
+      {
+        "id": "b2a83d1e-1c94-4259-8426-bcfc041aadb3",
+        "status": "PAID",
+        "paymentStatus": "SUCCEEDED",
+        "totalAmount": "10"
+      }
+    ],
+    "tickets": [
+      {
+        "id": "39f3d1fa-8b41-42f6-8fb6-f741da741b73",
+        "orderId": "b2a83d1e-1c94-4259-8426-bcfc041aadb3",
+        "eventId": "e67e0900-dbda-4cee-a7a4-8c182a5eaa26",
+        "ticketTypeId": "e5957cbc-7af0-4d8b-9219-4fcdfa49167e",
+        "tierId": null,
+        "inventoryState": "SOLD",
+        "userId": "966451e3-f9e6-442e-b735-d29c64537802",
+        "barcode": "local294-1792568736231",
+        "qrCodeUrl": "data:image/png;base64,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",
+        "seatInfo": null,
+        "status": "VALID",
+        "pricePaid": "10",
+        "checkedInAt": null,
+        "checkedInBy": null,
+        "transferredFrom": null,
+        "transferredAt": null,
+        "createdAt": "2026-10-21T07:45:36.377Z",
+        "updatedAt": "2026-10-21T07:45:39.119Z"
+      }
+    ],
+    "attempts": 0,
+    "refunds": 0
+  },
+  "financialAfter": {
+    "orders": [
+      {
+        "id": "149335bd-11ae-4c20-b727-1902503d2ac9",
+        "status": "PENDING",
+        "paymentStatus": "PENDING",
+        "totalAmount": "10"
+      },
+      {
+        "id": "b2a83d1e-1c94-4259-8426-bcfc041aadb3",
+        "status": "PAID",
+        "paymentStatus": "SUCCEEDED",
+        "totalAmount": "10"
+      }
+    ],
+    "tickets": [
+      {
+        "id": "39f3d1fa-8b41-42f6-8fb6-f741da741b73",
+        "orderId": "b2a83d1e-1c94-4259-8426-bcfc041aadb3",
+        "eventId": "e67e0900-dbda-4cee-a7a4-8c182a5eaa26",
+        "ticketTypeId": "e5957cbc-7af0-4d8b-9219-4fcdfa49167e",
+        "tierId": null,
+        "inventoryState": "SOLD",
+        "userId": "966451e3-f9e6-442e-b735-d29c64537802",
+        "barcode": "local294-1792568736231",
+        "qrCodeUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAAAAklEQVR4AewaftIAAA/USURBVO3BUa4cOrIkwXDi7H/LPsJ8JiiAF1SVxH5hhr+kquoBK1VVj1ipqnrESlXVI1aqqh6xUlX1iJ/8BpB/kZpTQE6pOQXklJoJyI6aCcgpNaeATGo+AciOmgnIjpoJyKRmB8gNNaeAnFKzA+SEmltA/kVqppWqqkesVFU9YqWq6hErVVWP+Ml/oOabgNxQMwE5BeSUmh0gp4BManaATEBOqbkB5BaQU0AmNROQHTWngJwCMqnZATIB2VEzAZmA7Ki5oeabgJxYqap6xEpV1SNWqqoesVJV9YiVqqpH/OQPAHJDzS0gk5pJzSk136RmArKj5gSQU0B21HyLmh0gE5BJzS01E5BTQE6pOaVmAvJNQG6oubFSVfWIlaqqR6xUVT1iparqET+p/w/IpOYUkB01p4BMak4BmdScUrMDZFKzA+QT1JwAckrNLTUTkFNAbqjZATKped1KVdUjVqqqHrFSVfWIlaqqR6xUVT3iJ/8j1ExAJjW3gJwC8jcB+QQg/yI1t4CcAjKp2QFySs0E5JSa/0UrVVWPWKmqesRKVdUjVqqqHvGTP0DNK4DsqDmlZgJySs0pIDfU7AC5oeYWkAnIDTX/KjWngPyL1PxNK1VVj1ipqnrESlXVI1aqqh6xUlX1iJ/8B0D+VUAmNROQU0B21JxSMwHZUXNKzQTkhpodIKeATGpOqdkBMqmZgOyomYDsqJmA7KiZgOyomYDsqJmAnAIyqTkF5F+0UlX1iJWqqkesVFU9YqWq6hE/+Q01L1EzAZnUnFKzA+QUkG9R87ep+QQ1E5BJzSk1p9TsALmhZgfIpOYT1LxiparqEStVVY9Yqap6xEpV1SNWqqoe8ZMPAXJKzQ6QU2puAJnUnFKzA2RScwvIpOZbgLwEyLeouaVmAjKp+duAnFJzY6Wq6hErVVWPWKmqesRKVdUjfvIbQP42NaeAnACyo+aUmgnIN6mZgExq/jY13wJkR80pIDeA7KiZgNwAsqPmBpBTanaATEBOqZlWqqoesVJV9YiVqqpHrFRVPeInf4CaU0AmIJ+gZgLyTWq+Rc0EZEfNKTWngJwCMql5iZpTQE6pmYCcAvIJak6p+dNWqqoesVJV9YiVqqpHrFRVPWKlquoRP/kNNTeAnFJzCshLgJxS8y8CMqn5BCCfAOSUmgnILTUTkFNqJiCn1HwCkB01p4BMaqaVqqpHrFRVPWKlquoRK1VVj/jJbwCZ1OwAmdTsAJmAfAKQU0BuqNkBMqn5FjW31ExAdtR8gpo/DcgOkBtAbgGZ1HwCkFNqPkHNiZWqqkesVFU9YqWq6hErVVWPWKmqesRP/gA1p9RMQHbU3ADyCWomIDtqJiCn1JwC8hI1E5AbQE6p2QEyqdkBMqnZAXIDyA0gt4D8TStVVY9Yqap6xEpV1SNWqqoe8ZPfUDMB2VHzCUD+NDU7QD4ByCk1E5BTaiYgp9TsAJnU7AC5oeZbgOyomYB8gppPAHJDzSkg37JSVfWIlaqqR6xUVT1iparqEStVVY/AX3IIyI6aU0AmNaeA7KiZgPxfouYGkB01E5AdNXUOyI6aCcikZgfIpGYHyKTmFJBTam6sVFU9YqWq6hErVVWPWKmqegT+kg0g/yI1p4BManaAnFJzA8gpNaeAfIuaHSCn1ExAdtRMQCY1t4BManaA3FCzA+SEmlNAdtScAjKpOQVkR82JlaqqR6xUVT1iparqEStVVY9Yqap6xE/+AzU7QE6p+ZuAnFJzC8ikZgfIBOSUmhtAbqmZgJxS8wlAJjWngOyomYDcUjMBuaHmFJAdNaeAnAIyqZlWqqoesVJV9YiVqqpHrFRVPeIn/zAg36JmArKj5gaQW2r+NDU7QCYgO2omNTtAJjWn1JxSc0PNKTU7QE4BmdTcALKj5hSQSc0pNTdWqqoesVJV9YiVqqpHrFRVPWKlquoR+EsuAZnU7AA5peYUkEnNKSCTmlNAdtTcAPItam4BmdScArKjZgIyqdkBMqnZATKp2QEyqfkWIDtqTgGZ1PyLVqqqHrFSVfWIlaqqR6xUVT0Cf8kGkFNqJiB/m5pTQG6ouQVkUrMD5ISaHSCTmm8CckrNCSA7ar4FyCk1O0C+Rc0E5JSaW0AmNdNKVdUjVqqqHrFSVfWIlaqqR+AvOQTklpobQD5BzQRkR80EZEfN3wTkm9RMQHbU3ADyt6mZgNxScwPIDTU7QCY1O0AmNTtAJjXTSlXVI1aqqh6xUlX1iJWqqkesVFU94if/gZodIDeAvATIpGYHyA01p4BManaAnFJzCsik5haQSc0E5JSaHSB/G5Abak4BmYDsqJmA7Kj501aqqh6xUlX1iJWqqkesVFU94ie/AWRSs6PmhppbQE6ouaVmAvK3qbmh5paaG0B21ExAJjWfoGYHyCk1E5BTak4BOaVmArIDZFJzCsiNlaqqR6xUVT1iparqEStVVY9Yqap6BP6SDSCn1ExA/jY1E5BTam4BOaXmBpD/69TsALmhZgfIDTU3gPwvUHNiparqEStVVY9Yqap6xEpV1SPwlxwCsqNmAnJKzS0gJ9TcAnJKzQ0gO2r+NCCn1NwCMqnZATKpmYCcUrMD5JSaCciOmgnIjpoJyKRmB8ik5haQG2p2gExqppWqqkesVFU9YqWq6hErVVWPWKmqesRP/gAgk5odIKeATGr+NjU3gJxSswPkhJodIJOaHSCngExqTgHZUTMBOaVmArKj5hSQb1EzAbkFZFJzSs0OkAnIjZWqqkesVFU9YqWq6hErVVWP+MlvADml5hPU3FAzATml5hSQHTWTmlNATqmZgOyo+QQ1nwDkhJpvUnMKyJ+mZgfIKTV/m5oTK1VVj1ipqnrESlXVI1aqqh6xUlX1CPwll4BManaA/E1qvgnIpGYHyCk1J4CcUrMD5FvU7ACZ1JwC8glqJiA7aiYgO2omIJOaHSAvUXNiparqEStVVY9Yqap6xEpV1SPwlxwCckvNtwA5pWYCsqNmAnJKzb8IyI6aCciOmgnILTUngNxScwrIpOYUkFNqJiA7ak4BmdT8i1aqqh6xUlX1iJWqqkesVFU9YqWq6hH4S/4yILfUTEBuqPkEIN+iZgfIpOYWkEnNDpAbak4BuaFmB8ik5hSQU2pOAZnUnAJyS80E5JSaaaWq6hErVVWPWKmqesRKVdUjfvIbQCY1t4CcUjMBuaFmB8gE5JSaU2puATkBZEfNKSCn1ExAdtScAjIBmdScUrMD5G9Tc0PNDTU7QD5BzYmVqqpHrFRVPWKlquoRK1VVj/jJb6iZgHwTkFNAbqi5AeSUmh0gp9RMQCY1t9RMQG4BuaHmW4B8E5AbaiYgn6BmB8gpIJOaaaWq6hErVVWPWKmqesRKVdUjVqqqHoG/ZAPIpOZ1QG6pOQXklJoJyI6aG0BuqNkBckrN3wTklJodIKfUTEB21ExAJjWfAOSWmgnIKTXTSlXVI1aqqh6xUlX1iJWqqkf85D8AsqNmAnJKzQ6QG2pOqZmA/KuA3FBzA8gpNTtAJjU3gOyomdTsAJmA7Kj5BCCTmlNAJjU7QE6pOQVkUrMD5MRKVdUjVqqqHrFSVfWIlaqqR6xUVT3iJ1+m5pSaCcgNNafUnAJySs0OkEnNtwDZUTOpuaXmT1OzA2RScwvI3wTkm4B8gpoTK1VVj1ipqnrESlXVI1aqqh6Bv+QQkB01p4B8i5oJyC01E5BTanaAnFJzAsiOmm8BsqPmBpAbam4BmdScAvK3qZmA7KiZgHyCmmmlquoRK1VVj1ipqnrESlXVI1aqqh7xk98AcgPIjpoJyI6aG0BOqZmA3FIzAdlRcwrIpGZScwrIJ6j5BDWngExAdtScUvMvUvMJQE6p+dNWqqoesVJV9YiVqqpHrFRVPeIn/4GaT1CzA+SUmhtAJjU7QCY1t4BMar5FzTcB+dPU7Kg5BeSGmh0gp9ScAHILyKRmB8gpIJOaGytVVY9Yqap6xEpV1SNWqqoesVJV9Yif/AdAvknNBOSUmlNATqn5BDUTkFNATqmZgOyoOQXklJpTQCY1E5BTanbUTED+RWpOATkF5JuATGqmlaqqR6xUVT1iparqEStVVY/4yW+o+QQgk5odIKeATGpuADml5iVAvkXNDpBJzY6aG2omIDtqJjU7QCYgO2pOAZnUTEBuqZmA3FIzAbmxUlX1iJWqqkesVFU9YqWq6hErVVWP+Ml/AGRHzQRkR80pNa8DMqk5pWYHyKTmdUBOqbmhZgfIpGZHzQ0gO2pOqDkFZAfIKTUTkB0gk5obK1VVj1ipqnrESlXVI1aqqh7xk98A8glAbqjZATKpOaXmFJAJyCcAuQHklpoJyL9IzSkgp4DsqDkFZFKzA+SGmlNqTgE5peYUkEnNtFJV9YiVqqpHrFRVPWKlquoR+EsOATml5hOAnFJzCsgpNROQHTWfAGRSMwH5JjUTkFNqdoCcUPMJQG6pmYDcUHMKyCk1t4BMam6sVFU9YqWq6hErVVWPWKmqesRKVdUj8Jd8AJAdNaeAnFIzAZnUnAKyo2YCckrNKSA31JwC8q9ScwLIJ6i5BeSUmhtA/kVqbqxUVT1iparqEStVVY9Yqap6xE8+RM0tNaeATGomIDtqJjWn1HyTmgnIDTU7QCY1t4BMaj5BzQ0gn6BmB8gJNafU3ALyN61UVT1iparqEStVVY9Yqap6xEpV1SN+8htA/kVqTgGZ1NwCckrNBOSUmh0gk5pTQCY1t4BMam4BOaFmB8ik5paaU0AmIDtqvgXIpOaUmh0gf9pKVdUjVqqqHrFSVfWIlaqqR+Av2QAyqfkmIJOaU0BOqfkEIJOaU0A+Qc0E5JSaW0BOqZmAnFIzAbmlZgKyo+YUkEnNBOSUmltATqk5BWRSM61UVT1iparqEStVVY9Yqap6xEpV1SN+8gcAuaHmFpBJzQTkFJAdNd+i5hOATGp2gExAXqfmE9ScArKjZgJyA8gnqDkFZEfNiZWqqkesVFU9YqWq6hErVVWP+Mn/MWpOqdkBcgPIJ6iZgHyCmlNAdtR8C5BTak4BuaFmB8gJNTtAJjWfAOSUmhsrVVWPWKmqesRKVdUjVqqqHrFSVfWIn/yPUHMCyCeo+QQgN9TsALkB5BOAfIKaCcgOkBtqdoCcUnMCyCcAOaVmB8gE5JSaaaWq6hErVVWPWKmqesRKVdUjfvIHqPkXATmlZgJyCsiOmgnIKTWngJxS87cBOaXmBJBvUnNKzQRkR80E5BOAfIuaGytVVY9Yqap6xEpV1SNWqqoesVJV9Yif/AdAXqLmhpodIJ+gZgKyo+YGkEnNKTU7QCY1O0AmNTtAJjU31OwAmdTsADml5k9TswPklJoJyI6aU2omIDtqTqxUVT1iparqEStVVY9Yqap6BP6SqqoHrFRVPWKlquoRK1VVj1ipqnrE/wPWb8CPjftxEAAAAABJRU5ErkJggg==",
+        "seatInfo": null,
+        "status": "VALID",
+        "pricePaid": "10",
+        "checkedInAt": null,
+        "checkedInBy": null,
+        "transferredFrom": null,
+        "transferredAt": null,
+        "createdAt": "2026-10-21T07:45:36.377Z",
+        "updatedAt": "2026-10-21T07:45:39.119Z"
+      }
+    ],
+    "attempts": 0,
+    "refunds": 0
+  }
+}

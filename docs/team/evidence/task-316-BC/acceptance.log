@@ -1,0 +1,38 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task316-BC/run.jY5YTA/jest-cache --runInBand --runTestsByPath tests/integration/wallet-elapsed-receipt.qa316.local.test.ts
+
+  console.log
+    TASK294_REDIS_CLIENT 1
+
+      at Object.<anonymous> (tests/integration/wallet-elapsed-receipt.qa316.local.test.ts:27:11)
+
+  console.log
+    TASK294_API_LISTENER 2832059 { address: '127.0.0.1', family: 'IPv4', port: 42297 }
+
+      at Object.<anonymous> (tests/integration/wallet-elapsed-receipt.qa316.local.test.ts:36:11)
+
+TASK314_TARGET_B_PASS
+TASK294_BROWSER_CLEANUP {
+  browser: { pid: 2832390, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 45073, closed: true },
+  profileRemoved: true
+}
+  console.log
+    TASK314_B_C_PASS real elapsed expiry and actual NotificationService/template transport-only receipt capture; no financial mutation/provider calls
+
+      at Object.<anonymous> (tests/integration/wallet-elapsed-receipt.qa316.local.test.ts:77:11)
+
+  console.log
+    TASK294_API_CLOSED
+
+      at Object.<anonymous> (tests/integration/wallet-elapsed-receipt.qa316.local.test.ts:23:11)
+
+PASS tests/integration/wallet-elapsed-receipt.qa316.local.test.ts (25.564 s)
+  ✓ native elapsed server JWT expiry refresh reauthentication and real receipt local transport capture (19260 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        25.804 s
+Ran all test suites within paths "tests/integration/wallet-elapsed-receipt.qa316.local.test.ts".
