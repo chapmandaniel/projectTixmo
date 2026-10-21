@@ -27,7 +27,9 @@ test('100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec', 
   let server: http.Server | undefined;
   let httpPort: number | undefined;
   let revokeListener: (() => void) | undefined;
-  const identity = { pid: process.pid, ppid: process.ppid, executable: process.execPath, startStat: fs.readFileSync(`/proc/${process.pid}/stat`, 'utf8') };
+  const runId = process.env.TASK379_RUN_ID;
+  if (!runId || !/^[a-f0-9]{64}$/.test(runId)) throw new Error('Missing current runtime invocation');
+  const identity = { runId, runtimeRoot: artifact, pid: process.pid, ppid: process.ppid, executable: process.execPath, startStat: fs.readFileSync(`/proc/${process.pid}/stat`, 'utf8') };
   fs.writeFileSync(path.join(artifact, 'jest-identity.json'), JSON.stringify(identity, null, 2));
   let ACTIVE_REQUESTS_KEY: string | undefined;
   let failure: unknown;

@@ -21,6 +21,8 @@ task_root=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379
 node "$PWD/docs/team/evidence/task-379/runtime-path.cjs" "$task_root" --prepare
 owned_run=$(mktemp -d "$task_root/run.XXXXXX")
 node "$PWD/docs/team/evidence/task-379/runtime-path.cjs" "$owned_run"
+# Fresh per-invocation challenge, retained in this shell rather than trusted from receipts.
+export TASK379_RUN_ID=$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('hex'))")
 pgport=$(shuf -i 20000-39999 -n 1)
 redisport=$(shuf -i 40000-59999 -n 1)
 redis_pid=''
