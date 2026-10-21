@@ -1,0 +1,24 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task364/run.plgKcF",
+  "mode": "0o700",
+  "servicePids": [
+    "3102139",
+    "3102152"
+  ],
+  "workerPids": [
+    "3102244",
+    "3102267",
+    "3102290",
+    "3102313"
+  ],
+  "allPidsAbsent": true,
+  "ports": [
+    "30080",
+    "55590"
+  ],
+  "listeners": "",
+  "sockets": [],
+  "postmasterPidfileAbsent": true,
+  "blockedNetworkAttempts": "",
+  "priorAttemptPidsAbsent": true
+}
