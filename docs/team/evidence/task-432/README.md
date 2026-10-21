@@ -436,3 +436,40 @@ services, DB/Redis/HTTP/network/audit/install/generation/config/scheduler/cloud/
 spend/push/merge/deploy. Commit uses invocation-local identity/hooksPath only
 because inspected inherited Husky hook references missing _/husky.sh; no Git
 configuration write or lint-staged claim.
+
+## Local-phase lifecycle bridge (source/offline checkpoint)
+
+New isolated `tixmo/task-432-local-lifecycle`, exact base
+`1fd0e76eb74e4f78aadb17197f77181bf22a9d97` (460/461 narrow repair approved).
+Inspected maintained composition, ten-stage executor, 427 run-gate/runtime and
+actual independent reports. `scripts/market-local-phase.mjs` connects injected
+owned-runtime acquisition to the existing exact-ten executor and compose.openLocal.
+It checks source before acquisition and after admission, requires callable native,
+provenance and ownership verifiers, reruns all three before each child, and closes
+an acquired runtime on admission rejection. Cleanup failures propagate; executor
+close retains its once-only behavior. Acquisition owns rollback if it rejects
+before returning a handle. Invalid handles without cleanup cannot be cleaned here.
+
+No actual provider is supplied: default invocation rejects before acquisition.
+Boolean admission/provenance assertions are rejected, not treated as enforcement.
+Injected verifier functions remain trusted code, not authenticated security proof;
+offline fixtures do NOT demonstrate real native isolation or generated provenance.
+The bridge does not invoke or rewrite runtime.sh: extracting the existing 427
+shell lifecycle into a separately admitted provider remains OPEN, as do actual
+registry443/existing-DNS enforcement, scrubbed native runtime admission and
+installed/generated/native provenance. Core still cannot issue market PASS.
+
+Actual PASS: `node docs/team/evidence/task-432/offline-local-phase.mjs` covers
+missing provider/boolean claims, denied native/provenance and source drift with
+zero stage execution and cleanup, revocation before first child, compose integration
+with exact12 commands and every local failure position, raw output and once-only
+cleanup rejection; `node docs/team/evidence/task-432/offline-local-session.mjs`
+and `node docs/team/evidence/task-432/offline-stub.mjs` prior regressions PASS.
+New bridge/probe node syntax and git diff checks PASS. Exact12 table/default runner,
+nested4, 427 shell and old probes unchanged. No disk runtime fixtures needed.
+
+SOURCE/OFFLINE only,432 INCOMPLETE; original424 FAIL retained. Independent exact-SHA
+lead+QA required; no selfapproval, closure, runtime grant or fullmarketPASS. No
+services/app/Jest/DB/Redis/HTTP/network/audit/install/generation/config/scheduler/
+cloud/provider/spend/push/merge/deploy. Invocation-local Git identity/hooksPath
+only (previously inspected inherited missing Husky helper); no lint-staged claim.
