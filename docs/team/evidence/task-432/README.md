@@ -219,3 +219,34 @@ with exact warnings and explicit durability, reader-valid hashes, and duplicate
 reservation denial. Original offline-nested/offline-disk/offline-stub all PASS,
 store/regression syntax and diff checks PASS. No runtime/network/services.
 Independent lead436 fresh exact-successor review and QA438 still required.
+
+## Caller persistence-outcome continuation (source/offline only)
+
+From exact `f45349e422beb381ccfac419271c859df2a13e48`, composition retains the
+persistence callback's full result as returned-manifest `persistence`, including
+committed/warnings/durabilityConfirmed, plus an explicit `evidenceCompletion`.
+Committed publication is distinguished from confirmed directory-fsync durability.
+Missing/uncommitted outcomes or unconfirmed durability set caller qualification
+INCOMPLETE. Warnings remain visible even when durability is confirmed; callers
+must inspect them. No result emits market PASS. Failed stages/cleanup still reject
+and expose the manifest/outcome on `error.evidence`. Callback rejection reports
+CALLBACK_FAILED_PUBLICATION_UNKNOWN, not an unsupported unpublished guarantee;
+when it supersedes an execution failure that error is retained as executionFailure.
+
+This is a caller envelope, NOT a recursive rewrite of the already-sealed input.
+A reader's sealed manifest alone does not attest post-publication warnings or
+fsync history. Receiving/retaining this envelope is not crash-safe outcome storage,
+authenticity, filesystem immutability, or reviewed runtime qualification.
+
+Actual offline checks: `node docs/team/evidence/task-432/offline-caller.mjs`
+passes full12 stub runs with real owned-disk prepublication link EIO and
+postpublication unlink/chmod/both-directory-fsync faults, precise warnings and
+durability visibility, rejected stage/cleanup outcome visibility, absent/uncommitted
+callback results, unchanged sealed bytes. Existing offline-publication,
+offline-stub, offline-disk and offline-nested suites pass; changed JS syntax and
+`git diff --check` pass. No network/audit/runtime/application tests, DB/Redis/HTTP,
+install/generation/config/CI/scheduler/cloud/spend/push/merge/deploy executed.
+
+Task432 remains REVIEW/INCOMPLETE pending actual427 all10-stage lifecycle,
+CLI callback wiring, enforced registry/DNS boundary, verified provenance and fresh
+independent final lead+QA review. This caller change supplies no real adapters.

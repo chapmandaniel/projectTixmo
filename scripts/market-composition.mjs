@@ -42,7 +42,7 @@ export async function compose({ capture, openAudit, openLocal, persist, versions
   const manifest = { schema: 'task432-source-core-v1', identity, versions,
     started: now(), qualification: 'INCOMPLETE', receipts: [] };
   const unchanged = () => { if (!equal(identity, capture())) throw Error('Candidate changed; qualification invalid'); };
-  let session;
+  let session, failure;
   try {
     for (let index = 0; index < steps.length; index++) {
       unchanged();
@@ -82,10 +82,34 @@ export async function compose({ capture, openAudit, openLocal, persist, versions
     return manifest;
   } catch (error) {
     manifest.failure = error.message;
+    failure = error;
     throw error;
   } finally {
     try { if (session) await session.close(); }
-    catch (error) { manifest.qualification = 'INCOMPLETE'; manifest.cleanupFailure = error.message; throw error; }
-    finally { manifest.finished = now(); await persist(structuredClone(manifest)); }
+    catch (error) { failure = error; manifest.qualification = 'INCOMPLETE'; manifest.cleanupFailure = error.message; throw error; }
+    finally {
+      manifest.finished = now();
+      // The sealed input cannot contain its own post-publication outcome. Retain
+      // that outcome in the caller envelope instead; never rewrite sealed bytes.
+      try {
+        const outcome = await persist(structuredClone(manifest));
+        manifest.persistence = structuredClone(outcome ?? null);
+        manifest.evidenceCompletion = outcome?.committed === true
+          ? (outcome.durabilityConfirmed === true ? 'COMMITTED_DURABILITY_CONFIRMED' : 'COMMITTED_DURABILITY_UNCONFIRMED')
+          : 'PUBLICATION_UNCONFIRMED';
+        if (outcome?.committed !== true || outcome.durabilityConfirmed !== true) manifest.qualification = 'INCOMPLETE';
+      } catch (error) {
+        manifest.qualification = 'INCOMPLETE';
+        manifest.persistenceFailure = error.message;
+        // A generic callback rejection cannot prove publication never happened.
+        manifest.evidenceCompletion = 'CALLBACK_FAILED_PUBLICATION_UNKNOWN';
+        error.evidence = structuredClone(manifest);
+        if (failure) error.executionFailure = failure;
+        throw error;
+      } finally {
+        // Failed stages/cleanup still reject, with any committed outcome exposed.
+        if (failure) failure.evidence = structuredClone(manifest);
+      }
+    }
   }
 }
