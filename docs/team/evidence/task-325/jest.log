@@ -1,0 +1,12 @@
+PASS tixmoapi2/tests/integration/order-refund-current-path.test.ts (6.034 s)
+  ✓ denied USED remains unchanged before provider operations (122 ms)
+  ✓ denied TRANSFERRED remains unchanged before provider operations (48 ms)
+  ✓ matching inert provider success finalizes SOLD inventory once and retry is idempotent (110 ms)
+  ✓ pending inert refund does not finalize financial or inventory state (37 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        6.287 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-refund-current-path.test.ts".
+Test results written to: docs/team/evidence/task-325/jest-result.json

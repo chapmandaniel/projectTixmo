@@ -1,0 +1,19 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task325/run.ofFcmc",
+  "mode": "0o700",
+  "pids": [
+    2976960,
+    2976973
+  ],
+  "livePids": [],
+  "ports": [
+    35766,
+    46524
+  ],
+  "listeners": "",
+  "sockets": [],
+  "pgPidfile": false,
+  "redisPidfile": false,
+  "workers": "",
+  "blockedNetworkRecords": 0
+}
