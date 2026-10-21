@@ -1,0 +1,84 @@
+PASS tixmoapi2/tests/unit/api/events-public.service.test.ts
+  ● Console
+
+    console.warn
+      WARNING: Missing environment variables: DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, SESSION_SECRET
+
+      152 |     throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+      153 |   } else {
+    > 154 |     console.warn(`WARNING: Missing environment variables: ${missingEnvVars.join(', ')}`);
+          |             ^
+      155 |   }
+      156 | }
+      157 |
+
+      at Object.<anonymous> (src/config/environment.ts:154:13)
+      at Object.<anonymous> (src/config/email.ts:3:1)
+      at Object.<anonymous> (src/utils/notificationService.ts:1:1)
+      at Object.<anonymous> (src/api/orders/service.ts:4:1)
+      at Object.<anonymous> (src/api/events/service.ts:6:1)
+      at Object.<anonymous> (tests/unit/api/events-public.service.test.ts:1:1)
+
+    console.log
+      2026-10-21 05:47:10:4710 [32minfo[39m: [32mEmail transport using jsonTransport (env=test, hasCreds=false)[39m
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+PASS tixmoapi2/tests/benchmark/event_cache.benchmark.test.ts
+  ● Console
+
+    console.warn
+      WARNING: Missing environment variables: DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, SESSION_SECRET
+
+      152 |     throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+      153 |   } else {
+    > 154 |     console.warn(`WARNING: Missing environment variables: ${missingEnvVars.join(', ')}`);
+          |             ^
+      155 |   }
+      156 | }
+      157 |
+
+      at Object.<anonymous> (src/config/environment.ts:154:13)
+      at Object.<anonymous> (src/config/email.ts:3:1)
+      at Object.<anonymous> (src/utils/notificationService.ts:1:1)
+      at Object.<anonymous> (src/api/orders/service.ts:4:1)
+      at Object.<anonymous> (src/api/events/service.ts:6:1)
+      at Object.<anonymous> (tests/benchmark/event_cache.benchmark.test.ts:1:1)
+
+    console.log
+      --- START BENCHMARK ---
+
+      at Object.<anonymous> (tests/benchmark/event_cache.benchmark.test.ts:69:13)
+
+    console.log
+      1. First Call (Cold): 50.91ms
+
+      at Object.<anonymous> (tests/benchmark/event_cache.benchmark.test.ts:76:13)
+
+    console.log
+         (Cache was NOT populated - Baseline)
+
+      at Object.<anonymous> (tests/benchmark/event_cache.benchmark.test.ts:85:15)
+
+    console.log
+      2. Second Call (Hot): 50.09ms
+
+      at Object.<anonymous> (tests/benchmark/event_cache.benchmark.test.ts:93:13)
+
+    console.log
+      ✅ FRESH DETAIL READ: Similar duration.
+
+      at Object.<anonymous> (tests/benchmark/event_cache.benchmark.test.ts:98:15)
+
+    console.log
+      --- END BENCHMARK ---
+
+      at Object.<anonymous> (tests/benchmark/event_cache.benchmark.test.ts:105:13)
+
+
+Test Suites: 2 passed, 2 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        4.926 s
+Ran all test suites within paths "tixmoapi2/tests/benchmark/event_cache.benchmark.test.ts", "tixmoapi2/tests/unit/api/events-public.service.test.ts".
+Test results written to: docs/team/evidence/task-321/jest-result.json
