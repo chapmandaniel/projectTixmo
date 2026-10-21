@@ -1,0 +1,21 @@
+PASS tixmoapi2/tests/integration/order-refund-current-path.test.ts (7.16 s)
+PASS tixmoapi2/tests/integration/order-double-refund.race.test.ts
+  ● Console
+
+    console.log
+      TASK121_OBSERVED {"trace":["read-0-PAID","read-1-PAID","call-0-committed","both-settled"],"outcomes":["fulfilled","rejected"],"counters":[6,2,2],"target":"REFUNDED","payment":"SUCCEEDED","otherPending":"PENDING","otherPaid":"PAID","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-double-refund.race.test.ts:164:15
+
+    console.log
+      TASK121_OBSERVED {"trace":["read-1-PAID","read-0-PAID","call-1-committed","both-settled"],"outcomes":["rejected","fulfilled"],"counters":[6,2,2],"target":"REFUNDED","payment":"SUCCEEDED","otherPending":"PENDING","otherPaid":"PAID","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-double-refund.race.test.ts:164:15
+
+
+Test Suites: 2 passed, 2 total
+Tests:       21 passed, 21 total
+Snapshots:   0 total
+Time:        9.605 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-double-refund.race.test.ts", "tixmoapi2/tests/integration/order-refund-current-path.test.ts".
+Test results written to: docs/team/evidence/task-325-legacy/jest-result.json
