@@ -17,6 +17,9 @@ npm --prefix tdash run dev -- --host 127.0.0.1 --port 5187 --strictPort
 ```
 
 - Sample design: `http://127.0.0.1:5187/preview/event-onsale`.
+- Multi-event journey: `/preview/festival`, or `/preview/festival?passes=none`
+  for an event-tickets-only festival. See [festival journey and integration
+  contract](FESTIVAL_CUSTOMER_JOURNEY.md).
 - Real event: `/e/<published-event-slug>`, using the configured API URL.
 - Organizer entry: **Event page** in the event command center, enabled for
   published, on-sale, and sold-out events.

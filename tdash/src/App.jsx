@@ -40,6 +40,8 @@ const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const WalletPage = lazy(() => import('./pages/WalletPage'));
 const EventOnSalePage = lazy(() => import('./pages/EventOnSalePage'));
 const EventOnSalePreview = import.meta.env.DEV ? lazy(() => import('./pages/EventOnSalePreview')) : null;
+const FestivalPreview = import.meta.env.DEV ? lazy(() => import('./pages/FestivalPage')) : null;
+const FestivalEventPreview = import.meta.env.DEV ? lazy(() => import('./pages/FestivalPage').then(module => ({ default: module.FestivalEventPreview }))) : null;
 
 const RouteFallback = ({ isDark = true }) => (
     <div className={`flex min-h-[280px] items-center justify-center rounded-md border text-sm font-light ${isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-dashboard-muted' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
@@ -279,6 +281,8 @@ const App = () => {
                 {/* External unauthenticated routes */}
                 <Route path="/e/:slug" element={<EventOnSalePage />} />
                 {EventOnSalePreview && <Route path="/preview/event-onsale" element={<EventOnSalePreview />} />}
+                {FestivalPreview && <Route path="/preview/festival" element={<FestivalPreview />} />}
+                {FestivalEventPreview && <Route path="/preview/festival/events/:slug" element={<FestivalEventPreview />} />}
                 <Route path="/review/*" element={<ExternalReviewPage />} />
                 <Route path="/invite" element={<AcceptInvitationView onAccepted={(nextUser) => { handleLogin(nextUser); navigate('/dashboard', { replace: true }); }} />} />
                 <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />
