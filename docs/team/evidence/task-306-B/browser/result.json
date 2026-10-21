@@ -1,0 +1,119 @@
+{
+  "status": "PASS native elapsed same-page opening/closing and separate browser-only Date skew server400",
+  "observations": [
+    {
+      "name": "native-before-opening",
+      "native": 1121.5,
+      "date": 1792566354346,
+      "disabled": true
+    },
+    {
+      "name": "skew-early-server-reject",
+      "native": 1384.5,
+      "date": 1792566365609,
+      "disabled": false
+    },
+    {
+      "name": "native-open",
+      "native": 9714.199999809265,
+      "date": 1792566362939,
+      "disabled": false
+    },
+    {
+      "name": "native-closed",
+      "native": 21766.89999985695,
+      "date": 1792566374992,
+      "disabled": true
+    },
+    {
+      "name": "skew-late-server-reject",
+      "native": 21916.89999985695,
+      "date": 1792566364142,
+      "disabled": false
+    }
+  ],
+  "early": {
+    "status": 400,
+    "body": {
+      "success": false,
+      "message": "Event is not available for purchase"
+    }
+  },
+  "late": {
+    "status": 400,
+    "body": {
+      "success": false,
+      "message": "Event is not available for purchase"
+    }
+  },
+  "audit": [
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/public/clock305-1792566352769",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/public/clock305-1792566352769",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/public/clock305-1792566352769",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/events/public/clock305-1792566352769",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": "",
+      "body": {
+        "items": [
+          {
+            "ticketTypeId": "cacf24de-4583-4924-93f1-18957995d12d",
+            "quantity": 1
+          }
+        ]
+      }
+    },
+    {
+      "responsePath": "/api/v1/orders",
+      "status": 400
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": "",
+      "body": {
+        "items": [
+          {
+            "ticketTypeId": "cacf24de-4583-4924-93f1-18957995d12d",
+            "quantity": 1
+          }
+        ]
+      }
+    },
+    {
+      "responsePath": "/api/v1/orders",
+      "status": 400
+    }
+  ],
+  "failures": []
+}

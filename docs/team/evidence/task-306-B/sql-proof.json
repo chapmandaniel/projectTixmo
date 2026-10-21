@@ -1,0 +1,56 @@
+{
+  "before": {
+    "type": {
+      "id": "cacf24de-4583-4924-93f1-18957995d12d",
+      "eventId": "3822384f-45c0-4759-af8c-09fb42a06a3c",
+      "name": "Clock Admission",
+      "description": null,
+      "price": "10",
+      "quantityTotal": 100,
+      "quantityAvailable": 100,
+      "quantitySold": 0,
+      "quantityHeld": 0,
+      "tierInventoryStatus": "READY",
+      "salesStart": null,
+      "salesEnd": null,
+      "maxPerOrder": 10,
+      "requiresSeatSelection": false,
+      "sortOrder": 0,
+      "metadata": null,
+      "status": "ACTIVE",
+      "createdAt": "2026-10-21T07:05:52.901Z",
+      "updatedAt": "2026-10-21T07:05:52.901Z"
+    },
+    "orders": [],
+    "tickets": [],
+    "attempts": [],
+    "refunds": []
+  },
+  "after": {
+    "type": {
+      "id": "cacf24de-4583-4924-93f1-18957995d12d",
+      "eventId": "3822384f-45c0-4759-af8c-09fb42a06a3c",
+      "name": "Clock Admission",
+      "description": null,
+      "price": "10",
+      "quantityTotal": 100,
+      "quantityAvailable": 100,
+      "quantitySold": 0,
+      "quantityHeld": 0,
+      "tierInventoryStatus": "READY",
+      "salesStart": null,
+      "salesEnd": null,
+      "maxPerOrder": 10,
+      "requiresSeatSelection": false,
+      "sortOrder": 0,
+      "metadata": null,
+      "status": "ACTIVE",
+      "createdAt": "2026-10-21T07:05:52.901Z",
+      "updatedAt": "2026-10-21T07:05:52.901Z"
+    },
+    "orders": [],
+    "tickets": [],
+    "attempts": [],
+    "refunds": []
+  }
+}

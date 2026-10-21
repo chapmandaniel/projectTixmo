@@ -1,0 +1,27 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-306-B/run.m5tJrP/jest-cache --runInBand --runTestsByPath tests/integration/checkout-clock-browser.local.test.ts
+
+  console.log
+    TASK305_API_LISTENER 2779317 { address: '127.0.0.1', family: 'IPv4', port: 41575 }
+
+      at Object.<anonymous> (tests/integration/checkout-clock-browser.local.test.ts:24:205)
+
+TASK305_BROWSER_CLEANUP {
+  browser: { pid: 2779639, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 45375, closed: true },
+  profileRemoved: true
+}
+  console.log
+    TASK305_API_CLOSED
+
+      at Object.<anonymous> (tests/integration/checkout-clock-browser.local.test.ts:19:11)
+
+PASS tests/integration/checkout-clock-browser.local.test.ts (34.693 s)
+  ✓ actual App checkout stays mounted over native elapsed windows; browser-only Date skew cannot reserve (28456 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        34.947 s
+Ran all test suites within paths "tests/integration/checkout-clock-browser.local.test.ts".

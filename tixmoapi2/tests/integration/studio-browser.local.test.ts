@@ -35,6 +35,6 @@ test('real Studio unchanged saves preserve SQL instants and inventory in three b
  }
  await new Promise<void>((resolve,reject)=>{const child=spawn(process.execPath,[path.resolve(__dirname,'../../../scripts/browser/task-305-studio.mjs')],{stdio:['ignore','inherit','inherit'],env:{HOME:'/home/daniel',PATH:process.env.PATH!,NODE_ENV:'test',TIXMO_BROWSER_PATH:'/home/daniel/projects/projectTixmo/worktrees/task-288/scripts/runtime/task-288-chromium',TASK305_FRONTEND_PORT:String(frontendPort),TASK305_RUN:process.env.TMPDIR!,TASK305_API_ORIGIN:`http://127.0.0.1:${(server.address() as any).port}`,TASK305_FIXTURE:JSON.stringify({email:user.email,password,organizationId:org.id,cases})}});child.on('error',reject);child.on('exit',c=>c===0?resolve():reject(Error(`Browser exit ${c}`)));});
  const proof=[];for(const item of cases){const after=await snapshot(item.event.id);proof.push({zone:item.zone,before:item.before,after});expect(after).toEqual(item.before);}
- require('fs').writeFileSync(path.resolve(__dirname,'../../../docs/team/evidence/task-305-r2/sql-proof.json'),JSON.stringify(proof,null,2));
+ require('fs').writeFileSync(path.resolve(__dirname,'../../../docs/team/evidence/task-306-A/sql-proof.json'),JSON.stringify(proof,null,2));
  for(const result of (Stripe as unknown as jest.Mock).mock.results)for(const group of Object.values(result.value) as any[])for(const fn of Object.values(group) as jest.Mock[])expect(fn).not.toHaveBeenCalled();
 },85000);

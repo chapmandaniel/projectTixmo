@@ -1,0 +1,44 @@
+{
+  "task-306-A": {
+    "run": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-306-A/run.dBGn9U",
+    "pidsAbsent": {
+      "2778130": true,
+      "2778161": true,
+      "2778251": true,
+      "2778594": true
+    },
+    "portsClosed": {
+      "21231": true,
+      "42583": true,
+      "35239": true,
+      "44661": true,
+      "42383": true
+    },
+    "postmasterAbsent": true,
+    "pgSocketsAbsent": true,
+    "redisSocketAbsent": true,
+    "profilesAbsent": true,
+    "mode0700": true
+  },
+  "task-306-B": {
+    "run": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-306-B/run.m5tJrP",
+    "pidsAbsent": {
+      "2779162": true,
+      "2779175": true,
+      "2779317": true,
+      "2779639": true
+    },
+    "portsClosed": {
+      "35705": true,
+      "43122": true,
+      "41575": true,
+      "45375": true,
+      "34925": true
+    },
+    "postmasterAbsent": true,
+    "pgSocketsAbsent": true,
+    "redisSocketAbsent": true,
+    "profilesAbsent": true,
+    "mode0700": true
+  }
+}

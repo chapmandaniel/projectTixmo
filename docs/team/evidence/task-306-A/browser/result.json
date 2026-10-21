@@ -1,0 +1,1059 @@
+{
+  "status": "PASS Studio UI saves only; SQL verified by parent",
+  "audit": [
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/79e29ac6-b8d9-4d8b-882f-c0abc6ac3ecc",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/79e29ac6-b8d9-4d8b-882f-c0abc6ac3ecc",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues",
+      "query": "?limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=79e29ac6-b8d9-4d8b-882f-c0abc6ac3ecc"
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=ec54d487-5c4f-4db8-8cd7-d3a79855419a"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/events/79e29ac6-b8d9-4d8b-882f-c0abc6ac3ecc/configuration",
+      "query": "",
+      "body": {
+        "event": {
+          "title": "local305-1792566314713-0",
+          "name": "local305-1792566314713-0",
+          "description": "",
+          "organizationId": "cd937a30-9cb6-48db-83b0-f6646f66cf4e",
+          "startDateTime": "2026-11-09T15:30:27.123Z",
+          "endDateTime": "2026-11-10T21:00:00.000Z",
+          "timezone": "America/St_Johns",
+          "capacity": 100,
+          "category": "Music",
+          "metadata": {
+            "hashtag": ""
+          },
+          "tags": []
+        },
+        "ticketTypes": [
+          {
+            "id": "ec54d487-5c4f-4db8-8cd7-d3a79855419a",
+            "name": "Admission",
+            "price": 10,
+            "quantity": 100,
+            "status": "ACTIVE",
+            "maxPerOrder": 10,
+            "salesStart": "2026-11-09T15:30:27.123Z",
+            "salesEnd": "2026-11-10T20:00:00.000Z",
+            "tiers": [
+              {
+                "id": "74ee947e-c041-4eec-b5e4-dd27ba67501b",
+                "name": "Early",
+                "price": 8,
+                "quantityLimit": 50,
+                "startsAt": "2026-11-09T15:30:27.123Z",
+                "endsAt": "2026-11-10T20:00:00.000Z",
+                "sortOrder": 0,
+                "isActive": true
+              }
+            ]
+          }
+        ],
+        "publish": false
+      }
+    },
+    {
+      "responsePath": "/api/v1/events/79e29ac6-b8d9-4d8b-882f-c0abc6ac3ecc/configuration",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=79e29ac6-b8d9-4d8b-882f-c0abc6ac3ecc"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=ec54d487-5c4f-4db8-8cd7-d3a79855419a"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/b4bdf65a-c2c6-465f-b66e-c8115e253208",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/b4bdf65a-c2c6-465f-b66e-c8115e253208",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues",
+      "query": "?limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=b4bdf65a-c2c6-465f-b66e-c8115e253208"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=f17acc16-d0e6-4d29-bec6-941adee5f19d"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/events/b4bdf65a-c2c6-465f-b66e-c8115e253208/configuration",
+      "query": "",
+      "body": {
+        "event": {
+          "title": "local305-1792566314713-1",
+          "name": "local305-1792566314713-1",
+          "description": "",
+          "organizationId": "cd937a30-9cb6-48db-83b0-f6646f66cf4e",
+          "startDateTime": "2026-11-01T04:00:27.123Z",
+          "endDateTime": "2026-11-10T21:00:00.000Z",
+          "timezone": "America/St_Johns",
+          "capacity": 100,
+          "category": "Music",
+          "metadata": {
+            "hashtag": ""
+          },
+          "tags": []
+        },
+        "ticketTypes": [
+          {
+            "id": "f17acc16-d0e6-4d29-bec6-941adee5f19d",
+            "name": "Admission",
+            "price": 10,
+            "quantity": 100,
+            "status": "ACTIVE",
+            "maxPerOrder": 10,
+            "salesStart": "2026-11-01T04:00:27.123Z",
+            "salesEnd": "2026-11-10T20:00:00.000Z",
+            "tiers": [
+              {
+                "id": "4a738bb0-61d4-46e6-81a0-fd60b879ba66",
+                "name": "Early",
+                "price": 8,
+                "quantityLimit": 50,
+                "startsAt": "2026-11-01T04:00:27.123Z",
+                "endsAt": "2026-11-10T20:00:00.000Z",
+                "sortOrder": 0,
+                "isActive": true
+              }
+            ]
+          }
+        ],
+        "publish": false
+      }
+    },
+    {
+      "responsePath": "/api/v1/events/b4bdf65a-c2c6-465f-b66e-c8115e253208/configuration",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=b4bdf65a-c2c6-465f-b66e-c8115e253208"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=f17acc16-d0e6-4d29-bec6-941adee5f19d"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/33d07fa3-4599-48dc-b15c-b8f21b8b8534",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/33d07fa3-4599-48dc-b15c-b8f21b8b8534",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues",
+      "query": "?limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=33d07fa3-4599-48dc-b15c-b8f21b8b8534"
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=7bba3c73-f6e8-4c2f-ad35-d6988b760aa8"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/events/33d07fa3-4599-48dc-b15c-b8f21b8b8534/configuration",
+      "query": "",
+      "body": {
+        "event": {
+          "title": "local305-1792566314713-2",
+          "name": "local305-1792566314713-2",
+          "description": "",
+          "organizationId": "cd937a30-9cb6-48db-83b0-f6646f66cf4e",
+          "startDateTime": "2026-11-01T05:00:27.123Z",
+          "endDateTime": "2026-11-10T21:00:00.000Z",
+          "timezone": "America/St_Johns",
+          "capacity": 100,
+          "category": "Music",
+          "metadata": {
+            "hashtag": ""
+          },
+          "tags": []
+        },
+        "ticketTypes": [
+          {
+            "id": "7bba3c73-f6e8-4c2f-ad35-d6988b760aa8",
+            "name": "Admission",
+            "price": 10,
+            "quantity": 100,
+            "status": "ACTIVE",
+            "maxPerOrder": 10,
+            "salesStart": "2026-11-01T05:00:27.123Z",
+            "salesEnd": "2026-11-10T20:00:00.000Z",
+            "tiers": [
+              {
+                "id": "a9ceec42-476b-4cc7-b0b2-bb3c3509fa1d",
+                "name": "Early",
+                "price": 8,
+                "quantityLimit": 50,
+                "startsAt": "2026-11-01T05:00:27.123Z",
+                "endsAt": "2026-11-10T20:00:00.000Z",
+                "sortOrder": 0,
+                "isActive": true
+              }
+            ]
+          }
+        ],
+        "publish": false
+      }
+    },
+    {
+      "responsePath": "/api/v1/events/33d07fa3-4599-48dc-b15c-b8f21b8b8534/configuration",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=33d07fa3-4599-48dc-b15c-b8f21b8b8534"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=7bba3c73-f6e8-4c2f-ad35-d6988b760aa8"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/5cfdeec1-2fad-401c-87ec-c83c59c15b5e",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/5cfdeec1-2fad-401c-87ec-c83c59c15b5e",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues",
+      "query": "?limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=5cfdeec1-2fad-401c-87ec-c83c59c15b5e"
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=e40ca0b1-69e3-4b43-8dd8-787aa56012c7"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/events/5cfdeec1-2fad-401c-87ec-c83c59c15b5e/configuration",
+      "query": "",
+      "body": {
+        "event": {
+          "title": "local305-1792566314713-3",
+          "name": "local305-1792566314713-3",
+          "description": "",
+          "organizationId": "cd937a30-9cb6-48db-83b0-f6646f66cf4e",
+          "startDateTime": "2026-11-09T15:30:27.123Z",
+          "endDateTime": "2026-11-10T21:00:00.000Z",
+          "timezone": "America/St_Johns",
+          "capacity": 100,
+          "category": "Music",
+          "metadata": {
+            "hashtag": ""
+          },
+          "tags": []
+        },
+        "ticketTypes": [
+          {
+            "id": "e40ca0b1-69e3-4b43-8dd8-787aa56012c7",
+            "name": "Admission",
+            "price": 10,
+            "quantity": 100,
+            "status": "ACTIVE",
+            "maxPerOrder": 10,
+            "salesStart": "2026-11-09T15:30:27.123Z",
+            "salesEnd": "2026-11-10T20:00:00.000Z",
+            "tiers": [
+              {
+                "id": "7e6a2bbe-e43c-47e2-b543-98237c60b6e9",
+                "name": "Early",
+                "price": 8,
+                "quantityLimit": 50,
+                "startsAt": "2026-11-09T15:30:27.123Z",
+                "endsAt": "2026-11-10T20:00:00.000Z",
+                "sortOrder": 0,
+                "isActive": true
+              }
+            ]
+          }
+        ],
+        "publish": false
+      }
+    },
+    {
+      "responsePath": "/api/v1/events/5cfdeec1-2fad-401c-87ec-c83c59c15b5e/configuration",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=5cfdeec1-2fad-401c-87ec-c83c59c15b5e"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=e40ca0b1-69e3-4b43-8dd8-787aa56012c7"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/24ae1b68-891f-4f0a-8775-ed9bc6132e8d",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/24ae1b68-891f-4f0a-8775-ed9bc6132e8d",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues",
+      "query": "?limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=24ae1b68-891f-4f0a-8775-ed9bc6132e8d"
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=e41c3b71-c201-4261-86be-c72d9353c79d"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/events/24ae1b68-891f-4f0a-8775-ed9bc6132e8d/configuration",
+      "query": "",
+      "body": {
+        "event": {
+          "title": "local305-1792566314713-4",
+          "name": "local305-1792566314713-4",
+          "description": "",
+          "organizationId": "cd937a30-9cb6-48db-83b0-f6646f66cf4e",
+          "startDateTime": "2026-11-01T04:00:27.123Z",
+          "endDateTime": "2026-11-10T21:00:00.000Z",
+          "timezone": "America/St_Johns",
+          "capacity": 100,
+          "category": "Music",
+          "metadata": {
+            "hashtag": ""
+          },
+          "tags": []
+        },
+        "ticketTypes": [
+          {
+            "id": "e41c3b71-c201-4261-86be-c72d9353c79d",
+            "name": "Admission",
+            "price": 10,
+            "quantity": 100,
+            "status": "ACTIVE",
+            "maxPerOrder": 10,
+            "salesStart": "2026-11-01T04:00:27.123Z",
+            "salesEnd": "2026-11-10T20:00:00.000Z",
+            "tiers": [
+              {
+                "id": "aba31bc5-1256-4e99-981a-5f6ba9e7337a",
+                "name": "Early",
+                "price": 8,
+                "quantityLimit": 50,
+                "startsAt": "2026-11-01T04:00:27.123Z",
+                "endsAt": "2026-11-10T20:00:00.000Z",
+                "sortOrder": 0,
+                "isActive": true
+              }
+            ]
+          }
+        ],
+        "publish": false
+      }
+    },
+    {
+      "responsePath": "/api/v1/events/24ae1b68-891f-4f0a-8775-ed9bc6132e8d/configuration",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=24ae1b68-891f-4f0a-8775-ed9bc6132e8d"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=e41c3b71-c201-4261-86be-c72d9353c79d"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/5d59ba04-ec3e-4ac8-90dd-4620f75e07f4",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/5d59ba04-ec3e-4ac8-90dd-4620f75e07f4",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues",
+      "query": "?limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=5d59ba04-ec3e-4ac8-90dd-4620f75e07f4"
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=efa2a8b1-efd5-42d5-ab6f-d8dbddcb3a06"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/events/5d59ba04-ec3e-4ac8-90dd-4620f75e07f4/configuration",
+      "query": "",
+      "body": {
+        "event": {
+          "title": "local305-1792566314713-5",
+          "name": "local305-1792566314713-5",
+          "description": "",
+          "organizationId": "cd937a30-9cb6-48db-83b0-f6646f66cf4e",
+          "startDateTime": "2026-11-01T05:00:27.123Z",
+          "endDateTime": "2026-11-10T21:00:00.000Z",
+          "timezone": "America/St_Johns",
+          "capacity": 100,
+          "category": "Music",
+          "metadata": {
+            "hashtag": ""
+          },
+          "tags": []
+        },
+        "ticketTypes": [
+          {
+            "id": "efa2a8b1-efd5-42d5-ab6f-d8dbddcb3a06",
+            "name": "Admission",
+            "price": 10,
+            "quantity": 100,
+            "status": "ACTIVE",
+            "maxPerOrder": 10,
+            "salesStart": "2026-11-01T05:00:27.123Z",
+            "salesEnd": "2026-11-10T20:00:00.000Z",
+            "tiers": [
+              {
+                "id": "6397e41d-322f-4360-8e19-d3e2d362a250",
+                "name": "Early",
+                "price": 8,
+                "quantityLimit": 50,
+                "startsAt": "2026-11-01T05:00:27.123Z",
+                "endsAt": "2026-11-10T20:00:00.000Z",
+                "sortOrder": 0,
+                "isActive": true
+              }
+            ]
+          }
+        ],
+        "publish": false
+      }
+    },
+    {
+      "responsePath": "/api/v1/events/5d59ba04-ec3e-4ac8-90dd-4620f75e07f4/configuration",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=5d59ba04-ec3e-4ac8-90dd-4620f75e07f4"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=efa2a8b1-efd5-42d5-ab6f-d8dbddcb3a06"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/a0e65de6-5867-4dd2-a118-e79c4ed8c6ed",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/a0e65de6-5867-4dd2-a118-e79c4ed8c6ed",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues",
+      "query": "?limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=a0e65de6-5867-4dd2-a118-e79c4ed8c6ed"
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=f70312f0-21c5-4948-a095-9066b792fce3"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/events/a0e65de6-5867-4dd2-a118-e79c4ed8c6ed/configuration",
+      "query": "",
+      "body": {
+        "event": {
+          "title": "local305-1792566314713-6",
+          "name": "local305-1792566314713-6",
+          "description": "",
+          "organizationId": "cd937a30-9cb6-48db-83b0-f6646f66cf4e",
+          "startDateTime": "2026-11-09T15:30:27.123Z",
+          "endDateTime": "2026-11-10T21:00:00.000Z",
+          "timezone": "America/St_Johns",
+          "capacity": 100,
+          "category": "Music",
+          "metadata": {
+            "hashtag": ""
+          },
+          "tags": []
+        },
+        "ticketTypes": [
+          {
+            "id": "f70312f0-21c5-4948-a095-9066b792fce3",
+            "name": "Admission",
+            "price": 10,
+            "quantity": 100,
+            "status": "ACTIVE",
+            "maxPerOrder": 10,
+            "salesStart": "2026-11-09T15:30:27.123Z",
+            "salesEnd": "2026-11-10T20:00:00.000Z",
+            "tiers": [
+              {
+                "id": "18cc7efd-d0da-4904-a91d-929db1bc485f",
+                "name": "Early",
+                "price": 8,
+                "quantityLimit": 50,
+                "startsAt": "2026-11-09T15:30:27.123Z",
+                "endsAt": "2026-11-10T20:00:00.000Z",
+                "sortOrder": 0,
+                "isActive": true
+              }
+            ]
+          }
+        ],
+        "publish": false
+      }
+    },
+    {
+      "responsePath": "/api/v1/events/a0e65de6-5867-4dd2-a118-e79c4ed8c6ed/configuration",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=a0e65de6-5867-4dd2-a118-e79c4ed8c6ed"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=f70312f0-21c5-4948-a095-9066b792fce3"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/f0cd58b5-6a26-4067-a178-c87041984ac3",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/f0cd58b5-6a26-4067-a178-c87041984ac3",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues",
+      "query": "?limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=f0cd58b5-6a26-4067-a178-c87041984ac3"
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=90d29fb0-815d-4720-af5f-65609cb89b5b"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/events/f0cd58b5-6a26-4067-a178-c87041984ac3/configuration",
+      "query": "",
+      "body": {
+        "event": {
+          "title": "local305-1792566314713-7",
+          "name": "local305-1792566314713-7",
+          "description": "",
+          "organizationId": "cd937a30-9cb6-48db-83b0-f6646f66cf4e",
+          "startDateTime": "2026-11-01T04:00:27.123Z",
+          "endDateTime": "2026-11-10T21:00:00.000Z",
+          "timezone": "America/St_Johns",
+          "capacity": 100,
+          "category": "Music",
+          "metadata": {
+            "hashtag": ""
+          },
+          "tags": []
+        },
+        "ticketTypes": [
+          {
+            "id": "90d29fb0-815d-4720-af5f-65609cb89b5b",
+            "name": "Admission",
+            "price": 10,
+            "quantity": 100,
+            "status": "ACTIVE",
+            "maxPerOrder": 10,
+            "salesStart": "2026-11-01T04:00:27.123Z",
+            "salesEnd": "2026-11-10T20:00:00.000Z",
+            "tiers": [
+              {
+                "id": "0dd7b98f-1493-42d4-8e1a-bd814cf49537",
+                "name": "Early",
+                "price": 8,
+                "quantityLimit": 50,
+                "startsAt": "2026-11-01T04:00:27.123Z",
+                "endsAt": "2026-11-10T20:00:00.000Z",
+                "sortOrder": 0,
+                "isActive": true
+              }
+            ]
+          }
+        ],
+        "publish": false
+      }
+    },
+    {
+      "responsePath": "/api/v1/events/f0cd58b5-6a26-4067-a178-c87041984ac3/configuration",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=f0cd58b5-6a26-4067-a178-c87041984ac3"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=90d29fb0-815d-4720-af5f-65609cb89b5b"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/8cb24023-a9a0-4761-876d-051d3fb6d427",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/8cb24023-a9a0-4761-876d-051d3fb6d427",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues",
+      "query": "?limit=100"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=8cb24023-a9a0-4761-876d-051d3fb6d427"
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=281b6763-a790-4291-9c5c-fce6d7e5c64b"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/events/8cb24023-a9a0-4761-876d-051d3fb6d427/configuration",
+      "query": "",
+      "body": {
+        "event": {
+          "title": "local305-1792566314713-8",
+          "name": "local305-1792566314713-8",
+          "description": "",
+          "organizationId": "cd937a30-9cb6-48db-83b0-f6646f66cf4e",
+          "startDateTime": "2026-11-01T05:00:27.123Z",
+          "endDateTime": "2026-11-10T21:00:00.000Z",
+          "timezone": "America/St_Johns",
+          "capacity": 100,
+          "category": "Music",
+          "metadata": {
+            "hashtag": ""
+          },
+          "tags": []
+        },
+        "ticketTypes": [
+          {
+            "id": "281b6763-a790-4291-9c5c-fce6d7e5c64b",
+            "name": "Admission",
+            "price": 10,
+            "quantity": 100,
+            "status": "ACTIVE",
+            "maxPerOrder": 10,
+            "salesStart": "2026-11-01T05:00:27.123Z",
+            "salesEnd": "2026-11-10T20:00:00.000Z",
+            "tiers": [
+              {
+                "id": "cfc16266-4e6d-4e59-9a64-2ade370b6c61",
+                "name": "Early",
+                "price": 8,
+                "quantityLimit": 50,
+                "startsAt": "2026-11-01T05:00:27.123Z",
+                "endsAt": "2026-11-10T20:00:00.000Z",
+                "sortOrder": 0,
+                "isActive": true
+              }
+            ]
+          }
+        ],
+        "publish": false
+      }
+    },
+    {
+      "responsePath": "/api/v1/events/8cb24023-a9a0-4761-876d-051d3fb6d427/configuration",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types",
+      "query": "?eventId=8cb24023-a9a0-4761-876d-051d3fb6d427"
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers",
+      "query": "?ticketTypeId=281b6763-a790-4291-9c5c-fce6d7e5c64b"
+    },
+    {
+      "responsePath": "/api/v1/ticket-tiers",
+      "status": 200
+    }
+  ],
+  "failures": []
+}

@@ -1,0 +1,119 @@
+[
+  {
+    "name": "studio-0",
+    "fonts": "loaded",
+    "text": true,
+    "geometry": [
+      451.25,
+      14.375,
+      116,
+      40.25
+    ],
+    "running": 0,
+    "stableFrames": 4
+  },
+  {
+    "name": "studio-1",
+    "fonts": "loaded",
+    "text": true,
+    "geometry": [
+      451.25,
+      14.375,
+      116,
+      40.25
+    ],
+    "running": 0,
+    "stableFrames": 4
+  },
+  {
+    "name": "studio-2",
+    "fonts": "loaded",
+    "text": true,
+    "geometry": [
+      451.25,
+      14.375,
+      116,
+      40.25
+    ],
+    "running": 0,
+    "stableFrames": 4
+  },
+  {
+    "name": "studio-3",
+    "fonts": "loaded",
+    "text": true,
+    "geometry": [
+      451.25,
+      14.375,
+      116,
+      40.25
+    ],
+    "running": 0,
+    "stableFrames": 4
+  },
+  {
+    "name": "studio-4",
+    "fonts": "loaded",
+    "text": true,
+    "geometry": [
+      451.25,
+      14.375,
+      116,
+      40.25
+    ],
+    "running": 0,
+    "stableFrames": 4
+  },
+  {
+    "name": "studio-5",
+    "fonts": "loaded",
+    "text": true,
+    "geometry": [
+      451.25,
+      14.375,
+      116,
+      40.25
+    ],
+    "running": 0,
+    "stableFrames": 4
+  },
+  {
+    "name": "studio-6",
+    "fonts": "loaded",
+    "text": true,
+    "geometry": [
+      451.25,
+      14.375,
+      116,
+      40.25
+    ],
+    "running": 0,
+    "stableFrames": 4
+  },
+  {
+    "name": "studio-7",
+    "fonts": "loaded",
+    "text": true,
+    "geometry": [
+      451.25,
+      14.375,
+      116,
+      40.25
+    ],
+    "running": 0,
+    "stableFrames": 4
+  },
+  {
+    "name": "studio-8",
+    "fonts": "loaded",
+    "text": true,
+    "geometry": [
+      451.25,
+      14.375,
+      116,
+      40.25
+    ],
+    "running": 0,
+    "stableFrames": 4
+  }
+]

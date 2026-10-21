@@ -1,0 +1,27 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-306-A/run.dBGn9U/jest-cache --runInBand --runTestsByPath tests/integration/studio-browser.local.test.ts
+
+  console.log
+    TASK305_API_LISTENER 2778251 { address: '127.0.0.1', family: 'IPv4', port: 35239 }
+
+      at Object.<anonymous> (tests/integration/studio-browser.local.test.ts:25:136)
+
+TASK305_BROWSER_CLEANUP {
+  browser: { pid: 2778594, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 44661, closed: true },
+  profileRemoved: true
+}
+  console.log
+    TASK305_API_CLOSED
+
+      at Object.<anonymous> (tests/integration/studio-browser.local.test.ts:19:11)
+
+PASS tests/integration/studio-browser.local.test.ts (24.158 s)
+  ✓ real Studio unchanged saves preserve SQL instants and inventory in three browser timezones (17981 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        24.398 s
+Ran all test suites within paths "tests/integration/studio-browser.local.test.ts".
