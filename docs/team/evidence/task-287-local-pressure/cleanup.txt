@@ -1,0 +1,9 @@
+PID 2665548 absent=True
+PID 2665561 absent=True
+PID 2663911 absent=True
+PID 2663924 absent=True
+Listener check empty=True
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-287/run.61T9ed/pg/postmaster.pid absent=True
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-287/run.61T9ed/redis.sock absent=True
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-287/run.1aOApI/pg/postmaster.pid absent=True
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-287/run.1aOApI/redis.sock absent=True

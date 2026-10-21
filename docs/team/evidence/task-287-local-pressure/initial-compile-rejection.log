@@ -1,0 +1,17 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-287/run.1aOApI/jest-cache --runInBand --runTestsByPath tests/integration/orders-pressure.local.test.ts
+
+FAIL tests/integration/orders-pressure.local.test.ts
+  ● Test suite failed to run
+
+    [96mtests/integration/orders-pressure.local.test.ts[0m:[93m21[0m:[93m9[0m - [91merror[0m[90m TS6133: [0m'vip' is declared but its value is never read.
+
+    [7m21[0m   const vip = await prisma.ticketType.create({data:{eventId:event.id,name:'VIP',price:20,quantityTotal:200,quantityAvailable:200,maxPerOrder:4}});
+    [7m  [0m [91m        ~~~[0m
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        5.051 s
+Ran all test suites within paths "tests/integration/orders-pressure.local.test.ts".

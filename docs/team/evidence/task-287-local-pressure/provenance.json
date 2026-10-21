@@ -1,0 +1,20 @@
+{
+  "productSHA": "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+  "harnessSHA": "4b3dcd82145da3b52102573c2a0527d47adc50fd",
+  "reusedGuardSHA": "5947e4737410c6ed732230eb84581dcb87f8ed83",
+  "dependencyCache": "/home/daniel/projects/projectTixmo/worktrees/task-235/tixmoapi2/node_modules",
+  "runtimeRoot": "/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root",
+  "binaries": {
+    "/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root/usr/lib/postgresql/18/bin/postgres": {
+      "sha256": "30a38e0516ec1bde4b8ca710cf28ba51ee78bd004cabbf3107e7a52d5414a64a",
+      "uid": 1000,
+      "mode": "0o755"
+    },
+    "/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root/usr/bin/redis-server": {
+      "sha256": "0f3f5d696b7dabd9af484c2d8844dbb0c9bc7722ddf794f63b911a9795509293",
+      "uid": 1000,
+      "mode": "0o755"
+    }
+  },
+  "cacheLockSha256": "34db4fabca3967228f5f47e339380dacde626de1a3b295e0b63aac4864738732"
+}

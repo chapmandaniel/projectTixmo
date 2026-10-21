@@ -1,0 +1,64 @@
+{
+  "attempts": 1800,
+  "completed": 1800,
+  "successes": 900,
+  "errors": {
+    "Not enough tickets available": 900
+  },
+  "elapsedMs": 60086.896447,
+  "scheduledWindowMs": 60000,
+  "maxActive": 2,
+  "maxQueue": 1,
+  "maxBacklog": 2,
+  "remainingBacklog": 0,
+  "latencyMs": {
+    "min": 3.8668480000051204,
+    "p50": 13.53124000000389,
+    "p95": 24.871433000000252,
+    "p99": 25.560202000000572,
+    "max": 39.62423899999885
+  },
+  "serviceMs": {
+    "min": 3.8577320000040345,
+    "p50": 13.506725999999617,
+    "p95": 24.846353000000818,
+    "p99": 25.53708299999562,
+    "max": 39.60804499999904
+  },
+  "arrivalLatenessMs": {
+    "min": -2.1530760000005102,
+    "p50": -0.19814933333691442,
+    "p95": 0.7799679999952787,
+    "p99": 1.2018413333353237,
+    "max": 15.22964200000024
+  },
+  "eventLoopMs": {
+    "p50": 10.199039,
+    "p95": 11.223039,
+    "p99": 11.763711,
+    "max": 39.256063
+  },
+  "lockSamples": 590,
+  "maxLockWaiters": 0,
+  "stock": [
+    {
+      "name": "VIP",
+      "quantityAvailable": 200,
+      "quantityHeld": 0,
+      "quantitySold": 0,
+      "quantityTotal": 200
+    },
+    {
+      "name": "GA",
+      "quantityAvailable": 0,
+      "quantityHeld": 1800,
+      "quantitySold": 0,
+      "quantityTotal": 1800
+    }
+  ],
+  "orders": 900,
+  "tickets": 1800,
+  "uniqueBarcodes": 1800,
+  "uniqueOrderNumbers": 900,
+  "uniqueBuyers": 900
+}
