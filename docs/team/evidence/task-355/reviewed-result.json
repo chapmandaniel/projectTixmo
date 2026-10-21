@@ -1,0 +1,63 @@
+{
+  "success": false,
+  "numTotalTestSuites": 107,
+  "numPassedTestSuites": 95,
+  "numFailedTestSuites": 2,
+  "numPendingTestSuites": 10,
+  "numTotalTests": 747,
+  "numPassedTests": 715,
+  "numFailedTests": 6,
+  "numPendingTests": 26,
+  "failedTests": [
+    {
+      "file": "orders-tenant.unit.test.ts",
+      "name": "processor refund scope ADMIN processor delegation retains explicit organization fence (org-a)",
+      "messages": [
+        "Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)\n\nExpected: \"a\"\nReceived: \"a\", {\"event\": {\"organizationId\": \"org-a\"}, \"id\": \"a\", \"status\": \"PENDING\", \"tickets\": [], \"userId\": \"buyer-a\"}\n\nNumber of calls: 1\n    at /home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/orders-tenant.unit.test.ts:311:42"
+      ]
+    },
+    {
+      "file": "orders-tenant.unit.test.ts",
+      "name": "processor refund scope ADMIN processor delegation retains explicit organization fence (null)",
+      "messages": [
+        "Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)\n\nExpected: \"a\"\nReceived: \"a\", {\"event\": {\"organizationId\": \"org-a\"}, \"id\": \"a\", \"status\": \"PENDING\", \"tickets\": [], \"userId\": \"buyer-a\"}\n\nNumber of calls: 1\n    at /home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/orders-tenant.unit.test.ts:311:42"
+      ]
+    },
+    {
+      "file": "integration/order-double-refund.race.test.ts",
+      "name": "overlapping refund applies inventory once and preserves other paid and pending buyers (reverse release=false)",
+      "messages": [
+        "Error: Barrier timeout (harness failure)\n    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/integration/order-double-refund.race.test.ts:21:41)\n    at listOnTimeout (node:internal/timers:685:17)\n    at processTimers (node:internal/timers:618:7)"
+      ]
+    },
+    {
+      "file": "integration/order-double-refund.race.test.ts",
+      "name": "overlapping refund applies inventory once and preserves other paid and pending buyers (reverse release=true)",
+      "messages": [
+        "Error: Barrier timeout (harness failure)\n    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/integration/order-double-refund.race.test.ts:21:41)\n    at listOnTimeout (node:internal/timers:685:17)\n    at processTimers (node:internal/timers:618:7)"
+      ]
+    },
+    {
+      "file": "integration/order-double-refund.race.test.ts",
+      "name": "insufficient sold inventory rolls back claim and ticket cancellation completely",
+      "messages": [
+        "Error: expect(received).rejects.toMatchObject(expected)\n\n- Expected  - 2\n+ Received  + 1\n\n  Object {\n-   \"message\": \"Order sold inventory is inconsistent\",\n-   \"statusCode\": 500,\n+   \"statusCode\": 400,\n  }\n    at Object.toMatchObject (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/node_modules/expect/build/index.js:2155:20)\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/integration/order-double-refund.race.test.ts:246:66)"
+      ]
+    },
+    {
+      "file": "integration/order-double-refund.race.test.ts",
+      "name": "refund preserves scalar response/payment contract, cancels VALID/TRANSFERRED only and rejects retries",
+      "messages": [
+        "ApiError: Full refunds require unused, untransferred tickets\n    at ApiError.badRequest (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/src/utils/ApiError.ts:16:12)\n    at /home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/src/api/payments/service.ts:513:24\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at PaymentService.refundOrder (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/src/api/payments/service.ts:489:19)\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/integration/order-double-refund.race.test.ts:261:18)"
+      ]
+    }
+  ],
+  "artifactHashes": {
+    "jest-result.json": "be989d3810314a67be674d668aa5b31b75b115b9c9f1c99aa98459afdf9c8f7d",
+    "commands.jsonl": "e73843fbf14d0fbf38bb821a177ce537f1304ae398454672097d4b872e430d02",
+    "cleanup.json": "6491c753b846418c0b40620a22851a46c95fee6e1dd3bc916f37201e2071a3b3",
+    "summary.json": "85914cb48daeeb3c3b9cde2f5458c0ba1ac757639f92dbb33d9aba7fcb3827ae"
+  },
+  "reviewedEvidenceSHA": "4665068adeb098d12ba9ae0a4f90e5a5e27b0cb3",
+  "committedArtifactHashesMatch": true
+}

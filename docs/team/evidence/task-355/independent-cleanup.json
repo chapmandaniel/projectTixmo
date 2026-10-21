@@ -1,0 +1,21 @@
+{
+  "servicePidsAbsent": {
+    "3050089": true,
+    "3050102": true
+  },
+  "listeners": "",
+  "runtimeMode": "0o700",
+  "reviewedReleaseCleanup": {
+    "servicePidsAbsent": {
+      "3050089": true,
+      "3050102": true
+    },
+    "portsClosed": true,
+    "listenerOutput": "",
+    "postmasterPidfileAbsent": true,
+    "remainingSocketFiles": [],
+    "remainingWorkers": [],
+    "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task354/run.KG9zhY",
+    "workerInspection": "Read /proc cmdline for node/npm/redis-server/postgres executables, not shell command text"
+  }
+}
