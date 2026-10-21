@@ -1,0 +1,1123 @@
+{
+  "assessedAt": "2026-10-21T04:00:10.701Z",
+  "baselineSha": "87bbad00da8ee2e6ddddd2658b743103cf2bc467",
+  "scope": "Read-only deployment and CI inventory; static source readiness review; dependency audit and safety-contract tests. No live transactions, logins, migrations, scanner actions or provider configuration.",
+  "productionProjectId": "8c5a1df6-dc6b-46ca-a516-dc1c25750921",
+  "services": [
+    {
+      "label": "productionApi",
+      "service": {
+        "id": "c4f336bd-dd66-46e7-8bc3-db03ad08dd8c",
+        "name": "backend api",
+        "state": "live"
+      },
+      "environment": {
+        "id": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+        "name": "production"
+      },
+      "staged": null,
+      "config": {
+        "source": {
+          "repo": "chapmandaniel/projectTixmo",
+          "branch": "main",
+          "rootDirectory": "/tixmoapi2"
+        },
+        "networking": {
+          "serviceDomains": {
+            "api-production-fbaf.up.railway.app": {
+              "port": 8080
+            }
+          },
+          "privateNetworkEndpoint": "api"
+        },
+        "build": {
+          "builder": "RAILPACK",
+          "buildEnvironment": "V3"
+        },
+        "deploy": {
+          "startCommand": "/bin/sh -c 'npm run migrate && exec node dist/index.js'",
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+              "numReplicas": 1
+            }
+          }
+        }
+      },
+      "stagedChanges": [],
+      "variableNames": [
+        "CLIENT_URL",
+        "CORS_ORIGIN",
+        "DATABASE_URL",
+        "EMAIL_FROM",
+        "FROM_EMAIL",
+        "FROM_NAME",
+        "JWT_REFRESH_SECRET",
+        "JWT_SECRET",
+        "POSTMARK_MESSAGE_STREAM",
+        "POSTMARK_SERVER_TOKEN",
+        "RATE_LIMIT_MAX",
+        "RATE_LIMIT_READ_MAX",
+        "RATE_LIMIT_WINDOW_MS",
+        "RATE_LIMIT_WRITE_MAX",
+        "REDIS_URL",
+        "S3_ACCESS_KEY_ID",
+        "S3_BUCKET_NAME",
+        "S3_ENDPOINT",
+        "S3_REGION",
+        "S3_SECRET_ACCESS_KEY",
+        "SESSION_SECRET"
+      ],
+      "volumes": [],
+      "domains": {
+        "serviceDomains": [
+          {
+            "id": "6b71e890-3cf6-4e7b-b533-7bfda65f52ea",
+            "domain": "api-production-fbaf.up.railway.app",
+            "targetPort": 8080
+          }
+        ],
+        "customDomains": []
+      },
+      "tcpProxies": [],
+      "latestDeployment": {
+        "id": "86b22bcd-2ca8-4754-8c23-8b4054af3c2d",
+        "status": "SUCCESS",
+        "createdAt": "2026-06-16T23:57:52.309Z",
+        "url": null
+      },
+      "tracing": {
+        "tracingEnabled": false,
+        "autoInstrumentationEnabled": false,
+        "autoInstrumentationActive": false
+      }
+    },
+    {
+      "label": "productionWeb",
+      "service": {
+        "id": "756bc4eb-b8f4-4156-9daf-fe0a55da829d",
+        "name": "frontend dash",
+        "state": "live"
+      },
+      "environment": {
+        "id": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+        "name": "production"
+      },
+      "staged": null,
+      "config": {
+        "source": {
+          "repo": "chapmandaniel/projectTixmo",
+          "branch": "main",
+          "rootDirectory": "/tdash"
+        },
+        "networking": {
+          "serviceDomains": {
+            "dash-production-7487.up.railway.app": {
+              "port": 80
+            },
+            "frontend-dash-production.up.railway.app": {}
+          },
+          "customDomains": {
+            "demo.tixmo.co": {
+              "port": 80
+            }
+          },
+          "privateNetworkEndpoint": "dash"
+        },
+        "build": {
+          "builder": "DOCKERFILE",
+          "buildEnvironment": "V3",
+          "dockerfilePath": "/tdash/Dockerfile"
+        },
+        "deploy": {
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "us-east4-eqdc4a": {
+              "numReplicas": 1
+            }
+          }
+        }
+      },
+      "stagedChanges": [],
+      "variableNames": [
+        "VITE_API_URL"
+      ],
+      "volumes": [],
+      "domains": {
+        "serviceDomains": [
+          {
+            "id": "7b75f8b5-da79-4dc0-9257-61ccffb24971",
+            "domain": "dash-production-7487.up.railway.app",
+            "targetPort": 80
+          },
+          {
+            "id": "61a3f1ce-b1a5-4eba-badf-5565cd21edd8",
+            "domain": "frontend-dash-production.up.railway.app",
+            "targetPort": null
+          }
+        ],
+        "customDomains": [
+          {
+            "id": "e6a74507-b73b-43fe-9db8-fc487e7cc0ff",
+            "domain": "demo.tixmo.co",
+            "targetPort": 80
+          }
+        ]
+      },
+      "tcpProxies": [],
+      "latestDeployment": {
+        "id": "0910a6b7-ce64-40e3-98c6-b8665d2c375a",
+        "status": "SUCCESS",
+        "createdAt": "2026-07-26T16:29:26.508Z",
+        "url": null
+      },
+      "tracing": {
+        "tracingEnabled": false,
+        "autoInstrumentationEnabled": false,
+        "autoInstrumentationActive": false
+      }
+    },
+    {
+      "label": "stagingApi",
+      "service": {
+        "id": "5af658c7-72ee-4ec4-bf0f-81ead50aef58",
+        "name": "Tixmo API Candidate",
+        "state": "live"
+      },
+      "environment": {
+        "id": "d21ebf73-4198-4483-9a16-1fc2fb3685e6",
+        "name": "staging-audit-20261005"
+      },
+      "staged": null,
+      "config": {
+        "source": {
+          "rootDirectory": "/tixmoapi2"
+        },
+        "networking": {
+          "serviceDomains": {
+            "tixmo-api-candidate-staging-audit-20261005.up.railway.app": {
+              "port": 3000
+            }
+          },
+          "privateNetworkEndpoint": "tixmo-api-candidate"
+        },
+        "build": {
+          "builder": "DOCKERFILE",
+          "buildEnvironment": "V3",
+          "dockerfilePath": "Dockerfile"
+        },
+        "deploy": {
+          "startCommand": "/bin/sh -c 'npm run migrate && exec node dist/index.js'",
+          "healthcheckPath": "/ready",
+          "healthcheckTimeout": 300,
+          "restartPolicyMaxRetries": 5,
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "us-west2": {
+              "numReplicas": 1
+            }
+          }
+        }
+      },
+      "stagedChanges": [],
+      "variableNames": [
+        "CLIENT_URL",
+        "CORS_ORIGIN",
+        "DATABASE_URL",
+        "ENABLE_APPROVAL_REMINDERS",
+        "JWT_REFRESH_SECRET",
+        "JWT_SECRET",
+        "LOG_TO_FILE",
+        "NODE_ENV",
+        "PAYMENT_CURRENCY",
+        "PORT",
+        "REDIS_URL",
+        "RELEASE",
+        "S3_ACCESS_KEY_ID",
+        "S3_BUCKET_NAME",
+        "S3_ENDPOINT",
+        "S3_REGION",
+        "S3_SECRET_ACCESS_KEY",
+        "S3_URL_STYLE",
+        "SENTRY_ENVIRONMENT",
+        "SENTRY_RELEASE",
+        "SERVICE_NAME",
+        "SESSION_SECRET"
+      ],
+      "volumes": [],
+      "domains": {
+        "serviceDomains": [
+          {
+            "id": "de50f63c-9d6e-4c47-a8fd-906237ab50f0",
+            "domain": "tixmo-api-candidate-staging-audit-20261005.up.railway.app",
+            "targetPort": 3000
+          }
+        ],
+        "customDomains": []
+      },
+      "tcpProxies": [],
+      "latestDeployment": {
+        "id": "c8436e3e-07c3-4551-adfb-88a5344aa4fd",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-07T04:00:56.378Z",
+        "url": null
+      },
+      "tracing": {
+        "tracingEnabled": false,
+        "autoInstrumentationEnabled": false,
+        "autoInstrumentationActive": false
+      }
+    },
+    {
+      "label": "stagingWeb",
+      "service": {
+        "id": "13eafbe0-40da-41c1-8a24-d87ac36cb97d",
+        "name": "Tixmo Dashboard Candidate",
+        "state": "live"
+      },
+      "environment": {
+        "id": "d21ebf73-4198-4483-9a16-1fc2fb3685e6",
+        "name": "staging-audit-20261005"
+      },
+      "staged": null,
+      "config": {
+        "source": {
+          "rootDirectory": "/tdash"
+        },
+        "networking": {
+          "serviceDomains": {
+            "tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app": {
+              "port": 80
+            }
+          },
+          "privateNetworkEndpoint": "tixmo-dashboard-candidate"
+        },
+        "build": {
+          "builder": "DOCKERFILE",
+          "buildEnvironment": "V3",
+          "dockerfilePath": "Dockerfile"
+        },
+        "deploy": {
+          "healthcheckPath": "/",
+          "healthcheckTimeout": 300,
+          "restartPolicyMaxRetries": 5,
+          "useLegacyStacker": false,
+          "ipv6EgressEnabled": false,
+          "runtime": "V2",
+          "multiRegionConfig": {
+            "us-west2": {
+              "numReplicas": 1
+            }
+          }
+        }
+      },
+      "stagedChanges": [],
+      "variableNames": [
+        "PORT",
+        "TIXMO_API_URL",
+        "TIXMO_PAYMENT_CURRENCY",
+        "VITE_API_URL",
+        "VITE_PAYMENT_CURRENCY"
+      ],
+      "volumes": [],
+      "domains": {
+        "serviceDomains": [
+          {
+            "id": "820db877-f01f-4e02-9f14-f97ce066c398",
+            "domain": "tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app",
+            "targetPort": 80
+          }
+        ],
+        "customDomains": []
+      },
+      "tcpProxies": [],
+      "latestDeployment": {
+        "id": "068df481-3cba-47f9-a735-eb7f3fb7d78d",
+        "status": "SUCCESS",
+        "createdAt": "2026-10-07T04:00:57.412Z",
+        "url": null
+      },
+      "tracing": {
+        "tracingEnabled": false,
+        "autoInstrumentationEnabled": false,
+        "autoInstrumentationActive": false
+      }
+    }
+  ],
+  "environments": [
+    {
+      "environment": {
+        "id": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+        "name": "production"
+      },
+      "services": [
+        {
+          "serviceId": "5bd12fde-0a8b-4bfe-85a1-000ba1d86480",
+          "serviceName": "Postgres",
+          "state": "online",
+          "statusText": "Online",
+          "activeDeployments": [
+            {
+              "id": "a223f2fa-01b0-491d-b223-7cc5bd1b5d8e",
+              "status": "SUCCESS",
+              "createdAt": "2026-08-22T10:41:41.051Z",
+              "statusUpdatedAt": "2026-08-22T10:42:53.375Z"
+            }
+          ],
+          "replicaStatus": {
+            "running": 1,
+            "crashed": 0,
+            "total": 1
+          },
+          "cronJob": null,
+          "issues": {
+            "warningCount": 2,
+            "criticalCount": 0
+          },
+          "recentFailures": 0,
+          "recentFailedDeployments": [],
+          "hasIssues": true,
+          "isCronJob": false,
+          "hasVolume": true
+        },
+        {
+          "serviceId": "92871e79-8373-4bc6-a7c2-6964a4637442",
+          "serviceName": "Redis",
+          "state": "online",
+          "statusText": "Online",
+          "activeDeployments": [
+            {
+              "id": "43c5f673-d0b5-4938-b165-6d9c5a5689c0",
+              "status": "SUCCESS",
+              "createdAt": "2026-10-07T12:11:51.388Z",
+              "statusUpdatedAt": "2026-10-07T12:12:04.839Z"
+            }
+          ],
+          "replicaStatus": {
+            "running": 1,
+            "crashed": 0,
+            "total": 1
+          },
+          "cronJob": null,
+          "issues": {
+            "warningCount": 0,
+            "criticalCount": 0
+          },
+          "recentFailures": 0,
+          "recentFailedDeployments": [],
+          "hasIssues": false,
+          "isCronJob": false,
+          "hasVolume": true
+        },
+        {
+          "serviceId": "756bc4eb-b8f4-4156-9daf-fe0a55da829d",
+          "serviceName": "frontend dash",
+          "state": "online",
+          "statusText": "Online",
+          "activeDeployments": [
+            {
+              "id": "0910a6b7-ce64-40e3-98c6-b8665d2c375a",
+              "status": "SUCCESS",
+              "createdAt": "2026-07-26T16:29:26.508Z",
+              "statusUpdatedAt": "2026-07-26T16:29:32.406Z"
+            }
+          ],
+          "replicaStatus": {
+            "running": 1,
+            "crashed": 0,
+            "total": 1
+          },
+          "cronJob": null,
+          "issues": {
+            "warningCount": 0,
+            "criticalCount": 0
+          },
+          "recentFailures": 0,
+          "recentFailedDeployments": [],
+          "hasIssues": false,
+          "isCronJob": false,
+          "hasVolume": false
+        },
+        {
+          "serviceId": "c4f336bd-dd66-46e7-8bc3-db03ad08dd8c",
+          "serviceName": "backend api",
+          "state": "online",
+          "statusText": "Online",
+          "activeDeployments": [
+            {
+              "id": "86b22bcd-2ca8-4754-8c23-8b4054af3c2d",
+              "status": "SUCCESS",
+              "createdAt": "2026-06-16T23:57:52.309Z",
+              "statusUpdatedAt": "2026-06-17T00:00:20.760Z"
+            }
+          ],
+          "replicaStatus": {
+            "running": 1,
+            "crashed": 0,
+            "total": 1
+          },
+          "cronJob": null,
+          "issues": {
+            "warningCount": 0,
+            "criticalCount": 0
+          },
+          "recentFailures": 0,
+          "recentFailedDeployments": [],
+          "hasIssues": false,
+          "isCronJob": false,
+          "hasVolume": false
+        }
+      ],
+      "pendingWork": [],
+      "summary": {
+        "totalServices": 4,
+        "servicesWithIssues": 1,
+        "totalFailures": 0
+      }
+    },
+    {
+      "environment": {
+        "id": "d21ebf73-4198-4483-9a16-1fc2fb3685e6",
+        "name": "staging-audit-20261005"
+      },
+      "services": [
+        {
+          "serviceId": "13eafbe0-40da-41c1-8a24-d87ac36cb97d",
+          "serviceName": "Tixmo Dashboard Candidate",
+          "state": "online",
+          "statusText": "Online",
+          "activeDeployments": [
+            {
+              "id": "068df481-3cba-47f9-a735-eb7f3fb7d78d",
+              "status": "SUCCESS",
+              "createdAt": "2026-10-07T04:00:57.412Z",
+              "statusUpdatedAt": "2026-10-07T04:01:44.107Z"
+            }
+          ],
+          "replicaStatus": {
+            "running": 1,
+            "crashed": 0,
+            "total": 1
+          },
+          "cronJob": null,
+          "issues": {
+            "warningCount": 0,
+            "criticalCount": 0
+          },
+          "recentFailures": 0,
+          "recentFailedDeployments": [],
+          "hasIssues": false,
+          "isCronJob": false,
+          "hasVolume": false
+        },
+        {
+          "serviceId": "5af658c7-72ee-4ec4-bf0f-81ead50aef58",
+          "serviceName": "Tixmo API Candidate",
+          "state": "online",
+          "statusText": "Online",
+          "activeDeployments": [
+            {
+              "id": "c8436e3e-07c3-4551-adfb-88a5344aa4fd",
+              "status": "SUCCESS",
+              "createdAt": "2026-10-07T04:00:56.378Z",
+              "statusUpdatedAt": "2026-10-07T04:02:09.511Z"
+            }
+          ],
+          "replicaStatus": {
+            "running": 1,
+            "crashed": 0,
+            "total": 1
+          },
+          "cronJob": null,
+          "issues": {
+            "warningCount": 0,
+            "criticalCount": 0
+          },
+          "recentFailures": 0,
+          "recentFailedDeployments": [],
+          "hasIssues": false,
+          "isCronJob": false,
+          "hasVolume": false
+        },
+        {
+          "serviceId": "8fecd33f-2c7a-458b-92af-c16ae83e20f0",
+          "serviceName": "Redis-83Ua",
+          "state": "online",
+          "statusText": "Online",
+          "activeDeployments": [
+            {
+              "id": "4e67bb1b-c5a1-4aa1-8544-fecca97034e0",
+              "status": "SUCCESS",
+              "createdAt": "2026-10-07T03:08:23.810Z",
+              "statusUpdatedAt": "2026-10-07T03:08:30.151Z"
+            }
+          ],
+          "replicaStatus": {
+            "running": 1,
+            "crashed": 0,
+            "total": 1
+          },
+          "cronJob": null,
+          "issues": {
+            "warningCount": 0,
+            "criticalCount": 0
+          },
+          "recentFailures": 0,
+          "recentFailedDeployments": [],
+          "hasIssues": false,
+          "isCronJob": false,
+          "hasVolume": true
+        },
+        {
+          "serviceId": "9c5a4556-57b9-40d5-ab89-f36ea4d092da",
+          "serviceName": "Postgres-S5Gj",
+          "state": "online",
+          "statusText": "Online",
+          "activeDeployments": [
+            {
+              "id": "52e7cdcf-448d-422e-8d9c-a07fe431feeb",
+              "status": "SUCCESS",
+              "createdAt": "2026-10-05T15:25:27.763Z",
+              "statusUpdatedAt": "2026-10-05T15:27:35.742Z"
+            }
+          ],
+          "replicaStatus": {
+            "running": 1,
+            "crashed": 0,
+            "total": 1
+          },
+          "cronJob": null,
+          "issues": {
+            "warningCount": 0,
+            "criticalCount": 0
+          },
+          "recentFailures": 0,
+          "recentFailedDeployments": [],
+          "hasIssues": false,
+          "isCronJob": false,
+          "hasVolume": true
+        }
+      ],
+      "pendingWork": [],
+      "summary": {
+        "totalServices": 4,
+        "servicesWithIssues": 0,
+        "totalFailures": 0
+      }
+    }
+  ],
+  "deployments": [
+    {
+      "id": "43c5f673-d0b5-4938-b165-6d9c5a5689c0",
+      "status": "SUCCESS",
+      "createdAt": "2026-10-07T12:11:51.388Z",
+      "updatedAt": "2026-10-07T12:12:04.839Z",
+      "serviceId": "92871e79-8373-4bc6-a7c2-6964a4637442",
+      "environmentId": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+      "regions": [
+        "us-west2"
+      ],
+      "meta": {
+        "reason": "deploy",
+        "image": "redis:8.2.10"
+      }
+    },
+    {
+      "id": "068df481-3cba-47f9-a735-eb7f3fb7d78d",
+      "status": "SUCCESS",
+      "createdAt": "2026-10-07T04:00:57.412Z",
+      "updatedAt": "2026-10-07T04:01:44.108Z",
+      "serviceId": "13eafbe0-40da-41c1-8a24-d87ac36cb97d",
+      "environmentId": "d21ebf73-4198-4483-9a16-1fc2fb3685e6",
+      "regions": [
+        "us-west2"
+      ],
+      "meta": {
+        "reason": "deploy"
+      }
+    },
+    {
+      "id": "c8436e3e-07c3-4551-adfb-88a5344aa4fd",
+      "status": "SUCCESS",
+      "createdAt": "2026-10-07T04:00:56.378Z",
+      "updatedAt": "2026-10-07T04:02:09.512Z",
+      "serviceId": "5af658c7-72ee-4ec4-bf0f-81ead50aef58",
+      "environmentId": "d21ebf73-4198-4483-9a16-1fc2fb3685e6",
+      "regions": [
+        "us-west2"
+      ],
+      "meta": {
+        "reason": "deploy"
+      }
+    },
+    {
+      "id": "4e67bb1b-c5a1-4aa1-8544-fecca97034e0",
+      "status": "SUCCESS",
+      "createdAt": "2026-10-07T03:08:23.810Z",
+      "updatedAt": "2026-10-07T03:08:30.152Z",
+      "serviceId": "8fecd33f-2c7a-458b-92af-c16ae83e20f0",
+      "environmentId": "d21ebf73-4198-4483-9a16-1fc2fb3685e6",
+      "regions": [
+        "us-west2"
+      ],
+      "meta": {
+        "reason": "deploy",
+        "image": "redis:8.2.10"
+      }
+    },
+    {
+      "id": "52e7cdcf-448d-422e-8d9c-a07fe431feeb",
+      "status": "SUCCESS",
+      "createdAt": "2026-10-05T15:25:27.763Z",
+      "updatedAt": "2026-10-05T15:27:35.743Z",
+      "serviceId": "9c5a4556-57b9-40d5-ab89-f36ea4d092da",
+      "environmentId": "d21ebf73-4198-4483-9a16-1fc2fb3685e6",
+      "regions": [
+        "us-west2"
+      ],
+      "meta": {
+        "reason": "deploy",
+        "image": "ghcr.io/railwayapp-templates/postgres-ssl:17"
+      }
+    },
+    {
+      "id": "a223f2fa-01b0-491d-b223-7cc5bd1b5d8e",
+      "status": "SUCCESS",
+      "createdAt": "2026-08-22T10:41:41.051Z",
+      "updatedAt": "2026-08-22T10:42:53.376Z",
+      "serviceId": "5bd12fde-0a8b-4bfe-85a1-000ba1d86480",
+      "environmentId": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+      "regions": [
+        "us-west2"
+      ],
+      "meta": {
+        "reason": "autoupdate",
+        "image": "ghcr.io/railwayapp-templates/postgres-ssl:17"
+      }
+    },
+    {
+      "id": "0910a6b7-ce64-40e3-98c6-b8665d2c375a",
+      "status": "SUCCESS",
+      "createdAt": "2026-07-26T16:29:26.508Z",
+      "updatedAt": "2026-07-26T16:29:32.407Z",
+      "serviceId": "756bc4eb-b8f4-4156-9daf-fe0a55da829d",
+      "environmentId": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+      "regions": [
+        "us-east4-eqdc4a"
+      ],
+      "meta": {
+        "reason": "migrate",
+        "commitMessage": "chore: clean stale repo artifacts",
+        "commitHash": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+        "branch": "main"
+      }
+    },
+    {
+      "id": "86b22bcd-2ca8-4754-8c23-8b4054af3c2d",
+      "status": "SUCCESS",
+      "createdAt": "2026-06-16T23:57:52.309Z",
+      "updatedAt": "2026-06-17T00:00:20.761Z",
+      "serviceId": "c4f336bd-dd66-46e7-8bc3-db03ad08dd8c",
+      "environmentId": "36121c6d-d63f-4d58-8be2-e3684dfda52a",
+      "regions": [
+        "us-east4-eqdc4a"
+      ],
+      "meta": {
+        "reason": "deploy",
+        "commitMessage": "chore: clean stale repo artifacts",
+        "commitHash": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+        "branch": "main"
+      }
+    }
+  ],
+  "checks": [
+    {
+      "id": "productionRuntimeConfig",
+      "chunk_id": "1f3d47",
+      "wall_time_seconds": 0.833378583,
+      "exit_code": 1,
+      "original_token_count": 90,
+      "output": "[evidence:checkout-config] pass runtime config fetch 200 448ms\n[evidence:checkout-config] fail checkout runtime config evidence privacyPolicyUrl present is missing\n[evidence:checkout-config] evidence written /Users/danielchapman/.codex/worktrees/tixmo-nov9-readiness-audit/Project Tixmo/docs/audits/2026-10-21-onsale-evidence/production-runtime-config.json\n",
+      "command": "TIXMO_DASHBOARD_URL=https://demo.tixmo.co TIXMO_CHECKOUT_CONFIG_EVIDENCE_PATH=docs/audits/2026-10-21-onsale-evidence/production-runtime-config.json node scripts/check-checkout-runtime-config.mjs"
+    },
+    {
+      "id": "stagingRuntimeConfig",
+      "chunk_id": "f3e323",
+      "wall_time_seconds": 0.814356583,
+      "exit_code": 1,
+      "original_token_count": 89,
+      "output": "[evidence:checkout-config] pass runtime config fetch 200 421ms\n[evidence:checkout-config] fail checkout runtime config evidence privacyPolicyUrl present is missing\n[evidence:checkout-config] evidence written /Users/danielchapman/.codex/worktrees/tixmo-nov9-readiness-audit/Project Tixmo/docs/audits/2026-10-21-onsale-evidence/staging-runtime-config.json\n",
+      "command": "TIXMO_DASHBOARD_URL=https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app TIXMO_CHECKOUT_CONFIG_EVIDENCE_PATH=docs/audits/2026-10-21-onsale-evidence/staging-runtime-config.json node scripts/check-checkout-runtime-config.mjs"
+    },
+    {
+      "id": "productionHttpStatus",
+      "chunk_id": "981dc6",
+      "wall_time_seconds": 2.419736875,
+      "exit_code": 1,
+      "original_token_count": 122,
+      "output": "[status:check] retry https://api-production-fbaf.up.railway.app/ready after HTTP 404: {\"success\":false,\"message\":\"Route /ready not found\"}\n[status:check] fail https://api-production-fbaf.up.railway.app/ready: HTTP 404: {\"success\":false,\"message\":\"Route /ready not found\"}\n[status:check] ok https://api-production-fbaf.up.railway.app/health 200 164ms\n[status:check] ok https://api-production-fbaf.up.railway.app/api/v1/health 200 198ms\n[status:check] ok https://demo.tixmo.co/ 200 154ms\n",
+      "command": "TIXMO_API_BASE_URL=https://api-production-fbaf.up.railway.app TIXMO_DASHBOARD_URL=https://demo.tixmo.co node scripts/check-status.mjs"
+    },
+    {
+      "id": "stagingHttpStatus",
+      "chunk_id": "81c9c1",
+      "wall_time_seconds": 1.380960083,
+      "exit_code": 0,
+      "original_token_count": 103,
+      "output": "[status:check] ok https://tixmo-api-candidate-staging-audit-20261005.up.railway.app/ready 200 435ms\n[status:check] ok https://tixmo-api-candidate-staging-audit-20261005.up.railway.app/health 200 220ms\n[status:check] ok https://tixmo-api-candidate-staging-audit-20261005.up.railway.app/api/v1/health 200 123ms\n[status:check] ok https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app/ 200 237ms\n",
+      "command": "TIXMO_API_BASE_URL=https://tixmo-api-candidate-staging-audit-20261005.up.railway.app TIXMO_DASHBOARD_URL=https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app node scripts/check-status.mjs"
+    },
+    {
+      "id": "productionDependencyAudit",
+      "chunk_id": "b1409e",
+      "wall_time_seconds": 1.4526928749999999,
+      "exit_code": 0,
+      "original_token_count": 116,
+      "output": "[evidence:dependency-audit] running npm --prefix tdash audit --omit=dev --json\n[evidence:dependency-audit] pass dashboard 0 vulnerabilities\n[evidence:dependency-audit] running npm --prefix tixmoapi2 audit --omit=dev --json\n[evidence:dependency-audit] pass api 0 vulnerabilities\n[evidence:dependency-audit] evidence written /Users/danielchapman/.codex/worktrees/tixmo-nov9-readiness-audit/Project Tixmo/docs/audits/2026-10-21-onsale-evidence/dependency-audit.json\n",
+      "command": "TIXMO_DEPENDENCY_AUDIT_EVIDENCE_PATH=docs/audits/2026-10-21-onsale-evidence/dependency-audit.json node scripts/dependency-audit-evidence.mjs"
+    }
+  ],
+  "evidenceStatusBeforeNewArtifacts": {
+    "sections": [
+      {
+        "name": "Local Evidence",
+        "items": [
+          {
+            "label": "local seeded external smoke",
+            "path": "docs/external-smoke-runs/local-external-smoke-2026-06-09.json",
+            "exists": true,
+            "result": "pass",
+            "status": "pass",
+            "warnings": [],
+            "nextAction": ""
+          },
+          {
+            "label": "local public-route screenshots",
+            "path": "docs/public-route-screenshots/public-route-evidence.json",
+            "exists": true,
+            "result": "pass",
+            "status": "pass",
+            "warnings": [],
+            "nextAction": ""
+          },
+          {
+            "label": "local checkout runtime config",
+            "path": "docs/checkout-config-evidence/local-runtime-config-2026-06-09.json",
+            "exists": true,
+            "result": "pass",
+            "status": "pass",
+            "warnings": [
+              "local non-launch evidence only"
+            ],
+            "nextAction": "Run `npm run evidence:checkout-config` against staging/production with real policy URLs, Stripe publishable key, and payment currency."
+          },
+          {
+            "label": "local production dependency audit",
+            "path": "docs/dependency-audit/production-dependency-audit.json",
+            "exists": true,
+            "result": "pass",
+            "status": "pass",
+            "warnings": [],
+            "nextAction": ""
+          }
+        ]
+      },
+      {
+        "name": "Target Evidence",
+        "items": [
+          {
+            "label": "staging/production external smoke",
+            "path": null,
+            "exists": false,
+            "result": null,
+            "status": "missing",
+            "warnings": [],
+            "nextAction": "Set target API/dashboard URLs plus seeded demo credentials or workflow secrets, then run `npm run smoke:external` or `.github/workflows/external-smoke-evidence.yml`.",
+            "requiredFields": []
+          },
+          {
+            "label": "staging/production checkout runtime config",
+            "path": null,
+            "exists": false,
+            "result": null,
+            "status": "missing",
+            "warnings": [],
+            "nextAction": "Configure target `runtime-config.js` with approved policy URLs, `stripePublishableKey`, and payment currency, then run `npm run evidence:checkout-config`.",
+            "requiredFields": []
+          },
+          {
+            "label": "staging/production public-route screenshots",
+            "path": null,
+            "exists": false,
+            "result": null,
+            "status": "missing",
+            "warnings": [],
+            "nextAction": "Run `npm run evidence:public-routes` against the target dashboard; use `TIXMO_PUBLIC_EVIDENCE_REQUIRE_POLICIES=true` for launch policy-link evidence.",
+            "requiredFields": []
+          }
+        ]
+      },
+      {
+        "name": "Manual And Operational Evidence",
+        "items": [
+          {
+            "label": "real-device scanner/offline field test",
+            "path": null,
+            "exists": false,
+            "result": null,
+            "status": "missing",
+            "warnings": [],
+            "nextAction": "Start with `npm run evidence:manual-template -- --gate scanner --environment staging --owner \"Name\"`, run `docs/SCANNER_SETUP_AND_FIELD_TEST.md`, then set `result: \"pass\"` when complete.",
+            "requiredFields": [
+              "environment",
+              "capturedAt",
+              "releaseSha",
+              "owner",
+              "evidence.summary"
+            ]
+          },
+          {
+            "label": "backup/migration rollback evidence",
+            "path": null,
+            "exists": false,
+            "result": null,
+            "status": "missing",
+            "warnings": [],
+            "nextAction": "Start with `npm run evidence:manual-template -- --gate backup --environment staging --owner \"Name\"`, then complete scheduled backup, manual backup, restore test, rollback owner, and smoke evidence.",
+            "requiredFields": [
+              "environment",
+              "capturedAt",
+              "releaseSha",
+              "owner",
+              "evidence.summary"
+            ]
+          },
+          {
+            "label": "external reviewer/shared asset flow evidence",
+            "path": null,
+            "exists": false,
+            "result": null,
+            "status": "missing",
+            "warnings": [],
+            "nextAction": "Start with `npm run evidence:manual-template -- --gate review-share --environment staging --owner \"Name\"`, then run logged-out external review and shared-asset flows on the target domain.",
+            "requiredFields": [
+              "environment",
+              "capturedAt",
+              "releaseSha",
+              "owner",
+              "evidence.summary"
+            ]
+          },
+          {
+            "label": "policy approval/publication evidence",
+            "path": null,
+            "exists": false,
+            "result": null,
+            "status": "missing",
+            "warnings": [],
+            "nextAction": "Start with `npm run evidence:manual-template -- --gate policy --environment staging --owner \"Name\"`, finish `docs/POLICY_PUBLICATION_CHECKLIST.md`, publish URLs, and verify checkout/runtime config.",
+            "requiredFields": [
+              "environment",
+              "capturedAt",
+              "releaseSha",
+              "owner",
+              "evidence.summary"
+            ]
+          },
+          {
+            "label": "uptime/status monitoring evidence",
+            "path": null,
+            "exists": false,
+            "result": null,
+            "status": "missing",
+            "warnings": [],
+            "nextAction": "Start with `npm run evidence:manual-template -- --gate uptime --environment staging --owner \"Name\"`, configure monitors, capture manual/scheduled passing runs, and confirm alert routing.",
+            "requiredFields": [
+              "environment",
+              "capturedAt",
+              "releaseSha",
+              "owner",
+              "evidence.summary"
+            ]
+          }
+        ]
+      }
+    ],
+    "blockers": [
+      {
+        "section": "Target Evidence",
+        "label": "staging/production external smoke",
+        "path": null,
+        "exists": false,
+        "result": null,
+        "status": "missing",
+        "warnings": [],
+        "nextAction": "Set target API/dashboard URLs plus seeded demo credentials or workflow secrets, then run `npm run smoke:external` or `.github/workflows/external-smoke-evidence.yml`.",
+        "requiredFields": []
+      },
+      {
+        "section": "Target Evidence",
+        "label": "staging/production checkout runtime config",
+        "path": null,
+        "exists": false,
+        "result": null,
+        "status": "missing",
+        "warnings": [],
+        "nextAction": "Configure target `runtime-config.js` with approved policy URLs, `stripePublishableKey`, and payment currency, then run `npm run evidence:checkout-config`.",
+        "requiredFields": []
+      },
+      {
+        "section": "Target Evidence",
+        "label": "staging/production public-route screenshots",
+        "path": null,
+        "exists": false,
+        "result": null,
+        "status": "missing",
+        "warnings": [],
+        "nextAction": "Run `npm run evidence:public-routes` against the target dashboard; use `TIXMO_PUBLIC_EVIDENCE_REQUIRE_POLICIES=true` for launch policy-link evidence.",
+        "requiredFields": []
+      },
+      {
+        "section": "Manual And Operational Evidence",
+        "label": "real-device scanner/offline field test",
+        "path": null,
+        "exists": false,
+        "result": null,
+        "status": "missing",
+        "warnings": [],
+        "nextAction": "Start with `npm run evidence:manual-template -- --gate scanner --environment staging --owner \"Name\"`, run `docs/SCANNER_SETUP_AND_FIELD_TEST.md`, then set `result: \"pass\"` when complete.",
+        "requiredFields": [
+          "environment",
+          "capturedAt",
+          "releaseSha",
+          "owner",
+          "evidence.summary"
+        ]
+      },
+      {
+        "section": "Manual And Operational Evidence",
+        "label": "backup/migration rollback evidence",
+        "path": null,
+        "exists": false,
+        "result": null,
+        "status": "missing",
+        "warnings": [],
+        "nextAction": "Start with `npm run evidence:manual-template -- --gate backup --environment staging --owner \"Name\"`, then complete scheduled backup, manual backup, restore test, rollback owner, and smoke evidence.",
+        "requiredFields": [
+          "environment",
+          "capturedAt",
+          "releaseSha",
+          "owner",
+          "evidence.summary"
+        ]
+      },
+      {
+        "section": "Manual And Operational Evidence",
+        "label": "external reviewer/shared asset flow evidence",
+        "path": null,
+        "exists": false,
+        "result": null,
+        "status": "missing",
+        "warnings": [],
+        "nextAction": "Start with `npm run evidence:manual-template -- --gate review-share --environment staging --owner \"Name\"`, then run logged-out external review and shared-asset flows on the target domain.",
+        "requiredFields": [
+          "environment",
+          "capturedAt",
+          "releaseSha",
+          "owner",
+          "evidence.summary"
+        ]
+      },
+      {
+        "section": "Manual And Operational Evidence",
+        "label": "policy approval/publication evidence",
+        "path": null,
+        "exists": false,
+        "result": null,
+        "status": "missing",
+        "warnings": [],
+        "nextAction": "Start with `npm run evidence:manual-template -- --gate policy --environment staging --owner \"Name\"`, finish `docs/POLICY_PUBLICATION_CHECKLIST.md`, publish URLs, and verify checkout/runtime config.",
+        "requiredFields": [
+          "environment",
+          "capturedAt",
+          "releaseSha",
+          "owner",
+          "evidence.summary"
+        ]
+      },
+      {
+        "section": "Manual And Operational Evidence",
+        "label": "uptime/status monitoring evidence",
+        "path": null,
+        "exists": false,
+        "result": null,
+        "status": "missing",
+        "warnings": [],
+        "nextAction": "Start with `npm run evidence:manual-template -- --gate uptime --environment staging --owner \"Name\"`, configure monitors, capture manual/scheduled passing runs, and confirm alert routing.",
+        "requiredFields": [
+          "environment",
+          "capturedAt",
+          "releaseSha",
+          "owner",
+          "evidence.summary"
+        ]
+      }
+    ],
+    "summary": {
+      "openEvidenceGaps": 8,
+      "strict": true,
+      "readyForGoNoGo": false
+    }
+  },
+  "localSafetyTests": {
+    "command": "node --test scripts/verification-safety.test.mjs scripts/market-readiness-workflow.test.mjs scripts/test-target.test.cjs",
+    "exitCode": 0,
+    "passed": 47
+  },
+  "hostedCI": {
+    "market": {
+      "url": "https://github.com/chapmandaniel/projectTixmo/actions/runs/39527401260",
+      "sha": "87bbad00da8ee2e6ddddd2658b743103cf2bc467",
+      "conclusion": "success",
+      "frontendFiles": 35,
+      "frontendTests": 233,
+      "apiTests": "verifier passed; count suppressed by runner",
+      "apiLintWarnings": 337,
+      "designGuardBaseline": 926
+    },
+    "design": {
+      "url": "https://github.com/chapmandaniel/projectTixmo/actions/runs/39527401290",
+      "conclusion": "success"
+    },
+    "latestScheduledUptime": {
+      "url": "https://github.com/chapmandaniel/projectTixmo/actions/runs/39540481002",
+      "conclusion": "failure",
+      "cause": "production /ready 404; production /health, /api/v1/health and dashboard passed"
+    }
+  },
+  "limits": [
+    "No current live board access; kanban unavailable locally.",
+    "No full new local runtime suite: exact audited SHA hosted full gate was verified.",
+    "No traffic/load benchmark, Stripe sandbox transaction, provider inbox delivery, physical scanner exercise or restore drill executed.",
+    "GitHub repository is public; this audit is kept on a local branch, no push or PR publication."
+  ],
+  "repositoryControls": {
+    "visibility": "public",
+    "classicMainProtection": "HTTP 404 Branch not protected",
+    "activeMainRules": [],
+    "publishedDuringAudit": false
+  },
+  "dateExpressionReproduction": {
+    "browserTimezone": "America/St_Johns",
+    "saved": "2026-11-09T13:30:00.000Z",
+    "datetimeLocalInput": "2026-11-09T13:30",
+    "unchangedSave": "2026-11-09T17:00:00.000Z",
+    "scope": "Exact JavaScript expression reproduction; not UI runtime reproduction"
+  }
+}

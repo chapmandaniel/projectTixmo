@@ -1,0 +1,32 @@
+{
+  "startedAt": "2026-10-21T03:58:22.154Z",
+  "dashboardUrl": "https://demo.tixmo.co",
+  "runtimeConfigUrl": "https://demo.tixmo.co/runtime-config.js",
+  "checks": [
+    {
+      "name": "runtime config fetch",
+      "status": "pass",
+      "at": "2026-10-21T03:58:22.603Z",
+      "httpStatus": 200,
+      "durationMs": 448,
+      "summary": "200 448ms"
+    },
+    {
+      "name": "checkout runtime config evidence",
+      "status": "fail",
+      "at": "2026-10-21T03:58:22.604Z",
+      "summary": "privacyPolicyUrl present is missing"
+    }
+  ],
+  "config": {
+    "apiUrl": "https://api-production-fbaf.up.railway.app/api/v1",
+    "privacyPolicyUrl": "",
+    "termsUrl": "",
+    "refundPolicyUrl": "",
+    "organizerTermsUrl": "",
+    "stripePublishableKey": "",
+    "paymentCurrency": "usd"
+  },
+  "result": "fail",
+  "finishedAt": "2026-10-21T03:58:22.604Z"
+}

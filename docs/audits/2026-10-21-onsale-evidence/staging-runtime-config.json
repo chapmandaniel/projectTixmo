@@ -1,0 +1,32 @@
+{
+  "startedAt": "2026-10-21T03:58:22.155Z",
+  "dashboardUrl": "https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app",
+  "runtimeConfigUrl": "https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app/runtime-config.js",
+  "checks": [
+    {
+      "name": "runtime config fetch",
+      "status": "pass",
+      "at": "2026-10-21T03:58:22.576Z",
+      "httpStatus": 200,
+      "durationMs": 421,
+      "summary": "200 421ms"
+    },
+    {
+      "name": "checkout runtime config evidence",
+      "status": "fail",
+      "at": "2026-10-21T03:58:22.577Z",
+      "summary": "privacyPolicyUrl present is missing"
+    }
+  ],
+  "config": {
+    "apiUrl": "https://tixmo-api-candidate-staging-audit-20261005.up.railway.app/api/v1",
+    "privacyPolicyUrl": "",
+    "termsUrl": "",
+    "refundPolicyUrl": "",
+    "organizerTermsUrl": "",
+    "stripePublishableKey": "",
+    "paymentCurrency": "cad"
+  },
+  "result": "fail",
+  "finishedAt": "2026-10-21T03:58:22.577Z"
+}
