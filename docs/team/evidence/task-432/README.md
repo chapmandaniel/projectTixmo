@@ -299,3 +299,41 @@ shared-lock mutation/config/CI/scheduler/provider/spend/push/merge/deploy run.
 This successor requires independent exactSHA lead+QA review; earlier partial
 approvals do not cover it. Task432 INCOMPLETE, original424 failure retained,
 no full market PASS and no closure/runtime authorization.
+
+
+## Successor: concrete427 shell-to-CLI transport wiring (SOURCE/OFFLINE only)
+
+Base92225b707a114b49c6c9f2cef361e7c8977c539b, isolated task-432-preimport.
+427 runtime.sh now exclusively writes/fsyncs the clean tracked-source snapshot to
+api-identity.json and opts into TASK432_API_RECEIPTS before verifier children.
+427 run-gate actually calls the reviewed CLI adapter around the existing verifyApi
+callback; raw stdout/stderr are piped into its canonical receipts while legacy
+numbered logs, command journal, full-suite Jest JSON flags, and blocked-call check
+remain. Capture is bounded to64MiB per stream; overflow is a child failure, never
+PASS. This buffers rather than streams output; no unlimited-output claim.
+The default root12 stages/audits and verifyApi implementation are untouched.
+
+Actual `node docs/team/evidence/task-432/offline-shell.mjs`:10 cases PASS:
+full four-command/rawNUL receipt-to-log parity, each four failure positions,
+spawn throw, source drift stopping migration/incomplete collector rejection,
+blocked-call failure, missing guard denial, and real shell missing-grant exit2
+before any runtime creation. Fixture validator temporarily substituted solely
+for private /tmp fixtures and restored; this is NOT real admission. Initial test
+incorrectly expected drift's partial successful receipt to collect; actual
+collector rejected it, expectation corrected and rerun PASS.
+`node --check` runner and fixture, `bash -n` shell, `git diff --check`:PASS.
+Older five suites are rerun separately if explicitly recorded on the board;
+historical passes are not current evidence.
+
+No genuine runtime admission is established by snapshot/env/symbol/privateJSON.
+Service ownership checks remain existing427 shell behavior, not newly tested.
+All10-stage lifecycle and compose.openLocal integration, genuine preimport/native
+admission, enforced registryHTTPS443/existingDNS, dependency/generated-client
+provenance and runtime versions remain OPEN. Snapshot occurs after service setup
+but before verifier children; it does not gate service provisioning. Admission
+requires independently reviewed lifecycle integration and a separate explicit
+audit/runtime grant; this checkpoint grants neither. No overall432 closure,
+fullmarketPASS or replacement of424 original failure. Fresh independent lead
+and QA must review this exact successor;444/445 approve its parent slice only.
+No network/audit/services/runtime/DB/Redis/HTTP/applicationtest/install/generation/
+config/CI/scheduler/cloud/spend/push/merge/deploy executed.

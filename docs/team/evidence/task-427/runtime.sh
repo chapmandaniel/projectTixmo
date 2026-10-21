@@ -161,5 +161,16 @@ test -x tixmoapi2/node_modules/.bin/jest
 export TMPDIR="$owned_run"
 # Full unfiltered verifyApi build/migrate/schema/Jest sequence. No path filters.
 export JWT_EXPIRES_IN=7d JWT_REFRESH_EXPIRES_IN=30d CHECKPOINT_DISABLE=1 PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
+# Bind the reviewed CLI transport to this exact clean candidate before children.
+# Exclusive publication refuses reuse; source identity is consistency, not admission.
+export TASK432_API_RECEIPTS="$owned_run"
+node --input-type=module -e '
+  import fs from "node:fs";
+  import { snapshot } from "./scripts/market-composition.mjs";
+  const identity = snapshot(process.cwd());
+  const fd = fs.openSync(process.env.TASK379_ARTIFACT_DIR + "/api-identity.json", "wx", 0o400);
+  try { fs.writeFileSync(fd, JSON.stringify(identity) + "\n"); fs.fsyncSync(fd); }
+  finally { fs.closeSync(fd); }
+'
 jest_attempted=1
 timeout --signal=TERM --kill-after=5s 360s node "$PWD/docs/team/evidence/task-427/run-gate.mjs" > "$artifact_dir/acceptance.log" 2>&1
