@@ -92,3 +92,63 @@ zero local runs, two retained audit receipts and INCOMPLETE. Original parity,
 all12 fail-fast, cleanup and invalidation stubs still PASS. Syntax and diff check
 PASS. No adapters/runtime/registry/services added or run. All remaining gaps
 above unchanged. Requires independent exact-successor re-review, not selfapproval.
+
+## Persistence successor (source/offline only)
+
+New isolated branch `tixmo/task-432-persistence`, worktree
+`worktrees/task-432-persistence`, exact base
+`0cdb124530272f2c7408acb0374eb4a576a8fdf4`; previous worktree and main untouched.
+The earlier missing-persistence statements describe the previous checkpoint:
+this successor supplies a concrete `createEvidenceStore` callback plus reader
+in `scripts/market-evidence-store.mjs`. No core/stage/default-runner changes.
+
+Existing maintained Node24.21.0/npm11.19.0 suffice: fs/crypto/Git, no dependency
+or custom service. Board lookup `kanban show 443` returned no such task; no
+reviewed enforceable registry/DNS boundary identified or exercised here.
+Inspected existing427 run-gate nested command/stdout/stderr/Jest transport.
+
+Store requires an existing private owned non-symlink directory outside the
+candidate and a safe run ID. Exclusive mkdir reserves each run, exclusive file
+writes prevent overwrite, raw UTF-8 stdout/stderr bytes are fsynced and joined
+with canonical receipts/hash metadata in manifest.json. The full manifest seal
+is fsynced privately then hard-linked atomically to manifest.sha256 (no clobber),
+followed by directory fsync. Readers accept only sealed/hash-consistent bundles;
+failed writes deliberately leave unsealed reservations for inspection, never
+reuse/overwrite them. Read-only files/run directory discourage accidental edits.
+This is append-only/content-verified **application scope**, NOT filesystem
+immutability against owning UID/root, authentication, WORM storage, or OS
+network isolation. Owner can rewrite both data and seals; hashes alone cannot
+prove authenticity. Preserve/separately trust returned manifestHash for custody.
+
+Actual checks (offline only):
+
+- `node docs/team/evidence/task-432/offline-disk.mjs` PASS: creates owned temporary
+  Git repository with six fixture package/lock files and source; real uncommitted
+  source/lock changes denied, restore matches snapshot, committed lock drift
+  changes identity. Real source mutation on teardown/admission gives zero local
+  commands and two retained INCOMPLETE audit-stub receipts.
+- Same fixture PASS: disk-backed12-stage stub and fail-fast2-stage raw bundles,
+  seal/hash verification, repeat write EEXIST, raw tamper rejection, failed hash
+  write leaves unsealed bundle denied by reader, traversal run-ID rejection.
+- Original `offline-stub.mjs` PASS: all12 exact-command/env parity, every failfast
+  position, canonical receipt/argument protection and transition stale denial.
+- `node --check scripts/market-evidence-store.mjs` and
+  `node --check docs/team/evidence/task-432/offline-disk.mjs` PASS;
+  `git diff --check` PASS. npm version read only, no npm execution stage.
+
+An initial fixture assertion used async rejection for synchronous validation;
+corrected to assert.throws, rerun PASS. All filesystem mutation confined to owned
+new source files and temporary fixtures; cleanup only those generated fixtures.
+Inherited Husky pre-commit references missing `_/husky.sh` helper (actual path
+`tixmoapi2/.husky/_/husky.sh`); inspected hook, commit uses invocation-only
+`core.hooksPath=/dev/null`, no config write/install/lint-staged claim.
+
+Remaining blockers unchanged except this bounded persistence implementation:
+real reviewed registry443/existingDNS admission + scrubbed config/env provenance,
+fresh427 local owned DB/Redis/HTTP/artifact adapter, nested API raw receipt join,
+actual verified npm/dependency/generated-client provenance. Adapter-supplied
+versions remain caller claims; test npm version is explicitly a stub. The store
+can retain current core receipts, not attest missing nested receipts or turn
+stubs into qualification. Independent lead+QA exact successor review required;
+no audit/runtime grant, full-market PASS, task432 closure or selfapproval.
+QA434 is sole runtime owner separately; its services/dependencies untouched.
