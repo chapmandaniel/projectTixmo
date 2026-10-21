@@ -114,6 +114,48 @@ describe('customer event on-sale page', () => {
         ).toBeDisabled();
     });
 
+    it('shows the mobile ticket shortcut only while the ticket selector is outside view', () => {
+        let notifyVisibility;
+        const disconnect = vi.fn();
+        vi.stubGlobal(
+            'IntersectionObserver',
+            class {
+                constructor(callback) {
+                    notifyVisibility = callback;
+                }
+                observe() {}
+                disconnect = disconnect;
+            },
+        );
+        const view = renderView();
+        // The hero has its own shortcut; the floating shortcut is the second.
+        expect(
+            screen.getAllByRole('button', {
+                name: 'Choose tickets',
+                hidden: true,
+            }),
+        ).toHaveLength(2);
+        act(() => notifyVisibility([{ isIntersecting: true }]));
+        expect(
+            screen.getAllByRole('button', {
+                name: 'Choose tickets',
+                hidden: true,
+            }),
+        ).toHaveLength(1);
+        expect(
+            screen.getByRole('button', { name: 'Continue to checkout' }),
+        ).toBeInTheDocument();
+        act(() => notifyVisibility([{ isIntersecting: false }]));
+        expect(
+            screen.getAllByRole('button', {
+                name: 'Choose tickets',
+                hidden: true,
+            }),
+        ).toHaveLength(2);
+        view.unmount();
+        expect(disconnect).toHaveBeenCalledOnce();
+    });
+
     it('keeps the sample preview from opening a real checkout', () => {
         renderView({}, true);
         fireEvent.click(

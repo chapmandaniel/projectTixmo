@@ -67,10 +67,12 @@ describe('festival customer journey', () => {
         expect(
             screen.queryByRole('button', { name: /Add one General admission/ }),
         ).not.toBeInTheDocument();
+        const exclusions = within(
+            screen.getByRole('region', { name: 'Not included' }),
+        );
+        expect(exclusions.getByText('Rooftop Sessions')).toBeInTheDocument();
         expect(
-            screen.getByText(
-                'Rooftop Sessions is not included. Separate event tickets are required.',
-            ),
+            exclusions.getByText('Separate event tickets are required.'),
         ).toBeInTheDocument();
     });
 
@@ -86,7 +88,7 @@ describe('festival customer journey', () => {
             destinations.getByRole('link', { name: /Festival passes/ }),
         ).toHaveAttribute('href', '#festival-passes');
         const coverage = within(
-            screen.getByRole('region', { name: '2. What’s included' }),
+            screen.getByRole('region', { name: 'Weekend pass includes' }),
         );
         expect(
             coverage.getByRole('list', { name: 'Included events' }),
@@ -96,9 +98,16 @@ describe('festival customer journey', () => {
                 'General admission at the included events. Balcony access is separate.',
             ),
         ).toBeVisible();
-        expect(
-            coverage.getByText('Fri, Nov 19 · Sat, Nov 20 · Sun, Nov 21'),
-        ).toBeVisible();
+        for (const date of ['Fri, Nov 19', 'Sat, Nov 20', 'Sun, Nov 21']) {
+            expect(coverage.getByRole('heading', { name: date })).toBeVisible();
+        }
+        const friday = within(
+            coverage.getByRole('list', {
+                name: 'Included events on Friday, November 19',
+            }),
+        );
+        expect(friday.getByRole('link', { name: /After Dark/ })).toBeVisible();
+        expect(friday.getByText('11:00 PM')).toBeVisible();
         const soldOutEvent = screen
             .getByRole('link', { name: 'View event: Rooftop Sessions' })
             .closest('article');
@@ -151,6 +160,31 @@ describe('festival customer journey', () => {
         ).toHaveLength(6);
     });
 
+    it('retains date and venue when both controls change before the next render', () => {
+        renderJourney();
+        act(() => {
+            fireEvent.click(
+                screen.getByRole('button', { name: 'Sat, Nov 20' }),
+            );
+            fireEvent.change(screen.getByLabelText('Filter events by venue'), {
+                target: { value: 'signal-hall' },
+            });
+        });
+        expect(
+            screen.getAllByRole('link', {
+                name: /^View event(?: & tickets)?: /,
+            }),
+        ).toHaveLength(1);
+        expect(
+            screen.getByRole('link', {
+                name: 'View event & tickets: Neon Nights',
+            }),
+        ).toHaveAttribute(
+            'href',
+            '/preview/festival/events/neon-nights-preview?date=2027-11-20&venue=signal-hall',
+        );
+    });
+
     it('navigates to an event where its tickets are sold, then restores the festival filters on return', () => {
         renderJourney(
             '/preview/festival?date=2027-11-20&venue=signal-hall&pass=saturday-pass',
@@ -163,9 +197,19 @@ describe('festival customer journey', () => {
         expect(
             screen.getByRole('heading', { name: 'Neon Nights' }),
         ).toBeInTheDocument();
+        const eventTickets = within(
+            screen.getByRole('complementary', { name: 'Ticket selection' }),
+        );
         expect(
-            screen.getByText('Tickets on this page cover this event only.'),
+            eventTickets.getByText(
+                'Tickets on this page cover this event only.',
+            ),
         ).toBeInTheDocument();
+        expect(
+            eventTickets.getByRole('group', { name: 'Event ticket admission' }),
+        ).toContainElement(
+            eventTickets.getByRole('link', { name: /Also included in:/ }),
+        );
         expect(
             screen.getByRole('button', {
                 name: 'Add one General admission ticket',
@@ -211,7 +255,7 @@ describe('festival customer journey', () => {
             }),
         ).toHaveLength(6);
         expect(
-            screen.queryByText(/Included in weekend pass/),
+            screen.queryByText(/Included in Weekend pass/),
         ).not.toBeInTheDocument();
         fireEvent.click(
             screen.getByRole('link', {
@@ -235,7 +279,38 @@ describe('festival customer journey', () => {
             }),
         );
         expect(panel.getByText('2 events included')).toBeInTheDocument();
-        expect(screen.getAllByText('Included in saturday pass')).toHaveLength(
+        const exclusions = panel.getByRole('region', { name: 'Not included' });
+        for (const name of [
+            'Opening Night',
+            'After Dark',
+            'Rooftop Sessions',
+            'Sunday Closing',
+        ]) {
+            expect(exclusions).toHaveTextContent(name);
+        }
+
+        expect(
+            panel.getByRole('heading', { name: 'Saturday pass includes' }),
+        ).toBeInTheDocument();
+        expect(
+            within(
+                panel.getByRole('region', { name: 'Your selection' }),
+            ).getByText('Saturday pass'),
+        ).toBeInTheDocument();
+        const opening = within(
+            screen.getByRole('article', { name: 'Opening Night' }),
+        );
+        expect(
+            opening.getByRole('group', { name: 'Admission for Opening Night' }),
+        ).toHaveTextContent('Not included in Saturday pass');
+        const neon = within(
+            screen.getByRole('article', { name: 'Neon Nights' }),
+        );
+        expect(
+            neon.getByRole('group', { name: 'Admission for Neon Nights' }),
+        ).toHaveTextContent('Included in Saturday pass');
+
+        expect(screen.getAllByText('Included in Saturday pass')).toHaveLength(
             2,
         );
         const add = panel.getByRole('button', {
