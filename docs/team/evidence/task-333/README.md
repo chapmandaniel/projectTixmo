@@ -22,7 +22,7 @@ Tests retain bare SQL predicates and no provider dependencies. Disposable fixtur
 
 1. Focused Prettier on source/new test: passed.
 2. Scrubbed-env `node node_modules/typescript/bin/tsc --noEmit` from tixmoapi2: exit0, typecheck.log empty.
-3. Scrubbed-env `node tixmoapi2/node_modules/typescript/bin/tsc --noEmit -p docs/team/evidence/task-333/tsconfig.prepared-tests.json`: exit0, prepared-tests-typecheck.log empty; compiles prepared integration tests without executing them or DB setup.
+3. Scrubbed-env `node tixmoapi2/node_modules/typescript/bin/tsc --noEmit -p docs/team/evidence/task-333/tsconfig.prepared-tests.json`: exit0, prepared-tests-typecheck.log empty; compiles prepared integration tests without executing them or DB setup. Initial standalone config lacked Jest type roots because it resides under evidence; its failed diagnostics are retained in prepared-tests-typecheck-attempt-1.log. Final config explicitly resolves existing owned node/Jest types (no installation).
 4. Scrubbed-env `TS_NODE_PROJECT=tixmoapi2/tsconfig.json NODE_OPTIONS=--require=<absolute task333 network-guard.cjs> TASK333_BLOCK_LOG=<absolute task333 blocked-network.jsonl> node -r ./tixmoapi2/node_modules/ts-node/register docs/team/evidence/task-333/shape-check.cjs`: exit0. Pure fragment shape/value assertions verify UTC parameter casts, bare column, unmodified Date objects, inclusive operators and unchanged existing status/currency/tenant/event/SOLD/LEFT JOIN structure. No configuration/DB client import. No blocked-network record.
 5. `git diff --check`: exit0. Hash/inode provenance retained. Owned dependencies copied with cp-a from task328, matching baseline schema/lock, distinct generated-client inode/nlink1, no install/generate/shared generated writes.
 

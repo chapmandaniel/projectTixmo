@@ -1,0 +1,15 @@
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(7,1): error TS2304: Cannot find name 'afterAll'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(16,5): error TS2304: Cannot find name 'expect'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(90,1): error TS2582: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(92,10): error TS7006: Parameter 'timezone' implicitly has an 'any' type.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(103,7): error TS2304: Cannot find name 'expect'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(106,7): error TS2304: Cannot find name 'expect'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(109,7): error TS2304: Cannot find name 'expect'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(110,7): error TS2304: Cannot find name 'expect'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(116,7): error TS2304: Cannot find name 'expect'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(126,1): error TS2582: Cannot find name 'test'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(128,10): error TS7006: Parameter 'timezone' implicitly has an 'any' type.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(136,7): error TS2304: Cannot find name 'expect'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(144,7): error TS2304: Cannot find name 'expect'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(147,7): error TS2304: Cannot find name 'expect'.
+tixmoapi2/tests/integration/paid-sales-utc.test.ts(150,7): error TS2304: Cannot find name 'expect'.
