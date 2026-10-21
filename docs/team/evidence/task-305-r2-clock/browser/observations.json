@@ -1,0 +1,32 @@
+[
+  {
+    "name": "native-before-opening",
+    "native": 1110.8000001907349,
+    "date": 1792566013299,
+    "disabled": true
+  },
+  {
+    "name": "skew-early-server-reject",
+    "native": 1437.5,
+    "date": 1792566024626,
+    "disabled": false
+  },
+  {
+    "name": "native-open",
+    "native": 9716.200000047684,
+    "date": 1792566021904,
+    "disabled": false
+  },
+  {
+    "name": "native-closed",
+    "native": 21763.60000014305,
+    "date": 1792566033952,
+    "disabled": true
+  },
+  {
+    "name": "skew-late-server-reject",
+    "native": 21882.10000014305,
+    "date": 1792566023070,
+    "disabled": false
+  }
+]

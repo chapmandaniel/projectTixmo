@@ -1,0 +1,3 @@
+de5c571fa5eafc6f436d7fef31da65c699c1c0bd1f757e65c606b1d94cde391a  scripts/browser/task-305-clock.mjs
+8d39f9a20279e67899aa293338fe9138afbaf6a9f6c76d9949a504261f05ebb7  tixmoapi2/tests/integration/checkout-clock-browser.local.test.ts
+607305deafb6bfdd55ec5ac3716570cfc6aaf6e28494d8c1eed09fb5f4ca0dc0  docs/team/evidence/task-305-r2-clock/runtime.sh

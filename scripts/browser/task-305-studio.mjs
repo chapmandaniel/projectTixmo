@@ -15,7 +15,7 @@ const { createServer } = await import(require.resolve('vite'));
 const react = (await import(require.resolve('@vitejs/plugin-react'))).default;
 const browserPath = process.env.TIXMO_BROWSER_PATH;
 assert(browserPath, 'Set TIXMO_BROWSER_PATH to an existing cached Chromium executable; do not download.');
-const out = resolve(root, 'docs/team/evidence/task-305/browser');
+const out = resolve(root, 'docs/team/evidence/task-305-r2/browser');
 const fixture = JSON.parse(process.env.TASK305_FIXTURE);
 const apiOrigin = process.env.TASK305_API_ORIGIN;
 assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(apiOrigin));
@@ -26,31 +26,20 @@ const audit = []; const failures = [];
 const evaluate = async expression => { const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }); if (r.exceptionDetails) throw Error(JSON.stringify(r.exceptionDetails)); return r.result.value; };
 const wait = async (expression, description) => { for (let i=0;i<100;i++) { if(await evaluate(expression)) return; await new Promise(r=>setTimeout(r,100)); } throw Error(`Timed out: ${description}`); };
 const click = text => evaluate(`(()=>{const e=[...document.querySelectorAll('button,a')].find(e=>e.textContent.trim()===${JSON.stringify(text)}); if(!e)throw Error('Missing control');e.click();})()`);
-const fill = (label,value) => evaluate(`(()=>{const e=document.querySelector('[aria-label="${label}"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));})()`);
-const captureStates = [];
-const screenshot = async name => {
- const authFrame=['02-real-session-cleared','04-real-signedout-return','05-real-return-expired'].includes(name);
- const expected=name==='03-real-b-reload-isolated' ? ['No tickets yet.','No orders yet.',fixture.b]
-  : name==='06-real-confirmed-wallet-link' ? ['Order confirmed. Payment succeeded.','View my tickets and orders']
-  : ['04-real-signedout-return','05-real-return-expired'].includes(name) ? ['Sign in to check your order. Payment has not been verified.']
-  : name==='02-real-session-cleared' ? ['Sign in to view tickets, payment status, and refunds.','New buyer'] : name==='failure' ? [] : [fixture.orderNumber];
- const selector=authFrame ? '[aria-label="Email address"],h1' : ['01-real-a-wallet-qr','07-real-delivered-wallet-qr'].includes(name) ? 'h1,img[alt="Ticket admission QR code"]' : 'h1';
+const captureStates=[];
+const screenshot=async(name)=>{
  await evaluate('document.fonts.ready.then(()=>true)');
- let previous='',stable=0,state;
- for(let attempt=0;attempt<60;attempt++){
-  state=await evaluate(`(()=>{const text=document.body?.textContent||'';const nodes=[...document.querySelectorAll(${JSON.stringify(selector)})];let minOpacity=1;let visible=nodes.length>0;const geometry=[];for(const node of nodes){const r=node.getBoundingClientRect();visible=visible&&r.width>0&&r.height>0;geometry.push([r.x,r.y,r.width,r.height].map(v=>Math.round(v*10)/10));for(let e=node;e;e=e.parentElement){const c=getComputedStyle(e);minOpacity=Math.min(minOpacity,Number(c.opacity));visible=visible&&c.display!=='none'&&c.visibility!=='hidden';}}const running=document.getAnimations().filter(a=>a.playState==='running'&&Number.isFinite(a.effect?.getTiming().iterations??1)).length;return{expected:${JSON.stringify(expected)}.every(t=>text.includes(t)),visible,minOpacity,running,geometry,fonts:document.fonts.status};})()`);
-  const key=JSON.stringify(state.geometry);stable=state.expected&&state.visible&&state.minOpacity>=.95&&state.running===0&&state.fonts==='loaded'&&key===previous ? stable+1:0;previous=key;
-  if(stable>=4)break;await new Promise(resolve=>setTimeout(resolve,100));
+ let stable=0,previous='';
+ for(let i=0;i<60;i++){
+  const state=await evaluate(`(()=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Save Draft');const r=b?.getBoundingClientRect();return{fonts:document.fonts.status,text:document.body.textContent.includes('Draft saved.'),geometry:r?[r.x,r.y,r.width,r.height]:null,running:document.getAnimations().filter(a=>a.playState==='running'&&Number.isFinite(a.effect?.getTiming().iterations??1)).length};})()`);
+  const key=JSON.stringify(state);stable=state.text&&state.fonts==='loaded'&&state.running===0&&key===previous?stable+1:0;previous=key;
+  if(stable>=4){captureStates.push({name,...state,stableFrames:stable});break;}await new Promise(r=>setTimeout(r,100));
  }
- assert(stable>=4,`Unsettled screenshot ${name}: ${JSON.stringify(state)}`);
- captureStates.push({name,expectedText:expected,selector,...state,stableFrames:stable});
- await send('Page.bringToFront');
- await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))');
+ assert(stable>=4,'Screenshot not settled');
+ await send('Page.bringToFront');await evaluate('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await writeFile(resolve(out,`${name}.png`),Buffer.from(shot.data,'base64'));
  await writeFile(resolve(out,'capture-states.json'),JSON.stringify(captureStates,null,2));
 };
-const login = async name => { await click('Sign in'); await fill('Email address',fixture[name]); await fill('Password',fixture.password); await click('Sign in for checkout'); };
-const revoke = () => new Promise((resolve,reject)=>{process.once('message',m=>m.ok?resolve():reject(Error(m.error)));process.send({revoke:true});});
 try {
  const frontendPort=Number(process.env.TASK305_FRONTEND_PORT);assert(frontendPort>0 && frontendPort<65536);
  server = await createServer({configFile:false,envFile:false,envDir:profile,root:resolve(root,'tdash'),plugins:[react(),{name:'task305-entry',configureServer(vite){vite.middlewares.use('/__task305',async(req,res)=>{res.setHeader('Content-Type','text/html');res.end(await vite.transformIndexHtml('/__task305',`<html><body><div id="root"></div><script type="module" src="/task305-entry.jsx"></script></body></html>`));});}}],server:{host:'127.0.0.1',port:frontendPort,strictPort:true,proxy:{'/api':{target:apiOrigin,changeOrigin:true}}}, logLevel:'error'});
@@ -65,8 +54,14 @@ try {
  try {
   if(u.origin!==origin){audit.push({blockedExternal:u.origin});await send('Fetch.failRequest',{requestId:p.requestId,errorReason:'BlockedByClient'});return;}
   if(u.pathname.startsWith('/api/')){const path=u.pathname; const method=p.request.method;
-   const allowed=(method==='PUT' && fixture.cases.some(c=>path===`/api/v1/events/${c.event.id}/configuration`)) || (method==='POST' && path==='/api/v1/auth/login') || (method==='GET' && (path==='/api/v1/venues'||path.startsWith('/api/v1/ticket-types'))) || (method==='GET' && (path.startsWith('/api/v1/tickets/')||path.startsWith('/api/v1/orders/')||path.startsWith('/api/v1/events/public/'))) || (method==='POST' && ['/api/v1/auth/login','/api/v1/auth/refresh'].includes(path));
-   audit.push({method,path}); if(!allowed){failures.push(`${method} ${path}`);await send('Fetch.failRequest',{requestId:p.requestId,errorReason:'BlockedByClient'});return;}
+   const eventIds=fixture.cases.map(c=>c.event.id);const typeIds=fixture.cases.map(c=>c.typeId);
+   const allowed=(method==='PUT' && eventIds.some(id=>path===`/api/v1/events/${id}/configuration`))
+    || (method==='POST' && path==='/api/v1/auth/login')
+    || (method==='GET' && path==='/api/v1/venues' && u.search==='?limit=100')
+    || (method==='GET' && path==='/api/v1/ticket-types' && eventIds.includes(u.searchParams.get('eventId')))
+    || (method==='GET' && path==='/api/v1/ticket-tiers' && typeIds.includes(u.searchParams.get('ticketTypeId')))
+    || (method==='GET' && eventIds.some(id=>path===`/api/v1/events/${id}`));
+   audit.push({method,path,query:u.search,...(method==='PUT'?{body:JSON.parse(p.request.postData)}:{})}); if(!allowed){failures.push(`${method} ${path}`);await send('Fetch.failRequest',{requestId:p.requestId,errorReason:'BlockedByClient'});return;}
   }
   await send('Fetch.continueRequest',{requestId:p.requestId});
  }catch(error){failures.push(error.message);}}
@@ -80,10 +75,11 @@ try {
   await wait(`(document.body?.textContent||'').includes('Admission') && [...document.querySelectorAll('button')].some(e=>e.textContent.trim()==='Save Draft')`,'Studio configuration loaded');
   await click('Save Draft');
   await wait(`(document.body?.textContent||'').includes('Draft saved.')`,'actual configuration HTTP save');
-  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});
-  await writeFile(resolve(out,`studio-${index}.png`),Buffer.from(shot.data,'base64'));
+  await screenshot(`studio-${index}`);
  }
  assert.equal(failures.length,0,failures.join('\n'));
+ assert.equal(audit.filter(a=>a.method==='PUT').length,9);
+ assert.equal(audit.filter(a=>a.responsePath?.endsWith('/configuration')&&a.status===200).length,9);
  await writeFile(resolve(out,'result.json'),JSON.stringify({status:'PASS Studio UI saves only; SQL verified by parent',audit,failures},null,2));
 } catch(error) {
  if(send)await writeFile(resolve(out,'failure.json'),JSON.stringify({error:error.stack,audit,failures,body:await evaluate('document.body?.textContent').catch(()=>null)},null,2));

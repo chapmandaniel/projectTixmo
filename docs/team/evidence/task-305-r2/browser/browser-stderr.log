@@ -1,0 +1,36 @@
+[1021/042719.823484:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/042719.831902:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+
+DevTools listening on ws://127.0.0.1:46563/devtools/browser/bbf75f20-417c-4364-aedd-018a3e3f42ba
+[1021/042719.831997:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/042719.836091:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[1021/042719.843063:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+[1021/042719.932947:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/042719.933028:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[1021/042720.603850:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:41213/@vite/client (789)
+[1021/042720.610590:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:41213/@vite/client (912)
+[1021/042720.693190:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:41213/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)
+[1021/042721.879292:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:41213/@vite/client (789)
+[1021/042721.883468:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:41213/@vite/client (912)
+[1021/042721.920283:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:41213/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)
+[1021/042723.006906:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:41213/@vite/client (789)
+[1021/042723.010953:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:41213/@vite/client (912)
+[1021/042723.047355:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:41213/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)
+[1021/042724.154986:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:41213/@vite/client (789)
+[1021/042724.159615:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:41213/@vite/client (912)
+[1021/042724.192275:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:41213/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)
+[1021/042725.401936:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:41213/@vite/client (789)
+[1021/042725.405598:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:41213/@vite/client (912)
+[1021/042725.443012:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:41213/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)
+[1021/042726.512182:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:41213/@vite/client (789)
+[1021/042726.514537:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:41213/@vite/client (912)
+[1021/042726.547260:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:41213/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)
+[1021/042727.610026:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:41213/@vite/client (789)
+[1021/042727.613374:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:41213/@vite/client (912)
+[1021/042727.644072:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:41213/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)
+[1021/042728.709140:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:41213/@vite/client (789)
+[1021/042728.711398:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:41213/@vite/client (912)
+[1021/042728.743532:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:41213/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)
+[1021/042729.810230:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:41213/@vite/client (789)
+[1021/042729.814974:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:41213/@vite/client (912)
+[1021/042729.843193:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:41213/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)

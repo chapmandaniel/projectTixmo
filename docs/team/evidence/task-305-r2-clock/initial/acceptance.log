@@ -1,0 +1,50 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task305-r2/run.vDYUXN/jest-cache --runInBand --runTestsByPath tests/integration/checkout-clock-browser.local.test.ts
+
+  console.log
+    TASK305_API_LISTENER 2770318 { address: '127.0.0.1', family: 'IPv4', port: 33263 }
+
+      at Object.<anonymous> (tests/integration/checkout-clock-browser.local.test.ts:24:205)
+
+TASK305_BROWSER_CLEANUP {
+  browser: { pid: 2770657, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 37231, closed: true },
+  profileRemoved: true
+}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+Error: Timed out: same page native closing
+    at wait (file:///home/daniel/projects/projectTixmo/worktrees/task-305/scripts/browser/task-305-clock.mjs:27:165)
+    at async file:///home/daniel/projects/projectTixmo/worktrees/task-305/scripts/browser/task-305-clock.mjs:85:2
+
+Node.js v24.21.0
+  console.log
+    TASK305_API_CLOSED
+
+      at Object.<anonymous> (tests/integration/checkout-clock-browser.local.test.ts:19:11)
+
+FAIL tests/integration/checkout-clock-browser.local.test.ts (32.681 s)
+  ✕ actual App checkout stays mounted over native elapsed windows; browser-only Date skew cannot reserve (26555 ms)
+
+  ● actual App checkout stays mounted over native elapsed windows; browser-only Date skew cannot reserve
+
+    Browser exit 1
+
+      27 |  const type=await prisma.ticketType.create({data:{eventId:event.id,name:'Clock Admission',price:10,quantityTotal:100,quantityAvailable:100}});
+      28 |  const state=async()=>({type:await prisma.ticketType.findUnique({where:{id:type.id}}),orders:await prisma.order.findMany(),tickets:await prisma.ticket.findMany(),attempts:await prisma.paymentAttempt.findMany(),refunds:await prisma.paymentRefund.findMany()});const before=await state();
+    > 29 |  await new Promise<void>((resolve,reject)=>{const child=spawn(process.execPath,[path.resolve(__dirname,'../../../scripts/browser/task-305-clock.mjs')],{stdio:['ignore','inherit','inherit'],env:{HOME:'/home/daniel',PATH:process.env.PATH!,NODE_ENV:'test',TIXMO_BROWSER_PATH:'/home/daniel/projects/projectTixmo/worktrees/task-288/scripts/runtime/task-288-chromium',TASK305_FRONTEND_PORT:String(frontendPort),TASK305_RUN:process.env.TMPDIR!,TASK305_API_ORIGIN:`http://127.0.0.1:${(server.address() as any).port}`,TASK305_FIXTURE:JSON.stringify({email:user.email,password,cases:[{event,typeId:type.id}]})}});child.on('error',reject);child.on('exit',c=>c===0?resolve():reject(Error(`Browser exit ${c}`)));});
+         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ^
+      30 |  const after=await state();require('fs').writeFileSync(path.resolve(__dirname,'../../../docs/team/evidence/task-305-r2-clock/sql-proof.json'),JSON.stringify({before,after},null,2));expect(after).toEqual(before);
+      31 |  for(const result of (Stripe as unknown as jest.Mock).mock.results)for(const group of Object.values(result.value) as any[])for(const fn of Object.values(group) as jest.Mock[])expect(fn).not.toHaveBeenCalled();
+      32 | },85000);
+
+      at ChildProcess.<anonymous> (tests/integration/checkout-clock-browser.local.test.ts:29:671)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        32.928 s
+Ran all test suites within paths "tests/integration/checkout-clock-browser.local.test.ts".

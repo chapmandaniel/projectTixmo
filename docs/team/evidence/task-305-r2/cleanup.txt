@@ -1,0 +1,53 @@
+{
+  "pidsAbsent": {
+    "2768072": true,
+    "2768085": true,
+    "2768188": true,
+    "2768495": true,
+    "2770177": true,
+    "2770190": true,
+    "2770318": true,
+    "2770657": true,
+    "2771737": true,
+    "2771750": true,
+    "2771832": true,
+    "2772166": true
+  },
+  "listenersClosed": {
+    "29393": true,
+    "33209": true,
+    "33263": true,
+    "33513": true,
+    "34443": true,
+    "37231": true,
+    "37820": true,
+    "38180": true,
+    "38539": true,
+    "41213": true,
+    "45074": true,
+    "45971": true,
+    "46563": true,
+    "49859": true,
+    "59021": true
+  },
+  "runs": {
+    "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task305-r2/run.2VZBqc": {
+      "postmasterAbsent": true,
+      "pgSocketsAbsent": true,
+      "redisSocketAbsent": true,
+      "profilesAbsent": true
+    },
+    "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task305-r2/run.htPXbR": {
+      "postmasterAbsent": true,
+      "pgSocketsAbsent": true,
+      "redisSocketAbsent": true,
+      "profilesAbsent": true
+    },
+    "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task305-r2/run.vDYUXN": {
+      "postmasterAbsent": true,
+      "pgSocketsAbsent": true,
+      "redisSocketAbsent": true,
+      "profilesAbsent": true
+    }
+  }
+}

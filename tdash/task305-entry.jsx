@@ -1,4 +1,5 @@
 import React from 'react';
+import './src/index.css';
 import {createRoot} from 'react-dom/client';
 import EventStudio from './src/features/EventStudio';
 const fixture=window.__TASK305;
@@ -6,4 +7,7 @@ const response=await fetch('/api/v1/auth/login',{method:'POST',headers:{'Content
 if(response.status!==200)throw Error('Real operator login failed');
 localStorage.setItem('access_token',(await response.json()).data.accessToken);
 const item=fixture.cases[Number(new URLSearchParams(location.search).get('case'))];
-createRoot(document.getElementById('root')).render(<EventStudio initialData={item.event} user={{organizationId:fixture.organizationId}} embedded isDark/>);
+const loaded=await fetch(`/api/v1/events/${item.event.id}`,{headers:{Authorization:'Bearer '+localStorage.getItem('access_token')}});
+if(loaded.status!==200)throw Error('Actual event read failed');
+const event=(await loaded.json()).data;
+createRoot(document.getElementById('root')).render(<EventStudio initialData={event} user={{organizationId:fixture.organizationId}} embedded isDark/>);

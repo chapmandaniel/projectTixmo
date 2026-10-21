@@ -1,0 +1,57 @@
+{
+  "error": "Error: Timed out: same page native closing\n    at wait (file:///home/daniel/projects/projectTixmo/worktrees/task-305/scripts/browser/task-305-clock.mjs:27:165)\n    at async file:///home/daniel/projects/projectTixmo/worktrees/task-305/scripts/browser/task-305-clock.mjs:85:2",
+  "audit": [
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/public/clock305-1792565945161",
+      "query": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/public/clock305-1792565945161",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/events/public/clock305-1792565945161",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/events/public/clock305-1792565945161",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "query": ""
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "query": "",
+      "body": {
+        "items": [
+          {
+            "ticketTypeId": "11dd1ea9-d6ea-4293-8133-ff098bf6224c",
+            "quantity": 1
+          }
+        ]
+      }
+    },
+    {
+      "responsePath": "/api/v1/orders",
+      "status": 400
+    }
+  ],
+  "failures": [],
+  "body": "\n    Secure checkoutclock305-1792565945161clock305-1792565945161Thu, Oct 22, 4:29 AMAmerica/St_JohnsVenue to be announcedSale availability is checked at checkoutChoose ticketsPick the ticket mix for this order. Availability and pricing are confirmed by the server when checkout starts.Clock Admission100 leftGeneral event admission.CA$10.000New buyerSign inCreate buyer accountOrder summary0 tickets selectedChoose at least one ticket.TotalCA$0.00Checkout is blocked until approved Terms, Refund Policy, and Privacy Policy URLs are configured.Continue to secure payment\n    \n    \n\n\n\n"
+}
