@@ -18,8 +18,9 @@ runtime_root="/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtim
 export LD_LIBRARY_PATH="$runtime_root/usr/lib/x86_64-linux-gnu"
 pgbin="$runtime_root/usr/lib/postgresql/18/bin"
 task_root=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379
-mkdir -p -m 700 "$task_root"
+node "$PWD/docs/team/evidence/task-379/runtime-path.cjs" "$task_root" --prepare
 owned_run=$(mktemp -d "$task_root/run.XXXXXX")
+node "$PWD/docs/team/evidence/task-379/runtime-path.cjs" "$owned_run"
 pgport=$(shuf -i 20000-39999 -n 1)
 redisport=$(shuf -i 40000-59999 -n 1)
 redis_pid=''
@@ -143,7 +144,7 @@ export DATABASE_URL="postgresql://tixmo379@127.0.0.1:$pgport/tixmo_disposable_37
 export STRIPE_SECRET_KEY=sk_test_verify_api STRIPE_PUBLISHABLE_KEY=pk_test_verify_api STRIPE_WEBHOOK_SECRET=whsec_verify_api
 export JWT_SECRET=task379-synthetic-jwt-fixture-not-a-real-credential JWT_REFRESH_SECRET=task379-synthetic-refresh-fixture-not-a-real-credential SESSION_SECRET=task379-synthetic-session-fixture-not-a-real-credential
 echo "TASK379_RUNTIME path=$owned_run pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"
-artifact_dir="$PWD/docs/team/evidence/task-379"
+artifact_dir="$owned_run"
 export PAYMENT_CURRENCY=cad REDIS_DB=1 npm_config_offline=true npm_config_yes=false
 export TASK379_ARTIFACT_DIR="$owned_run"
 export TASK379_ALLOWED_PORTS="$pgport,$redisport"

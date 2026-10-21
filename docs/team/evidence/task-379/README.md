@@ -12,7 +12,7 @@ and current-version JWTs, sends 100 same-forwarded-IP read/order pairs at
 route latency, arrival/queue/backlog, PG locks/connections, CPU/RSS and Redis
 keys/lease counts. Exact HTTP/status and stock/ticket/order assertions plus
 post-measurement cancellation/lease assertions are source assertions, NOT passes.
-Partial results are written before cleanup even when assertions fail.
+Partial results and cleanup diagnostics are attempted independently of resource cleanup, including when assertions or artifact writes fail.
 
 Runner is SOURCE ONLY and refuses absent a fresh explicit PM sole-owner grant.
 It adapts historical disk-backed 0700 runtime, env-i, owned PID/listener checks,
@@ -50,3 +50,32 @@ Full #246 remains OPEN: 100/250/500 browser sessions, 200-session 30min soak,
 ceiling, provider delivery/fulfillment and recovery are not covered/proved.
 500ms read/2s reservation thresholds are local observations, not production SLA.
 No push/merge/deploy/spend or full API rerun.
+
+## Task385 repair checkpoint (source only)
+
+Base929355653b2b37ae50633e704eb2a2628e5e4967; isolated branch
+`tixmo/task-385-http-cleanup`, worktrees/task-385. Addresses lead382 and
+QA383 findings: Node normalized connect vectors preserved and actual options
+validated; Redis/app/listen acquisition under cleanup coverage with listen error
+rejection; immediately handled monitor failure stops new arrivals/queued work,
+drains active requests, then fails; each artifact/cancellation/lease/server/Redis/
+Prisma cleanup attempted independently, original failure rethrown unchanged.
+
+Shared synchronous runtime-path.cjs preflight checks directory type, UID, modes,
+all ancestors for symlink/write exposure, realpath, unique run child name and
+explicit disk filesystem allowlist (ext/XFS/Btrfs/ZFS, fail closed for unknown).
+Runner validates before starting services; test validates before Redis. Existing
+runtime/task parents must be owned0700; no chmod of existing state. Logs now
+live in each unique private run, not reused source-directory files. This is a
+preflight contract, not protection from concurrent same-UID path replacement.
+
+Actual task385 checks: bash -n runtime.sh, node --check network-guard.cjs,
+node --check runtime-path.cjs, git diff --check, all exit0. Source inspection
+preserves exact100GET200/100POST201, inventory/uniqueness, cancellation and
+metrics assertions. No helper/guard behavior execution, compiler, Jest, DB,
+services, runtime, install/download, network, envsecret/config, providers, spend,
+push, merge or deployment. Hooks not run (command-local hooksPath only).
+
+Independent fresh lead+QA review of exact repaired SHA required before closure
+or a separately granted sole-owner runtime slice. Parent379 remains REVIEW;
+full246 remains OPEN. Node guard is not a subprocess sandbox.
