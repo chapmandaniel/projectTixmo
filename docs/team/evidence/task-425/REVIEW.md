@@ -26,5 +26,11 @@ Dependency verification independently confirms API package/lock bytes match task
 
 After release cleanup marker, QA independently inspected /proc, ss, runtime filesystem and links. Both owned PIDs3394179/3394192 absent; ports30896/50913 have no listeners; no remaining sockets/postmaster.pid/owned Node/Postgres/Redis workers; no API/dashboard dependency symlinks; runtime remains0700. See independent-cleanup.json. No service was touched by QA.
 
-Verdict: APPROVE evidence accuracy and cleanup for the exact evidence SHA above. REJECT full market/API acceptance: both commands failed. Task424 remains OPEN; PM retains closure. This approval does not cover staging parity (target PG14/Redis7), real HTTP abort-load, provider/browser/scanner/production/launch readiness. No merge/deploy authorization.
+Verdict: APPROVE evidence accuracy and cleanup for the exact evidence SHA above. REJECT full market/API acceptance: both commands failed. Task424 remains OPEN; PM retains closure. This approval does not cover staging parity (task245 target PG17/Redis8.2.10), real HTTP abort-load, provider/browser/scanner/production/launch readiness. No merge/deploy authorization.
 
+
+## Exact successor and parity correction
+
+Final reviewed release evidence SHA: `21e2c8fec6f6fd7913c1c14e274b79fda964fc46`, successor of `689dad8f79f21a417075ac4800d6d108e1e1e9bb`. Its sole change corrects README parity-target wording to task245 PostgreSQL17/Redis8.2.10; independently corroborated with current board245. This supersedes the prior QA report parity-target wording, not the actual runtime PG18.6/Redis8.0.5 observations. All raw evidence/results/cleanup are unchanged; no rerun or runtime action.
+
+Final verdict: APPROVE exact successor evidence accuracy/cleanup only. Fullmarket FAIL (audit blocked), fullAPI FAIL (task379 safe-runtime prerequisite), and task424 remains OPEN. Repair427 is queued, not executed. QA task425 is submitted for PM closure of this scoped review only.
