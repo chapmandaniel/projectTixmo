@@ -123,7 +123,7 @@ Do not reopen old issues solely because historical reports list them:
 - Processor-backed refund requests, frozen admission during refund processing, reconciliation before local finalization.
 - Atomic online admission, scanner scope/revocation checks, transfer/reissue credential rotation.
 - Receipt leases/recovery and existing order-email resend.
-- Resumable checkout/order status, buyer wallet, atomic event configuration and production-only readiness probes.
+- Resumable checkout/order status, buyer wallet, atomic event configuration and dependency-aware readiness probes.
 - Guarded disposable test targets, including refusal to load application .env files in test mode.
 
 Relevant source: `orders/service.ts:69-223,328-416,530-555`; `payments/service.ts:31-283,287-381,424-594,653-681`; `services/order-inventory.service.ts`; `services/ticket-admission.service.ts`; `scanners/service.ts:323-362`. Existing integration and race tests cover these paths, including `payment-inventory-integrity.test.ts` and the webhook-generation suites. This audit's full-suite evidence is the hosted run, not specialist test execution.

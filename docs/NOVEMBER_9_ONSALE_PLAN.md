@@ -51,7 +51,7 @@ Approvals and asset sharing are in the existing V1 checklist. Validate them as i
 | 1 | PM reconciles this plan against existing board claims; nominate release owner and QA reviewer | One launch parent task/evidence index; no duplicate or forced claims; actual availability recorded |
 | 2 | Lead/backend and frontend take the scheduled-sale contract together | Agreed event/ticket boundary semantics; failing tests for event-window bypass and unchanged timestamp shift |
 | 3 | Release prepares the current candidate/config/upgrade packet | Exact SHA, deployment settings, five-migration inventory, safe test targets, missing provider settings and rollback plan |
-| 4 | Daniel resolves currency and refund policy, names support/release decision owners | No invented fee/tax/payout/refund assumptions; deadline for approved policy text |
+| 4 | Daniel resolves currency and refund policy, names support/release decision owners; gate lead identifies the runnable scanner client/build and devices | No invented fee/tax/payout/refund assumptions; by Oct 22 demonstrate a current paid test QR scanned on the intended client, or escalate admission feasibility before committing the onsale |
 | 5 | Fix schedule/timezone/count contracts in small reviewed changes | Direct API cannot buy early/late; ticket edit cannot move opening time or reset inventory |
 | 6 | Correct refund and paid-order recovery instructions against current code | No instruction to double-refund or invoke unmounted /orders/:id/confirm; list tested exception procedures |
 
@@ -72,7 +72,7 @@ Estimates are focused engineer/QA workdays, including review, not elapsed durati
 | W07 · Oct 29 | QA + backend support | Real Stripe test-mode browser matrix and small authorized inbox cohort; order, PaymentIntent, webhook, ticket and receipt IDs correlate. Verify provider and local states, full refund and exceptions | W01–06 as relevant; first happy path Oct 27; 2 days |
 | W08 · Oct 30 | Release + QA | Disposable Postgres 17 / Redis 8.2.10 parity run; populated migration harness; inventory reconciliation and credential/session rotation plan; backup restore and rollback rehearsal with measured timing | W06, schema stable; 1.5–2 days |
 | W09 · Nov 2 | QA/release + backend | Load, sell-out races and failure/recovery exercises using the synthetic profile. Same-IP/proxy/rate-limit behavior; event-lock contention; no oversell or duplicate charge/fulfillment. Remediate measured bottlenecks only | W04, W06–08; 2–3 days |
-| W10 · Nov 3 | QA + gate lead; frontend support | Actual scanner app/device identified; paid QR scanned on two devices; duplicate/wrong-event/refunded/transferred/revoked rejection; outage/reconnect handling. Mobile/keyboard checkout and buyer recovery. Internal reviewer/share/storage acceptance | Actual hardware/client and current candidate; 1.5–2 days |
+| W10 · Nov 3 | QA + gate lead; frontend support | Following the Oct 22 client/device feasibility check, paid QR scanned on two devices; duplicate/wrong-event/refunded/transferred/revoked rejection; outage/reconnect handling. Mobile/keyboard checkout and buyer recovery. Internal reviewer/share/storage acceptance | Actual hardware/client and current candidate; 1.5–2 days |
 | W11 · Nov 4 | Release + on-call owner | Fix readiness/deployment mismatch; delivered alert and recovery notification; payment/receipt/refund backlog monitoring; named support and incident drill; protect main with agreed exact checks after authorization | Current deployed candidate; 1 day |
 | W12 · Nov 5–6 | Release + independent QA/lead; Daniel release authority | Exact-candidate final regression; approved production upgrade/cutover, evidence-linked config/smoke; authorized bounded live payment/refund if agreed; final go/no-go packet and signoff | All mandatory gates; 2 days |
 
@@ -85,11 +85,11 @@ The two working lanes are generally product correctness and release/acceptance. 
 | Date | Outcome due | Decision or evidence |
 | --- | --- | --- |
 | Oct 21 | Baseline audit and launch scope recorded; identify board owners | This audit, current CI/deployment facts, synthetic assumptions |
-| Oct 22 | Schedule contract and reproduction cases; business/recovery decisions | Currency/refund/tax-fee model, support recovery choice, provider access owner |
+| Oct 22 | Schedule contract and reproduction cases; business/recovery decisions; scanner feasibility | Currency/refund/tax-fee model, support recovery choice, provider access owner; runnable scanner client/build and real hardware demonstrated, or explicit escalation |
 | Oct 23 | Server sale-window change reviewed | Direct-request boundary tests; no early purchase |
 | Oct 24 | Editor/checkout contract fixes reviewed | Timezone/count/cap/tier tests and focused mobile check |
-| Oct 25 | Refund workflow and exception handling integrated | Policy/code/runbook agreement; failure reproduction and correction |
-| Oct 26 | Current candidate on authorized staging | Deployed SHA plus runtime/provider/policy configuration |
+| Oct 25 | Refund workflow and exception handling in independent review | Policy/code/runbook agreement; failure reproduction and correction |
+| Oct 26 | Refund work integrated; current candidate on authorized staging | Deployed SHA plus runtime/provider/policy configuration |
 | Oct 27 | First complete real test-mode purchase and refund | Browser → Stripe webhook → paid tickets → inbox → wallet |
 | Oct 28 | Recovery fixes and buyer-access flow complete | Poison backlog, lost callback, browser closure and account recovery |
 | Oct 29 | Provider matrix complete; migration rehearsal underway | 3DS/decline/late payment/refund exception evidence |
@@ -199,7 +199,7 @@ Synthetic data lets engineering proceed now. These are future decision deadlines
 | By | Daniel / operator decision |
 | --- | --- |
 | Oct 22 | Confirm individual-event-only scope; currency; inclusive tax/fee/payout responsibility; immediate eligible full refund vs organizer approval; cancellation exceptions; self-service vs support-assisted account recovery |
-| Oct 22 | Name release decision-maker, support lead, incident commander, gate/device owner and second approver; confirm their availability |
+| Oct 22 | Name release decision-maker, support lead, incident commander, gate/device owner and second approver; confirm availability. Identify and demonstrate the runnable scanner client/build with a paid synthetic QR on intended hardware. If unavailable, explicitly choose a separately dated admission milestone with owner/solution, an approved alternative, or replan before committing the onsale. |
 | Oct 24 | Approve final policy text and publication destinations; identify authorized provider/test-inbox access and approve concrete staging/provider setup |
 | Oct 30 | Supply real event(s), timezone/opening instant, total capacity, types/prices/caps and expected burst; revise synthetic targets if needed |
 | Nov 3 | Accept tested capacity/outage/support procedure and any explicit V1 deferrals |
