@@ -23,7 +23,7 @@ function launch(command, args, options) {
   owned.add(record);
   record.closed = new Promise(resolve => {
     child.once('error', error => {record.result = {error}; resolve(record.result);});
-    child.once('close', (code, signal) => {record.result = {code, signal}; resolve(record.result);});
+    child.once('close', (code, signal) => {record.result = {...record.result, code, signal}; resolve(record.result);});
   });
   if (child.pid) record.identity = stat(child.pid);
   return record;

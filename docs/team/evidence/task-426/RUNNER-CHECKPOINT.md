@@ -62,3 +62,27 @@ No app/Jest/HTTP/Lua/DB/Redis/runtime/typecheck/build/install/generation/network
 config/scheduler/cloud/provider/production/spend/push/merge/deploy executed.
 Only owned offline Node/Git fixture processes; shared main unchanged.
 Task448 and426 remain open; fresh independent exactSHA lead+QA required.
+
+## QA451 original-author repair successor
+
+New isolated task-448-prejest, branch tixmo/task-448-prejest from exact
+f8f54a476ed171fdc8b9c307aa1316c8113cdc52. Despite branch name, no preJest
+shell integration added: PM redirected this bounded continuation to actual
+QA451 blockers before new scope.
+
+Repaired original ENOENT spawn Error overwrite: close handler now merges
+code/signal into existing result, retaining original Error object/diagnostic.
+Port validation now compares numeric values and requires canonical decimal
+representations, denying leading-zero aliases such as 02345,2345.
+
+Actual node docs/team/evidence/task-426/runner-probes.cjs exit0: real missing
+executable ENOENT followed by close retains Error.code/message and code -2 /
+signal null; canonical pair accepted and six malformed/alias/range/equal
+mutations denied. Existing owned cooperative two-process timeout, foreignPID
+authority denial, preload/SHA rejection, exit42/stderr + evidenceENOSPC pass.
+Both changed helper node --check commands and git diff --check exit0.
+
+All prior remainder/limits above remain. No env-i shell or beforeJest full
+integration, escaped-tree containment, bounded service teardown or immutable
+transitive dependencies claim. No runtime/services/network. Fresh independent
+exact successor QA+lead required. This only repairs the two reported blockers.
