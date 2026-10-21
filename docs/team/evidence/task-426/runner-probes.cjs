@@ -29,6 +29,42 @@ const {verify,validatePorts} = require('./preflight.cjs');
   assert.equal(serialized.result.code,-2); assert.equal(serialized.result.signal,null);
   assert.equal(serialized.timedOut,false); assert.match(serialized.evidenceError,/ENOSPC/);
   console.log('PASS real ENOENT+close+evidence ENOSPC JSON roundtrip preserves name/message/stack/code/errno/syscall/path/spawnargs and status/signal');
+  // Real closed/reaped child; hold the first cleanup callback so the second
+  // finish overlaps deterministically, without depending on scheduler timing.
+  const concurrent = launch(process.execPath,['-e','process.exit(31)'],{env:{}});
+  await new Promise(resolve => concurrent.child.once('close',resolve));
+  let releaseTeardown, enteredTeardown;
+  const teardownGate = new Promise(resolve=>{releaseTeardown=resolve;});
+  const teardownEntered = new Promise(resolve=>{enteredTeardown=resolve;});
+  let concurrentTeardowns=0, concurrentEvidence=0, duplicateTeardowns=0, duplicateEvidence=0;
+  const firstFinish = finish(concurrent,{teardown:async()=>{
+    concurrentTeardowns++; assert.equal(concurrent.result.code,31);
+    assert.equal(concurrent.child.exitCode,31); enteredTeardown(); await teardownGate;
+  },writeEvidence:()=>{concurrentEvidence++;}});
+  await teardownEntered;
+  try {
+    await assert.rejects(finish(concurrent,{teardown:()=>{duplicateTeardowns++;},writeEvidence:()=>{duplicateEvidence++;}}),/No live owned/);
+  } finally { releaseTeardown(); }
+  const concurrentReport = await firstFinish;
+  assert.equal(concurrentReport.result.code,31);
+  assert.deepEqual([concurrentTeardowns,concurrentEvidence,duplicateTeardowns,duplicateEvidence],[1,1,0,0]);
+  await assert.rejects(finish(concurrent),/No live owned/);
+  console.log('PASS real owned concurrent finish denied during held teardown, callbacks exactly once and sequential reuse denied');
+  const reentrant = launch(process.execPath,['-e','process.exit(32)'],{env:{}});
+  await new Promise(resolve => reentrant.child.once('close',resolve));
+  let reentrantTeardowns=0, reentrantEvidence=0, nestedCallbacks=0;
+  const nestedOptions = {teardown:()=>{nestedCallbacks++;},writeEvidence:()=>{nestedCallbacks++;}};
+  const reentrantReport = await finish(reentrant,{teardown:async()=>{
+    reentrantTeardowns++; assert.equal(reentrant.child.exitCode,32);
+    await assert.rejects(finish(reentrant,nestedOptions),/No live owned/);
+  },writeEvidence:async()=>{
+    reentrantEvidence++;
+    await assert.rejects(finish(reentrant,nestedOptions),/No live owned/);
+  }});
+  assert.equal(reentrantReport.result.code,32);
+  assert.deepEqual([reentrantTeardowns,reentrantEvidence,nestedCallbacks],[1,1,0]);
+  await assert.rejects(finish(reentrant),/No live owned/);
+  console.log('PASS real owned reentrant finish denied from both teardown and evidence; callbacks exactly once');
   const foreign = spawn(process.execPath,['-e','setInterval(()=>{},1000)'], {stdio:'ignore'});
   try {
     await assert.rejects(finish({child:foreign}), /No live owned/);

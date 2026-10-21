@@ -99,3 +99,39 @@ fields, original -2/null close status, false timeout and separate evidence
 error. Previous offline regressions also PASS; helper syntax/diff checks exit0.
 No other integration attempted. All full-runner/containment/TOCTOU limitations
 remain, no runtime or services executed. Independent exactSHA review required.
+
+## Lead454 atomic one-shot authority repair
+
+New isolated worktree task-448-atomic-finish / branch
+`tixmo/task-448-atomic-finish`, exact base
+`c21be3d31d7b491d691dc5e0c9f96ee39b55853d`. Read independent lead454
+`a59d63803988c95e6b3250e5ac4d879c089df2b2` README and existing448 notes.
+The original author consumes WeakSet authority synchronously immediately after
+membership validation, before any await or callback. Concurrent, callback-
+reentrant and sequential duplicate finish calls now reject without signalling,
+teardown or evidence callbacks. There is one completion owner, not a shared
+completion promise. A failed cleanup also consumes its capability; it is not
+permission to retry teardown against uncertain process identity.
+
+Actual `node docs/team/evidence/task-426/runner-probes.cjs`: exit0. New
+regressions use two real owned Node children, each awaited through close.
+First case holds the original teardown with an explicit gate while a second
+finish is rejected; original teardown/evidence counts are each1 and duplicate
+callback counts both0. Second case awaits rejected reentrant calls from BOTH
+teardown and evidence callbacks, counts original callbacks once and nested
+callbacks0. Both additionally verify subsequent sequential reuse denial.
+Owned child exit31/32 is retained. Existing cooperative two-process timeout,
+process-first teardown, foreign-child authority denial, real ENOENT+close and
+all8 diagnostic fields through JSON+evidence ENOSPC, canonical ports/preload/
+wrongSHA and exit42/stderr+ENOSPC assertions also PASS. Expected injected
+ENOSPC stacks remain visible; they are fixture outcomes, not hidden failures.
+`node --check` for process-cleanup.cjs and runner-probes.cjs: exit0;
+`git diff --check`: exit0. No original426 qualification assertions modified.
+
+Only this concrete lead454 defect is repaired. Full escaped-tree containment,
+immutable dependencies/source TOCTOU, env-i shell/preJest integration, observer
+and service identities, bounded teardown and shell exit mapping remain OPEN.
+No app/Jest/DB/Redis/HTTP/services/network/install/config/scheduler/spend/push/
+merge/deploy or runtime grant. Fresh exactSHA independent QA and lead required;
+448 and426 remain OPEN. Commit uses invocation-local identity/hooks override
+so inherited API Husky cannot launch app tooling; no persistent config changed.

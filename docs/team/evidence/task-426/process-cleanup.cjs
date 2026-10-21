@@ -33,6 +33,9 @@ function launch(command, args, options) {
 }
 async function finish(record, {timeoutMs=1000, graceMs=1000, teardown, writeEvidence=()=>{}}={}) {
   if (!owned.has(record)) throw new Error('No live owned child authority');
+  // Consume synchronously before any await or callback: one completion owner,
+  // including concurrent calls and teardown/evidence callback reentrancy.
+  owned.delete(record);
   let timedOut = false, failure;
   const deadline = Date.now() + timeoutMs;
   while (!record.result && Date.now() < deadline) await delay(10);
@@ -63,7 +66,6 @@ async function finish(record, {timeoutMs=1000, graceMs=1000, teardown, writeEvid
   } catch(error) { failure = error; }
   const report = {timedOut, result:record.result, cleanupError:failure?.stack};
   try { await writeEvidence(report); } catch(error) { report.evidenceError = error.stack; console.error(error.stack); }
-  owned.delete(record);
   if (failure) throw Object.assign(failure, {report});
   return report;
 }
