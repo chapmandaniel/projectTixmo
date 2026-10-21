@@ -1,0 +1,34 @@
+PASS 1 real owned cooperative TERM timeout/reap before teardown
+PASS 2 consumed capability cannot repeat teardown
+PASS 3 real owned stubborn SIGKILL timeout/reap before teardown
+PASS 4 consumed capability cannot repeat teardown
+PASS 5 foreign live PID authority rejected/no signal
+QA452_ORIGINAL_STDERR
+Error: QA452_ENOSPC
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-452/docs/team/evidence/task-452/probes.cjs:16:68)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-452/docs/team/evidence/task-426/process-cleanup.cjs:62:15)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-452/docs/team/evidence/task-452/probes.cjs:16:15
+PASS 6 original exit37 retained alongside evidence failure
+Error: QA452_ENOSPC_SPAWN
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-452/docs/team/evidence/task-452/probes.cjs:18:134)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-452/docs/team/evidence/task-426/process-cleanup.cjs:62:15)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-452/docs/team/evidence/task-452/probes.cjs:18:27
+PASS repaired in-memory ENOENT message/code/syscall/path retained across close and evidence failure
+REPRODUCED REMAINING DEFECT serialized error.message absent: {"timedOut":false,"result":{"error":{"errno":-2,"code":"ENOENT","syscall":"spawn /nonexistent-qa452-command","path":"/nonexistent-qa452-command","spawnargs":[]},"code":-2,"signal":null}}
+PASS 7 spawn failure not marked success
+PASS 8 NODE_OPTIONS denial
+PASS 9 NODE_PATH denial
+PASS 10 LD_PRELOAD denial
+PASS 11 port denial ""
+PASS 12 port denial "1023,2345"
+PASS 13 port denial "65536,2345"
+PASS 14 port denial "1234,1234"
+PASS 15 port denial "1234"
+PASS 16 port denial "1234,abc"
+PASS 17 canonical alias/equal denial before guard 02345,2345
+PASS 18 canonical alias/equal denial before guard 2345,03456
+PASS 19 canonical alias/equal denial before guard 2345,2345
+PASS 20 fixture preflight installs native guard
+PASS 21 native guard denies nonowned TCP/UDP before socket calls
+PASS 22 numeric port alias rejected before guard
+TOTAL 22 independent checks PASS; observations require review
