@@ -1,5 +1,8 @@
 'use strict';
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const {spawn} = require('node:child_process');
 const {launch,finish} = require('./process-cleanup.cjs');
 const {status} = require('./exit-status.cjs');
@@ -165,6 +168,65 @@ const {verify,validatePorts} = require('./preflight.cjs');
     }
   }
   console.log('PASS 36 real owned reaped child cases: null/undefined/string/number/boolean/bigint/symbol/null-prototype/hostile rejection in both callbacks, JSON diagnostics, primary0->1 and primary54 preserved, one-shot cleanup');
+  // Private disk handshake is emitted only AFTER installing the TERM handler.
+  // No socket, app service, mocked signal, or externally supplied PID authority.
+  const privateRoot = fs.mkdtempSync(path.join(os.tmpdir(),'task448-stubborn-'));
+  fs.chmodSync(privateRoot,0o700);
+  const readyPath = path.join(privateRoot,'ready.json');
+  const termPath = path.join(privateRoot,'term.json');
+  const stubbornCode = `const fs=require('node:fs');
+    process.on('SIGTERM',()=>fs.writeFileSync(${JSON.stringify(termPath)},JSON.stringify({pid:process.pid,signal:'SIGTERM'}),{mode:0o600}));
+    console.error('STUBBORN_PRIMARY_STDERR_SENTINEL');
+    fs.writeFileSync(${JSON.stringify(readyPath)},JSON.stringify({pid:process.pid,ready:true}),{mode:0o600});
+    setInterval(()=>{},1000);`;
+  const stubborn = launch(process.execPath,['-e',stubbornCode],{env:{}});
+  let directClosed=false;
+  stubborn.child.once('close',()=>{directClosed=true;});
+  try {
+    const readyDeadline=Date.now()+2000;
+    while (!fs.existsSync(readyPath) && !directClosed && Date.now()<readyDeadline) await new Promise(resolve=>setTimeout(resolve,10));
+    assert.deepEqual(JSON.parse(fs.readFileSync(readyPath,'utf8')),{pid:stubborn.child.pid,ready:true});
+    assert.equal(directClosed,false);
+    const groupMembers=()=>fs.readdirSync('/proc').filter(x=>/^\d+$/.test(x)).filter(pid=>{
+      try { const stat=fs.readFileSync(`/proc/${pid}/stat`,'utf8'); return Number(stat.slice(stat.lastIndexOf(')')+2).trim().split(/\s+/)[2]) === stubborn.child.pid; }
+      catch(error) { if (error.code==='ENOENT'||error.code==='ESRCH') return false; throw error; }
+    });
+    assert.deepEqual(groupMembers(),[String(stubborn.child.pid)]);
+    // A copied PID/identity record must not signal the genuine live child.
+    let fakeCallbacks=0;
+    await assert.rejects(finish({child:stubborn.child,identity:stubborn.identity},{teardown:()=>fakeCallbacks++,writeEvidence:()=>fakeCallbacks++}),/No live owned/);
+    assert.equal(fakeCallbacks,0); assert.equal(directClosed,false);
+    assert.equal(fs.existsSync(termPath),false);
+    const order=[];
+    const verifyReaped=()=>{
+      assert.equal(directClosed,true);
+      assert.equal(stubborn.child.signalCode,'SIGKILL');
+      assert.equal(fs.existsSync(`/proc/${stubborn.child.pid}`),false);
+      assert.deepEqual(groupMembers(),[]);
+      assert.deepEqual(JSON.parse(fs.readFileSync(termPath,'utf8')),{pid:stubborn.child.pid,signal:'SIGTERM'});
+    };
+    const started=Date.now();
+    const killed=await finish(stubborn,{timeoutMs:40,graceMs:150,teardown:()=>{
+      verifyReaped();order.push('synthetic-teardown');
+    },writeEvidence:report=>{
+      verifyReaped();order.push('synthetic-evidence');
+      assert.equal(report.result.signal,'SIGKILL');
+      throw new Error('STUBBORN_ENOSPC_SECONDARY');
+    }});
+    assert.ok(Date.now()-started<1500);
+    assert.deepEqual(order,['synthetic-teardown','synthetic-evidence']);
+    assert.equal(killed.timedOut,true);
+    assert.equal(killed.result.code,null); assert.equal(killed.result.signal,'SIGKILL');
+    assert.equal(killed.teardownStatus,'completed'); assert.equal(killed.evidenceStatus,'failed');
+    assert.match(killed.evidenceError,/STUBBORN_ENOSPC_SECONDARY/);
+    const json=JSON.parse(JSON.stringify(killed));
+    assert.equal(status(json),137); assert.equal(json.result.signal,'SIGKILL');
+    await assert.rejects(finish(stubborn),/No live owned/);
+    console.log('PASS actual ready direct child ignored TERM, bounded KILL escalation, awaited close/direct reap+group absence BEFORE synthetic callbacks, primary SIGKILL137+stderr preserved despite evidence failure, foreign identity denied');
+  } finally {
+    if (!directClosed) { stubborn.child.kill('SIGKILL'); await new Promise(resolve=>stubborn.child.once('close',resolve)); }
+    fs.rmSync(privateRoot,{recursive:true,force:true});
+  }
   const foreign = spawn(process.execPath,['-e','setInterval(()=>{},1000)'], {stdio:'ignore'});
   try {
     await assert.rejects(finish({child:foreign}), /No live owned/);

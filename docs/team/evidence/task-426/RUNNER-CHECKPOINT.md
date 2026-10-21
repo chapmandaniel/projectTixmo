@@ -274,3 +274,47 @@ fresh independent exact-SHA QA+lead required, no selfapproval/runtimegrant.
 No app/Jest/services/DBRedisHTTP/network/install/generation/config/scheduler/
 cloud/provider/production/spend/push/merge/deploy. Invocation-local Git identity
 and hooks override only; no persistent config mutation.
+
+
+## Ready stubborn DIRECT child evidence (source/OFFLINE)
+
+NEW isolated `task-448-stubborn-direct`, branch
+`tixmo/task-448-stubborn-direct`, exact base
+`4a265fb957cfc760d4c985c55a0190ee4517671b`. Read actual independent
+QA471 `3b388998fe832fe976b208ba55172d8930c1557e` and lead472
+`581e33675441ecb8319ba135310244bc1ee88baa` reports. Existing426 cleanup,
+runner/checkpoint and393 observation were inspected first. Existing TERM/KILL
+helper already implements this DIRECT-child case correctly; no implementation
+rewrite or new orchestrator/dependency. Only runner-probes and checkpoint change.
+
+New actual probe installs a TERM-ignoring handler in one real owned detached
+DIRECT child, then emits a PID-bound ready handshake in a private0700 temporary
+disk directory. Parent waits for actual readiness before invoking finish.
+Handler writes a SIGTERM receipt without exiting. Helper times out40ms, waits
+150ms grace, escalates SIGKILL and awaits close. Both synthetic teardown and
+evidence callbacks independently require close observed, signalCode SIGKILL,
+/proc direct PID absent, entire original group absent, and matching TERM receipt.
+Callbacks run in that order; completion under1500ms. Forged identity/live child
+handle copy is denied before any callback or TERM receipt. Secondary injected
+evidence failure retains timedOut=true, original null/SIGKILL result through JSON,
+primary status137 and inherited STUBBORN_PRIMARY_STDERR_SENTINEL. One-shot reuse
+is denied. Fixture finalizer only signals its own direct child on failure and
+removes its own temporary directory after reaping.
+
+Actual commands (all exit0, final verified run recorded below):
+- `node docs/team/evidence/task-426/runner-probes.cjs`: new real stubborn case
+  plus existing36 arbitrary-rejection cases, cooperative two-process cleanup,
+  authority/concurrency/reentrancy/deadline/ENOENT/ports/preload regressions PASS.
+- `node docs/team/evidence/task-426/shell-probes.cjs`: PASS, unchanged terminal
+  runtime refusal, source/dependency/path denials and owned status mappings.
+- `node --check docs/team/evidence/task-426/runner-probes.cjs`: PASS.
+- `git diff --check`: PASS.
+
+This supersedes only the historical missing stubborn DIRECT-child evidence gap;
+not full escaped-tree containment/adoption/reaping or immutabledeps/TOCTOU,
+observer/service identities or admitted shell integration. Async callback wait
+bounds do not imply cancellation or prevent late effects. Original qualification
+assertions and terminal shell refusal unchanged. No app/Jest/services/DBRedisHTTP/
+network/install/generation/config/scheduler/cloud/provider/production/spend/
+push/merge/deploy/runtimegrant.448/426 remain OPEN. Fresh independent exact-SHA
+QA and lead required; not author acceptance or full runner readiness.
