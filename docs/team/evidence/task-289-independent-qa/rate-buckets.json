@@ -1,0 +1,307 @@
+[
+  {
+    "second": 0,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 1,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 2,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 3,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 4,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 5,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 6,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 7,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 8,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 9,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 10,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 11,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 12,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 13,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 14,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 15,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 16,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 17,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 18,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 19,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 20,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 21,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 22,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 23,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 24,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 25,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 26,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 27,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 28,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 29,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 30,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 31,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 32,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 33,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 34,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 35,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 36,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 37,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 38,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 39,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 40,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 41,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 42,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 43,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 44,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 45,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 46,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 47,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 48,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 49,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 50,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 51,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 52,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 53,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 54,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 55,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 56,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 57,
+    "arrivals": 31,
+    "completed": 30
+  },
+  {
+    "second": 58,
+    "arrivals": 30,
+    "completed": 30
+  },
+  {
+    "second": 59,
+    "arrivals": 29,
+    "completed": 30
+  },
+  {
+    "second": 60,
+    "arrivals": 0,
+    "completed": 0
+  }
+]

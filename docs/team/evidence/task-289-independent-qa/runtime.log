@@ -1,0 +1,8 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_287|tixmo287|127.0.0.1|23348
+PONG
+TASK289_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-289/run.VLDgKB pg_pid=2670413 redis_pid=2670426 pgport=23348 redisport=42844
+waiting for server to shut down.... done
+server stopped
+TASK289_CLEANUP pg_pid=2670413 redis_pid=2670426 pgport=23348 redisport=42844

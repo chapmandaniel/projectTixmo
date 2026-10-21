@@ -1,0 +1,13 @@
+✔ synthetic return is admitted by actual product UUID guard and exact recovery projection (6.227289ms)
+✔ CDP lost response times out; late response is harmless; closure rejects pending calls (39.765034ms)
+✔ owned stubborn child escalates to SIGKILL and PID is proven absent (100.50984ms)
+✔ cleanup on startup failure closes own listener and removes profile (35.806187ms)
+✔ server cleanup failure cannot prevent profile removal (1.85219ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 260.423021

@@ -1,0 +1,6 @@
+PID 2670413 absent=True
+PID 2670426 absent=True
+PG23348/Redis42844 listeners absent=True
+pg/postmaster.pid absent=True
+redis.sock absent=True
+280 PID2663622/front37845/CDP37425 independently absent=True

@@ -1,0 +1,9 @@
+Fontconfig error: Cannot load default config file: File not found
+[1021/030753.002231:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+
+DevTools listening on ws://127.0.0.1:37425/devtools/browser/e2b88c0c-2b30-4214-9c4c-5ee6203920bc
+[1021/030753.828241:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:37845/@vite/client (789)
+[1021/030753.837324:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:37845/@vite/client (912)
+[1021/030753.922659:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:37845/node_modules/.vite/deps/chunk-QOPAOKW2.js?v=63bb05d0 (21609)
+[1021/030754.097945:INFO:CONSOLE:157] "Error: Failed to load Stripe.js", source: http://127.0.0.1:37845/node_modules/.vite/deps/@stripe_stripe-js.js?v=63bb05d0 (157)
+[1021/030754.473355:FATAL:third_party/skia/src/ports/SkFontMgr_FontConfigInterface.cpp:163] Not implemented.
