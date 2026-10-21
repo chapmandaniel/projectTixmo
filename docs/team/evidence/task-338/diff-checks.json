@@ -1,0 +1,40 @@
+[
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "4ec85948",
+      "6fafb9f9",
+      "--",
+      "tixmoapi2"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "4ec85948",
+      "6fafb9f9"
+    ],
+    "exitCode": 2,
+    "stdout": "docs/team/evidence/task-334/generate.log:8: new blank line at EOF.\ndocs/team/evidence/task-334/migrate.log:103: trailing whitespace.\n+      \n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "ded97d5",
+      "6fafb9f9"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

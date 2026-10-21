@@ -1,0 +1,11 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "exitCode": 2,
+  "stdout": "docs/team/evidence/task-338/generate.log:8: new blank line at EOF.\ndocs/team/evidence/task-338/migrate.log:103: trailing whitespace.\n+      \n",
+  "stderr": ""
+}

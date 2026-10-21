@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "startTime": 1792573124035,
+  "numTotalTestSuites": 3,
+  "numPassedTestSuites": 3,
+  "numFailedTestSuites": 0,
+  "numRuntimeErrorTestSuites": 0,
+  "numPassedTests": 28,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "openHandles": [],
+  "startISO": "2026-10-21T08:58:44.035000+00:00",
+  "suites": [
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-338/tixmoapi2/tests/integration/approvals.test.ts",
+      "status": "passed",
+      "tests": 13
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-338/tixmoapi2/tests/unit/upload.service.test.ts",
+      "status": "passed",
+      "tests": 11
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-338/tixmoapi2/tests/unit/upload-cleanup.test.ts",
+      "status": "passed",
+      "tests": 4
+    }
+  ],
+  "runtimeExit": 0
+}

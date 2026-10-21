@@ -1,0 +1,20 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task338/run.89QpUi",
+  "pids": {
+    "2943118": "",
+    "2943131": ""
+  },
+  "ports": [
+    "30745",
+    "47922"
+  ],
+  "listeners": "",
+  "sockets": [],
+  "pidfile": false,
+  "blockedNetworkLog": false,
+  "runtimeMode": "0o700",
+  "parentMode": "0o700",
+  "filesystem": "/dev/nvme0n1p2 ext4",
+  "workers": [],
+  "rootContextFiles": []
+}

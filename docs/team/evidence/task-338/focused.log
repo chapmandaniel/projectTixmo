@@ -1,0 +1,14 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --config /home/daniel/projects/projectTixmo/worktrees/task-338/docs/team/evidence/task-338/jest.config.cjs --runInBand --runTestsByPath tests/integration/approvals.test.ts tests/unit/upload.service.test.ts tests/unit/upload-cleanup.test.ts --json --outputFile /home/daniel/projects/projectTixmo/worktrees/task-338/docs/team/evidence/task-338/jest-result.json
+
+PASS tests/integration/approvals.test.ts (13.551 s)
+PASS tests/unit/upload.service.test.ts
+PASS tests/unit/upload-cleanup.test.ts
+
+Test Suites: 3 passed, 3 total
+Tests:       28 passed, 28 total
+Snapshots:   0 total
+Time:        16.923 s
+Ran all test suites within paths "tests/integration/approvals.test.ts", "tests/unit/upload.service.test.ts", "tests/unit/upload-cleanup.test.ts".
+Test results written to: ../docs/team/evidence/task-338/jest-result.json

@@ -1,0 +1,121 @@
+{
+  "onlyChangedPath": "docs/team/evidence/task-334/README.md",
+  "allOtherTrackedBlobsIdentical": true,
+  "selected": [
+    {
+      "file": "docs/team/evidence/task-334/cleanup.json",
+      "blob": "6c62ec5e6fb05969db701b74443f180275a731bc",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/commands.log",
+      "blob": "9f607f0e4ab15466e9b23a9585835ee2dca69fca",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/context.setup.cjs",
+      "blob": "c92747ba6737ab79cf342894be2f1834894fefc9",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/focused.log",
+      "blob": "17c1397285c5aa920a70747f56b8890b301932b7",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/generate.log",
+      "blob": "18a27af1a2f57eb2476d48034a3c7a57a4b80565",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/jest-result.json",
+      "blob": "2ddca5b455b4890a4650b52ce5f03eb5db963f8b",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/jest.config.cjs",
+      "blob": "1da446346539be2e21f4567f9d402181b50508af",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/migrate.log",
+      "blob": "01437609dcc288657e1b39f773ac54d36e87c7b6",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/network-guard.cjs",
+      "blob": "1e872a67ddea623848ba64b776d2e6c70dcf6d51",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/network-verdict.json",
+      "blob": "93a04e16bcd48d8da5a27201b3a5464199b806b1",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/observed-workers.json",
+      "blob": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/provenance.sha256",
+      "blob": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/runtime.log",
+      "blob": "712766cf668a1bd24afee4b051a2a03aaa0bfe96",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/runtime.sh",
+      "blob": "618f31fef5cfef820f4e1857c3c2e5e373ef05e6",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/source-check.cjs",
+      "blob": "87e9ee266dfad4544479a755378a2dcbcdc051d5",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/stage-A-README.md",
+      "blob": "eb09f4bf8af065ea69a51f11867a94f032ecd8ea",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/stage-A-checks.log",
+      "blob": "a595f6434d3df02fab5df1266a829166bad44d44",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/stage-A-provenance.sha256",
+      "blob": "9587ddb78706ed01a4822faea6093760bec6990b",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/stage-B-provenance.sha256",
+      "blob": "2219de17d5641ad0789ada4322bae994c3ac9718",
+      "identical": true
+    },
+    {
+      "file": "docs/team/evidence/task-334/summary.json",
+      "blob": "d912dfd71bd722f94159fd691c9e1f027092cad2",
+      "identical": true
+    },
+    {
+      "file": "tixmoapi2/tests/integration/approvals.test.ts",
+      "blob": "c89233d97dafc695f7eb42fed26c33bdb19d5f5e",
+      "identical": true
+    },
+    {
+      "file": "tixmoapi2/tests/unit/upload-cleanup.test.ts",
+      "blob": "dd8249778e9da6b2bda408225a7218595009e055",
+      "identical": true
+    },
+    {
+      "file": "tixmoapi2/tests/unit/upload.service.test.ts",
+      "blob": "63bca191b658cbf5dd305508febec8cfa837911b",
+      "identical": true
+    }
+  ]
+}

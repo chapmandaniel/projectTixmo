@@ -1,0 +1,27 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task336/run.sPuSVc",
+  "pids": {
+    "2935625": "",
+    "2935638": ""
+  },
+  "ports": [
+    "31008",
+    "53575"
+  ],
+  "listeners": "",
+  "sockets": [],
+  "pidfile": false,
+  "blockedNetworkLog": false,
+  "runtimeMode": "0o700",
+  "parentMode": "0o700",
+  "filesystem": "/dev/nvme0n1p2 ext4",
+  "workers": [],
+  "rootContextFiles": [],
+  "currentPids": {
+    "2935625": "",
+    "2935638": ""
+  },
+  "currentListeners": "",
+  "currentSockets": [],
+  "currentPidfile": false
+}
