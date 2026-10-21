@@ -1,0 +1,12 @@
+{
+  "independent": 0,
+  "retained": 0,
+  "extraction": 0,
+  "local-phase": 0,
+  "local-session": 0,
+  "stub": 0,
+  "bash-syntax": 0,
+  "probe-syntax": 0,
+  "diffcheck": 0,
+  "only3newfiles": true
+}

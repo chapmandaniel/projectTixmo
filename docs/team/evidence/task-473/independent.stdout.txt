@@ -1,0 +1,1 @@
+{"passedGroups":12,"defects":1,"defect":"cleanup ss exits23 but retained shell returns0 and prints cleanup success","stdout":"TASK432_SHELL_HELD\nSTOP:redis:910002\nTASK379_CLEANUP pg_pid=910001 redis_pid=910002 pgport=23111 redisport=43111\n\n","stderr":""}
