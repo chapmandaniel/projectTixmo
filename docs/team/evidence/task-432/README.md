@@ -1,0 +1,79 @@
+# Task432 bounded source-only candidate — INCOMPLETE
+
+Base `fcab880ea7caf50493439a21032b7a93effc438f`, isolated branch
+`tixmo/task-432-two-phase-market`, worktree `worktrees/task-432`.
+No real execution grant; source/stub review only. Existing424 market/API
+FAIL remains unchanged, QA430 independent. This is not full-market PASS.
+
+## Inspected / existing-solution preflight
+
+Read assigned role/repository/team workflow, board424/427/428 including actual
+`BB428-20261021-AUDIT-METADATA-ONLY`, docs successor
+`d853dad3800b26e523c4d3f2dac24d25990c443d`, actual root market/verifyApi,
+427 runtime/run-gate/scoped guard,379 private runtime path; inspected retained
+362/424 composition descriptions. Existing npm+Node are sufficient; no new
+library, service, installation, dependency or lock mutation.
+
+## Delivered
+
+- Extract exact12 ordered stages into shared `scripts/market-stages.mjs`;
+  existing `verify-market-local.mjs` otherwise unchanged. Every npm command,
+  unfiltered audit, API nested invocation, dashboard production override and
+  fail-fast policy retained. Existing root runner is NOT converted to a split
+  runtime and still requires its existing execution boundary.
+- `scripts/market-composition.mjs`: non-CLI DI-only composition core. Exact2
+  audits precede10 local stages. Closes audit adapter before local admission,
+  checks source identity before/after each stage, accumulates commands/time/
+  raw outputs/output hashes/versions and calls persistence on failure too.
+  Tracked source/package/lock hashes plus HEAD and clean-tree requirement in
+  exported snapshot helper. Missing files fail closed.
+- No real executor/admission/persistence implementation supplied. Core contract
+  acknowledgement is an adapter interface, NOT proof of enforcement. It never
+  emits PASS, even with all stubs returning zero. No environment credentials
+  or inherited environment accepted by the core.
+
+## Actual offline checks
+
+PASS `node docs/team/evidence/task-432/offline-stub.mjs`: compares all12 exact
+original stage objects at basefcab880e (including override), proves teardown
+ordering, every12 fail-fast position, source-change invalidation, missing
+boundary contract denial, cleanup failure. All executors are in-memory stubs;
+no service/listener/network/DB/application import. Git show is read-only.
+PASS `node --check` each of market-composition.mjs, market-stages.mjs and
+verify-market-local.mjs; PASS `git diff --check`.
+An initial file-generation command used unavailable `python`; corrected to
+existing python3 and reran actual checks above. No install performed.
+
+## Precise remaining gaps / required continuation
+
+This bounded candidate is a reviewable partial implementation, NOT a finished
+compositional runner, runtime approval or authority-bearing wrapper.
+
+1. Real credential/service-free audit admission must enforce only
+   registry.npmjs.org HTTPS443 plus existing-resolver DNS, no arbitrary DNS,
+   proxies, alternate registries or redirected destination. Fresh private HOME
+   and npm config/environment provenance must exclude credentials/providers/
+   DB URLs. Existing npm still runs exact unfiltered audits, no retry/bypass.
+   Node hooks alone do NOT establish OS/native/subprocess isolation; an
+   enforcement-capable reviewed execution boundary remains missing.
+2. Real local admission must use fresh scrubbed owned DB/Redis/HTTP/private
+   disk artifact contract and mandatory pre-import427 protection with no audit
+   authority. Compose427 runtime/run-gate rather than merely setting marker
+   variables. Current shared commands intentionally retain `npm run verify:api`:
+   nested build/migrate/schema/Jest raw receipt transport must be added without
+   replacing/filtering that command or weakening assertions. Compile/Jest/ALS
+   native bridge, real listener ownership and cleanup remain unverified.
+3. Persist the joined manifest and raw receipts immutably with verified versions
+   and dependencies/generated-client provenance. Current persistence is only
+   a required injected callback, not an immutable on-disk store. Add source/
+   lock mutation fixtures against real snapshot helper and adapter rejection
+   tests. Missing proof must remain INCOMPLETE, never become full PASS.
+4. Independent lead AND QA review exact final composed SHA including427 and both
+   adapters, then PM names bounded audit owner after environment verification.
+   Both audits must actually PASS before separate fresh sole-runtime grant for
+   all10 local stages. Partial manual commands cannot qualify verify:market.
+
+No network/audits/build/Jest/DB/Redis/runtime/services/install/generation,
+provider/spend/config/CI/scheduler/production/push/merge/deploy performed.
+No default-branch changes. No full-market, parity, capacity, browser/provider
+acceptance, task424 closure or launch approval claimed.
