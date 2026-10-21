@@ -1,0 +1,6 @@
+PASS nested work admitted while parent settles is joined
+PASS extracted pre-app catchAsync wrapper forwards args, returns void, routes rejection to next
+PASS installed jest-mock three phases/native exactly once/reset fallback/exact restoration
+REPRO: actual installed express-rate-limit deferred store increment outlives empty tracker join, invokes downstream after synthetic disconnect; no sockets/app imports
+REPRO: exact provenance expression accepts clean unrelated Git cwd and names 2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e instead of executed review target 98adaa1b057f5feddd221d4ac8a39673e494df26
+PASS source helper preserves original error identity/partial receipt despite ENOSPC
