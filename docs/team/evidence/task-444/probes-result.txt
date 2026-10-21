@@ -1,0 +1,2 @@
+PASS 22 independent offline cases: byte-identical verifier body/default env identity; 4 child failures+throw/raw NUL/canonical collector/provider scrub; all 5 source drift checkpoints; 6 preflight denials; unsafe identity modes/symlink; actual CLI invalid path rejects.
+Validator fixture substitution is explicit test DI only; no genuine owned-runtime admission/security/whole lifecycle claim. No runtime directory/service/network/app import.
