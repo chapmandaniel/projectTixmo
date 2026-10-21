@@ -1,0 +1,22 @@
+PASS 1 live SIGTERM: concurrent+bothcallback reentrancy denied, reap before teardown
+PASS 2 sequential reuse denied
+PASS 3 live SIGKILL: concurrent+bothcallback reentrancy denied, reap before teardown
+PASS 4 sequential reuse denied
+PASS 5 closed real child held teardown, duplicate callbacks zero
+PASS 6 closed real child held evidence, duplicate callbacks zero
+PASS 7 teardown failure consumes authority and evidence once
+PASS 8 foreign live child denied without signal
+Error: QA458_ENOSPC
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-458/docs/team/evidence/task-458/probes.cjs:26:202)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-458/docs/team/evidence/task-426/process-cleanup.cjs:68:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-458/docs/team/evidence/task-458/probes.cjs:26:141
+PASS 9 real ENOENT after close: JSON8fields + primary status + separate ENOSPC
+PASS 10 evidence failure consumes authority
+QA458_STDERR_SENTINEL
+Error: QA458_EXIT_ENOSPC
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-458/docs/team/evidence/task-458/probes.cjs:29:169)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-458/docs/team/evidence/task-426/process-cleanup.cjs:68:15)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-458/docs/team/evidence/task-458/probes.cjs:29:125
+PASS 11 exit38 + inherited stderr preserved despite evidence ENOSPC
+TOTAL 11 independent checks PASS
