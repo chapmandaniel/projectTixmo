@@ -1,0 +1,6 @@
+owned PID 2615250: ABSENT
+owned PID 2615263: ABSENT
+port 37922: NO LISTENER
+port 47801: NO LISTENER
+port 38353: NO LISTENER
+live runtime/application process references (postgres/node executable filter): []

@@ -1,0 +1,27 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-272/run.FHZlH7/jest-cache --runInBand --runTestsByPath tests/integration/orders-sale-windows.local.test.ts
+
+  console.log
+    TASK272_HTTP_LISTENER { address: '127.0.0.1', family: 'IPv4', port: 38353 }
+
+      at Object.<anonymous> (tests/integration/orders-sale-windows.local.test.ts:59:11)
+
+  console.log
+    TASK272_REAL_LOCK_WAIT_CLOSE_REJECTED 2026-10-21T05:05:17.021Z
+
+      at Object.<anonymous> (tests/integration/orders-sale-windows.local.test.ts:170:11)
+
+PASS tests/integration/orders-sale-windows.local.test.ts (13.561 s)
+  ✓ eventEarly rejects without inventory/order mutation (50 ms)
+  ✓ eventClosed rejects without inventory/order mutation (17 ms)
+  ✓ ticketEarly rejects without inventory/order mutation (19 ms)
+  ✓ ticketClosed rejects without inventory/order mutation (17 ms)
+  ✓ open intersection HTTP order, aggregate cap, buyer isolation (29 ms)
+  ✓ actual event row lock wait crosses close before server clock sampling (1728 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        13.798 s
+Ran all test suites within paths "tests/integration/orders-sale-windows.local.test.ts".

@@ -1,0 +1,2 @@
+d42c8bca7d722cd31ccf027a12bad5da60a3bc446c00f4cd40d09b4815155675  tixmoapi2/tests/integration/orders-sale-windows.local.test.ts
+fde43e5f8424f5ecc76c452188836ac3452d6d8774a97184b939c2bab7721817  docs/team/evidence/task-272-local-sale/runtime.sh
