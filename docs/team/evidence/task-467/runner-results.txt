@@ -1,0 +1,34 @@
+PASS pre-Jest preload and wrong-SHA denial without application imports
+PASS canonical numeric distinct ports: leading-zero aliases and range/malformed mutations rejected
+Error: ENOENT receipt ENOSPC fixture
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/runner-probes.cjs:16:100)
+    at /home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:98:33
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:39:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:98:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/runner-probes.cjs:16:25
+PASS real ENOENT+close+evidence ENOSPC JSON roundtrip preserves name/message/stack/code/errno/syscall/path/spawnargs and status/signal
+PASS real owned concurrent finish denied during held teardown, callbacks exactly once and sequential reuse denied
+PASS real owned reentrant finish denied from both teardown and evidence; callbacks exactly once
+DEADLINE_PRIMARY_STDERR
+Error: SEPARATE_EVIDENCE_FAILURE
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/runner-probes.cjs:94:13)
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:39:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:98:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/runner-probes.cjs:98:5
+PASS real exit47/stderr/reaping preserved through bounded unsettled teardown, separate evidence failure, reentrancy and late rejection; invalid timer values rejected
+Error: Evidence callback deadline exceeded; pending callback may have late effects
+    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:42:23)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+PASS real owned reaped child with never-settling evidence returns bounded separate failure and concurrent reuse denied
+PASS unrelated PID rejected, foreign owned probe remains alive
+PASS real owned two-process timeout, termination, direct reap and process absence before teardown
+ORIGINAL_STDERR_SENTINEL
+Error: ENOSPC fixture
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/runner-probes.cjs:143:95)
+    at /home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:98:33
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:39:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:98:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/runner-probes.cjs:143:20
+PASS original exit42/stderr retained with evidence ENOSPC

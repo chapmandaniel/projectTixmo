@@ -1,0 +1,22 @@
+LEAD467_STDERR
+PASS 1 40 invalid timer options deny without consuming authority
+Error: SECONDARY467
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-467/probes.cjs:15:194)
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:39:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-426/process-cleanup.cjs:98:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-467/docs/team/evidence/task-467/probes.cjs:16:75
+PASS 2 deadline/late settlement preserve53 and separate evidence error; reaped before callbacks, concurrent/reentrant/sequential denial
+LEAD467_STDERR
+FINDING evidence rejection null escapes TypeError without primary report
+PASS 3 reproduced non-Error evidence defect null with reaped owned fixture
+LEAD467_STDERR
+FINDING evidence rejection undefined escapes TypeError without primary report
+PASS 4 reproduced non-Error evidence defect undefined with reaped owned fixture
+LEAD467_STDERR
+undefined
+FINDING evidence string rejection loses diagnostics and maps successful primary to exit0
+PASS 5 reproduced non-Error evidence defect primitive467 with reaped owned fixture
+LEAD467_STDERR
+FINDING teardown null rejection reports stale pending and replaces original rejection with TypeError
+PASS 6 reproduced async teardown non-Error classification defect
+TOTAL 6 diagnostic groups PASS; 5 owned direct children closed/reaped; 4 defect variants observed. NOT acceptance PASS.
