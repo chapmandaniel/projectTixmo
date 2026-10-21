@@ -1,0 +1,26 @@
+PASS 1 real owned cooperative TERM timeout/reap before teardown
+PASS 2 consumed capability cannot repeat teardown
+PASS 3 real owned stubborn SIGKILL timeout/reap before teardown
+PASS 4 consumed capability cannot repeat teardown
+PASS 5 foreign live PID authority rejected/no signal
+QA451_ORIGINAL_STDERR
+Error: QA451_ENOSPC
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-451/docs/team/evidence/task-451/probes.cjs:16:68)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-451/docs/team/evidence/task-426/process-cleanup.cjs:62:15)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-451/docs/team/evidence/task-451/probes.cjs:16:15
+PASS 6 original exit37 retained alongside evidence failure
+REPRODUCED DEFECT original ENOENT diagnostic lost: {"timedOut":false,"result":{"code":-2,"signal":null}}
+PASS 7 spawn failure not marked success
+PASS 8 NODE_OPTIONS denial
+PASS 9 NODE_PATH denial
+PASS 10 LD_PRELOAD denial
+PASS 11 port denial ""
+PASS 12 port denial "1023,2345"
+PASS 13 port denial "65536,2345"
+PASS 14 port denial "1234,1234"
+PASS 15 port denial "1234"
+PASS 16 port denial "1234,abc"
+PASS 17 fixture preflight installs native guard
+PASS 18 native guard denies nonowned TCP/UDP before socket calls
+REPRODUCED DEFECT duplicate numeric port accepted=true
+TOTAL 18 independent checks PASS; observations require review

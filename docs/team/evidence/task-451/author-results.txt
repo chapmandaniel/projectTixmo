@@ -1,0 +1,9 @@
+PASS pre-Jest preload and wrong-SHA denial without application imports
+PASS unrelated PID rejected, foreign owned probe remains alive
+PASS real owned two-process timeout, termination, direct reap and process absence before teardown
+ORIGINAL_STDERR_SENTINEL
+Error: ENOSPC fixture
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-451/docs/team/evidence/task-426/runner-probes.cjs:22:95)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-451/docs/team/evidence/task-426/process-cleanup.cjs:62:15)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-451/docs/team/evidence/task-426/runner-probes.cjs:22:20
+PASS original exit42/stderr retained with evidence ENOSPC
