@@ -1,0 +1,8 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_284|tixmo284|127.0.0.1|27600
+PONG
+TASK284_RUNTIME path=/home/daniel/projects/projectTixmo/runtime/task-286-race/run.QVCG2N pg_pid=2658680 redis_pid=2658693 pgport=27600 redisport=47103
+waiting for server to shut down.... done
+server stopped
+TASK284_CLEANUP pg_pid=2658680 redis_pid=2658693 pgport=27600 redisport=47103

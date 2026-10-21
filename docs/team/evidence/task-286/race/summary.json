@@ -1,0 +1,728 @@
+{
+  "attempts": 100,
+  "successes": 10,
+  "failures": 90,
+  "errors": {
+    "Not enough tickets available": 90
+  },
+  "observedWaiters": 69,
+  "elapsedMs": 1193.8643540000003,
+  "latencyMs": {
+    "min": 136.874597,
+    "p50": 676.5616140000002,
+    "p95": 1171.6349420000006,
+    "p99": 1188.8449680000003,
+    "max": 1193.3500089999998
+  },
+  "final": {
+    "stock": {
+      "quantityAvailable": 0,
+      "quantityHeld": 10,
+      "quantitySold": 0
+    },
+    "orders": 10,
+    "tickets": 10
+  },
+  "results": [
+    {
+      "ok": true,
+      "id": "437ea988-e5b2-4f01-aa84-07006437c022",
+      "buyer": "0f0fc39d-dd84-4727-a3fc-10d4912036b9",
+      "error": "",
+      "ms": 136.874597
+    },
+    {
+      "ok": true,
+      "id": "853fb7df-4147-4d02-8708-3c0856fd10aa",
+      "buyer": "ca389615-b598-4a70-b82b-e968c6b5142e",
+      "error": "",
+      "ms": 221.91918599999917
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "2c227304-123c-4bc1-b45a-09c92ba5f47d",
+      "error": "Not enough tickets available",
+      "ms": 270.43572199999926
+    },
+    {
+      "ok": true,
+      "id": "f722d840-3edc-4bc6-a786-114fb87337d5",
+      "buyer": "f5a3c2f0-cfea-42d7-89aa-477ba356fa23",
+      "error": "",
+      "ms": 193.2967920000001
+    },
+    {
+      "ok": true,
+      "id": "272adeb5-f8de-4da8-912c-d707c9732e28",
+      "buyer": "1b5b2a20-1d46-4a0d-aa5f-aaa5468a3d1e",
+      "error": "",
+      "ms": 146.42706400000043
+    },
+    {
+      "ok": true,
+      "id": "7db7fa7d-f783-4138-af19-486ee340a707",
+      "buyer": "b0ba4eb1-6746-4436-9f30-e02e5ad664d3",
+      "error": "",
+      "ms": 202.752383
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "2d0c4109-54ce-4f8c-a820-c3d1cd3f9796",
+      "error": "Not enough tickets available",
+      "ms": 227.25281600000017
+    },
+    {
+      "ok": true,
+      "id": "02e23ba0-8c65-46db-bff0-7ee1d653d067",
+      "buyer": "dd89ef16-7dfb-46bb-9109-086f67529d8d",
+      "error": "",
+      "ms": 183.6983449999998
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "17ddbaf2-18bb-4b1b-a194-590e593ea51c",
+      "error": "Not enough tickets available",
+      "ms": 535.7505489999994
+    },
+    {
+      "ok": true,
+      "id": "63b3c1d0-6afc-4d26-b08c-9e9fe74c536b",
+      "buyer": "e5be49cb-f45f-49ab-8283-16fc87f6c734",
+      "error": "",
+      "ms": 164.35631999999987
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "4c182d11-1adf-482f-b702-ad906ed831f2",
+      "error": "Not enough tickets available",
+      "ms": 239.3204740000001
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "5ef62e1f-a4f6-4366-9227-76ace696af39",
+      "error": "Not enough tickets available",
+      "ms": 306.6741670000001
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "acc1efeb-2a18-4898-a238-3afcfb108be0",
+      "error": "Not enough tickets available",
+      "ms": 357.89748599999984
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "c38a874c-ee0c-47bc-aff0-0b747e1c64ff",
+      "error": "Not enough tickets available",
+      "ms": 258.53550500000074
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "96498f07-dc47-4436-8bbd-a12833375116",
+      "error": "Not enough tickets available",
+      "ms": 294.01851499999975
+    },
+    {
+      "ok": true,
+      "id": "ba311ea0-7270-4e4d-9f76-21fce6a9b7da",
+      "buyer": "5b123ca4-a6b0-4db0-9dc5-2856e1441806",
+      "error": "",
+      "ms": 173.80561899999975
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "747493d6-6e04-45a6-9e6b-f3c1af7967fa",
+      "error": "Not enough tickets available",
+      "ms": 247.22156300000006
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "3c2645aa-479c-41f1-933c-d53f936e6b5c",
+      "error": "Not enough tickets available",
+      "ms": 428.3660579999996
+    },
+    {
+      "ok": true,
+      "id": "4db15e4b-be27-4368-b886-dfe2b1425d14",
+      "buyer": "b6d0148a-062c-4e6d-b41c-0cbd59d07039",
+      "error": "",
+      "ms": 155.1436359999998
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "f934a034-5782-40d5-b0ed-2d558b9dd829",
+      "error": "Not enough tickets available",
+      "ms": 232.73071900000014
+    },
+    {
+      "ok": true,
+      "id": "9e65e42f-0278-4e2a-85fb-d73972fdedee",
+      "buyer": "53ecc78c-b5c8-4dd0-9129-c1a7997bd449",
+      "error": "",
+      "ms": 212.05262500000026
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "565033d1-9a6c-4ed7-857d-a1460dfa53f3",
+      "error": "Not enough tickets available",
+      "ms": 570.8931230000007
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "43ead4ac-3d57-4aa8-b267-a1edf31205fb",
+      "error": "Not enough tickets available",
+      "ms": 282.1124970000001
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "766f3c91-a61e-411b-8036-585d8bf1f5bd",
+      "error": "Not enough tickets available",
+      "ms": 345.11859599999934
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "dbf9bc1f-2c8f-4b98-8d13-fe7782aab902",
+      "error": "Not enough tickets available",
+      "ms": 369.50384699999995
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "96f4502f-21cc-4627-9149-dd23426d13ba",
+      "error": "Not enough tickets available",
+      "ms": 487.93470499999967
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "82ce9eff-87af-470d-b684-eec00b426a14",
+      "error": "Not enough tickets available",
+      "ms": 523.8511710000002
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "fcfb6995-b6d1-49f0-9a52-e3c1817b0c5a",
+      "error": "Not enough tickets available",
+      "ms": 606.4806449999996
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "508c8403-32e9-4494-9562-dfdf4dcaf11f",
+      "error": "Not enough tickets available",
+      "ms": 476.1440299999995
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "95a9ae38-e847-4256-a2e9-7d280c24fb6c",
+      "error": "Not enough tickets available",
+      "ms": 856.3394499999995
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "ad51392f-8c70-40f0-bda1-f2452dbd79d9",
+      "error": "Not enough tickets available",
+      "ms": 547.3147749999998
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "fb2cf698-0eaf-402d-b981-d54d98578db8",
+      "error": "Not enough tickets available",
+      "ms": 381.2645819999998
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "83681b84-c2e1-4142-8f06-5e5724eae776",
+      "error": "Not enough tickets available",
+      "ms": 318.9537300000002
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "44230f32-8840-45dd-93f1-cf04f9997369",
+      "error": "Not enough tickets available",
+      "ms": 404.77644899999996
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "2f10eb1f-efc9-45f7-8331-704239e13488",
+      "error": "Not enough tickets available",
+      "ms": 332.04528499999924
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "3a88b377-cd64-4c0d-a58c-e213eb3e99e5",
+      "error": "Not enough tickets available",
+      "ms": 416.48543400000017
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "5df668e0-3439-4ae4-8956-fa372472dd97",
+      "error": "Not enough tickets available",
+      "ms": 688.945702
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "aa4b9651-e1c2-4099-8fca-a16f4239738b",
+      "error": "Not enough tickets available",
+      "ms": 1068.9362680000004
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "2e1f473b-43bf-48ca-b00d-74e631b23133",
+      "error": "Not enough tickets available",
+      "ms": 1161.8178710000002
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "39b0e268-43fa-40b4-81c6-83b825b7c354",
+      "error": "Not enough tickets available",
+      "ms": 1167.1667889999999
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "b5c78718-c475-4b7c-80cc-315c7ee36cb0",
+      "error": "Not enough tickets available",
+      "ms": 1157.1062370000009
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "ee224b41-d14f-4123-b5de-b104fae1200f",
+      "error": "Not enough tickets available",
+      "ms": 1152.2198469999994
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "fd2f5662-618a-463a-bb99-5cef080e3c72",
+      "error": "Not enough tickets available",
+      "ms": 1080.6355130000002
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "556e1e0f-f39a-4477-a651-03612636ceb1",
+      "error": "Not enough tickets available",
+      "ms": 1175.9943160000003
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "f21cc3f5-1cd5-4f38-9678-3005bbf98508",
+      "error": "Not enough tickets available",
+      "ms": 1193.3500089999998
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "30f99118-41dd-4c77-a41d-57f9f25cc587",
+      "error": "Not enough tickets available",
+      "ms": 439.86055300000044
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "5fafb5d0-3c56-4363-9368-3f55336387da",
+      "error": "Not enough tickets available",
+      "ms": 452.22031399999923
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "7aa621df-a152-4f53-9f18-abd39a8d852b",
+      "error": "Not enough tickets available",
+      "ms": 1188.8449680000003
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "62138586-1ab0-469b-aaad-67c6d3ad2705",
+      "error": "Not enough tickets available",
+      "ms": 392.83846600000015
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "30bd4950-ee1d-44f7-a6b4-bfbe5ab6e602",
+      "error": "Not enough tickets available",
+      "ms": 558.9771200000005
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "b15c7560-f6ec-47a8-b59c-03e82b60d459",
+      "error": "Not enough tickets available",
+      "ms": 819.3672469999992
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "e16e37c8-6180-4e60-a58f-ec6c8642b3d2",
+      "error": "Not enough tickets available",
+      "ms": 618.1754890000002
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "0dbc2e76-6432-4533-9d35-c4ad55b82216",
+      "error": "Not enough tickets available",
+      "ms": 844.2898300000006
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "87caf8b7-774d-4067-b494-0d155f72ac2a",
+      "error": "Not enough tickets available",
+      "ms": 1092.961432
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "8d3d8f6a-6345-436a-84c7-4dd7c2d1b3e7",
+      "error": "Not enough tickets available",
+      "ms": 1171.6349420000006
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "c20f3a8a-0cf1-47e6-9b54-64021a2e3946",
+      "error": "Not enough tickets available",
+      "ms": 1184.7196439999998
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "f58e630b-2823-49a0-9fcb-790206801652",
+      "error": "Not enough tickets available",
+      "ms": 1105.373039
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "9fbf6560-8dee-4e6f-acd9-7eeac4c7c1a2",
+      "error": "Not enough tickets available",
+      "ms": 1180.1118650000008
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "9a974e1a-8482-40f6-80e0-286326c9884f",
+      "error": "Not enough tickets available",
+      "ms": 511.5083910000003
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "6cf0483b-effa-4dae-9a4f-caf7a7294854",
+      "error": "Not enough tickets available",
+      "ms": 723.5458390000003
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "5c4c40f3-017c-4a9b-ab6c-262ff7fc7e91",
+      "error": "Not enough tickets available",
+      "ms": 676.5616140000002
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "f222f96d-3160-4039-a357-cd2e22b0cf72",
+      "error": "Not enough tickets available",
+      "ms": 664.8837020000001
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "aadf6641-5c48-4662-916e-7932dc34d409",
+      "error": "Not enough tickets available",
+      "ms": 806.3029289999995
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "2eaa289b-36f3-4629-8e29-d8d6738bd04d",
+      "error": "Not enough tickets available",
+      "ms": 914.8861189999998
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "3b215c9b-1b17-4177-bfdb-171f4ada25c8",
+      "error": "Not enough tickets available",
+      "ms": 700.4919730000001
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "36c32db6-a3fe-405f-820c-bf227c1da958",
+      "error": "Not enough tickets available",
+      "ms": 594.2394970000005
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "5dc8d7ad-1432-46ac-97a3-0f31049f6201",
+      "error": "Not enough tickets available",
+      "ms": 463.91745399999945
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "3d544499-36ab-4326-af75-c67d873114a1",
+      "error": "Not enough tickets available",
+      "ms": 641.5300790000001
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "34ce543d-1025-4534-a52c-a91003f743c5",
+      "error": "Not enough tickets available",
+      "ms": 499.59384599999976
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "fb21743b-3015-42f9-ab7f-748790e5404b",
+      "error": "Not enough tickets available",
+      "ms": 653.1635930000002
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "d88ebc94-2939-4264-95cf-95e66178834c",
+      "error": "Not enough tickets available",
+      "ms": 950.5811570000005
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "f603e842-ac5e-43c5-8f63-0b6e956c4b91",
+      "error": "Not enough tickets available",
+      "ms": 711.843003
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "9b801aef-19db-441a-9a37-d7fe033cbb9f",
+      "error": "Not enough tickets available",
+      "ms": 629.8359349999992
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "1a2e8b18-59ed-42cc-abea-c6f89c69eaa0",
+      "error": "Not enough tickets available",
+      "ms": 747.2559810000002
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "94720e90-d19d-4e6c-9d80-5b2bfcf07ceb",
+      "error": "Not enough tickets available",
+      "ms": 759.0514569999996
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "91cee0b1-c028-471a-a8a9-5c4d0ece7c1f",
+      "error": "Not enough tickets available",
+      "ms": 770.6641740000005
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "79b2d1e7-fab6-4ed4-911d-3955b7ad6429",
+      "error": "Not enough tickets available",
+      "ms": 832.0985770000007
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "1555dcd2-619c-4752-93cb-e913bbf356c2",
+      "error": "Not enough tickets available",
+      "ms": 735.1555639999997
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "153cf676-c86c-473a-9149-e226ab9acd03",
+      "error": "Not enough tickets available",
+      "ms": 867.62165
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "f14ba1c9-66a9-46c3-9493-c06c3a8ff5a7",
+      "error": "Not enough tickets available",
+      "ms": 582.4246230000008
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "3764887e-bc53-4a1c-b69e-eceecfea6f29",
+      "error": "Not enough tickets available",
+      "ms": 782.3224899999996
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "2e9d4f99-ae99-4d2b-8666-04aeb2ec602a",
+      "error": "Not enough tickets available",
+      "ms": 793.9932079999999
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "cf1fe19f-09a3-40b9-a754-986c5852063a",
+      "error": "Not enough tickets available",
+      "ms": 938.6125310000007
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "58e20991-fe16-4948-9d27-315dae5d8695",
+      "error": "Not enough tickets available",
+      "ms": 879.4984099999992
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "28777dfd-b74a-4776-93e2-a5b1cbaf5103",
+      "error": "Not enough tickets available",
+      "ms": 891.2445299999999
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "f8c38a9c-bdcd-4062-b85d-0bd655a11cf4",
+      "error": "Not enough tickets available",
+      "ms": 926.5336180000004
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "c9d4fd50-7b04-4b4c-ab16-b4afaedbdd41",
+      "error": "Not enough tickets available",
+      "ms": 962.0926960000006
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "aa9d1d45-c153-4f68-afec-ff9f742967d8",
+      "error": "Not enough tickets available",
+      "ms": 902.858338
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "b457d3bb-a3b5-4556-a0b4-7587a8ce343b",
+      "error": "Not enough tickets available",
+      "ms": 1020.4153799999995
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "902d2103-04a1-4ecf-8d9e-2e23aacfb96d",
+      "error": "Not enough tickets available",
+      "ms": 973.6812719999998
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "6721cf76-bb52-4f3f-aec2-e64d42ff60e0",
+      "error": "Not enough tickets available",
+      "ms": 1008.8943939999999
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "7974bf8f-c7a6-426b-b6c1-b16ef86e3c0d",
+      "error": "Not enough tickets available",
+      "ms": 985.4217449999996
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "dcf1ea88-f961-49e7-883c-26f7f3600658",
+      "error": "Not enough tickets available",
+      "ms": 1116.7672920000005
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "fe88f633-01e6-48e8-be4e-bc824d1253f3",
+      "error": "Not enough tickets available",
+      "ms": 1126.8374190000004
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "03d971fe-42a0-4600-b47d-555aa5ece790",
+      "error": "Not enough tickets available",
+      "ms": 997.1988000000001
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "39349f47-793b-47fa-add2-7fb3e20b9e26",
+      "error": "Not enough tickets available",
+      "ms": 1135.937492
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "27a55b6a-0fad-45a7-a363-1499cd775b7b",
+      "error": "Not enough tickets available",
+      "ms": 1043.7135709999993
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "9e4b22ce-4f59-4645-81e7-383478e316e5",
+      "error": "Not enough tickets available",
+      "ms": 1032.0790979999992
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "cc82b8d8-2f53-4471-9912-f6cbaf3dce6f",
+      "error": "Not enough tickets available",
+      "ms": 1055.244323
+    },
+    {
+      "ok": false,
+      "id": "",
+      "buyer": "61c3634b-31e4-4e2b-9caf-bc9f80718a2e",
+      "error": "Not enough tickets available",
+      "ms": 1145.8215629999995
+    }
+  ]
+}

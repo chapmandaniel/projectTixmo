@@ -1,0 +1,16 @@
+8d99c64805df7db0e7325cf5e49f1fad181452b61a5e38e1745e8d4cb01226d0  docs/team/evidence/task-286/README.md
+e5952a7b2a7ef8f81ae9a7de99a3c77d4453098193883c08620358e486c3e3d4  docs/team/evidence/task-286/browser/browser-stderr.txt
+b250de22d6422fae6cadb8c875fb857dc07433074b4a65ae3fdf78e56d0c34cd  docs/team/evidence/task-286/browser/ldd.txt
+821ab7099551f26aed969b3902e95a5c1691d4272d55bed7de4ce46abb63ae22  docs/team/evidence/task-286/browser/render.html
+19b6e8ca68364f08b2c47220267f23b41bfbe2b2d1a5daed2dd9f0a73b1d4d5c  docs/team/evidence/task-286/browser/result.json
+28a278c3b1c9dd720e31d89e3eadfd6f9d97c831c27bbf02f174fbc48aa4de69  docs/team/evidence/task-286/browser-cache-verification.json
+19b6e8ca68364f08b2c47220267f23b41bfbe2b2d1a5daed2dd9f0a73b1d4d5c  docs/team/evidence/task-286/browser-qualification.log
+03b6b2965698c73ace39805aec301c8a719064eb05d6eabca964633f7ec01112  docs/team/evidence/task-286/browser-qualify.py
+a311d313d03a43cb4de70937d9c2d1ec552eadeb9a75e8f7b3eb835070f5528b  docs/team/evidence/task-286/cleanup.txt
+a07343ebd2583365673fb2813cc717b7c7f9b9e804e9d76be2841f7c26bb4e72  docs/team/evidence/task-286/extracted-cache-verification.txt
+7f8284f719f14533fb4e4ceaca68c268c70e99f12b0fe2469a874b0321b2e2c7  docs/team/evidence/task-286/race/acceptance.log
+de901b5e7c9aa454562cf7e7bafe2a2ee83fc9b3511afa7f3e514f5f32cc9e33  docs/team/evidence/task-286/race/migrate.log
+1d3516c8651e5c32628ca23f4209dfd99514c1a1f279a70e8973727447b7f64c  docs/team/evidence/task-286/race/runtime.log
+9bcfd9794dc4b28d4be8290cc70df9ca60e1cf61e0160e8b7ffa27473a8d7a90  docs/team/evidence/task-286/race/summary.json
+47af6763cc17afe630039243265df6dce3b0196f7bbce3a51943c6808f7bbd13  docs/team/evidence/task-286/race-runtime.sh
+f3bb8a83687cfbc0402614e542f6a07f50cf0559393e9ba324f747f9b7fc55d1  docs/team/evidence/task-286/source-verification.log

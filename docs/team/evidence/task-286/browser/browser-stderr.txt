@@ -1,0 +1,2 @@
+Fontconfig error: Cannot load default config file: File not found
+[1021/030356.746735:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
