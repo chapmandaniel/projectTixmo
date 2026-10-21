@@ -1,0 +1,5 @@
+PASS inert held lifetime, close once, EOF/unknown denial, partial-start cleanup/original72, missing grant
+PASS readiness succeeds then cleanup observer23 denies success/nonzero with phase and status
+PASS held-open partial="" status75 elapsedMs=1034.6 cleanup=1
+PASS held-open partial="close" status75 elapsedMs=1035.0 cleanup=1
+PASS eight invalid bounds deny before HELD with once-only partial cleanup; upper endpoint close0

@@ -1,0 +1,4 @@
+{"input":"","observer":"0","status":75,"elapsedMs":1071.5134159999998}
+{"input":"close","observer":"0","status":75,"elapsedMs":1026.788185}
+{"input":"close","observer":"23","status":1,"elapsedMs":1064.7551089999997}
+PASS 37 independent cases: genuine Bash timed read and EXIT cleanup, inert identity/listener/stop hooks

@@ -1,0 +1,71 @@
+[
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-retained-shell.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-shell-functions.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-local-phase.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-local-session.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-stub.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "bash",
+      "-n",
+      "docs/team/evidence/task-432/retained-shell.sh"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "node",
+      "--check",
+      "docs/team/evidence/task-479/check.mjs"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit": 0
+  },
+  {
+    "command": [
+      "findmnt",
+      "-T",
+      "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/qa479-disk",
+      "-o",
+      "FSTYPE,TARGET"
+    ],
+    "exit": 0
+  }
+]

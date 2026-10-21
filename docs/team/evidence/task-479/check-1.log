@@ -1,0 +1,1 @@
+PASS exact byte reconstruction; inert source; owned/foreign PID, UID and executable; no foreign signal; partial startup status; foreign listener and cleanup failure denial
