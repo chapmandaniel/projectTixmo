@@ -1,0 +1,413 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task303/run.VE4cLd/jest-cache --runInBand --runTestsByPath tests/integration/orders-sale-windows.local.test.ts
+
+  console.log
+    TASK302_HTTP_LISTENER 2755939 { address: '127.0.0.1', family: 'IPv4', port: 35655 }
+
+      at Object.<anonymous> (tests/integration/orders-sale-windows.local.test.ts:68:11)
+
+  console.log
+    TASK302_BOUNDARY service event-start-1ms controlledDate 2026-10-21T06:47:06.579Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-start+0ms controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-start+1ms controlledDate 2026-10-21T06:47:06.581Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-end-1ms controlledDate 2026-10-21T06:47:16.579Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-end+0ms controlledDate 2026-10-21T06:47:16.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-end+1ms controlledDate 2026-10-21T06:47:16.581Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service ticket-start-1ms controlledDate 2026-10-21T06:47:06.579Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service ticket-start+0ms controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service ticket-start+1ms controlledDate 2026-10-21T06:47:06.581Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service ticket-end-1ms controlledDate 2026-10-21T06:47:16.579Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service ticket-end+0ms controlledDate 2026-10-21T06:47:16.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service ticket-end+1ms controlledDate 2026-10-21T06:47:16.581Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service all-null controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service null-event-narrow-ticket-start controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service null-ticket-event-start controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service one-sided-null-start controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service one-sided-null-close controlledDate 2026-10-21T06:47:16.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service empty-touching-intersection controlledDate 2026-10-21T06:47:16.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service disjoint-intersection controlledDate 2026-10-21T06:47:21.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service empty-event controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service empty-ticket controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service inverted-event controlledDate 2026-10-21T06:47:11.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service inverted-ticket controlledDate 2026-10-21T06:47:11.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-DRAFT controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-CANCELLED controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-COMPLETED controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-DELETED controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-SOLD_OUT controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service soft-deleted-published controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service event-started-closed controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service ticket-hidden controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY service ticket-sold-out controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-start-1ms controlledDate 2026-10-21T06:47:06.579Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-start+0ms controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-start+1ms controlledDate 2026-10-21T06:47:06.581Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-end-1ms controlledDate 2026-10-21T06:47:16.579Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-end+0ms controlledDate 2026-10-21T06:47:16.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-end+1ms controlledDate 2026-10-21T06:47:16.581Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP ticket-start-1ms controlledDate 2026-10-21T06:47:06.579Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP ticket-start+0ms controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP ticket-start+1ms controlledDate 2026-10-21T06:47:06.581Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP ticket-end-1ms controlledDate 2026-10-21T06:47:16.579Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP ticket-end+0ms controlledDate 2026-10-21T06:47:16.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP ticket-end+1ms controlledDate 2026-10-21T06:47:16.581Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP all-null controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP null-event-narrow-ticket-start controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP null-ticket-event-start controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP one-sided-null-start controlledDate 2026-10-21T06:47:06.580Z single-reservation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP one-sided-null-close controlledDate 2026-10-21T06:47:16.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP empty-touching-intersection controlledDate 2026-10-21T06:47:16.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP disjoint-intersection controlledDate 2026-10-21T06:47:21.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP empty-event controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP empty-ticket controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP inverted-event controlledDate 2026-10-21T06:47:11.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP inverted-ticket controlledDate 2026-10-21T06:47:11.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-DRAFT controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-CANCELLED controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-COMPLETED controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-DELETED controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-SOLD_OUT controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP soft-deleted-published controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP event-started-closed controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP ticket-hidden controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK302_BOUNDARY HTTP ticket-sold-out controlledDate 2026-10-21T06:47:06.580Z zero-mutation
+
+      at tests/integration/orders-sale-windows.local.test.ts:176:13
+
+  console.log
+    TASK279_REAL_LOCK_WAIT_CLOSE_REJECTED 2026-10-21T06:47:10.131Z
+
+      at Object.<anonymous> (tests/integration/orders-sale-windows.local.test.ts:248:11)
+
+  console.log
+    TASK279_DURABLE_MANUAL_LATE_PAYMENT f4dc00ba-bcbe-4a35-8ec6-4e17ceb1d5c3
+
+      at Object.<anonymous> (tests/integration/orders-sale-windows.local.test.ts:316:11)
+
+PASS tests/integration/orders-sale-windows.local.test.ts (15.64 s)
+  ✓ Date-only service: event-start-1ms (29 ms)
+  ✓ Date-only service: event-start+0ms (27 ms)
+  ✓ Date-only service: event-start+1ms (24 ms)
+  ✓ Date-only service: event-end-1ms (24 ms)
+  ✓ Date-only service: event-end+0ms (27 ms)
+  ✓ Date-only service: event-end+1ms (36 ms)
+  ✓ Date-only service: ticket-start-1ms (38 ms)
+  ✓ Date-only service: ticket-start+0ms (50 ms)
+  ✓ Date-only service: ticket-start+1ms (52 ms)
+  ✓ Date-only service: ticket-end-1ms (50 ms)
+  ✓ Date-only service: ticket-end+0ms (38 ms)
+  ✓ Date-only service: ticket-end+1ms (39 ms)
+  ✓ Date-only service: all-null (48 ms)
+  ✓ Date-only service: null-event-narrow-ticket-start (48 ms)
+  ✓ Date-only service: null-ticket-event-start (48 ms)
+  ✓ Date-only service: one-sided-null-start (48 ms)
+  ✓ Date-only service: one-sided-null-close (33 ms)
+  ✓ Date-only service: empty-touching-intersection (32 ms)
+  ✓ Date-only service: disjoint-intersection (33 ms)
+  ✓ Date-only service: empty-event (33 ms)
+  ✓ Date-only service: empty-ticket (37 ms)
+  ✓ Date-only service: inverted-event (32 ms)
+  ✓ Date-only service: inverted-ticket (36 ms)
+  ✓ Date-only service: event-DRAFT (34 ms)
+  ✓ Date-only service: event-CANCELLED (33 ms)
+  ✓ Date-only service: event-COMPLETED (29 ms)
+  ✓ Date-only service: event-DELETED (25 ms)
+  ✓ Date-only service: event-SOLD_OUT (26 ms)
+  ✓ Date-only service: soft-deleted-published (26 ms)
+  ✓ Date-only service: event-started-closed (25 ms)
+  ✓ Date-only service: ticket-hidden (35 ms)
+  ✓ Date-only service: ticket-sold-out (27 ms)
+  ✓ Date-only HTTP: event-start-1ms (60 ms)
+  ✓ Date-only HTTP: event-start+0ms (26 ms)
+  ✓ Date-only HTTP: event-start+1ms (24 ms)
+  ✓ Date-only HTTP: event-end-1ms (23 ms)
+  ✓ Date-only HTTP: event-end+0ms (19 ms)
+  ✓ Date-only HTTP: event-end+1ms (17 ms)
+  ✓ Date-only HTTP: ticket-start-1ms (22 ms)
+  ✓ Date-only HTTP: ticket-start+0ms (26 ms)
+  ✓ Date-only HTTP: ticket-start+1ms (26 ms)
+  ✓ Date-only HTTP: ticket-end-1ms (25 ms)
+  ✓ Date-only HTTP: ticket-end+0ms (20 ms)
+  ✓ Date-only HTTP: ticket-end+1ms (20 ms)
+  ✓ Date-only HTTP: all-null (24 ms)
+  ✓ Date-only HTTP: null-event-narrow-ticket-start (25 ms)
+  ✓ Date-only HTTP: null-ticket-event-start (24 ms)
+  ✓ Date-only HTTP: one-sided-null-start (24 ms)
+  ✓ Date-only HTTP: one-sided-null-close (18 ms)
+  ✓ Date-only HTTP: empty-touching-intersection (17 ms)
+  ✓ Date-only HTTP: disjoint-intersection (17 ms)
+  ✓ Date-only HTTP: empty-event (18 ms)
+  ✓ Date-only HTTP: empty-ticket (18 ms)
+  ✓ Date-only HTTP: inverted-event (18 ms)
+  ✓ Date-only HTTP: inverted-ticket (20 ms)
+  ✓ Date-only HTTP: event-DRAFT (18 ms)
+  ✓ Date-only HTTP: event-CANCELLED (17 ms)
+  ✓ Date-only HTTP: event-COMPLETED (17 ms)
+  ✓ Date-only HTTP: event-DELETED (17 ms)
+  ✓ Date-only HTTP: event-SOLD_OUT (17 ms)
+  ✓ Date-only HTTP: soft-deleted-published (18 ms)
+  ✓ Date-only HTTP: event-started-closed (18 ms)
+  ✓ Date-only HTTP: ticket-hidden (19 ms)
+  ✓ Date-only HTTP: ticket-sold-out (20 ms)
+  ✓ open intersection HTTP order, aggregate cap, buyer isolation (33 ms)
+  ✓ actual event row lock wait crosses close before server clock sampling (1726 ms)
+  ✓ expired paid webhook persists one manual exception across replay with no provider or fulfillment (234 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       67 passed, 67 total
+Snapshots:   0 total
+Time:        15.903 s
+Ran all test suites within paths "tests/integration/orders-sale-windows.local.test.ts".
