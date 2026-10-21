@@ -1,0 +1,3 @@
+{"partial":"","elapsed":1060.3277110000001,"status":75,"marker":"cleanup only, NOT session success"}
+{"partial":"close","elapsed":1023.9513470000002,"status":75,"marker":"cleanup only, NOT session success"}
+PASS 37 independent real Bash cases; injected inert identities/stop/listeners, genuine cleanup; default60/1..300 canonical boundaries, partialstartup76, input74/0, heldpipe75, oncecleanup/observer23

@@ -1,0 +1,57 @@
+{
+  "TMPDIR": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/lead478-disk",
+  "rows": [
+    {
+      "name": "parity",
+      "cmd": "node",
+      "args": [
+        "docs/team/evidence/task-432/offline-shell-functions.mjs"
+      ],
+      "status": 0
+    },
+    {
+      "name": "exact12",
+      "cmd": "node",
+      "args": [
+        "docs/team/evidence/task-432/offline-stub.mjs"
+      ],
+      "status": 0
+    },
+    {
+      "name": "syntax-shell",
+      "cmd": "bash",
+      "args": [
+        "-n",
+        "docs/team/evidence/task-432/retained-shell.sh"
+      ],
+      "status": 0
+    },
+    {
+      "name": "syntax-own",
+      "cmd": "node",
+      "args": [
+        "--check",
+        "docs/team/evidence/task-478/check.mjs"
+      ],
+      "status": 0
+    },
+    {
+      "name": "diff",
+      "cmd": "git",
+      "args": [
+        "diff",
+        "--check"
+      ],
+      "status": 0
+    },
+    {
+      "name": "filesystem",
+      "cmd": "findmnt",
+      "args": [
+        "-T",
+        "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/lead478-disk"
+      ],
+      "status": 0
+    }
+  ]
+}
