@@ -1,0 +1,30 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.XAQwvK/jest-cache --runInBand --runTestsByPath tests/integration/orders-http-pressure.local.test.ts
+
+FAIL tests/integration/orders-http-pressure.local.test.ts (16.322 s)
+  ✕ 100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec (9548 ms)
+
+  ● 100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 100
+    Received length: 0
+    Received array:  []
+
+      108 |     const routeStats = Object.fromEntries(['read', 'order'].map(route => [route, percentiles(results.filter(r => r.route === route).map(r => r.ms))]));
+      109 |     fs.writeFileSync(path.join(artifact, 'measurement.json'), JSON.stringify({ results, samples, routeStats, arrived, completed, maxActive, maxQueue, elapsedMs: performance.now() - measuredStart }, null, 2));
+    > 110 |     expect(results.filter(r => r.route === 'read' && r.status === 200)).toHaveLength(100);
+          |                                                                         ^
+      111 |     expect(results.filter(r => r.route === 'order' && r.status === 201)).toHaveLength(100);
+      112 |     expect(results).toHaveLength(200); expect(maxActive).toBeLessThanOrEqual(30);
+      113 |     expect(arrived - completed).toBe(0);
+
+      at Object.<anonymous> (tests/integration/orders-http-pressure.local.test.ts:110:73)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        16.577 s
+Ran all test suites within paths "tests/integration/orders-http-pressure.local.test.ts".

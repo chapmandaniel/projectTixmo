@@ -1,0 +1,49 @@
+{
+  "runnerExit": 1,
+  "startUTC": "2026-10-21T12:42:34Z",
+  "endUTC": "2026-10-21T12:42:54Z",
+  "sourceSHA": "b0d749d6962f75d6daee2836a4605e505daf4556",
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.XAQwvK",
+  "statusCounts": {
+    "read_0_guard_rejected": 100,
+    "order_0_guard_rejected": 100,
+    "read_200": 0,
+    "order_201": 0
+  },
+  "arrived": 100,
+  "completed": 100,
+  "maxActive": 1,
+  "maxQueue": 1,
+  "elapsedMs": 3322.8862179999996,
+  "guardRejectionLatenciesNotHTTPLatencies": {
+    "read": {
+      "p50": 1.0935680000002321,
+      "p95": 1.2655409999988478,
+      "p99": 1.4730399999989459,
+      "p100": 3.0301970000000438
+    },
+    "order": {
+      "p50": 0.7435850000001665,
+      "p95": 0.8905979999999545,
+      "p99": 1.0256620000000112,
+      "p100": 1.4110110000001441
+    }
+  },
+  "maxMetrics": {
+    "connections": 1,
+    "lock_waiters": 0,
+    "ungranted": 0,
+    "rss": 1070018560,
+    "leases": 0,
+    "backlog": 0,
+    "queue": 0
+  },
+  "lastCPU": {
+    "user": 9436637,
+    "system": 350218
+  },
+  "lastRedisKeys": [],
+  "maxArrivalLateMs": 1.271456999998918,
+  "lastArrivalMs": 3299.7671349999982,
+  "cleanupErrors": []
+}
