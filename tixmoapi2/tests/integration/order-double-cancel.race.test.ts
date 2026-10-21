@@ -44,7 +44,7 @@ test.each([false, true])(
       },
     });
     const event = await prisma.event.create({
-      data: { organizationId: org.id, name: key, slug: key, tags: [] },
+      data: { organizationId: org.id, name: key, slug: key, tags: [], status: 'ON_SALE' },
     });
     const type = await prisma.ticketType.create({
       data: {
@@ -56,17 +56,25 @@ test.each([false, true])(
         quantityHeld: 4,
       },
     });
-    const makeOrder = (suffix: string) =>
+    const otherUser = await prisma.user.create({
+      data: {
+        email: key + '-other@example.test',
+        passwordHash: 'test-only',
+        firstName: 'Other',
+        lastName: 'Buyer',
+      },
+    });
+    const makeOrder = (suffix: string, buyer = user.id) =>
       prisma.order.create({
         data: {
           orderNumber: `${key}-${suffix}`,
-          userId: user.id,
+          userId: buyer,
           eventId: event.id,
           totalAmount: 20,
           tickets: {
             create: [0, 1].map((i) => ({
               eventId: event.id,
-              userId: user.id,
+              userId: buyer,
               ticketTypeId: type.id,
               barcode: `${key}-${suffix}-${i}`,
               pricePaid: 10,
@@ -76,7 +84,7 @@ test.each([false, true])(
         include: { tickets: { orderBy: { id: 'asc' } } },
       });
     const target = await makeOrder('a');
-    const otherBefore = await makeOrder('b');
+    const otherBefore = await makeOrder('b', otherUser.id);
     const original = prisma.order.findFirst.bind(prisma.order);
     const arrived = [deferred(), deferred()];
     const release = [deferred(), deferred()];
@@ -149,16 +157,19 @@ test.each([false, true])(
         target.tickets.map((ticket) => ({
           ...ticket,
           status: 'CANCELLED',
+          inventoryState: 'RELEASED',
           updatedAt: expect.any(Date),
         }))
       );
       expect(counters).toEqual([8, 2, 0]);
-      expect(settled[winnerIndex].status).toBe('fulfilled');
-      expect(settled[loserIndex].status).toBe('rejected');
-      expect(settled.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
-      expect(settled.filter((r) => r.status === 'rejected')).toHaveLength(1);
-      const loser = settled.find((r) => r.status === 'rejected');
-      if (loser?.status === 'rejected') expect(loser.reason).toMatchObject({ statusCode: 400 });
+      expect(settled.every((result) => result.status === 'fulfilled')).toBe(true);
+      for (const result of settled)
+        if (result.status === 'fulfilled')
+          expect(result.value).toMatchObject({
+            id: target.id,
+            status: a.status,
+            paymentStatus: a.paymentStatus,
+          });
     } finally {
       release.forEach((g) => g.resolve());
       await outcomes;
@@ -182,7 +193,7 @@ test('inconsistent hold rolls back cancellation claim and leaves tickets and inv
     },
   });
   const event = await prisma.event.create({
-    data: { organizationId: org.id, name: key, slug: key, tags: [] },
+    data: { organizationId: org.id, name: key, slug: key, tags: [], status: 'ON_SALE' },
   });
   const type = await prisma.ticketType.create({
     data: {
@@ -215,8 +226,8 @@ test('inconsistent hold rolls back cancellation claim and leaves tickets and inv
     include: { tickets: true },
   });
   await expect(new OrderService().cancelOrder(before.id)).rejects.toMatchObject({
-    statusCode: 500,
-    message: 'Order inventory hold is inconsistent',
+    statusCode: 409,
+    message: 'Order inventory is inconsistent',
   });
   expect(
     await prisma.order.findUniqueOrThrow({ where: { id: before.id }, include: { tickets: true } })
@@ -240,7 +251,7 @@ test.each(['PAID', 'PROCESSING'] as const)(
       },
     });
     const event = await prisma.event.create({
-      data: { organizationId: org.id, name: key, slug: key, tags: [] },
+      data: { organizationId: org.id, name: key, slug: key, tags: [], status: 'ON_SALE' },
     });
     const type = await prisma.ticketType.create({
       data: {

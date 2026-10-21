@@ -1,0 +1,26 @@
+[
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "f8bac3e1f53e64533b65bf6a1c3c7f0aebe2cb3d",
+      "--",
+      "tixmoapi2/tests/integration"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "f8bac3e1f53e64533b65bf6a1c3c7f0aebe2cb3d"
+    ],
+    "exit": 2,
+    "stdout": "docs/team/evidence/task-323/attempt-1/jest.log:18: trailing whitespace.\n+      prisma:error \ndocs/team/evidence/task-323/attempt-1/jest.log:20: trailing whitespace.\n+      \ndocs/team/evidence/task-323/attempt-1/jest.log:21: trailing whitespace.\n+      \ndocs/team/evidence/task-323/attempt-2/jest.log:18: trailing whitespace.\n+      prisma:error \ndocs/team/evidence/task-323/attempt-2/jest.log:20: trailing whitespace.\n+      \ndocs/team/evidence/task-323/attempt-2/jest.log:21: trailing whitespace.\n+      \ndocs/team/evidence/task-323/jest.log:19: trailing whitespace.\n+      prisma:error \ndocs/team/evidence/task-323/jest.log:21: trailing whitespace.\n+      \ndocs/team/evidence/task-323/jest.log:22: trailing whitespace.\n+      \n",
+    "stderr": ""
+  }
+]
