@@ -1,0 +1,14 @@
+PASS 1 installed deferred limiter success: cleanup waits store AND nested child; native restored before disconnect
+PASS 2 installed deferred limiter rejection: cleanup waits store AND nested child; native restored before disconnect
+PASS 3 all3 limiter wrappers installed before app; tracked sendCommand; join before restore/disconnect inspected
+PASS 4 EXECUTED emitted CommonJS guard rejects before supertest/product imports (not before Jest setup)
+PASS 5 actual provenance ignores wrong caller main cwd, binds executed root/SHA/manifests
+PASS 6 failclosed missing SHA
+PASS 7 failclosed wrong SHA
+PASS 8 failclosed missing deps
+PASS 9 failclosed absent deps
+PASS 10 executed source mutation denied
+PASS 11 untracked executable source denied
+PASS 12 dependency manifest mismatch denied
+PASS 13 matching manifests but different installed modules denied
+TOTAL 13 independent cases PASS; 0 failures; offline fixtures only
