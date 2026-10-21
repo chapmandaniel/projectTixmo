@@ -1,0 +1,53 @@
+[
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-476/check.cjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-426/runner-probes.cjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-426/shell-probes.cjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "--check",
+      "docs/team/evidence/task-476/check.cjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "--check",
+      "docs/team/evidence/task-426/runner-probes.cjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "status": 0,
+    "signal": null
+  }
+]

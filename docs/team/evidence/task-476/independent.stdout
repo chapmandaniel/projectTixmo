@@ -1,0 +1,3 @@
+{"case":1,"evidenceFails":false,"status":137,"order":["teardown","evidence"],"directClosed":true,"groupAbsent":true}
+{"case":2,"evidenceFails":true,"status":137,"order":["teardown","evidence"],"directClosed":true,"groupAbsent":true}
+PASS independent two real stubborn direct children; both callback absence/order; copied authority denial; SIGKILL137 JSON primary preservation; all owned children reaped

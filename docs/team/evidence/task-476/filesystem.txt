@@ -1,0 +1,2 @@
+TARGET FSTYPE SOURCE
+/      ext4   /dev/nvme0n1p2

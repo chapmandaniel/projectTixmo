@@ -1,0 +1,8 @@
+QA476_PRIMARY_STDERR_false
+QA476_PRIMARY_STDERR_true
+Error: QA476_SECONDARY_ENOSPC
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-476/docs/team/evidence/task-476/check.cjs:20:278)
+    at /home/daniel/projects/projectTixmo/worktrees/task-476/docs/team/evidence/task-426/process-cleanup.cjs:111:33
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-476/docs/team/evidence/task-426/process-cleanup.cjs:51:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-476/docs/team/evidence/task-426/process-cleanup.cjs:111:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-476/docs/team/evidence/task-476/check.cjs:20:39
