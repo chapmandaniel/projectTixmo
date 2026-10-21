@@ -1,0 +1,4 @@
+PASS exact10/parity/override/rawNUL/all10failfast/admission/source/order/closed/preprovision-order offline probes
+PASS lead455 all10 in-flight command/args/environment mutation regressions
+PASS offline: exact12/overrides, phase teardown, all12 failfast positions, stale source, boundary denial, cleanup failure. No network/runtime/services.
+PASS QA433 regression: canonical receipts reject all12 forged identities/step mutations; teardown/admission source mutation yields zero local runs.

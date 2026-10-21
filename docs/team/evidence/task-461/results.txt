@@ -1,0 +1,8 @@
+PASS sole validated artifact binding precedes exclusive/fsynced publication and initdb
+PASS env-i negative control no inherited artifact env reproduces original ENOENT
+PASS env-i actual validator + actual binding + inline publication privately publishes exact identity
+PASS EEXIST leaves inode and content unchanged
+PASS drift denial before identity file creation
+PASS actual validator rejects nonprivate target before publication
+PASS actual whole shell env-i missing grant exit2, before provisioning
+TOTAL 7 independent source/offline checks PASS; no services
