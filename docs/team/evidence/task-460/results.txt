@@ -1,0 +1,7 @@
+PASS validated path -> sole export -> sourcechecked publication -> provisioning order
+PASS empty-env negative control reproduces unbound artifact defect without inheritance
+PASS fresh env-i actual binding + actual inline publishes private owned identity
+PASS exclusive publication does not replace or overwrite existing identity
+PASS source drift denied before any identity file
+PASS actual runtime missing grant denied exit2 without provisioning
+TOTAL 6 independent checks PASS; only synchronous exited/reaped disk fixture children

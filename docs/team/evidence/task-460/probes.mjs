@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawnSync} from 'node:child_process';
+const runtime=fs.readFileSync('docs/team/evidence/task-427/runtime.sh','utf8');
+const binding=runtime.match(/^export TASK379_ARTIFACT_DIR=.*$/gm);assert.equal(binding.length,1);assert.equal(binding[0],'export TASK379_ARTIFACT_DIR="$owned_run"');
+const validation=runtime.indexOf('node "$PWD/docs/team/evidence/task-379/runtime-path.cjs" "$owned_run"');const pub=runtime.indexOf('TASK432_SOURCE_IDENTITY="$task432_identity" node --input-type=module');const init=runtime.indexOf('"$pgbin/initdb"');assert.ok(validation>=0&&validation<runtime.indexOf(binding[0])&&runtime.indexOf(binding[0])<pub&&pub<init);console.log('PASS validated path -> sole export -> sourcechecked publication -> provisioning order');
+const raw=runtime.slice(pub,runtime.indexOf("\n'",pub)+2);assert.match(raw,/"wx", 0o400/);assert.match(raw,/fs\.fsyncSync\(fd\)/);assert.ok(raw.indexOf('Source changed before provisioning')<raw.indexOf('fs.openSync'));
+const fixture=raw.replace('import { snapshot } from "./scripts/market-composition.mjs";','const snapshot=()=>({id:process.env.FIXTURE_ID});');assert.notEqual(raw,fixture);
+const temp=fs.mkdtempSync(path.join(os.tmpdir(),'lead460-'));const identity='{"id":"review460"}';
+function run(dir,id='review460',bind=true){const script='owned_run="$1"\ntask432_identity=\''+identity+'\'\n'+(bind?binding[0]:'')+'\n'+fixture;return spawnSync('/usr/bin/env',['-i',`PATH=${path.dirname(process.execPath)}:/usr/bin:/bin`,`FIXTURE_ID=${id}`,'/bin/bash','-euc',script,'lead460',dir],{cwd:temp,encoding:'utf8',timeout:5000});}
+try{
+ const missing=fs.mkdtempSync(path.join(temp,'unbound-'));const denied=run(missing,'review460',false);assert.equal(denied.status,1);assert.match(denied.stderr,/undefined\/api-identity.json/);assert.deepEqual(fs.readdirSync(missing),[]);console.log('PASS empty-env negative control reproduces unbound artifact defect without inheritance');
+ const dir=fs.mkdtempSync(path.join(temp,'bound-'));let result=run(dir);assert.equal(result.status,0,result.stderr);const file=path.join(dir,'api-identity.json');assert.equal(fs.readFileSync(file,'utf8'),identity+'\n');assert.equal(fs.statSync(file).mode&0o777,0o400);assert.equal(fs.statSync(file).uid,process.getuid());console.log('PASS fresh env-i actual binding + actual inline publishes private owned identity');
+ const before=fs.statSync(file);result=run(dir);assert.equal(result.status,1);assert.match(result.stderr,/EEXIST/);assert.equal(fs.statSync(file).ino,before.ino);assert.equal(fs.readFileSync(file,'utf8'),identity+'\n');console.log('PASS exclusive publication does not replace or overwrite existing identity');
+ const drift=fs.mkdtempSync(path.join(temp,'drift-'));result=run(drift,'drift460');assert.equal(result.status,1);assert.match(result.stderr,/Source changed before provisioning/);assert.deepEqual(fs.readdirSync(drift),[]);console.log('PASS source drift denied before any identity file');
+ const gate=spawnSync('/usr/bin/env',['-i','PATH=/usr/bin:/bin','/bin/bash',path.resolve('docs/team/evidence/task-427/runtime.sh')],{encoding:'utf8',timeout:5000});assert.equal(gate.status,2);assert.match(gate.stderr,/fresh explicit PM sole-owner runtime grant/);console.log('PASS actual runtime missing grant denied exit2 without provisioning');
+ console.log('TOTAL 6 independent checks PASS; only synchronous exited/reaped disk fixture children');
+}finally{fs.rmSync(temp,{recursive:true,force:true});}
