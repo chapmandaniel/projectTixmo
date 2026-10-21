@@ -1,0 +1,18 @@
+{
+  "path": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task348/run.Dxi5cY",
+  "mode": "0o700",
+  "pids": [
+    3021349,
+    3021404
+  ],
+  "ports": [
+    36459,
+    44086
+  ],
+  "pidAbsent": true,
+  "listenersAbsent": true,
+  "socketsAbsent": true,
+  "pidfilesAbsent": true,
+  "ownedRuntimeWorkers": [],
+  "blockedNetworkRecords": 0
+}
