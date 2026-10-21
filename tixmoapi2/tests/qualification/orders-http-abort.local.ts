@@ -45,7 +45,7 @@ test('real authenticated checkout socket aborts release each admission lease onc
   let revoke: (() => void) | undefined;
   let gate: ReturnType<typeof deferred> | undefined;
   let socket: http.ClientRequest | undefined;
-  let evalSpy: jest.SpyInstance | undefined, controllerSpy: jest.SpyInstance | undefined;
+  let evalLayer: any, controllerSpy: jest.SpyInstance | undefined;
 
   const { tracker, finalize } = require('../../../docs/team/evidence/task-426/lifecycle.cjs');
   const work = tracker();
@@ -86,14 +86,14 @@ test('real authenticated checkout socket aborts release each admission lease onc
       return ((...args: any[]) => work.run(() => (handler as any)(...args))) as any;
     }));
     // Lease release is deliberately detached from middleware; track its actual Redis promise too.
-    for (const name of ['zRem', 'eval'] as const) {
-      const original = redis[name].bind(redis);
-      instrumentation.push(jest.spyOn(redis, name).mockImplementation(((...args: any[]) => work.run(() => (original as any)(...args))) as any));
-    }
+    const { trackedSpy } = require('../../../docs/team/evidence/task-426/tracked-spy.cjs');
+    const removalLayer = trackedSpy(jest, redis, 'zRem', work);
+    removal = removalLayer.spy;
+    evalLayer = trackedSpy(jest, redis, 'eval', work);
+    instrumentation.push(removalLayer.spy, evalLayer.spy);
     const { default: app } = await import('../../src/app');
     const { ACTIVE_REQUESTS_KEY, ACQUIRE_REQUEST_LEASE } = await import('../../src/middleware/waitingRoom');
     const { orderService } = await import('../../src/api/orders/service');
-    removal = jest.spyOn(redis, 'zRem');
     server = http.createServer(app);
     server.on('connection', connection => { ownedSockets.add(connection); connection.once('close', () => ownedSockets.delete(connection)); });
     server.prependListener('request', (req, res) => {
@@ -115,21 +115,20 @@ test('real authenticated checkout socket aborts release each admission lease onc
     const baseline = await snapshot();
     expect(baseline.leases).toEqual([]);
     const body = JSON.stringify({ items: [{ ticketTypeId: ga.id, quantity: 1 }] });
-    const realEval = redis.eval.bind(redis);
     for (const point of ['before-acquire', 'after-acquire', 'controller'] as const) {
       const phase: any = { point, status: 'STARTED', requested, aborted, settled }; rows.push(phase);
       const reached = deferred(); gate = deferred();
       const terminal = deferred(); terminalAcks.set(point, terminal);
       const released = gate;
       let token: string | undefined;
-      evalSpy = jest.spyOn(redis, 'eval').mockImplementation((async (script: string, options: any) => {
+      evalLayer.setPhase(async (realEval: any, script: string, options: any) => {
         if (script !== ACQUIRE_REQUEST_LEASE) return realEval(script, options);
         token = options.arguments[0];
         if (point === 'before-acquire') { reached.resolve(); await released.promise; }
         const result = await realEval(script, options);
         if (point === 'after-acquire') { reached.resolve(); await released.promise; }
         return result;
-      }) as any);
+      });
       if (point === 'controller') controllerSpy = jest.spyOn(orderService, 'createOrder').mockImplementation(async () => {
         reached.resolve(); await released.promise;
         throw new Error('Task426 deliberate post-abort test-only controller termination');
@@ -155,7 +154,7 @@ test('real authenticated checkout socket aborts release each admission lease onc
       await work.join();
       settled++; phase.status = 'SETTLED';
       rows.push({ point, requested, aborted, settled, token, inflight, after, ms: performance.now() - started });
-      evalSpy.mockRestore(); evalSpy = undefined;
+      evalLayer.resetPhase();
       controllerSpy?.mockRestore(); controllerSpy = undefined;
     }
     const healthy = await request(server!).post('/api/v1/orders').set('Authorization', `Bearer ${tokens[0]}`).send(JSON.parse(body)).timeout({ response: 3000, deadline: 5000 });
@@ -177,7 +176,7 @@ test('real authenticated checkout socket aborts release each admission lease onc
         if (server?.listening) await new Promise<void>((resolve, reject) => server!.close(error => error ? reject(error) : resolve()));
       }],
       ['join admitted mutable work', async () => { await work.join(); joined = true; }],
-      ['restore instrumentation', () => { if (!joined) throw new Error('SKIPPED: unjoined work retains instrumentation'); evalSpy?.mockRestore(); controllerSpy?.mockRestore(); removal?.mockRestore(); for (const spy of instrumentation.reverse()) spy.mockRestore(); }],
+      ['restore instrumentation', () => { if (!joined) throw new Error('SKIPPED: unjoined work retains instrumentation'); evalLayer?.resetPhase(); controllerSpy?.mockRestore(); for (const spy of instrumentation.reverse()) spy.mockRestore(); }],
       ['revoke listener', () => revoke?.()],
       ['Redis disconnect', () => { if (!joined) throw new Error('SKIPPED: mutable work pending; runner must terminate owned process before service teardown'); return disconnectRedis(); }],
       ['Prisma disconnect', () => { if (!joined) throw new Error('SKIPPED: mutable work pending; runner must terminate owned process before service teardown'); return prisma.$disconnect(); }],

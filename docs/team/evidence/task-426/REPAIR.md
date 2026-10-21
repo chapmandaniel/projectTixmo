@@ -84,3 +84,24 @@ NOTRUN. No services, sockets, PIDs, ports, runtime directories or dependency lin
 created; unrelated services untouched. No product defect reproduced or product
 code changed. Still a reviewable SOURCE checkpoint, NOT qualification acceptance.
 Independent QA and fresh lead review of exact successor required before closure.
+
+## Two-minute QA442 recursion repair
+
+Exact parent 701ad1040caad539ff0afb625d6aa6256c026473; NEW isolated worktree
+`task-426-layering`, branch `tixmo/task-426-spy-layering`. QA identified actual
+jest-mock duplicate spy identity causing eval self-recursion and phase restore
+removing tracking. Replaced with one permanent trackedSpy per eval/zRem method:
+native bound BEFORE spy installation, phase delegate receives that native,
+reset clears delegate only, final joined cleanup restores original once. zRem
+assertions reference the same permanent tracking spy, with no second spyOn.
+Controller service phase spy remains independent from catchAsync body tracking:
+restored only after phase work.join; failure cleanup joins before restoration.
+
+Actual installed task434 jest-mock regression PASS: three phase delegates, each
+native called exactly once/no recursion, blocked phase join deadline then joined
+release, phase failure joined/reset, healthy native fallback, zRem call tracking
+retained all phases, exact original method identity restored. lifecycle-probes,
+offline-check syntax/dependency/schema/path and diffcheck PASS. No runtime or
+HTTP qualification; all preceding runner/whole-app tracking limitations remain.
+Fresh independent QA + lead exact successor required. No product change, service,
+network, install, runtime, dependency link, configuration, push/merge/deploy.
