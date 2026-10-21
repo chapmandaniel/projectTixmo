@@ -1,0 +1,13 @@
+PID absent 2792154
+PID absent 2792167
+PID absent 2792299
+PID absent 2792352
+PID absent 2792380
+TCP listener absent 24652
+TCP listener absent 53464
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-309/run.8X5avU/pg/postmaster.pid
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-309/run.8X5avU/.s.PGSQL.24652
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-309/run.8X5avU/.s.PGSQL.24652.lock
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-309/run.8X5avU/redis.sock
+absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-309/run.8X5avU/redis.pid
+runtime mode0700; disk filesystem ext2/ext3
