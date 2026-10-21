@@ -1,0 +1,31 @@
+# Task347 independent lead source review
+
+**Bounded APPROVE**, exact candidate `2ac9a4b033638916f7fafe4fe49c1e07d76d0718`, base `bc3384cf316c9efa86fc9510d6a905cd032fd52a`. Reviewer tixmo-lead, 2026-10-21. Isolated worktree task-347, branch tixmo/task-347-independent-lead. Only this artifact added. Parent325 remains PARTIAL REVIEW; independent fresh QA348 still required. This is source/evidence inspection, not a fresh SQL pass.
+
+## Reviewed contract
+
+Read347/325 and contention README, initial/compile/final logs+JSON, runtime/guard/cleanup, entire current test and exact test diff, current payment refund reconciliation, order finalization and inventory source. Prior role/team instructions remain applicable. No new product implementation or custom runtime necessary.
+
+The external real SQL transaction holds the target order FOR UPDATE before launching two real OrderService requests. Final probe counts pg_stat_activity rows with nonempty pg_blocking_pids and order-lock SELECT text, allowing the second waiter to queue behind the first rather than requiring both to name the original blocker. In this isolated single-suite disposable server, this is adequate evidence of two overlapping SQL lock waiters; it is not a general production-specific target-PID/target-order diagnostic. No provider create may occur while blocked. Polling with10ms delay observes actual lock state, not an assumed sleep-selected schedule.
+
+After release, both provider create invocations must arrive before finishProvider resolves. The synthetic Map caches one response by supplied key; effects.size1 plus exact two call keys refund-{durable ledger id} constrains application key reuse. calls2 and both fulfilled distinguish overlap from sequential replay. This models one provider effect; it does not verify real Stripe behavior, network, retention semantics or promise exactly one provider invocation.
+
+PaymentService.refundOrder locks eligibility and upserts one paymentIntent ledger; ensureRefund reuses it; reconcileRefund sends its stable key, checks provider amount/currency/intent, and durably saves SUCCEEDED before calling OrderService.finalizeRefund. FinalizeRefund locks the order, returns alreadyREFUNDED idempotently, requires matching successful ORDER_REFUND evidence, and changes SOLD inventory plus order in one transaction. The two calls yield one ledger and counters10/0/0 from8/0/2; sequential replay requires full order/sorted-ticket/stock/refund snapshot equality and no third provider create.
+
+InsufficientSOLD case gives two SOLD tickets but only one sold counter. transitionInventory's guarded decrement fails409. Complete stock/tickets equality and order equality except refundStatusPROCESSING/updatedAt prove local finalization rollback; exactly one SUCCEEDED ledger with correct order/intent/amount/reason remains. Durable provider evidence intentionally survives outside that local transaction. No external refund/money rollback claim is valid. This does not execute recovery from repaired stock.
+
+Both cases create another buyer on a different event/type and compare complete foreign order+sorted tickets+stock+refund ledger before/after. This does not snapshot the foreign event row, does not prove shared-stock isolation, and does not observe intermediate transient foreign effects. No route actor authorization is exercised by the new calls.
+
+## Failure history and assertion sensitivity
+
+Retained initial JSON/log:7PASS2FAIL. First failed on observed1 versus required2 direct-blocker waiters; final query correctly allows blocker chains while retaining >=2. Initial failed-test in-flight requests were not drained and collided with the next fixture's provider-ID mock; final finally releases both gates and awaits blocker and allSettled requests. Compile intermediate:unused blockerPid TS6133,0tests; removed unused probe variable. Final author JSON/log:1suite9PASS0FAIL0SKIP7.185s. These were disclosed harness defects; not product RED/GREEN repair. Exact source/schema diff against base is empty and existing seven cases unchanged.
+
+Source sensitivity: serializing away the second provider entry would prevent bothProviderCalls, changing keys would fail exact key/effects assertions, skipping/doubling counters fails10/0/0, losing ledger success fails rollback assertions, and foreign persistent mutations fail full equality. Inspection only: no mutation test run. New overlap ticket assertion uses every without its own length assertion, so ticket deletion is not independently excluded by that line; fixture and unchanged transitionInventory source retain tickets and earlier retained sequential test asserts length2. Accordingly approve existing-source bounded behavior, not comprehensive mutation sensitivity or full overlap row-preservation proof. Stronger future overlap qualification should explicitly assert ticket cardinality/IDs/full changed-field rows. Rollback ticket equality is complete.
+
+Gates are bounded by Jest15s and runtime100s, but not every await has a local timeout; finally awaits blocker before settled, so unexpected blocker rejection could skip drain. Final demonstrated positive path is sound; no universal failure-cleanup robustness or all-schedule fairness claim. No hidden assertion deletion or product-policy invention found.
+
+## Checks and boundaries
+
+Actually performed source-only: product/schema `git diff --exit-code bc3384cf316c9efa86fc9510d6a905cd032fd52a HEAD -- tixmoapi2/src tixmoapi2/prisma` exit0; bash -n runtime.sh exit0; node --check network-guard.cjs exit0; independent Python parse of all3 result JSON files confirms7/2,false;0tests,false;9/0,true; review git diff --check exit0. Author logs, not a new runtime run. Cleanup artifact records all6 service PIDs/ports absent and0blocked; PM separately corroborated live cleanup, not this review.
+
+No services, DB/runtime grant, provider call, secret access, cloud, config/scheduler, spend, external messaging, source/test edit, merge/push/deploy. Shared main/author worktree untouched. Command-scoped synthetic Git identity and hooksPath=/dev/null for known missing Husky only; no persistent config or hook gate claim. Inverse/slow-provider terminal monotonicity/shared-stock/broader rollback tiers/promos/route-actor/manual-fairness/fullAPI/fullgate remain unqualified. Finish347 only; do not close325.
