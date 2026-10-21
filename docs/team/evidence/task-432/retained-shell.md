@@ -23,8 +23,11 @@ caller must independently establish reviewed native enforcement and installed/
 generated/runtime provenance BEFORE provisioning; none exists in this slice.
 The function only retains already supplied owned state; it cannot roll back
 startup occurring before its invocation. Legacy427 runtime/defaults stay byte
-unchanged. There is no timeout/parent-death guarantee if a future caller keeps
-input open forever: that remains future integration design, not a granted runtime.
+unchanged. Historical note superseded by `held-timeout.md` at fc1c24da:
+the current retained helper bounds only the held-input read (default60s, canonical
+integer1..300); open or partial input times out75. Readiness, arbitrary cleanup,
+parent-death handling and escaped-tree containment remain unproved; the read
+deadline is not a whole-session deadline or a granted runtime.
 Bash command substitution and existing ownership checks retain existing limits
 including live PID identity/PID reuse and escaped-tree containment not proved.
 
