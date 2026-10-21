@@ -180,6 +180,9 @@ describe('CheckoutPage', () => {
         renderCheckout({ user: buyer, entry: returnEntry });
         expect(await screen.findByText(new RegExp(text))).toBeInTheDocument();
         expect(apiGet).toHaveBeenCalledWith(`/orders/${orderId}/recovery`);
+        if (status === 'PAID' && paymentStatus === 'SUCCEEDED') {
+            expect(screen.getByRole('link', { name: 'View my tickets and orders' })).toHaveAttribute('href', '/wallet');
+        } else expect(screen.queryByRole('link', { name: 'View my tickets and orders' })).not.toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Check status again' }));
         await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(2));
         assertReadOnly();

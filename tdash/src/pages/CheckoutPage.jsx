@@ -746,6 +746,9 @@ const RecoveryPage = ({ candidate, user, onAuthenticated }) => {
             <DashboardSurface isDark className="mx-auto max-w-xl space-y-5 p-6">
                 <h1 className="text-2xl font-light">Order status</h1>
                 <p role="status" className="text-sm leading-6 text-dashboard-muted">{message}</p>
+                {result?.kind === 'loaded' && result.data.status === 'PAID' && result.data.paymentStatus === 'SUCCEEDED' ? (
+                    <Link className="text-sm underline" to="/wallet">View my tickets and orders</Link>
+                ) : null}
                 {needsAuth ? <BuyerAuthPanel currentUser={null} onAuthenticated={onAuthenticated} /> : null}
                 {valid && user?.id ? (
                     <DashboardButton isDark type="button" onClick={() => setAttempt((value) => value + 1)}>

@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import WalletPage from '../pages/WalletPage';
 const calls = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 vi.mock('../lib/api', () => ({ api: calls }));
-vi.mock('../pages/CheckoutPage', () => ({ BuyerAuthPanel: () => <p>Sign in for wallet</p> }));
+vi.mock('../pages/CheckoutPage', () => ({ BuyerAuthPanel: ({ onAuthenticated }) => <><p>Sign in for wallet</p><button onClick={() => onAuthenticated({ id: 'buyer', email: 'buyer@example.com' })}>Restore wallet session</button></> }));
 const order = { id: 'order-owned', orderNumber: 'ORD-OWNED', status: 'PAID', totalAmount: 25, currency: 'cad', event: { name: 'Night show' } };
 const ticket = { id: 'ticket-owned', status: 'VALID', ticketType: { name: 'Admission' }, event: { name: 'Night show' }, order: { status: 'PAID', refundStatus: 'NONE' } };
 const mount = (user = { id: 'buyer', email: 'buyer@example.com' }) => render(<MemoryRouter><WalletPage user={user} onAuthenticated={vi.fn()} /></MemoryRouter>);
@@ -41,4 +41,60 @@ describe('Buyer wallet', () => {
     expect(screen.getByText('Sign in for wallet')).toBeInTheDocument();
     expect(calls.get).not.toHaveBeenCalled();
   });
+  it('resends a paid receipt through the authenticated existing endpoint without creating payment', async () => {
+    mount();
+    await screen.findByText('ORD-OWNED', { exact: false });
+    fireEvent.click(screen.getByRole('button', { name: 'Resend receipt' }));
+    expect(await screen.findByText('Receipt sent to your email.')).toBeInTheDocument();
+    expect(calls.post.mock.calls).toEqual([['/orders/order-owned/receipt']]);
+  });
+  it('clears the displayed QR and private records on session expiry and offers reauthentication', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Show ticket' }));
+    await screen.findByAltText('Ticket admission QR code');
+    calls.post.mockRejectedValueOnce({ response: { status: 401 } });
+    fireEvent.click(screen.getByRole('button', { name: 'Resend receipt' }));
+    await screen.findByText(/Your session expired/);
+    expect(screen.getByText('Sign in for wallet')).toBeInTheDocument();
+    expect(screen.queryByAltText('Ticket admission QR code')).not.toBeInTheDocument();
+    expect(screen.queryByText('ORD-OWNED', { exact: false })).not.toBeInTheDocument();
+    expect(screen.queryByText('Receipt sent to your email.')).not.toBeInTheDocument();
+    expect(calls.post.mock.calls).toEqual([['/orders/order-owned/receipt']]);
+    fireEvent.click(screen.getByRole('button', { name: 'Restore wallet session' }));
+    await screen.findByText('ORD-OWNED', { exact: false });
+    expect(screen.queryByText(/Your session expired/)).not.toBeInTheDocument();
+    expect(screen.queryByAltText('Ticket admission QR code')).not.toBeInTheDocument();
+  });
+  it('does not show a QR or retry payment when ownership lookup is denied', async () => {
+    mount();
+    await screen.findByRole('button', { name: 'Show ticket' });
+    calls.get.mockRejectedValueOnce({ response: { status: 403, data: { message: 'Ticket unavailable' } } });
+    fireEvent.click(screen.getByRole('button', { name: 'Show ticket' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ticket unavailable');
+    expect(screen.queryByAltText('Ticket admission QR code')).not.toBeInTheDocument();
+    expect(calls.post).not.toHaveBeenCalled();
+  });
+  it('refetches owned records after reopening rather than retaining a prior QR', async () => {
+    const view = mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Show ticket' }));
+    await screen.findByAltText('Ticket admission QR code');
+    view.unmount();
+    calls.get.mockClear();
+    mount();
+    await screen.findByText('ORD-OWNED', { exact: false });
+    expect(calls.get).toHaveBeenCalledWith('/orders/mine?page=1&limit=20');
+    expect(calls.get).toHaveBeenCalledWith('/tickets/mine?page=1&limit=20');
+    expect(screen.queryByAltText('Ticket admission QR code')).not.toBeInTheDocument();
+    expect(calls.post).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the initial owned-record lookup has an expired session', async () => {
+    calls.get.mockRejectedValue({ response: { status: 401 } });
+    mount();
+    await screen.findByText(/Your session expired/);
+    expect(screen.getByText('Sign in for wallet')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show ticket' })).not.toBeInTheDocument();
+    expect(calls.post).not.toHaveBeenCalled();
+  });
+
 });
