@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-    ArrowRight,
-    Check,
-    ChevronDown,
-    Minus,
-    Plus,
-    Ticket,
-} from 'lucide-react';
+import { ArrowRight, Check, Minus, Plus, Ticket } from 'lucide-react';
 import { StorefrontBrand, StorefrontButton } from './StorefrontPrimitives';
-import { festivalEvents, passCoveredEvents } from '../../lib/festivalProgram';
+import {
+    festivalDays,
+    festivalEvents,
+    passCoveredEvents,
+} from '../../lib/festivalProgram';
 import { formatEventMoney, getPublicTicketOffer } from '../../lib/publicEvent';
 
 export default function FestivalPassSelector({
@@ -28,6 +25,11 @@ export default function FestivalPassSelector({
     const covered = passCoveredEvents(festival, selectedPass);
     const excluded = festivalEvents(festival).filter(
         (event) => !covered.some((included) => included.id === event.id),
+    );
+    const includedDays = festivalDays(festival).filter((day) =>
+        day.events.some((event) =>
+            covered.some((included) => included.id === event.id),
+        ),
     );
     const offer = getPublicTicketOffer(selectedPass, now);
     const quantity = Math.min(quantities[selectedPass.id] ?? 1, offer.max);
@@ -82,9 +84,7 @@ export default function FestivalPassSelector({
                 Choose a pass and check exactly what’s included.
             </p>
             <fieldset className="sf-pass-options">
-                <legend className="sf-visually-hidden">
-                    Choose a festival pass
-                </legend>
+                <legend>1. Choose a pass</legend>
                 {passes.map((pass) => {
                     const passOffer = getPublicTicketOffer(pass, now);
                     return (
@@ -115,35 +115,37 @@ export default function FestivalPassSelector({
                     );
                 })}
             </fieldset>
-            <div className="sf-pass-coverage" aria-live="polite">
-                <p>
-                    <Check size={15} aria-hidden="true" />
+            <section
+                className="sf-pass-coverage"
+                aria-live="polite"
+                aria-labelledby="pass-coverage-heading"
+            >
+                <h3 id="pass-coverage-heading">2. What’s included</h3>
+                <p className="sf-pass-included-count">
+                    <Check size={17} aria-hidden="true" />
                     <strong>
                         {covered.length}{' '}
                         {covered.length === 1 ? 'event' : 'events'} included
                     </strong>
                 </p>
+                <p className="sf-pass-dates">
+                    {includedDays.map((day) => day.shortLabel).join(' · ')}
+                </p>
                 {selectedPass.admissionDescription && (
-                    <p className="sf-pass-exclusions">
+                    <p className="sf-pass-admission">
                         {selectedPass.admissionDescription}
                     </p>
                 )}
-                <details key={selectedPass.id}>
-                    <summary>
-                        See included events{' '}
-                        <ChevronDown size={16} aria-hidden="true" />
-                    </summary>
-                    <ul>
-                        {covered.map((event) => (
-                            <li key={event.id}>
-                                <Link to={eventHref(event)}>
-                                    {event.name}
-                                    <ArrowRight size={12} aria-hidden="true" />
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </details>
+                <ul aria-label="Included events">
+                    {covered.map((event) => (
+                        <li key={event.id}>
+                            <Link to={eventHref(event)}>
+                                {event.name}
+                                <ArrowRight size={15} aria-hidden="true" />
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
                 {excluded.length > 0 && (
                     <p className="sf-pass-exclusions">
                         {excluded.length === 1
@@ -152,63 +154,79 @@ export default function FestivalPassSelector({
                         Separate event tickets are required.
                     </p>
                 )}
-            </div>
-            <div className="sf-pass-quantity">
-                <div>
-                    <strong>Passes</strong>
-                    <span>
-                        {currency.toUpperCase()} · {money(offer.price)} each
-                    </span>
+            </section>
+            <section
+                className="sf-pass-checkout"
+                aria-labelledby="pass-quantity-heading"
+            >
+                <h3 id="pass-quantity-heading">3. Quantity and total</h3>
+                <div className="sf-pass-quantity">
+                    <div>
+                        <strong>Passes</strong>
+                        <span>
+                            {currency.toUpperCase()} · {money(offer.price)} each
+                        </span>
+                    </div>
+                    <div
+                        className="sf-stepper"
+                        role="group"
+                        aria-label={`${selectedPass.name} quantity`}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => adjust(-1)}
+                            disabled={!quantity}
+                            aria-label="Remove one festival pass"
+                        >
+                            <Minus size={16} aria-hidden="true" />
+                        </button>
+                        <output aria-label="Festival passes selected">
+                            {quantity}
+                        </output>
+                        <button
+                            type="button"
+                            onClick={() => adjust(1)}
+                            disabled={quantity >= offer.max}
+                            aria-label="Add one festival pass"
+                        >
+                            <Plus size={16} aria-hidden="true" />
+                        </button>
+                    </div>
                 </div>
                 <div
-                    className="sf-stepper"
-                    role="group"
-                    aria-label={`${selectedPass.name} quantity`}
+                    className="sf-subtotal"
+                    aria-live="polite"
+                    aria-atomic="true"
                 >
-                    <button
-                        type="button"
-                        onClick={() => adjust(-1)}
-                        disabled={!quantity}
-                        aria-label="Remove one festival pass"
-                    >
-                        <Minus size={16} aria-hidden="true" />
-                    </button>
-                    <output aria-label="Festival passes selected">
-                        {quantity}
-                    </output>
-                    <button
-                        type="button"
-                        onClick={() => adjust(1)}
-                        disabled={quantity >= offer.max}
-                        aria-label="Add one festival pass"
-                    >
-                        <Plus size={16} aria-hidden="true" />
-                    </button>
+                    <span>Pass subtotal</span>
+                    <strong>
+                        {money(
+                            (Math.round(offer.price * 100) * quantity) / 100,
+                        )}
+                    </strong>
                 </div>
-            </div>
-            <div className="sf-subtotal" aria-live="polite" aria-atomic="true">
-                <span>Pass subtotal</span>
-                <strong>
-                    {money((Math.round(offer.price * 100) * quantity) / 100)}
-                </strong>
-            </div>
-            <p className="sf-fee-note">Final total confirmed at checkout.</p>
-            <StorefrontButton
-                disabled={!canContinue}
-                onClick={continueWithPass}
-            >
-                Continue with {selectedPass.name.toLowerCase()}
-                <ArrowRight size={16} aria-hidden="true" />
-            </StorefrontButton>
-            {message && (
-                <p className="sf-inline-message" role="status">
-                    {message}
+                <p className="sf-fee-note">
+                    Final total confirmed at checkout.
                 </p>
-            )}
-            {!offer.max && <p className="sf-inline-message">{offer.label}</p>}
-            <p className="sf-reservation-note">
-                For one event, choose it from the program.
-            </p>
+                <StorefrontButton
+                    disabled={!canContinue}
+                    onClick={continueWithPass}
+                >
+                    Continue with {selectedPass.name.toLowerCase()}
+                    <ArrowRight size={16} aria-hidden="true" />
+                </StorefrontButton>
+                {message && (
+                    <p className="sf-inline-message" role="status">
+                        {message}
+                    </p>
+                )}
+                {!offer.max && (
+                    <p className="sf-inline-message">{offer.label}</p>
+                )}
+                <p className="sf-reservation-note">
+                    For one event, choose it from the program.
+                </p>
+            </section>
             <div className="sf-ticket-footer">
                 <StorefrontBrand />
                 <span>Festival ticketing</span>
