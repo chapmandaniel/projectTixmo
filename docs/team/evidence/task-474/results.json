@@ -1,0 +1,95 @@
+[
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-474/check.mjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-retained-shell.mjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-shell-functions.mjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-local-phase.mjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-local-session.mjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "docs/team/evidence/task-432/offline-stub.mjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "bash",
+      "-n",
+      "docs/team/evidence/task-427/owned-lifecycle.sh"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "bash",
+      "-n",
+      "docs/team/evidence/task-427/runtime.sh"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "bash",
+      "-n",
+      "docs/team/evidence/task-432/retained-shell.sh"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "node",
+      "--check",
+      "docs/team/evidence/task-474/check.mjs"
+    ],
+    "status": 0,
+    "signal": null
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "status": 0,
+    "signal": null
+  }
+]

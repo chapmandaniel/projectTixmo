@@ -1,0 +1,2 @@
+PASS inert held lifetime, close once, EOF/unknown denial, partial-start cleanup/original72, missing grant
+PASS readiness succeeds then cleanup observer23 denies success/nonzero with phase and status
