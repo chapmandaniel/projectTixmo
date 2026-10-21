@@ -1,0 +1,38 @@
+{
+  "author-baseline": {
+    "numPassedTests": 28,
+    "numFailedTests": 2,
+    "numPendingTests": 0,
+    "numTotalTests": 30,
+    "failures": [
+      {
+        "title": "processor refund scope ADMIN processor delegation retains explicit organization fence (org-a)",
+        "messages": [
+          "Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)\n\nExpected: \"a\"\nReceived: \"a\", {\"event\": {\"organizationId\": \"org-a\"}, \"id\": \"a\", \"status\": \"PENDING\", \"tickets\": [], \"userId\": \"buyer-a\"}\n\nNumber of calls: 1\n    at /home/daniel/projects/projectTixmo/worktrees/task-356/tixmoapi2/tests/orders-tenant.unit.test.ts:311:42"
+        ]
+      },
+      {
+        "title": "processor refund scope ADMIN processor delegation retains explicit organization fence (null)",
+        "messages": [
+          "Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)\n\nExpected: \"a\"\nReceived: \"a\", {\"event\": {\"organizationId\": \"org-a\"}, \"id\": \"a\", \"status\": \"PENDING\", \"tickets\": [], \"userId\": \"buyer-a\"}\n\nNumber of calls: 1\n    at /home/daniel/projects/projectTixmo/worktrees/task-356/tixmoapi2/tests/orders-tenant.unit.test.ts:311:42"
+        ]
+      }
+    ]
+  },
+  "author-fixed": {
+    "numPassedTests": 30,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numTotalTests": 30,
+    "failures": []
+  },
+  "independent-backend-fresh": {
+    "numPassedTests": 30,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numTotalTests": 30,
+    "durationSeconds": 3.779
+  },
+  "successorCodeDiffEmpty": true,
+  "testSHA256": "cac597eb95463f21966bd4e41002d79bf222dbfce63e1759fe35941ae53a8b60"
+}
