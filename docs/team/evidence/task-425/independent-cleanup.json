@@ -1,0 +1,15 @@
+{
+  "servicePidsAbsent": {
+    "3394179": true,
+    "3394192": true
+  },
+  "listenerOutput": "",
+  "remainingSockets": [],
+  "postmasterPidAbsent": true,
+  "remainingWorkers": [],
+  "dependencyLinks": {
+    "/home/daniel/projects/projectTixmo/worktrees/task-424/tdash/node_modules": false,
+    "/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules": false
+  },
+  "runtimeMode": "0o700"
+}
