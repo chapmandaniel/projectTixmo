@@ -1,0 +1,12 @@
+PID 2652733: ABSENT
+PID 2652746: ABSENT
+PID 2653729: ABSENT
+PID 2653742: ABSENT
+PORT 24025: NO LISTENER
+PORT 53096: NO LISTENER
+PORT 38929: NO LISTENER
+PORT 59768: NO LISTENER
+pg/postmaster.pid: ABSENT
+redis.sock: ABSENT
+runtime /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-284/run.ue12AR
+mode0700 filesystem disk-backed ext2/ext3

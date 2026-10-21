@@ -1,0 +1,26 @@
+{
+  "attempts": 100,
+  "successes": 10,
+  "failures": 90,
+  "errors": {
+    "Not enough tickets available": 90
+  },
+  "observedWaiters": 66,
+  "elapsedMs": 1140.5316590000002,
+  "latencyMs": {
+    "min": 120.02084400000058,
+    "p50": 639.1224819999998,
+    "p95": 1117.7451440000004,
+    "p99": 1135.5366480000002,
+    "max": 1139.768164
+  },
+  "final": {
+    "stock": {
+      "quantityAvailable": 0,
+      "quantityHeld": 10,
+      "quantitySold": 0
+    },
+    "orders": 10,
+    "tickets": 10
+  }
+}
