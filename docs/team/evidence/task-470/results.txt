@@ -1,0 +1,5 @@
+PASS byte exact reconstruction/defaults/traps/order and old probes unchanged
+PASS inert source preserves options/traps; actual no-grant entry exits2 before provisioning
+PASS own identity; foreign PID/UID/executable/parent denial and zero mock foreign signal
+PASS ownership recheck before KILL; stubborn owned process bounded40 mocked polls
+PASS real EXIT trap partial startup preserves23/29; foreign listener and failed cleanup deny success

@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {execFileSync,spawnSync} from 'node:child_process';
+const base='d5fec56e99a37218ef06a512e265c99942290340';
+const runtime=fs.readFileSync('docs/team/evidence/task-427/runtime.sh','utf8');
+const helper=fs.readFileSync('docs/team/evidence/task-427/owned-lifecycle.sh','utf8');
+const source='source "$PWD/docs/team/evidence/task-427/owned-lifecycle.sh"\n';
+const old=execFileSync('git',['show',`${base}:docs/team/evidence/task-427/runtime.sh`],{encoding:'utf8'});
+assert.equal(runtime.replace(source,()=>helper.split('\n').slice(2).join('\n')),old);
+const changed=execFileSync('git',['diff','--name-only',base,'8eaf5cec7fc62bf093bbf4cb401bcc0396a9b161'],{encoding:'utf8'}).trim().split('\n');
+assert.equal(changed.length,4);
+assert.equal(changed.filter(x=>x.includes('offline-')).length,1);
+console.log('PASS byte exact reconstruction/defaults/traps/order and old probes unchanged');
+function bash(code,status=0){ const r=spawnSync('/bin/bash',['--noprofile','--norc','-c',code],{encoding:'utf8',env:{PATH:'/usr/bin:/bin',PWD:process.cwd()},timeout:3000});assert.equal(r.error,undefined);assert.equal(r.status,status,r.stdout+r.stderr);return r.stdout; }
+assert.equal(bash(`set -eu; trap ':' EXIT; before=$(set +o); traps=$(trap -p); ${source}test "$before" = "$(set +o)"; test "$traps" = "$(trap -p)"; declare -F alive owned_identity stop_exact cleanup`),'alive\nowned_identity\nstop_exact\ncleanup\n');
+const denied=spawnSync('/bin/bash',['docs/team/evidence/task-427/runtime.sh'],{encoding:'utf8',env:{PATH:'/usr/bin:/bin'},timeout:3000});assert.equal(denied.status,2);assert.match(denied.stderr,/source-only handoff/);
+console.log('PASS inert source preserves options/traps; actual no-grant entry exits2 before provisioning');
+const mock=`${source}
+stat(){ echo 1000; }; id(){ echo 1000; }; ps(){ echo $$; }; readlink(){ case "$2" in /proc/*) echo "$exe";; *) echo "$2";; esac; }; runtime_root=/fixture; redis_pid=123; exe=/fixture/usr/bin/redis-server;
+`;
+bash(mock+'owned_identity redis 123');
+for(const mutation of ['redis_pid=124','stat(){ echo 999; }','exe=/foreign','ps(){ echo 999999; }']) bash(mock+mutation+'; owned_identity redis 123',1);
+assert.equal(bash(source+'alive(){ return 0; }; owned_identity(){ return 1; }; kill(){ echo SIGNAL; }; stop_exact redis 123',1),'');
+console.log('PASS own identity; foreign PID/UID/executable/parent denial and zero mock foreign signal');
+assert.equal(bash(source+`alive(){ return 0; }; owned_identity(){ test "$signal" != KILL; }; kill(){ echo "$1:$2"; }; sleep(){ :; }; stop_exact redis 123`,1),'-TERM:123\n');
+assert.equal(bash(source+`alive(){ return 0; }; owned_identity(){ return 0; }; kill(){ echo "$1:$2"; }; sleep(){ echo POLL; }; stop_exact redis 123`,1).split('POLL').length-1,40);
+console.log('PASS ownership recheck before KILL; stubborn owned process bounded40 mocked polls');
+const partial=source+`owned_run=/nonexistent-task470; pgbin=/fixture; pg_pid=''; redis_pid=''; jest_attempted=0; pgport=23001; redisport=43001; stop_exact(){ echo STOP:$1:$2; }; ss(){ :; }; `;
+assert.match(bash(partial+'trap cleanup EXIT; exit 23',23),/STOP:redis:/);
+assert.match(bash(partial+`redis_pid=123; alive(){ return 1; }; wait(){ :; }; trap cleanup EXIT; exit 29`,29),/STOP:redis:123/);
+bash(partial+`ss(){ echo FOREIGN; }; trap cleanup EXIT; exit 0`,1);
+bash(partial+`stop_exact(){ return 1; }; trap cleanup EXIT; exit 37`,1);
+console.log('PASS real EXIT trap partial startup preserves23/29; foreign listener and failed cleanup deny success');
