@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
     ArrowDown,
+    ArrowLeft,
     ArrowRight,
     CalendarDays,
     Check,
@@ -39,7 +40,7 @@ import {
 const eventDate = (event, options = {}) =>
     formatEventDate(event.startDatetime, eventTimeZone(event), options);
 
-export const EventOnSaleView = ({ event, preview = false }) => {
+export const EventOnSaleView = ({ event, preview = false, festivalContext = null }) => {
     const navigate = useNavigate();
     const [quantities, setQuantities] = useState({});
     const [now, setNow] = useState(Date.now());
@@ -237,6 +238,14 @@ export const EventOnSaleView = ({ event, preview = false }) => {
 
                 <div className="sf-content sf-container">
                     <div className="sf-event-body">
+                        {festivalContext && <section className="sf-parent-festival" aria-label="Festival context">
+                            <p className="sf-eyebrow">Part of the festival</p>
+                            <Link className="sf-parent-festival-link" to={festivalContext.href}><ArrowLeft size={17} aria-hidden="true" />{festivalContext.name}</Link>
+                            <p>Tickets on this page cover this event only.</p>
+                            {festivalContext.passesAvailable && <Link className="sf-parent-pass-link" to={festivalContext.passesHref}>
+                                {festivalContext.includedPassNames?.length ? `Also included in: ${festivalContext.includedPassNames.join(', ')}. Check pass coverage` : 'This event is not included in the festival passes. View passes'}<ArrowRight size={14} aria-hidden="true" />
+                            </Link>}
+                        </section>}
                         <nav
                             className="sf-section-nav"
                             aria-label="Event sections"
