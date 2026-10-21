@@ -1,0 +1,2275 @@
+{
+  "originalBranch": "codex/tixmo-ai-feature-strategy-2026-10-05",
+  "originalHead": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+  "reviewedConsolidation": "3a8d7d5449ecdef951c87a7c330f7dc17af8ada5",
+  "releaseAncestor": "f699a5340b467fffbe92fccf9eb494dbd5b47e93",
+  "count": 323,
+  "counts": {
+    "already_integrated_exactly": 297,
+    "integrated_then_reconciled": 21,
+    "superseded_configuration": 5
+  },
+  "files": [
+    {
+      "path": ".github/workflows/checkout-runtime-config-evidence.yml",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ef20d722db42dd2eb89b51c80cbb3331dd2183deb064252a1859ba31b816b171",
+      "integratedSha256": "ef20d722db42dd2eb89b51c80cbb3331dd2183deb064252a1859ba31b816b171"
+    },
+    {
+      "path": ".github/workflows/dependency-audit-evidence.yml",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8eb8617246d69b3393edcd56b7b10a083098a262e4152d58b9c8e6f4ad76e4be",
+      "integratedSha256": "8eb8617246d69b3393edcd56b7b10a083098a262e4152d58b9c8e6f4ad76e4be"
+    },
+    {
+      "path": ".github/workflows/external-smoke-evidence.yml",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9c31c34d27858044d4158a8fbe5432129cf0e87f8c808ba8e7d4a43cf3c3e5c8",
+      "integratedSha256": "9c31c34d27858044d4158a8fbe5432129cf0e87f8c808ba8e7d4a43cf3c3e5c8"
+    },
+    {
+      "path": ".github/workflows/market-readiness-local.yml",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "eae1ba759ffbefcb86639e1cfa23d7531b3579505dd00e9e9d67f133a5036db6",
+      "integratedSha256": "7b9c52910b7b90d68b679ab5f7b31d58956ef4a7eb08c969d39798cb8678c53e"
+    },
+    {
+      "path": ".github/workflows/public-route-screenshot-evidence.yml",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "adee9ef0e90d34c71db5ea8f4c961681e142380833fe0464ba14e174e5e773e5",
+      "integratedSha256": "adee9ef0e90d34c71db5ea8f4c961681e142380833fe0464ba14e174e5e773e5"
+    },
+    {
+      "path": ".github/workflows/tdash-design-system.yml",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "03848b03734df14db71e6ec6aa33018a9dcc690bfd5a1408bad942ab3c9d6aa0",
+      "integratedSha256": "03848b03734df14db71e6ec6aa33018a9dcc690bfd5a1408bad942ab3c9d6aa0"
+    },
+    {
+      "path": ".github/workflows/uptime-status.yml",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "6bcaf5c5caf9cc76e450a30bda5035fbee4416a5a22e9034585c52522a95d3e1",
+      "integratedSha256": "6bcaf5c5caf9cc76e450a30bda5035fbee4416a5a22e9034585c52522a95d3e1"
+    },
+    {
+      "path": ".gitignore",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3f9040dc43ef420dedb5a3ddf1caeb8b35d1c5c9787591d06cd62d05ef82bb02",
+      "integratedSha256": "3f9040dc43ef420dedb5a3ddf1caeb8b35d1c5c9787591d06cd62d05ef82bb02"
+    },
+    {
+      "path": "docs/ROLE_ACTION_PERMISSION_MATRIX.md",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "99fd63a74ad373575f50b5ba708ca016a166832a1bd070c028b43435accf294c",
+      "integratedSha256": "99fd63a74ad373575f50b5ba708ca016a166832a1bd070c028b43435accf294c"
+    },
+    {
+      "path": "package.json",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "280588b9e479d72d261d57b2646b33c88ffbdb93eaabed32be9072f28b5951c7",
+      "integratedSha256": "280588b9e479d72d261d57b2646b33c88ffbdb93eaabed32be9072f28b5951c7"
+    },
+    {
+      "path": "scripts/check-checkout-runtime-config.mjs",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "03d93ff85e4857c9e258c4c889e29733d154e6746a5a63f85f52409894050f18",
+      "integratedSha256": "03d93ff85e4857c9e258c4c889e29733d154e6746a5a63f85f52409894050f18"
+    },
+    {
+      "path": "scripts/check-status.mjs",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "331da94451d454c18ef39047035920909d2f43395453a1b13e92c598a2c76cea",
+      "integratedSha256": "331da94451d454c18ef39047035920909d2f43395453a1b13e92c598a2c76cea"
+    },
+    {
+      "path": "scripts/evidence-status.mjs",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "7294c3670de5954d46b73f73a6153c4950a3b7a5c1824b7a6cac92e7c3e9e7ee",
+      "integratedSha256": "7294c3670de5954d46b73f73a6153c4950a3b7a5c1824b7a6cac92e7c3e9e7ee"
+    },
+    {
+      "path": "scripts/verify-api.mjs",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "ddeec070c7f45a2c1e2f86fab83c248329beff1f1497c64b92151554cbbe07b2",
+      "integratedSha256": "646c82577a2e7db39c32a2c14e6a9fe50dc48a9ccf401e829072dc4adc103807"
+    },
+    {
+      "path": "scripts/verify-market-local.mjs",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "380fcea6d0bb1b7339f737b38b602648483652d10d0f0783240432ee12304124",
+      "integratedSha256": "17c3f3c95f1bd615e7b3d804005864d2e4e31f7a9b0fa004df102de11c1f674a"
+    },
+    {
+      "path": "tdash/.dockerignore",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ecc80db643cb3dccfc01227e33709849a75be411bbcb01ac208ac920f6029648",
+      "integratedSha256": "ecc80db643cb3dccfc01227e33709849a75be411bbcb01ac208ac920f6029648"
+    },
+    {
+      "path": "tdash/Dockerfile",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "effe8298d0f90e5aaeadf8b1da32b0a93678807e2aff5fa64823fa621395b62d",
+      "integratedSha256": "effe8298d0f90e5aaeadf8b1da32b0a93678807e2aff5fa64823fa621395b62d"
+    },
+    {
+      "path": "tdash/design-system-guard-baseline.json",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b626acc4cabc284f0b1d3350495c643a2c21f0ee0a851409c916e1aa1ba7ed00",
+      "integratedSha256": "b626acc4cabc284f0b1d3350495c643a2c21f0ee0a851409c916e1aa1ba7ed00"
+    },
+    {
+      "path": "tdash/docker-entrypoint.d/40-runtime-config.sh",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "be334513cbc5cfcb5ffd3706557dcf520353710bdab0993c56ed045c9dc2e6d6",
+      "integratedSha256": "be334513cbc5cfcb5ffd3706557dcf520353710bdab0993c56ed045c9dc2e6d6"
+    },
+    {
+      "path": "tdash/nginx.site.conf",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "e4cc2ed407b0b7666160a308e31395b9657e876216d0eaf6cb0194a32e2fc503",
+      "integratedSha256": "e4cc2ed407b0b7666160a308e31395b9657e876216d0eaf6cb0194a32e2fc503"
+    },
+    {
+      "path": "tdash/package-lock.json",
+      "originalStatus": " M",
+      "resolution": "superseded_configuration",
+      "originalSha256": "a073401103fd74effa7c01fbdcca538a6f2d1895b55578c1703dee3c8e46d346",
+      "integratedSha256": "dc6b714dd60e9a4db639e064b57d20ff3b4491da89f663dc29e76ab8a60a271d"
+    },
+    {
+      "path": "tdash/package.json",
+      "originalStatus": " M",
+      "resolution": "superseded_configuration",
+      "originalSha256": "7a3cd8baeb6eae413aaec646f7e7044cbdc381b417a20c1710f1e6b3fa146308",
+      "integratedSha256": "e5a29560bb5a2c24e6b0a38de088acf2960223669f1ce2776074b7ea5ced2ab1"
+    },
+    {
+      "path": "tdash/postcss.config.js",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9a384fe4ba004f6c85e8267e9ee7e4ecd2cd08bb892e90e434d8202746ad6286",
+      "integratedSha256": "9a384fe4ba004f6c85e8267e9ee7e4ecd2cd08bb892e90e434d8202746ad6286"
+    },
+    {
+      "path": "tdash/src/App.jsx",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "424bfa58a63eb99c05d2bb5a93541ad67a3a4fa1f616376e19d3d5d3b98880e1",
+      "integratedSha256": "477b9b25e8b7d9521c4274df3ba760cda10f9abda30c3c2457ab9a74182be42b"
+    },
+    {
+      "path": "tdash/src/components/CommentThread.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "54ae883f2b786ff64860f6b1070e046220f7ab8871bbbf66479e6c99d1fb5594",
+      "integratedSha256": "54ae883f2b786ff64860f6b1070e046220f7ab8871bbbf66479e6c99d1fb5594"
+    },
+    {
+      "path": "tdash/src/components/ErrorBoundary.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b1eae931b72c88fdb42bf0e4725f6124a7e163868fa2329f9c8e72a622a3aa5d",
+      "integratedSha256": "b1eae931b72c88fdb42bf0e4725f6124a7e163868fa2329f9c8e72a622a3aa5d"
+    },
+    {
+      "path": "tdash/src/components/InputField.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d294dec3664d9db00c29bec80b769e58bcf4088ca69a6aeeaa7d6a02db65ca4c",
+      "integratedSha256": "d294dec3664d9db00c29bec80b769e58bcf4088ca69a6aeeaa7d6a02db65ca4c"
+    },
+    {
+      "path": "tdash/src/components/ReviewerSelector.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "de26687fc8d932dc4efe5f90cfd77430544797cc800e02afb7e72b177b26d4f1",
+      "integratedSha256": "de26687fc8d932dc4efe5f90cfd77430544797cc800e02afb7e72b177b26d4f1"
+    },
+    {
+      "path": "tdash/src/components/TicketBuilder.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "f0231799039249bf8ddc88066c19fcc9ea28b190d08df8bec0c6dc8ea9b26f82",
+      "integratedSha256": "f0231799039249bf8ddc88066c19fcc9ea28b190d08df8bec0c6dc8ea9b26f82"
+    },
+    {
+      "path": "tdash/src/components/dashboard/DashboardPrimitives.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "140d820050029b5690cd1d5a068937d391e7e7d0cbf4572a0fae2b2dd7e5943c",
+      "integratedSha256": "140d820050029b5690cd1d5a068937d391e7e7d0cbf4572a0fae2b2dd7e5943c"
+    },
+    {
+      "path": "tdash/src/features/AnalyticsView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "702875d630287842bd06dd2aef2fe83e58fb6b794f01ac408bd17a48a96b65cb",
+      "integratedSha256": "702875d630287842bd06dd2aef2fe83e58fb6b794f01ac408bd17a48a96b65cb"
+    },
+    {
+      "path": "tdash/src/features/ApprovalDetailView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d20563016d8447bcabaa58508ddb51f92472dc9ddc4df0adf7035d2fbdc8f051",
+      "integratedSha256": "d20563016d8447bcabaa58508ddb51f92472dc9ddc4df0adf7035d2fbdc8f051"
+    },
+    {
+      "path": "tdash/src/features/ApprovalStudio.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0d439f7c1af068bad7107382259f134063a0e208bc79a94c81aab49f409daee3",
+      "integratedSha256": "0d439f7c1af068bad7107382259f134063a0e208bc79a94c81aab49f409daee3"
+    },
+    {
+      "path": "tdash/src/features/ApprovalsDashboard.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "97c138f3a0056fe899eb70b946a42263de51ae2775a52d2d57845f932217546c",
+      "integratedSha256": "97c138f3a0056fe899eb70b946a42263de51ae2775a52d2d57845f932217546c"
+    },
+    {
+      "path": "tdash/src/features/ApprovalsView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "17e8583981eec4276dd7b92c4027bbaec0c252cf461bb03f655b396704ec8032",
+      "integratedSha256": "17e8583981eec4276dd7b92c4027bbaec0c252cf461bb03f655b396704ec8032"
+    },
+    {
+      "path": "tdash/src/features/AssetLibraryView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "6fc736e3f4ba6f0197f912dd12f592fa5b1eecfeb24797e70d632ab39147b425",
+      "integratedSha256": "6fc736e3f4ba6f0197f912dd12f592fa5b1eecfeb24797e70d632ab39147b425"
+    },
+    {
+      "path": "tdash/src/features/CreateApprovalModal.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "1edb0c832c1259f44e6ba7aff0a9b87462b9e3e6781b19358cd9de3f7504d226",
+      "integratedSha256": "1edb0c832c1259f44e6ba7aff0a9b87462b9e3e6781b19358cd9de3f7504d226"
+    },
+    {
+      "path": "tdash/src/features/CreateTaskModal.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "52943bc3707be0d48b1b9b3d9f713e64603d4ac051421693c736d68634aa697e",
+      "integratedSha256": "52943bc3707be0d48b1b9b3d9f713e64603d4ac051421693c736d68634aa697e"
+    },
+    {
+      "path": "tdash/src/features/CreativeControls.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "851b2bce928e3f0716fcaab53f80e6199bb8ded75aaa432e574060682c5f5a6a",
+      "integratedSha256": "851b2bce928e3f0716fcaab53f80e6199bb8ded75aaa432e574060682c5f5a6a"
+    },
+    {
+      "path": "tdash/src/features/DevDashboard.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fc5aea2a8a1efe7848c61dd12c9fb6a5c37eae529cb513427363e39b736431fb",
+      "integratedSha256": "fc5aea2a8a1efe7848c61dd12c9fb6a5c37eae529cb513427363e39b736431fb"
+    },
+    {
+      "path": "tdash/src/features/ECC_Attendees.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "59cab4b11281591bf772c047dab5b0a894898d47d9283d1b73a89267dfe15941",
+      "integratedSha256": "59cab4b11281591bf772c047dab5b0a894898d47d9283d1b73a89267dfe15941"
+    },
+    {
+      "path": "tdash/src/features/ECC_Marketing.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "98a0ced02c9ca45cd463c59733764739ccd6c81980482ceb83e9af4201fe733d",
+      "integratedSha256": "98a0ced02c9ca45cd463c59733764739ccd6c81980482ceb83e9af4201fe733d"
+    },
+    {
+      "path": "tdash/src/features/ECC_Orders.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9c78e0144b085bbf4efa3283c5a9845482be6b02c2e108f337cc6b9c496424a9",
+      "integratedSha256": "9c78e0144b085bbf4efa3283c5a9845482be6b02c2e108f337cc6b9c496424a9"
+    },
+    {
+      "path": "tdash/src/features/ECC_Overview.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "df3238cf229e3ae834664e15b32e45ecd7b603875ad2e9fe6d7e127b9bd6a7da",
+      "integratedSha256": "df3238cf229e3ae834664e15b32e45ecd7b603875ad2e9fe6d7e127b9bd6a7da"
+    },
+    {
+      "path": "tdash/src/features/ECC_Settings.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "16310a39549c811562b83a57b10b9719fe24d80302f755f705a9ba3709229136",
+      "integratedSha256": "16310a39549c811562b83a57b10b9719fe24d80302f755f705a9ba3709229136"
+    },
+    {
+      "path": "tdash/src/features/EventCommandCenter.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0888f2282ea30ff32afc915554e6fc6e14e72669a88d09b0ab184477f5484d69",
+      "integratedSha256": "0888f2282ea30ff32afc915554e6fc6e14e72669a88d09b0ab184477f5484d69"
+    },
+    {
+      "path": "tdash/src/features/EventStudio.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "793c36f20ce3a2097d99d7b26bd531561c3e44248ec9ce9e5bfda990d64c1665",
+      "integratedSha256": "793c36f20ce3a2097d99d7b26bd531561c3e44248ec9ce9e5bfda990d64c1665"
+    },
+    {
+      "path": "tdash/src/features/EventWizard.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "4271900f24a975f917ec9d3b5bf9bca85b47ff6f1f3015c81361ed5b033f0fa3",
+      "integratedSha256": "4271900f24a975f917ec9d3b5bf9bca85b47ff6f1f3015c81361ed5b033f0fa3"
+    },
+    {
+      "path": "tdash/src/features/KanbanCard.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "147de59122aa7b8f39f6d98076721b6afda812588327debde665069b43fdd51a",
+      "integratedSha256": "147de59122aa7b8f39f6d98076721b6afda812588327debde665069b43fdd51a"
+    },
+    {
+      "path": "tdash/src/features/LoginView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0e194555e74802fa76fde4fbe676fdd03943e35207e77329ffacc52affa32c7a",
+      "integratedSha256": "0e194555e74802fa76fde4fbe676fdd03943e35207e77329ffacc52affa32c7a"
+    },
+    {
+      "path": "tdash/src/features/OrderDetailModal.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "c6e18a6ba99eb75c841b653d8abf2f5f464861febd5b8ca2d841044076f10117",
+      "integratedSha256": "c6e18a6ba99eb75c841b653d8abf2f5f464861febd5b8ca2d841044076f10117"
+    },
+    {
+      "path": "tdash/src/features/OrdersView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9627f625d4cdf971b519fc033a89e768fe963d004030709d12e9c02194c855e0",
+      "integratedSha256": "9627f625d4cdf971b519fc033a89e768fe963d004030709d12e9c02194c855e0"
+    },
+    {
+      "path": "tdash/src/features/PersonalTodoView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "08d69fa540fa5bfa14b7c54e511eabe31ee3f57bed7fd95bed24dba2e03c3e8f",
+      "integratedSha256": "08d69fa540fa5bfa14b7c54e511eabe31ee3f57bed7fd95bed24dba2e03c3e8f"
+    },
+    {
+      "path": "tdash/src/features/PromoCodeModal.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "34d6c540721a1da42c0385f1beeca9f7f9214107339c1d72f30eb57f0b887f6e",
+      "integratedSha256": "34d6c540721a1da42c0385f1beeca9f7f9214107339c1d72f30eb57f0b887f6e"
+    },
+    {
+      "path": "tdash/src/features/PromoCodesView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fefff7756e85b7fdafb82aacce3116371b62b68e9ed7d7de892a3c59614632bc",
+      "integratedSha256": "fefff7756e85b7fdafb82aacce3116371b62b68e9ed7d7de892a3c59614632bc"
+    },
+    {
+      "path": "tdash/src/features/RegisterScannerModal.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d5a8f1108699104164eca054b322dd4af98f2b8c0cba0e5013fc942993084574",
+      "integratedSha256": "d5a8f1108699104164eca054b322dd4af98f2b8c0cba0e5013fc942993084574"
+    },
+    {
+      "path": "tdash/src/features/SettingsView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "27e1731653133f12b62aa05ab9eb69cf6ef492435dec1e77a0e4fe21eb5d258c",
+      "integratedSha256": "27e1731653133f12b62aa05ab9eb69cf6ef492435dec1e77a0e4fe21eb5d258c"
+    },
+    {
+      "path": "tdash/src/features/TaskDetailsModal.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "4e3941297d7d7e2f7c3f58eea8ddea868692ba7a8f4ea88ee2b15992e63ce6f0",
+      "integratedSha256": "4e3941297d7d7e2f7c3f58eea8ddea868692ba7a8f4ea88ee2b15992e63ce6f0"
+    },
+    {
+      "path": "tdash/src/features/TeamMemberWizard.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fc62fa7663e0437bf11d8cc8f6b15c82cc0c0bfe23a16b5e41585f6a9498bf9a",
+      "integratedSha256": "fc62fa7663e0437bf11d8cc8f6b15c82cc0c0bfe23a16b5e41585f6a9498bf9a"
+    },
+    {
+      "path": "tdash/src/features/TeamView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fd7d3069bfe715b7e4e2267d5c5f402c8eb30cdd9162027301812b6216c928fa",
+      "integratedSha256": "fd7d3069bfe715b7e4e2267d5c5f402c8eb30cdd9162027301812b6216c928fa"
+    },
+    {
+      "path": "tdash/src/features/TicketTypeModal.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "da95de21fd8c01f22a55f96b61ce7764c2616800f4f34227814f979da3e94e7a",
+      "integratedSha256": "da95de21fd8c01f22a55f96b61ce7764c2616800f4f34227814f979da3e94e7a"
+    },
+    {
+      "path": "tdash/src/features/TodoView.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "66361eb631b187ed55671c71e5dc26281d8c0a1d8fa712ec9e9fe2ca56bc6886",
+      "integratedSha256": "66361eb631b187ed55671c71e5dc26281d8c0a1d8fa712ec9e9fe2ca56bc6886"
+    },
+    {
+      "path": "tdash/src/index.css",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d0d240d75b12197f437b9906fa9b2629ca4461e8e2072b9052a92af9c988f9d8",
+      "integratedSha256": "d0d240d75b12197f437b9906fa9b2629ca4461e8e2072b9052a92af9c988f9d8"
+    },
+    {
+      "path": "tdash/src/lib/api.js",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "2ee006848c16ca4ad017f124e2e4933a84dd6fffc642a7649a75c169214af270",
+      "integratedSha256": "2ee006848c16ca4ad017f124e2e4933a84dd6fffc642a7649a75c169214af270"
+    },
+    {
+      "path": "tdash/src/lib/auth.js",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "49e314ad4c32f63714a5364ef3a4348aa684a8432baced177d90c27d4caa5bd9",
+      "integratedSha256": "49e314ad4c32f63714a5364ef3a4348aa684a8432baced177d90c27d4caa5bd9"
+    },
+    {
+      "path": "tdash/src/lib/runtimeConfig.js",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "bbed313d8bc0629c4d4eaacf7638fb9098ed1d7befe63a0241acd3473924e001",
+      "integratedSha256": "bbed313d8bc0629c4d4eaacf7638fb9098ed1d7befe63a0241acd3473924e001"
+    },
+    {
+      "path": "tdash/src/lib/session.js",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "91c840ded5fa851ff3be0a75c821d294ce027123619909bf181e9ce0cf895d42",
+      "integratedSha256": "91c840ded5fa851ff3be0a75c821d294ce027123619909bf181e9ce0cf895d42"
+    },
+    {
+      "path": "tdash/src/pages/CheckoutPage.jsx",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "aa7e708b6d75e92b1c06e733241c338ebfac162e0249dc2746b2d0e13927a917",
+      "integratedSha256": "d3647d878647ef93fe0feef16c20a1975b30eac43e2f48adb3ce9316e31043eb"
+    },
+    {
+      "path": "tdash/src/pages/ExternalReviewPage.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "24e580ac737753ed6ce3c984c4c801ab0605e18480d2d9f6a08d7052b27b1878",
+      "integratedSha256": "24e580ac737753ed6ce3c984c4c801ab0605e18480d2d9f6a08d7052b27b1878"
+    },
+    {
+      "path": "tdash/src/pages/SharedAssetFolderPage.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a50e075a9fdd5982da0a59e5ceb8adc24f4bfd7e23749fb839be511d9c5d06a0",
+      "integratedSha256": "a50e075a9fdd5982da0a59e5ceb8adc24f4bfd7e23749fb839be511d9c5d06a0"
+    },
+    {
+      "path": "tdash/src/test/ApprovalsDashboard.test.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "4124febb3d4d6b22b7aa0e0f47a8aac40b456e9235d9e0ea8192daf573ec8e06",
+      "integratedSha256": "4124febb3d4d6b22b7aa0e0f47a8aac40b456e9235d9e0ea8192daf573ec8e06"
+    },
+    {
+      "path": "tdash/src/test/CheckoutPage.test.jsx",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "25a849856bef1ed822aa6043d5b5ac872aed6c3977c238593cf3551e896becc8",
+      "integratedSha256": "0d2bfb5b715750a391485357e56e6e0c47dc6fdbc56d2a6e93d9a022dc710600"
+    },
+    {
+      "path": "tdash/src/test/EventsView.test.jsx",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "80e8f838ac3c59841d6e6b826a485896a4cd73c4970a671627e2ee26f8e7a2ff",
+      "integratedSha256": "cc4e1ad7caa24efaafe872087f7a69f6fade93286c236abad63d971580c26683"
+    },
+    {
+      "path": "tdash/src/test/TeamView.test.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "94a61fb0489dcd9acb959bd43724521b08f30fd272b744ceab7f5f80e0392bae",
+      "integratedSha256": "94a61fb0489dcd9acb959bd43724521b08f30fd272b744ceab7f5f80e0392bae"
+    },
+    {
+      "path": "tdash/src/test/runtimeConfig.test.jsx",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b1a84a13976c14b1ffd5b250705ca8d2b0e77597c8fceb66f7ee420cebff54c3",
+      "integratedSha256": "b1a84a13976c14b1ffd5b250705ca8d2b0e77597c8fceb66f7ee420cebff54c3"
+    },
+    {
+      "path": "tdash/src/test/session.test.js",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "7a8c7c405d85e2565380990f5100275ec9fab5ac3941fb9c6dac19c9a7e98d6a",
+      "integratedSha256": "7a8c7c405d85e2565380990f5100275ec9fab5ac3941fb9c6dac19c9a7e98d6a"
+    },
+    {
+      "path": "tdash/tailwind.config.js",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "e5e60e11a09ed454227e6612a3e5a081fbd7fac470878b2533ca62d4026a2ab7",
+      "integratedSha256": "e5e60e11a09ed454227e6612a3e5a081fbd7fac470878b2533ca62d4026a2ab7"
+    },
+    {
+      "path": "tixmoapi2/.env.example",
+      "originalStatus": " M",
+      "resolution": "superseded_configuration",
+      "originalSha256": "219e36d15e5ea382a2661b2fe2c9c006447fbbae0605207e4e4550981274759d",
+      "integratedSha256": "2637b68a754b08550eb21b8d0dd56978be2a2e7ee1d7514a6c9c7d5991fc757b"
+    },
+    {
+      "path": "tixmoapi2/.eslintrc.json",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d20ba9749c87234ae7a1bbcfc2371f49fa811f49c66d5fb129725ab20278dba3",
+      "integratedSha256": "d20ba9749c87234ae7a1bbcfc2371f49fa811f49c66d5fb129725ab20278dba3"
+    },
+    {
+      "path": "tixmoapi2/.github/workflows/ci.yml",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "082a51c893f14432afa594dbad64c484261a7da7cc56a1702f26fab12de872fe",
+      "integratedSha256": "082a51c893f14432afa594dbad64c484261a7da7cc56a1702f26fab12de872fe"
+    },
+    {
+      "path": "tixmoapi2/.gitignore",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "6b62bb87c392c55b7c4a7846393c6dbedca2709636a8d910260c92b45ee178a6",
+      "integratedSha256": "6b62bb87c392c55b7c4a7846393c6dbedca2709636a8d910260c92b45ee178a6"
+    },
+    {
+      "path": "tixmoapi2/check_admin.js",
+      "originalStatus": " D",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": null,
+      "integratedSha256": null
+    },
+    {
+      "path": "tixmoapi2/check_user.js",
+      "originalStatus": " D",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": null,
+      "integratedSha256": null
+    },
+    {
+      "path": "tixmoapi2/nodemon.json",
+      "originalStatus": " D",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": null,
+      "integratedSha256": null
+    },
+    {
+      "path": "tixmoapi2/package-lock.json",
+      "originalStatus": " M",
+      "resolution": "superseded_configuration",
+      "originalSha256": "ed991104af972faaeb503fa70ad6460e4fe9af66e5bd68640d753e4f7f21d676",
+      "integratedSha256": "a9226a613f66a149a033b6b6e800efeec4d1da5b8b79f7c5e5d8ce77c339a0a8"
+    },
+    {
+      "path": "tixmoapi2/package.json",
+      "originalStatus": " M",
+      "resolution": "superseded_configuration",
+      "originalSha256": "252c2675d54aea41f5fe1ef1d4264ad495aa5fbcaf470c423411a6f160fb2ee5",
+      "integratedSha256": "1279d580b6f1db936b116a830850f83bf67b03ef31f7cd504a79821d2a5aa6d9"
+    },
+    {
+      "path": "tixmoapi2/prisma/schema.prisma",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "902f85ff4f4084abb15c994911c0ca8cea0c4874fbc8eec47d39425488b10e7a",
+      "integratedSha256": "03544f7a5fbe613b111fcf83b0249a38cc21d15ff8427b95ff340989871ec7bb"
+    },
+    {
+      "path": "tixmoapi2/prisma/seed-approvals.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "328157d7e72aa6c24cd701d373e983b7b1792767b67f15c06252ead228d868c8",
+      "integratedSha256": "328157d7e72aa6c24cd701d373e983b7b1792767b67f15c06252ead228d868c8"
+    },
+    {
+      "path": "tixmoapi2/prisma/seed-minimal.js",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "643be4e5a458a48941794c24a025a6c8da58cd8bb3ee3a89bdd97a59ad955533",
+      "integratedSha256": "643be4e5a458a48941794c24a025a6c8da58cd8bb3ee3a89bdd97a59ad955533"
+    },
+    {
+      "path": "tixmoapi2/prisma/seed-minimal.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0e458654b5b6f4659d981ac3e7f93121b2a02e716c93f1ee0335a7653a310e89",
+      "integratedSha256": "0e458654b5b6f4659d981ac3e7f93121b2a02e716c93f1ee0335a7653a310e89"
+    },
+    {
+      "path": "tixmoapi2/prisma/seed.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "68b398d920644df631f1cdb38a2d35cef578b780e89396188b258d18f63e6d3a",
+      "integratedSha256": "68b398d920644df631f1cdb38a2d35cef578b780e89396188b258d18f63e6d3a"
+    },
+    {
+      "path": "tixmoapi2/prisma/seeders/01-users.seeder.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "208f128d1a1e4a457ac3db9c34f27aaa4d643ef64c2faa91bf7ef58f1c03786d",
+      "integratedSha256": "208f128d1a1e4a457ac3db9c34f27aaa4d643ef64c2faa91bf7ef58f1c03786d"
+    },
+    {
+      "path": "tixmoapi2/prisma/seeders/02-organizations.seeder.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d1d355959c42f240131b0209ca71d92786d38d505a12c698522206aecfc622ba",
+      "integratedSha256": "d1d355959c42f240131b0209ca71d92786d38d505a12c698522206aecfc622ba"
+    },
+    {
+      "path": "tixmoapi2/prisma/seeders/03-venues.seeder.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "bc8bb1ce77a939924ec960308455d4387efa5dbaaa75cc4dca97ac957a22d7a3",
+      "integratedSha256": "bc8bb1ce77a939924ec960308455d4387efa5dbaaa75cc4dca97ac957a22d7a3"
+    },
+    {
+      "path": "tixmoapi2/prisma/seeders/04-events.seeder.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fd1135d58cd2dc1f3fb0851ef82568d3714bd4cc9f65dc88f0b1164cbc5223dc",
+      "integratedSha256": "fd1135d58cd2dc1f3fb0851ef82568d3714bd4cc9f65dc88f0b1164cbc5223dc"
+    },
+    {
+      "path": "tixmoapi2/prisma/seeders/05-ticket-types.seeder.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "91a899cac2e72851fe53aef1b683763e198d700a22dbb09fe200eda88dc95a9c",
+      "integratedSha256": "91a899cac2e72851fe53aef1b683763e198d700a22dbb09fe200eda88dc95a9c"
+    },
+    {
+      "path": "tixmoapi2/prisma/seeders/06-promo-codes.seeder.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "6c25a40808cff2e9165a51093ac7418da0d08eb83a8d31f45ee059726da9a717",
+      "integratedSha256": "6c25a40808cff2e9165a51093ac7418da0d08eb83a8d31f45ee059726da9a717"
+    },
+    {
+      "path": "tixmoapi2/prisma/seeders/07-orders.seeder.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8589dab3acd9c78db5564fbe76091ba2f0b7a2c627cc1df2a151c3ca6f412b6d",
+      "integratedSha256": "8589dab3acd9c78db5564fbe76091ba2f0b7a2c627cc1df2a151c3ca6f412b6d"
+    },
+    {
+      "path": "tixmoapi2/prisma/seeders/08-scanners.seeder.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ff9ecbefab5512afc7bc72142d5be75309f9b9612e75f5c5da2fa6f7baf11191",
+      "integratedSha256": "ff9ecbefab5512afc7bc72142d5be75309f9b9612e75f5c5da2fa6f7baf11191"
+    },
+    {
+      "path": "tixmoapi2/prisma/utils/cleanup.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "1489b46245a6e26207c1905bdd546f661f80eec3e41ad2f3b9817bfda6efcb0e",
+      "integratedSha256": "1489b46245a6e26207c1905bdd546f661f80eec3e41ad2f3b9817bfda6efcb0e"
+    },
+    {
+      "path": "tixmoapi2/scripts/create-admin-user.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "2f47b19e4e360ff93d05c184f0535b4b5a96bd3c92a33558e82a41cfd9846db9",
+      "integratedSha256": "2f47b19e4e360ff93d05c184f0535b4b5a96bd3c92a33558e82a41cfd9846db9"
+    },
+    {
+      "path": "tixmoapi2/scripts/dev-data-populate.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "6691657afa0fbbf9f6a079ff644bccd494997c7dca7e14f2ee3f89511ef0d65a",
+      "integratedSha256": "6691657afa0fbbf9f6a079ff644bccd494997c7dca7e14f2ee3f89511ef0d65a"
+    },
+    {
+      "path": "tixmoapi2/scripts/dev-data.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "7acb71211c5581acd85b1872b1f8eec64fd288f6e44662d9b75ca7733f473d49",
+      "integratedSha256": "7acb71211c5581acd85b1872b1f8eec64fd288f6e44662d9b75ca7733f473d49"
+    },
+    {
+      "path": "tixmoapi2/scripts/generate-event-simulation.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "05dbf7ea757f8c4331edccac0dd3f75cbcea0fc44fad70fc02e83bcc7bf67a97",
+      "integratedSha256": "05dbf7ea757f8c4331edccac0dd3f75cbcea0fc44fad70fc02e83bcc7bf67a97"
+    },
+    {
+      "path": "tixmoapi2/scripts/market-demo-data.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9712a36d917ee37d7f4730c4e5a9547c6527265b1534b860283b4ad965ae351f",
+      "integratedSha256": "9712a36d917ee37d7f4730c4e5a9547c6527265b1534b860283b4ad965ae351f"
+    },
+    {
+      "path": "tixmoapi2/scripts/postCoverageComment.js",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "644a4c233fb8c7aca191130a00157f0d5ae4eb9030f5c6e110cf51487539d3d5",
+      "integratedSha256": "644a4c233fb8c7aca191130a00157f0d5ae4eb9030f5c6e110cf51487539d3d5"
+    },
+    {
+      "path": "tixmoapi2/scripts/setup.sh",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "758594144b9cdf304a3939648064bc12aa61d17ed64c33fb0a5fdb573486cae2",
+      "integratedSha256": "758594144b9cdf304a3939648064bc12aa61d17ed64c33fb0a5fdb573486cae2"
+    },
+    {
+      "path": "tixmoapi2/scripts/verify-s3.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "17aff911d18f5ee695fd8c46b7db1332181676ce8c35530e1e254abcad0eda9e",
+      "integratedSha256": "17aff911d18f5ee695fd8c46b7db1332181676ce8c35530e1e254abcad0eda9e"
+    },
+    {
+      "path": "tixmoapi2/seed_org.js",
+      "originalStatus": " D",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": null,
+      "integratedSha256": null
+    },
+    {
+      "path": "tixmoapi2/seed_venue.js",
+      "originalStatus": " D",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": null,
+      "integratedSha256": null
+    },
+    {
+      "path": "tixmoapi2/src/api/analytics/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "1c9f98edf21e2c2e72102c423030f4affdb4cb7d481388cb825ab3b1bd0d4a12",
+      "integratedSha256": "1c9f98edf21e2c2e72102c423030f4affdb4cb7d481388cb825ab3b1bd0d4a12"
+    },
+    {
+      "path": "tixmoapi2/src/api/analytics/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "54a1649cff987cd444753915d0e1bad0c0945bdbaf22696fd1d8a8f8b8436b1c",
+      "integratedSha256": "54a1649cff987cd444753915d0e1bad0c0945bdbaf22696fd1d8a8f8b8436b1c"
+    },
+    {
+      "path": "tixmoapi2/src/api/analytics/validation.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3a8fa69d45fd72521b8db5c4e71258954e76adacc4961abbb563c1bea5fc555e",
+      "integratedSha256": "3a8fa69d45fd72521b8db5c4e71258954e76adacc4961abbb563c1bea5fc555e"
+    },
+    {
+      "path": "tixmoapi2/src/api/approvals/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b51402e93cc45ae201f6c30d6b10caeccc9c697ba25a46f7bbbd3d68dda1e252",
+      "integratedSha256": "b51402e93cc45ae201f6c30d6b10caeccc9c697ba25a46f7bbbd3d68dda1e252"
+    },
+    {
+      "path": "tixmoapi2/src/api/approvals/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "78dc23aae09cc7ee18df930de5c4b10bf02ae6e7b5976292c370acfe42d16b0c",
+      "integratedSha256": "78dc23aae09cc7ee18df930de5c4b10bf02ae6e7b5976292c370acfe42d16b0c"
+    },
+    {
+      "path": "tixmoapi2/src/api/approvals/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3f9185335d027b7628ed91c559483a0122cc40100a9a4bb526e65698088bc72c",
+      "integratedSha256": "3f9185335d027b7628ed91c559483a0122cc40100a9a4bb526e65698088bc72c"
+    },
+    {
+      "path": "tixmoapi2/src/api/approvals/validation.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a39b5063b7a06df922cb0dc256ad63e0627ca77164f48dee332352dd5a6f032d",
+      "integratedSha256": "a39b5063b7a06df922cb0dc256ad63e0627ca77164f48dee332352dd5a6f032d"
+    },
+    {
+      "path": "tixmoapi2/src/api/assets/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3f635421ead6b1febba70050c927c4528adbfd5b3faff891157101bf22e95ff7",
+      "integratedSha256": "3f635421ead6b1febba70050c927c4528adbfd5b3faff891157101bf22e95ff7"
+    },
+    {
+      "path": "tixmoapi2/src/api/assets/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9e94ad8e1146909ff5023c8798edba14b447fa012926ebc8c5001cf2f1201a67",
+      "integratedSha256": "9e94ad8e1146909ff5023c8798edba14b447fa012926ebc8c5001cf2f1201a67"
+    },
+    {
+      "path": "tixmoapi2/src/api/assets/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "e5163682e226ea229fe882d690cadd7a65ba1c06fb8ebb26ad64a378fb5ce5ec",
+      "integratedSha256": "e5163682e226ea229fe882d690cadd7a65ba1c06fb8ebb26ad64a378fb5ce5ec"
+    },
+    {
+      "path": "tixmoapi2/src/api/auth/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "f52beff6d15b88798a85bfea6e34f7507ac30fd69c8a302e4d135215f23f92a2",
+      "integratedSha256": "f52beff6d15b88798a85bfea6e34f7507ac30fd69c8a302e4d135215f23f92a2"
+    },
+    {
+      "path": "tixmoapi2/src/api/auth/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "eac754b8fcf3bdb5ac2acd9da2464922ec715745d56d7c1387c099f40ef21770",
+      "integratedSha256": "eac754b8fcf3bdb5ac2acd9da2464922ec715745d56d7c1387c099f40ef21770"
+    },
+    {
+      "path": "tixmoapi2/src/api/auth/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "36d683d75e4d1b0b1efc520c77ad65915ec93ccc346bc45cfe37c40976f410c7",
+      "integratedSha256": "36d683d75e4d1b0b1efc520c77ad65915ec93ccc346bc45cfe37c40976f410c7"
+    },
+    {
+      "path": "tixmoapi2/src/api/auth/validation.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "278e1f29843bf08dbda337e5532cf3e41587cac87f199d907ccf8679484ad1e8",
+      "integratedSha256": "278e1f29843bf08dbda337e5532cf3e41587cac87f199d907ccf8679484ad1e8"
+    },
+    {
+      "path": "tixmoapi2/src/api/events/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "31f900a7a0a09363726771e4b0ae9f24e5b9aaf9818568b780d93dfc47171e89",
+      "integratedSha256": "31f900a7a0a09363726771e4b0ae9f24e5b9aaf9818568b780d93dfc47171e89"
+    },
+    {
+      "path": "tixmoapi2/src/api/events/public.routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8715c3b1078b949a2521fcb2132d2805e324c4eac810aab45a837c1aa1e9d3d4",
+      "integratedSha256": "8715c3b1078b949a2521fcb2132d2805e324c4eac810aab45a837c1aa1e9d3d4"
+    },
+    {
+      "path": "tixmoapi2/src/api/events/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3dc652d2926c84103ae7c101aa888d14825ab5c9dfd2a85d04c9ad586728dcff",
+      "integratedSha256": "3dc652d2926c84103ae7c101aa888d14825ab5c9dfd2a85d04c9ad586728dcff"
+    },
+    {
+      "path": "tixmoapi2/src/api/events/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "f4d6e24a38a48d5bf6faf56fabd222e51ed31392bd09c946417c91922a68c157",
+      "integratedSha256": "f4d6e24a38a48d5bf6faf56fabd222e51ed31392bd09c946417c91922a68c157"
+    },
+    {
+      "path": "tixmoapi2/src/api/events/stats.service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "c6ef3d8beb945034b6b2898a2f9c64e5e92c0b94dece8bbb2d6e6ca73b49c267",
+      "integratedSha256": "c6ef3d8beb945034b6b2898a2f9c64e5e92c0b94dece8bbb2d6e6ca73b49c267"
+    },
+    {
+      "path": "tixmoapi2/src/api/events/validation.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d38276aeb49056bac2311667c9c0c346e2ab03700dfd702195aed23c101d412e",
+      "integratedSha256": "d38276aeb49056bac2311667c9c0c346e2ab03700dfd702195aed23c101d412e"
+    },
+    {
+      "path": "tixmoapi2/src/api/notifications/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ba48f9b4d53e5fe8b52efeae0332920952bd1f96b2eaa8d56e2394cf14c98d24",
+      "integratedSha256": "ba48f9b4d53e5fe8b52efeae0332920952bd1f96b2eaa8d56e2394cf14c98d24"
+    },
+    {
+      "path": "tixmoapi2/src/api/orders/controller.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "a8a8bd62ebc93987e7b2a728b0d6caea37652e5928e14e7e696d88eba9f4e0b5",
+      "integratedSha256": "5a11948430c89bdc2ea2167696d060c06a7f4de9f646f7580e952826c1f3116d"
+    },
+    {
+      "path": "tixmoapi2/src/api/orders/routes.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "6898715c7f2dc101e26aa31c7dc62bcb4eaf695eac5ddee1dc0194b28828c6cc",
+      "integratedSha256": "2c800e611b3bd6454e32b99e9774c9c212d834cad3cc2ab394c22ef12120dfd6"
+    },
+    {
+      "path": "tixmoapi2/src/api/orders/service.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "453aa05cedace8ba6f086e02fd3a8664d4453d352d899ad98a25750f9e64da95",
+      "integratedSha256": "dc20611ea44c882585154fa03e55519193009b0fa9cb6ec075aa08bfd57835d9"
+    },
+    {
+      "path": "tixmoapi2/src/api/orders/validation.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "382fe78f81b1115c90869c56e45abbd475f97e6d863d8029c95895b6ed95b7a2",
+      "integratedSha256": "ef83ab881eb7e97045f39201a7cd546631acbaa4d22638b95f6095eba3669d45"
+    },
+    {
+      "path": "tixmoapi2/src/api/organizations/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "796e1532a568f0d8af53da26cfb87d641dae4cb4361d7de576cb6ed83eaffd26",
+      "integratedSha256": "796e1532a568f0d8af53da26cfb87d641dae4cb4361d7de576cb6ed83eaffd26"
+    },
+    {
+      "path": "tixmoapi2/src/api/organizations/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9f93c9ecc7a8e7af015436c28954eba37a12df3a19637f6369f1a1658a12990a",
+      "integratedSha256": "9f93c9ecc7a8e7af015436c28954eba37a12df3a19637f6369f1a1658a12990a"
+    },
+    {
+      "path": "tixmoapi2/src/api/payments/service.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "23023accbd92d64ffab407ffc02acd0c551dce514d8b571d9a1c9ded6806fb97",
+      "integratedSha256": "7c49b29204faf8f2f7e51f890163f7fec61daf2dfdf7fb40f905b6299aeb547a"
+    },
+    {
+      "path": "tixmoapi2/src/api/promo-codes/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9ad04ad64f47c6762126aad22679de0de19b1f0399be10221de260efc297e617",
+      "integratedSha256": "9ad04ad64f47c6762126aad22679de0de19b1f0399be10221de260efc297e617"
+    },
+    {
+      "path": "tixmoapi2/src/api/promo-codes/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d508ed5404202a2ce6789dd956ca465c64b59932a6ae563922051d3c5703c6fe",
+      "integratedSha256": "d508ed5404202a2ce6789dd956ca465c64b59932a6ae563922051d3c5703c6fe"
+    },
+    {
+      "path": "tixmoapi2/src/api/reports/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "c87079230882d50bee837c46c185fbb3c13a7af05379044d9ff101a16e160462",
+      "integratedSha256": "c87079230882d50bee837c46c185fbb3c13a7af05379044d9ff101a16e160462"
+    },
+    {
+      "path": "tixmoapi2/src/api/reports/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "aecf5e8fef1f01f8e7f6c16c7029b0594ffc86a53703fd5fdb5f8b5b99709e87",
+      "integratedSha256": "aecf5e8fef1f01f8e7f6c16c7029b0594ffc86a53703fd5fdb5f8b5b99709e87"
+    },
+    {
+      "path": "tixmoapi2/src/api/reports/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "2a68307e300426306f9f15e7d83c618c81fc96bfde12bf8f0ad8c56729961a04",
+      "integratedSha256": "2a68307e300426306f9f15e7d83c618c81fc96bfde12bf8f0ad8c56729961a04"
+    },
+    {
+      "path": "tixmoapi2/src/api/reports/validation.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ded5cc4e7f37b151b3d45274b7d8d77178f25410f9e06b40aaf7c742cfe4e435",
+      "integratedSha256": "ded5cc4e7f37b151b3d45274b7d8d77178f25410f9e06b40aaf7c742cfe4e435"
+    },
+    {
+      "path": "tixmoapi2/src/api/review/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3b08273365356bc30f0a224424412300febc9e70cac10239757dab9e033c566f",
+      "integratedSha256": "3b08273365356bc30f0a224424412300febc9e70cac10239757dab9e033c566f"
+    },
+    {
+      "path": "tixmoapi2/src/api/scanners/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "4c0cd8174ee5f97a2891533f62bf054f8b1483a9581d829f37b5be3539d4439f",
+      "integratedSha256": "4c0cd8174ee5f97a2891533f62bf054f8b1483a9581d829f37b5be3539d4439f"
+    },
+    {
+      "path": "tixmoapi2/src/api/scanners/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "47c0c117e877e6c69beadf2d97118fffe2479c4b737115766a16f3e642e82796",
+      "integratedSha256": "47c0c117e877e6c69beadf2d97118fffe2479c4b737115766a16f3e642e82796"
+    },
+    {
+      "path": "tixmoapi2/src/api/scanners/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a94aaa4f3f22c3c2114481bb193157691e948efd5e40070253d64e81fabdc690",
+      "integratedSha256": "a94aaa4f3f22c3c2114481bb193157691e948efd5e40070253d64e81fabdc690"
+    },
+    {
+      "path": "tixmoapi2/src/api/tasks/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "7f25cb02dd6caba72b56cafd3eedf57aec38bd360d06dbd646b85c6df3c1a878",
+      "integratedSha256": "7f25cb02dd6caba72b56cafd3eedf57aec38bd360d06dbd646b85c6df3c1a878"
+    },
+    {
+      "path": "tixmoapi2/src/api/tasks/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b38ebb5f0c707645abda0e3ca47647e41e0ed20fd6983e6d835a838f4307e6bd",
+      "integratedSha256": "b38ebb5f0c707645abda0e3ca47647e41e0ed20fd6983e6d835a838f4307e6bd"
+    },
+    {
+      "path": "tixmoapi2/src/api/tasks/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "58d314434aec54e5b744260968787d0f10ac130b9b7f58c6dad7cc28499d4056",
+      "integratedSha256": "58d314434aec54e5b744260968787d0f10ac130b9b7f58c6dad7cc28499d4056"
+    },
+    {
+      "path": "tixmoapi2/src/api/ticket-tiers/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "4b4db5603fd89c97e7e5f14b016add395b6d6e37bd621587c0d60a69153efc49",
+      "integratedSha256": "4b4db5603fd89c97e7e5f14b016add395b6d6e37bd621587c0d60a69153efc49"
+    },
+    {
+      "path": "tixmoapi2/src/api/ticket-tiers/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "7ace4e7ad9ac6f83c4a5136f9dabea11793e9824cd79afc41743425d0c07ef25",
+      "integratedSha256": "7ace4e7ad9ac6f83c4a5136f9dabea11793e9824cd79afc41743425d0c07ef25"
+    },
+    {
+      "path": "tixmoapi2/src/api/ticket-tiers/validation.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3709cbada9105dcc9da7e7a177c3e2d02b33aa7d929fa515e84679a30cb511bd",
+      "integratedSha256": "3709cbada9105dcc9da7e7a177c3e2d02b33aa7d929fa515e84679a30cb511bd"
+    },
+    {
+      "path": "tixmoapi2/src/api/ticket-types/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "1bdab1e8128676d08b470e75cfa0b9e0a17f243c43210b5bed4ee8b4d78cae5d",
+      "integratedSha256": "1bdab1e8128676d08b470e75cfa0b9e0a17f243c43210b5bed4ee8b4d78cae5d"
+    },
+    {
+      "path": "tixmoapi2/src/api/tickets/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0085eebe6aefbb0a134e9399a67d9e35a716dd84d3e38c50372a198c62d5b03c",
+      "integratedSha256": "0085eebe6aefbb0a134e9399a67d9e35a716dd84d3e38c50372a198c62d5b03c"
+    },
+    {
+      "path": "tixmoapi2/src/api/tickets/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5a2f1564d4f3a713da050816719de587f28fb84b0565e29201c434029c5fabcf",
+      "integratedSha256": "5a2f1564d4f3a713da050816719de587f28fb84b0565e29201c434029c5fabcf"
+    },
+    {
+      "path": "tixmoapi2/src/api/tickets/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "de8fc7c16b6656d8717c62d8930687fb6111640b0a09086ccad5dd5f5f8ea369",
+      "integratedSha256": "de8fc7c16b6656d8717c62d8930687fb6111640b0a09086ccad5dd5f5f8ea369"
+    },
+    {
+      "path": "tixmoapi2/src/api/users/controller.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "355a15a7e28692727baa2030d976ed57423f29ccd773229126cb71ef8a053fa6",
+      "integratedSha256": "355a15a7e28692727baa2030d976ed57423f29ccd773229126cb71ef8a053fa6"
+    },
+    {
+      "path": "tixmoapi2/src/api/users/routes.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "933736d3e903f5ed785639a46ad9ea0203f60397d26d4fa0eddf1a2f895981da",
+      "integratedSha256": "933736d3e903f5ed785639a46ad9ea0203f60397d26d4fa0eddf1a2f895981da"
+    },
+    {
+      "path": "tixmoapi2/src/api/users/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "c9064c81159d686edf48125168f8853bff32d8f1861552885fed8c6a367c2dc4",
+      "integratedSha256": "c9064c81159d686edf48125168f8853bff32d8f1861552885fed8c6a367c2dc4"
+    },
+    {
+      "path": "tixmoapi2/src/api/users/validation.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a8f987db7726ca341d4fe1caad3f319e0b1ea0445494f0d8a926f80b7255defd",
+      "integratedSha256": "a8f987db7726ca341d4fe1caad3f319e0b1ea0445494f0d8a926f80b7255defd"
+    },
+    {
+      "path": "tixmoapi2/src/api/venues/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "04d515f28d238dcd4a3c2988e814e142cf0d27a0419b31d50619c5e1d895c15d",
+      "integratedSha256": "04d515f28d238dcd4a3c2988e814e142cf0d27a0419b31d50619c5e1d895c15d"
+    },
+    {
+      "path": "tixmoapi2/src/api/waitlists/service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "feedf41fad225cbdb8f88b4cc281c7c13b24c342c768457b29e6680c657fbd5b",
+      "integratedSha256": "feedf41fad225cbdb8f88b4cc281c7c13b24c342c768457b29e6680c657fbd5b"
+    },
+    {
+      "path": "tixmoapi2/src/app.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b2c8049e31a3a6ef7dd4d7ca156747dc4cbe2800744ecf3c8ee8ee4503a29077",
+      "integratedSha256": "b2c8049e31a3a6ef7dd4d7ca156747dc4cbe2800744ecf3c8ee8ee4503a29077"
+    },
+    {
+      "path": "tixmoapi2/src/config/email.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0c6a14f11c074051a0c1a8a152c264b9f1003625c8600b1668fe6688926f3a1b",
+      "integratedSha256": "0c6a14f11c074051a0c1a8a152c264b9f1003625c8600b1668fe6688926f3a1b"
+    },
+    {
+      "path": "tixmoapi2/src/config/environment.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5fc97d212ac95826e27f9cb586f8213cf3de19db1d464f12330839e278fb8c10",
+      "integratedSha256": "5fc97d212ac95826e27f9cb586f8213cf3de19db1d464f12330839e278fb8c10"
+    },
+    {
+      "path": "tixmoapi2/src/config/logger.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "6564e1ebec335ac3eab28ed0a038e717e4f6929770baeb0b29e4719e78b67cb1",
+      "integratedSha256": "6564e1ebec335ac3eab28ed0a038e717e4f6929770baeb0b29e4719e78b67cb1"
+    },
+    {
+      "path": "tixmoapi2/src/config/s3.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0f9ac45d52f1b4bda9926b98bc42c99eec50f66506d767165e0fae86aa1b6921",
+      "integratedSha256": "0f9ac45d52f1b4bda9926b98bc42c99eec50f66506d767165e0fae86aa1b6921"
+    },
+    {
+      "path": "tixmoapi2/src/config/swagger.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "1bf50315696ea3bf99c9554ccb74eec9cf9c88157acb27c9b6eff7dff5129bf4",
+      "integratedSha256": "1bf50315696ea3bf99c9554ccb74eec9cf9c88157acb27c9b6eff7dff5129bf4"
+    },
+    {
+      "path": "tixmoapi2/src/index.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "6980e27c2d50bec474e029ebe81af8f24a703f55cfbeb0866c6d449b161a3163",
+      "integratedSha256": "6980e27c2d50bec474e029ebe81af8f24a703f55cfbeb0866c6d449b161a3163"
+    },
+    {
+      "path": "tixmoapi2/src/jobs/approval-reminder.job.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5576c343c375ce0c2ca0eb5048fbd3ec2262eca25a283924668b9406cf508a29",
+      "integratedSha256": "5576c343c375ce0c2ca0eb5048fbd3ec2262eca25a283924668b9406cf508a29"
+    },
+    {
+      "path": "tixmoapi2/src/jobs/order-expiry.job.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "1320fc45bbc559b0d636d94763fcef2c2e77a8e5602046d12f36161f51e62fb8",
+      "integratedSha256": "1320fc45bbc559b0d636d94763fcef2c2e77a8e5602046d12f36161f51e62fb8"
+    },
+    {
+      "path": "tixmoapi2/src/middleware/auth.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "430e020ee5fc134bc48d1c907c6b66f6c5cd5df7268696f14ce2fb4743c15388",
+      "integratedSha256": "430e020ee5fc134bc48d1c907c6b66f6c5cd5df7268696f14ce2fb4743c15388"
+    },
+    {
+      "path": "tixmoapi2/src/middleware/authorize.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8556a939ff7ad49ca9cb12b82c347033076f70dfaba4315d6ccec0bd3447c9f3",
+      "integratedSha256": "8556a939ff7ad49ca9cb12b82c347033076f70dfaba4315d6ccec0bd3447c9f3"
+    },
+    {
+      "path": "tixmoapi2/src/middleware/authorizeOrg.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "032fbd4b368abdb7c591b4df10a723061db100349c08afc75512a1f324c53a50",
+      "integratedSha256": "032fbd4b368abdb7c591b4df10a723061db100349c08afc75512a1f324c53a50"
+    },
+    {
+      "path": "tixmoapi2/src/middleware/rateLimiter.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "e47ce70481b2dc41a28b4bd2d1f196c30b253c3df50b79ecc799016a420454a3",
+      "integratedSha256": "e47ce70481b2dc41a28b4bd2d1f196c30b253c3df50b79ecc799016a420454a3"
+    },
+    {
+      "path": "tixmoapi2/src/middleware/validateExpress.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "e460d158ef1465491bc1f15bf50284cd9a8ac8180362b29e4ffe9823b46d906c",
+      "integratedSha256": "e460d158ef1465491bc1f15bf50284cd9a8ac8180362b29e4ffe9823b46d906c"
+    },
+    {
+      "path": "tixmoapi2/src/middleware/waitingRoom.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ae48febdcd520cb6a9b8ea0e537dd3e9e64c79401c5decb3de3206385feb70a5",
+      "integratedSha256": "ae48febdcd520cb6a9b8ea0e537dd3e9e64c79401c5decb3de3206385feb70a5"
+    },
+    {
+      "path": "tixmoapi2/src/services/approval-email.service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "00a7664837f08e2075cbce63b3e8e3ab44f13efa866b1ab1eb2c7c7511451290",
+      "integratedSha256": "00a7664837f08e2075cbce63b3e8e3ab44f13efa866b1ab1eb2c7c7511451290"
+    },
+    {
+      "path": "tixmoapi2/src/services/redis-lock.service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "700c210e045f6bd92f4051cf120fe27cb082caa86cef763fad5e59a4b7a76ead",
+      "integratedSha256": "700c210e045f6bd92f4051cf120fe27cb082caa86cef763fad5e59a4b7a76ead"
+    },
+    {
+      "path": "tixmoapi2/src/services/upload.service.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3fd19c5be5bf046c98d481ac0ef2eb962b0ef1e4d22f391aa5a7a11e50749108",
+      "integratedSha256": "3fd19c5be5bf046c98d481ac0ef2eb962b0ef1e4d22f391aa5a7a11e50749108"
+    },
+    {
+      "path": "tixmoapi2/src/utils/clientOrigin.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "053891034df264c2738dc81d87a3e0f5d988d571048e96115a24dd16610c56f5",
+      "integratedSha256": "053891034df264c2738dc81d87a3e0f5d988d571048e96115a24dd16610c56f5"
+    },
+    {
+      "path": "tixmoapi2/src/utils/jwt.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "f041dea17b981e4ff9faba4ea1f0ad0bc1a62dcfcb73bbdb231bd6d98c944e70",
+      "integratedSha256": "f041dea17b981e4ff9faba4ea1f0ad0bc1a62dcfcb73bbdb231bd6d98c944e70"
+    },
+    {
+      "path": "tixmoapi2/src/utils/retry.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "24a148eb0e20910f501cbb593fc5db4aceaf09f196415533b9d21ae415e3d477",
+      "integratedSha256": "f5a9cfc416f76a4d3743969fa047aa895c7c147f13b92cce81a89211389399b1"
+    },
+    {
+      "path": "tixmoapi2/src/utils/tenantScope.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "92637e6f355471cd0c5638f3b38808c5b29ceb2afcc7e77797c5bf475c49fa29",
+      "integratedSha256": "d0c08a9e4a09906f237a8bba171ff50db7a0470d14cae0bf867496aa900e650b"
+    },
+    {
+      "path": "tixmoapi2/tests/benchmark/event_cache.benchmark.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "40c835460ca32017eb980a7036c1c84281230108d665b888e3566d468515673f",
+      "integratedSha256": "40c835460ca32017eb980a7036c1c84281230108d665b888e3566d468515673f"
+    },
+    {
+      "path": "tixmoapi2/tests/benchmark/syncTickets.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d6f0aa06d997897ab0cfe67c16200baa7f9f5c917d3514532d0beb3343cd2e10",
+      "integratedSha256": "d6f0aa06d997897ab0cfe67c16200baa7f9f5c917d3514532d0beb3343cd2e10"
+    },
+    {
+      "path": "tixmoapi2/tests/benchmark/ticketCreation.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "c20dad5fb87648bd5ab5dfc81ef1fa791d37834161bbe2e8cc0799e0e281feb9",
+      "integratedSha256": "c20dad5fb87648bd5ab5dfc81ef1fa791d37834161bbe2e8cc0799e0e281feb9"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/advanced.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d7cc4685164b78ce19fd59029a5731cd5d3688ba057afedab687c144b921c46c",
+      "integratedSha256": "d7cc4685164b78ce19fd59029a5731cd5d3688ba057afedab687c144b921c46c"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/apiRateLimit.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8ee2afbe194fb82159860e8b0b3f7589ea67190524a8d2f28eadd856bc437fa8",
+      "integratedSha256": "8ee2afbe194fb82159860e8b0b3f7589ea67190524a8d2f28eadd856bc437fa8"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/approvals.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "62925697dbed8ede0e2d0630ed7401b161feb150255f6a889ebed18bbf20b371",
+      "integratedSha256": "62925697dbed8ede0e2d0630ed7401b161feb150255f6a889ebed18bbf20b371"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/auth.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "49694f36b60dfb5525b94601504ea55102789cdd5e6d8c9c2ab70e5f01b9aa1d",
+      "integratedSha256": "49694f36b60dfb5525b94601504ea55102789cdd5e6d8c9c2ab70e5f01b9aa1d"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/concurrency.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "1d2fe3bd9514bc8ae73d5c88017546e2b586cdfdfdb3b231db1498dd1b81ec74",
+      "integratedSha256": "1d2fe3bd9514bc8ae73d5c88017546e2b586cdfdfdb3b231db1498dd1b81ec74"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/orders.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "bc5c8f94df796fa53bbaf30882404ca904be8158a82d31da519d453adc76ea3a",
+      "integratedSha256": "bc5c8f94df796fa53bbaf30882404ca904be8158a82d31da519d453adc76ea3a"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/organizations.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "521ba0e678497e2d65d34d8422c41c0dd563b11a973c300224916bbf99f13a34",
+      "integratedSha256": "521ba0e678497e2d65d34d8422c41c0dd563b11a973c300224916bbf99f13a34"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/payments.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "17d727af3c4caf47e0a1a46feefae881876df3fe1f3a1d80743f88223c1448d6",
+      "integratedSha256": "17d727af3c4caf47e0a1a46feefae881876df3fe1f3a1d80743f88223c1448d6"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/payments_retry.test.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "340301a39a4a27fd2b9817665fc195cf52a9d443934ed5d1b90373e8d39d3658",
+      "integratedSha256": "237e5ae390c3ef9afbf35975179fb52fc807c381a1bfb2b54f1a7bcfe20a94ed"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/reports.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fc31bebd076e4dbbb7cf8aa5adec5dd9eb4b0ce834f2afae6aea68d9efbbc046",
+      "integratedSha256": "fc31bebd076e4dbbb7cf8aa5adec5dd9eb4b0ce834f2afae6aea68d9efbbc046"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/scanners-offline.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "6f2ad2031bf55301faa894218cd6cd0d8a638c85802027723ae59c0f64258d98",
+      "integratedSha256": "6f2ad2031bf55301faa894218cd6cd0d8a638c85802027723ae59c0f64258d98"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/tickets.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fdd79d9e5808a3aa1b28cfd11b35a01eb89aad63a33b372ac9b815738006ba67",
+      "integratedSha256": "fdd79d9e5808a3aa1b28cfd11b35a01eb89aad63a33b372ac9b815738006ba67"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/users.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3cbf64fc06a0cccea036a18ca85d02820baf148797ca5dddd60b38f035ab8469",
+      "integratedSha256": "3cbf64fc06a0cccea036a18ca85d02820baf148797ca5dddd60b38f035ab8469"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/users_create.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "29102c34d86d833f41c2a831227de547b1b25466f89a3da585d2d4e165cb3b8a",
+      "integratedSha256": "29102c34d86d833f41c2a831227de547b1b25466f89a3da585d2d4e165cb3b8a"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/venues.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ec08b364a200fdd88f5153119cb7e6e32e57d5bde86d0a000252b90f9bfbe890",
+      "integratedSha256": "ec08b364a200fdd88f5153119cb7e6e32e57d5bde86d0a000252b90f9bfbe890"
+    },
+    {
+      "path": "tixmoapi2/tests/security/payment_validation.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "11f43f69ec925032e4ab4500a0a347ca1dd9ab6f8681b0dae7c1fde981a3c1f4",
+      "integratedSha256": "11f43f69ec925032e4ab4500a0a347ca1dd9ab6f8681b0dae7c1fde981a3c1f4"
+    },
+    {
+      "path": "tixmoapi2/tests/security/submit_decision_validation.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "6f13b9fa4769f52269d7d37d61e88f0a41c6fb680df575f10ac47aa6fc088908",
+      "integratedSha256": "6f13b9fa4769f52269d7d37d61e88f0a41c6fb680df575f10ac47aa6fc088908"
+    },
+    {
+      "path": "tixmoapi2/tests/setup.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "64259a3f1e194746f258a535c948f66ff0f9b9c5e44c11e8f342bf4123aaecb5",
+      "integratedSha256": "1cfc6be820a6c7b21777e4c9f982a329239a9cd690f2910b97fb43192f148e11"
+    },
+    {
+      "path": "tixmoapi2/tests/smoke/v1-market-smoke.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "998e65b9b456060cc6b37016c65ecdadea4ed75ecc7d5dbf438be258c5af7f36",
+      "integratedSha256": "998e65b9b456060cc6b37016c65ecdadea4ed75ecc7d5dbf438be258c5af7f36"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/api/events-public.service.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a07c28f2c1737e4d69ac964bb069196a4e688bfae5ebdaa82b0d191a13ce81b4",
+      "integratedSha256": "a07c28f2c1737e4d69ac964bb069196a4e688bfae5ebdaa82b0d191a13ce81b4"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/api/organizations/controller_auth.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ee648a958628b8e6e6d18f43355bbc8e2223742aa773eda87e9ad4a94906a3d6",
+      "integratedSha256": "ee648a958628b8e6e6d18f43355bbc8e2223742aa773eda87e9ad4a94906a3d6"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/approval-email.service.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9f46b5c946c04873ae98e41759b14d291e8b4cf81c9457157aa1fd1fc7e28636",
+      "integratedSha256": "9f46b5c946c04873ae98e41759b14d291e8b4cf81c9457157aa1fd1fc7e28636"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/approval_upload_limit.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9617423a55e48508703819b4062030791c01678f38b88f114786c1ab226711b6",
+      "integratedSha256": "9617423a55e48508703819b4062030791c01678f38b88f114786c1ab226711b6"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/approval_upload_validation.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a823c9ca88711df48bf7443d0adbed69a7fcb3fccfce90199e517f2c3cc5dea3",
+      "integratedSha256": "a823c9ca88711df48bf7443d0adbed69a7fcb3fccfce90199e517f2c3cc5dea3"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/asset-library.service.test.ts",
+      "originalStatus": " M",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "3f5b174106234987381d6226657dff0d15cd76ac1bf0ea09b4241468847517f2",
+      "integratedSha256": "5d4cb10fb6ed684de30045db8ae19b215cabff0f6996559a125a303d35850e84"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/asset_upload_validation.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fde26e7543c6d07e6c5f9516dbab947e1fd9d60c6bf04e78a6537e2584a034d9",
+      "integratedSha256": "fde26e7543c6d07e6c5f9516dbab947e1fd9d60c6bf04e78a6537e2584a034d9"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/client-origin.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "f1a92556f7425489bebf0a0b2112218d9f9443bb911c20a59df99006c6139e24",
+      "integratedSha256": "f1a92556f7425489bebf0a0b2112218d9f9443bb911c20a59df99006c6139e24"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/cors.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d2255c4d2c274df43775bbcd70e139ef61b5347febd115a846f5355bb60cbb57",
+      "integratedSha256": "d2255c4d2c274df43775bbcd70e139ef61b5347febd115a846f5355bb60cbb57"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/email.config.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "2d1d012a057f4cd39147e25384b85e35c50be55bedc406a5ad602705551a4d44",
+      "integratedSha256": "2d1d012a057f4cd39147e25384b85e35c50be55bedc406a5ad602705551a4d44"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/organizations.controller.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "344ce99ed7a5ebca57796ef6fbf100c92727c5168ebe389a1f62e5ac19d63973",
+      "integratedSha256": "344ce99ed7a5ebca57796ef6fbf100c92727c5168ebe389a1f62e5ac19d63973"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/redis-lock.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "48f2527c6a5c0bf1243d12711850d113f6c81be4e8354f8fb146c9576a3f4d9d",
+      "integratedSha256": "48f2527c6a5c0bf1243d12711850d113f6c81be4e8354f8fb146c9576a3f4d9d"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/report.service.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "512208f2144baf3c9055543c6424d9c2b1a7c7e65053295877ffa814fc4db3fb",
+      "integratedSha256": "512208f2144baf3c9055543c6424d9c2b1a7c7e65053295877ffa814fc4db3fb"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/security_fixes.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "e781ace0f6332890992ec16e48ec049f8d750f2739fad2795e42ddc72607f652",
+      "integratedSha256": "e781ace0f6332890992ec16e48ec049f8d750f2739fad2795e42ddc72607f652"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/sentry.config.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "660eb1c309afb45577c47e9fea3fd8eb8f9116a249ae602be816e21732427251",
+      "integratedSha256": "660eb1c309afb45577c47e9fea3fd8eb8f9116a249ae602be816e21732427251"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/stats.service.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "478df1418f5b7db17bbbe1594fce9d004d16f56f61a8f8e681183590afb25c7f",
+      "integratedSha256": "478df1418f5b7db17bbbe1594fce9d004d16f56f61a8f8e681183590afb25c7f"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/upload.service.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "80c487dca5c3d99667e4fad89eba2d2b56afd1de9d4c0a0aa42b366dcf4bfb18",
+      "integratedSha256": "80c487dca5c3d99667e4fad89eba2d2b56afd1de9d4c0a0aa42b366dcf4bfb18"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/users.controller.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "42d9a561f0a7781dd7c4eb51f922e7293c92e156b34d8fedd66609ec7b788c7f",
+      "integratedSha256": "42d9a561f0a7781dd7c4eb51f922e7293c92e156b34d8fedd66609ec7b788c7f"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/users.service.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9722a14a9c4e6d4b6847f636c6a60a4a0eab834328a7638b6e87c013442e6a12",
+      "integratedSha256": "9722a14a9c4e6d4b6847f636c6a60a4a0eab834328a7638b6e87c013442e6a12"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/waiting-room.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0a7be19027389266b60c6564df765a14cf581c9b7e512e33d8721baef331eac8",
+      "integratedSha256": "0a7be19027389266b60c6564df765a14cf581c9b7e512e33d8721baef331eac8"
+    },
+    {
+      "path": "tixmoapi2/tests/utils/testUtils.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "e8f616f48ff45f069cd156cb9a3bbe2aead996ba7de5ca9d11a5665f9d307cd8",
+      "integratedSha256": "e8f616f48ff45f069cd156cb9a3bbe2aead996ba7de5ca9d11a5665f9d307cd8"
+    },
+    {
+      "path": "tixmoapi2/tests/verification/boot.test.ts",
+      "originalStatus": " M",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8857a6fa3e0918fcf3277279999fad387342d50901bc97f958e3baaf178bdc9d",
+      "integratedSha256": "8857a6fa3e0918fcf3277279999fad387342d50901bc97f958e3baaf178bdc9d"
+    },
+    {
+      "path": ".nvmrc",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "73fb1b615e2043a933be1c0895cde4358036acc28d785692509b822aa53c761f",
+      "integratedSha256": "73fb1b615e2043a933be1c0895cde4358036acc28d785692509b822aa53c761f"
+    },
+    {
+      "path": "docs/ACCESS_ACCOUNT_ROLLOUT.md",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "972a063375045f362bc4e9e32e2aeb63596a2b35a0165b4b8a169576cefe5a44",
+      "integratedSha256": "972a063375045f362bc4e9e32e2aeb63596a2b35a0165b4b8a169576cefe5a44"
+    },
+    {
+      "path": "docs/TIXMO_DESCRIPTION_AND_FEATURES.md",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fa134de22f3dd51fe1bd83ce7db663d6b7841d85bde755069480de724aa3dcb3",
+      "integratedSha256": "fa134de22f3dd51fe1bd83ce7db663d6b7841d85bde755069480de724aa3dcb3"
+    },
+    {
+      "path": "docs/audits/2026-09-07-current-state-evidence.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "df57cee954e528fb89555ae7627762bdb3f4688186fa0be6a99953c7b9b910dd",
+      "integratedSha256": "df57cee954e528fb89555ae7627762bdb3f4688186fa0be6a99953c7b9b910dd"
+    },
+    {
+      "path": "docs/audits/2026-09-07-current-state-report.md",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "79793e0c1414c0c10dac088883e968eaf6c6114579335ca14deeb22d616520a5",
+      "integratedSha256": "79793e0c1414c0c10dac088883e968eaf6c6114579335ca14deeb22d616520a5"
+    },
+    {
+      "path": "docs/audits/2026-10-04-access-remediation-evidence.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "648eec16c1ff735a667b33a313e0546ce147d7655da47c5cbf01bb71506a08a1",
+      "integratedSha256": "648eec16c1ff735a667b33a313e0546ce147d7655da47c5cbf01bb71506a08a1"
+    },
+    {
+      "path": "docs/audits/2026-10-04-access-remediation.md",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "30e7bae9921849e683c1e533b7c06a373bc2677979d4e833e63a4e6f48c989db",
+      "integratedSha256": "30e7bae9921849e683c1e533b7c06a373bc2677979d4e833e63a4e6f48c989db"
+    },
+    {
+      "path": "docs/audits/2026-10-04-evidence/api-audit-all.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5f8b982f17de7e2c3fa413bc1ad706225bc6edbff97261694616d9a0f6277f3d",
+      "integratedSha256": "5f8b982f17de7e2c3fa413bc1ad706225bc6edbff97261694616d9a0f6277f3d"
+    },
+    {
+      "path": "docs/audits/2026-10-04-evidence/api-audit.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "78bb20fca012aad86924118e6cea925c0a4f3aa98ca391daad2eb3929dc0e55f",
+      "integratedSha256": "78bb20fca012aad86924118e6cea925c0a4f3aa98ca391daad2eb3929dc0e55f"
+    },
+    {
+      "path": "docs/audits/2026-10-04-evidence/frontend-audit-all.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d44ae6da8a631e82a1f6a76d25985cb724616a6fd6777b6b25587db58592ad57",
+      "integratedSha256": "d44ae6da8a631e82a1f6a76d25985cb724616a6fd6777b6b25587db58592ad57"
+    },
+    {
+      "path": "docs/audits/2026-10-04-evidence/frontend-audit.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8bfafdcd893e8375d7b3e56801219a332650bf774e87a30dffbcc22ba74b324c",
+      "integratedSha256": "8bfafdcd893e8375d7b3e56801219a332650bf774e87a30dffbcc22ba74b324c"
+    },
+    {
+      "path": "docs/audits/2026-10-04-evidence/live-checkout-mobile.png",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "bb423d13652e38286136a153f00aa7a96c1b2493a431aea284c7011bcdafc654",
+      "integratedSha256": "bb423d13652e38286136a153f00aa7a96c1b2493a431aea284c7011bcdafc654"
+    },
+    {
+      "path": "docs/audits/2026-10-04-evidence/live-login-desktop.png",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "867c9bfb06cff8f3cfca10c6ab8322d46db3d732c465a7ab188ee994a5dae19f",
+      "integratedSha256": "867c9bfb06cff8f3cfca10c6ab8322d46db3d732c465a7ab188ee994a5dae19f"
+    },
+    {
+      "path": "docs/audits/2026-10-04-evidence/live-login-mobile.png",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "294da47d221fd51d29fd70b4c2bd7192f21d4a4b030190621a3b642e71e3af2b",
+      "integratedSha256": "294da47d221fd51d29fd70b4c2bd7192f21d4a4b030190621a3b642e71e3af2b"
+    },
+    {
+      "path": "docs/audits/2026-10-04-evidence/public-http.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "591e3ef80d7dbca8f678e719ff01f6af879e286e31382071566b505a63d78307",
+      "integratedSha256": "591e3ef80d7dbca8f678e719ff01f6af879e286e31382071566b505a63d78307"
+    },
+    {
+      "path": "docs/audits/2026-10-04-full-project-audit.md",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b914e2d2ed3e79b9d93834103f27fdbb7575bcd89b6ebe2a47e1fdbc525f5377",
+      "integratedSha256": "b914e2d2ed3e79b9d93834103f27fdbb7575bcd89b6ebe2a47e1fdbc525f5377"
+    },
+    {
+      "path": "docs/audits/2026-10-04-full-project-evidence.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3f1482bbb6b9e213192a7cf19e9b62ff70965860c8c9b33b3ebb5688728e830b",
+      "integratedSha256": "3f1482bbb6b9e213192a7cf19e9b62ff70965860c8c9b33b3ebb5688728e830b"
+    },
+    {
+      "path": "docs/audits/2026-10-04-next-steps.md",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fcee14338f11db994fa501b00d5fdcdbe4a1ae8269a7860239c34dd55bf81b59",
+      "integratedSha256": "fcee14338f11db994fa501b00d5fdcdbe4a1ae8269a7860239c34dd55bf81b59"
+    },
+    {
+      "path": "docs/audits/2026-10-04-security-coverage.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fd537733abc5ea405bd439f783127afbed893de23caccf30eb3aa883e31922d3",
+      "integratedSha256": "fd537733abc5ea405bd439f783127afbed893de23caccf30eb3aa883e31922d3"
+    },
+    {
+      "path": "docs/audits/2026-10-04-security-findings.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "34059cfdf9d1f75bdfbdaecdc6f288f0c1d90d305a1c04a2b0c4d416753e6894",
+      "integratedSha256": "34059cfdf9d1f75bdfbdaecdc6f288f0c1d90d305a1c04a2b0c4d416753e6894"
+    },
+    {
+      "path": "docs/audits/2026-10-04-security-manifest.json",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "e197f92263234041e0734671591608d4092c7b031062affe32e3d5036372404c",
+      "integratedSha256": "e197f92263234041e0734671591608d4092c7b031062affe32e3d5036372404c"
+    },
+    {
+      "path": "docs/audits/2026-10-04-security-report.md",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "7f7f0f93dc807fd3d0e4b25b35794cc55ea9af8d1af59d1d6123e1494fc7dcc0",
+      "integratedSha256": "7f7f0f93dc807fd3d0e4b25b35794cc55ea9af8d1af59d1d6123e1494fc7dcc0"
+    },
+    {
+      "path": "docs/mockup-screenshots/external-review.png",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "2bb23516a488eb941961ef6f338101638091bc9a3247dac9b02c9067b5d81626",
+      "integratedSha256": "2bb23516a488eb941961ef6f338101638091bc9a3247dac9b02c9067b5d81626"
+    },
+    {
+      "path": "docs/mockup-screenshots/request-review.png",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "2fed960fbc9af7f04d011bc386d48f09b761fdc84d25eb70e236ae8e9ad1fe19",
+      "integratedSha256": "2fed960fbc9af7f04d011bc386d48f09b761fdc84d25eb70e236ae8e9ad1fe19"
+    },
+    {
+      "path": "docs/mockup-screenshots/review-detail.png",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0951ae3f54d53c0a274ec9e89037cdb576bac02951f1dbcae563c98c6d5ab8d9",
+      "integratedSha256": "0951ae3f54d53c0a274ec9e89037cdb576bac02951f1dbcae563c98c6d5ab8d9"
+    },
+    {
+      "path": "docs/mockup-screenshots/workspace.png",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "795120db603c5cb159bc39c9ef0db91b0b26046d0b4e98212efc86073c56e899",
+      "integratedSha256": "795120db603c5cb159bc39c9ef0db91b0b26046d0b4e98212efc86073c56e899"
+    },
+    {
+      "path": "docs/review-assets-consolidation-mockups.html",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "722e13d0d0c288360b713e6262cee618465e23b25d85c8a2fc006acf19621067",
+      "integratedSha256": "722e13d0d0c288360b713e6262cee618465e23b25d85c8a2fc006acf19621067"
+    },
+    {
+      "path": "docs/review-portal-assets-consolidation-plan.md",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "f1148b523f536f0711e53259f328ec6c7c29616e17ee89ec8b567f718ec0bbe0",
+      "integratedSha256": "f1148b523f536f0711e53259f328ec6c7c29616e17ee89ec8b567f718ec0bbe0"
+    },
+    {
+      "path": "scripts/check-status.test.mjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ff68a7fb584e6c117be11e555adfb105e1ecaf647819e3628be9dfe105774e7c",
+      "integratedSha256": "ff68a7fb584e6c117be11e555adfb105e1ecaf647819e3628be9dfe105774e7c"
+    },
+    {
+      "path": "scripts/evidence-status.test.mjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ef82e4e64fbcab25bba82e55aea7bc3190446e37bc9fa20c2c11a8b42bd20ad4",
+      "integratedSha256": "ef82e4e64fbcab25bba82e55aea7bc3190446e37bc9fa20c2c11a8b42bd20ad4"
+    },
+    {
+      "path": "scripts/runtime-config-parser.mjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8cbe31bc9edfcedea25a0bc61eda657d5d8590fd62621f1c2c083532170d73ae",
+      "integratedSha256": "8cbe31bc9edfcedea25a0bc61eda657d5d8590fd62621f1c2c083532170d73ae"
+    },
+    {
+      "path": "scripts/runtime-config-parser.test.mjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "acfda666868ed0d84687b23cc604542fd0df2df456b513c88a17b76a0cbde011",
+      "integratedSha256": "acfda666868ed0d84687b23cc604542fd0df2df456b513c88a17b76a0cbde011"
+    },
+    {
+      "path": "scripts/test-target.cjs",
+      "originalStatus": "??",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "8eb820bb7cf8373d3a9bdc9af2e6bf1d94da772e610a24272ac8de3c9605b84d",
+      "integratedSha256": "097c26a85c005781932c451fee5c6b7e5f434e7e1a03dafb4fda357ad474d160"
+    },
+    {
+      "path": "scripts/test-target.test.cjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "213520826e9a0e70f7a8156a617ff744bacaef21194cd33bf7285e15f2d21753",
+      "integratedSha256": "213520826e9a0e70f7a8156a617ff744bacaef21194cd33bf7285e15f2d21753"
+    },
+    {
+      "path": "scripts/verify-payment-upgrade.cjs",
+      "originalStatus": "??",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "a0cb3dc57bcfe9f66645332eae633523681710f7c1d89ad8b3c9ea7d1bae63fd",
+      "integratedSha256": "71dec1833fee65456bb8f65dde3f716620eda3160bcc9604b6d03335ca6982bc"
+    },
+    {
+      "path": "scripts/waiting-room-redis.test.cjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "14f0ac3f1f5972c4ee1e20c4f9b9412aee06a06e3c5da1838dcf3c01d6033db7",
+      "integratedSha256": "14f0ac3f1f5972c4ee1e20c4f9b9412aee06a06e3c5da1838dcf3c01d6033db7"
+    },
+    {
+      "path": "tdash/nginx.security-headers.conf",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fa15df3373758302457e57c43ff35d8c1b86225b4e957a8624d1df7988fdc3aa",
+      "integratedSha256": "fa15df3373758302457e57c43ff35d8c1b86225b4e957a8624d1df7988fdc3aa"
+    },
+    {
+      "path": "tdash/src/features/AcceptInvitationView.jsx",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "19ebf6fee4516304d2d6201216450c7713e81878d87d8a705dabbe15a3dfbbe6",
+      "integratedSha256": "19ebf6fee4516304d2d6201216450c7713e81878d87d8a705dabbe15a3dfbbe6"
+    },
+    {
+      "path": "tdash/src/lib/eventTime.js",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3a897e6ce4b81bfa6e3680f3f6292ed6d6df33d5f0296ba646209b40b2b255c7",
+      "integratedSha256": "3a897e6ce4b81bfa6e3680f3f6292ed6d6df33d5f0296ba646209b40b2b255c7"
+    },
+    {
+      "path": "tdash/src/lib/ordersCsv.js",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "be24c448e061fe22df8183002dd141ec79f9d08f4864d2e64d54f3b60d683871",
+      "integratedSha256": "be24c448e061fe22df8183002dd141ec79f9d08f4864d2e64d54f3b60d683871"
+    },
+    {
+      "path": "tdash/src/pages/WalletPage.jsx",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "7552926ebff96af3a9d8e7b7ecf13b94127a2a927021c19c330aaea3191ffb29",
+      "integratedSha256": "7552926ebff96af3a9d8e7b7ecf13b94127a2a927021c19c330aaea3191ffb29"
+    },
+    {
+      "path": "tdash/src/test/AcceptInvitationView.test.jsx",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "eb36529219db531c63aa7a19fa5c4707a6dc30bd6ac2074828b99e9748b044ec",
+      "integratedSha256": "eb36529219db531c63aa7a19fa5c4707a6dc30bd6ac2074828b99e9748b044ec"
+    },
+    {
+      "path": "tdash/src/test/EventStudio.test.jsx",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9a3d5099477084cb69b5c3183491e2d3ae061249e243742d5fe3b762b9092453",
+      "integratedSha256": "9a3d5099477084cb69b5c3183491e2d3ae061249e243742d5fe3b762b9092453"
+    },
+    {
+      "path": "tdash/src/test/OperationalPages.test.jsx",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "489e133ce30437792acf9f251c0071b8edc6a9b51e68550c333b4f67bf79f9e8",
+      "integratedSha256": "489e133ce30437792acf9f251c0071b8edc6a9b51e68550c333b4f67bf79f9e8"
+    },
+    {
+      "path": "tdash/src/test/WalletPage.test.jsx",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5d6236041d61db7851b96d966837caa1e5698e0446cd0a0d47b435fb2f7465e7",
+      "integratedSha256": "5d6236041d61db7851b96d966837caa1e5698e0446cd0a0d47b435fb2f7465e7"
+    },
+    {
+      "path": "tdash/src/test/api-session-races.test.js",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8aa8b441bdd2cd79e1ad6938295dd6c793ba2626b1d9013e08f5f69228c8a07a",
+      "integratedSha256": "8aa8b441bdd2cd79e1ad6938295dd6c793ba2626b1d9013e08f5f69228c8a07a"
+    },
+    {
+      "path": "tdash/src/test/eventTime.test.js",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "2a802b7346edc06078df10a047e513fa7a810bec02033f34fddf7af2e8222285",
+      "integratedSha256": "2a802b7346edc06078df10a047e513fa7a810bec02033f34fddf7af2e8222285"
+    },
+    {
+      "path": "tdash/tailwind-compat.config.js",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b7e7ff0dcebe391569851df646bba40a142cdd59320a6962efce2bf7a50faa22",
+      "integratedSha256": "b7e7ff0dcebe391569851df646bba40a142cdd59320a6962efce2bf7a50faa22"
+    },
+    {
+      "path": "tixmoapi2/.dockerignore",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "01e4138325a073bbeeb7b27780869a87166c38ba0e7c81bce3edb74e06137aa2",
+      "integratedSha256": "01e4138325a073bbeeb7b27780869a87166c38ba0e7c81bce3edb74e06137aa2"
+    },
+    {
+      "path": "tixmoapi2/Dockerfile",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a39946fb7dcd4206f86533ff483f5bfc3dd75669225c5337e8651f4bd778b778",
+      "integratedSha256": "a39946fb7dcd4206f86533ff483f5bfc3dd75669225c5337e8651f4bd778b778"
+    },
+    {
+      "path": "tixmoapi2/prisma/bootstrap-owner.js",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b4239ec74fe4407a70a6aaafcbee556bf94d62cd087f7ae0fbba186079887279",
+      "integratedSha256": "b4239ec74fe4407a70a6aaafcbee556bf94d62cd087f7ae0fbba186079887279"
+    },
+    {
+      "path": "tixmoapi2/prisma/migrations/20261004234000_account_revocation_and_invitations/migration.sql",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "0b73ff0904ab885353b8ebd9453361ed91c2214155f5f7107de1bf9f1440f63e",
+      "integratedSha256": "0b73ff0904ab885353b8ebd9453361ed91c2214155f5f7107de1bf9f1440f63e"
+    },
+    {
+      "path": "tixmoapi2/prisma/migrations/20261005003000_payment_and_inventory_integrity/migration.sql",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "91dee0ccd83186b62a860fe7da56a8bcbb498d2b42b4399cdd5c2badf86e497b",
+      "integratedSha256": "91dee0ccd83186b62a860fe7da56a8bcbb498d2b42b4399cdd5c2badf86e497b"
+    },
+    {
+      "path": "tixmoapi2/prisma/migrations/20261005052000_durable_approval_reminders/migration.sql",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5d5bd835763f733692376bc1ad878b265a0cac53e9123cfac80748f22550d2c2",
+      "integratedSha256": "5d5bd835763f733692376bc1ad878b265a0cac53e9123cfac80748f22550d2c2"
+    },
+    {
+      "path": "tixmoapi2/prisma/migrations/20261005134000_ticket_inventory_reconciliation_audit/migration.sql",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "4bef52aecd74925ce4258006e2b39bfa46dde9827885cf02b4035ca109461b43",
+      "integratedSha256": "4bef52aecd74925ce4258006e2b39bfa46dde9827885cf02b4035ca109461b43"
+    },
+    {
+      "path": "tixmoapi2/prisma/reconcile-approval-reminders.js",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "fbcf664a62faf2fd6d9b324bf0dcc012a95e9beafa30c32b2891573fb39c0c3b",
+      "integratedSha256": "fbcf664a62faf2fd6d9b324bf0dcc012a95e9beafa30c32b2891573fb39c0c3b"
+    },
+    {
+      "path": "tixmoapi2/prisma/reconcile-ticket-inventory.js",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "94ceae5f0a4c2010944eec4b6d9507d4d0d2c447df7cb20ab50fd5ab6888e592",
+      "integratedSha256": "94ceae5f0a4c2010944eec4b6d9507d4d0d2c447df7cb20ab50fd5ab6888e592"
+    },
+    {
+      "path": "tixmoapi2/prisma/rotate-account-credentials.js",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8fbb4f704f251ec0bd489dd3ff22518192efb5a1368dcb811ca8c3657fe4b16c",
+      "integratedSha256": "8fbb4f704f251ec0bd489dd3ff22518192efb5a1368dcb811ca8c3657fe4b16c"
+    },
+    {
+      "path": "tixmoapi2/prisma/utils/development-client.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "26e5ecf5f411e0e8f9f31bf60f7b31ba18b98d724d301d1207af173eb4d1b462",
+      "integratedSha256": "26e5ecf5f411e0e8f9f31bf60f7b31ba18b98d724d301d1207af173eb4d1b462"
+    },
+    {
+      "path": "tixmoapi2/railway.toml",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5286e593eb2963a228e070d5ea35533f5b24ab4ce24a0cb83482d8a26afa1831",
+      "integratedSha256": "5286e593eb2963a228e070d5ea35533f5b24ab4ce24a0cb83482d8a26afa1831"
+    },
+    {
+      "path": "tixmoapi2/scripts/build.cjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "8ecf35102a79658bf78563cfc50e496cb423d393c13eef563e8621f47c06c33c",
+      "integratedSha256": "8ecf35102a79658bf78563cfc50e496cb423d393c13eef563e8621f47c06c33c"
+    },
+    {
+      "path": "tixmoapi2/scripts/development-target.test.cjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "37abd6a4e91955c1dde6f656095f8cfa0544f623040ab8490ad1e12edda24ca7",
+      "integratedSha256": "37abd6a4e91955c1dde6f656095f8cfa0544f623040ab8490ad1e12edda24ca7"
+    },
+    {
+      "path": "tixmoapi2/scripts/local-migrate.cjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "b48b609a1e1e4b1d2d7b10adbfcbf64c2471ea9a28ad550097f8a121a29785f6",
+      "integratedSha256": "b48b609a1e1e4b1d2d7b10adbfcbf64c2471ea9a28ad550097f8a121a29785f6"
+    },
+    {
+      "path": "tixmoapi2/scripts/tooling.test.cjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "4f29a6629377d6ba9f2e047f28e0140fabe7a89fe550448e53dc3c7f6f8fca1a",
+      "integratedSha256": "4f29a6629377d6ba9f2e047f28e0140fabe7a89fe550448e53dc3c7f6f8fca1a"
+    },
+    {
+      "path": "tixmoapi2/scripts/watch.cjs",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "f7e041be387fd6c44ce01c0ad7074c7a84c1afe17d370537d3576c5790c5bc9d",
+      "integratedSha256": "f7e041be387fd6c44ce01c0ad7074c7a84c1afe17d370537d3576c5790c5bc9d"
+    },
+    {
+      "path": "tixmoapi2/src/api/events/configuration.service.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5121c52af6d1c58b72665b11d0ad00e5878fbdf6637ee4638800a2a5320566ab",
+      "integratedSha256": "5121c52af6d1c58b72665b11d0ad00e5878fbdf6637ee4638800a2a5320566ab"
+    },
+    {
+      "path": "tixmoapi2/src/jobs/payment-recovery.job.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "38a83956079beb0dc635cb3eb298985eb74c2243cab96ea650ca99ecc39e7b38",
+      "integratedSha256": "38a83956079beb0dc635cb3eb298985eb74c2243cab96ea650ca99ecc39e7b38"
+    },
+    {
+      "path": "tixmoapi2/src/services/email-delivery.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "05ded0ec3612de22a8af2c98437fda93546130a0bf732430544dcb764977ff32",
+      "integratedSha256": "05ded0ec3612de22a8af2c98437fda93546130a0bf732430544dcb764977ff32"
+    },
+    {
+      "path": "tixmoapi2/src/services/order-inventory.service.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5eee18c0d87317de7d177f0c8cc4f6fbdf7baae01ea447cc0233b2b47a9ba2db",
+      "integratedSha256": "5eee18c0d87317de7d177f0c8cc4f6fbdf7baae01ea447cc0233b2b47a9ba2db"
+    },
+    {
+      "path": "tixmoapi2/src/services/paid-sales-query.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "5b2883228e4e49dc1fee2c7264eb5625a96e1cd8f713be122dceac2f05ebe46c",
+      "integratedSha256": "5b2883228e4e49dc1fee2c7264eb5625a96e1cd8f713be122dceac2f05ebe46c"
+    },
+    {
+      "path": "tixmoapi2/src/services/readiness.service.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a97264fe28258770c444d4675aa88b26df5274433df3d16422922e11d137cd92",
+      "integratedSha256": "a97264fe28258770c444d4675aa88b26df5274433df3d16422922e11d137cd92"
+    },
+    {
+      "path": "tixmoapi2/src/services/staged-upload-storage.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "68e2e2408c3d8005d7966dfcda2a3cd40147a9296973a4554fd5213a4d0dece0",
+      "integratedSha256": "68e2e2408c3d8005d7966dfcda2a3cd40147a9296973a4554fd5213a4d0dece0"
+    },
+    {
+      "path": "tixmoapi2/src/services/ticket-admission.service.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "aa8a076cb468512c10f5e7fbfce0e2dcf34d507bf775413eb871376e75d00be3",
+      "integratedSha256": "aa8a076cb468512c10f5e7fbfce0e2dcf34d507bf775413eb871376e75d00be3"
+    },
+    {
+      "path": "tixmoapi2/src/utils/accountSession.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a51fc2188f490ca35f3f01cd1635e1da3a8f0f07f3a4ee822c908d13d207c67d",
+      "integratedSha256": "a51fc2188f490ca35f3f01cd1635e1da3a8f0f07f3a4ee822c908d13d207c67d"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/account-security.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "19e1fc46342951333129c2ca1e041aeccad5bbe9188f913bedf6f954a2f1446a",
+      "integratedSha256": "19e1fc46342951333129c2ca1e041aeccad5bbe9188f913bedf6f954a2f1446a"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/approval-reminders.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "671822b8f94e03a1cef09f5e38ee45fb85ceb75b32bef8a74225d6acc8fc7337",
+      "integratedSha256": "671822b8f94e03a1cef09f5e38ee45fb85ceb75b32bef8a74225d6acc8fc7337"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/bootstrap-owner.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "611fc38feb6463919773c27368955e5789d911e82104eaa636eb4fa438a37eb3",
+      "integratedSha256": "611fc38feb6463919773c27368955e5789d911e82104eaa636eb4fa438a37eb3"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/event-configuration.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "ff7b6979698d731c6bc7d64f23e4fa867f20341b93eaa76071de0933455894be",
+      "integratedSha256": "ff7b6979698d731c6bc7d64f23e4fa867f20341b93eaa76071de0933455894be"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/inventory-reconciliation.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "f107b7d3bbc9387940bdb58d9c73542623fe2aa4358ebdf82187ee95ebb7db83",
+      "integratedSha256": "f107b7d3bbc9387940bdb58d9c73542623fe2aa4358ebdf82187ee95ebb7db83"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/operational-data.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "bcefe4df8efc7bc1a08dee5a2fab5b00ec0080921c124ae7364d054316df1a26",
+      "integratedSha256": "bcefe4df8efc7bc1a08dee5a2fab5b00ec0080921c124ae7364d054316df1a26"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/payment-inventory-integrity.test.ts",
+      "originalStatus": "??",
+      "resolution": "integrated_then_reconciled",
+      "originalSha256": "bdb0af7f666dd6e1cfa1210c9fefedbf6dc63fc19b04219cb89659bdf5025bd1",
+      "integratedSha256": "3b1b89c4db0629d17638acf210f0a1e2117765676933a23dd201a789c203136c"
+    },
+    {
+      "path": "tixmoapi2/tests/integration/report-data.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "78e040961074630eee63dfd68c72166dc540c8490614bc6cdcead7acf26b7464",
+      "integratedSha256": "78e040961074630eee63dfd68c72166dc540c8490614bc6cdcead7acf26b7464"
+    },
+    {
+      "path": "tixmoapi2/tests/migrations/payment-inventory-upgrade-fixture.sql",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "20d9b29c9859e820fbc3b25a02df7694504a5614db8f055e30047a29e310b798",
+      "integratedSha256": "20d9b29c9859e820fbc3b25a02df7694504a5614db8f055e30047a29e310b798"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/approval-reminder.job.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "a23c88b09fabee3bd19cfb3d8b0bb6e4ec49c743b275d5bda03cc780e905864a",
+      "integratedSha256": "a23c88b09fabee3bd19cfb3d8b0bb6e4ec49c743b275d5bda03cc780e905864a"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/email-transport.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "c342fc9cec6fbddc4dc28c1f6c704baa2e4b1135d5a166bf44e236b08bfc9b9c",
+      "integratedSha256": "c342fc9cec6fbddc4dc28c1f6c704baa2e4b1135d5a166bf44e236b08bfc9b9c"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/multipart-abort-cleanup.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "9afa24ee6b4a470050a64aa61eff36d27b1a8ed19005f123ecd202eb2f864092",
+      "integratedSha256": "9afa24ee6b4a470050a64aa61eff36d27b1a8ed19005f123ecd202eb2f864092"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/multipart-field-limit.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "772243858306b7a6c98dc36bb2bb0aae3c589e88fe134615d260264ee31c449f",
+      "integratedSha256": "772243858306b7a6c98dc36bb2bb0aae3c589e88fe134615d260264ee31c449f"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/postmark-delivery.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "f6b6e4c800c3af8d2e2c9b7fa5a4d18bdd580c7d828d59b6241026c03405d90b",
+      "integratedSha256": "f6b6e4c800c3af8d2e2c9b7fa5a4d18bdd580c7d828d59b6241026c03405d90b"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/readiness.service.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "67cb209417eb59ad7dcff4dd023251493d01ade06321cd24fbf23e4033b353c9",
+      "integratedSha256": "67cb209417eb59ad7dcff4dd023251493d01ade06321cd24fbf23e4033b353c9"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/s3.config.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "08ac1f3ffbf5b3623ca7866f39cff48ed8b986ec11bedf2d558d1a56880f2f60",
+      "integratedSha256": "08ac1f3ffbf5b3623ca7866f39cff48ed8b986ec11bedf2d558d1a56880f2f60"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/supertest-loopback.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3e9d8ad2c5a017216402fefe06b2f33221dfdf684a0145067a6065586d892949",
+      "integratedSha256": "3e9d8ad2c5a017216402fefe06b2f33221dfdf684a0145067a6065586d892949"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/upload-cleanup.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "d0526dd4a3ae9de8f2629cdadd8f51c94c0fd822a042b893d62d38e15a2f9694",
+      "integratedSha256": "d0526dd4a3ae9de8f2629cdadd8f51c94c0fd822a042b893d62d38e15a2f9694"
+    },
+    {
+      "path": "tixmoapi2/tests/unit/upload-metadata.test.ts",
+      "originalStatus": "??",
+      "resolution": "already_integrated_exactly",
+      "originalSha256": "3b54f79dab402f4b88b822092a7f400aab796e895ad021543bdb02fdba2780c8",
+      "integratedSha256": "3b54f79dab402f4b88b822092a7f400aab796e895ad021543bdb02fdba2780c8"
+    }
+  ]
+}
