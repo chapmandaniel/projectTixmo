@@ -1,0 +1,25 @@
+initial-runtime.log PG/Redis stopped, postmaster/socket/profile absent 2698836 2698867 /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r2/run.CjsPqz
+runtime.log PG/Redis stopped, postmaster/socket/profile absent 2701926 2701939 /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r2/run.eOLqKX
+identifier-overlap-runtime.log PG/Redis stopped, postmaster/socket/profile absent 2700829 2700842 /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r2/run.KvFzL2
+typecheck-runtime.log PG/Redis stopped, postmaster/socket/profile absent 2700175 2700188 /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r2/run.BU75oW
+API PID absent 2702040 34029
+API PID absent 2700942 43451
+API PID absent 2698958 41495
+docs/team/evidence/task-294-r2/identifier-overlap-browser/cleanup.json browser PID absent 2701251 profile removed
+docs/team/evidence/task-294-r2/initial-browser/cleanup.json browser PID absent 2699311 profile removed
+docs/team/evidence/task-294-r2/browser/cleanup.json browser PID absent 2702388 profile removed
+No listener 37015
+No listener 54874
+No listener 31239
+No listener 42054
+No listener 33443
+No listener 54524
+No listener 36818
+No listener 52987
+No listener 34029
+No listener 43451
+No listener 41495
+No listener 36805
+No listener 37893
+No listener 37803
+Browser-harness child exit awaited by Jest (0 final), frontend closed by harness; deps symlinks removed after runtime.

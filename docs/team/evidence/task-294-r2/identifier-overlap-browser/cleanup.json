@@ -1,0 +1,13 @@
+{
+  "browser": {
+    "pid": 2701251,
+    "stopped": true,
+    "exitCode": 143,
+    "signalCode": null
+  },
+  "listener": {
+    "port": 36805,
+    "closed": true
+  },
+  "profileRemoved": true
+}

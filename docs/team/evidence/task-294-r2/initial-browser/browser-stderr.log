@@ -1,0 +1,13 @@
+[1021/033519.930607:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+
+DevTools listening on ws://127.0.0.1:37713/devtools/browser/38083b37-3c35-4c26-a853-cbc65ed2e54a
+[1021/033519.942443:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type:
+[1021/033519.942532:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/033519.946118:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type:
+[1021/033519.949997:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+[1021/033520.066550:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/033520.066737:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type:
+[1021/033520.825682:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:37893/@vite/client (789)
+[1021/033520.847142:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:37893/@vite/client (912)
+[1021/033521.439715:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:37893/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=388ce96d (21609)
+[1021/033521.598838:INFO:CONSOLE:157] "Error: Failed to load Stripe.js", source: http://127.0.0.1:37893/node_modules/.vite/deps/@stripe_stripe-js.js?v=b5b51653 (157)

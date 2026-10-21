@@ -1,0 +1,55 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r2/run.CjsPqz/jest-cache --runInBand --runTestsByPath tests/integration/wallet-auth-browser.local.test.ts
+
+  console.log
+    TASK294_REDIS_CLIENT 1
+
+      at Object.<anonymous> (tests/integration/wallet-auth-browser.local.test.ts:23:11)
+
+  console.log
+    TASK294_API_LISTENER 2698958 { address: '127.0.0.1', family: 'IPv4', port: 41495 }
+
+      at Object.<anonymous> (tests/integration/wallet-auth-browser.local.test.ts:27:11)
+
+TASK294_BROWSER_CLEANUP {
+  browser: { pid: 2699311, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 37893, closed: true },
+  profileRemoved: true
+}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+Error: Timed out: real A wallet
+    at wait (file:///home/daniel/projects/projectTixmo/worktrees/task-294/scripts/browser/task-294-real-wallet.mjs:27:165)
+    at async file:///home/daniel/projects/projectTixmo/worktrees/task-294/scripts/browser/task-294-real-wallet.mjs:59:2
+
+Node.js v24.21.0
+  console.log
+    TASK294_API_CLOSED
+
+      at Object.<anonymous> (tests/integration/wallet-auth-browser.local.test.ts:19:11)
+
+FAIL tests/integration/wallet-auth-browser.local.test.ts (26.097 s)
+  ✕ HTTP password login A wallet/QR, B isolation, session revocation and re-login are read-only (19774 ms)
+
+  ● HTTP password login A wallet/QR, B isolation, session revocation and re-login are read-only
+
+    Browser exit 1
+
+      59 |     const child=spawn(process.execPath,[path.resolve(__dirname,'../../../scripts/browser/task-294-real-wallet.mjs')],{stdio:['ignore','inherit','inherit','ipc'], env:{ HOME:'/home/daniel',PATH:process.env.PATH!,NODE_ENV:'test',TIXMO_BROWSER_PATH:'/home/daniel/projects/projectTixmo/worktrees/task-288/scripts/runtime/task-288-chromium',TASK294_RUN:process.env.TMPDIR!,TASK294_API_ORIGIN:`http://127.0.0.1:${port}`,TASK294_FIXTURE:JSON.stringify({a:a.email,b:b.email,password,orderNumber:order.orderNumber})}});
+      60 |     child.on('message',async (m:any)=>{if(m.revoke){try{await prisma.user.update({where:{id:a.id},data:{sessionVersion:{increment:1}}});child.send({ok:true});}catch(e){child.send({ok:false,error:String(e)});}}});
+    > 61 |     child.on('error',reject);child.on('exit',(code)=>code===0?resolve():reject(Error(`Browser exit ${code}`)));
+         |                                                                                ^
+      62 |   });
+      63 |   expect(await state()).toEqual(before);
+      64 |   for (const result of (Stripe as unknown as jest.Mock).mock.results) {
+
+      at ChildProcess.<anonymous> (tests/integration/wallet-auth-browser.local.test.ts:61:80)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        26.335 s
+Ran all test suites within paths "tests/integration/wallet-auth-browser.local.test.ts".

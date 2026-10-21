@@ -1,0 +1,21 @@
+{
+  "error": "Error: Timed out: real A wallet\n    at wait (file:///home/daniel/projects/projectTixmo/worktrees/task-294/scripts/browser/task-294-real-wallet.mjs:27:165)\n    at async file:///home/daniel/projects/projectTixmo/worktrees/task-294/scripts/browser/task-294-real-wallet.mjs:59:2",
+  "audit": [
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login"
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 500
+    }
+  ],
+  "failures": [],
+  "body": "\n    My ticketsSign in to view tickets, payment status, and refunds.New buyerSign inInternal Server ErrorSign in for checkoutTixmo\n    \n    \n\n\n\n"
+}

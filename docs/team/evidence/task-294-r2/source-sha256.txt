@@ -1,0 +1,4 @@
+0d519f0a92d9962c627c742af4199cde4888adb16a8c88467af1531f51c41145  scripts/browser/task-294-real-wallet.mjs
+9c083f76467177b8e7eefacc7041e10fa87c49d0d67d8ec1b791e8404978d57e  scripts/browser/task-294-support.mjs
+04bf07ecf48890ddecdc004052291048b130f009ffb687e47b11ff77e8d9dccf  tixmoapi2/tests/integration/wallet-auth-browser.local.test.ts
+d2d40e2f9eb296e05c5e786ff15c35f73a1e1433486f08fcd4ddadc921a4db4c  docs/team/evidence/task-294-r2/runtime.sh

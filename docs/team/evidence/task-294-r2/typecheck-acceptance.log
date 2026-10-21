@@ -1,0 +1,17 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r2/run.BU75oW/jest-cache --runInBand --runTestsByPath tests/integration/wallet-auth-browser.local.test.ts
+
+FAIL tests/integration/wallet-auth-browser.local.test.ts
+  ● Test suite failed to run
+
+    [96mtests/integration/wallet-auth-browser.local.test.ts[0m:[93m31[0m:[93m10[0m - [91merror[0m[90m TS2540: [0mCannot assign to 'clientUrl' because it is a read-only property.
+
+    [7m31[0m   config.clientUrl=`http://127.0.0.1:${frontendPort}`;
+    [7m  [0m [91m         ~~~~~~~~~[0m
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        5.991 s
+Ran all test suites within paths "tests/integration/wallet-auth-browser.local.test.ts".
