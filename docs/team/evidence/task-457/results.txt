@@ -1,0 +1,27 @@
+PASS 1 caller command/args/environment and imported-step mutations pinned stage 2
+PASS 2 caller command/args/environment and imported-step mutations pinned stage 3
+PASS 3 caller command/args/environment and imported-step mutations pinned stage 4
+PASS 4 caller command/args/environment and imported-step mutations pinned stage 5
+PASS 5 caller command/args/environment and imported-step mutations pinned stage 6
+PASS 6 caller command/args/environment and imported-step mutations pinned stage 7
+PASS 7 caller command/args/environment and imported-step mutations pinned stage 8
+PASS 8 caller command/args/environment and imported-step mutations pinned stage 9
+PASS 9 caller command/args/environment and imported-step mutations pinned stage 10
+PASS 10 caller command/args/environment and imported-step mutations pinned stage 11
+PASS 11 cleanup once and postclose denial
+PASS 12 failfast position 0
+PASS 13 failfast position 1
+PASS 14 failfast position 2
+PASS 15 failfast position 3
+PASS 16 failfast position 4
+PASS 17 failfast position 5
+PASS 18 failfast position 6
+PASS 19 failfast position 7
+PASS 20 failfast position 8
+PASS 21 failfast position 9
+PASS 22 zerochild denial before
+PASS 23 zerochild denial after
+PASS 24 zerochild denial authority
+PASS 25 active close/run race denied
+PASS 26 default12 unchanged
+TOTAL 26 independent checks PASS
