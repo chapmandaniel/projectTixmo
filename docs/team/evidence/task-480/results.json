@@ -1,0 +1,24 @@
+{
+  "candidate": "0081e61462ac7e18b1c82d8c1ac0a538d4df3bcb",
+  "base": "fc1c24dac2ce2fd5b0eb9a8d3df5f15b9f7486e3",
+  "changed": [
+    "docs/team/evidence/task-432/native-feasibility.md",
+    "docs/team/evidence/task-432/retained-shell.md"
+  ],
+  "command": [
+    "/usr/bin/timeout",
+    "--signal=TERM",
+    "--kill-after=1s",
+    "3s",
+    "/usr/bin/unshare",
+    "--user",
+    "--map-root-user",
+    "--net",
+    "--",
+    "/usr/bin/true"
+  ],
+  "exit": 1,
+  "stdout": "",
+  "stderr": "unshare: write failed /proc/self/uid_map: Operation not permitted\n",
+  "elapsedMs": 4.8848658334463835
+}
