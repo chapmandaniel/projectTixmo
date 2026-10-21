@@ -1,0 +1,46 @@
+{
+  "observedAt": "2026-10-21T15:53:42.502060+00:00",
+  "reviewedEvidence": "9439ebc46e357c5df4dad592ce45d692c62fdff3",
+  "product": "fcab880ea7caf50493439a21032b7a93effc438f",
+  "sourceManifest602MatchesCandidateReviewAndActual": true,
+  "independentCopiedDependenciesAndGeneratedClientHashesVerified": true,
+  "rawJestCounts": {
+    "numTotalTests": 830,
+    "numPassedTests": 804,
+    "numFailedTests": 0,
+    "numPendingTests": 26,
+    "numTotalTestSuites": 110,
+    "numPassedTestSuites": 100,
+    "numFailedTestSuites": 0,
+    "numPendingTestSuites": 10
+  },
+  "rawSuiteAndAssertionCountsRecomputed": true,
+  "unfilteredCommandStatuses": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "httpStatusCounts": {
+    "read200": 100,
+    "order201": 100
+  },
+  "currentRuntimeIdentityAndMeasurementMatch": true,
+  "ownedPidAbsent": {
+    "3435925": true,
+    "3435938": true,
+    "3436596": true,
+    "3435976": true,
+    "3435977": true
+  },
+  "ownedListeners": "",
+  "runtimeMode": "0700",
+  "runtimeSocketAndPostmasterAbsent": true,
+  "unrelatedServicePidsPresent": [
+    7071,
+    7502,
+    7194,
+    7620
+  ],
+  "noBlockedNetworkLog": true
+}
