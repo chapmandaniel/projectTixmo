@@ -183,3 +183,52 @@ OPEN and enforce terminal runtime refusal. Original qualification assertions
 unchanged. No app/Jest/services/DBRedisHTTP/network/install/generation/config/
 scheduler/cloud/spend/push/merge/deploy/runtime grant.448/426 remain OPEN;
 fresh independent exactcommit QA+lead required.
+
+## Bounded callback checkpoint (source/offline, NOT runtime admission)
+
+NEW isolated task-448-bounded-callbacks / tixmo/task-448-bounded-callbacks,
+exact base b181da31c0a1358d2e43af3bce2e125c21e5a76a. Actual independent
+QA462 25ea1cbc and lead463 ceccd993 reports read. Existing process-cleanup
+helper and Node builtins reused; no new orchestrator or dependencies.
+
+finish now validates timeoutMs/graceMs/teardownMs/evidenceMs as finite integers
+1..60000 before consuming authority. Callback types validated likewise.
+Teardown and evidence waiting each default1000ms; timers remain referenced
+so an otherwise idle process reaches the deadline, and are cleared on every
+completion. Atomic authority consumption and process-first reaping unchanged.
+Primary result/stderr remain unchanged; cleanupError and evidenceError remain
+separate. teardownStatus/evidenceStatus distinguish completed/failed/not-started
+from timed-out-pending-late-effects-possible. A teardown timeout rejects with
+its report after attempting independently bounded evidence; an evidence timeout
+returns the original result with secondary evidenceError. Existing exit mapper
+preserves primary47 despite both failures and maps success+evidence timeout1.
+The evidence callback sees evidenceStatus pending while writing; its completed
+status is only known afterward, not a claim of durable receipt completion.
+
+Actual commands: node runner-probes.cjs (task426 path) exit0, twice (second
+run after adding overlap+exitmapper assertions); shell-probes.cjs exit0 once;
+node --check process-cleanup.cjs and runner-probes.cjs, git diff --check exit0.
+New real owned direct children exit47/stderr and0 are closed/reaped before
+callbacks. Pending teardown times out40ms with original47, separate evidence
+failure and pending-late-effects status; concurrent/reentrant/sequential calls
+are denied and callbacks once. A late teardown rejection is observed without
+unhandled rejection. Never-settling evidence times out40ms despite no other
+owned live subprocess/handle, returns original0+secondary error. Both callers
+finish within1500ms.28 invalid timer mutations deny without consuming authority.
+Existing two-process cooperative timeout/reap-before-teardown, foreignPID
+no-signal, ENOENT8field JSON+ENOSPC, held callback overlap and both callback
+reentrancy, exit42/stderr, numeric ports, shell/preflight refusals all PASS.
+Expected injected errors and inherited stderr remain visible. All subprocesses
+reaped. No original qualification assertions modified; only these three files.
+
+These deadlines bound ASYNCHRONOUS WAITING, not synchronous callback execution
+or event-loop starvation. They cannot cancel arbitrary callback side effects:
+late teardown/evidence effects may occur and timed-out callbacks may retain
+resources. No claim that teardown completed, services stopped or receipt was
+written on timeout. Such cancellation/containment remains a runtime prerequisite.
+Shell terminal refusal unchanged. Full escapedtree containment/adoption/reaping,
+immutable dependencies/source TOCTOU, observer/service identities and admitted
+integration remain OPEN.448/426 remain OPEN; fresh independent exactSHA QA and
+lead mandatory, no author approval/closure. No app/Jest/services/DBRedisHTTP/
+network/install/generation/config/scheduler/cloud/provider/production/spend/
+push/merge/deploy/runtimegrant. Commit invocation-local identity/hooks only.

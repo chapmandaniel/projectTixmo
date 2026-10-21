@@ -2,6 +2,7 @@
 const assert = require('node:assert/strict');
 const {spawn} = require('node:child_process');
 const {launch,finish} = require('./process-cleanup.cjs');
+const {status} = require('./exit-status.cjs');
 const {verify,validatePorts} = require('./preflight.cjs');
 (async () => {
   for (const key of ['NODE_OPTIONS','NODE_PATH','LD_PRELOAD']) assert.throws(() => verify({[key]:'untrusted'}), /Ambient preload rejected/);
@@ -65,6 +66,68 @@ const {verify,validatePorts} = require('./preflight.cjs');
   assert.deepEqual([reentrantTeardowns,reentrantEvidence,nestedCallbacks],[1,1,0]);
   await assert.rejects(finish(reentrant),/No live owned/);
   console.log('PASS real owned reentrant finish denied from both teardown and evidence; callbacks exactly once');
+  // Closed real children, never-settling callbacks: caller completion is
+  // bounded, but timeout must not claim callback cancellation/completion.
+  const deadlineChild = launch(process.execPath,['-e','console.error("DEADLINE_PRIMARY_STDERR");process.exit(47)'],{env:{}});
+  await new Promise(resolve=>deadlineChild.child.once('close',resolve));
+  for (const key of ['timeoutMs','graceMs','teardownMs','evidenceMs']) {
+    for (const value of [NaN,Infinity,0,-1,1.5,60001,'10']) {
+      await assert.rejects(finish(deadlineChild,{[key]:value}), /integer in 1..60000/);
+    }
+  }
+  let deadlineTeardowns=0, deadlineEvidence=0, deadlineDuplicates=0, lateReject;
+  const pendingTeardown = new Promise((_,reject)=>{lateReject=reject;});
+  let deadlineEntered;
+  const deadlineGate = new Promise(resolve=>{deadlineEntered=resolve;});
+  const deadlineStart = Date.now();
+  let deadlineFailure;
+  try {
+    const deadlineFinish = finish(deadlineChild,{teardownMs:40,evidenceMs:40,teardown:async()=>{
+      deadlineTeardowns++; deadlineEntered();
+      assert.equal(deadlineChild.child.exitCode,47);
+      assert.throws(()=>process.kill(deadlineChild.child.pid,0), /ESRCH/);
+      await assert.rejects(finish(deadlineChild,{teardown:()=>{deadlineDuplicates++;}}),/No live owned/);
+      return pendingTeardown;
+    },writeEvidence:async()=>{
+      deadlineEvidence++;
+      await assert.rejects(finish(deadlineChild),/No live owned/);
+      throw new Error('SEPARATE_EVIDENCE_FAILURE');
+    }});
+    await deadlineGate;
+    await assert.rejects(finish(deadlineChild,{teardown:()=>{deadlineDuplicates++;}}),/No live owned/);
+    await deadlineFinish;
+    assert.fail('Unsettled teardown must reject with report');
+  } catch(error) { deadlineFailure=error; }
+  assert.equal(deadlineFailure.code,'CALLBACK_DEADLINE');
+  assert.equal(deadlineFailure.report.result.code,47);
+  assert.equal(status(deadlineFailure.report),47);
+  assert.equal(deadlineFailure.report.timedOut,false);
+  assert.match(deadlineFailure.report.cleanupError,/Teardown callback deadline/);
+  assert.match(deadlineFailure.report.evidenceError,/SEPARATE_EVIDENCE_FAILURE/);
+  assert.equal(deadlineFailure.report.teardownStatus,'timed-out-pending-late-effects-possible');
+  assert.equal(deadlineFailure.report.evidenceStatus,'failed');
+  assert.deepEqual([deadlineTeardowns,deadlineEvidence,deadlineDuplicates],[1,1,0]);
+  assert.ok(Date.now()-deadlineStart < 1500);
+  await assert.rejects(finish(deadlineChild),/No live owned/);
+  lateReject(new Error('LATE_TEARDOWN_REJECTION_HANDLED'));
+  await new Promise(resolve=>setImmediate(resolve));
+  console.log('PASS real exit47/stderr/reaping preserved through bounded unsettled teardown, separate evidence failure, reentrancy and late rejection; invalid timer values rejected');
+  const receiptChild = launch(process.execPath,['-e','process.exit(0)'],{env:{}});
+  await new Promise(resolve=>receiptChild.child.once('close',resolve));
+  let receiptEntered;
+  const receiptGate = new Promise(resolve=>{receiptEntered=resolve;});
+  const receiptStart = Date.now();
+  const receiptFinish = finish(receiptChild,{evidenceMs:40,writeEvidence:()=>{receiptEntered();return new Promise(()=>{});}});
+  await receiptGate;
+  await assert.rejects(finish(receiptChild),/No live owned/);
+  const receiptReport=await receiptFinish;
+  assert.equal(receiptReport.result.code,0);
+  assert.equal(status(receiptReport),1);
+  assert.equal(receiptReport.teardownStatus,'not-started');
+  assert.equal(receiptReport.evidenceStatus,'timed-out-pending-late-effects-possible');
+  assert.match(receiptReport.evidenceError,/Evidence callback deadline/);
+  assert.ok(Date.now()-receiptStart < 1500);
+  console.log('PASS real owned reaped child with never-settling evidence returns bounded separate failure and concurrent reuse denied');
   const foreign = spawn(process.execPath,['-e','setInterval(()=>{},1000)'], {stdio:'ignore'});
   try {
     await assert.rejects(finish({child:foreign}), /No live owned/);

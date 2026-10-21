@@ -31,12 +31,32 @@ function launch(command, args, options) {
   if (child.pid) record.identity = stat(child.pid);
   return record;
 }
-async function finish(record, {timeoutMs=1000, graceMs=1000, teardown, writeEvidence=()=>{}}={}) {
+// Bounds asynchronous waiting only. A callback can continue after timeout; this
+// is not cancellation, synchronous-code preemption, or service teardown proof.
+async function boundedCallback(callback, ms, label) {
+  let timer;
+  try {
+    await Promise.race([
+      Promise.resolve().then(callback),
+      new Promise((_, reject) => { timer = setTimeout(() => {
+        const error = new Error(`${label} callback deadline exceeded; pending callback may have late effects`);
+        error.code = 'CALLBACK_DEADLINE'; reject(error);
+      }, ms); }),
+    ]);
+  } finally { clearTimeout(timer); }
+  // Timer intentionally referenced: an unsettled callback alone cannot keep
+  // Node alive long enough to deliver its deadline and receipt.
+}
+async function finish(record, {timeoutMs=1000, graceMs=1000, teardownMs=1000, evidenceMs=1000, teardown, writeEvidence=()=>{}}={}) {
   if (!owned.has(record)) throw new Error('No live owned child authority');
+  for (const [name, value] of Object.entries({timeoutMs, graceMs, teardownMs, evidenceMs})) {
+    if (!Number.isInteger(value) || value < 1 || value > 60000) throw new RangeError(`${name} must be an integer in 1..60000 milliseconds`);
+  }
+  if ((teardown !== undefined && typeof teardown !== 'function') || typeof writeEvidence !== 'function') throw new TypeError('Cleanup callbacks must be functions');
   // Consume synchronously before any await or callback: one completion owner,
   // including concurrent calls and teardown/evidence callback reentrancy.
   owned.delete(record);
-  let timedOut = false, failure;
+  let timedOut = false, failure, teardownStatus = 'not-started';
   const deadline = Date.now() + timeoutMs;
   while (!record.result && Date.now() < deadline) await delay(10);
   if (!record.result) timedOut = true;
@@ -62,10 +82,25 @@ async function finish(record, {timeoutMs=1000, graceMs=1000, teardown, writeEvid
     while ((!record.result || (id && members(id.group).length)) && Date.now() < end) await delay(10);
     if (!record.result || (id && members(id.group).length)) throw new Error('Process tree disappearance/reaping unproven; services MUST remain running');
     await record.closed; // direct child reaped by Node before service teardown
-    if (teardown) await teardown();
+    if (teardown) {
+      teardownStatus = 'pending';
+      try {
+        await boundedCallback(teardown, teardownMs, 'Teardown');
+        teardownStatus = 'completed';
+      } catch(error) {
+        teardownStatus = error.code === 'CALLBACK_DEADLINE' ? 'timed-out-pending-late-effects-possible' : 'failed';
+        throw error;
+      }
+    }
   } catch(error) { failure = error; }
-  const report = {timedOut, result:record.result, cleanupError:failure?.stack};
-  try { await writeEvidence(report); } catch(error) { report.evidenceError = error.stack; console.error(error.stack); }
+  const report = {timedOut, result:record.result, teardownStatus, cleanupError:failure?.stack, evidenceStatus:'pending'};
+  try {
+    await boundedCallback(() => writeEvidence(report), evidenceMs, 'Evidence');
+    report.evidenceStatus = 'completed';
+  } catch(error) {
+    report.evidenceStatus = error.code === 'CALLBACK_DEADLINE' ? 'timed-out-pending-late-effects-possible' : 'failed';
+    report.evidenceError = error.stack; console.error(error.stack);
+  }
   if (failure) throw Object.assign(failure, {report});
   return report;
 }
