@@ -15,7 +15,7 @@ const { createServer } = await import(require.resolve('vite'));
 const react = (await import(require.resolve('@vitejs/plugin-react'))).default;
 const browserPath = process.env.TIXMO_BROWSER_PATH;
 assert(browserPath, 'Set TIXMO_BROWSER_PATH to an existing cached Chromium executable; do not download.');
-const out = resolve(root, 'docs/team/evidence/task-294-r4/browser');
+const out = resolve(root, 'docs/team/evidence/task-296-r4/browser');
 const fixture = JSON.parse(process.env.TASK294_FIXTURE);
 const apiOrigin = process.env.TASK294_API_ORIGIN;
 assert(/^http:\/\/127\.0\.0\.1:\d+$/.test(apiOrigin));

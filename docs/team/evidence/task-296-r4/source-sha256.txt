@@ -1,0 +1,6 @@
+2092d8e32469f9acc72513623333117a19a01f98e7ab064bc8e94fee1b5eeff0  docs/team/evidence/task-294-r4/runtime.sh
+a1c351fec4d5bc15f8443e18f8be84be793b132e909a37f8f3e9e374ab7ee3b8  scripts/browser/task-294-settled-return.mjs
+9c083f76467177b8e7eefacc7041e10fa87c49d0d67d8ec1b791e8404978d57e  scripts/browser/task-294-support.mjs
+fa03a91dc6e335f1cea3ce99be149dc4798d2eee3c539a82104befa216150d57  tixmoapi2/tests/integration/wallet-auth-settled.local.test.ts
+01ab2b510451f6841a95904562d57cfbed2945a3625a7190bcbb892fbc0d79b3  tixmoapi2/tests/setup.ts
+8fa8db0d72c618b40e5d3b63293643464201a0437de8de600f76a0289fbc24b0  scripts/verification-safety.cjs

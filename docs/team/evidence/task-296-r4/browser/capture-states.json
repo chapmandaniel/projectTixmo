@@ -1,0 +1,204 @@
+[
+  {
+    "name": "01-real-a-wallet-qr",
+    "expectedText": [
+      "ORDER-local294-1792563863284"
+    ],
+    "selector": "h1,img[alt=\"Ticket admission QR code\"]",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ],
+      [
+        256.5,
+        547.8,
+        272,
+        272
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "02-real-session-cleared",
+    "expectedText": [
+      "Sign in to view tickets, payment status, and refunds.",
+      "New buyer"
+    ],
+    "selector": "[aria-label=\"Email address\"],h1",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ],
+      [
+        56.3,
+        370.5,
+        672.5,
+        46.8
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "02b-real-a-recovered",
+    "expectedText": [
+      "ORDER-local294-1792563863284"
+    ],
+    "selector": "h1",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "03-real-b-reload-isolated",
+    "expectedText": [
+      "No tickets yet.",
+      "No orders yet.",
+      "local294-1792563863284-b@example.test"
+    ],
+    "selector": "h1",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "04-real-signedout-return",
+    "expectedText": [
+      "Sign in to check your order. Payment has not been verified."
+    ],
+    "selector": "[aria-label=\"Email address\"],h1",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        120.5,
+        81.8,
+        559,
+        34
+      ],
+      [
+        142.8,
+        339.7,
+        514.5,
+        46.8
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "05-real-return-expired",
+    "expectedText": [
+      "Sign in to check your order. Payment has not been verified."
+    ],
+    "selector": "[aria-label=\"Email address\"],h1",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        120.5,
+        81.8,
+        559,
+        34
+      ],
+      [
+        142.8,
+        339.7,
+        514.5,
+        46.8
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "06-real-confirmed-wallet-link",
+    "expectedText": [
+      "Order confirmed. Payment succeeded.",
+      "View my tickets and orders"
+    ],
+    "selector": "h1",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        120.5,
+        81.8,
+        559,
+        34
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "07-real-delivered-wallet-qr",
+    "expectedText": [
+      "ORDER-local294-1792563863284"
+    ],
+    "selector": "h1,img[alt=\"Ticket admission QR code\"]",
+    "expected": true,
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ],
+      [
+        256.5,
+        547.8,
+        272,
+        272
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  }
+]
