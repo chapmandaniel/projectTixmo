@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
+import { execFileSync } from 'child_process';
 import net from 'net';
 import request from 'supertest';
 import prisma from '../../src/config/prisma';
@@ -46,6 +47,13 @@ test('real authenticated checkout socket aborts release each admission lease onc
   let socket: http.ClientRequest | undefined;
   let evalSpy: jest.SpyInstance | undefined, controllerSpy: jest.SpyInstance | undefined;
 
+  const { tracker, finalize } = require('../../../docs/team/evidence/task-426/lifecycle.cjs');
+  const work = tracker();
+  const instrumentation: jest.SpyInstance[] = [];
+  const invocation = crypto.randomUUID();
+  let provenance: any = { invocation, sourceSHA: null, sourceDigest: null };
+  let primary: unknown;
+  let joined = false;
   const rows: any[] = [];
   const started = performance.now();
   let requested = 0, aborted = 0, settled = 0;
@@ -56,7 +64,32 @@ test('real authenticated checkout socket aborts release each admission lease onc
     tickets: await prisma.ticket.findMany({ orderBy: { id: 'asc' } }),
   });
   try {
+    const sourceSHA = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const sourceDigest = crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex');
+    provenance = { invocation, sourceSHA, sourceDigest };
+    // A receipt must name the actual immutable source; dirty tracked source fails closed.
+    execFileSync('git', ['diff', '--quiet', 'HEAD', '--']);
     redis = await connectRedis();
+    // Instrument before app/routes capture exports. catchAsync otherwise hides its promise.
+    const asyncModule = await import('../../src/utils/catchAsync');
+    instrumentation.push(jest.spyOn(asyncModule, 'catchAsync').mockImplementation((fn: any) => ((req: any, res: any, next: any) => { void work.run(() => fn(req, res, next)).catch(next); }) as any));
+    const auth = await import('../../src/middleware/auth');
+    const waiting = await import('../../src/middleware/waitingRoom');
+    for (const [module, name] of [[auth, 'authenticate'], [auth, 'optionalAuthenticate'], [waiting, 'waitingRoom']] as const) {
+      const original = (module as any)[name];
+      instrumentation.push(jest.spyOn(module as any, name).mockImplementation((...args: any[]) => work.run(() => original(...args))));
+    }
+    const validation = await import('../../src/middleware/validate');
+    const realValidate = validation.validate;
+    instrumentation.push(jest.spyOn(validation, 'validate').mockImplementation((schema: any) => {
+      const handler = realValidate(schema);
+      return ((...args: any[]) => work.run(() => (handler as any)(...args))) as any;
+    }));
+    // Lease release is deliberately detached from middleware; track its actual Redis promise too.
+    for (const name of ['zRem', 'eval'] as const) {
+      const original = redis[name].bind(redis);
+      instrumentation.push(jest.spyOn(redis, name).mockImplementation(((...args: any[]) => work.run(() => (original as any)(...args))) as any));
+    }
     const { default: app } = await import('../../src/app');
     const { ACTIVE_REQUESTS_KEY, ACQUIRE_REQUEST_LEASE } = await import('../../src/middleware/waitingRoom');
     const { orderService } = await import('../../src/api/orders/service');
@@ -84,6 +117,7 @@ test('real authenticated checkout socket aborts release each admission lease onc
     const body = JSON.stringify({ items: [{ ticketTypeId: ga.id, quantity: 1 }] });
     const realEval = redis.eval.bind(redis);
     for (const point of ['before-acquire', 'after-acquire', 'controller'] as const) {
+      const phase: any = { point, status: 'STARTED', requested, aborted, settled }; rows.push(phase);
       const reached = deferred(); gate = deferred();
       const terminal = deferred(); terminalAcks.set(point, terminal);
       const released = gate;
@@ -107,7 +141,7 @@ test('real authenticated checkout socket aborts release each admission lease onc
       socket.on('response', res => { res.resume(); });
       socket.end(body);
       await Promise.race([reached.promise, sleep(3000).then(() => { throw new Error(`Did not reach ${point}`); })]);
-      const inflight = await snapshot();
+      const inflight = await snapshot(); phase.inflight = inflight;
       expect(inflight.leases).toHaveLength(point === 'before-acquire' ? 0 : 1);
       socket.destroy(); aborted++; await closed;
       // Local close is insufficient: observe server terminal before unblocking Lua.
@@ -118,7 +152,8 @@ test('real authenticated checkout socket aborts release each admission lease onc
       const after = await snapshot();
       expect(after).toEqual(baseline);
       expect(removal!.mock.calls.filter(call => call[1] === token)).toHaveLength(1);
-      settled++;
+      await work.join();
+      settled++; phase.status = 'SETTLED';
       rows.push({ point, requested, aborted, settled, token, inflight, after, ms: performance.now() - started });
       evalSpy.mockRestore(); evalSpy = undefined;
       controllerSpy?.mockRestore(); controllerSpy = undefined;
@@ -134,21 +169,21 @@ test('real authenticated checkout socket aborts release each admission lease onc
     expect(stable(await prisma.ticketType.findUnique({ where: { id: ga.id } }))).toEqual(stable(baseline.inventory.find(t => t.id === ga.id)));
     rows.push({ healthyStatus: healthy.status, requested, aborted, settled, final: await snapshot(), ms: performance.now() - started });
     expect({ requested, aborted, settled }).toEqual({ requested: 4, aborted: 3, settled: 3 });
-  } finally {
-    const { cleanupSteps } = require('../../../docs/team/evidence/task-426/cleanup.cjs');
-    const cleanup = await cleanupSteps([
+  } catch (error) { primary = error; } finally {
+    await finalize({ primary, steps: [
       ['unblock', () => { gate?.resolve(); socket?.destroy(); }],
       ['drain owned sockets', async () => {
         for (const connection of ownedSockets) connection.destroy();
         if (server?.listening) await new Promise<void>((resolve, reject) => server!.close(error => error ? reject(error) : resolve()));
       }],
-      ['restore instrumentation', () => { evalSpy?.mockRestore(); controllerSpy?.mockRestore(); removal?.mockRestore(); }],
+      ['join admitted mutable work', async () => { await work.join(); joined = true; }],
+      ['restore instrumentation', () => { if (!joined) throw new Error('SKIPPED: unjoined work retains instrumentation'); evalSpy?.mockRestore(); controllerSpy?.mockRestore(); removal?.mockRestore(); for (const spy of instrumentation.reverse()) spy.mockRestore(); }],
       ['revoke listener', () => revoke?.()],
-      ['Redis disconnect', () => disconnectRedis()],
-      ['Prisma disconnect', () => prisma.$disconnect()],
-    ]);
-    // Evidence I/O cannot bypass any cleanup action; exclusive write refuses overwrite.
-    fs.writeFileSync(path.join(artifact, `abort426-${crypto.randomUUID()}.json`), JSON.stringify({ rows, requested, aborted, settled, elapsedMs: performance.now() - started, cleanup }, null, 2), { flag: 'wx' });
-    if (cleanup.some((step: any) => !step.ok)) throw new Error('Owned cleanup incomplete: inspect receipt');
+      ['Redis disconnect', () => { if (!joined) throw new Error('SKIPPED: mutable work pending; runner must terminate owned process before service teardown'); return disconnectRedis(); }],
+      ['Prisma disconnect', () => { if (!joined) throw new Error('SKIPPED: mutable work pending; runner must terminate owned process before service teardown'); return prisma.$disconnect(); }],
+    ], receipt: () => ({ ...provenance, rows, requested, aborted, settled, pendingMutableWork: work.size, joined, elapsedMs: performance.now() - started }),
+      // Exclusive invocation/source-bound publication AFTER cleanup; first failure wins.
+      publish: (receipt: any) => fs.writeFileSync(path.join(artifact, `abort426-${invocation}.json`), JSON.stringify(receipt, null, 2), { flag: 'wx' }),
+    });
   }
 }), 45000);
