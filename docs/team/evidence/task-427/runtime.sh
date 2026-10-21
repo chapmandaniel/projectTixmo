@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# NOT EXECUTED. Requires a fresh sole-owner PM grant; not an authorization token.
+if test "${TASK427_PM_RUNTIME_GRANT:-}" != source-reviewed-sole-owner; then
+  echo 'STOP: source-only handoff; obtain a fresh explicit PM sole-owner runtime grant' >&2
+  exit 2
+fi
+# Always discard inherited credentials before importing tools or application code.
+if test "${TASK427_SCRUBBED:-}" != 1; then
+  exec env -i HOME=/home/daniel PATH="/home/daniel/.nvm/versions/node/v24.21.0/bin:/usr/bin:/bin" TASK427_PM_RUNTIME_GRANT=source-reviewed-sole-owner TASK427_SCRUBBED=1 bash "$0"
+fi
+set -euo pipefail
+# Defense in depth: environment.ts skips dotenv in test; reject ambient files anyway.
+for ambient in .env tixmoapi2/.env; do
+  test ! -e "$ambient" || { echo 'Refusing ambient dotenv file' >&2; exit 2; }
+done
+umask 077
+runtime_root="/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root"
+export LD_LIBRARY_PATH="$runtime_root/usr/lib/x86_64-linux-gnu"
+pgbin="$runtime_root/usr/lib/postgresql/18/bin"
+task_root=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379
+node "$PWD/docs/team/evidence/task-379/runtime-path.cjs" "$task_root" --prepare
+owned_run=$(mktemp -d "$task_root/run.XXXXXX")
+node "$PWD/docs/team/evidence/task-379/runtime-path.cjs" "$owned_run"
+# Fresh per-invocation challenge, retained in this shell rather than trusted from receipts.
+export TASK379_RUN_ID=$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('hex'))")
+pgport=$(shuf -i 20000-39999 -n 1)
+redisport=$(shuf -i 40000-59999 -n 1)
+redis_pid=''
+pg_pid=''
+jest_attempted=0
+alive() {
+  test -r "/proc/$1/stat" || return 1
+  # A zombie is stopped and cannot retain listeners; its parent reaps it.
+  case "$(ps -o stat= -p "$1")" in Z*|'') return 1;; esac
+  kill -0 "$1" 2>/dev/null
+}
+owned_identity() {
+  kind=$1; pid=$2
+  test "$(stat -c %u "/proc/$pid" 2>/dev/null)" = "$(id -u)" || return 1
+  if test "$kind" = pg; then
+    test "$(head -n 1 "$owned_run/pg/postmaster.pid" 2>/dev/null)" = "$pid" || return 1
+    test "$(readlink -f "/proc/$pid/exe")" = "$(readlink -f "$pgbin/postgres")" || return 1
+    tr '\0' '\n' < "/proc/$pid/cmdline" | grep -Fxq -- "$owned_run/pg"
+  else
+    # Unreaped direct child PID cannot be recycled before wait.
+    test "$pid" = "$redis_pid" || return 1
+    test "$(ps -o ppid= -p "$pid" | tr -d ' ')" = "$$" || return 1
+    test "$(readlink -f "/proc/$pid/exe")" = \
+      "$(readlink -f "$runtime_root/usr/bin/redis-server")"
+  fi
+}
+stop_exact() {
+  kind=$1; pid=$2
+  test -n "$pid" || return 0
+  alive "$pid" || return 0
+  for signal in TERM KILL; do
+    owned_identity "$kind" "$pid" || return 1
+    kill -"$signal" "$pid" 2>/dev/null || return 1
+    for poll in {1..20}; do
+      alive "$pid" || return 0
+      sleep 0.1
+    done
+  done
+  return 1 # bounded deadline expired; report leftovers, never hang in wait
+}
+cleanup() {
+  original_status=$?
+  trap - EXIT INT TERM
+  set +e # All failures are collected; neither service may skip the other.
+  cleanup_failed=0
+  if test -z "$pg_pid" && test -f "$owned_run/pg/postmaster.pid"; then
+    pg_pid=$(head -n 1 "$owned_run/pg/postmaster.pid")
+  fi
+  if test -n "$pg_pid" && alive "$pg_pid"; then
+    if owned_identity pg "$pg_pid"; then
+      "$pgbin/pg_ctl" -D "$owned_run/pg" -m fast -w -t 5 stop || cleanup_failed=1
+      stop_exact pg "$pg_pid" || cleanup_failed=1
+    else cleanup_failed=1; fi
+  fi
+  stop_exact redis "$redis_pid" || cleanup_failed=1
+  # wait only after observed stopped/zombie; never wait for a live process.
+  if test -n "$redis_pid" && ! alive "$redis_pid"; then
+    wait "$redis_pid" >/dev/null 2>&1
+  fi
+  if test "$jest_attempted" = 1; then
+    node "$PWD/docs/team/evidence/task-393/process-cleanup.cjs" "$owned_run" || cleanup_failed=1
+  fi
+  if test "$cleanup_failed" -ne 0; then
+    echo "Owned-runtime cleanup FAILED; inspect $owned_run; do not run another gate" >&2
+    exit 1
+  fi
+  echo "TASK379_CLEANUP pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"
+  listeners=$(ss -H -ltnp "sport = :$pgport or sport = :$redisport")
+  printf '%s\n' "$listeners"
+  test -z "$listeners" || exit 1
+  test ! -e "$owned_run/pg/postmaster.pid" || exit 1
+  test ! -S "$owned_run/.s.PGSQL.$pgport" || exit 1
+  if { test -n "$pg_pid" && alive "$pg_pid"; } || { test -n "$redis_pid" && alive "$redis_pid"; }; then exit 1; fi
+  exit "$original_status"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+"$pgbin/initdb" -D "$owned_run/pg" \
+  -L "$runtime_root/usr/share/postgresql/18" --auth=trust \
+  --username=tixmo379 --encoding=UTF8 --no-locale > "$owned_run/initdb.log"
+"$pgbin/pg_ctl" -D "$owned_run/pg" -l "$owned_run/postgres.log" \
+  -o "-h 127.0.0.1 -p $pgport -k $owned_run -c max_connections=130 -c statement_timeout=5000 -c lock_timeout=5000" -w -t 10 start
+pg_pid=$(head -n 1 "$owned_run/pg/postmaster.pid")
+test "$(readlink -f "/proc/$pg_pid/exe")" = "$(readlink -f "$pgbin/postgres")"
+# Foreground mode gives the shell an exact unreaped child PID. No daemonize race.
+"$runtime_root/usr/bin/redis-server" --bind 127.0.0.1 --port "$redisport" \
+  --save '' --appendonly no --daemonize no --dir "$owned_run" \
+  --pidfile "$owned_run/redis.pid" --logfile "$owned_run/redis.log" \
+  --unixsocket "$owned_run/redis.sock" --unixsocketperm 700 &
+redis_pid=$!
+redis_ready=0
+for attempt in {1..30}; do
+  kill -0 "$redis_pid" 2>/dev/null || break
+  if test -S "$owned_run/redis.sock" &&
+    test "$("$runtime_root/usr/bin/redis-cli" -s "$owned_run/redis.sock" ping)" = PONG; then
+    redis_ready=1
+    break
+  fi
+  sleep 0.1
+done
+test "$redis_ready" = 1
+info_pid=$("$runtime_root/usr/bin/redis-cli" -s "$owned_run/redis.sock" info server |
+  tr -d '\r' | sed -n 's/^process_id://p')
+test "$info_pid" = "$redis_pid"
+test "$(readlink -f "/proc/$redis_pid/exe")" = \
+  "$(readlink -f "$runtime_root/usr/bin/redis-server")"
+# Fail closed unless each exact PID owns its requested loopback TCP listener.
+# No TCP probe or database access is allowed before these assertions.
+for pair in "$pgport:$pg_pid" "$redisport:$redis_pid"; do
+  port=${pair%:*}; pid=${pair#*:}
+  listener=$(ss -H -ltnp "sport = :$port")
+  test "$(printf '%s\n' "$listener" | wc -l)" = 1
+  printf '%s\n' "$listener" | rg -q "127\.0\.0\.1:$port .*pid=$pid,"
+done
+"$pgbin/createdb" -h 127.0.0.1 -p "$pgport" -U tixmo379 tixmo_disposable_379
+"$pgbin/psql" -h 127.0.0.1 -p "$pgport" -U tixmo379 \
+  -d tixmo_disposable_379 -Atc \
+  'select current_database(), current_user, inet_server_addr(), inet_server_port();'
+"$runtime_root/usr/bin/redis-cli" -h 127.0.0.1 -p "$redisport" -n 1 ping
+DATABASE_URL="postgresql://tixmo379@127.0.0.1:$pgport/tixmo_disposable_379" \
+REDIS_URL="redis://127.0.0.1:$redisport/1" TIXMO_ALLOW_DESTRUCTIVE_TESTS=1 \
+node -e 'require("./scripts/verification-safety.cjs").validateVerificationTargets(process.env)'
+export DATABASE_URL="postgresql://tixmo379@127.0.0.1:$pgport/tixmo_disposable_379" REDIS_URL="redis://127.0.0.1:$redisport/1" TIXMO_ALLOW_DESTRUCTIVE_TESTS=1 NODE_ENV=test
+export STRIPE_SECRET_KEY=sk_test_verify_api STRIPE_PUBLISHABLE_KEY=pk_test_verify_api STRIPE_WEBHOOK_SECRET=whsec_verify_api
+export JWT_SECRET=task379-synthetic-jwt-fixture-not-a-real-credential JWT_REFRESH_SECRET=task379-synthetic-refresh-fixture-not-a-real-credential SESSION_SECRET=task379-synthetic-session-fixture-not-a-real-credential
+echo "TASK379_RUNTIME path=$owned_run pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"
+artifact_dir="$owned_run"
+export PAYMENT_CURRENCY=cad REDIS_DB=1 npm_config_offline=true npm_config_yes=false
+export TASK379_ARTIFACT_DIR="$owned_run"
+export TASK379_ALLOWED_PORTS="$pgport,$redisport"
+export TASK427_BLOCK_LOG="$owned_run/blocked-network.jsonl"
+export NODE_OPTIONS="--require=$PWD/docs/team/evidence/task-427/network-guard.cjs"
+test -x tixmoapi2/node_modules/.bin/prisma
+test -x tixmoapi2/node_modules/.bin/jest
+export TMPDIR="$owned_run"
+# Full unfiltered verifyApi build/migrate/schema/Jest sequence. No path filters.
+export JWT_EXPIRES_IN=7d JWT_REFRESH_EXPIRES_IN=30d CHECKPOINT_DISABLE=1 PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
+jest_attempted=1
+timeout --signal=TERM --kill-after=5s 360s node "$PWD/docs/team/evidence/task-427/run-gate.mjs" > "$artifact_dir/acceptance.log" 2>&1

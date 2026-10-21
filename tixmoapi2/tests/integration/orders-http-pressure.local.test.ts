@@ -19,7 +19,9 @@ const percentiles = (values: number[]) => {
   return Object.fromEntries([50, 95, 99, 100].map(p => [`p${p}`, a[Math.ceil(a.length * p / 100) - 1]]));
 };
 
-test('100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec', async () => {
+// Full-suite runner supplies a native async scope; standalone379 is already strict.
+const ownedScope: <T>(work: () => T) => T = (net as any)[Symbol.for('tixmo.task427.ownedScope')] || ((work: () => any) => work());
+test('100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec', () => ownedScope(async () => {
   const artifact = process.env.TASK379_ARTIFACT_DIR;
   if (!artifact) throw new Error('Require task379 runtime artifact directory');
   require('../../../docs/team/evidence/task-379/runtime-path.cjs').validate(artifact);
@@ -172,4 +174,4 @@ test('100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec', 
   if (failed) throw failure;
   if (monitorFailed) throw monitorError;
   if (cleanupErrors.length) throw new Error(cleanupErrors.join('\n'));
-}, 90000);
+}), 90000);
