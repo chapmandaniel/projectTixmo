@@ -18,7 +18,7 @@ test('30 scheduled arrivals/sec for 60 seconds conserve 1800 GA and 200 VIP', as
   await prisma.user.createMany({data:buyers});
   const event = await prisma.event.create({data:{organizationId:org.id,name:key,slug:key,tags:[],status:'PUBLISHED',startDatetime:new Date(Date.now()+86400000)}});
   const ga = await prisma.ticketType.create({data:{eventId:event.id,name:'GA',price:10,quantityTotal:1800,quantityAvailable:1800,maxPerOrder:4}});
-  const vip = await prisma.ticketType.create({data:{eventId:event.id,name:'VIP',price:20,quantityTotal:200,quantityAvailable:200,maxPerOrder:4}});
+  await prisma.ticketType.create({data:{eventId:event.id,name:'VIP',price:20,quantityTotal:200,quantityAvailable:200,maxPerOrder:4}});
   const delay = monitorEventLoopDelay({resolution:10}); delay.enable();
   const start=performance.now(), results:any[]=[], samples:any[]=[], queue:any[]=[];
   let active=0, completed=0, arrived=0, maxActive=0, maxQueue=0, maxBacklog=0;
