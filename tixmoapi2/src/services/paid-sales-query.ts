@@ -11,8 +11,16 @@ export function paidSalesSource(params: {
     Prisma.sql`o.status = 'PAID'`,
     Prisma.sql`o.currency = ${(params.currency || 'cad').toLowerCase()}`,
   ];
-  if (params.startDate) conditions.push(Prisma.sql`o.created_at >= ${params.startDate}`);
-  if (params.endDate) conditions.push(Prisma.sql`o.created_at <= ${params.endDate}`);
+  // Prisma stores DateTime as UTC-naive timestamp. Normalize only bound
+  // instants, independent of session TimeZone, keeping the indexed column bare.
+  if (params.startDate)
+    conditions.push(
+      Prisma.sql`o.created_at >= (${params.startDate}::timestamptz AT TIME ZONE 'UTC')`
+    );
+  if (params.endDate)
+    conditions.push(
+      Prisma.sql`o.created_at <= (${params.endDate}::timestamptz AT TIME ZONE 'UTC')`
+    );
   if (params.eventId) conditions.push(Prisma.sql`o.event_id = ${params.eventId}`);
   if (params.organizationId)
     conditions.push(Prisma.sql`e.organization_id = ${params.organizationId}`);

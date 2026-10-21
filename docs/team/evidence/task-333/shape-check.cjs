@@ -1,0 +1,14 @@
+const assert = require('node:assert/strict');
+const { paidSalesSource } = require('../../../../tixmoapi2/src/services/paid-sales-query.ts');
+const startDate = new Date('2026-11-01T04:00:00.000Z');
+const endDate = new Date('2026-11-01T05:00:00.000Z');
+const source = paidSalesSource({ startDate, endDate, organizationId: 'org', eventId: 'event', currency: 'CAD' });
+assert.match(source.sql, /o\.created_at >= \(\?::timestamptz AT TIME ZONE 'UTC'\)/);
+assert.match(source.sql, /o\.created_at <= \(\?::timestamptz AT TIME ZONE 'UTC'\)/);
+assert.doesNotMatch(source.sql, /o\.created_at\s*(?:::|AT TIME ZONE)/);
+assert.deepEqual(source.values, ['cad', startDate, endDate, 'event', 'org']);
+assert.match(source.sql, /o\.status = 'PAID'/);
+assert.match(source.sql, /t\.inventory_state = 'SOLD'/);
+assert.match(source.sql, /LEFT JOIN ticket_counts/);
+assert.doesNotMatch(paidSalesSource({}).sql, /AT TIME ZONE/);
+console.log('PASS: parameter UTC casts, bare indexed column, exact values and existing filters');

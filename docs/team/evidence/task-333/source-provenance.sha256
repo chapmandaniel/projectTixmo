@@ -1,0 +1,6 @@
+c614ecd06de218f974a80a35c8842cea65921243ac5993dba455ea4e597cfdfb  tixmoapi2/src/services/paid-sales-query.ts
+d770e4f761d6d5d251ae13d2a2b8976b645c3b9bdfaa72da903e8e912f72fe89  tixmoapi2/tests/integration/paid-sales-utc.test.ts
+03544f7a5fbe613b111fcf83b0249a38cc21d15ff8427b95ff340989871ec7bb  tixmoapi2/prisma/schema.prisma
+f530d7671524de570d43a6cf7e105cc8161f4c1be6b71a7ffc89025ee8a139da  tixmoapi2/package-lock.json
+1225023 1 tixmoapi2/node_modules/.prisma/client/index.js
+1054593 1 ../task-328/tixmoapi2/node_modules/.prisma/client/index.js
