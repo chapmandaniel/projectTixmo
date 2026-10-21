@@ -152,3 +152,45 @@ can retain current core receipts, not attest missing nested receipts or turn
 stubs into qualification. Independent lead+QA exact successor review required;
 no audit/runtime grant, full-market PASS, task432 closure or selfapproval.
 QA434 is sole runtime owner separately; its services/dependencies untouched.
+
+## Nested API transport successor — still INCOMPLETE
+
+New isolated `tixmo/task-432-runtime-transport`, base9704866f. Existing Node
+fs/crypto and reviewed379 private disk-path validator reused; no package added.
+`verifyApi` now accepts an explicit optional DI `record` callback; its default
+CLI and exact four nested commands/safety/scrubbing/fail-fast remain unchanged.
+Raw stdout/stderr, command/cwd/start/status/signal/error are recorded before the
+existing error check, including thrown spawn failures. No environment switch,
+preload bypass, runtime grant marker or replacement outer npm command added.
+
+`api-receipt-transport.mjs` supplies a concrete exclusive/fsynced private disk
+writer and collector. Writer enforces four canonical commands/cwds in order;
+collector verifies source identity, canonical command/cwd/index, raw hashes,
+owned regular files and failure prefixes; rejects missing success receipts,
+extra commands and execution after failure. Source identity is caller captured,
+not an attestation; same-UID rewrite remains possible. Core can optionally call
+`collectNestedApi` at exact stage5, joining its returned nested receipts into the
+canonical stage receipt and the existing sealed manifest. This callback is a
+trusted collector interface; use the concrete validating collector, never trust
+an executor's arbitrary receipt metadata. Core remains non-qualifying.
+
+Actual offline checks PASS:
+`node docs/team/evidence/task-432/offline-nested.mjs` drives existing verifyApi
+with only stubbed subprocesses, actual private disk raw NUL receipts, all four
+nested failfast positions, stale identity denial, duplicate-write rejection,
+raw tamper denial, core12-stage stub join and sealed-store reread. Original
+`offline-stub.mjs` and `offline-disk.mjs` PASS. Syntax checks on changed modules
+and diff check PASS. First nested fixture cleanup hit read-only sealed directory;
+fixed owned-fixture chmod before cleanup and removed that exact generated fixture,
+then reran PASS. No other runtime directory/service touched.
+
+NOT DELIVERED: actual427 all-ten-stage local session lifecycle/preimport admission,
+CLI wiring to retain exact `npm run verify:api` while installing callback and
+transport into its nested process, actual verified dependency/generated-client/
+runtime version provenance, or enforceable registry443/existingDNS boundary.
+Standalone427 starts/stops its own services around verifyApi; invoking it as a
+stage replacement would change the exact command and cannot prove all10-stage
+ownership. Do not treat DI transport as a functioning runtime adapter. No audit,
+network, DB, Redis, HTTP, application tests/build/install/generation/config/CI/
+scheduler/cloud/spend/push/merge/deploy execution. Final exactSHA independent
+lead+QA still required before separate admission; no PASS or432 closure.

@@ -7,7 +7,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 
 // Services must already be provisioned in isolation. Never start the shared
 // development Compose stack or infer disposability from a localhost URL alone.
-export function verifyApi({ env = process.env, spawn = spawnSync, log = console.log } = {}) {
+export function verifyApi({ env = process.env, spawn = spawnSync, log = console.log, record } = {}) {
   safety.validateVerificationTargets(env); // Before any subprocess or service action.
   const testEnv = { ...env, NODE_ENV: 'test' };
   // Never pass inherited real provider credentials to local test children.
@@ -28,10 +28,15 @@ export function verifyApi({ env = process.env, spawn = spawnSync, log = console.
   log(`[verify:api] REDIS_URL ${safety.redactConnectionUrl(env.REDIS_URL)}`);
   const run = (command, args, cwd, label) => {
     let result;
+    const started = new Date().toISOString();
     try {
       // Capture and suppress raw child output: Prisma/Jest failures may embed URLs.
       result = spawn(command, args, { cwd, env: testEnv, encoding: 'utf8', stdio: 'pipe', shell: false });
-    } catch { throw new Error(`${label} failed (child output suppressed).`); }
+    } catch (error) {
+      record?.({ command, args: [...args], cwd, started, status: -1, signal: null, error: error.message, stdout: '', stderr: '' });
+      throw new Error(`${label} failed (child output suppressed).`);
+    }
+    record?.({ command, args: [...args], cwd, started, status: result.status ?? -1, signal: result.signal ?? null, error: result.error?.message ?? null, stdout: result.stdout ?? '', stderr: result.stderr ?? '' });
     if (result.error || result.status !== 0) throw new Error(`${label} failed (child output suppressed).`);
   };
   run('npm', ['run', 'build'], path.join(repoRoot, 'tixmoapi2'), 'API build');

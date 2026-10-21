@@ -36,7 +36,7 @@ export const boundaries = { audit: auditBoundary, local: localBoundary };
 // Admission adapters are trusted external boundaries, not booleans supplied by
 // shell environment. They MUST actually enforce the contract before returning.
 // This core alone cannot enforce native/subprocess egress or validate ownership.
-export async function compose({ capture, openAudit, openLocal, persist, versions, now = () => new Date().toISOString() }) {
+export async function compose({ capture, openAudit, openLocal, persist, versions, collectNestedApi, now = () => new Date().toISOString() }) {
   if (!versions?.node || !versions?.npm) throw Error('Runtime versions required');
   const identity = structuredClone(capture());
   const manifest = { schema: 'task432-source-core-v1', identity, versions,
@@ -67,6 +67,10 @@ export async function compose({ capture, openAudit, openLocal, persist, versions
         status: result.status, signal: result.signal ?? null, error: result.error ?? null,
         stdout: result.stdout, stderr: result.stderr,
         stdoutHash: digest(result.stdout), stderrHash: digest(result.stderr) });
+      if (index === 4 && collectNestedApi) {
+        // Collect independently from private transport, never spread executor fields.
+        manifest.receipts.at(-1).nestedApi = structuredClone(await collectNestedApi({ identity: structuredClone(identity), status: result.status }));
+      }
       unchanged();
       if (result.status !== 0 || result.signal || result.error) throw Error('Market stage failed: ' + step.name);
     }
