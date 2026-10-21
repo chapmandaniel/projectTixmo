@@ -1,0 +1,3 @@
+pg/postmaster.pid exists=False
+redis.sock exists=False
+PIDs absent; owned loopback listeners absent; temporary node_modules symlink removed after test.
