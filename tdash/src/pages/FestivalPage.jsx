@@ -305,7 +305,17 @@ export const FestivalPageView = ({
                                 >
                                     <div className="sf-program-day-heading">
                                         <h3 id={`day-${day.key}`}>
-                                            {day.label}
+                                            <CalendarDays
+                                                size={16}
+                                                aria-hidden="true"
+                                            />
+                                            {day.key === 'tba' ? (
+                                                day.label
+                                            ) : (
+                                                <time dateTime={day.key}>
+                                                    {day.label}
+                                                </time>
+                                            )}
                                         </h3>
                                         <span>
                                             {day.events.length}{' '}
@@ -340,6 +350,8 @@ export const FestivalPageView = ({
                                                                     {event.name}
                                                                 </Link>
                                                             </h4>
+                                                        </div>
+                                                        <div className="sf-program-event-facts">
                                                             <div className="sf-program-time">
                                                                 {day.key ===
                                                                 'tba' ? (
@@ -368,18 +380,18 @@ export const FestivalPageView = ({
                                                                     </time>
                                                                 )}
                                                             </div>
+                                                            <p className="sf-program-venue">
+                                                                <span>
+                                                                    {event.venue
+                                                                        ?.name ||
+                                                                        'Venue to be announced'}
+                                                                </span>
+                                                                <span>
+                                                                    {event.category ||
+                                                                        'Live event'}
+                                                                </span>
+                                                            </p>
                                                         </div>
-                                                        <p className="sf-program-venue">
-                                                            <span>
-                                                                {event.venue
-                                                                    ?.name ||
-                                                                    'Venue to be announced'}
-                                                            </span>
-                                                            <span>
-                                                                {event.category ||
-                                                                    'Live event'}
-                                                            </span>
-                                                        </p>
                                                         {selectedPass && (
                                                             <p
                                                                 className={`sf-program-coverage ${coveredIds.has(event.id) ? 'is-included' : ''}`}
@@ -410,13 +422,26 @@ export const FestivalPageView = ({
                                                                     : ''
                                                             }
                                                         >
-                                                            {price !== null
-                                                                ? price === 0
-                                                                    ? 'Free tickets'
-                                                                    : `From ${money(price)}`
-                                                                : sale.available
-                                                                  ? 'Tickets unavailable'
-                                                                  : sale.label}
+                                                            {price !== null ? (
+                                                                price === 0 ? (
+                                                                    'Free tickets'
+                                                                ) : (
+                                                                    <>
+                                                                        <span>
+                                                                            From
+                                                                        </span>{' '}
+                                                                        <strong>
+                                                                            {money(
+                                                                                price,
+                                                                            )}
+                                                                        </strong>
+                                                                    </>
+                                                                )
+                                                            ) : sale.available ? (
+                                                                'Tickets unavailable'
+                                                            ) : (
+                                                                sale.label
+                                                            )}
                                                         </p>
                                                         <Link
                                                             className="sf-event-page-link"

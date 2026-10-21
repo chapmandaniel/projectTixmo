@@ -167,3 +167,27 @@ Screenshots are saved locally in `output/playwright/hierarchy-*.png`.
 This increment is submitted for independent exact-commit review. Record its
 reviewed SHA and result in the integration handoff; no board activity, backend
 integration, deployment, push or merge is claimed.
+
+## Typography and spacing rhythm
+
+Follow-up to the first hierarchy pass, on the same dedicated branch:
+
+- Calendar headings use compact uppercase labels and a calendar icon; event
+  titles use 26–28px bold type with 1.08 line height. Time and venue form one
+  supporting line below the title, with 1.3 line height.
+- A 6px gap connects the title and schedule. Admission/coverage follows after
+  13px. Day groups separate by 36px on mobile and 44px on desktop. This keeps
+  related facts together without giving every line the same vertical rhythm.
+- Pass section labels use a compact caption style, pass names use stronger
+  title type, and coverage counts and subtotals have their own emphasis.
+  Prose keeps more generous leading. Shared ticket selectors use the same
+  title/fact/copy leading tokens from the storefront design-system layer.
+- Price prefixes and amounts have distinct weights and sizes. Event-page
+  action labels can wrap at narrow widths while keeping their complete label
+  and at least a 44px target. Quantity controls remain 44px square.
+
+All 231 frontend tests, the unchanged design guard and production build passed.
+Responsive inspection covers 320, 375, 390, 768, 820, 1024 and 1440px; the 375px
+price/action crowding found during inspection was corrected. Exact-commit
+independent review and final browser evidence belong in the integration handoff.
+No new backend, checkout or logo behavior is introduced.
