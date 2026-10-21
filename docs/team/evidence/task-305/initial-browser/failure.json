@@ -1,0 +1,6 @@
+{
+  "error": "Error: Timed out: Studio configuration loaded\n    at wait (file:///home/daniel/projects/projectTixmo/worktrees/task-305/scripts/browser/task-305-studio.mjs:27:165)\n    at async file:///home/daniel/projects/projectTixmo/worktrees/task-305/scripts/browser/task-305-studio.mjs:80:3",
+  "audit": [],
+  "failures": [],
+  "body": ""
+}

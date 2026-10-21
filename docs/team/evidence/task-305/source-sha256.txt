@@ -1,0 +1,5 @@
+a7060cf77b5fe5435f5bf42362649561ebac47f2770184b888af86f321dc8acd  scripts/browser/task-305-studio.mjs
+9c083f76467177b8e7eefacc7041e10fa87c49d0d67d8ec1b791e8404978d57e  scripts/browser/task-305-support.mjs
+d47c4de86e4c9b52be064d97aa9b21a6a1e39c9f1ed14b4dbc8239fc8e85b447  tdash/task305-entry.jsx
+907827a737cbcf4b48c4c479a1bd11d49d20703f17a643a3805502abadd43821  tixmoapi2/tests/integration/studio-browser.local.test.ts
+7d2999c30cbc3c9a1ce94f616c35b40be9e5181c7e69f044499395554d8a126e  docs/team/evidence/task-305/runtime.sh

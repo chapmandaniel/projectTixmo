@@ -1,0 +1,21 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task305/run.9sPYSc/jest-cache --runInBand --runTestsByPath tests/integration/studio-browser.local.test.ts
+
+FAIL tests/integration/studio-browser.local.test.ts
+  ● Test suite failed to run
+
+    [96mtests/integration/studio-browser.local.test.ts[0m:[93m6[0m:[93m1[0m - [91merror[0m[90m TS6133: [0m'request' is declared but its value is never read.
+
+    [7m6[0m import request from 'supertest';
+    [7m [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    [96mtests/integration/studio-browser.local.test.ts[0m:[93m11[0m:[93m1[0m - [91merror[0m[90m TS6133: [0m'jwt' is declared but its value is never read.
+
+    [7m11[0m import jwt from 'jsonwebtoken';
+    [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        5.964 s
+Ran all test suites within paths "tests/integration/studio-browser.local.test.ts".

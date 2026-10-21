@@ -1,0 +1,13 @@
+[1021/042301.767277:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+
+DevTools listening on ws://127.0.0.1:36143/devtools/browser/a9b386db-8baa-4776-ae06-ff0e213dda8a
+[1021/042301.780676:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[1021/042301.781970:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/042301.784262:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[1021/042301.792995:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+[1021/042301.900704:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/042301.900785:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[1021/042302.843159:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:45131/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=21e931a5 (21609)
+[1021/042302.844693:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:45131/@vite/client (789)
+[1021/042302.856368:INFO:CONSOLE:8] "Uncaught Error: @vitejs/plugin-react can't detect preamble. Something is wrong.", source: http://127.0.0.1:45131/src/components/InputField.jsx (8)
+[1021/042302.858454:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:45131/@vite/client (912)

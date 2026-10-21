@@ -1,0 +1,41 @@
+{
+  "pids": {
+    "2762300": true,
+    "2762313": true,
+    "2763042": true,
+    "2763321": true,
+    "2763985": true,
+    "2763998": true,
+    "2764099": true,
+    "2764430": true
+  },
+  "ports": {
+    "32222": true,
+    "56916": true,
+    "40391": true,
+    "45131": true,
+    "20629": true,
+    "48807": true,
+    "42409": true,
+    "37875": true,
+    "36143": true,
+    "45597": true
+  },
+  "runs": {
+    "run.9sPYSc": {
+      "postmasterAbsent": true,
+      "socketAbsent": true,
+      "profilesAbsent": true
+    },
+    "run.7Zlyz8": {
+      "postmasterAbsent": true,
+      "socketAbsent": true,
+      "profilesAbsent": true
+    },
+    "run.Wc6N6t": {
+      "postmasterAbsent": true,
+      "socketAbsent": true,
+      "profilesAbsent": true
+    }
+  }
+}

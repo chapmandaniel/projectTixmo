@@ -1,0 +1,13 @@
+[1021/042342.562192:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/042342.574363:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[1021/042342.577102:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/042342.578720:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+
+DevTools listening on ws://127.0.0.1:45597/devtools/browser/86cbed3c-3c8d-40f0-a427-f245a9d76025
+[1021/042342.578489:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+[1021/042342.658991:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/042342.659086:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[1021/042343.122675:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:37875/@vite/client (789)
+[1021/042343.127522:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:37875/@vite/client (912)
+[1021/042343.196853:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:37875/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=0193afa6 (21609)
+[1021/042343.428422:INFO:CONSOLE:141] "Failed to load ticket tiers AxiosError: Network Error", source: http://127.0.0.1:37875/src/features/EventStudio.jsx (141)

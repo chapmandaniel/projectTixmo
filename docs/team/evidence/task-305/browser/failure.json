@@ -1,0 +1,37 @@
+{
+  "error": "Error: Timed out: Studio configuration loaded\n    at wait (file:///home/daniel/projects/projectTixmo/worktrees/task-305/scripts/browser/task-305-studio.mjs:27:165)\n    at async file:///home/daniel/projects/projectTixmo/worktrees/task-305/scripts/browser/task-305-studio.mjs:80:3",
+  "audit": [
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login"
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/venues"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-types"
+    },
+    {
+      "responsePath": "/api/v1/venues",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/ticket-types",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/ticket-tiers"
+    }
+  ],
+  "failures": [
+    "GET /api/v1/ticket-tiers"
+  ],
+  "body": "Edit EventDRAFTSave DraftPublish EventTicket configuration could not be loaded. Reopen the event before saving.Event BasicsEvent Title Category Select CategoryMusicNightlifeTheaterConferenceHashtag Description Time & PlaceEvent timezone Event and ticket sale times use America/St_Johns.Start End VenueSelect a Venue+ Create New VenueTickets & Capacity Add Ticket TypeTotal Event Capacity0Media & SEOCover Image URL Search Tags Musiclocal305-1792565622155-0Monday, November 9 at 12:00 PMto Tuesday, November 10 at 5:30 PMVenue To Be AnnouncedGet DirectionsEvent description will appear here...Select TicketsNo tickets available yetGet Tickets"
+}
