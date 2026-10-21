@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {createRequire} from 'node:module';
+import {spawnSync} from 'node:child_process';
+import {runVerifyApiCli} from '../../../../scripts/verify-api-cli.mjs';
+import {verifyApi} from '../../../../scripts/verify-api.mjs';
+import {collectApiReceipts,apiCommands} from '../../../../scripts/api-receipt-transport.mjs';
+const root=path.resolve(import.meta.dirname,'../../../..');
+const require=createRequire(import.meta.url);
+const validator=require('../task-379/runtime-path.cjs');
+const original=validator.validate;
+const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tixmo-qa445-'));
+const identity={source:'independent-offline',sourceHash:'fixture-only'};
+let count=0;
+const test=(name,fn)=>{fn();console.log(`PASS ${++count} ${name}`);};
+const fresh=()=>{const d=fs.mkdtempSync(path.join(temp,'case-'));fs.chmodSync(d,0o700);fs.writeFileSync(path.join(d,'api-identity.json'),JSON.stringify(identity),{mode:0o400});return d;};
+const env=d=>({TASK432_API_RECEIPTS:d,TASK379_ARTIFACT_DIR:d,TASK379_RUN_ID:'b'.repeat(64),npm_config_offline:'true',npm_config_yes:'false',DATABASE_URL:'postgresql://test@127.0.0.1:23333/tixmo_disposable_qa445',REDIS_URL:'redis://127.0.0.1:24444/1',TIXMO_ALLOW_DESTRUCTIVE_TESTS:'1',AWS_QA445:'synthetic',STRIPE_SECRET_KEY:'synthetic'});
+const options=d=>({env:env(d),cwd:root,guarded:()=>true,capture:()=>identity});
+try {
+ validator.validate=d=>{assert.ok(d.startsWith(temp+path.sep));assert.equal(fs.statSync(d).mode&0o077,0);};
+ test('default env object and callback parity',()=>{const e={};let result;runVerifyApiCli({env:e,verify:o=>result=o});assert.equal(result.env,e);assert.deepEqual(Object.keys(result),['env']);const old=spawnSync('git',['show','b45649abb438ec791f0c37a57bb42cdcfd928abb:scripts/verify-api.mjs'],{cwd:root,encoding:'utf8'});assert.equal(old.status,0);const body=s=>s.slice(s.indexOf('export function verifyApi'),s.indexOf('\nif (process.argv'));assert.equal(body(old.stdout),body(fs.readFileSync(path.join(root,'scripts/verify-api.mjs'),'utf8')));});
+ for(let fail=-1;fail<4;fail++) test(`canonical callback/raw bytes/failfast ${fail}`,()=>{const d=fresh();let calls=0;const e=env(d);const execute=()=>runVerifyApiCli({...options(d),env:e,verify:o=>verifyApi({...o,log(){},spawn(command,args,opts){const i=calls++;assert.equal(command,apiCommands[i][0]);assert.deepEqual(args,apiCommands[i][1]);assert.equal(opts.env.AWS_QA445,undefined);assert.equal(opts.env.STRIPE_SECRET_KEY,'sk_test_verify_api');return {status:i===fail?9:0,stdout:'a\0b\nλ',stderr:'err\0\r\n'};}})});if(fail<0)execute();else assert.throws(execute,/failed/);assert.equal(calls,fail<0?4:fail+1);assert.equal(e.AWS_QA445,'synthetic');const r=collectApiReceipts({directory:d,root,identity,status:fail<0?0:1});assert.equal(r.length,calls);assert.ok(r.every(x=>x.stdout==='a\0b\nλ'&&x.stderr==='err\0\r\n'));});
+ test('spawn throw records failure',()=>{const d=fresh();let calls=0;assert.throws(()=>runVerifyApiCli({...options(d),verify:o=>verifyApi({...o,log(){},spawn(){calls++;throw Error('fixture-child-error');}})}),/failed/);assert.equal(calls,1);const r=collectApiReceipts({directory:d,root,identity,status:1});assert.equal(r[0].status,-1);assert.equal(r[0].error,'fixture-child-error');});
+ for(let drift=0;drift<5;drift++) test(`source drift boundary ${drift}`,()=>{const d=fresh();let captured=0,calls=0;assert.throws(()=>runVerifyApiCli({...options(d),capture:()=>captured++===drift?{...identity,sourceHash:'changed'}:identity,verify:o=>verifyApi({...o,log(){},spawn(){calls++;return {status:0,stdout:'',stderr:''};}})}),/identity changed/);assert.equal(calls,drift);});
+ for(const [name,change] of [['cwd',{cwd:'/tmp'}],['guard',{guarded:()=>false}],['offline',{envPatch:{npm_config_offline:'false'}}],['auto-yes',{envPatch:{npm_config_yes:'true'}}],['challenge',{envPatch:{TASK379_RUN_ID:'invalid'}}],['artifact',{envPatch:{TASK379_ARTIFACT_DIR:'/tmp'}}],['empty optin',{envPatch:{TASK432_API_RECEIPTS:''}}]]) test(`preflight ${name}`,()=>{const d=fresh();const {envPatch,...patch}=change;let called=0;assert.throws(()=>runVerifyApiCli({...options(d),...patch,env:{...env(d),...envPatch},verify(){called++;}}));assert.equal(called,0);});
+ test('identity permission denial',()=>{const d=fresh();fs.chmodSync(path.join(d,'api-identity.json'),0o444);assert.throws(()=>runVerifyApiCli({...options(d),verify(){assert.fail();}}),/Unsafe/);});
+ test('identity symlink denial',()=>{const d=fresh();fs.renameSync(path.join(d,'api-identity.json'),path.join(d,'saved'));fs.symlinkSync('saved',path.join(d,'api-identity.json'));assert.throws(()=>runVerifyApiCli({...options(d),verify(){assert.fail();}}),/Unsafe/);});
+ validator.validate=original;
+ test('actual executable fails closed before verifier on invalid location',()=>{const child=spawnSync(process.execPath,['scripts/verify-api.mjs'],{cwd:root,env:{PATH:process.env.PATH,TASK432_API_RECEIPTS:'/tmp/qa445-invalid'},encoding:'utf8'});assert.equal(child.status,1);assert.match(child.stderr,/Invalid runtime location/);assert.equal(child.stdout,'');});
+ console.log(`TOTAL ${count} PASS; 0 failures; fixture-only validator substitution, NOT admission`);
+} finally {validator.validate=original;fs.rmSync(temp,{recursive:true,force:true});}

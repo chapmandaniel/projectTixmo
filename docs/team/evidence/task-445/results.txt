@@ -1,0 +1,23 @@
+PASS 1 default env object and callback parity
+PASS 2 canonical callback/raw bytes/failfast -1
+PASS 3 canonical callback/raw bytes/failfast 0
+PASS 4 canonical callback/raw bytes/failfast 1
+PASS 5 canonical callback/raw bytes/failfast 2
+PASS 6 canonical callback/raw bytes/failfast 3
+PASS 7 spawn throw records failure
+PASS 8 source drift boundary 0
+PASS 9 source drift boundary 1
+PASS 10 source drift boundary 2
+PASS 11 source drift boundary 3
+PASS 12 source drift boundary 4
+PASS 13 preflight cwd
+PASS 14 preflight guard
+PASS 15 preflight offline
+PASS 16 preflight auto-yes
+PASS 17 preflight challenge
+PASS 18 preflight artifact
+PASS 19 preflight empty optin
+PASS 20 identity permission denial
+PASS 21 identity symlink denial
+PASS 22 actual executable fails closed before verifier on invalid location
+TOTAL 22 PASS; 0 failures; fixture-only validator substitution, NOT admission
