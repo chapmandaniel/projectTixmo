@@ -1,0 +1,46 @@
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+[verify:api] API verification passed.
+PASS 1 success calls=4
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+[verify:api] API verification passed.
+PASS 2 default calls=4
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 3 0 calls=1
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 4 1 calls=2
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 5 2 calls=3
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 6 3 calls=4
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 7 overflow calls=1
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 8 exception calls=1
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 9 signal calls=1
+PASS 10 drift-before calls=0
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 11 drift-after-third calls=3
+PASS 12 guard calls=0
+PASS 13 offline calls=0
+PASS 14 challenge calls=0
+PASS 15 artifact-mismatch calls=0
+PASS 16 identity-mode calls=0
+PASS 17 identity-symlink calls=0
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+[verify:api] API verification passed.
+PASS 18 blocked calls=4
+PASS 19 static capture exclusive/fsync before verifier AFTER services
+PASS 20 real shell no-grant exits2
+TOTAL 20 independent offline cases PASS; fixture substitution NOT genuine admission
