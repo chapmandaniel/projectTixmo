@@ -10,16 +10,43 @@ npm run verify:market
 
 ## What It Runs
 
-In order:
+At source `8aae387bcd4290edd259fd75aa11baaa1f62ca63`,
+`scripts/verify-market-local.mjs` runs these 12 stages, stopping at the first
+nonzero exit. API build is nested inside `verify:api`, not a separate stage.
 
-1. `npm --prefix tixmoapi2 run build`
-2. `npm run verify:api`
-3. `npm --prefix tdash test -- --run`
-4. `npm --prefix tdash run design:guard`
-5. `npm --prefix tdash run build`
-6. `node --check scripts/verify-api.mjs`
-7. `node --check scripts/check-status.mjs`
-8. `node --check scripts/external-smoke-evidence.mjs`
+1. `npm --prefix tixmoapi2 audit`
+2. `npm --prefix tdash audit`
+3. `npm --prefix tixmoapi2 run test:tooling`
+4. `npm --prefix tixmoapi2 run test:development`
+5. `npm run verify:api`
+6. `npm --prefix tixmoapi2 run lint`
+7. `npm --prefix tdash test -- --run`
+8. `npm --prefix tdash run design:guard`
+9. `npm --prefix tdash run build` (child `NODE_ENV=production`)
+10. `node --check scripts/verify-api.mjs`
+11. `node --check scripts/check-status.mjs`
+12. `node --check scripts/external-smoke-evidence.mjs`
+
+`verify:api` validates disposable targets before running API build, migration
+rehearsal, Prisma schema bootstrap (`--accept-data-loss`), and unfiltered Jest.
+Read its safety contract and coordinate sole disposable DB ownership first.
+
+## Advisory audit versus guarded local qualification
+
+The two unfiltered `npm audit` stages require advisory-registry access; they
+are not equivalent to the production-only `evidence:dependency-audit` helper.
+The task362/424 loopback Node guard intentionally blocks nonloopback requests.
+Task424 evidence commit `21e2c8fec6f6fd7913c1c14e274b79fda964fc46`
+records market exit 1 at API audit: 0 stages passed, 1 failed, 11 not reached.
+This is not an advisory verdict or a market pass. Supplementary checks are
+not passes of the unexecuted market stages.
+
+The current market script inherits one environment for all stages and offers
+no supported split/skip mode. Do not disable its guard, use an offline/cache
+result as a fresh audit, or skip audits to claim full-market acceptance.
+A proposed two-environment composition and required authority are documented
+in [task428 assessment](team/evidence/task-428/README.md). It is a proposal,
+not an implemented or authorized execution path. Full market remains open.
 
 ## CI Workflow
 
@@ -63,7 +90,7 @@ CI run remains required for runner/service integration evidence.
 - Commit SHA.
 - Any failure logs and the first fixed passing run.
 
-Latest local evidence:
+Historical local evidence (not a current-candidate pass):
 
 - `npm run verify:market` passed on 2026-06-03.
 - API verification included 50 passing Jest suites and 320 passing tests.
