@@ -21,6 +21,10 @@ const getPaymentIntentContext = (event: Stripe.Event) => {
   };
 };
 
+// Policy #73: this durable exception is not permission to issue a refund.
+const LATE_PAYMENT_MANUAL_RECONCILIATION =
+  'Manual reconciliation required: late payment; automatic refund prohibited.';
+
 const LEASE_MS = 5 * 60_000;
 const IDEMPOTENCY_SAFE_MS = 23 * 60 * 60_000;
 const cents = (value: { toString(): string }) => {
@@ -344,8 +348,8 @@ export class PaymentService {
             ) {
               if (order.status === 'PENDING')
                 await orderService.cancelOrderInTransaction(tx, orderId);
-              const refund = await this.recordRefund(tx, orderId, intent, 'LATE_PAYMENT');
-              return { confirmed: false, refundId: refund.id };
+              await this.recordRefund(tx, orderId, intent, 'LATE_PAYMENT');
+              return { confirmed: false };
             }
             await orderService.confirmOrderInTransaction(tx, orderId);
             return { confirmed: true };
@@ -451,8 +455,13 @@ export class PaymentService {
         amount: intent.amount_received,
         currency: intent.currency,
         reason,
+        ...(reason === 'LATE_PAYMENT'
+          ? { errorMessage: LATE_PAYMENT_MANUAL_RECONCILIATION }
+          : {}),
       },
-      update: {},
+      update: reason === 'LATE_PAYMENT'
+        ? { errorMessage: LATE_PAYMENT_MANUAL_RECONCILIATION }
+        : {},
     });
   }
 
@@ -551,8 +560,11 @@ export class PaymentService {
   }
 
   private async reconcileRefund(id: string): Promise<void> {
-    const stripe = this.provider();
     const record = await prisma.paymentRefund.findUniqueOrThrow({ where: { id } });
+    // Defense for legacy rows, stale recovery selections and every internal caller.
+    // Preserve provider identities/status as evidence; never finalize/close this exception.
+    if (record.reason === 'LATE_PAYMENT') return;
+    const stripe = this.provider();
     if (record.status === 'SUCCEEDED') {
       if (record.reason === 'ORDER_REFUND') await orderService.finalizeRefund(record.orderId);
       else
@@ -697,6 +709,9 @@ export class PaymentService {
   async recoverRefunds(): Promise<void> {
     const records = await prisma.paymentRefund.findMany({
       where: {
+        // Existing late-paid rows remain visible as owned manual exceptions,
+        // not automatic work (and must not starve the bounded recovery queue).
+        reason: { not: 'LATE_PAYMENT' },
         OR: [
           { status: { in: ['REQUESTED', 'PROCESSING', 'FAILED'] } },
           { status: 'SUCCEEDED', reason: 'ORDER_REFUND', order: { status: 'PAID' } },
