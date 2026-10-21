@@ -1,0 +1,15 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task353/run.1b0jGE",
+  "mode": "0o700",
+  "pidAbsent": {
+    "3048631": true,
+    "3048644": true
+  },
+  "ports": "",
+  "sockets": [],
+  "postmasterPidAbsent": true,
+  "redisPidAbsent": true,
+  "ownedWorkers": [],
+  "blockedNetworkRecords": 0,
+  "probeCorrection": "Executable-based worker match excludes own shell source text; initial false-positive probe preserved."
+}

@@ -1,0 +1,14 @@
+PASS tixmoapi2/tests/unit/payments.external-refund.test.ts
+  ✓ external 1200-cent refund without local metadata is not adopted before a full create attempt (23 ms)
+  ✓ external 400-cent refund without local metadata is not adopted before a full create attempt (1 ms)
+  ✓ linked partial result fails closed without finalization (2 ms)
+  ✓ matching linked pending result only finalizes success (1 ms)
+  ✓ matching linked failed result only finalizes success
+  ✓ matching linked succeeded result only finalizes success
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        3.966 s
+Ran all test suites.
+Test results written to: docs/team/evidence/task-353/external-result.json

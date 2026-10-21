@@ -1,0 +1,1 @@
+module.exports={rootDir: '../../../../tixmoapi2',testEnvironment:'node',setupFiles:[],setupFilesAfterEnv:[],testMatch:['<rootDir>/tests/unit/payments.external-refund.test.ts'],transform:{'^.+\\.ts$':['ts-jest',{tsconfig:'<rootDir>/tsconfig.json'}]}};

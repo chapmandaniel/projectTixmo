@@ -1,0 +1,60 @@
+diff --git a/tixmoapi2/tests/integration/order-refund-current-path.test.ts b/tixmoapi2/tests/integration/order-refund-current-path.test.ts
+index b0df58e..f0bae31 100644
+--- a/tixmoapi2/tests/integration/order-refund-current-path.test.ts
++++ b/tixmoapi2/tests/integration/order-refund-current-path.test.ts
+@@ -250,3 +250,55 @@ test.each([0, 1])('slow pending response cannot regress terminal success (succes
+     await Promise.allSettled(requests);
+   }
+ }, 15000);
++
++
++async function sharedBuyer(order: any, type: any) {
++  const key = `foreign325-${Date.now()}-${Math.random().toString(36).slice(2)}`;
++  const user = await prisma.user.create({ data: { email: `${key}@example.test`, passwordHash: 'synthetic', firstName: 'Foreign', lastName: '325' } });
++  const foreign = await prisma.order.create({ data: {
++    orderNumber: key, userId: user.id, eventId: order.eventId, totalAmount: 10, currency: 'cad', status: 'PAID', paymentStatus: 'SUCCEEDED', paymentIntentId: `pi_${key}`,
++    tickets: { create: [{ eventId: order.eventId, userId: user.id, ticketTypeId: type.id, barcode: key, pricePaid: 10, status: 'VALID', inventoryState: 'SOLD' }] },
++  } });
++  await prisma.ticketType.update({ where: { id: type.id }, data: { quantityAvailable: { decrement: 1 }, quantitySold: { increment: 1 } } });
++  return foreign;
++}
++test('same-tickettype foreign buyer remains SOLD while only refunded allocation is released once', async () => {
++  const { order, type } = await fixture();
++  const foreign = await sharedBuyer(order, type);
++  const before = await snapshot(foreign.id, type.id);
++  await expect(new OrderService().refundOrder(order.id)).resolves.toMatchObject({ status: 'REFUNDED' });
++  const after = await snapshot(foreign.id, type.id);
++  expect(after.order).toEqual(before.order);
++  expect(after.event).toEqual(before.event);
++  expect(after.refunds).toEqual(before.refunds);
++  expect(after.order.tickets).toHaveLength(1);
++  expect(after.order.tickets[0]).toMatchObject({ userId: foreign.userId, ticketTypeId: type.id, status: 'VALID', inventoryState: 'SOLD' });
++  expect(after.stock).toEqual({ ...before.stock, quantityAvailable: 9, quantitySold: 1, updatedAt: expect.any(Date) });
++  const own = await snapshot(order.id, type.id);
++  expect(own.order.tickets).toEqual(order.tickets.map(t => ({ ...t, status: 'CANCELLED', inventoryState: 'RELEASED', updatedAt: expect.any(Date) })));
++  await new OrderService().refundOrder(order.id);
++  expect(await snapshot(foreign.id, type.id)).toEqual(after);
++  expect(await snapshot(order.id, type.id)).toEqual(own);
++  expect(provider.refunds.create).toHaveBeenCalledTimes(1);
++});
++
++test('later type failure rolls back earlier shared-stock update and all ticket rows, retaining provider success', async () => {
++  const { order, type } = await fixture();
++  const foreign = await sharedBuyer(order, type);
++  // Explicit sort order ensures the first type update succeeds before the second fails.
++  const bad = await prisma.ticketType.create({ data: { id: `zzzz-${type.id}`, eventId: order.eventId, name: 'later inconsistent type', price: 10, quantityTotal: 10, quantityAvailable: 10, quantitySold: 0 } });
++  await prisma.ticket.update({ where: { id: order.tickets[1].id }, data: { ticketTypeId: bad.id } });
++  const before = await snapshot(order.id, type.id);
++  const foreignBefore = await snapshot(foreign.id, type.id);
++  await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({ statusCode: 409 });
++  const after = await snapshot(order.id, type.id);
++  expect(after.stock).toEqual(before.stock);
++  expect(after.event).toEqual(before.event);
++  expect(after.order).toEqual({ ...before.order, refundStatus: 'PROCESSING', updatedAt: expect.any(Date) });
++  expect(after.order.tickets).toHaveLength(2);
++  expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: bad.id } })).toEqual(bad);
++  expect(await snapshot(foreign.id, type.id)).toEqual(foreignBefore);
++  expect(after.refunds).toHaveLength(1);
++  expect(after.refunds[0]).toMatchObject({ status: 'SUCCEEDED', amount: 2000, reason: 'ORDER_REFUND', orderId: order.id });
++  expect(provider.refunds.create).toHaveBeenCalledTimes(1);
++});
