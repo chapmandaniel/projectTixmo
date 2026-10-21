@@ -1,0 +1,38 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-qa/runtime/task296-r2/run.Xr3WdF/jest-cache --runInBand --runTestsByPath tests/integration/wallet-auth-browser.local.test.ts
+
+  console.log
+    TASK294_REDIS_CLIENT 1
+
+      at Object.<anonymous> (tests/integration/wallet-auth-browser.local.test.ts:25:11)
+
+  console.log
+    TASK294_API_LISTENER 2705207 { address: '127.0.0.1', family: 'IPv4', port: 41323 }
+
+      at Object.<anonymous> (tests/integration/wallet-auth-browser.local.test.ts:34:11)
+
+TASK294_REAL_BROWSER_PASS
+TASK294_BROWSER_CLEANUP {
+  browser: { pid: 2705575, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 37603, closed: true },
+  profileRemoved: true
+}
+  console.log
+    TASK294_ASSERTIONS real login/wallet/png QR/B denial/expired JWT401/wrong password401/session revocation/relogin/no financial mutation/no provider calls PASS
+
+      at Object.<anonymous> (tests/integration/wallet-auth-browser.local.test.ts:75:11)
+
+  console.log
+    TASK294_API_CLOSED
+
+      at Object.<anonymous> (tests/integration/wallet-auth-browser.local.test.ts:21:11)
+
+PASS tests/integration/wallet-auth-browser.local.test.ts (17.378 s)
+  ✓ HTTP password login A wallet/QR, B isolation, session revocation and re-login are read-only (11275 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        17.621 s
+Ran all test suites within paths "tests/integration/wallet-auth-browser.local.test.ts".
