@@ -1,0 +1,9 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_292|tixmo292|127.0.0.1|29711
+PONG
+TASK292_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-292-pg/run.l9XKJa pg_pid=2683482 redis_pid=2683495 pgport=29711 redisport=46693
+docs/team/evidence/task-292-pg/runtime.sh: line 134: /home/daniel/projects/projectTixmo/worktrees/review-292-pg/docs/team/evidence/task-292-pg-webhook-pg/migrate.log: No such file or directory
+waiting for server to shut down.... done
+server stopped
+TASK292_CLEANUP pg_pid=2683482 redis_pid=2683495 pgport=29711 redisport=46693
