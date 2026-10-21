@@ -1,0 +1,26 @@
+PASS 1 missing provider
+PASS 2 acquire rejection preserves original; provider rollback remains provider responsibility
+PASS 3 preacquire drift denies before acquisition
+PASS 4 boolean provider fails closed and cleans
+PASS 5 admission verifier 0 cleanup
+PASS 6 stage verifier 0 revocation
+PASS 7 admission verifier 1 cleanup
+PASS 8 stage verifier 1 revocation
+PASS 9 admission verifier 2 cleanup
+PASS 10 stage verifier 2 revocation
+PASS 11 admission plus cleanup retains original diagnostics
+PASS 12 held verifier overlap and postawait source drift
+PASS 13 concurrent failed cleanup once and closed cannot restart
+PASS 14 compose exact12 and verifier11calls cleanup once
+PASS 15 compose local failfast 0 cleanup once
+PASS 16 compose local failfast 1 cleanup once
+PASS 17 compose local failfast 2 cleanup once
+PASS 18 compose local failfast 3 cleanup once
+PASS 19 compose local failfast 4 cleanup once
+PASS 20 compose local failfast 5 cleanup once
+PASS 21 compose local failfast 6 cleanup once
+PASS 22 compose local failfast 7 cleanup once
+PASS 23 compose local failfast 8 cleanup once
+PASS 24 compose local failfast 9 cleanup once
+PASS 25 stage failure and cleanup failure both retained in evidence
+TOTAL 25 checks PASS; all spawn functions inert, no children/services/network
