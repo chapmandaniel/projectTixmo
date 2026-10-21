@@ -1,0 +1,54 @@
+{
+  "services": [
+    {
+      "log": "docs/team/evidence/task-326/stageB-1/runtime.log",
+      "root": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task326/run.bCe4HT",
+      "rootMode": "0o700",
+      "pids": [
+        2903739,
+        2903754
+      ],
+      "pidsAbsent": true,
+      "ports": [
+        24655,
+        55297
+      ],
+      "listeners": "",
+      "postmasterAbsent": true,
+      "sockets": [],
+      "currentPids": {
+        "2903739": "",
+        "2903754": ""
+      },
+      "currentListeners": "",
+      "currentSockets": [],
+      "currentPidfile": false
+    },
+    {
+      "log": "docs/team/evidence/task-326/runtime.log",
+      "root": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task326/run.ApfOcx",
+      "rootMode": "0o700",
+      "pids": [
+        2905593,
+        2905606
+      ],
+      "pidsAbsent": true,
+      "ports": [
+        35032,
+        59651
+      ],
+      "listeners": "",
+      "postmasterAbsent": true,
+      "sockets": [],
+      "currentPids": {
+        "2905593": "",
+        "2905606": ""
+      },
+      "currentListeners": "",
+      "currentSockets": [],
+      "currentPidfile": false
+    }
+  ],
+  "remainingOwnedNodeWorkers": [],
+  "remainingContextFiles": []
+}

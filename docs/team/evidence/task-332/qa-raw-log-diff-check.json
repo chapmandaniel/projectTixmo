@@ -1,0 +1,11 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "exitCode": 2,
+  "stdout": "docs/team/evidence/task-332/jest.log:2: trailing whitespace.\n+    prisma:error \ndocs/team/evidence/task-332/jest.log:4: trailing whitespace.\n+    \ndocs/team/evidence/task-332/jest.log:5: trailing whitespace.\n+    \ndocs/team/evidence/task-332/red-baseline/jest.log:2: trailing whitespace.\n+    prisma:error \ndocs/team/evidence/task-332/red-baseline/jest.log:4: trailing whitespace.\n+    \ndocs/team/evidence/task-332/red-baseline/jest.log:5: trailing whitespace.\n+    \n",
+  "stderr": ""
+}

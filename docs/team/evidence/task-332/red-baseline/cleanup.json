@@ -1,0 +1,15 @@
+{
+  "run": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task332/run.kMoa5v",
+  "pids": {
+    "2911239": "",
+    "2911252": ""
+  },
+  "listeners": "",
+  "ports": [
+    "24557",
+    "58812"
+  ],
+  "sockets": [],
+  "pidfilePresent": false,
+  "blockedNetworkLogPresent": false
+}

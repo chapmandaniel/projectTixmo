@@ -1,0 +1,19 @@
+{
+  "run": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task332/run.4lxptV",
+  "pids": {
+    "2911886": "",
+    "2911899": ""
+  },
+  "listeners": "",
+  "ports": [
+    "27938",
+    "49541"
+  ],
+  "sockets": [],
+  "pidfilePresent": false,
+  "blockedNetworkLogPresent": false,
+  "rootMode": "0o700",
+  "runMode": "0o700",
+  "filesystem": "/dev/nvme0n1p2 ext4",
+  "remainingNodeWorkers": []
+}

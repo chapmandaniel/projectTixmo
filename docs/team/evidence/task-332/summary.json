@@ -1,0 +1,86 @@
+{
+  "red-baseline/": {
+    "success": false,
+    "startTime": 1792571976417,
+    "numTotalTestSuites": 1,
+    "numPassedTestSuites": 0,
+    "numFailedTestSuites": 1,
+    "numPassedTests": 6,
+    "numFailedTests": 1,
+    "numPendingTests": 0,
+    "numTodoTests": 0,
+    "startISO": "2026-10-21T08:39:36.417000+00:00",
+    "assertions": [
+      {
+        "name": "refuses committed PROCESSING transition after actual authorized public observation",
+        "status": "failed"
+      },
+      {
+        "name": "refuses committed PAID transition after actual authorized public observation",
+        "status": "passed"
+      },
+      {
+        "name": "stable PENDING remains eligible and repeat cancellation is idempotent",
+        "status": "passed"
+      },
+      {
+        "name": "stable PROCESSING remains eligible and repeat cancellation is idempotent",
+        "status": "passed"
+      },
+      {
+        "name": "scope denial cannot mutate another buyer",
+        "status": "passed"
+      },
+      {
+        "name": "inverse schedule holds an actual SQL lock before cancellation effects",
+        "status": "passed"
+      },
+      {
+        "name": "trusted transactional cancellation still releases expired holds",
+        "status": "passed"
+      }
+    ]
+  },
+  "green": {
+    "success": true,
+    "startTime": 1792572002612,
+    "numTotalTestSuites": 1,
+    "numPassedTestSuites": 1,
+    "numFailedTestSuites": 0,
+    "numPassedTests": 7,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numTodoTests": 0,
+    "startISO": "2026-10-21T08:40:02.612000+00:00",
+    "assertions": [
+      {
+        "name": "refuses committed PROCESSING transition after actual authorized public observation",
+        "status": "passed"
+      },
+      {
+        "name": "refuses committed PAID transition after actual authorized public observation",
+        "status": "passed"
+      },
+      {
+        "name": "stable PENDING remains eligible and repeat cancellation is idempotent",
+        "status": "passed"
+      },
+      {
+        "name": "stable PROCESSING remains eligible and repeat cancellation is idempotent",
+        "status": "passed"
+      },
+      {
+        "name": "scope denial cannot mutate another buyer",
+        "status": "passed"
+      },
+      {
+        "name": "inverse schedule holds an actual SQL lock before cancellation effects",
+        "status": "passed"
+      },
+      {
+        "name": "trusted transactional cancellation still releases expired holds",
+        "status": "passed"
+      }
+    ]
+  }
+}

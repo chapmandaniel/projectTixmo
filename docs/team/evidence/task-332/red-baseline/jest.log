@@ -1,0 +1,42 @@
+  console.log
+    prisma:error 
+    Invalid `prisma.$queryRawUnsafe()` invocation:
+    
+    
+    Raw query failed. Code: `55P03`. Message: `ERROR: could not obtain lock on row in relation "orders"`
+
+      at Object.mc (node_modules/@prisma/client/runtime/library.js:21:432)
+
+FAIL tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts (5.904 s)
+  ✕ refuses committed PROCESSING transition after actual authorized public observation (125 ms)
+  ✓ refuses committed PAID transition after actual authorized public observation (31 ms)
+  ✓ stable PENDING remains eligible and repeat cancellation is idempotent (42 ms)
+  ✓ stable PROCESSING remains eligible and repeat cancellation is idempotent (43 ms)
+  ✓ scope denial cannot mutate another buyer (24 ms)
+  ✓ inverse schedule holds an actual SQL lock before cancellation effects (103 ms)
+  ✓ trusted transactional cancellation still releases expired holds (30 ms)
+
+  ● refuses committed PROCESSING transition after actual authorized public observation
+
+    expect(received).rejects.toMatchObject()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"createdAt": 2026-10-21T08:39:42.201Z, "currency": "usd", "discountAmount": "0", "eventId": "e67bd9e3-f559-4701-99a5-fafc24d91d0d", "expiresAt": null, "feesAmount": "0", "id": "ece61736-bc20-43aa-952f-107ee0d91e46", "ipAddress": null, "orderNumber": "03f26db4-7c0d-4658-bb00-ad76bdaa9cb6target", "paymentClosedAt": null, "paymentIntentId": null, "paymentMethod": null, "paymentStatus": "PROCESSING", "promoCodeId": null, "promoReservation": "NONE", "receiptLeaseToken": null, "receiptSentAt": null, "receiptStartedAt": null, "receiptStatus": "PENDING", "refundStatus": "NONE", "status": "CANCELLED", "taxAmount": "0", "totalAmount": "20", "updatedAt": 2026-10-21T08:39:42.250Z, "userAgent": null, "userId": "e2bf9c72-565a-436c-accc-7160798da9ae"}
+
+      132 |       const afterMutation = await f.snapshot();
+      133 |       release.resolve();
+    > 134 |       await expect(result).rejects.toMatchObject({ statusCode: 400 });
+          |             ^
+      135 |       expect(await f.snapshot()).toEqual(afterMutation);
+      136 |     } finally {
+      137 |       release.resolve();
+
+      at expect (node_modules/expect/build/index.js:2116:15)
+      at tests/integration/order-cancel-stale-observation.test.ts:134:13
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 6 passed, 7 total
+Snapshots:   0 total
+Time:        6.142 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts".
+Test results written to: docs/team/evidence/task-332/red-baseline/jest-result.json
