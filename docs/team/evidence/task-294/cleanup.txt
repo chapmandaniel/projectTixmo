@@ -1,0 +1,15 @@
+Stopped owned PID 2689345
+Stopped owned PID 2689358
+Postmaster PID and socket absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294/run.lWnrKI
+Stopped owned PID 2690345
+Stopped owned PID 2690358
+Postmaster PID and socket absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294/run.UEh6f9
+API PID absent 2689498 port 43499
+API PID absent 2690458 port 34499
+No listener 28153
+No listener 41799
+No listener 23625
+No listener 56582
+No listener 43499
+No listener 34499
+Frontend/browser/profile: never started or created
