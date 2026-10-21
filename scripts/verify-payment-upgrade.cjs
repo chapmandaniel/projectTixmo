@@ -8,6 +8,7 @@ const { spawnSync } = require('node:child_process');
 const { createHash } = require('node:crypto');
 const { createRequire } = require('node:module');
 const { assertDisposableTestTarget } = require('./test-target.cjs');
+const { priorDumpRequested, retainPriorDump } = require('./prior-schema-dump.cjs');
 const root = path.resolve(__dirname, '..');
 const api = path.join(root, 'tixmoapi2');
 const apiRequire = createRequire(path.join(api, 'package.json'));
@@ -67,6 +68,7 @@ const runPrisma = (args) => {
 };
 (async () => {
   process.env.DATABASE_URL = assertDisposableTestTarget();
+  const dumpRequested = priorDumpRequested();
   startEvidence();
   phase = 'prefix-and-fixture';
   prisma = new PrismaClient({ log: [] });
@@ -94,6 +96,12 @@ const runPrisma = (args) => {
   const before = await snapshot();
   const readLedger = () => prisma.$queryRawUnsafe('SELECT migration_name, checksum FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY migration_name');
   persist('before.json', { rows: before, ledger: await readLedger() });
+  if (dumpRequested) {
+    phase = 'prior-dump';
+    const version = await prisma.$queryRawUnsafe('SHOW server_version_num');
+    retainPriorDump({ evidenceDir, beforeSha256: artifacts['before.json'], persist,
+      serverVersion: version[0]?.server_version_num });
+  }
   phase = 'upgrade';
   const names = fs.readdirSync(source).filter(name => fs.existsSync(path.join(source, name, 'migration.sql'))).sort();
   assert.equal(names.length, 31, 'Review migration set changes before running');
