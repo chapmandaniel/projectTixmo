@@ -1,0 +1,15 @@
+# Independent QA365: scoped source/docs ACCEPT
+
+Reviewed exact reconciliation `a5acec2631a2c9c44bfb2bcb7bf07dac01a53338`, docs/team/evidence/task-363/README.md, against original241 and accepted267/271/291/308/311 board records. Isolated branch tixmo/task-365-independent-qa at that exact SHA; only this evidence directory added. No blocking finding.
+
+## Fresh independent checks
+
+Read original241 requirement for poison50/healthy51, outage/restart, old idempotency window, no duplicated effects and accountable exception. Read accepted scoped evidence and independent review notes for each predecessor. Criterion map accurately separates mocked refund/webhook queue proof267/271, realSQL unsupported-event webhook proof291, realfinancial SQL stock/postcommit workers308, and in-flight durable synthetic effect recovery311. It does not promote unsupported events to financial effects, after-commit kills to in-flight crashes, immediate rejection to actual timeout, or historic passes to current runtime.
+
+Inspected complete `git diff 4ec8594850eb547dafc145a14bb1b85cdeaa235c 80c6710b89d147588e1514aa99a4e55c5630d38a -- tixmoapi2/src tixmoapi2/prisma`. Exactly three changed paths: order/payment services public ingress observation/recheck and paid-sales-query UTC parameters. Fresh Python string assertions exit0: payments reconcileRefund through EOF identical; orders finalizeRefund through EOF identical. Complete diff confirms unchanged earlier manual guard/constants/webhook fences and transactional helpers; Prisma unchanged. No wholefile identity inferred. Product API/scripts parity between reviewed docs commit and80c6710b confirmed. Docs-only successor2d878423 changes exactly two task361 evidence files, no runtime code. `git diff --check a5acec2^ a5acec2` exit0.
+
+Inspected exact311/feb60b1 check.cjs: healthy created about2min ago, separate aged fixture >23h, no same-row age after kill. Thus363's ONE recommended intersection (same matching-effect row aged AFTER crash/reap, list-match before cutoff, zero newcreate, one stockrelease/replay equality/manual73) was genuinely unproved by those historical inputs. This is an honest PRE364 recommendation, not a claim that the gap remains untested now: subsequent364 final750b598 was independently accepted by QA367 fresh runtime, evidence937dcfddca4cdb6d6135aef4070d86ee75a9e744, plus source366 f8caffa. This review neither reruns nor independently reissues that runtime verdict.
+
+## Boundaries
+
+Source/docs-only review, no DB/services/test/install/network/provider execution. No dependencies linked or runtime restarted; no new DB grant used. No product fix/config/spend/push/merge/deploy. Prior synthetic/SQL-aged limitations retained: no verified provider retention/list completeness, elapsed outage/SDK timeout/external exactly-once/hostcrash/operational-owner acceptance. Does not close363 or parent241; PM owns closure.231 integration and61/250 owner/release gates remain. Commit uses command-local identity/hooksPath overrides only, no persistent config or hook-pass claim.
