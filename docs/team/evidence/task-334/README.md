@@ -26,4 +26,15 @@ PG18 and RedisDB1 use fresh0700 disk-backed workspace/runtime/task334 directory,
 
 cleanup.json proves owned PG2922559/Redis2922572 absent; ports35689/41418 closed; postmaster pidfile/sockets absent; no334 Node/Jest/API workers or per-PID context files. **DB slot released.** Runtime disk diagnostics remain private and inert, no live services. No interrupted/failing attempt occurred in334 StageB; no harness repair/retry needed.
 
-All task CJS/shell syntax, focused Prettier and diff-check pass. Command-local synthetic Git author/hooksPath only, no repo/global config mutation. Author submits **review, not done**; independent source and fresh guarded QA of exact SHA still required. This is focused local fixture/storage isolation acceptance, not full API/market, provider/staging, combined-candidate or releaseGO. No merge/deploy/scheduler/Gateway/spend action.
+All task CJS/shell syntax and focused Prettier checks passed. Diff-check scope is qualified below; the complete evidence range is not whitespace-clean. Command-local synthetic Git author/hooksPath only, no repo/global config mutation. Author submits **review, not done**; independent source and fresh guarded QA of exact SHA still required. This is focused local fixture/storage isolation acceptance, not full API/market, provider/staging, combined-candidate or releaseGO. No merge/deploy/scheduler/Gateway/spend action.
+
+
+## Review337 accuracy correction (documentation only)
+
+Independent source review337 `96080909a04d5488599a16cd6631f0aaab21570e` approved fixture source at `ded97d5c945ab286aa5d53ba5521eb61201f0156` but identified an overbroad diff-check statement. Exact fresh results:
+
+- `git diff --check 4ec8594850eb547dafc145a14bb1b85cdeaa235c..ded97d5c945ab286aa5d53ba5521eb61201f0156`: **exit2**. Raw `generate.log:8` has a new blank line at EOF; raw `migrate.log:103` contains trailing whitespace.
+- Same command restricted with `-- tixmoapi2/tests/integration/approvals.test.ts`: **exit0** (fixture/source scope).
+- `git diff --check` on this README-only working correction: **exit0**.
+
+Raw tool logs are intentionally preserved byte-for-byte, including their whitespace; this correction does not turn the whole-range result into PASS. Fixture, product, tests, guard, runtime and all prior artifacts remain byte-identical to ded97d5. No tests, services, database or network activity was performed for this correction. Independent final-SHA QA remains separate.
