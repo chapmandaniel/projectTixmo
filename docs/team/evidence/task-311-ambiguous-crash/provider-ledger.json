@@ -1,0 +1,1 @@
+{"effects":[{"idempotencyKey":"refund-healthy","args":{"payment_intent":"healthy","amount":1000,"metadata":{"refundId":"healthy","orderId":"fd79a4f9-0959-49b2-b251-5047c1f2e023"}},"response":{"id":"re_311","status":"succeeded","amount":1000,"currency":"usd","payment_intent":"healthy","metadata":{"refundId":"healthy","orderId":"fd79a4f9-0959-49b2-b251-5047c1f2e023"}}}]}

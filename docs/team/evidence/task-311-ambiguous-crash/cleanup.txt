@@ -1,0 +1,12 @@
+PID 2804309 absent
+PID 2804322 absent
+PID 2804470 absent
+PID 2804511 absent
+PID 2804533 absent
+PID 2804557 absent
+PG32685 Redis52441 listeners absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-311/run.9q8zDz/.s.PGSQL.32685 absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-311/run.9q8zDz/redis.sock absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-311/run.9q8zDz/pg/postmaster.pid absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-311/run.9q8zDz/redis.pid absent
+runtime0700, HTTP not used; exit0 fresh rerun captured by exec tool
