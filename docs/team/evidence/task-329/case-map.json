@@ -1,0 +1,104 @@
+[
+  {
+    "task319_case": 1,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "final_case": "Payment, admission and inventory integrity keeps failed fulfillment retryable, recovers an abandoned lease and never consumes another hold",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 2,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "final_case": "Payment, admission and inventory integrity records manual late payments without reviving expired tickets or stealing a newer hold",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 3,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "final_case": "Payment, admission and inventory integrity freezes pending refunds and finalizes processor success once across replay",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 4,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "final_case": "Payment, admission and inventory integrity finishes local refunds after a crash following the processor success commit",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 5,
+    "suite": "tests/integration/payment-inventory-integrity.test.ts",
+    "final_case": "Payment, admission and inventory integrity recovers late charges after failed payments and reservation cancellation without a webhook",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 6,
+    "suite": "tests/integration/payment-failed-retry.race.test.ts",
+    "final_case": "FAILED same-ID retry has one claimant (second delivery claims first=false)",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 7,
+    "suite": "tests/integration/payment-failed-retry.race.test.ts",
+    "final_case": "FAILED same-ID retry has one claimant (second delivery claims first=true)",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 14,
+    "suite": "tests/integration/payment-distinct-success.race.test.ts",
+    "final_case": "distinct successful webhook IDs preserve single fulfillment (winner=0, reverse reads=false)",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 15,
+    "suite": "tests/integration/payment-distinct-success.race.test.ts",
+    "final_case": "distinct successful webhook IDs preserve single fulfillment (winner=0, reverse reads=true)",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 16,
+    "suite": "tests/integration/payment-distinct-success.race.test.ts",
+    "final_case": "distinct successful webhook IDs preserve single fulfillment (winner=1, reverse reads=false)",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 17,
+    "suite": "tests/integration/payment-distinct-success.race.test.ts",
+    "final_case": "distinct successful webhook IDs preserve single fulfillment (winner=1, reverse reads=true)",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 18,
+    "suite": "tests/unit/release-integration.test.ts",
+    "final_case": "late success records a manual exception and releases inventory without provider delivery",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 19,
+    "suite": "tests/integration/payment-paused-owner.baseline.test.ts",
+    "final_case": "paused owner phase=fresh",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 20,
+    "suite": "tests/integration/payment-paused-owner.baseline.test.ts",
+    "final_case": "paused owner phase=before-handler",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 21,
+    "suite": "tests/integration/payment-paused-owner.baseline.test.ts",
+    "final_case": "paused owner phase=before-finish",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 30,
+    "suite": "tests/integration/payment-old-processing.baseline.test.ts",
+    "final_case": "PROCESSING duplicate (crashed ancient owner=true)",
+    "author_result": "passed"
+  },
+  {
+    "task319_case": 31,
+    "suite": "tests/integration/payment-fenced-checkpoint.test.ts",
+    "final_case": "FAILED retry generation, real transaction fulfillment, stale finish and failure immunity",
+    "author_result": "passed"
+  }
+]
