@@ -1,0 +1,32 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --config /home/daniel/projects/projectTixmo/worktrees/task-326/docs/team/evidence/task-326/jest.config.cjs --runInBand --runTestsByPath tests/smoke/v1-market-smoke.test.ts tests/integration/approvals.test.ts tests/unit/upload.service.test.ts tests/unit/upload-cleanup.test.ts --json --outputFile /home/daniel/projects/projectTixmo/worktrees/task-326/docs/team/evidence/task-326/jest-result.json
+
+PASS tests/integration/approvals.test.ts (13.384 s)
+FAIL tests/smoke/v1-market-smoke.test.ts
+  ● V1 market readiness smoke › runs the operator, checkout, scanner, asset, approval, and analytics path
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 1
+    Received:    0
+
+      273 |       .query({ organizationId: organization.id });
+      274 |     expectSuccess(analyticsResponse, 200, 'Load dashboard analytics');
+    > 275 |     expect(analyticsResponse.body.data.sales.totalOrders).toBeGreaterThanOrEqual(1);
+          |                                                           ^
+      276 |
+      277 |     const folderResponse = await request(app)
+      278 |       .post('/api/v1/assets/folders')
+
+      at Object.<anonymous> (tests/smoke/v1-market-smoke.test.ts:275:59)
+
+PASS tests/unit/upload.service.test.ts
+PASS tests/unit/upload-cleanup.test.ts
+
+Test Suites: 1 failed, 3 passed, 4 total
+Tests:       1 failed, 28 passed, 29 total
+Snapshots:   0 total
+Time:        18.838 s
+Ran all test suites within paths "tests/smoke/v1-market-smoke.test.ts", "tests/integration/approvals.test.ts", "tests/unit/upload.service.test.ts", "tests/unit/upload-cleanup.test.ts".
+Test results written to: ../docs/team/evidence/task-326/jest-result.json

@@ -1,0 +1,1 @@
+prisma generate; prisma migrate deploy; focused Jest smoke/approvals/upload.service/upload-cleanup with task326 config

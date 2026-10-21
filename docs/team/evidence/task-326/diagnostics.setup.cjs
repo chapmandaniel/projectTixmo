@@ -26,8 +26,25 @@ beforeEach(() => {
     const rows = await prisma.order.findMany({ select: { id: true, status: true, paymentStatus: true, currency: true, createdAt: true, eventId: true, event: { select: { organizationId: true } } } });
     const clock = await prisma.$queryRaw`SELECT CURRENT_TIMESTAMP::text AS database_now, clock_timestamp()::text AS database_wall, current_setting('TimeZone') AS timezone`;
     const exactCount = await prisma.$queryRaw(Prisma.sql`${paidSalesSource({ organizationId, startDate, endDate, currency: 'cad' })} SELECT COUNT(*)::text AS count FROM scoped_orders`);
+    const sqlPredicates = await prisma.$queryRaw(Prisma.sql`SELECT o.id,
+      pg_typeof(o.created_at)::text AS created_type, o.created_at::text AS created_raw,
+      o.status = 'PAID' AS paid, o.currency = ${'cad'} AS currency,
+      e.organization_id = ${organizationId} AS organization,
+      o.created_at >= ${startDate} AS starts,
+      o.created_at <= ${endDate} AS ends,
+      (o.created_at AT TIME ZONE 'UTC') >= ${startDate} AS utc_starts,
+      (o.created_at AT TIME ZONE 'UTC') <= ${endDate} AS utc_ends,
+      ${endDate}::timestamptz::text AS end_bound_timestamptz
+      FROM orders o JOIN events e ON e.id = o.event_id`);
+    const sqlPredicateCounts = { all: sqlPredicates.length,
+      paid: sqlPredicates.filter(r => r.paid).length,
+      paidCurrency: sqlPredicates.filter(r => r.paid && r.currency).length,
+      paidCurrencyOrganization: sqlPredicates.filter(r => r.paid && r.currency && r.organization).length,
+      plusStart: sqlPredicates.filter(r => r.paid && r.currency && r.organization && r.starts).length,
+      originalAll: sqlPredicates.filter(r => r.paid && r.currency && r.organization && r.starts && r.ends).length,
+      utcInterpretationAll: sqlPredicates.filter(r => r.paid && r.currency && r.organization && r.utc_starts && r.utc_ends).length };
     const direct = await this.getSalesAnalytics({ organizationId, startDate, endDate, currency: 'cad' });
-    const data = { appBefore, appAfter: new Date().toISOString(), period: result.period, organizationId, currency: 'cad', databaseClock: clock, dashboardTotalOrders: result.sales.totalOrders, directTotalOrders: direct.totalOrders, exactSqlCount: exactCount, orders: rows.map(row => ({ ...row, predicates: { paid: row.status === 'PAID', currency: row.currency === 'cad', organization: row.event.organizationId === organizationId, createdAtGteStart: row.createdAt >= startDate, createdAtLteEnd: row.createdAt <= endDate } })) };
+    const data = { appBefore, appAfter: new Date().toISOString(), period: result.period, organizationId, currency: 'cad', databaseClock: clock, dashboardTotalOrders: result.sales.totalOrders, directTotalOrders: direct.totalOrders, exactSqlCount: exactCount, sqlPredicates, sqlPredicateCounts, orders: rows.map(row => ({ ...row, predicates: { paid: row.status === 'PAID', currency: row.currency === 'cad', organization: row.event.organizationId === organizationId, createdAtGteStart: row.createdAt >= startDate, createdAtLteEnd: row.createdAt <= endDate } })) };
     fs.writeFileSync(path.join(artifact, 'smoke-predicates.json'), JSON.stringify(data, (_, value) => typeof value === 'bigint' ? value.toString() : value, 2) + '\n', { mode: 0o600 });
     return result; // Original dashboard payload, assertion/date/org/currency filters unchanged.
   });

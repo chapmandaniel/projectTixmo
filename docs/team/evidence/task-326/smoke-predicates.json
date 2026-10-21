@@ -1,0 +1,69 @@
+{
+  "appBefore": "2026-10-21T08:34:43.678Z",
+  "appAfter": "2026-10-21T08:34:43.697Z",
+  "period": {
+    "startDate": "2026-09-21T08:34:43.678Z",
+    "endDate": "2026-10-21T08:34:43.678Z",
+    "days": 30
+  },
+  "organizationId": "03eca0b3-7d89-4377-a196-7b1ebf560bfa",
+  "currency": "cad",
+  "databaseClock": [
+    {
+      "database_now": "2026-10-21 06:04:43.691279-02:30",
+      "database_wall": "2026-10-21 06:04:43.691309-02:30",
+      "timezone": "America/St_Johns"
+    }
+  ],
+  "dashboardTotalOrders": 0,
+  "directTotalOrders": 0,
+  "exactSqlCount": [
+    {
+      "count": "0"
+    }
+  ],
+  "sqlPredicates": [
+    {
+      "id": "ab157e82-6af2-4b62-97d8-2994255469cc",
+      "created_type": "timestamp without time zone",
+      "created_raw": "2026-10-21 08:34:43.548",
+      "paid": true,
+      "currency": true,
+      "organization": true,
+      "starts": true,
+      "ends": false,
+      "utc_starts": true,
+      "utc_ends": true,
+      "end_bound_timestamptz": "2026-10-21 06:04:43.678-02:30"
+    }
+  ],
+  "sqlPredicateCounts": {
+    "all": 1,
+    "paid": 1,
+    "paidCurrency": 1,
+    "paidCurrencyOrganization": 1,
+    "plusStart": 1,
+    "originalAll": 0,
+    "utcInterpretationAll": 1
+  },
+  "orders": [
+    {
+      "id": "ab157e82-6af2-4b62-97d8-2994255469cc",
+      "status": "PAID",
+      "paymentStatus": "SUCCEEDED",
+      "currency": "cad",
+      "createdAt": "2026-10-21T08:34:43.548Z",
+      "eventId": "6a79a0cd-652b-4760-82ed-5514fda851e0",
+      "event": {
+        "organizationId": "03eca0b3-7d89-4377-a196-7b1ebf560bfa"
+      },
+      "predicates": {
+        "paid": true,
+        "currency": true,
+        "organization": true,
+        "createdAtGteStart": true,
+        "createdAtLteEnd": true
+      }
+    }
+  ]
+}

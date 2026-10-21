@@ -1,0 +1,18 @@
+{
+  "numFailedTestSuites": 1,
+  "numPassedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numFailedTests": 1,
+  "numPassedTests": 0,
+  "numPendingTests": 0,
+  "numRuntimeErrorTestSuites": 0,
+  "openHandles": [],
+  "success": false,
+  "wasInterrupted": false,
+  "suites": [
+    {
+      "name": "tests/smoke/v1-market-smoke.test.ts",
+      "status": "failed"
+    }
+  ]
+}

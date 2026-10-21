@@ -1,0 +1,1 @@
+prisma generate; prisma migrate deploy; focused Jest smoke only; SQL-predicate diagnostic enhancement; task326 config

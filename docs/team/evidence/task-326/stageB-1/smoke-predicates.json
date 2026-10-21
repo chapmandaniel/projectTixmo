@@ -1,0 +1,45 @@
+{
+  "appBefore": "2026-10-21T08:33:21.511Z",
+  "appAfter": "2026-10-21T08:33:21.528Z",
+  "period": {
+    "startDate": "2026-09-21T08:33:21.511Z",
+    "endDate": "2026-10-21T08:33:21.511Z",
+    "days": 30
+  },
+  "organizationId": "9747bdaa-73c4-4471-9372-fa6cc63228ef",
+  "currency": "cad",
+  "databaseClock": [
+    {
+      "database_now": "2026-10-21 06:03:21.523759-02:30",
+      "database_wall": "2026-10-21 06:03:21.523794-02:30",
+      "timezone": "America/St_Johns"
+    }
+  ],
+  "dashboardTotalOrders": 0,
+  "directTotalOrders": 0,
+  "exactSqlCount": [
+    {
+      "count": "0"
+    }
+  ],
+  "orders": [
+    {
+      "id": "692bf9a7-e7ab-434f-b425-2d5fb1528088",
+      "status": "PAID",
+      "paymentStatus": "SUCCEEDED",
+      "currency": "cad",
+      "createdAt": "2026-10-21T08:33:21.398Z",
+      "eventId": "6e43d73f-696b-40d6-9fa4-e5bfdda2d953",
+      "event": {
+        "organizationId": "9747bdaa-73c4-4471-9372-fa6cc63228ef"
+      },
+      "predicates": {
+        "paid": true,
+        "currency": true,
+        "organization": true,
+        "createdAtGteStart": true,
+        "createdAtLteEnd": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_326|tixmo326|127.0.0.1|24655
+PONG
+TASK326_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task326/run.bCe4HT pg_pid=2903739 redis_pid=2903754 pgport=24655 redisport=55297
+v24.21.0
+11.19.0
+JEST_EXIT=1
+GUARDED_FOCUS_FAIL blocked nonloopback attempts (even if swallowed)
+waiting for server to shut down.... done
+server stopped
+TASK326_CLEANUP pg_pid=2903739 redis_pid=2903754 pgport=24655 redisport=55297
