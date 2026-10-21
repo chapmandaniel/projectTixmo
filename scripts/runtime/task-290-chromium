@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+R=/home/daniel/projects/projectTixmo/runtime/task-290
+B=/home/daniel/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell
+# Never inherit arbitrary runtime paths. All private libraries are task-local.
+export LD_LIBRARY_PATH="$R/root/usr/lib/x86_64-linux-gnu"
+export FONTCONFIG_FILE="$R/fonts.conf"
+export FONTCONFIG_PATH="$R"
+export XDG_CACHE_HOME="$R/cache"
+# Application-level network confinement (not an OS namespace): dead proxy,
+# exact loopback bypass, wildcard DNS failure, and disabled background features.
+exec "$B" --headless --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-background-networking --disable-component-update --disable-sync --no-first-run --no-default-browser-check --disable-breakpad --proxy-server=http://127.0.0.1:9 '--proxy-bypass-list=<-loopback>;127.0.0.1' '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1' "$@"

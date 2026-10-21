@@ -1,0 +1,3 @@
+
+DevTools listening on ws://127.0.0.1:35827/devtools/browser/42f7a0ed-cf59-4569-a198-e18ae03a2ad7
+[1021/031659.620743:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
