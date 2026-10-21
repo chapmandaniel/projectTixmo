@@ -1,0 +1,10 @@
+{
+  "boundedDiagnostic": "Read exact verify-market-local.mjs stages and captured first audit error; no retry/bypass/offline assertion.",
+  "rootCause": "First npm audit requires registry.npmjs.org HTTPS; pre-import guard blocks under explicit no-external-network authorization.",
+  "marketStages": 12,
+  "attempted": 1,
+  "failed": 1,
+  "passed": 0,
+  "notReached": 11,
+  "repairOwner": "tixmo-lead/release-tooling owner with PM decision: qualify fresh audits in approved-network environment or separately specify offline gate semantics; docs readiness stage list is stale."
+}

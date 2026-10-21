@@ -1,0 +1,14 @@
+{
+  ".prisma/client/index.js": {
+    "independentInode": true,
+    "nlink": 1
+  },
+  "typescript/lib/typescript.js": {
+    "independentInode": true,
+    "nlink": 1
+  },
+  "prisma/build/index.js": {
+    "independentInode": true,
+    "nlink": 1
+  }
+}

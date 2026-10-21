@@ -1,0 +1,26 @@
+{
+  "success": false,
+  "numTotalTestSuites": 110,
+  "numPassedTestSuites": 99,
+  "numFailedTestSuites": 1,
+  "numPendingTestSuites": 10,
+  "numTotalTests": 830,
+  "numPassedTests": 803,
+  "numFailedTests": 1,
+  "numPendingTests": 26,
+  "startTime": 1792595595479,
+  "failures": [
+    {
+      "file": "/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/tests/integration/orders-http-pressure.local.test.ts",
+      "message": "  \u25cf 100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec\n\n    Require task379 runtime artifact directory\n\n      22 | test('100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec', async () => {\n      23 |   const artifact = process.env.TASK379_ARTIFACT_DIR;\n    > 24 |   if (!artifact) throw new Error('Require task379 runtime artifact directory');\n         |                        ^\n      25 |   require('../../../docs/team/evidence/task-379/runtime-path.cjs').validate(artifact);\n      26 |   let redis: Awaited<ReturnType<typeof connectRedis>> | undefined;\n      27 |   let server: http.Server | undefined;\n\n      at Object.<anonymous> (tests/integration/orders-http-pressure.local.test.ts:24:24)\n",
+      "assertions": [
+        {
+          "title": "100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec",
+          "messages": [
+            "Error: Require task379 runtime artifact directory\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/tests/integration/orders-http-pressure.local.test.ts:24:24)\n    at Promise.finally.completed (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/jestAdapterInit.js:1834:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/jestAdapterInit.js:1774:10)\n    at _callCircusTest (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/jestAdapterInit.js:1167:40)\n    at _runTestInContext (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/jestAdapterInit.js:1103:3)\n    at runTestWithContext (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/jestAdapterInit.js:996:5)\n    at _runTestsForDescribeBlockOnce (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/jestAdapterInit.js:1008:11)\n    at _runTestsForDescribeBlock (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/jestAdapterInit.js:824:5)\n    at run (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/jestAdapterInit.js:789:3)\n    at runAndTransformResultsToJestFormat (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/jestAdapterInit.js:2300:21)\n    at jestAdapter (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-circus/build/runner.js:111:19)\n    at runTestInternal (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-runner/build/index.js:247:16)\n    at runTest (/home/daniel/projects/projectTixmo/worktrees/task-424/tixmoapi2/node_modules/jest-runner/build/index.js:315:7)"
+          ]
+        }
+      ]
+    }
+  ]
+}

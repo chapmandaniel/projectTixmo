@@ -1,0 +1,5 @@
+{
+  "api": "task362/tixmoapi2/node_modules",
+  "apiPackageAndLockByteMatch": true,
+  "copy": "cp -a --reflink=auto, independent writable copy; no install"
+}

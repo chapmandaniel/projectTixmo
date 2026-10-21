@@ -1,0 +1,11 @@
+
+> project-tixmo@0.1.0 verify:market
+> node ./scripts/verify-market-local.mjs
+
+
+[verify:market] API dependency audit
+npm warn audit TASK424_NONLOOPBACK_BLOCKED https registry.npmjs.org
+undefined
+npm error audit endpoint returned an error
+npm error A complete log of this run can be found in: /home/daniel/.npm/_logs/2026-10-21T15_13_01_296Z-debug-0.log
+[verify:market] API dependency audit failed with exit code 1
