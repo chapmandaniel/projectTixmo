@@ -1,0 +1,15 @@
+Cleanup verified {
+  browser: { pid: 2678789, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 34671, closed: true },
+  profileRemoved: true
+}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+Error: {"exceptionId":1,"text":"Uncaught","lineNumber":0,"columnNumber":56,"scriptId":"57","stackTrace":{"callFrames":[{"functionName":"","scriptId":"57","url":"","lineNumber":0,"columnNumber":56}]},"exception":{"type":"object","subtype":"error","className":"TypeError","description":"TypeError: Cannot read properties of null (reading 'textContent')\n    at <anonymous>:1:57","objectId":"7101064311379831608.3.2"}}
+    at evaluate (file:///home/daniel/projects/projectTixmo/worktrees/task-280/scripts/browser/task-280-delivery.mjs:26:169)
+    at async wait (file:///home/daniel/projects/projectTixmo/worktrees/task-280/scripts/browser/task-280-delivery.mjs:27:80)
+    at async file:///home/daniel/projects/projectTixmo/worktrees/task-280/scripts/browser/task-280-delivery.mjs:68:88
+
+Node.js v24.21.0

@@ -68,3 +68,30 @@ Actual runtime reaches App/Vite. First attempt timed out checking `innerText`: n
 Final actual cleanup verified browser PID **2663622** absent after SIGTRAP; owned frontend port **37845** connection refused; temporary profile removed. Prior actual attempts also executed independent cleanup (ports36415,36819,43261). Listener9 was checked absent before the final attempts. No backend/DB/real provider/email/API, host repair, downloaded asset, spend, merge or deployment occurred.
 
 Runtime recovery prerequisite is now **usable local font/fontconfig rendering**, not missing ELF dependencies: environment/runtime owner must qualify the text-input/session-recovery rendering path. No further runtime repair or browser retries attempted by frontend. Keep full #280 browser acceptance open and obtain independent exact-SHA source/evidence review. Existing #283 minimal JS qualification is not contradicted; it did not qualify this font-dependent App interaction.
+
+## Completed actual App run with reviewed #288 font runtime
+
+**Supersedes the runtime blockers above for this scoped synthetic flow only.** PM accepted the independently reviewed #288 font/runtime launcher before this run. Product remains exactly `4ec8594850eb547dafc145a14bb1b85cdeaa235c`; only browser harness/evidence changed.
+
+```sh
+TIXMO_BROWSER_PATH=/home/daniel/projects/projectTixmo/worktrees/task-288/scripts/runtime/task-288-chromium node scripts/browser/task-280-delivery.mjs
+```
+
+Final command **exit 0**; output and complete evidence live in `font-runtime-run/`, separate from historical failed attempts. Actual App/React/Axios rendered browser assertions completed:
+
+1. Buyer A authenticated wallet displays synthetic private order; Show ticket retrieves synthetic admission image; Transfer positively opens dialog. Screenshot `01-a-wallet-qr-transfer.png`.
+2. Actual wallet requests receive synthetic401; actual Axios interceptor POSTs `/auth/refresh` and receives401. App retains `/wallet`, removes access token, refresh token and stored user, and clears A's order, admission image and dialog. Screenshot `02-wallet-expired-cleared.png`.
+3. Actual BuyerAuthPanel login stores buyer B and loads B-authenticated empty orders/tickets, without A's order. Screenshot `03-b-wallet-isolated.png`. A real page reload (new performance.timeOrigin) preserves B's empty wallet, with no A order/QR/dialog: `03b-b-wallet-reloaded.png`.
+4. Synthetic expired A credentials are deliberately reseeded solely to enter checkout return. Actual `/orders/00000000-0000-4000-8000-000000000280/recovery` receives401 and refresh fails; URL retains candidate orderId, auth panel is shown and token cleared: `04-return-expired-preserved.png`.
+5. Actual buyer login reauthenticates A; read-only recovery projection `{id,status,paymentStatus}` returns PAID/SUCCEEDED; App shows confirmed status and wallet link: `05-confirmed-wallet-link.png`.
+6. Following that actual link delivers `/wallet` and A's synthetic order: `06-delivered-wallet.png`.
+
+`result.json` records exact product SHA, absolute launcher and complete method/path/synthetic-authorization/status audit. It shows401 and200 recovery, two actual synthetic login POSTs, B-authenticated wallet requests across reload, and zero unexpected fixtures. API allowlist permits only login/refresh POST and listed read GETs; no create-intent, purchase, transfer submit, receipt, refund or other financial/backend operation was called. Fonts.googleapis.com and Stripe.js renderer requests were deliberately intercepted/blocked; expected Stripe.js load-error console messages are not real provider communication. Nonfatal GPU sandbox warning remains; no Fontconfig fatal/SIGTRAP in final run. Application proxy/DNS/CDP blocking is still not kernel isolation.
+
+Final `cleanup.json`: owned browser PID **2679333** absent (intentional stop exit143); frontend listener **36019** refused; profile removed. Additional `ps -p 2679333` produced no PID and `ss -ltn '( sport = :36019 )'` showed no listener. Port9 was checked absent before run. No DB/backend started; #291's independent DB lane untouched.
+
+Screenshots01 and05 were opened and visually inspected: actual text/QR marker/status/link are legible (unlike historical no-glyph files). This is narrow visual evidence at the captured viewport, not responsive/a11y/real-provider/real-QR scanning certification. Fonts are qualified local fallback fonts, not remotely downloaded production fonts.
+
+The first font-runtime App attempt reached B login but revealed a harness polling race: `document.body` is briefly null during actual reload. `font-runtime-reload-race/` retains its failure and cleanup (PID2678789/port34671); polling was narrowly null-guarded. One subsequent syntax check caught quoting in diagnostics before a browser launched, corrected immediately. Final complete run above passed. Five Node support selftests, harness syntax, and diff checks were rerun after fixes. No product changes, host configuration/install/download, real identity/provider/email, spend, merge or deployment.
+
+**Author result: scoped synthetic rendered browser PASS, pending independent exact-SHA QA/review.** This does not close full W05 inbox/real backend ownership recovery, provider checkout/receipt delivery, production acceptance or launch NO-GO. Existing #250 authority boundaries remain unchanged; no reset/reissue.

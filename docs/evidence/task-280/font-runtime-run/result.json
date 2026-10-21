@@ -1,0 +1,188 @@
+{
+  "status": "PASS synthetic rendered browser only",
+  "candidate": "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+  "browser": "/home/daniel/projects/projectTixmo/worktrees/task-288/scripts/runtime/task-288-chromium",
+  "audit": [
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/synthetic-ticket/qr",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-A",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-A",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/auth/refresh",
+      "token": "",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "token": "",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "GET",
+      "path": "/orders/00000000-0000-4000-8000-000000000280/recovery",
+      "token": "Bearer synthetic-A",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/orders/00000000-0000-4000-8000-000000000280/recovery",
+      "token": "Bearer synthetic-A",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/auth/refresh",
+      "token": "",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "token": "",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/00000000-0000-4000-8000-000000000280/recovery",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/00000000-0000-4000-8000-000000000280/recovery",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    }
+  ],
+  "failures": []
+}

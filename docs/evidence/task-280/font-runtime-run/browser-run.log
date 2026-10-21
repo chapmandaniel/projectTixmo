@@ -1,0 +1,6 @@
+PASS: rendered wallet expiry, account isolation, return expiry URL retention, confirmed return wallet link. Synthetic API only.
+Cleanup verified {
+  browser: { pid: 2679333, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 36019, closed: true },
+  profileRemoved: true
+}

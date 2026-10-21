@@ -1,0 +1,92 @@
+{
+  "error": "Error: {\"exceptionId\":1,\"text\":\"Uncaught\",\"lineNumber\":0,\"columnNumber\":56,\"scriptId\":\"57\",\"stackTrace\":{\"callFrames\":[{\"functionName\":\"\",\"scriptId\":\"57\",\"url\":\"\",\"lineNumber\":0,\"columnNumber\":56}]},\"exception\":{\"type\":\"object\",\"subtype\":\"error\",\"className\":\"TypeError\",\"description\":\"TypeError: Cannot read properties of null (reading 'textContent')\\n    at <anonymous>:1:57\",\"objectId\":\"7101064311379831608.3.2\"}}\n    at evaluate (file:///home/daniel/projects/projectTixmo/worktrees/task-280/scripts/browser/task-280-delivery.mjs:26:169)\n    at async wait (file:///home/daniel/projects/projectTixmo/worktrees/task-280/scripts/browser/task-280-delivery.mjs:27:80)\n    at async file:///home/daniel/projects/projectTixmo/worktrees/task-280/scripts/browser/task-280-delivery.mjs:68:88",
+  "audit": [
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/synthetic-ticket/qr",
+      "token": "Bearer synthetic-A",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-A",
+      "status": 401
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-A",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/auth/refresh",
+      "token": "",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "token": "",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/orders/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/tickets/mine",
+      "token": "Bearer synthetic-B",
+      "status": 200
+    }
+  ],
+  "failures": [],
+  "body": "\n    \n    ",
+  "url": "http://127.0.0.1:34671/wallet"
+}

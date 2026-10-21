@@ -1,0 +1,9 @@
+[1021/031911.326456:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+
+DevTools listening on ws://127.0.0.1:37485/devtools/browser/7b8c2429-562d-4a02-97c8-99f393dd8d36
+[1021/031912.223075:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:34671/@vite/client (789)
+[1021/031912.237828:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:34671/@vite/client (912)
+[1021/031912.323278:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:34671/node_modules/.vite/deps/chunk-QOPAOKW2.js?v=63bb05d0 (21609)
+[1021/031912.507078:INFO:CONSOLE:157] "Error: Failed to load Stripe.js", source: http://127.0.0.1:34671/node_modules/.vite/deps/@stripe_stripe-js.js?v=63bb05d0 (157)
+[1021/031913.232620:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:34671/@vite/client (789)
+[1021/031913.240535:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:34671/@vite/client (912)

@@ -1,0 +1,15 @@
+
+DevTools listening on ws://127.0.0.1:43047/devtools/browser/8f366613-ca7b-4509-b6c6-321d8ef61f84
+[1021/031933.287807:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+[1021/031934.102630:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:36019/@vite/client (789)
+[1021/031934.113224:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:36019/@vite/client (912)
+[1021/031934.193824:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:36019/node_modules/.vite/deps/chunk-QOPAOKW2.js?v=63bb05d0 (21609)
+[1021/031934.376515:INFO:CONSOLE:157] "Error: Failed to load Stripe.js", source: http://127.0.0.1:36019/node_modules/.vite/deps/@stripe_stripe-js.js?v=63bb05d0 (157)
+[1021/031935.060418:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:36019/@vite/client (789)
+[1021/031935.065877:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:36019/@vite/client (912)
+[1021/031935.101733:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:36019/node_modules/.vite/deps/chunk-QOPAOKW2.js?v=63bb05d0 (21609)
+[1021/031935.168084:INFO:CONSOLE:157] "Error: Failed to load Stripe.js", source: http://127.0.0.1:36019/node_modules/.vite/deps/@stripe_stripe-js.js?v=63bb05d0 (157)
+[1021/031935.359835:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:36019/@vite/client (789)
+[1021/031935.365985:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:36019/@vite/client (912)
+[1021/031935.407861:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:36019/node_modules/.vite/deps/chunk-QOPAOKW2.js?v=63bb05d0 (21609)
+[1021/031935.443046:INFO:CONSOLE:157] "Error: Failed to load Stripe.js", source: http://127.0.0.1:36019/node_modules/.vite/deps/@stripe_stripe-js.js?v=63bb05d0 (157)

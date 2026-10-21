@@ -3,7 +3,7 @@ import { createWriteStream } from 'node:fs';
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { createServer as createNetServer } from 'node:net';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +15,8 @@ const { createServer } = await import(require.resolve('vite'));
 const react = (await import(require.resolve('@vitejs/plugin-react'))).default;
 const browserPath = process.env.TIXMO_BROWSER_PATH;
 assert(browserPath, 'Set TIXMO_BROWSER_PATH to an existing cached Chromium executable; do not download.');
-const out = resolve(root, 'docs/evidence/task-280');
+const out = resolve(root, 'docs/evidence/task-280/font-runtime-run');
+await mkdir(out,{recursive:true});
 const profile = await mkdtemp(resolve(tmpdir(), 'tixmo-280-'));
 let server, browser, ws, send;
 const audit = []; const failures = []; let expired = false; let buyer = 'A';
@@ -40,7 +41,7 @@ try {
  ws.addEventListener('message',async e=>{const m=JSON.parse(e.data);if(m.id)return;
  if(m.method==='Fetch.requestPaused'){try{const p=m.params;const u=new URL(p.request.url);if(u.origin!==origin){audit.push({blockedExternal:u.origin});await send('Fetch.failRequest',{requestId:p.requestId,errorReason:'BlockedByClient'});return;}
  if(!u.pathname.startsWith('/api/v1/')) {await send('Fetch.continueRequest',{requestId:p.requestId});return;}
- const path=u.pathname.slice(7);const token=p.request.headers.Authorization || p.request.headers.authorization || '';audit.push({method:p.request.method,path,token});let status=200;let data;
+ const path=u.pathname.slice(7);const token=p.request.headers.Authorization || p.request.headers.authorization || '';const entry={method:p.request.method,path,token};audit.push(entry);let status=200;let data;
  const allowed=(p.request.method==='POST' && ['/auth/login','/auth/refresh'].includes(path)) || (p.request.method==='GET' && (path.startsWith('/events/public/') || path===RECOVERY_PATH || path.startsWith('/orders/mine') || path.startsWith('/tickets/mine') || path==='/tickets/synthetic-ticket/qr'));
  if(!allowed){failures.push(`Unexpected API method/route ${p.request.method} ${path}`);await send('Fetch.failRequest',{requestId:p.requestId,errorReason:'BlockedByClient'});return;}
  if(path.startsWith('/events/public/'))data={id:'synthetic-event',name:'Synthetic delivery rehearsal',startDate:'2027-11-09T20:00:00Z',timezone:'America/St_Johns',ticketTypes:[]};
@@ -52,27 +53,29 @@ try {
  else if(path.startsWith('/tickets/mine'))data={tickets:token==='Bearer synthetic-A'?[ticket]:[],pagination:{pages:1}};
  else if(path==='/tickets/synthetic-ticket/qr')data={qrCode:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180"><rect width="180" height="180" fill="white"/><text x="10" y="90">SYNTHETIC QR</text></svg>')};
  else{status=500;failures.push(`Unhandled synthetic API: ${path}`);data={};}
+ entry.status=status;
  await send('Fetch.fulfillRequest',{requestId:p.requestId,responseCode:status,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({success:status===200,data,message:status===401?'Synthetic session expired':undefined})).toString('base64')});
  }catch(error){failures.push(error.message);}}
  });
  await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*'}]});
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__TIXMO_CONFIG__={apiUrl:'/api/v1',stripePublishableKey:''}; if(!sessionStorage.getItem('synthetic-seeded')){localStorage.clear();localStorage.setItem('access_token','synthetic-A');localStorage.setItem('refresh_token','synthetic-refresh-A');localStorage.setItem('user',${JSON.stringify(JSON.stringify(user('A')))});localStorage.setItem('tixmo_session_generation','synthetic-A-generation');sessionStorage.setItem('synthetic-seeded','yes');}`});
  await send('Page.navigate',{url:`${origin}/wallet`});
- await wait(`document.body.textContent.includes('SYNTHETIC-A-ONLY')`,'A wallet');await click('Show ticket');await wait(`!!document.querySelector('img[alt="Ticket admission QR code"]')`,'synthetic QR');await click('Transfer');await wait(`!!document.querySelector('[role="dialog"][aria-label="Transfer ticket"]')`,'transfer dialog positively present');await screenshot('01-a-wallet-qr-transfer');
+ await wait(`(document.body?.textContent || '').includes('SYNTHETIC-A-ONLY')`,'A wallet');await click('Show ticket');await wait(`!!document.querySelector('img[alt="Ticket admission QR code"]')`,'synthetic QR');await click('Transfer');await wait(`!!document.querySelector('[role="dialog"][aria-label="Transfer ticket"]')`,'transfer dialog positively present');await screenshot('01-a-wallet-qr-transfer');
  expired=true;await click('Refresh');await wait(`!!document.querySelector('[aria-label="Email address"]')`,'actual 401 refresh failure recovery');
- assert.equal(await evaluate(`location.pathname`),'/wallet');assert.equal(await evaluate(`document.body.textContent.includes('SYNTHETIC-A-ONLY') || !!document.querySelector('img[alt="Ticket admission QR code"]') || !!document.querySelector('[role="dialog"]')`),false);
- assert.equal(await evaluate(`localStorage.getItem('access_token')`),null);await screenshot('02-wallet-expired-cleared');
- await login('B');await wait(`document.body.textContent.includes('buyer-b@example.invalid') && document.body.textContent.includes('No tickets yet.') && document.body.textContent.includes('No orders yet.') && JSON.parse(localStorage.getItem('user')).id==='synthetic-B'`,'B wallet');assert.equal(await evaluate(`document.body.textContent.includes('SYNTHETIC-A-ONLY')`),false);await screenshot('03-b-wallet-isolated');
+ assert.equal(await evaluate(`location.pathname`),'/wallet');assert.equal(await evaluate(`(document.body?.textContent || '').includes('SYNTHETIC-A-ONLY') || !!document.querySelector('img[alt="Ticket admission QR code"]') || !!document.querySelector('[role="dialog"]')`),false);
+ assert.equal(await evaluate(`localStorage.getItem('access_token') || localStorage.getItem('refresh_token') || localStorage.getItem('user')`),null);await screenshot('02-wallet-expired-cleared');
+ await login('B');await wait(`(document.body?.textContent || '').includes('buyer-b@example.invalid') && (document.body?.textContent || '').includes('No tickets yet.') && (document.body?.textContent || '').includes('No orders yet.') && JSON.parse(localStorage.getItem('user')).id==='synthetic-B'`,'B wallet');assert.equal(await evaluate(`(document.body?.textContent || '').includes('SYNTHETIC-A-ONLY')`),false);await screenshot('03-b-wallet-isolated');
+ const beforeReload=await evaluate('performance.timeOrigin');await send('Page.reload');await wait(`performance.timeOrigin>${beforeReload} && (document.body?.textContent || '').includes('buyer-b@example.invalid') && (document.body?.textContent || '').includes('No orders yet.') && (document.body?.textContent || '').includes('No tickets yet.')`,'B survives real page reload');assert.equal(await evaluate(`(document.body?.textContent || '').includes('SYNTHETIC-A-ONLY') || !!document.querySelector('img[alt="Ticket admission QR code"]') || !!document.querySelector('[role="dialog"]')`),false);await screenshot('03b-b-wallet-reloaded');
  // Return begins with expired A credentials; actual interceptor must preserve URL and reauthentication.
  await evaluate(`localStorage.setItem('access_token','synthetic-A');localStorage.setItem('refresh_token','synthetic-refresh-A');localStorage.setItem('user',${JSON.stringify(JSON.stringify(user('A')))});localStorage.setItem('tixmo_session_generation','synthetic-return-A');`);expired=true;
  await send('Page.navigate',{url:`${origin}/checkout/synthetic?orderId=${ORDER_ID}&redirect_status=succeeded`});
  await wait(`!!document.querySelector('[aria-label="Email address"]') && !localStorage.getItem('access_token')`,'return expiry');assert.equal(await evaluate(`new URLSearchParams(location.search).get('orderId')`),ORDER_ID);await screenshot('04-return-expired-preserved');
- await login('A');await wait(`document.body.textContent.includes('Order confirmed.')`,'server-confirmed return');await screenshot('05-confirmed-wallet-link');await click('View my tickets and orders');await wait(`location.pathname==='/wallet' && document.body.textContent.includes('SYNTHETIC-A-ONLY')`,'wallet link delivered');await screenshot('06-delivered-wallet');
+ await login('A');await wait(`(document.body?.textContent || '').includes('Order confirmed.')`,'server-confirmed return');await screenshot('05-confirmed-wallet-link');await click('View my tickets and orders');await wait(`location.pathname==='/wallet' && (document.body?.textContent || '').includes('SYNTHETIC-A-ONLY')`,'wallet link delivered');await screenshot('06-delivered-wallet');
  assert(audit.filter(r=>r.path===RECOVERY_PATH && r.token==='Bearer synthetic-A').length>=2,'Recovery requested before expiry and after reauthentication');assert(audit.some(r=>r.path==='/auth/refresh'));assert(audit.some(r=>r.path?.startsWith('/tickets/mine')&&r.token==='Bearer synthetic-B'));assert.equal(failures.length,0,failures.join('\n'));
  await writeFile(resolve(out,'result.json'),JSON.stringify({status:'PASS synthetic rendered browser only',candidate:'4ec8594850eb547dafc145a14bb1b85cdeaa235c',browser:browserPath,audit,failures},null,2));
  console.log('PASS: rendered wallet expiry, account isolation, return expiry URL retention, confirmed return wallet link. Synthetic API only.');
 } catch(error) {
- if(send){try{await writeFile(resolve(out,'failure.json'),JSON.stringify({error:error.stack,audit,failures,body:await evaluate('document.body.textContent').catch(()=>null),url:await evaluate('location.href').catch(()=>null)},null,2));await screenshot('failure');}catch(diagnostic){console.error('Diagnostic failure',diagnostic.message);}}throw error;
+ if(send){try{await writeFile(resolve(out,'failure.json'),JSON.stringify({error:error.stack,audit,failures,body:await evaluate("(document.body?.textContent || '')").catch(()=>null),url:await evaluate('location.href').catch(()=>null)},null,2));await screenshot('failure');}catch(diagnostic){console.error('Diagnostic failure',diagnostic.message);}}throw error;
 } finally {
  if(ws){ws.close();}
  const proof=await cleanupOwned({child:browser,server,profile,remove:rm});
