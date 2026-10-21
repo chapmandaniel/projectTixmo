@@ -1,0 +1,10 @@
+Owned PID stopped/absent 2709617
+Owned PID stopped/absent 2709630
+Postmaster PID/socket/browser profile absent /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r3/run.hgT1gf
+API PID absent 2709717
+Browser PID absent 2710055
+No listener 29976
+No listener 53524
+No listener 36545
+No listener 43007
+Parent awaited browser-harness child exit0; helper awaited exact Chromium exit/Vite close/profile removal. Dependencies unlinked after run.
