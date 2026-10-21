@@ -1,0 +1,33 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-279/run.gk7RwB/jest-cache --runInBand --runTestsByPath tests/integration/orders-sale-windows.local.test.ts
+
+  console.log
+    TASK279_HTTP_LISTENER { address: '127.0.0.1', family: 'IPv4', port: 44191 }
+
+      at Object.<anonymous> (tests/integration/orders-sale-windows.local.test.ts:65:11)
+
+  console.log
+    TASK279_REAL_LOCK_WAIT_CLOSE_REJECTED 2026-10-21T05:19:11.333Z
+
+      at Object.<anonymous> (tests/integration/orders-sale-windows.local.test.ts:176:11)
+
+  console.log
+    TASK279_DURABLE_MANUAL_LATE_PAYMENT 25210dbc-f0b4-4580-95e1-ed127021b1fc
+
+      at Object.<anonymous> (tests/integration/orders-sale-windows.local.test.ts:215:11)
+
+PASS tests/integration/orders-sale-windows.local.test.ts (13.822 s)
+  ✓ eventEarly rejects without inventory/order mutation (50 ms)
+  ✓ eventClosed rejects without inventory/order mutation (18 ms)
+  ✓ ticketEarly rejects without inventory/order mutation (19 ms)
+  ✓ ticketClosed rejects without inventory/order mutation (18 ms)
+  ✓ open intersection HTTP order, aggregate cap, buyer isolation (29 ms)
+  ✓ actual event row lock wait crosses close before server clock sampling (1729 ms)
+  ✓ expired paid webhook persists one manual exception across replay with no provider or fulfillment (111 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       7 passed, 7 total
+Snapshots:   0 total
+Time:        14.059 s
+Ran all test suites within paths "tests/integration/orders-sale-windows.local.test.ts".
