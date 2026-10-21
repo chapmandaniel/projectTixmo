@@ -1,4 +1,5 @@
 // Loopback-only actual-App delivery rehearsal. No API server, DB, provider or email.
+import { createWriteStream } from 'node:fs';
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { createServer as createNetServer } from 'node:net';
@@ -32,6 +33,7 @@ try {
  server = await createServer({configFile:false,envFile:false,envDir:profile,root:resolve(root,'tdash'),plugins:[react()],server:{host:'127.0.0.1',port:frontendPort,strictPort:true,proxy:{}}, logLevel:'error'});
  await server.listen(); const origin=`http://127.0.0.1:${server.httpServer.address().port}`;
  browser=spawn(browserPath,['--headless','--no-sandbox','--disable-gpu','--disable-background-networking','--disable-component-update','--no-first-run','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','pipe']});
+ browser.stderr.pipe(createWriteStream(resolve(out,'browser-stderr.log')));
  const browserWs=await new Promise((res,rej)=>{let s='';browser.stderr.on('data',d=>{s+=d;const m=s.match(/DevTools listening on (ws:\/\/[^\s]+)/);if(m)res(m[1]);});browser.once('error',rej);browser.once('exit',c=>rej(Error(`Chromium exited ${c}: ${s.slice(-2000)}`)));setTimeout(()=>rej(Error('Chromium startup timeout')),15000).unref();});
  const debugOrigin=new URL(browserWs); assert(['127.0.0.1','localhost','[::1]'].includes(debugOrigin.hostname),'DevTools must be loopback'); const targets=await fetch(`http://${debugOrigin.host}/json/list`, {signal:AbortSignal.timeout(5000)}).then(r=>r.json());
  ws=new WebSocket(targets.find(t=>t.type==='page').webSocketDebuggerUrl);await deadline(new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',()=>reject(Error('CDP connection failed')),{once:true});}),5000,'CDP connection'); send=createCDP(ws);
@@ -56,19 +58,21 @@ try {
  await send('Page.enable');await send('Runtime.enable');await send('Fetch.enable',{patterns:[{urlPattern:'*'}]});
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__TIXMO_CONFIG__={apiUrl:'/api/v1',stripePublishableKey:''}; if(!sessionStorage.getItem('synthetic-seeded')){localStorage.clear();localStorage.setItem('access_token','synthetic-A');localStorage.setItem('refresh_token','synthetic-refresh-A');localStorage.setItem('user',${JSON.stringify(JSON.stringify(user('A')))});localStorage.setItem('tixmo_session_generation','synthetic-A-generation');sessionStorage.setItem('synthetic-seeded','yes');}`});
  await send('Page.navigate',{url:`${origin}/wallet`});
- await wait(`document.body.innerText.includes('SYNTHETIC-A-ONLY')`,'A wallet');await click('Show ticket');await wait(`!!document.querySelector('img[alt="Ticket admission QR code"]')`,'synthetic QR');await click('Transfer');await wait(`!!document.querySelector('[role="dialog"][aria-label="Transfer ticket"]')`,'transfer dialog positively present');await screenshot('01-a-wallet-qr-transfer');
+ await wait(`document.body.textContent.includes('SYNTHETIC-A-ONLY')`,'A wallet');await click('Show ticket');await wait(`!!document.querySelector('img[alt="Ticket admission QR code"]')`,'synthetic QR');await click('Transfer');await wait(`!!document.querySelector('[role="dialog"][aria-label="Transfer ticket"]')`,'transfer dialog positively present');await screenshot('01-a-wallet-qr-transfer');
  expired=true;await click('Refresh');await wait(`!!document.querySelector('[aria-label="Email address"]')`,'actual 401 refresh failure recovery');
- assert.equal(await evaluate(`location.pathname`),'/wallet');assert.equal(await evaluate(`document.body.innerText.includes('SYNTHETIC-A-ONLY') || !!document.querySelector('img[alt="Ticket admission QR code"]') || !!document.querySelector('[role="dialog"]')`),false);
+ assert.equal(await evaluate(`location.pathname`),'/wallet');assert.equal(await evaluate(`document.body.textContent.includes('SYNTHETIC-A-ONLY') || !!document.querySelector('img[alt="Ticket admission QR code"]') || !!document.querySelector('[role="dialog"]')`),false);
  assert.equal(await evaluate(`localStorage.getItem('access_token')`),null);await screenshot('02-wallet-expired-cleared');
- await login('B');await wait(`document.body.innerText.includes('buyer-b@example.invalid') && document.body.innerText.includes('No tickets yet.') && document.body.innerText.includes('No orders yet.') && JSON.parse(localStorage.getItem('user')).id==='synthetic-B'`,'B wallet');assert.equal(await evaluate(`document.body.innerText.includes('SYNTHETIC-A-ONLY')`),false);await screenshot('03-b-wallet-isolated');
+ await login('B');await wait(`document.body.textContent.includes('buyer-b@example.invalid') && document.body.textContent.includes('No tickets yet.') && document.body.textContent.includes('No orders yet.') && JSON.parse(localStorage.getItem('user')).id==='synthetic-B'`,'B wallet');assert.equal(await evaluate(`document.body.textContent.includes('SYNTHETIC-A-ONLY')`),false);await screenshot('03-b-wallet-isolated');
  // Return begins with expired A credentials; actual interceptor must preserve URL and reauthentication.
  await evaluate(`localStorage.setItem('access_token','synthetic-A');localStorage.setItem('refresh_token','synthetic-refresh-A');localStorage.setItem('user',${JSON.stringify(JSON.stringify(user('A')))});localStorage.setItem('tixmo_session_generation','synthetic-return-A');`);expired=true;
  await send('Page.navigate',{url:`${origin}/checkout/synthetic?orderId=${ORDER_ID}&redirect_status=succeeded`});
  await wait(`!!document.querySelector('[aria-label="Email address"]') && !localStorage.getItem('access_token')`,'return expiry');assert.equal(await evaluate(`new URLSearchParams(location.search).get('orderId')`),ORDER_ID);await screenshot('04-return-expired-preserved');
- await login('A');await wait(`document.body.innerText.includes('Order confirmed.')`,'server-confirmed return');await screenshot('05-confirmed-wallet-link');await click('View my tickets and orders');await wait(`location.pathname==='/wallet' && document.body.innerText.includes('SYNTHETIC-A-ONLY')`,'wallet link delivered');await screenshot('06-delivered-wallet');
+ await login('A');await wait(`document.body.textContent.includes('Order confirmed.')`,'server-confirmed return');await screenshot('05-confirmed-wallet-link');await click('View my tickets and orders');await wait(`location.pathname==='/wallet' && document.body.textContent.includes('SYNTHETIC-A-ONLY')`,'wallet link delivered');await screenshot('06-delivered-wallet');
  assert(audit.filter(r=>r.path===RECOVERY_PATH && r.token==='Bearer synthetic-A').length>=2,'Recovery requested before expiry and after reauthentication');assert(audit.some(r=>r.path==='/auth/refresh'));assert(audit.some(r=>r.path?.startsWith('/tickets/mine')&&r.token==='Bearer synthetic-B'));assert.equal(failures.length,0,failures.join('\n'));
  await writeFile(resolve(out,'result.json'),JSON.stringify({status:'PASS synthetic rendered browser only',candidate:'4ec8594850eb547dafc145a14bb1b85cdeaa235c',browser:browserPath,audit,failures},null,2));
  console.log('PASS: rendered wallet expiry, account isolation, return expiry URL retention, confirmed return wallet link. Synthetic API only.');
+} catch(error) {
+ if(send){try{await writeFile(resolve(out,'failure.json'),JSON.stringify({error:error.stack,audit,failures,body:await evaluate('document.body.textContent').catch(()=>null),url:await evaluate('location.href').catch(()=>null)},null,2));await screenshot('failure');}catch(diagnostic){console.error('Diagnostic failure',diagnostic.message);}}throw error;
 } finally {
  if(ws){ws.close();}
  const proof=await cleanupOwned({child:browser,server,profile,remove:rm});

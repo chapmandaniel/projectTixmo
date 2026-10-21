@@ -1,0 +1,13 @@
+{
+  "browser": {
+    "pid": 2663622,
+    "stopped": true,
+    "exitCode": null,
+    "signalCode": "SIGTRAP"
+  },
+  "listener": {
+    "port": 37845,
+    "closed": true
+  },
+  "profileRemoved": true
+}

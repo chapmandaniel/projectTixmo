@@ -50,3 +50,21 @@ Checks run after corrections:
 - `git diff --check`: exit 0.
 
 No Chromium launch retry, installs, downloads, DB/API runtime, provider or email occurred. Rendered interactions/screenshots remain **unverified**, not PASS. Initial 53 component tests are historical evidence on unchanged product base, not a new rendered check or re-run. Independent #281/#282 rereview remains required.
+
+## Actual App attempt with reviewed #283 runtime — partial only, NOT PASS
+
+After PM accepted #283 (`68eb4db523c4054001104c27cb2a0725bfc84906`, independent lead/QA reviewed), executed:
+
+```sh
+TIXMO_BROWSER_PATH=/home/daniel/projects/projectTixmo/worktrees/task-283/scripts/runtime/task-283-chromium node scripts/browser/task-280-delivery.mjs
+```
+
+Actual runtime reaches App/Vite. First attempt timed out checking `innerText`: no text glyphs rendered; screenshot `initial-wallet-no-glyphs.png` records blank text with styled layout. Narrow harness correction changes text checks to DOM `textContent` (not a claim glyphs are visually readable), adds persistent browser stderr and failure audit/DOM diagnostics. A subsequent diagnostic attempt preserves fatal cause; no product files changed.
+
+**Partial actual assertions reached:** A wallet DOM contains synthetic order; Show ticket triggers authenticated intercepted QR request and admission image exists; Transfer opens positively asserted accessible dialog; screenshot `01-a-wallet-qr-transfer.png` captured. Clicking Refresh drives actual orders/tickets 401s and actual `/auth/refresh` POST with synthetic failure; then browser crashes **SIGTRAP** with `FATAL:third_party/skia/src/ports/SkFontMgr_FontConfigInterface.cpp:163 Not implemented.` Fontconfig default configuration was unavailable. No remaining session-clearing/B-login/return/confirmed-link assertions completed. No result.json/PASS produced.
+
+`browser-stderr.log`, `browser-run.log`, `failure.json` and `cleanup.json` describe the final diagnostic run. Earlier no-glyph screenshot is explicitly from the initial attempt; it is not a final-run screenshot. External font/Stripe renderer requests were intercepted/blocked; only synthetic API requests were fulfilled. Application-level dead-proxy/DNS and CDP blocking remain **not kernel isolation**. Font/raster quality is not accepted.
+
+Final actual cleanup verified browser PID **2663622** absent after SIGTRAP; owned frontend port **37845** connection refused; temporary profile removed. Prior actual attempts also executed independent cleanup (ports36415,36819,43261). Listener9 was checked absent before the final attempts. No backend/DB/real provider/email/API, host repair, downloaded asset, spend, merge or deployment occurred.
+
+Runtime recovery prerequisite is now **usable local font/fontconfig rendering**, not missing ELF dependencies: environment/runtime owner must qualify the text-input/session-recovery rendering path. No further runtime repair or browser retries attempted by frontend. Keep full #280 browser acceptance open and obtain independent exact-SHA source/evidence review. Existing #283 minimal JS qualification is not contradicted; it did not qualify this font-dependent App interaction.
