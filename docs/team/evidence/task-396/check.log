@@ -1,0 +1,9 @@
+PASS 19 committed SHA256SUMS entries
+PASS retained originals byte-identical; files0400 child0500 runtime0700
+PASS separate build/harness/outer/cleanup exit0 receipts and raw logs match runtime
+PASS terminal success retained; source emits only after seal and no exit failure
+PASS result artifact hashes; prefinalization not standalone success
+PASS before26/after31 migration ledger source checksums; unchanged legacy snapshots; tickets8 types5 tiers6
+PASS six tier limit/sold/held counters retained
+PASS source/schema/lock/generated-client hashes; donor lock exact and generated schema whitespace-equivalent; exact source commit
+PASS all eight ticket inventory/tier mappings and five type totals/availability/status assertions

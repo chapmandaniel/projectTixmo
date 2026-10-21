@@ -1,0 +1,6 @@
+ObservedUTC 2026-10-21T13:05:41.374107+00:00
+PID 3234779 absent
+PID 3234792 absent
+ss exit0 ports34722/57178 closed
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-391/run.aVUlMz/pg/postmaster.pid absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-391/run.aVUlMz/.s.PGSQL.34722 absent
