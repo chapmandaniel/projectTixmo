@@ -1,0 +1,6 @@
+{
+  "blockedNetworkAttempts": 0,
+  "blockLogAbsent": true,
+  "guard": "Preimport NODE_OPTIONS network-guard.cjs for Node net/TLS/http/https/fetch. Attempt fatal to guarded gate even if caught; current gate already failed at Jest.",
+  "limitations": "Not OS network isolation or proof of arbitrary native executables. Native PG/Prisma use inspected explicit ownedloopback targets."
+}

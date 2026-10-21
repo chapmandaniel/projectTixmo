@@ -1,0 +1,64 @@
+{
+  "numFailedTestSuites": 2,
+  "numPassedTestSuites": 95,
+  "numPendingTestSuites": 10,
+  "numTotalTestSuites": 107,
+  "numFailedTests": 6,
+  "numPassedTests": 715,
+  "numPendingTests": 26,
+  "numTotalTests": 747,
+  "numRuntimeErrorTestSuites": 0,
+  "success": false,
+  "startTime": 1792578275460,
+  "failedSuites": [
+    {
+      "file": "/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/orders-tenant.unit.test.ts",
+      "message": "  \u25cf processor refund scope \u203a ADMIN processor delegation retains explicit organization fence (org-a)\n\n    expect(jest.fn()).toHaveBeenCalledWith(...expected)\n\n    Expected: \"a\"\n    Received: \"a\", {\"event\": {\"organizationId\": \"org-a\"}, \"id\": \"a\", \"status\": \"PENDING\", \"tickets\": [], \"userId\": \"buyer-a\"}\n\n    Number of calls: 1\n\n      309 |         where: { id: 'a', ...(organizationId ? { event: { organizationId } } : {}) },\n      310 |       });\n    > 311 |       expect(paymentService.refundOrder).toHaveBeenCalledWith('a');\n          |                                          ^\n      312 |       expect(db.$transaction).not.toHaveBeenCalled();\n      313 |     }\n      314 |   );\n\n      at tests/orders-tenant.unit.test.ts:311:42\n\n  \u25cf processor refund scope \u203a ADMIN processor delegation retains explicit organization fence (null)\n\n    expect(jest.fn()).toHaveBeenCalledWith(...expected)\n\n    Expected: \"a\"\n    Received: \"a\", {\"event\": {\"organizationId\": \"org-a\"}, \"id\": \"a\", \"status\": \"PENDING\", \"tickets\": [], \"userId\": \"buyer-a\"}\n\n    Number of calls: 1\n\n      309 |         where: { id: 'a', ...(organizationId ? { event: { organizationId } } : {}) },\n      310 |       });\n    > 311 |       expect(paymentService.refundOrder).toHaveBeenCalledWith('a');\n          |                                          ^\n      312 |       expect(db.$transaction).not.toHaveBeenCalled();\n      313 |     }\n      314 |   );\n\n      at tests/orders-tenant.unit.test.ts:311:42\n",
+      "failures": [
+        {
+          "title": "processor refund scope ADMIN processor delegation retains explicit organization fence (org-a)",
+          "messages": [
+            "Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)\n\nExpected: \"a\"\nReceived: \"a\", {\"event\": {\"organizationId\": \"org-a\"}, \"id\": \"a\", \"status\": \"PENDING\", \"tickets\": [], \"userId\": \"buyer-a\"}\n\nNumber of calls: 1\n    at /home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/orders-tenant.unit.test.ts:311:42"
+          ]
+        },
+        {
+          "title": "processor refund scope ADMIN processor delegation retains explicit organization fence (null)",
+          "messages": [
+            "Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)\n\nExpected: \"a\"\nReceived: \"a\", {\"event\": {\"organizationId\": \"org-a\"}, \"id\": \"a\", \"status\": \"PENDING\", \"tickets\": [], \"userId\": \"buyer-a\"}\n\nNumber of calls: 1\n    at /home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/orders-tenant.unit.test.ts:311:42"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/integration/order-double-refund.race.test.ts",
+      "message": "  \u25cf overlapping refund applies inventory once and preserves other paid and pending buyers (reverse release=false)\n\n    Barrier timeout (harness failure)\n\n      19 |       promise,\n      20 |       new Promise((_, reject) => {\n    > 21 |         timer = setTimeout(() => reject(new Error('Barrier timeout (harness failure)')), 5000);\n         |                                         ^\n      22 |       }),\n      23 |     ]);\n      24 |   } finally {\n\n      at Timeout.<anonymous> (tests/integration/order-double-refund.race.test.ts:21:41)\n\n  \u25cf overlapping refund applies inventory once and preserves other paid and pending buyers (reverse release=true)\n\n    Barrier timeout (harness failure)\n\n      19 |       promise,\n      20 |       new Promise((_, reject) => {\n    > 21 |         timer = setTimeout(() => reject(new Error('Barrier timeout (harness failure)')), 5000);\n         |                                         ^\n      22 |       }),\n      23 |     ]);\n      24 |   } finally {\n\n      at Timeout.<anonymous> (tests/integration/order-double-refund.race.test.ts:21:41)\n\n  \u25cf insufficient sold inventory rolls back claim and ticket cancellation completely\n\n    expect(received).rejects.toMatchObject(expected)\n\n    - Expected  - 2\n    + Received  + 1\n\n      Object {\n    -   \"message\": \"Order sold inventory is inconsistent\",\n    -   \"statusCode\": 500,\n    +   \"statusCode\": 400,\n      }\n\n      244 | test('insufficient sold inventory rolls back claim and ticket cancellation completely', async () => {\n      245 |   const { order, type } = await refundFixture(1);\n    > 246 |   await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({\n          |                                                                  ^\n      247 |     statusCode: 500,\n      248 |     message: 'Order sold inventory is inconsistent',\n      249 |   });\n\n      at Object.toMatchObject (node_modules/expect/build/index.js:2155:20)\n      at Object.<anonymous> (tests/integration/order-double-refund.race.test.ts:246:66)\n\n  \u25cf refund preserves scalar response/payment contract, cancels VALID/TRANSFERRED only and rejects retries\n\n    ApiError: Full refunds require unused, untransferred tickets\n\n      14 |\n      15 |   static badRequest(message: string, errors?: unknown) {\n    > 16 |     return new ApiError(400, message, errors);\n         |            ^\n      17 |   }\n      18 |\n      19 |   static unauthorized(message: string = 'Unauthorized') {\n\n      at ApiError.badRequest (src/utils/ApiError.ts:16:12)\n      at src/api/payments/service.ts:513:24\n      at Proxy._transactionWithCallback (node_modules/@prisma/client/runtime/library.js:130:8000)\n      at PaymentService.refundOrder (src/api/payments/service.ts:489:19)\n      at Object.<anonymous> (tests/integration/order-double-refund.race.test.ts:261:18)\n",
+      "failures": [
+        {
+          "title": "overlapping refund applies inventory once and preserves other paid and pending buyers (reverse release=false)",
+          "messages": [
+            "Error: Barrier timeout (harness failure)\n    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/integration/order-double-refund.race.test.ts:21:41)\n    at listOnTimeout (node:internal/timers:685:17)\n    at processTimers (node:internal/timers:618:7)"
+          ]
+        },
+        {
+          "title": "overlapping refund applies inventory once and preserves other paid and pending buyers (reverse release=true)",
+          "messages": [
+            "Error: Barrier timeout (harness failure)\n    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/integration/order-double-refund.race.test.ts:21:41)\n    at listOnTimeout (node:internal/timers:685:17)\n    at processTimers (node:internal/timers:618:7)"
+          ]
+        },
+        {
+          "title": "insufficient sold inventory rolls back claim and ticket cancellation completely",
+          "messages": [
+            "Error: expect(received).rejects.toMatchObject(expected)\n\n- Expected  - 2\n+ Received  + 1\n\n  Object {\n-   \"message\": \"Order sold inventory is inconsistent\",\n-   \"statusCode\": 500,\n+   \"statusCode\": 400,\n  }\n    at Object.toMatchObject (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/node_modules/expect/build/index.js:2155:20)\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/integration/order-double-refund.race.test.ts:246:66)"
+          ]
+        },
+        {
+          "title": "refund preserves scalar response/payment contract, cancels VALID/TRANSFERRED only and rejects retries",
+          "messages": [
+            "ApiError: Full refunds require unused, untransferred tickets\n    at ApiError.badRequest (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/src/utils/ApiError.ts:16:12)\n    at /home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/src/api/payments/service.ts:513:24\n    at Proxy._transactionWithCallback (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/node_modules/@prisma/client/runtime/library.js:130:8000)\n    at PaymentService.refundOrder (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/src/api/payments/service.ts:489:19)\n    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/tests/integration/order-double-refund.race.test.ts:261:18)"
+          ]
+        }
+      ]
+    }
+  ],
+  "blockedNetworkAttempts": 0
+}

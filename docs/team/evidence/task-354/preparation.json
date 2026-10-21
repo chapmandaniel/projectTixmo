@@ -1,0 +1,25 @@
+{
+  "candidate": "cdb41d4d3aa4ccc323a2a1cc6b04a490feafe6a6",
+  "branch": "tixmo/task-354-full-api",
+  "sourceParity": {
+    "checked": 102,
+    "equal": 102
+  },
+  "deps": "offline cp -a --reflink=auto from task318; no downloads/shared writes",
+  "inspected": [
+    "351manifest/recipe",
+    "318runtime.sh/run-gate.mjs/network-guard.cjs",
+    "scripts/verify-api.mjs",
+    "scripts/verification-safety.cjs",
+    "API Jest config/setup",
+    "API build wrapper",
+    "migration list and SQL"
+  ],
+  "runtimeStatus": "Await explicit PM grant; no services started during preparation",
+  "limits": [
+    "No product/test/assertion changes",
+    "No new2d7490a tests",
+    "Node preimport guard is not OS or native network isolation",
+    "Historical318 remainsFAIL; no pass inferred"
+  ]
+}

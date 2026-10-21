@@ -1,0 +1,614 @@
+[
+  {
+    "path": "docs/team/evidence/task-321/.gitignore",
+    "accepted": "792e090b2432c6990f725754a6a08eae4672ee6c",
+    "candidate": "792e090b2432c6990f725754a6a08eae4672ee6c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-321/README.md",
+    "accepted": "f999b983fc070b573a550010343e934d1466aecc",
+    "candidate": "f999b983fc070b573a550010343e934d1466aecc",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-321/jest-result.json",
+    "accepted": "a5398317786b4020034e2ce24c45e21559c797d3",
+    "candidate": "a5398317786b4020034e2ce24c45e21559c797d3",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-321/jest.config.cjs",
+    "accepted": "591385bf85cd3054adb6bff38588dd1b2aaf3f6b",
+    "candidate": "591385bf85cd3054adb6bff38588dd1b2aaf3f6b",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-321/jest.log",
+    "accepted": "67cf348b8eb4a4d37c8f5432be840dd6051eea1e",
+    "candidate": "67cf348b8eb4a4d37c8f5432be840dd6051eea1e",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-321/network-guard.cjs",
+    "accepted": "75edffbec9a03e62b1bcfa196665114500d2cc32",
+    "candidate": "75edffbec9a03e62b1bcfa196665114500d2cc32",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-321/run.sh",
+    "accepted": "add2baabfd0da31b2c2b641daf44073023f1c768",
+    "candidate": "add2baabfd0da31b2c2b641daf44073023f1c768",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/benchmark/event_cache.benchmark.test.ts",
+    "accepted": "c4c1686d380f081007df30aafdacd201e074a731",
+    "candidate": "c4c1686d380f081007df30aafdacd201e074a731",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/unit/api/events-public.service.test.ts",
+    "accepted": "29bc48ac46ba22be46f799afc3cef46dacce360e",
+    "candidate": "29bc48ac46ba22be46f799afc3cef46dacce360e",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/README.md",
+    "accepted": "d014ff2fc9345b6536df1cdb8ce588a4c5638691",
+    "candidate": "d014ff2fc9345b6536df1cdb8ce588a4c5638691",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/attempt-1/jest-result.json",
+    "accepted": "f7fcbd9d4e3fbd03e4b36c15f53fc5634d8ab764",
+    "candidate": "f7fcbd9d4e3fbd03e4b36c15f53fc5634d8ab764",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/attempt-1/jest.log",
+    "accepted": "fb6172333743765d3af6e5bdbb48bb4c441e044c",
+    "candidate": "fb6172333743765d3af6e5bdbb48bb4c441e044c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/attempt-1/runtime.log",
+    "accepted": "7305c88de0ca5b92ee6221d6114d2dd81ff023d3",
+    "candidate": "7305c88de0ca5b92ee6221d6114d2dd81ff023d3",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/attempt-2/jest-result.json",
+    "accepted": "2ca33060b9969176bd296328eda6d37f00dc4594",
+    "candidate": "2ca33060b9969176bd296328eda6d37f00dc4594",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/attempt-2/jest.log",
+    "accepted": "2ff86e81017a002eea877c94e4990eebb5e83f40",
+    "candidate": "2ff86e81017a002eea877c94e4990eebb5e83f40",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/attempt-2/runtime.log",
+    "accepted": "4cebd5f394eef701a639f888225bc7fa21a7a075",
+    "candidate": "4cebd5f394eef701a639f888225bc7fa21a7a075",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/cleanup.json",
+    "accepted": "3703d642f771baa4f725b9bcca31aed9585e6d20",
+    "candidate": "3703d642f771baa4f725b9bcca31aed9585e6d20",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/jest-result.json",
+    "accepted": "3090fbce88d1e764c15e052f484aeb73e46c4b49",
+    "candidate": "3090fbce88d1e764c15e052f484aeb73e46c4b49",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/jest.log",
+    "accepted": "6ce8a8677b22e560cdeb4e7142282ab7ae586cd3",
+    "candidate": "6ce8a8677b22e560cdeb4e7142282ab7ae586cd3",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/network-guard.cjs",
+    "accepted": "6fa01e56bbb998d0a0f5eb34cbbc3cba04bc5038",
+    "candidate": "6fa01e56bbb998d0a0f5eb34cbbc3cba04bc5038",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/provenance.sha256",
+    "accepted": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "candidate": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/runtime.log",
+    "accepted": "2373f7f8a747fd3edbf981f1f04740c979d7fa5a",
+    "candidate": "2373f7f8a747fd3edbf981f1f04740c979d7fa5a",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/runtime.sh",
+    "accepted": "bb17520b5d314dd2c23e35401ec1d0e33204b790",
+    "candidate": "bb17520b5d314dd2c23e35401ec1d0e33204b790",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/source-provenance.sha256",
+    "accepted": "c828fbf529a35397a4f60e3b4f5ceb27534ad9c1",
+    "candidate": "c828fbf529a35397a4f60e3b4f5ceb27534ad9c1",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-322/summary.json",
+    "accepted": "513b8822174b40140e8a59d80289c92e89b99953",
+    "candidate": "513b8822174b40140e8a59d80289c92e89b99953",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/payment-distinct-success.race.test.ts",
+    "accepted": "c9f4950f6bac6070b893ea34f320ef6c0d5b2074",
+    "candidate": "c9f4950f6bac6070b893ea34f320ef6c0d5b2074",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/payment-failed-retry.race.test.ts",
+    "accepted": "f907c52244210997c7619b4b525ce246a7200f29",
+    "candidate": "f907c52244210997c7619b4b525ce246a7200f29",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/payment-fenced-checkpoint.test.ts",
+    "accepted": "efcb4af57c7fc9663ccfb7ca6985fa0079f7b0c1",
+    "candidate": "efcb4af57c7fc9663ccfb7ca6985fa0079f7b0c1",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/payment-inventory-integrity.test.ts",
+    "accepted": "4e6bd41ebac7e15ec252849b4534819b8f5a7905",
+    "candidate": "4e6bd41ebac7e15ec252849b4534819b8f5a7905",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/payment-old-processing.baseline.test.ts",
+    "accepted": "10d42375f0cedf5f3bebce0c11b29f8e5aca0f27",
+    "candidate": "10d42375f0cedf5f3bebce0c11b29f8e5aca0f27",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/payment-paused-owner.baseline.test.ts",
+    "accepted": "1fba2c28edc143dadfcb0141c4c6faa9d3bd55a4",
+    "candidate": "1fba2c28edc143dadfcb0141c4c6faa9d3bd55a4",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/unit/release-integration.test.ts",
+    "accepted": "6ca682c65268dbb88bd7bd5971616fe6bb8032ed",
+    "candidate": "6ca682c65268dbb88bd7bd5971616fe6bb8032ed",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/README.md",
+    "accepted": "f4976fedfff700c768538858462d22571813b123",
+    "candidate": "f4976fedfff700c768538858462d22571813b123",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/attempt-1/jest-result.json",
+    "accepted": "fb608ccca06b5add08d6b501929c4b6c4ac211c1",
+    "candidate": "fb608ccca06b5add08d6b501929c4b6c4ac211c1",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/attempt-1/jest.log",
+    "accepted": "95300ff1dfa867868d64ddb9793760e066698b54",
+    "candidate": "95300ff1dfa867868d64ddb9793760e066698b54",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/attempt-1/provenance.sha256",
+    "accepted": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "candidate": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/attempt-1/runtime.log",
+    "accepted": "9b8b1c5784282c4f26099e981367b97111b118f2",
+    "candidate": "9b8b1c5784282c4f26099e981367b97111b118f2",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/attempt-2/jest-result.json",
+    "accepted": "9dd53cfa171085816140b0e76fab1e942b990cb4",
+    "candidate": "9dd53cfa171085816140b0e76fab1e942b990cb4",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/attempt-2/jest.log",
+    "accepted": "1f4eee8b7f57adb525683d394d2abbc6c4a988bc",
+    "candidate": "1f4eee8b7f57adb525683d394d2abbc6c4a988bc",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/attempt-2/provenance.sha256",
+    "accepted": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "candidate": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/attempt-2/runtime.log",
+    "accepted": "7048b558fab5fa624a20feb9ff91b3ff118a26be",
+    "candidate": "7048b558fab5fa624a20feb9ff91b3ff118a26be",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/cleanup.json",
+    "accepted": "899b9546e6f79cb7a49c43faf355cd94f61635c9",
+    "candidate": "899b9546e6f79cb7a49c43faf355cd94f61635c9",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/diff-checks.json",
+    "accepted": "20ad698b26cd3871cc9bf21f7c0a344b953cd51f",
+    "candidate": "20ad698b26cd3871cc9bf21f7c0a344b953cd51f",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/jest-result.json",
+    "accepted": "89f6e527a8013a1523b6cc93415cbf2c3f59536d",
+    "candidate": "89f6e527a8013a1523b6cc93415cbf2c3f59536d",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/jest.log",
+    "accepted": "a65842a9d079f8f568dbdf5eb3b9f7016be788e2",
+    "candidate": "a65842a9d079f8f568dbdf5eb3b9f7016be788e2",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/network-guard.cjs",
+    "accepted": "01582bdc1dd19890c12818de445c63d86d2ea4dd",
+    "candidate": "01582bdc1dd19890c12818de445c63d86d2ea4dd",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/provenance.sha256",
+    "accepted": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "candidate": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/runtime.log",
+    "accepted": "9e495eb534d8e0d9f62e8475711fbfaab436a556",
+    "candidate": "9e495eb534d8e0d9f62e8475711fbfaab436a556",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/runtime.sh",
+    "accepted": "e18fd6908fcf640fe26dbdf1af66b0a98cfeabef",
+    "candidate": "e18fd6908fcf640fe26dbdf1af66b0a98cfeabef",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/source-provenance.sha256",
+    "accepted": "e2e771876c55c7cc2e2d627716c281ff67a3ddf2",
+    "candidate": "e2e771876c55c7cc2e2d627716c281ff67a3ddf2",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-323/summary.json",
+    "accepted": "0cec44dbeacaf52a3cf7ad6f3bbc2185bbdb4e32",
+    "candidate": "0cec44dbeacaf52a3cf7ad6f3bbc2185bbdb4e32",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/order-confirm-cancel.race.test.ts",
+    "accepted": "adb8ae7a11e3ad4c6da85c80f6937e5ed062296e",
+    "candidate": "adb8ae7a11e3ad4c6da85c80f6937e5ed062296e",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/order-confirm-expiry.race.test.ts",
+    "accepted": "360e3281163df3497276e948aaa2c27a42b22f06",
+    "candidate": "360e3281163df3497276e948aaa2c27a42b22f06",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/order-double-cancel.race.test.ts",
+    "accepted": "7a3e4debc0f6e30e3ecccfb4e81ade1c297a9ef5",
+    "candidate": "7a3e4debc0f6e30e3ecccfb4e81ade1c297a9ef5",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/order-double-confirm.race.test.ts",
+    "accepted": "4b5d0f303da60545a2ff604695102fc06b50d1ee",
+    "candidate": "4b5d0f303da60545a2ff604695102fc06b50d1ee",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/README.md",
+    "accepted": "c2dc90f0df8faa78db8491e150723cd1881284b2",
+    "candidate": "c2dc90f0df8faa78db8491e150723cd1881284b2",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/cleanup.json",
+    "accepted": "cc518547597d7e3186b9b7836963886915dbf402",
+    "candidate": "cc518547597d7e3186b9b7836963886915dbf402",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/diff-checks.json",
+    "accepted": "a3c689b65621653bce945cd8f61787453e8635f9",
+    "candidate": "a3c689b65621653bce945cd8f61787453e8635f9",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/jest-result.json",
+    "accepted": "6cc2397366de7ec9064e7640f726cc394263e947",
+    "candidate": "6cc2397366de7ec9064e7640f726cc394263e947",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/jest.log",
+    "accepted": "87d0b597b2ee3a0262aa7fc4f995b3aff8504050",
+    "candidate": "87d0b597b2ee3a0262aa7fc4f995b3aff8504050",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/network-guard.cjs",
+    "accepted": "a4a889d43a62d1967a2f79f48249fd4761333d36",
+    "candidate": "a4a889d43a62d1967a2f79f48249fd4761333d36",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/prepared-tests-typecheck-attempt-1.log",
+    "accepted": "0b48d7a0585a411d2e0c15f37c0dba56f6ae5fbd",
+    "candidate": "0b48d7a0585a411d2e0c15f37c0dba56f6ae5fbd",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/prepared-tests-typecheck.log",
+    "accepted": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "candidate": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/provenance.sha256",
+    "accepted": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "candidate": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/red-baseline/jest-result.json",
+    "accepted": "1daf60ec8b692b916f585d9268b72ee8942fd6ec",
+    "candidate": "1daf60ec8b692b916f585d9268b72ee8942fd6ec",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/red-baseline/jest.log",
+    "accepted": "721c908943c78b7b4e52d8129e92e228c33ff2d9",
+    "candidate": "721c908943c78b7b4e52d8129e92e228c33ff2d9",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/red-baseline/provenance.sha256",
+    "accepted": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "candidate": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/red-baseline/runtime.log",
+    "accepted": "29d6bda953d8958dd62d330e753c91a024767859",
+    "candidate": "29d6bda953d8958dd62d330e753c91a024767859",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/red-source-identity.json",
+    "accepted": "bb9eea7f3f5fb4a1ad31f89bd2ba2a418c78540d",
+    "candidate": "bb9eea7f3f5fb4a1ad31f89bd2ba2a418c78540d",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/runtime.log",
+    "accepted": "11edab1335ede5f065aa1f3c414ec900ec0970bf",
+    "candidate": "11edab1335ede5f065aa1f3c414ec900ec0970bf",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/runtime.sh",
+    "accepted": "ecc33f3622a3991f3174111c59c7aa4457891d32",
+    "candidate": "ecc33f3622a3991f3174111c59c7aa4457891d32",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/shape-check.cjs",
+    "accepted": "b497fb12fbdea7882a4771ff1c168f138ec119f4",
+    "candidate": "b497fb12fbdea7882a4771ff1c168f138ec119f4",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/shape-check.log",
+    "accepted": "289e921018ee80d492581bb58de2a5cd64f95140",
+    "candidate": "289e921018ee80d492581bb58de2a5cd64f95140",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/source-provenance.sha256",
+    "accepted": "9465b105f952ae0e3c6741a8d413ed5fa5d3f7b2",
+    "candidate": "9465b105f952ae0e3c6741a8d413ed5fa5d3f7b2",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/stage-A-README.md",
+    "accepted": "ec5dded04ffa47d0e5d139d60330122f57c3ac75",
+    "candidate": "ec5dded04ffa47d0e5d139d60330122f57c3ac75",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/summary.json",
+    "accepted": "e63cfd0b37a14fe77359d4fad1389dbae48b58c1",
+    "candidate": "e63cfd0b37a14fe77359d4fad1389dbae48b58c1",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/tsconfig.prepared-tests.json",
+    "accepted": "4c452acdbb27ac34d07290e4fde8d7e1ff12961c",
+    "candidate": "4c452acdbb27ac34d07290e4fde8d7e1ff12961c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-333/typecheck.log",
+    "accepted": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "candidate": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/src/services/paid-sales-query.ts",
+    "accepted": "62d1c70c293af0c5407329c674ef52c66ce6cd2c",
+    "candidate": "62d1c70c293af0c5407329c674ef52c66ce6cd2c",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/paid-sales-utc.test.ts",
+    "accepted": "ad36b37c2be471c3a8b4b194e17860ff32f16934",
+    "candidate": "ad36b37c2be471c3a8b4b194e17860ff32f16934",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/README.md",
+    "accepted": "fb8b18e0ee3c52123ac82a5d0d474fba769e79b5",
+    "candidate": "fb8b18e0ee3c52123ac82a5d0d474fba769e79b5",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/cleanup.json",
+    "accepted": "6c62ec5e6fb05969db701b74443f180275a731bc",
+    "candidate": "6c62ec5e6fb05969db701b74443f180275a731bc",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/commands.log",
+    "accepted": "9f607f0e4ab15466e9b23a9585835ee2dca69fca",
+    "candidate": "9f607f0e4ab15466e9b23a9585835ee2dca69fca",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/context.setup.cjs",
+    "accepted": "c92747ba6737ab79cf342894be2f1834894fefc9",
+    "candidate": "c92747ba6737ab79cf342894be2f1834894fefc9",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/focused.log",
+    "accepted": "17c1397285c5aa920a70747f56b8890b301932b7",
+    "candidate": "17c1397285c5aa920a70747f56b8890b301932b7",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/generate.log",
+    "accepted": "18a27af1a2f57eb2476d48034a3c7a57a4b80565",
+    "candidate": "18a27af1a2f57eb2476d48034a3c7a57a4b80565",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/jest-result.json",
+    "accepted": "2ddca5b455b4890a4650b52ce5f03eb5db963f8b",
+    "candidate": "2ddca5b455b4890a4650b52ce5f03eb5db963f8b",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/jest.config.cjs",
+    "accepted": "1da446346539be2e21f4567f9d402181b50508af",
+    "candidate": "1da446346539be2e21f4567f9d402181b50508af",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/migrate.log",
+    "accepted": "01437609dcc288657e1b39f773ac54d36e87c7b6",
+    "candidate": "01437609dcc288657e1b39f773ac54d36e87c7b6",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/network-guard.cjs",
+    "accepted": "1e872a67ddea623848ba64b776d2e6c70dcf6d51",
+    "candidate": "1e872a67ddea623848ba64b776d2e6c70dcf6d51",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/network-verdict.json",
+    "accepted": "93a04e16bcd48d8da5a27201b3a5464199b806b1",
+    "candidate": "93a04e16bcd48d8da5a27201b3a5464199b806b1",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/observed-workers.json",
+    "accepted": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+    "candidate": "fe51488c7066f6687ef680d6bfaa4f7768ef205c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/provenance.sha256",
+    "accepted": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "candidate": "a0c9876e2e14abc20cb6bc51f615f2e6c486ed4c",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/runtime.log",
+    "accepted": "712766cf668a1bd24afee4b051a2a03aaa0bfe96",
+    "candidate": "712766cf668a1bd24afee4b051a2a03aaa0bfe96",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/runtime.sh",
+    "accepted": "618f31fef5cfef820f4e1857c3c2e5e373ef05e6",
+    "candidate": "618f31fef5cfef820f4e1857c3c2e5e373ef05e6",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/source-check.cjs",
+    "accepted": "87e9ee266dfad4544479a755378a2dcbcdc051d5",
+    "candidate": "87e9ee266dfad4544479a755378a2dcbcdc051d5",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/stage-A-README.md",
+    "accepted": "eb09f4bf8af065ea69a51f11867a94f032ecd8ea",
+    "candidate": "eb09f4bf8af065ea69a51f11867a94f032ecd8ea",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/stage-A-checks.log",
+    "accepted": "a595f6434d3df02fab5df1266a829166bad44d44",
+    "candidate": "a595f6434d3df02fab5df1266a829166bad44d44",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/stage-A-provenance.sha256",
+    "accepted": "9587ddb78706ed01a4822faea6093760bec6990b",
+    "candidate": "9587ddb78706ed01a4822faea6093760bec6990b",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/stage-B-provenance.sha256",
+    "accepted": "2219de17d5641ad0789ada4322bae994c3ac9718",
+    "candidate": "2219de17d5641ad0789ada4322bae994c3ac9718",
+    "equal": true
+  },
+  {
+    "path": "docs/team/evidence/task-334/summary.json",
+    "accepted": "d912dfd71bd722f94159fd691c9e1f027092cad2",
+    "candidate": "d912dfd71bd722f94159fd691c9e1f027092cad2",
+    "equal": true
+  },
+  {
+    "path": "tixmoapi2/tests/integration/approvals.test.ts",
+    "accepted": "c89233d97dafc695f7eb42fed26c33bdb19d5f5e",
+    "candidate": "c89233d97dafc695f7eb42fed26c33bdb19d5f5e",
+    "equal": true
+  }
+]

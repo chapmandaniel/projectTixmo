@@ -1,0 +1,10 @@
+{
+  "candidate": "cdb41d4d3aa4ccc323a2a1cc6b04a490feafe6a6",
+  "sourceSchemaSHA256": "03544f7a5fbe613b111fcf83b0249a38cc21d15ff8427b95ff340989871ec7bb",
+  "generatedSchemaSHA256": "a8601e89abd910f7464f9848ba061dc68fabf8ec6b4f014d4365004c95dc3b01",
+  "whitespaceNormalizedEqual": true,
+  "compiler": "TypeScript5.9.3",
+  "prismaClient": "5.22.0",
+  "node": "24.21.0",
+  "npm": "11.19.0"
+}
