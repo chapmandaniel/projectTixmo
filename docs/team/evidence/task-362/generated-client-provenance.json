@@ -1,0 +1,19 @@
+{
+  "candidate": "80c6710b89d147588e1514aa99a4e55c5630d38a",
+  "node": "v24.21.0",
+  "packages": {
+    "typescript": "5.9.3",
+    "prisma": "5.22.0",
+    "@prisma/client": "5.22.0",
+    "jest": "30.5.2"
+  },
+  "generatedSchemaWhitespaceNormalizedEqualsSource": true,
+  "sha256": {
+    "tixmoapi2/package-lock.json": "f530d7671524de570d43a6cf7e105cc8161f4c1be6b71a7ffc89025ee8a139da",
+    "tixmoapi2/prisma/schema.prisma": "03544f7a5fbe613b111fcf83b0249a38cc21d15ff8427b95ff340989871ec7bb",
+    "tixmoapi2/node_modules/.prisma/client/schema.prisma": "a8601e89abd910f7464f9848ba061dc68fabf8ec6b4f014d4365004c95dc3b01",
+    "tixmoapi2/node_modules/.prisma/client/index.js": "bdf9d2c9c26caf370271603742bfd580c227659ea4a12fd864a4ca0448178d3d",
+    "tixmoapi2/node_modules/typescript/lib/typescript.js": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675",
+    "tixmoapi2/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node": "35860a5c0fb2f79e7b38c40747c4d212318d97e1910ca528b133c802716de0b8"
+  }
+}

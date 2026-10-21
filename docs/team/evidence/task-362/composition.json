@@ -1,0 +1,52 @@
+{
+  "testBlobParity": {
+    "tixmoapi2/tests/integration/order-double-refund.race.test.ts": {
+      "reference": "7e01d57",
+      "sha256": "b7a9b66518d3c14a2ec3ba83389ba7e64d9ef87811004878c1c10ba3ec58fb9c"
+    },
+    "tixmoapi2/tests/integration/order-refund-current-path.test.ts": {
+      "reference": "7e01d57",
+      "sha256": "cf922383fe07dbe962f84cf622e0defd5757ee3825ddae194bda055c6ca347f9"
+    },
+    "tixmoapi2/tests/orders-tenant.unit.test.ts": {
+      "reference": "ccdab139",
+      "sha256": "cac597eb95463f21966bd4e41002d79bf222dbfce63e1759fe35941ae53a8b60"
+    }
+  },
+  "productSchemaLocksScriptsParityCdb": true,
+  "fullChangedPathAllowlistPass": true,
+  "changedPaths": [
+    "docs/team/evidence/task-325-legacy/README.md",
+    "docs/team/evidence/task-325-legacy/cleanup.json",
+    "docs/team/evidence/task-325-legacy/focused-result.json",
+    "docs/team/evidence/task-325-legacy/focused.log",
+    "docs/team/evidence/task-325-legacy/initial-jest-result.json",
+    "docs/team/evidence/task-325-legacy/initial-jest.log",
+    "docs/team/evidence/task-325-legacy/initial-runtime.log",
+    "docs/team/evidence/task-325-legacy/jest-result.json",
+    "docs/team/evidence/task-325-legacy/jest.log",
+    "docs/team/evidence/task-325-legacy/network-guard.cjs",
+    "docs/team/evidence/task-325-legacy/provenance.sha256",
+    "docs/team/evidence/task-325-legacy/runtime.log",
+    "docs/team/evidence/task-325-legacy/runtime.sh",
+    "docs/team/evidence/task-325-shared-stock/README.md",
+    "docs/team/evidence/task-325-shared-stock/cleanup.json",
+    "docs/team/evidence/task-325-shared-stock/focused-result.json",
+    "docs/team/evidence/task-325-shared-stock/focused.log",
+    "docs/team/evidence/task-325-shared-stock/jest-result.json",
+    "docs/team/evidence/task-325-shared-stock/jest.log",
+    "docs/team/evidence/task-325-shared-stock/network-guard.cjs",
+    "docs/team/evidence/task-325-shared-stock/provenance.sha256",
+    "docs/team/evidence/task-325-shared-stock/runtime.log",
+    "docs/team/evidence/task-325-shared-stock/runtime.sh",
+    "docs/team/evidence/task-356/README.md",
+    "docs/team/evidence/task-356/baseline.json",
+    "docs/team/evidence/task-356/deny-network.cjs",
+    "docs/team/evidence/task-356/fixed.json",
+    "docs/team/evidence/task-356/jest.json",
+    "tixmoapi2/tests/integration/order-double-refund.race.test.ts",
+    "tixmoapi2/tests/integration/order-refund-current-path.test.ts",
+    "tixmoapi2/tests/orders-tenant.unit.test.ts"
+  ],
+  "compositionManifestCommit": "2d878423391e3d34761cbea622c1a7e0b7dfac25"
+}

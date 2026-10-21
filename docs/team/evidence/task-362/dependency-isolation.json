@@ -1,0 +1,29 @@
+{
+  "absoluteSymlinks": [],
+  "sampledIndependentFiles": {
+    ".prisma/client/index.js": {
+      "inode": 2409417,
+      "sourceInode": 2270577,
+      "nlink": 1,
+      "sha256": "bdf9d2c9c26caf370271603742bfd580c227659ea4a12fd864a4ca0448178d3d"
+    },
+    ".prisma/client/schema.prisma": {
+      "inode": 2409427,
+      "sourceInode": 2270587,
+      "nlink": 1,
+      "sha256": "a8601e89abd910f7464f9848ba061dc68fabf8ec6b4f014d4365004c95dc3b01"
+    },
+    "typescript/lib/typescript.js": {
+      "inode": 2493419,
+      "sourceInode": 2278511,
+      "nlink": 1,
+      "sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675"
+    },
+    "prisma/build/index.js": {
+      "inode": 2491582,
+      "sourceInode": 2276674,
+      "nlink": 1,
+      "sha256": "ff0102cdfadfecb884c5f0b6e43661f4ef2a31917dbfad3157236ba8e8532388"
+    }
+  }
+}

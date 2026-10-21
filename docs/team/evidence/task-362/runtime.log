@@ -1,0 +1,13 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_362|tixmo362|127.0.0.1|29781
+PONG
+TASK362_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task362/run.dBKrRk pg_pid=3085826 redis_pid=3085839 pgport=29781 redisport=45851
+v24.21.0
+11.19.0
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+[verify:api] API verification passed.
+waiting for server to shut down.... done
+server stopped
+TASK362_CLEANUP pg_pid=3085826 redis_pid=3085839 pgport=29781 redisport=45851
