@@ -1,0 +1,21 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task367/run.KLaqut",
+  "mode": "0o700",
+  "pids": {
+    "3117680": true,
+    "3117693": true,
+    "3117787": true,
+    "3117810": true,
+    "3117833": true,
+    "3117875": true
+  },
+  "ports": [
+    22632,
+    44655
+  ],
+  "listeners": "",
+  "pgPidfileAbsent": true,
+  "redisSocketAbsent": true,
+  "redisPidfileAbsent": true,
+  "blockedNetworkAttempts": 0
+}
