@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "numTotalTestSuites": 5,
+  "numPassedTestSuites": 5,
+  "numFailedTestSuites": 0,
+  "numTotalTests": 24,
+  "numPassedTests": 24,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numRuntimeErrorTestSuites": 0,
+  "suites": [
+    {
+      "name": "order-double-cancel.race.test.ts",
+      "status": "passed",
+      "tests": 5
+    },
+    {
+      "name": "order-confirm-expiry.race.test.ts",
+      "status": "passed",
+      "tests": 6
+    },
+    {
+      "name": "order-cancel-stale-observation.test.ts",
+      "status": "passed",
+      "tests": 7
+    },
+    {
+      "name": "order-confirm-cancel.race.test.ts",
+      "status": "passed",
+      "tests": 4
+    },
+    {
+      "name": "order-double-confirm.race.test.ts",
+      "status": "passed",
+      "tests": 2
+    }
+  ]
+}
