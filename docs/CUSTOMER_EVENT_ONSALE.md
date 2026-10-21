@@ -35,6 +35,10 @@ stays open after session expiration or logout in another tab.
 The public storefront has its own scoped design system in
 `StorefrontPrimitives.jsx` and `storefront.css`; the organizer entry uses the
 existing `DashboardButton`. Existing dashboard styling is not replaced.
+The storefront uses the actual Tixmo logo PNG from
+`https://tixmo.co/images/tixmo_logo.png`, also used by the dashboard and login.
+The unchanged asset is vendored at `tdash/public/images/tixmo_logo.png` and
+rendered in the header, ticket panel and footer without redrawing or recoloring.
 
 Quantities respect published inventory, per-order caps, current tier capacity,
 sales windows, and unavailable states. Time boundaries update while the page

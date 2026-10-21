@@ -28,9 +28,8 @@
 .sf-preview { display: flex; justify-content: center; gap: 14px; padding: 7px 20px; font-size: 11px; letter-spacing: .06em; background: var(--sf-control); }
 .sf-preview span { color: var(--sf-muted); letter-spacing: 0; }
 .sf-header { height: 86px; display: flex; justify-content: space-between; align-items: center; }
-.sf-brand { display: inline-flex; align-items: center; gap: 9px; font-size: 32px; line-height: 1; letter-spacing: -.07em; font-weight: 850; flex-shrink: 0; }
-.sf-brand svg { color: var(--sf-accent); transform: rotate(-25deg); }
-.sf-brand-dot { color: var(--sf-accent); }
+.sf-brand { display: inline-flex; align-items: center; line-height: 0; flex-shrink: 0; }
+.sf-logo { display: block; width: 122px; height: auto; object-fit: contain; }
 .sf-header nav { display: flex; align-items: center; gap: 28px; font-size: 13px; font-weight: 550; }
 .sf-header nav a { display: flex; align-items: center; gap: 8px; }
 .sf-header nav button { display: grid; place-items: center; border: 1px solid var(--sf-border); border-radius: 50%; width: 38px; height: 38px; background: transparent; }
@@ -114,15 +113,13 @@
 .sf-ticket-panel > .sf-button { width: 100%; margin-top: 20px; }
 .sf-reservation-note { color: var(--sf-muted); text-align: center; font-size: 9px; margin-top: 13px !important; }
 .sf-ticket-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px dashed var(--sf-border); margin: 24px -26px -26px; padding: 17px 26px; }
-.sf-ticket-footer .sf-brand { font-size: 20px; gap: 5px; }
-.sf-ticket-footer .sf-brand svg { width: 18px; height: 18px; }
+.sf-ticket-footer .sf-logo { width: 74px; }
 .sf-ticket-footer > span { color: var(--sf-muted); font-size: 8px; }
 .sf-share-link { display: flex; align-items: center; justify-content: center; margin: 18px auto 0; gap: 9px; border: 0; background: transparent; color: var(--sf-muted); font-size: 11px !important; min-height: 40px; }
 .sf-muted { color: var(--sf-muted); font-size: 12px; margin-top: 15px !important; }
 .sf-inline-message { font-size: 11px; color: var(--sf-soft); margin-top: 14px !important; }
 .sf-footer { display: flex; gap: 28px; align-items: center; border-top: 1px solid var(--sf-border); padding-block: 32px; margin-top: 45px; color: var(--sf-muted); font-size: 10px; }
-.sf-footer .sf-brand { color: var(--sf-text); font-size: 25px; }
-.sf-footer .sf-brand svg { width: 21px; }
+.sf-footer .sf-logo { width: 92px; }
 .sf-footer > div { margin-left: auto; display: flex; gap: 20px; }
 .sf-share-message:empty { display: none; }
 .sf-share-message { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--sf-text); color: var(--sf-bg); padding: 12px 18px; border-radius: 7px; font-size: 12px; z-index: 10; max-width: calc(100vw - 40px); width: max-content; }
@@ -144,7 +141,7 @@
   .sf-header { height: 72px; }
   .sf-header nav { gap: 17px; font-size: 11px; }
   .sf-header nav button { width: 34px; height: 34px; }
-  .sf-brand { font-size: 29px; }
+  .sf-logo { width: 106px; }
   .sf-preview { gap: 8px; font-size: 9px; padding-inline: 10px; }
   .sf-hero { min-height: 420px; }
   .sf-hero-image { object-position: 62% center; }

@@ -1,16 +1,16 @@
 import React from 'react';
-import { Ticket } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './storefront.css';
 
 export const StorefrontBrand = ({ href, to }) => {
     const content = (
-        <>
-            <Ticket size={27} strokeWidth={2.2} aria-hidden="true" />
-            <span>
-                tixmo<span className="sf-brand-dot">.</span>
-            </span>
-        </>
+        <img
+            className="sf-logo"
+            src="/images/tixmo_logo.png"
+            width={882}
+            height={350}
+            alt="Tixmo"
+        />
     );
     return to ? (
         <Link className="sf-brand" to={to} aria-label="Tixmo">
