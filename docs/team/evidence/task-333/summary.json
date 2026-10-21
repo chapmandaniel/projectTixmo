@@ -1,0 +1,22 @@
+{
+  "red": {
+    "success": false,
+    "numPassedTests": 2,
+    "numFailedTests": 3,
+    "numPendingTests": 0,
+    "numPassedTestSuites": 0,
+    "numFailedTestSuites": 2,
+    "numRuntimeErrorTestSuites": 0
+  },
+  "green": {
+    "success": true,
+    "numPassedTests": 5,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numPassedTestSuites": 2,
+    "numFailedTestSuites": 0,
+    "numRuntimeErrorTestSuites": 0
+  },
+  "fixedRuntimeExit": 0,
+  "originalSmokeUnchanged": true
+}

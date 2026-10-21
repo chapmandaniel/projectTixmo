@@ -1,38 +1,41 @@
-# Task333 Stage A — READY FOR DB, NOT RUNTIME VERIFIED
+# Task333 Stage B — UTC paid-sales bounds, focused RED/GREEN
 
-Base/product `4ec8594850eb547dafc145a14bb1b85cdeaa235c`; isolated branch `tixmo/task-333-paid-sales-utc`. No task328 cancellation change or other unmerged fixes composed. PM authorized source/test preparation only while QA332 holds the DB lane. **No DB/services/Jest/integration execution occurred here. Await explicit PM runtime grant before Stage B.**
+Base `4ec8594850eb547dafc145a14bb1b85cdeaa235c`, branch `tixmo/task-333-paid-sales-utc`. Stage A exact `4e98efb2d5b7255e72aabe8784b6cea036e420ae` is preserved in Git and stage-A-README.md. Source/test implementation remains byte-identical to Stage A (`61feda408cd721da6d60cc240400f99605855fba` product/test commit). PM explicitly granted sole DB ownership after QA332 cleanup; release334 remained source-only.
 
-## Evidence and minimal repair
+## Minimal fix and semantics
 
-Read task326 diagnostic exact `8726384e`, README and smoke-predicates.json: PAID/cad/correct tenant order created08:34:43.548Z lies before08:34:43.678Z dashboard bound in JS, but SQL session America/St_Johns interprets stored UTC-naive created_at against timestamptz incorrectly: original endfalse/count0 versus explicit-UTCtrue/count1. No financial/window/clock-skew workaround warranted.
+Only product change versus baseline is paid-sales-query.ts: each optional Date parameter becomes `(<bound>::timestamptz AT TIME ZONE 'UTC')`; indexed `o.created_at` remains bare. No session/global timezone alteration, date-window widening, column cast/function, or new financial default. Exact >=/<= inclusivity, status PAID, currency lowercasing, event/tenant filters, existing total_amount (including promo discount), SOLD ticket aggregation and LEFT JOIN retained. This fixes the specific proven326 UTC-naive-column/timestamptz mismatch, not every raw timestamp comparison.
 
-Only product change is `src/services/paid-sales-query.ts`: each optional Date bound becomes `(<bound>::timestamptz AT TIME ZONE 'UTC')`, comparing against unchanged bare indexed `o.created_at`. No function/cast on indexed column; >= and <= inclusivity unchanged. No session/global timezone mutation or window widening. Status, currency lowercasing, event/org predicates, promo-derived total_amount, ticket SOLD count and LEFT JOIN semantics unchanged. No other timestamp queries swept into scope.
+## Actual execution, same test blob
 
-## Prepared actual-SQL tests (NOT RUN)
+Command from worktree root for each run:
 
-`tests/integration/paid-sales-utc.test.ts` has four parameterized cases: UTC and America/St_Johns for inclusive boundaries and Newfoundland fall-back repeated-hour instants. Each executes `set_config('TimeZone', timezone, true)` in its own Prisma transaction (equivalent transaction-local SET LOCAL; no pool-global configuration), verifies setting, creates actual Prisma fixtures and queries the real paidSalesSource fragment.
+```bash
+bash docs/team/evidence/task-333/runtime.sh > docs/team/evidence/task-333/runtime.log 2>&1
+```
 
-- Exact start/end inclusion, single instant equality, one millisecond before/after exclusion, start-only and end-only bounds.
-- PAID/cad versus excluded PENDING/usd/foreign tenant fixtures, exact returned IDs; exact event filtering where specified.
-- 2026-11-01T04:00Z (first01:30 NDT−02:30) and05:00Z (second01:30 NST−03:30): assert both named local wall times are01:30 while exact instant windows select distinct IDs; range includes both. Actual PostgreSQL assertions remain pending. DB-free Node Intl corroborated these labels.
+Script runs only new `paid-sales-utc.test.ts` plus original `v1-market-smoke.test.ts` with ordinary candidate Jest setup/schema bootstrap, JSON reporting, bounded timeout and preimport denial guard. No full API gate/build/migration/generate performed. No global TZ override: both fresh disposable DBs reported default **America/St_Johns**, inherited from host initdb defaults, before application import. Each new SQL test uses transaction-local set_config(TimeZone,...,true), not pool-global state.
 
-Tests retain bare SQL predicates and no provider dependencies. Disposable fixture rows are scoped by unique UUID tenant per case, never relying on wall-clock sleeps or a global session timezone change. Prepared callback transactions use ordinary Prisma defaults; runtime may reveal a genuine harness or product failure, which must be preserved rather than asserted away.
+### Baseline sensitivity
 
-## Stage A checks
+Temporarily wrote exact `git show 4ec85948:tixmoapi2/src/services/paid-sales-query.ts` bytes for the baseline run, restoring fixed bytes in Python `finally` regardless of outcome. `red-source-identity.json` records baseline/fixed/test SHA256, exit1, sourceRestored=true and testUnchanged=true. No baseline substitutes for test data/query/provider results.
 
-1. Focused Prettier on source/new test: passed.
-2. Scrubbed-env `node node_modules/typescript/bin/tsc --noEmit` from tixmoapi2: exit0, typecheck.log empty.
-3. Scrubbed-env `node tixmoapi2/node_modules/typescript/bin/tsc --noEmit -p docs/team/evidence/task-333/tsconfig.prepared-tests.json`: exit0, prepared-tests-typecheck.log empty; compiles prepared integration tests without executing them or DB setup. Initial standalone config lacked Jest type roots because it resides under evidence; its failed diagnostics are retained in prepared-tests-typecheck-attempt-1.log. Final config explicitly resolves existing owned node/Jest types (no installation).
-4. Scrubbed-env `TS_NODE_PROJECT=tixmoapi2/tsconfig.json NODE_OPTIONS=--require=<absolute task333 network-guard.cjs> TASK333_BLOCK_LOG=<absolute task333 blocked-network.jsonl> node -r ./tixmoapi2/node_modules/ts-node/register docs/team/evidence/task-333/shape-check.cjs`: exit0. Pure fragment shape/value assertions verify UTC parameter casts, bare column, unmodified Date objects, inclusive operators and unchanged existing status/currency/tenant/event/SOLD/LEFT JOIN structure. No configuration/DB client import. No blocked-network record.
-5. `git diff --check`: exit0. Hash/inode provenance retained. Owned dependencies copied with cp-a from task328, matching baseline schema/lock, distinct generated-client inode/nlink1, no install/generate/shared generated writes.
+Baseline: **2 failed suites,3 failed/2 passed tests**, zero skipped/runtime errors;14.504s. UTC cases pass; both America/St_Johns date-boundary/DST cases fail semantically (missing expected IDs), and original smoke totalOrders>=1 fails actual0. Raw evidence retained under red-baseline/. No compile/timeouts/harness failure. No network denials. Both baseline services stopped before green began.
 
-No smoke or SQL PASS claimed. Existing326 diagnostic supplies prior baseline failure evidence; same-test fresh baseline RED is still required after runtime grant.
+### Fixed source
 
-## Stage B pending explicit runtime grant
+Same new test blob and unchanged original smoke: **2 passed suites,5 passed tests,0 failed/skipped/runtime errors**, Jest and guarded runtime exit0;14.871s. Original smoke progressed beyond analytics through the remaining asset/approval path without changing its >=1 assertion or any fixture. Exact smoke blob verified identical to4ec85948. Fixed source and new test hashes verified again after both runs.
 
-- Preserve this Stage A commit. Prepare a separate isolated baseline checkout at4ec85948 with this exact new test blob, its SHA256 retained, owned matching dependencies and inspected guarded disk0700 workspace runtime. Run the prepared suite on baseline **before** fixed-source run; retain expected StJohns semantic failure, not compilation/barrier failure. Avoid rewriting this source merely to simulate a baseline pass.
-- Then run identical test blob against corrected exact source under fresh owned PG18/Redis; per-case transaction-local timezones as above. Guard/scrub credentials before imports; CHECKPOINT_DISABLE; no provider/network. One sole DB owner only.
-- Run original smoke unchanged, preserving `sales.totalOrders >=1`, with nonUTC America/St_Johns disposable DB default reproducing326; do not silently forceUTC globally. Retain all results including failures and explicit network-denial gate outcome, exact source/test hashes and commands.
-- Stop owned services and audit exact PIDs/listeners/sockets/pidfiles/Jest workers. Source and fresh SQL QA independent exact-SHA review required. If source fix is insufficient, return concrete result rather than broadening raw SQL/financial scope.
+New SQL tests cover both UTC/StJohns sessions: exact start/end equality, +/-1ms exclusions, exact-point windows, one-sided start/end, actual PENDING/usd/foreign-tenant exclusion and exact event scope. Repeated Newfoundland01:30 has distinct named instants04:00Z (NDT−02:30) and05:00Z (NST−03:30), both actual PostgreSQL local labels asserted01:30 while exact UTC-point windows select the correct individual IDs and combined window includes both. Actual queries use paidSalesSource, not a mocked alternate query. Every case creates isolated UUID-scoped actual rows inside its locally configured transaction.
 
-No runtime root or services created in Stage A; no cleanup/DB ownership release claim needed because this lane never acquired runtime ownership. No cloud/provider/AWS actions, credential access, spend, merge or deployment. Stage A is ready-for-DB preparation, not completion of task333. Command-scoped Git identity/hook bypass only for fresh-worktree missing Husky helper.
+## Checks and isolation
+
+Stage A production and prepared-test typechecks, pure guarded SQL-shape/value check and focused formatting passed (initial standalone missing-Jest-type diagnostics preserved, then config corrected). These source/test blobs did not change in Stage B, so no redundant typecheck claimed. Source/test-only and full staged-range diff-check results are separately retained in diff-checks.json, including any raw-log whitespace diagnostics without rewriting raw evidence. bash -n runtime.sh exit0. Source/provenance hashes retained.
+
+Dependencies were already owned cp-a copies from task328, matching baseline schema/lock, distinct generated client inode/nlink1; no install/generate/shared writes. Inspected existing PG18/Redis helper from328 reused: env-i before imports; synthetic keys only; CHECKPOINT_DISABLE; hard preimport nonloopback guard with deny record treated as failure; exact owned user/executable/runtime PID and listener checks before access; new disk-backed workspace/runtime/task333 mode0700; disposable local DB and Redis DB1 only. No AWS/provider/credential access or external connection. Original smoke upload/provider mocks remain unchanged and inert. No blocked-network log exists in either run.
+
+cleanup.json audits both exact PG/Redis pairs absent, all four TCP listeners closed, PostgreSQL sockets/pidfiles absent, Redis sockets absent, no task333 Node/Jest/query-engine workers. Runtime logs retain orderly shutdown. **DB ownership released.** Private disk roots remain only as stopped diagnostic data.
+
+## Limits / handoff
+
+Focused UTC normalization and original smoke are green, not full API/market readiness. No index EXPLAIN/performance claim; bare-column preservation is verified by fragment shape/source. Other analytics customer/date queries and general session/DST correctness outside paidSalesSource remain unqualified. No other unmerged fixes composed; no financial policy/other rawSQL sweep. Independent source+fresh SQL QA exact-final-SHA required before PM closes. Author submits review, not done. No cloud/spend/default-branch merge/deploy. Command-scoped Git identity and hook bypass only (fresh checkout lacks Husky helper).

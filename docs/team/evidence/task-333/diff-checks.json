@@ -1,0 +1,27 @@
+[
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+      "--",
+      "tixmoapi2/src/services/paid-sales-query.ts",
+      "tixmoapi2/tests/integration/paid-sales-utc.test.ts"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "4ec8594850eb547dafc145a14bb1b85cdeaa235c"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]
