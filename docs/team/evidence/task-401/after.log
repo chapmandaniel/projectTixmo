@@ -1,0 +1,3 @@
+FIRST native normalized target={"host":"127.0.0.1","port":33333,"path":null}; transportCalls=0
+PROVED native http.get normalizes TCP path=null; reaches counting stub
+PASS native GET+POST transport stub calls=3; denied targets=11; UDP denied; close revokes; no network

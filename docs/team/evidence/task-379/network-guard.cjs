@@ -27,7 +27,8 @@ net.Socket.prototype.connect = function (...args) {
   const vector = Array.isArray(args[0]) ? args[0] : net._normalizeArgs(args);
   const [options] = vector;
   const allowed = (process.env.TASK379_ALLOWED_PORTS || '').split(',');
-  if (options.path !== undefined || options.host !== '127.0.0.1' || (!allowed.includes(String(options.port)) && !httpPorts.has(Number(options.port)))) {
+  // Native HTTP Agent uses null for TCP; any other present path is Unix.
+  if ((options.path !== undefined && options.path !== null) || options.host !== '127.0.0.1' || (!allowed.includes(String(options.port)) && !httpPorts.has(Number(options.port)))) {
     throw new Error('Task379 network guard rejected non-owned TCP target');
   }
   return connect.apply(this, args);

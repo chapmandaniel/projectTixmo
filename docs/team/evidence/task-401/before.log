@@ -1,0 +1,18 @@
+FIRST native normalized target={"host":"127.0.0.1","port":33333,"path":null}; transportCalls=0
+/home/daniel/projects/projectTixmo/worktrees/task-401/docs/team/evidence/task-379/network-guard.cjs:31
+    throw new Error('Task379 network guard rejected non-owned TCP target');
+    ^
+
+Error: Task379 network guard rejected non-owned TCP target
+    at net.Socket.connect (/home/daniel/projects/projectTixmo/worktrees/task-401/docs/team/evidence/task-379/network-guard.cjs:31:11)
+    at net.Socket.connect (/home/daniel/projects/projectTixmo/worktrees/task-401/docs/team/evidence/task-401/native-http-regression.cjs:20:16)
+    at Object.connect (node:net:261:17)
+    at Agent.createConnection (node:_http_agent:311:16)
+    at Agent.createSocket (node:_http_agent:480:26)
+    at Agent.addRequest (node:_http_agent:420:10)
+    at new ClientRequest (node:_http_client:575:16)
+    at request (node:http:108:10)
+    at Object.get (node:http:119:15)
+    at request (/home/daniel/projects/projectTixmo/worktrees/task-401/docs/team/evidence/task-401/native-http-regression.cjs:31:39)
+
+Node.js v24.21.0

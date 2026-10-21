@@ -1,0 +1,26 @@
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node docs/team/evidence/task-401/native-http-regression.cjs
+exit=0
+FIRST native normalized target={"host":"127.0.0.1","port":33333,"path":null}; transportCalls=0
+PROVED native http.get normalizes TCP path=null; reaches counting stub
+PASS native GET+POST transport stub calls=3; denied targets=11; UDP denied; close revokes; no network
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node docs/team/evidence/task-393/guard-regression.cjs
+exit=0
+PROVED Jest copied env adds 51001; native preload does not see it; exact HTTP target rejected without socket
+PASS explicit owned listener registration/revocation; normalized vectors; failclosed Unix UDP external IPv6 unowned ports; transport calls=2 stub only
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node docs/team/evidence/task-393/cleanup-regression.cjs
+exit=0
+PASS 46 cleanup receipt regressions; stub observations only, no signals/network/services
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node --check docs/team/evidence/task-379/network-guard.cjs
+exit=0
+
+$ /home/daniel/.nvm/versions/node/v24.21.0/bin/node --check docs/team/evidence/task-401/native-http-regression.cjs
+exit=0
+
+$ /bin/bash -n docs/team/evidence/task-379/runtime.sh
+exit=0
+
+$ git diff --check
+exit=0
