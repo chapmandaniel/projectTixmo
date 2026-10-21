@@ -28,7 +28,7 @@ test.each([false, true])(
       },
     });
     const event = await prisma.event.create({
-      data: { organizationId: org.id, name: key, slug: key, tags: [] },
+      data: { organizationId: org.id, name: key, slug: key, tags: [], status: 'ON_SALE' },
     });
     const type = await prisma.ticketType.create({
       data: {
@@ -113,6 +113,9 @@ test.each([false, true])(
           id: target.paymentIntentId,
           object: 'payment_intent',
           status: 'succeeded',
+          amount: Number(target.totalAmount) * 100,
+          amount_received: Number(target.totalAmount) * 100,
+          currency: target.currency,
           metadata: { orderId: target.id, userId: user.id },
         },
       },
@@ -156,7 +159,11 @@ test.each([false, true])(
         )
       );
       expect(b).toEqual(before.other);
-      expect(a.tickets).toEqual(before.target.tickets);
+      expect(a.tickets).toEqual(
+        before.target.tickets.map((ticket) =>
+          ancient ? { ...ticket, inventoryState: 'SOLD', updatedAt: expect.any(Date) } : ticket
+        )
+      );
       expect([after.tickets, after.events]).toEqual([4, 1]);
       for (const state of [before.inventory, inventory]) {
         const quantities = [state.quantityAvailable, state.quantityHeld, state.quantitySold];
@@ -190,6 +197,11 @@ test.each([false, true])(
       });
       expect(a).toEqual({
         ...before.target,
+        tickets: before.target.tickets.map((ticket) => ({
+          ...ticket,
+          inventoryState: 'SOLD',
+          updatedAt: expect.any(Date),
+        })),
         status: 'PAID',
         paymentStatus: 'SUCCEEDED',
         updatedAt: a.updatedAt,

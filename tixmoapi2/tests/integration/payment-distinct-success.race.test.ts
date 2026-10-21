@@ -53,7 +53,7 @@ test.each([
       },
     });
     const event = await prisma.event.create({
-      data: { organizationId: org.id, name: key, slug: key, tags: [] },
+      data: { organizationId: org.id, name: key, slug: key, tags: [], status: 'ON_SALE' },
     });
     const type = await prisma.ticketType.create({
       data: {
@@ -139,6 +139,9 @@ test.each([
           id: target.paymentIntentId,
           object: 'payment_intent',
           status: 'succeeded',
+          amount: Number(target.totalAmount) * 100,
+          amount_received: Number(target.totalAmount) * 100,
+          currency: target.currency,
           metadata: { orderId: target.id, userId: user.id },
         },
       },
@@ -206,7 +209,15 @@ test.each([
       expect(a.tickets).toHaveLength(2);
       expect(b.tickets).toHaveLength(2);
       expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
-      expect(a.tickets).toEqual(target.tickets);
+      expect(a.tickets).toEqual(
+        target.tickets.map((ticket) => ({
+          ...ticket,
+          inventoryState: 'SOLD',
+          updatedAt: expect.any(Date),
+        }))
+      );
+      for (const ticket of a.tickets)
+        expect(ticket.updatedAt.getTime()).toBeGreaterThanOrEqual(ticket.createdAt.getTime());
       expect(counters).toEqual([6, 2, 2]);
       expect(settled.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
       const initialRows = await prisma.paymentWebhookEvent.findMany({

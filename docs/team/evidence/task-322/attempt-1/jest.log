@@ -1,0 +1,710 @@
+FAIL tixmoapi2/tests/integration/payment-inventory-integrity.test.ts (18.095 s)
+  ● Payment, admission and inventory integrity › records manual late payments without reviving expired tickets or stealing a newer hold
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "manual"
+    Received string:    "Manual reconciliation required: late payment; automatic refund prohibited."
+
+      269 |       stripeRefundId: null,
+      270 |     });
+    > 271 |     expect(manual.errorMessage).toContain('manual');
+          |                                 ^
+      272 |     expect(
+      273 |       (await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).paymentClosedAt
+      274 |     ).toBeNull();
+
+      at Object.<anonymous> (tests/integration/payment-inventory-integrity.test.ts:271:33)
+
+FAIL tixmoapi2/tests/integration/payment-failed-retry.race.test.ts
+  ● Console
+
+    console.log
+      TASK132_OBSERVED {"secondFirst":false,"trace":["claim-read-0-FAILED","claim-read-1-FAILED","claim-0-1","pre-fence-0-PENDING","claim-1-0"],"claims":1,"outcomes":["fulfilled","fulfilled"],"row":{"attemptGeneration":"1","id":"evt_race132-1792570714530","type":"payment_intent.succeeded","paymentIntentId":"pi_race132-1792570714530","orderId":"3557d13e-7357-4ad1-9fb6-55795c62261e","status":"PROCESSED","errorMessage":null,"processingStartedAt":"2026-10-21T08:18:34.582Z","leaseToken":null,"attempts":0,"processedAt":"2026-10-21T08:18:34.610Z","createdAt":"2026-10-21T08:18:34.578Z","updatedAt":"2026-10-21T08:18:34.610Z"},"counters":[6,2,2]}
+
+      at tests/integration/payment-failed-retry.race.test.ts:230:15
+
+    console.log
+      TASK132_OBSERVED {"secondFirst":true,"trace":["claim-read-0-FAILED","claim-read-1-FAILED","claim-1-1","pre-fence-1-PENDING","claim-0-0"],"claims":1,"outcomes":["fulfilled","fulfilled"],"row":{"attemptGeneration":"1","id":"evt_race132-1792570714628","type":"payment_intent.succeeded","paymentIntentId":"pi_race132-1792570714628","orderId":"d853a334-8882-4c2a-8042-dfa126ab327a","status":"PROCESSED","errorMessage":null,"processingStartedAt":"2026-10-21T08:18:34.649Z","leaseToken":null,"attempts":0,"processedAt":"2026-10-21T08:18:34.670Z","createdAt":"2026-10-21T08:18:34.647Z","updatedAt":"2026-10-21T08:18:34.671Z"},"counters":[6,2,2]}
+
+      at tests/integration/payment-failed-retry.race.test.ts:230:15
+
+  ● FAILED same-ID retry has one claimant (second delivery claims first=false)
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:34.569Z,
+          "eventId": "a1b2a027-4a37-41fe-b63b-5a6a54b7c721",
+          "id": "11d47d05-2c8c-445c-9d06-2c024fea0719",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "3557d13e-7357-4ad1-9fb6-55795c62261e",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "1b66b473-6921-4bd9-a0f9-bf48bbeafe40",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:34.569Z,
+    +     "updatedAt": 2026-10-21T08:18:34.607Z,
+          "userId": "83da711f-be8b-4de6-8983-4095323ad8a9",
+        },
+        Object {
+          "barcode": "race132-1792570714530-a-1",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:34.569Z,
+          "eventId": "a1b2a027-4a37-41fe-b63b-5a6a54b7c721",
+          "id": "62fa72b9-9e7c-4871-9ad3-855821389917",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "3557d13e-7357-4ad1-9fb6-55795c62261e",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "1b66b473-6921-4bd9-a0f9-bf48bbeafe40",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:34.569Z,
+    +     "updatedAt": 2026-10-21T08:18:34.607Z,
+          "userId": "83da711f-be8b-4de6-8983-4095323ad8a9",
+        },
+      ]
+
+      260 |       expect(a.paymentStatus).toBe('SUCCEEDED');
+      261 |       expect(a.paymentIntentId).toBe(target.paymentIntentId);
+    > 262 |       expect(a.tickets).toEqual(target.tickets);
+          |                         ^
+      263 |       expect(b).toEqual(otherBefore);
+      264 |       expect([inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold]).toEqual(
+      265 |         [6, 2, 2]
+
+      at tests/integration/payment-failed-retry.race.test.ts:262:25
+
+  ● FAILED same-ID retry has one claimant (second delivery claims first=true)
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:34.639Z,
+          "eventId": "3afd9f6f-6fc5-4632-87ee-e6d90da942f9",
+          "id": "41796432-1b0b-4c88-98c1-446201793bc4",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "d853a334-8882-4c2a-8042-dfa126ab327a",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "7cc33f9b-972c-4080-8d11-35f78e0be453",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:34.639Z,
+    +     "updatedAt": 2026-10-21T08:18:34.668Z,
+          "userId": "418dc371-7b57-48dc-ad07-7c3e2c9ce667",
+        },
+        Object {
+          "barcode": "race132-1792570714628-a-0",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:34.639Z,
+          "eventId": "3afd9f6f-6fc5-4632-87ee-e6d90da942f9",
+          "id": "bf9c2cb6-d933-4b86-8c39-34c4f16ae9a1",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "d853a334-8882-4c2a-8042-dfa126ab327a",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "7cc33f9b-972c-4080-8d11-35f78e0be453",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:34.639Z,
+    +     "updatedAt": 2026-10-21T08:18:34.668Z,
+          "userId": "418dc371-7b57-48dc-ad07-7c3e2c9ce667",
+        },
+      ]
+
+      260 |       expect(a.paymentStatus).toBe('SUCCEEDED');
+      261 |       expect(a.paymentIntentId).toBe(target.paymentIntentId);
+    > 262 |       expect(a.tickets).toEqual(target.tickets);
+          |                         ^
+      263 |       expect(b).toEqual(otherBefore);
+      264 |       expect([inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold]).toEqual(
+      265 |         [6, 2, 2]
+
+      at tests/integration/payment-failed-retry.race.test.ts:262:25
+
+PASS tixmoapi2/tests/unit/release-integration.test.ts
+FAIL tixmoapi2/tests/integration/payment-distinct-success.race.test.ts
+  ● Console
+
+    console.log
+      TASK130_OBSERVED {"winnerIndex":0,"reverseReads":false,"trace":["read-0-PENDING","read-1-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:188:15
+
+    console.log
+      TASK130_OBSERVED {"winnerIndex":0,"reverseReads":true,"trace":["read-1-PENDING","read-0-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:188:15
+
+    console.log
+      TASK130_OBSERVED {"winnerIndex":1,"reverseReads":false,"trace":["read-0-PENDING","read-1-PENDING","call-1-committed","both-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:188:15
+
+    console.log
+      TASK130_OBSERVED {"winnerIndex":1,"reverseReads":true,"trace":["read-1-PENDING","read-0-PENDING","call-1-committed","both-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/payment-distinct-success.race.test.ts:188:15
+
+  ● distinct successful webhook IDs preserve single fulfillment (winner=0, reverse reads=false)
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:37.702Z,
+          "eventId": "842ed478-154b-40ba-9d78-d289d5536a51",
+          "id": "4e76f6f4-7a50-4197-8a21-c56156dc2baf",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "0c5fd94e-cba3-4ba9-9da0-2f6baf87ec10",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "79278589-0ecd-4d15-917d-61094388f2ef",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:37.702Z,
+    +     "updatedAt": 2026-10-21T08:18:37.736Z,
+          "userId": "335e2c82-c7eb-4efe-9388-82d9ef3ca38d",
+        },
+        Object {
+          "barcode": "race130-1792570717664-a-0",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:37.702Z,
+          "eventId": "842ed478-154b-40ba-9d78-d289d5536a51",
+          "id": "c94102cb-aca9-484f-a9bf-cb1b10fdd9af",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "0c5fd94e-cba3-4ba9-9da0-2f6baf87ec10",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "79278589-0ecd-4d15-917d-61094388f2ef",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:37.702Z,
+    +     "updatedAt": 2026-10-21T08:18:37.736Z,
+          "userId": "335e2c82-c7eb-4efe-9388-82d9ef3ca38d",
+        },
+      ]
+
+      210 |       expect(b.tickets).toHaveLength(2);
+      211 |       expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
+    > 212 |       expect(a.tickets).toEqual(target.tickets);
+          |                         ^
+      213 |       expect(counters).toEqual([6, 2, 2]);
+      214 |       expect(settled.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+      215 |       const initialRows = await prisma.paymentWebhookEvent.findMany({
+
+      at tests/integration/payment-distinct-success.race.test.ts:212:25
+
+  ● distinct successful webhook IDs preserve single fulfillment (winner=0, reverse reads=true)
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:37.769Z,
+          "eventId": "902fe3d4-d3ea-4720-b383-e719305c4c95",
+          "id": "52fb95b0-2923-40a0-a820-f2be4020d46d",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "1d946dbd-89ff-4404-9dda-2837b3fc1112",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "426eb1ef-0ce2-44f7-a798-d82caaa91f49",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:37.769Z,
+    +     "updatedAt": 2026-10-21T08:18:37.791Z,
+          "userId": "56e65b71-eeea-47ea-8c53-3fd7a427a0b8",
+        },
+        Object {
+          "barcode": "race130-1792570717759-a-0",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:37.769Z,
+          "eventId": "902fe3d4-d3ea-4720-b383-e719305c4c95",
+          "id": "8fe473ff-d285-4702-b87a-15e38b6a00d1",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "1d946dbd-89ff-4404-9dda-2837b3fc1112",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "426eb1ef-0ce2-44f7-a798-d82caaa91f49",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:37.769Z,
+    +     "updatedAt": 2026-10-21T08:18:37.791Z,
+          "userId": "56e65b71-eeea-47ea-8c53-3fd7a427a0b8",
+        },
+      ]
+
+      210 |       expect(b.tickets).toHaveLength(2);
+      211 |       expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
+    > 212 |       expect(a.tickets).toEqual(target.tickets);
+          |                         ^
+      213 |       expect(counters).toEqual([6, 2, 2]);
+      214 |       expect(settled.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+      215 |       const initialRows = await prisma.paymentWebhookEvent.findMany({
+
+      at tests/integration/payment-distinct-success.race.test.ts:212:25
+
+  ● distinct successful webhook IDs preserve single fulfillment (winner=1, reverse reads=false)
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:37.821Z,
+          "eventId": "8b0341df-c7d3-4570-856b-02396a4ac3d1",
+          "id": "393a1c2d-ef91-402f-8a70-4a9e3ac567d3",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "43704bb0-a514-4a73-8e22-fab014ef7867",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "9cfafdd3-ed41-4f0c-b7c9-fb2f7874dc5e",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:37.821Z,
+    +     "updatedAt": 2026-10-21T08:18:37.842Z,
+          "userId": "f8202743-7de4-4bd1-b471-01967ddc5936",
+        },
+        Object {
+          "barcode": "race130-1792570717812-a-0",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:37.821Z,
+          "eventId": "8b0341df-c7d3-4570-856b-02396a4ac3d1",
+          "id": "a7d0f476-6aa2-4013-8530-030d420e03b4",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "43704bb0-a514-4a73-8e22-fab014ef7867",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "9cfafdd3-ed41-4f0c-b7c9-fb2f7874dc5e",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:37.821Z,
+    +     "updatedAt": 2026-10-21T08:18:37.842Z,
+          "userId": "f8202743-7de4-4bd1-b471-01967ddc5936",
+        },
+      ]
+
+      210 |       expect(b.tickets).toHaveLength(2);
+      211 |       expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
+    > 212 |       expect(a.tickets).toEqual(target.tickets);
+          |                         ^
+      213 |       expect(counters).toEqual([6, 2, 2]);
+      214 |       expect(settled.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+      215 |       const initialRows = await prisma.paymentWebhookEvent.findMany({
+
+      at tests/integration/payment-distinct-success.race.test.ts:212:25
+
+  ● distinct successful webhook IDs preserve single fulfillment (winner=1, reverse reads=true)
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:37.875Z,
+          "eventId": "b191e0a2-2917-4d01-9d0a-0040ee333de5",
+          "id": "89e20802-efe4-455b-8ce0-2bb07e32dde3",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "9e1a7c53-3d10-4fec-8c0c-f6f5c3f80389",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "b5bcc8de-e732-4e37-8641-2ab09ece5748",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:37.875Z,
+    +     "updatedAt": 2026-10-21T08:18:37.900Z,
+          "userId": "d275c86b-53f4-4b4e-bd80-ae832def1099",
+        },
+        Object {
+          "barcode": "race130-1792570717867-a-0",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:37.875Z,
+          "eventId": "b191e0a2-2917-4d01-9d0a-0040ee333de5",
+          "id": "c8a189f0-82a1-4f43-8786-076291b97fe8",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "9e1a7c53-3d10-4fec-8c0c-f6f5c3f80389",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "b5bcc8de-e732-4e37-8641-2ab09ece5748",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:37.875Z,
+    +     "updatedAt": 2026-10-21T08:18:37.900Z,
+          "userId": "d275c86b-53f4-4b4e-bd80-ae832def1099",
+        },
+      ]
+
+      210 |       expect(b.tickets).toHaveLength(2);
+      211 |       expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
+    > 212 |       expect(a.tickets).toEqual(target.tickets);
+          |                         ^
+      213 |       expect(counters).toEqual([6, 2, 2]);
+      214 |       expect(settled.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+      215 |       const initialRows = await prisma.paymentWebhookEvent.findMany({
+
+      at tests/integration/payment-distinct-success.race.test.ts:212:25
+
+FAIL tixmoapi2/tests/integration/payment-paused-owner.baseline.test.ts
+  ● Console
+
+    console.log
+      TASK141_DURABLE {"phase":"fresh","trace":["A-real-claim-committed","B-signed-redelivery-returned","A-released-finished"],"paused":{"event":{"attemptGeneration":"1","id":"evt_paused141-1792570719473","type":"payment_intent.succeeded","paymentIntentId":"pi_paused141-1792570719473","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-21T08:18:39.558Z","leaseToken":null,"attempts":0,"processedAt":null,"createdAt":"2026-10-21T08:18:39.561Z","updatedAt":"2026-10-21T08:18:39.561Z"},"target":{"id":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","orderNumber":"paused141-1792570719473-a","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PROCESSING","paymentIntentId":"pi_paused141-1792570719473","paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.538Z","tickets":[{"id":"4cd49739-9ad8-49b1-8831-3b751ace348c","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","barcode":"paused141-1792570719473-a-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.538Z"},{"id":"7b8d7230-3228-42c9-9b91-4ae88fca81e0","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","barcode":"paused141-1792570719473-a-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.538Z"}]},"other":{"id":"6c055ccb-4c19-46b4-99aa-8334751270ea","orderNumber":"paused141-1792570719473-b","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PENDING","paymentIntentId":null,"paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z","tickets":[{"id":"2463277a-5c46-40a6-a630-5d9e053d7984","orderId":"6c055ccb-4c19-46b4-99aa-8334751270ea","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","barcode":"paused141-1792570719473-b-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z"},{"id":"78163948-0a50-4500-846d-44183b744d38","orderId":"6c055ccb-4c19-46b4-99aa-8334751270ea","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","barcode":"paused141-1792570719473-b-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z"}]},"inventory":{"id":"889d9da2-7775-44ad-8fb0-75f6db8f3979","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","name":"paused141-1792570719473","description":null,"price":"10","quantityTotal":10,"quantityAvailable":6,"quantitySold":0,"quantityHeld":4,"tierInventoryStatus":"READY","salesStart":null,"salesEnd":null,"maxPerOrder":10,"requiresSeatSelection":false,"sortOrder":0,"metadata":null,"status":"ACTIVE","createdAt":"2026-10-21T08:18:39.531Z","updatedAt":"2026-10-21T08:18:39.531Z"},"tickets":4,"events":1,"emails":0},"beforeB":{"event":{"attemptGeneration":"1","id":"evt_paused141-1792570719473","type":"payment_intent.succeeded","paymentIntentId":"pi_paused141-1792570719473","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-21T08:18:39.558Z","leaseToken":null,"attempts":0,"processedAt":null,"createdAt":"2026-10-21T08:18:39.561Z","updatedAt":"2026-10-21T08:18:39.561Z"},"target":{"id":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","orderNumber":"paused141-1792570719473-a","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PROCESSING","paymentIntentId":"pi_paused141-1792570719473","paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.538Z","tickets":[{"id":"4cd49739-9ad8-49b1-8831-3b751ace348c","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","barcode":"paused141-1792570719473-a-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.538Z"},{"id":"7b8d7230-3228-42c9-9b91-4ae88fca81e0","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","barcode":"paused141-1792570719473-a-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.538Z"}]},"other":{"id":"6c055ccb-4c19-46b4-99aa-8334751270ea","orderNumber":"paused141-1792570719473-b","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PENDING","paymentIntentId":null,"paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z","tickets":[{"id":"2463277a-5c46-40a6-a630-5d9e053d7984","orderId":"6c055ccb-4c19-46b4-99aa-8334751270ea","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","barcode":"paused141-1792570719473-b-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z"},{"id":"78163948-0a50-4500-846d-44183b744d38","orderId":"6c055ccb-4c19-46b4-99aa-8334751270ea","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","barcode":"paused141-1792570719473-b-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z"}]},"inventory":{"id":"889d9da2-7775-44ad-8fb0-75f6db8f3979","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","name":"paused141-1792570719473","description":null,"price":"10","quantityTotal":10,"quantityAvailable":6,"quantitySold":0,"quantityHeld":4,"tierInventoryStatus":"READY","salesStart":null,"salesEnd":null,"maxPerOrder":10,"requiresSeatSelection":false,"sortOrder":0,"metadata":null,"status":"ACTIVE","createdAt":"2026-10-21T08:18:39.531Z","updatedAt":"2026-10-21T08:18:39.531Z"},"tickets":4,"events":1,"emails":0},"afterB":{"event":{"attemptGeneration":"1","id":"evt_paused141-1792570719473","type":"payment_intent.succeeded","paymentIntentId":"pi_paused141-1792570719473","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-21T08:18:39.558Z","leaseToken":null,"attempts":0,"processedAt":null,"createdAt":"2026-10-21T08:18:39.561Z","updatedAt":"2026-10-21T08:18:39.561Z"},"target":{"id":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","orderNumber":"paused141-1792570719473-a","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PROCESSING","paymentIntentId":"pi_paused141-1792570719473","paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.538Z","tickets":[{"id":"4cd49739-9ad8-49b1-8831-3b751ace348c","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","barcode":"paused141-1792570719473-a-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.538Z"},{"id":"7b8d7230-3228-42c9-9b91-4ae88fca81e0","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","barcode":"paused141-1792570719473-a-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.538Z"}]},"other":{"id":"6c055ccb-4c19-46b4-99aa-8334751270ea","orderNumber":"paused141-1792570719473-b","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PENDING","paymentIntentId":null,"paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z","tickets":[{"id":"2463277a-5c46-40a6-a630-5d9e053d7984","orderId":"6c055ccb-4c19-46b4-99aa-8334751270ea","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","barcode":"paused141-1792570719473-b-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z"},{"id":"78163948-0a50-4500-846d-44183b744d38","orderId":"6c055ccb-4c19-46b4-99aa-8334751270ea","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","barcode":"paused141-1792570719473-b-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z"}]},"inventory":{"id":"889d9da2-7775-44ad-8fb0-75f6db8f3979","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","name":"paused141-1792570719473","description":null,"price":"10","quantityTotal":10,"quantityAvailable":6,"quantitySold":0,"quantityHeld":4,"tierInventoryStatus":"READY","salesStart":null,"salesEnd":null,"maxPerOrder":10,"requiresSeatSelection":false,"sortOrder":0,"metadata":null,"status":"ACTIVE","createdAt":"2026-10-21T08:18:39.531Z","updatedAt":"2026-10-21T08:18:39.531Z"},"tickets":4,"events":1,"emails":0},"final":{"event":{"attemptGeneration":"1","id":"evt_paused141-1792570719473","type":"payment_intent.succeeded","paymentIntentId":"pi_paused141-1792570719473","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","status":"PROCESSED","errorMessage":null,"processingStartedAt":"2026-10-21T08:18:39.558Z","leaseToken":null,"attempts":0,"processedAt":"2026-10-21T08:18:39.639Z","createdAt":"2026-10-21T08:18:39.561Z","updatedAt":"2026-10-21T08:18:39.639Z"},"target":{"id":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","orderNumber":"paused141-1792570719473-a","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","status":"PAID","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"SUCCEEDED","paymentIntentId":"pi_paused141-1792570719473","paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.630Z","tickets":[{"id":"4cd49739-9ad8-49b1-8831-3b751ace348c","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"SOLD","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","barcode":"paused141-1792570719473-a-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.635Z"},{"id":"7b8d7230-3228-42c9-9b91-4ae88fca81e0","orderId":"2cd9a7bd-0ed9-4c97-a5ea-c07725752e04","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"SOLD","userId":"91f18a12-a899-454a-a9ea-502259ad60ac","barcode":"paused141-1792570719473-a-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.538Z","updatedAt":"2026-10-21T08:18:39.635Z"}]},"other":{"id":"6c055ccb-4c19-46b4-99aa-8334751270ea","orderNumber":"paused141-1792570719473-b","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PENDING","paymentIntentId":null,"paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z","tickets":[{"id":"2463277a-5c46-40a6-a630-5d9e053d7984","orderId":"6c055ccb-4c19-46b4-99aa-8334751270ea","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","barcode":"paused141-1792570719473-b-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z"},{"id":"78163948-0a50-4500-846d-44183b744d38","orderId":"6c055ccb-4c19-46b4-99aa-8334751270ea","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","ticketTypeId":"889d9da2-7775-44ad-8fb0-75f6db8f3979","tierId":null,"inventoryState":"HELD","userId":"8651554b-3696-42a8-af84-e6125dd51dc3","barcode":"paused141-1792570719473-b-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:39.549Z","updatedAt":"2026-10-21T08:18:39.549Z"}]},"inventory":{"id":"889d9da2-7775-44ad-8fb0-75f6db8f3979","eventId":"e3b5749a-d8e5-424b-b6d8-e65a9a05d323","name":"paused141-1792570719473","description":null,"price":"10","quantityTotal":10,"quantityAvailable":6,"quantitySold":2,"quantityHeld":2,"tierInventoryStatus":"READY","salesStart":null,"salesEnd":null,"maxPerOrder":10,"requiresSeatSelection":false,"sortOrder":0,"metadata":null,"status":"ACTIVE","createdAt":"2026-10-21T08:18:39.531Z","updatedAt":"2026-10-21T08:18:39.634Z"},"tickets":4,"events":1,"emails":1}}
+
+      at tests/integration/payment-paused-owner.baseline.test.ts:242:15
+
+  ● paused owner phase=fresh
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:39.538Z,
+          "eventId": "e3b5749a-d8e5-424b-b6d8-e65a9a05d323",
+          "id": "4cd49739-9ad8-49b1-8831-3b751ace348c",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "2cd9a7bd-0ed9-4c97-a5ea-c07725752e04",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "889d9da2-7775-44ad-8fb0-75f6db8f3979",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:39.538Z,
+    +     "updatedAt": 2026-10-21T08:18:39.635Z,
+          "userId": "91f18a12-a899-454a-a9ea-502259ad60ac",
+        },
+        Object {
+          "barcode": "paused141-1792570719473-a-1",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:39.538Z,
+          "eventId": "e3b5749a-d8e5-424b-b6d8-e65a9a05d323",
+          "id": "7b8d7230-3228-42c9-9b91-4ae88fca81e0",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "2cd9a7bd-0ed9-4c97-a5ea-c07725752e04",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "889d9da2-7775-44ad-8fb0-75f6db8f3979",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:39.538Z,
+    +     "updatedAt": 2026-10-21T08:18:39.635Z,
+          "userId": "91f18a12-a899-454a-a9ea-502259ad60ac",
+        },
+      ]
+
+      258 |         paymentIntentId: target.paymentIntentId,
+      259 |       });
+    > 260 |       expect(final.target.tickets).toEqual(target.tickets);
+          |                                    ^
+      261 |       expect(final.other).toEqual(otherBefore);
+      262 |       expect([
+      263 |         final.inventory.quantityAvailable,
+
+      at tests/integration/payment-paused-owner.baseline.test.ts:260:36
+
+  ● paused owner phase=before-handler
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:39.662Z,
+          "eventId": "0083e84e-2079-4ec6-98c6-77ab0682281c",
+          "id": "8a9cc90d-58bc-4635-a84f-9f257ed378db",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "7685cd43-5015-4fef-8da1-35c53710f619",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "884126e1-b26e-437a-a777-377505892eb2",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:39.662Z,
+    +     "updatedAt": 2026-10-21T08:18:39.698Z,
+          "userId": "f0fc3c7b-e736-49a3-985d-5c3ee0c62e48",
+        },
+        Object {
+          "barcode": "paused141-1792570719653-a-1",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:39.662Z,
+          "eventId": "0083e84e-2079-4ec6-98c6-77ab0682281c",
+          "id": "d9a29445-30ba-43d1-b8af-7c02ffdbb773",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "7685cd43-5015-4fef-8da1-35c53710f619",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "884126e1-b26e-437a-a777-377505892eb2",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:39.662Z,
+    +     "updatedAt": 2026-10-21T08:18:39.698Z,
+          "userId": "f0fc3c7b-e736-49a3-985d-5c3ee0c62e48",
+        },
+      ]
+
+      221 |           paymentIntentId: target.paymentIntentId,
+      222 |         });
+    > 223 |         expect(afterB.target.tickets).toEqual(target.tickets);
+          |                                       ^
+      224 |         expect(afterB.other).toEqual(otherBefore);
+      225 |         expect([
+      226 |           afterB.inventory.quantityAvailable,
+
+      at tests/integration/payment-paused-owner.baseline.test.ts:223:39
+
+  ● paused owner phase=before-finish
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:39.723Z,
+          "eventId": "8225a425-320d-443e-b83a-262efde18add",
+          "id": "04558e2c-ac06-41d5-bb99-2d6ae1cf5dd1",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "f8bbb833-d2f0-49ed-a5d1-c01e3bf394ac",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "c51cb258-65b6-4589-b706-6ca1c025c786",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:39.723Z,
+    +     "updatedAt": 2026-10-21T08:18:39.742Z,
+          "userId": "cb363267-e34c-4a08-a05e-834e08ffaa4d",
+        },
+        Object {
+          "barcode": "paused141-1792570719715-a-0",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:39.723Z,
+          "eventId": "8225a425-320d-443e-b83a-262efde18add",
+          "id": "28378323-a013-4d5a-a567-97390add9784",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "f8bbb833-d2f0-49ed-a5d1-c01e3bf394ac",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "c51cb258-65b6-4589-b706-6ca1c025c786",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:39.723Z,
+    +     "updatedAt": 2026-10-21T08:18:39.742Z,
+          "userId": "cb363267-e34c-4a08-a05e-834e08ffaa4d",
+        },
+      ]
+
+      180 |         phase === 'before-finish' ? 'SUCCEEDED' : 'PROCESSING'
+      181 |       );
+    > 182 |       expect(paused.target.tickets).toEqual(target.tickets);
+          |                                     ^
+      183 |       expect(paused.other).toEqual(otherBefore);
+      184 |       expect([
+      185 |         paused.inventory.quantityAvailable,
+
+      at tests/integration/payment-paused-owner.baseline.test.ts:182:37
+
+FAIL tixmoapi2/tests/integration/payment-old-processing.baseline.test.ts
+  ● Console
+
+    console.log
+      TASK137_DURABLE {"ancient":false,"before":{"event":{"attemptGeneration":"0","id":"evt_crash137-1792570721247","type":"payment_intent.succeeded","paymentIntentId":"pi_crash137-1792570721247","orderId":"4056ead6-0505-4340-b94f-6884c938c09a","status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-21T08:18:41.247Z","leaseToken":null,"attempts":0,"processedAt":null,"createdAt":"2026-10-21T08:18:41.247Z","updatedAt":"2026-10-21T08:18:41.247Z"},"target":{"id":"4056ead6-0505-4340-b94f-6884c938c09a","orderNumber":"crash137-1792570721247-a","userId":"56a92196-721d-4415-bf97-ce90bf3c99b5","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PROCESSING","paymentIntentId":"pi_crash137-1792570721247","paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:41.284Z","updatedAt":"2026-10-21T08:18:41.284Z","tickets":[{"id":"b337105a-e1ea-4527-9a09-9364cad39ace","orderId":"4056ead6-0505-4340-b94f-6884c938c09a","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","ticketTypeId":"59db2af8-55f6-445e-bbbb-6c8608138dda","tierId":null,"inventoryState":"HELD","userId":"56a92196-721d-4415-bf97-ce90bf3c99b5","barcode":"crash137-1792570721247-a-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.284Z","updatedAt":"2026-10-21T08:18:41.284Z"},{"id":"f177a347-6055-43f5-b0a4-239c564babec","orderId":"4056ead6-0505-4340-b94f-6884c938c09a","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","ticketTypeId":"59db2af8-55f6-445e-bbbb-6c8608138dda","tierId":null,"inventoryState":"HELD","userId":"56a92196-721d-4415-bf97-ce90bf3c99b5","barcode":"crash137-1792570721247-a-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.284Z","updatedAt":"2026-10-21T08:18:41.284Z"}]},"other":{"id":"62dc36b9-8af0-4e08-bcf2-d5914ae6e61c","orderNumber":"crash137-1792570721247-b","userId":"5e31218f-9afb-475e-8f26-a6096c5f53c3","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PENDING","paymentIntentId":null,"paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:41.289Z","updatedAt":"2026-10-21T08:18:41.289Z","tickets":[{"id":"3f67cf89-626e-4525-b300-e43c03ad0b54","orderId":"62dc36b9-8af0-4e08-bcf2-d5914ae6e61c","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","ticketTypeId":"59db2af8-55f6-445e-bbbb-6c8608138dda","tierId":null,"inventoryState":"HELD","userId":"5e31218f-9afb-475e-8f26-a6096c5f53c3","barcode":"crash137-1792570721247-b-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.289Z","updatedAt":"2026-10-21T08:18:41.289Z"},{"id":"906249a3-87b2-4337-ad25-b0f82569dd75","orderId":"62dc36b9-8af0-4e08-bcf2-d5914ae6e61c","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","ticketTypeId":"59db2af8-55f6-445e-bbbb-6c8608138dda","tierId":null,"inventoryState":"HELD","userId":"5e31218f-9afb-475e-8f26-a6096c5f53c3","barcode":"crash137-1792570721247-b-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.289Z","updatedAt":"2026-10-21T08:18:41.289Z"}]},"inventory":{"id":"59db2af8-55f6-445e-bbbb-6c8608138dda","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","name":"crash137-1792570721247","description":null,"price":"10","quantityTotal":10,"quantityAvailable":6,"quantitySold":0,"quantityHeld":4,"tierInventoryStatus":"READY","salesStart":null,"salesEnd":null,"maxPerOrder":10,"requiresSeatSelection":false,"sortOrder":0,"metadata":null,"status":"ACTIVE","createdAt":"2026-10-21T08:18:41.280Z","updatedAt":"2026-10-21T08:18:41.280Z"},"tickets":4,"events":1,"emails":0},"after":{"event":{"attemptGeneration":"0","id":"evt_crash137-1792570721247","type":"payment_intent.succeeded","paymentIntentId":"pi_crash137-1792570721247","orderId":"4056ead6-0505-4340-b94f-6884c938c09a","status":"PROCESSING","errorMessage":null,"processingStartedAt":"2026-10-21T08:18:41.247Z","leaseToken":null,"attempts":0,"processedAt":null,"createdAt":"2026-10-21T08:18:41.247Z","updatedAt":"2026-10-21T08:18:41.247Z"},"target":{"id":"4056ead6-0505-4340-b94f-6884c938c09a","orderNumber":"crash137-1792570721247-a","userId":"56a92196-721d-4415-bf97-ce90bf3c99b5","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PROCESSING","paymentIntentId":"pi_crash137-1792570721247","paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:41.284Z","updatedAt":"2026-10-21T08:18:41.284Z","tickets":[{"id":"b337105a-e1ea-4527-9a09-9364cad39ace","orderId":"4056ead6-0505-4340-b94f-6884c938c09a","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","ticketTypeId":"59db2af8-55f6-445e-bbbb-6c8608138dda","tierId":null,"inventoryState":"HELD","userId":"56a92196-721d-4415-bf97-ce90bf3c99b5","barcode":"crash137-1792570721247-a-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.284Z","updatedAt":"2026-10-21T08:18:41.284Z"},{"id":"f177a347-6055-43f5-b0a4-239c564babec","orderId":"4056ead6-0505-4340-b94f-6884c938c09a","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","ticketTypeId":"59db2af8-55f6-445e-bbbb-6c8608138dda","tierId":null,"inventoryState":"HELD","userId":"56a92196-721d-4415-bf97-ce90bf3c99b5","barcode":"crash137-1792570721247-a-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.284Z","updatedAt":"2026-10-21T08:18:41.284Z"}]},"other":{"id":"62dc36b9-8af0-4e08-bcf2-d5914ae6e61c","orderNumber":"crash137-1792570721247-b","userId":"5e31218f-9afb-475e-8f26-a6096c5f53c3","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PENDING","paymentIntentId":null,"paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:41.289Z","updatedAt":"2026-10-21T08:18:41.289Z","tickets":[{"id":"3f67cf89-626e-4525-b300-e43c03ad0b54","orderId":"62dc36b9-8af0-4e08-bcf2-d5914ae6e61c","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","ticketTypeId":"59db2af8-55f6-445e-bbbb-6c8608138dda","tierId":null,"inventoryState":"HELD","userId":"5e31218f-9afb-475e-8f26-a6096c5f53c3","barcode":"crash137-1792570721247-b-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.289Z","updatedAt":"2026-10-21T08:18:41.289Z"},{"id":"906249a3-87b2-4337-ad25-b0f82569dd75","orderId":"62dc36b9-8af0-4e08-bcf2-d5914ae6e61c","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","ticketTypeId":"59db2af8-55f6-445e-bbbb-6c8608138dda","tierId":null,"inventoryState":"HELD","userId":"5e31218f-9afb-475e-8f26-a6096c5f53c3","barcode":"crash137-1792570721247-b-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.289Z","updatedAt":"2026-10-21T08:18:41.289Z"}]},"inventory":{"id":"59db2af8-55f6-445e-bbbb-6c8608138dda","eventId":"96a42dd3-f726-400d-88bd-885293cb0eb4","name":"crash137-1792570721247","description":null,"price":"10","quantityTotal":10,"quantityAvailable":6,"quantitySold":0,"quantityHeld":4,"tierInventoryStatus":"READY","salesStart":null,"salesEnd":null,"maxPerOrder":10,"requiresSeatSelection":false,"sortOrder":0,"metadata":null,"status":"ACTIVE","createdAt":"2026-10-21T08:18:41.280Z","updatedAt":"2026-10-21T08:18:41.280Z"},"tickets":4,"events":1,"emails":0}}
+
+      at tests/integration/payment-old-processing.baseline.test.ts:155:15
+
+    console.log
+      TASK137_DURABLE {"ancient":true,"before":{"event":{"attemptGeneration":"0","id":"evt_crash137-1792570721318","type":"payment_intent.succeeded","paymentIntentId":"pi_crash137-1792570721318","orderId":"0c9e5c25-806e-4658-8a8e-0d0acbbfac59","status":"PROCESSING","errorMessage":null,"processingStartedAt":"2000-01-01T00:00:00.000Z","leaseToken":null,"attempts":0,"processedAt":null,"createdAt":"2000-01-01T00:00:00.000Z","updatedAt":"2000-01-01T00:00:00.000Z"},"target":{"id":"0c9e5c25-806e-4658-8a8e-0d0acbbfac59","orderNumber":"crash137-1792570721318-a","userId":"fa73b0ba-8444-4f3c-8dc2-5ecfab368d1a","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PROCESSING","paymentIntentId":"pi_crash137-1792570721318","paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:41.326Z","updatedAt":"2026-10-21T08:18:41.326Z","tickets":[{"id":"26736656-31d8-452f-a401-38e9e3ea9cf0","orderId":"0c9e5c25-806e-4658-8a8e-0d0acbbfac59","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","ticketTypeId":"1ea09fac-92a5-4530-acab-8ea663c197cb","tierId":null,"inventoryState":"HELD","userId":"fa73b0ba-8444-4f3c-8dc2-5ecfab368d1a","barcode":"crash137-1792570721318-a-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.326Z","updatedAt":"2026-10-21T08:18:41.326Z"},{"id":"52932b31-faed-449b-8498-7d3cd117ac71","orderId":"0c9e5c25-806e-4658-8a8e-0d0acbbfac59","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","ticketTypeId":"1ea09fac-92a5-4530-acab-8ea663c197cb","tierId":null,"inventoryState":"HELD","userId":"fa73b0ba-8444-4f3c-8dc2-5ecfab368d1a","barcode":"crash137-1792570721318-a-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.326Z","updatedAt":"2026-10-21T08:18:41.326Z"}]},"other":{"id":"73901ceb-ba53-4254-b780-146da56b19bd","orderNumber":"crash137-1792570721318-b","userId":"7272f693-1149-4bd0-a8ce-b867b465a57b","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PENDING","paymentIntentId":null,"paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:41.330Z","updatedAt":"2026-10-21T08:18:41.330Z","tickets":[{"id":"4744eefe-25a5-48c3-a7cb-847a206ce338","orderId":"73901ceb-ba53-4254-b780-146da56b19bd","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","ticketTypeId":"1ea09fac-92a5-4530-acab-8ea663c197cb","tierId":null,"inventoryState":"HELD","userId":"7272f693-1149-4bd0-a8ce-b867b465a57b","barcode":"crash137-1792570721318-b-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.330Z","updatedAt":"2026-10-21T08:18:41.330Z"},{"id":"c9bfdc2b-86d4-4d86-a7b1-2e970d0fac4d","orderId":"73901ceb-ba53-4254-b780-146da56b19bd","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","ticketTypeId":"1ea09fac-92a5-4530-acab-8ea663c197cb","tierId":null,"inventoryState":"HELD","userId":"7272f693-1149-4bd0-a8ce-b867b465a57b","barcode":"crash137-1792570721318-b-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.330Z","updatedAt":"2026-10-21T08:18:41.330Z"}]},"inventory":{"id":"1ea09fac-92a5-4530-acab-8ea663c197cb","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","name":"crash137-1792570721318","description":null,"price":"10","quantityTotal":10,"quantityAvailable":6,"quantitySold":0,"quantityHeld":4,"tierInventoryStatus":"READY","salesStart":null,"salesEnd":null,"maxPerOrder":10,"requiresSeatSelection":false,"sortOrder":0,"metadata":null,"status":"ACTIVE","createdAt":"2026-10-21T08:18:41.323Z","updatedAt":"2026-10-21T08:18:41.323Z"},"tickets":4,"events":1,"emails":0},"after":{"event":{"attemptGeneration":"1","id":"evt_crash137-1792570721318","type":"payment_intent.succeeded","paymentIntentId":"pi_crash137-1792570721318","orderId":"0c9e5c25-806e-4658-8a8e-0d0acbbfac59","status":"PROCESSED","errorMessage":null,"processingStartedAt":"2026-10-21T08:18:41.343Z","leaseToken":null,"attempts":0,"processedAt":"2026-10-21T08:18:41.363Z","createdAt":"2000-01-01T00:00:00.000Z","updatedAt":"2026-10-21T08:18:41.363Z"},"target":{"id":"0c9e5c25-806e-4658-8a8e-0d0acbbfac59","orderNumber":"crash137-1792570721318-a","userId":"fa73b0ba-8444-4f3c-8dc2-5ecfab368d1a","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","status":"PAID","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"SUCCEEDED","paymentIntentId":"pi_crash137-1792570721318","paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:41.326Z","updatedAt":"2026-10-21T08:18:41.355Z","tickets":[{"id":"26736656-31d8-452f-a401-38e9e3ea9cf0","orderId":"0c9e5c25-806e-4658-8a8e-0d0acbbfac59","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","ticketTypeId":"1ea09fac-92a5-4530-acab-8ea663c197cb","tierId":null,"inventoryState":"SOLD","userId":"fa73b0ba-8444-4f3c-8dc2-5ecfab368d1a","barcode":"crash137-1792570721318-a-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.326Z","updatedAt":"2026-10-21T08:18:41.360Z"},{"id":"52932b31-faed-449b-8498-7d3cd117ac71","orderId":"0c9e5c25-806e-4658-8a8e-0d0acbbfac59","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","ticketTypeId":"1ea09fac-92a5-4530-acab-8ea663c197cb","tierId":null,"inventoryState":"SOLD","userId":"fa73b0ba-8444-4f3c-8dc2-5ecfab368d1a","barcode":"crash137-1792570721318-a-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.326Z","updatedAt":"2026-10-21T08:18:41.360Z"}]},"other":{"id":"73901ceb-ba53-4254-b780-146da56b19bd","orderNumber":"crash137-1792570721318-b","userId":"7272f693-1149-4bd0-a8ce-b867b465a57b","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","status":"PENDING","totalAmount":"20","feesAmount":"0","taxAmount":"0","discountAmount":"0","paymentStatus":"PENDING","paymentIntentId":null,"paymentMethod":null,"currency":"usd","refundStatus":"NONE","receiptSentAt":null,"receiptStatus":"PENDING","receiptLeaseToken":null,"receiptStartedAt":null,"paymentClosedAt":null,"promoReservation":"NONE","promoCodeId":null,"ipAddress":null,"userAgent":null,"expiresAt":null,"createdAt":"2026-10-21T08:18:41.330Z","updatedAt":"2026-10-21T08:18:41.330Z","tickets":[{"id":"4744eefe-25a5-48c3-a7cb-847a206ce338","orderId":"73901ceb-ba53-4254-b780-146da56b19bd","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","ticketTypeId":"1ea09fac-92a5-4530-acab-8ea663c197cb","tierId":null,"inventoryState":"HELD","userId":"7272f693-1149-4bd0-a8ce-b867b465a57b","barcode":"crash137-1792570721318-b-0","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.330Z","updatedAt":"2026-10-21T08:18:41.330Z"},{"id":"c9bfdc2b-86d4-4d86-a7b1-2e970d0fac4d","orderId":"73901ceb-ba53-4254-b780-146da56b19bd","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","ticketTypeId":"1ea09fac-92a5-4530-acab-8ea663c197cb","tierId":null,"inventoryState":"HELD","userId":"7272f693-1149-4bd0-a8ce-b867b465a57b","barcode":"crash137-1792570721318-b-1","qrCodeUrl":null,"seatInfo":null,"status":"VALID","pricePaid":"10","checkedInAt":null,"checkedInBy":null,"transferredFrom":null,"transferredAt":null,"createdAt":"2026-10-21T08:18:41.330Z","updatedAt":"2026-10-21T08:18:41.330Z"}]},"inventory":{"id":"1ea09fac-92a5-4530-acab-8ea663c197cb","eventId":"7d27bdde-60ab-4b99-bf89-4a2b542669e7","name":"crash137-1792570721318","description":null,"price":"10","quantityTotal":10,"quantityAvailable":6,"quantitySold":2,"quantityHeld":2,"tierInventoryStatus":"READY","salesStart":null,"salesEnd":null,"maxPerOrder":10,"requiresSeatSelection":false,"sortOrder":0,"metadata":null,"status":"ACTIVE","createdAt":"2026-10-21T08:18:41.323Z","updatedAt":"2026-10-21T08:18:41.359Z"},"tickets":4,"events":1,"emails":1}}
+
+      at tests/integration/payment-old-processing.baseline.test.ts:155:15
+
+  ● PROCESSING duplicate (crashed ancient owner=true)
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 4
+
+    @@ -4,39 +4,39 @@
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:41.326Z,
+          "eventId": "7d27bdde-60ab-4b99-bf89-4a2b542669e7",
+          "id": "26736656-31d8-452f-a401-38e9e3ea9cf0",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "0c9e5c25-806e-4658-8a8e-0d0acbbfac59",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "1ea09fac-92a5-4530-acab-8ea663c197cb",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:41.326Z,
+    +     "updatedAt": 2026-10-21T08:18:41.360Z,
+          "userId": "fa73b0ba-8444-4f3c-8dc2-5ecfab368d1a",
+        },
+        Object {
+          "barcode": "crash137-1792570721318-a-1",
+          "checkedInAt": null,
+          "checkedInBy": null,
+          "createdAt": 2026-10-21T08:18:41.326Z,
+          "eventId": "7d27bdde-60ab-4b99-bf89-4a2b542669e7",
+          "id": "52932b31-faed-449b-8498-7d3cd117ac71",
+    -     "inventoryState": "HELD",
+    +     "inventoryState": "SOLD",
+          "orderId": "0c9e5c25-806e-4658-8a8e-0d0acbbfac59",
+          "pricePaid": "10",
+          "qrCodeUrl": null,
+          "seatInfo": null,
+          "status": "VALID",
+          "ticketTypeId": "1ea09fac-92a5-4530-acab-8ea663c197cb",
+          "tierId": null,
+          "transferredAt": null,
+          "transferredFrom": null,
+    -     "updatedAt": 2026-10-21T08:18:41.326Z,
+    +     "updatedAt": 2026-10-21T08:18:41.360Z,
+          "userId": "fa73b0ba-8444-4f3c-8dc2-5ecfab368d1a",
+        },
+      ]
+
+      160 |       );
+      161 |       expect(b).toEqual(before.other);
+    > 162 |       expect(a.tickets).toEqual(before.target.tickets);
+          |                         ^
+      163 |       expect([after.tickets, after.events]).toEqual([4, 1]);
+      164 |       for (const state of [before.inventory, inventory]) {
+      165 |         const quantities = [state.quantityAvailable, state.quantityHeld, state.quantitySold];
+
+      at tests/integration/payment-old-processing.baseline.test.ts:162:25
+
+FAIL tixmoapi2/tests/integration/payment-fenced-checkpoint.test.ts
+  ● Test suite failed to run
+
+    [96mtixmoapi2/tests/integration/payment-fenced-checkpoint.test.ts[0m:[93m11[0m:[93m1[0m - [91merror[0m[90m TS6133: [0m'notificationService' is declared but its value is never read.
+
+    [7m11[0m import { notificationService } from '../../src/utils/notificationService';
+    [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+Test Suites: 6 failed, 1 passed, 7 total
+Tests:       11 failed, 30 passed, 41 total
+Snapshots:   0 total
+Time:        28.167 s
+Ran all test suites within paths "tixmoapi2/tests/integration/payment-inventory-integrity.test.ts", "tixmoapi2/tests/integration/payment-failed-retry.race.test.ts", "tixmoapi2/tests/integration/payment-distinct-success.race.test.ts", "tixmoapi2/tests/integration/payment-paused-owner.baseline.test.ts", "tixmoapi2/tests/integration/payment-old-processing.baseline.test.ts", "tixmoapi2/tests/integration/payment-fenced-checkpoint.test.ts", "tixmoapi2/tests/unit/release-integration.test.ts".
+Test results written to: docs/team/evidence/task-322/jest-result.json
