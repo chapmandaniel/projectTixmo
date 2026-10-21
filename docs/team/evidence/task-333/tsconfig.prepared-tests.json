@@ -1,6 +1,22 @@
 {
   "extends": "../../../../tixmoapi2/tsconfig.json",
-  "compilerOptions": { "rootDir": "../../../../tixmoapi2", "noEmit": true },
-  "include": ["../../../../tixmoapi2/src/**/*", "../../../../tixmoapi2/tests/integration/paid-sales-utc.test.ts"],
-  "exclude": ["../../../../tixmoapi2/node_modules", "../../../../tixmoapi2/dist"]
+  "compilerOptions": {
+    "rootDir": "../../../../tixmoapi2",
+    "noEmit": true,
+    "types": [
+      "node",
+      "jest"
+    ],
+    "typeRoots": [
+      "../../../../tixmoapi2/node_modules/@types"
+    ]
+  },
+  "include": [
+    "../../../../tixmoapi2/src/**/*",
+    "../../../../tixmoapi2/tests/integration/paid-sales-utc.test.ts"
+  ],
+  "exclude": [
+    "../../../../tixmoapi2/node_modules",
+    "../../../../tixmoapi2/dist"
+  ]
 }
