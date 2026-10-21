@@ -24,13 +24,21 @@ phase 1. No network discovery performed under this task's source-only boundary.
 | Versioned health | `src/api/index.ts:32-39,66`; `src/app.ts:73,147` | `/api/v1/health` is currently limited: full req.path at global middleware is not `/health`. Router-local admission removes that contention too. Version defaults to v1 (`src/config/environment.ts:49`). |
 | Checkout writes | `src/api/orders/routes.ts:11,60`; `src/api/payments/routes.ts:49-54` | Only POST `/api/{version}/orders` and POST `/api/{version}/payments/create-intent` should acquire phase-1 leases, after existing authentication/validation and before controller execution. Same Redis key/cap shared across these two operations and instances. |
 | Stripe confirmation | `src/app.ts:55-64,73,147`; `src/api/index.ts:57`; `src/api/payments/routes.ts:67` | POST `/api/v1/payments/webhook` raw parser is earlier, but controller remains behind global admission. Saturation can reject confirmation before signature handling. Remove this lease contention without moving raw parsing, signature checks or payment lifecycle. |
-| Scanner device and offline paths | `src/api/index.ts:51,53`; `src/api/scanners/routes.ts:50,85,118,165,213,256,308,340`; `src/api/tickets/routes.ts:81-84,116-119` | All scanner routes currently contend: POST `/scanners/register`, `/auth`, `/validate` (offline scan upload), `/scan`; GET `/scanners`, `/sync`, `/logs`, `/:id`. Also POST `/tickets/validate` and `/tickets/check-in`. All must bypass phase-1 admission. These paths are under `/api/{version}`. |
+| Scanner device and offline paths | `src/api/index.ts:51,53`; `src/api/scanners/routes.ts:50,85,118,165,213,256,308,340,387-392,419-423`; `src/api/tickets/routes.ts:81-84,116-119` | All scanner routes currently contend: POST `/scanners/register`, `/auth`, `/validate` (offline scan upload), `/scan`; GET `/scanners`, `/sync`, `/logs`, `/:id`; PUT `/scanners/:id` and DELETE `/scanners/:id` (both retain authenticate and OWNER/ADMIN/MANAGER/PROMOTER authorization; PUT also retains schema validation). Also POST `/tickets/validate` and `/tickets/check-in`. All must bypass phase-1 admission. These paths are under `/api/{version}`. |
 | Login/session | `src/api/index.ts:42`; `src/api/auth/routes.ts:14,101,168,226,260,294` | `/auth/accept-invitation`, `/register`, `/login`, `/refresh`, `/logout`, `/me` all currently cross global admission despite independent auth rate limits. Router-local checkout admission exempts them, preserving auth controls. |
 | Organizer/admin/recovery | `src/api/index.ts:43-63`; `src/api/users/routes.ts:189`; `src/api/organizations/routes.ts:174`; `src/api/orders/routes.ts:13,95,125,155-156,194` | No separate mounted `/admin` router. Role-gated DELETE `/users/:id`, DELETE `/organizations/:id`, POST `/orders/:id/refund`, plus organizer list/read/cancel/receipt/request-refund paths all contend today. Remove lease contention for every non-target route, not a guessed `/admin` exemption. Approvals/assets/reports/events/analytics similarly bypass. |
 | Docs / unmatched requests | `src/app.ts:73,137-150`; `src/api/index.ts:60` | Swagger `/api/v1/docs`, versioned docs router and unmatched paths cross admission today. Route-local mounting removes them from lease accounting. |
 | Capacity | `waitingRoom.ts:65`; `src/config/environment.ts:43-58` | Redis acquisition hardcodes `5000`. It counts active admitted requests, not users; no fairness/place in line. Source does not establish actual DB pool size or safe launch capacity. Add strict configuration; do not claim guessed pool=10 or cap=5000 is safe. |
 | 503 response / UI | `waitingRoom.ts:72-76`; `tdash/src/lib/api.js:129-146`; `tdash/src/App.jsx:149-160,286-287` | No explicit admission marker or Retry-After header; all Axios 503s trigger waiting-room event. App also suppresses generic 503 global errors. Fix both producer and consumers; otherwise unmarked errors silently disappear. |
 | Misleading queue UI | `tdash/src/features/WaitingRoomView.jsx:20-43`; `App.jsx:287` | Claims "in line"/"lose your place" without queue state; retry merely dismisses overlay. Use busy/retry wording, no fairness claim or automatic replay of checkout POSTs. |
+
+Public checkout qualification: `tdash/src/App.jsx:281-287` mounts
+`/checkout/:slug` as its own route, outside the wildcard route that renders
+`WaitingRoomView`. Setting the global waiting-room event state therefore does
+not establish visible busy feedback on the actual purchase path. Future UI
+implementation must provide reachable admission feedback there (shared placement
+or checkout-local handling), preserve checkout state and existing auth, and prove
+it through actual-path integration tests; wildcard-only tests are insufficient.
 
 ## Smallest bounded repair contract (future implementation)
 
@@ -81,6 +89,10 @@ phase 1. No network discovery performed under this task's source-only boundary.
   controllers are not invoked. Auth/validation failures must not acquire.
   Test both orders and create-intent; trailing slash/query-string variants
   must behave as Express routes. Parameterize every scanner route above,
+  explicitly including PUT `/api/{version}/scanners/:id` and DELETE
+  `/api/{version}/scanners/:id`: assert zero admission evaluation for each,
+  preserve authentication and role denials, and retain PUT schema validation
+  and authorized controller behavior. Also parameterize
   auth routes, webhook, tickets validate/check-in, admin role routes,
   orders read/cancel/refund/receipt, root/versioned health and docs. Assert
   no admission eval, and normal handler/auth response rather than asserting
@@ -94,6 +106,12 @@ phase 1. No network discovery performed under this task's source-only boundary.
   Add `tdash/src/test/AppWaitingRoom.test.jsx`: only admission event displays
   busy view; unmarked 503 renders global error; delay gates manual action;
   copy has no queue/place claim; existing auth/session cases remain green.
+  Exercise the actual `/checkout/:slug` route, not only the wildcard route:
+  marked order/create-intent 503 must produce visible actionable busy feedback
+  with the agreed delay; unmarked 503 must remain visible as a generic error.
+  Preserve entered checkout data and auth/session behavior, do not navigate
+  away, and assert no automatic replay of either write. Existing wildcard-only
+  WaitingRoomView placement does not satisfy this integration requirement.
 - Existing `scripts/waiting-room-redis.test.cjs:10-35` already covers two-client
   atomic capacity, same-token idempotence, expiry replacement and duplicate
   removal against explicit disposable loopback Redis. Reuse, do not replace
