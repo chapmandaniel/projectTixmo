@@ -1,0 +1,155 @@
+# Always discard inherited credentials before importing tools or application code.
+if test "${TASK302_SCRUBBED:-}" != 1; then
+  exec env -i HOME=/home/daniel PATH="/home/daniel/.nvm/versions/node/v24.21.0/bin:/usr/bin:/bin" TASK302_SCRUBBED=1 bash "$0"
+fi
+set -euo pipefail
+umask 077
+sha256sum -c "$PWD/docs/team/evidence/task-302/source-sha256.txt"
+runtime_root="/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root"
+export LD_LIBRARY_PATH="$runtime_root/usr/lib/x86_64-linux-gnu"
+pgbin="$runtime_root/usr/lib/postgresql/18/bin"
+task_root=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task302
+mkdir -p -m 700 "$task_root"
+owned_run=$(mktemp -d "$task_root/run.XXXXXX")
+pgport=$(shuf -i 20000-39999 -n 1)
+redisport=$(shuf -i 40000-59999 -n 1)
+redis_pid=''
+pg_pid=''
+alive() {
+  test -r "/proc/$1/stat" || return 1
+  # A zombie is stopped and cannot retain listeners; its parent reaps it.
+  case "$(ps -o stat= -p "$1")" in Z*|'') return 1;; esac
+  kill -0 "$1" 2>/dev/null
+}
+owned_identity() {
+  kind=$1; pid=$2
+  test "$(stat -c %u "/proc/$pid" 2>/dev/null)" = "$(id -u)" || return 1
+  if test "$kind" = pg; then
+    test "$(head -n 1 "$owned_run/pg/postmaster.pid" 2>/dev/null)" = "$pid" || return 1
+    test "$(readlink -f "/proc/$pid/exe")" = "$(readlink -f "$pgbin/postgres")" || return 1
+    tr '\0' '\n' < "/proc/$pid/cmdline" | grep -Fxq -- "$owned_run/pg"
+  elif test "$kind" = api; then
+    test "$(readlink -f "/proc/$pid/cwd")" = "$PWD/tixmoapi2" || return 1
+    test "$(readlink -f "/proc/$pid/exe")" = "$(readlink -f "$(command -v node)")" || return 1
+    test "$(awk '{print $22}' "/proc/$pid/stat")" = "$api_start" || return 1
+  else
+    # Unreaped direct child PID cannot be recycled before wait.
+    test "$pid" = "$redis_pid" || return 1
+    test "$(ps -o ppid= -p "$pid" | tr -d ' ')" = "$$" || return 1
+    test "$(readlink -f "/proc/$pid/exe")" = \
+      "$(readlink -f "$runtime_root/usr/bin/redis-server")"
+  fi
+}
+stop_exact() {
+  kind=$1; pid=$2
+  test -n "$pid" || return 0
+  alive "$pid" || return 0
+  for signal in TERM KILL; do
+    owned_identity "$kind" "$pid" || return 1
+    kill -"$signal" "$pid" 2>/dev/null || return 1
+    for poll in {1..20}; do
+      alive "$pid" || return 0
+      sleep 0.1
+    done
+  done
+  return 1 # bounded deadline expired; report leftovers, never hang in wait
+}
+cleanup() {
+  original_status=$?
+  trap - EXIT INT TERM
+  set +e # All failures are collected; neither service may skip the other.
+  cleanup_failed=0
+  api_pid=''; api_port=''; api_start=''
+  if test -n "$redis_pid" && alive "$redis_pid" && owned_identity redis "$redis_pid"; then kill -CONT "$redis_pid" || cleanup_failed=1; fi
+  if test -f "$owned_run/api-owner"; then
+    read -r api_pid api_port api_start < "$owned_run/api-owner"
+    stop_exact api "$api_pid" || cleanup_failed=1
+  fi
+  if test -z "$pg_pid" && test -f "$owned_run/pg/postmaster.pid"; then
+    pg_pid=$(head -n 1 "$owned_run/pg/postmaster.pid")
+  fi
+  if test -n "$pg_pid" && alive "$pg_pid"; then
+    if owned_identity pg "$pg_pid"; then
+      "$pgbin/pg_ctl" -D "$owned_run/pg" -m fast -w -t 5 stop || cleanup_failed=1
+      stop_exact pg "$pg_pid" || cleanup_failed=1
+    else cleanup_failed=1; fi
+  fi
+  if test -n "$redis_pid" && alive "$redis_pid" && owned_identity redis "$redis_pid"; then kill -CONT "$redis_pid" || cleanup_failed=1; fi
+  stop_exact redis "$redis_pid" || cleanup_failed=1
+  # wait only after observed stopped/zombie; never wait for a live process.
+  if test -n "$redis_pid" && ! alive "$redis_pid"; then
+    wait "$redis_pid" >/dev/null 2>&1
+  fi
+  if test "$cleanup_failed" -ne 0; then
+    echo "Owned-runtime cleanup FAILED; inspect $owned_run; do not run another gate" >&2
+    exit 1
+  fi
+  echo "TASK302_CLEANUP pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"
+  ss -H -ltnp "sport = :$pgport or sport = :$redisport"
+  if { test -n "$pg_pid" && alive "$pg_pid"; } || { test -n "$redis_pid" && alive "$redis_pid"; }; then exit 1; fi
+  test ! -f "$owned_run/pg/postmaster.pid" || exit 1
+  test ! -S "$owned_run/redis.sock" || exit 1
+  if test -n "$api_pid" && alive "$api_pid"; then exit 1; fi
+  if test -n "$api_port"; then
+    test -z "$(ss -H -ltnp "sport = :$api_port")" || exit 1
+  fi
+  test -z "$(ss -H -ltnp "sport = :$pgport or sport = :$redisport")" || exit 1
+  echo "TASK302_ALL_CLEAN api_pid=$api_pid api_port=$api_port socket_postmaster_absent=1"
+  exit "$original_status"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+"$pgbin/initdb" -D "$owned_run/pg" \
+  -L "$runtime_root/usr/share/postgresql/18" --auth=trust \
+  --username=tixmo302 --encoding=UTF8 --no-locale > "$owned_run/initdb.log"
+"$pgbin/pg_ctl" -D "$owned_run/pg" -l "$owned_run/postgres.log" \
+  -o "-h 127.0.0.1 -p $pgport -k $owned_run" -w -t 10 start
+pg_pid=$(head -n 1 "$owned_run/pg/postmaster.pid")
+test "$(readlink -f "/proc/$pg_pid/exe")" = "$(readlink -f "$pgbin/postgres")"
+# Foreground mode gives the shell an exact unreaped child PID. No daemonize race.
+"$runtime_root/usr/bin/redis-server" --bind 127.0.0.1 --port "$redisport" \
+  --save '' --appendonly no --daemonize no --dir "$owned_run" \
+  --pidfile "$owned_run/redis.pid" --logfile "$owned_run/redis.log" \
+  --unixsocket "$owned_run/redis.sock" --unixsocketperm 700 &
+redis_pid=$!
+redis_ready=0
+for attempt in {1..30}; do
+  kill -0 "$redis_pid" 2>/dev/null || break
+  if test -S "$owned_run/redis.sock" &&
+    test "$("$runtime_root/usr/bin/redis-cli" -s "$owned_run/redis.sock" ping)" = PONG; then
+    redis_ready=1
+    break
+  fi
+  sleep 0.1
+done
+test "$redis_ready" = 1
+info_pid=$("$runtime_root/usr/bin/redis-cli" -s "$owned_run/redis.sock" info server |
+  tr -d '\r' | sed -n 's/^process_id://p')
+test "$info_pid" = "$redis_pid"
+test "$(readlink -f "/proc/$redis_pid/exe")" = \
+  "$(readlink -f "$runtime_root/usr/bin/redis-server")"
+# Fail closed unless each exact PID owns its requested loopback TCP listener.
+# No TCP probe or database access is allowed before these assertions.
+for pair in "$pgport:$pg_pid" "$redisport:$redis_pid"; do
+  port=${pair%:*}; pid=${pair#*:}
+  listener=$(ss -H -ltnp "sport = :$port")
+  test "$(printf '%s\n' "$listener" | wc -l)" = 1
+  printf '%s\n' "$listener" | rg -q "127\.0\.0\.1:$port .*pid=$pid,"
+done
+"$pgbin/createdb" -h 127.0.0.1 -p "$pgport" -U tixmo302 tixmo_disposable_302
+"$pgbin/psql" -h 127.0.0.1 -p "$pgport" -U tixmo302 \
+  -d tixmo_disposable_302 -Atc \
+  'select current_database(), current_user, inet_server_addr(), inet_server_port();'
+"$runtime_root/usr/bin/redis-cli" -h 127.0.0.1 -p "$redisport" -n 1 ping
+DATABASE_URL="postgresql://tixmo302@127.0.0.1:$pgport/tixmo_disposable_302" \
+REDIS_URL="redis://127.0.0.1:$redisport/1" TIXMO_ALLOW_DESTRUCTIVE_TESTS=1 \
+node -e 'require("./scripts/verification-safety.cjs").validateVerificationTargets(process.env)'
+export DATABASE_URL="postgresql://tixmo302@127.0.0.1:$pgport/tixmo_disposable_302" REDIS_URL="redis://127.0.0.1:$redisport/1" TIXMO_ALLOW_DESTRUCTIVE_TESTS=1 REDIS_DB=1 NODE_ENV=test
+export STRIPE_SECRET_KEY=sk_test_verify_api STRIPE_PUBLISHABLE_KEY=pk_test_verify_api STRIPE_WEBHOOK_SECRET=whsec_verify_api
+export JWT_SECRET=task302-synthetic-jwt-fixture-not-a-real-credential JWT_REFRESH_SECRET=task302-synthetic-refresh-fixture-not-a-real-credential SESSION_SECRET=task302-synthetic-session-fixture-not-a-real-credential
+echo "TASK302_RUNTIME path=$owned_run pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"
+artifact_dir="$PWD/docs/team/evidence/task-302"
+export TMPDIR="$owned_run"
+timeout --signal=TERM --kill-after=5s 35s tixmoapi2/node_modules/.bin/prisma migrate deploy --schema tixmoapi2/prisma/schema.prisma > "$artifact_dir/migrate.log" 2>&1
+timeout --signal=TERM --kill-after=5s 100s npm --prefix tixmoapi2 test -- --cacheDirectory "$owned_run/jest-cache" --runInBand --runTestsByPath tests/integration/orders-sale-windows.local.test.ts > "$artifact_dir/acceptance.log" 2>&1
