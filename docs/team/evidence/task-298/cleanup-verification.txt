@@ -1,0 +1,14 @@
+first-runtime.log PID 2734381 absent=True
+first-runtime.log PID 2734394 absent=True
+first-runtime.log port 31758 no listener
+first-runtime.log port 40538 no listener
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task298/run.vViPC4/pg/postmaster.pid absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task298/run.vViPC4/redis.sock absent
+runtime.log PID 2735714 absent=True
+runtime.log PID 2735727 absent=True
+runtime.log port 25819 no listener
+runtime.log port 57951 no listener
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task298/run.OgOKj2/pg/postmaster.pid absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task298/run.OgOKj2/redis.sock absent
+API 2734478 absent; listener 44475 absent
+API 2735814 absent; listener 43509 absent
