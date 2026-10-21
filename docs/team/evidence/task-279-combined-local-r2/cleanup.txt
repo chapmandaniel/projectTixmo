@@ -1,0 +1,9 @@
+PID 2645550: ABSENT
+PID 2645563: ABSENT
+PORT 26464: NO LISTENER
+PORT 44732: NO LISTENER
+PORT 46559: NO LISTENER
+pg/postmaster.pid: ABSENT
+redis.sock: ABSENT
+runtime/task-279-r2 permission:0700
+filesystem:ext4

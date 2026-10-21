@@ -190,16 +190,45 @@ test('expired paid webhook persists one manual exception across replay with no p
     amount: Math.round(Number(order.totalAmount.toString()) * 100),
     amount_received: Math.round(Number(order.totalAmount.toString()) * 100), currency: order.currency };
   const firstId = `evt-synthetic-279-${order.id}`;
-  for (const id of [firstId, firstId, `${firstId}-replay`]) {
-    await (payments as any).processEvent({ id, type: 'payment_intent.succeeded', data: { object: intent } });
+  const deliver = (id: string) => (payments as any).processEvent({ id,
+    type: 'payment_intent.succeeded', data: { object: intent } });
+  const state = async () => ({
+    order: await prisma.order.findUniqueOrThrow({ where: { id: order.id }, select: {
+      status: true, paymentStatus: true, refundStatus: true, paymentClosedAt: true,
+    } }),
+    tickets: await prisma.ticket.findMany({ where: { orderId: order.id }, orderBy: { id: 'asc' } }),
+    inventory: await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id }, select: {
+      quantityAvailable: true, quantityHeld: true, quantitySold: true,
+    } }),
+  });
+  await deliver(firstId);
+  const baseline = await state();
+  expect(baseline.order).toEqual({ status: 'CANCELLED', paymentStatus: 'PROCESSING',
+    refundStatus: 'NONE', paymentClosedAt: null });
+  for (const id of [firstId, `${firstId}-replay`]) {
+    await deliver(id);
+    expect(await state()).toEqual(baseline);
   }
   const record = await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId: intentId } });
   expect(record).toMatchObject({ orderId: order.id, reason: 'LATE_PAYMENT', status: 'REQUESTED',
     stripeRefundId: null, errorMessage: expect.stringContaining('Manual reconciliation') });
   expect(await prisma.paymentRefund.count({ where: { paymentIntentId: intentId } })).toBe(1);
+  // Prove this is eligible by generic status/time rules, not protected by youth/backoff.
+  const aged = await prisma.paymentRefund.update({ where: { id: record.id }, data: {
+    updatedAt: new Date(Date.now() - 120_000),
+  } });
+  const genericEligibility = { id: record.id, status: 'REQUESTED',
+    updatedAt: { lte: new Date(Date.now() - 60_000) } };
+  expect(await prisma.paymentRefund.count({ where: genericEligibility })).toBe(1);
+  expect(await prisma.paymentRefund.count({ where: {
+    ...genericEligibility, reason: { not: 'LATE_PAYMENT' },
+  } })).toBe(0);
   await (payments as any).reconcileRefund(record.id);
+  expect(await state()).toEqual(baseline);
+  expect(await prisma.paymentRefund.findUniqueOrThrow({ where: { id: record.id } })).toEqual(aged);
   await payments.recoverRefunds();
-  expect(await prisma.paymentRefund.findUniqueOrThrow({ where: { id: record.id } })).toEqual(record);
+  expect(await state()).toEqual(baseline);
+  expect(await prisma.paymentRefund.findUniqueOrThrow({ where: { id: record.id } })).toEqual(aged);
   const afterOrder = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
   expect(afterOrder.status).toBe('CANCELLED');
   expect(afterOrder.paymentStatus).not.toBe('SUCCEEDED');
