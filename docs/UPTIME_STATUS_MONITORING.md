@@ -1,6 +1,6 @@
 # Tixmo Uptime And Status Monitoring
 
-Status: monitoring script and scheduled workflow template added. Production monitoring is not complete until the target URLs are configured and at least one scheduled run passes.
+Status: existing monitoring script and scheduled workflow template are source-backed, not evidence of configured or deployed monitoring. Launch qualification remains open until target runs, received failure/recovery notifications and accepted human ownership are evidenced. See [W11 incident handoff](W11_SALES_PAUSE_INCIDENT_HANDOFF.md) for broader control and evidence gaps; #248 and launch remain OPEN.
 
 ## What To Monitor
 
@@ -8,6 +8,7 @@ Required launch monitors:
 
 | Target | URL | Frequency | Expected result |
 | --- | --- | ---: | --- |
+| API dependency readiness | `https://<api-origin>/ready` | 1 to 5 minutes | HTTP 200 JSON with `status: ready`, `checks.database: true` and `checks.redis: true` |
 | API root health | `https://<api-origin>/health` | 1 to 5 minutes | HTTP 200 with `status: ok` |
 | API version health | `https://<api-origin>/api/v1/health` | 1 to 5 minutes | HTTP 200 JSON response |
 | Dashboard | `https://<dashboard-origin>/` | 1 to 5 minutes | HTTP 200 to 399 |
@@ -40,13 +41,18 @@ TIXMO_DASHBOARD_URL=https://app.example.com \
 npm run status:check
 ```
 
-The command checks:
+In origin mode, `scripts/check-status.mjs` builds these targets:
 
-- `/health`
-- `/api/v1/health`
+- `/ready` (dependency readiness)
+- `/health` (liveness)
+- `/api/v1/health` (liveness)
 - dashboard root when `TIXMO_DASHBOARD_URL` is set
 
-It exits non-zero if any configured target fails, times out, or returns a non-2xx/3xx response.
+CLI URL arguments take precedence over `TIXMO_STATUS_URLS`; either explicit mode replaces, rather than supplements, origin-derived targets. The explicit example above omits `/ready` and version health, so its success alone is not readiness evidence. Include the exact `/ready` path explicitly or use origin mode for dependency coverage. A standalone invocation does not require both API and dashboard origins; it checks whichever targets are supplied.
+
+The API `/ready` handler returns 200 only when database and Redis are both true, otherwise 503. The script requires a 2xx/3xx response and, for a supplied URL whose pathname is exactly `/ready`, parsed JSON with `status: ready` and both dependency checks true. Other paths receive HTTP-status checking, not health-body assertions; advertised JSON must still parse. `/health` success is not dependency readiness.
+
+The command exits non-zero after configured retries if any valid target fails, times out, or fails those checks. Defaults are an 8-second request timeout and one retry per URL, not a persistent cross-run incident counter. Invalid explicit URLs are filtered out; zero valid targets fails. Inspect the actual target inventory, not only exit status.
 
 ## GitHub Scheduled Monitor
 
@@ -61,24 +67,29 @@ Required repository or environment secrets:
 - `PRODUCTION_API_BASE_URL`
 - `PRODUCTION_DASHBOARD_URL`
 
-The workflow skips an environment when both URLs for that environment are missing. A configured environment fails the workflow if any status target fails.
+Each environment step requires BOTH its API and dashboard URL. If either or both are missing, that step emits an error and exits 1; there is no skip-missing-environment success. Staging runs first; a failed staging step normally prevents the production step from running. With both URLs present, each step invokes origin mode and fails if any status target fails. Source presence does not prove the workflow is enabled or targets configured.
 
 Launch evidence to capture:
 
 - First passing manual workflow run URL.
 - First passing scheduled workflow run URL.
 - The configured API and dashboard origins.
-- The alert destination for failed workflow runs.
+- The alert destination and actual received failure notification, with run URL, timestamp, recipient and acknowledgement latency.
+- The corresponding received recovery notification and acknowledgement, linked to a fresh passing run; a green run alone is not a delivery receipt.
+- Accepted primary and backup human ownership; source/log messages and attempted sends are not receipts.
+
+No failure/recovery receipt or accepted on-call assignment is established by this source-only correction. Named launch owner, support owner, monitoring/on-call primary, backup and incident commander remain UNASSIGNED until humans accept them. Retain receipts in the authorized rehearsal evidence; do not infer delivery from workflow failure alone.
 
 ## Hosted Uptime Monitor Option
 
 If using a dedicated uptime provider instead of GitHub Actions, configure the same targets:
 
+- `GET /ready` with dependency JSON assertions above (HTTP-only monitoring is insufficient)
 - `GET /health`
 - `GET /api/v1/health`
 - `GET /`
 
-Use:
+Proposed hosted-provider settings, pending authorized rehearsal/calibration (not implemented by the GitHub workflow):
 
 - 60-second or 5-minute check interval.
 - 8-second timeout.
@@ -105,6 +116,8 @@ Before launch:
 
 ## Incident Thresholds
 
+Existing proposed incident thresholds below are unchanged and require rehearsal/calibration and accepted escalation/recovery ownership. They are not proof of configured alert rules; script retries do not implement a two-consecutive-scheduled-check threshold. Dependency readiness failures also require incident triage, not dismissal because liveness passes.
+
 Create an incident when any of these happen:
 
 - API health fails for 2 consecutive checks.
@@ -120,5 +133,6 @@ Create an incident when any of these happen:
 - [ ] GitHub monitor secrets are configured or hosted uptime provider targets are configured.
 - [ ] One manual monitor run passes.
 - [ ] One scheduled monitor run passes.
-- [ ] Failed monitor alerts route to the launch owner or support owner.
+- [ ] Actual failure and recovery notifications are received and acknowledged, with linked run/timestamp receipts.
+- [ ] Launch/support owners, monitoring/on-call primary and backup, and incident commander accept named assignments (currently UNASSIGNED).
 - [ ] Sentry test alert routes to the launch on-call destination.
