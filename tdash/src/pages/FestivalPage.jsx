@@ -193,37 +193,36 @@ export const FestivalPageView = ({
                                 {events.length === 1 ? 'event' : 'events'}
                             </span>
                         </div>
-                        <div className="sf-festival-hero-actions">
-                            <a href="#festival-program" className="sf-button">
-                                Explore events
-                                <ArrowDown size={16} aria-hidden="true" />
-                            </a>
-                            {passes.length > 0 && (
-                                <a
-                                    className="sf-festival-pass-anchor"
-                                    href="#festival-passes"
-                                >
-                                    View festival passes
-                                    <ArrowRight size={15} aria-hidden="true" />
-                                </a>
-                            )}
-                        </div>
                     </div>
                 </section>
+                <div className="sf-container sf-festival-overview">
+                    <p>{festival.description}</p>
+                    <nav
+                        className="sf-festival-destinations"
+                        aria-label="Festival tickets"
+                    >
+                        <a href="#festival-program">
+                            <span>
+                                <strong>Individual events</strong>
+                                <span>Book an event’s tickets</span>
+                            </span>
+                            <ArrowDown size={19} aria-hidden="true" />
+                        </a>
+                        {passes.length > 0 && (
+                            <a href="#festival-passes">
+                                <span>
+                                    <strong>Festival passes</strong>
+                                    <span>Compare pass coverage</span>
+                                </span>
+                                <ArrowDown size={19} aria-hidden="true" />
+                            </a>
+                        )}
+                    </nav>
+                </div>
                 <div
                     className={`sf-container sf-festival-layout ${!passes.length ? 'sf-festival-layout-no-passes' : ''}`}
                 >
                     <div className="sf-festival-main">
-                        <div className="sf-festival-intro">
-                            <p className="sf-eyebrow">The festival</p>
-                            <h2>Choose your events.</h2>
-                            <p>{festival.description}</p>
-                            <p className="sf-festival-ticket-rule">
-                                <Ticket size={16} aria-hidden="true" />
-                                Individual event tickets are sold on each
-                                event’s own page.
-                            </p>
-                        </div>
                         <section
                             id="festival-program"
                             className="sf-program"
@@ -232,8 +231,13 @@ export const FestivalPageView = ({
                         >
                             <div className="sf-program-heading">
                                 <div>
-                                    <p className="sf-eyebrow">Dates & venues</p>
-                                    <h2 id="program-heading">The program</h2>
+                                    <h2 id="program-heading">
+                                        Individual events
+                                    </h2>
+                                    <p>
+                                        Tickets are sold on each event’s own
+                                        page.
+                                    </p>
                                 </div>
                                 <label className="sf-venue-filter">
                                     <span className="sf-visually-hidden">
@@ -299,7 +303,17 @@ export const FestivalPageView = ({
                                     key={day.key}
                                     aria-labelledby={`day-${day.key}`}
                                 >
-                                    <h3 id={`day-${day.key}`}>{day.label}</h3>
+                                    <div className="sf-program-day-heading">
+                                        <h3 id={`day-${day.key}`}>
+                                            {day.label}
+                                        </h3>
+                                        <span>
+                                            {day.events.length}{' '}
+                                            {day.events.length === 1
+                                                ? 'event'
+                                                : 'events'}
+                                        </span>
+                                    </div>
                                     <div>
                                         {day.events.map((event) => {
                                             const sale = getEventSaleState(
@@ -315,51 +329,56 @@ export const FestivalPageView = ({
                                                     className="sf-program-event"
                                                     key={event.id}
                                                 >
-                                                    <div className="sf-program-time">
-                                                        {day.key === 'tba' ? (
-                                                            'TBA'
-                                                        ) : (
-                                                            <time
-                                                                dateTime={
-                                                                    event.startDatetime
-                                                                }
-                                                            >
-                                                                {new Intl.DateTimeFormat(
-                                                                    undefined,
-                                                                    {
-                                                                        timeZone:
-                                                                            eventTimeZone(
-                                                                                festival,
-                                                                            ),
-                                                                        hour: 'numeric',
-                                                                        minute: '2-digit',
-                                                                    },
-                                                                ).format(
-                                                                    new Date(
-                                                                        event.startDatetime,
-                                                                    ),
-                                                                )}
-                                                            </time>
-                                                        )}
-                                                    </div>
                                                     <div className="sf-program-event-detail">
-                                                        <p className="sf-eyebrow">
-                                                            {event.category ||
-                                                                'Live event'}
-                                                        </p>
-                                                        <h4>
-                                                            <Link
-                                                                to={hrefForEvent(
-                                                                    event,
+                                                        <div className="sf-program-event-title">
+                                                            <h4>
+                                                                <Link
+                                                                    to={hrefForEvent(
+                                                                        event,
+                                                                    )}
+                                                                >
+                                                                    {event.name}
+                                                                </Link>
+                                                            </h4>
+                                                            <div className="sf-program-time">
+                                                                {day.key ===
+                                                                'tba' ? (
+                                                                    'TBA'
+                                                                ) : (
+                                                                    <time
+                                                                        dateTime={
+                                                                            event.startDatetime
+                                                                        }
+                                                                    >
+                                                                        {new Intl.DateTimeFormat(
+                                                                            undefined,
+                                                                            {
+                                                                                timeZone:
+                                                                                    eventTimeZone(
+                                                                                        festival,
+                                                                                    ),
+                                                                                hour: 'numeric',
+                                                                                minute: '2-digit',
+                                                                            },
+                                                                        ).format(
+                                                                            new Date(
+                                                                                event.startDatetime,
+                                                                            ),
+                                                                        )}
+                                                                    </time>
                                                                 )}
-                                                            >
-                                                                {event.name}
-                                                            </Link>
-                                                        </h4>
+                                                            </div>
+                                                        </div>
                                                         <p className="sf-program-venue">
-                                                            {event.venue
-                                                                ?.name ||
-                                                                'Venue to be announced'}
+                                                            <span>
+                                                                {event.venue
+                                                                    ?.name ||
+                                                                    'Venue to be announced'}
+                                                            </span>
+                                                            <span>
+                                                                {event.category ||
+                                                                    'Live event'}
+                                                            </span>
                                                         </p>
                                                         {selectedPass && (
                                                             <p
@@ -370,7 +389,7 @@ export const FestivalPageView = ({
                                                                 ) && (
                                                                     <Check
                                                                         size={
-                                                                            12
+                                                                            15
                                                                         }
                                                                         aria-hidden="true"
                                                                     />
@@ -384,9 +403,17 @@ export const FestivalPageView = ({
                                                         )}
                                                     </div>
                                                     <div className="sf-program-event-action">
-                                                        <p>
+                                                        <p
+                                                            className={
+                                                                price === null
+                                                                    ? 'sf-program-unavailable'
+                                                                    : ''
+                                                            }
+                                                        >
                                                             {price !== null
-                                                                ? `Event tickets ${price === 0 ? 'free' : `from ${money(price)}`}`
+                                                                ? price === 0
+                                                                    ? 'Free tickets'
+                                                                    : `From ${money(price)}`
                                                                 : sale.available
                                                                   ? 'Tickets unavailable'
                                                                   : sale.label}
@@ -396,9 +423,11 @@ export const FestivalPageView = ({
                                                             to={hrefForEvent(
                                                                 event,
                                                             )}
-                                                            aria-label={`View ${event.name} event page`}
+                                                            aria-label={`${price !== null ? 'View event & tickets' : 'View event'}: ${event.name}`}
                                                         >
-                                                            Event page
+                                                            {price !== null
+                                                                ? 'View event & tickets'
+                                                                : 'View event'}
                                                             <ArrowRight
                                                                 size={15}
                                                                 aria-hidden="true"
@@ -448,50 +477,6 @@ export const FestivalPageView = ({
                                 </div>
                             )}
                         </section>
-                        <section className="sf-detail-section sf-info">
-                            <p className="sf-eyebrow">Planning your festival</p>
-                            <h2>Tickets & entry</h2>
-                            <details>
-                                <summary>
-                                    Can I book just one event?
-                                    <ArrowDown size={16} aria-hidden="true" />
-                                </summary>
-                                <p>
-                                    Yes. Open that event’s page to choose its
-                                    tickets. Each event has its own availability
-                                    and admission details.
-                                </p>
-                            </details>
-                            {passes.length > 0 && (
-                                <details>
-                                    <summary>
-                                        Does a pass include every event?
-                                        <ArrowDown
-                                            size={16}
-                                            aria-hidden="true"
-                                        />
-                                    </summary>
-                                    <p>
-                                        Only the events listed for your chosen
-                                        pass are included. Check the included
-                                        events before buying. Other events
-                                        require their own tickets.
-                                    </p>
-                                </details>
-                            )}
-                            <details>
-                                <summary>
-                                    Where do I find entry and venue information?
-                                    <ArrowDown size={16} aria-hidden="true" />
-                                </summary>
-                                <p>
-                                    Open the individual event page for its start
-                                    time, location and admission information.
-                                    Events can take place at different venues on
-                                    different days.
-                                </p>
-                            </details>
-                        </section>
                     </div>
                     {selectedPass && (
                         <aside
@@ -512,6 +497,45 @@ export const FestivalPageView = ({
                         </aside>
                     )}
                 </div>
+                <section className="sf-container sf-detail-section sf-info sf-festival-info">
+                    <p className="sf-eyebrow">Planning your festival</p>
+                    <h2>Tickets & entry</h2>
+                    <details>
+                        <summary>
+                            Can I book just one event?
+                            <ArrowDown size={16} aria-hidden="true" />
+                        </summary>
+                        <p>
+                            Yes. Open that event’s page to choose its tickets.
+                            Each event has its own availability and admission
+                            details.
+                        </p>
+                    </details>
+                    {passes.length > 0 && (
+                        <details>
+                            <summary>
+                                Does a pass include every event?
+                                <ArrowDown size={16} aria-hidden="true" />
+                            </summary>
+                            <p>
+                                Only the events listed for your chosen pass are
+                                included. Check the included events before
+                                buying. Other events require their own tickets.
+                            </p>
+                        </details>
+                    )}
+                    <details>
+                        <summary>
+                            Where do I find entry and venue information?
+                            <ArrowDown size={16} aria-hidden="true" />
+                        </summary>
+                        <p>
+                            Open the individual event page for its start time,
+                            location and admission information. Events can take
+                            place at different venues on different days.
+                        </p>
+                    </details>
+                </section>
             </main>
             <footer className="sf-footer sf-container">
                 <StorefrontBrand />
