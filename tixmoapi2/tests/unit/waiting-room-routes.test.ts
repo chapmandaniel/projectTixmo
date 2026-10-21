@@ -1,6 +1,7 @@
 // Actual app and API index/selected routers; every controller/transport boundary is mocked.
 // No integration setup, service imports, database, Redis connection or provider calls.
 import request from 'supertest';
+import { createServer } from 'node:http';
 import { Request, Response, NextFunction } from 'express';
 const pass = (_req: Request, _res: Response, next: NextFunction) => next();
 const auth = (req: any, res: Response, next: NextFunction) => {
@@ -45,13 +46,17 @@ jest.doMock('../../src/api/ticket-tiers/routes', () => require('express').Router
 jest.doMock('../../src/api/events/routes', () => require('express').Router());
 jest.doMock('../../src/api/events/public.routes', () => require('express').Router());
 const app = require('../../src/app').default;
+// QA416 harness only: explicit authorized loopback listener, OS-assigned port.
+const server = createServer(app);
+beforeAll(async () => { await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve)); });
+afterAll(async () => { await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); expect(server.listening).toBe(false); });
 const scanners: [string, string][] = [
   ['post', '/scanners/register'], ['post', '/scanners/auth'], ['get', '/scanners/sync'],
   ['post', '/scanners/validate'], ['get', '/scanners'], ['post', '/scanners/scan'],
   ['get', '/scanners/logs'], ['get', '/scanners/id'], ['put', '/scanners/id'], ['delete', '/scanners/id'],
 ];
 const send = (method: string, path: string, role?: string, invalid = false) => {
-  const req = (request(app) as any)[method](path);
+  const req = (request(server) as any)[method](path);
   if (role) req.set('x-test-role', role);
   if (invalid) req.set('x-test-invalid', 'yes');
   return req;
@@ -101,12 +106,12 @@ it.each([['delete','/users/id'], ['delete','/organizations/id'], ['post','/order
   expect(evalLease).not.toHaveBeenCalled();
 });
 it.each([['/health',200], ['/ready',503], ['/api/v1/health',200], ['/metrics',404], ['/unknown',404], ['/api/v1/docs/',200]])('operational/docs %s bypasses', async (path, status) => {
-  expect((await request(app).get(path as string)).status).toBe(status);
+  expect((await request(server).get(path as string)).status).toBe(status);
   expect(evalLease).not.toHaveBeenCalled();
 });
 it('webhook receives exact raw body at mocked signature/controller boundary while full', async () => {
   const body = '{ "id": "evt_test", "preserve": true }';
-  const response = await request(app).post('/api/v1/payments/webhook').set('Content-Type', 'application/json').send(body);
+  const response = await request(server).post('/api/v1/payments/webhook').set('Content-Type', 'application/json').send(body);
   expect(response.status).toBe(200);
   expect(response.body).toEqual({ handled: true, raw: true, body });
   expect(evalLease).not.toHaveBeenCalled();
