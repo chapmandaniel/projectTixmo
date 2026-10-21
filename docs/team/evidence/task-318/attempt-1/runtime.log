@@ -1,0 +1,12 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_318|tixmo318|127.0.0.1|28321
+PONG
+TASK318_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task318/run.gAhy2x pg_pid=2839541 redis_pid=2839554 pgport=28321 redisport=43296
+v24.21.0
+11.19.0
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+waiting for server to shut down.... done
+server stopped
+TASK318_CLEANUP pg_pid=2839541 redis_pid=2839554 pgport=28321 redisport=43296

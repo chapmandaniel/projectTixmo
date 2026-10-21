@@ -1,0 +1,4 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --runInBand --json --outputFile=/home/daniel/projects/projectTixmo/worktrees/task-318/docs/team/evidence/task-318/jest-result.json
+

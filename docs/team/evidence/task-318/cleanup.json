@@ -1,0 +1,33 @@
+{
+  "services": [
+    {
+      "log": "docs/team/evidence/task-318/attempt-1/runtime.log",
+      "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task318/run.gAhy2x",
+      "pg_pid": 2839541,
+      "redis_pid": 2839554,
+      "pids_absent": true,
+      "ports": [
+        28321,
+        43296
+      ],
+      "listeners": "",
+      "postmasterAbsent": true,
+      "socketFiles": []
+    },
+    {
+      "log": "docs/team/evidence/task-318/runtime.log",
+      "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task318/run.3yAYjK",
+      "pg_pid": 2850372,
+      "redis_pid": 2850385,
+      "pids_absent": true,
+      "ports": [
+        35956,
+        40797
+      ],
+      "listeners": "",
+      "postmasterAbsent": true,
+      "socketFiles": []
+    }
+  ],
+  "remainingOwnedNodeWorkers": []
+}

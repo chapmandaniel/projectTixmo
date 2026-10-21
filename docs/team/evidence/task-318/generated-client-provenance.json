@@ -1,0 +1,49 @@
+{
+  "sourceDependencyTree": "/home/daniel/projects/projectTixmo/worktrees/task-235/tixmoapi2/node_modules",
+  "copy": "cp -a, no hardlink flags, matching package-lock",
+  "generation": "npm run build -> prisma generate, candidate schema",
+  "sourceSchemaSha256": "03544f7a5fbe613b111fcf83b0249a38cc21d15ff8427b95ff340989871ec7bb",
+  "normalizedSchemaEqual": true,
+  "items": [
+    {
+      "file": "typescript/package.json",
+      "sha256": "822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6",
+      "owned_inode": 663458,
+      "source_inode": 56135,
+      "owned_nlink": 1,
+      "version": "5.9.3"
+    },
+    {
+      "file": "prisma/package.json",
+      "sha256": "01c1aa746e5b0aebf01b38ec1aaffaebc098bacfe93b2f413fd4112de9251ae3",
+      "owned_inode": 661531,
+      "source_inode": 53518,
+      "owned_nlink": 1,
+      "version": "5.22.0"
+    },
+    {
+      "file": "@prisma/client/package.json",
+      "sha256": "2efa3f7c0f05cf2bd4b681b71dd0e7a197006a3c29f2acdb5f88d5e7bc9bb2e3",
+      "owned_inode": 557052,
+      "source_inode": 48360,
+      "owned_nlink": 1,
+      "version": "5.22.0"
+    },
+    {
+      "file": ".prisma/client/index.js",
+      "sha256": "21fcf0e26e6ed97af257da1d07c18575ef148a11bccb9b1f79e3bce03437a490",
+      "owned_inode": 571658,
+      "source_inode": 143385,
+      "owned_nlink": 1,
+      "version": null
+    },
+    {
+      "file": ".prisma/client/schema.prisma",
+      "sha256": "a8601e89abd910f7464f9848ba061dc68fabf8ec6b4f014d4365004c95dc3b01",
+      "owned_inode": 571666,
+      "source_inode": 143396,
+      "owned_nlink": 1,
+      "version": null
+    }
+  ]
+}
