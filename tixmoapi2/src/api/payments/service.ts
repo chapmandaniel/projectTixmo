@@ -26,6 +26,8 @@ const LATE_PAYMENT_MANUAL_RECONCILIATION =
   'Manual reconciliation required: late payment; automatic refund prohibited.';
 
 const LEASE_MS = 5 * 60_000;
+// Fixed durable cooldown: at most one background attempt per minute per refund.
+const REFUND_RECOVERY_BACKOFF_MS = 60_000;
 const IDEMPOTENCY_SAFE_MS = 23 * 60 * 60_000;
 const cents = (value: { toString(): string }) => {
   const amount = Math.round(Number(value.toString()) * 100);
@@ -712,6 +714,7 @@ export class PaymentService {
         // Existing late-paid rows remain visible as owned manual exceptions,
         // not automatic work (and must not starve the bounded recovery queue).
         reason: { not: 'LATE_PAYMENT' },
+        updatedAt: { lte: new Date(Date.now() - REFUND_RECOVERY_BACKOFF_MS) },
         OR: [
           { status: { in: ['REQUESTED', 'PROCESSING', 'FAILED'] } },
           { status: 'SUCCEEDED', reason: 'ORDER_REFUND', order: { status: 'PAID' } },
@@ -725,10 +728,22 @@ export class PaymentService {
       orderBy: { updatedAt: 'asc' },
       take: 50,
     });
-    for (const record of records)
-      await this.reconcileRefund(record.id).catch((error) =>
-        logger.error(`Refund reconciliation failed for ${record.id}: ${error}`)
-      );
+    for (const record of records) {
+      try {
+        await this.reconcileRefund(record.id);
+      } catch (error) {
+        logger.error(`Refund reconciliation failed for ${record.id}: ${error}`);
+        // Rotate poison work and expose an owned exception without copying provider
+        // errors or changing money/status. CAS cannot overwrite a newer result.
+        await prisma.paymentRefund.updateMany({
+          where: { id: record.id, updatedAt: record.updatedAt },
+          data: {
+            updatedAt: new Date(),
+            errorMessage: 'Recovery reconciliation required; owner=tixmo-backend; retry after 60 seconds.',
+          },
+        });
+      }
+    }
   }
 
   private async recoverReceipts(): Promise<void> {
