@@ -1,0 +1,6 @@
+REPRO blocker: extracted actual tracking/phase blocks share same Jest spy; recursive depth7 sentinel, zero native eval calls
+REPRO blocker: phase mockRestore removes lifetime eval tracking; subsequent native eval is not tracked
+PASS tracker includes child admitted while parent active and joins both
+PASS original error identity survives cleanup failure plus ENOSPC; partial/source receipt retained for publication attempt
+PASS cleanup failure precedence over artifact failure without primary
+PASS source-only pre-app catchAsync tracking, join-before-restore and timeout skips, clean-source preconnection ordering; NOT app compatibility/runtime proof
