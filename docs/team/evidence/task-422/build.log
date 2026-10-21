@@ -1,0 +1,64 @@
+
+> tdash@0.1.0 build
+> vite build
+
+vite v6.4.3 building for production...
+transforming...
+✓ 2137 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                         0.51 kB │ gzip:   0.33 kB
+dist/app-assets/index-ChGQf83X.css                    108.93 kB │ gzip:  18.29 kB
+dist/app-assets/chevron-right-CszTNS2I.js               0.13 kB │ gzip:   0.14 kB
+dist/app-assets/check-C-ge5KSC.js                       0.13 kB │ gzip:   0.14 kB
+dist/app-assets/loader-2-DifWiFnr.js                    0.14 kB │ gzip:   0.15 kB
+dist/app-assets/zap-BUWnzHI0.js                         0.15 kB │ gzip:   0.15 kB
+dist/app-assets/plus-CSLfSH2O.js                        0.15 kB │ gzip:   0.15 kB
+dist/app-assets/filter-BdaIuYhS.js                      0.16 kB │ gzip:   0.16 kB
+dist/app-assets/arrow-left-DNr6GVZf.js                  0.16 kB │ gzip:   0.16 kB
+dist/app-assets/search-B9pxAQlJ.js                      0.17 kB │ gzip:   0.17 kB
+dist/app-assets/clock-3-DglA0ziK.js                     0.18 kB │ gzip:   0.17 kB
+dist/app-assets/smartphone-K5qomckv.js                  0.19 kB │ gzip:   0.18 kB
+dist/app-assets/map-pin-0ORedQu3.js                     0.20 kB │ gzip:   0.19 kB
+dist/app-assets/dollar-sign-am-wXzFf.js                 0.22 kB │ gzip:   0.19 kB
+dist/app-assets/copy-BXa7PXLM.js                        0.23 kB │ gzip:   0.21 kB
+dist/app-assets/alert-circle-GkVhZkzM.js                0.25 kB │ gzip:   0.19 kB
+dist/app-assets/user-check-C22Y04s_.js                  0.25 kB │ gzip:   0.22 kB
+dist/app-assets/download-DucpDXYU.js                    0.26 kB │ gzip:   0.22 kB
+dist/app-assets/external-link-Da6dc-PO.js               0.28 kB │ gzip:   0.23 kB
+dist/app-assets/save-DEtd4yeL.js                        0.28 kB │ gzip:   0.22 kB
+dist/app-assets/user-plus-C0Rq1YzP.js                   0.31 kB │ gzip:   0.23 kB
+dist/app-assets/link-2-BSjKehDA.js                      0.31 kB │ gzip:   0.24 kB
+dist/app-assets/refresh-ccw-B2NUSks7.js                 0.32 kB │ gzip:   0.23 kB
+dist/app-assets/ticket-BDky6jZU.js                      0.32 kB │ gzip:   0.21 kB
+dist/app-assets/trash-2-BSuzR0aM.js                     0.35 kB │ gzip:   0.25 kB
+dist/app-assets/pen-line-CaBckJro.js                    0.36 kB │ gzip:   0.25 kB
+dist/app-assets/file-text-DY5jQZBu.js                   0.39 kB │ gzip:   0.26 kB
+dist/app-assets/calendar-days-3wQspfBn.js               0.55 kB │ gzip:   0.29 kB
+dist/app-assets/sparkles-m0d7VrXg.js                    0.71 kB │ gzip:   0.34 kB
+dist/app-assets/video-BLfEYfxY.js                       0.72 kB │ gzip:   0.44 kB
+dist/app-assets/InputField-CjXEc-0N.js                  1.44 kB │ gzip:   0.57 kB
+dist/app-assets/eventTime-CctElKBz.js                   1.84 kB │ gzip:   0.94 kB
+dist/app-assets/approvalConstants-D20YBPai.js           2.77 kB │ gzip:   1.39 kB
+dist/app-assets/DevDashboard-BQ2nZAGB.js                3.36 kB │ gzip:   1.31 kB
+dist/app-assets/DashboardHome-B7JW81a4.js               4.11 kB │ gzip:   1.63 kB
+dist/app-assets/SettingsView-BpVeKc31.js                4.72 kB │ gzip:   1.89 kB
+dist/app-assets/WalletPage-BMu0UZuW.js                  7.36 kB │ gzip:   2.58 kB
+dist/app-assets/index-PuI2-Vhy.js                       9.03 kB │ gzip:   3.67 kB
+dist/app-assets/OrderDetailModal-C21-rvAu.js            9.29 kB │ gzip:   2.68 kB
+dist/app-assets/SharedAssetFolderPage-DeVsnEAi.js       9.57 kB │ gzip:   3.03 kB
+dist/app-assets/OrdersView-BmkdAg1k.js                  9.66 kB │ gzip:   2.88 kB
+dist/app-assets/VenuesView-gXJHhIuH.js                 11.13 kB │ gzip:   3.33 kB
+dist/app-assets/EventsView-Bu4Chxd_.js                 12.68 kB │ gzip:   4.45 kB
+dist/app-assets/ScannersView-CafXNtcC.js               17.48 kB │ gzip:   4.90 kB
+dist/app-assets/TeamView-OhyvgVia.js                   21.37 kB │ gzip:   6.45 kB
+dist/app-assets/TodoView-BlPB8wlJ.js                   26.33 kB │ gzip:   7.16 kB
+dist/app-assets/ExternalReviewPage-CNq2fczF.js         27.23 kB │ gzip:   7.12 kB
+dist/app-assets/EventStudio-CH2hLz0A.js                27.28 kB │ gzip:   7.25 kB
+dist/app-assets/CheckoutPage-DMtGejd0.js               35.75 kB │ gzip:  11.66 kB
+dist/app-assets/EventManagementDashboard-DSs7flMz.js   46.83 kB │ gzip:  11.66 kB
+dist/app-assets/AssetLibraryView-DUl4wuC8.js           53.13 kB │ gzip:  14.71 kB
+dist/app-assets/ApprovalsDashboard-CGXAZ4Sj.js         55.80 kB │ gzip:  13.88 kB
+dist/app-assets/index-X5DsJCK-.js                     294.02 kB │ gzip:  98.09 kB
+dist/app-assets/AnalyticsView-B2MJrKP0.js             482.86 kB │ gzip: 156.77 kB
+✓ built in 15.43s

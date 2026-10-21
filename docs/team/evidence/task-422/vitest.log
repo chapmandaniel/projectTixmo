@@ -1,0 +1,99 @@
+
+> tdash@0.1.0 test
+> vitest --run --reporter=default --reporter=json --outputFile.json=../docs/team/evidence/task-422/vitest.json
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/home/daniel/projects/projectTixmo/worktrees/task-422/tdash[39m
+
+ [32m✓[39m src/test/ExternalReviewPage.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1121[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the simplified external review workspace shell [33m 418[2mms[22m[39m
+     [33m[2m✓[22m[39m opens a note modal for request changes and adds the note to discussion after submit [33m 305[2mms[22m[39m
+ [32m✓[39m src/test/ApprovalsDashboard.test.jsx [2m([22m[2m12 tests[22m[2m)[22m[33m 1352[2mms[22m[39m
+     [33m[2m✓[22m[39m lets admins add approved images to the asset library and archive gallery approvals [33m 513[2mms[22m[39m
+ [32m✓[39m src/test/ApprovalDetailView.test.jsx [2m([22m[2m12 tests[22m[2m)[22m[33m 2155[2mms[22m[39m
+     [33m[2m✓[22m[39m renders version controls and reviewer actions for the latest version [33m 490[2mms[22m[39m
+ [32m✓[39m src/test/ScannersView.test.jsx [2m([22m[2m30 tests[22m[2m)[22m[33m 3177[2mms[22m[39m
+     [33m[2m✓[22m[39m renders a scanner card layout for mobile while preserving the desktop table [33m 332[2mms[22m[39m
+     [33m[2m✓[22m[39m uses API meta.pages for both tabs, keeps request limits, Previous and tab reset [33m 719[2mms[22m[39m
+ [32m✓[39m src/test/EventsView.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[32m 229[2mms[22m[39m
+ [32m✓[39m src/test/AssetLibraryView.test.jsx [2m([22m[2m15 tests[22m[2m)[22m[33m 3261[2mms[22m[39m
+     [33m[2m✓[22m[39m renders uploaded assets and filters by asset type [33m 482[2mms[22m[39m
+     [33m[2m✓[22m[39m opens a basic asset preview and copies the asset link [33m 390[2mms[22m[39m
+ [32m✓[39m src/test/OperationalPages.test.jsx [2m([22m[2m10 tests[22m[2m)[22m[33m 1022[2mms[22m[39m
+     [33m[2m✓[22m[39m uses the signed-in organization, searches on the server, and restores drafts [33m 383[2mms[22m[39m
+     [33m[2m✓[22m[39m exports every filtered page and rejects incomplete exports [33m 305[2mms[22m[39m
+ [32m✓[39m src/test/SharedAssetFolderPage.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 673[2mms[22m[39m
+     [33m[2m✓[22m[39m lets external visitors browse nested shared folders [33m 438[2mms[22m[39m
+[90mstderr[2m | src/test/EventStudio.test.jsx[2m > [22m[2mEvent Studio persistence[2m > [22m[2mdoes not replace an unknown total with remaining inventory
+[22m[39mSave failed Error: Ticket total quantity is unavailable or invalid. Reload the complete ticket configuration before saving.
+    at handleSave [90m(/home/daniel/projects/projectTixmo/worktrees/task-422/tdash/[39msrc/features/EventStudio.jsx:198:23[90m)[39m
+    at onClick [90m(/home/daniel/projects/projectTixmo/worktrees/task-422/tdash/[39msrc/features/EventStudio.jsx:296:40[90m)[39m
+    at HTMLUnknownElement.callCallback (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mreact-dom[24m/cjs/react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/generated/EventListener.js:26:30)
+    at innerInvokeEventListeners (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/events/EventTarget-impl.js:360:16)
+    at invokeEventListeners (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/events/EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/events/EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/events/EventTarget-impl.js:114:17)
+    at HTMLUnknownElement.dispatchEvent (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/generated/EventTarget.js:241:34)
+    at Object.invokeGuardedCallbackDev (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mreact-dom[24m/cjs/react-dom.development.js:4213:16)
+
+[90mstderr[2m | src/test/EventStudio.test.jsx[2m > [22m[2mEvent Studio persistence[2m > [22m[2mrejects a missing daylight-saving wall time before any write
+[22m[39mSave failed Error: This local time does not exist in America/St_Johns. Check the daylight saving change.
+    at fromEventLocalInput [90m(/home/daniel/projects/projectTixmo/worktrees/task-422/tdash/[39msrc/lib/eventTime.js:35:32[90m)[39m
+    at handleSave [90m(/home/daniel/projects/projectTixmo/worktrees/task-422/tdash/[39msrc/features/EventStudio.jsx:187:58[90m)[39m
+    at onClick [90m(/home/daniel/projects/projectTixmo/worktrees/task-422/tdash/[39msrc/features/EventStudio.jsx:296:40[90m)[39m
+    at HTMLUnknownElement.callCallback (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mreact-dom[24m/cjs/react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/generated/EventListener.js:26:30)
+    at innerInvokeEventListeners (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/events/EventTarget-impl.js:360:16)
+    at invokeEventListeners (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/events/EventTarget-impl.js:296:3)
+    at HTMLUnknownElementImpl._dispatch (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/events/EventTarget-impl.js:243:9)
+    at HTMLUnknownElementImpl.dispatchEvent (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/events/EventTarget-impl.js:114:17)
+    at HTMLUnknownElement.dispatchEvent (/home/daniel/projects/projectTixmo/worktrees/task-251/tdash/node_modules/[4mjsdom[24m/lib/jsdom/living/generated/EventTarget.js:241:34)
+
+ [32m✓[39m src/test/AppWalletSession.test.jsx [2m([22m[2m6 tests[22m[2m)[22m[33m 1452[2mms[22m[39m
+     [33m[2m✓[22m[39m retains wallet intent and reloads only the signed-in owner after failed refresh [33m 708[2mms[22m[39m
+ [32m✓[39m src/test/EventStudio.test.jsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1760[2mms[22m[39m
+     [33m[2m✓[22m[39m round-trips unchanged event and tier instants through one atomic configuration request [33m 541[2mms[22m[39m
+ [32m✓[39m src/test/CheckoutPage.test.jsx [2m([22m[2m32 tests[22m[2m)[22m[33m 1671[2mms[22m[39m
+     [33m[2m✓[22m[39m shows required checkout policy links before preparing payment [33m 709[2mms[22m[39m
+ [32m✓[39m src/test/WalletPage.test.jsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1121[2mms[22m[39m
+     [33m[2m✓[22m[39m loads owned records and keeps a requested ticket QR visible [33m 447[2mms[22m[39m
+ [32m✓[39m src/test/api-session-races.test.js [2m([22m[2m11 tests[22m[2m)[22m[32m 237[2mms[22m[39m
+ [32m✓[39m src/test/AppCheckoutBusy.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[33m 3217[2mms[22m[39m
+     [33m[2m✓[22m[39m retains cart/auth after /orders busy and waits for manual retry [33m 1742[2mms[22m[39m
+     [33m[2m✓[22m[39m retains cart/auth after /payments/create-intent busy and waits for manual retry [33m 1295[2mms[22m[39m
+ [32m✓[39m src/test/StatusBadge.test.jsx [2m([22m[2m21 tests[22m[2m)[22m[32m 121[2mms[22m[39m
+ [32m✓[39m src/test/AssetUploader.test.jsx [2m([22m[2m9 tests[22m[2m)[22m[32m 167[2mms[22m[39m
+ [32m✓[39m src/test/AppCheckoutReturn.test.jsx [2m([22m[2m4 tests[22m[2m)[22m[33m 753[2mms[22m[39m
+     [33m[2m✓[22m[39m retains the candidate and restores only owner status after auth event [33m 486[2mms[22m[39m
+ [32m✓[39m src/test/AnalyticsView.test.jsx [2m([22m[2m1 test[22m[2m)[22m[33m 619[2mms[22m[39m
+     [33m[2m✓[22m[39m separates GA4 traffic language from Tixmo sales language [33m 616[2mms[22m[39m
+ [32m✓[39m src/test/DashboardTruth.test.jsx [2m([22m[2m1 test[22m[2m)[22m[33m 402[2mms[22m[39m
+     [33m[2m✓[22m[39m renders the dashboard home in the pinned truth state by default [33m 394[2mms[22m[39m
+ [32m✓[39m src/test/NotificationResilience.test.jsx [2m([22m[2m3 tests[22m[2m)[22m[32m 182[2mms[22m[39m
+ [32m✓[39m src/test/TeamView.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 565[2mms[22m[39m
+     [33m[2m✓[22m[39m resends a pending invitation and reports delivery failure before retry [33m 346[2mms[22m[39m
+ [32m✓[39m src/test/AppSession.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 616[2mms[22m[39m
+     [33m[2m✓[22m[39m lands on the main dashboard after signing in from a deep route [33m 507[2mms[22m[39m
+ [32m✓[39m src/test/checkoutEligibility.test.js [2m([22m[2m16 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/test/TicketBuilder.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[32m 103[2mms[22m[39m
+ [32m✓[39m src/test/AcceptInvitationView.test.jsx [2m([22m[2m4 tests[22m[2m)[22m[33m 519[2mms[22m[39m
+     [33m[2m✓[22m[39m accepts a valid link and removes its capability from browser history [33m 379[2mms[22m[39m
+ [32m✓[39m src/test/Smoke.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 533[2mms[22m[39m
+     [33m[2m✓[22m[39m renders DashboardLayout without crashing [33m 485[2mms[22m[39m
+ [32m✓[39m src/test/EventCommandCenter.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[33m 1003[2mms[22m[39m
+     [33m[2m✓[22m[39m copies and opens the buyer checkout link for on-sale events [33m 704[2mms[22m[39m
+ [32m✓[39m src/test/eventTime.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 48[2mms[22m[39m
+ [32m✓[39m src/test/session.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m src/test/runtimeConfig.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/test/LoginView.test.jsx [2m([22m[2m2 tests[22m[2m)[22m[32m 290[2mms[22m[39m
+ [32m✓[39m src/test/ApprovalCard.test.jsx [2m([22m[2m6 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+ [32m✓[39m src/test/StatCard.test.jsx [2m([22m[2m5 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32m✓[39m src/test/DashboardPlaceholderView.test.jsx [2m([22m[2m1 test[22m[2m)[22m[32m 178[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m34 passed[39m[22m[90m (34)[39m
+[2m      Tests [22m [1m[32m250 passed[39m[22m[90m (250)[39m
+[2m   Start at [22m 12:33:16
+[2m   Duration [22m 16.73s[2m (transform 2.66s, setup 2.05s, import 19.53s, tests 28.71s, environment 22.70s)[22m
+
+JSON report written to /home/daniel/projects/projectTixmo/worktrees/task-422/docs/team/evidence/task-422/vitest.json
