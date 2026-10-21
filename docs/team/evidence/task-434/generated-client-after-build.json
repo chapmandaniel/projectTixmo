@@ -1,0 +1,20 @@
+{
+  ".prisma/client/schema.prisma": {
+    "sha256": "a8601e89abd910f7464f9848ba061dc68fabf8ec6b4f014d4365004c95dc3b01",
+    "inode": 2774613,
+    "nlink": 1,
+    "resolved": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/node_modules/.prisma/client/schema.prisma"
+  },
+  ".prisma/client/index.js": {
+    "sha256": "90872064ee9f501cec26a4fb5b283424d6d621441c5f5a62eafc359885c74882",
+    "inode": 2774605,
+    "nlink": 1,
+    "resolved": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/node_modules/.prisma/client/index.js"
+  },
+  ".prisma/client/libquery_engine-debian-openssl-3.0.x.so.node": {
+    "sha256": "35860a5c0fb2f79e7b38c40747c4d212318d97e1910ca528b133c802716de0b8",
+    "inode": 2785464,
+    "nlink": 1,
+    "resolved": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node"
+  }
+}

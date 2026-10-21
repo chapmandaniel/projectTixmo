@@ -1,0 +1,110 @@
+2026-10-21 13:13:14.949 NDT [3435925] LOG:  starting PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-10-21 13:13:14.949 NDT [3435925] LOG:  listening on IPv4 address "127.0.0.1", port 39710
+2026-10-21 13:13:14.951 NDT [3435925] LOG:  listening on Unix socket "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.SVyaBI/.s.PGSQL.39710"
+2026-10-21 13:13:14.956 NDT [3435931] LOG:  database system was shut down at 2026-10-21 13:13:14 NDT
+2026-10-21 13:13:14.961 NDT [3435925] LOG:  database system is ready to accept connections
+2026-10-21 13:13:27.441 NDT [3436527] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:13:28.683 NDT [3436572] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:13:33.556 NDT [3436733] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:13:48.533 NDT [3437308] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:13:50.195 NDT [3437352] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:13:53.237 NDT [3437745] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:13:55.968 NDT [3437757] ERROR:  owned audit failure
+2026-10-21 13:13:55.968 NDT [3437757] CONTEXT:  PL/pgSQL function tixmo_test_reject_inventory_audit() line 1 at RAISE
+2026-10-21 13:13:55.968 NDT [3437757] STATEMENT:  INSERT INTO "public"."ticket_inventory_reconciliations" ("id","ticket_type_id","actor_id","evidence","snapshot_fingerprint","plan_fingerprint","before","after","created_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING "public"."ticket_inventory_reconciliations"."id"
+2026-10-21 13:13:56.430 NDT [3437840] ERROR:  could not serialize access due to concurrent update
+2026-10-21 13:13:56.430 NDT [3437840] STATEMENT:  SELECT id FROM ticket_types WHERE id = $1 FOR UPDATE
+2026-10-21 13:13:57.389 NDT [3437932] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:00.583 NDT [3438005] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:03.616 NDT [3438138] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:09.380 NDT [3438321] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:18.023 NDT [3438571] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:21.965 NDT [3438658] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:25.422 NDT [3439106] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:27.555 NDT [3439217] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:29.026 NDT [3439282] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:31.489 NDT [3439333] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:41.917 NDT [3439630] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:43.640 NDT [3439754] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:45.069 NDT [3439798] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:46.947 NDT [3439863] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:48.909 NDT [3439982] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:50.327 NDT [3440026] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:51.751 NDT [3440070] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:55.058 NDT [3440239] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:56.575 NDT [3440288] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:14:58.142 NDT [3440412] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:02.116 NDT [3440470] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:04.412 NDT [3440600] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:06.562 NDT [3440656] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:08.050 NDT [3440758] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:09.538 NDT [3440821] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:13.321 NDT [3440997] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:14.825 NDT [3441042] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:16.239 NDT [3441087] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:19.122 NDT [3441253] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:20.234 NDT [3441267] ERROR:  could not obtain lock on row in relation "orders"
+2026-10-21 13:15:20.234 NDT [3441267] STATEMENT:  SELECT id FROM orders WHERE id = $1 FOR UPDATE NOWAIT
+2026-10-21 13:15:21.264 NDT [3441301] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:22.822 NDT [3441404] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:25.816 NDT [3441533] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:27.248 NDT [3441577] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:29.017 NDT [3441704] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:31.006 NDT [3441755] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:33.267 NDT [3441861] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:40.829 NDT [3442150] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:42.223 NDT [3442194] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:43.825 NDT [3442316] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:45.551 NDT [3442368] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:46.944 NDT [3442413] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:48.365 NDT [3442520] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:50.730 NDT [3442586] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:52.147 NDT [3442630] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:53.792 NDT [3442748] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:55.224 NDT [3442798] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:56.764 NDT [3442845] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:15:58.250 NDT [3442946] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:00.348 NDT [3443014] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:03.915 NDT [3443191] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:05.634 NDT [3443247] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:09.347 NDT [3443429] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:10.751 NDT [3443480] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:12.138 NDT [3443524] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:13.982 NDT [3443663] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:17.343 NDT [3443755] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:20.163 NDT [3443921] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:23.099 NDT [3444048] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:28.510 NDT [3444196] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:29.918 NDT [3444258] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:32.842 NDT [3444348] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:35.792 NDT [3444616] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:38.067 NDT [3444663] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:39.518 NDT [3444780] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:43.788 NDT [3444930] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:45.189 NDT [3444993] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:46.542 NDT [3445037] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:50.449 NDT [3445205] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:51.814 NDT [3445249] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:55.078 NDT [3445414] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:56.707 NDT [3445458] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:16:58.176 NDT [3445507] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:00.425 NDT [3445631] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:05.016 NDT [3445861] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:06.507 NDT [3445932] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:07.895 NDT [3445976] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:09.324 NDT [3446095] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:10.774 NDT [3446144] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:12.160 NDT [3446189] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:13.627 NDT [3446302] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:15.038 NDT [3446382] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:16.403 NDT [3446427] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:17.751 NDT [3446472] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:19.378 NDT [3446593] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:20.772 NDT [3446637] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 13:17:22.153 NDT [3435925] LOG:  received fast shutdown request
+2026-10-21 13:17:22.154 NDT [3435925] LOG:  aborting any active transactions
+2026-10-21 13:17:22.157 NDT [3435925] LOG:  background worker "logical replication launcher" (PID 3435934) exited with exit code 1
+2026-10-21 13:17:22.157 NDT [3435929] LOG:  shutting down
+2026-10-21 13:17:22.158 NDT [3435929] LOG:  checkpoint starting: shutdown immediate
+2026-10-21 13:17:22.254 NDT [3435929] LOG:  checkpoint complete: wrote 1392 buffers (8.5%), wrote 4 SLRU buffers; 0 WAL file(s) added, 0 removed, 1 recycled; write=0.035 s, sync=0.054 s, total=0.098 s; sync files=520, longest=0.003 s, average=0.001 s; distance=11786 kB, estimate=11786 kB; lsn=0/22E8980, redo lsn=0/22E8980
+2026-10-21 13:17:22.276 NDT [3435925] LOG:  database system is shut down

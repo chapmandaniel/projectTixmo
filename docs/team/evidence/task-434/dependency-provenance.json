@@ -1,0 +1,49 @@
+{
+  "candidate": "fcab880ea7caf50493439a21032b7a93effc438f",
+  "source": "/home/daniel/projects/projectTixmo/worktrees/task-424",
+  "copy": "cp -a --reflink=auto; no install; independent writable inodes",
+  "packageLockSchema": {
+    "package.json": "1279d580b6f1db936b116a830850f83bf67b03ef31f7cd504a79821d2a5aa6d9",
+    "package-lock.json": "f530d7671524de570d43a6cf7e105cc8161f4c1be6b71a7ffc89025ee8a139da",
+    "prisma/schema.prisma": "03544f7a5fbe613b111fcf83b0249a38cc21d15ff8427b95ff340989871ec7bb"
+  },
+  "copiedFiles": {
+    ".prisma/client/schema.prisma": {
+      "sha256": "a8601e89abd910f7464f9848ba061dc68fabf8ec6b4f014d4365004c95dc3b01",
+      "inode": 2774613,
+      "nlink": 1
+    },
+    ".prisma/client/index.js": {
+      "sha256": "834354a6921e7f9ff8830275b2dacb3c1a7b4817eb7a841c94bbff2a97798502",
+      "inode": 2774604,
+      "nlink": 1
+    },
+    "typescript/lib/typescript.js": {
+      "sha256": "3ae902c92cc44dace175c0e69e13a4b0899f6983c6121d76b9ab8dd5795e7675",
+      "inode": 2782537,
+      "nlink": 1
+    },
+    "prisma/build/index.js": {
+      "sha256": "ff0102cdfadfecb884c5f0b6e43661f4ef2a31917dbfad3157236ba8e8532388",
+      "inode": 2780700,
+      "nlink": 1
+    },
+    "@prisma/engines/libquery_engine-debian-openssl-3.0.x.so.node": {
+      "sha256": "35860a5c0fb2f79e7b38c40747c4d212318d97e1910ca528b133c802716de0b8",
+      "inode": 2759990,
+      "nlink": 1
+    },
+    "@prisma/engines/schema-engine-debian-openssl-3.0.x": {
+      "sha256": "cedeae04739cfa085493da2bafb5d1e4da0247fc74f2995a51ee24f20c9890be",
+      "inode": 2759991,
+      "nlink": 1
+    }
+  },
+  "generatedSchemaWhitespaceNormalizedMatch": true,
+  "versions": {
+    "@prisma/client": "5.22.0",
+    "prisma": "5.22.0",
+    "typescript": "5.9.3",
+    "jest": "30.5.2"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-10-21T15:47:49.816850+00:00",
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.SVyaBI",
+  "mode": "0o700",
+  "ownedPidAbsent": {
+    "3435925": true,
+    "3435938": true,
+    "3436596": true,
+    "3435976": true,
+    "3435977": true
+  },
+  "listeners": {
+    "39710": "",
+    "41941": "",
+    "33683": ""
+  },
+  "remainingSockets": [],
+  "postmasterPidfileAbsent": true,
+  "dependencyLinkAbsent": true,
+  "unrelatedServicesPresent": {
+    "7071": true,
+    "7502": true,
+    "7194": true,
+    "7620": true
+  },
+  "runtimeWorkers": [],
+  "sourceManifestUnchanged": true
+}

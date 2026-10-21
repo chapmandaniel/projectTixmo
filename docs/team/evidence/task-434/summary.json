@@ -1,0 +1,583 @@
+{
+  "success": true,
+  "numTotalTests": 830,
+  "numPassedTests": 804,
+  "numFailedTests": 0,
+  "numPendingTests": 26,
+  "numTodoTests": 0,
+  "numTotalTestSuites": 110,
+  "numPassedTestSuites": 100,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 10,
+  "startTime": 1792597409215,
+  "runtimeExit": 0,
+  "jestSeconds": 232.274,
+  "snapshots": {
+    "added": 0,
+    "didUpdate": false,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0
+  },
+  "testFiles": [
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-inventory-integrity.test.ts",
+      "status": "passed",
+      "assertions": 17
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/asset-library.service.test.ts",
+      "status": "passed",
+      "assertions": 16
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/approvals.test.ts",
+      "status": "passed",
+      "assertions": 13
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/inventory-reconciliation.test.ts",
+      "status": "passed",
+      "assertions": 18
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/order-refund-current-path.test.ts",
+      "status": "passed",
+      "assertions": 13
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/tickets.test.ts",
+      "status": "passed",
+      "assertions": 27
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/promo-codes.test.ts",
+      "status": "passed",
+      "assertions": 37
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/auth.test.ts",
+      "status": "passed",
+      "assertions": 31
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/account-security.test.ts",
+      "status": "passed",
+      "assertions": 16
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/users_create.test.ts",
+      "status": "passed",
+      "assertions": 19
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/approval-reminders.test.ts",
+      "status": "passed",
+      "assertions": 10
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/order-double-refund.race.test.ts",
+      "status": "passed",
+      "assertions": 8
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/orders-tenant.unit.test.ts",
+      "status": "passed",
+      "assertions": 30
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/smoke/v1-market-smoke.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/orders.test.ts",
+      "status": "passed",
+      "assertions": 20
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/orders-http-pressure.local.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-failed-retry.race.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/payments.recovery-fairness.test.ts",
+      "status": "passed",
+      "assertions": 6
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-paused-owner.baseline.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-distinct-success.race.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/release-integration.test.ts",
+      "status": "passed",
+      "assertions": 13
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/payments.prepare.test.ts",
+      "status": "passed",
+      "assertions": 20
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/order-double-cancel.race.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-handler-ownership.test.ts",
+      "status": "skipped",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-failed-successor.test.ts",
+      "status": "skipped",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/waiting-room-routes.test.ts",
+      "status": "passed",
+      "assertions": 56
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/report-data.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/reports.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/order-confirm-expiry.race.test.ts",
+      "status": "passed",
+      "assertions": 6
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-expired-successor.test.ts",
+      "status": "skipped",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-distinct-failure-prelock.test.ts",
+      "status": "skipped",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-old-processing.baseline.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payments.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-prelock-missing-intent.test.ts",
+      "status": "skipped",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/upload.service.test.ts",
+      "status": "passed",
+      "assertions": 11
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/payments.webhook-recovery.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-cutoff-overflow.test.ts",
+      "status": "skipped",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/orders-recovery.unit.test.ts",
+      "status": "passed",
+      "assertions": 43
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-fenced-checkpoint.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/users.controller.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-admission-aba.test.ts",
+      "status": "skipped",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/order-confirm-cancel.race.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/operational-data.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/event-configuration.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-expired-candidate.test.ts",
+      "status": "skipped",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/users.test.ts",
+      "status": "passed",
+      "assertions": 13
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payments_retry.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/upload-cleanup.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/organizations.controller.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/email-transport.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/order-double-confirm.race.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/api/organizations/controller_auth.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/payments.manual-late-paid.test.ts",
+      "status": "passed",
+      "assertions": 11
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/scanners-offline.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/security_fixes.test.ts",
+      "status": "passed",
+      "assertions": 6
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/venues.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-competing-claims.test.ts",
+      "status": "skipped",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/paid-sales-utc.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/postmark-delivery.test.ts",
+      "status": "passed",
+      "assertions": 12
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/advanced.test.ts",
+      "status": "passed",
+      "assertions": 8
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/waiting-room.test.ts",
+      "status": "passed",
+      "assertions": 13
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/approval-email.service.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/apiRateLimit.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/orders-sale-windows.unit.test.ts",
+      "status": "passed",
+      "assertions": 24
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/concurrency.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/users.service.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/orders-aggregate-limit.unit.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/benchmark/syncTickets.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/benchmark/ticketCreation.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/receipt-template.test.ts",
+      "status": "passed",
+      "assertions": 17
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/payments.external-refund.test.ts",
+      "status": "passed",
+      "assertions": 6
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/api/events-public.service.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/multipart-abort-cleanup.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/upload-metadata.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/bootstrap-owner.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/payments.webhook-signature.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/email.config.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/benchmark/event_cache.benchmark.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/sentry.config.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/stats.service.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/security/tenant_scope.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/release-order-scope.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/qrcode.test.ts",
+      "status": "passed",
+      "assertions": 9
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/cors.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/multipart-field-limit.test.ts",
+      "status": "passed",
+      "assertions": 15
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/password.test.ts",
+      "status": "passed",
+      "assertions": 8
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/auth.service.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/authRateLimit.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/readiness.service.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/approval_upload_limit.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/security/payment_validation.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/organizations.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/report.service.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/redis-lock.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/s3.config.test.ts",
+      "status": "passed",
+      "assertions": 6
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/payment-sequential-generation.test.ts",
+      "status": "skipped",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/security/organization_update_auth.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/approval_upload_validation.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/approval-reminder.job.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/asset_upload_validation.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/security/submit_decision_validation.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/supertest-loopback.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/environment.config.test.ts",
+      "status": "passed",
+      "assertions": 2
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/waiting-room-config.test.ts",
+      "status": "passed",
+      "assertions": 16
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/ApiError.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/response.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/integration/app.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/unit/client-origin.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "name": "/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2/tests/verification/boot.test.ts",
+      "status": "passed",
+      "assertions": 1
+    }
+  ]
+}

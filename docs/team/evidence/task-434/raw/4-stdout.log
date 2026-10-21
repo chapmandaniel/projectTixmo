@@ -1,0 +1,4 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --runInBand --json --outputFile=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.SVyaBI/jest-result.json
+

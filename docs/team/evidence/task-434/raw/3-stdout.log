@@ -1,0 +1,5 @@
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "tixmo_disposable_379", schema "public" at "127.0.0.1:39710"
+
+🚀  Your database is now in sync with your Prisma schema. Done in 103ms
+

@@ -1,0 +1,8 @@
+{"command":"npm","args":["run","build"],"cwd":"/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2"}
+{"step":1,"status":0,"signal":null}
+{"command":"npm","args":["run","migrate"],"cwd":"/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2"}
+{"step":2,"status":0,"signal":null}
+{"command":"npx","args":["prisma","db","push","--accept-data-loss","--skip-generate"],"cwd":"/home/daniel/projects/projectTixmo/worktrees/task-434/tixmoapi2"}
+{"step":3,"status":0,"signal":null}
+{"command":"npm","args":["--prefix","tixmoapi2","test","--","--runInBand","--json","--outputFile=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.SVyaBI/jest-result.json"],"cwd":"/home/daniel/projects/projectTixmo/worktrees/task-434"}
+{"step":4,"status":0,"signal":null}
