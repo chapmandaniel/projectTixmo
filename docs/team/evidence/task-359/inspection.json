@@ -1,0 +1,29 @@
+{
+  "author-initial-jest-result.json": {
+    "numPassedTests": 20,
+    "numFailedTests": 1,
+    "numPendingTests": 0,
+    "numPassedTestSuites": 1,
+    "numFailedTestSuites": 1
+  },
+  "author-jest-result.json": {
+    "numPassedTests": 21,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numPassedTestSuites": 2,
+    "numFailedTestSuites": 0
+  },
+  "author-focused-result.json": {
+    "numPassedTests": 17,
+    "numFailedTests": 0,
+    "numPendingTests": 0,
+    "numPassedTestSuites": 2,
+    "numFailedTestSuites": 0
+  },
+  "sourceParity": {
+    "tixmoapi2/tests/integration/order-refund-current-path.test.ts": "cf922383fe07dbe962f84cf622e0defd5757ee3825ddae194bda055c6ca347f9",
+    "tixmoapi2/tests/unit/payments.recovery-fairness.test.ts": "0b7508bf4328597d7101254278a77ff87350097d565adec7b9396a93fe347fe3",
+    "tixmoapi2/tests/unit/payments.manual-late-paid.test.ts": "77793f1eb1ca280961b5a6d485262d2c65ba692d8c08c7cf7478a9e610e3e065"
+  },
+  "productSchemaLockfileDiffEmpty": true
+}
