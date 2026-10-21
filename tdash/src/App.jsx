@@ -121,10 +121,10 @@ const App = () => {
     const navigate = useNavigate();
     const latestLocation = useRef(location);
     latestLocation.current = location;
-    const preserveCheckoutReturn = () => {
+    const preserveBuyerRecovery = () => {
         const current = latestLocation.current;
         const query = new URLSearchParams(current.search);
-        return matchPath('/checkout/:slug', current.pathname)
+        return matchPath('/wallet', current.pathname) || matchPath('/checkout/:slug', current.pathname)
             && ['orderId', 'redirect_status', 'payment_intent', 'payment_intent_client_secret']
                 .some((field) => query.has(field));
     };
@@ -172,7 +172,7 @@ const App = () => {
             }
 
             setRedirectToDashboardAfterLogin(false);
-            if (!preserveCheckoutReturn()) navigate('/dashboard', { replace: true });
+            if (!preserveBuyerRecovery()) navigate('/dashboard', { replace: true });
             setUser(null);
         };
         window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
@@ -180,7 +180,7 @@ const App = () => {
         const handleStorage = (event) => {
             if (event.key === ACCESS_TOKEN_KEY && !event.newValue) {
                 setRedirectToDashboardAfterLogin(false);
-                if (!preserveCheckoutReturn()) navigate('/dashboard', { replace: true });
+                if (!preserveBuyerRecovery()) navigate('/dashboard', { replace: true });
                 setUser(null);
             }
 
