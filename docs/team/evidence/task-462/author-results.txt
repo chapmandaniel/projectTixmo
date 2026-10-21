@@ -1,0 +1,19 @@
+PASS scrubbed shell grant/preload/SHA denials; actual disk path/source/dependency denials; real owned exit37/SIGTERM/ENOENT mapping. NO application/Jest/provisioning path exists in entry; fixture identity success is NOT runtime admission.
+PASS pre-Jest preload and wrong-SHA denial without application imports
+PASS canonical numeric distinct ports: leading-zero aliases and range/malformed mutations rejected
+Error: ENOENT receipt ENOSPC fixture
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-462/docs/team/evidence/task-426/runner-probes.cjs:15:100)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-462/docs/team/evidence/task-426/process-cleanup.cjs:68:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-462/docs/team/evidence/task-426/runner-probes.cjs:15:25
+PASS real ENOENT+close+evidence ENOSPC JSON roundtrip preserves name/message/stack/code/errno/syscall/path/spawnargs and status/signal
+PASS real owned concurrent finish denied during held teardown, callbacks exactly once and sequential reuse denied
+PASS real owned reentrant finish denied from both teardown and evidence; callbacks exactly once
+PASS unrelated PID rejected, foreign owned probe remains alive
+PASS real owned two-process timeout, termination, direct reap and process absence before teardown
+ORIGINAL_STDERR_SENTINEL
+Error: ENOSPC fixture
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-462/docs/team/evidence/task-426/runner-probes.cjs:80:95)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-462/docs/team/evidence/task-426/process-cleanup.cjs:68:15)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-462/docs/team/evidence/task-426/runner-probes.cjs:80:20
+PASS original exit42/stderr retained with evidence ENOSPC

@@ -1,0 +1,12 @@
+PASS actual full fixture preflight reaches terminal refusal; no runtime path
+PASS actual missing grant denial
+PASS hostile inherited Node preload never executes; caller scrub markers cannot bypass env-i
+PASS actual wrong source SHA denial
+PASS actual missing dependency identity denial
+PASS actual foreign private-path denial
+PASS actual nonprivate path denial
+PASS actual dirty source denial before guard or application
+PASS actual guard mutation denied before guard execution
+PASS tracked guard byte comparison statically precedes guard execution
+PASS real owned exit43/SIGTERM143/ENOENT127 preserved with secondary errors; EACCES126 and cleanup failure1
+TOTAL 11 independent checks PASS; fixture identity is NOT runtime admission
