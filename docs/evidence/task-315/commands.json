@@ -1,0 +1,49 @@
+[
+  {
+    "name": "vitest-full",
+    "command": [
+      "npm",
+      "--prefix",
+      "tdash",
+      "test",
+      "--",
+      "--run",
+      "--cache=false",
+      "--configLoader",
+      "runner",
+      "--maxWorkers=2",
+      "--reporter=default",
+      "--reporter=json",
+      "--outputFile.json=/home/daniel/projects/projectTixmo/worktrees/task-315/docs/evidence/task-315/vitest-results.json"
+    ],
+    "exit": 0,
+    "seconds": 27.231
+  },
+  {
+    "name": "design-guard",
+    "command": [
+      "npm",
+      "--prefix",
+      "tdash",
+      "run",
+      "design:guard"
+    ],
+    "exit": 0,
+    "seconds": 0.245
+  },
+  {
+    "name": "build",
+    "command": [
+      "npm",
+      "--prefix",
+      "tdash",
+      "run",
+      "build",
+      "--",
+      "--configLoader",
+      "runner"
+    ],
+    "exit": 0,
+    "seconds": 13.259
+  }
+]
