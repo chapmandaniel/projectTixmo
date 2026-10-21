@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import CheckoutPage from '../pages/CheckoutPage';
@@ -62,13 +62,14 @@ const eventPayload = {
     slug: 'neon-nights',
     description: 'A high-energy launch event.',
     status: 'ON_SALE',
-    startDatetime: '2026-07-20T23:00:00.000Z',
+    startDatetime: '2099-07-20T23:00:00.000Z',
     timezone: 'America/St_Johns',
     organization: { name: 'Tixmo Presents' },
     venue: { name: 'Signal Hall' },
     ticketTypes: [
         {
             id: 'ticket-ga',
+            status: 'ACTIVE', tierInventoryStatus: 'READY',
             name: 'General Admission',
             description: 'Floor access.',
             price: '25.00',
@@ -286,5 +287,85 @@ describe('CheckoutPage', () => {
             });
         });
         expect(onAuthenticated).toHaveBeenCalledWith({ id: 'buyer-2', email: 'newbuyer@example.com' });
+    });
+});
+
+
+describe('open-page sale boundaries', () => {
+    const opening = Date.parse('2026-11-09T13:30:00Z');
+    const buyer = { id: 'buyer-1', email: 'buyer@example.com' };
+    const ticket = { ...eventPayload.ticketTypes[0] };
+    const mount = async (overrides = {}, ticketOverrides = {}) => {
+        global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: {
+            ...eventPayload, salesStart: new Date(opening).toISOString(),
+            salesEnd: new Date(opening + 1000).toISOString(), ...overrides,
+            ticketTypes: [{ ...ticket, ...ticketOverrides }],
+        } }) });
+        await act(async () => { renderCheckout({ user: buyer }); });
+    };
+    beforeEach(() => {
+        vi.clearAllMocks(); apiPost.mockReset(); apiGet.mockReset();
+        vi.useFakeTimers(); vi.setSystemTime(opening - 1);
+    });
+    afterEach(() => vi.useRealTimers());
+    it('opens at the exact event boundary and closes a selected cart at the exact end without payment calls', async () => {
+        await mount();
+        const increase = screen.getByRole('button', { name: 'Increase General Admission' });
+        const proceed = screen.getByRole('button', { name: /continue to secure payment/i });
+        expect(increase).toBeDisabled();
+        await act(async () => vi.advanceTimersByTime(1));
+        expect(increase).toBeEnabled(); fireEvent.click(increase);
+        expect(proceed).toBeEnabled();
+        await act(async () => vi.advanceTimersByTime(999));
+        expect(proceed).toBeEnabled();
+        await act(async () => vi.advanceTimersByTime(1));
+        expect(increase).toBeDisabled(); expect(proceed).toBeDisabled();
+        expect(apiPost).not.toHaveBeenCalled();
+    });
+    it('intersects a narrower ticket window instead of extending event eligibility', async () => {
+        await mount({}, { salesStart: new Date(opening + 100).toISOString(), salesEnd: new Date(opening + 500).toISOString() });
+        const increase = screen.getByRole('button', { name: 'Increase General Admission' });
+        await act(async () => vi.advanceTimersByTime(100)); expect(increase).toBeDisabled();
+        await act(async () => vi.advanceTimersByTime(1)); expect(increase).toBeEnabled();
+        await act(async () => vi.advanceTimersByTime(400)); expect(increase).toBeDisabled();
+    });
+    it('changes pricing tiers at their half-open boundary and respects remaining tier capacity', async () => {
+        vi.setSystemTime(opening);
+        await mount({}, { tiers: [
+            { id: 'early', isActive: true, price: '12', endsAt: new Date(opening + 500).toISOString(), quantityLimit: 1, quantitySold: 0, quantityHeld: 0 },
+            { id: 'late', isActive: true, price: '18', startsAt: new Date(opening + 500).toISOString(), quantityLimit: 2, quantitySold: 0, quantityHeld: 1 },
+        ] });
+        const increase = screen.getByRole('button', { name: 'Increase General Admission' });
+        expect(screen.getByText('$12.00')).toBeInTheDocument(); fireEvent.click(increase);
+        expect(increase).toBeDisabled();
+        await act(async () => vi.advanceTimersByTime(500));
+        expect(screen.queryByText('$12.00')).not.toBeInTheDocument();
+        expect(screen.getAllByText('$18.00').length).toBeGreaterThan(0);
+        expect(increase).toBeDisabled();
+    });
+    it('does not restart payment or revoke an existing reservation at sale close', async () => {
+        vi.setSystemTime(opening);
+        apiPost.mockResolvedValueOnce({ id: 'held-order', status: 'PENDING', totalAmount: '25', currency: 'usd' })
+            .mockResolvedValueOnce({ clientSecret: 'held-secret' });
+        await mount();
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: /continue to secure payment/i })));
+        expect(screen.getByText('Card payment details')).toBeInTheDocument();
+        await act(async () => vi.advanceTimersByTime(1000));
+        expect(screen.getByText('Card payment details')).toBeInTheDocument();
+        expect(apiPost).toHaveBeenCalledTimes(2);
+        expect(stripeMocks.confirmPayment).not.toHaveBeenCalled();
+        expect(screen.queryByText(/Order confirmed/)).not.toBeInTheDocument();
+    });
+    it('does not turn a skewed browser selection into entitlement when the API rejects', async () => {
+        vi.setSystemTime(opening);
+        await mount();
+        apiPost.mockRejectedValue({ response: { data: { message: 'Event is not available for purchase' } } });
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: /continue to secure payment/i })));
+        expect(screen.getByText('Event is not available for purchase')).toBeInTheDocument();
+        expect(apiPost).toHaveBeenCalledTimes(1); expect(apiPost.mock.calls[0][0]).toBe('/orders');
+        expect(screen.queryByText(/Order confirmed/)).not.toBeInTheDocument();
+        expect(stripeMocks.confirmPayment).not.toHaveBeenCalled();
     });
 });

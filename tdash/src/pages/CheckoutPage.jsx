@@ -29,6 +29,7 @@ import {
     getPolicyLinks,
     getStripePublishableKey,
 } from '../lib/runtimeConfig';
+import { checkoutTicketState, checkoutBoundaryDelay } from '../lib/checkoutEligibility';
 import { cn } from '../lib/utils';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 
@@ -55,11 +56,6 @@ const formatDate = (value) => {
 };
 
 const unwrapApiPayload = (response) => response?.data?.data || response?.data || response;
-
-const getTicketPrice = (ticketType) => {
-    const activeTier = ticketType?.tiers?.find((tier) => tier.isActive !== false);
-    return Number(activeTier?.price ?? ticketType?.price ?? 0);
-};
 
 const buildInitialQuantities = (ticketTypes = []) => (
     ticketTypes.reduce((next, ticketType) => {
@@ -293,6 +289,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     // Cart continuation is distinct from Stripe's read-only orderId return.
     const resumedOrderId = searchParams.get('cartOrderId');
     const [event, setEvent] = useState(null);
+    const [now, setNow] = useState(() => Date.now());
     const [quantities, setQuantities] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -327,6 +324,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                 const payload = unwrapApiPayload(body);
                 if (!cancelled) {
                     setEvent(payload);
+                    setNow(Date.now());
                     setQuantities(buildInitialQuantities(payload.ticketTypes || []));
                 }
             } catch (requestError) {
@@ -385,11 +383,19 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
         return () => { cancelled = true; window.clearInterval(timer); };
     }, [user?.id, order?.id, order?.status, paymentComplete]);
 
+    useEffect(() => {
+        if (!event || order) return undefined;
+        const refreshClock = () => setNow(Date.now());
+        const timer = window.setTimeout(refreshClock, checkoutBoundaryDelay(event, Date.now()));
+        window.addEventListener('focus', refreshClock);
+        return () => { window.clearTimeout(timer); window.removeEventListener('focus', refreshClock); };
+    }, [event, order, now]);
+
     const clearReservation = async () => {
         setSubmitting(true);
         try {
             if (order?.status === 'PENDING') await api.post(`/orders/${order.id}/cancel`);
-            setOrder(null); setPaymentSession(null); setPaymentComplete(null);
+            setOrder(null); setPaymentSession(null); setPaymentComplete(null); setNow(Date.now());
             setSearchParams({}, { replace: true }); setError('');
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message);
@@ -402,18 +408,19 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
             .map((ticketType) => ({
                 ticketType,
                 quantity: quantities[ticketType.id] || 0,
-                price: getTicketPrice(ticketType),
+                price: checkoutTicketState(event, ticketType, now).price,
             }))
             .filter((item) => item.quantity > 0)
-    ), [quantities, ticketTypes]);
+    ), [quantities, ticketTypes, event, now]);
     const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const ticketCount = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
     const hasPolicyLinks = Boolean(policyLinks.privacyPolicyUrl && policyLinks.termsUrl && policyLinks.refundPolicyUrl);
-    const canPreparePayment = Boolean(user && (order?.status === 'PENDING' || selectedItems.length) && (!order || order.status === 'PENDING') && hasPolicyLinks && (subtotal === 0 || stripePublishableKey));
+    const selectionEligible = selectedItems.every(({ ticketType, quantity }) => quantity <= checkoutTicketState(event, ticketType, now).max);
+    const canPreparePayment = Boolean(user && (order?.status === 'PENDING' || (selectedItems.length && selectionEligible)) && (!order || order.status === 'PENDING') && hasPolicyLinks && (subtotal === 0 || stripePublishableKey));
 
     const setTicketQuantity = (ticketType, nextQuantity) => {
         if (order) return;
-        const maxAllowed = Math.min(ticketType.maxPerOrder || 10, ticketType.quantityAvailable || 0);
+        const maxAllowed = checkoutTicketState(event, ticketType, now).max;
         const quantity = Math.max(0, Math.min(maxAllowed, nextQuantity));
         setPaymentSession(null);
         setOrder(null);
@@ -422,7 +429,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     };
 
     const handlePreparePayment = async () => {
-        if (!canPreparePayment) return;
+        if (!canPreparePayment || submitting || paymentSession) return;
         setSubmitting(true);
         setError('');
         setPaymentSession(null);
@@ -517,7 +524,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                 <div className="min-w-0 rounded-md border border-dashboard-border bg-dashboard-panelMuted p-4">
                                     <Ticket className="h-5 w-5 text-orange-300" />
                                     <p className="mt-3 break-words text-sm text-zinc-100">{event?.venue?.name || 'Venue to be announced'}</p>
-                                    <p className="mt-1 break-words text-xs text-dashboard-muted">{event?.status === 'ON_SALE' ? 'On sale now' : 'Published event'}</p>
+                                    <p className="mt-1 break-words text-xs text-dashboard-muted">Sale availability is checked at checkout</p>
                                 </div>
                             </div>
                         </DashboardSurface>
@@ -532,16 +539,16 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                 <div className="min-w-0">
                                     <h2 className="text-2xl font-light tracking-tight">Choose tickets</h2>
                                     <p className="mt-2 max-w-[18rem] break-words text-sm leading-6 text-dashboard-muted sm:max-w-none">
-                                        Pick the ticket mix for this order. Inventory is held after checkout starts.
+                                        Pick the ticket mix for this order. Availability and pricing are confirmed by the server when checkout starts.
                                     </p>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 {ticketTypes.length ? ticketTypes.map((ticketType) => {
-                                    const price = getTicketPrice(ticketType);
+                                    const price = checkoutTicketState(event, ticketType, now).price;
                                     const quantity = quantities[ticketType.id] || 0;
-                                    const maxAllowed = Math.min(ticketType.maxPerOrder || 10, ticketType.quantityAvailable || 0);
+                                    const maxAllowed = checkoutTicketState(event, ticketType, now).max;
 
                                     return (
                                         <div key={ticketType.id} className="grid min-w-0 gap-4 rounded-md border border-dashboard-border bg-dashboard-panelMuted p-4 sm:grid-cols-[minmax(0,1fr)_160px] sm:items-center">
@@ -554,6 +561,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                                 </div>
                                                 <p className="mt-2 break-words text-sm text-dashboard-muted">{ticketType.description || 'General event admission.'}</p>
                                                 <p className="mt-3 text-xl font-light text-zinc-100">{formatMoney(price, paymentCurrency)}</p>
+                                                {!maxAllowed ? <p className="mt-2 text-sm text-dashboard-muted">Not currently available for selection.</p> : null}
                                             </div>
                                             <div className="flex h-12 items-center justify-between rounded-md border border-dashboard-border bg-dashboard-panel">
                                                 <button
