@@ -1,0 +1,7 @@
+PASS extracted before-acquire delegate: native once, gate ordering, join, tracking retained on reset and healthy fallback
+PASS extracted after-acquire delegate: native once, gate ordering, join, tracking retained on reset and healthy fallback
+PASS extracted controller delegate: native once, gate ordering, join, tracking retained on reset and healthy fallback
+PASS detached zRem remains tracked and blocks join until actual native settlement
+PASS rejection settles tracker; final restoration preserves exact original method identities
+PASS original failure identity preserved on artifact ENOSPC
+PASS source has no duplicate eval spy/per-phase restore; join precedes reset
