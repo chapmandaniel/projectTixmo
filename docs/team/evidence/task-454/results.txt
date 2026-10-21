@@ -1,0 +1,26 @@
+PASS 1 owned SIGTERM and direct reap before teardown
+PASS 2 sequential consumed capability denied
+PASS 3 owned SIGKILL and direct reap before teardown
+PASS 4 sequential consumed capability denied
+PASS 5 foreign child denied and remains alive
+Error: LEAD454_ENOSPC
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-454/docs/team/evidence/task-454/probes.cjs:16:48)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-454/docs/team/evidence/task-426/process-cleanup.cjs:65:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-454/docs/team/evidence/task-454/probes.cjs:16:10
+PASS 6 ENOENT close + JSON8fields + separate receipt failure
+LEAD454_STDERR
+Error: LEAD454_EXIT_ENOSPC
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-454/docs/team/evidence/task-454/probes.cjs:21:49)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-454/docs/team/evidence/task-426/process-cleanup.cjs:65:15)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-454/docs/team/evidence/task-454/probes.cjs:21:11
+PASS 7 exit39 stderr and evidence failure preserved
+PASS 8 NODE_OPTIONS early denial
+PASS 9 NODE_PATH early denial
+PASS 10 LD_PRELOAD early denial
+PASS 11 real wrong SHA denied before runtime path/native guard
+PASS 12 canonical distinct port pair
+PASS 13 six alias/range/malformed port denials
+PASS 14 no native guard installed by rejected preflights
+REPRODUCED concurrent capability reuse: two finish calls accepted same handle; teardown called twice
+TOTAL 14 checks PASS plus 1 reproduced defect
