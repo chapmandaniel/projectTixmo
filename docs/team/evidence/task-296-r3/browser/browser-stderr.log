@@ -1,0 +1,21 @@
+[1021/034603.524461:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/034603.535317:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[1021/034603.535454:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/034603.541303:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+
+DevTools listening on ws://127.0.0.1:41705/devtools/browser/40c16f5d-55a8-45c3-9b88-b1af2f06dff5
+[1021/034603.545324:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process.
+[1021/034603.644041:ERROR:dbus/bus.cc:405] Failed to connect to the bus: Could not parse server address: Unknown address type (examples of valid types are "tcp" and on UNIX "unix")
+[1021/034603.644102:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+[1021/034604.440729:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:38549/@vite/client (789)
+[1021/034604.448675:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:38549/@vite/client (912)
+[1021/034604.871542:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:38549/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=3580413b (21609)
+[1021/034605.029642:INFO:CONSOLE:157] "Error: Failed to load Stripe.js", source: http://127.0.0.1:38549/node_modules/.vite/deps/@stripe_stripe-js.js?v=a99fbbd3 (157)
+[1021/034606.389966:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:38549/@vite/client (789)
+[1021/034606.394306:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:38549/@vite/client (912)
+[1021/034606.443191:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:38549/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=3580413b (21609)
+[1021/034606.514109:INFO:CONSOLE:157] "Error: Failed to load Stripe.js", source: http://127.0.0.1:38549/node_modules/.vite/deps/@stripe_stripe-js.js?v=a99fbbd3 (157)
+[1021/034606.692391:INFO:CONSOLE:789] "[vite] connecting...", source: http://127.0.0.1:38549/@vite/client (789)
+[1021/034606.697480:INFO:CONSOLE:912] "[vite] connected.", source: http://127.0.0.1:38549/@vite/client (912)
+[1021/034606.748928:INFO:CONSOLE:21609] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://127.0.0.1:38549/node_modules/.vite/deps/chunk-ETAXMCIU.js?v=3580413b (21609)
+[1021/034606.789670:INFO:CONSOLE:157] "Error: Failed to load Stripe.js", source: http://127.0.0.1:38549/node_modules/.vite/deps/@stripe_stripe-js.js?v=a99fbbd3 (157)

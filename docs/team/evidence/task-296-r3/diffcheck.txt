@@ -1,0 +1,8 @@
+docs/team/evidence/task-296-r3/browser/browser-stderr.log:2: trailing whitespace.
++[1021/034603.535317:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+docs/team/evidence/task-296-r3/browser/browser-stderr.log:4: trailing whitespace.
++[1021/034603.541303:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+docs/team/evidence/task-296-r3/browser/browser-stderr.log:9: trailing whitespace.
++[1021/034603.644102:ERROR:dbus/object_proxy.cc:572] Failed to call method: org.freedesktop.DBus.NameHasOwner: object_path= /org/freedesktop/DBus: unknown error type: 
+docs/team/evidence/task-296-r3/migrate.log:103: trailing whitespace.
++      

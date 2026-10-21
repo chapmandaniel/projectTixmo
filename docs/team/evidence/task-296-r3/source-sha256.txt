@@ -1,0 +1,7 @@
+98dbcce382084fc2638e92eb8b0127e10ec019dd3fb8a33851c9cfbd87d0ec97  docs/team/evidence/task-294-r3/runtime.sh
+0a28ec0a73f43270f5c4aec0c2635f394a96c9dec9bba4916b3d3625b756195f  scripts/browser/task-294-real-return.mjs
+9c083f76467177b8e7eefacc7041e10fa87c49d0d67d8ec1b791e8404978d57e  scripts/browser/task-294-support.mjs
+40f2ae43d31dedd1027631443904cd2d69dcfc91df8357dbd2b8ca6b8f7d165d  tixmoapi2/tests/integration/wallet-auth-return.local.test.ts
+01ab2b510451f6841a95904562d57cfbed2945a3625a7190bcbb892fbc0d79b3  tixmoapi2/tests/setup.ts
+8fa8db0d72c618b40e5d3b63293643464201a0437de8de600f76a0289fbc24b0  scripts/verification-safety.cjs
+5c0de353893849d4aec9f93e69df1e17048d8328eac71b85d801c94ee6402981  tixmoapi2/src/config/redis.ts

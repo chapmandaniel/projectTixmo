@@ -1,0 +1,9 @@
+PG PID2712540 absent
+Redis PID2712553 absent
+API/Jest PID2712694 absent
+browser PID2713056 absent
+port32693 no TCP listener
+port58085 no TCP listener
+port44729 no TCP listener
+port38549 no TCP listener
+0700 disk run; PG socket/postmaster and browser profile absent; harness child exit0 awaited; frontend closed
