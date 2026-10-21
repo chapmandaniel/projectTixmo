@@ -1,0 +1,36 @@
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+[verify:api] API verification passed.
+PASS 1 shell adapter none canonical commands/raw logs/journal/failfast
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 2 shell adapter 0 canonical commands/raw logs/journal/failfast
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 3 shell adapter 1 canonical commands/raw logs/journal/failfast
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 4 shell adapter 2 canonical commands/raw logs/journal/failfast
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 5 shell adapter 3 canonical commands/raw logs/journal/failfast
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 6 shell adapter overflow canonical commands/raw logs/journal/failfast
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 7 shell adapter signal canonical commands/raw logs/journal/failfast
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 8 shell adapter throw canonical commands/raw logs/journal/failfast
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+PASS 9 shell adapter drift canonical commands/raw logs/journal/failfast
+PASS 10 shell adapter guard canonical commands/raw logs/journal/failfast
+[verify:api] DATABASE_URL postgresql://<redacted>
+[verify:api] REDIS_URL redis://<redacted>
+[verify:api] API verification passed.
+PASS 11 shell adapter blocked canonical commands/raw logs/journal/failfast
+PASS 12 source capture is exclusive fsynced before verifier but AFTER services (NOT provisioning admission)
+PASS 13 actual shell missing-grant denial before runtime
+TOTAL 13 independent offline cases PASS
