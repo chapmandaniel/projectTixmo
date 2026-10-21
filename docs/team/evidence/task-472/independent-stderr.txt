@@ -1,0 +1,208 @@
+LEAD472_0
+LEAD472_1
+LEAD472_2
+LEAD472_3
+LEAD472_4
+LEAD472_5
+LEAD472_6
+LEAD472_7
+LEAD472_8
+LEAD472_9
+LEAD472_10
+LEAD472_11
+LEAD472_12
+LEAD472_13
+LEAD472_14
+LEAD472_15
+LEAD472_16
+LEAD472_17
+LEAD472_18
+LEAD472_19
+LEAD472_20
+LEAD472_21
+LEAD472_22
+LEAD472_23
+LEAD472_24
+LEAD472_25
+LEAD472_26
+Error: Callback rejected (object): null
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_27
+Error: Callback rejected (object): null
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_28
+Error: Callback rejected (undefined): undefined
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_29
+Error: Callback rejected (undefined): undefined
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_30
+Error: Callback rejected (string): lead472
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_31
+Error: Callback rejected (string): lead472
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_32
+Error: Callback rejected (boolean): false
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_33
+Error: Callback rejected (boolean): false
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_34
+Error: Callback rejected (number): 0
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_35
+Error: Callback rejected (number): 0
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_36
+Error: Callback rejected (number): NaN
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_37
+Error: Callback rejected (number): NaN
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_38
+Error: Callback rejected (bigint): 27
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_39
+Error: Callback rejected (bigint): 27
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_40
+Error: Callback rejected (symbol): Symbol(472)
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_41
+Error: Callback rejected (symbol): Symbol(472)
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_42
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_43
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_44
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_45
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_46
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_47
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_48
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_49
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:13:14
+LEAD472_50
+Error: ORIGINAL472
+    at /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:7:249
+    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:31:3)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+LEAD472_51
+Error: ORIGINAL472
+    at /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:7:249
+    at Object.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:31:3)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+LEAD472_52
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:19:43
+Error: Callback rejected (number): 0
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-472/check.cjs:23:6
+LEAD472_53
+Error: Evidence callback deadline exceeded; pending callback may have late effects
+    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-472/docs/team/evidence/task-426/process-cleanup.cjs:54:23)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)

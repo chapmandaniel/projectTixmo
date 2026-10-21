@@ -1,0 +1,1 @@
+PASS scrubbed shell grant/preload/SHA denials; actual disk path/source/dependency denials; real owned exit37/SIGTERM/ENOENT mapping. NO application/Jest/provisioning path exists in entry; fixture identity success is NOT runtime admission.

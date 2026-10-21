@@ -1,0 +1,11 @@
+{
+  "independent": 0,
+  "runner": 0,
+  "shell": 0,
+  "syntax:docs/team/evidence/task-472/check.cjs": 0,
+  "syntax:docs/team/evidence/task-426/process-cleanup.cjs": 0,
+  "syntax:docs/team/evidence/task-426/runner-probes.cjs": 0,
+  "diffcheck": 0,
+  "54 stderr sentinels exactly once": true,
+  "unchanged terminal shell": true
+}
