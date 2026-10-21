@@ -1,0 +1,237 @@
+;
+; Archive created at 2026-10-21 02:41:46 NDT
+;     dbname: tixmo_disposable_276
+;     TOC Entries: 226
+;     Compression: gzip
+;     Dump Version: 1.16-0
+;     Format: CUSTOM
+;     Integer: 4 bytes
+;     Offset: 8 bytes
+;     Dumped from database version: 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)
+;     Dumped by pg_dump version: 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)
+;
+;
+; Selected TOC Entries:
+;
+1016; 1247 17404 TYPE public ApprovalCommentVisibility tixmo276
+986; 1247 17176 TYPE public ApprovalDecision tixmo276
+1049; 1247 17706 TYPE public ApprovalReminderDeliveryStatus tixmo276
+992; 1247 17190 TYPE public ApprovalReminderType tixmo276
+1019; 1247 17412 TYPE public ApprovalReviewerAssociation tixmo276
+989; 1247 17184 TYPE public ApprovalReviewerType tixmo276
+983; 1247 17164 TYPE public ApprovalStatus tixmo276
+911; 1247 16480 TYPE public DiscountType tixmo276
+896; 1247 16426 TYPE public EventStatus tixmo276
+953; 1247 16806 TYPE public NotificationStatus tixmo276
+950; 1247 16793 TYPE public NotificationType tixmo276
+902; 1247 16448 TYPE public OrderStatus tixmo276
+893; 1247 16418 TYPE public OrganizationStatus tixmo276
+890; 1247 16410 TYPE public OrganizationType tixmo276
+905; 1247 16460 TYPE public PaymentStatus tixmo276
+914; 1247 16486 TYPE public PromoCodeStatus tixmo276
+941; 1247 16731 TYPE public ScannerStatus tixmo276
+965; 1247 16880 TYPE public TaskPriority tixmo276
+962; 1247 16870 TYPE public TaskStatus tixmo276
+968; 1247 16888 TYPE public TaskTag tixmo276
+1040; 1247 17620 TYPE public TicketInventoryState tixmo276
+908; 1247 16470 TYPE public TicketStatus tixmo276
+899; 1247 16440 TYPE public TicketTypeStatus tixmo276
+887; 1247 16400 TYPE public UserRole tixmo276
+219; 1259 16385 TABLE public _prisma_migrations tixmo276
+238; 1259 17232 TABLE public approval_assets tixmo276
+241; 1259 17281 TABLE public approval_comments tixmo276
+242; 1259 17295 TABLE public approval_reminders tixmo276
+236; 1259 17197 TABLE public approval_requests tixmo276
+240; 1259 17266 TABLE public approval_review_decisions tixmo276
+239; 1259 17249 TABLE public approval_reviewers tixmo276
+237; 1259 17219 TABLE public approval_revisions tixmo276
+243; 1259 17427 TABLE public asset_library_assets tixmo276
+246; 1259 17546 TABLE public asset_library_folder_share_folders tixmo276
+245; 1259 17510 TABLE public asset_library_folder_shares tixmo276
+244; 1259 17466 TABLE public asset_library_folders tixmo276
+223; 1259 16546 TABLE public events tixmo276
+231; 1259 16832 TABLE public notification_preferences tixmo276
+230; 1259 16815 TABLE public notifications tixmo276
+225; 1259 16594 TABLE public orders tixmo276
+221; 1259 16514 TABLE public organizations tixmo276
+249; 1259 17648 TABLE public payment_attempts tixmo276
+250; 1259 17662 TABLE public payment_refunds tixmo276
+247; 1259 17570 TABLE public payment_webhook_events tixmo276
+227; 1259 16638 TABLE public promo_codes tixmo276
+229; 1259 16754 TABLE public scan_logs tixmo276
+228; 1259 16737 TABLE public scanners tixmo276
+248; 1259 17592 TABLE public staff_invitations tixmo276
+234; 1259 16933 TABLE public task_comments tixmo276
+233; 1259 16916 TABLE public tasks tixmo276
+251; 1259 17726 TABLE public ticket_inventory_reconciliations tixmo276
+235; 1259 17130 TABLE public ticket_tiers tixmo276
+224; 1259 16568 TABLE public ticket_types tixmo276
+226; 1259 16619 TABLE public tickets tixmo276
+220; 1259 16493 TABLE public users tixmo276
+222; 1259 16530 TABLE public venues tixmo276
+232; 1259 16901 TABLE public waitlists tixmo276
+3934; 0 16385 TABLE DATA public _prisma_migrations tixmo276
+3953; 0 17232 TABLE DATA public approval_assets tixmo276
+3956; 0 17281 TABLE DATA public approval_comments tixmo276
+3957; 0 17295 TABLE DATA public approval_reminders tixmo276
+3951; 0 17197 TABLE DATA public approval_requests tixmo276
+3955; 0 17266 TABLE DATA public approval_review_decisions tixmo276
+3954; 0 17249 TABLE DATA public approval_reviewers tixmo276
+3952; 0 17219 TABLE DATA public approval_revisions tixmo276
+3958; 0 17427 TABLE DATA public asset_library_assets tixmo276
+3961; 0 17546 TABLE DATA public asset_library_folder_share_folders tixmo276
+3960; 0 17510 TABLE DATA public asset_library_folder_shares tixmo276
+3959; 0 17466 TABLE DATA public asset_library_folders tixmo276
+3938; 0 16546 TABLE DATA public events tixmo276
+3946; 0 16832 TABLE DATA public notification_preferences tixmo276
+3945; 0 16815 TABLE DATA public notifications tixmo276
+3940; 0 16594 TABLE DATA public orders tixmo276
+3936; 0 16514 TABLE DATA public organizations tixmo276
+3964; 0 17648 TABLE DATA public payment_attempts tixmo276
+3965; 0 17662 TABLE DATA public payment_refunds tixmo276
+3962; 0 17570 TABLE DATA public payment_webhook_events tixmo276
+3942; 0 16638 TABLE DATA public promo_codes tixmo276
+3944; 0 16754 TABLE DATA public scan_logs tixmo276
+3943; 0 16737 TABLE DATA public scanners tixmo276
+3963; 0 17592 TABLE DATA public staff_invitations tixmo276
+3949; 0 16933 TABLE DATA public task_comments tixmo276
+3948; 0 16916 TABLE DATA public tasks tixmo276
+3966; 0 17726 TABLE DATA public ticket_inventory_reconciliations tixmo276
+3950; 0 17130 TABLE DATA public ticket_tiers tixmo276
+3939; 0 16568 TABLE DATA public ticket_types tixmo276
+3941; 0 16619 TABLE DATA public tickets tixmo276
+3935; 0 16493 TABLE DATA public users tixmo276
+3937; 0 16530 TABLE DATA public venues tixmo276
+3947; 0 16901 TABLE DATA public waitlists tixmo276
+3623; 2606 16398 CONSTRAINT public _prisma_migrations _prisma_migrations_pkey tixmo276
+3671; 2606 17248 CONSTRAINT public approval_assets approval_assets_pkey tixmo276
+3680; 2606 17294 CONSTRAINT public approval_comments approval_comments_pkey tixmo276
+3683; 2606 17307 CONSTRAINT public approval_reminders approval_reminders_pkey tixmo276
+3666; 2606 17218 CONSTRAINT public approval_requests approval_requests_pkey tixmo276
+3678; 2606 17280 CONSTRAINT public approval_review_decisions approval_review_decisions_pkey tixmo276
+3674; 2606 17265 CONSTRAINT public approval_reviewers approval_reviewers_pkey tixmo276
+3669; 2606 17231 CONSTRAINT public approval_revisions approval_revisions_pkey tixmo276
+3690; 2606 17445 CONSTRAINT public asset_library_assets asset_library_assets_pkey tixmo276
+3702; 2606 17557 CONSTRAINT public asset_library_folder_share_folders asset_library_folder_share_folders_pkey tixmo276
+3698; 2606 17527 CONSTRAINT public asset_library_folder_shares asset_library_folder_shares_pkey tixmo276
+3694; 2606 17481 CONSTRAINT public asset_library_folders asset_library_folders_pkey tixmo276
+3633; 2606 16567 CONSTRAINT public events events_pkey tixmo276
+3654; 2606 16857 CONSTRAINT public notification_preferences notification_preferences_pkey tixmo276
+3652; 2606 16831 CONSTRAINT public notifications notifications_pkey tixmo276
+3639; 2606 16618 CONSTRAINT public orders orders_pkey tixmo276
+3628; 2606 16529 CONSTRAINT public organizations organizations_pkey tixmo276
+3715; 2606 17661 CONSTRAINT public payment_attempts payment_attempts_pkey tixmo276
+3718; 2606 17679 CONSTRAINT public payment_refunds payment_refunds_pkey tixmo276
+3707; 2606 17585 CONSTRAINT public payment_webhook_events payment_webhook_events_pkey tixmo276
+3645; 2606 16658 CONSTRAINT public promo_codes promo_codes_pkey tixmo276
+3650; 2606 16770 CONSTRAINT public scan_logs scan_logs_pkey tixmo276
+3648; 2606 16753 CONSTRAINT public scanners scanners_pkey tixmo276
+3709; 2606 17606 CONSTRAINT public staff_invitations staff_invitations_pkey tixmo276
+3662; 2606 16946 CONSTRAINT public task_comments task_comments_pkey tixmo276
+3660; 2606 16932 CONSTRAINT public tasks tasks_pkey tixmo276
+3722; 2606 17742 CONSTRAINT public ticket_inventory_reconciliations ticket_inventory_reconciliations_pkey tixmo276
+3664; 2606 17149 CONSTRAINT public ticket_tiers ticket_tiers_pkey tixmo276
+3636; 2606 16593 CONSTRAINT public ticket_types ticket_types_pkey tixmo276
+3642; 2606 16637 CONSTRAINT public tickets tickets_pkey tixmo276
+3626; 2606 16513 CONSTRAINT public users users_pkey tixmo276
+3631; 2606 16545 CONSTRAINT public venues venues_pkey tixmo276
+3658; 2606 16915 CONSTRAINT public waitlists waitlists_pkey tixmo276
+3681; 1259 17312 INDEX public approval_reminders_approval_revision_id_reviewer_id_reminder_ty tixmo276
+3684; 1259 17725 INDEX public approval_reminders_status_claimed_at_idx tixmo276
+3676; 1259 17311 INDEX public approval_review_decisions_approval_revision_id_reviewer_id_key tixmo276
+3672; 1259 17310 INDEX public approval_reviewers_approval_request_id_email_key tixmo276
+3675; 1259 17309 INDEX public approval_reviewers_token_key tixmo276
+3667; 1259 17308 INDEX public approval_revisions_approval_request_id_revision_number_key tixmo276
+3685; 1259 17447 INDEX public asset_library_assets_event_id_idx tixmo276
+3686; 1259 17484 INDEX public asset_library_assets_folder_id_idx tixmo276
+3687; 1259 17446 INDEX public asset_library_assets_organization_id_created_at_idx tixmo276
+3688; 1259 17465 INDEX public asset_library_assets_organization_id_usage_type_idx tixmo276
+3700; 1259 17559 INDEX public asset_library_folder_share_folders_folder_id_idx tixmo276
+3703; 1259 17558 INDEX public asset_library_folder_share_folders_share_id_folder_id_key tixmo276
+3695; 1259 17529 INDEX public asset_library_folder_shares_folder_id_revoked_at_expires_at_idx tixmo276
+3696; 1259 17530 INDEX public asset_library_folder_shares_organization_id_created_at_idx tixmo276
+3699; 1259 17528 INDEX public asset_library_folder_shares_token_hash_key tixmo276
+3691; 1259 17483 INDEX public asset_library_folders_event_id_idx tixmo276
+3692; 1259 17482 INDEX public asset_library_folders_organization_id_parent_id_idx tixmo276
+3634; 1259 16661 INDEX public events_slug_key tixmo276
+3655; 1259 16858 INDEX public notification_preferences_user_id_key tixmo276
+3637; 1259 16662 INDEX public orders_order_number_key tixmo276
+3629; 1259 16660 INDEX public organizations_slug_key tixmo276
+3712; 1259 17680 INDEX public payment_attempts_order_id_key tixmo276
+3713; 1259 17681 INDEX public payment_attempts_payment_intent_id_key tixmo276
+3716; 1259 17682 INDEX public payment_refunds_payment_intent_id_key tixmo276
+3719; 1259 17684 INDEX public payment_refunds_status_updated_at_idx tixmo276
+3720; 1259 17683 INDEX public payment_refunds_stripe_refund_id_key tixmo276
+3704; 1259 17587 INDEX public payment_webhook_events_order_id_idx tixmo276
+3705; 1259 17586 INDEX public payment_webhook_events_payment_intent_id_idx tixmo276
+3643; 1259 16664 INDEX public promo_codes_code_key tixmo276
+3646; 1259 16771 INDEX public scanners_api_key_key tixmo276
+3710; 1259 17617 INDEX public staff_invitations_token_hash_key tixmo276
+3711; 1259 17618 INDEX public staff_invitations_user_id_idx tixmo276
+3723; 1259 17743 INDEX public ticket_inventory_reconciliations_ticket_type_id_created_at_idx tixmo276
+3640; 1259 16663 INDEX public tickets_barcode_key tixmo276
+3624; 1259 16659 INDEX public users_email_key tixmo276
+3656; 1259 16947 INDEX public waitlists_event_id_user_id_key tixmo276
+3756; 2606 17338 FK CONSTRAINT public approval_assets approval_assets_approval_revision_id_fkey tixmo276
+3757; 2606 17421 FK CONSTRAINT public approval_assets approval_assets_approved_for_library_by_id_fkey tixmo276
+3763; 2606 17368 FK CONSTRAINT public approval_comments approval_comments_approval_request_id_fkey tixmo276
+3764; 2606 17373 FK CONSTRAINT public approval_comments approval_comments_approval_revision_id_fkey tixmo276
+3765; 2606 17388 FK CONSTRAINT public approval_comments approval_comments_parent_comment_id_fkey tixmo276
+3766; 2606 17378 FK CONSTRAINT public approval_comments approval_comments_reviewer_id_fkey tixmo276
+3767; 2606 17383 FK CONSTRAINT public approval_comments approval_comments_user_id_fkey tixmo276
+3768; 2606 17393 FK CONSTRAINT public approval_reminders approval_reminders_approval_revision_id_fkey tixmo276
+3769; 2606 17398 FK CONSTRAINT public approval_reminders approval_reminders_reviewer_id_fkey tixmo276
+3751; 2606 17323 FK CONSTRAINT public approval_requests approval_requests_created_by_id_fkey tixmo276
+3752; 2606 17318 FK CONSTRAINT public approval_requests approval_requests_event_id_fkey tixmo276
+3753; 2606 17313 FK CONSTRAINT public approval_requests approval_requests_organization_id_fkey tixmo276
+3760; 2606 17353 FK CONSTRAINT public approval_review_decisions approval_review_decisions_approval_request_id_fkey tixmo276
+3761; 2606 17358 FK CONSTRAINT public approval_review_decisions approval_review_decisions_approval_revision_id_fkey tixmo276
+3762; 2606 17363 FK CONSTRAINT public approval_review_decisions approval_review_decisions_reviewer_id_fkey tixmo276
+3758; 2606 17343 FK CONSTRAINT public approval_reviewers approval_reviewers_approval_request_id_fkey tixmo276
+3759; 2606 17348 FK CONSTRAINT public approval_reviewers approval_reviewers_user_id_fkey tixmo276
+3754; 2606 17328 FK CONSTRAINT public approval_revisions approval_revisions_approval_request_id_fkey tixmo276
+3755; 2606 17333 FK CONSTRAINT public approval_revisions approval_revisions_uploaded_by_id_fkey tixmo276
+3770; 2606 17453 FK CONSTRAINT public asset_library_assets asset_library_assets_event_id_fkey tixmo276
+3771; 2606 17505 FK CONSTRAINT public asset_library_assets asset_library_assets_folder_id_fkey tixmo276
+3772; 2606 17448 FK CONSTRAINT public asset_library_assets asset_library_assets_organization_id_fkey tixmo276
+3773; 2606 17458 FK CONSTRAINT public asset_library_assets asset_library_assets_uploaded_by_id_fkey tixmo276
+3781; 2606 17565 FK CONSTRAINT public asset_library_folder_share_folders asset_library_folder_share_folders_folder_id_fkey tixmo276
+3782; 2606 17560 FK CONSTRAINT public asset_library_folder_share_folders asset_library_folder_share_folders_share_id_fkey tixmo276
+3778; 2606 17541 FK CONSTRAINT public asset_library_folder_shares asset_library_folder_shares_created_by_id_fkey tixmo276
+3779; 2606 17536 FK CONSTRAINT public asset_library_folder_shares asset_library_folder_shares_folder_id_fkey tixmo276
+3780; 2606 17531 FK CONSTRAINT public asset_library_folder_shares asset_library_folder_shares_organization_id_fkey tixmo276
+3774; 2606 17500 FK CONSTRAINT public asset_library_folders asset_library_folders_created_by_id_fkey tixmo276
+3775; 2606 17495 FK CONSTRAINT public asset_library_folders asset_library_folders_event_id_fkey tixmo276
+3776; 2606 17485 FK CONSTRAINT public asset_library_folders asset_library_folders_organization_id_fkey tixmo276
+3777; 2606 17490 FK CONSTRAINT public asset_library_folders asset_library_folders_parent_id_fkey tixmo276
+3726; 2606 16675 FK CONSTRAINT public events events_organization_id_fkey tixmo276
+3727; 2606 16983 FK CONSTRAINT public events events_venue_id_fkey tixmo276
+3743; 2606 16864 FK CONSTRAINT public notification_preferences notification_preferences_user_id_fkey tixmo276
+3742; 2606 16859 FK CONSTRAINT public notifications notifications_user_id_fkey tixmo276
+3729; 2606 16695 FK CONSTRAINT public orders orders_event_id_fkey tixmo276
+3730; 2606 16700 FK CONSTRAINT public orders orders_promo_code_id_fkey tixmo276
+3731; 2606 16690 FK CONSTRAINT public orders orders_user_id_fkey tixmo276
+3785; 2606 17685 FK CONSTRAINT public payment_attempts payment_attempts_order_id_fkey tixmo276
+3786; 2606 17690 FK CONSTRAINT public payment_refunds payment_refunds_order_id_fkey tixmo276
+3737; 2606 16725 FK CONSTRAINT public promo_codes promo_codes_organization_id_fkey tixmo276
+3740; 2606 16782 FK CONSTRAINT public scan_logs scan_logs_scanner_id_fkey tixmo276
+3741; 2606 17700 FK CONSTRAINT public scan_logs scan_logs_ticket_id_fkey tixmo276
+3738; 2606 16777 FK CONSTRAINT public scanners scanners_event_id_fkey tixmo276
+3739; 2606 16772 FK CONSTRAINT public scanners scanners_organization_id_fkey tixmo276
+3783; 2606 17612 FK CONSTRAINT public staff_invitations staff_invitations_issuer_id_fkey tixmo276
+3784; 2606 17607 FK CONSTRAINT public staff_invitations staff_invitations_user_id_fkey tixmo276
+3748; 2606 16968 FK CONSTRAINT public task_comments task_comments_task_id_fkey tixmo276
+3749; 2606 16973 FK CONSTRAINT public task_comments task_comments_user_id_fkey tixmo276
+3746; 2606 16963 FK CONSTRAINT public tasks tasks_assignee_id_fkey tixmo276
+3747; 2606 16958 FK CONSTRAINT public tasks tasks_organization_id_fkey tixmo276
+3750; 2606 17150 FK CONSTRAINT public ticket_tiers ticket_tiers_ticket_type_id_fkey tixmo276
+3728; 2606 16685 FK CONSTRAINT public ticket_types ticket_types_event_id_fkey tixmo276
+3732; 2606 16710 FK CONSTRAINT public tickets tickets_event_id_fkey tixmo276
+3733; 2606 16705 FK CONSTRAINT public tickets tickets_order_id_fkey tixmo276
+3734; 2606 16715 FK CONSTRAINT public tickets tickets_ticket_type_id_fkey tixmo276
+3735; 2606 17695 FK CONSTRAINT public tickets tickets_tier_id_fkey tixmo276
+3736; 2606 16720 FK CONSTRAINT public tickets tickets_user_id_fkey tixmo276
+3724; 2606 16665 FK CONSTRAINT public users users_organization_id_fkey tixmo276
+3725; 2606 16670 FK CONSTRAINT public venues venues_organization_id_fkey tixmo276
+3744; 2606 16948 FK CONSTRAINT public waitlists waitlists_event_id_fkey tixmo276
+3745; 2606 16953 FK CONSTRAINT public waitlists waitlists_user_id_fkey tixmo276

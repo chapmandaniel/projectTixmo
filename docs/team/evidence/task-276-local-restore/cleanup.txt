@@ -1,0 +1,7 @@
+PID 2624104: ABSENT
+PID 2624135: ABSENT
+PORT 24997: NO LISTENER
+PORT 57074: NO LISTENER
+PG postmaster.pid: ABSENT
+Redis socket: ABSENT
+HTTP: not started; no HTTP PID/port owned by this rehearsal

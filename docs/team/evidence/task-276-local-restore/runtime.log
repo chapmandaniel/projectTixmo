@@ -1,0 +1,25 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_276|tixmo276|127.0.0.1|24997
+PONG
+TASK276_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-276/run.UWGSbu pg_pid=2624104 redis_pid=2624135 pgport=24997 redisport=57074
+pg_dump (PostgreSQL) 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)
+pg_restore (PostgreSQL) 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)
+BEGIN
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 2
+INSERT 0 3
+INSERT 0 1
+COMMIT
+2140f455c3f9620428cb91b9a64c193f430897fa3bbcf85177153f8de0674d64  /home/daniel/projects/projectTixmo/worktrees/task-276/docs/team/evidence/task-276-local-restore/restored-state.txt
+2140f455c3f9620428cb91b9a64c193f430897fa3bbcf85177153f8de0674d64  /home/daniel/projects/projectTixmo/worktrees/task-276/docs/team/evidence/task-276-local-restore/source-after-state.txt
+2140f455c3f9620428cb91b9a64c193f430897fa3bbcf85177153f8de0674d64  /home/daniel/projects/projectTixmo/worktrees/task-276/docs/team/evidence/task-276-local-restore/source-state.txt
+backup_ns=81092928
+restore_ns=118525382
+PASS: restored data and unchanged source equal; acceptance assertions passed
+waiting for server to shut down.... done
+server stopped
+TASK276_CLEANUP pg_pid=2624104 redis_pid=2624135 pgport=24997 redisport=57074
