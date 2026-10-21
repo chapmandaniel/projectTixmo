@@ -1,0 +1,1 @@
+PASS TypeScript transpile syntax and source-scope checks only; no Jest/app/database/network executed

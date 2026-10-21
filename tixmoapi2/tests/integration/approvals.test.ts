@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../../src/app';
+import { uploadService } from '../../src/services/upload.service';
 import {
   cleanupTestData,
   createEvent,
@@ -563,14 +564,29 @@ describe('Creative approvals API', () => {
       libraryListResponse.body.approvals.map((approval: { id: string }) => approval.id)
     ).toContain(createResponse.body.id);
 
-    const deleteResponse = await request(app)
-      .delete(`/api/v1/approvals/${createResponse.body.id}`)
-      .set('Authorization', `Bearer ${ownerAuth.accessToken}`);
+    const assetId = createResponse.body.latestRevision.assets[0].id;
+    const { s3Key } = await prisma.approvalAsset.findUniqueOrThrow({
+      where: { id: assetId },
+      select: { s3Key: true },
+    });
+    // Only this local fixture's deletion transport is inert. Keep the real
+    // approval route, authorization, curation and database cleanup behavior.
+    const deleteFileSpy = jest.spyOn(uploadService, 'deleteFile').mockResolvedValue(undefined);
+    try {
+      const deleteResponse = await request(app)
+        .delete(`/api/v1/approvals/${createResponse.body.id}`)
+        .set('Authorization', `Bearer ${ownerAuth.accessToken}`);
 
-    expect(deleteResponse.status).toBe(200);
-    expect(deleteResponse.body).toEqual({ id: createResponse.body.id, deleted: true });
-    await expect(
-      prisma.approvalRequest.findUnique({ where: { id: createResponse.body.id } })
-    ).resolves.toBeNull();
+      expect(deleteResponse.status).toBe(200);
+      expect(deleteResponse.body).toEqual({ id: createResponse.body.id, deleted: true });
+      expect(deleteFileSpy).toHaveBeenCalledTimes(1);
+      expect(deleteFileSpy).toHaveBeenNthCalledWith(1, s3Key);
+      await expect(
+        prisma.approvalRequest.findUnique({ where: { id: createResponse.body.id } })
+      ).resolves.toBeNull();
+      await expect(prisma.approvalAsset.findUnique({ where: { id: assetId } })).resolves.toBeNull();
+    } finally {
+      deleteFileSpy.mockRestore();
+    }
   });
 });
