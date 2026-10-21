@@ -128,15 +128,42 @@ No new or altered logo/artwork was created. Preview routes and fixtures are
 excluded from production JavaScript. Independent exact-commit review and local
 test/build/browser evidence are recorded with the implementation handoff.
 
-Verification on 2026-10-20: full frontend suite 35 files / 230 tests passed.
-Focused festival checks passed again after the admission-level copy was added.
-Production build and design guard passed with the unchanged 926-entry baseline.
-Desktop 1440px and mobile 390px festival layouts were visually inspected.
-Independent review of `51822e560ae598f272f9a8e2bb6ec74f0bccee2a` passed
-19 tests across 3 files, a production build and a production-JavaScript isolation
-scan. The one introduced finding was the hero link's text color overriding the
-button foreground. The follow-up sets button-style links explicitly to white,
-restoring 4.70:1 text contrast, and is submitted for exact-commit re-review.
-Browser checks confirm child pages open at the top, the pass-coverage return
-link focuses the pass panel, the event-only layout has six event links and no
-pass selector, and widths from 320px through 1440px have no horizontal overflow.
+The preceding festival increment was independently reviewed at
+`55334f5b6e5564a288828559248660c5d9849956`, including the explicit white
+foreground on action links (4.70:1 contrast). Its review used a separate checkout.
+
+## Hierarchy and readability refinement
+
+The approved UX audit is implemented in the same dedicated worktree:
+
+- The overview names the two purchase paths: Individual events and optional
+  Festival passes. The program remains the main content, with pass selection
+  alongside it on desktop and before the FAQ on mobile.
+- Date groups have distinct header bands, event counts and larger gaps between
+  dates. Event time sits beside its name; venue, category and pass coverage sit
+  directly beneath. Price or availability stays with the event-page action.
+- Available events say View event & tickets; unavailable events say View event
+  with a separate availability label. Event tickets remain on individual pages.
+- Pass selection has three visible groups: choose a pass, included admission and
+  events, then quantity and total. Covered dates, admission level and exclusions
+  remain visible. The included-event list no longer starts collapsed.
+- Functional text in the program and ticket selectors is larger, with 44px
+  quantity controls. The exact Tixmo logo, artwork and event information remain.
+
+Local verification: 35 frontend files / 231 tests passed, including a new
+acceptance check for both purchase paths, visible pass coverage, unavailable
+states and purchase information preceding the FAQ. Production build and design
+guard passed with the unchanged 926-entry baseline. Festival fixtures and routes
+are absent from production JavaScript.
+
+Browser checks cover pass selection, preview checkout guards, child event
+selection and return focus. Festival and child-event layouts have no page-level
+horizontal overflow at 320, 375, 390, 768, 820, 1024 and 1440px. The event-only
+variant was also checked at 320, 390, 820 and 1440px, with six event links and no
+pass section. At 1440px the first event moves from approximately y1147 to y868;
+at 390px it moves from y1075 to y838 while using larger supporting text.
+Screenshots are saved locally in `output/playwright/hierarchy-*.png`.
+
+This increment is submitted for independent exact-commit review. Record its
+reviewed SHA and result in the integration handoff; no board activity, backend
+integration, deployment, push or merge is claimed.
