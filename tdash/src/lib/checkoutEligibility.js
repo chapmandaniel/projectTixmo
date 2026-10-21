@@ -12,7 +12,7 @@ export const checkoutTicketState = (event, ticket, now) => {
         && inside(now, event.salesStart, event.salesEnd)
         && ticket.status === 'ACTIVE' && ticket.tierInventoryStatus === 'READY'
         && inside(now, ticket.salesStart, ticket.salesEnd)
-        && (!ticket.tiers?.length || Boolean(tier));
+        && (!(ticket.hasConfiguredTiers || ticket.tiers?.length) || Boolean(tier));
     const tierRemaining = tier?.quantityLimit == null ? Infinity
         : Math.max(0, tier.quantityLimit - tier.quantitySold - tier.quantityHeld);
     return {

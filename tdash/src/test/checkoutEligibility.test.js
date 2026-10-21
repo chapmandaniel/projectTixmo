@@ -23,6 +23,10 @@ describe('checkout advisory eligibility contract', () => {
     it('does not let a wider ticket window extend event eligibility', () => {
         expect(state({}, { salesStart: at(-100), salesEnd: at(500) }, now + 100).max).toBe(0);
     });
+    it('blocks a configured schedule when the public DTO filters every tier', () => {
+        expect(state({}, { hasConfiguredTiers: true, tiers: [] }).max).toBe(0);
+        expect(state({}, { hasConfiguredTiers: false, tiers: [] }).max).toBe(4);
+    });
     it('blocks gaps, inactive and exhausted tiers rather than falling back to the base price', () => {
         for (const tier of [
             { isActive: false }, { isActive: true, startsAt: at(1) },

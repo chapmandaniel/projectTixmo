@@ -742,7 +742,7 @@ export class EventService {
    * active tiers, and live availability that must not survive event resets or
    * ticket mutations.
    */
-  async getPublicEventBySlug(slug: string): Promise<Event | null> {
+  async getPublicEventBySlug(slug: string) {
     const publicStatuses: EventStatus[] = [
       EventStatus.PUBLISHED,
       EventStatus.ON_SALE,
@@ -765,16 +765,25 @@ export class EventService {
         ticketTypes: {
           where: { status: 'ACTIVE' },
           include: {
+            _count: { select: { tiers: true } },
             tiers: {
               where: { isActive: true },
-              orderBy: { sortOrder: 'asc' },
+              orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
             },
           },
         },
       },
     });
 
-    return event;
+    if (!event) return null;
+    return {
+      ...event,
+      ticketTypes: event.ticketTypes.map(({ _count, ...ticketType }) => ({
+        ...ticketType,
+        // Expose schedule presence, never inactive tier rows or raw counts.
+        hasConfiguredTiers: _count.tiers > 0,
+      })),
+    };
   }
 }
 export const eventService = new EventService();
