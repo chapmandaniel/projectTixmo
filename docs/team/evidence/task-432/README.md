@@ -337,3 +337,48 @@ fullmarketPASS or replacement of424 original failure. Fresh independent lead
 and QA must review this exact successor;444/445 approve its parent slice only.
 No network/audit/services/runtime/DB/Redis/HTTP/applicationtest/install/generation/
 config/CI/scheduler/cloud/spend/push/merge/deploy executed.
+
+## Bounded pre-provision / exact-ten source checkpoint (2026-10-21)
+
+Base d2e0dbdfea93e4f6e4a21fdf4e4c0201611acce7, NEW isolated
+`tixmo/task-432-local-admission` in `worktrees/task-432-local-admission`.
+Read actual independent449 ec96d05a and450 1e1375ec reports; do not consume
+448 helper: lead454 newly found its concurrent finish double-teardown defect.
+
+Existing427 shell now captures clean source before even runtime directory
+preparation and exclusively publishes/rechecks it before initdb, pg_ctl,
+Redis or DB access. This closes source-after-provision ordering only, not
+native admission. Default exact12 and root runner unchanged. The prior API
+receipt directory/identity setup moves earlier; callback and four nested
+commands, raw logs, JSON flags, transport and persistence unchanged.
+
+New `scripts/market-local-session.mjs` executes canonical exact10 local steps
+with raw output, bounded buffer/error propagation, per-stage source checks
+before AND after an awaited owned-runtime assertion, exact order, fail-fast,
+production override isolated to dashboard build, and cleanup once across
+concurrent close calls. Concurrent run/close during active work is rejected.
+It intentionally exposes NO compose boundary contract: callback provenance
+is not native/OS attestation, and this executor must not satisfy openLocal
+on its own. It is not wired into runtime.sh/default CLI; shell still runs
+reviewed full API gate only. This bounded executable slice is NOT complete
+all10 lifecycle/admission integration, and does not authorize provisioning.
+The shell's existing explicit grant check remains necessary but not sufficient.
+
+Actual checks exit0: `node docs/team/evidence/task-432/offline-local-session.mjs`
+(exact10, all10 fail positions, rawNUL, environment override isolation,
+pre/post-assert source denial, missing authority, order/closed/concurrency,
+cleanup once and static preprovision ordering);
+`node --check scripts/market-local-session.mjs`;
+`bash -n docs/team/evidence/task-427/runtime.sh`; `git diff --check`.
+Existing `offline-stub.mjs`, `offline-disk.mjs`, `offline-nested.mjs`,
+`offline-publication.mjs`, `offline-caller.mjs`, `offline-shell.mjs` actual PASS.
+All in this directory. Stubs/temporary fixture directories only, no native
+runtime or service execution. Existing missing Husky helper inspected;
+invocation-only identity/hooksPath for commit, no config change/lintstaged claim.
+
+OPEN: concrete enforced compose.openLocal provisioning/teardown connection,
+genuine scrubbed/native preimport admission, registry443/necessaryDNS audit
+boundary, dependency/generated/native/runtime provenance. No fullmarketPASS,
+closure, execution authority or waiver of original424FAIL. Fresh exact-SHA
+independent lead and QA required. No services/runtime/DB/Redis/HTTP/network/
+audit/install/generation/config/scheduler/cloud/spend/push/merge/deploy.

@@ -14,6 +14,12 @@ for ambient in .env tixmoapi2/.env; do
   test ! -e "$ambient" || { echo 'Refusing ambient dotenv file' >&2; exit 2; }
 done
 umask 077
+# Capture clean candidate BEFORE runtime directory preparation or provisioning.
+# This source check is not native egress admission or an execution grant.
+task432_identity=$(node --input-type=module -e '
+  import { snapshot } from "./scripts/market-composition.mjs";
+  process.stdout.write(JSON.stringify(snapshot(process.cwd())));
+')
 runtime_root="/home/daniel/projects/projectTixmo/worktrees/task-57/.local-runtime-57/root"
 export LD_LIBRARY_PATH="$runtime_root/usr/lib/x86_64-linux-gnu"
 pgbin="$runtime_root/usr/lib/postgresql/18/bin"
@@ -101,6 +107,19 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
+# Bind the reviewed CLI transport to this exact clean candidate before children.
+# Exclusive publication refuses reuse; source identity is consistency, not admission.
+export TASK432_API_RECEIPTS="$owned_run"
+TASK432_SOURCE_IDENTITY="$task432_identity" node --input-type=module -e '
+  import fs from "node:fs";
+  import { snapshot } from "./scripts/market-composition.mjs";
+  const identity = JSON.parse(process.env.TASK432_SOURCE_IDENTITY);
+  if (JSON.stringify(snapshot(process.cwd())) !== JSON.stringify(identity)) throw Error("Source changed before provisioning");
+  const fd = fs.openSync(process.env.TASK379_ARTIFACT_DIR + "/api-identity.json", "wx", 0o400);
+  try { fs.writeFileSync(fd, JSON.stringify(identity) + "\n"); fs.fsyncSync(fd); }
+  finally { fs.closeSync(fd); }
+'
+
 "$pgbin/initdb" -D "$owned_run/pg" \
   -L "$runtime_root/usr/share/postgresql/18" --auth=trust \
   --username=tixmo379 --encoding=UTF8 --no-locale > "$owned_run/initdb.log"
@@ -161,16 +180,5 @@ test -x tixmoapi2/node_modules/.bin/jest
 export TMPDIR="$owned_run"
 # Full unfiltered verifyApi build/migrate/schema/Jest sequence. No path filters.
 export JWT_EXPIRES_IN=7d JWT_REFRESH_EXPIRES_IN=30d CHECKPOINT_DISABLE=1 PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
-# Bind the reviewed CLI transport to this exact clean candidate before children.
-# Exclusive publication refuses reuse; source identity is consistency, not admission.
-export TASK432_API_RECEIPTS="$owned_run"
-node --input-type=module -e '
-  import fs from "node:fs";
-  import { snapshot } from "./scripts/market-composition.mjs";
-  const identity = snapshot(process.cwd());
-  const fd = fs.openSync(process.env.TASK379_ARTIFACT_DIR + "/api-identity.json", "wx", 0o400);
-  try { fs.writeFileSync(fd, JSON.stringify(identity) + "\n"); fs.fsyncSync(fd); }
-  finally { fs.closeSync(fd); }
-'
 jest_attempted=1
 timeout --signal=TERM --kill-after=5s 360s node "$PWD/docs/team/evidence/task-427/run-gate.mjs" > "$artifact_dir/acceptance.log" 2>&1
