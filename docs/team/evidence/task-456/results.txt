@@ -1,0 +1,31 @@
+PASS 1 stage 3 caller/import/args/env await mutation pinned, raw receipts
+PASS 2 stage 4 caller/import/args/env await mutation pinned, raw receipts
+PASS 3 stage 5 caller/import/args/env await mutation pinned, raw receipts
+PASS 4 stage 6 caller/import/args/env await mutation pinned, raw receipts
+PASS 5 stage 7 caller/import/args/env await mutation pinned, raw receipts
+PASS 6 stage 8 caller/import/args/env await mutation pinned, raw receipts
+PASS 7 stage 9 caller/import/args/env await mutation pinned, raw receipts
+PASS 8 stage 10 caller/import/args/env await mutation pinned, raw receipts
+PASS 9 stage 11 caller/import/args/env await mutation pinned, raw receipts
+PASS 10 stage 12 caller/import/args/env await mutation pinned, raw receipts
+PASS 11 failfast position 1
+PASS 12 failfast position 2
+PASS 13 failfast position 3
+PASS 14 failfast position 4
+PASS 15 failfast position 5
+PASS 16 failfast position 6
+PASS 17 failfast position 7
+PASS 18 failfast position 8
+PASS 19 failfast position 9
+PASS 20 failfast position 10
+PASS 21 pre-source zero child
+PASS 22 post-source zero child
+PASS 23 authority zero child
+PASS 24 active concurrent run/close rejected; cleanup once; postclose denied
+PASS 25 error/signal/throw fail closed
+PASS 26 error/signal/throw fail closed
+PASS 27 error/signal/throw fail closed
+PASS 28 root12/default/nested4/run-gate exact source unchanged
+PASS 29 static capture before preparation and publish before initdb
+REPRODUCED BLOCKER: fresh scrubbed shell publication fails ENOENT undefined/api-identity.json before provisioning. Fixture replaces ONLY snapshot import, runs actual publication code, no services.
+TOTAL 29 PASS plus 1 reproduced blocker
