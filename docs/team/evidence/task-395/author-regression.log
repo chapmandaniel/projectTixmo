@@ -1,0 +1,2 @@
+PROVED Jest copied env adds 51001; native preload does not see it; exact HTTP target rejected without socket
+PASS explicit owned listener registration/revocation; normalized vectors; failclosed Unix UDP external IPv6 unowned ports; transport calls=2 stub only

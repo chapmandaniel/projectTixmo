@@ -1,0 +1,10 @@
+PASS native address/listening methods with fake handle: exact registration, duplicate, explicit/close revoke; invalid listener and Unix/UDP/IPv6/external/unowned/malformed target denial; transport=1 stub only
+PASS cleanup rejects missing
+PASS cleanup rejects invalid PID
+PASS cleanup rejects PID present/recycled
+PASS cleanup rejects ss failure
+PASS cleanup rejects ss unavailable
+PASS cleanup rejects port occupied
+PASS cleanup rejects wrong PID
+PASS cleanup rejects invalid port
+REPRODUCED GAP: malformed/stale process provenance and listener family accepted when integer PID absent and port clear; exit=0. startStat/ppid/executable are retained but never checked.
