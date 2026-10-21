@@ -1,0 +1,20 @@
+Observed UTC 2026-10-21T13:27:38.115013+00:00
+PASS 200 attempts, 100 read/100 order, all status0 same guard rejection; zero GET200/POST201; partial matches
+PASS current receipt identity/root/run challenge consistent across 4 receipts, clean cleanup reports; stat suffix repr '594482630 0\n'
+PASS retained owned-runtime raw bytes equal jest-identity.json
+PASS retained owned-runtime raw bytes equal http-listener.json
+PASS retained owned-runtime raw bytes equal measurement.json
+PASS retained owned-runtime raw bytes equal partial.json
+PASS retained owned-runtime raw bytes equal cleanup.json
+PASS retained owned-runtime raw bytes equal process-cleanup.json
+PASS absent /proc/3269192
+PASS absent /proc/3269074
+PASS absent /proc/3269088
+PASS exact port empty 43015
+PASS exact port empty 22273
+PASS exact port empty 48850
+PASS absent pg/postmaster.pid
+PASS absent .s.PGSQL.22273
+PASS absent redis.sock
+PASS preflight hashes independently recalculated 9
+PASS 5 executed helpers/test byte-identical to exact reviewed source
