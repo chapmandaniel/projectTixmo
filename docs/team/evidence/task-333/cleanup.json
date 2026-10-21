@@ -1,0 +1,42 @@
+{
+  "runs": [
+    {
+      "log": "docs/team/evidence/task-333/red-baseline/runtime.log",
+      "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task333/run.tgvKXe",
+      "mode": "0o700",
+      "pids": [
+        "2917819",
+        "2917833"
+      ],
+      "ports": [
+        "26911",
+        "52450"
+      ],
+      "listeners": "",
+      "livePids": [],
+      "sockets": [],
+      "pgSocket": false,
+      "pgPidfile": false
+    },
+    {
+      "log": "docs/team/evidence/task-333/runtime.log",
+      "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task333/run.dJXMGF",
+      "mode": "0o700",
+      "pids": [
+        "2918845",
+        "2918858"
+      ],
+      "ports": [
+        "28382",
+        "58283"
+      ],
+      "listeners": "",
+      "livePids": [],
+      "sockets": [],
+      "pgSocket": false,
+      "pgPidfile": false
+    }
+  ],
+  "workers": [],
+  "blockedNetworkRecords": 0
+}

@@ -1,0 +1,10 @@
+{
+  "base": "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+  "stageA": "4e98efb2d5b7255e72aabe8784b6cea036e420ae",
+  "baselineSourceSha256": "5b2883228e4e49dc1fee2c7264eb5625a96e1cd8f713be122dceac2f05ebe46c",
+  "fixedSourceSha256": "c614ecd06de218f974a80a35c8842cea65921243ac5993dba455ea4e597cfdfb",
+  "testSha256": "d770e4f761d6d5d251ae13d2a2b8976b645c3b9bdfaa72da903e8e912f72fe89",
+  "baselineRuntimeExit": 1,
+  "sourceRestored": true,
+  "testUnchanged": true
+}

@@ -1,0 +1,74 @@
+FAIL tixmoapi2/tests/smoke/v1-market-smoke.test.ts (12.718 s)
+  ● V1 market readiness smoke › runs the operator, checkout, scanner, asset, approval, and analytics path
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 1
+    Received:    0
+
+      273 |       .query({ organizationId: organization.id });
+      274 |     expectSuccess(analyticsResponse, 200, 'Load dashboard analytics');
+    > 275 |     expect(analyticsResponse.body.data.sales.totalOrders).toBeGreaterThanOrEqual(1);
+          |                                                           ^
+      276 |
+      277 |     const folderResponse = await request(app)
+      278 |       .post('/api/v1/assets/folders')
+
+      at Object.<anonymous> (tests/smoke/v1-market-smoke.test.ts:275:59)
+
+FAIL tixmoapi2/tests/integration/paid-sales-utc.test.ts
+  ● inclusive UTC instant bounds and millisecond exclusions in America/St_Johns
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 1
+
+    - Array [
+    -   "475a1425-7e0f-466c-a3b3-a1a392692ff3",
+    -   "9fd9b2f6-98e3-4434-b00b-c1a8e6e43122",
+    - ]
+    + Array []
+
+      101 |       ]);
+      102 |       const scope = { organizationId: f.organization.id, eventId: f.event.id, currency: 'CAD' };
+    > 103 |       expect(await ids(tx, { ...scope, startDate: start, endDate: end })).toEqual(
+          |                                                                           ^
+      104 |         [f.orders[1].id, f.orders[2].id].sort()
+      105 |       );
+      106 |       expect(await ids(tx, { ...scope, startDate: start, endDate: start })).toEqual([
+
+      at tests/integration/paid-sales-utc.test.ts:103:75
+      at Proxy._transactionWithCallback (node_modules/@prisma/client/runtime/library.js:130:8000)
+      at tests/integration/paid-sales-utc.test.ts:93:5
+
+  ● Newfoundland repeated 01:30 first/second instants stay distinct in America/St_Johns
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 1
+
+    - Array [
+    -   "5ad44bd5-9d36-483a-95c0-8283f5866db2",
+    - ]
+    + Array []
+
+      142 |       ]);
+      143 |       const scope = { organizationId: f.organization.id, currency: 'cad' };
+    > 144 |       expect(await ids(tx, { ...scope, startDate: first, endDate: first })).toEqual([
+          |                                                                             ^
+      145 |         f.orders[1].id,
+      146 |       ]);
+      147 |       expect(await ids(tx, { ...scope, startDate: second, endDate: second })).toEqual([
+
+      at tests/integration/paid-sales-utc.test.ts:144:77
+      at Proxy._transactionWithCallback (node_modules/@prisma/client/runtime/library.js:130:8000)
+      at tests/integration/paid-sales-utc.test.ts:129:5
+
+Test Suites: 2 failed, 2 total
+Tests:       3 failed, 2 passed, 5 total
+Snapshots:   0 total
+Time:        14.504 s
+Ran all test suites within paths "tixmoapi2/tests/integration/paid-sales-utc.test.ts", "tixmoapi2/tests/smoke/v1-market-smoke.test.ts".
+Test results written to: docs/team/evidence/task-333/jest-result.json
