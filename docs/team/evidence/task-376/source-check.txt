@@ -1,0 +1,6 @@
+tixmoapi2/src/api/orders/service.ts
+tixmoapi2/src/api/payments/service.ts
+tixmoapi2/src/services/paid-sales-query.ts
+17	8	tixmoapi2/src/api/orders/service.ts
+10	1	tixmoapi2/src/api/payments/service.ts
+10	2	tixmoapi2/src/services/paid-sales-query.ts
