@@ -40,13 +40,18 @@ import {
 const eventDate = (event, options = {}) =>
     formatEventDate(event.startDatetime, eventTimeZone(event), options);
 
-export const EventOnSaleView = ({ event, preview = false, festivalContext = null }) => {
+export const EventOnSaleView = ({
+    event,
+    preview = false,
+    festivalContext = null,
+}) => {
     const navigate = useNavigate();
     const [quantities, setQuantities] = useState({});
     const [now, setNow] = useState(Date.now());
     const [shareMessage, setShareMessage] = useState('');
     const [imageFailed, setImageFailed] = useState(false);
     const [previewMessage, setPreviewMessage] = useState('');
+    const [ticketPanelVisible, setTicketPanelVisible] = useState(false);
     const currency = getPaymentCurrency();
     const policies = getPolicyLinks();
     const sale = getEventSaleState(event, now);
@@ -97,6 +102,19 @@ export const EventOnSaleView = ({ event, preview = false, festivalContext = null
             window.clearInterval(timer);
         };
     }, [event.name]);
+
+    useEffect(() => {
+        const panel = document.getElementById('event-tickets');
+        if (!panel || typeof window.IntersectionObserver !== 'function') return;
+        const observer = new window.IntersectionObserver(
+            ([entry]) => {
+                setTicketPanelVisible(Boolean(entry?.isIntersecting));
+            },
+            { rootMargin: '0px 0px -100px 0px' },
+        );
+        observer.observe(panel);
+        return () => observer.disconnect();
+    }, [event.id]);
 
     const changeQuantity = (item, delta) => {
         setPreviewMessage('');
@@ -238,14 +256,23 @@ export const EventOnSaleView = ({ event, preview = false, festivalContext = null
 
                 <div className="sf-content sf-container">
                     <div className="sf-event-body">
-                        {festivalContext && <section className="sf-parent-festival" aria-label="Festival context">
-                            <p className="sf-eyebrow">Part of the festival</p>
-                            <Link className="sf-parent-festival-link" to={festivalContext.href}><ArrowLeft size={17} aria-hidden="true" />{festivalContext.name}</Link>
-                            <p>Tickets on this page cover this event only.</p>
-                            {festivalContext.passesAvailable && <Link className="sf-parent-pass-link" to={festivalContext.passesHref}>
-                                {festivalContext.includedPassNames?.length ? `Also included in: ${festivalContext.includedPassNames.join(', ')}. Check pass coverage` : 'This event is not included in the festival passes. View passes'}<ArrowRight size={14} aria-hidden="true" />
-                            </Link>}
-                        </section>}
+                        {festivalContext && (
+                            <section
+                                className="sf-parent-festival"
+                                aria-label="Festival context"
+                            >
+                                <p className="sf-eyebrow">
+                                    Part of the festival
+                                </p>
+                                <Link
+                                    className="sf-parent-festival-link"
+                                    to={festivalContext.href}
+                                >
+                                    <ArrowLeft size={17} aria-hidden="true" />
+                                    {festivalContext.name}
+                                </Link>
+                            </section>
+                        )}
                         <nav
                             className="sf-section-nav"
                             aria-label="Event sections"
@@ -411,6 +438,33 @@ export const EventOnSaleView = ({ event, preview = false, festivalContext = null
                                 <Ticket size={24} aria-hidden="true" />
                             </div>
                             <p className="sf-ticket-date">{eventDate(event)}</p>
+                            {festivalContext && (
+                                <div
+                                    className="sf-event-ticket-scope"
+                                    role="group"
+                                    aria-label="Event ticket admission"
+                                >
+                                    <p>
+                                        Tickets on this page cover this event
+                                        only.
+                                    </p>
+                                    {festivalContext.passesAvailable && (
+                                        <Link
+                                            className="sf-parent-pass-link"
+                                            to={festivalContext.passesHref}
+                                        >
+                                            {festivalContext.includedPassNames
+                                                ?.length
+                                                ? `Also included in: ${festivalContext.includedPassNames.join(', ')}. Check pass coverage`
+                                                : 'This event is not included in the festival passes. View passes'}
+                                            <ArrowRight
+                                                size={14}
+                                                aria-hidden="true"
+                                            />
+                                        </Link>
+                                    )}
+                                </div>
+                            )}
                             <div className="sf-ticket-list">
                                 {items.length ? (
                                     items.map((item) => (
@@ -566,28 +620,30 @@ export const EventOnSaleView = ({ event, preview = false, festivalContext = null
                         </button>
                     </aside>
                 </div>
-                <div className="sf-mobile-bar">
-                    <div>
-                        <span>
-                            {count
-                                ? `${count} ${count === 1 ? 'ticket' : 'tickets'}`
-                                : startingPrice === null
-                                  ? saleLabel
-                                  : 'Tickets from'}
-                        </span>
-                        <strong>
-                            {count
-                                ? money(subtotal)
-                                : startingPrice === null
-                                  ? 'Check availability'
-                                  : money(startingPrice)}
-                        </strong>
+                {!ticketPanelVisible && (
+                    <div className="sf-mobile-bar">
+                        <div>
+                            <span>
+                                {count
+                                    ? `${count} ${count === 1 ? 'ticket' : 'tickets'}`
+                                    : startingPrice === null
+                                      ? saleLabel
+                                      : 'Tickets from'}
+                            </span>
+                            <strong>
+                                {count
+                                    ? money(subtotal)
+                                    : startingPrice === null
+                                      ? 'Check availability'
+                                      : money(startingPrice)}
+                            </strong>
+                        </div>
+                        <StorefrontButton onClick={focusTickets}>
+                            Choose tickets{' '}
+                            <ArrowRight size={16} aria-hidden="true" />
+                        </StorefrontButton>
                     </div>
-                    <StorefrontButton onClick={focusTickets}>
-                        Choose tickets{' '}
-                        <ArrowRight size={16} aria-hidden="true" />
-                    </StorefrontButton>
-                </div>
+                )}
             </main>
             <footer className="sf-footer sf-container">
                 <StorefrontBrand />

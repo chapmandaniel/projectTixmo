@@ -7,7 +7,12 @@ import {
     festivalEvents,
     passCoveredEvents,
 } from '../../lib/festivalProgram';
-import { formatEventMoney, getPublicTicketOffer } from '../../lib/publicEvent';
+import {
+    eventTimeZone,
+    formatEventMoney,
+    getPublicTicketOffer,
+} from '../../lib/publicEvent';
+import { formatEventDate } from '../../lib/eventTime';
 
 export default function FestivalPassSelector({
     festival,
@@ -26,11 +31,14 @@ export default function FestivalPassSelector({
     const excluded = festivalEvents(festival).filter(
         (event) => !covered.some((included) => included.id === event.id),
     );
-    const includedDays = festivalDays(festival).filter((day) =>
-        day.events.some((event) =>
-            covered.some((included) => included.id === event.id),
-        ),
-    );
+    const includedDays = festivalDays(festival)
+        .map((day) => ({
+            ...day,
+            events: day.events.filter((event) =>
+                covered.some((included) => included.id === event.id),
+            ),
+        }))
+        .filter((day) => day.events.length);
     const offer = getPublicTicketOffer(selectedPass, now);
     const quantity = Math.min(quantities[selectedPass.id] ?? 1, offer.max);
     const money = (value) => formatEventMoney(value, currency);
@@ -80,11 +88,8 @@ export default function FestivalPassSelector({
                 <h2 id="festival-pass-title">Festival passes</h2>
                 <Ticket size={24} aria-hidden="true" />
             </div>
-            <p className="sf-pass-intro">
-                Choose a pass and check exactly what’s included.
-            </p>
             <fieldset className="sf-pass-options">
-                <legend>1. Choose a pass</legend>
+                <legend>Choose a pass</legend>
                 {passes.map((pass) => {
                     const passOffer = getPublicTicketOffer(pass, now);
                     return (
@@ -120,53 +125,102 @@ export default function FestivalPassSelector({
                 aria-live="polite"
                 aria-labelledby="pass-coverage-heading"
             >
-                <h3 id="pass-coverage-heading">2. What’s included</h3>
+                <h3 id="pass-coverage-heading">{selectedPass.name} includes</h3>
                 <p className="sf-pass-included-count">
                     <Check size={17} aria-hidden="true" />
                     <strong>
                         {covered.length}{' '}
                         {covered.length === 1 ? 'event' : 'events'} included
                     </strong>
-                </p>
-                <p className="sf-pass-dates">
-                    {includedDays.map((day) => day.shortLabel).join(' · ')}
+                    {includedDays.length > 0 && (
+                        <span>
+                            {includedDays.some((day) => day.key === 'tba')
+                                ? 'Dates TBA'
+                                : `across ${includedDays.length} ${includedDays.length === 1 ? 'day' : 'days'}`}
+                        </span>
+                    )}
                 </p>
                 {selectedPass.admissionDescription && (
-                    <p className="sf-pass-admission">
-                        {selectedPass.admissionDescription}
-                    </p>
+                    <dl className="sf-pass-admission">
+                        <dt>Admission</dt>
+                        <dd>{selectedPass.admissionDescription}</dd>
+                    </dl>
                 )}
-                <ul aria-label="Included events">
-                    {covered.map((event) => (
-                        <li key={event.id}>
-                            <Link to={eventHref(event)}>
-                                {event.name}
-                                <ArrowRight size={15} aria-hidden="true" />
-                            </Link>
+                <ul className="sf-pass-event-days" aria-label="Included events">
+                    {includedDays.map((day) => (
+                        <li key={day.key}>
+                            <h4>{day.shortLabel}</h4>
+                            <ul aria-label={`Included events on ${day.label}`}>
+                                {day.events.map((event) => (
+                                    <li key={event.id}>
+                                        <Link to={eventHref(event)}>
+                                            <span>
+                                                {day.key === 'tba' ? (
+                                                    'Time TBA'
+                                                ) : (
+                                                    <time
+                                                        dateTime={
+                                                            event.startDatetime
+                                                        }
+                                                    >
+                                                        {formatEventDate(
+                                                            event.startDatetime,
+                                                            eventTimeZone(
+                                                                festival,
+                                                            ),
+                                                            {
+                                                                weekday:
+                                                                    undefined,
+                                                                month: undefined,
+                                                                day: undefined,
+                                                            },
+                                                        )}
+                                                    </time>
+                                                )}
+                                            </span>
+                                            <span>{event.name}</span>
+                                            <ArrowRight
+                                                size={14}
+                                                aria-hidden="true"
+                                            />
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
                         </li>
                     ))}
                 </ul>
                 {excluded.length > 0 && (
-                    <p className="sf-pass-exclusions">
-                        {excluded.length === 1
-                            ? `${excluded[0].name} is not included.`
-                            : `${excluded.length} other events are not included.`}{' '}
-                        Separate event tickets are required.
-                    </p>
+                    <section
+                        className="sf-pass-exclusions"
+                        aria-labelledby="pass-exclusions-heading"
+                    >
+                        <h4 id="pass-exclusions-heading">Not included</h4>
+                        <p>
+                            {new Intl.ListFormat(undefined, {
+                                style: 'long',
+                                type: 'conjunction',
+                            }).format(excluded.map((event) => event.name))}
+                        </p>
+                        <p className="sf-pass-exclusion-note">
+                            Separate event tickets are required.
+                        </p>
+                    </section>
                 )}
             </section>
             <section
                 className="sf-pass-checkout"
                 aria-labelledby="pass-quantity-heading"
             >
-                <h3 id="pass-quantity-heading">3. Quantity and total</h3>
+                <h3 id="pass-quantity-heading">Your selection</h3>
                 <div className="sf-pass-quantity">
                     <div>
-                        <strong>Passes</strong>
+                        <strong>{selectedPass.name}</strong>
                         <span>
                             {currency.toUpperCase()} · {money(offer.price)} each
                         </span>
                     </div>
+                    <span className="sf-pass-quantity-label">Quantity</span>
                     <div
                         className="sf-stepper"
                         role="group"
