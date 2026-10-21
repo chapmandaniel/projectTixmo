@@ -1,0 +1,1 @@
+PASS exact package/lock/schema match; TypeScript syntax transpile + emitted JS parse; 4 unsafe runtime paths rejected; checkpoint invariant checks. NOT typecheck/Jest/HTTP/runtime. TypeScript=5.9.3
