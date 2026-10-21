@@ -1,0 +1,16 @@
+PASS 1 actual full inert preflight reaches terminal refusal, never admission
+PASS 2 missing grant denied
+PASS 3 malicious NODE_OPTIONS never executes despite forged scrub markers
+PASS 4 NODE_PATH cannot bypass shell-generated rejection
+PASS 5 wrong SHA denied
+PASS 6 missing dependency tree denied
+PASS 7 mismatched dependency manifest denied
+PASS 8 foreign and nonprivate artifact paths denied
+PASS 9 dirty qualification source denied
+PASS 10 mutated tracked guard denied before execution (global dirty check)
+PASS 11 specific guard byte identity check precedes require in source
+PASS 12 actual owned subprocess primary 51 survives secondary errors
+PASS 13 actual owned subprocess primary 143 survives secondary errors
+PASS 14 actual ENOENT close plus JSON diagnostics and secondary error preserve127
+PASS 15 success/secondary/spawnpermission/timeout fallback mappings
+TOTAL 15 independent checks PASS; no sockets, no app, all direct children closed/reaped
