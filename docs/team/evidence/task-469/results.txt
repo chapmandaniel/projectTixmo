@@ -1,0 +1,7 @@
+PASS 1 byte-exact function extraction and whole runtime reconstruction, traps/default/order unchanged
+PASS 2 sourcing preserves shell options/traps and emits only explicit function listing
+PASS 3 foreign live identity rejected before any mock signal
+PASS 4 stubborn owned mock uses TERM/KILL then bounded40 polls, returns failure
+PASS 5 same UID/PID/executable but foreign parent denied
+PASS 6 absent-service partial startup retains primary27; remaining mocked listener denies success
+TOTAL6 independent groups PASS; all Bash/Git fixture children exited/reaped; no actual signals/services/listeners inspected

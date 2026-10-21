@@ -1,0 +1,2 @@
+PASS exact byte reconstruction; inert source; owned/foreign PID, UID and executable; no foreign signal; partial startup status; foreign listener and cleanup failure denial
+PASS offline local lifecycle: default denial, boolean denial, native/provenance/source denial cleanup, compose exact12/all10 failfast, cleanup once

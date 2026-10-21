@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {spawnSync,execFileSync} from 'node:child_process';
+const helper='docs/team/evidence/task-427/owned-lifecycle.sh';
+const runtime=fs.readFileSync('docs/team/evidence/task-427/runtime.sh','utf8');
+const text=fs.readFileSync(helper,'utf8');
+const old=execFileSync('git',['show','d5fec56e99a37218ef06a512e265c99942290340:docs/team/evidence/task-427/runtime.sh'],{encoding:'utf8'});
+const begin=old.indexOf('alive() {'),end=old.indexOf('trap cleanup EXIT');
+assert.equal(text.split('\n').slice(2).join('\n'),old.slice(begin,end));
+assert.equal(runtime.replace(`source "$PWD/${helper}"\n`,()=>old.slice(begin,end)),old);
+console.log('PASS 1 byte-exact function extraction and whole runtime reconstruction, traps/default/order unchanged');
+function bash(body,status=0){const r=spawnSync('/bin/bash',['--noprofile','--norc','-c',body],{env:{PATH:'/usr/bin:/bin'},encoding:'utf8',timeout:2000});assert.equal(r.error,undefined);assert.equal(r.status,status,r.stdout+r.stderr);return r;}
+const source=`source "$PWD/${helper}"\n`;
+let r=bash('set -u; trap ":" EXIT; before=$(set +o); traps=$(trap -p); '+source+'test "$before" = "$(set +o)"; test "$traps" = "$(trap -p)"; declare -F alive owned_identity stop_exact cleanup');
+assert.equal(r.stdout,'alive\nowned_identity\nstop_exact\ncleanup\n');console.log('PASS 2 sourcing preserves shell options/traps and emits only explicit function listing');
+r=bash(source+'alive(){ return 0; }; owned_identity(){ return 1; }; kill(){ echo FORBIDDEN; }; stop_exact redis 123',1);assert.equal(r.stdout,'');console.log('PASS 3 foreign live identity rejected before any mock signal');
+r=bash(source+'alive(){ return 0; }; owned_identity(){ return 0; }; kill(){ echo "SIGNAL:$1:$2"; }; sleep(){ echo POLL; }; stop_exact redis 123',1);
+assert.equal(r.stdout.split('\n').filter(s=>s==='POLL').length,40);assert.deepEqual(r.stdout.split('\n').filter(s=>s.startsWith('SIGNAL:')),['SIGNAL:-TERM:123','SIGNAL:-KILL:123']);console.log('PASS 4 stubborn owned mock uses TERM/KILL then bounded40 polls, returns failure');
+const mocks=`stat(){ echo 1000; }; id(){ echo 1000; }; ps(){ echo 999999; }; redis_pid=123; runtime_root=/fixture; readlink(){ echo /fixture/usr/bin/redis-server; }; `;
+bash(source+mocks+'owned_identity redis 123',1);console.log('PASS 5 same UID/PID/executable but foreign parent denied');
+const clean=`owned_run=/nonexistent-task469-fixture; pgbin=/fixture; pg_pid=''; redis_pid=''; jest_attempted=0; pgport=23001; redisport=43001; stop_exact(){ echo STOP; }; ss(){ :; }; `;
+r=bash(source+clean+'(exit 27); cleanup',27);assert.match(r.stdout,/STOP/);
+r=bash(source+clean+'ss(){ echo FOREIGN; }; cleanup',1);assert.match(r.stdout,/FOREIGN/);console.log('PASS 6 absent-service partial startup retains primary27; remaining mocked listener denies success');
+console.log('TOTAL6 independent groups PASS; all Bash/Git fixture children exited/reaped; no actual signals/services/listeners inspected');
