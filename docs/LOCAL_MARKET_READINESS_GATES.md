@@ -46,7 +46,11 @@ no supported split/skip mode. Do not disable its guard, use an offline/cache
 result as a fresh audit, or skip audits to claim full-market acceptance.
 A proposed two-environment composition and required authority are documented
 in [task428 assessment](team/evidence/task-428/README.md). It is a proposal,
-not an implemented or authorized execution path. Full market remains open.
+not an implemented execution path. Board decision
+`BB428-20261021-AUDIT-METADATA-ONLY` approves the narrowly scoped advisory
+metadata purpose and source-only tooling preparation, not runtime execution.
+Reviewed composition, a named audit owner and a fresh sole-DB grant remain
+prerequisites. Full market remains open.
 
 ## CI Workflow
 

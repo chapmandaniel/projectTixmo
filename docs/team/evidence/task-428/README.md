@@ -67,15 +67,32 @@ with no skip switches or weakened exit/assertion/security policy:
 
 ## Operational authority and safe sequencing
 
-Current tasks424/428 prohibit external network; no grant is inferred from a
-registry requirement or existing CI configuration. PM must secure Daniel's
-explicit authorization for this new outbound audit purpose (or an expressly
-approved equivalent execution environment), including permitted registry/DNS
-scope, dependency-metadata disclosure, no installs/spend and evidence handling.
-That authorization must not authorize broad test/runtime egress. PM separately
-assigns a source-only tooling implementation/review; then grants one named
-release owner a bounded sole disposable DB/Redis/HTTP runtime after checking
-active claims, existing ports/services and the reviewed427 composition.
+Board decision `BB428-20261021-AUDIT-METADATA-ONLY` on task428 records
+Blockerbuster's delegated routine operational proxy approval of the separate
+outbound audit purpose and SOURCE-ONLY compositional tooling preparation.
+This supersedes only the blanket no-external-network restriction for that
+purpose; a further personal Daniel approval is not required by habit.
+
+Scope is the exact two unfiltered npm audit commands above, unchanged candidate
+package/lockfiles and existing matching npm/dependencies, disclosing only
+required dependency metadata to `registry.npmjs.org` over HTTPS443 with necessary
+name resolution through the existing resolver. No other destinations, arbitrary
+DNS, alternate registries/proxies/redirect destinations or broad egress. The
+advisory environment must be separate, scrubbed, credential-free/service-free:
+no inherited tokens, credential-bearing npm config, DB/provider URLs or runtime
+secrets. An enforced denial is reported once, never bypassed or retried around.
+
+This is not a runtime execution grant or technical acceptance. PM first assigns
+source-only tooling implementation/offline-stub validation and requires exact
+final composed SHA independent lead+QA review, including427 and both phase
+boundaries. Then PM must verify the secure environment and assign one named
+bounded audit owner. Both audits must PASS before all10 local stages; runtime
+resume separately requires a fresh sole disposable DB/Redis/HTTP grant and
+claims/ports/service checks. App/tests retain mandatory pre-import fail-closed
+owned-loopback protection and full artifact/cleanup contracts; audit network
+authority never carries into them. Source/lock changes invalidate receipts.
+No installs/audit fix/lock mutation/spend/new service/config/CI/scheduler/
+production/provider/merge/deploy or guard bypass is approved by the decision.
 No DB owner is granted by this report. Existing CI is an option to assess,
 not proof: it currently has a single environment and PostgreSQL14/Redis7,
 not task245 PostgreSQL17/Redis8.2.10 parity or the task379 owned-runtime contract.
