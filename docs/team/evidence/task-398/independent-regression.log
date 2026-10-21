@@ -1,0 +1,1 @@
+PASS 81 independent observer cases + exact producer fragment, missing/bad challenge producer rejection, runner fresh challenge/export/current-root source checks; no real fs/proc/ss/network/signals inside candidate
