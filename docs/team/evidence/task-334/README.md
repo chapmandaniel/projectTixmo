@@ -1,23 +1,29 @@
-# Task334 Stage A — READY FOR DB, NOT RUNNING
+# Task334 Stage B — scoped guarded-local PASS
 
-Branch `tixmo/task-334-approval-storage-fixture`, isolated task334 worktree, exact product base `4ec8594850eb547dafc145a14bb1b85cdeaa235c`. Task333 remains sole DB owner; StageA includes no DB/services/Jest/integration/runtime execution. Claim334 retained, runtime acceptance unfinished.
+Exact fixture source commit `476faca3fd43a6926a289eb51c2254ea1e9cd98b`, product base `4ec8594850eb547dafc145a14bb1b85cdeaa235c`; branch `tixmo/task-334-approval-storage-fixture`. StageA source and test are unchanged by StageB; new commit adds evidence/runtime only. StageA report preserved in stage-A-README.md. PM explicitly granted sole DB slot after333 `b0bc7e8` cleanup. This task does not include333's analytics fix or claim combined-candidate acceptance.
 
-## Narrow fixture repair
+## Fresh actual checks
 
-Task326 `8726384e97d5f799ccb4acb76982cb2891a49d42` freshly attributed blocked-before-connect S3 call to approvals curation test, `upload.service.ts152` -> `approvals/service.ts995`, after authorized delete route invocation. It is not evidence of a real provider request.
+Exact entry: `bash docs/team/evidence/task-334/runtime.sh > docs/team/evidence/task-334/runtime.log 2>&1` (exit0).
 
-Only `tixmoapi2/tests/integration/approvals.test.ts` is changed. Import existing uploadService singleton; inside the responsible curation test, read the actual approval asset's private storage key from its disposable fixture row (not public DTO, which intentionally omits it). Immediately around the final real delete HTTP request, install an inert resolved `deleteFile` spy. Assert exactly one call with the actual key, original200/body/approval-removal expectations and explicit asset cascade removal. Restore the spy in finally even if an assertion fails. Existing403 noncurator refusal, owner promotion, archive/list behavior and other tests remain unchanged. Real auth/routes/service/Prisma effects stay active; upload/URL resolution and unrelated behavior are not mocked.
+Actual Jest command is retained verbatim in focused.log and runtime.sh: npm --prefix tixmoapi2 test, task334 extra-context config, runInBand, runTestsByPath **tests/integration/approvals.test.ts tests/unit/upload.service.test.ts tests/unit/upload-cleanup.test.ts**, JSON output to task334 artifact. No filtering by test name or skipped cases.
 
-No production change, storage configuration change, blanket catch/fallback or guard disable. Existing configured storage unit test at upload.service.test.ts224-234 still verifies DeleteObjectCommand exact Bucket/Key and client send; that file and all production source are unchanged. StageA cannot claim the new fixture passes until actual focused guarded SQL execution.
+**3 suites passed;28 tests passed;0 failed/skipped/runtime-error suites or tests**,17.277s. Jest exit0, guarded runtime exit0; results not interrupted, openHandles[]. No unhandled/open-handle warning observed (not detectOpenHandles instrumentation). Raw output/Jest JSON and case-level summary retained. Prisma generate and migrate deploy each exited0 before Jest; original candidate test setup applies schema only to this owned disposable database.
 
-## Checks actually completed
+Network verdict: **zero blocked attempts** (`network-verdict.json`; no blocked record file created). Task326's prior explicit S3 stack/context from responsible curation test is not repeated: same final approval delete route now calls only fixture-local inert deleteFile spy, **exactly once with the actual persisted asset key**, asserted in the test. Original200/delete body/approval row removal and new asset cascade-removal assertions pass. All original noncurator403, owner curation and archive/list assertions pass. Spy restored in finally; no blanket transport mock for other tests or production fallback change.
 
-- 173G free before copying matching candidate dependency tree from326 with cp-a into owned334 node_modules; cmp package-lock passed. No hardlink/shared generated-client writes, no dependency install/generation/network.
-- Scrubbed `env -i PATH=/home/daniel/.nvm/versions/node/v24.21.0/bin:/usr/bin:/bin CHECKPOINT_DISABLE=1 node docs/team/evidence/task-334/source-check.cjs` passed TypeScript transpile diagnostics and static fixture-scope checks only. It loads TypeScript, not app/Jest setup. No semantic/runtime/Jest pass claim.
-- Node syntax checks of task CJS helpers, focused Prettier check and git diff-check passed. Raw pure-check output retained in stage-A-checks.log. No AWS/provider/credentials/network attempt, cloud/spend/merge/deploy/global configuration action.
+Configured storage unit tests remain unchanged, pass with existing mocked S3 client and exact Bucket/Key/client-send assertions. This is inert configured delegation coverage, **not actual storage deletion or provider delivery**. No product storage code change.
 
-## Prepared guarded StageB, awaiting explicit PM DB grant
+## Isolation and provenance
 
-Task-only network-guard.cjs is copied from326's sanitized stack/time/PID/context pre-import hard denial, with334 markers. context.setup.cjs adds fixture attribution only, no smoke/analytics instrumentation. jest.config.cjs preserves original setup and adds task context. These files have syntax checks only, not executed by Jest yet. Use scrubbed environment/CHECKPOINT_DISABLE and preload this guard before imports; no arbitrary env/headers/bodies/secret values in records. Node guard is not an OS network namespace.
+Scrubbed env-i/fixed Node24 PATH before imports, CHECKPOINT_DISABLE=1, synthetic local JWT/Stripe fixtures only; no dotenv/provider secrets. Hard pre-import334 guard includes sanitized stack/time/PID/fixture context and denies nonloopback net/TLS/HTTP/fetch before connection. Its zero-attempt result is Node-instrumentation evidence, not OS/native-network isolation. No AWS/provider request or credential access, network fetch, spend or cloud action.
 
-After PM releases333 DB ownership, use fresh owned0700 disk-backed task334 PG18/RedisDB1 runtime, exact PID/listener identity/safety checks, owned generated-client provenance and mandatory cleanup. Run focused approvals + upload.service + upload-cleanup only with original guard active. Require all focused assertions PASS and **zero** blocked attempts, even if library catches a blocked call. Record exact test/product SHA/commands/counts/rawlogs and cleanup every worker/listener/socket/context file. No fullgate or provider claim. Source and QA exactSHA review remain required. Do not run before explicit grant.
+Owned matching cp-a dependency tree prepared in StageA after173G free check; copied generated-client index inode1098312/nlink1 differs from326 inode1084841/nlink1. StageB generated Prisma5.22 client only in334's owned tree using existing engine binaries, no install/download/shared generated-cache write. Schema/lockfile/client/source/test hashes retained in stage-A/B-provenance.sha256 and provenance.sha256. Product source/unit-storage files unchanged; fixture test diff relative StageA empty.
+
+PG18 and RedisDB1 use fresh0700 disk-backed workspace/runtime/task334 directory, loopback randomports. Script checks exact executable/user/PID/parent/process arguments/listener ownership before database access, validates explicit disposable targets before schema effects, and traps bounded identity-checked service cleanup. No shared Compose/global service/config action. No API server/browser was launched.
+
+## Cleanup and handoff
+
+cleanup.json proves owned PG2922559/Redis2922572 absent; ports35689/41418 closed; postmaster pidfile/sockets absent; no334 Node/Jest/API workers or per-PID context files. **DB slot released.** Runtime disk diagnostics remain private and inert, no live services. No interrupted/failing attempt occurred in334 StageB; no harness repair/retry needed.
+
+All task CJS/shell syntax, focused Prettier and diff-check pass. Command-local synthetic Git author/hooksPath only, no repo/global config mutation. Author submits **review, not done**; independent source and fresh guarded QA of exact SHA still required. This is focused local fixture/storage isolation acceptance, not full API/market, provider/staging, combined-candidate or releaseGO. No merge/deploy/scheduler/Gateway/spend action.

@@ -1,0 +1,11 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_334|tixmo334|127.0.0.1|35689
+PONG
+TASK334_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task334/run.sHoDlh pg_pid=2922559 redis_pid=2922572 pgport=35689 redisport=41418
+v24.21.0
+11.19.0
+JEST_EXIT=0
+waiting for server to shut down.... done
+server stopped
+TASK334_CLEANUP pg_pid=2922559 redis_pid=2922572 pgport=35689 redisport=41418
