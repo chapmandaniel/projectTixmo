@@ -191,3 +191,37 @@ Responsive inspection covers 320, 375, 390, 768, 820, 1024 and 1440px; the 375px
 price/action crowding found during inspection was corrected. Exact-commit
 independent review and final browser evidence belong in the integration handoff.
 No new backend, checkout or logo behavior is introduced.
+
+## Information grouping and purchase context
+
+Follow-up from `2ca7566`: the page was reviewed around customer decisions rather
+than typography alone. Ownership adds `FestivalProgramEvent.jsx` as the shared
+storefront row pattern; no backend or data-model work is included.
+
+- The two ticket destinations are compact navigation. The program has one
+  introduction, and date/venue controls share a labelled filter group.
+- Each event separates identity and schedule from admission. The admission group
+  contains its event-ticket price, event-page action and selected-pass coverage.
+  Exclusion explicitly names the selected pass, avoiding an ambiguous separate
+  ticket label. The program identifies which pass coverage is being compared.
+- A selected pass has dated groups of included shows with local start times,
+  labelled admission details, and a separate named exclusion group. Late Friday
+  events stay under Friday in the festival timezone. Unscheduled membership
+  displays dates TBA rather than promising a known number of days.
+- The purchase summary names the selected pass, its unit price, quantity and
+  subtotal together on a distinct surface. At narrow widths, option descriptions
+  use the row width, and product details sit above the labelled quantity control.
+- Child event pages keep a compact festival breadcrumb. Event-only admission and
+  pass alternatives sit inside the ticket selector. The floating ticket shortcut
+  appears when the selector is off-screen and hides while it is in view, so it
+  does not cover or repeat the visible purchase controls.
+
+Verification includes 233 frontend tests, the unchanged 926-entry design guard,
+production build, preview-fixture isolation, browser checks at 320–1440px and the
+390×568px shortcut visibility/focus journey. Acceptance assertions verify dated
+pass membership, named exclusions, admission grouped with event actions, selected
+product identity and event-scope information inside ticket selection. The hook
+visibility test also checks observer cleanup. A consecutive-control regression
+check verifies date and venue are retained when changed before router rendering
+settles. Exact reviewed SHA and independent
+review results are recorded in the local integration handoff.

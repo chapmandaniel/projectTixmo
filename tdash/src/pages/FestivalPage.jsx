@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Link,
     useLocation,
@@ -10,25 +10,19 @@ import {
     ArrowLeft,
     ArrowRight,
     CalendarDays,
-    Check,
     MapPin,
     Ticket,
 } from 'lucide-react';
 import { StorefrontBrand } from '../components/storefront/StorefrontPrimitives';
 import FestivalPassSelector from '../components/storefront/FestivalPassSelector';
+import FestivalProgramEvent from '../components/storefront/FestivalProgramEvent';
 import {
     festivalDays,
-    festivalEventPrice,
     festivalEvents,
     festivalPasses,
     passCoveredEvents,
 } from '../lib/festivalProgram';
-import {
-    eventArtwork,
-    eventTimeZone,
-    formatEventMoney,
-    getEventSaleState,
-} from '../lib/publicEvent';
+import { eventArtwork, eventTimeZone } from '../lib/publicEvent';
 import { getPaymentCurrency, getPolicyLinks } from '../lib/runtimeConfig';
 import { EventOnSaleView } from './EventOnSalePage';
 import {
@@ -43,6 +37,10 @@ export const FestivalPageView = ({
     onPassCheckout,
 }) => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const latestFilters = useRef(searchParams);
+    useEffect(() => {
+        latestFilters.current = searchParams;
+    }, [searchParams]);
     const { hash } = useLocation();
     const [imageFailed, setImageFailed] = useState(false);
     const [now, setNow] = useState(Date.now());
@@ -88,13 +86,14 @@ export const FestivalPageView = ({
     const currency = getPaymentCurrency();
     const policies = getPolicyLinks();
     const artwork = eventArtwork(festival);
-    const money = (value) => formatEventMoney(value, currency);
     const hrefForEvent = (event) =>
         eventHref ? eventHref(event) : `/e/${encodeURIComponent(event.slug)}`;
     const setFilter = (key, value) => {
-        const next = new URLSearchParams(searchParams);
+        // Keep consecutive control changes together before router rendering settles.
+        const next = new URLSearchParams(latestFilters.current);
         if (value === 'all') next.delete(key);
         else next.set(key, value);
+        latestFilters.current = next;
         setSearchParams(next, { replace: true });
     };
 
@@ -202,18 +201,12 @@ export const FestivalPageView = ({
                         aria-label="Festival tickets"
                     >
                         <a href="#festival-program">
-                            <span>
-                                <strong>Individual events</strong>
-                                <span>Book an event’s tickets</span>
-                            </span>
+                            <strong>Individual events</strong>
                             <ArrowDown size={19} aria-hidden="true" />
                         </a>
                         {passes.length > 0 && (
                             <a href="#festival-passes">
-                                <span>
-                                    <strong>Festival passes</strong>
-                                    <span>Compare pass coverage</span>
-                                </span>
+                                <strong>Festival passes</strong>
                                 <ArrowDown size={19} aria-hidden="true" />
                             </a>
                         )}
@@ -231,20 +224,49 @@ export const FestivalPageView = ({
                         >
                             <div className="sf-program-heading">
                                 <div>
-                                    <h2 id="program-heading">
-                                        Individual events
-                                    </h2>
+                                    <h2 id="program-heading">The program</h2>
                                     <p>
                                         Tickets are sold on each event’s own
                                         page.
                                     </p>
                                 </div>
+                            </div>
+                            <div
+                                className="sf-program-filters"
+                                role="group"
+                                aria-label="Program filters"
+                            >
+                                <div
+                                    className="sf-date-filters"
+                                    role="group"
+                                    aria-label="Filter events by date"
+                                >
+                                    <button
+                                        type="button"
+                                        aria-pressed={selectedDay === 'all'}
+                                        onClick={() => setFilter('date', 'all')}
+                                    >
+                                        All dates
+                                    </button>
+                                    {days.map((day) => (
+                                        <button
+                                            type="button"
+                                            key={day.key}
+                                            aria-pressed={
+                                                selectedDay === day.key
+                                            }
+                                            onClick={() =>
+                                                setFilter('date', day.key)
+                                            }
+                                        >
+                                            {day.shortLabel}
+                                        </button>
+                                    ))}
+                                </div>
                                 <label className="sf-venue-filter">
-                                    <span className="sf-visually-hidden">
-                                        Filter events by venue
-                                    </span>
-                                    <MapPin size={15} aria-hidden="true" />
+                                    <span>Venue</span>
                                     <select
+                                        aria-label="Filter events by venue"
                                         value={selectedVenue}
                                         onChange={(e) =>
                                             setFilter('venue', e.target.value)
@@ -262,31 +284,6 @@ export const FestivalPageView = ({
                                     </select>
                                 </label>
                             </div>
-                            <div
-                                className="sf-date-filters"
-                                role="group"
-                                aria-label="Filter events by date"
-                            >
-                                <button
-                                    type="button"
-                                    aria-pressed={selectedDay === 'all'}
-                                    onClick={() => setFilter('date', 'all')}
-                                >
-                                    All dates
-                                </button>
-                                {days.map((day) => (
-                                    <button
-                                        type="button"
-                                        key={day.key}
-                                        aria-pressed={selectedDay === day.key}
-                                        onClick={() =>
-                                            setFilter('date', day.key)
-                                        }
-                                    >
-                                        {day.shortLabel}
-                                    </button>
-                                ))}
-                            </div>
                             <div className="sf-program-caption">
                                 <span>
                                     Times are local to{' '}
@@ -297,6 +294,19 @@ export const FestivalPageView = ({
                                     {visibleCount === 1 ? 'event' : 'events'}
                                 </span>
                             </div>
+                            {selectedPass && (
+                                <p className="sf-program-pass-context">
+                                    <span>Pass coverage:</span>{' '}
+                                    <strong>{selectedPass.name}</strong>
+                                    <a href="#festival-passes">
+                                        Change pass{' '}
+                                        <ArrowRight
+                                            size={14}
+                                            aria-hidden="true"
+                                        />
+                                    </a>
+                                </p>
+                            )}
                             {visibleDays.map((day) => (
                                 <section
                                     className="sf-program-day"
@@ -325,143 +335,22 @@ export const FestivalPageView = ({
                                         </span>
                                     </div>
                                     <div>
-                                        {day.events.map((event) => {
-                                            const sale = getEventSaleState(
-                                                event,
-                                                now,
-                                            );
-                                            const price = festivalEventPrice(
-                                                event,
-                                                now,
-                                            );
-                                            return (
-                                                <article
-                                                    className="sf-program-event"
-                                                    key={event.id}
-                                                >
-                                                    <div className="sf-program-event-detail">
-                                                        <div className="sf-program-event-title">
-                                                            <h4>
-                                                                <Link
-                                                                    to={hrefForEvent(
-                                                                        event,
-                                                                    )}
-                                                                >
-                                                                    {event.name}
-                                                                </Link>
-                                                            </h4>
-                                                        </div>
-                                                        <div className="sf-program-event-facts">
-                                                            <div className="sf-program-time">
-                                                                {day.key ===
-                                                                'tba' ? (
-                                                                    'TBA'
-                                                                ) : (
-                                                                    <time
-                                                                        dateTime={
-                                                                            event.startDatetime
-                                                                        }
-                                                                    >
-                                                                        {new Intl.DateTimeFormat(
-                                                                            undefined,
-                                                                            {
-                                                                                timeZone:
-                                                                                    eventTimeZone(
-                                                                                        festival,
-                                                                                    ),
-                                                                                hour: 'numeric',
-                                                                                minute: '2-digit',
-                                                                            },
-                                                                        ).format(
-                                                                            new Date(
-                                                                                event.startDatetime,
-                                                                            ),
-                                                                        )}
-                                                                    </time>
-                                                                )}
-                                                            </div>
-                                                            <p className="sf-program-venue">
-                                                                <span>
-                                                                    {event.venue
-                                                                        ?.name ||
-                                                                        'Venue to be announced'}
-                                                                </span>
-                                                                <span>
-                                                                    {event.category ||
-                                                                        'Live event'}
-                                                                </span>
-                                                            </p>
-                                                        </div>
-                                                        {selectedPass && (
-                                                            <p
-                                                                className={`sf-program-coverage ${coveredIds.has(event.id) ? 'is-included' : ''}`}
-                                                            >
-                                                                {coveredIds.has(
-                                                                    event.id,
-                                                                ) && (
-                                                                    <Check
-                                                                        size={
-                                                                            15
-                                                                        }
-                                                                        aria-hidden="true"
-                                                                    />
-                                                                )}
-                                                                {coveredIds.has(
-                                                                    event.id,
-                                                                )
-                                                                    ? `Included in ${selectedPass.name.toLowerCase()}`
-                                                                    : 'Separate event ticket'}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    <div className="sf-program-event-action">
-                                                        <p
-                                                            className={
-                                                                price === null
-                                                                    ? 'sf-program-unavailable'
-                                                                    : ''
-                                                            }
-                                                        >
-                                                            {price !== null ? (
-                                                                price === 0 ? (
-                                                                    'Free tickets'
-                                                                ) : (
-                                                                    <>
-                                                                        <span>
-                                                                            From
-                                                                        </span>{' '}
-                                                                        <strong>
-                                                                            {money(
-                                                                                price,
-                                                                            )}
-                                                                        </strong>
-                                                                    </>
-                                                                )
-                                                            ) : sale.available ? (
-                                                                'Tickets unavailable'
-                                                            ) : (
-                                                                sale.label
-                                                            )}
-                                                        </p>
-                                                        <Link
-                                                            className="sf-event-page-link"
-                                                            to={hrefForEvent(
-                                                                event,
-                                                            )}
-                                                            aria-label={`${price !== null ? 'View event & tickets' : 'View event'}: ${event.name}`}
-                                                        >
-                                                            {price !== null
-                                                                ? 'View event & tickets'
-                                                                : 'View event'}
-                                                            <ArrowRight
-                                                                size={15}
-                                                                aria-hidden="true"
-                                                            />
-                                                        </Link>
-                                                    </div>
-                                                </article>
-                                            );
-                                        })}
+                                        {day.events.map((event) => (
+                                            <FestivalProgramEvent
+                                                key={event.id}
+                                                event={event}
+                                                timeZone={eventTimeZone(
+                                                    festival,
+                                                )}
+                                                selectedPass={selectedPass}
+                                                included={coveredIds.has(
+                                                    event.id,
+                                                )}
+                                                href={hrefForEvent(event)}
+                                                currency={currency}
+                                                now={now}
+                                            />
+                                        ))}
                                     </div>
                                 </section>
                             ))}
@@ -478,10 +367,11 @@ export const FestivalPageView = ({
                                             onClick={() => {
                                                 const next =
                                                     new URLSearchParams(
-                                                        searchParams,
+                                                        latestFilters.current,
                                                     );
                                                 next.delete('date');
                                                 next.delete('venue');
+                                                latestFilters.current = next;
                                                 setSearchParams(next, {
                                                     replace: true,
                                                 });
