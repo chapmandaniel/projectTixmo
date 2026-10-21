@@ -1,0 +1,7 @@
+PG pid=2694137 absent
+Redis pid=2694150 absent
+API pid=2694303 absent
+port=28215 no TCP listener
+port=47154 no TCP listener
+port=42157 no TCP listener
+postmaster.pid absent; disk run mode0700; no browser started

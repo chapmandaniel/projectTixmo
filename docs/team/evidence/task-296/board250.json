@@ -1,0 +1,54 @@
+{
+  "id": 250,
+  "project": "tixmo",
+  "title": "Resolve scoped onsale business and recovery choices via delegated proxy",
+  "body": "Oct22 plan decision: individual-event-only scope, CAD synthetic vs actual settlement currency, fee/tax/payout responsibility, immediate eligible full-refund vs organizer approval, cancellation exceptions, selfservice vs identitychecked support recovery. Route routine scoped zero-spend recommendation to Blockerbuster first; preserve prior policy73, do not invent legal/entity consent or actual event facts. Missing staffing/device/provider access stays existing61. Proposed conservative engineering baseline only: individual events, synthetic CAD, no invented taxes/fees/payouts, current supported refund flow pending policy, recovery spec not weaker auth. Actual published commercial policy remains blocked absent valid scoped decision. Existing budget=0 new spend, financial exposure=0 execution authorized; no live transactions. Record actual decision not admission.",
+  "status": "doing",
+  "priority": 1,
+  "assignee": "tixmo-pm",
+  "claimed_by": "tixmo-pm",
+  "claimed_at": 1792556594.4627082,
+  "parent_id": 237,
+  "due": "2026-10-22",
+  "created_by": "tixmo-pm",
+  "created_at": 1792556501.6069634,
+  "updated_at": 1792556594.4626868,
+  "labels": [
+    "nov9-onsale"
+  ],
+  "depends_on": [],
+  "waiting_on": [],
+  "subtasks": [],
+  "events": [
+    {
+      "ts": 1792556501.6070774,
+      "actor": "tixmo-pm",
+      "kind": "created",
+      "body": "Resolve scoped onsale business and recovery choices via delegated proxy"
+    },
+    {
+      "ts": 1792556514.1278217,
+      "actor": "tixmo-pm",
+      "kind": "claim",
+      "body": "todo -> doing"
+    },
+    {
+      "ts": 1792556538.5531301,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "Requested scoped zero-spend proxy decision from Blockerbuster rund213cabe-e35a-4674-ac95-fb65f9732778, queued only NOT approval; return agent:tixmo-pm:main. Prior73 human-approved conservative role/late-paid manual reconciliation remains binding. Continue238/243; no dependent commercial/policy change."
+    },
+    {
+      "ts": 1792556558.5368447,
+      "actor": "codex",
+      "kind": "comment",
+      "body": "DECISION \u2014 BB250-20261021-LOCAL-ONS ALE (identifier: BB250-20261021-LOCAL-ONSALE). APPROVED scoped routine engineering choices, not commercial publication or release acceptance. Daniel delegated proxy authority applies to already-authorized Tixmo work. Evidence reviewed: live tasks250/73/61 and NOVEMBER_9_ONSALE_PLAN sections1/3/9; memory search found no hits. No source/runtime tests rerun or external operations performed.\n\n1. Scope/currency: APPROVE individual-event-only local development and synthetic CAD fixtures, explicitly labelled test assumptions. Use isolated existing zero-cost local resources and simulators only. Do not expand to multi-event commerce. CAD fixtures do not decide actual event, charge, settlement or payout currency. Do not invent tax/fee inclusivity, allocation, payout responsibility or commercial prices; keep missing commercial inputs explicit rather than silently setting them to zero or publishing defaults.\n\n2. Refund/cancellation: APPROVE local reproduction, contract/spec and simulator tests for the current supported refund flow and full/partial external refunds, pending/failed refunds, disputes and cancellation exceptions. Existing behavior is an observed test subject, not an approved refund entitlement. Do not choose immediate automatic refund versus organizer approval without source-backed eligibility/authority. No double refund, false success, financial retries on uncertain outcome, or unsupported endpoint instructions. Unknown financial state remains a visible owned reconciliation exception. Event cancellation must not be used as pause-sales. Source-backed policy73 remains authoritative: no-org ADMIN-only global access; no global OWNER expansion; promoter scoped confirm/own-order cancel; paid-after-expiry explicit manual reconciliation with NO automatic financial refund. No new cancellation entitlement or automatic recovery/refund exception approved.\n\n3. Account recovery: CHOOSE secure self-service through existing authenticated or independently verified ownership mechanisms as the conservative LOCAL design target, with fail-closed behavior when ownership is not established. Preserve current auth/tenant boundaries, session/credential protections and no cross-account QR access. Specify local lost-credential/session-expiry/retrieval/resend cases and negative tests. Support-assisted recovery is a proposed fallback only: no identity-check bypass or manual reset/reissue permission is granted. If existing self-service cannot meet acceptance, return the concrete deficiency and proposed identity-check process for review; do not silently promise staffed support. Account recovery is distinct from payment/fulfillment recovery, which retains73.\n\n4. Remaining commercial facts/owners: tixmo-pm collects existing authorized business/payment owner evidence for actual event/charge/settlement/payout currencies and supported provider mode; legal/entity jurisdiction and tax responsibility; inclusive/exclusive fee treatment, fee bearer and payout model; refund eligibility/window, used/transferred restrictions, full/partial and fee treatment, decision authority, cancellation/dispute obligations and exception owner. No source-backed authority for those commercial selections was supplied in250 or the reviewed plan/73. PM obtains the actual recovery/support owner, available coverage, accepted target and approved identity-verification/escalation process before promising assisted recovery. Proxy can review a concrete bounded proposal once those facts exist; do not duplicate existing61 asks or ask Daniel merely by habit. No legal/identity/third-party consent fabricated.\n\nFinancial exposure authorized ZERO: no new spending, recurring commitments, provider calls, orders, live money or external notifications. No publishing/push/public PR, merge, deploy, production/config action, actual event facts or live refund authorized. Preserve BB61-STAGING-ONLY and all later61 factual corrections: existing Railway origins/read-only access are known, but provenance/runtime/CI and named participants remain separately gated. QA, exact-candidate lead review and all technical acceptance remain mandatory; release NO-GO unchanged. PM retains250 ownership, links this actual decision into237/243 and may continue local238/243 within these limits; commercial and participant gaps remain in their existing records."
+    },
+    {
+      "ts": 1792556594.4626343,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "PM received actual proxy decision BB250-20261021-LOCAL-ONSALE and verified decision recorded here. Accepted only scoped LOCAL individual-event/synthetic CAD development, conservative verified-ownership self-service design, and refund reproductions/specs/simulator tests. No commercial refund entitlement, currency/tax/fee/payout terms or assisted recovery privileges selected. ZERO financial exposure; policy73 and61 remain binding; exact-SHA independent QA mandatory. Remaining commercial facts stay unresolved here; no duplicate asks."
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "id": 73,
+  "project": "tixmo",
+  "title": "Resolve disputed global-role and paid-after-expiry contracts",
+  "body": "Evidence report59 at87a2408: permission matrix allows global OWNER/ADMIN but tenantScope allows only no-org ADMIN; matrix groups promoter cancel with confirm but current cancel controller treats promoter as buyer. Expiry creates15-minute hold, confirm lacks expiry check; no approved paid-after-expiry automatic recovery contract. Needed only for disputed positives/expiry behavior in65/68, not ordinary scoped-negative tests. Recommendation preserve global ADMIN-only current helper; no global OWNER expansion, promoter confirm scoped and cancel own-order only until explicit approval; late paid order enters explicit manual reconciliation without automatic financial refund. No financial action or permission expansion occurs from this ticket. Daniel decision required; ordinary source/mock work continues. No new runtime question:57 already owns environment access.",
+  "status": "done",
+  "priority": 1,
+  "assignee": null,
+  "claimed_by": null,
+  "claimed_at": null,
+  "parent_id": null,
+  "due": null,
+  "created_by": "tixmo-pm",
+  "created_at": 1792457232.0172486,
+  "updated_at": 1792462312.1503718,
+  "labels": [
+    "decision"
+  ],
+  "depends_on": [],
+  "waiting_on": [],
+  "subtasks": [],
+  "events": [
+    {
+      "ts": 1792457232.0173538,
+      "actor": "tixmo-pm",
+      "kind": "created",
+      "body": "Resolve disputed global-role and paid-after-expiry contracts"
+    },
+    {
+      "ts": 1792457232.0855582,
+      "actor": "tixmo-pm",
+      "kind": "ask",
+      "body": "{\"question\": \"Approve the conservative contracts: no-org ADMIN only for global access; promoter confirm scoped/cancel own-only; paid-after-expiry goes to explicit manual reconciliation with no automatic refund? Or specify the intended alternatives. These decisions gate only disputed behavior in65/68.\", \"return_to\": \"human\", \"previous_status\": \"todo\"}"
+    },
+    {
+      "ts": 1792462093.4267077,
+      "actor": "human",
+      "kind": "answer",
+      "body": "I approve"
+    },
+    {
+      "ts": 1792462093.4269063,
+      "actor": "human",
+      "kind": "status",
+      "body": "blocked -> todo"
+    },
+    {
+      "ts": 1792462312.0286827,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "PM inspected new human I approve answer to exact conservative-contract question. Approved policy: only no-org ADMIN global access, no global OWNER expansion; promoter confirm scoped and cancel own-order only; paid-after-expiry explicit manual reconciliation, no automatic refund. This records policy only and authorizes no financial action. Preserve current negative-scope behavior. Any implementation/reproduction remains separately assigned and exact-commit reviewed;57 runtime work taking priority this cycle."
+    },
+    {
+      "ts": 1792462312.1504135,
+      "actor": "tixmo-pm",
+      "kind": "status",
+      "body": "todo -> done"
+    },
+    {
+      "ts": 1792462312.1504464,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "Daniel approved exact conservative-contract recommendation in human answer: no-org ADMIN-only global; promoter scoped confirm/own-order cancel; late-paid explicit manual reconciliation/no automatic refund. Decision resolved only, no implementation or financial action claimed. Separate reviewed source tasks govern enforcement."
+    }
+  ]
+}

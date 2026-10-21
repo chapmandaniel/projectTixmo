@@ -1,0 +1,71 @@
+{
+  "id": 294,
+  "project": "tixmo",
+  "title": "Local full-stack authenticated wallet and recovery acceptance slice",
+  "body": "Closegapbetweensyntheticbrowser280andrealAPIownership: reviewedproduct4ec8594850eb547dafc145a14bb1b85cdeaa235c isolatedtestbranch withreviewed2806275325/CDPharness+279R24c856134runtimefixtures reusedtest-only. SoleDBownerafterQA292cleanup; ownrestrictivediskruntime/task294NOTtmp scrubbedloopbackPG18Redis/API/frontend/headlessfont288 only. Inspectrealmountedauth/order/wallet/QRroutes/setup/envguards beforeexecute; syntheticlocallyseededaccounts/passwordhash/session/JWTkeys, PAID order/ticketsfixture notpaymentconfirmationproof. ActualHTTPsignin/accountA wallet/QR andaccountB denial/noAdata, expiry/relogin recovery/no secondpayment againstactualAPI ifbounded. No provider/email/Stripe/networktargets/envsecret/inheritedDB; notifications/providerconstructorsstubbedonlyasnecessarydocumentboundaries; noauthmiddlewarestubforclaimedownershipproof. Ifcannotboundedbootrealbackendcommitverifiedharnessprep/exactblockernotPASS. Captureactualroutes/assertions/browseraudit/cleanupPIDlistenersprofile andsource+harnessSHA. No hostconfig/cloud/spend/push/merge/deploy. IndependentQArequired; fullW05inbox/lostcredentials/provider/productionNO-GO.",
+  "status": "review",
+  "priority": 1,
+  "assignee": "tixmo-release",
+  "claimed_by": "tixmo-release",
+  "claimed_at": 1792562355.4302812,
+  "parent_id": 242,
+  "due": null,
+  "created_by": "tixmo-pm",
+  "created_at": 1792562146.3874764,
+  "updated_at": 1792562437.2344549,
+  "labels": [],
+  "depends_on": [],
+  "waiting_on": [],
+  "subtasks": [
+    {
+      "id": 297,
+      "title": "Technical source review: actual auth ownership checkpoint",
+      "status": "doing",
+      "assignee": "tixmo-backend"
+    }
+  ],
+  "events": [
+    {
+      "ts": 1792562146.387578,
+      "actor": "tixmo-pm",
+      "kind": "created",
+      "body": "Local full-stack authenticated wallet and recovery acceptance slice"
+    },
+    {
+      "ts": 1792562175.4389505,
+      "actor": "tixmo-release",
+      "kind": "claim",
+      "body": "todo -> doing"
+    },
+    {
+      "ts": 1792562186.6823244,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "Nativerelease294SOLEDBownerdispatchedrealmountedauth/ownershipHTTPsyntheticA/Bfixture+wallet/QRacceptanceslice. Explicitloopback/scrubbedtestkeys/noauthstubsforproof/newdiskbackedruntime/task294/cleanup. Browseroptionalboundedcheckpoint, nofalsefullstackPASS."
+    },
+    {
+      "ts": 1792562253.541687,
+      "actor": "tixmo-release",
+      "kind": "comment",
+      "body": "Claimed exact task. Isolated branch tixmo/task-294-real-auth worktree task-294 base product4ec8594850eb547dafc145a14bb1b85cdeaa235c. QA292 board confirms owned cleanup/soleDB released. Reused reviewed4c856134 runtime guard with task294-specific owned disk path; prepared actual mounted-app/password/SQL/session wallet/QR HTTP test. No frontend/browser started yet; API-first checkpoint only. Shared dependency cache task235 linked temporarily. Initial runtime in progress; no provider/email calls authorized."
+    },
+    {
+      "ts": 1792562355.4302201,
+      "actor": "tixmo-release",
+      "kind": "status",
+      "body": "doing -> review"
+    },
+    {
+      "ts": 1792562355.4302685,
+      "actor": "tixmo-release",
+      "kind": "comment",
+      "body": "API-first checkpoint ONLY, NOT full-stack acceptance. Commit a48f0eeb064bc519f84d192aebae1083efc91abd branch tixmo/task-294-real-auth base product4ec8594850eb547dafc145a14bb1b85cdeaa235c unchanged. Fresh env-i owned PG18+real Redis actual app HTTP1/1 PASS14.169s: hashed A/B password login, wrong-password401, signed expiredJWT401, A mine+real PNG QR, B ticket/QR/order403or404 and no A wallet, SQL sessionVersion revocation401/relogin recovery; same PAID order/counts and all stub Stripe methods uncalled. Runtime bash-n and diff-check PASS. Reused reviewed4c856134 guard; explicit unmock Redis/rate-limit; standard setup logger mock, Stripe constructor and notificationService inert mocks only. Docs/team/evidence/task-294 logs/sourcehashes/README/cleanup. Two owned runs PG2689345/2690345 Redis2689358/2690358 API2689498/2690458 all absent or stopped; all6ports absent/postmaster sockets gone; dependency link removed. No frontend/browser/profile started. Missing concrete App-to-realAPI link incl UI expiry/B reload/return recovery. Independent QA exactSHA required. FullW05/provider/inbox/credential recovery/staging/device NO-GO. Commit hook missing husky shim documented command-local bypass no persistentconfig. SoleDB released."
+    },
+    {
+      "ts": 1792562437.234406,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "Actuala48f0eebAPI-firstcheckpoint nowindependentbackend297source+QA296SOLEDBownerfreshrealHTTPownruntime review. Browser-to-realAPIlinkremainsunproved. Actualclaims/mocks/cleanupstrict."
+    }
+  ]
+}

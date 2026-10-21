@@ -1,0 +1,27 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-qa/runtime/task296/run.IHBcK4/jest-cache --runInBand --runTestsByPath tests/integration/wallet-auth.local.test.ts
+
+  console.log
+    TASK294_API_LISTENER 2694303 { address: '127.0.0.1', family: 'IPv4', port: 42157 }
+
+      at Object.<anonymous> (tests/integration/wallet-auth.local.test.ts:23:11)
+
+  console.log
+    TASK294_ASSERTIONS real login/wallet/png QR/B denial/expired JWT401/wrong password401/session revocation/relogin/no financial mutation/no provider calls PASS
+
+      at Object.<anonymous> (tests/integration/wallet-auth.local.test.ts:57:11)
+
+  console.log
+    TASK294_API_CLOSED
+
+      at Object.<anonymous> (tests/integration/wallet-auth.local.test.ts:17:11)
+
+PASS tests/integration/wallet-auth.local.test.ts (13.73 s)
+  ✓ HTTP password login A wallet/QR, B isolation, session revocation and re-login are read-only (7503 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        13.97 s
+Ran all test suites within paths "tests/integration/wallet-auth.local.test.ts".

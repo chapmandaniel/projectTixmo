@@ -1,0 +1,157 @@
+{
+  "id": 61,
+  "project": "tixmo",
+  "title": "Prepare actionable release-evidence handoff for nine open launch gates",
+  "body": "PM ran node scripts/evidence-status.mjs --json --strict at exact c35a6f84512b274b2ae9563fda57169770f08c18: exit1, readyForGoNoGo=false, nine gaps: eight missing target/manual artifacts and local checkout config explicitly non-launch. Existing23 release inventory is complete but no tracked target-evidence execution handoff exists. Prepare a local release-evidence ticket/checklist on isolated task branch with exact candidate SHA, individual owners, required target inputs, scanner-device participation, backup restore approval, policy approval and uptime run acceptance. Reuse existing templates/runbooks; do not fabricate evidence or check off historical June artifacts as current. Explicitly separate authorized local preparation from unavailable target/runtime inputs and approval-required publication/deploy/monitor changes/restore tests. No external actions, provisioning, real secrets, target calls, schedule/config changes, merge or deploy. Return committed preparation artifact to review; split actual execution only after target and authority exist. Queued, NOT dispatched: two specialist lanes allocated to59/60.",
+  "status": "blocked",
+  "priority": 1,
+  "assignee": "human",
+  "claimed_by": null,
+  "claimed_at": null,
+  "parent_id": null,
+  "due": null,
+  "created_by": "tixmo-pm",
+  "created_at": 1792457095.5286348,
+  "updated_at": 1792556890.3596227,
+  "labels": [
+    "release-evidence"
+  ],
+  "depends_on": [],
+  "waiting_on": [],
+  "subtasks": [
+    {
+      "id": 74,
+      "title": "Independently review release evidence handoff61 at f750366",
+      "status": "done",
+      "assignee": "tixmo-qa"
+    }
+  ],
+  "events": [
+    {
+      "ts": 1792457095.5287435,
+      "actor": "tixmo-pm",
+      "kind": "created",
+      "body": "Prepare actionable release-evidence handoff for nine open launch gates"
+    },
+    {
+      "ts": 1792457243.2506924,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "Fresh strict evidence gate ran at c35a6f84512b274b2ae9563fda57169770f08c18, exit1: eight missing target/manual artifacts plus local config explicitly non-launch. Candidate not readyForGoNoGo. Queued local preparation only, no target writes/approval implied."
+    },
+    {
+      "ts": 1792457476.9343636,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "Dispatching native tixmo-release specialist: isolated branch from exact reviewed c35a6f84512b274b2ae9563fda57169770f08c18. Local handoff document only, nine strict launch gaps, existing templates, owners/inputs/acceptance and authority separation. No target calls/config/runtime/provisioning. Submit exact committed artifact for independent review; no launch approval."
+    },
+    {
+      "ts": 1792457499.7872758,
+      "actor": "tixmo-release",
+      "kind": "claim",
+      "body": "todo -> doing"
+    },
+    {
+      "ts": 1792457508.1512172,
+      "actor": "tixmo-release",
+      "kind": "comment",
+      "body": "Claimed task61; isolated tixmo/task-61-release-evidence at /home/daniel/projects/projectTixmo/worktrees/task-61 from exact reviewed c35a6f84512b274b2ae9563fda57169770f08c18. Own new docs/team/RELEASE_EVIDENCE_HANDOFF_61.md only. Existing evidence scripts/templates/runbooks adequate; no custom tooling. Inspected script before strict run; target/runtime and approval boundaries remain closed."
+    },
+    {
+      "ts": 1792457575.991009,
+      "actor": "tixmo-release",
+      "kind": "status",
+      "body": "doing -> review"
+    },
+    {
+      "ts": 1792457575.9910429,
+      "actor": "tixmo-release",
+      "kind": "comment",
+      "body": "Prepared documentation-only handoff at f75036662a7b097d20f0d2b920ca590ea5765c5f, branch tixmo/task-61-release-evidence, worktree /home/daniel/projects/projectTixmo/worktrees/task-61, exact parent/reviewed product candidate c35a6f84512b274b2ae9563fda57169770f08c18. Only docs/team/RELEASE_EVIDENCE_HANDOFF_61.md added. Existing ticket/template/runbooks reused; nine individually owned gaps, target/runtime/human-device prerequisites, backup second approval, policy signoffs/publication and uptime manual+scheduled/alert/Sentry acceptance. Local prep separated from unavailable inputs and approval-required target/deploy/publication/monitor/restore operations. Inspected evidence script first; fresh node scripts/evidence-status.mjs --json --strict at candidate exit1, 9 gaps, readyForGoNoGo=false; post-doc strict rerun same failure expected. Important bounded diagnosis: local config nonLaunchEvidence warning is unconditional, so eight target artifacts alone cannot yield zero strict gaps; lead must separately review checker-contract decision, no script change/weakening here. Historical June pass labels explicitly not fresh passes. git diff HEAD^ HEAD --check exit0; relative documentation links verified and headings exactly1..9; clean worktree. No target calls, env/secret reads, services/DB/config/scheduler/Gateway/provisioning/merge/push/deploy. Independent exact-SHA documentation review required; leave61 review, not done. PM obtains missing authority/target inputs then splits execution; current launch remains NO-GO."
+    },
+    {
+      "ts": 1792457627.211793,
+      "actor": "tixmo-qa",
+      "kind": "comment",
+      "body": "APPROVE independent documentation QA74 of EXACT f75036662a7b097d20f0d2b920ca590ea5765c5f vs c35a6f84512b274b2ae9563fda57169770f08c18. Separate isolated branch tixmo/task-74-qa-release-handoff, /home/daniel/projects/projectTixmo/worktrees/task-74-qa-release-handoff. Complete diff adds ONLY docs/team/RELEASE_EVIDENCE_HANDOFF_61.md. No blocking findings. All nine gap headings1..9 match local non-launch plus eight target/manual artifact families; individually assigned accountable roles, unavailable target/runtime/human inputs and Daniel authority explicit. Scanner actual device/operator/offline reconciliation and gate-lead risk acceptance, backup isolated restore/second operator and approval, policy named counsel/payment/support/security/product approvals/publication, uptime manual+genuine scheduled runs/alert delivery/staging Sentry/cadence decision align with linked runbooks. Historical June pass labels expressly not current evidence; no readiness/launch approval fabricated.\nACTUAL STATIC CHECKS: cat handoff and scripts/evidence-status.mjs exit0; cat uptime/policy/scanner/backup runbooks plus rg schedule/cron/package entrypoints exit0. Python pathlib/re/subprocess link+heading+Git assertions exit0: all10 relative Markdown links resolve, headings exactly1..9; git rev-parse HEAD exact supplied SHA, git diff --name-status BASE HEAD only new handoff, git diff --check BASE HEAD exit0, git status --short exit0/empty. Additional Python source assertions exit0: unconditional nonLaunchEvidence warning, local item nonLaunchEvidence:true, blockers include any warnings, readyForGoNoGo only at zero blockers, strict nonzero exit, lexical selection and all8 target artifact directories confirmed. Independent source reasoning: warning is added regardless of local file existence/result and cannot be cleared by supplying eight target passes; reported checker-contract conflict is accurate. No checker repair or checker execution performed by QA; strict9-gap exit1 in document remains attributed author/PM historical execution, not a new QA runtime claim.\nLIMITS: static source/documentation review only. No dependencies installed, tests/services/DB/target calls/environment/secret/config reads or changes, approval/publication/monitor/restore execution, merge/push/deploy. Preparation accepted, all actual launch evidence remains open/NO-GO. Close74 only;61 stays PM-owned for closure."
+    },
+    {
+      "ts": 1792457640.448478,
+      "actor": "tixmo-pm",
+      "kind": "status",
+      "body": "review -> done"
+    },
+    {
+      "ts": 1792457640.448516,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "PM closes local preparation only at EXACT f75036662a7b097d20f0d2b920ca590ea5765c5f after independent QA74 APPROVE in separate task74 worktree. Nine gap sections/owners/inputs/approval boundaries and10 relative links verified, clean diff/tree. Base c35a6f8 explicitly recorded; successor code60 d6b513a needs future refreshed candidate evidence. Strict gate still exit1 with9 gaps and readyForGoNoGo=false; historical local pass labels not fresh runs. No target inputs, deploy, services, restore, monitoring, policy approval or launch authorization satisfied. Reported unconditional checker warning source-confirmed; separate lead contract task queued next."
+    },
+    {
+      "ts": 1792457648.0086882,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "PM accepted independently reviewed documentation deliverable EXACT f75036662a7b097d20f0d2b920ca590ea5765c5f after QA74 APPROVE. Nine gap families, accountable owners/prerequisites/authority, ten relative links and clean diff verified in separate checkout. Documentation preparation only; all actual launch evidence remains open, NO-GO. Checker non-launch-warning semantics identified, no guard weakened. Unmerged branch tixmo/task-61-release-evidence; no deployment or target actions."
+    },
+    {
+      "ts": 1792502507.676208,
+      "actor": "tixmo-pm",
+      "kind": "ask",
+      "body": "{\"question\": \"Local preparation for #61 remains independently accepted; this reopens only the outstanding release-input decision, not its completed documentation. Whole-board triage found all 191 scoped tasks done, no claims or active workers, and no eligible executable work. #213/#214 verify candidate 0d193a6 locally (170 dashboard tests; full market PASS); this is not launch approval. Please identify the approved staging target/API+dashboard origins and candidate deployment, supply secure access references (not secrets in board text), and explicitly authorize a bounded staging acceptance window/test-data mutations plus native-CI execution. Name the physical-scanner operator/gate lead and policy/backup/on-call approvers; authorize restore/monitoring/publication separately before those operations. Recommendation: staging-only acceptance first; no production deployment or default-branch merge. Prepared #61 checklist covers smoke, checkout config/screenshots, device scans, backup/rollback, review/share, policies and uptime. No new code/test work is justified until inputs/authority or a concrete defect arrive; release remains NO-GO. Which staging target and acceptance scope should the team use?\", \"return_to\": \"tixmo-release\", \"previous_status\": \"done\"}"
+    },
+    {
+      "ts": 1792506753.6606207,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "Proxy policy reconciliation: requested scoped zero-spend staging-only decision from Blockerbuster, run 6087c8a6-5940-4255-854b-191b50fdfa18 (queued; NOT approval). No target/access supplied, no execution authority inferred. Existing human ask reused, no duplicate. Whole-board 190 done/61 blocked; no specialist execution/review or stale claim. Prior unchanged Telegram notice within24h remains suppressed. Await actual proxy decision before changing approval gates."
+    },
+    {
+      "ts": 1792506759.0256064,
+      "actor": "codex",
+      "kind": "comment",
+      "body": "APPROVED WITH CONDITIONS \u2014 BB61-20261020-STAGING-ONLY. Daniel's delegated proxy approves the staging-only acceptance approach for candidate 0d193a6e8f8180d509f5cfdbb793203904047237: local checklist/evidence preparation now, and bounded non-mutating staging evidence capture plus native CI only after PM records an existing approved staging target, secure access references, candidate deployment mapping, permitted window/commands and verified zero incremental financial commitment. Inspect commands/workflows first; inherited credentials do not expand scope. If a workflow uses billable capacity without a documented preapproved allocation, changes the target/config or sends notifications, it is outside this approval. Authentication last-used writes and test-data/scanner/review mutations are not silently exempted. No production, default-branch merge, deploy, target mutations, restore, monitoring/scheduler changes, publication, subscriptions or unbudgeted spend authorized. Exposure authorized: zero. This is an actual approach/scope decision, not launch acceptance or authorization to execute presently blocked operations.\n\nEvidence: live #61 confirms accepted preparation/QA74 and unanswered input request; reviewed handoff docs/team/RELEASE_EVIDENCE_HANDOFF_61.md supplies role ownership. PM reports independent local full-market #213/#214 acceptance of current candidate; not independently rerun here. Handoff's c35a6f8 SHA/checker diagnosis is historical, not current-candidate acceptance; refresh/reconcile evidence against exact current SHA. Independent QA and technical criteria stay mandatory; release remains NO-GO and #61 stays blocked on actual inputs.\n\nRemaining owners (accountable roles, not invented named humans):\n- tixmo-pm obtains from Daniel/existing authorized environment owner: approved staging environment, API/dashboard origins, deployed SHA/deployment IDs, secure workflow/access references, execution window and named participants. No named environment/access custodian is established in #61; PM must identify one, not assume credentials or provisioning authority.\n- tixmo-release coordinates target/deployment evidence and native CI execution; tixmo-lead reviews workflow scope/integration; tixmo-qa independently accepts fresh evidence. PM/release must identify the actual CI credential custodian and verify existing runner capacity/budget; none is named.\n- tixmo-backend supplies approved test org/account/event/scanner dataset, ownership and runtime inputs; tixmo-frontend supplies checkout/runtime/policy URL and screenshot inputs; tixmo-qa handles smoke/review-share acceptance. Any needed mutations require a separately bounded decision.\n- Daniel/tixmo-pm must name an actual physical-scanner operator and gate lead, with availability; tixmo-qa verifies device/offline reconciliation. Proxy cannot fabricate physical participation or gate-lead acceptance.\n- tixmo-pm collects actual named counsel and payment/support/security approvers, legal entity/contact and policy signoffs. Proxy does not impersonate counsel or supply missing identity/legal/third-party consent; publication remains excluded.\n- tixmo-release owns backup/recovery input collection; tixmo-backend schema support; tixmo-lead second technical operator. PM obtains actual recovery identity/access, isolation/handling scope and named second operator; restore execution/approval is not granted here.\n- tixmo-pm names on-call/alert recipient, destination and availability; tixmo-release collects existing uptime evidence. Monitoring changes, alert tests/Sentry events and cadence changes remain excluded.\n\nResume: PM records this decision on existing #61, reconciles current candidate checklist, collects missing named owners/inputs without creating a duplicate escalation, and dispatches only the explicitly permitted zero-cost/non-mutating subset once prerequisites are verified. Keep other gates blocked. Memory search returned no hits; no memory-dependent claims used."
+    },
+    {
+      "ts": 1792506817.3102894,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "PM recovered actual scoped decision BB61-20261020-STAGING-ONLY from sanitized Blockerbuster history/run6087c8a6 (direct reply failed source_reply_delivery_mode_mismatch). Accept conditional non-mutating zero-incremental-cost staging evidence/nativeCI approach only after approved target/access/deployed-SHA mapping/window/commands/capacity are recorded. No current target operations authorized; mutation/deploy/restore/monitor/publication/merge excluded. Current product candidate is 0d193a6e8f8180d509f5cfdbb793203904047237; #213/#214 supersede historical c35a6f8 local evidence in handoff; historical checker diagnosis is not a current defect or new acceptance result. Existing prepared checklist remains usable with this candidate reconciliation; no redundant documentation task or rerun needed. Remaining unblock inputs: actual environment/access+CI custodian, approved origins/deployment, physical scanner operator/gate lead, named policy/recovery/oncall participants. Existing ask reused; eligible executable work remains exhausted pending inputs, no workers dispatched."
+    },
+    {
+      "ts": 1792532465.0331767,
+      "actor": "moosey",
+      "kind": "comment",
+      "body": "Daniel confirmed Railway and asked pipeline review. Task225 verified existing authenticated read-only Railway connector: project 8c5a1df6-dc6b-46ca-a516-dc1c25750921; staging-audit-20261005 d21ebf73-4198-4483-9a16-1fc2fb3685e6. Dashboard https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app API https://tixmo-api-candidate-staging-audit-20261005.up.railway.app. Platform/control-plane read access and origins are NOT missing. Latest staging app deploys October7 SUCCESS but commitHash absent in returned metadata; production app metadata maps older2f3a055, not reviewed0d193a6. Staging API expects missing tixmoapi2/Dockerfile in reviewed candidate: concrete build provenance gap. Replace blanket missing-target/access premise with deployed-SHA/build provenance, runtime/CI scope and remaining human participation gates. Read-only inventory only, no secret values, target calls, deploy/config/CI dispatch/spend. Detailed review on task225; do not duplicate hosting questions to Daniel."
+    },
+    {
+      "ts": 1792532647.381308,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "PM cycle reconciled Railway225 accepted after independent QA226 exact6393885. Existing staging origins/control-plane access established; do not repeat hosting/access request. Lead227 independently confirmed source/build provenance unresolved, configured /ready absent from candidate API, and production startup invokes minimal seed that resets existing admin auth/role/org and logs bootstrap credential. Static source finding only; no live account/log exposure established and no values copied. Bounded local repair228 now active; runtime/deploy/config untouched. Candidate staging mapping, approved exact command/window and CI capacity plus physical scanner/policy/recovery/oncall participants remain gates. Current product release NO-GO; no new human ask while local remediation/review proceeds."
+    },
+    {
+      "ts": 1792532792.9906502,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "Local seed-safety repair228 accepted exact5e1e658f14415f63ccb794dfc96bead76ebda7e9 after independent lead229 PASS: focused5/5 plus CLI/error/import checks; unmerged, no realDB/runtime or deploy. Existing account reset/default/logging removed on branch only. Release remains NO-GO; production startup remains unchanged. Queued authorized read-only provenance investigation230, so eligible work is NOT exhausted. No new human/proxy approval request; existing named participant/CI/window inputs still needed after technical mapping."
+    },
+    {
+      "ts": 1792533241.1399913,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "230 completed bounded read-only investigation: historical API Dockerfile/context recovered fromdc45798/f699a53, historical /ready exists, so do not invent replacement Dockerfile or swap to liveness merely to match config. Railway deployment snapshot IDs recovered but no sourceSHA/archive/imageDigest attestation; exact missing deployment-bound manifest recorded230. Concurrent Daniel-authorized integration231 and independent lead232 ACTIVE under moosey; scheduled PM defers their work/claims, no duplicate specialist or merge actions. Existing61 release gates remain NO-GO; eligible work is NOT exhausted while231/232 run."
+    },
+    {
+      "ts": 1792556538.6285233,
+      "actor": "tixmo-pm",
+      "kind": "comment",
+      "body": "Nov9 plan reconciled into parent237 and packages238\u2013249. Existing staging origins/read access retained; do not repeat hosting question or create duplicate participant ask. W10#247 adds Oct22 scanner feasibility milestone, W06#243 starts LOCAL packet and W11#248 local ops work. Missing actual named hardware/gate/support/release/second-approver participation and scoped target execution remain gates, not blockers to all engineering. Daniel asleep; routine decision#250 routed proxy. No human notification needed now."
+    },
+    {
+      "ts": 1792556890.35957,
+      "actor": "tixmo-frontend",
+      "kind": "comment",
+      "body": "Task251 bounded source/device-feasibility inventory at product source317754edc7b43eb8e27b60c5374679330326c575: runnable tdash /scanners is management/register/log/revoke only; no optical scanner client/build, QR decoder, scanner auth/sync/scan/validate client or offline queue found in inspected tree. No physical device/operator supplied or operated; no /dev/video host entry, USB bus dirs do not prove usable hardware. Existing61 remains sole participant gate: need actual model/OS/operator/gate lead + Oct22 window, QR second display, identified scanner client source/build/SHA, approved dataset/connectivity/key loading and explicit scanner mutation authority. Known staging origins retained; no duplicate hosting/human ask. PM to reconcile Oct22 feasibility with247; physical251/247 acceptance remains OPEN. Zero exposure;250/73/61 boundaries and NO-GO unchanged. Local33 mocked UI tests/build/design guard passes are NOT hardware proof."
+    }
+  ]
+}

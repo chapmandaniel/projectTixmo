@@ -1,0 +1,617 @@
+[
+  {
+    "id": 61,
+    "project": "tixmo",
+    "title": "Prepare actionable release-evidence handoff for nine open launch gates",
+    "body": "PM ran node scripts/evidence-status.mjs --json --strict at exact c35a6f84512b274b2ae9563fda57169770f08c18: exit1, readyForGoNoGo=false, nine gaps: eight missing target/manual artifacts and local checkout config explicitly non-launch. Existing23 release inventory is complete but no tracked target-evidence execution handoff exists. Prepare a local release-evidence ticket/checklist on isolated task branch with exact candidate SHA, individual owners, required target inputs, scanner-device participation, backup restore approval, policy approval and uptime run acceptance. Reuse existing templates/runbooks; do not fabricate evidence or check off historical June artifacts as current. Explicitly separate authorized local preparation from unavailable target/runtime inputs and approval-required publication/deploy/monitor changes/restore tests. No external actions, provisioning, real secrets, target calls, schedule/config changes, merge or deploy. Return committed preparation artifact to review; split actual execution only after target and authority exist. Queued, NOT dispatched: two specialist lanes allocated to59/60.",
+    "status": "blocked",
+    "priority": 1,
+    "assignee": "human",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": null,
+    "due": null,
+    "created_by": "tixmo-pm",
+    "created_at": 1792457095.5286348,
+    "updated_at": 1792556890.3596227,
+    "labels": [
+      "release-evidence"
+    ],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 231,
+    "project": "tixmo",
+    "title": "Land reviewed Tixmo work through verified GitHub PRs",
+    "body": "Daniel explicitly authorizes start merging work via PRs and restoring project health. Own integration sequence, push reviewed deliverables, open/update PRs, resolve CI and review findings, merge exact approved heads and verify GitHub MERGED state. Inspect existing PR58, remote branch divergence and Railway main deployment consequences first. Preserve QA scratch and shared main checkout. Existing deployment safety and no new unbudgeted spend remain; do not silently trigger migration/seed production cutover. Coordinate scheduled PM via board; prioritize independent lead/QA and current checks.",
+    "status": "todo",
+    "priority": 1,
+    "assignee": "moosey",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": null,
+    "due": null,
+    "created_by": "codex",
+    "created_at": 1792533152.0389514,
+    "updated_at": 1792556458.3029492,
+    "labels": [],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 235,
+    "project": "tixmo",
+    "title": "Reconcile existing release PR58 with reviewed reliability candidate",
+    "body": "Implement combined candidate in isolated task branch/worktree from0d193a6 with remote PR58f699a53 as second parent; preserve independent reviewed local payment generation/transaction fences AND PR58 auth/account/scanner/security hardening. Audit232 has11 conflict files31 hunks. Must reconcile schema fields and migrations, webhook and reconciler ownership, tenant auth/session changes and fixtures; keep PR58 automatic-seed no-op (do not layer5e1e658 bootstrap). No shared main edits, DB services or unknown inherited environment. Parent owns push/PR/merge, no cloud/deployment/config mutations. Inspect exact scripts before any verification; use focused safe unit/build checks and report complete conflicts/remaining failures. Submit committed resolution for separate lead+QA exact-SHA acceptance; do not weaken assertions.",
+    "status": "review",
+    "priority": 1,
+    "assignee": "tixmo-backend",
+    "claimed_by": "tixmo-backend",
+    "claimed_at": 1792534320.7468076,
+    "parent_id": 231,
+    "due": null,
+    "created_by": "codex",
+    "created_at": 1792533311.6252975,
+    "updated_at": 1792534320.7467017,
+    "labels": [],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 237,
+    "project": "tixmo",
+    "title": "November 9 individual-event onsale \u2014 delivery and evidence index",
+    "body": "PM launch parent: reconcile W01\u2013W12 and G1\u2013G8; readiness Nov5, exact-candidate go/no-go Nov6, stability Nov7\u20138. NO-GO until evidence accepted. Preserve existing integration231 and claims235/236; do not duplicate or override. Plan review: ambitious19\u201328 engineer/QA workdays across two lanes, dates are targets not guarantees. Individual events only; no passes/expansion. New code invalidates affected historical gates. Named human staffing/real hardware/identity/legal consent remain unverified. Maintain package mapping and morning handoff; existing scheduler can resume this board without new schedule changes. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "doing",
+    "priority": 1,
+    "assignee": "tixmo-pm",
+    "claimed_by": "tixmo-pm",
+    "claimed_at": 1792562437.16204,
+    "parent_id": null,
+    "due": "2026-11-09",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.2076066,
+    "updated_at": 1792562437.1620176,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 238,
+    "project": "tixmo",
+    "title": "W01: Enforce authoritative event and ticket sale windows",
+    "body": "Inspect candidate317754edc7b43eb8e27b60c5374679330326c575 against audit baseline87bbad0; agree API/UI contract. Reject deleted/unpublished/closed events and direct early/late orders; event and ticket windows intersect, exact opening/closing semantics recorded. Tests T\u22121ms,T,T+1ms, narrower ticket window, browser clock skew. First bounded slice: source-backed contract and executable failing regression if missing, then small fix. Independent lead/non-author contract reviewer plus QA required before closure. Existing70 caps and65 tenant fences must survive. Integrate only through231 owner. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "review",
+    "priority": 1,
+    "assignee": "tixmo-lead",
+    "claimed_by": "tixmo-lead",
+    "claimed_at": 1792556604.1194615,
+    "parent_id": 237,
+    "due": "2026-10-23",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.3588657,
+    "updated_at": 1792556698.5022535,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 239,
+    "project": "tixmo",
+    "title": "W02: Preserve timezone, inventory and eligibility across Studio checkout",
+    "body": "After W01 contract: unchanged edit preserves absolute opening instant in Newfoundland/UTC/other browser zone including DST; schedule not dropped; quantity/sold field normalization cannot reset inventory; checkout/tier/cap eligibility agrees API and updates across boundary while page stays open. Reuse reviewed70 cap work, do not duplicate. Frontend focused tests/build/design guard; lead review exact SHA. Local inspection/reproduction may proceed before W01 complete. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "todo",
+    "priority": 1,
+    "assignee": "tixmo-frontend",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": 237,
+    "due": "2026-10-24",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.4363904,
+    "updated_at": 1792556457.4363904,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [
+      {
+        "id": 238,
+        "status": "review"
+      }
+    ],
+    "waiting_on": [
+      238
+    ]
+  },
+  {
+    "id": 240,
+    "project": "tixmo",
+    "title": "W03: Align refunds, cancellation exceptions and support instructions",
+    "body": "Reproduce provider-side full/partial refund mismatch; define visible bounded exceptions for disputes,pending/failed refunds,cancelled events,used/transferred tickets. No double refund,false success,invalid admission or unintended stock release. Correct runbook against actual mounted routes; never instruct unmounted /orders/:id/confirm. Policy dependent behavior waits on scoped decision, but reproduction and factual runbook repair proceed now. Preserve previous123/235 financial fences; backend authored code requires independent lead+QA. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "review",
+    "priority": 1,
+    "assignee": "tixmo-backend",
+    "claimed_by": "tixmo-backend",
+    "claimed_at": 1792557280.1755874,
+    "parent_id": 237,
+    "due": "2026-10-26",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.5133023,
+    "updated_at": 1792557375.8637166,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 241,
+    "project": "tixmo",
+    "title": "W04: Ensure recovery backlog fairness, backoff and owned exceptions",
+    "body": "Beyond completed143 recovery fencing, prove50 poison records plus healthy successor (51+ backlog), outages/restart and old provider idempotency window. Healthy work progresses exactly once; no duplicated money/stock/fulfillment; exception state observable with accountable owner. Inspect235 combined candidate before assuming old harness compatible. Source/unit work can start after W01 contract; shared realDB tests serialize. Independent lead+QA exact commit. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "todo",
+    "priority": 1,
+    "assignee": "tixmo-backend",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": 237,
+    "due": "2026-10-27",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.5978658,
+    "updated_at": 1792556457.5978658,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [
+      {
+        "id": 238,
+        "status": "review"
+      }
+    ],
+    "waiting_on": [
+      238
+    ]
+  },
+  {
+    "id": 242,
+    "project": "tixmo",
+    "title": "W05: Complete receipt, wallet and buyer-access recovery",
+    "body": "Receipt and confirmed-return wallet links; authenticated QR retrieval/resend; session-expiry and close/reopen browser recovery; no cross-account ticket access/no second payment. Reuse completed93/94 and PR58 access work, test remaining gaps. Demonstrate secure self-service OR explicitly approved identity-checked support-assisted flow within agreed target. Auth code requires independent lead+QA; policy-dependent recovery choice separate, local path tests continue. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "review",
+    "priority": 1,
+    "assignee": "tixmo-frontend",
+    "claimed_by": "tixmo-frontend",
+    "claimed_at": 1792557761.4595065,
+    "parent_id": 237,
+    "due": "2026-10-28",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.6720777,
+    "updated_at": 1792557850.82141,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 243,
+    "project": "tixmo",
+    "title": "W06: Prepare and qualify exact staging candidate/config packet",
+    "body": "Start LOCAL packet now: exact candidate SHA/build provenance; actual migration inventory (plan says five, verify current count); mode/currency/policyURLs; webhook/mail/storage/monitor presence+mode without values; safe target and rollback; reconcile225/227/230 and235/236. Staging execution is a separate gated step, not authorized by intake; preserve61 proxy conditions. Source read/local docs unrestricted within scope; deploy/config/test writes require concrete scoped authority. Lead+QA review packet. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "review",
+    "priority": 1,
+    "assignee": "tixmo-release",
+    "claimed_by": "tixmo-release",
+    "claimed_at": 1792556602.8210952,
+    "parent_id": 237,
+    "due": "2026-10-26",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.7418833,
+    "updated_at": 1792556827.000193,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 244,
+    "project": "tixmo",
+    "title": "W07: Prove real Stripe test-mode purchase/refund and inbox matrix",
+    "body": "First complete path targetOct27, matrixOct29. Browser checkout success,decline/retry,3DS/redirect,refresh/back,repeated submits,hold expiry/delayed payment; real Stripe test-mode IDs correlate order,intent,webhook,ticket,receipt and provider/local refund states. Small authorized real-inbox cohort only. Simulators not provider evidence. Depends applicable W01\u201306 and concrete approved staging/provider/inbox mutation scope. Prepare scenarios locally now; do not send mail or call provider without authority. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "todo",
+    "priority": 1,
+    "assignee": "tixmo-qa",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": 237,
+    "due": "2026-10-29",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.816245,
+    "updated_at": 1792556457.816245,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [
+      {
+        "id": 238,
+        "status": "review"
+      },
+      {
+        "id": 239,
+        "status": "todo"
+      },
+      {
+        "id": 240,
+        "status": "review"
+      },
+      {
+        "id": 241,
+        "status": "todo"
+      },
+      {
+        "id": 242,
+        "status": "review"
+      },
+      {
+        "id": 243,
+        "status": "review"
+      }
+    ],
+    "waiting_on": [
+      238,
+      239,
+      240,
+      241,
+      242,
+      243
+    ]
+  },
+  {
+    "id": 245,
+    "project": "tixmo",
+    "title": "W08: Rehearse version-parity upgrade, restore and rollback",
+    "body": "Disposable Postgres17/Redis8.2.10 parity; empty and populated-prior-schema upgrade; ambiguous inventory stays blocked; rotation/session invalidation disposition. Restore isolated copy with measured timing and schema-compatible rollback; proposedRTO60min/RPO15min not claims. Never blindly overwrite customer writes. Reuse runtime57 and gate213 evidence as historical only. Cluster directories under workspace runtime/, not /tmp; one DB owner. Actual backup/restore access and staging actions gated independently; local migration harness permitted. Lead+QA review migrations. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "todo",
+    "priority": 1,
+    "assignee": "tixmo-release",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": 237,
+    "due": "2026-10-30",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.8892004,
+    "updated_at": 1792556457.8892004,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [
+      {
+        "id": 243,
+        "status": "review"
+      }
+    ],
+    "waiting_on": [
+      243
+    ]
+  },
+  {
+    "id": 246,
+    "project": "tixmo",
+    "title": "W09: Prove synthetic capacity, sell-out races and recovery",
+    "body": "Local simulators only by default: ramp100/250/500 sessions,200-session30min soak,30 order attempts/sec60sec burst,100 buyers last10 tickets; stress1000 not promised. Reset owned fixture between scenarios. Zero oversell/duplicate charge/fulfillment; readp95<=500ms,reservationp95<=2s,unexpected5xx<0.5%; paid-ticketp95<=30s,healthy recovery<=5min; measure locks/connections/CPU/memory/Redis/queueage and sameIP limits. Distinguish honest sold-out from errors. W04/W06\u201308 acceptance before full run; scripts/scenario prep can proceed earlier. No thirdparty/production load. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "todo",
+    "priority": 1,
+    "assignee": "tixmo-qa",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": 237,
+    "due": "2026-11-02",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556457.9587831,
+    "updated_at": 1792556457.9587831,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [
+      {
+        "id": 241,
+        "status": "todo"
+      },
+      {
+        "id": 243,
+        "status": "review"
+      },
+      {
+        "id": 244,
+        "status": "todo"
+      },
+      {
+        "id": 245,
+        "status": "todo"
+      }
+    ],
+    "waiting_on": [
+      241,
+      243,
+      244,
+      245
+    ]
+  },
+  {
+    "id": 247,
+    "project": "tixmo",
+    "title": "W10: Prove scanner feasibility, two-device admission and V1 flows",
+    "body": "ByOct22 identify runnable current scanner client/build,actual gate owner/devices and paid syntheticQR scan, or escalate feasibility without fabricating hardware. ByNov3 two-device sameQR race at most one online admission; wrong event,revoked scanner,refund/transfer/reissue/cancellation rejection; outage/reconnect limits explicit. Physical iOSSafari/AndroidChrome buyer access/mobile/keyboard proof and internal approvals/share/storage acceptance or explicit approved deferral. API tests not device evidence. Local client inventory/scenario work unblocked; real hardware participation dependency tracked separately. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "todo",
+    "priority": 1,
+    "assignee": "tixmo-qa",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": 237,
+    "due": "2026-11-03",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556458.0265574,
+    "updated_at": 1792557024.245814,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [
+      {
+        "id": 244,
+        "status": "todo"
+      }
+    ],
+    "waiting_on": [
+      244
+    ]
+  },
+  {
+    "id": 248,
+    "project": "tixmo",
+    "title": "W11: Qualify readiness, monitoring, incident and sales-pause controls",
+    "body": "Reconcile actual readiness endpoint/deployment (227/230); payment/refund/receipt backlog monitoring and delivered alert+recovery notification; named support/oncall/incident/secondapprover drill. Pause new sales without event cancellation, preserving paid ticket access/reconciliation. Proposed trigger thresholds calibrated in rehearsal. Main protection exact checks only after scoped authorization. Source fixes/runbook prep local; monitoring changes/test sends/main protection not authorized by this task. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "todo",
+    "priority": 1,
+    "assignee": "tixmo-release",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": 237,
+    "due": "2026-11-04",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556458.094694,
+    "updated_at": 1792556458.094694,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [
+      {
+        "id": 243,
+        "status": "review"
+      }
+    ],
+    "waiting_on": [
+      243
+    ]
+  },
+  {
+    "id": 249,
+    "project": "tixmo",
+    "title": "W12: Freeze exact candidate and prepare final go/no-go cutover",
+    "body": "W01\u201311 mandatory gatesG1\u2013G8; exact candidate verify:market/dependency audit/runtimeSHA/config; evidence index environment,SHA,deploymentID,time,owner,independentreviewer,scenario,artifact,limits; freshness cannot be inferred from checker. FreezeNov4, readyNov5, signed go/no-goNov6. Production cutover/migrations/rotation and bounded live payment/refund require explicit scoped authority. Missing money/stock/access/core gates meanNO-GO; buffer never waives acceptance. Nov9 operator timeline from plan includes final second-person schedule/stock/policy check and reconciliation. Source: /home/daniel/.openclaw/media/inbound/NOVEMBER_9_ONSALE_PLAN---fa93ad48-8e6a-48c0-8cd9-583432d660cf.md. Synthetic test inputs only; timezone America/St_Johns. Local isolated branches/tests authorized; no new spend, production/provider mutation, publication, default-branch merge or live financial action by this intake. Evidence must identify exact SHA/environment/commands/results/limitations and independent reviewer. Existing completed tasks are historical inputs, not current acceptance. Block only dependent execution, continue local preparation. Two execution lanes maximum, one shared DB-mutating owner.",
+    "status": "todo",
+    "priority": 1,
+    "assignee": "tixmo-release",
+    "claimed_by": null,
+    "claimed_at": null,
+    "parent_id": 237,
+    "due": "2026-11-06",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556458.164154,
+    "updated_at": 1792556458.164154,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [
+      {
+        "id": 238,
+        "status": "review"
+      },
+      {
+        "id": 239,
+        "status": "todo"
+      },
+      {
+        "id": 240,
+        "status": "review"
+      },
+      {
+        "id": 241,
+        "status": "todo"
+      },
+      {
+        "id": 242,
+        "status": "review"
+      },
+      {
+        "id": 243,
+        "status": "review"
+      },
+      {
+        "id": 244,
+        "status": "todo"
+      },
+      {
+        "id": 245,
+        "status": "todo"
+      },
+      {
+        "id": 246,
+        "status": "todo"
+      },
+      {
+        "id": 247,
+        "status": "todo"
+      },
+      {
+        "id": 248,
+        "status": "todo"
+      }
+    ],
+    "waiting_on": [
+      238,
+      239,
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247,
+      248
+    ]
+  },
+  {
+    "id": 250,
+    "project": "tixmo",
+    "title": "Resolve scoped onsale business and recovery choices via delegated proxy",
+    "body": "Oct22 plan decision: individual-event-only scope, CAD synthetic vs actual settlement currency, fee/tax/payout responsibility, immediate eligible full-refund vs organizer approval, cancellation exceptions, selfservice vs identitychecked support recovery. Route routine scoped zero-spend recommendation to Blockerbuster first; preserve prior policy73, do not invent legal/entity consent or actual event facts. Missing staffing/device/provider access stays existing61. Proposed conservative engineering baseline only: individual events, synthetic CAD, no invented taxes/fees/payouts, current supported refund flow pending policy, recovery spec not weaker auth. Actual published commercial policy remains blocked absent valid scoped decision. Existing budget=0 new spend, financial exposure=0 execution authorized; no live transactions. Record actual decision not admission.",
+    "status": "doing",
+    "priority": 1,
+    "assignee": "tixmo-pm",
+    "claimed_by": "tixmo-pm",
+    "claimed_at": 1792556594.4627082,
+    "parent_id": 237,
+    "due": "2026-10-22",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556501.6069634,
+    "updated_at": 1792556594.4626868,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 251,
+    "project": "tixmo",
+    "title": "W10 prerequisite: identify runnable scanner build and Oct22 device feasibility",
+    "body": "Immediate independent source/client inventory, NOT dependent on full W07 matrix. From current candidate identify actual runnable scanner entry/build, supported authentication/QR flow, how paid synthetic QR reaches intended device, and reproducible local setup. Record client SHA, commands and limitations; API routes alone not proof. Existing61 owns actual human gate/device operator availability. On physical hardware demonstrate current paid synthetic QR or record exact missing hardware/operator and feasibility escalation; do not fabricate records or contact outsiders. Local source/setup/tests can proceed now even while parent247 full dress rehearsal waits244. Isolated worktree; no provider/deploy/spend; independent review exact SHA.",
+    "status": "review",
+    "priority": 1,
+    "assignee": "tixmo-frontend",
+    "claimed_by": "tixmo-frontend",
+    "claimed_at": 1792556909.0014648,
+    "parent_id": 247,
+    "due": "2026-10-22",
+    "created_by": "tixmo-pm",
+    "created_at": 1792556549.1692238,
+    "updated_at": 1792557003.7098827,
+    "labels": [
+      "nov9-onsale"
+    ],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 294,
+    "project": "tixmo",
+    "title": "Local full-stack authenticated wallet and recovery acceptance slice",
+    "body": "Closegapbetweensyntheticbrowser280andrealAPIownership: reviewedproduct4ec8594850eb547dafc145a14bb1b85cdeaa235c isolatedtestbranch withreviewed2806275325/CDPharness+279R24c856134runtimefixtures reusedtest-only. SoleDBownerafterQA292cleanup; ownrestrictivediskruntime/task294NOTtmp scrubbedloopbackPG18Redis/API/frontend/headlessfont288 only. Inspectrealmountedauth/order/wallet/QRroutes/setup/envguards beforeexecute; syntheticlocallyseededaccounts/passwordhash/session/JWTkeys, PAID order/ticketsfixture notpaymentconfirmationproof. ActualHTTPsignin/accountA wallet/QR andaccountB denial/noAdata, expiry/relogin recovery/no secondpayment againstactualAPI ifbounded. No provider/email/Stripe/networktargets/envsecret/inheritedDB; notifications/providerconstructorsstubbedonlyasnecessarydocumentboundaries; noauthmiddlewarestubforclaimedownershipproof. Ifcannotboundedbootrealbackendcommitverifiedharnessprep/exactblockernotPASS. Captureactualroutes/assertions/browseraudit/cleanupPIDlistenersprofile andsource+harnessSHA. No hostconfig/cloud/spend/push/merge/deploy. IndependentQArequired; fullW05inbox/lostcredentials/provider/productionNO-GO.",
+    "status": "review",
+    "priority": 1,
+    "assignee": "tixmo-release",
+    "claimed_by": "tixmo-release",
+    "claimed_at": 1792562355.4302812,
+    "parent_id": 242,
+    "due": null,
+    "created_by": "tixmo-pm",
+    "created_at": 1792562146.3874764,
+    "updated_at": 1792562437.2344549,
+    "labels": [],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 295,
+    "project": "tixmo",
+    "title": "Consolidate November onsale reviewed evidence and remaining acceptance handoff",
+    "body": "Documentation-only exactevidenceindex forDanielmorninghandoff, notnewproductwork/releaseapproval. Base reviewedproduct4ec8594850eb547dafc145a14bb1b85cdeaa235c isolatedbranch. Readparent237packages238-249 andactualreviewed260-293notes. Mapbranch/product/testharnessSHAs/localauthoredvsindependentreviewedvsintegrated/deployed (nonebyPM), exactfreshcounts/environments/mocks/limits, currentcandidate4ec85948, W01APIlockproof/W02contracts/W03manualpolicyfix/W04fairness/W05browser+receipt/W08restore/W09pressure evidence andremaininggates. Commercial250/BB25073/61authority/participants/device/scannerclient/realStripe/inbox/stagingversion/RTO/RPO andgoNO-GOexplicit. Correct31totalmigrations/fiverecentsubset; no misleadingdonecounts(duplicatescancelednotdelivered), nooldgreenscurrent. Linkdurableboard/repoevidence paths andsourcecommits. Read-onlynotoverlap294services, noDB/provider/envsecret/email/networktargets/spend/merge/deploy. ReturnexactdocSHA/links/staticchecksreviewnotdone independentQA; preserve231integrationowner.",
+    "status": "review",
+    "priority": 1,
+    "assignee": "tixmo-lead",
+    "claimed_by": "tixmo-lead",
+    "claimed_at": 1792562369.053196,
+    "parent_id": 237,
+    "due": null,
+    "created_by": "tixmo-pm",
+    "created_at": 1792562146.4536242,
+    "updated_at": 1792562437.3057468,
+    "labels": [],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 296,
+    "project": "tixmo",
+    "title": "Independent QA: real-auth HTTP checkpoint and morning evidence handoff",
+    "body": "SerialQA294a48f0eeb064bc519f84d192aebae1083efc91abd product4ec85948 API-firstcheckpoint actualfullapprealPGRedispassword/JWT/sessionVersion/walletrealPNG/crossownerdenial/noStripe unchangedfinancialcounts. SoleDBownerafter294cleanup own0700diskruntime/task296NOTtmp explicit scrubbedloopbackPG18Redis/API sourcehash/guardsinspectfirst, noauthoroverwrite, ownedPIDlistenercleanupmandatory. No browserAppfullstackclaim. Then2950cac3d60212e621607a22a5947816799d608525b docindex refs/links/crossbranchobjects/migrations/status/evidencecount/mocks/limitations/authority2507361/NO-GO validateactualboard andgitobjects. SeparateoriginalexactSHAverdicts/checks/results/limits, no provider/email/envsecret/networktargets/spend/config/merge/deploy. FullW05/browserrealbackend/inbox/Stripe/stagingNO-GO.",
+    "status": "doing",
+    "priority": 1,
+    "assignee": "tixmo-qa",
+    "claimed_by": "tixmo-qa",
+    "claimed_at": 1792562446.507121,
+    "parent_id": 237,
+    "due": null,
+    "created_by": "tixmo-pm",
+    "created_at": 1792562403.9241025,
+    "updated_at": 1792562446.507121,
+    "labels": [],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 297,
+    "project": "tixmo",
+    "title": "Technical source review: actual auth ownership checkpoint",
+    "body": "Independent source294a48f0eeb064bc519f84d192aebae1083efc91abd product4ec85948 unchanged; verifyactualmountedrealapp/authmiddleware/password/JWT/PrismaRedis notstubbedforclaimedloginownership proof; preciseexternalStripe/logger/notificationmocks. AssertionsA/BwalletprivatePNGQR/orderdenial/sessionVersionexpiredJWT/relogin andnoextra financialcounts runtimeguard/hash/cleanup. No frontend/browserclaim/sourcepolicychange. NoDBservicesbyreviewer QA296soleDBowner. ExactSHAverdict294/commands/limitsreviewnotdone; fullW05providerinboxNO-GO. No envsecret/provider/email/spend/merge/deploy.",
+    "status": "doing",
+    "priority": 1,
+    "assignee": "tixmo-backend",
+    "claimed_by": "tixmo-backend",
+    "claimed_at": 1792562428.1793532,
+    "parent_id": 294,
+    "due": null,
+    "created_by": "tixmo-pm",
+    "created_at": 1792562403.9916203,
+    "updated_at": 1792562428.1793532,
+    "labels": [],
+    "depends_on": [],
+    "waiting_on": []
+  },
+  {
+    "id": 236,
+    "project": "tixmo",
+    "title": "Publish orphaned reviewed regressions and release evidence",
+    "body": "Inventory234 found reviewed config isolation/output regression6c57442 absent candidate, plus local market acceptance docs213/214, API docs209/210, handoff61 and evidence-status checker tests6787e. Prepare isolated branch from0d193a6 containing unchanged config test + missing historical evidence docs/artifacts with explicit original SHAs/dates, and reconcile checker test without blindly replacing PR58 equivalent implementation. Do not add scratch or claim historical as current. Parent owns pushes/PR/merges; separate review required for new/reconciled content. No DB/cloud/config or runtime secrets; safe focused test only after inspection.",
+    "status": "review",
+    "priority": 2,
+    "assignee": "tixmo-qa",
+    "claimed_by": "tixmo-qa",
+    "claimed_at": 1792533525.0526223,
+    "parent_id": 231,
+    "due": null,
+    "created_by": "codex",
+    "created_at": 1792533417.323314,
+    "updated_at": 1792533525.0525146,
+    "labels": [],
+    "depends_on": [],
+    "waiting_on": []
+  }
+]
