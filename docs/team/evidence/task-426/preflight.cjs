@@ -16,6 +16,11 @@ function verify(env=process.env) {
   require('./runtime-path.cjs').validate(env.TASK426_ARTIFACT_DIR);
   const ports = env.TASK379_ALLOWED_PORTS;
   validatePorts(ports);
+  // Snapshot exact tracked guard identity before execution; NOT immutability.
+  const guard = path.resolve(__dirname, '../task-379/network-guard.cjs');
+  const trackedGuard = require('node:child_process').execFileSync('/usr/bin/git',
+    ['show', 'HEAD:docs/team/evidence/task-379/network-guard.cjs'], {cwd:identity.sourceRoot});
+  if (!fs.readFileSync(guard).equals(trackedGuard)) throw new Error('Native guard identity mismatch');
   // Reuse native guard without task427 outer loopback fallback.
   require('../task-379/network-guard.cjs');
   if (typeof require('node:net')[Symbol.for('tixmo.task379.registerListener')] !== 'function') throw new Error('Missing native listener guard');

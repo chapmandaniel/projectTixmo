@@ -135,3 +135,51 @@ No app/Jest/DB/Redis/HTTP/services/network/install/config/scheduler/spend/push/
 merge/deploy or runtime grant. Fresh exactSHA independent QA and lead required;
 448 and426 remain OPEN. Commit uses invocation-local identity/hooks override
 so inherited API Husky cannot launch app tooling; no persistent config changed.
+
+## Bounded shell/pre-Jest checkpoint (source/offline, NOT a runner)
+
+New isolated `task-448-shell-checkpoint`, branch
+`tixmo/task-448-shell-checkpoint`, exact base
+`59d3cd722ea14af778feb8048839ab81b8a95aad`. Read actual QA458 `4c671a65`
+and lead459 `acd3fc08` scoped reports. Existing426/427/379 helpers were the
+existing-solution preflight; reused existing426 identity/path/nativeguard and
+cleanup capabilities, bash/env and Node builtins. No custom orchestrator.
+
+`/bin/bash docs/team/evidence/task-426/prejest.sh` always invokes env-i before
+Node, allows only explicit inputs, rejects inherited preload attempts, and
+runs426 preflight before any possible Jest/app/provisioning. No caller marker
+can bypass scrubbing. Guard bytes are compared with tracked HEAD before guard
+execution; source/dependency/guard attestation remains snapshot-only. After
+preflight it unconditionally refuses runtime admission: no service/Jest launch
+code exists here. The grant-shaped string is a denial gate, NOT authorization.
+This is a usable preflight checkpoint, deliberately NOT a complete runtime
+runner. A shell invoked with hostile loader environment may already have
+executed preload at OS startup; this cannot undo prior execution.
+
+Added exit-status.cjs maps actual primary nonzero code, signal (128+signal),
+ENOENT127/other spawnerror126, then timeout124 or secondary failure1. Original
+structured result/diagnostics stay untouched. It is not wired to a production
+runner because there is no admitted runtime path yet.
+
+Actual commands exit0:
+- `node docs/team/evidence/task-426/shell-probes.cjs`: actual scrubbed shell
+  missing-grant, malicious NODE_OPTIONS missing preload and wrongSHA denials;
+  actual private0700 disk Git fixture successful identity (NOT admission),
+  dirty source, absent/mismatched dependency, invalid path denials; real owned
+  direct-child exit37/SIGTERM143/ENOENT127 mapping, primary status unchanged
+  with secondary receipt failure. All real fixture children closed/reaped.
+- `node docs/team/evidence/task-426/runner-probes.cjs`: unchanged atomic cleanup,
+  reentrant/concurrent/sequential authority, process-first timeout/two-process
+  cooperative reaping, foreignPID no-signal, eight-field ENOENT JSON+ENOSPC,
+  ports/preload/SHA and exit42/stderr+ENOSPC regressions PASS.
+- bash syntax, changed/new Node syntax and `git diff --check` PASS.
+
+Zero qualification/provisioning child ordering is structural plus actual early
+shell denials; no successful end-to-end runtime admission was attempted or
+claimed. No stubbed runtime checks. Full escaped-tree containment/adoption/
+reaping, immutable dependencies and source TOCTOU, observer/service identities,
+bounded teardown callbacks and actual shell-runtime exit integration remain
+OPEN and enforce terminal runtime refusal. Original qualification assertions
+unchanged. No app/Jest/services/DBRedisHTTP/network/install/generation/config/
+scheduler/cloud/spend/push/merge/deploy/runtime grant.448/426 remain OPEN;
+fresh independent exactcommit QA+lead required.
