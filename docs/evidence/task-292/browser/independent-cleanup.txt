@@ -1,0 +1,1 @@
+Independent final verification: all seven original/owned PIDs absent; seven loopback listeners refused; browser profile directory empty; both own PG runs have no postmaster.pid or redis.sock; runtime/root modes0700.
