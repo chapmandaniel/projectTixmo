@@ -1,0 +1,76 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task314-r2/run.mkrXEA/jest-cache --runInBand --runTestsByPath tests/integration/wallet-elapsed-receipt.local.test.ts
+
+  console.log
+    TASK294_REDIS_CLIENT 1
+
+      at Object.<anonymous> (tests/integration/wallet-elapsed-receipt.local.test.ts:27:11)
+
+  console.log
+    TASK294_API_LISTENER 2823489 { address: '127.0.0.1', family: 'IPv4', port: 43601 }
+
+      at Object.<anonymous> (tests/integration/wallet-elapsed-receipt.local.test.ts:36:11)
+
+TASK314_TARGET_B_PASS
+TASK294_BROWSER_CLEANUP {
+  browser: { pid: 2823773, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 37797, closed: true },
+  profileRemoved: true
+}
+  console.log
+    TASK294_API_CLOSED
+
+      at Object.<anonymous> (tests/integration/wallet-elapsed-receipt.local.test.ts:23:11)
+
+FAIL tests/integration/wallet-elapsed-receipt.local.test.ts (25.579 s)
+  ✕ native elapsed server JWT expiry refresh reauthentication and real receipt local transport capture (19332 ms)
+
+  ● native elapsed server JWT expiry refresh reauthentication and real receipt local transport capture
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 6
+    + Received  + 6
+
+    @@ -1,18 +1,18 @@
+      Object {
+        "attempts": 0,
+        "orders": Array [
+          Object {
+    -       "id": "af952e7a-8d4e-4b5d-ac4f-d20af26b93bf",
+    -       "paymentStatus": "SUCCEEDED",
+    -       "status": "PAID",
+    -       "totalAmount": "10",
+    -     },
+    -     Object {
+            "id": "368bda5d-6b48-44e0-88ae-40024e5511f0",
+            "paymentStatus": "PENDING",
+            "status": "PENDING",
+    +       "totalAmount": "10",
+    +     },
+    +     Object {
+    +       "id": "af952e7a-8d4e-4b5d-ac4f-d20af26b93bf",
+    +       "paymentStatus": "SUCCEEDED",
+    +       "status": "PAID",
+            "totalAmount": "10",
+          },
+        ],
+        "refunds": 0,
+        "tickets": Array [
+
+      72 |   expect(mail.html).toContain('&lt;script&gt;A&amp;');expect(mail.html).toContain('&lt;img src=x onerror=bad&gt;&amp; event');expect(mail.html).not.toContain('<script>A&');expect(mail.html).not.toContain('<img src=x');
+      73 |   expect((await prisma.order.findUnique({where:{id:order.id}}))?.receiptStatus).toBe('SENT');
+    > 74 |   expect(await financial()).toEqual(financialBefore);
+         |                             ^
+      75 |   for(const result of (Stripe as unknown as jest.Mock).mock.results)for(const group of Object.values(result.value) as any[])for(const fn of Object.values(group) as jest.Mock[])expect(fn).not.toHaveBeenCalled();
+      76 |   writeFileSync(path.resolve(__dirname,'../../../docs/team/evidence/task-314-r2/receipt-capture.json'),JSON.stringify({scope:'inert local transport capture ONLY not inbox/provider acceptance',statuses:{A:allowed.status,B:denied.status,unpaid:blocked.status},mail,sendCount:1,financialBefore,financialAfter:await financial()},null,2));
+      77 |   console.log('TASK314_B_C_PASS real elapsed expiry and actual NotificationService/template transport-only receipt capture; no financial mutation/provider calls');
+
+      at Object.<anonymous> (tests/integration/wallet-elapsed-receipt.local.test.ts:74:29)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        25.819 s
+Ran all test suites within paths "tests/integration/wallet-elapsed-receipt.local.test.ts".

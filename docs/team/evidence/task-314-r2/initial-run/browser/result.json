@@ -1,0 +1,162 @@
+{
+  "status": "PASS target B native elapsed actual server-issued access JWT expiration401 actual refresh200 owned wallet and existing-owner password reauthentication",
+  "candidate": "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+  "elapsed": {
+    "wallStart": 1792568353611,
+    "wallEnd": 1792568362201,
+    "monotonicMs": 8589.312437,
+    "issued": {
+      "iat": 1792568351,
+      "exp": 1792568361,
+      "userId": "e842bc78-6f2e-4da5-b015-03e673df59ab"
+    }
+  },
+  "renewed": {
+    "iat": 1792568362,
+    "exp": 1792568372,
+    "userId": "e842bc78-6f2e-4da5-b015-03e673df59ab"
+  },
+  "audit": [
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login"
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/fcdaed0d-a35f-4f82-bd51-2bda53ad5ca9/qr"
+    },
+    {
+      "responsePath": "/api/v1/tickets/fcdaed0d-a35f-4f82-bd51-2bda53ad5ca9/qr",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh"
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 401
+    },
+    {
+      "responsePath": "/api/v1/auth/refresh",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login"
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    }
+  ],
+  "failures": []
+}

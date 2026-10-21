@@ -1,0 +1,16 @@
+{
+  "pidsAbsent": {
+    "2823352": true,
+    "2823365": true,
+    "2823489": true,
+    "2823773": true,
+    "2824451": true,
+    "2824464": true,
+    "2824602": true,
+    "2824865": true
+  },
+  "listeners": "",
+  "profilesRemaining": [],
+  "socketsRemaining": [],
+  "postmasterPidfilesRemaining": []
+}
