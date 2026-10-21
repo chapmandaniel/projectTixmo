@@ -1,0 +1,12 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.w3oFCn/jest-cache --runInBand --runTestsByPath tests/integration/orders-http-pressure.local.test.ts
+
+PASS tests/integration/orders-http-pressure.local.test.ts (18.197 s)
+  ✓ 100 same-IP authenticated HTTP buyer pairs at 30 scheduled arrivals/sec (11694 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        18.452 s
+Ran all test suites within paths "tests/integration/orders-http-pressure.local.test.ts".

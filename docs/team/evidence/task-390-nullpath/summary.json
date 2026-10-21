@@ -1,0 +1,42 @@
+{
+  "GET200": 100,
+  "POST201": 100,
+  "results": 200,
+  "statuses": [
+    200,
+    201
+  ],
+  "arrived": 100,
+  "completed": 100,
+  "maxActive": 2,
+  "maxQueue": 1,
+  "elapsedMs": 3380.8750599999985,
+  "routeStats": {
+    "read": {
+      "p50": 10.149235999999291,
+      "p95": 19.54224299999987,
+      "p99": 24.096258999999918,
+      "p100": 31.6521900000007
+    },
+    "order": {
+      "p50": 18.80346400000053,
+      "p95": 34.23159100000157,
+      "p99": 35.92437300000165,
+      "p100": 42.27773299999899
+    }
+  },
+  "monitorSamples": 63,
+  "peaks": {
+    "connections": 3,
+    "lock_waiters": 0,
+    "ungranted": 0,
+    "rss": 1094664192,
+    "leases": 2,
+    "backlog": 2
+  },
+  "lastCPU": {
+    "user": 11547959,
+    "system": 631080
+  },
+  "cleanupErrors": []
+}

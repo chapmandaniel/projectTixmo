@@ -1,0 +1,9 @@
+{
+  "source": "971275ba7c87b7d6d3d8831d6334922dcf618a05",
+  "dependencies": "/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/node_modules",
+  "lock_sha256": "f530d7671524de570d43a6cf7e105cc8161f4c1be6b71a7ffc89025ee8a139da",
+  "dependency_lock_sha256": "f530d7671524de570d43a6cf7e105cc8161f4c1be6b71a7ffc89025ee8a139da",
+  "schema_sha256": "03544f7a5fbe613b111fcf83b0249a38cc21d15ff8427b95ff340989871ec7bb",
+  "generated_schema_sha256": "a8601e89abd910f7464f9848ba061dc68fabf8ec6b4f014d4365004c95dc3b01",
+  "schema_normalized_equal": true
+}

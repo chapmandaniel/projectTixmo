@@ -1,0 +1,31 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.w3oFCn",
+  "mode": "0o700",
+  "pids": {
+    "3291903": {
+      "proc_absent": true
+    },
+    "3291916": {
+      "proc_absent": true
+    },
+    "3292058": {
+      "proc_absent": true
+    }
+  },
+  "ports": {
+    "38404": {
+      "exit": 0,
+      "rows": ""
+    },
+    "55714": {
+      "exit": 0,
+      "rows": ""
+    },
+    "32911": {
+      "exit": 0,
+      "rows": ""
+    }
+  },
+  "postmaster_absent": true,
+  "pg_socket_absent": true
+}

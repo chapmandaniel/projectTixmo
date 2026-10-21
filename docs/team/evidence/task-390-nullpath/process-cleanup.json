@@ -1,0 +1,15 @@
+{
+  "observedAt": "2026-10-21T13:45:05.065Z",
+  "errors": [],
+  "identity": {
+    "runId": "c8cbf3e5eb1f08566b505394574d339dabd932bbd924b2eab0daf2d38fc5625d",
+    "runtimeRoot": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.w3oFCn",
+    "pid": 3292058,
+    "ppid": 3292057,
+    "executable": "/home/daniel/.nvm/versions/node/v24.21.0/bin/node",
+    "startStat": "3292058 (MainThread) R 3292057 3292045 3291835 0 -1 4194304 186565 44656 0 0 1011 51 112 20 20 0 11 0 126391667 2494689280 186575 18446744073709551615 7626752 52430497 140724041669504 0 0 0 0 4096 1536 0 0 0 17 0 0 0 0 0 0 112535000 112706784 809893888 140724041671141 140724041671434 140724041671434 140724041674694 0\n"
+  },
+  "pidAbsent": true,
+  "httpPort": 32911,
+  "listenerRows": ""
+}

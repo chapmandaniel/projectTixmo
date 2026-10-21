@@ -1,0 +1,14 @@
+2026-10-21 11:14:44.032 NDT [3291903] LOG:  starting PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-10-21 11:14:44.032 NDT [3291903] LOG:  listening on IPv4 address "127.0.0.1", port 38404
+2026-10-21 11:14:44.034 NDT [3291903] LOG:  listening on Unix socket "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-379/run.w3oFCn/.s.PGSQL.38404"
+2026-10-21 11:14:44.038 NDT [3291909] LOG:  database system was shut down at 2026-10-21 11:14:43 NDT
+2026-10-21 11:14:44.043 NDT [3291903] LOG:  database system is ready to accept connections
+2026-10-21 11:14:45.025 NDT [3292034] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 11:14:50.172 NDT [3292177] LOG:  could not receive data from client: Connection reset by peer
+2026-10-21 11:15:04.491 NDT [3291903] LOG:  received fast shutdown request
+2026-10-21 11:15:04.493 NDT [3291903] LOG:  aborting any active transactions
+2026-10-21 11:15:04.494 NDT [3291903] LOG:  background worker "logical replication launcher" (PID 3291912) exited with exit code 1
+2026-10-21 11:15:04.496 NDT [3291907] LOG:  shutting down
+2026-10-21 11:15:04.497 NDT [3291907] LOG:  checkpoint starting: shutdown immediate
+2026-10-21 11:15:04.679 NDT [3291907] LOG:  checkpoint complete: wrote 1096 buffers (6.7%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.017 s, sync=0.159 s, total=0.183 s; sync files=495, longest=0.002 s, average=0.001 s; distance=6252 kB, estimate=6252 kB; lsn=0/1D81370, redo lsn=0/1D81370
+2026-10-21 11:15:04.712 NDT [3291903] LOG:  database system is shut down
