@@ -61,12 +61,17 @@ cleanup() {
     echo "Owned-runtime cleanup FAILED; inspect $owned_run; do not run another gate" >&2
     exit 1
   fi
-  echo "TASK379_CLEANUP pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"
   listeners=$(ss -H -ltnp "sport = :$pgport or sport = :$redisport")
+  observer_status=$?
+  if test "$observer_status" -ne 0; then
+    echo "Owned-runtime cleanup listener observation FAILED status=$observer_status; inspect $owned_run" >&2
+    exit 1
+  fi
   printf '%s\n' "$listeners"
   test -z "$listeners" || exit 1
   test ! -e "$owned_run/pg/postmaster.pid" || exit 1
   test ! -S "$owned_run/.s.PGSQL.$pgport" || exit 1
   if { test -n "$pg_pid" && alive "$pg_pid"; } || { test -n "$redis_pid" && alive "$redis_pid"; }; then exit 1; fi
+  echo "TASK379_CLEANUP pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"
   exit "$original_status"
 }

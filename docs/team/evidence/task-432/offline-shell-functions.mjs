@@ -3,7 +3,19 @@ import fs from 'node:fs';
 import { spawnSync, execFileSync } from 'node:child_process';
 const runtime = fs.readFileSync('docs/team/evidence/task-427/runtime.sh', 'utf8');
 const helper = fs.readFileSync('docs/team/evidence/task-427/owned-lifecycle.sh', 'utf8');
-const definitions = helper.slice(helper.indexOf('alive() {'));
+const baselineHelper = execFileSync('git', ['show', '8eaf5cec7fc62bf093bbf4cb401bcc0396a9b161:docs/team/evidence/task-427/owned-lifecycle.sh'], { encoding: 'utf8' });
+const successLine = '  echo "TASK379_CLEANUP pg_pid=$pg_pid redis_pid=$redis_pid pgport=$pgport redisport=$redisport"\n';
+const observationLine = '  listeners=$(ss -H -ltnp "sport = :$pgport or sport = :$redisport")\n';
+const observerCheck = `  observer_status=$?
+  if test "$observer_status" -ne 0; then
+    echo "Owned-runtime cleanup listener observation FAILED status=$observer_status; inspect $owned_run" >&2
+    exit 1
+  fi
+`;
+assert.equal(helper, baselineHelper.replace(successLine, '').replace(observationLine, observationLine + observerCheck).replace('  exit "$original_status"', successLine + '  exit "$original_status"'));
+// Legacy byte parity remains exact, with the entire narrowly asserted correction
+// above explicitly reversed, not a weakened source comparison.
+const definitions = baselineHelper.slice(baselineHelper.indexOf('alive() {'));
 const old = execFileSync('git', ['show', 'd5fec56e99a37218ef06a512e265c99942290340:docs/team/evidence/task-427/runtime.sh'], { encoding: 'utf8' });
 assert.equal(runtime.replace('source "$PWD/docs/team/evidence/task-427/owned-lifecycle.sh"\n', () => definitions), old);
 const source = 'source "$PWD/docs/team/evidence/task-427/owned-lifecycle.sh"\n';
@@ -35,3 +47,10 @@ assert.match(bash(clean + 'redis_pid=123; alive() { return 1; }; wait() { :; }; 
 bash(clean + "ss() { printf 'foreign listener\\n'; }; cleanup", 1); // cannot claim cleanup with listener
 assert.match(bash(clean + 'stop_exact() { return 1; }; cleanup', 1), /cleanup FAILED/);
 console.log('PASS exact byte reconstruction; inert source; owned/foreign PID, UID and executable; no foreign signal; partial startup status; foreign listener and cleanup failure denial');
+
+const observerFailure = bash(clean + 'ss() { return 23; }; cleanup', 1);
+assert.match(observerFailure, /listener observation FAILED status=23/);
+assert.doesNotMatch(observerFailure, /TASK379_CLEANUP/);
+const observerOriginalFailure = bash(clean + 'ss() { return 23; }; (exit 37); cleanup', 1);
+assert.match(observerOriginalFailure, /status=23/);
+assert.doesNotMatch(observerOriginalFailure, /TASK379_CLEANUP/);

@@ -64,3 +64,11 @@ assert.equal((output.match(/TASK379_CLEANUP/g) || []).length, 1);
 const denied = spawnSync('bash', ['docs/team/evidence/task-427/runtime.sh'], { env, encoding: 'utf8' });
 assert.equal(denied.status, 2); assert.match(denied.stderr, /source-only handoff/);
 console.log('PASS inert held lifetime, close once, EOF/unknown denial, partial-start cleanup/original72, missing grant');
+
+const observerFailProgram = program('').replace("*'23001 or'*) :;", "*'23001 or'*) return 23;");
+const observerFail = spawnSync('bash', ['--noprofile', '--norc', '-c', observerFailProgram], { env, input: 'close\n', encoding: 'utf8', timeout: 3000 });
+assert.equal(observerFail.status, 1, observerFail.stdout + observerFail.stderr);
+assert.match(observerFail.stdout, /TASK432_SHELL_HELD/);
+assert.doesNotMatch(observerFail.stdout, /TASK379_CLEANUP/);
+assert.match(observerFail.stderr, /listener observation FAILED status=23/);
+console.log('PASS readiness succeeds then cleanup observer23 denies success/nonzero with phase and status');
