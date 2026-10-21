@@ -1,0 +1,1 @@
+PASS 48 independent actual-owned closed/reaped cases: both callback paths/primary0+61, null undefined primitives revoked proxy hostile getters/unprintable empty diagnostic fields and real Error; report/JSON/status, ordering and one-shot retained
