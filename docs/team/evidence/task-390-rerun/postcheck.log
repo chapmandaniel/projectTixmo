@@ -1,0 +1,5 @@
+/proc/3269074 exists=False
+/proc/3269088 exists=False
+/proc/3269192 exists=False
+ss exit=0
+postmaster.pid exists=False

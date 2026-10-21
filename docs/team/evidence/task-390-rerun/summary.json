@@ -1,0 +1,46 @@
+{
+  "arrived": 100,
+  "completed": 100,
+  "maxActive": 1,
+  "maxQueue": 1,
+  "elapsedMs": 3313.1516120000015,
+  "routeStats": {
+    "read": {
+      "p50": 1.076108999999633,
+      "p95": 1.2192849999992177,
+      "p99": 1.3899719999990339,
+      "p100": 2.9227069999997184
+    },
+    "order": {
+      "p50": 0.7188319999986561,
+      "p95": 0.8240370000003168,
+      "p99": 0.9097669999991922,
+      "p100": 1.2428270000000339
+    }
+  },
+  "statuses": {
+    "read": {
+      "0": 100
+    },
+    "order": {
+      "0": 100
+    }
+  },
+  "errors": {
+    "Error: Task379 network guard rejected non-owned TCP target": 200
+  },
+  "maxima": {
+    "connections": 1,
+    "lock_waiters": 0,
+    "ungranted": 0,
+    "rss": 1070358528,
+    "leases": 0,
+    "backlog": 0,
+    "queue": 0,
+    "oldestQueueMs": 0
+  },
+  "lastCPU": {
+    "user": 9351392,
+    "system": 306842
+  }
+}
