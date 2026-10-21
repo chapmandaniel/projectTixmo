@@ -1,0 +1,65 @@
+{
+  "implementation": "fa7fe109959f415b8f83e1ff3e01b68db61416ad",
+  "identity": [
+    {
+      "file": "tixmoapi2/src/api/orders/service.ts",
+      "byteIdentical": true,
+      "sha256": "88d4f9e29caf0af0762c6c5348af64f055b414224fa6c8c5245bdc6493522e46"
+    },
+    {
+      "file": "tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts",
+      "byteIdentical": true,
+      "sha256": "0a19c39327cdaf1063a9ce209d5cec7f3cbbfb9c4bab39428305363461f42f4f"
+    },
+    {
+      "file": "docs/team/evidence/task-328/jest.log",
+      "byteIdentical": true,
+      "sha256": "e354bd1583957c1a239f5782308f0c678ca7cbc7c1e21ef6807c6ca03bfa1cfb"
+    },
+    {
+      "file": "docs/team/evidence/task-328/red-baseline/jest.log",
+      "byteIdentical": true,
+      "sha256": "e1acd32185648ec01a3c9506e6af26fa03b06db9fbc17337fbd4479cf3d63109"
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+        "fa7fe109959f415b8f83e1ff3e01b68db61416ad",
+        "--",
+        "tixmoapi2/src/api/orders/service.ts",
+        "tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+        "fa7fe109959f415b8f83e1ff3e01b68db61416ad"
+      ],
+      "exit": 2,
+      "stdout": "docs/team/evidence/task-328/jest.log:2: trailing whitespace.\n+    prisma:error \ndocs/team/evidence/task-328/jest.log:4: trailing whitespace.\n+    \ndocs/team/evidence/task-328/jest.log:5: trailing whitespace.\n+    \ndocs/team/evidence/task-328/red-baseline/jest.log:2: trailing whitespace.\n+    prisma:error \ndocs/team/evidence/task-328/red-baseline/jest.log:4: trailing whitespace.\n+    \ndocs/team/evidence/task-328/red-baseline/jest.log:5: trailing whitespace.\n+    \n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "fa7fe109959f415b8f83e1ff3e01b68db61416ad"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}
