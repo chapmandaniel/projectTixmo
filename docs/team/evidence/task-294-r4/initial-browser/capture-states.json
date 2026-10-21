@@ -1,0 +1,44 @@
+[
+  {
+    "name": "01-real-a-wallet-qr",
+    "expected": true,
+    "selector": "h1,img[alt=\"Ticket admission QR code\"]",
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ],
+      [
+        256.5,
+        547.8,
+        272,
+        272
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  },
+  {
+    "name": "failure",
+    "expected": true,
+    "selector": "h1",
+    "visible": true,
+    "minOpacity": 1,
+    "running": 0,
+    "geometry": [
+      [
+        69,
+        69,
+        647,
+        42.5
+      ]
+    ],
+    "fonts": "loaded",
+    "stableFrames": 4
+  }
+]

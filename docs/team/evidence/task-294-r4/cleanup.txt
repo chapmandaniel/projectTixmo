@@ -1,0 +1,22 @@
+initial-runtime.log PG/Redis stopped, postmaster/socket/profile absent 2716400 2716413 /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r4/run.MwDtss
+compositor-runtime.log PG/Redis stopped, postmaster/socket/profile absent 2718420 2718433 /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r4/run.7QIocr
+runtime.log PG/Redis stopped, postmaster/socket/profile absent 2721150 2721206 /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r4/run.ymogFY
+API PID absent 2718555
+API PID absent 2721341
+API PID absent 2716500
+/home/daniel/projects/projectTixmo/worktrees/task-294/docs/team/evidence/task-294-r4/compositor-browser/cleanup.json browser PID absent 2719281
+/home/daniel/projects/projectTixmo/worktrees/task-294/docs/team/evidence/task-294-r4/initial-browser/cleanup.json browser PID absent 2716958
+/home/daniel/projects/projectTixmo/worktrees/task-294/docs/team/evidence/task-294-r4/browser/cleanup.json browser PID absent 2722065
+No listener 30360
+No listener 55397
+No listener 30979
+No listener 47442
+No listener 20952
+No listener 59697
+No listener 45129
+No listener 37133
+No listener 43171
+No listener 45647
+No listener 32965
+No listener 34453
+Browser-harness child exit0 awaited by Jest; exact browser exit/Vite close/profile removal awaited; dependency links removed after runtime.

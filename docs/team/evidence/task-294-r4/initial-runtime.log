@@ -1,0 +1,8 @@
+waiting for server to start.... done
+server started
+tixmo_disposable_294|tixmo294|127.0.0.1|30360
+PONG
+TASK294_RUNTIME path=/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r4/run.MwDtss pg_pid=2716400 redis_pid=2716413 pgport=30360 redisport=55397
+waiting for server to shut down.... done
+server stopped
+TASK294_CLEANUP pg_pid=2716400 redis_pid=2716413 pgport=30360 redisport=55397

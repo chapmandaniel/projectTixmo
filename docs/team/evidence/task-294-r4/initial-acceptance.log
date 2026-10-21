@@ -1,0 +1,62 @@
+
+> tixmoapi2@0.1.0 test
+> jest --runInBand --cacheDirectory /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task294-r4/run.MwDtss/jest-cache --runInBand --runTestsByPath tests/integration/wallet-auth-settled.local.test.ts
+
+  console.log
+    TASK294_REDIS_CLIENT 1
+
+      at Object.<anonymous> (tests/integration/wallet-auth-settled.local.test.ts:25:11)
+
+  console.log
+    TASK294_API_LISTENER 2716500 { address: '127.0.0.1', family: 'IPv4', port: 43171 }
+
+      at Object.<anonymous> (tests/integration/wallet-auth-settled.local.test.ts:34:11)
+
+TASK294_BROWSER_CLEANUP {
+  browser: { pid: 2716958, stopped: true, exitCode: 143, signalCode: null },
+  listener: { port: 32965, closed: true },
+  profileRemoved: true
+}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Unsettled screenshot 02-real-session-cleared: {"expected":false,"visible":true,"minOpacity":1,"running":0,"geometry":[[69,69,647,42.5],[56.3,370.5,672.5,46.8]],"fonts":"loaded"}
+    at screenshot (file:///home/daniel/projects/projectTixmo/worktrees/task-294/scripts/browser/task-294-settled-return.mjs:45:2)
+    at async file:///home/daniel/projects/projectTixmo/worktrees/task-294/scripts/browser/task-294-settled-return.mjs:85:2 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
+  console.log
+    TASK294_API_CLOSED
+
+      at Object.<anonymous> (tests/integration/wallet-auth-settled.local.test.ts:21:11)
+
+FAIL tests/integration/wallet-auth-settled.local.test.ts (23.308 s)
+  ✕ HTTP password login A wallet/QR, B isolation, session revocation and re-login are read-only (17122 ms)
+
+  ● HTTP password login A wallet/QR, B isolation, session revocation and re-login are read-only
+
+    Browser exit 1
+
+      66 |     const child=spawn(process.execPath,[path.resolve(__dirname,'../../../scripts/browser/task-294-settled-return.mjs')],{stdio:['ignore','inherit','inherit','ipc'], env:{ HOME:'/home/daniel',PATH:process.env.PATH!,NODE_ENV:'test',TIXMO_BROWSER_PATH:'/home/daniel/projects/projectTixmo/worktrees/task-288/scripts/runtime/task-288-chromium',TASK294_FRONTEND_PORT:String(frontendPort),TASK294_RUN:process.env.TMPDIR!,TASK294_API_ORIGIN:`http://127.0.0.1:${port}`,TASK294_FIXTURE:JSON.stringify({a:a.email,b:b.email,password,orderNumber:order.orderNumber,orderId:order.id,slug:event.slug})}});
+      67 |     child.on('message',async (m:any)=>{if(m.revoke){try{await prisma.user.update({where:{id:a.id},data:{sessionVersion:{increment:1}}});child.send({ok:true});}catch(e){child.send({ok:false,error:String(e)});}}});
+    > 68 |     child.on('error',reject);child.on('exit',(code)=>code===0?resolve():reject(Error(`Browser exit ${code}`)));
+         |                                                                                ^
+      69 |   });
+      70 |   expect(await state()).toEqual(before);
+      71 |   for (const result of (Stripe as unknown as jest.Mock).mock.results) {
+
+      at ChildProcess.<anonymous> (tests/integration/wallet-auth-settled.local.test.ts:68:80)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        23.547 s
+Ran all test suites within paths "tests/integration/wallet-auth-settled.local.test.ts".

@@ -1,0 +1,85 @@
+{
+  "error": "AssertionError [ERR_ASSERTION]: Unsettled screenshot 02-real-session-cleared: {\"expected\":false,\"visible\":true,\"minOpacity\":1,\"running\":0,\"geometry\":[[69,69,647,42.5],[56.3,370.5,672.5,46.8]],\"fonts\":\"loaded\"}\n    at screenshot (file:///home/daniel/projects/projectTixmo/worktrees/task-294/scripts/browser/task-294-settled-return.mjs:45:2)\n    at async file:///home/daniel/projects/projectTixmo/worktrees/task-294/scripts/browser/task-294-settled-return.mjs:85:2",
+  "audit": [
+    {
+      "blockedExternal": "https://fonts.googleapis.com"
+    },
+    {
+      "blockedExternal": "https://js.stripe.com"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login"
+    },
+    {
+      "responsePath": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 200
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/9ed6f0df-5570-4ee8-a1d1-03fd5fe32b8d/qr"
+    },
+    {
+      "responsePath": "/api/v1/tickets/9ed6f0df-5570-4ee8-a1d1-03fd5fe32b8d/qr",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/mine"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/tickets/mine"
+    },
+    {
+      "responsePath": "/api/v1/orders/mine",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh"
+    },
+    {
+      "responsePath": "/api/v1/tickets/mine",
+      "status": 401
+    },
+    {
+      "responsePath": "/api/v1/auth/refresh",
+      "status": 401
+    }
+  ],
+  "failures": [],
+  "body": "\n    My ticketsSign in to view tickets, payment status, and refunds.New buyerSign inCreate buyer accountTixmo\n    \n    \n\n\n\n"
+}
