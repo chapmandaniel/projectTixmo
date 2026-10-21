@@ -38,6 +38,8 @@ const ExternalReviewPage = lazy(() => import('./pages/ExternalReviewPage'));
 const SharedAssetFolderPage = lazy(() => import('./pages/SharedAssetFolderPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const WalletPage = lazy(() => import('./pages/WalletPage'));
+const EventOnSalePage = lazy(() => import('./pages/EventOnSalePage'));
+const EventOnSalePreview = import.meta.env.DEV ? lazy(() => import('./pages/EventOnSalePreview')) : null;
 
 const RouteFallback = ({ isDark = true }) => (
     <div className={`flex min-h-[280px] items-center justify-center rounded-md border text-sm font-light ${isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-dashboard-muted' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
@@ -121,12 +123,12 @@ const App = () => {
     const navigate = useNavigate();
     const latestLocation = useRef(location);
     latestLocation.current = location;
-    const preserveCheckoutReturn = () => {
+    const preservePublicLocation = () => {
         const current = latestLocation.current;
         const query = new URLSearchParams(current.search);
-        return matchPath('/checkout/:slug', current.pathname)
+        return matchPath('/e/:slug', current.pathname) || (matchPath('/checkout/:slug', current.pathname)
             && ['orderId', 'redirect_status', 'payment_intent', 'payment_intent_client_secret']
-                .some((field) => query.has(field));
+                .some((field) => query.has(field)));
     };
     const [isDark, setIsDark] = useState(true);
     const [user, setUser] = useState(auth.getCurrentUser());
@@ -172,7 +174,7 @@ const App = () => {
             }
 
             setRedirectToDashboardAfterLogin(false);
-            if (!preserveCheckoutReturn()) navigate('/dashboard', { replace: true });
+            if (!preservePublicLocation()) navigate('/dashboard', { replace: true });
             setUser(null);
         };
         window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
@@ -180,7 +182,7 @@ const App = () => {
         const handleStorage = (event) => {
             if (event.key === ACCESS_TOKEN_KEY && !event.newValue) {
                 setRedirectToDashboardAfterLogin(false);
-                if (!preserveCheckoutReturn()) navigate('/dashboard', { replace: true });
+                if (!preservePublicLocation()) navigate('/dashboard', { replace: true });
                 setUser(null);
             }
 
@@ -275,6 +277,8 @@ const App = () => {
         <Suspense fallback={<PublicRouteFallback isDark={isDark} />}>
             <Routes>
                 {/* External unauthenticated routes */}
+                <Route path="/e/:slug" element={<EventOnSalePage />} />
+                {EventOnSalePreview && <Route path="/preview/event-onsale" element={<EventOnSalePreview />} />}
                 <Route path="/review/*" element={<ExternalReviewPage />} />
                 <Route path="/invite" element={<AcceptInvitationView onAccepted={(nextUser) => { handleLogin(nextUser); navigate('/dashboard', { replace: true }); }} />} />
                 <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />

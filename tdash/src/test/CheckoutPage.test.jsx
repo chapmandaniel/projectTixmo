@@ -121,6 +121,13 @@ describe('CheckoutPage', () => {
         });
     });
 
+    it('restores event-page selections using current ticket limits', async () => {
+        renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A99%2Cunknown%3A2' });
+        await screen.findByText('Neon Nights');
+        expect(screen.getByText('4 x $25.00')).toBeInTheDocument();
+        expect(screen.queryByText('99 x $25.00')).not.toBeInTheDocument();
+    });
+
     it('shows required checkout policy links before preparing payment', async () => {
         renderCheckout({
             user: { id: 'buyer-1', email: 'buyer@example.com' },

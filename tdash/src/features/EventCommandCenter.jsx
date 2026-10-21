@@ -35,6 +35,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
     const eventName = event.name || event.title || 'Event';
     const checkoutSlug = event.slug || generateEventSlug(eventName, event.id);
     const checkoutUrl = `${window.location.origin}/checkout/${checkoutSlug}`;
+    const publicEventUrl = `${window.location.origin}/e/${encodeURIComponent(checkoutSlug)}`;
     const publicCheckoutStatuses = new Set(['PUBLISHED', 'ON_SALE', 'SOLD_OUT']);
     const canUseCheckoutLink = publicCheckoutStatuses.has(event.status);
 
@@ -149,6 +150,18 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
 
 
                         <div className="flex items-center gap-2">
+                            <DashboardButton
+                                isDark={isDark}
+                                variant="secondary"
+                                onClick={() => canUseCheckoutLink && window.open(publicEventUrl, '_blank', 'noopener,noreferrer')}
+                                disabled={!canUseCheckoutLink}
+                                className="h-10 px-3 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+                                title={canUseCheckoutLink ? publicEventUrl : 'Event page available after publish'}
+                            >
+                                <Globe size={14} />
+                                Event page
+                                <ExternalLink size={13} />
+                            </DashboardButton>
                             <DashboardIconButton
                                 isDark={isDark}
                                 aria-label="Copy checkout link"
