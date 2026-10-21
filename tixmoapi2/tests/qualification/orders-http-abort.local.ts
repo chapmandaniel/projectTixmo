@@ -8,8 +8,9 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
-import { execFileSync } from 'child_process';
 import net from 'net';
+// Must execute before any product/dependency imports; runner supplies immutable identity.
+const preimportProvenance = require('../../../docs/team/evidence/task-426/provenance.cjs').verify(__filename, process.env);
 import request from 'supertest';
 import prisma from '../../src/config/prisma';
 import { connectRedis, disconnectRedis } from '../../src/config/redis';
@@ -64,11 +65,7 @@ test('real authenticated checkout socket aborts release each admission lease onc
     tickets: await prisma.ticket.findMany({ orderBy: { id: 'asc' } }),
   });
   try {
-    const sourceSHA = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-    const sourceDigest = crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex');
-    provenance = { invocation, sourceSHA, sourceDigest };
-    // A receipt must name the actual immutable source; dirty tracked source fails closed.
-    execFileSync('git', ['diff', '--quiet', 'HEAD', '--']);
+    provenance = { invocation, ...preimportProvenance };
     redis = await connectRedis();
     // Instrument before app/routes capture exports. catchAsync otherwise hides its promise.
     const asyncModule = await import('../../src/utils/catchAsync');
@@ -90,7 +87,16 @@ test('real authenticated checkout socket aborts release each admission lease onc
     const removalLayer = trackedSpy(jest, redis, 'zRem', work);
     removal = removalLayer.spy;
     evalLayer = trackedSpy(jest, redis, 'eval', work);
-    instrumentation.push(removalLayer.spy, evalLayer.spy);
+    const commandLayer = trackedSpy(jest, redis, 'sendCommand', work);
+    instrumentation.push(removalLayer.spy, evalLayer.spy, commandLayer.spy);
+    // The installed limiter returns a promise encompassing store waits AND next().
+    // Join that continuation, not merely sendCommand (which settles before next).
+    const { promiseMiddleware } = require('../../../docs/team/evidence/task-426/middleware-lifetime.cjs');
+    const limiter = await import('../../src/middleware/rateLimiter');
+    for (const name of ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter'] as const) {
+      const original = limiter[name];
+      instrumentation.push(jest.spyOn(limiter, name).mockImplementation(promiseMiddleware(original, work)));
+    }
     const { default: app } = await import('../../src/app');
     const { ACTIVE_REQUESTS_KEY, ACQUIRE_REQUEST_LEASE } = await import('../../src/middleware/waitingRoom');
     const { orderService } = await import('../../src/api/orders/service');

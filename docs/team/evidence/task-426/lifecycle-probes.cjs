@@ -31,7 +31,7 @@ const { tracker, finalize } = require('./lifecycle.cjs');
   const source = fs.readFileSync('tixmoapi2/tests/qualification/orders-http-abort.local.ts', 'utf8');
   assert(source.indexOf('await Promise.race([terminal.promise') < source.indexOf('      gate.resolve();'));
   assert(source.indexOf("['join admitted mutable work'") < source.indexOf("['Prisma disconnect'"));
-  assert.match(source, /flag: 'wx'/); assert.match(source, /\['diff', '--quiet', 'HEAD'/);
+  assert.match(source, /flag: 'wx'/); assert.match(fs.readFileSync(require('node:path').join(__dirname, 'provenance.cjs'), 'utf8'), /\['diff', '--no-ext-diff', '--quiet', 'HEAD'/);
   assert.match(source, /phase.inflight = inflight/);
   console.log('PASS pending handler joins before disconnect; stuck handler prevents disconnect; first error survives ENOSPC with cleanup diagnostics; initialization failure cleanup/receipt; invocation and source binding; ACK ordering. Offline only, no sockets/services.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

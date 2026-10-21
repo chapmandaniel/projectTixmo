@@ -1,0 +1,26 @@
+$ node docs/team/evidence/task-426/continuation-probes.cjs
+PASS installed express-rate-limit deferred store success/error: join blocks before gate, downstream and child finish before synthetic disconnect
+PASS executed-root provenance independent of caller cwd; wrong expected SHA, absent deps, dirty executed source reject before imports
+PASS emitted CommonJS provenance verifies before first product import; future runner/preload still required
+exit=0
+$ node docs/team/evidence/task-426/lifecycle-probes.cjs
+PASS pending handler joins before disconnect; stuck handler prevents disconnect; first error survives ENOSPC with cleanup diagnostics; initialization failure cleanup/receipt; invocation and source binding; ACK ordering. Offline only, no sockets/services.
+exit=0
+$ node docs/team/evidence/task-426/spy-probes.cjs
+PASS installed jest-mock: three phase delegates, native called once each/no recursion, blocked phase joined, failure join/reset, zRem tracking retained, exact original restoration. Offline only.
+exit=0
+$ node docs/team/evidence/task-426/cleanup-probes.cjs
+PASS ENOSPC and hanging cleanup do not skip later cleanup; artifact after cleanup; server ACK before gate release; initialization owned by try. No sockets/services.
+exit=0
+$ node docs/team/evidence/task-426/offline-check.cjs
+PASS exact package/lock/schema match; TypeScript syntax transpile + emitted JS parse; 4 unsafe runtime paths rejected; checkpoint invariant checks. NOT typecheck/Jest/HTTP/runtime. TypeScript=5.9.3
+exit=0
+$ node docs/team/evidence/task-427/transport-stub.cjs
+PASS transport stub: no native connections/listens; scope async propagation, nonowned rejection, normalized/null paths, native registration/revocation, outer scope restored
+exit=0
+$ node --check docs/team/evidence/task-426/provenance.cjs
+exit=0
+$ node --check docs/team/evidence/task-426/middleware-lifetime.cjs
+exit=0
+$ git diff --check
+exit=0
