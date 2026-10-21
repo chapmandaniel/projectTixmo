@@ -8,6 +8,15 @@ retain_owned_shell() (
   trap 'exit 130' INT
   trap 'exit 143' TERM
   # Install cleanup before validating even partial startup; never signal foreigners.
+  # Bound only the held-input wait, not readiness or arbitrary native cleanup.
+  held_wait_seconds=${TASK432_HELD_WAIT_SECONDS-60}
+  case "$held_wait_seconds" in
+    ''|*[!0-9]*|0|0*|????*) echo 'Invalid TASK432_HELD_WAIT_SECONDS (integer 1..300 required)' >&2; exit 76;;
+  esac
+  if test "$held_wait_seconds" -gt 300; then
+    echo 'Invalid TASK432_HELD_WAIT_SECONDS (integer 1..300 required)' >&2
+    exit 76
+  fi
   test -n "$pg_pid" && test -n "$redis_pid" || exit 72
   for pair in "pg:$pg_pid" "redis:$redis_pid"; do
     kind=${pair%%:*}; pid=${pair#*:}
@@ -23,7 +32,17 @@ retain_owned_shell() (
   printf 'TASK432_SHELL_HELD\n'
   # Keep the owning shell and its traps alive. No command evaluation or children.
   # EOF/unknown input fails closed. Exactly one close is consumed; EXIT cleans once.
-  IFS= read -r request || exit 74
+  # Bash read >128 is timeout. Never accept its partial buffer on failure.
+  if IFS= read -r -t "$held_wait_seconds" request; then
+    :
+  else
+    read_status=$?
+    if test "$read_status" -gt 128; then
+      echo "Held-input wait timed out after $held_wait_seconds seconds; close NOT accepted" >&2
+      exit 75
+    fi
+    exit 74
+  fi
   test "$request" = close || exit 74
   exit 0
 )

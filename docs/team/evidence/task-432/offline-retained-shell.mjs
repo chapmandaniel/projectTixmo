@@ -44,6 +44,7 @@ assert.match(foreign.stderr, /cleanup FAILED/);
 assert.match(run('', 'close\nclose\n', 0), /SHELL_HELD/);
 assert.equal((run('', 'close\n', 0).match(/STOP:redis:124/g) || []).length, 1);
 run('', '', 74); run('', 'arbitrary-command\n', 74);
+run('', 'close', 74); run('', 'close \n', 74);
 // Same shell remains blocked/alive until close; no polling sleep needed.
 const child = spawn('bash', ['--noprofile', '--norc', '-c', program('')], { env, stdio: ['pipe', 'pipe', 'pipe'] });
 let output = ''; let errors = ''; let held = false;
@@ -72,3 +73,49 @@ assert.match(observerFail.stdout, /TASK432_SHELL_HELD/);
 assert.doesNotMatch(observerFail.stdout, /TASK379_CLEANUP/);
 assert.match(observerFail.stderr, /listener observation FAILED status=23/);
 console.log('PASS readiness succeeds then cleanup observer23 denies success/nonzero with phase and status');
+
+// Real Bash read timeout with the parent's pipe intentionally kept open.
+for (const partialInput of ['', 'close']) {
+  const started = performance.now();
+  const c = spawn('bash', ['--noprofile', '--norc', '-c', program('')], {
+    env: { ...env, TASK432_HELD_WAIT_SECONDS: '1' }, stdio: ['pipe', 'pipe', 'pipe']
+  });
+  let out = '', err = '', sent = false;
+  const watchdog = setTimeout(() => c.kill('SIGKILL'), 4000);
+  c.stdout.on('data', b => {
+    out += b;
+    if (!sent && out.includes('TASK432_SHELL_HELD\n')) {
+      sent = true;
+      if (partialInput) c.stdin.write(partialInput); // NO newline, NO EOF
+    }
+  });
+  c.stderr.on('data', b => { err += b; });
+  c.stdin.on('error', () => {});
+  const [code, signal] = await new Promise(resolve => c.on('close', (...args) => resolve(args)));
+  clearTimeout(watchdog); c.stdin.destroy();
+  const elapsed = performance.now() - started;
+  assert.equal(signal, null, out + err); assert.equal(code, 75, out + err);
+  assert.equal(sent, true); assert.match(err, /timed out after 1 seconds; close NOT accepted/);
+  assert.equal((out.match(/STOP:redis:124/g) || []).length, 1);
+  assert.equal((out.match(/TASK379_CLEANUP/g) || []).length, 1);
+  assert.ok(elapsed >= 900 && elapsed < 3500, `elapsed=${elapsed}`);
+  console.log(`PASS held-open partial=${JSON.stringify(partialInput)} status75 elapsedMs=${elapsed.toFixed(1)} cleanup=1`);
+}
+// Validate BEFORE HELD with a partially owned startup; cleanup remains installed.
+for (const bound of ['', '0', '-1', '1.5', 'Infinity', '301', '01', '99999999999999999999']) {
+  const p = program('').replace('pg_pid=123; redis_pid=124;', "pg_pid=''; redis_pid=124;")
+    .replace('validation=1', 'validation=0');
+  const r = spawnSync('bash', ['--noprofile', '--norc', '-c', p], {
+    env: { ...env, TASK432_HELD_WAIT_SECONDS: bound }, input: '', encoding: 'utf8', timeout: 3000
+  });
+  assert.equal(r.status, 76, r.stdout + r.stderr);
+  assert.doesNotMatch(r.stdout, /SHELL_HELD/); assert.match(r.stderr, /Invalid TASK432_HELD_WAIT_SECONDS/);
+  assert.equal((r.stdout.match(/STOP:redis:124/g) || []).length, 1);
+  assert.equal((r.stdout.match(/TASK379_CLEANUP/g) || []).length, 1);
+}
+// Upper endpoint is valid, without waiting for that endpoint.
+const endpoint = spawnSync('bash', ['--noprofile', '--norc', '-c', program('')], {
+  env: { ...env, TASK432_HELD_WAIT_SECONDS: '300' }, input: 'close\n', encoding: 'utf8', timeout: 3000
+});
+assert.equal(endpoint.status, 0, endpoint.stdout + endpoint.stderr);
+console.log('PASS eight invalid bounds deny before HELD with once-only partial cleanup; upper endpoint close0');
