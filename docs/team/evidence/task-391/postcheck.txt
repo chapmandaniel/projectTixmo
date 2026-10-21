@@ -1,0 +1,6 @@
+PID 3234779 absent
+PID 3234792 absent
+owned ports 34722/57178 closed; ss exit0
+postmaster.pid absent
+owned PG sockets absent
+task process scan (may include capturing shell):

@@ -1,0 +1,14 @@
+{
+  "passed": null,
+  "verificationPassed": true,
+  "finalization": "unconfirmed-until-process-exit",
+  "phase": "complete",
+  "recordedAt": "2026-10-21T12:53:50.407Z",
+  "failures": [],
+  "artifacts": {
+    "provenance.json": "e7c18e3889ec12fba352ede2724040e69cd5e1eb28c80ddbc2de0c6c6d235bf4",
+    "before.json": "9f4f5077321a1a52783e6b0ca7e7da33be739fa0b14904cab7ef905df77b49b7",
+    "migration-sources.json": "092e3e1088699ccb01a231591d81f73871dca65ebaac1859fa77cab8f0f2c510",
+    "after.json": "fa724d0541ed17e127a5b367386957ea8f2d6273f102c2bb60c7ffd654e0c658"
+  }
+}

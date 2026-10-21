@@ -1,0 +1,8 @@
+{
+  "tixmoapi2/package-lock.json": "f530d7671524de570d43a6cf7e105cc8161f4c1be6b71a7ffc89025ee8a139da",
+  "tixmoapi2/prisma/schema.prisma": "03544f7a5fbe613b111fcf83b0249a38cc21d15ff8427b95ff340989871ec7bb",
+  "/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/node_modules/.prisma/client/schema.prisma": "a8601e89abd910f7464f9848ba061dc68fabf8ec6b4f014d4365004c95dc3b01",
+  "/home/daniel/projects/projectTixmo/worktrees/task-354/tixmoapi2/node_modules/.prisma/client/index.js": "a5f39662437e2d2652d4bb544b521fd1fdc7cba797472a96731a1521568640ca",
+  "scripts/verify-payment-upgrade.cjs": "cbf92d7b41848ea6176ae164736d2d35fb8537e086ef6744c8f86ad1cb2183be",
+  "tixmoapi2/tests/migrations/payment-inventory-upgrade-fixture.sql": "9ed128fb7bfa86c13250615aeb3bd85bc49fee2f05dabfb9632470187cd43690"
+}

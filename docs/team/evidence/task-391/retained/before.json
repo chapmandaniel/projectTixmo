@@ -1,0 +1,597 @@
+{
+  "rows": {
+    "orders": [
+      {
+        "id": "upgrade-cancelled-order",
+        "order_number": "SYNTHETIC-CANCELLED",
+        "user_id": "upgrade-buyer",
+        "event_id": "upgrade-event",
+        "status": "CANCELLED",
+        "total_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "fees_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "tax_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "discount_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "payment_status": "FAILED",
+        "created_at": "2026-06-01T00:00:00.000Z",
+        "updated_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-cancelled-paid",
+        "order_number": "SYNTHETIC-CANCELLED-PAID",
+        "user_id": "upgrade-buyer",
+        "event_id": "upgrade-cancelled-event",
+        "status": "PAID",
+        "total_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "fees_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "tax_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "discount_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "payment_status": "SUCCEEDED",
+        "created_at": "2026-06-01T00:00:00.000Z",
+        "updated_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-history",
+        "order_number": "SYNTHETIC-HISTORY",
+        "user_id": "upgrade-buyer",
+        "event_id": "upgrade-event",
+        "status": "PAID",
+        "total_amount": {
+          "s": 1,
+          "e": 1,
+          "d": [
+            24
+          ]
+        },
+        "fees_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "tax_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "discount_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "payment_status": "SUCCEEDED",
+        "created_at": "2026-06-01T00:00:00.000Z",
+        "updated_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-paid",
+        "order_number": "SYNTHETIC-PAID",
+        "user_id": "upgrade-buyer",
+        "event_id": "upgrade-event",
+        "status": "PAID",
+        "total_amount": {
+          "s": 1,
+          "e": 1,
+          "d": [
+            16
+          ]
+        },
+        "fees_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "tax_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "discount_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "payment_status": "SUCCEEDED",
+        "created_at": "2026-06-01T00:00:00.000Z",
+        "updated_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-pending",
+        "order_number": "SYNTHETIC-PENDING",
+        "user_id": "upgrade-buyer",
+        "event_id": "upgrade-event",
+        "status": "PENDING",
+        "total_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "fees_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "tax_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "discount_amount": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            0
+          ]
+        },
+        "payment_status": "PENDING",
+        "created_at": "2026-06-01T00:00:00.000Z",
+        "updated_at": "2026-06-01T00:00:00.000Z"
+      }
+    ],
+    "webhooks": [
+      {
+        "id": "upgrade-webhook-FAILED",
+        "type": "synthetic.inert",
+        "order_id": "upgrade-paid",
+        "status": "FAILED",
+        "processing_started_at": "2026-06-01T00:00:00.000Z",
+        "processed_at": null,
+        "created_at": "2026-06-01T00:00:00.000Z",
+        "updated_at": "2026-06-02T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-webhook-PROCESSED",
+        "type": "synthetic.inert",
+        "order_id": "upgrade-paid",
+        "status": "PROCESSED",
+        "processing_started_at": "2026-06-01T00:00:00.000Z",
+        "processed_at": "2026-06-02T00:00:00.000Z",
+        "created_at": "2026-06-01T00:00:00.000Z",
+        "updated_at": "2026-06-02T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-webhook-PROCESSING",
+        "type": "synthetic.inert",
+        "order_id": "upgrade-paid",
+        "status": "PROCESSING",
+        "processing_started_at": "2026-06-01T00:00:00.000Z",
+        "processed_at": null,
+        "created_at": "2026-06-01T00:00:00.000Z",
+        "updated_at": "2026-06-02T00:00:00.000Z"
+      }
+    ],
+    "scans": [
+      {
+        "id": "upgrade-scan",
+        "scanner_id": "upgrade-scanner",
+        "ticket_id": "upgrade-used",
+        "event_id": "upgrade-event",
+        "scan_type": "ENTRY",
+        "success": true,
+        "failure_reason": null,
+        "metadata": null,
+        "scanned_at": "2026-06-02T00:00:00.000Z"
+      }
+    ],
+    "tickets": [
+      {
+        "id": "upgrade-ambiguous-ticket",
+        "order_id": "upgrade-history",
+        "event_id": "upgrade-event",
+        "ticket_type_id": "upgrade-ambiguous",
+        "user_id": "upgrade-buyer",
+        "price_paid": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "checked_in_at": null,
+        "checked_in_by": null,
+        "transferred_from": null,
+        "transferred_at": null,
+        "created_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-cancelled-ticket",
+        "order_id": "upgrade-cancelled-paid",
+        "event_id": "upgrade-cancelled-event",
+        "ticket_type_id": "upgrade-cancelled",
+        "user_id": "upgrade-buyer",
+        "price_paid": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "checked_in_at": null,
+        "checked_in_by": null,
+        "transferred_from": null,
+        "transferred_at": null,
+        "created_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-held",
+        "order_id": "upgrade-pending",
+        "event_id": "upgrade-event",
+        "ticket_type_id": "upgrade-known",
+        "user_id": "upgrade-buyer",
+        "price_paid": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "checked_in_at": null,
+        "checked_in_by": null,
+        "transferred_from": null,
+        "transferred_at": null,
+        "created_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-inconsistent-ticket",
+        "order_id": "upgrade-history",
+        "event_id": "upgrade-event",
+        "ticket_type_id": "upgrade-inconsistent",
+        "user_id": "upgrade-buyer",
+        "price_paid": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "checked_in_at": null,
+        "checked_in_by": null,
+        "transferred_from": null,
+        "transferred_at": null,
+        "created_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-released",
+        "order_id": "upgrade-cancelled-order",
+        "event_id": "upgrade-event",
+        "ticket_type_id": "upgrade-known",
+        "user_id": "upgrade-buyer",
+        "price_paid": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "checked_in_at": null,
+        "checked_in_by": null,
+        "transferred_from": null,
+        "transferred_at": null,
+        "created_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-transferred",
+        "order_id": "upgrade-paid",
+        "event_id": "upgrade-event",
+        "ticket_type_id": "upgrade-known",
+        "user_id": "upgrade-recipient",
+        "price_paid": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "checked_in_at": null,
+        "checked_in_by": null,
+        "transferred_from": "upgrade-buyer",
+        "transferred_at": "2026-06-02T00:00:00.000Z",
+        "created_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-unmatched-ticket",
+        "order_id": "upgrade-history",
+        "event_id": "upgrade-event",
+        "ticket_type_id": "upgrade-unmatched",
+        "user_id": "upgrade-buyer",
+        "price_paid": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "checked_in_at": null,
+        "checked_in_by": null,
+        "transferred_from": null,
+        "transferred_at": null,
+        "created_at": "2026-06-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-used",
+        "order_id": "upgrade-paid",
+        "event_id": "upgrade-event",
+        "ticket_type_id": "upgrade-known",
+        "user_id": "upgrade-buyer",
+        "price_paid": {
+          "s": 1,
+          "e": 0,
+          "d": [
+            8
+          ]
+        },
+        "checked_in_at": "2026-06-02T00:00:00.000Z",
+        "checked_in_by": "upgrade-buyer",
+        "transferred_from": null,
+        "transferred_at": null,
+        "created_at": "2026-06-01T00:00:00.000Z"
+      }
+    ],
+    "types": [
+      {
+        "id": "upgrade-ambiguous",
+        "quantity_total": 100,
+        "quantity_available": 90
+      },
+      {
+        "id": "upgrade-cancelled",
+        "quantity_total": 100,
+        "quantity_available": 90
+      },
+      {
+        "id": "upgrade-inconsistent",
+        "quantity_total": 100,
+        "quantity_available": 90
+      },
+      {
+        "id": "upgrade-known",
+        "quantity_total": 100,
+        "quantity_available": 90
+      },
+      {
+        "id": "upgrade-unmatched",
+        "quantity_total": 100,
+        "quantity_available": 90
+      }
+    ],
+    "tiers": [
+      {
+        "id": "upgrade-ambiguous-a",
+        "quantity_limit": 10,
+        "quantity_sold": 0
+      },
+      {
+        "id": "upgrade-ambiguous-b",
+        "quantity_limit": 10,
+        "quantity_sold": 0
+      },
+      {
+        "id": "upgrade-cancelled-tier",
+        "quantity_limit": 10,
+        "quantity_sold": 1
+      },
+      {
+        "id": "upgrade-inconsistent-tier",
+        "quantity_limit": 10,
+        "quantity_sold": 5
+      },
+      {
+        "id": "upgrade-tier",
+        "quantity_limit": 3,
+        "quantity_sold": 2
+      },
+      {
+        "id": "upgrade-unmatched-tier",
+        "quantity_limit": 10,
+        "quantity_sold": 0
+      }
+    ],
+    "users": [
+      {
+        "id": "upgrade-bootstrap",
+        "first_name": "Synthetic",
+        "last_name": "Bootstrap",
+        "created_at": "2026-10-21T10:23:49.429Z",
+        "updated_at": "2026-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-buyer",
+        "first_name": "Synthetic",
+        "last_name": "Buyer",
+        "created_at": "2026-10-21T10:23:49.429Z",
+        "updated_at": "2026-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-deleted",
+        "first_name": "Synthetic",
+        "last_name": "Deleted",
+        "created_at": "2026-10-21T10:23:49.429Z",
+        "updated_at": "2026-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-recipient",
+        "first_name": "Synthetic",
+        "last_name": "Recipient",
+        "created_at": "2026-10-21T10:23:49.429Z",
+        "updated_at": "2026-01-01T00:00:00.000Z"
+      },
+      {
+        "id": "upgrade-unscoped",
+        "first_name": "Synthetic",
+        "last_name": "Unscoped",
+        "created_at": "2026-10-21T10:23:49.429Z",
+        "updated_at": "2026-01-01T00:00:00.000Z"
+      }
+    ]
+  },
+  "ledger": [
+    {
+      "migration_name": "20251029024657_init",
+      "checksum": "04c2b7da5955264313ccd4d16bb4f3587eb454ca956d41f780f33c3e30b1939b"
+    },
+    {
+      "migration_name": "20251106234538_add_scanner_and_scan_log_models",
+      "checksum": "ac080033dfdcfecb03dbccf3e48dfaf16c92a2fb1898910a8f2c2459d7b8bc18"
+    },
+    {
+      "migration_name": "20251107004712_add_notification_models",
+      "checksum": "4fcf7ec38ca73903189bb8a58917d4090f274e157334537801a7ed1dfea82fdb"
+    },
+    {
+      "migration_name": "20251213132041_add_tasks",
+      "checksum": "f8079739f96868e7f988fcec31ca0429de8c82dd91680aed625620047d1bccf4"
+    },
+    {
+      "migration_name": "20251219023936_add_deleted_at_to_event",
+      "checksum": "fd4e3eca0b8f1bbc60f55789be43c71623a61b1b0ad000fc920bc36c1db41af6"
+    },
+    {
+      "migration_name": "20260101000000_add_title_manual",
+      "checksum": "7c8486cd7611c4a6fe7feb8a8f8516b15fefacb84d58a4e08b26a016735348b3"
+    },
+    {
+      "migration_name": "20260101000001_add_permissions_manual",
+      "checksum": "32b01ac1d8fd667ae0f47b86e880926563f5287f630f952fdca0713da3d2d954"
+    },
+    {
+      "migration_name": "20260102000000_make_category_optional",
+      "checksum": "be7f4f67d414246f0696b32e56db9a45a367660021235520a402c539c1ccfc86"
+    },
+    {
+      "migration_name": "20260102000001_make_timezone_optional",
+      "checksum": "3191f9721d710a208fdb5d057ac606fd1c5a327d5172b76225b12742deccefa8"
+    },
+    {
+      "migration_name": "20260105153700_sync_schema_drift",
+      "checksum": "19b667c24c5134d0a66e4946b604e52624b8f09ac75f11018478013537c23176"
+    },
+    {
+      "migration_name": "20260105223709_add_task_mention_notification_type",
+      "checksum": "89ecd1fb3de5da234756ffdbda9038724b8ca2fcfe58d98996967c37df96a6f6"
+    },
+    {
+      "migration_name": "20260201203653_add_approval_system",
+      "checksum": "0706ff5844cdfc54d547f5cccc83bb6451bca331ef21ea149fa69603ba76de0e"
+    },
+    {
+      "migration_name": "20260211210000_fix_ticket_types_and_tiers",
+      "checksum": "a28620e2e4559a89923a533f01c32da21f5c59100bc83185f9c44b13ba8c97f1"
+    },
+    {
+      "migration_name": "20260216143335_add_approval_type",
+      "checksum": "0e44b900c9e11bfeef42d5ecbf7dcbec3a4fb888619f65b7c6c84116d469fc08"
+    },
+    {
+      "migration_name": "20260309120000_rebuild_creative_approval_system",
+      "checksum": "0070f61469000e57516d91cb538d4fe0031805822bf6251e116eb30d70887865"
+    },
+    {
+      "migration_name": "20260403153000_add_approval_comment_visibility",
+      "checksum": "6ae395964ff38afd9c90d530bfccc278f3afd502f064f3c480686bd9c5b5d7e8"
+    },
+    {
+      "migration_name": "20260403170000_add_approval_reviewer_association",
+      "checksum": "479b070f384d82fb9d7b79843e3f2f0b4a6d831e59ed3de929290dd823693a0c"
+    },
+    {
+      "migration_name": "20260502120000_add_approval_curation_fields",
+      "checksum": "0ed29f2e7a784b38f2a78c8dcdb9b2e83b850bdb5081650b3c3c12d0c3c91450"
+    },
+    {
+      "migration_name": "20260502133000_add_manager_role",
+      "checksum": "a462c56c6b0dc9ffb1a158fac5c13ff73e25be71599ddb69160872fba1d5a7d5"
+    },
+    {
+      "migration_name": "20260504120000_add_direct_asset_library",
+      "checksum": "56a8d49b0f089976788116a69bfea69620d9883fd5026f726b6a17b31b6064ef"
+    },
+    {
+      "migration_name": "20260504143000_add_asset_library_usage_type",
+      "checksum": "ecd9d60f80907a01a82e89fedee6d9ef8ec19cd5e4a5f83e4645cfa8683c1cee"
+    },
+    {
+      "migration_name": "20260508140000_add_asset_library_folders",
+      "checksum": "fcdc5d664760fd944505a980ab338fcff695095230be8c84479b8e57a63351aa"
+    },
+    {
+      "migration_name": "20260508153000_add_asset_library_folder_shares",
+      "checksum": "594f6ee0d117b91402c70b503f767c8042263f4df4ddf1fa33ed40da0c702f56"
+    },
+    {
+      "migration_name": "20260508173000_add_asset_library_share_folders",
+      "checksum": "03dc2952bf0379217b5875b28c628359a9168e32693810737c9deb9a170cca00"
+    },
+    {
+      "migration_name": "20260518120000_add_folder_share_token_ciphertext",
+      "checksum": "e833f8f98dd32baba3cf3a6627eb1e4bb46823a3c6dca556e74f2c9cceeebe53"
+    },
+    {
+      "migration_name": "20260602010000_add_payment_webhook_events",
+      "checksum": "a5d5adfb977002e3289a4f7047eea31d6d4c83529a6a4d10acbcb7761b788aea"
+    }
+  ]
+}

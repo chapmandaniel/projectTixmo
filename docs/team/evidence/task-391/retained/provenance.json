@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "commit": "28b403252555ba9917e482cfbcd5d287c57afa47",
+  "startedAt": "2026-10-21T12:53:47.957Z",
+  "prefixEnd": "20260602010000_add_payment_webhook_events",
+  "harnessSha256": "cbf92d7b41848ea6176ae164736d2d35fb8537e086ef6744c8f86ad1cb2183be",
+  "fixtureSha256": "9ed128fb7bfa86c13250615aeb3bd85bc49fee2f05dabfb9632470187cd43690",
+  "scope": "synthetic selected rows; not dump, restore, parity or rollback proof"
+}

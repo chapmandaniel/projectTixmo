@@ -1,0 +1,2 @@
+PASS: before ledger26 after31; tickets8 types5 tiers6; result artifacts SHA256 match; runtime evidence files0400 directory0500; separate harness+outer exit0 and final output.
+Runtime evidence /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-391/retained/upgrade-BVaT5I
