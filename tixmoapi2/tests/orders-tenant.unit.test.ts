@@ -308,7 +308,8 @@ describe('processor refund scope', () => {
       expect(db.order.findFirst).toHaveBeenCalledWith({
         where: { id: 'a', ...(organizationId ? { event: { organizationId } } : {}) },
       });
-      expect(paymentService.refundOrder).toHaveBeenCalledWith('a');
+      expect(paymentService.refundOrder).toHaveBeenCalledWith('a', orders[0]);
+      expect((paymentService.refundOrder as jest.Mock).mock.calls[0][1]).toBe(orders[0]);
       expect(db.$transaction).not.toHaveBeenCalled();
     }
   );
