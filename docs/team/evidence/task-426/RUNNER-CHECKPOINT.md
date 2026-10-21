@@ -232,3 +232,45 @@ integration remain OPEN.448/426 remain OPEN; fresh independent exactSHA QA and
 lead mandatory, no author approval/closure. No app/Jest/services/DBRedisHTTP/
 network/install/generation/config/scheduler/cloud/provider/production/spend/
 push/merge/deploy/runtimegrant. Commit invocation-local identity/hooks only.
+
+## Lead467 arbitrary callback rejection repair (source/OFFLINE)
+
+NEW isolated `task-448-rejection-diagnostics`, branch
+`tixmo/task-448-rejection-diagnostics`, exact base
+`069fae13a0875fbb8f9a5fbc8d08a0c6128c9ac0`. Read actual independent lead467
+immutable `2909e0b6b999e12879f962a066e1fd3fe064c372` REQUEST CHANGES.
+Existing process-cleanup helper reused; no new orchestration/dependencies.
+Callback failures now become Errors with nonempty diagnostics before code/stack
+access. Defensive property reads and string conversion handle null/undefined,
+primitives, null-prototype objects and hostile getters. Original Error stack
+and string/numeric code are retained. Both teardown and evidence classify
+non-Error rejection as failed; teardown rejects with primary report, evidence
+returns primary report with separate evidenceError. Primary child result and
+inherited stderr unchanged; existing mapper returns1 for successful primary
+plus either secondary failure, and retains nonzero primary exit.
+
+Actual checks, all exit0:
+- `node docs/team/evidence/task-426/runner-probes.cjs`: existing regression
+  suite plus36 actual owned direct-child cases, nine rejection values
+  (null/undefined/string/0/false/bigint/symbol/null-prototype/hostile getter),
+  BOTH callback paths, primary0 and54 each. Children closed/reaped before
+  callbacks; JSON diagnostics nonempty, statuses failed,0->1/54->54 mapping,
+  subsequent evidence after teardown failure, reentrant/sequential authority
+  denial and callback-once assertions PASS. Primary stderr sentinels inherited
+  and visible. Existing owned timeout/reap/order/foreignPID/atomic/late rejection/
+  deadline/ENOENT JSON+ENOSPC/port/preload regressions PASS.
+- `node docs/team/evidence/task-426/shell-probes.cjs`: PASS, unchanged terminal
+  scrubbed shell refusals, offline disk/source/dependency/path checks and actual
+  owned exit/signal/spawn-error mapping.
+- `node --check` process-cleanup.cjs and runner-probes.cjs, `git diff --check`:
+  PASS.
+
+Only process-cleanup.cjs, runner-probes.cjs and this checkpoint changed.
+All prior runtime limitations remain: asynchronous waiting only, no callback
+cancellation/late-effect prevention, full escaped-tree containment/adoption/
+reaping, immutable dependencies/source TOCTOU, observer/service identities and
+admitted integration OPEN. Shell terminal refusal unchanged.448/426 OPEN;
+fresh independent exact-SHA QA+lead required, no selfapproval/runtimegrant.
+No app/Jest/services/DBRedisHTTP/network/install/generation/config/scheduler/
+cloud/provider/production/spend/push/merge/deploy. Invocation-local Git identity
+and hooks override only; no persistent config mutation.

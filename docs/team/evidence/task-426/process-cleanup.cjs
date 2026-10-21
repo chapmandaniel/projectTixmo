@@ -7,6 +7,18 @@ const owned = new WeakSet();
 function errorRecord(error) {
   return Object.fromEntries(['name','message','stack','code','errno','syscall','path','spawnargs'].map(key => [key, error[key] ?? null]));
 }
+// A callback may reject any JavaScript value. Read/convert defensively so
+// secondary diagnostics cannot replace the primary child result.
+function callbackFailure(value) {
+  const read = key => { try { return value == null ? undefined : value[key]; } catch { return undefined; } };
+  const stringify = item => { try { return String(item); } catch { return '<unprintable rejection>'; } };
+  const message = read('message');
+  const error = new Error(typeof message === 'string' ? message : `Callback rejected (${typeof value}): ${stringify(value)}`);
+  const stack = read('stack'), code = read('code');
+  if (typeof stack === 'string' && stack) error.stack = stack;
+  if (typeof code === 'string' || typeof code === 'number') error.code = code;
+  return error;
+}
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 function stat(pid) {
   const text = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
@@ -88,16 +100,18 @@ async function finish(record, {timeoutMs=1000, graceMs=1000, teardownMs=1000, ev
         await boundedCallback(teardown, teardownMs, 'Teardown');
         teardownStatus = 'completed';
       } catch(error) {
+        error = callbackFailure(error);
         teardownStatus = error.code === 'CALLBACK_DEADLINE' ? 'timed-out-pending-late-effects-possible' : 'failed';
         throw error;
       }
     }
-  } catch(error) { failure = error; }
+  } catch(error) { failure = callbackFailure(error); }
   const report = {timedOut, result:record.result, teardownStatus, cleanupError:failure?.stack, evidenceStatus:'pending'};
   try {
     await boundedCallback(() => writeEvidence(report), evidenceMs, 'Evidence');
     report.evidenceStatus = 'completed';
   } catch(error) {
+    error = callbackFailure(error);
     report.evidenceStatus = error.code === 'CALLBACK_DEADLINE' ? 'timed-out-pending-late-effects-possible' : 'failed';
     report.evidenceError = error.stack; console.error(error.stack);
   }

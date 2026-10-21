@@ -128,6 +128,43 @@ const {verify,validatePorts} = require('./preflight.cjs');
   assert.match(receiptReport.evidenceError,/Evidence callback deadline/);
   assert.ok(Date.now()-receiptStart < 1500);
   console.log('PASS real owned reaped child with never-settling evidence returns bounded separate failure and concurrent reuse denied');
+  // Each rejection/path/primary combination uses a real owned, closed child.
+  // Verify reaping before callbacks, JSON diagnostic durability, one-shot
+  // authority and primary nonzero precedence as well as success->failure mapping.
+  const rejections = [null, undefined, 'primitive448', 0, false, 17n, Symbol('primitive448'),
+    Object.create(null), new Proxy({}, {get(){throw new Error('hostile getter');}})];
+  for (const path of ['teardown','evidence']) {
+    for (const rejection of rejections) {
+      for (const primary of [0,54]) {
+        const child = launch(process.execPath,['-e',`console.error("PRIMITIVE_PRIMARY_${path}_${primary}");process.exit(${primary})`],{env:{}});
+        await new Promise(resolve=>child.child.once('close',resolve));
+        let calls=0, evidenceCalls=0, report, failure;
+        const reject = async()=>{
+          calls++;
+          assert.equal(child.child.exitCode,primary);
+          assert.throws(()=>process.kill(child.child.pid,0),/ESRCH/);
+          await assert.rejects(finish(child),/No live owned/);
+          throw rejection;
+        };
+        const options = path === 'teardown'
+          ? {teardown:reject,writeEvidence:()=>{evidenceCalls++;}}
+          : {writeEvidence:reject};
+        try { report=await finish(child,options); } catch(error) { failure=error; report=error.report; }
+        assert.equal(Boolean(failure),path === 'teardown');
+        assert.equal(report.result.code,primary);
+        assert.equal(report.result.signal,null);
+        assert.equal(report.timedOut,false);
+        const json=JSON.parse(JSON.stringify(report));
+        assert.match(json[path === 'teardown' ? 'cleanupError' : 'evidenceError'],/Callback rejected/);
+        assert.equal(json[path === 'teardown' ? 'teardownStatus' : 'evidenceStatus'],'failed');
+        assert.equal(status(json),primary || 1);
+        assert.equal(calls,1);
+        assert.equal(evidenceCalls,path === 'teardown' ? 1 : 0);
+        await assert.rejects(finish(child),/No live owned/);
+      }
+    }
+  }
+  console.log('PASS 36 real owned reaped child cases: null/undefined/string/number/boolean/bigint/symbol/null-prototype/hostile rejection in both callbacks, JSON diagnostics, primary0->1 and primary54 preserved, one-shot cleanup');
   const foreign = spawn(process.execPath,['-e','setInterval(()=>{},1000)'], {stdio:'ignore'});
   try {
     await assert.rejects(finish({child:foreign}), /No live owned/);
