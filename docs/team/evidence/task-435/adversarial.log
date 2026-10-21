@@ -1,0 +1,1 @@
+PASS independent concurrent no-clobber, binary-string raw receipt, manifest seal tamper, rehashed raw association tamper, absent/symlink seal, partial-write no seal and no reuse.
