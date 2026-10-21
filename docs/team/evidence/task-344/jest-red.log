@@ -1,0 +1,33 @@
+FAIL tixmoapi2/tests/integration/order-refund-current-path.test.ts (6.068 s)
+  ✓ denied USED remains unchanged before provider operations (69 ms)
+  ✓ denied TRANSFERRED remains unchanged before provider operations (19 ms)
+  ✓ matching inert provider success finalizes SOLD inventory once and retry is idempotent (46 ms)
+  ✓ pending inert refund does not finalize financial or inventory state (27 ms)
+  ✕ stale scoped refund payment observation refuses before provider or ledger writes (42 ms)
+  ○ skipped stable FAILED local payment status is not a new categorical refund prohibition
+  ○ skipped direct payment ingress refuses committed change after its real preflight
+
+  ● stale scoped refund payment observation refuses before provider or ledger writes
+
+    expect(received).rejects.toMatchObject()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"createdAt": 2026-10-21T09:43:35.822Z, "currency": "cad", "discountAmount": "0", "eventId": "712510d8-5301-4b50-8654-6204f20f0305", "expiresAt": null, "feesAmount": "0", "id": "f8fd1b5e-c7be-4d16-81a7-3f2ea697424c", "ipAddress": null, "orderNumber": "refund325-1792575815815-1gaeixaxbuu", "paymentClosedAt": null, "paymentIntentId": "pi_refund325-1792575815815-1gaeixaxbuu", "paymentMethod": null, "paymentStatus": "FAILED", "promoCodeId": null, "promoReservation": "NONE", "receiptLeaseToken": null, "receiptSentAt": null, "receiptStartedAt": null, "receiptStatus": "PENDING", "refundStatus": "SUCCEEDED", "status": "REFUNDED", "taxAmount": "0", "totalAmount": "20", "updatedAt": 2026-10-21T09:43:35.853Z, "userAgent": null, "userId": "ddc1a2d4-2857-421a-a5d1-7fcfd7e3ebfc"}
+
+      70 |   }) as any);
+      71 |   try {
+    > 72 |     await expect(new OrderService().refundOrder(order.id, order.userId)).rejects.toMatchObject({ statusCode: 400 });
+         |           ^
+      73 |   } finally { spy.mockRestore(); }
+      74 |   expect(changed).toBeDefined();
+      75 |   expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { tickets: { orderBy: { id: 'asc' } } } })).toEqual(changed);
+
+      at expect (node_modules/expect/build/index.js:2116:15)
+      at Object.<anonymous> (tests/integration/order-refund-current-path.test.ts:72:11)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 2 skipped, 4 passed, 7 total
+Snapshots:   0 total
+Time:        6.314 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-refund-current-path.test.ts".
+Test results written to: docs/team/evidence/task-344/jest-result.json

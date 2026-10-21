@@ -1,0 +1,38 @@
+[
+  {
+    "run": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task344/run.0niVC9",
+    "mode": "0o700",
+    "pids": [
+      2998793,
+      2998806
+    ],
+    "livePids": [],
+    "ports": [
+      20230,
+      52275
+    ],
+    "listeners": "",
+    "sockets": [],
+    "pgPidfile": false,
+    "redisPidfile": false,
+    "workers": []
+  },
+  {
+    "run": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task344/run.FCtqCr",
+    "mode": "0o700",
+    "pids": [
+      2999197,
+      2999210
+    ],
+    "livePids": [],
+    "ports": [
+      39636,
+      51888
+    ],
+    "listeners": "",
+    "sockets": [],
+    "pgPidfile": false,
+    "redisPidfile": false,
+    "workers": []
+  }
+]
