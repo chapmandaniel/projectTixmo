@@ -29,6 +29,39 @@ describe('Event Studio persistence', () => {
         }));
         expect(mocks.post).not.toHaveBeenCalled();
     });
+    it.each([
+        ['Nov 9 standard time', '2026-11-09T15:30:27.123Z', '2026-11-09T12:00'],
+        ['DST first occurrence', '2026-11-01T04:00:27.123Z', '2026-11-01T01:30'],
+        ['DST second occurrence', '2026-11-01T05:00:27.123Z', '2026-11-01T01:30'],
+    ])('preserves %s event, ticket and tier windows without rewriting inventory', async (_, opening, local) => {
+        const saved = { ...event, startDatetime: opening, salesStart: opening, salesEnd: '2026-11-10T20:00:00.000Z' };
+        const stock = { ...type, quantity: 2, quantityTotal: 100, quantityAvailable: 63, quantitySold: 30, quantityHeld: 7,
+            maxPerOrder: 4, salesStart: opening, salesEnd: '2026-11-10T20:00:00.000Z',
+            tiers: [{ ...type.tiers[0], startsAt: opening, endsAt: '2026-11-10T20:00:00.000Z', quantitySold: 3, quantityHeld: 1 }] };
+        mocks.get.mockImplementation(url => Promise.resolve({ data: { data: url.startsWith('/venues') ? { venues: [] } : { ticketTypes: [stock] } } }));
+        show(saved); await screen.findAllByText('Admission');
+        expect(screen.getByLabelText('Start')).toHaveValue(local);
+        fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }));
+        await waitFor(() => expect(mocks.put).toHaveBeenCalledTimes(1));
+        const request = mocks.put.mock.calls[0][1];
+        expect(request.event.startDateTime).toBe(opening);
+        expect(request.ticketTypes[0]).toMatchObject({ quantity: 100, maxPerOrder: 4, salesStart: opening,
+            salesEnd: stock.salesEnd, tiers: [expect.objectContaining({ startsAt: opening, endsAt: stock.salesEnd })] });
+        // Counters belong to the server: never send stale sold/held/available values.
+        for (const counter of ['quantitySold', 'quantityHeld', 'quantityAvailable', 'sold']) {
+            expect(request.ticketTypes[0]).not.toHaveProperty(counter);
+            expect(request.ticketTypes[0].tiers[0]).not.toHaveProperty(counter);
+        }
+    });
+    it('does not replace an unknown total with remaining inventory', async () => {
+        mocks.get.mockImplementation(url => Promise.resolve({ data: { data: url.startsWith('/venues') ? { venues: [] } : {
+            ticketTypes: [{ ...type, quantityTotal: undefined, quantityAvailable: 6, quantitySold: 4 }],
+        } } }));
+        show(); await screen.findAllByText('Admission');
+        fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }));
+        await screen.findByText(/total quantity/i);
+        expect(mocks.put).not.toHaveBeenCalled();
+    });
     it('rejects a missing daylight-saving wall time before any write', async () => {
         show(); await screen.findAllByText('Admission');
         fireEvent.change(screen.getByLabelText('Start'), { target: { value: '2027-03-14T02:30' } });
