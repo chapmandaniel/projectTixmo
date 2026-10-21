@@ -1,0 +1,8 @@
+LEAD477_PRIMARY_false
+LEAD477_PRIMARY_true
+Error: LEAD477_ENOSPC
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-477/check.cjs:20:244)
+    at /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:111:33
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:51:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:111:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-477/check.cjs:20:40

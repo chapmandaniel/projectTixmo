@@ -1,0 +1,62 @@
+{
+  "TMPDIR": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/lead477-disk",
+  "results": [
+    {
+      "name": "independent",
+      "cmd": "/home/daniel/.nvm/versions/node/v24.21.0/bin/node",
+      "args": [
+        "docs/team/evidence/task-477/check.cjs"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "name": "runner",
+      "cmd": "/home/daniel/.nvm/versions/node/v24.21.0/bin/node",
+      "args": [
+        "docs/team/evidence/task-426/runner-probes.cjs"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "name": "shell",
+      "cmd": "/home/daniel/.nvm/versions/node/v24.21.0/bin/node",
+      "args": [
+        "docs/team/evidence/task-426/shell-probes.cjs"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "name": "syntax-own",
+      "cmd": "/home/daniel/.nvm/versions/node/v24.21.0/bin/node",
+      "args": [
+        "--check",
+        "docs/team/evidence/task-477/check.cjs"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "name": "syntax-author",
+      "cmd": "/home/daniel/.nvm/versions/node/v24.21.0/bin/node",
+      "args": [
+        "--check",
+        "docs/team/evidence/task-426/runner-probes.cjs"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "name": "diff",
+      "cmd": "git",
+      "args": [
+        "diff",
+        "--check"
+      ],
+      "status": 0,
+      "signal": null
+    }
+  ]
+}

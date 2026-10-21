@@ -1,0 +1,3 @@
+{"fail":false,"elapsed":348,"order":["teardown","evidence"],"primary":{"code":null,"signal":"SIGKILL"},"status":137,"directReaped":true,"groupAbsent":true}
+{"fail":true,"elapsed":318,"order":["teardown","evidence"],"primary":{"code":null,"signal":"SIGKILL"},"status":137,"directReaped":true,"groupAbsent":true}
+PASS independent two direct children, readiness after handler, real ignored TERM, bounded KILL, direct reap/proc/group absence before both callbacks, authority and one-shot denials, JSON137 primary preserved

@@ -1,0 +1,157 @@
+Error: ENOENT receipt ENOSPC fixture
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:19:100)
+    at /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:111:33
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:51:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:111:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:19:25
+DEADLINE_PRIMARY_STDERR
+Error: SEPARATE_EVIDENCE_FAILURE
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:97:13)
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:51:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:111:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:101:5
+Error: Evidence callback deadline exceeded; pending callback may have late effects
+    at Timeout.<anonymous> (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:54:23)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+PRIMITIVE_PRIMARY_teardown_0
+PRIMITIVE_PRIMARY_teardown_54
+PRIMITIVE_PRIMARY_teardown_0
+PRIMITIVE_PRIMARY_teardown_54
+PRIMITIVE_PRIMARY_teardown_0
+PRIMITIVE_PRIMARY_teardown_54
+PRIMITIVE_PRIMARY_teardown_0
+PRIMITIVE_PRIMARY_teardown_54
+PRIMITIVE_PRIMARY_teardown_0
+PRIMITIVE_PRIMARY_teardown_54
+PRIMITIVE_PRIMARY_teardown_0
+PRIMITIVE_PRIMARY_teardown_54
+PRIMITIVE_PRIMARY_teardown_0
+PRIMITIVE_PRIMARY_teardown_54
+PRIMITIVE_PRIMARY_teardown_0
+PRIMITIVE_PRIMARY_teardown_54
+PRIMITIVE_PRIMARY_teardown_0
+PRIMITIVE_PRIMARY_teardown_54
+PRIMITIVE_PRIMARY_evidence_0
+Error: Callback rejected (object): null
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_54
+Error: Callback rejected (object): null
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_0
+Error: Callback rejected (undefined): undefined
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_54
+Error: Callback rejected (undefined): undefined
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_0
+Error: Callback rejected (string): primitive448
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_54
+Error: Callback rejected (string): primitive448
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_0
+Error: Callback rejected (number): 0
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_54
+Error: Callback rejected (number): 0
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_0
+Error: Callback rejected (boolean): false
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_54
+Error: Callback rejected (boolean): false
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_0
+Error: Callback rejected (bigint): 17
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_54
+Error: Callback rejected (bigint): 17
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_0
+Error: Callback rejected (symbol): Symbol(primitive448)
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_54
+Error: Callback rejected (symbol): Symbol(primitive448)
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_0
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_54
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_0
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+PRIMITIVE_PRIMARY_evidence_54
+Error: Callback rejected (object): <unprintable rejection>
+    at callbackFailure (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:16:17)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:114:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:155:22
+STUBBORN_PRIMARY_STDERR_SENTINEL
+Error: STUBBORN_ENOSPC_SECONDARY
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:214:13)
+    at /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:111:33
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:51:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:111:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:209:18
+ORIGINAL_STDERR_SENTINEL
+Error: ENOSPC fixture
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:242:95)
+    at /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:111:33
+    at async boundedCallback (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:51:5)
+    at async finish (/home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/process-cleanup.cjs:111:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-477/docs/team/evidence/task-426/runner-probes.cjs:242:20
