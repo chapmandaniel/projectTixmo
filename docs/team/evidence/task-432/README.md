@@ -403,3 +403,36 @@ Both changed .mjs files `node --check` and `git diff --check` PASS.
 Read current455 board twice; immutable reviewer report not yet available at
 repair time. All prior source-only and incomplete-admission limits remain;
 no runtime/network/services. Fresh independent lead+QA exact successor needed.
+
+## QA456 artifact initialization repair (source/offline only)
+
+Base `d6ad958ce3bda5659ad7c347a014dd78146b9640`; new isolated branch
+`tixmo/task-432-artifact-init-repair`, worktree `task-432-artifact-init-repair`.
+Read actual immutable QA456 `b335fd922bad646da474df84652133d26a274453`.
+Move the single TASK379_ARTIFACT_DIR export immediately after owned_run's
+runtime-path validation, before identity publication or any service provisioning.
+No publication/source check/fsync/exclusive flags, exact12/default/nested4,
+executor or cleanup behavior changed. No448 helper involvement.
+
+Actual checks PASS: `node docs/team/evidence/task-432/offline-shell-publication.mjs`,
+`node docs/team/evidence/task-432/offline-local-session.mjs`,
+`node docs/team/evidence/task-432/offline-stub.mjs`, `node --check
+ docs/team/evidence/task-432/offline-shell-publication.mjs`, `bash -n
+ docs/team/evidence/task-427/runtime.sh`, `git diff --check`.
+The fresh env-i regression runs actual inline Node publication and actual shell
+export (only snapshot import replaced by deterministic fixture). No inherited
+artifact variable. Checks private 0400 identity output, exclusive EEXIST without
+replacement, source drift denial before file creation, validated binding before
+publication before initdb, unchanged wx/fsync/source ordering, and actual whole
+runtime script missing-grant exit2. Synchronous fixture children exited/reaped;
+owned temporary disk tree removed. Existing local-session all10/failfast/mutation
+and core exact12/default/canonical/transition regressions PASS.
+
+Remaining compose.openLocal/lifecycle, native admission, registry443/DNS and
+installed/generated/runtime provenance remain OPEN. No runtime grant or
+full-market PASS; task432 remains INCOMPLETE and requires fresh independent
+exact-SHA lead+QA review, not author approval or closure. No application/Jest,
+services, DB/Redis/HTTP/network/audit/install/generation/config/scheduler/cloud/
+spend/push/merge/deploy. Commit uses invocation-local identity/hooksPath only
+because inspected inherited Husky hook references missing _/husky.sh; no Git
+configuration write or lint-staged claim.
