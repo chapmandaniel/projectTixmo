@@ -1,0 +1,9 @@
+PID 2648114: ABSENT
+PID 2648127: ABSENT
+PORT 30932: NO LISTENER
+PORT 49326: NO LISTENER
+PORT 45179: NO LISTENER
+pg/postmaster.pid: ABSENT
+redis.sock: ABSENT
+runtime /home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-282-r2/run.IR72It
+mode0700 filesystem ext2/ext3

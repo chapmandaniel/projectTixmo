@@ -1,0 +1,72 @@
+$ git rev-parse HEAD
+ed9cfdabb2c812019bbbe96667ee7c890e99a164
+exit=0
+$ node --test scripts/browser/task-280-support.test.mjs
+✔ synthetic return is admitted by actual product UUID guard and exact recovery projection (9.758375ms)
+✔ CDP lost response times out; late response is harmless; closure rejects pending calls (44.606633ms)
+✔ owned stubborn child escalates to SIGKILL and PID is proven absent (96.694446ms)
+✔ cleanup on startup failure closes own listener and removes profile (11.940747ms)
+✔ server cleanup failure cannot prevent profile removal (1.192035ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 237.580128
+exit=0
+$ node --check scripts/browser/task-280-delivery.mjs
+exit=0
+$ node --check scripts/browser/task-280-support.mjs
+exit=0
+$ git diff --check ed9cfdab^ ed9cfdab
+exit=0
+$ ldd /home/daniel/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome
+	linux-vdso.so.1 (0x00007b11e6449000)
+	libdl.so.2 => /usr/lib/x86_64-linux-gnu/libdl.so.2 (0x00007b11e6436000)
+	libpthread.so.0 => /usr/lib/x86_64-linux-gnu/libpthread.so.0 (0x00007b11e6431000)
+	libglib-2.0.so.0 => /usr/lib/x86_64-linux-gnu/libglib-2.0.so.0 (0x00007b11e62d9000)
+	libgobject-2.0.so.0 => /usr/lib/x86_64-linux-gnu/libgobject-2.0.so.0 (0x00007b11e6275000)
+	libnspr4.so => /usr/lib/x86_64-linux-gnu/libnspr4.so (0x00007b11d47c0000)
+	libnss3.so => /usr/lib/x86_64-linux-gnu/libnss3.so (0x00007b11d4682000)
+	libnssutil3.so => /usr/lib/x86_64-linux-gnu/libnssutil3.so (0x00007b11d464e000)
+	libsmime3.so => /usr/lib/x86_64-linux-gnu/libsmime3.so (0x00007b11d4621000)
+	libgio-2.0.so.0 => /usr/lib/x86_64-linux-gnu/libgio-2.0.so.0 (0x00007b11d4444000)
+	libatk-1.0.so.0 => not found
+	libatk-bridge-2.0.so.0 => not found
+	libdbus-1.so.3 => /usr/lib/x86_64-linux-gnu/libdbus-1.so.3 (0x00007b11d43f2000)
+	libcups.so.2 => not found
+	libexpat.so.1 => /usr/lib/x86_64-linux-gnu/libexpat.so.1 (0x00007b11d43c4000)
+	libxcb.so.1 => /usr/lib/x86_64-linux-gnu/libxcb.so.1 (0x00007b11d4399000)
+	libxkbcommon.so.0 => /usr/lib/x86_64-linux-gnu/libxkbcommon.so.0 (0x00007b11d433a000)
+	libasound.so.2 => not found
+	libgbm.so.1 => not found
+	libX11.so.6 => /usr/lib/x86_64-linux-gnu/libX11.so.6 (0x00007b11d41f6000)
+	libXext.so.6 => /usr/lib/x86_64-linux-gnu/libXext.so.6 (0x00007b11d41e2000)
+	libcairo.so.2 => not found
+	libpango-1.0.so.0 => not found
+	libudev.so.1 => /usr/lib/x86_64-linux-gnu/libudev.so.1 (0x00007b11d4199000)
+	libm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x00007b11d4073000)
+	libXcomposite.so.1 => not found
+	libXdamage.so.1 => not found
+	libXfixes.so.3 => not found
+	libXrandr.so.2 => not found
+	libatspi.so.0 => not found
+	libgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007b11d4043000)
+	libc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x00007b11d3e00000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007b11e644b000)
+	libatomic.so.1 => /usr/lib/x86_64-linux-gnu/libatomic.so.1 (0x00007b11d4036000)
+	libpcre2-8.so.0 => /usr/lib/x86_64-linux-gnu/libpcre2-8.so.0 (0x00007b11d3d54000)
+	libffi.so.8 => /usr/lib/x86_64-linux-gnu/libffi.so.8 (0x00007b11d4025000)
+	libplc4.so => /usr/lib/x86_64-linux-gnu/libplc4.so (0x00007b11d3d4d000)
+	libplds4.so => /usr/lib/x86_64-linux-gnu/libplds4.so (0x00007b11d3d48000)
+	libgmodule-2.0.so.0 => /usr/lib/x86_64-linux-gnu/libgmodule-2.0.so.0 (0x00007b11d3d41000)
+	libz.so.1 => /usr/lib/x86_64-linux-gnu/libz.so.1 (0x00007b11d3d23000)
+	libmount.so.1 => /usr/lib/x86_64-linux-gnu/libmount.so.1 (0x00007b11d3cd0000)
+	libselinux.so.1 => /usr/lib/x86_64-linux-gnu/libselinux.so.1 (0x00007b11d3c9d000)
+	libsystemd.so.0 => /usr/lib/x86_64-linux-gnu/libsystemd.so.0 (0x00007b11d3b89000)
+	libXau.so.6 => /usr/lib/x86_64-linux-gnu/libXau.so.6 (0x00007b11d3b83000)
+	libXdmcp.so.6 => /usr/lib/x86_64-linux-gnu/libXdmcp.so.6 (0x00007b11d3b7b000)
+	libblkid.so.1 => /usr/lib/x86_64-linux-gnu/libblkid.so.1 (0x00007b11d3b3f000)
+exit=0
