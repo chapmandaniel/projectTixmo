@@ -1,0 +1,7 @@
+{
+  "guardedFocusedVerdict": "PASS",
+  "recordFileExists": false,
+  "blockedAttemptCount": 0,
+  "jestExit": 0,
+  "limitation": "Node-level pre-import net/TLS/HTTP/fetch guard, not OS/native network isolation"
+}

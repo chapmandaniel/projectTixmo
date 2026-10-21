@@ -1,0 +1,60 @@
+{
+  "numFailedTestSuites": 0,
+  "numPassedTestSuites": 3,
+  "numPendingTestSuites": 0,
+  "numFailedTests": 0,
+  "numPassedTests": 28,
+  "numPendingTests": 0,
+  "numRuntimeErrorTestSuites": 0,
+  "openHandles": [],
+  "success": true,
+  "wasInterrupted": false,
+  "suites": [
+    {
+      "name": "tests/integration/approvals.test.ts",
+      "status": "passed",
+      "cases": [
+        "Creative approvals API creates a creative approval with initial revision assets and reviewers",
+        "Creative approvals API redacts peer capabilities on every external approval response",
+        "Creative approvals API lists approval requests with creative workflow fields",
+        "Creative approvals API adds a reviewer to an existing approval request",
+        "Creative approvals API resends an invite for an existing reviewer with a fresh secure token",
+        "Creative approvals API removes a pending reviewer who has not interacted yet",
+        "Creative approvals API supports external review comments and decisions via secure token",
+        "Creative approvals API allows invited reviewers to add another reviewer from the secure portal",
+        "Creative approvals API prevents invited reviewers from adding reviewers after approval is complete",
+        "Creative approvals API keeps internal comments private while allowing authors to delete their own messages",
+        "Creative approvals API creates a new revision and updates the dashboard status",
+        "Creative approvals API allows an internal assigned reviewer to approve the latest revision",
+        "Creative approvals API requires owner or admin curation before approved image assets enter the library"
+      ]
+    },
+    {
+      "name": "tests/unit/upload.service.test.ts",
+      "status": "passed",
+      "cases": [
+        "UploadService uploadFile should fall back to deterministic test storage URLs if S3 is not configured in test",
+        "UploadService uploadFile should upload file from buffer successfully",
+        "UploadService uploadFile should upload file from path (stream) successfully and delete temp file",
+        "UploadService uploadFile should throw error if file content is empty",
+        "UploadService uploadFile should throw error if S3 upload fails",
+        "UploadService uploadFile should log error but not throw if temp file deletion fails",
+        "UploadService getSignedUrl should return signed URL",
+        "UploadService resolveFileUrl should return a newly signed URL when S3 is configured",
+        "UploadService resolveFileUrl should return the fallback URL when S3 is not configured",
+        "UploadService deleteFile should delete file from S3",
+        "UploadService uploadMultiple should upload multiple files"
+      ]
+    },
+    {
+      "name": "tests/unit/upload-cleanup.test.ts",
+      "status": "passed",
+      "cases": [
+        "Request-owned staged upload cleanup removes staged files on schema rejection, business rejection and revision rejection",
+        "Request-owned staged upload cleanup removes files on role/context rejection, signature rejection and success",
+        "Request-owned staged upload cleanup cleans up service configuration failures and closes rejected S3 streams",
+        "Request-owned staged upload cleanup does not release request files while a sibling upload remains unsettled"
+      ]
+    }
+  ]
+}

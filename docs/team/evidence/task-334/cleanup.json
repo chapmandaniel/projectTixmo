@@ -1,0 +1,18 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task334/run.sHoDlh",
+  "rootMode": "0o700",
+  "servicePids": [
+    2922559,
+    2922572
+  ],
+  "pidsAbsent": true,
+  "ports": [
+    35689,
+    41418
+  ],
+  "listeners": "",
+  "postmasterAbsent": true,
+  "sockets": [],
+  "remainingOwnedNodeWorkers": [],
+  "remainingContextFiles": []
+}
