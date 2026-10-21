@@ -1,0 +1,79 @@
+{
+  "base": "cdb41d4d3aa4ccc323a2a1cc6b04a490feafe6a6",
+  "combinedCandidate": "80c6710b89d147588e1514aa99a4e55c5630d38a",
+  "branch": "tixmo/task361-compose",
+  "serialCherryPicks": [
+    {
+      "source": "2d7490a45685f7dd66a50bf4d7bda1d38c2685ce",
+      "result": "03a9da903073f55877dbd3e6adc22b01e5142ef5"
+    },
+    {
+      "source": "7e01d57fa90426ad37fd9837aa0a387f7f39ae1e",
+      "result": "2c8d3e92115aa9d53ccff1fe9f6ae2c77fef28c6"
+    },
+    {
+      "source": "ccdab1394863c0457cdc78f2563ffe56e049af21",
+      "result": "5a1f706f6d188ce14187ea1d848e00d41e81d3a5"
+    },
+    {
+      "source": "199cb9afa6ce1785bc956951e6e6590faec32119",
+      "result": "80c6710b89d147588e1514aa99a4e55c5630d38a"
+    }
+  ],
+  "testBlobParity": [
+    {
+      "path": "tixmoapi2/tests/integration/order-double-refund.race.test.ts",
+      "reviewedSource": "7e01d57fa90426ad37fd9837aa0a387f7f39ae1e",
+      "blob": "87a5da058e2ce9267ce4e4355859de80fd9bbb1d",
+      "equal": true
+    },
+    {
+      "path": "tixmoapi2/tests/integration/order-refund-current-path.test.ts",
+      "reviewedSource": "7e01d57fa90426ad37fd9837aa0a387f7f39ae1e",
+      "blob": "f0bae315cf1b52d74f00ab75ad854acaa4a71163",
+      "equal": true
+    },
+    {
+      "path": "tixmoapi2/tests/orders-tenant.unit.test.ts",
+      "reviewedSource": "ccdab1394863c0457cdc78f2563ffe56e049af21",
+      "blob": "c699e81005c2b5dd904e161b5660dc15f172bc7d",
+      "equal": true
+    }
+  ],
+  "changedPaths": [
+    "docs/team/evidence/task-325-legacy/README.md",
+    "docs/team/evidence/task-325-legacy/cleanup.json",
+    "docs/team/evidence/task-325-legacy/focused-result.json",
+    "docs/team/evidence/task-325-legacy/focused.log",
+    "docs/team/evidence/task-325-legacy/initial-jest-result.json",
+    "docs/team/evidence/task-325-legacy/initial-jest.log",
+    "docs/team/evidence/task-325-legacy/initial-runtime.log",
+    "docs/team/evidence/task-325-legacy/jest-result.json",
+    "docs/team/evidence/task-325-legacy/jest.log",
+    "docs/team/evidence/task-325-legacy/network-guard.cjs",
+    "docs/team/evidence/task-325-legacy/provenance.sha256",
+    "docs/team/evidence/task-325-legacy/runtime.log",
+    "docs/team/evidence/task-325-legacy/runtime.sh",
+    "docs/team/evidence/task-325-shared-stock/README.md",
+    "docs/team/evidence/task-325-shared-stock/cleanup.json",
+    "docs/team/evidence/task-325-shared-stock/focused-result.json",
+    "docs/team/evidence/task-325-shared-stock/focused.log",
+    "docs/team/evidence/task-325-shared-stock/jest-result.json",
+    "docs/team/evidence/task-325-shared-stock/jest.log",
+    "docs/team/evidence/task-325-shared-stock/network-guard.cjs",
+    "docs/team/evidence/task-325-shared-stock/provenance.sha256",
+    "docs/team/evidence/task-325-shared-stock/runtime.log",
+    "docs/team/evidence/task-325-shared-stock/runtime.sh",
+    "docs/team/evidence/task-356/README.md",
+    "docs/team/evidence/task-356/baseline.json",
+    "docs/team/evidence/task-356/deny-network.cjs",
+    "docs/team/evidence/task-356/fixed.json",
+    "docs/team/evidence/task-356/jest.json",
+    "tixmoapi2/tests/integration/order-double-refund.race.test.ts",
+    "tixmoapi2/tests/integration/order-refund-current-path.test.ts",
+    "tixmoapi2/tests/orders-tenant.unit.test.ts"
+  ],
+  "productSchemaLockfilesByteIdenticalToBase": true,
+  "testsRun": false,
+  "databaseRuntimeGrantUsed": false
+}
