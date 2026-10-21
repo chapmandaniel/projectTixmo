@@ -47,7 +47,7 @@ test.each([
       },
     });
     const event = await prisma.event.create({
-      data: { organizationId: org.id, name: key, slug: key, tags: [] },
+      data: { organizationId: org.id, name: key, slug: key, tags: [], status: 'ON_SALE' },
     });
     const type = await prisma.ticketType.create({
       data: {
@@ -162,10 +162,15 @@ test.each([
       expect(await prisma.ticket.count({ where: { ticketTypeId: type.id } })).toBe(4);
       expect(a.tickets).toEqual(
         winnerIndex === 0
-          ? target.tickets
+          ? target.tickets.map((ticket) => ({
+              ...ticket,
+              inventoryState: 'SOLD',
+              updatedAt: expect.any(Date),
+            }))
           : target.tickets.map((ticket) => ({
               ...ticket,
               status: 'CANCELLED',
+              inventoryState: 'RELEASED',
               updatedAt: expect.any(Date),
             }))
       );
@@ -177,11 +182,11 @@ test.each([
       const loser = settled.find((r) => r.status === 'rejected');
       if (loser?.status === 'rejected')
         expect(loser.reason).toMatchObject({
-          statusCode: 400,
+          statusCode: winnerIndex === 0 ? 400 : 409,
           message:
             winnerIndex === 0
               ? 'Cannot cancel order that has changed'
-              : 'Cannot confirm order that is no longer pending',
+              : 'Order can no longer be fulfilled',
         });
     } finally {
       release.forEach((g) => g.resolve());

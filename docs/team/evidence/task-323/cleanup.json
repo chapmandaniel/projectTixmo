@@ -1,0 +1,60 @@
+{
+  "runs": [
+    {
+      "log": "docs/team/evidence/task-323/attempt-1/runtime.log",
+      "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task323/run.rcEf6H",
+      "mode": "0o700",
+      "pids": [
+        "2949781",
+        "2949797"
+      ],
+      "ports": [
+        "24191",
+        "45423"
+      ],
+      "listeners": "",
+      "livePids": [],
+      "sockets": [],
+      "pgSocket": false,
+      "pgPidfile": false
+    },
+    {
+      "log": "docs/team/evidence/task-323/attempt-2/runtime.log",
+      "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task323/run.cvbPrz",
+      "mode": "0o700",
+      "pids": [
+        "2951023",
+        "2951036"
+      ],
+      "ports": [
+        "35201",
+        "58318"
+      ],
+      "listeners": "",
+      "livePids": [],
+      "sockets": [],
+      "pgSocket": false,
+      "pgPidfile": false
+    },
+    {
+      "log": "docs/team/evidence/task-323/runtime.log",
+      "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task323/run.GL3XQq",
+      "mode": "0o700",
+      "pids": [
+        "2952233",
+        "2952246"
+      ],
+      "ports": [
+        "22961",
+        "58610"
+      ],
+      "listeners": "",
+      "livePids": [],
+      "sockets": [],
+      "pgSocket": false,
+      "pgPidfile": false
+    }
+  ],
+  "workers": [],
+  "blockedNetworkRecords": 0
+}

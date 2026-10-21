@@ -1,0 +1,84 @@
+PASS tixmoapi2/tests/integration/order-double-cancel.race.test.ts (6.046 s)
+  ● Console
+
+    console.log
+      TASK115_OBSERVED {"trace":["read-0-PENDING","read-1-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[8,2,0],"target":"CANCELLED","payment":"PENDING","other":"PENDING","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-double-cancel.race.test.ts:130:15
+
+    console.log
+      TASK115_OBSERVED {"trace":["read-1-PENDING","read-0-PENDING","call-1-committed","both-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[8,2,0],"target":"CANCELLED","payment":"PENDING","other":"PENDING","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-double-cancel.race.test.ts:130:15
+
+PASS tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts
+  ● Console
+
+    console.log
+      prisma:error 
+      Invalid `prisma.$queryRawUnsafe()` invocation:
+      
+      
+      Raw query failed. Code: `55P03`. Message: `ERROR: could not obtain lock on row in relation "orders"`
+
+      at Object.mc (node_modules/@prisma/client/runtime/library.js:21:432)
+
+FAIL tixmoapi2/tests/integration/order-confirm-expiry.race.test.ts
+  ● Test suite failed to run
+
+    [96mtixmoapi2/tests/integration/order-confirm-expiry.race.test.ts[0m:[93m59[0m:[93m9[0m - [91merror[0m[90m TS7034: [0mVariable 'orders' implicitly has type 'any[]' in some locations where its type cannot be determined.
+
+    [7m59[0m   const orders = [];
+    [7m  [0m [91m        ~~~~~~[0m
+    [96mtixmoapi2/tests/integration/order-confirm-expiry.race.test.ts[0m:[93m83[0m:[93m20[0m - [91merror[0m[90m TS7005: [0mVariable 'orders' implicitly has an 'any[]' type.
+
+    [7m83[0m       where: { id: orders[0].id },
+    [7m  [0m [91m                   ~~~~~~[0m
+    [96mtixmoapi2/tests/integration/order-confirm-expiry.race.test.ts[0m:[93m87[0m:[93m20[0m - [91merror[0m[90m TS7005: [0mVariable 'orders' implicitly has an 'any[]' type.
+
+    [7m87[0m       where: { id: orders[1].id },
+    [7m  [0m [91m                   ~~~~~~[0m
+
+PASS tixmoapi2/tests/integration/order-confirm-cancel.race.test.ts
+  ● Console
+
+    console.log
+      TASK126_OBSERVED {"winnerIndex":0,"reverseReads":false,"trace":["read-0-PENDING","read-1-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","rejected"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/order-confirm-cancel.race.test.ts:140:15
+
+    console.log
+      TASK126_OBSERVED {"winnerIndex":0,"reverseReads":true,"trace":["read-1-PENDING","read-0-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","rejected"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/order-confirm-cancel.race.test.ts:140:15
+
+    console.log
+      TASK126_OBSERVED {"winnerIndex":1,"reverseReads":false,"trace":["read-0-PENDING","read-1-PENDING","call-1-committed","both-settled"],"outcomes":["rejected","fulfilled"],"counters":[8,2,0],"target":"CANCELLED","payment":"PENDING","other":"PENDING","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-confirm-cancel.race.test.ts:140:15
+
+    console.log
+      TASK126_OBSERVED {"winnerIndex":1,"reverseReads":true,"trace":["read-1-PENDING","read-0-PENDING","call-1-committed","both-settled"],"outcomes":["rejected","fulfilled"],"counters":[8,2,0],"target":"CANCELLED","payment":"PENDING","other":"PENDING","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-confirm-cancel.race.test.ts:140:15
+
+PASS tixmoapi2/tests/integration/order-double-confirm.race.test.ts
+  ● Console
+
+    console.log
+      TASK68_OBSERVED {"trace":["read-0-PENDING","read-1-PENDING","first-committed","second-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/order-double-confirm.race.test.ts:126:15
+
+    console.log
+      TASK68_OBSERVED {"trace":["read-1-PENDING","read-0-PENDING","first-committed","second-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/order-double-confirm.race.test.ts:126:15
+
+
+Test Suites: 1 failed, 4 passed, 5 total
+Tests:       18 passed, 18 total
+Snapshots:   0 total
+Time:        13.289 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-double-cancel.race.test.ts", "tixmoapi2/tests/integration/order-double-confirm.race.test.ts", "tixmoapi2/tests/integration/order-confirm-cancel.race.test.ts", "tixmoapi2/tests/integration/order-confirm-expiry.race.test.ts", "tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts".
+Test results written to: docs/team/evidence/task-323/jest-result.json

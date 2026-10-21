@@ -1,0 +1,69 @@
+PASS tixmoapi2/tests/integration/order-double-cancel.race.test.ts (5.915 s)
+  ● Console
+
+    console.log
+      TASK115_OBSERVED {"trace":["read-1-PENDING","read-0-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[8,2,0],"target":"CANCELLED","payment":"PENDING","other":"PENDING","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-double-cancel.race.test.ts:138:15
+
+    console.log
+      TASK115_OBSERVED {"trace":["read-1-PENDING","read-0-PENDING","call-1-committed","both-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[8,2,0],"target":"CANCELLED","payment":"PENDING","other":"PENDING","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-double-cancel.race.test.ts:138:15
+
+PASS tixmoapi2/tests/integration/order-confirm-expiry.race.test.ts
+PASS tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts
+  ● Console
+
+    console.log
+      prisma:error 
+      Invalid `prisma.$queryRawUnsafe()` invocation:
+      
+      
+      Raw query failed. Code: `55P03`. Message: `ERROR: could not obtain lock on row in relation "orders"`
+
+      at Object.mc (node_modules/@prisma/client/runtime/library.js:21:432)
+
+PASS tixmoapi2/tests/integration/order-confirm-cancel.race.test.ts
+  ● Console
+
+    console.log
+      TASK126_OBSERVED {"winnerIndex":0,"reverseReads":false,"trace":["read-0-PENDING","read-1-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","rejected"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/order-confirm-cancel.race.test.ts:140:15
+
+    console.log
+      TASK126_OBSERVED {"winnerIndex":0,"reverseReads":true,"trace":["read-1-PENDING","read-0-PENDING","call-0-committed","both-settled"],"outcomes":["fulfilled","rejected"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/order-confirm-cancel.race.test.ts:140:15
+
+    console.log
+      TASK126_OBSERVED {"winnerIndex":1,"reverseReads":false,"trace":["read-0-PENDING","read-1-PENDING","call-1-committed","both-settled"],"outcomes":["rejected","fulfilled"],"counters":[8,2,0],"target":"CANCELLED","payment":"PENDING","other":"PENDING","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-confirm-cancel.race.test.ts:140:15
+
+    console.log
+      TASK126_OBSERVED {"winnerIndex":1,"reverseReads":true,"trace":["read-1-PENDING","read-0-PENDING","call-1-committed","both-settled"],"outcomes":["rejected","fulfilled"],"counters":[8,2,0],"target":"CANCELLED","payment":"PENDING","other":"PENDING","ticketStates":["CANCELLED","CANCELLED"]}
+
+      at tests/integration/order-confirm-cancel.race.test.ts:140:15
+
+PASS tixmoapi2/tests/integration/order-double-confirm.race.test.ts
+  ● Console
+
+    console.log
+      TASK68_OBSERVED {"trace":["read-0-PENDING","read-1-PENDING","first-committed","second-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/order-double-confirm.race.test.ts:134:15
+
+    console.log
+      TASK68_OBSERVED {"trace":["read-1-PENDING","read-0-PENDING","first-committed","second-settled"],"outcomes":["fulfilled","fulfilled"],"counters":[6,2,2],"target":"PAID","payment":"SUCCEEDED","other":"PENDING","ticketStates":["VALID","VALID"]}
+
+      at tests/integration/order-double-confirm.race.test.ts:134:15
+
+
+Test Suites: 5 passed, 5 total
+Tests:       24 passed, 24 total
+Snapshots:   0 total
+Time:        14.087 s
+Ran all test suites within paths "tixmoapi2/tests/integration/order-double-cancel.race.test.ts", "tixmoapi2/tests/integration/order-double-confirm.race.test.ts", "tixmoapi2/tests/integration/order-confirm-cancel.race.test.ts", "tixmoapi2/tests/integration/order-confirm-expiry.race.test.ts", "tixmoapi2/tests/integration/order-cancel-stale-observation.test.ts".
+Test results written to: docs/team/evidence/task-323/jest-result.json

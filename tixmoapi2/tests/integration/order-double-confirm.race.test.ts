@@ -42,7 +42,7 @@ test.each([false, true])(
       },
     });
     const event = await prisma.event.create({
-      data: { organizationId: org.id, name: key, slug: key, tags: [] },
+      data: { organizationId: org.id, name: key, slug: key, tags: [], status: 'ON_SALE' },
     });
     const type = await prisma.ticketType.create({
       data: {
@@ -54,17 +54,25 @@ test.each([false, true])(
         quantityHeld: 4,
       },
     });
-    const makeOrder = (suffix: string) =>
+    const otherUser = await prisma.user.create({
+      data: {
+        email: key + '-other@example.test',
+        passwordHash: 'test-only',
+        firstName: 'Other',
+        lastName: 'Buyer',
+      },
+    });
+    const makeOrder = (suffix: string, buyer = user.id) =>
       prisma.order.create({
         data: {
           orderNumber: `${key}-${suffix}`,
-          userId: user.id,
+          userId: buyer,
           eventId: event.id,
           totalAmount: 20,
           tickets: {
             create: [0, 1].map((i) => ({
               eventId: event.id,
-              userId: user.id,
+              userId: buyer,
               ticketTypeId: type.id,
               barcode: `${key}-${suffix}-${i}`,
               pricePaid: 10,
@@ -74,7 +82,7 @@ test.each([false, true])(
         include: { tickets: { orderBy: { id: 'asc' } } },
       });
     const target = await makeOrder('a');
-    const otherBefore = await makeOrder('b');
+    const otherBefore = await makeOrder('b', otherUser.id);
     const original = prisma.order.findFirst.bind(prisma.order);
     const arrived = [deferred(), deferred()];
     const release = [deferred(), deferred()];
@@ -141,12 +149,22 @@ test.each([false, true])(
       expect(b).toEqual(otherBefore);
       expect(a.status).toBe('PAID');
       expect(a.paymentStatus).toBe('SUCCEEDED');
-      expect(a.tickets).toEqual(target.tickets);
+      expect(a.tickets).toEqual(
+        target.tickets.map((ticket) => ({
+          ...ticket,
+          inventoryState: 'SOLD',
+          updatedAt: expect.any(Date),
+        }))
+      );
       expect(counters).toEqual([6, 2, 2]);
-      expect(settled.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
-      expect(settled.filter((r) => r.status === 'rejected')).toHaveLength(1);
-      const loser = settled.find((r) => r.status === 'rejected');
-      if (loser?.status === 'rejected') expect(loser.reason).toMatchObject({ statusCode: 400 });
+      expect(settled.every((result) => result.status === 'fulfilled')).toBe(true);
+      for (const result of settled)
+        if (result.status === 'fulfilled')
+          expect(result.value).toMatchObject({
+            id: target.id,
+            status: a.status,
+            paymentStatus: a.paymentStatus,
+          });
     } finally {
       release.forEach((g) => g.resolve());
       await outcomes;
