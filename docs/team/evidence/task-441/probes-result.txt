@@ -1,0 +1,7 @@
+PASS extracted finally: ENOSPC occurs after both disconnect attempts
+PASS extracted finally: hanging server close gets failed receipt and later cleanup continues
+REPRO remaining gap: ENOSPC replaces ORIGINAL failure
+REPRO remaining gap: failure receipt has no source SHA or original error/status
+PASS source ordering: server ACK wait precedes release; Redis/app initialization inside try (not HTTP verification)
+PASS extracted stable comparison: only timestamp ignored; inventory drift remains visible
+REPRO remaining gap: timed-out work can execute after disconnect; timeout is not joining/cancellation
