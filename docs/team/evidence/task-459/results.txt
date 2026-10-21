@@ -1,0 +1,19 @@
+PASS TERM live simultaneous denial, both reentrant callbacks once, direct reap before teardown, sequential denial
+PASS KILL live simultaneous denial, both reentrant callbacks once, direct reap before teardown, sequential denial
+PASS closed child held teardown overlapping finish denied with callbacks once
+PASS closed child held writeEvidence overlapping finish denied with callbacks once
+PASS foreign live PID denied without signal
+Error: ENOSPC459
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-459/docs/team/evidence/task-459/probes.cjs:32:89)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-459/docs/team/evidence/task-426/process-cleanup.cjs:68:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-459/docs/team/evidence/task-459/probes.cjs:32:42
+PASS real ENOENT eight serialized fields, close and evidence failure retained; consumed on evidence failure
+LEAD459_STDERR
+Error: receipt459
+    at writeEvidence (/home/daniel/projects/projectTixmo/worktrees/task-459/docs/team/evidence/task-459/probes.cjs:36:73)
+    at finish (/home/daniel/projects/projectTixmo/worktrees/task-459/docs/team/evidence/task-426/process-cleanup.cjs:68:15)
+    at async /home/daniel/projects/projectTixmo/worktrees/task-459/docs/team/evidence/task-459/probes.cjs:36:15
+PASS exit39 stderr and separate evidence error retained
+PASS teardown failure consumes authority and evidence once
+TOTAL 8 independent checks PASS; all direct children reaped
