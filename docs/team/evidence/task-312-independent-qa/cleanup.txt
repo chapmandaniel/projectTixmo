@@ -1,0 +1,12 @@
+PID 2808038 absent
+PID 2808051 absent
+PID 2808142 absent
+PID 2808165 absent
+PID 2808214 absent
+PID 2808277 absent
+PG36305 Redis46749 listeners absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-312/run.IlV9cq/.s.PGSQL.36305 absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-312/run.IlV9cq/redis.sock absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-312/run.IlV9cq/pg/postmaster.pid absent
+/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-312/run.IlV9cq/redis.pid absent
+Runtime directory and parent mode0700; no HTTP server; shell runtime exit0 observed by tool session60939.

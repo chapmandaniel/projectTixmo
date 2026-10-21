@@ -1,0 +1,8 @@
+ec17f5e3b1ef39a53ce37013745d94937721bbbb680884cc81f74a1568acf018  docs/team/evidence/task-311-ambiguous-crash/runtime.sh
+6d22ba0f0312968712097d5392f0dd616051532c6576512d6af286d02490dc11  docs/team/evidence/task-311-ambiguous-crash/check.cjs
+3e368cbd971ac6415e25c9467859d9d8133b60644ebd38fc0384c473f912f62b  docs/team/evidence/task-312-independent-qa/runtime.sh
+363de614130733bcd11768f5d6710ab02e679e35a728f14e724cf5ed07173242  docs/team/evidence/task-312-independent-qa/check.cjs
+1ece0031fa6324973c3a60a8c0f395dfb858095edddbe2f5563a7b0c7389bfd0  tixmoapi2/src/api/payments/service.ts
+596ff985c2a9b94e19c1b1f8963292bf747bb541b510662e9baa3b520f627749  tixmoapi2/src/api/orders/service.ts
+8fa8db0d72c618b40e5d3b63293643464201a0437de8de600f76a0289fbc24b0  scripts/verification-safety.cjs
+03544f7a5fbe613b111fcf83b0249a38cc21d15ff8427b95ff340989871ec7bb  tixmoapi2/prisma/schema.prisma

@@ -1,0 +1,114 @@
+{
+  "runtime": "/home/daniel/.openclaw/workspace/tixmo-pm/runtime/task-312/run.IlV9cq",
+  "processPhases": [
+    {
+      "pid": 2808142,
+      "type": "provider-durable-before-return",
+      "calls": [
+        [
+          "intent",
+          "healthy"
+        ],
+        [
+          "list",
+          {
+            "payment_intent": "healthy",
+            "limit": 100
+          }
+        ],
+        [
+          "create",
+          {
+            "payment_intent": "healthy",
+            "amount": 1000,
+            "metadata": {
+              "refundId": "healthy",
+              "orderId": "42fdcd82-c2b1-4fdb-9723-1229da1ce7d6"
+            }
+          },
+          {
+            "idempotencyKey": "refund-healthy"
+          }
+        ]
+      ]
+    },
+    {
+      "pid": 2808165,
+      "type": "complete",
+      "calls": [
+        [
+          "intent",
+          "healthy"
+        ],
+        [
+          "list",
+          {
+            "payment_intent": "healthy",
+            "limit": 100
+          }
+        ],
+        [
+          "intent",
+          "aged"
+        ],
+        [
+          "list",
+          {
+            "payment_intent": "aged",
+            "limit": 100
+          }
+        ],
+        [
+          "intent",
+          "unknown"
+        ],
+        [
+          "list",
+          {
+            "payment_intent": "unknown",
+            "limit": 100
+          }
+        ]
+      ]
+    },
+    {
+      "pid": 2808214,
+      "type": "complete",
+      "calls": []
+    },
+    {
+      "pid": 2808277,
+      "type": "complete",
+      "calls": [
+        [
+          "intent",
+          "unknown"
+        ],
+        [
+          "list",
+          {
+            "payment_intent": "unknown",
+            "limit": 100
+          }
+        ]
+      ]
+    }
+  ],
+  "inGap": {
+    "refund": "REQUESTED",
+    "providerId": null,
+    "order": "PAID",
+    "ticket": "SOLD",
+    "ledgerEffects": 1
+  },
+  "final": {
+    "refund": "SUCCEEDED",
+    "order": "REFUNDED",
+    "inventory": [
+      1,
+      0,
+      0
+    ],
+    "ledgerEffects": 1
+  }
+}
