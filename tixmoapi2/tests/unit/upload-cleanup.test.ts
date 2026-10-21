@@ -125,23 +125,44 @@ describe('Request-owned staged upload cleanup', () => {
       slow = file('slow.png'),
       service = new UploadService();
     let settle!: () => void;
+    let started!: () => void;
+    const uploadStarted = new Promise<void>((resolve) => {
+      started = resolve;
+    });
     jest.spyOn(service, 'uploadFile').mockImplementation(async (staged) => {
       if (staged === first) throw new Error('One file failed');
       await new Promise<void>((resolve) => {
         settle = resolve;
+        started();
       });
       return {} as any;
     });
     jest
       .mocked(assetLibraryService.upload)
       .mockImplementationOnce(async (_user, files) => service.uploadMultiple(files) as any);
+    const cleanup = jest.spyOn(fs.promises, 'unlink');
     const next = jest.fn(),
       pending = AssetLibraryController.upload(request([first, slow]), response(), next);
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(next).not.toHaveBeenCalled();
-    expect(fs.existsSync(slow.path)).toBe(true);
-    settle();
-    await pending;
+    try {
+      await Promise.race([
+        uploadStarted,
+        pending.then(() => {
+          throw new Error('Request settled before the sibling upload started');
+        }),
+      ]);
+      // Let rejection handlers run without assuming any filesystem speed.
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(next).not.toHaveBeenCalled();
+      expect(cleanup).not.toHaveBeenCalled();
+      expect(fs.existsSync(slow.path)).toBe(true);
+    } finally {
+      settle?.();
+      try {
+        await pending;
+      } finally {
+        cleanup.mockRestore();
+      }
+    }
     expect(next).toHaveBeenCalled();
     expect(fs.existsSync(first.path)).toBe(false);
     expect(fs.existsSync(slow.path)).toBe(false);
