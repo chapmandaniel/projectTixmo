@@ -154,3 +154,37 @@ test('large child output is discarded without buffer overflow or leaking diagnos
   } });
   assert.equal(calls, 2);
 });
+
+test('failure diagnostics expose only bounded assertion ordinals and matching source lines', () => {
+  const diagnostic = formatTestFailures({ numFailedTests: 2, testResults: [{
+    status: 'failed', name: '/private/payment-recovery-backlog.test.ts', message: 'synthetic-secret', assertionResults: [
+      { status: 'passed', fullName: 'secret passed title' },
+      { status: 'failed', fullName: 'secret failed title', failureMessages: ['Error: synthetic-secret https://private.example/token\n    at Object.fn (/private/payment-recovery-backlog.test.ts:421:9)\n    at other (/private/other.test.ts:88:2)'] },
+      { status: 'failed', failureMessages: ['synthetic-argument\n at fn (C:\\private\\payment-recovery-backlog.test.ts:17:1)\n at fn (/private/payment-recovery-backlog.test.ts:100000:1)\n at fn (/private/payment-recovery-backlog.test.ts:0:1)\n at fn (/private/payment-recovery-backlog.test.ts:100001:1)\n at fn (/private/payment-recovery-backlogXtestXts:999:1)\n at fn (https://secret/payment-recovery-backlog.test.ts:666:1)'] },
+    ],
+  }] });
+  assert.equal(diagnostic, ' Failed tests: 2; suites: payment-recovery-backlog.test.ts; assertions: payment-recovery-backlog.test.ts#2@421; payment-recovery-backlog.test.ts#3@17,100000.');
+  assert.doesNotMatch(diagnostic, /private|synthetic|secret|https|argument|title|666|999|100001/);
+});
+
+test('malformed diagnostic reports cannot expose object coercion or unbounded fields', () => {
+  const hidden = { toString: () => { throw new Error('must not coerce synthetic-secret'); } };
+  for (const report of [undefined, null, 7, 'synthetic-secret', { testResults: hidden }, { testResults: [null, 42, {}, { status: 'failed', name: hidden }] }]) {
+    assert.equal(formatTestFailures(report), ' Failed tests: unknown; suites: unavailable; assertions: unavailable.');
+  }
+  const diagnostic = formatTestFailures({ numFailedTests: -1, testResults: [{ status: 'failed', name: 'safe.test.ts', assertionResults: [null, { status: 'failed', failureMessages: [hidden, null, 5] }] }] });
+  assert.equal(diagnostic, ' Failed tests: unknown; suites: safe.test.ts; assertions: safe.test.ts#2.');
+  for (const numFailedTests of [Infinity, NaN, 1000001, '3']) assert.match(formatTestFailures({ numFailedTests }), /Failed tests: unknown/);
+});
+
+test('diagnostic traversal and output stay bounded with oversized reports and stack text', () => {
+  const cases = Array.from({ length: 1001 }, () => ({ status: 'failed', fullName: 'synthetic-secret', failureMessages: ['x'.repeat(20000) + '\n at fn (/private/safe.test.ts:999:1)'] }));
+  const diagnostic = formatTestFailures({ numFailedTests: 1000000, testResults: Array.from({ length: 101 }, (_, i) => ({ status: 'failed', name: `safe${i}.test.ts`, assertionResults: cases })) });
+  assert.equal((diagnostic.match(/#/g) || []).length, 20);
+  assert.doesNotMatch(diagnostic, /#21|@999|synthetic|safe20|safe100/);
+  assert.ok(diagnostic.length < 4000);
+  const frame = '\n at fn (/private/safe.test.ts:1:1)';
+  const lines = formatTestFailures({ testResults: [{ status: 'failed', name: 'safe.test.ts', assertionResults: [{ status: 'failed', failureMessages: [frame + frame + '\n at fn (/private/safe.test.ts:2:1)\n at fn (/private/safe.test.ts:3:1)\n at fn (/private/safe.test.ts:4:1)'] }] }] });
+  assert.match(lines, /safe.test.ts#1@1,2,3\./);
+  assert.doesNotMatch(lines, /,4/);
+});
