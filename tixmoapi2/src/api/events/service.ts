@@ -2,6 +2,7 @@ import { ApiError } from '@utils/ApiError';
 import { Event, Prisma, EventStatus } from '@prisma/client';
 
 import prisma from '../../config/prisma';
+import { ActorScope, assertOrganizationAccess } from '../../utils/tenantScope';
 import { lockOrder } from '../../services/order-inventory.service';
 import { orderService } from '../orders/service';
 
@@ -246,11 +247,63 @@ export class EventService {
   /**
    * Update event
    */
+  async setSalesPause(
+    id: string,
+    input: { paused: boolean; reason: string; requestId: string },
+    actor: ActorScope
+  ) {
+    if (!['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'].includes(actor.role)) throw ApiError.forbidden();
+    return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
+      const event = await tx.event.findUnique({ where: { id } });
+      if (!event) throw ApiError.notFound('Event not found');
+      assertOrganizationAccess(actor, event.organizationId);
+      if (event.deletedAt) throw ApiError.badRequest('Cannot control sales of a deleted event');
+      const prior = await tx.eventSalesControl.findUnique({
+        where: { eventId_requestId: { eventId: id, requestId: input.requestId } },
+      });
+      if (
+        prior &&
+        (prior.actorId !== actor.userId ||
+          prior.reason !== input.reason ||
+          prior.afterPaused !== input.paused)
+      )
+        throw ApiError.conflict('Request key was used with different input', {
+          code: 'SALES_PAUSE_REQUEST_CONFLICT',
+        });
+      const evidence =
+        prior ||
+        (await tx.eventSalesControl.create({
+          data: {
+            eventId: id,
+            organizationId: event.organizationId,
+            actorId: actor.userId,
+            requestId: input.requestId,
+            reason: input.reason,
+            beforePaused: event.salesPaused,
+            afterPaused: input.paused,
+          },
+        }));
+      if (!prior && event.salesPaused !== input.paused)
+        await tx.event.update({ where: { id }, data: { salesPaused: input.paused } });
+      return {
+        eventId: id,
+        salesPaused: evidence.afterPaused,
+        changed: evidence.beforePaused !== evidence.afterPaused,
+        requestId: evidence.requestId,
+        auditId: evidence.id,
+        replayed: !!prior,
+      };
+    });
+  }
+
   async updateEvent(
     id: string,
     data: UpdateEventInput,
     db: Prisma.TransactionClient = prisma
   ): Promise<Event> {
+    if (db === prisma) return prisma.$transaction((tx) => this.updateEvent(id, data, tx));
+    await db.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
     // Check if event exists
     const existingEvent = await db.event.findUnique({
       where: { id },
@@ -304,7 +357,7 @@ export class EventService {
     }
     if (data.description !== undefined) updateData.description = data.description;
     if (data.venueId) updateData.venueId = data.venueId;
-    if (data.status) updateData.status = data.status;
+    // Generic updates never write lifecycle or independent sales-control state.
     if (data.capacity) updateData.capacity = data.capacity;
     if (data.category) updateData.category = data.category;
     if (data.tags !== undefined) updateData.tags = data.tags;
@@ -500,15 +553,18 @@ export class EventService {
     if (newStatus === EventStatus.DRAFT)
       throw ApiError.badRequest('Use the dedicated restore action');
 
-    const event = await prisma.event.findUnique({ where: { id } });
-    if (!event) throw ApiError.notFound('Event not found');
-    if (event.deletedAt) throw ApiError.badRequest('Cannot transition a deleted event');
+    return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
+      const event = await tx.event.findUnique({ where: { id } });
+      if (!event) throw ApiError.notFound('Event not found');
+      if (event.deletedAt) throw ApiError.badRequest('Cannot transition a deleted event');
 
-    this.validateStatusTransition(event.status, newStatus);
+      this.validateStatusTransition(event.status, newStatus);
 
-    return await prisma.event.update({
-      where: { id },
-      data: { status: newStatus },
+      return await tx.event.update({
+        where: { id },
+        data: { status: newStatus },
+      });
     });
   }
 
@@ -516,6 +572,8 @@ export class EventService {
    * Publish event (change status from DRAFT to PUBLISHED)
    */
   async publishEvent(id: string, db: Prisma.TransactionClient = prisma): Promise<Event> {
+    if (db === prisma) return prisma.$transaction((tx) => this.publishEvent(id, tx));
+    await db.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
     const event = await db.event.findUnique({
       where: { id },
     });

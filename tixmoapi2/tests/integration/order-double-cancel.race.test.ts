@@ -89,6 +89,7 @@ test.each([false, true])(
     const original = prisma.$transaction.bind(prisma);
     const arrived = [deferred(), deferred()];
     const release = [deferred(), deferred()];
+    const committed = [deferred(), deferred()];
     const trace: string[] = [];
     let reads = 0;
     const spy = jest.spyOn(prisma, '$transaction').mockImplementation((async (
@@ -105,7 +106,9 @@ test.each([false, true])(
         arrived[index].resolve();
         await bounded(release[index].promise);
       }
-      return original(callback, options);
+      const result = await original(callback, options);
+      if (index >= 0) committed[index].resolve();
+      return result;
     }) as any);
     const service = new OrderService();
     const first = service.cancelOrder(target.id);
@@ -118,7 +121,9 @@ test.each([false, true])(
       const winnerIndex = reverseSchedule ? 1 : 0;
       const loserIndex = 1 - winnerIndex;
       release[winnerIndex].resolve();
-      await [first, second][winnerIndex];
+      // Gate indexes describe transaction entry, not call invocation: asynchronous
+      // public preflight reads can make the second call enter first.
+      await bounded(committed[winnerIndex].promise);
       trace.push(`call-${winnerIndex}-committed`);
       release[loserIndex].resolve();
       const settled = await outcomes;

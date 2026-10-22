@@ -118,3 +118,14 @@ export const eventConfigurationSchema = z.object({
     publish: z.boolean().default(false),
   }),
 });
+
+export const salesPauseSchema = z.object({
+  params: z.object({ id: z.string().uuid() }),
+  body: z
+    .object({
+      paused: z.boolean(),
+      reason: z.string().trim().min(1).max(1000),
+      requestId: z.string().uuid(),
+    })
+    .strict(),
+});

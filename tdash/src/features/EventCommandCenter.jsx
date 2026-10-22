@@ -6,6 +6,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import { generateEventSlug } from '../lib/utils';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
+import EventSalesControl from './EventSalesControl';
 import StatusBadge from '../components/StatusBadge';
 import { DashboardButton, DashboardIconButton } from '../components/dashboard/DashboardPrimitives';
 import ECC_Overview from './ECC_Overview';
@@ -193,6 +194,8 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                     </div>
                 </div>
             </div>
+
+            <EventSalesControl key={`${event.id}:${user?.id}:${user?.role}`} event={event} user={user} isDark={isDark} onUpdate={onUpdate} />
 
             {/* Split View (Sidebar + Main Content) */}
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-visible lg:flex-row lg:gap-0 lg:overflow-hidden">

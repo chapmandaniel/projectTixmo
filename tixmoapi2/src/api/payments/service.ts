@@ -404,23 +404,33 @@ export class PaymentService {
     const recipient = await this.orderTransaction(claim, orderId, async (tx) => {
       const order = await tx.order.findUnique({
         where: { id: orderId },
-        include: { user: { select: { email: true } } },
+        include: { user: { select: { email: true } }, paymentAttempt: true },
       });
-      if (
-        !order ||
-        order.paymentIntentId !== intent.id ||
-        order.status !== 'PENDING' ||
-        order.paymentStatus === 'SUCCEEDED'
-      )
-        return null;
+      if (!order || order.status !== 'PENDING' || order.paymentStatus === 'SUCCEEDED') return null;
+      // A webhook can arrive before the create response links its durable attempt.
+      // Bind only the committed matching operation, never an unrelated intent.
+      const early =
+        !order.paymentIntentId &&
+        !!order.paymentAttempt &&
+        order.paymentAttempt.id === intent.metadata.attemptId &&
+        (!order.paymentAttempt.paymentIntentId ||
+          order.paymentAttempt.paymentIntentId === intent.id) &&
+        intent.amount === cents(order.totalAmount) &&
+        intent.currency === order.currency;
+      if (order.paymentIntentId !== intent.id && !early) return null;
+      if (early)
+        await tx.paymentAttempt.update({
+          where: { orderId },
+          data: { paymentIntentId: intent.id },
+        });
       const updated = await tx.order.updateMany({
         where: {
           id: orderId,
           status: 'PENDING',
-          paymentIntentId: intent.id,
+          paymentIntentId: early ? null : intent.id,
           paymentStatus: { not: 'SUCCEEDED' },
         },
-        data: { paymentStatus: 'FAILED' },
+        data: { paymentStatus: 'FAILED', ...(early ? { paymentIntentId: intent.id } : {}) },
       });
       return updated.count ? { email: order.user.email, orderNumber: order.orderNumber } : null;
     });
@@ -594,26 +604,30 @@ export class PaymentService {
         : ['failed', 'canceled'].includes(refund.status || '')
           ? 'FAILED'
           : 'PROCESSING';
-    await prisma.paymentRefund.update({
-      where: { id },
+    // A delayed provider response must not undo another worker's settlement.
+    const saved = await prisma.paymentRefund.updateMany({
+      where: { id, status: { not: 'SUCCEEDED' } },
       data: {
         stripeRefundId: refund.id,
         status,
         errorMessage: refund.failure_reason || null,
       },
     });
-    if (status === 'SUCCEEDED' && record.reason !== 'ORDER_REFUND') {
+    const effectiveStatus = saved.count
+      ? status
+      : (await prisma.paymentRefund.findUniqueOrThrow({ where: { id } })).status;
+    if (effectiveStatus === 'SUCCEEDED' && record.reason !== 'ORDER_REFUND') {
       await prisma.order.updateMany({
         where: { id: record.orderId, status: 'CANCELLED', paymentIntentId: record.paymentIntentId },
         data: { paymentClosedAt: new Date(), paymentStatus: 'SUCCEEDED' },
       });
     }
     if (record.reason === 'ORDER_REFUND') {
-      if (status === 'SUCCEEDED') await orderService.finalizeRefund(record.orderId);
+      if (effectiveStatus === 'SUCCEEDED') await orderService.finalizeRefund(record.orderId);
       else
         await prisma.order.updateMany({
           where: { id: record.orderId, status: 'PAID' },
-          data: { refundStatus: status },
+          data: { refundStatus: effectiveStatus },
         });
     }
   }

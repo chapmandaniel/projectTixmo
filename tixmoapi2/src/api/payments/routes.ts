@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { waitingRoom } from '../../middleware/waitingRoom';
 import { authenticate } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import * as controller from './controller';
@@ -50,6 +51,7 @@ router.post(
   '/create-intent',
   authenticate,
   validate(createPaymentIntentSchema),
+  waitingRoom,
   controller.createPaymentIntent
 );
 

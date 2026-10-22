@@ -3,6 +3,10 @@ import { Request, Response, NextFunction } from 'express';
 import { waitingRoom } from '../../src/middleware/waitingRoom';
 import { getRedisClient } from '../../src/config/redis';
 jest.mock('../../src/config/redis', () => ({ getRedisClient: jest.fn() }));
+jest.mock('../../src/config/logger', () => ({ logger: { warn: jest.fn(), error: jest.fn() } }));
+jest.mock('../../src/config/environment', () => ({
+  config: { waitingRoomMaxConcurrentRequests: 17 },
+}));
 
 describe('Waiting room request leases', () => {
   let client: any, req: any, res: any, next: jest.Mock;
@@ -15,6 +19,7 @@ describe('Waiting room request leases', () => {
     jest.mocked(getRedisClient).mockReturnValue(client);
     req = Object.assign(new EventEmitter(), { path: '/orders', aborted: false });
     res = Object.assign(new EventEmitter(), {
+      set: jest.fn().mockReturnThis(),
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     });
@@ -23,6 +28,8 @@ describe('Waiting room request leases', () => {
   afterEach(async () => {
     res.emit('finish');
     await Promise.resolve();
+    jest.restoreAllMocks();
+    jest.useRealTimers();
     jest.clearAllMocks();
   });
   const enter = () => waitingRoom(req as Request, res as Response, next as NextFunction);
@@ -56,9 +63,11 @@ describe('Waiting room request leases', () => {
   });
   it('preserves overload responses without allocating capacity', async () => {
     client.eval.mockResolvedValueOnce(0);
+    jest.spyOn(Math, 'random').mockReturnValue(0);
     await enter();
     expect(res.status).toHaveBeenCalledWith(503);
     expect(res.json).toHaveBeenCalledWith({
+      code: 'WAITING_ROOM_ACTIVE',
       message: 'High traffic volume. Please try again in a moment.',
       retryAfter: 5,
     });
@@ -78,12 +87,46 @@ describe('Waiting room request leases', () => {
     expect(next).toHaveBeenCalledTimes(1);
     expect(client.eval).not.toHaveBeenCalled();
   });
+  it.each([
+    [0, 5],
+    [0.5, 6],
+    [0.999999, 7],
+  ])('marks rejection with matching jitter at %s', async (random, delay) => {
+    jest.spyOn(Math, 'random').mockReturnValue(random);
+    client.eval.mockResolvedValueOnce(0);
+    await enter();
+    expect(res.set).toHaveBeenCalledWith('Retry-After', String(delay));
+    expect(res.set).toHaveBeenCalledWith('Cache-Control', 'no-store');
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'WAITING_ROOM_ACTIVE', retryAfter: delay })
+    );
+    expect(client.zRem).not.toHaveBeenCalled();
+  });
+  it.each(['finish', 'close', 'aborted'])(
+    'renews configured leases and clears timer on %s',
+    async (event) => {
+      jest.useFakeTimers();
+      await enter();
+      expect(client.eval.mock.calls[0][1].arguments).toEqual([expect.any(String), '17', '120000']);
+      await jest.advanceTimersByTimeAsync(30000);
+      expect(client.eval).toHaveBeenCalledTimes(2);
+      expect(client.eval.mock.calls[1][1].arguments).toEqual([
+        client.eval.mock.calls[0][1].arguments[0],
+        '120000',
+      ]);
+      (event === 'aborted' ? req : res).emit(event);
+      await jest.advanceTimersByTimeAsync(90000);
+      expect(client.eval).toHaveBeenCalledTimes(2);
+      expect(client.zRem).toHaveBeenCalledTimes(1);
+      expect(jest.getTimerCount()).toBe(0);
+    }
+  );
   it('preserves health and metrics bypasses', async () => {
-    for (const path of ['/health', '/metrics']) {
+    for (const path of ['/health', '/ready', '/metrics']) {
       req.path = path;
       await enter();
     }
-    expect(next).toHaveBeenCalledTimes(2);
+    expect(next).toHaveBeenCalledTimes(3);
     expect(client.eval).not.toHaveBeenCalled();
   });
 });

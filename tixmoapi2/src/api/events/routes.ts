@@ -10,6 +10,13 @@ const router = Router();
 // All routes require authentication
 router.use(authenticate);
 router.post(
+  '/:id/sales-pause',
+  authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
+  validate(validation.salesPauseSchema),
+  controller.setSalesPause
+);
+
+router.post(
   '/configuration',
   authorize('OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'),
   validate(validation.eventConfigurationSchema),

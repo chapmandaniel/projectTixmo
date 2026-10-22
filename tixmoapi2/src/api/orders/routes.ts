@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { waitingRoom } from '../../middleware/waitingRoom';
 import { authenticate } from '../../middleware/auth';
 import { authorize } from '../../middleware/authorize';
 import { validate } from '../../middleware/validate';
@@ -57,7 +58,7 @@ router.post('/:id/receipt', controller.resendReceipt);
  *       404:
  *         description: Ticket type not found
  */
-router.post('/', validate(validation.createOrderSchema), controller.createOrder);
+router.post('/', validate(validation.createOrderSchema), waitingRoom, controller.createOrder);
 
 /**
  * @swagger
