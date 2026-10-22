@@ -1,6 +1,8 @@
 PASS all 107 setup IDs preallocated, including independent foreign sentinel
 PASS unresolved continuation: permanent preserve, no teardown/admission, late settle cannot reopen
 PASS unresolved close: permanent preserve, no teardown/admission, late settle cannot reopen
+PASS unknown middleware lifetime (non-promise): hidden raw work preserves permanently before teardown
+PASS unknown middleware lifetime (synchronous throw): hidden raw work preserves permanently before teardown
 PASS settled client failure: raw join permits owned cleanup
 PASS settled client success: raw join permits owned cleanup
 PASS settled critical observer rejection conservatively latches

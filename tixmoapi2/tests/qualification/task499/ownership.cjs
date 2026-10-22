@@ -54,7 +54,7 @@ function checkoutOwnership(ids, timeoutMs = 3000) {
     await join();
     for (const step of steps) await critical(step);
   }
-  return { run, join, critical, teardown, admit, stop() { stopped = true; },
+  return { run, join, critical, teardown, admit, preserve, stop() { stopped = true; },
     get size() { return pending.size; }, get preserved() { return Boolean(failure); },
     get inventory() { return structuredClone(inventory); } };
 }
@@ -63,8 +63,13 @@ function checkoutOwnership(ids, timeoutMs = 3000) {
 function promiseMiddleware(original, work) {
   return function (...args) {
     return work.run(() => {
-      const result = original.apply(this, args);
-      if (!result || typeof result.then !== 'function') throw new Error('Expected promise-returning middleware; cannot establish continuation lifetime');
+      // A missing/throwing return contract may hide already-started work.
+      // Latch synchronously before the tracked wrapper can settle/remove itself.
+      let result;
+      try {
+        result = original.apply(this, args);
+        if (!result || typeof result.then !== 'function') throw new Error('Expected promise-returning middleware; cannot establish continuation lifetime');
+      } catch (error) { work.preserve(error); }
       return result;
     });
   };

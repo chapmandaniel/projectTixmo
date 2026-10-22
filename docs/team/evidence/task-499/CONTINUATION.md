@@ -62,3 +62,25 @@ install/generation/env/secrets/config/spend/push/merge/deploy. Independent exact
 lead AND QA are mandatory before implementation closure; this partial helper
 needs review, not approval by its author. Full246 remains OPEN. Actual runtime
 needs separate reviewed admission and explicit sole disposable-target grant.
+
+## QA501 unknown-lifetime contract repair
+
+QA independently found that52f528a promiseMiddleware's non-promise rejection
+was removed from pending without setting preservation, permitting teardown
+while hidden raw middleware work could still be running. This was a real
+safety defect, not a settled-client failure. Expose the existing permanent
+preserve operation and call it synchronously on absent/throwing middleware
+promise contract before the tracked wrapper settles. Synchronous middleware
+throw after starting hidden work is conservatively treated the same way.
+Normal returned-promise/client settled failures retain their distinct controls.
+
+Added two actual-helper inert proofs: middleware starts a hidden deferred raw
+operation then returns undefined or throws. Its tracked wrapper settles and
+pending.size reaches0 while hidden raw work is still unresolved; nevertheless
+preservation is already permanent, zero cleanup/disconnect, exact inventory
+retained and fixture admission refused. Resolve hidden work late and prove all
+those restrictions remain. Re-ran both node --check commands and actual helper
+probe: exit0 with eight PASS lines, including original settled-client controls.
+No full HTTP source added; all previous scope/runtime restrictions still apply.
+IndependentQA501 fresh exactSHA re-review required; independent lead remains
+pending.499 and246 remain incomplete and must not be closed.

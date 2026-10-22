@@ -25,6 +25,33 @@ async function unresolved(kind) {
   assert.deepEqual([cleanups, disconnects], [0, 0]);
   console.log('PASS unresolved ' + kind + ': permanent preserve, no teardown/admission, late settle cannot reopen');
 }
+async function unknownLifetime(throws) {
+  const ids = { event: 'unknown-middleware', buyers: ['retained-buyer'] };
+  const work = checkoutOwnership(ids, 50), raw = deferred();
+  let hiddenSettled = false, cleanup = 0, disconnect = 0;
+  let hidden;
+  const middleware = promiseMiddleware(() => {
+    hidden = raw.promise.then(() => { hiddenSettled = true; });
+    if (throws) throw new Error('middleware threw after starting hidden work');
+    // Deliberately returns undefined while the hidden raw operation is pending.
+  }, work);
+  await assert.rejects(middleware(), /preserve fixture IDs/);
+  assert.equal(hiddenSettled, false);
+  assert.equal(work.size, 0, 'tracked wrapper settled but hidden work has not');
+  assert.equal(work.preserved, true);
+  assert.deepEqual(work.inventory, ids);
+  assert.throws(() => work.admit(), /preserve fixture IDs/);
+  await assert.rejects(work.teardown([() => { cleanup++; }, () => { disconnect++; }]), /preserve fixture IDs/);
+  assert.deepEqual([cleanup, disconnect], [0, 0]);
+  raw.resolve(); await hidden;
+  assert.equal(hiddenSettled, true);
+  await assert.rejects(work.join(), /preserve fixture IDs/);
+  await assert.rejects(work.teardown([() => { cleanup++; }]), /preserve fixture IDs/);
+  assert.throws(() => work.admit(), /preserve fixture IDs/);
+  assert.deepEqual(work.inventory, ids);
+  assert.deepEqual([cleanup, disconnect], [0, 0]);
+  console.log('PASS unknown middleware lifetime (' + (throws ? 'synchronous throw' : 'non-promise') + '): hidden raw work preserves permanently before teardown');
+}
 async function settled(rejectClient) {
   const work = checkoutOwnership({ event: 'settled-fixture' }, 50);
   let cleanup = 0;
@@ -42,6 +69,7 @@ async function settled(rejectClient) {
   assert.equal(new Set([ids.organization, ids.event, ids.ticketType, ...ids.buyers, ...Object.values(ids.foreign)]).size, 107);
   console.log('PASS all 107 setup IDs preallocated, including independent foreign sentinel');
   await unresolved('continuation'); await unresolved('close');
+  await unknownLifetime(false); await unknownLifetime(true);
   await settled(true); await settled(false);
   const work = checkoutOwnership({ event: 'observer-fixture' }, 50);
   await assert.rejects(work.critical(() => Promise.reject(new Error('observer failed'))), /preserve fixture IDs/);
