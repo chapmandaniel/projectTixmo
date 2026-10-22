@@ -12,7 +12,7 @@ Use this playbook for beta customer support, admin repair, and launch-week incid
 
 ## First Checks
 
-1. Confirm service health with `/health` and `/api/v1/health`.
+1. Check `/health` for liveness and `/ready` for database/Redis readiness. Record the actual deployed commit; a green repository check does not establish target health.
 2. Capture release/version context, environment, organization ID, event ID, user ID, order number, Stripe PaymentIntent ID, scanner ID, ticket ID, or share/review token reference.
 3. Check logs around the affected timestamp before changing state.
 4. Reproduce in staging when the issue is workflow-wide rather than customer-specific.
@@ -25,8 +25,8 @@ Use this playbook for beta customer support, admin repair, and launch-week incid
 | Users | `GET/POST/PUT/DELETE /api/v1/users` | User lookup, team account creation, profile repair, soft delete |
 | Organizations | `GET/POST/PUT/DELETE /api/v1/organizations` | Org lookup, org status repair, Stripe account reference checks |
 | Org members | `POST /api/v1/organizations/:id/members`, `DELETE /api/v1/organizations/:id/members/:userId` | Add/remove users from organizations |
-| Orders | `GET /api/v1/orders`, `GET /api/v1/orders/:id`, `POST /api/v1/orders/:id/confirm`, `POST /api/v1/orders/:id/cancel`, `POST /api/v1/orders/:id/refund` | Order lookup and controlled order-state repair |
-| Payments | Stripe Dashboard, `POST /api/v1/payments/webhook` | PaymentIntent verification and webhook replay |
+| Orders | `GET /api/v1/orders`, `GET /api/v1/orders/:id`, `POST /api/v1/orders/:id/cancel`, `POST /api/v1/orders/:id/refund` | Actor-scoped lookup, pending cancellation and processor-backed full refunds |
+| Payments | Stripe Dashboard and the signed `POST /api/v1/payments/webhook` receiver | PaymentIntent verification and provider-signed webhook redelivery |
 | Scanners | `GET/POST/PUT/DELETE /api/v1/scanners`, `GET /api/v1/scanners/logs` | Scanner registration, update, revoke, and scan investigation |
 | Assets | `GET /api/v1/assets/folders/:folderId/shares`, `POST /api/v1/assets/folders/:folderId/shares`, `DELETE /api/v1/assets/folders/:folderId/shares/:shareId` | Share creation and revocation |
 | Approvals | `/api/v1/approvals`, `/api/v1/review/:token` | Approval routing, reviewer resend/remove, public reviewer actions |
@@ -44,7 +44,7 @@ Use this playbook for beta customer support, admin repair, and launch-week incid
 1. Confirm the Stripe PaymentIntent succeeded and matches the Tixmo order amount, currency, customer, and event.
 2. Check `payment_webhook_events` for the Stripe event ID, `payment_intent_id`, `order_id`, `status`, and `error_message`.
 3. Replay the Stripe webhook when the event is missing or failed.
-4. If Stripe is correct and the webhook cannot be replayed, an owner/admin/manager/promoter may use `POST /api/v1/orders/:id/confirm` after documenting the PaymentIntent evidence.
+4. There is no mounted manual order-confirmation endpoint. If signed redelivery and existing recovery cannot resolve the order, escalate with sanitized evidence. Under approved policy #73, a payment after hold expiry requires explicit manual reconciliation with no automatic refund, hold revival or second charge. Do not call internal confirmation methods or change stock directly.
 5. Verify the order is `PAID`, `payment_status` is `SUCCEEDED`, tickets exist, inventory counts are correct, and the customer received confirmation.
 
 ## Duplicate Webhook Or Duplicate Confirmation
@@ -56,10 +56,12 @@ Use this playbook for beta customer support, admin repair, and launch-week incid
 
 ## Refund Or Chargeback
 
-1. Verify who approved the refund and why.
-2. Handle the financial refund or chargeback workflow in Stripe first unless product policy says otherwise.
-3. Use `POST /api/v1/orders/:id/refund` for the platform-side order/ticket/inventory update after the financial action is confirmed.
-4. Confirm the order is `REFUNDED` or `PARTIALLY_REFUNDED` as expected and tickets cannot be used.
+1. Record the requested action, actual policy approval, order, actor and processor evidence. Commercial entitlement and cancellation policy remain #250/#61; the implemented eligibility below is a technical contract, not approval of customer-facing terms.
+2. For an eligible platform full refund, use the existing flow once: an authorized organization-scoped OWNER/ADMIN may call `POST /api/v1/orders/:id/refund`; a signed-in buyer may call `POST /api/v1/orders/:id/request-refund` for their own order. Both invoke the processor-backed refund service. Do not perform a separate Stripe refund first and then treat these routes as bookkeeping-only updates.
+3. Eligibility requires a PAID order, unused and untransferred tickets still owned by the buyer with SOLD inventory, and the refund window before event start unless the event is cancelled. A cancelled event permits its CANCELLED tickets; it does not bypass other eligibility checks. Monetary orders require a matching processor payment. Zero-value eligible orders settle without a processor refund.
+4. A successful HTTP envelope or “Refund processing” message does not prove money settlement. Inspect the returned order state and processor evidence. While PROCESSING, admission/transfer is frozen; stock is released only when reconciliation finalizes the full refund. Confirm REFUNDED, ticket cancellation and stock released once after processor success. Do not clear refund rows, change idempotency keys or repeat external financial actions after a timeout.
+5. Pending/failed processor refunds, mismatched amount/currency/payment, external full or partial refunds without the matching platform refund record, disputes/chargebacks, used/transferred tickets and unresolved cancelled-event cases require manual reconciliation. Preserve provider IDs and amounts, ticket/admission state and inventory evidence; do not promise PARTIALLY_REFUNDED support or manually force a terminal state. A refund older than the safe retry window without a matching provider refund fails closed for reconciliation rather than creating a fresh refund.
+6. Event cancellation is not a bulk-refund action. Review each affected order and policy before any approved financial action. Do not infer a dispute outcome or a new refund entitlement from event status.
 
 ## Duplicate Scan
 
@@ -105,7 +107,7 @@ Use this playbook for beta customer support, admin repair, and launch-week incid
 
 1. Confirm the email address on the user, order, reviewer, or share recipient.
 2. Check provider delivery logs for bounce, suppression, spam complaint, or delayed delivery.
-3. Resend only through a supported product route where available, such as approval reviewer resend.
+3. For a PAID order, the authenticated actor-scoped `POST /api/v1/orders/:id/receipt` requests a receipt to the recorded buyer; it does not accept an arbitrary recipient. The wallet offers the existing receipt action. Approval reviewer resend is a separate supported flow. A successful API response or local transport capture is not proof of inbox delivery.
 4. If no resend route exists, create a new supported action rather than manually sending secrets or raw tokens.
 
 ## Staging Or Production Smoke Failure
@@ -152,21 +154,7 @@ For production database backup and restore evidence, use `docs/DB_BACKUP_AND_MIG
   reconfirmed. If that replay still fails, stop manual replay loops and escalate
   with event/order IDs and sanitized error evidence. Do not reset event records,
   create a replacement PaymentIntent or manually change inventory.
-- If replay is unavailable, the existing documented authorized confirmation
-  workflow above is a possible fallback only with reviewed organization-scoped
-  access and payment/hold evidence. This section does not approve the historical
-  role list above or resolve disputed authorization/paid-after-expiry policy
-  (task 73); escalate those cases for the pending decision. Never reconfirm a
-  paid order. Confirmed inventory must not be
-  rolled back or fulfilled again merely to repair email delivery.
-- A rejection from the confirmation-email call **after** confirmation is logged
-  separately as `Order Confirmation Email Failure`; the webhook is `PROCESSED`,
-  even if its admin alert also fails. Use the existing email support triage;
-  there is no order-email resend endpoint. Do not promise replay will resend it.
-  The underlying email sender also logs asynchronous delivery failures; webhook
-  success is not proof of inbox delivery. Escalate unresolved delivery through
-  existing support rather than introducing a retry worker or sending raw tokens.
+- If signed redelivery is unavailable, escalate the unresolved payment. No manual confirmation route is mounted. Policy #73 is already approved: no-org ADMIN-only global access, no global OWNER expansion, promoter scoped confirm/own-order cancellation, and paid-after-expiry manual reconciliation with no automatic refund. Internal confirmation methods do not create an operator HTTP surface.
+- Confirmation-email failure after payment settlement must not trigger fulfillment or money movement again. Use the authenticated PAID-order receipt route described above and check actual provider delivery separately. Keep existing order/ticket/inventory state intact; never send raw QR payloads, credentials or tokens through support.
 
-Scope: sequential retry recovery only. Concurrent claims, stale `PROCESSING`
-events, paid-after-expiry policy and real persistence/HTTP integration remain
-separate work; mocked tests do not establish production recovery evidence.
+Scope: these instructions describe mounted source contracts. Hosted SQL/process recovery and sales-pause HTTP checks are recorded in #566/#570; actual target/provider/inbox acceptance remains #243/#244. This playbook does not establish deployed readiness, approve commercial policy, or grant support reset/reissue privileges.
