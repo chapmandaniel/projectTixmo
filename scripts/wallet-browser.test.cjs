@@ -41,5 +41,7 @@ test('suite retains real auth, transport-only receipt, full financial and cleanu
  for(const marker of ['jest.unmock(\'../../src/config/redis\')','jest.unmock(\'../../src/utils/notificationService\')',"['jwtExpiresIn', '10s']",'expect(await snapshot()).toEqual(before)','expect(financial(after)).toEqual(financial(before))','expect(transporter.sendMail).toHaveBeenCalledTimes(1)','requireSafeCleanup();']) assert.ok(suite.includes(marker), marker);
  assert.doesNotMatch(suite, /jest\.mock\(['"]\.\.\/\.\.\/src\/(middleware\/auth|utils\/jwt|api\/orders\/service|utils\/notificationService)/);
  assert.ok(suite.indexOf('requireSafeCleanup();') < suite.indexOf('prisma.ticket.deleteMany'));
+ assert.ok(suite.indexOf('await bounded(cleanup)') < suite.indexOf('for (const spy of spies.reverse())'));
+ assert.match(suite, /unsafe = true/);
  assert.match(suite, /stdio: \['ignore', 'ignore', 'ignore', 'ipc'\]/);
 });

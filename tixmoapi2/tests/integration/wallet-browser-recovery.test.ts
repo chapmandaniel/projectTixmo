@@ -107,7 +107,6 @@ async function qualifyWallet() {
       throw new Error('Browser lifetime cleanup unproven; preserve fixtures');
   };
   let primary: unknown,
-    settled = false,
     workerCleanup = false;
   try {
     const redis = await redisModule.connectRedis();
@@ -280,6 +279,11 @@ async function qualifyWallet() {
         where: { orderId: { in: [ids.order, ids.unpaid] } },
       }),
     });
+    // Real QR reads cache QR metadata; establish that legitimate write before the immutable baseline.
+    const { ticketService } = await import('../../src/api/tickets/service');
+    expect(await ticketService.getTicketQRCode(ids.ticket, ids.a)).toMatch(
+      /^data:image\/png;base64,/
+    );
     const before = await snapshot();
     const chrome =
       process.env.TIXMO_BROWSER_PATH ||
@@ -424,20 +428,34 @@ async function qualifyWallet() {
       }
       await bounded(drain());
       requireSafeCleanup();
-      settled = true;
+      const cleanup = track(
+        (async () => {
+          requireSafeCleanup();
+          await prisma.ticket.deleteMany({ where: { eventId: ids.event } });
+          requireSafeCleanup();
+          await prisma.order.deleteMany({ where: { id: { in: [ids.order, ids.unpaid] } } });
+          requireSafeCleanup();
+          await prisma.ticketType.deleteMany({ where: { id: ids.type } });
+          requireSafeCleanup();
+          await prisma.event.deleteMany({ where: { id: ids.event } });
+          requireSafeCleanup();
+          await prisma.organization.deleteMany({ where: { id: ids.org } });
+          requireSafeCleanup();
+          await prisma.user.deleteMany({ where: { id: { in: [ids.a, ids.b] } } });
+        })(),
+        false
+      );
+      await bounded(cleanup);
+      await bounded(drain());
+      requireSafeCleanup();
+      await bounded(track(redisModule.disconnectRedis(), false));
+      requireSafeCleanup();
+      await bounded(track(prisma.$disconnect(), false));
+      requireSafeCleanup();
       for (const spy of spies.reverse()) spy.mockRestore();
-      await prisma.ticket.deleteMany({ where: { eventId: ids.event } });
-      await prisma.order.deleteMany({ where: { id: { in: [ids.order, ids.unpaid] } } });
-      await prisma.ticketType.deleteMany({ where: { id: ids.type } });
-      await prisma.event.deleteMany({ where: { id: ids.event } });
-      await prisma.organization.deleteMany({ where: { id: ids.org } });
-      await prisma.user.deleteMany({ where: { id: { in: [ids.a, ids.b] } } });
     } catch (error) {
+      unsafe = true;
       primary ??= error;
-    }
-    if (settled) {
-      await redisModule.disconnectRedis();
-      await prisma.$disconnect();
     }
   }
   if (primary instanceof Error) throw primary;
