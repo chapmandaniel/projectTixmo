@@ -50,7 +50,7 @@ afterAll(async () => {
 it('current browser reopens owned wallet and confirmed return, refreshes elapsed JWT, denies foreign buyer and captures only permitted receipt', () => {
   lifetime = qualifyWallet();
   return lifetime;
-}, 130000);
+}, 160000);
 async function qualifyWallet() {
   require('../../../scripts/verification-safety.cjs').validateVerificationTargets(process.env);
   const ids = {
@@ -289,12 +289,31 @@ async function qualifyWallet() {
       process.env.TIXMO_BROWSER_PATH ||
       execFileSync('which', ['google-chrome'], { encoding: 'utf8' }).trim();
     expect(path.isAbsolute(chrome)).toBe(true);
+    (transporter.sendMail as jest.Mock).mockImplementation(
+      (mail: { subject: string; to: string; text: string }) => {
+        if (mail.subject !== 'Reset your Tixmo buyer password')
+          return Promise.resolve({ messageId: 'inert-capture' });
+        expect(mail.to).toBe(`${ids.a}@synthetic.test`);
+        const captured = mail.text.match(
+          /http:\/\/127\.0\.0\.1:[0-9]+\/reset-password#token=[a-f0-9]{64}/
+        )?.[0];
+        expect(Boolean(captured)).toBe(true);
+        return new Promise((resolve, reject) =>
+          browser!.send({ resetLink: captured }, (error) =>
+            error
+              ? reject(new Error('Owned reset-link IPC failed'))
+              : resolve({ messageId: 'inert-capture' })
+          )
+        );
+      }
+    );
     browser = fork(path.resolve(__dirname, '../../../scripts/browser/wallet-continuity.mjs'), [], {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
       env: {
         PATH: process.env.PATH,
         HOME: process.env.HOME,
-        NODE_ENV: 'test',
+        // Frontend build only; the mounted API remains in its own test process.
+        NODE_ENV: 'production',
         TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1',
         DATABASE_URL: process.env.DATABASE_URL,
         REDIS_URL: process.env.REDIS_URL,
@@ -305,6 +324,7 @@ async function qualifyWallet() {
           a: `${ids.a}@synthetic.test`,
           b: `${ids.b}@synthetic.test`,
           password,
+          newPassword: 'Synthetic-Recovered2!',
           orderId: ids.order,
           ticketId: ids.ticket,
           orderNumber: order.orderNumber,
@@ -317,7 +337,21 @@ async function qualifyWallet() {
       browser!.once('error', reject);
     });
     let result: any;
+    let failureStage = 0;
+    let currentStage = 0;
+    let failureCategory = 0;
     browser.on('message', (message: any) => {
+      const diagnostic =
+        require('../../../scripts/wallet-browser-guard.cjs').walletBrowserDiagnostic(
+          message?.diagnostic
+        );
+      if (diagnostic) {
+        currentStage = diagnostic.stage;
+        if (diagnostic.category !== 'progress' && failureStage === 0) {
+          failureStage = diagnostic.stage;
+          failureCategory = ['assertion', 'deadline', 'other'].indexOf(diagnostic.category) + 1;
+        }
+      }
       if (message.ok === true) result = message;
       if (
         message.cleanup === true &&
@@ -327,7 +361,38 @@ async function qualifyWallet() {
       )
         workerCleanup = true;
     });
-    expect(await bounded(browserExit, 100000)).toBe(0);
+    const workerExitCode = await bounded(browserExit, 120000);
+    if (workerExitCode !== 0) {
+      const failedStage = failureStage || currentStage;
+      // Category assertion + stage call site both survive the sanitized formatter.
+      const assertStagePassed = (stage: number) => {
+        if (failedStage !== stage) return;
+        expect(failureCategory).not.toBe(1); // assertion
+        expect(failureCategory).not.toBe(2); // deadline
+        expect(failureCategory).not.toBe(3); // other
+        expect(failedStage).not.toBe(stage); // exit without diagnostic
+      };
+      assertStagePassed(1);
+      assertStagePassed(2);
+      assertStagePassed(3);
+      assertStagePassed(4);
+      assertStagePassed(5);
+      assertStagePassed(6);
+      assertStagePassed(7);
+      assertStagePassed(8);
+      assertStagePassed(9);
+      assertStagePassed(10);
+      assertStagePassed(11);
+      assertStagePassed(12);
+      assertStagePassed(13);
+      assertStagePassed(14);
+      assertStagePassed(15);
+      assertStagePassed(16);
+      assertStagePassed(17);
+      assertStagePassed(18);
+      expect(failureCategory).toBe(0);
+    }
+    expect(workerExitCode).toBe(0);
     expect(result).toMatchObject({
       ok: true,
       browserProcesses: 3,
@@ -335,6 +400,12 @@ async function qualifyWallet() {
       nativeExpiry: true,
       foreignDenied: true,
       ownerReauthenticated: true,
+      lostPasswordRecovered: true,
+      sameDocumentRecovered: true,
+      fragmentCleared: true,
+      earlyFragmentCapture: true,
+      resetDocumentCsp: true,
+      newPasswordSignedIn: true,
     });
     expect(workerCleanup).toBe(true);
     expect(result.pids).toHaveLength(3);
@@ -357,10 +428,25 @@ async function qualifyWallet() {
     expect(result.elapsed.monotonicMs).toBeGreaterThan(0);
     await bounded(drain());
     expect(await snapshot()).toEqual(before);
+    const recoveryMailCount = (transporter.sendMail as jest.Mock).mock.calls.length;
+    expect(recoveryMailCount).toBe(2);
+    expect(
+      (transporter.sendMail as jest.Mock).mock.calls.filter(
+        ([mail]) => mail.subject === 'Reset your Tixmo buyer password'
+      ).length
+    ).toBe(1);
+    expect(
+      (transporter.sendMail as jest.Mock).mock.calls.filter(
+        ([mail]) => mail.subject === 'Your Tixmo buyer password changed'
+      ).length
+    ).toBe(1);
     const login = async (id: string) => {
       const response = await request(server!)
         .post('/api/v1/auth/login')
-        .send({ email: `${id}@synthetic.test`, password });
+        .send({
+          email: `${id}@synthetic.test`,
+          password: id === ids.a ? 'Synthetic-Recovered2!' : password,
+        });
       expect(response.status).toBe(200);
       return response.body.data.accessToken as string;
     };
@@ -369,12 +455,12 @@ async function qualifyWallet() {
     const receipt = (id: string, token: string) =>
       request(server!).post(`/api/v1/orders/${id}/receipt`).set('Authorization', `Bearer ${token}`);
     expect((await receipt(ids.order, b)).status).toBe(404);
-    expect(transporter.sendMail).not.toHaveBeenCalled();
+    expect(transporter.sendMail).toHaveBeenCalledTimes(recoveryMailCount);
     expect((await receipt(ids.unpaid, a)).status).toBe(400);
-    expect(transporter.sendMail).not.toHaveBeenCalled();
+    expect(transporter.sendMail).toHaveBeenCalledTimes(recoveryMailCount);
     expect((await receipt(ids.order, a)).status).toBe(200);
-    expect(transporter.sendMail).toHaveBeenCalledTimes(1);
-    const mail = (transporter.sendMail as jest.Mock).mock.calls[0][0];
+    expect(transporter.sendMail).toHaveBeenCalledTimes(recoveryMailCount + 1);
+    const mail = (transporter.sendMail as jest.Mock).mock.calls.at(-1)![0];
     expect(mail.to).toBe(`${ids.a}@synthetic.test`);
     expect(mail.html).toContain(`href="${clientUrl}/wallet"`);
     expect(mail.text).toContain(`${clientUrl}/wallet`);
@@ -430,6 +516,8 @@ async function qualifyWallet() {
       requireSafeCleanup();
       const cleanup = track(
         (async () => {
+          requireSafeCleanup();
+          await prisma.buyerPasswordReset.deleteMany({ where: { userId: { in: [ids.a, ids.b] } } });
           requireSafeCleanup();
           await prisma.ticket.deleteMany({ where: { eventId: ids.event } });
           requireSafeCleanup();

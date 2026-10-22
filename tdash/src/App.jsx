@@ -1,8 +1,11 @@
+import { clearResetIntent } from './lib/buyerRecovery';
 import React, { Suspense, lazy, useState, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate, matchPath } from 'react-router-dom';
 import { auth } from './lib/auth';
 import {
     ACCESS_TOKEN_KEY,
+    clearStoredSession,
+    getAccessToken,
     AUTH_EXPIRED_EVENT,
     AUTH_EXPIRED_REASONS,
     SESSION_TIMEOUT_MINUTES,
@@ -38,6 +41,7 @@ import WaitingRoomView from './features/WaitingRoomView';
 const ExternalReviewPage = lazy(() => import('./pages/ExternalReviewPage'));
 const SharedAssetFolderPage = lazy(() => import('./pages/SharedAssetFolderPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const BuyerPasswordResetPage = lazy(() => import('./pages/BuyerPasswordResetPage'));
 const WalletPage = lazy(() => import('./pages/WalletPage'));
 const ScannerPage = lazy(() => import('./pages/ScannerPage'));
 const EventOnSalePage = lazy(() => import('./pages/EventOnSalePage'));
@@ -125,12 +129,13 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
 const App = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    useEffect(() => { if (location.pathname !== '/reset-password') clearResetIntent(); }, [location.pathname]);
     const latestLocation = useRef(location);
     latestLocation.current = location;
     const preservePublicLocation = () => {
         const current = latestLocation.current;
         const query = new URLSearchParams(current.search);
-        return matchPath('/scan', current.pathname) || matchPath('/wallet', current.pathname) || matchPath('/e/:slug', current.pathname) || (matchPath('/checkout/:slug', current.pathname)
+        return matchPath('/reset-password', current.pathname) || matchPath('/scan', current.pathname) || matchPath('/wallet', current.pathname) || matchPath('/e/:slug', current.pathname) || (matchPath('/checkout/:slug', current.pathname)
             && ['orderId', 'redirect_status', 'payment_intent', 'payment_intent_client_secret']
                 .some((field) => query.has(field)));
     };
@@ -294,6 +299,9 @@ const App = () => {
                 <Route path="/invite" element={<AcceptInvitationView onAccepted={(nextUser) => { handleLogin(nextUser); navigate('/dashboard', { replace: true }); }} />} />
                 <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />
                 <Route path="/checkout/:slug" element={<CheckoutPage key={`${getUserCacheIdentity(user)}:${getSessionGeneration()}`} user={user} onAuthenticated={handleCheckoutAuthenticated} />} />
+                <Route path="/reset-password" element={<BuyerPasswordResetPage onPasswordReset={({ generation, accessToken }) => {
+                    if (getSessionGeneration() === generation && getAccessToken() === accessToken) { clearStoredSession(); setUser(null); }
+                }} />} />
                 <Route path="/wallet" element={<WalletPage key={`${getUserCacheIdentity(user)}:${getSessionGeneration()}`} user={user} onAuthenticated={handleCheckoutAuthenticated} />} />
 
                 {/* Main Application */}

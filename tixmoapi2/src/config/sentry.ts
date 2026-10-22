@@ -1,3 +1,4 @@
+import { buyerRecoveryLogPath } from '../utils/buyerRecoveryLogPath';
 import * as Sentry from '@sentry/node';
 import { config } from './environment';
 
@@ -39,7 +40,17 @@ export function initSentry() {
           ev.release = release;
         }
 
-        // Scrub PII or large payloads here if needed
+        // Password recovery bodies and URLs must never enter error telemetry.
+        const request = ev.request;
+        const recoveryPath = buyerRecoveryLogPath(request?.url);
+        if (request && recoveryPath) {
+          request.url = recoveryPath;
+          delete request.data;
+          delete request.query_string;
+          delete request.headers;
+          delete request.cookies;
+        }
+        // Existing general password scrubbing remains in place.
         try {
           if (ev && typeof ev === 'object' && 'request' in ev) {
             const req = (ev as Record<string, unknown>).request;

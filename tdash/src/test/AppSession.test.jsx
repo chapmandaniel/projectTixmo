@@ -1,7 +1,10 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import App from '../App';
+import { clearResetIntent, captureResetIntent } from '../lib/buyerRecovery';
+import { storeSession } from '../lib/session';
 import { AUTH_EXPIRED_EVENT, AUTH_EXPIRED_REASONS } from '../lib/session';
 
 const LocationProbe = () => {
@@ -96,6 +99,42 @@ describe('App session messaging', () => {
         await act(async () => { window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT, { detail: { reason: AUTH_EXPIRED_REASONS.idle } })); });
         expect(screen.getByTestId('session-location')).toHaveTextContent('/scan');
         expect(screen.getByLabelText('Scanner API key')).toBeInTheDocument();
+    });
+
+    it('preserves the public recovery route across session expiry', async () => {
+        await act(async () => { render(<MemoryRouter initialEntries={['/reset-password']}><LocationProbe /><App /></MemoryRouter>); });
+        expect(await screen.findByLabelText('Buyer email')).toBeInTheDocument();
+        await act(async () => { window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT, { detail: { reason: AUTH_EXPIRED_REASONS.expired } })); });
+        expect(screen.getByTestId('session-location')).toHaveTextContent('/reset-password');
+        expect(screen.getByLabelText('Buyer email')).toBeInTheDocument();
+    });
+    it.each([false, true])('reset completion clears only its captured browser session; newer login=%s', async newer => {
+        let resolve;
+        vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(done => { resolve = done; })));
+        window.history.replaceState({}, '', '/reset-password#token=' + 'a'.repeat(64)); captureResetIntent();
+        storeSession({ accessToken: 'synthetic-old', refreshToken: 'synthetic-old-refresh', user: { id: 'old' } });
+        try {
+            await act(async () => { render(<MemoryRouter initialEntries={['/reset-password']}><App /></MemoryRouter>); });
+            fireEvent.change(await screen.findByLabelText('New password'), { target: { value: 'Synthetic-New1!' } });
+            fireEvent.change(screen.getByLabelText('Confirm new password'), { target: { value: 'Synthetic-New1!' } });
+            fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
+            if (newer) storeSession({ accessToken: 'synthetic-new', refreshToken: 'synthetic-new-refresh', user: { id: 'new' } });
+            await act(async () => { resolve({ ok: true, json: async () => ({ success: true, data: null }) }); });
+            await screen.findByText(/Password changed/);
+            expect(localStorage.getItem('access_token')).toBe(newer ? 'synthetic-new' : null);
+        } finally { vi.unstubAllGlobals(); clearResetIntent(); localStorage.clear(); window.history.replaceState({}, '', '/'); }
+    });
+
+    it('drops old email intent on actual departure so wallet Forgot password opens a fresh request form', async () => {
+        window.history.replaceState({}, '', '/reset-password#token=' + 'a'.repeat(64)); captureResetIntent();
+        await act(async () => { render(<React.StrictMode><MemoryRouter initialEntries={['/reset-password']}><App /></MemoryRouter></React.StrictMode>); });
+        expect(await screen.findByLabelText('New password')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('link', { name: 'Return to wallet sign-in' }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
+        fireEvent.click(await screen.findByRole('link', { name: 'Forgot your password?' }));
+        expect(await screen.findByLabelText('Buyer email')).toBeInTheDocument();
+        expect(screen.queryByLabelText('New password')).not.toBeInTheDocument();
+        clearResetIntent(); window.history.replaceState({}, '', '/');
     });
 
 });

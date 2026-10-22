@@ -73,7 +73,9 @@ for (const marker of [PG_IMAGE, REDIS_IMAGE, 'PGDATA: /var/lib/postgresql/data/p
 test('restore source uses a new empty destination, exact snapshots and post-backup writes', () => {
   const source = fs.readFileSync('scripts/verify-image-restore.cjs', 'utf8');
   assert.ok(source.indexOf('guard(env)') < source.indexOf('const url = guard(env)'));
-  assert.match(source, /assert\.equal\(migrations\.length, 32\)/);
+  assert.match(source, /assert\.equal\(migrations\.length, 33\)/);
+  assert.match(source, /20261021120000_event_sales_pause/);
+  assert.match(source, /20261022143000_buyer_password_recovery/);
   assert.match(source, /--template=template0/);
   assert.match(source, /--exit-on-error/);
   assert.match(source, /--single-transaction/);
@@ -118,7 +120,7 @@ test('mocked restore protocol preserves later source writes and detects changed 
       if (sql === 'SHOW ssl;') return ok('on');
       if (sql.includes('current_database()')) return ok(database);
       if (sql.includes('information_schema.tables')) return ok('0');
-      if (sql.includes('SELECT count(*) FROM _prisma_migrations')) return ok('32');
+      if (sql.includes('SELECT count(*) FROM _prisma_migrations')) return ok(String(fs.readdirSync('tixmoapi2/prisma/migrations').filter(name => /^\d/.test(name)).length));
       if (sql.includes('SELECT checksum')) {
         const migration = sql.match(/migration_name='([^']+)'/)[1];
         return ok(require('node:crypto').createHash('sha256').update(fs.readFileSync('tixmoapi2/prisma/migrations/' + migration + '/migration.sql')).digest('hex'));
