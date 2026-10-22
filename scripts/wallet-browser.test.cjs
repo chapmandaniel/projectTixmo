@@ -51,6 +51,34 @@ test('current browser lost-password extension uses production CSP and real captu
  assert.ok(worker.includes('/api/v1/auth/forgot-password')); assert.ok(worker.includes('/api/v1/auth/reset-password'));
  assert.ok(suite.includes("Reset your Tixmo buyer password")); assert.ok(suite.includes("Your Tixmo buyer password changed"));
  assert.ok(suite.includes('recoveryMailCount + 1'));
- const result = worker.slice(worker.indexOf('process.send?.({'));
+ const result = worker.slice(worker.indexOf('process.send?.({\n    ok: true'));
  assert.doesNotMatch(result, /capturedLink|resetLink:|token:|raw:/);
+});
+
+const { walletBrowserDiagnostic } = require('./wallet-browser-guard.cjs');
+test('worker diagnostics project only bounded stages and fixed categories', () => {
+  const secret = 'synthetic-token-canary';
+  for (const category of ['progress', 'assertion', 'deadline', 'other']) {
+    for (let stage = 1; stage <= 18; stage++) {
+      const projected = walletBrowserDiagnostic({ stage, category, message: secret, stack: secret, url: secret, token: secret });
+      assert.deepEqual(projected, { stage, category });
+      assert.equal(JSON.stringify(projected).includes(secret), false);
+    }
+  }
+});
+test('worker diagnostics reject malformed/unbounded/free-text fields', () => {
+  for (const value of [null, undefined, 'secret', {}, { stage: 1, category: 'secret' },
+    ...[-1, 0, 19, 1.5, Infinity, NaN, '1', null].map(stage => ({ stage, category: 'other' })),
+    { stage: 1, category: 'other'.repeat(10000) }]) assert.equal(walletBrowserDiagnostic(value), null);
+});
+test('worker failure diagnostics retain real failure and cleanup assertions', () => {
+  const source = fs.readFileSync('scripts/browser/wallet-continuity.mjs', 'utf8');
+  assert.match(source, /error instanceof assert.AssertionError/);
+  assert.match(source, /error instanceof BrowserDeadline/);
+  assert.doesNotMatch(source, /diagnose[^;]*error\.(message|stack)/s);
+  assert.match(source, /process.exitCode = 1/);
+  const parent = fs.readFileSync('tixmoapi2/tests/integration/wallet-browser-recovery.test.ts', 'utf8');
+  for (let stage = 1; stage <= 18; stage++) assert.ok(parent.includes(`assertStagePassed(${stage})`));
+  assert.ok(parent.includes('expect(workerExitCode).toBe(0)'));
+  assert.ok(parent.includes('expect(workerCleanup).toBe(true)'));
 });
