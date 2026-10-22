@@ -90,6 +90,8 @@ export class OrderService {
         if (
           event.deletedAt ||
           !['PUBLISHED', 'ON_SALE'].includes(event.status) ||
+          (event.salesStart && now < event.salesStart) ||
+          (event.salesEnd && now >= event.salesEnd) ||
           (event.startDatetime && now >= event.startDatetime)
         ) {
           throw ApiError.badRequest('Event is not available for purchase');
