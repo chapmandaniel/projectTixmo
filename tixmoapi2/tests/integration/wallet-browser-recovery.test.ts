@@ -337,7 +337,21 @@ async function qualifyWallet() {
       browser!.once('error', reject);
     });
     let result: any;
+    let failureStage = 0;
+    let currentStage = 0;
+    let failureCategory = 0;
     browser.on('message', (message: any) => {
+      const diagnostic =
+        require('../../../scripts/wallet-browser-guard.cjs').walletBrowserDiagnostic(
+          message?.diagnostic
+        );
+      if (diagnostic) {
+        currentStage = diagnostic.stage;
+        if (diagnostic.category !== 'progress' && failureStage === 0) {
+          failureStage = diagnostic.stage;
+          failureCategory = ['assertion', 'deadline', 'other'].indexOf(diagnostic.category) + 1;
+        }
+      }
       if (message.ok === true) result = message;
       if (
         message.cleanup === true &&
@@ -347,7 +361,38 @@ async function qualifyWallet() {
       )
         workerCleanup = true;
     });
-    expect(await bounded(browserExit, 120000)).toBe(0);
+    const workerExitCode = await bounded(browserExit, 120000);
+    if (workerExitCode !== 0) {
+      const failedStage = failureStage || currentStage;
+      // Category assertion + stage call site both survive the sanitized formatter.
+      const assertStagePassed = (stage: number) => {
+        if (failedStage !== stage) return;
+        expect(failureCategory).not.toBe(1); // assertion
+        expect(failureCategory).not.toBe(2); // deadline
+        expect(failureCategory).not.toBe(3); // other
+        expect(failedStage).not.toBe(stage); // exit without diagnostic
+      };
+      assertStagePassed(1);
+      assertStagePassed(2);
+      assertStagePassed(3);
+      assertStagePassed(4);
+      assertStagePassed(5);
+      assertStagePassed(6);
+      assertStagePassed(7);
+      assertStagePassed(8);
+      assertStagePassed(9);
+      assertStagePassed(10);
+      assertStagePassed(11);
+      assertStagePassed(12);
+      assertStagePassed(13);
+      assertStagePassed(14);
+      assertStagePassed(15);
+      assertStagePassed(16);
+      assertStagePassed(17);
+      assertStagePassed(18);
+      expect(failureCategory).toBe(0);
+    }
+    expect(workerExitCode).toBe(0);
     expect(result).toMatchObject({
       ok: true,
       browserProcesses: 3,
