@@ -22,24 +22,48 @@ function options(args, env) {
       (env.DATABASE_URL && explicit !== env.DATABASE_URL)) throw new Error('Rejected');
   return { apply, limit, organizationId, url: explicit };
 }
+function failureReason(error) {
+  try {
+    if (!(error instanceof Error)) return 'generic';
+    const known = new Map([
+      ['Asset share rekey configuration rejected', 'configuration'],
+      ['Asset share rekey bound exceeded', 'bound'],
+      ['Asset share rekey verification failed', 'verification'],
+      ['Asset share rekey conflict', 'conflict'],
+    ]);
+    if (known.has(error.message)) return known.get(error.message);
+    if (['P1000', 'P1001', 'P1002', 'P1010', 'P2021', 'P2022', 'P2024', 'P2028'].includes(error.code)) return 'database';
+  } catch {
+    // Even a malformed error cannot expose arbitrary properties through diagnostics.
+  }
+  return 'generic';
+}
 async function main() {
   let db;
+  let stage = 'options';
   try {
     const plan = options(process.argv.slice(2), process.env);
+    stage = 'load';
     const { PrismaClient } = require('@prisma/client');
     const { rekeyAssetShares } = require('../dist/services/asset-share-rekey');
+    stage = 'client';
     db = new PrismaClient({ datasources: { db: { url: plan.url } }, log: [] });
+    stage = 'rekey';
     const counts = await rekeyAssetShares(db, {
       key: process.env.ASSET_SHARE_ENCRYPTION_KEY,
       legacySecret: process.env.ASSET_SHARE_LEGACY_SECRET || process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || process.env.SESSION_SECRET,
     }, plan);
     console.log(JSON.stringify(counts));
-  } catch {
+  } catch (error) {
+    console.error(JSON.stringify({ operation: 'asset-share-rekey', status: 'failed', stage, reason: failureReason(error) }));
     console.error('Asset share rekey failed; no completion proof. Retain legacy decryption configuration.');
     process.exitCode = 1;
   } finally {
-    if (db) await db.$disconnect().catch(() => { process.exitCode = 1; });
+    if (db) await db.$disconnect().catch((error) => {
+      console.error(JSON.stringify({ operation: 'asset-share-rekey', status: 'failed', stage: 'disconnect', reason: failureReason(error) }));
+      process.exitCode = 1;
+    });
   }
 }
 if (require.main === module) void main();
-module.exports = { options };
+module.exports = { options, failureReason };

@@ -43,3 +43,25 @@ test('CLI does not load .env, print raw failures or include record contents', ()
   );
   assert.match(source, /log: \[\]/);
 });
+
+
+const { failureReason } = require('../../prisma/rekey-asset-shares');
+test('failure diagnostics map only fixed source reasons and allowlisted database codes', () => {
+  for (const [message, expected] of [
+    ['Asset share rekey configuration rejected', 'configuration'],
+    ['Asset share rekey bound exceeded', 'bound'],
+    ['Asset share rekey verification failed', 'verification'],
+    ['Asset share rekey conflict', 'conflict'],
+  ]) assert.equal(failureReason(new Error(message)), expected);
+  for (const code of ['P1000', 'P1001', 'P1002', 'P1010', 'P2021', 'P2022', 'P2024', 'P2028']) {
+    assert.equal(failureReason(Object.assign(new Error('synthetic-private-canary'), { code })), 'database');
+  }
+});
+test('unknown errors, canaries and malformed properties never enter diagnostic output', () => {
+  const malformed = new Error();
+  Object.defineProperty(malformed, 'message', { get() { throw new Error('synthetic-private-canary'); } });
+  for (const error of [null, 'synthetic-private-canary', {}, new Error('synthetic-private-canary'), Object.assign(new Error('synthetic-private-canary'), {code: 'synthetic-private-canary'}), malformed]) {
+    assert.equal(failureReason(error), 'generic');
+    assert.equal(JSON.stringify({reason: failureReason(error)}).includes('synthetic-private-canary'), false);
+  }
+});
