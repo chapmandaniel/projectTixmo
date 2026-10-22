@@ -43,6 +43,10 @@ const restorers: Array<{ restore: () => void }> = [];
 const safe = () => {
   if (unsafe) throw new Error('Asset rekey context preserved for job teardown');
 };
+const rekey = (...args: Parameters<typeof rekeyAssetShares>) => {
+  safe();
+  return rekeyAssetShares(...args);
+};
 function track<T>(work: () => Promise<T>): Promise<T> {
   safe();
   const promise = Promise.resolve().then(() => {
@@ -98,7 +102,8 @@ const snapshot = () =>
 const withoutCipher = (rows: Awaited<ReturnType<typeof snapshot>>) =>
   rows.map(({ tokenCiphertext: _cipher, ...row }) => row);
 async function resetOwned() {
-  for (let i = 0; i < shares.length; i++)
+  for (let i = 0; i < shares.length; i++) {
+    safe();
     await prisma.assetLibraryFolderShare.update({
       where: { id: shares[i] },
       data: {
@@ -106,6 +111,7 @@ async function resetOwned() {
         tokenCiphertext: i === 2 ? encryptAssetShareToken(tokens[i], keys) : legacy(tokens[i]),
       },
     });
+  }
 }
 beforeAll(
   () =>
@@ -116,6 +122,7 @@ beforeAll(
           jest.replaceProperty(config, 'assetShareLegacySecret', legacySecret)
         );
         for (const foreign of [false, true]) {
+          safe();
           await prisma.organization.create({
             data: {
               id: foreign ? ids.foreignOrg : ids.org,
@@ -125,6 +132,7 @@ beforeAll(
               status: 'ACTIVE',
             },
           });
+          safe();
           await prisma.user.create({
             data: {
               id: foreign ? ids.foreignUser : ids.user,
@@ -141,7 +149,8 @@ beforeAll(
           [ids.folder, false],
           [ids.extraFolder, false],
           [ids.foreignFolder, true],
-        ] as const)
+        ] as const) {
+          safe();
           await prisma.assetLibraryFolder.create({
             data: {
               id,
@@ -150,7 +159,9 @@ beforeAll(
               name: 'Synthetic folder',
             },
           });
-        for (let i = 0; i < shares.length; i++)
+        }
+        for (let i = 0; i < shares.length; i++) {
+          safe();
           await prisma.assetLibraryFolderShare.create({
             data: {
               id: shares[i],
@@ -167,6 +178,8 @@ beforeAll(
               folders: { create: [{ folderId: ids.folder }, { folderId: ids.extraFolder }] },
             },
           });
+        }
+        safe();
         await prisma.assetLibraryFolderShare.create({
           data: {
             id: foreignShare,
@@ -226,10 +239,10 @@ owned(
     await expect(
       assetLibraryService.listFolderShares(ids.foreignUser, ids.folder, 'https://synthetic.invalid')
     ).rejects.toMatchObject({ statusCode: 404 });
-    expect((await rekeyAssetShares(prisma, keys, { organizationId: ids.org })).legacy).toBe(3);
+    expect((await rekey(prisma, keys, { organizationId: ids.org })).legacy).toBe(3);
     expect(await snapshot()).toEqual(before);
     await expect(
-      rekeyAssetShares(prisma, keys, { apply: true, organizationId: ids.org })
+      rekey(prisma, keys, { apply: true, organizationId: ids.org })
     ).resolves.toMatchObject({ scanned: 4, updated: 3, current: 1 });
     const after = await snapshot();
     expect(withoutCipher(after)).toEqual(withoutCipher(before));
@@ -250,7 +263,7 @@ owned(
       ).toBe(tokens[i]);
     }
     await expect(
-      rekeyAssetShares(prisma, { key }, { apply: true, organizationId: ids.org })
+      rekey(prisma, { key }, { apply: true, organizationId: ids.org })
     ).resolves.toMatchObject({ updated: 0, legacy: 0 });
     expect(await snapshot()).toEqual(after);
   }
@@ -265,27 +278,24 @@ owned(
       encryptAssetShareToken(tokens[1], keys),
       null,
     ]) {
+      safe();
       await prisma.assetLibraryFolderShare.update({
         where: { id: shares[0] },
         data: { tokenCiphertext: bad },
       });
       const before = await snapshot();
-      await expect(
-        rekeyAssetShares(prisma, keys, { apply: true, organizationId: ids.org })
-      ).rejects.toThrow('verification failed');
+      await expect(rekey(prisma, keys, { apply: true, organizationId: ids.org })).rejects.toThrow(
+        'verification failed'
+      );
       expect(await snapshot()).toEqual(before);
     }
     await resetOwned();
     const before = await snapshot();
     await expect(
-      rekeyAssetShares(
-        prisma,
-        { key: 'bad', legacySecret },
-        { apply: true, organizationId: ids.org }
-      )
+      rekey(prisma, { key: 'bad', legacySecret }, { apply: true, organizationId: ids.org })
     ).rejects.toThrow('configuration rejected');
     await expect(
-      rekeyAssetShares(prisma, keys, { apply: true, limit: 3, organizationId: ids.org })
+      rekey(prisma, keys, { apply: true, limit: 3, organizationId: ids.org })
     ).rejects.toThrow('bound exceeded');
     expect(await snapshot()).toEqual(before);
   }
@@ -294,8 +304,8 @@ owned('concurrent real SQL rekeys never duplicate effects or change scope/metada
   await resetOwned();
   const before = await snapshot();
   const results = await Promise.allSettled([
-    rekeyAssetShares(prisma, keys, { apply: true, organizationId: ids.org }),
-    rekeyAssetShares(second, keys, { apply: true, organizationId: ids.org }),
+    rekey(prisma, keys, { apply: true, organizationId: ids.org }),
+    rekey(second, keys, { apply: true, organizationId: ids.org }),
   ]);
   expect(results.filter((item) => item.status === 'fulfilled').length).toBeGreaterThanOrEqual(1);
   for (const result of results)
@@ -323,14 +333,17 @@ owned(
       options: any
     ) =>
       transaction((tx) => {
+        safe();
         const query = tx.$queryRaw.bind(tx);
         const wrapped = new Proxy(tx, {
           get(target, property) {
             if (property === '$queryRaw')
               return async (...args: any[]) => {
+                safe();
                 const rows = await (query as any)(...args);
                 if (!observed) {
                   observed = true;
+                  safe();
                   await second.$executeRaw`UPDATE asset_library_folder_shares SET token_ciphertext = ${encryptAssetShareToken(tokens[3], keys)} WHERE id = ${shares[3]}`;
                   newerSnapshot = await snapshot();
                 }
@@ -343,11 +356,12 @@ owned(
         return callback(wrapped);
       }, options)) as any);
     try {
-      await expect(
-        rekeyAssetShares(prisma, keys, { apply: true, organizationId: ids.org })
-      ).rejects.toThrow('rekey conflict');
+      await expect(rekey(prisma, keys, { apply: true, organizationId: ids.org })).rejects.toThrow(
+        'rekey conflict'
+      );
     } finally {
-      observation.mockRestore();
+      // Preserve observation/configuration if a timed-out transaction may still be live.
+      if (!unsafe) observation.mockRestore();
     }
     expect(observed).toBe(true);
     expect(newerSnapshot).toBeDefined();
