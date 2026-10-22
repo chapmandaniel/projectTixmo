@@ -149,7 +149,7 @@ it('cleanup timeout fails and still attempts other cleanup', async () => {
 it('CLI rejects before dependencies and terminates after only the fixed receipt', async () => {
   const exit = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
   const output = jest.spyOn(process.stdout, 'write').mockImplementation(((
-    value: string,
+    _value: string,
     callback: () => void
   ) => {
     callback();
@@ -169,7 +169,7 @@ it('CLI exits failure after operation and cleanup deadlines despite permanently 
   h.db.$disconnect.mockReturnValue(new Promise(() => {}));
   const exit = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
   const output = jest.spyOn(process.stdout, 'write').mockImplementation(((
-    value: string,
+    _value: string,
     callback: () => void
   ) => {
     callback();
