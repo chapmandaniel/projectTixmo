@@ -221,6 +221,7 @@ describe('Event cancellation interruption and authorized recovery', () => {
       await prisma.organization.deleteMany({ where: { id: { in: [ids.org, ids.foreignOrg] } } });
     })();
     await joinBody();
+    await bodyWork;
   }, 15000);
   afterAll(async () => {
     if (!unsafe) await prisma.$disconnect();
@@ -373,6 +374,62 @@ describe('Event cancellation interruption and authorized recovery', () => {
       expect(await prisma.paymentRefund.count({ where: { order: { eventId: ids.event } } })).toBe(
         0
       );
+      expect(await foreignSnapshot()).toEqual(before);
+    }
+  );
+
+  qualify(
+    'PROCESSING change after public cancellation observation refuses stale work then reenters once',
+    async () => {
+      const order = await reserve();
+      const before = await foreignSnapshot();
+      const initialRows = await targetRows();
+      const realFindFirst = prisma.order.findFirst.bind(prisma.order);
+      const observation = jest.spyOn(prisma.order, 'findFirst').mockImplementationOnce((async (
+        args: any
+      ) => {
+        const observed = await realFindFirst(args);
+        expect(observed?.id).toBe(order.id);
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { paymentStatus: 'PROCESSING' },
+        });
+        return observed;
+      }) as any);
+      try {
+        await expect(eventService.cancelEvent(ids.event)).rejects.toThrow(
+          'Cannot cancel order that has changed'
+        );
+      } finally {
+        observation.mockRestore();
+      }
+      expect(await prisma.event.findUniqueOrThrow({ where: { id: ids.event } })).toMatchObject({
+        status: 'CANCELLED',
+      });
+      const interruptedRows = await targetRows();
+      expect(interruptedRows.orders).toHaveLength(1);
+      expect(interruptedRows.orders[0]).toMatchObject({
+        status: 'PENDING',
+        paymentStatus: 'PROCESSING',
+        promoReservation: 'HELD',
+      });
+      expect(interruptedRows.tickets).toEqual(initialRows.tickets);
+      await conservation(9, 1, 0);
+      expect(await foreignSnapshot()).toEqual(before);
+      await eventService.cancelEvent(ids.event);
+      await conservation(10, 0, 0);
+      const settledRows = await targetRows();
+      expect(settledRows.orders[0]).toMatchObject({
+        status: 'CANCELLED',
+        paymentStatus: 'PROCESSING',
+        promoReservation: 'RELEASED',
+      });
+      expect(settledRows.tickets).toEqual([
+        expect.objectContaining({ status: 'CANCELLED', inventoryState: 'RELEASED' }),
+      ]);
+      await eventService.cancelEvent(ids.event);
+      expect(await targetRows()).toEqual(settledRows);
+      await conservation(10, 0, 0);
       expect(await foreignSnapshot()).toEqual(before);
     }
   );
