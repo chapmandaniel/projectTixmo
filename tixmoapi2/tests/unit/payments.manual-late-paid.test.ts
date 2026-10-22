@@ -163,3 +163,18 @@ test.each(['ORDER_REFUND', 'UNEXPECTED_PAYMENT', 'INCORRECT_AMOUNT'])(
     expect(orderService.finalizeRefund).toHaveBeenCalledTimes(reason === 'ORDER_REFUND' ? 1 : 0);
   }
 );
+
+test.each([false, true])(
+  'refund rejects stale payment observation before financial effects explicit=%s',
+  async (explicit) => {
+    const observed = { status: 'PAID', paymentStatus: 'SUCCEEDED' };
+    order.status = 'PAID';
+    order.paymentStatus = 'FAILED';
+    if (!explicit) (prisma.order.findUnique as jest.Mock).mockResolvedValueOnce(observed);
+    await expect(
+      service.refundOrder('order-local', explicit ? observed : undefined)
+    ).rejects.toMatchObject({ statusCode: 400 });
+    noFinancialEffects();
+    expect(prisma.paymentRefund.upsert).not.toHaveBeenCalled();
+  }
+);

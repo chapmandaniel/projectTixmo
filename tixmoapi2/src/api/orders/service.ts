@@ -424,9 +424,20 @@ export class OrderService {
    */
   async cancelOrder(id: string, userId?: string, actorId?: string): Promise<Order> {
     const scope = actorId ? await this.actorOrderScope(actorId) : userId ? { userId } : {};
-    if ((actorId || userId) && !(await prisma.order.findFirst({ where: { id, ...scope } })))
-      throw ApiError.notFound('Order not found');
-    return prisma.$transaction((tx) => this.cancelOrderInTransaction(tx, id, scope));
+    const observed = await prisma.order.findFirst({ where: { id, ...scope } });
+    if (!observed) throw ApiError.notFound('Order not found');
+    return prisma.$transaction(async (tx) => {
+      await lockOrder(tx, id);
+      const current = await tx.order.findFirst({ where: { id, ...scope } });
+      if (!current) throw ApiError.notFound('Order not found');
+      // Revalidate public observation under lock; trusted transactional callers retain their fence.
+      if (
+        current.status !== 'CANCELLED' &&
+        (current.status !== observed.status || current.paymentStatus !== observed.paymentStatus)
+      )
+        throw ApiError.badRequest('Cannot cancel order that has changed');
+      return this.cancelOrderInTransaction(tx, id, scope);
+    });
   }
 
   async cancelOrderInTransaction(
@@ -519,13 +530,11 @@ export class OrderService {
    * Refund an order (ADMIN only)
    */
   async refundOrder(id: string, actorId?: string): Promise<Order> {
-    if (actorId) {
-      const scope = await this.actorOrderScope(actorId, 'refund');
-      if (!(await prisma.order.findFirst({ where: { id, ...scope } })))
-        throw ApiError.notFound('Order not found');
-    }
+    const scope = actorId ? await this.actorOrderScope(actorId, 'refund') : {};
+    const observed = await prisma.order.findFirst({ where: { id, ...scope } });
+    if (!observed) throw ApiError.notFound('Order not found');
     const { paymentService } = await import('../payments/service');
-    return paymentService.refundOrder(id);
+    return paymentService.refundOrder(id, observed);
   }
 
   // Only the processor reconciliation path may finalize a monetary refund.

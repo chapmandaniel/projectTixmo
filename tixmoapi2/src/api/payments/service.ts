@@ -435,7 +435,14 @@ export class PaymentService {
         .catch((error) => logger.error(`Payment failure notification failed: ${error}`));
   }
 
-  async refundOrder(orderId: string) {
+  async refundOrder(
+    orderId: string,
+    requestObservation?: { status: string; paymentStatus: string }
+  ) {
+    // Observation equality, not a categorical payment-status eligibility rule.
+    const observed =
+      requestObservation ?? (await prisma.order.findUnique({ where: { id: orderId } }));
+    if (!observed) throw ApiError.notFound('Order not found');
     const order = await prisma.$transaction(async (tx) => {
       await lockOrder(tx, orderId);
       const current = await tx.order.findUnique({
@@ -443,6 +450,8 @@ export class PaymentService {
         include: { tickets: true, event: true },
       });
       if (!current) throw ApiError.notFound('Order not found');
+      if (current.status !== observed.status || current.paymentStatus !== observed.paymentStatus)
+        throw ApiError.badRequest('Order changed during refund request');
       if (current.status === 'REFUNDED') return current;
       if (current.status !== 'PAID') throw ApiError.badRequest('Only PAID orders can be refunded');
       // Beta policy: full order only. Freeze admission and transfer before the
