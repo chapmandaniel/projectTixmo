@@ -198,26 +198,29 @@ describe('Event cancellation interruption and authorized recovery', () => {
     if (unsafe) throw new Error('Unjoined work preserves fixtures');
     await joinBody();
     jest.restoreAllMocks();
-    await prisma.paymentWebhookEvent.deleteMany({
-      where: {
-        orderId: {
-          in: (
-            await prisma.order.findMany({ where: { eventId: ids.event }, select: { id: true } })
-          ).map((order) => order.id),
+    bodyWork = (async () => {
+      await prisma.paymentWebhookEvent.deleteMany({
+        where: {
+          orderId: {
+            in: (
+              await prisma.order.findMany({ where: { eventId: ids.event }, select: { id: true } })
+            ).map((order) => order.id),
+          },
         },
-      },
-    });
-    const events = [ids.event, ids.foreignEvent];
-    await prisma.ticket.deleteMany({ where: { eventId: { in: events } } });
-    await prisma.order.deleteMany({ where: { eventId: { in: events } } });
-    await prisma.ticketTier.deleteMany({ where: { id: ids.tier } });
-    await prisma.ticketType.deleteMany({ where: { eventId: { in: events } } });
-    await prisma.promoCode.deleteMany({ where: { id: ids.promo } });
-    await prisma.event.deleteMany({ where: { id: { in: events } } });
-    await prisma.user.deleteMany({
-      where: { id: { in: [ids.buyer, ids.owner, ids.foreignBuyer, ids.foreignOwner] } },
-    });
-    await prisma.organization.deleteMany({ where: { id: { in: [ids.org, ids.foreignOrg] } } });
+      });
+      const events = [ids.event, ids.foreignEvent];
+      await prisma.ticket.deleteMany({ where: { eventId: { in: events } } });
+      await prisma.order.deleteMany({ where: { eventId: { in: events } } });
+      await prisma.ticketTier.deleteMany({ where: { id: ids.tier } });
+      await prisma.ticketType.deleteMany({ where: { eventId: { in: events } } });
+      await prisma.promoCode.deleteMany({ where: { id: ids.promo } });
+      await prisma.event.deleteMany({ where: { id: { in: events } } });
+      await prisma.user.deleteMany({
+        where: { id: { in: [ids.buyer, ids.owner, ids.foreignBuyer, ids.foreignOwner] } },
+      });
+      await prisma.organization.deleteMany({ where: { id: { in: [ids.org, ids.foreignOrg] } } });
+    })();
+    await joinBody();
   }, 15000);
   afterAll(async () => {
     if (!unsafe) await prisma.$disconnect();
@@ -360,8 +363,10 @@ describe('Event cancellation interruption and authorized recovery', () => {
           expect.objectContaining({ inventoryState: 'RELEASED', status: 'CANCELLED' }),
         ]);
       }
+      const settledRows = await targetRows();
       await eventService.cancelEvent(ids.event);
       await conservation(9, 0, 1);
+      expect(await targetRows()).toEqual(settledRows);
       expect(await prisma.ticket.findMany({ where: { orderId: paid.id } })).toEqual([
         expect.objectContaining({ status: 'CANCELLED', inventoryState: 'SOLD' }),
       ]);
@@ -396,14 +401,14 @@ describe('Event cancellation interruption and authorized recovery', () => {
         status: 'PUBLISHED',
       });
       await conservation(9, 1, 0);
-      for (let replay = 0; replay < 2; replay++)
-        expect(
-          (
-            await request(app)
-              .post(path)
-              .set('Authorization', `Bearer ${token(ids.owner, 'OWNER')}`)
-          ).status
-        ).toBe(200);
+      const cancel = () =>
+        request(app)
+          .post(path)
+          .set('Authorization', `Bearer ${token(ids.owner, 'OWNER')}`);
+      expect((await cancel()).status).toBe(200);
+      const settledRows = await targetRows();
+      expect((await cancel()).status).toBe(200);
+      expect(await targetRows()).toEqual(settledRows);
       await conservation(10, 0, 0);
       expect(await foreignSnapshot()).toEqual(before);
     }
