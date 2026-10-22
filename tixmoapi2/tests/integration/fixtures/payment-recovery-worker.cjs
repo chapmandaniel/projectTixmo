@@ -77,6 +77,8 @@ const provider = {
       value.effects.push({ key: options.idempotencyKey, response });
       writeLedger(value);
       if (spec.pauseAfterEffect) {
+        // An unresolved promise alone does not keep this owned crash-gap worker alive.
+        process.channel.ref();
         process.send({ type: 'effect-before-return', pid: process.pid, calls });
         await new Promise(() => {}); // Parent kills/reaps this exact owned process.
       }
