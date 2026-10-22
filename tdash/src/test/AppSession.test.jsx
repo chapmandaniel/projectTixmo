@@ -88,4 +88,14 @@ describe('App session messaging', () => {
             expect(screen.getByText(/welcome back, test/i)).toBeInTheDocument();
         });
     });
+    it('opens the independent scanner route without dashboard sign in and preserves it on JWT expiry', async () => {
+        await act(async () => {
+            render(<MemoryRouter initialEntries={['/scan']}><LocationProbe /><App /></MemoryRouter>);
+        });
+        expect(await screen.findByLabelText('Scanner API key')).toBeInTheDocument();
+        await act(async () => { window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT, { detail: { reason: AUTH_EXPIRED_REASONS.idle } })); });
+        expect(screen.getByTestId('session-location')).toHaveTextContent('/scan');
+        expect(screen.getByLabelText('Scanner API key')).toBeInTheDocument();
+    });
+
 });
