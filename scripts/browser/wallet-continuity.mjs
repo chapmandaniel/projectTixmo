@@ -12,14 +12,21 @@ const require = createRequire(import.meta.url);
 const { api, frontendPort, fixture } =
   require("../wallet-browser-guard.cjs").validateWalletBrowser(process.env);
 let stage = 0;
+let startupPhase = 0;
+const phase = (value) => {
+  startupPhase = value;
+  process.send?.({ diagnostic: { stage, category: "progress", startupPhase } });
+};
 const mark = (value) => {
   stage = value;
-  process.send?.({ diagnostic: { stage, category: "progress" } });
+  startupPhase = 0;
+  process.send?.({ diagnostic: { stage, category: "progress", startupPhase } });
 };
 const diagnose = (error) =>
   process.send?.({
     diagnostic: {
       stage,
+      startupPhase,
       category:
         error instanceof assert.AssertionError
           ? "assertion"
@@ -161,6 +168,7 @@ const decode = () =>
   );
 let origin;
 async function openBrowser() {
+  phase(1); // spawn
   browser = spawn(
     process.env.TIXMO_BROWSER_PATH,
     [
@@ -184,6 +192,7 @@ async function openBrowser() {
     },
   );
   pids.push(browser.pid);
+  phase(2); // DevTools announcement
   const browserWs = await deadline(
     new Promise((resolve, reject) => {
       let output = "";
@@ -202,13 +211,16 @@ async function openBrowser() {
   const debug = new URL(browserWs);
   assert.equal(debug.hostname, "127.0.0.1");
   debugPort = Number(debug.port);
+  phase(3); // target discovery transport and JSON
   const targets = await fetch(`http://${debug.host}/json/list`, {
     signal: AbortSignal.timeout(5000),
   }).then((r) => r.json());
+  phase(4); // page target selection
   const target = new URL(
     targets.find((t) => t.type === "page").webSocketDebuggerUrl,
   );
   assert.equal(target.host, debug.host);
+  phase(5); // debugger connection
   ws = new WebSocket(target);
   await deadline(
     new Promise((resolve, reject) => {
@@ -311,9 +323,11 @@ async function openBrowser() {
       },
     );
   });
+  phase(6); // protocol domains and interception
   for (const method of ["Page.enable", "Runtime.enable", "Network.enable"])
     await send(method);
   await send("Fetch.enable", { patterns: [{ urlPattern: "*" }] });
+  phase(7); // document bootstrap installation
   await send("Page.addScriptToEvaluateOnNewDocument", {
     source: `window.__TIXMO_CONFIG__={apiUrl:'/api/v1',stripePublishableKey:''};
       window.__TIXMO_RESET_CAPTURE_EARLY__=false;
@@ -359,7 +373,9 @@ try {
   origin = `http://127.0.0.1:${frontendPort}`;
   mark(4);
   await openBrowser();
+  phase(8); // first navigation
   await send("Page.navigate", { url: origin + "/wallet" });
+  phase(9); // first document lookup
   await wait(`!!document.querySelector('[aria-label="Email address"]')`);
   mark(5);
   await login("a");
