@@ -167,7 +167,12 @@ const decode = () =>
     `(()=>{const t=localStorage.getItem('access_token');const p=JSON.parse(atob(t.split('.')[1]));return{iat:p.iat,exp:p.exp,userId:p.userId};})()`,
   );
 let origin;
+const {
+  clearDevToolsActivePort,
+  discoverDevTools,
+} = require("./devtools-discovery.cjs");
 async function openBrowser() {
+  clearDevToolsActivePort(profile);
   phase(1); // spawn
   browser = spawn(
     process.env.TIXMO_BROWSER_PATH,
@@ -193,20 +198,10 @@ async function openBrowser() {
   );
   pids.push(browser.pid);
   phase(2); // DevTools announcement
-  const browserWs = await deadline(
-    new Promise((resolve, reject) => {
-      let output = "";
-      browser.stderr.on("data", (chunk) => {
-        output = (output + chunk).slice(-16000);
-        const match = output.match(/DevTools listening on (ws:\/\/[^\s]+)/);
-        if (match) resolve(match[1]);
-      });
-      browser.once("error", () => reject(Error("Browser start failed")));
-      browser.once("exit", () =>
-        reject(Error("Browser exited during startup")),
-      );
-    }),
-    15000,
+  const browserWs = await discoverDevTools(
+    browser,
+    profile,
+    () => new BrowserDeadline(),
   );
   const debug = new URL(browserWs);
   assert.equal(debug.hostname, "127.0.0.1");
