@@ -465,7 +465,16 @@ try {
   assert.equal(capturedLink.search, "");
   assert.match(capturedLink.hash, /^#token=[a-f0-9]{64}$/);
   mark(13);
-  await send("Page.navigate", { url: capturedLink.href });
+  // The request form already uses /reset-password. A fragment-only navigation
+  // would keep that document and cannot exercise the external-email bootstrap.
+  await send("Page.navigate", { url: origin + "/wallet" });
+  await wait(`!!document.querySelector('[aria-label="Email address"]')`);
+  const resetNavigation = await send("Page.navigate", {
+    url: capturedLink.href,
+  });
+  // CDP omits loaderId for same-document navigation; require a real new document.
+  assert.equal(typeof resetNavigation.loaderId, "string");
+  assert.ok(resetNavigation.loaderId.length > 0);
   await wait(`!!document.querySelector('[aria-label="New password"]')`);
   assert.equal(await evaluate("location.hash"), "");
   assert.equal(await evaluate("window.__TIXMO_RESET_CAPTURE_EARLY__"), true);

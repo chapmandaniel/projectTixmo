@@ -82,3 +82,14 @@ test('worker failure diagnostics retain real failure and cleanup assertions', ()
   assert.ok(parent.includes('expect(workerExitCode).toBe(0)'));
   assert.ok(parent.includes('expect(workerCleanup).toBe(true)'));
 });
+
+test('captured email opens a new document instead of only changing the request-form fragment', () => {
+  const source = fs.readFileSync('scripts/browser/wallet-continuity.mjs', 'utf8');
+  const emailNavigation = source.slice(source.indexOf('  mark(13);'), source.indexOf('  mark(14);'));
+  const departure = emailNavigation.indexOf('url: origin + "/wallet"');
+  const email = emailNavigation.indexOf('url: capturedLink.href');
+  assert.ok(departure >= 0 && email > departure);
+  assert.ok(emailNavigation.includes('typeof resetNavigation.loaderId, "string"'));
+  assert.ok(emailNavigation.includes('resetNavigation.loaderId.length > 0'));
+  for (const invariant of ['location.hash', '__TIXMO_RESET_CAPTURE_EARLY__', 'location.search', 'resetDocumentCsp, true']) assert.ok(emailNavigation.includes(invariant));
+});
