@@ -257,3 +257,62 @@ test('new provider refund keeps its durable request identity', async () => {
   expect(record.status).toBe('SUCCEEDED');
   expect(order.status).toBe('REFUNDED');
 });
+
+// Reproduce external-refund identity mismatches, not approval of another financial action.
+// Provider rejection is simulated; actual Stripe exception qualification remains W07.
+test.each([1200, 400])(
+  'external %i-cent refund without platform metadata is not falsely settled after rejected create',
+  async (amount) => {
+    record.stripeRefundId = null;
+    const beforeRecord = { ...record },
+      beforeOrder = { ...order };
+    provider.refunds.list.mockResolvedValue({
+      data: [
+        {
+          ...response('succeeded'),
+          id: 're_external',
+          amount,
+          metadata: {},
+        },
+      ],
+    });
+    const rejection = new Error('Synthetic provider: amount already refunded');
+    provider.refunds.create.mockRejectedValue(rejection);
+    await expect(reconcile()).rejects.toBe(rejection);
+    expect(provider.refunds.list).toHaveBeenCalledWith({
+      payment_intent: record.paymentIntentId,
+      limit: 100,
+    });
+    expect(provider.refunds.create).toHaveBeenCalledTimes(1);
+    expect(provider.refunds.create).toHaveBeenCalledWith(
+      {
+        payment_intent: record.paymentIntentId,
+        amount: beforeRecord.amount,
+        metadata: { refundId: record.id, orderId: record.orderId },
+      },
+      { idempotencyKey: `refund-${record.id}` }
+    );
+    expect(provider.refunds.retrieve).not.toHaveBeenCalled();
+    expect(db.paymentRefund.update).not.toHaveBeenCalled();
+    expect(db.paymentRefund.updateMany).not.toHaveBeenCalled();
+    expect(db.order.updateMany).not.toHaveBeenCalled();
+    expect(finalizeRefund).not.toHaveBeenCalled();
+    expect(record).toEqual(beforeRecord);
+    expect(order).toEqual(beforeOrder);
+  }
+);
+
+test('linked under-amount partial refund fails closed without financial or local settlement', async () => {
+  const beforeRecord = { ...record },
+    beforeOrder = { ...order };
+  provider.refunds.retrieve.mockResolvedValue({ ...response('succeeded'), amount: 400 });
+  await expect(reconcile()).rejects.toMatchObject({ statusCode: 409 });
+  expect(provider.refunds.create).not.toHaveBeenCalled();
+  expect(provider.refunds.list).not.toHaveBeenCalled();
+  expect(db.paymentRefund.update).not.toHaveBeenCalled();
+  expect(db.paymentRefund.updateMany).not.toHaveBeenCalled();
+  expect(db.order.updateMany).not.toHaveBeenCalled();
+  expect(finalizeRefund).not.toHaveBeenCalled();
+  expect(record).toEqual(beforeRecord);
+  expect(order).toEqual(beforeOrder);
+});
