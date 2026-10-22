@@ -84,3 +84,27 @@ Remaining: dashboard-origin identity, catalog drift/compatibility, encrypted
 storage/containment/cost proof, named operators and second approval, exact
 cutover/rollback smoke plan and proxy operational grant. PRs remain unmerged;
 existing no-backup/schedule finding and migration-triggering merge hold persist.
+
+## Independent review and corrective successor
+
+Independent task553 verdict `f78725be` CHANGES REQUIRED against395cafb7:
+catalog output values were not fully bounded/validated; extra service IDs could
+escape the fixed allowlist; SQL failure emitted a failure JSON but exited0;
+internal URL schemes were unchecked; LIMIT500 could silently truncate. TLS
+`require` encrypted the historical connection but did NOT verify the peer's
+certificate hostname. Preserve that historical limitation and the reported
+ledger; no unchanged live query rerun is needed or claimed.
+
+Author corrective successor rejects non-Postgres URLs/private target mismatches,
+noncanonical timestamps/types/duplicate migrations,500-or-more ledger entries,
+oversized responses and nonfixed service IDs. Server version emits only a
+validated18.x numeric value, not an arbitrary package suffix. SQL failure exits1.
+Future client connections require `verify-full` and the existing system CA
+bundle; no silent `require` fallback. Availability of a trusted matching server
+certificate is NOT asserted by offline tests and no new live connection ran.
+Seven offline unittest methods exercise adversarial field mutations, output
+sentinels, failure propagation, target rejection before connection and fixed
+read-only/TLS/timeout command construction; all PASS. Embedded self-test and
+diff checks PASS. Exact corrective successor still requires independent553
+review before further live use; earlier receipt is not promoted to no-drift or
+restore readiness.
