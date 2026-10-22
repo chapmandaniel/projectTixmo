@@ -78,6 +78,10 @@ export const config = {
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || '',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
 
+  // Server-only durable asset-share encryption; independent of authentication rotation.
+  assetShareEncryptionKey: process.env.ASSET_SHARE_ENCRYPTION_KEY || '',
+  assetShareLegacySecret: process.env.ASSET_SHARE_LEGACY_SECRET || '',
+
   // Stripe
   stripeSecretKey: normalizeOptionalCredential(process.env.STRIPE_SECRET_KEY),
   stripePublishableKey: normalizeOptionalCredential(process.env.STRIPE_PUBLISHABLE_KEY),

@@ -1,4 +1,12 @@
 import prisma from '../../src/config/prisma';
+import { config } from '../../src/config/environment';
+jest.mock('../../src/config/environment', () => ({
+  config: {
+    assetShareEncryptionKey: '11'.repeat(32),
+    jwtRefreshSecret: 'synthetic-legacy-only',
+    clientUrl: 'http://localhost:3001',
+  },
+}));
 import { assetLibraryService } from '../../src/api/assets/service';
 import { uploadService } from '../../src/services/upload.service';
 
@@ -406,7 +414,7 @@ describe('assetLibraryService.upload', () => {
           folders: {
             create: [{ folderId: 'folder-1' }],
           },
-          tokenCiphertext: expect.stringMatching(/^v1:/),
+          tokenCiphertext: expect.stringMatching(/^v2:/),
         }),
         include: {
           folders: {
@@ -461,6 +469,7 @@ describe('assetLibraryService.upload', () => {
         createdAt: new Date('2026-05-04T12:00:00.000Z'),
         updatedAt: new Date('2026-05-04T12:00:00.000Z'),
         tokenCiphertext,
+        tokenHash: (prisma as any).assetLibraryFolderShare.create.mock.calls[0][0].data.tokenHash,
         folders: [{ folderId: 'folder-1' }],
       },
     ]);
@@ -719,5 +728,22 @@ describe('assetLibraryService.upload', () => {
       folderId: 'folder-child',
       s3Url: 'https://signed.example.com/artist-photo.png',
     });
+  });
+  it('refuses new shares with an explicit service-unavailable error when the dedicated key is absent', async () => {
+    const setting = jest.replaceProperty(config, 'assetShareEncryptionKey', '');
+    try {
+      (prisma.assetLibraryFolder.findMany as jest.Mock).mockResolvedValue([
+        { id: 'folder-1', parentId: null, eventId: null, name: 'Brand', usageType: 'BRAND' },
+      ]);
+      await expect(
+        assetLibraryService.createFolderShare('user-1', 'folder-1', {})
+      ).rejects.toMatchObject({
+        statusCode: 503,
+        message: 'Asset share encryption is unavailable',
+      });
+      expect((prisma as any).assetLibraryFolderShare.create).not.toHaveBeenCalled();
+    } finally {
+      setting.restore();
+    }
   });
 });

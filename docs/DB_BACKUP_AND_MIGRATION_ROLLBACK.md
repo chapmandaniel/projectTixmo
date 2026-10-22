@@ -156,3 +156,43 @@ Only check off "Production backup and rollback are confirmed" when all of these 
 - Railway backups: https://docs.railway.com/volumes/backups
 - Railway point-in-time recovery: https://docs.railway.com/volumes/point-in-time-recovery
 - PostgreSQL backup and restore: https://www.postgresql.org/docs/current/backup.html
+
+## Asset-share ciphertext before authentication key rotation
+
+Stored folder-share tokens have a separate server-only `ASSET_SHARE_ENCRYPTION_KEY`
+(32 random bytes encoded as 64 lowercase hex characters). Configure it through the
+runtime secret manager before enabling new share creation; absence or malformed
+configuration returns 503 for new shares. Never put this key in dashboard/Vite
+configuration. New `v2` AES-GCM envelopes authenticate their format/domain. Existing
+`v1` envelopes remain readable using `ASSET_SHARE_LEGACY_SECRET` when explicitly
+provided, otherwise the existing refresh/JWT/session-secret precedence. The legacy
+secret is the original secret string, not its hash. Do not change or remove legacy
+decryption configuration until a complete actual rekey and link-verification proof.
+
+After building the API, run `node prisma/rekey-asset-shares.js` from `tixmoapi2`
+using an explicitly supplied runtime `TIXMO_ASSET_REKEY_DATABASE_URL` (must match
+`DATABASE_URL` when present). This defaults to audit with at most 1000 rows.
+`--limit 1..10000` changes that bound; `--organization-id UUID` selects one tenant.
+The entire selected set must fit the bound and decrypt/hash-verify, including
+expired and revoked shares. Unknown formats, absent ciphertext, corruption or
+mismatched hashes fail closed. No record identifiers or token material are output.
+
+Apply requires both `--apply` and runtime `TIXMO_ALLOW_ASSET_SHARE_REKEY=true`.
+One bounded transaction rewrites only legacy ciphertext using a compare-and-swap
+on identity, organization, original hash and ciphertext; a conflict rolls back the
+transaction. Scope, hash, recipient, timestamps (including `updatedAt`), expiry,
+revocation, views and public URLs remain unchanged. Replay reports zero updates.
+An audit after apply must report zero legacy rows for the **complete database**;
+a scoped or bounded failure is not completion proof. Retain the dedicated key in
+backup/restore planning independently of authentication secrets. This command is
+not an actual target backup, rekey, key retirement or auth-rotation acceptance.
+
+Cutover order is mandatory: first deploy the reviewed `v2` writer with the fresh
+asset key and unchanged old authentication keys. Verify every active API worker
+is on that version (including the expected replica count). Only then run the
+reviewed audit/apply command and obtain an unscoped audit with zero legacy rows,
+plus actual link checks. An old worker can create new `v1` rows after a rekey;
+pre-deploy rekey alone cannot prove completion. Only after this proof may the
+authentication key family rotate. A killed command, failed transaction, bound
+failure or CAS conflict is not completion: retain legacy configuration, audit
+again, and explicitly retry. No automatic retry or legacy-key retirement occurs.

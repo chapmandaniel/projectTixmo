@@ -63,6 +63,8 @@ jest.mock('../../src/services/upload.service', () => ({
   },
 }));
 
+const { config } =
+  require('../../src/config/environment') as typeof import('../../src/config/environment');
 const app = require('../../src/app').default;
 const { cleanupTestData, createOrganization, prisma, registerUser } = require('../utils/testUtils');
 
@@ -73,12 +75,19 @@ const expectSuccess = (response: request.Response, status: number, label: string
 };
 
 describe('V1 market readiness smoke', () => {
+  let shareKey: ReturnType<typeof jest.replaceProperty> | undefined;
   beforeAll(async () => {
+    // Synthetic key belongs only to this smoke fixture, never application defaults.
+    shareKey = jest.replaceProperty(config, 'assetShareEncryptionKey', '34'.repeat(32));
     await cleanupTestData();
   });
 
   afterAll(async () => {
-    await cleanupTestData();
+    try {
+      await cleanupTestData();
+    } finally {
+      shareKey?.restore();
+    }
   });
 
   it('runs the operator, checkout, scanner, asset, approval, and analytics path', async () => {
