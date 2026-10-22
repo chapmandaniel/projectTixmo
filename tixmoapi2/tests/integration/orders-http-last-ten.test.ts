@@ -189,7 +189,8 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
     let ready = 0,
       active = 0,
       maxInFlight = 0;
-    clients = buyers.map(async (buyer) => {
+    const measurements: Array<{ i: number; started: number; settled: number }> = [];
+    clients = buyers.map(async (buyer, i) => {
       const token = generateAccessToken({
         userId: buyer.id,
         email: buyer.email,
@@ -199,6 +200,7 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
       });
       ready++;
       await barrier;
+      const started = performance.now();
       active++;
       maxInFlight = Math.max(maxInFlight, active);
       try {
@@ -206,10 +208,12 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
           .post('/api/v1/orders')
           .set('Authorization', `Bearer ${token}`)
           .set('X-Forwarded-For', '127.0.0.1')
-          .send({ items: [{ ticketTypeId: ids.ticketType, quantity: 1 }] });
+          .send({ items: [{ ticketTypeId: ids.ticketType, quantity: 1 }] })
+          .timeout({ response: 5000, deadline: 8000 });
         return { buyer: buyer.id, response };
       } finally {
         active--;
+        measurements.push({ i, started, settled: performance.now() });
       }
     });
     // All 100 clients reach the barrier before any request is admitted.
@@ -220,6 +224,13 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
     expect(allReady).toBe(true);
     expect(maxInFlight).toBe(100);
     expect(active).toBe(0);
+    expect(measurements).toHaveLength(100);
+    expect(new Set(measurements.map((item) => item.i)).size).toBe(100);
+    expect(measurements.every((item) => item.settled >= item.started)).toBe(true);
+    console.info('task499 actual client start-to-settlement measurements', {
+      maxInFlight,
+      measurements,
+    });
     expect(settled.every((result) => result.status === 'fulfilled')).toBe(true);
     const results = settled.flatMap((result) =>
       result.status === 'fulfilled' ? [result.value] : []
