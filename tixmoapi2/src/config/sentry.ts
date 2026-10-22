@@ -1,3 +1,4 @@
+import { assetShareLogPath } from '../utils/assetShareLogPath';
 import { buyerRecoveryLogPath } from '../utils/buyerRecoveryLogPath';
 import * as Sentry from '@sentry/node';
 import { config } from './environment';
@@ -40,11 +41,11 @@ export function initSentry() {
           ev.release = release;
         }
 
-        // Password recovery bodies and URLs must never enter error telemetry.
+        // Recovery and public bearer URLs must never enter error telemetry.
         const request = ev.request;
-        const recoveryPath = buyerRecoveryLogPath(request?.url);
-        if (request && recoveryPath) {
-          request.url = recoveryPath;
+        const sensitivePath = buyerRecoveryLogPath(request?.url) || assetShareLogPath(request?.url);
+        if (request && sensitivePath) {
+          request.url = sensitivePath;
           delete request.data;
           delete request.query_string;
           delete request.headers;
