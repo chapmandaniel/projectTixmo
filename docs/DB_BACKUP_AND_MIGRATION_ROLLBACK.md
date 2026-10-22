@@ -227,3 +227,15 @@ qualified API available when observing links. Clear temporary flags after collec
 actual complete decoded audit/link counts. Deployment success alone is not proof.
 Apply remains an explicitly authorized one-shot pre-deploy operation after the
 visible audit; all existing writer cutover, key retention and final-proof gates apply.
+
+The repository pre-deploy hook defaults to no operation. Only exact
+`TIXMO_ASSET_SHARE_REKEY_ONCE=true` selects one invocation of the existing CLI with
+`--preserve-hash-only --apply`; BOTH `TIXMO_ALLOW_HASH_ONLY_SHARE_PRESERVATION=true`
+and `TIXMO_ALLOW_ASSET_SHARE_REKEY=true` are still mandatory. Obtain the actual
+visible complete startup audit before enabling these three permissions. The hook
+has no retry loop and never moves apply into startup. Each separately triggered
+deployment can invoke it again while enabled, so clear the one-shot selector and
+all temporary observation/apply permissions before normal recovery or another deploy.
+Retain existing platform timeout, writer/key retention, post-audit/link receipts and
+interruption gates. A failed later startup does not undo an already committed apply;
+no authentication key rotation is authorized by deployment status alone.
