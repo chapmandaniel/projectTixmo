@@ -87,8 +87,12 @@ test('captured email opens a new document instead of only changing the request-f
   const source = fs.readFileSync('scripts/browser/wallet-continuity.mjs', 'utf8');
   const emailNavigation = source.slice(source.indexOf('  mark(13);'), source.indexOf('  mark(14);'));
   const departure = emailNavigation.indexOf('url: origin + "/wallet"');
-  const email = emailNavigation.indexOf('url: capturedLink.href');
+  const email = emailNavigation.indexOf('const resetNavigation =');
   assert.ok(departure >= 0 && email > departure);
+  assert.ok(emailNavigation.includes('sameDocumentNavigation.loaderId, undefined'));
+  assert.ok(worker.includes('sameDocumentRecovered,'));
+  assert.ok(suite.includes('sameDocumentRecovered: true'));
+  assert.ok(emailNavigation.indexOf('const sameDocumentNavigation =') < departure);
   assert.ok(emailNavigation.includes('typeof resetNavigation.loaderId, "string"'));
   assert.ok(emailNavigation.includes('resetNavigation.loaderId.length > 0'));
   for (const invariant of ['location.hash', '__TIXMO_RESET_CAPTURE_EARLY__', 'location.search', 'resetDocumentCsp, true']) assert.ok(emailNavigation.includes(invariant));

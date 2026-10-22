@@ -465,6 +465,21 @@ try {
   assert.equal(capturedLink.search, "");
   assert.match(capturedLink.hash, /^#token=[a-f0-9]{64}$/);
   mark(13);
+  const raw = capturedLink.hash.slice("#token=".length);
+  // Mail clients can reuse the request-form tab: prove the same-document path too.
+  const sameDocumentNavigation = await send("Page.navigate", {
+    url: capturedLink.href,
+  });
+  assert.equal(sameDocumentNavigation.loaderId, undefined);
+  await wait(`!!document.querySelector('[aria-label="New password"]')`);
+  assert.equal(await evaluate("location.hash"), "");
+  assert.equal(
+    await evaluate(
+      `JSON.stringify([Object.entries(localStorage),Object.entries(sessionStorage)]).includes(${JSON.stringify(raw)})`,
+    ),
+    false,
+  );
+  const sameDocumentRecovered = true;
   // The request form already uses /reset-password. A fragment-only navigation
   // would keep that document and cannot exercise the external-email bootstrap.
   await send("Page.navigate", { url: origin + "/wallet" });
@@ -483,7 +498,6 @@ try {
     await evaluate("window.__TIXMO_BUYER_RESET_INTENT__ === undefined"),
     true,
   );
-  const raw = capturedLink.hash.slice("#token=".length);
   assert.equal(
     await evaluate(
       `JSON.stringify([Object.entries(localStorage),Object.entries(sessionStorage)]).includes(${JSON.stringify(raw)})`,
@@ -552,6 +566,7 @@ try {
     foreignDenied: true,
     ownerReauthenticated: true,
     lostPasswordRecovered: true,
+    sameDocumentRecovered,
     fragmentCleared: true,
     earlyFragmentCapture: true,
     resetDocumentCsp: true,

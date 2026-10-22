@@ -63,4 +63,40 @@ describe('Buyer password recovery', () => {
         storeSession({ accessToken: 'synthetic-new', refreshToken: 'synthetic-new-refresh', user: { id: 'new' } }); await act(async () => { resolve(reply()); });
         await waitFor(() => expect(onPasswordReset).toHaveBeenCalledTimes(1)); expect(onPasswordReset.mock.calls[0][0].accessToken).toBe('synthetic-old'); expect(localStorage.getItem('access_token')).toBe('synthetic-new');
     });
+    it('accepts an emailed fragment while the request form is already open and strips it before rendering', async () => {
+        mount();
+        act(() => {
+            window.history.replaceState({}, '', `/reset-password#token=${token}`);
+            window.dispatchEvent(new HashChangeEvent('hashchange'));
+            expect(window.location.hash).toBe('');
+        });
+        expect(screen.getByLabelText('New password')).toBeInTheDocument();
+        expect(fetch).not.toHaveBeenCalled(); expect(localStorage.length).toBe(0); expect(sessionStorage.length).toBe(0);
+        resetFields(); fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
+        await screen.findByText(/Password changed/);
+        expect(JSON.parse(fetch.mock.calls[0][1].body).token).toBe(token);
+    });
+    it.each([true, false])('a newer emailed proof fences an older in-flight reset completion (%s) and clears typed passwords', async oldSucceeded => {
+        let resolve; fetch.mockReturnValueOnce(new Promise(done => { resolve = done; }));
+        window.history.replaceState({}, '', `/reset-password#token=${token}`); captureResetIntent();
+        const onPasswordReset = vi.fn(); mount({ onPasswordReset }); resetFields();
+        fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
+        const newer = 'b'.repeat(64);
+        act(() => { window.history.replaceState({}, '', `/reset-password#token=${newer}`); window.dispatchEvent(new HashChangeEvent('hashchange')); });
+        expect(screen.getByLabelText('New password')).toHaveValue('');
+        await act(async () => { resolve(reply(oldSucceeded, oldSucceeded)); });
+        expect(onPasswordReset).not.toHaveBeenCalled(); expect(getResetIntent()).toBe(newer);
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.queryByText(/Password changed/)).not.toBeInTheDocument();
+        resetFields(); fireEvent.click(screen.getByRole('button', { name: 'Change password' })); await screen.findByText(/Password changed/);
+        expect(JSON.parse(fetch.mock.calls[1][1].body).token).toBe(newer);
+    });
+    it('ignores fragment arrivals outside the recovery route and unsubscribes on departure', () => {
+        const mounted = mount();
+        act(() => { window.history.replaceState({}, '', `/wallet#token=${token}`); window.dispatchEvent(new HashChangeEvent('hashchange')); });
+        expect(getResetIntent()).toBe(''); expect(screen.getByLabelText('Buyer email')).toBeInTheDocument();
+        mounted.unmount(); window.history.replaceState({}, '', `/reset-password#token=${token}`);
+        window.dispatchEvent(new HashChangeEvent('hashchange')); expect(getResetIntent()).toBe('');
+    });
+
 });
