@@ -1,0 +1,227 @@
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import ScannerPage from '../pages/ScannerPage';
+import { ticketQR } from '../lib/scannerClient';
+
+const key = 'sk_scanner_synthetic';
+const ticketId = '11111111-1111-4111-8111-111111111111';
+const eventId = '22222222-2222-4222-8222-222222222222';
+const qr = `TICKET:${ticketId}:TIX-ABC123:${eventId}`;
+const reply = data => ({ ok: true, json: async () => ({ success: true, data }) });
+const authenticated = { id: 'scanner', name: 'North gate', status: 'ACTIVE' };
+const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
+async function connect() {
+    fireEvent.change(screen.getByLabelText('Scanner API key'), { target: { value: key } });
+    fireEvent.click(screen.getByRole('button', { name: 'Connect scanner' }));
+    await screen.findByText('North gate');
+}
+function enter(value = qr) { fireEvent.change(screen.getByLabelText('Ticket QR or barcode'), { target: { value } }); }
+const check = () => fireEvent.click(screen.getByRole('button', { name: 'Check ticket for entry' }));
+
+beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(authenticated)));
+    vi.stubGlobal('isSecureContext', true);
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: vi.fn() } });
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+    vi.spyOn(HTMLMediaElement.prototype, 'readyState', 'get').mockReturnValue(4);
+    delete window.BarcodeDetector;
+});
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+
+describe('Online scanner', () => {
+    it.each(['TICKET:missing:barcode:event', `TICKET:${ticketId}::${eventId}`, `${qr}:extra`, 'https://other.example/ticket'])('rejects malformed ticket QR %s', value => {
+        expect(() => ticketQR(value)).toThrow();
+    });
+    it('uses only scanner auth and shows nested denial despite a successful HTTP envelope', async () => {
+        const storage = vi.spyOn(Storage.prototype, 'setItem');
+        render(<ScannerPage />); await connect();
+        fetch.mockResolvedValueOnce(reply({ success: false, reason: 'Ticket already used' }));
+        enter(); check();
+        expect(await screen.findByText('Not admitted')).toBeInTheDocument();
+        expect(screen.getByText('Ticket already used')).toBeInTheDocument();
+        const [authUrl, authOptions] = fetch.mock.calls[0];
+        expect(authUrl).toBe('/api/v1/scanners/auth');
+        expect(authOptions.headers.Authorization).toBeUndefined();
+        expect(JSON.parse(authOptions.body)).toEqual({ apiKey: key });
+        const [scanUrl, options] = fetch.mock.calls[1];
+        expect(scanUrl).toBe('/api/v1/scanners/scan');
+        expect(options.headers.Authorization).toBe(`Bearer ${key}`);
+        expect(options.credentials).toBe('omit');
+        expect(JSON.parse(options.body)).toEqual({ qrData: qr, scanType: 'ENTRY' });
+        expect(storage).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('button', { name: 'End scanner session' }));
+        expect(screen.getByLabelText('Scanner API key')).toHaveValue('');
+        expect(screen.queryByText('Ticket already used')).not.toBeInTheDocument();
+    });
+    it('requires valid QR before request and constructs raw barcode entry from explicit IDs', async () => {
+        render(<ScannerPage />); await connect(); enter('bad payload'); check();
+        expect(await screen.findByText(/Use a complete ticket QR/)).toBeInTheDocument();
+        expect(fetch).toHaveBeenCalledTimes(1);
+        enter('TIX-ABC123');
+        fireEvent.change(screen.getByLabelText('Ticket ID (barcode entry only)'), { target: { value: ticketId } });
+        fireEvent.change(screen.getByLabelText('Event ID (barcode entry only)'), { target: { value: eventId } });
+        fetch.mockResolvedValueOnce(reply({ success: true })); check();
+        expect(await screen.findByText('Admitted')).toBeInTheDocument();
+        expect(JSON.parse(fetch.mock.calls[1][1].body).qrData).toBe(qr);
+    });
+    it('joins rapid submissions into one active admission request and uses its actual response', async () => {
+        render(<ScannerPage />); await connect(); enter();
+        const pending = deferred(); fetch.mockReturnValueOnce(pending.promise);
+        const form = screen.getByRole('button', { name: 'Check ticket for entry' }).closest('form');
+        fireEvent.submit(form); fireEvent.submit(form);
+        expect(fetch).toHaveBeenCalledTimes(2);
+        expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
+        await act(async () => { pending.resolve(reply({ success: true })); });
+        expect(await screen.findByText('Admitted')).toBeInTheDocument();
+    });
+    it('does not infer admission from missing data or a failed network and permits explicit recovery', async () => {
+        render(<ScannerPage />); await connect(); enter();
+        fetch.mockRejectedValueOnce(new Error('private request details')); check();
+        expect(await screen.findByText(/No confirmed result. Check the ticket/)).toBeInTheDocument();
+        expect(screen.queryByText('private request details')).not.toBeInTheDocument();
+        fetch.mockResolvedValueOnce(reply({ ticket: {} })); check();
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Check ticket for entry' })).not.toBeDisabled());
+        expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
+        fetch.mockResolvedValueOnce(reply({ success: false, reason: 'Event cancelled' })); check();
+        expect(await screen.findByText('Event cancelled')).toBeInTheDocument();
+    });
+    it('does not queue offline scans', async () => {
+        render(<ScannerPage />); await connect(); enter();
+        Object.defineProperty(navigator, 'onLine', { configurable: true, value: false }); check();
+        expect(await screen.findByText(/You are offline/)).toBeInTheDocument();
+        expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    it('offers manual fallback when camera detection is unsupported', async () => {
+        render(<ScannerPage />); await connect(); fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
+        expect(await screen.findByText(/Camera QR scanning is unavailable/)).toBeInTheDocument();
+        expect(screen.getByLabelText('Ticket QR or barcode')).toBeEnabled();
+        expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    });
+    it('checks QR format support before requesting camera access', async () => {
+        class Detector { static getSupportedFormats = vi.fn(async () => ['code_128']); }
+        vi.stubGlobal('BarcodeDetector', Detector);
+        render(<ScannerPage />); await connect(); fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
+        expect(await screen.findByText(/does not support camera QR decoding/)).toBeInTheDocument();
+        expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    });
+    it('camera admits only the returned QR result then stops all tracks', async () => {
+        const stop = vi.fn(), detect = vi.fn(async () => [{ rawValue: qr }, { rawValue: qr }]);
+        class Detector { static getSupportedFormats = vi.fn(async () => ['qr_code']); detect = detect; }
+        vi.stubGlobal('BarcodeDetector', Detector);
+        navigator.mediaDevices.getUserMedia.mockResolvedValue({ getTracks: () => [{ stop }] });
+        const { unmount } = render(<ScannerPage />); await connect();
+        fetch.mockResolvedValueOnce(reply({ success: true }));
+        fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
+        expect(await screen.findByText('Admitted')).toBeInTheDocument();
+        expect(fetch).toHaveBeenCalledTimes(2); expect(detect).toHaveBeenCalledTimes(1); expect(stop).toHaveBeenCalledTimes(1);
+        unmount(); expect(stop).toHaveBeenCalledTimes(1);
+    });
+    it('stops a stream that arrives after unmount and does not submit its QR', async () => {
+        class Detector { detect = vi.fn(); }
+        vi.stubGlobal('BarcodeDetector', Detector);
+        const media = deferred(), stop = vi.fn(); navigator.mediaDevices.getUserMedia.mockReturnValue(media.promise);
+        const { unmount } = render(<ScannerPage />); await connect();
+        fireEvent.click(screen.getByRole('button', { name: 'Start camera' })); unmount();
+        await act(async () => { media.resolve({ getTracks: () => [{ stop }] }); });
+        expect(stop).toHaveBeenCalledTimes(1); expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    it('recovers from camera permission rejection without disabling manual entry', async () => {
+        class Detector { detect = vi.fn(); }
+        vi.stubGlobal('BarcodeDetector', Detector);
+        navigator.mediaDevices.getUserMedia.mockRejectedValue(new Error('Permission denied'));
+        render(<ScannerPage />); await connect(); fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
+        expect(await screen.findByText(/Camera could not start/)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Start camera' })).toBeEnabled();
+        expect(screen.getByLabelText('Ticket QR or barcode')).toBeEnabled();
+    });
+    it('ignores a detector result arriving after the operator stops the camera', async () => {
+        const found = deferred(), stop = vi.fn(), detect = vi.fn(() => found.promise);
+        class Detector { detect = detect; }
+        vi.stubGlobal('BarcodeDetector', Detector);
+        navigator.mediaDevices.getUserMedia.mockResolvedValue({ getTracks: () => [{ stop }] });
+        render(<ScannerPage />); await connect();
+        fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
+        await waitFor(() => expect(detect).toHaveBeenCalled());
+        fireEvent.click(screen.getByRole('button', { name: 'Stop camera' }));
+        await act(async () => { found.resolve([{ rawValue: qr }]); });
+        expect(fetch).toHaveBeenCalledTimes(1); expect(stop).toHaveBeenCalledTimes(1);
+    });
+    it('manual admission stops the camera and suppresses its pending detector result', async () => {
+        const found = deferred(), stop = vi.fn(), detect = vi.fn(() => found.promise), response = deferred();
+        class Detector { detect = detect; }
+        vi.stubGlobal('BarcodeDetector', Detector);
+        navigator.mediaDevices.getUserMedia.mockResolvedValue({ getTracks: () => [{ stop }] });
+        render(<ScannerPage />); await connect(); enter();
+        fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
+        await waitFor(() => expect(detect).toHaveBeenCalled());
+        fetch.mockReturnValueOnce(response.promise); check();
+        await act(async () => { found.resolve([{ rawValue: qr }]); });
+        expect(fetch).toHaveBeenCalledTimes(2); expect(stop).toHaveBeenCalledTimes(1);
+        await act(async () => { response.resolve(reply({ success: true })); });
+        expect(await screen.findByText('Admitted')).toBeInTheDocument();
+    });
+    it('stops camera tracks resolving after stop and keeps manual entry available', async () => {
+        class Detector { detect = vi.fn(); }
+        vi.stubGlobal('BarcodeDetector', Detector);
+        const media = deferred(), stop = vi.fn(); navigator.mediaDevices.getUserMedia.mockReturnValue(media.promise);
+        render(<ScannerPage />); await connect();
+        fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Stop camera' }));
+        await act(async () => { media.resolve({ getTracks: () => [{ stop }] }); });
+        expect(stop).toHaveBeenCalledTimes(1); expect(fetch).toHaveBeenCalledTimes(1);
+        expect(screen.getByLabelText('Ticket QR or barcode')).toBeEnabled();
+    });
+    it('ignores stale admission after ending and reconnecting a scanner session', async () => {
+        render(<ScannerPage />); await connect(); enter();
+        const old = deferred(); fetch.mockReturnValueOnce(old.promise); check();
+        const oldSignal = fetch.mock.calls[1][1].signal;
+        fireEvent.click(screen.getByRole('button', { name: 'End scanner session' }));
+        expect(oldSignal.aborted).toBe(true);
+        await connect();
+        await act(async () => { old.resolve(reply({ success: true })); });
+        expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Check ticket for entry' })).toBeEnabled();
+    });
+    it('clears an in-flight authentication and ignores its stale response', async () => {
+        render(<ScannerPage />);
+        const old = deferred(); fetch.mockReturnValueOnce(old.promise);
+        fireEvent.change(screen.getByLabelText('Scanner API key'), { target: { value: key } });
+        fireEvent.click(screen.getByRole('button', { name: 'Connect scanner' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Clear scanner key' }));
+        expect(fetch.mock.calls[0][1].signal.aborted).toBe(true);
+        await act(async () => { old.resolve(reply(authenticated)); });
+        expect(screen.queryByText('North gate')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Scanner API key')).toHaveValue('');
+    });
+
+    it.each([
+        ['Ticket QR or barcode', `TICKET:${eventId}:TIX-OTHER:${ticketId}`],
+        ['Ticket ID (barcode entry only)', eventId],
+        ['Event ID (barcode entry only)', ticketId],
+    ])('clears the previous admission when %s changes without submitting another ticket', async (label, value) => {
+        render(<ScannerPage />); await connect(); enter();
+        fetch.mockResolvedValueOnce(reply({ success: true })); check();
+        expect(await screen.findByText('Admitted')).toBeInTheDocument();
+        fireEvent.change(screen.getByLabelText(label), { target: { value } });
+        expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
+        expect(screen.queryByText('Not admitted')).not.toBeInTheDocument();
+        expect(fetch).toHaveBeenCalledTimes(2);
+    });
+    it('manual field focus stops pending optical detection before any admission', async () => {
+        const found = deferred(), stop = vi.fn(), detect = vi.fn(() => found.promise);
+        class Detector { detect = detect; }
+        vi.stubGlobal('BarcodeDetector', Detector);
+        navigator.mediaDevices.getUserMedia.mockResolvedValue({ getTracks: () => [{ stop }] });
+        render(<ScannerPage />); await connect();
+        fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
+        await waitFor(() => expect(detect).toHaveBeenCalled());
+        fireEvent.focus(screen.getByLabelText('Ticket QR or barcode'));
+        fireEvent.change(screen.getByLabelText('Ticket QR or barcode'), { target: { value: qr } });
+        await act(async () => { found.resolve([{ rawValue: qr }]); });
+        expect(stop).toHaveBeenCalledTimes(1); expect(fetch).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
+    });
+
+});
