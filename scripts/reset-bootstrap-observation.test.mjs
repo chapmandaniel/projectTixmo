@@ -17,6 +17,9 @@ for (const [name, altered] of [
   ['nomodule bootstrap', html.replace('<script src=', '<script nomodule src=')],
   ['inert template', html.replace(bootstrap, `<template>${bootstrap}</template>`)],
   ['bootstrap inside an attribute', html.replace(bootstrap, `<div data-code='${bootstrap}'></div>`)],
+  ['module in noembed', html.replace(module, `<noembed>${module}</noembed>`)],
+  ['module in noframes', html.replace(module, `<noframes>${module}</noframes>`)],
+  ['module in foreign namespace', html.replace(module, `<svg>${module}</svg>`)],
   ['no built module', html.replace(module, '')],
   ['script text inside JSON', html.replace(module, `<script type="application/json">${module}</script>`)],
 ]) test(name, () => assert.equal(observeResetDocument(altered, headers(csp)).bootstrapFirst, false));
@@ -24,6 +27,9 @@ for (const [name, policy] of [
   ['element directive blocks scripts', `${csp}; script-src-elem 'none'`],
   ['sandbox blocks execution', `${csp}; sandbox`],
   ['multiple policies unsupported', `${csp}, script-src 'none'`],
+  ['strict dynamic rejects nonce-less bootstrap', `${csp}; script-src-elem 'nonce-synthetic' 'strict-dynamic'`],
+  ['nonce strict dynamic policy', "script-src 'self' 'nonce-synthetic' 'strict-dynamic'"],
+  ['unknown hash policy', "script-src 'self' 'sha256-synthetic'"],
   ['inline scripts allowed', "script-src 'self' 'unsafe-inline'"],
   ['no self source', "script-src https://js.stripe.com"],
 ]) test(name, () => assert.equal(observeResetDocument(html, headers(policy)).scriptCsp, false));

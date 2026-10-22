@@ -15,7 +15,7 @@ function attributes(source) {
 export function observeResetDocument(body, headers) {
   const clean = body.replace(/<!--[\s\S]*?-->/g, '');
   // Unexpected/inert document structures fail closed rather than count their text as scripts.
-  const supported = !/<!--|<(?:template|noscript|textarea|iframe|xmp|plaintext)\b/i.test(clean) &&
+  const supported = !/<!--|<(?:template|noscript|textarea|iframe|xmp|plaintext|noembed|noframes|svg|math)\b/i.test(clean) &&
     /^\s*<!doctype\s+html>\s*<html\b[^>]*>\s*<head\s*>/i.test(clean);
   const document = clean.replace(/<(title|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '');
   const scripts = [...document.matchAll(/<script\b((?:[^"'<>]|"[^"<>]*"|'[^'<>]*')*)>([\s\S]*?)<\/script\s*>/gi)]
@@ -28,11 +28,13 @@ export function observeResetDocument(body, headers) {
   const csp = headers.get('content-security-policy') || '';
   const directives = csp.split(';').map(part => part.trim());
   const scriptPolicy = directives.find(part => /^script-src\s/i.test(part)) || '';
+  const allowedSources = new Set(["'self'", 'https://js.stripe.com', 'https://*.js.stripe.com']);
+  const scriptSources = scriptPolicy.split(/\s+/).slice(1);
+  const knownPolicy = scriptSources.includes("'self'") && scriptSources.every(source => allowedSources.has(source));
   const override = directives.some(part => /^(?:script-src-elem|sandbox)(?:\s|$)/i.test(part));
   return {
     bootstrapFirst: supported && firstHeadContent && first?.attrs?.size === 1 && first.attrs.get('src') === '/buyer-reset-intent.js' &&
       !first.body.trim() && moduleIndex > 0,
-    scriptCsp: !csp.includes(',') && !override && /(?:^|\s)'self'(?:\s|$)/.test(scriptPolicy) &&
-      !scriptPolicy.includes("'unsafe-inline'"),
+    scriptCsp: !csp.includes(',') && !override && knownPolicy,
   };
 }
