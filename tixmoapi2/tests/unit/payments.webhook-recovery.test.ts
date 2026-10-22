@@ -150,17 +150,27 @@ describe('public webhook fulfillment recovery (mocked boundaries)', () => {
         throw error;
       }
     });
-    db.order.findUnique.mockImplementation(async () => ({
-      ...order,
-      paymentAttempt: order.paymentAttempt ? { ...order.paymentAttempt } : null,
-    }));
+    db.order.findUnique.mockImplementation(async ({ where }: any) =>
+      where.id !== order.id
+        ? null
+        : {
+            ...order,
+            paymentAttempt: order.paymentAttempt ? { ...order.paymentAttempt } : null,
+          }
+    );
     db.order.update.mockImplementation(async ({ data }: any) => {
       Object.assign(order, data);
       return { ...order };
     });
-    db.order.updateMany.mockImplementation(async () => {
-      if (order.status !== 'PENDING' || order.paymentStatus === 'SUCCEEDED') return { count: 0 };
-      order.paymentStatus = 'FAILED';
+    db.order.updateMany.mockImplementation(async ({ where, data }: any) => {
+      if (
+        order.id !== where.id ||
+        order.paymentIntentId !== where.paymentIntentId ||
+        order.status !== where.status ||
+        order.paymentStatus === 'SUCCEEDED'
+      )
+        return { count: 0 };
+      Object.assign(order, data);
       return { count: 1 };
     });
     db.order.findMany.mockImplementation(async () =>
@@ -379,6 +389,88 @@ describe('public webhook fulfillment recovery (mocked boundaries)', () => {
       expect(notificationService.sendEmail).toHaveBeenCalledTimes(alreadyPaid ? 0 : 1);
       expect(orderService.confirmOrderInTransaction).not.toHaveBeenCalled();
       expect(stored.status).toBe('PROCESSED');
+    }
+  );
+  it('binds a matching early failed webhook to its durable attempt exactly once', async () => {
+    event.type = 'payment_intent.payment_failed';
+    order.paymentIntentId = null;
+    order.paymentAttempt.paymentIntentId = null;
+    await deliver();
+    expect(order).toMatchObject({
+      paymentIntentId: 'pi_recovery',
+      paymentStatus: 'FAILED',
+      status: 'PENDING',
+    });
+    expect(order.paymentAttempt.paymentIntentId).toBe('pi_recovery');
+    expect(notificationService.sendEmail).toHaveBeenCalledTimes(1);
+    expect(stored.status).toBe('PROCESSED');
+    await deliver();
+    expect(notificationService.sendEmail).toHaveBeenCalledTimes(1);
+    expect(orderService.confirmOrderInTransaction).not.toHaveBeenCalled();
+    expect([held, sold]).toEqual([2, 0]);
+  });
+
+  it.each([
+    'PAID',
+    'CANCELLED',
+    'SUCCEEDED',
+    'foreign-order',
+    'attempt',
+    'missing-attempt',
+    'bound-other-attempt',
+    'missing-attempt-id',
+    'missing-both',
+    'amount',
+    'currency',
+    'bogus-amount',
+    'other-intent',
+  ])('does not bind or notify an ineligible early failure: %s', async (variant) => {
+    event.type = 'payment_intent.payment_failed';
+    order.paymentIntentId = null;
+    order.paymentAttempt.paymentIntentId = null;
+    if (variant === 'PAID' || variant === 'CANCELLED') order.status = variant;
+    if (variant === 'SUCCEEDED') order.paymentStatus = 'SUCCEEDED';
+    if (variant === 'foreign-order') event.data.object.metadata.orderId = 'foreign';
+    if (variant === 'attempt') event.data.object.metadata.attemptId = 'foreign-attempt';
+    if (variant === 'missing-attempt-id' || variant === 'missing-both')
+      delete event.data.object.metadata.attemptId;
+    if (variant === 'missing-both') order.paymentAttempt = null;
+    if (variant === 'missing-attempt') order.paymentAttempt = null;
+    if (variant === 'bound-other-attempt') order.paymentAttempt.paymentIntentId = 'pi_other';
+    if (variant === 'amount') event.data.object.amount = 1300;
+    if (variant === 'currency') event.data.object.currency = 'usd';
+    if (variant === 'bogus-amount') event.data.object.amount = '1200';
+    if (variant === 'other-intent') order.paymentIntentId = 'pi_other';
+    const before = { ...order };
+    await deliver();
+    expect(order).toEqual(before);
+    expect(db.paymentAttempt.update).not.toHaveBeenCalled();
+    expect(db.order.updateMany).not.toHaveBeenCalled();
+    expect(notificationService.sendEmail).not.toHaveBeenCalled();
+    expect(orderService.confirmOrderInTransaction).not.toHaveBeenCalled();
+    expect(stored.status).toBe('PROCESSED');
+    expect([held, sold]).toEqual([2, 0]);
+  });
+
+  it.each(['generation', 'lease'])(
+    'lost event %s cannot bind a matching early failed response',
+    async (loss) => {
+      event.type = 'payment_intent.payment_failed';
+      order.paymentIntentId = null;
+      order.paymentAttempt.paymentIntentId = null;
+      db.$queryRaw.mockImplementation(async (sql: TemplateStringsArray) => {
+        const query = sql.join('?');
+        if (query.includes('AS now')) return [{ now: new Date() }];
+        if (query.includes('AS live')) return [{ live: loss !== 'lease' }];
+        if (query.includes('attempt_generation'))
+          return [{ status: 'PROCESSING', attempt_generation: loss === 'generation' ? 2n : 1n }];
+        return [{ id: order.id }];
+      });
+      await deliver();
+      expect(order.paymentIntentId).toBeNull();
+      expect(db.paymentAttempt.update).not.toHaveBeenCalled();
+      expect(notificationService.sendEmail).not.toHaveBeenCalled();
+      expect(stored.status).toBe('PROCESSING');
     }
   );
 });
