@@ -43,9 +43,12 @@ test('100 authenticated barrier buyers compete for the last ten untiered units',
       (req, res, next) => { void work.run(() => fn(req, res, next)).catch(next); }));
     const auth: typeof import('../../src/middleware/auth') = require('../../src/middleware/auth');
     const waitingRoom: typeof import('../../src/middleware/waitingRoom') = require('../../src/middleware/waitingRoom');
-    spies.push(jest.spyOn(auth, 'authenticate').mockImplementation(promiseMiddleware(auth.authenticate, work)));
-    spies.push(jest.spyOn(auth, 'optionalAuthenticate').mockImplementation(promiseMiddleware(auth.optionalAuthenticate, work)));
-    spies.push(jest.spyOn(waitingRoom, 'waitingRoom').mockImplementation(promiseMiddleware(waitingRoom.waitingRoom, work)));
+    const realAuthenticate = auth.authenticate;
+    spies.push(jest.spyOn(auth, 'authenticate').mockImplementation(promiseMiddleware(realAuthenticate, work)));
+    const realOptionalAuthenticate = auth.optionalAuthenticate;
+    spies.push(jest.spyOn(auth, 'optionalAuthenticate').mockImplementation(promiseMiddleware(realOptionalAuthenticate, work)));
+    const realWaitingRoom = waitingRoom.waitingRoom;
+    spies.push(jest.spyOn(waitingRoom, 'waitingRoom').mockImplementation(promiseMiddleware(realWaitingRoom, work)));
     const validation: typeof import('../../src/middleware/validate') = require('../../src/middleware/validate');
     const realValidate = validation.validate;
     spies.push(jest.spyOn(validation, 'validate').mockImplementation((schema) => {
