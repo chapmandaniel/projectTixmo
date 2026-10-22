@@ -2,7 +2,7 @@ name: Tixmo Checkout Runtime Config Evidence
 
 on:
   push:
-    branches: [codex/task-583-target-probe]
+    branches: [codex/task-583-target-probe, codex/task-243-live-readiness]
     paths:
       - scripts/probe-public-test-target.mjs
       - scripts/runtime-config-parser.mjs
