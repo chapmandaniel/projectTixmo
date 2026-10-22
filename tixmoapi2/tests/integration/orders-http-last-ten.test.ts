@@ -59,6 +59,19 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
     );
     return promise;
   };
+  const bounded = async <T>(promise: Promise<T>): Promise<T> => {
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error('Last-ten work did not drain')), 8000);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  };
   const drain = async () => {
     while (pending.size) await Promise.allSettled([...pending]);
   };
@@ -101,6 +114,33 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
       const replaced = jest.replaceProperty(config, name, 1000);
       spies.push({ mockRestore: () => replaced.restore() });
     }
+    // Middleware may continue after a client deadline; observe its actual promise
+    // before app/routes capture the exports. Preserve the real next() behavior.
+    const auth = await import('../../src/middleware/auth');
+    const waiting = await import('../../src/middleware/waitingRoom');
+    const limiter = await import('../../src/middleware/rateLimiter');
+    for (const [module, names] of [
+      [auth, ['authenticate', 'optionalAuthenticate']],
+      [waiting, ['waitingRoom']],
+      [limiter, ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter']],
+    ] as Array<[any, string[]]>) {
+      for (const name of names) {
+        const original = module[name];
+        spies.push(
+          jest
+            .spyOn(module, name)
+            .mockImplementation((...args: any[]) => track(Promise.resolve(original(...args))))
+        );
+      }
+    }
+    const validation = await import('../../src/middleware/validate');
+    const realValidate = validation.validate;
+    spies.push(
+      jest.spyOn(validation, 'validate').mockImplementation((schema) => {
+        const handler = realValidate(schema);
+        return (...args: Parameters<typeof handler>) => track(Promise.resolve(handler(...args)));
+      })
+    );
     const app = (await import('../../src/app')).default;
     const { orderService } = await import('../../src/api/orders/service');
     const { generateAccessToken } = await import('../../src/utils/jwt');
@@ -220,7 +260,7 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
     const allReady = ready === 100;
     release();
     const settled = await Promise.allSettled(clients);
-    await drain();
+    await bounded(drain());
     expect(allReady).toBe(true);
     expect(maxInFlight).toBe(100);
     expect(active).toBe(0);
@@ -294,29 +334,44 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
   } catch (error) {
     primary = error;
   } finally {
-    // No deadline is treated as cancellation: await every client and raw Redis
-    // release before closing resources. A hang fails the managed job timeout.
-    await Promise.allSettled(clients);
-    if (server?.listening)
-      await new Promise<void>((resolve, reject) =>
-        server!.close((error) => (error ? reject(error) : resolve()))
-      );
-    await drain();
+    // A deadline is failure, never evidence of cancellation. Keep tracking and
+    // context intact if HTTP/server/middleware/Redis work cannot be joined.
+    let joined = false;
     try {
-      // Preallocated event/user IDs cover partial setup and unreturned HTTP writes.
-      await prisma.ticket.deleteMany({ where: { eventId: { in: events } } });
-      await prisma.order.deleteMany({ where: { eventId: { in: events } } });
-      await prisma.ticketType.deleteMany({ where: { eventId: { in: events } } });
-      await prisma.event.deleteMany({ where: { id: { in: events } } });
-      await prisma.organization.deleteMany({ where: { id: { in: organizations } } });
-      await prisma.user.deleteMany({ where: { id: { in: users } } });
-    } finally {
-      for (const spy of spies.reverse()) spy.mockRestore();
+      await bounded(Promise.allSettled(clients));
+      if (server?.listening)
+        await bounded(
+          new Promise<void>((resolve, reject) =>
+            server!.close((error) => (error ? reject(error) : resolve()))
+          )
+        );
+      await bounded(drain());
+      joined = true;
+    } catch (error) {
+      primary ??= error;
+    }
+    if (joined) {
       try {
-        await redisModule.disconnectRedis();
+        // Preallocated event/user IDs cover partial setup and unreturned HTTP writes.
+        await prisma.ticket.deleteMany({ where: { eventId: { in: events } } });
+        await prisma.order.deleteMany({ where: { eventId: { in: events } } });
+        await prisma.ticketType.deleteMany({ where: { eventId: { in: events } } });
+        await prisma.event.deleteMany({ where: { id: { in: events } } });
+        await prisma.organization.deleteMany({ where: { id: { in: organizations } } });
+        await prisma.user.deleteMany({ where: { id: { in: users } } });
       } finally {
-        await prisma.$disconnect();
+        for (const spy of spies.reverse()) spy.mockRestore();
+        try {
+          await redisModule.disconnectRedis();
+        } finally {
+          await prisma.$disconnect();
+        }
       }
+    } else {
+      console.error(
+        'Unjoined last-ten work: preserve fixtures/connections for managed job teardown',
+        ids
+      );
     }
   }
   if (primary) throw primary;
