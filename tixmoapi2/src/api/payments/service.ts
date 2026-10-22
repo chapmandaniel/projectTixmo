@@ -11,6 +11,11 @@ import prisma from '../../config/prisma';
 type WebhookClaim = { eventId: string; generation: bigint };
 class WebhookOwnershipLost extends Error {}
 const EXPIRED_WEBHOOK_RECOVERY_ENABLED = true;
+// Policy #73: a durable late-paid exception never authorizes an automatic refund.
+const LATE_PAYMENT_MANUAL_RECONCILIATION =
+  'Manual reconciliation required: late payment; automatic refund prohibited.';
+const REFUND_RECOVERY_BACKOFF_MS = 60_000;
+const WEBHOOK_RECOVERY_BACKOFF_MS = 60_000;
 const LEASE_MS = 5 * 60_000;
 const IDEMPOTENCY_SAFE_MS = 23 * 60 * 60_000;
 const cents = (value: { toString(): string }) => {
@@ -312,10 +317,19 @@ export class PaymentService {
                   amount: intent.amount_received,
                   currency: intent.currency,
                   reason,
+                  ...(reason === 'LATE_PAYMENT'
+                    ? { errorMessage: LATE_PAYMENT_MANUAL_RECONCILIATION }
+                    : {}),
                 },
-                update: {},
+                update:
+                  reason === 'LATE_PAYMENT'
+                    ? { errorMessage: LATE_PAYMENT_MANUAL_RECONCILIATION }
+                    : {},
               });
-              return { receipt: false, refundId: record.id };
+              // Manual late-paid evidence is not executable refund work.
+              return reason === 'LATE_PAYMENT'
+                ? { receipt: false }
+                : { receipt: false, refundId: record.id };
             };
             // Bind an early response only to the previously committed provider operation.
             if (
@@ -506,8 +520,10 @@ export class PaymentService {
   }
 
   private async reconcileRefund(id: string): Promise<void> {
-    const stripe = this.provider();
     const record = await prisma.paymentRefund.findUniqueOrThrow({ where: { id } });
+    // Also block legacy rows and stale background selections before provider access.
+    if (record.reason === 'LATE_PAYMENT') return;
+    const stripe = this.provider();
     if (record.status === 'SUCCEEDED') {
       if (record.reason === 'ORDER_REFUND') await orderService.finalizeRefund(record.orderId);
       else
@@ -631,6 +647,10 @@ export class PaymentService {
   async recoverRefunds(): Promise<void> {
     const records = await prisma.paymentRefund.findMany({
       where: {
+        // Existing late-paid rows remain visible as owned manual exceptions,
+        // not automatic work (and must not starve the bounded recovery queue).
+        reason: { not: 'LATE_PAYMENT' },
+        updatedAt: { lte: new Date(Date.now() - REFUND_RECOVERY_BACKOFF_MS) },
         OR: [
           { status: { in: ['REQUESTED', 'PROCESSING', 'FAILED'] } },
           { status: 'SUCCEEDED', reason: 'ORDER_REFUND', order: { status: 'PAID' } },
@@ -644,10 +664,23 @@ export class PaymentService {
       orderBy: { updatedAt: 'asc' },
       take: 50,
     });
-    for (const record of records)
-      await this.reconcileRefund(record.id).catch((error) =>
-        logger.error(`Refund reconciliation failed for ${record.id}: ${error}`)
-      );
+    for (const record of records) {
+      try {
+        await this.reconcileRefund(record.id);
+      } catch (error) {
+        logger.error(`Refund reconciliation failed for ${record.id}: ${error}`);
+        // Rotate poison work and expose an owned exception without copying provider
+        // errors or changing money/status. CAS cannot overwrite a newer result.
+        await prisma.paymentRefund.updateMany({
+          where: { id: record.id, updatedAt: record.updatedAt },
+          data: {
+            updatedAt: new Date(),
+            errorMessage:
+              'Recovery reconciliation required; owner=tixmo-backend; retry after 60 seconds.',
+          },
+        });
+      }
+    }
   }
 
   private async recoverReceipts(): Promise<void> {
@@ -681,6 +714,7 @@ export class PaymentService {
     if (!this.stripe) return;
     const events = await prisma.paymentWebhookEvent.findMany({
       where: {
+        updatedAt: { lte: new Date(Date.now() - WEBHOOK_RECOVERY_BACKOFF_MS) },
         OR: [
           { status: { in: ['RECEIVED', 'FAILED'] } },
           { status: 'PROCESSING', processingStartedAt: { lt: new Date(Date.now() - LEASE_MS) } },
@@ -694,6 +728,22 @@ export class PaymentService {
         await this.processEvent(await this.stripe.events.retrieve(event.id));
       } catch (error) {
         logger.error(`Webhook reconciliation failed for ${event.id}: ${error}`);
+        // Provider retrieval can fail before processEvent claims the event. Rotate
+        // that poison work without claiming effects or modifying lease/status.
+        // A newer claim/result must never be overwritten by this stale selection.
+        await prisma.paymentWebhookEvent.updateMany({
+          where: {
+            id: event.id,
+            updatedAt: event.updatedAt,
+            status: event.status,
+            attemptGeneration: event.attemptGeneration,
+          },
+          data: {
+            updatedAt: new Date(),
+            errorMessage:
+              'Webhook recovery reconciliation required; owner=tixmo-backend; retry after 60 seconds.',
+          },
+        });
       }
     }
     const lost = await prisma.paymentAttempt.findMany({

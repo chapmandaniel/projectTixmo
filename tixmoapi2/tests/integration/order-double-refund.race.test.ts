@@ -344,6 +344,12 @@ test.each([false, true])(
       ).toEqual(new Set(['refund-' + record.id]));
 
       [...value.fake.refunds.values()][0].status = 'succeeded';
+      await value.service.recoverRefunds();
+      expect(await snapshot(value)).toEqual(stillPending); // Fresh row cannot finalize early.
+      await prisma.paymentRefund.update({
+        where: { id: record.id },
+        data: { updatedAt: new Date(Date.now() - 60001) },
+      });
       await Promise.all([value.service.recoverRefunds(), value.service.recoverRefunds()]);
       const finalized = await snapshot(value);
       expectFinalized(finalized, value);
@@ -431,6 +437,13 @@ test.each(['type', 'tier'] as const)(
       });
     else
       await prisma.ticketTier.update({ where: { id: value.tier.id }, data: { quantitySold: 4 } });
+    const repairedBeforeCooldown = await snapshot(value);
+    await value.service.recoverRefunds();
+    expect(await snapshot(value)).toEqual(repairedBeforeCooldown); // Still cooling down.
+    await prisma.paymentRefund.update({
+      where: { id: failedFinalization.refunds[0].id },
+      data: { updatedAt: new Date(Date.now() - 60001) },
+    });
     await Promise.all([value.service.recoverRefunds(), value.service.recoverRefunds()]);
     const recovered = await snapshot(value);
     expectFinalized(recovered, value);
