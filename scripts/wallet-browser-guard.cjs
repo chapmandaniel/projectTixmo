@@ -28,6 +28,7 @@ function validateWalletBrowser(env) {
 function walletBrowserDiagnostic(value) {
   if (!value || !Number.isInteger(value.stage) || value.stage < 1 || value.stage > 18 ||
       !['progress', 'assertion', 'deadline', 'other'].includes(value.category)) return null;
-  return { stage: value.stage, category: value.category };
+  if (value.startupPhase !== undefined && (!Number.isInteger(value.startupPhase) || value.startupPhase < 0 || value.startupPhase > 9)) return null;
+  return { stage: value.stage, category: value.category, ...(value.startupPhase === undefined ? {} : { startupPhase: value.startupPhase }) };
 }
 module.exports = { validateWalletBrowser, walletBrowserDiagnostic };
