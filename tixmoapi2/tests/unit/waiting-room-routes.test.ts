@@ -87,6 +87,8 @@ jest.doMock('../../src/api/tickets/controller', () => ({
   validateTicket: controller,
 }));
 jest.doMock('../../src/api/auth/controller', () => ({
+  forgotPassword: controller,
+  resetPassword: controller,
   acceptInvitation: controller,
   getCurrentUser: controller,
   login: controller,
@@ -189,6 +191,8 @@ it('scanner PUT retains validation and does not acquire', async () => {
   expect(evalLease).not.toHaveBeenCalled();
 });
 it.each([
+  ['post', '/auth/forgot-password'],
+  ['post', '/auth/reset-password'],
   ['post', '/auth/accept-invitation'],
   ['post', '/auth/register'],
   ['post', '/auth/login'],
