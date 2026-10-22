@@ -89,3 +89,41 @@ provider/spend/push/merge/deploy. Jest setup bootstraps schema, so it was NOT ru
 No capacity PASS or runtime grant. Independent lead AND QA must inspect this
 exact committed checkpoint; PM queues any continuation next cycle. Full246 and
 its prerequisites remain OPEN. Task499 must not be closed as implementation.
+
+## Additional426/448 reuse assessment (parent-requested checkpoint follow-up)
+
+Read exact426 `510824df9e9bb7f5e57984862728b52929f7f849` qualification
+source, lifecycle.cjs and middleware-lifetime.cjs; read exact448
+`843f0245eed7567350185190f85a6aefe60ecbef` complete RUNNER-CHECKPOINT.
+These commits are separate unmerged inputs, not present on assigned5526991 base.
+
+Correction/qualification to "no reusable seam": **426 does provide a candidate
+bounded mutable-work tracker and promiseMiddleware continuation wrapper.** It
+must be reused as the starting point rather than inventing another tracker.
+Its qualification instruments catchAsync, auth, waitingRoom, validation, limiter
+continuations and detached Redis work before importing app. This is materially
+stronger than379's client-wrapper joins. Its finalize gates instrumentation
+restoration and disconnect on successful work.join; timeout is not cancellation.
+
+It is not a drop-in499 seam: setup fixtures/snapshot queries/cancellation are
+outside work.run; no preallocated fixture inventory or permanent suite-admission
+latch is supplied. The test exercises three gated abort phases plus one healthy
+request, not100 barrier-released requests and last-ten cancellation/sentinel
+invariants. Server socket drain precedes bounded mutable join and itself awaits
+server.close without a deadline. 448's shell still refuses all runtime admission;
+its stubborn DIRECT-child proof is not full escaped-tree/process containment.
+These observations do not require changing the independently reviewed426/448
+files and do not dispute their deliberately bounded acceptance.
+
+Smallest next SOURCE prerequisite: apply/reuse426 tracker + continuation
+instrumentation in an opt-in499 qualification source, preallocate whole owned
+fixture inventory and integrate493's permanent uncertain-settlement latch around
+ALL raw acquisition/setup/request/observer/cancellation/close work. Prove with
+extracted-helper fakes that unresolved server-side continuation prevents cleanup,
+disconnect and new fixture admission even after HTTP wrapper settlement. Then
+add last-ten assertions above. No process helper/runner rewrite or completion
+of all448 runtime gaps is required merely to prepare this source; **the blocker
+here is safe bounded source adaptation within the checkpoint, not permission
+or a missing library.** This checkpoint supplies evidence instead of guessing
+that copied wrappers establish request lifetime. PM should queue that precise
+continuation next cycle. No426/448 probe or application code was executed here.
