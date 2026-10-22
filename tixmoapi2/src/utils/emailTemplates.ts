@@ -5,15 +5,59 @@ export interface EmailTemplate {
   text: string;
 }
 
+const escapeReceiptHtml = (value: string | number): string =>
+  String(value).replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return entities[character];
+  });
+
+// Only the server-configured CLIENT_URL is supplied by NotificationService.
+// Never accept an order/customer-provided destination, or carry URL credentials/tokens.
+const receiptWalletUrl = (clientUrl: string): string | undefined => {
+  try {
+    if (!clientUrl || /[\s\\]/.test(clientUrl)) return undefined;
+    const base = new URL(clientUrl);
+    const local = ['localhost', '127.0.0.1', '[::1]'].includes(base.hostname);
+    if (
+      (base.protocol !== 'https:' && !(base.protocol === 'http:' && local)) ||
+      base.username ||
+      base.password ||
+      base.search ||
+      base.hash
+    )
+      return undefined;
+    return new URL('/wallet', base).toString();
+  } catch {
+    // Preserve the receipt and existing account guidance if configuration is unusable.
+    return undefined;
+  }
+};
+
 // Order confirmation email
-export function orderConfirmationEmail(data: {
-  customerName: string;
-  orderNumber: string;
-  eventName: string;
-  eventDate: string;
-  ticketCount: number;
-  totalAmount: string;
-}): EmailTemplate {
+export function orderConfirmationEmail(
+  data: {
+    customerName: string;
+    orderNumber: string;
+    eventName: string;
+    eventDate: string;
+    ticketCount: number;
+    totalAmount: string;
+  },
+  clientUrl: string
+): EmailTemplate {
+  const walletUrl = receiptWalletUrl(clientUrl);
+  const walletHtml = walletUrl
+    ? `<p><a href="${escapeReceiptHtml(walletUrl)}">View your tickets</a>. Sign in with the account used for this order.</p>`
+    : '';
+  const walletText = walletUrl
+    ? `View your tickets: ${walletUrl}\n      Sign in with the account used for this order.`
+    : '';
   return {
     subject: `Order Confirmation - ${data.eventName}`,
     html: `
@@ -35,16 +79,17 @@ export function orderConfirmationEmail(data: {
               <h1>Order Confirmed!</h1>
             </div>
             <div class="content">
-              <p>Hi ${data.customerName},</p>
+              <p>Hi ${escapeReceiptHtml(data.customerName)},</p>
               <p>Thank you for your order! Your tickets are confirmed.</p>
               <div class="details">
-                <p><strong>Order Number:</strong> ${data.orderNumber}</p>
-                <p><strong>Event:</strong> ${data.eventName}</p>
-                <p><strong>Date:</strong> ${data.eventDate}</p>
-                <p><strong>Tickets:</strong> ${data.ticketCount}</p>
-                <p><strong>Total:</strong> $${data.totalAmount}</p>
+                <p><strong>Order Number:</strong> ${escapeReceiptHtml(data.orderNumber)}</p>
+                <p><strong>Event:</strong> ${escapeReceiptHtml(data.eventName)}</p>
+                <p><strong>Date:</strong> ${escapeReceiptHtml(data.eventDate)}</p>
+                <p><strong>Tickets:</strong> ${escapeReceiptHtml(data.ticketCount)}</p>
+                <p><strong>Total:</strong> $${escapeReceiptHtml(data.totalAmount)}</p>
               </div>
               <p>Your tickets will be available in your account shortly.</p>
+              ${walletHtml}
             </div>
             <div class="footer">
               <p>TixMo - Event Ticketing Platform</p>
@@ -68,6 +113,7 @@ export function orderConfirmationEmail(data: {
       Total: $${data.totalAmount}
       
       Your tickets will be available in your account shortly.
+      ${walletText}
       
       TixMo - Event Ticketing Platform
     `,

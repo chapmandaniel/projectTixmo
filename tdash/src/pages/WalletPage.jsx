@@ -7,6 +7,7 @@ import { DashboardButton, DashboardChip, DashboardPage, DashboardPageHeader, Das
 const payload = (response) => response?.data?.data || response?.data || response;
 const money = (order) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: (order.currency || 'usd').toUpperCase() }).format(order.totalAmount);
 const WalletPage = ({ user, onAuthenticated }) => {
+    const [sessionExpired, setSessionExpired] = useState(false);
     const [orders, setOrders] = useState([]);
     const [tickets, setTickets] = useState([]);
     const [page, setPage] = useState(1);
@@ -20,8 +21,20 @@ const WalletPage = ({ user, onAuthenticated }) => {
     const [transfer, setTransfer] = useState(null);
     const [recipient, setRecipient] = useState('');
     const [refund, setRefund] = useState(null);
+    const handleError = (e) => {
+        if (e.response?.status === 401) {
+            setSessionExpired(true);
+            setOrders([]); setTickets([]); setQr(null); setTransfer(null); setRefund(null); setNotice('');
+            setError('');
+        } else setError(e.response?.data?.message || e.message);
+    };
+    const handleAuthenticated = (buyer) => {
+        setSessionExpired(false);
+        setRefresh(n => n + 1);
+        onAuthenticated(buyer);
+    };
     useEffect(() => {
-        if (!user) return undefined;
+        if (!user || sessionExpired) return undefined;
         let cancelled = false;
         setLoading(true); setError(''); setQr(null);
         Promise.all([api.get(`/orders/mine?page=${page}&limit=20`), api.get(`/tickets/mine?page=${page}&limit=20`)])
@@ -30,21 +43,24 @@ const WalletPage = ({ user, onAuthenticated }) => {
                 const o = payload(orderResponse), t = payload(ticketResponse);
                 setOrders(o.orders || []); setTickets(t.tickets || []);
                 setPages(Math.max(o.pagination?.pages || 1, t.pagination?.pages || 1));
-            }).catch(e => { if (!cancelled) setError(e.response?.data?.message || e.message); })
+            }).catch(e => { if (!cancelled) handleError(e); })
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
-    }, [user?.id, page, refresh]);
+    }, [user?.id, page, refresh, sessionExpired]);
     const action = async (fn, refreshAfter = true) => {
         setBusy(true); setError(''); setNotice('');
         try { await fn(); if (refreshAfter) setRefresh(n => n + 1); }
-        catch (e) { setError(e.response?.data?.message || e.message); }
+        catch (e) { handleError(e); }
         finally { setBusy(false); }
     };
     return <main className="min-h-screen bg-dashboard-shell px-4 py-8 text-zinc-100 sm:px-8">
         <DashboardPage className="mx-auto max-w-5xl">
             <DashboardPageHeader isDark title="My tickets" description={user ? user.email : 'Sign in to view tickets, payment status, and refunds.'}
-                actions={user ? <DashboardButton isDark variant="secondary" disabled={loading || busy} onClick={() => setRefresh(n => n + 1)}>Refresh</DashboardButton> : null} />
-            {!user ? <BuyerAuthPanel currentUser={null} onAuthenticated={onAuthenticated} /> : <>
+                actions={user && !sessionExpired ? <DashboardButton isDark variant="secondary" disabled={loading || busy} onClick={() => setRefresh(n => n + 1)}>Refresh</DashboardButton> : null} />
+            {!user || sessionExpired ? <>
+                {sessionExpired ? <p role="status">Your session expired. Sign in again to retrieve your tickets. Do not purchase again.</p> : null}
+                <BuyerAuthPanel currentUser={null} onAuthenticated={handleAuthenticated} />
+            </> : <>
                 {error ? <p role="alert">{error}</p> : null}
                 {notice ? <p role="status">{notice}</p> : null}
                 {loading ? <p role="status">Loading wallet…</p> : <>
