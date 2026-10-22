@@ -9,7 +9,12 @@ import prisma from '../../src/config/prisma';
 
 const root = path.resolve(__dirname, '../..');
 const worker = path.join(__dirname, 'fixtures/payment-recovery-worker.cjs');
-type Reply = { type: string; pid: number; calls: string[][] };
+type Reply = {
+  type: string;
+  pid: number;
+  calls: string[][];
+  casSnapshot?: Record<string, unknown>;
+};
 type Spec = {
   mode: string;
   orderIds: string[];
@@ -329,6 +334,7 @@ describe('Recovery queue and old-window durable effects on real SQL', () => {
           type: 'task566.synthetic.unsupported',
           status: 'FAILED',
           attemptGeneration: i < 50 ? 7n : 0n,
+          leaseToken: i < 50 ? 'owned-lease-' + id : null,
           processingStartedAt: new Date(now - 600000),
           updatedAt: new Date(now - 180000 + i),
         })),
@@ -350,6 +356,9 @@ describe('Recovery queue and old-window durable effects on real SQL', () => {
           errorMessage:
             'Webhook recovery reconciliation required; owner=tixmo-backend; retry after 60 seconds.',
         });
+        const original = before.find((value) => value.id === row.id)!;
+        expect(row.leaseToken).toBe(original.leaseToken);
+        expect(row.processingStartedAt).toEqual(original.processingStartedAt);
         expect(row.updatedAt.getTime()).toBeGreaterThan(now - 1000);
       }
       const second = await run(spec({ mode: 'webhook', poisonEvents: ids.events.slice(0, 50) }));
@@ -374,6 +383,51 @@ describe('Recovery queue and old-window durable effects on real SQL', () => {
       expect(
         (await run(spec({ mode: 'webhook', poisonEvents: ids.events.slice(0, 50) }))).calls
       ).toEqual([['event', ids.events[0]]]);
+      expect(await foreign()).toEqual(beforeForeign);
+      expect(effects()).toHaveLength(0);
+    }
+  );
+
+  qualify(
+    'stale retrieval failure cannot overwrite a newer real SQL generation completion',
+    async () => {
+      await seedRefunds(1, 0, [{ index: 0, manual: true }]);
+      const beforeFinancial = await snapshot(0),
+        beforeForeign = await foreign();
+      const id = ids.events[0];
+      await prisma.paymentWebhookEvent.create({
+        data: {
+          id,
+          type: 'task566.synthetic.unsupported',
+          status: 'FAILED',
+          attemptGeneration: 7n,
+          leaseToken: 'old-owned-lease',
+          processedAt: null,
+          processingStartedAt: new Date(Date.now() - 600000),
+          updatedAt: new Date(Date.now() - 120000),
+        },
+      });
+      const reply = await run(spec({ mode: 'webhook', casEvent: id }));
+      expect(reply.calls).toEqual([['event', id]]);
+      expect(reply.casSnapshot).toBeDefined();
+      const final = await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id } });
+      expect(final).toMatchObject({
+        status: 'PROCESSED',
+        attemptGeneration: 8n,
+        errorMessage: null,
+        leaseToken: null,
+      });
+      expect(final.processedAt).not.toBeNull();
+      // Compare the entire committed row, including timestamps, after the older
+      // recoverPayments catch attempts its stale-selection metadata CAS.
+      expect(
+        JSON.parse(
+          JSON.stringify(final, (_key, value) =>
+            typeof value === 'bigint' ? value.toString() : value
+          )
+        )
+      ).toEqual(reply.casSnapshot);
+      expect(await snapshot(0)).toEqual(beforeFinancial);
       expect(await foreign()).toEqual(beforeForeign);
       expect(effects()).toHaveLength(0);
     }

@@ -19,6 +19,8 @@ assert(
   'Build API before recovery integration tests; dist predates PaymentService source'
 );
 const calls = [];
+let completeCompetingEvent;
+let casSnapshot;
 const ledger = () => JSON.parse(fs.readFileSync(spec.ledger, 'utf8'));
 const writeLedger = (value) => {
   const fd = fs.openSync(spec.ledger, 'w', 0o600);
@@ -84,6 +86,10 @@ const provider = {
   events: {
     retrieve: async (id) => {
       calls.push(['event', id]);
+      if (spec.casEvent === id) {
+        await completeCompetingEvent(id);
+        throw new Error('Synthetic stale retrieval failure after newer completion');
+      }
       if (spec.poisonEvents.includes(id)) throw new Error('Synthetic event unavailable');
       return { id, type: 'task566.synthetic.unsupported', data: { object: {} } };
     },
@@ -128,10 +134,22 @@ Module._load = function (request, parent, isMain) {
   try {
     const { PaymentService } = require(compiled);
     const service = new PaymentService();
+    completeCompetingEvent = async (id) => {
+      // Same database, actual generation admission and terminal CAS, before the
+      // selected worker sees its provider rejection. No financial event effect.
+      await new PaymentService().processEvent({
+        id,
+        type: 'task566.synthetic.unsupported',
+        data: { object: {} },
+      });
+      const row = await db.paymentWebhookEvent.findUniqueOrThrow({ where: { id } });
+      casSnapshot = { ...row, attemptGeneration: row.attemptGeneration.toString() };
+    };
+
     if (spec.mode === 'webhook') await service.recoverPayments();
     else await service.recoverRefunds();
     await db.$disconnect();
-    process.send({ type: 'complete', pid: process.pid, calls });
+    process.send({ type: 'complete', pid: process.pid, calls, casSnapshot });
     process.disconnect();
   } catch (error) {
     await db.$disconnect();
