@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { UserRole } from '@prisma/client';
+import { config } from '../../src/config/environment';
 
 process.env.NODE_ENV = 'test';
 
@@ -73,12 +74,19 @@ const expectSuccess = (response: request.Response, status: number, label: string
 };
 
 describe('V1 market readiness smoke', () => {
+  let shareKey: ReturnType<typeof jest.replaceProperty> | undefined;
   beforeAll(async () => {
+    // Synthetic key belongs only to this smoke fixture, never application defaults.
+    shareKey = jest.replaceProperty(config, 'assetShareEncryptionKey', '34'.repeat(32));
     await cleanupTestData();
   });
 
   afterAll(async () => {
-    await cleanupTestData();
+    try {
+      await cleanupTestData();
+    } finally {
+      shareKey?.restore();
+    }
   });
 
   it('runs the operator, checkout, scanner, asset, approval, and analytics path', async () => {
