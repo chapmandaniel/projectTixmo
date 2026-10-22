@@ -110,10 +110,6 @@ it.each([
     { STRIPE_SECRET_KEY: ['sk', 'live', 'SyntheticSecretCanary123456'].join('_') },
     'test-key-format',
   ],
-  [
-    { STRIPE_SECRET_KEY: ['rk', 'test', 'SyntheticSecretCanary123456'].join('_') },
-    'test-key-format',
-  ],
   [{ STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY + '\n' }, 'test-key-format'],
   [{ TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: '' }, 'expected-url-missing'],
   [
@@ -151,9 +147,28 @@ it.each([
     'expected-url-canonical',
   ],
   [{ TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected + '\n' }, 'expected-url-canonical'],
-  [{ STRIPE_SECRET_KEY: ['sk', 'test', 'short'].join('_') }, 'test-key-format'],
-  [{ STRIPE_SECRET_KEY: ['sk', 'test', 'a'.repeat(241)].join('_') }, 'test-key-format'],
-  [{ STRIPE_SECRET_KEY: ['sk', 'test', 'a'.repeat(12) + '_suffix'].join('_') }, 'test-key-format'],
+  ...['sk', 'rk'].map((family) => [
+    { STRIPE_SECRET_KEY: [family, 'test', ''].join('_') },
+    'test-key-format',
+  ]),
+  [{ STRIPE_SECRET_KEY: ['sk', 'test', 'a'.repeat(505)].join('_') }, 'test-key-format'],
+  ...[
+    ['rk', 'live'],
+    ['pk', 'test'],
+    ['pk', 'live'],
+    ['sk', 'org'],
+  ].map((prefix) => [
+    { STRIPE_SECRET_KEY: [...prefix, 'SyntheticCanary'].join('_') },
+    'test-key-format',
+  ]),
+  ...[' ', '\t', '\r', '\n', '\0', '\x1f', '\x7f', '\u00a0', '\u2028', '😀'].map((byte) => [
+    { STRIPE_SECRET_KEY: ['rk', 'test', 'opaque' + byte + 'canary'].join('_') },
+    'test-key-format',
+  ]),
+  ...[null, undefined, 42, {}, []].map((value) => [
+    { STRIPE_SECRET_KEY: value },
+    'test-key-format',
+  ]),
 ] as Array<[Record<string, unknown>, string]>)(
   'classifies a rejected guard as a fixed reason before SDK loading',
   async (mutation, guardReason) => {
@@ -277,6 +292,7 @@ it.each(['sdk', 'balance', 'webhooks'])(
       scope: 'stripe-test-v1-webhook-endpoints-only',
       phase,
       writeIsolationProved: false,
+      ...(phase === 'sdk' ? {} : { providerErrorCategory: 'generic' }),
     });
   }
 );
@@ -365,4 +381,94 @@ it('rejects CLI arguments without loading SDK and clears its deadline', async ()
     process.exitCode = exitCode;
     jest.useRealTimers();
   }
+});
+
+it.each([
+  { components: ['sk', 'test', 'opaque_suffix-with-hyphen'] },
+  { components: ['rk', 'test', 'opaque_suffix-with-hyphen'] },
+  { components: ['sk', 'test', 'x'] },
+  { components: ['rk', 'test', 'x'] },
+  { components: ['sk', 'test', 'a'.repeat(241)] },
+  { components: ['rk', 'test', 'a'.repeat(504)] },
+  { components: ['sk', 'test', '!visible~ascii:opaque/+='] },
+])(
+  'passes documented test families with an opaque bounded visible suffix unchanged to SDK',
+  async ({ components }) => {
+    const key = components.join('_');
+    const fixture = sdk();
+    expect(guard({ ...env, STRIPE_SECRET_KEY: key }).key).toBe(key);
+    expect(await observe({ ...env, STRIPE_SECRET_KEY: key }, fixture.load)).toMatchObject({
+      ok: true,
+      testMode: true,
+      writeIsolationProved: false,
+    });
+    expect(fixture.load.mock.results[0].value.mock.calls[0][0]).toBe(key);
+    expect(fixture.calls).toEqual(['balance', 'endpoints']);
+  }
+);
+it.each([
+  ['StripeAuthenticationError', 'authentication'],
+  ['StripePermissionError', 'permission'],
+  ['StripeConnectionError', 'connection'],
+  ['StripeRateLimitError', 'rate-limit'],
+  ['StripeInvalidRequestError', 'invalid-request'],
+  ['StripeAPIError', 'api'],
+  ['private-canary', 'generic'],
+])('reduces provider failure types to fixed categories without values', async (type, category) => {
+  const fixture = sdk();
+  const error = Object.assign(new Error('private-canary https://private.invalid'), {
+    type,
+    code: 'private-canary',
+    headers: { authorization: 'private-canary' },
+  });
+  fixture.retrieve.mockRejectedValue(error);
+  const output = await observe(env, fixture.load);
+  expect(output).toEqual({
+    ok: false,
+    scope: 'stripe-test-v1-webhook-endpoints-only',
+    phase: 'balance',
+    writeIsolationProved: false,
+    providerErrorCategory: category,
+  });
+  expect(fixture.enumerate).not.toHaveBeenCalled();
+  expect(JSON.stringify(output)).not.toMatch(/canary|https:|Stripe|authorization/);
+});
+it('a restricted test key with insufficient endpoint permissions remains fail-closed after one balance GET', async () => {
+  const fixture = sdk();
+  fixture.enumerate.mockRejectedValue(
+    Object.assign(new Error('private-canary'), { type: 'StripePermissionError' })
+  );
+  const key = ['rk', 'test', 'opaque_synthetic-only'].join('_');
+  expect(await observe({ ...env, STRIPE_SECRET_KEY: key }, fixture.load)).toEqual({
+    ok: false,
+    scope: 'stripe-test-v1-webhook-endpoints-only',
+    phase: 'webhooks',
+    writeIsolationProved: false,
+    providerErrorCategory: 'permission',
+  });
+  expect(fixture.retrieve.mock.invocationCallOrder[0]).toBeLessThan(
+    fixture.enumerate.mock.invocationCallOrder[0]
+  );
+  expect(fixture.retrieve).toHaveBeenCalledTimes(1);
+  expect(fixture.enumerate).toHaveBeenCalledTimes(1);
+});
+it('malformed error type getters and response-mode failures expose only generic categories', async () => {
+  const fixture = sdk();
+  const error = new Error('private-canary');
+  Object.defineProperty(error, 'type', {
+    get() {
+      throw new Error('private-canary');
+    },
+  });
+  fixture.retrieve.mockRejectedValue(error);
+  expect(await observe(env, fixture.load)).toMatchObject({
+    ok: false,
+    phase: 'balance',
+    providerErrorCategory: 'generic',
+  });
+  expect(await observe(env, sdk({ object: 'balance', livemode: true }).load)).toMatchObject({
+    ok: false,
+    phase: 'balance',
+    providerErrorCategory: 'generic',
+  });
 });
