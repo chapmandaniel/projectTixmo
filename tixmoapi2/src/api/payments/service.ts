@@ -594,26 +594,30 @@ export class PaymentService {
         : ['failed', 'canceled'].includes(refund.status || '')
           ? 'FAILED'
           : 'PROCESSING';
-    await prisma.paymentRefund.update({
-      where: { id },
+    // A delayed provider response must not undo another worker's settlement.
+    const saved = await prisma.paymentRefund.updateMany({
+      where: { id, status: { not: 'SUCCEEDED' } },
       data: {
         stripeRefundId: refund.id,
         status,
         errorMessage: refund.failure_reason || null,
       },
     });
-    if (status === 'SUCCEEDED' && record.reason !== 'ORDER_REFUND') {
+    const effectiveStatus = saved.count
+      ? status
+      : (await prisma.paymentRefund.findUniqueOrThrow({ where: { id } })).status;
+    if (effectiveStatus === 'SUCCEEDED' && record.reason !== 'ORDER_REFUND') {
       await prisma.order.updateMany({
         where: { id: record.orderId, status: 'CANCELLED', paymentIntentId: record.paymentIntentId },
         data: { paymentClosedAt: new Date(), paymentStatus: 'SUCCEEDED' },
       });
     }
     if (record.reason === 'ORDER_REFUND') {
-      if (status === 'SUCCEEDED') await orderService.finalizeRefund(record.orderId);
+      if (effectiveStatus === 'SUCCEEDED') await orderService.finalizeRefund(record.orderId);
       else
         await prisma.order.updateMany({
           where: { id: record.orderId, status: 'PAID' },
-          data: { refundStatus: status },
+          data: { refundStatus: effectiveStatus },
         });
     }
   }
