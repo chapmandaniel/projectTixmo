@@ -78,7 +78,9 @@ async function observe(args, env, dependencies = {}) {
     redis = createClient({
       url: plan.redisUrl,
       disableOfflineQueue: true,
-      commandsQueueMaxLength: 1,
+      // AUTH and optional SELECT are queued together during handshake.
+      disableClientInfo: true,
+      commandsQueueMaxLength: 2,
       socket: { connectTimeout: 3000, reconnectStrategy: false },
     });
     redis.on('error', () => {
