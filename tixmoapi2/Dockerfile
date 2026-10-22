@@ -26,7 +26,7 @@ COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY prisma/schema.prisma ./prisma/schema.prisma
 COPY prisma/migrations ./prisma/migrations
-COPY prisma/bootstrap-owner.js prisma/rotate-account-credentials.js prisma/reconcile-approval-reminders.js prisma/reconcile-ticket-inventory.js ./prisma/
+COPY prisma/bootstrap-owner.js prisma/rotate-account-credentials.js prisma/reconcile-approval-reminders.js prisma/reconcile-ticket-inventory.js prisma/rekey-asset-shares.js ./prisma/
 RUN mkdir -p logs tmp && chown node:node logs tmp
 USER node
 EXPOSE 3000
