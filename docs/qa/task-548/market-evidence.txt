@@ -1,0 +1,30 @@
+local-gates	Install API dependencies	2026-10-22T05:04:17.8590940Z found 0 vulnerabilities
+local-gates	Install dashboard dependencies	2026-10-22T05:04:19.7638092Z found 0 vulnerabilities
+local-gates	Run market readiness gates	2026-10-22T05:04:19.8930532Z [verify:market] API dependency audit
+local-gates	Run market readiness gates	2026-10-22T05:04:20.2705302Z found 0 vulnerabilities
+local-gates	Run market readiness gates	2026-10-22T05:04:20.2777085Z [verify:market] Dashboard dependency audit
+local-gates	Run market readiness gates	2026-10-22T05:04:20.5934605Z found 0 vulnerabilities
+local-gates	Run market readiness gates	2026-10-22T05:04:20.5993695Z [verify:market] API tooling checks
+local-gates	Run market readiness gates	2026-10-22T05:04:23.8835018Z [verify:market] Development helper safety checks
+local-gates	Run market readiness gates	2026-10-22T05:04:25.8943151Z [verify:market] Root verification safety checks
+local-gates	Run market readiness gates	2026-10-22T05:04:26.0396065Z [verify:market] API build
+local-gates	Run market readiness gates	2026-10-22T05:04:32.2899816Z [verify:market] API verification
+local-gates	Run market readiness gates	2026-10-22T05:06:35.3223780Z [verify:api] API verification passed.
+local-gates	Run market readiness gates	2026-10-22T05:06:35.3310536Z [verify:market] API lint
+local-gates	Run market readiness gates	2026-10-22T05:06:46.7878186Z ✖ 360 problems (0 errors, 360 warnings)
+local-gates	Run market readiness gates	2026-10-22T05:06:46.9152677Z [verify:market] Dashboard tests
+local-gates	Run market readiness gates	2026-10-22T05:07:03.7186627Z [2m Test Files [22m [1m[32m38 passed[39m[22m[90m (38)[39m
+local-gates	Run market readiness gates	2026-10-22T05:07:03.7187652Z [2m      Tests [22m [1m[32m281 passed[39m[22m[90m (281)[39m
+local-gates	Run market readiness gates	2026-10-22T05:07:03.7723545Z [verify:market] Dashboard design guard
+local-gates	Run market readiness gates	2026-10-22T05:07:03.8884938Z Design-system guard passed with 924 tracked baseline violation(s) and no regressions.
+local-gates	Run market readiness gates	2026-10-22T05:07:03.8966800Z [verify:market] Dashboard build
+local-gates	Run market readiness gates	2026-10-22T05:07:10.6900260Z [verify:market] Root helper syntax
+local-gates	Run market readiness gates	2026-10-22T05:07:10.7073715Z [verify:market] Status checker syntax
+local-gates	Run market readiness gates	2026-10-22T05:07:10.7237023Z [verify:market] External smoke syntax
+local-gates	Run market readiness gates	2026-10-22T05:07:10.7417419Z [verify:market] Market readiness local gates passed.
+local-gates	Stop containers	2026-10-22T05:07:11.0229083Z Stop and remove container: 9285145c39e9452a9c3f72eb83d0a59f_postgres14_69838f
+local-gates	Stop containers	2026-10-22T05:07:11.0232319Z ##[command]/usr/bin/docker rm --force 2844af48e2c89f11cc8c9d8e5bbc49dd0ec0b270daf34e9e36633f9a960bcd1c
+local-gates	Stop containers	2026-10-22T05:07:11.1822917Z Stop and remove container: a51942b1bef948f3aca70cce185f4ae9_redis7_617eb2
+local-gates	Stop containers	2026-10-22T05:07:11.1823401Z ##[command]/usr/bin/docker rm --force a70fd78ef75070bd6c90da4562fdbf92876e814294b9a66aa6a2634b227b5ddd
+local-gates	Stop containers	2026-10-22T05:07:11.2799812Z ##[command]/usr/bin/docker network rm github_network_0ccdcdc1d1d545e0a18f69413525ab88
+local-gates	Complete job	﻿2026-10-22T05:07:11.3432985Z Cleaning up orphan processes
