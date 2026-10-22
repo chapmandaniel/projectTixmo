@@ -1,6 +1,9 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import {
   AssetShareKeys,
+  AssetShareValidationError,
+  AssetShareValidationSummary,
+  classifyAssetShareToken,
   encryptAssetShareToken,
   validAssetShareKey,
   verifiedAssetShareToken,
@@ -44,17 +47,31 @@ export async function rekeyAssetShares(
       // Validate the entire selected set before any write; corrupt or unknown data blocks apply.
       const prepared = rows.map((row) => ({
         row,
-        token: verifiedAssetShareToken(row.tokenCiphertext, row.tokenHash, keys),
+        validation: classifyAssetShareToken(row.tokenCiphertext, row.tokenHash, keys),
       }));
-      if (prepared.some((item) => !item.token))
-        throw new Error('Asset share rekey verification failed');
+      const summary: AssetShareValidationSummary = {
+        scanned: rows.length,
+        scope: options.organizationId ? 'organization' : 'all',
+        missingCipher: 0,
+        unknownFormat: 0,
+        malformedEnvelope: 0,
+        decryptFailed: 0,
+        invalidHash: 0,
+        hashMismatch: 0,
+        validLegacy: 0,
+        validCurrent: 0,
+      };
+      for (const { validation } of prepared) summary[validation.category]++;
+      if (summary.validLegacy + summary.validCurrent !== summary.scanned)
+        throw new AssetShareValidationError(summary);
       let updated = 0;
       let legacy = 0;
-      for (const { row, token } of prepared) {
-        if (!row.tokenCiphertext!.startsWith('v1:')) continue;
+      for (const { row, validation } of prepared) {
+        if (validation.category !== 'validLegacy') continue;
+        const token = validation.token;
         legacy++;
         if (!options.apply) continue;
-        const ciphertext = encryptAssetShareToken(token!, keys);
+        const ciphertext = encryptAssetShareToken(token, keys);
         // Intentionally bypass Prisma @updatedAt: only ciphertext may change.
         const count = await tx.$executeRaw`
         UPDATE asset_library_folder_shares SET token_ciphertext = ${ciphertext}

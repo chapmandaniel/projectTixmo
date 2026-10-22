@@ -1,6 +1,7 @@
 import { createCipheriv, createHash, randomBytes } from 'crypto';
 import {
   decryptAssetShareToken,
+  classifyAssetShareToken,
   encryptAssetShareToken,
   hashAssetShareToken,
   verifiedAssetShareToken,
@@ -65,4 +66,35 @@ it('corruption and stored-hash mismatch never yield a URL token', () => {
   expect(decryptAssetShareToken(parts.join(':'), { key })).toBeUndefined();
   expect(verifiedAssetShareToken(value, '00'.repeat(32), { key })).toBeUndefined();
   expect(verifiedAssetShareToken(value, 'not-a-hash', { key })).toBeUndefined();
+});
+
+it('classifies all validation failures using the same acceptance path as token retrieval', () => {
+  const current = encryptAssetShareToken(token, { key });
+  const hash = hashAssetShareToken(token);
+  const damaged = current.split(':');
+  damaged[2] = Buffer.alloc(16).toString('base64url');
+  const cases: Array<
+    [string | null | undefined, string, { key?: string; legacySecret?: string }, string]
+  > = [
+    [null, hash, { key }, 'missingCipher'],
+    [undefined, hash, { key }, 'missingCipher'],
+    ['', hash, { key }, 'missingCipher'],
+    ['v9:a:b:c', hash, { key }, 'unknownFormat'],
+    ['v2:a:b:c', hash, { key }, 'malformedEnvelope'],
+    [current + ':extra', hash, { key }, 'malformedEnvelope'],
+    [damaged.join(':'), hash, { key }, 'decryptFailed'],
+    [current, hash, { key: '22'.repeat(32) }, 'decryptFailed'],
+    [legacy(), hash, { key }, 'decryptFailed'],
+    [current, 'invalid-private-canary', { key }, 'invalidHash'],
+    [current, '00'.repeat(32), { key }, 'hashMismatch'],
+    [legacy(), hash, { key, legacySecret }, 'validLegacy'],
+    [current, hash, { key }, 'validCurrent'],
+  ];
+  for (const [cipher, storedHash, config, category] of cases) {
+    const result = classifyAssetShareToken(cipher, storedHash, config);
+    expect(result.category).toBe(category);
+    const expected = category === 'validLegacy' || category === 'validCurrent' ? token : undefined;
+    expect(verifiedAssetShareToken(cipher, storedHash, config)).toBe(expected);
+    if (expected === undefined) expect(result).toEqual({ category });
+  }
 });

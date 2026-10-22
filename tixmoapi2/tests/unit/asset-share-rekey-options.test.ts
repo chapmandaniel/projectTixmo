@@ -1,3 +1,7 @@
+import {
+  AssetShareValidationError,
+  AssetShareValidationSummary,
+} from '../../src/services/asset-share-crypto';
 const assert = require('node:assert/strict');
 const { options } = require('../../prisma/rekey-asset-shares');
 const env = {
@@ -91,4 +95,82 @@ test('unknown errors, canaries and malformed properties never enter diagnostic o
       false
     );
   }
+});
+
+const { validationCounts } = require('../../prisma/rekey-asset-shares');
+const validation: AssetShareValidationSummary = {
+  scanned: 8,
+  scope: 'all',
+  missingCipher: 1,
+  unknownFormat: 1,
+  malformedEnvelope: 1,
+  decryptFailed: 1,
+  invalidHash: 1,
+  hashMismatch: 1,
+  validLegacy: 1,
+  validCurrent: 1,
+};
+test('trusted verification errors expose only fixed complete bounded aggregate counts', () => {
+  const error = new AssetShareValidationError(validation);
+  assert.deepEqual(validationCounts(error, AssetShareValidationError), validation);
+  assert.equal(JSON.stringify(error), '{}');
+  assert.equal(Object.isFrozen(error.summary), true);
+  const maximum = {
+    ...validation,
+    scanned: 10000,
+    missingCipher: 9993,
+    scope: 'organization' as const,
+  };
+  assert.deepEqual(
+    validationCounts(new AssetShareValidationError(maximum), AssetShareValidationError),
+    maximum
+  );
+});
+test('count projection rejects forged, partial, out-of-bound or secret-bearing summaries', () => {
+  const malformed = [
+    { ...validation, scanned: 10001 },
+    { ...validation, scanned: -1 },
+    { ...validation, scope: 'private-canary' },
+    { ...validation, missingCipher: -1 },
+    { ...validation, missingCipher: 0.5 },
+    { ...validation, missingCipher: NaN },
+    { ...validation, missingCipher: 9 },
+    { ...validation, validCurrent: 2 },
+    { ...validation, missingCipher: 'private-canary' },
+    { ...validation, token: 'private-canary' },
+    { ...validation, missingCipher: undefined },
+    {
+      ...validation,
+      scanned: 2,
+      missingCipher: 0,
+      unknownFormat: 0,
+      malformedEnvelope: 0,
+      decryptFailed: 0,
+      invalidHash: 0,
+      hashMismatch: 0,
+    },
+  ];
+  for (const value of malformed)
+    assert.equal(
+      validationCounts(new AssetShareValidationError(value as any), AssetShareValidationError),
+      undefined
+    );
+  const forged = Object.assign(new Error('Asset share rekey verification failed'), {
+    summary: validation,
+    token: 'private-canary',
+  });
+  const prototypeForgery = Object.setPrototypeOf(
+    new Error('private-canary'),
+    AssetShareValidationError.prototype
+  );
+  for (const value of [null, {}, forged, prototypeForgery, new Error('private-canary')]) {
+    assert.equal(validationCounts(value, AssetShareValidationError), undefined);
+    assert.equal(
+      JSON.stringify({ validation: validationCounts(value, AssetShareValidationError) }).includes(
+        'private-canary'
+      ),
+      false
+    );
+  }
+  assert.equal(validationCounts(new AssetShareValidationError(validation), undefined), undefined);
 });
