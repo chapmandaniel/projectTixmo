@@ -353,7 +353,13 @@ it('rejects CLI arguments without loading SDK and clears its deadline', async ()
     expect(load).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(1);
     expect(jest.getTimerCount()).toBe(0);
-    expect(JSON.parse(output.mock.calls[0][0])).toMatchObject({ ok: false, phase: 'guard' });
+    expect(JSON.parse(output.mock.calls[0][0])).toEqual({
+      ok: false,
+      scope: 'stripe-test-v1-webhook-endpoints-only',
+      phase: 'guard',
+      writeIsolationProved: false,
+      guardReason: 'arguments',
+    });
   } finally {
     output.mockRestore();
     process.exitCode = exitCode;

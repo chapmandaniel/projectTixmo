@@ -175,7 +175,13 @@ async function main(args = process.argv.slice(2), env = process.env, loadStripe)
     const result =
       args.length === 0
         ? await observe(env, loadStripe)
-        : { ok: false, scope: SCOPE, phase: 'guard', writeIsolationProved: false };
+        : {
+            ok: false,
+            scope: SCOPE,
+            phase: 'guard',
+            writeIsolationProved: false,
+            guardReason: 'arguments',
+          };
     if (expired) return;
     console.log(JSON.stringify(result));
     if (!result.ok) process.exitCode = 1;
