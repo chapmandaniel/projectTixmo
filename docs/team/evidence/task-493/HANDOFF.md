@@ -60,3 +60,35 @@ existing guards and execute the focused suite. Nothing here grants that action.
 No app imports/evaluation, Jest, services, DB connection/schema generation or
 migration, network, installs, environment/secrets reads, config/scheduler,
 provider/production/spend, push/merge/deploy occurred. Full248/243/launch OPEN.
+
+## R2 source repair after independent lead494
+
+Read immutable review `3d7b5cfbc72c2cfb2ac9cb10d960fe041b5a51ff`,
+`docs/team/evidence/task-494/REVIEW.md` before edits. Both P2 findings accepted.
+Original behavioral assertions retained; no product or prior test edits.
+
+- Preallocate and register exact org/user/event/type UUIDs before first INSERT,
+  so partial or ambiguous setup is still owned. Whole test-body promises are
+  tracked, including fixture construction, rather than only checkout requests.
+- afterEach first bounded-drains owned bodies and restores transaction spies in
+  finally. Only settled safe runs enter an FK-ordered cleanup transaction scoped
+  to those UUIDs: audit, tickets, orders, ticketType, event, user, organization.
+  Test-owned audit deletion is explicit disposable-fixture teardown, NOT a
+  product retention exception/API or removal of the RESTRICT relation.
+- Reused existing `payment-admission-aba` / `payment-competing-claims` nested
+  bounded-drain/finally-spy-restoration pattern. Concurrent request drain is now
+  bounded; fallback afterEach also restores spies even after a Jest timeout.
+- A drain or cleanup timeout/failure latches failClosed, reports exact owned IDs,
+  prevents subsequent tests reaching fixtures/SQL, skips further teardown and
+  skips disconnect against potentially active SQL. No claim that racing a timer
+  cancels a promise/query. Failed cleanup may itself remain active or later commit;
+  target must NOT be reused. No safe suite-owned SQL cancellation/reap primitive
+  was found: later authorized runtime owner must externally reap process and
+  exclusively owned disposable DB, retaining the logged fixture evidence first.
+- Concurrency test budget 20s; cleanup hook budget12s; internal gate/drain5s,
+  SQL-blocking poll3s and cleanup transaction maxWait2s/timeout4s. These are
+  failure detection budgets, not guarantees that transport cancellation works.
+
+R2 actual checks: inert Node strip/unlinked VM parse plus17 static markers PASS;
+whitespace PASS. SQL/Jest/typecheck/runtime still NOT RUN. Independent lead+QA
+must review the new exact SHA; full248/243/launch OPEN.

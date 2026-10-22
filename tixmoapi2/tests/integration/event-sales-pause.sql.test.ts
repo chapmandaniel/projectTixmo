@@ -21,20 +21,75 @@ async function bounded<T>(promise: Promise<T>): Promise<T> {
     })]);
   } finally { if (timer) clearTimeout(timer); }
 }
+// Own whole test bodies too: Jest timeout does not cancel their SQL promises.
+const live = new Set<Promise<unknown>>();
+const fixtures: Array<{ orgId: string; userId: string; eventId: string; typeId: string }> = [];
+const restorers = new Set<() => void>();
+let failClosed: Error | undefined;
+function owned(operation: () => Promise<void>): Promise<void> {
+  const work = operation();
+  live.add(work);
+  void work.then(() => live.delete(work), () => live.delete(work));
+  return work;
+}
+function preserve(error: unknown): never {
+  failClosed = new Error('Owned operations/cleanup did not settle safely; STOP suite and preserve fixture IDs: ' + JSON.stringify(fixtures));
+  console.error(failClosed.message, error);
+  throw failClosed;
+}
+beforeEach(() => { if (failClosed) throw failClosed; });
+afterEach(async () => {
+  try {
+    // A timeout race is NOT SQL cancellation. No cleanup or next test on failure.
+    if (failClosed) throw failClosed;
+    await bounded(Promise.allSettled([...live]));
+  } catch (error) { preserve(error); }
+  finally {
+    for (const restore of restorers) restore();
+    restorers.clear();
+  }
+  try {
+    // Only synthetic owned rows on the separately authorized disposable DB.
+    // Explicit test audit deletion respects the product's intentional RESTRICT;
+    // this is not a product retention/pruning policy.
+    await bounded(prisma.$transaction(async tx => {
+      for (const ids of fixtures) {
+        await tx.eventSalesControl.deleteMany({ where: { eventId: ids.eventId } });
+        await tx.ticket.deleteMany({ where: { eventId: ids.eventId } });
+        await tx.order.deleteMany({ where: { eventId: ids.eventId } });
+        await tx.ticketType.deleteMany({ where: { id: ids.typeId } });
+        await tx.event.deleteMany({ where: { id: ids.eventId } });
+        await tx.user.deleteMany({ where: { id: ids.userId } });
+        await tx.organization.deleteMany({ where: { id: ids.orgId } });
+      }
+    }, { maxWait: 2000, timeout: 4000 }));
+    fixtures.length = 0;
+  } catch (error) { preserve(error); }
+}, 12000);
+afterAll(async () => {
+  // No pretend cancellation or disconnect against possibly live SQL. On failure
+  // an external disposable-target owner must reap the process/DB before reuse.
+  if (failClosed) throw failClosed;
+  try { await bounded(prisma.$disconnect()); }
+  catch (error) { preserve(error); }
+});
+
 async function fixture(status: 'PUBLISHED' | 'ON_SALE' = 'ON_SALE') {
   const key = randomUUID();
-  const org = await prisma.organization.create({ data: { name: key, slug: key, type: 'PROMOTER' } });
+  const ids = { orgId: randomUUID(), userId: randomUUID(), eventId: randomUUID(), typeId: randomUUID() };
+  fixtures.push(ids); // before first INSERT: partial/ambiguous setup remains owned
+  const org = await prisma.organization.create({ data: { id: ids.orgId, name: key, slug: key, type: 'PROMOTER' } });
   const user = await prisma.user.create({ data: {
-    email: key + '@example.test', passwordHash: 'synthetic', firstName: 'Fixture',
+    id: ids.userId, email: key + '@example.test', passwordHash: 'synthetic', firstName: 'Fixture',
     lastName: '493', role: 'MANAGER', organizationId: org.id,
   } });
   const event = await prisma.event.create({ data: {
-    organizationId: org.id, name: key, slug: key, tags: [], status,
+    id: ids.eventId, organizationId: org.id, name: key, slug: key, tags: [], status,
     salesStart: new Date(Date.now() - 86400000), salesEnd: new Date(Date.now() + 86400000),
     startDatetime: new Date(Date.now() + 172800000),
   } });
   const type = await prisma.ticketType.create({ data: {
-    eventId: event.id, name: key, price: 10, quantityTotal: 10, quantityAvailable: 10,
+    id: ids.typeId, eventId: event.id, name: key, price: 10, quantityTotal: 10, quantityAvailable: 10,
   } });
   const actor = { userId: user.id, email: user.email, role: user.role, organizationId: org.id };
   const control = (paused: boolean, requestId = randomUUID(), reason = 'Synthetic incident review') =>
@@ -48,9 +103,8 @@ async function fixture(status: 'PUBLISHED' | 'ON_SALE' = 'ON_SALE') {
   });
   return { event, type, actor, control, create, snapshot };
 }
-afterAll(() => prisma.$disconnect());
 
-test.each(['PUBLISHED', 'ON_SALE'] as const)('%s rejects paused new orders; explicit resume preserves event and stock', async status => {
+test.each(['PUBLISHED', 'ON_SALE'] as const)('%s rejects paused new orders; explicit resume preserves event and stock', status => owned(async () => {
   const f = await fixture(status);
   const before = await f.snapshot();
   await f.control(true);
@@ -67,9 +121,9 @@ test.each(['PUBLISHED', 'ON_SALE'] as const)('%s rejects paused new orders; expl
   const after = await f.snapshot();
   expect(after.orders).toHaveLength(1);
   expect([after.stock.quantityAvailable, after.stock.quantityHeld]).toEqual([9, 1]);
-});
+}));
 
-test.each(['lifecycle', 'window', 'stock'] as const)('resume cannot repair an ineligible %s', async condition => {
+test.each(['lifecycle', 'window', 'stock'] as const)('resume cannot repair an ineligible %s', condition => owned(async () => {
   const f = await fixture();
   await f.control(true);
   if (condition === 'lifecycle') await prisma.event.update({ where: { id: f.event.id }, data: { status: 'SOLD_OUT' } });
@@ -82,9 +136,9 @@ test.each(['lifecycle', 'window', 'stock'] as const)('resume cannot repair an in
   expect(resumed.stock).toEqual(before.stock);
   await expect(f.create()).rejects.toMatchObject({ statusCode: 400 });
   expect(await f.snapshot()).toEqual(resumed);
-});
+}));
 
-test('same UUID is historical replay after resume; conflict and no-op preserve evidence semantics', async () => {
+test('same UUID is historical replay after resume; conflict and no-op preserve evidence semantics', () => owned(async () => {
   const f = await fixture();
   const requestId = randomUUID();
   const first = await f.control(true, requestId);
@@ -108,17 +162,19 @@ test('same UUID is historical replay after resume; conflict and no-op preserve e
   expect(await f.snapshot()).toEqual(resumed);
   expect(resumed.event.salesPaused).toBe(false);
   expect(resumed.audit).toHaveLength(3);
-});
+}));
 
 // Only wrap the transaction callback: every lock/read/write still reaches SQL.
 // The seam permits a deterministic barrier or a genuine FK failure, not mocked DB results.
 function interceptTransaction(wrap: (tx: any) => any) {
   const original = prisma.$transaction.bind(prisma);
-  return jest.spyOn(prisma, '$transaction').mockImplementation(((callback: any, options: any) =>
+  const spy = jest.spyOn(prisma, '$transaction').mockImplementation(((callback: any, options: any) =>
     original((tx: any) => callback(wrap(tx)), options)) as any);
+  restorers.add(() => spy.mockRestore());
+  return spy;
 }
 
-test('actual audit INSERT FK failure leaves event, stock, orders and evidence unchanged', async () => {
+test('actual audit INSERT FK failure leaves event, stock, orders and evidence unchanged', () => owned(async () => {
   const f = await fixture();
   const before = await f.snapshot();
   const spy = interceptTransaction(tx => new Proxy(tx, { get(target, property) {
@@ -131,9 +187,9 @@ test('actual audit INSERT FK failure leaves event, stock, orders and evidence un
   try { await expect(f.control(true)).rejects.toMatchObject({ code: 'P2003' }); }
   finally { spy.mockRestore(); }
   expect(await f.snapshot()).toEqual(before);
-});
+}));
 
-test.each(['pause', 'create'] as const)('%s serialized first holds the actual event row; later operation observes committed state', async first => {
+test.each(['pause', 'create'] as const)('%s serialized first holds the actual event row; later operation observes committed state', first => owned(async () => {
   const f = await fixture();
   const arrived = gate(), release = gate();
   let gated = false, holderPid = 0;
@@ -186,12 +242,13 @@ test.each(['pause', 'create'] as const)('%s serialized first holds the actual ev
     expect(await f.snapshot()).toEqual(after);
   } finally {
     release.resolve();
-    await Promise.allSettled(requests);
-    spy.mockRestore();
+    try { await bounded(Promise.allSettled(requests)); }
+    catch (error) { preserve(error); }
+    finally { spy.mockRestore(); }
   }
-}, 15000);
+}), 20000);
 
-test('generic writer carrying stale pause=false cannot clear a committed pause', async () => {
+test('generic writer carrying stale pause=false cannot clear a committed pause', () => owned(async () => {
   const f = await fixture();
   const stale = await f.snapshot();
   await f.control(true);
@@ -205,4 +262,4 @@ test('generic writer carrying stale pause=false cannot clear a committed pause',
   expect(after.audit).toEqual(paused.audit);
   expect(after.orders).toEqual(paused.orders);
   await expect(f.create()).rejects.toMatchObject({ errors: { code: 'SALES_PAUSED' } });
-});
+}));

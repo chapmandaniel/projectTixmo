@@ -13,8 +13,12 @@ const required = [
   "['pause', 'create']", 'pg_blocking_pids(pid)', "code: 'P2003'",
   "code: 'SALES_PAUSE_REQUEST_CONFLICT'", 'replayed: true',
   'noop.changed', 'stale.event.salesPaused', 'Promise.allSettled(requests)',
+  'fixtures.push(ids)', 'live.add(work)', 'beforeEach(() => { if (failClosed)',
+  'await bounded(Promise.allSettled([...live]))',
+  'finally { spy.mockRestore(); }', 'eventSalesControl.deleteMany',
+  'if (failClosed) throw failClosed;',
 ];
 for (const fragment of required) {
   if (!source.includes(fragment)) throw new Error('Missing source contract: ' + fragment);
 }
-console.log('PASS: TypeScript stripped and parsed without evaluation; 10 static coverage markers (NOT SQL/runtime proof)');
+console.log('PASS: TypeScript stripped and parsed without evaluation; ' + required.length + ' static coverage markers (NOT SQL/runtime proof)');
