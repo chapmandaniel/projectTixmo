@@ -23,17 +23,44 @@ export function encryptAssetShareToken(token: string, keys: AssetShareKeys): str
   ].join(':');
 }
 
-export function decryptAssetShareToken(
-  value: string | null | undefined,
-  keys: AssetShareKeys
-): string | undefined {
-  if (typeof value !== 'string' || value.length > 256) return undefined;
+export type AssetShareCategory =
+  | 'missingCipher'
+  | 'unknownFormat'
+  | 'malformedEnvelope'
+  | 'decryptFailed'
+  | 'invalidHash'
+  | 'hashMismatch'
+  | 'validLegacy'
+  | 'validCurrent';
+export type AssetShareValidationSummary = {
+  scanned: number;
+  scope: 'all' | 'organization';
+} & Record<AssetShareCategory, number>;
+export class AssetShareValidationError extends Error {
+  readonly #summary: Readonly<AssetShareValidationSummary>;
+  constructor(summary: AssetShareValidationSummary) {
+    super('Asset share rekey verification failed');
+    this.#summary = Object.freeze({ ...summary });
+  }
+  get summary() {
+    return this.#summary;
+  }
+}
+type ValidToken = { category: 'validLegacy' | 'validCurrent'; token: string };
+type CipherResult =
+  | ValidToken
+  | { category: 'missingCipher' | 'unknownFormat' | 'malformedEnvelope' | 'decryptFailed' };
+export type AssetShareValidation = CipherResult | { category: 'invalidHash' | 'hashMismatch' };
+function inspectCipher(value: string | null | undefined, keys: AssetShareKeys): CipherResult {
+  if (value === null || value === undefined || value === '') return { category: 'missingCipher' };
+  if (typeof value !== 'string' || value.length > 256) return { category: 'malformedEnvelope' };
   const parts = value.split(':');
-  if (parts.length !== 4) return undefined;
+  if (parts.length !== 4) return { category: 'malformedEnvelope' };
   const [version, ivValue, tagValue, encryptedValue] = parts;
-  if (!['v1', 'v2'].includes(version)) return undefined;
+  if (!['v1', 'v2'].includes(version)) return { category: 'unknownFormat' };
   const values = [ivValue, tagValue, encryptedValue];
-  if (values.some((part) => !/^[A-Za-z0-9_-]+$/.test(part))) return undefined;
+  if (values.some((part) => !/^[A-Za-z0-9_-]+$/.test(part)))
+    return { category: 'malformedEnvelope' };
   const [iv, tag, encrypted] = values.map((part) => Buffer.from(part, 'base64url'));
   if (
     iv.length !== 12 ||
@@ -41,8 +68,9 @@ export function decryptAssetShareToken(
     encrypted.length !== 43 ||
     values.some((part, index) => [iv, tag, encrypted][index].toString('base64url') !== part)
   )
-    return undefined;
-  if (version === 'v2' ? !validAssetShareKey(keys.key) : !keys.legacySecret) return undefined;
+    return { category: 'malformedEnvelope' };
+  if (version === 'v2' ? !validAssetShareKey(keys.key) : !keys.legacySecret)
+    return { category: 'decryptFailed' };
   try {
     const key =
       version === 'v2'
@@ -52,20 +80,40 @@ export function decryptAssetShareToken(
     if (version === 'v2') decipher.setAAD(aad);
     decipher.setAuthTag(tag);
     const token = Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
-    return tokenPattern.test(token) ? token : undefined;
+    return tokenPattern.test(token)
+      ? { category: version === 'v1' ? 'validLegacy' : 'validCurrent', token }
+      : { category: 'decryptFailed' };
   } catch {
-    return undefined;
+    return { category: 'decryptFailed' };
   }
 }
-
+export function decryptAssetShareToken(
+  value: string | null | undefined,
+  keys: AssetShareKeys
+): string | undefined {
+  const result = inspectCipher(value, keys);
+  return 'token' in result ? result.token : undefined;
+}
+export function classifyAssetShareToken(
+  value: string | null | undefined,
+  hash: string,
+  keys: AssetShareKeys
+): AssetShareValidation {
+  const result = inspectCipher(value, keys);
+  if (!('token' in result)) return result;
+  if (!/^[a-f0-9]{64}$/.test(hash)) return { category: 'invalidHash' };
+  return timingSafeEqual(
+    Buffer.from(hashAssetShareToken(result.token), 'hex'),
+    Buffer.from(hash, 'hex')
+  )
+    ? result
+    : { category: 'hashMismatch' };
+}
 export function verifiedAssetShareToken(
   value: string | null | undefined,
   hash: string,
   keys: AssetShareKeys
 ): string | undefined {
-  const token = decryptAssetShareToken(value, keys);
-  if (!token || !/^[a-f0-9]{64}$/.test(hash)) return undefined;
-  return timingSafeEqual(Buffer.from(hashAssetShareToken(token), 'hex'), Buffer.from(hash, 'hex'))
-    ? token
-    : undefined;
+  const result = classifyAssetShareToken(value, hash, keys);
+  return 'token' in result ? result.token : undefined;
 }

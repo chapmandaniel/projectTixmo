@@ -17,6 +17,7 @@ import { assetLibraryService } from '../../src/api/assets/service';
 import { rekeyAssetShares } from '../../src/services/asset-share-rekey';
 import {
   encryptAssetShareToken,
+  AssetShareValidationError,
   hashAssetShareToken,
   verifiedAssetShareToken,
 } from '../../src/services/asset-share-crypto';
@@ -35,6 +36,8 @@ const ids = {
 };
 const shares = Array.from({ length: 4 }, () => randomUUID()).sort();
 const tokens = shares.map(() => randomBytes(32).toString('base64url'));
+const diagnosticShares = Array.from({ length: 6 }, () => randomUUID());
+const diagnosticTokens = diagnosticShares.map(() => randomBytes(32).toString('base64url'));
 const foreignShare = randomUUID();
 const foreignToken = randomBytes(32).toString('base64url');
 const live = new Set<Promise<unknown>>();
@@ -95,7 +98,7 @@ const legacy = (token: string) => {
 };
 const snapshot = () =>
   prisma.assetLibraryFolderShare.findMany({
-    where: { id: { in: [...shares, foreignShare] } },
+    where: { id: { in: [...shares, ...diagnosticShares, foreignShare] } },
     include: { folders: { orderBy: { id: 'asc' } } },
     orderBy: { id: 'asc' },
   });
@@ -203,11 +206,11 @@ afterAll(async () => {
     track(async () => {
       safe();
       await prisma.assetLibraryFolderShareFolder.deleteMany({
-        where: { shareId: { in: [...shares, foreignShare] } },
+        where: { shareId: { in: [...shares, ...diagnosticShares, foreignShare] } },
       });
       safe();
       await prisma.assetLibraryFolderShare.deleteMany({
-        where: { id: { in: [...shares, foreignShare] } },
+        where: { id: { in: [...shares, ...diagnosticShares, foreignShare] } },
       });
       safe();
       await prisma.assetLibraryFolder.deleteMany({
@@ -366,5 +369,64 @@ owned(
     expect(observed).toBe(true);
     expect(newerSnapshot).toBeDefined();
     expect(await snapshot()).toEqual(newerSnapshot);
+  }
+);
+
+owned(
+  'mixed invalid audit reports only aggregate categories and apply aborts before every write',
+  async () => {
+    await resetOwned();
+    const ciphers = [
+      null,
+      'v9:a:b:c',
+      'v2:a:b:c',
+      encryptAssetShareToken(diagnosticTokens[3], { key: '34'.repeat(32) }),
+      encryptAssetShareToken(diagnosticTokens[4], keys),
+      encryptAssetShareToken(diagnosticTokens[5], keys),
+    ];
+    for (let i = 0; i < diagnosticShares.length; i++) {
+      safe();
+      await prisma.assetLibraryFolderShare.create({
+        data: {
+          id: diagnosticShares[i],
+          organizationId: ids.org,
+          folderId: ids.folder,
+          createdById: ids.user,
+          tokenHash:
+            i === 4
+              ? `invalid-${diagnosticShares[i]}`
+              : hashAssetShareToken(
+                  i === 5 ? randomBytes(32).toString('base64url') : diagnosticTokens[i]
+                ),
+          tokenCiphertext: ciphers[i],
+          recipientLabel: 'Synthetic diagnostic fixture',
+          expiresAt: new Date(Date.now() + 86400000),
+        },
+      });
+    }
+    const before = await snapshot();
+    const { validationCounts } = require('../../prisma/rekey-asset-shares');
+    for (const apply of [false, true]) {
+      let failure: unknown;
+      try {
+        await rekey(prisma, keys, { apply, organizationId: ids.org });
+      } catch (error) {
+        failure = error;
+      }
+      expect(failure).toBeInstanceOf(AssetShareValidationError);
+      expect(validationCounts(failure, AssetShareValidationError)).toEqual({
+        scanned: 10,
+        scope: 'organization',
+        missingCipher: 1,
+        unknownFormat: 1,
+        malformedEnvelope: 1,
+        decryptFailed: 1,
+        invalidHash: 1,
+        hashMismatch: 1,
+        validLegacy: 3,
+        validCurrent: 1,
+      });
+      expect(await snapshot()).toEqual(before);
+    }
   }
 );

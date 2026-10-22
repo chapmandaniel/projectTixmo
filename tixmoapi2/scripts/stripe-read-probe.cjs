@@ -1,18 +1,45 @@
 'use strict';
 // Runtime-only, read-only provider observation. No app/env-loader/database imports.
 const SCOPE = 'stripe-test-v1-webhook-endpoints-only';
+const GUARD_REASONS = new Set([
+  'node-env',
+  'opt-in',
+  'test-key-format',
+  'expected-url-missing',
+  'expected-url-shape',
+  'expected-url-parse',
+  'expected-url-canonical',
+]);
+class GuardRejected extends Error {
+  #reason;
+  constructor(reason) {
+    super('Rejected');
+    this.#reason = GUARD_REASONS.has(reason) ? reason : 'unclassified';
+  }
+  get reason() {
+    return this.#reason;
+  }
+}
 function guard(env) {
+  if (env.NODE_ENV !== 'production') throw new GuardRejected('node-env');
+  if (env.TIXMO_STRIPE_READ_PROBE !== 'true') throw new GuardRejected('opt-in');
   if (
-    env.NODE_ENV !== 'production' ||
-    env.TIXMO_STRIPE_READ_PROBE !== 'true' ||
     typeof env.STRIPE_SECRET_KEY !== 'string' ||
     env.STRIPE_SECRET_KEY.trim() !== env.STRIPE_SECRET_KEY ||
     !/^sk_test_[A-Za-z0-9]{12,240}$/.test(env.STRIPE_SECRET_KEY)
   )
-    throw new Error('Rejected');
+    throw new GuardRejected('test-key-format');
   const value = env.TIXMO_STRIPE_EXPECTED_WEBHOOK_URL;
-  if (typeof value !== 'string' || value.length > 512) throw new Error('Rejected');
-  const expected = new URL(value);
+  if (value === undefined || value === null || value === '')
+    throw new GuardRejected('expected-url-missing');
+  if (typeof value !== 'string' || value.length > 512)
+    throw new GuardRejected('expected-url-shape');
+  let expected;
+  try {
+    expected = new URL(value);
+  } catch {
+    throw new GuardRejected('expected-url-parse');
+  }
   if (
     expected.protocol !== 'https:' ||
     expected.username ||
@@ -24,10 +51,10 @@ function guard(env) {
     !/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(expected.hostname) ||
     expected.hostname.endsWith('.localhost') ||
     expected.hostname === 'localhost' ||
-    /^[0-9.]+$/.test(expected.hostname) ||
-    expected.href !== value
+    /^[0-9.]+$/.test(expected.hostname)
   )
-    throw new Error('Rejected');
+    throw new GuardRejected('expected-url-shape');
+  if (expected.href !== value) throw new GuardRejected('expected-url-canonical');
   return { key: env.STRIPE_SECRET_KEY, expected: expected.href };
 }
 function summarize(list, expected) {
@@ -118,8 +145,21 @@ async function observe(env, loadStripe = () => require('stripe')) {
       v2DestinationsInspected: false,
       writeIsolationProved: false,
     };
-  } catch {
-    return { ok: false, scope: SCOPE, phase, writeIsolationProved: false };
+  } catch (error) {
+    return {
+      ok: false,
+      scope: SCOPE,
+      phase,
+      writeIsolationProved: false,
+      ...(phase === 'guard'
+        ? {
+            guardReason:
+              error instanceof GuardRejected && GUARD_REASONS.has(error.reason)
+                ? error.reason
+                : 'unclassified',
+          }
+        : {}),
+    };
   }
 }
 async function main(args = process.argv.slice(2), env = process.env, loadStripe) {
@@ -135,7 +175,13 @@ async function main(args = process.argv.slice(2), env = process.env, loadStripe)
     const result =
       args.length === 0
         ? await observe(env, loadStripe)
-        : { ok: false, scope: SCOPE, phase: 'guard', writeIsolationProved: false };
+        : {
+            ok: false,
+            scope: SCOPE,
+            phase: 'guard',
+            writeIsolationProved: false,
+            guardReason: 'arguments',
+          };
     if (expired) return;
     console.log(JSON.stringify(result));
     if (!result.ok) process.exitCode = 1;

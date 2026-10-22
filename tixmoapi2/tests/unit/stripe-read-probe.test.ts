@@ -102,36 +102,102 @@ it('does not start the inventory call until the balance GET and test-mode check 
   expect(fixture.enumerate).toHaveBeenCalledTimes(1);
 });
 it.each([
-  { NODE_ENV: 'test' },
-  { TIXMO_STRIPE_READ_PROBE: '' },
-  { TIXMO_STRIPE_READ_PROBE: 'TRUE' },
-  { STRIPE_SECRET_KEY: '' },
-  { STRIPE_SECRET_KEY: ['sk', 'live', 'SyntheticSecretCanary123456'].join('_') },
-  { STRIPE_SECRET_KEY: ['rk', 'test', 'SyntheticSecretCanary123456'].join('_') },
-  { STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY + '\n' },
-  { TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: '' },
-  { TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: 'http://synthetic-api.invalid/api/v1/payments/webhook' },
-  ...['?secret=canary', '#secret', '/', '/extra'].map((suffix) => ({
-    TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected + suffix,
-  })),
-  {
-    TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected.replace(
-      'synthetic-api.invalid',
-      'canary@synthetic-api.invalid'
-    ),
-  },
-  { TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected.replace('synthetic-api.invalid', '127.0.0.1') },
-])('rejects missing, live, ambiguous or malformed guards before SDK loading', async (mutation) => {
-  const load = jest.fn(() => {
-    throw new Error('must-not-load');
-  });
-  expect(await observe({ ...env, ...mutation }, load)).toEqual({
+  [{ NODE_ENV: 'test' }, 'node-env'],
+  [{ TIXMO_STRIPE_READ_PROBE: '' }, 'opt-in'],
+  [{ TIXMO_STRIPE_READ_PROBE: 'TRUE' }, 'opt-in'],
+  [{ STRIPE_SECRET_KEY: '' }, 'test-key-format'],
+  [
+    { STRIPE_SECRET_KEY: ['sk', 'live', 'SyntheticSecretCanary123456'].join('_') },
+    'test-key-format',
+  ],
+  [
+    { STRIPE_SECRET_KEY: ['rk', 'test', 'SyntheticSecretCanary123456'].join('_') },
+    'test-key-format',
+  ],
+  [{ STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY + '\n' }, 'test-key-format'],
+  [{ TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: '' }, 'expected-url-missing'],
+  [
+    { TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: 'http://synthetic-api.invalid/api/v1/payments/webhook' },
+    'expected-url-shape',
+  ],
+  ...['?secret=canary', '#secret', '/', '/extra'].map((suffix) => [
+    { TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected + suffix },
+    'expected-url-shape',
+  ]),
+  [
+    {
+      TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected.replace(
+        'synthetic-api.invalid',
+        'canary@synthetic-api.invalid'
+      ),
+    },
+    'expected-url-shape',
+  ],
+  [
+    { TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected.replace('synthetic-api.invalid', '127.0.0.1') },
+    'expected-url-shape',
+  ],
+  [{ TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: undefined }, 'expected-url-missing'],
+  [{ TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: null }, 'expected-url-missing'],
+  [{ TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: 42 }, 'expected-url-shape'],
+  [{ TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: 'canary'.repeat(100) }, 'expected-url-shape'],
+  [{ TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: 'https://[canary' }, 'expected-url-parse'],
+  [
+    { TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected.replace('https:', 'HTTPS:') },
+    'expected-url-canonical',
+  ],
+  [
+    { TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected.replace('.invalid/', '.invalid:443/') },
+    'expected-url-canonical',
+  ],
+  [{ TIXMO_STRIPE_EXPECTED_WEBHOOK_URL: expected + '\n' }, 'expected-url-canonical'],
+  [{ STRIPE_SECRET_KEY: ['sk', 'test', 'short'].join('_') }, 'test-key-format'],
+  [{ STRIPE_SECRET_KEY: ['sk', 'test', 'a'.repeat(241)].join('_') }, 'test-key-format'],
+  [{ STRIPE_SECRET_KEY: ['sk', 'test', 'a'.repeat(12) + '_suffix'].join('_') }, 'test-key-format'],
+] as Array<[Record<string, unknown>, string]>)(
+  'classifies a rejected guard as a fixed reason before SDK loading',
+  async (mutation, guardReason) => {
+    const load = jest.fn(() => {
+      throw new Error('must-not-load');
+    });
+    const output = await observe({ ...env, ...mutation }, load);
+    expect(output).toEqual({
+      ok: false,
+      scope: 'stripe-test-v1-webhook-endpoints-only',
+      phase: 'guard',
+      writeIsolationProved: false,
+      guardReason,
+    });
+    expect(JSON.stringify(output)).not.toMatch(/canary|https:|sk_test|Synthetic|:443|241/);
+    expect(load).not.toHaveBeenCalled();
+  }
+);
+it('does not expose arbitrary thrown guard values or forge a reason from provider errors', async () => {
+  const load = jest.fn();
+  const hostile = {
+    ...env,
+    get NODE_ENV() {
+      throw new Error('secret-canary https://private.invalid');
+    },
+  };
+  expect(await observe(hostile, load)).toEqual({
     ok: false,
     scope: 'stripe-test-v1-webhook-endpoints-only',
     phase: 'guard',
     writeIsolationProved: false,
+    guardReason: 'unclassified',
   });
   expect(load).not.toHaveBeenCalled();
+  expect(
+    await observe(env, () => {
+      throw Object.assign(new Error('secret-canary'), { reason: 'node-env' });
+    })
+  ).toEqual({
+    ok: false,
+    scope: 'stripe-test-v1-webhook-endpoints-only',
+    phase: 'sdk',
+    writeIsolationProved: false,
+  });
 });
 it.each([undefined, {}, { object: 'balance', livemode: true }, { object: 'balance' }])(
   'rejects unproved test-mode balance before endpoint request',
@@ -195,7 +261,9 @@ it.each(['sdk', 'balance', 'webhooks'])(
   'reduces rejected SDK/error values to a fixed safe failure phase (%s)',
   async (phase) => {
     const fixture = sdk();
-    const secret = new Error('sk_test_secret https://canary.invalid/amount/987654321');
+    const secret = new Error(
+      ['sk', 'test', 'secret'].join('_') + ' https://canary.invalid/amount/987654321'
+    );
     if (phase === 'balance') fixture.retrieve.mockRejectedValue(secret);
     if (phase === 'webhooks') fixture.enumerate.mockRejectedValue(secret);
     const load =
@@ -285,7 +353,13 @@ it('rejects CLI arguments without loading SDK and clears its deadline', async ()
     expect(load).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(1);
     expect(jest.getTimerCount()).toBe(0);
-    expect(JSON.parse(output.mock.calls[0][0])).toMatchObject({ ok: false, phase: 'guard' });
+    expect(JSON.parse(output.mock.calls[0][0])).toEqual({
+      ok: false,
+      scope: 'stripe-test-v1-webhook-endpoints-only',
+      phase: 'guard',
+      writeIsolationProved: false,
+      guardReason: 'arguments',
+    });
   } finally {
     output.mockRestore();
     process.exitCode = exitCode;
