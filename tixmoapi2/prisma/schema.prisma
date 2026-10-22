@@ -196,6 +196,9 @@ model Event {
   updatedAt        DateTime     @updatedAt @map("updated_at")
   deletedAt        DateTime?    @map("deleted_at")
 
+  salesPaused Boolean @default(false) @map("sales_paused")
+  salesControls EventSalesControl[]
+
   // Relations
   ticketTypes      TicketType[]
   orders           Order[]
@@ -907,4 +910,22 @@ model ApprovalReminder {
   @@unique([approvalRevisionId, reviewerId, reminderType])
   @@index([status, claimedAt])
   @@map("approval_reminders")
+}
+
+// Operational evidence: no application edit/delete API; event deletion is restricted.
+// Actor and tenant snapshots intentionally have no cascading user/tenant relations.
+model EventSalesControl {
+  id String @id @default(uuid())
+  eventId String @map("event_id")
+  event Event @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  organizationId String @map("organization_id")
+  actorId String @map("actor_id")
+  requestId String @map("request_id")
+  reason String @db.VarChar(1000)
+  beforePaused Boolean @map("before_paused")
+  afterPaused Boolean @map("after_paused")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([eventId, requestId])
+  @@index([eventId, createdAt])
+  @@map("event_sales_controls")
 }

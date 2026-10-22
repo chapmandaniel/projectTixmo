@@ -96,6 +96,11 @@ export class OrderService {
         ) {
           throw ApiError.badRequest('Event is not available for purchase');
         }
+        if (event.salesPaused)
+          throw ApiError.conflict(
+            'Ticket sales are temporarily paused. Existing orders and tickets remain available.',
+            { code: 'SALES_PAUSED' }
+          );
         let subtotal = new Decimal(0);
         const allocations: Array<{
           ticketTypeId: string;

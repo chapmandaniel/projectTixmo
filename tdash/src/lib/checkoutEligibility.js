@@ -8,6 +8,7 @@ export const checkoutTicketState = (event, ticket, now) => {
         && (candidate.quantityLimit == null
             || candidate.quantitySold + candidate.quantityHeld < candidate.quantityLimit));
     const eligible = ['PUBLISHED', 'ON_SALE'].includes(event?.status) && !event?.deletedAt
+        && !event.salesPaused
         && (!event.startDatetime || now < Date.parse(event.startDatetime))
         && inside(now, event.salesStart, event.salesEnd)
         && ticket.status === 'ACTIVE' && ticket.tierInventoryStatus === 'READY'

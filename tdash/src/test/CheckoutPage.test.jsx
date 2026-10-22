@@ -378,4 +378,16 @@ describe('open-page sale boundaries', () => {
         expect(screen.queryByText(/Order confirmed/)).not.toBeInTheDocument();
         expect(stripeMocks.confirmPayment).not.toHaveBeenCalled();
     });
+    it('retains selection but blocks a new purchase after authoritative SALES_PAUSED rejection', async () => {
+        apiPost.mockReset().mockRejectedValueOnce({ response: { status: 409, data: { errors: { code: 'SALES_PAUSED' } } } });
+        vi.setSystemTime(opening);
+        await mount();
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: /continue to secure payment/i })));
+        expect(screen.getByText('Ticket sales are temporarily paused. Existing orders and tickets remain available.')).toBeInTheDocument();
+        expect(apiPost).toHaveBeenCalledTimes(1);
+        expect(apiPost.mock.calls[0][0]).toBe('/orders');
+        expect(screen.getByRole('button', { name: /continue to secure payment/i })).toBeDisabled();
+    });
+
 });

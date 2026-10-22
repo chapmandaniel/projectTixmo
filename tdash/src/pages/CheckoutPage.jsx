@@ -30,6 +30,7 @@ import {
     getStripePublishableKey,
 } from '../lib/runtimeConfig';
 import { checkoutTicketState, checkoutBoundaryDelay } from '../lib/checkoutEligibility';
+import { SALES_PAUSED_MESSAGE, isSalesPausedError } from '../lib/salesPause';
 import { cn } from '../lib/utils';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import { initialTicketQuantities } from '../lib/publicEvent';
@@ -450,7 +451,12 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
             });
             setPaymentSession(unwrapApiPayload(paymentResponse));
         } catch (requestError) {
-            setError(requestError.response?.data?.message || requestError.message || 'Checkout could not be prepared.');
+            if (!order && isSalesPausedError(requestError)) {
+                setEvent((current) => ({ ...current, salesPaused: true }));
+                setError(SALES_PAUSED_MESSAGE);
+            } else {
+                setError(requestError.response?.data?.message || requestError.message || 'Checkout could not be prepared.');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -635,6 +641,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                         Checkout is blocked until the Stripe publishable key is configured.
                                     </div>
                                 ) : null}
+                                {!order && !error && event.salesPaused && ticketTypes.some((ticket) => checkoutTicketState({ ...event, salesPaused: false }, ticket, now).max > 0) ? <p role="status">{SALES_PAUSED_MESSAGE}</p> : null}
                                 {error && event ? (
                                     <div className="rounded-md border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-sm leading-6 text-rose-50">
                                         {error}

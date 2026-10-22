@@ -196,3 +196,10 @@ export const cloneEvent = catchAsync(async (req: AuthRequest, res: Response) => 
   const event = await eventService.cloneEvent(id);
   res.status(201).json(successResponse(event, 'Event cloned successfully'));
 });
+
+export const setSalesPause = catchAsync(async (req: AuthRequest, res: Response) => {
+  const actor = await getActorScope(req);
+  await assertEventAccess(actor, req.params.id);
+  const result = await eventService.setSalesPause(req.params.id, req.body, actor);
+  res.json(successResponse(result, 'Sales control acknowledged; refetch current event'));
+});
