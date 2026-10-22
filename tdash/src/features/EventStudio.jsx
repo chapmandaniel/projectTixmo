@@ -27,7 +27,8 @@ const normalizeTier = (tier, timezone) => ({
 const normalizeTicketType = (ticketType, tiers = [], timezone = DEFAULT_EVENT_TIMEZONE) => ({
     ...ticketType,
     price: ticketType.price ?? '',
-    quantity: ticketType.quantity ?? ticketType.quantityTotal ?? ticketType.quantityAvailable ?? '',
+    // Available stock excludes sold/held tickets and must never become total capacity.
+    quantity: ticketType.quantityTotal ?? ticketType.quantity ?? '',
     status: ticketType.status || 'ACTIVE',
     tiers: tiers.map(tier => normalizeTier(tier, timezone)),
 });
@@ -193,10 +194,16 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                 tags: eventData.tags ? eventData.tags.split(',').map(t => t.trim()).filter(Boolean) : []
             };
 
+            if (tickets.some(t => t.quantity === '' || t.quantity == null || !Number.isInteger(Number(t.quantity)) || Number(t.quantity) <= 0)) {
+                throw new Error('Ticket total quantity is unavailable or invalid. Reload the complete ticket configuration before saving.');
+            }
             const persistedId = (id) => id && !String(id).startsWith('temp_') && /^[0-9a-f-]{36}$/i.test(String(id)) ? id : undefined;
             const ticketTypes = tickets.map(t => ({
                 id: persistedId(t.id), name: t.name, price: Number(t.price), quantity: Number(t.quantity),
                 status: t.status || 'ACTIVE', maxPerOrder: t.maxPerOrder,
+                // Studio has no ticket-window editor: preserve API instants verbatim, not browser wall time.
+                ...(t.salesStart ? { salesStart: t.salesStart } : {}),
+                ...(t.salesEnd ? { salesEnd: t.salesEnd } : {}),
                 tiers: (t.tiers || []).map((tier, index) => ({
                     id: persistedId(tier.id), name: tier.name, price: Number(tier.price),
                     quantityLimit: tier.quantityLimit === '' || tier.quantityLimit == null ? null : Number(tier.quantityLimit),
