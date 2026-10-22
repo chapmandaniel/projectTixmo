@@ -17,6 +17,10 @@ describe('Event timezone inputs', () => {
             expect(fromEventLocalInput(toEventLocalInput(instant, 'America/St_Johns'), 'America/St_Johns', instant)).toBe(instant);
         }
     });
+    it('resolves Nov 9 using the date-specific standard offset, not the current offset', () => {
+        expect(fromEventLocalInput('2026-11-09T12:00', 'America/St_Johns')).toBe('2026-11-09T15:30:00.000Z');
+        expect(fromEventLocalInput('2026-10-21T12:00', 'America/St_Johns')).toBe('2026-10-21T14:30:00.000Z');
+    });
     it('formats the actual event zone and rejects invalid timezone names', () => {
         expect(formatEventDate('2026-10-04T21:30:00Z', 'America/Los_Angeles')).toMatch(/2:30|14:30/);
         expect(() => fromEventLocalInput('2026-02-30T19:00', 'America/St_Johns')).toThrow();
