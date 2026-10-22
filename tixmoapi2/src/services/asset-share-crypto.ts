@@ -35,7 +35,7 @@ export type AssetShareCategory =
 export type AssetShareValidationSummary = {
   scanned: number;
   scope: 'all' | 'organization';
-} & Record<AssetShareCategory, number>;
+} & Record<AssetShareCategory | 'hashOnly', number>;
 export class AssetShareValidationError extends Error {
   readonly #summary: Readonly<AssetShareValidationSummary>;
   constructor(summary: AssetShareValidationSummary) {
@@ -116,4 +116,19 @@ export function verifiedAssetShareToken(
 ): string | undefined {
   const result = classifyAssetShareToken(value, hash, keys);
   return 'token' in result ? result.token : undefined;
+}
+
+// Operator policy only: this does not recover or cryptographically verify a bearer.
+export function classifyAssetShareForRekey(
+  value: string | null | undefined,
+  hash: string,
+  keys: AssetShareKeys,
+  preserveHashOnly = false
+): AssetShareValidation | { category: 'hashOnly' } {
+  if (preserveHashOnly === true && value === null) {
+    return typeof hash === 'string' && hash.length === 64 && /^[a-f0-9]{64}$/.test(hash)
+      ? { category: 'hashOnly' }
+      : { category: 'invalidHash' };
+  }
+  return classifyAssetShareToken(value, hash, keys);
 }

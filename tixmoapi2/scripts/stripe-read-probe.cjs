@@ -25,8 +25,12 @@ function guard(env) {
   if (env.TIXMO_STRIPE_READ_PROBE !== 'true') throw new GuardRejected('opt-in');
   if (
     typeof env.STRIPE_SECRET_KEY !== 'string' ||
-    env.STRIPE_SECRET_KEY.trim() !== env.STRIPE_SECRET_KEY ||
-    !/^sk_test_[A-Za-z0-9]{12,240}$/.test(env.STRIPE_SECRET_KEY)
+    // Stripe documents test-key families, not an alphanumeric suffix grammar.
+    // 512 is our defensive total-size bound, not a provider-validity assertion.
+    env.STRIPE_SECRET_KEY.length > 512 ||
+    env.STRIPE_SECRET_KEY.length <= 8 ||
+    !/^(sk|rk)_test_/.test(env.STRIPE_SECRET_KEY) ||
+    /[^\x21-\x7e]/.test(env.STRIPE_SECRET_KEY)
   )
     throw new GuardRejected('test-key-format');
   const value = env.TIXMO_STRIPE_EXPECTED_WEBHOOK_URL;
@@ -115,6 +119,21 @@ function summarize(list, expected) {
     expectedRefundEvents,
   };
 }
+function classifyProviderError(error) {
+  try {
+    const categories = new Map([
+      ['StripeAuthenticationError', 'authentication'],
+      ['StripePermissionError', 'permission'],
+      ['StripeConnectionError', 'connection'],
+      ['StripeRateLimitError', 'rate-limit'],
+      ['StripeInvalidRequestError', 'invalid-request'],
+      ['StripeAPIError', 'api'],
+    ]);
+    return categories.get(error?.type) || 'generic';
+  } catch {
+    return 'generic';
+  }
+}
 async function observe(env, loadStripe = () => require('stripe')) {
   let phase = 'guard';
   try {
@@ -151,6 +170,9 @@ async function observe(env, loadStripe = () => require('stripe')) {
       scope: SCOPE,
       phase,
       writeIsolationProved: false,
+      ...(['balance', 'webhooks'].includes(phase)
+        ? { providerErrorCategory: classifyProviderError(error) }
+        : {}),
       ...(phase === 'guard'
         ? {
             guardReason:

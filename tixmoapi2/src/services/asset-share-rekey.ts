@@ -3,13 +3,18 @@ import {
   AssetShareKeys,
   AssetShareValidationError,
   AssetShareValidationSummary,
-  classifyAssetShareToken,
+  classifyAssetShareForRekey,
   encryptAssetShareToken,
   validAssetShareKey,
   verifiedAssetShareToken,
 } from './asset-share-crypto';
 
-type RekeyOptions = { apply?: boolean; limit?: number; organizationId?: string };
+type RekeyOptions = {
+  apply?: boolean;
+  limit?: number;
+  organizationId?: string;
+  preserveHashOnly?: boolean;
+};
 type ShareRow = {
   id: string;
   organizationId: string;
@@ -27,6 +32,7 @@ export async function rekeyAssetShares(
     limit < 1 ||
     limit > 10000 ||
     !validAssetShareKey(keys.key) ||
+    (options.preserveHashOnly !== undefined && typeof options.preserveHashOnly !== 'boolean') ||
     (options.organizationId !== undefined &&
       !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
         options.organizationId
@@ -47,11 +53,17 @@ export async function rekeyAssetShares(
       // Validate the entire selected set before any write; corrupt or unknown data blocks apply.
       const prepared = rows.map((row) => ({
         row,
-        validation: classifyAssetShareToken(row.tokenCiphertext, row.tokenHash, keys),
+        validation: classifyAssetShareForRekey(
+          row.tokenCiphertext,
+          row.tokenHash,
+          keys,
+          options.preserveHashOnly
+        ),
       }));
       const summary: AssetShareValidationSummary = {
         scanned: rows.length,
         scope: options.organizationId ? 'organization' : 'all',
+        hashOnly: 0,
         missingCipher: 0,
         unknownFormat: 0,
         malformedEnvelope: 0,
@@ -62,7 +74,7 @@ export async function rekeyAssetShares(
         validCurrent: 0,
       };
       for (const { validation } of prepared) summary[validation.category]++;
-      if (summary.validLegacy + summary.validCurrent !== summary.scanned)
+      if (summary.validLegacy + summary.validCurrent + summary.hashOnly !== summary.scanned)
         throw new AssetShareValidationError(summary);
       let updated = 0;
       let legacy = 0;
@@ -85,7 +97,11 @@ export async function rekeyAssetShares(
       return {
         scanned: rows.length,
         legacy,
-        current: rows.length - legacy,
+        current: summary.validCurrent,
+        hashOnly: summary.hashOnly,
+        hashOnlyPolicyEnabled: options.preserveHashOnly === true,
+        hashOnlyCryptographicallyVerified: false,
+        hashOnlyReconstructable: false,
         updated,
         audit: !options.apply,
         scope: options.organizationId ? 'organization' : 'all',
