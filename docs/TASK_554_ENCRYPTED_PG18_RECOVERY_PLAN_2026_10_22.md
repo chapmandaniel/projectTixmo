@@ -14,7 +14,7 @@ Bounded read-only local checks:
 - Root ext4 directly /dev/nvme0n1p2,160GiB free; task57 runtime0700 ownerdaniel. Neither is encryption/custody proof.
 - `/dev/shm` tmpfs7.5GiB; MemAvailable8,677,480kB at check. `/proc/swaps` shows active `/swap.img`, size4,194,300kB, used4,170,844kB. Encryption of swap is UNKNOWN. **tmpfs can swap: do not use it for plaintext recovery on this evidence.** Available RAM is not a reserved allocation, and database aggregate does not bound restore/WAL/temp peak.
 - Shell core limit0; core_pattern routes to apport. Execution must set core soft+hard0 and prove inherited limits; this is not evidence that all daemon dump handling is safe.
-- gpg/unshare/setpriv/systemd-run/prlimit/timeout installed; bwrap absent per parent. No existing keyring inspected, key created, test encryption run, or custody reference found in bounded relevant docs. A synthetic GPG roundtrip would not prove actual recipient custody or safe storage, so omitted.
+- gpg/unshare/setpriv/systemd-run/prlimit/timeout installed; bwrap absent per parent. No existing keyring inspected or actual custody reference found in bounded relevant docs. Subsequent explicitly authorized nonsecret throwaway-key mechanics test passed (appendix); it does not prove actual recipient custody or safe storage.
 - One non-data probe `unshare --user --map-root-user --net --mount --pid --fork true` FAILED `uid_map: Operation not permitted`; flag unprivileged_userns_clone is1 but not sufficient. Parent then relayed existing432 same-host denials and STOP instruction: **no repeat or alternate/privileged probe performed**. No sockets/daemon control queried. Unix-socket-only Postgres is ingress reduction, NOT SQL process/egress containment.
 
 ## Concrete storage, custody, retention and cost contract
@@ -108,6 +108,57 @@ After approved restore: validate migration ledger/checksums and schema/columns/i
 
 Cleanup trap must be independently reviewed before executable script: on EXIT/INT/TERM stop ONLY PID whose UID/exe/datadir/postmaster.pid match this RUN with `pg_ctl -D "$RUN/pg" -m fast -w -t 10 stop`; owned-only TERM then bounded KILL if necessary, never signal unrelated/reused PID. Verify server absent, socket/listeners gone, no child remains, then remove only exact-owned decrypted cluster/logs under secure RUN under approved deletion policy. No source teardown. On cleanup failure halt the lane and record restrictive leftovers, never mark pass or launch another run. Capture sanitized timings including capture, startup, restore, acceptance and cleanup; no fixture timing extrapolation.
 
-Required packet returns: (1) recipient fingerprint/custodian/recovery/deletion acknowledgements; (2) approved encrypted data+log allocation or truly nonswappable RAM proof; (3) usable existing native containment proof independent of denied user namespaces; (4) source load/byte/resource/window/RTO/RPO accepted limits; (5) existing-account billing/headroom allocation proving zero-new-spend; (6) independent exact-command/wrapper review and explicit operational grant. **All six presently OPEN.** No dump/restore/data copy/key creation/server start/install/provision/config change/push/merge/deploy performed.
+Required packet returns: (1) recipient fingerprint/custodian/recovery/deletion acknowledgements; (2) approved encrypted data+log allocation or truly nonswappable RAM proof; (3) usable existing native containment proof independent of denied user namespaces; (4) source load/byte/resource/window/RTO/RPO accepted limits; (5) existing-account billing/headroom allocation proving zero-new-spend; (6) independent exact-command/wrapper review and explicit operational grant. **All six presently OPEN.** No dump/restore/production-data copy/production-key creation/server start/install/provision/config change/push/merge/deploy performed. Only an explicitly approved throwaway TEST key was generated and immediately cleaned up, as below.
 
 Checks for this documentation: pg_restore help only; bounded RAM/swap/mount/core/tool checks; public pricing fetch; git diff --check. No fixture or application tests appropriate to docs-only packet. Author submits review; this is not a reviewed execution plan until independent reviewer clears an exact commit.
+
+
+## Follow-up: bounded nonsecret GPG mechanics test
+
+Authority: parent relayed proxy's explicit additional authorization on same554, <=60s, <=64KiB nonsecret input, NEW0700 isolated test-only GNUPGHOME, no existing keyring/network/private outputs; no namespace/server/real data. Exact script below was written, inspected via sed, and Python syntax checked BEFORE execution. Execution command: `timeout --signal=TERM --kill-after=3s 60s python3 /tmp/tixmo554-gpg-mechanics.py`; exit0. GnuPG2.4.8. Actual result: PASS, input64 bytes; nonempty ciphertext; decrypt byte comparison and SHA256 equality true; existing keyring false, real data false; own-home `gpgconf --kill gpg-agent` returned success; test directory absent after cleanup; elapsed0.130s. No key/fingerprint/private output printed; data/cipher/plain comparison stayed in memory. TEST private material existed only in new0700 throwaway directory and was immediately removed. This is mechanics evidence only, not production key custody, approved retention/storage, unswappable memory, independent crypto review or containment acceptance. No test key retained; retention effectively immediate, within24h.
+
+Existing-account billing verification was separately authorized but NOT attempted: inspected current231 wrapper exposes only wiring/catalog queries and lacks a reviewed billing schema/allowlist/account-identity mapping. Do not improvise raw account/config/credential output or claim public tariff establishes headroom. Required existing-account receipt remains: exact billing account/project relationship, current plan/tariff, included usage/remaining credit and reset time, current/projected usage plus incremental source CPU/RAM/egress allocation and authorized resource caps. No billing/provider calls occurred in this follow-up.
+
+Exact inspected nonsecret mechanics script (not a production encryption wrapper):
+
+```python
+# Nonsecret mechanics test only. Never read existing HOME/keyring or use network.
+import hashlib,json,os,pathlib,shutil,subprocess,tempfile,time
+started=time.monotonic()
+root=pathlib.Path(tempfile.mkdtemp(prefix='tixmo554-gpg-test-'))
+os.chmod(root,0o700)
+env={'PATH':'/usr/bin:/bin','HOME':str(root),'GNUPGHOME':str(root),'LC_ALL':'C'}
+base=['gpg','--homedir',str(root),'--batch','--no-auto-key-retrieve']
+result={'input_bytes':0,'existing_keyring_used':False,'real_data_used':False}
+def run(args,**kw):
+ left=50-(time.monotonic()-started)
+ if left<=0: raise TimeoutError('test bound')
+ p=subprocess.run(args,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=min(left,20),**kw)
+ if p.returncode: raise RuntimeError('subcommand failed; raw diagnostics suppressed')
+ return p.stdout
+try:
+ run(base+['--pinentry-mode','loopback','--passphrase','','--quick-generate-key','Tixmo554 nonsecret mechanics test','rsa2048','encr','1d'])
+ public=run(base+['--with-colons','--list-keys'])
+ fpr=next(line.split(b':')[9].decode('ascii') for line in public.splitlines() if line.startswith(b'fpr:'))
+ data=b'Tixmo554 synthetic nonsecret GPG roundtrip, no production data.\n'
+ assert len(data)<=65536
+ cipher=run(base+['--trust-model','always','--recipient',fpr,'--encrypt'],input=data)
+ plain=run(base+['--pinentry-mode','loopback','--passphrase','','--decrypt'],input=cipher)
+ assert plain==data
+ assert hashlib.sha256(plain).digest()==hashlib.sha256(data).digest()
+ result.update({'result':'PASS','input_bytes':len(data),'decrypt_byte_compare':True,'sha256_match':True,'ciphertext_nonempty':bool(cipher)})
+except Exception:
+ result['result']='FAIL_CLOSED'
+finally:
+ try:
+  # Kill ONLY agent addressed by this brand-new GNUPGHOME, never global agent.
+  subprocess.run(['gpgconf','--homedir',str(root),'--kill','gpg-agent'],env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=3,check=True)
+  result['own_agent_cleanup']=True
+ except Exception:
+  result['own_agent_cleanup']=False
+ shutil.rmtree(root)
+ result['test_directory_absent']=not root.exists()
+ result['seconds']=round(time.monotonic()-started,3)
+ print(json.dumps(result,sort_keys=True))
+ if result.get('result')!='PASS' or not result['own_agent_cleanup'] or not result['test_directory_absent']: raise SystemExit(1)
+```
