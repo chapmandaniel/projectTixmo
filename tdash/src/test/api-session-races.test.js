@@ -59,4 +59,41 @@ describe('API session replacement races', () => {
         expect(getAccessToken()).toBe('new-access');
         expect(getStoredUser().id).toBe('new-user');
     });
+    it.each([
+        [503, 'WAITING_ROOM_ACTIVE', 7, true, 7],
+        [503, 'WAITING_ROOM_ACTIVE', '7', true, 5],
+        [503, 'WAITING_ROOM_ACTIVE', -1, true, 5],
+        [503, 'WAITING_ROOM_ACTIVE', 0, true, 5],
+        [503, 'WAITING_ROOM_ACTIVE', 61, true, 5],
+        [503, undefined, 7, false, undefined],
+        [500, 'WAITING_ROOM_ACTIVE', 7, false, undefined],
+    ])('classifies status %s marker %s delay %s without replay', async (status, code, retryAfter, busy, expected) => {
+        const waiting = vi.fn(); const generic = vi.fn();
+        window.addEventListener('tixmo:waiting-room', waiting);
+        window.addEventListener('tixmo:global-error', generic);
+        try {
+            adapter.mockImplementation((config) => Promise.reject({ config, response: { status, data: { code, retryAfter } } }));
+            await expect(api.post('/orders', {})).rejects.toMatchObject({ response: { status } });
+            expect(waiting).toHaveBeenCalledTimes(busy ? 1 : 0);
+            expect(generic).toHaveBeenCalledTimes(busy ? 0 : 1);
+            if (busy) expect(waiting.mock.calls[0][0].detail.retryAfter).toBe(expected);
+            expect(adapter).toHaveBeenCalledTimes(1);
+            expect(getAccessToken()).toBe('old-access');
+        } finally {
+            window.removeEventListener('tixmo:waiting-room', waiting);
+            window.removeEventListener('tixmo:global-error', generic);
+        }
+    });
+    it('ignores a stale marked503 after session replacement', async () => {
+        const waiting = vi.fn(); window.addEventListener('tixmo:waiting-room', waiting);
+        let rejectOld;
+        adapter.mockImplementation((config) => new Promise((resolve, reject) => { rejectOld = () => reject({ config, response: { status: 503, data: { code: 'WAITING_ROOM_ACTIVE' } } }); }));
+        const request = api.post('/orders', {});
+        const assertion = expect(request).rejects.toMatchObject({ sessionChanged: true });
+        await vi.waitFor(() => expect(rejectOld).toBeTypeOf('function'));
+        storeSession({ accessToken: 'new-access', refreshToken: 'new-refresh', user: { id: 'new-user' } });
+        rejectOld(); await assertion; expect(waiting).not.toHaveBeenCalled();
+        window.removeEventListener('tixmo:waiting-room', waiting);
+    });
+
 });

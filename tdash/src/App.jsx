@@ -33,7 +33,8 @@ const ApprovalsDashboard = lazy(() => import('./features/ApprovalsDashboard'));
 const OrdersView = lazy(() => import('./features/OrdersView'));
 const DevDashboard = lazy(() => import('./features/DevDashboard'));
 const ScannersView = lazy(() => import('./features/ScannersView'));
-const WaitingRoomView = lazy(() => import('./features/WaitingRoomView'));
+// Busy feedback must be immediately available without suspending the retained form.
+import WaitingRoomView from './features/WaitingRoomView';
 const ExternalReviewPage = lazy(() => import('./pages/ExternalReviewPage'));
 const SharedAssetFolderPage = lazy(() => import('./pages/SharedAssetFolderPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
@@ -135,7 +136,7 @@ const App = () => {
     const [isDark, setIsDark] = useState(true);
     const [user, setUser] = useState(auth.getCurrentUser());
     const [loading, setLoading] = useState(true);
-    const [showWaitingRoom, setShowWaitingRoom] = useState(false);
+    const [showWaitingRoom, setShowWaitingRoom] = useState(null);
     const [globalError, setGlobalError] = useState(null);
     const [authNotice, setAuthNotice] = useState('');
     const [redirectToDashboardAfterLogin, setRedirectToDashboardAfterLogin] = useState(false);
@@ -151,13 +152,13 @@ const App = () => {
         setLoading(false);
 
         // Listen for waiting room events
-        const handleWaitingRoom = () => setShowWaitingRoom(true);
+        const handleWaitingRoom = (event) => setShowWaitingRoom({ retryAfter: event.detail?.retryAfter || 5, receivedAt: Date.now() });
         window.addEventListener('tixmo:waiting-room', handleWaitingRoom);
 
         // Listen for global errors
         const handleGlobalError = (event) => {
             const error = event.detail;
-            if (error?.status !== 401 && error?.status !== 503) {
+            if (error?.status !== 401) {
                 setGlobalError({
                     message: error?.message || 'An unexpected system error occurred.',
                     code: error?.status || 'UNKNOWN'
@@ -276,6 +277,10 @@ const App = () => {
     }
 
     return (
+        <>
+        {showWaitingRoom ? <WaitingRoomView key={showWaitingRoom.receivedAt} retryAfter={showWaitingRoom.retryAfter} onRetry={() => setShowWaitingRoom(null)} /> : null}
+        {matchPath('/checkout/:slug', location.pathname) ? <GlobalErrorNotification error={globalError} onClose={() => setGlobalError(null)} isDark={isDark} /> : null}
+        <div inert={showWaitingRoom ? '' : undefined}>
         <Suspense fallback={<PublicRouteFallback isDark={isDark} />}>
             <Routes>
                 {/* External unauthenticated routes */}
@@ -291,9 +296,7 @@ const App = () => {
 
                 {/* Main Application */}
                 <Route path="*" element={
-                    showWaitingRoom ? (
-                        <WaitingRoomView onRetry={() => setShowWaitingRoom(false)} />
-                    ) : !user ? (
+                    !user ? (
                         <LoginView onLogin={handleLogin} notice={authNotice} />
                     ) : redirectToDashboardAfterLogin && location.pathname !== '/dashboard' ? (
                         <Navigate to="/dashboard" replace />
@@ -311,6 +314,8 @@ const App = () => {
                 } />
             </Routes>
         </Suspense>
+        </div>
+        </>
     );
 };
 

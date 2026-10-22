@@ -6612,22 +6612,6 @@
       "snippet": "${isDark ? 'text-gray-400 hover:text-white hover:bg-[#252525]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}"
     },
     {
-      "fingerprint": "arbitrary-color-utility::src/features/WaitingRoomView.jsx::bg-[#0a0a0a]::<div className=\"fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a0a] text-white\">",
-      "ruleId": "arbitrary-color-utility",
-      "file": "src/features/WaitingRoomView.jsx",
-      "line": 6,
-      "match": "bg-[#0a0a0a]",
-      "snippet": "<div className=\"fixed inset-0 z-50 flex items-center justify-center bg-[#0a0a0a] text-white\">"
-    },
-    {
-      "fingerprint": "arbitrary-color-utility::src/features/WaitingRoomView.jsx::bg-[#1a1a1a]::<div className=\"relative bg-[#1a1a1a] p-6 rounded-full border border-white/10\">",
-      "ruleId": "arbitrary-color-utility",
-      "file": "src/features/WaitingRoomView.jsx",
-      "line": 10,
-      "match": "bg-[#1a1a1a]",
-      "snippet": "<div className=\"relative bg-[#1a1a1a] p-6 rounded-full border border-white/10\">"
-    },
-    {
       "fingerprint": "arbitrary-color-utility::src/pages/ExternalReviewPage.jsx::border-[#2b2b40]::const panelClass = 'rounded-md border border-[#2b2b40] bg-[#1e1e2d]';",
       "ruleId": "arbitrary-color-utility",
       "file": "src/pages/ExternalReviewPage.jsx",

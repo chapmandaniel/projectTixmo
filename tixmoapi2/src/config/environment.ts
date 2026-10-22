@@ -40,6 +40,18 @@ export const normalizeOptionalCredential = (value?: string) => {
   return trimmedValue;
 };
 
+// Compatibility default only, not an evidenced launch-capacity budget.
+const waitingRoomLimit = process.env.WAITING_ROOM_MAX_CONCURRENT_REQUESTS;
+const waitingRoomMaxConcurrentRequests =
+  waitingRoomLimit === undefined ? 5000 : Number(waitingRoomLimit);
+if (
+  (waitingRoomLimit !== undefined && !/^[0-9]+$/.test(waitingRoomLimit)) ||
+  !Number.isSafeInteger(waitingRoomMaxConcurrentRequests) ||
+  waitingRoomMaxConcurrentRequests <= 0
+) {
+  throw new Error('WAITING_ROOM_MAX_CONCURRENT_REQUESTS must be a positive safe integer');
+}
+
 export const config = {
   // Application
   nodeEnv,
@@ -51,6 +63,9 @@ export const config = {
 
   // Database
   databaseUrl: process.env.DATABASE_URL || '',
+
+  // Aggregate active checkout requests across instances; not users or queue positions.
+  waitingRoomMaxConcurrentRequests,
 
   // Redis
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',

@@ -11,7 +11,6 @@ import { requestLogger } from './middleware/requestLogger';
 import { swaggerSpec } from './config/swagger';
 import apiRoutes from './api';
 import { initSentry, Sentry } from './config/sentry';
-import { waitingRoom } from './middleware/waitingRoom';
 import { optionalAuthenticate } from './middleware/auth';
 import { apiReadRateLimiter, apiWriteRateLimiter } from './middleware/rateLimiter';
 import { isTrustedClientOrigin } from './utils/clientOrigin';
@@ -69,8 +68,6 @@ app.use(compression());
 // Request logging
 app.use(requestLogger);
 
-// Apply Waiting Room first (throttle high traffic)
-app.use(waitingRoom);
 /**
  * @swagger
  * /health:

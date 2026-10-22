@@ -127,8 +127,10 @@ axiosInstance.interceptors.response.use(
         }
 
         // Handle Waiting Room (503)
-        if (status === 503) {
-            window.dispatchEvent(new CustomEvent('tixmo:waiting-room'));
+        if (status === 503 && error.response?.data?.code === 'WAITING_ROOM_ACTIVE') {
+            const delay = error.response.data.retryAfter;
+            const retryAfter = Number.isSafeInteger(delay) && delay > 0 && delay <= 60 ? delay : 5;
+            window.dispatchEvent(new CustomEvent('tixmo:waiting-room', { detail: { retryAfter } }));
         }
 
         // Dispatch global error for other failure codes (e.g. 500, 404, network error)
