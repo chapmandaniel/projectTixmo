@@ -374,6 +374,9 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
       );
     }
   }
-  if (primary) throw primary;
+  if (primary)
+    throw primary instanceof Error
+      ? primary
+      : new Error('Last-ten checkout failed', { cause: primary });
   expect(backgroundErrors).toEqual([]);
 }, 120000);
