@@ -1,0 +1,25 @@
+# Task 551 — historical review reconciliation
+
+Independent tixmo-lead review, 2026-10-22. Documentation-only branch `tixmo/task-551-historical-review`, baseline `2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e`. PM owns closure. No runtime/test/DB/provider/environment/secret/config/push/merge/deploy action performed. GitHub reads only. This is a bounded evidence reconciliation, not new product acceptance.
+
+## Recommendations
+
+| Original | Recommendation | Evidence and surviving scope |
+| --- | --- | --- |
+|235|KEEP REVIEW; exact acceptance gap|Author merge `317754edc7b43eb8e27b60c5374679330326c575`, parents `0d193a6e8f8180d509f5cfdbb793203904047237` and `f699a5340b467fffbe92fccf9eb494dbd5b47e93`. Original explicitly requires independent lead AND QA exact-SHA acceptance. None located in original events or bounded successor search. Author125 mocked API/202 dashboard/45 guards/6 tooling and builds are not independent acceptance.|
+|318|CLOSE scoped historical execution/evidence ONLY, retaining FAIL|Immutable failure receipt `aa64c2c59bba570ec39958d06e004cfbc7b2ad59`, product `4ec8594850eb547dafc145a14bb1b85cdeaa235c`:15 failed/79 passed/10 skipped suites;40 failed/655 passed/26 skipped tests. Independent lead319 `8cced1c93fc0abc488ba122803297be667d31b13` reviewed full commands/counts/cleanup and raw Jest; PM accepted319 DONE. Original asks full execution and honest failures, not mandatory green. Accepted successor362 `aeedc5867adb5bd2c7040e24dea8fe732fa3f7d7`, product `80c6710b89d147588e1514aa99a4e55c5630d38a`:725 passed/0 failed/26 skipped tests,97 passed/0 failed/10 skipped suites. QA execution independently accepted by PM; not a new run today.|
+|424|KEEP REVIEW; full-market scope not superseded|Original product `8aae387bcd4290edd259fd75aa11baaa1f62ca63`; corrected evidence `21e2c8fec6f6fd7913c1c14e274b79fda964fc46`. Independent425 `ddcf885afa880d857b3d1f42e78a07d27a33af7d` approves failure accuracy/cleanup only and explicitly keeps424 OPEN. Market audit network blocked:0 PASS/1 FAIL/11 not reached of12. Supplemental API803 PASS/1 FAIL/26 SKIP. Later434 `9439ebc4` product427 `fcab880ea7caf50493439a21032b7a93effc438f`, independently accepted437 `1042194b`, proves repaired API804 PASS/0 FAIL/26 SKIP and HTTP100, NOT full market.432 remains incomplete/native-execution blocked, latest docs `eb7fa665acff31d692683e5517d0992fed7e1d4b`; full audit/local composition acceptance unmatched.|
+
+## Current GitHub history and why it does not erase scope
+
+Read `gh pr list --repo chapmandaniel/projectTixmo --state all --limit 25 --json number,state,title,headRefOid,mergeCommit,mergedAt,url` and `gh pr view 61 --repo chapmandaniel/projectTixmo --json body,statusCheckRollup,commits`.
+
+PR58 f699a534 MERGED as9e207e5f; PR60 0d193a6e MERGED as272b3419; PR61 exact head `400470e21c7b0a1689144c6e85d28a1f4c6138f4` MERGED as `3a8d7d5449ecdef951c87a7c330f7dc17af8ada5` at2026-10-20T23:57:06Z. Both head checks SUCCESS: design run39517714812/job118953771148 and market run39517714697/job118953771237. PR61 history contains different merge272b3419 and substantive payment source/race fixture modifications. Local `git diff --stat 317754ed 400470e` shows84 changed paths, including payment service, order service and race tests, with original task235 evidence and release-integration fixtures absent. Hosted acceptance is valuable but not independently reviewed exact317754e preservation of all original reconciliation invariants. No close235 based solely on merged ancestry or general CI green. PM may establish a separately independent successor contract mapping; this bounded review does not invent it.
+
+PR68–72 now MERGED (latest72 merge027ada2296e8c1efb8e610b5bcf3a98c722eed39). PR73 head0dfb0badcd1cd6afc01c8047abc99622941af3d7,74 c9c9e7f354a72c49f6885e4df31b8713d34065fe,75 a5da21936f4e0c730cab448610d9ecc75d2ef398 remain OPEN at inspection. These newer histories are not evidence that the no-network local full-market qualification of424 succeeded. Current exact final-tree/CI acceptance is a separate reviewer lane552, not independently duplicated here.
+
+## Preserved limitations
+
+318 attempt1 timeout and blocked S3 attempt remain failures;319 unresolved contracts were materialized in321–328, not waived by this record closure.362 cleanup artifact reports ownedPG3085826/Redis3085839 absent, ports29781/45851 empty, no sockets/pidfiles/workers/blocked attempts; inspected as historical evidence only, no new live cleanup probe.26 skipped cases/10 suites remain excluded, not passing.424 actualPG18.6/Redis8.0.5 is NOT required245 PG17/Redis8.2.10 parity. Actual abort qualification426, capacity/provider/browser/parity/staging/release approval are not established by API-only evidence or these closure recommendations. No original failed raw log edited or removed.
+
+Checks: read board551/235/318/424/319/362/432/231 and team instructions; inspected immutable319 report,362 summary and cleanup via git show; read current GitHub PR history/check metadata. No application tests run. Only this evidence file is owned by551.
