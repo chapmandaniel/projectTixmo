@@ -67,7 +67,8 @@ it('uses only fixed read SQL and INFO server, no retries, and projects only vers
   expect(h.deps.createClient).toHaveBeenCalledWith({
     url: env.REDIS_URL,
     disableOfflineQueue: true,
-    commandsQueueMaxLength: 1,
+    disableClientInfo: true,
+    commandsQueueMaxLength: 2,
     socket: { connectTimeout: 3000, reconnectStrategy: false },
   });
   expect(h.db.$queryRawUnsafe).toHaveBeenCalledTimes(1);
@@ -215,3 +216,72 @@ it('packages the guarded standalone observer and retains a hard CLI deadline', (
   expect(source).toContain('20000');
   expect(source).toContain('process.exit(1)');
 });
+
+it.each([
+  ['redis://synthetic:synthetic@redis.test:6379/0', ['AUTH', 'INFO']],
+  ['redis://synthetic:synthetic@redis.test:6379/4', ['AUTH', 'SELECT', 'INFO']],
+  ['redis://redis.test:6379/0', ['INFO']],
+])(
+  'installed Redis client completes real queue/RESP handshake without TCP: %s',
+  async (url, expected) => {
+    const { EventEmitter } = require('node:events');
+    const net = require('node:net');
+    const { createClient } = require('redis');
+    const commands: string[][] = [];
+    let destroyed = false;
+    // Only the byte transport is replaced. The installed client's URL parsing,
+    // socket initiator, actual bounded command queue, encoder and decoder all run.
+    const socket = new EventEmitter();
+    for (const method of [
+      'setTimeout',
+      'setNoDelay',
+      'setKeepAlive',
+      'cork',
+      'uncork',
+      'ref',
+      'unref',
+    ])
+      socket[method] = jest.fn(() => socket);
+    socket.write = jest.fn((chunk: string | Buffer) => {
+      const parts = chunk.toString().split('\r\n');
+      const count = Number(parts[0].slice(1));
+      const args = Array.from({ length: count }, (_, index) => parts[2 + index * 2]);
+      commands.push(args);
+      const body = '# Server\r\nredis_version:8.2.9\r\n';
+      const reply = args[0] === 'INFO' ? `$${Buffer.byteLength(body)}\r\n${body}\r\n` : '+OK\r\n';
+      queueMicrotask(() => {
+        if (!destroyed) socket.emit('data', Buffer.from(reply));
+      });
+      return true;
+    });
+    socket.destroy = jest.fn(() => {
+      destroyed = true;
+      queueMicrotask(() => socket.emit('close', false));
+      return socket;
+    });
+    const connect = jest.spyOn(net, 'connect').mockImplementation(() => {
+      queueMicrotask(() => socket.emit('connect'));
+      return socket;
+    });
+    const h = harness();
+    try {
+      const result = await observe([], { ...env, REDIS_URL: url }, { ...h.deps, createClient });
+      expect(result).toEqual({
+        ok: true,
+        scope,
+        postgresqlVersionNum: 180003,
+        redisVersion: '8.2.9',
+      });
+      expect(commands.map((args) => args[0]).sort()).toEqual([...expected].sort());
+      expect(commands.filter((args) => args[0] === 'INFO')).toEqual([['INFO', 'server']]);
+      if (url.endsWith('/4')) expect(commands).toContainEqual(['SELECT', '4']);
+      expect(connect).toHaveBeenCalledTimes(1);
+      expect(socket.destroy).toHaveBeenCalledTimes(1);
+      expect(destroyed).toBe(true);
+    } finally {
+      if (!destroyed) socket.destroy();
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      connect.mockRestore();
+    }
+  }
+);
