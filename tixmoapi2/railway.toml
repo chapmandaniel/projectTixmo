@@ -3,6 +3,6 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "/bin/sh -c 'npm run migrate && exec node dist/index.js'"
+startCommand = "/bin/sh -c 'npm run migrate && if [ \"$TIXMO_ASSET_SHARE_AUDIT_ON_START\" = true ]; then TIXMO_ASSET_REKEY_DATABASE_URL=\"$DATABASE_URL\" node prisma/rekey-asset-shares.js; fi && exec node dist/index.js'"
 healthcheckPath = "/ready"
 restartPolicyType = "ON_FAILURE"
