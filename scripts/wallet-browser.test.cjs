@@ -3,8 +3,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { validateWalletBrowser } = require('./wallet-browser-guard.cjs');
-const fixture = { a: 'buyer-a@synthetic.test', b: 'buyer-b@synthetic.test', password: 'Synthetic-Wallet-Only!', orderId: '00000000-0000-4000-8000-000000000001', ticketId: '00000000-0000-4000-8000-000000000002', slug: 'wallet-00000000-0000-4000-8000-000000000003', orderNumber: 'WALLET-00000000-0000-4000-8000-000000000001' };
-const env = { TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1', DATABASE_URL: 'postgresql://synthetic@127.0.0.1:49152/tixmo_disposable_browser', REDIS_URL: 'redis://127.0.0.1:49153/1', TIXMO_WALLET_API: 'http://127.0.0.1:49154', TIXMO_WALLET_PORT: '49155', TIXMO_WALLET_FIXTURE: JSON.stringify(fixture), TIXMO_BROWSER_PATH: '/usr/bin/google-chrome' };
+const fixture = { a: 'buyer-a@synthetic.test', b: 'buyer-b@synthetic.test', password: 'Synthetic-Wallet-Only!', newPassword: 'Synthetic-Recovered2!', orderId: '00000000-0000-4000-8000-000000000001', ticketId: '00000000-0000-4000-8000-000000000002', slug: 'wallet-00000000-0000-4000-8000-000000000003', orderNumber: 'WALLET-00000000-0000-4000-8000-000000000001' };
+const env = { NODE_ENV: 'production', TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1', DATABASE_URL: 'postgresql://synthetic@127.0.0.1:49152/tixmo_disposable_browser', REDIS_URL: 'redis://127.0.0.1:49153/1', TIXMO_WALLET_API: 'http://127.0.0.1:49154', TIXMO_WALLET_PORT: '49155', TIXMO_WALLET_FIXTURE: JSON.stringify(fixture), TIXMO_BROWSER_PATH: '/usr/bin/google-chrome' };
 test('synthetic loopback browser request is admitted without runtime imports', () => assert.equal(validateWalletBrowser(env).frontendPort, 49155));
 for (const [name, mutation] of [
  ['missing destructive opt-in', { TIXMO_ALLOW_DESTRUCTIVE_TESTS: '' }], ['remoteSQL', { DATABASE_URL: env.DATABASE_URL.replace('127.0.0.1', 'remote.invalid') }], ['RedisDB0', { REDIS_URL: env.REDIS_URL.replace('/1', '/0') }],
@@ -38,10 +38,19 @@ test('worker guards before Vite/spawn and never fabricates API responses or logs
  assert.match(worker, /renewed\.userId, owner/);
 });
 test('suite retains real auth, transport-only receipt, full financial and cleanup boundaries', () => {
- for(const marker of ['jest.unmock(\'../../src/config/redis\')','jest.unmock(\'../../src/utils/notificationService\')',"['jwtExpiresIn', '10s']",'expect(await snapshot()).toEqual(before)','expect(financial(after)).toEqual(financial(before))','expect(transporter.sendMail).toHaveBeenCalledTimes(1)','requireSafeCleanup();']) assert.ok(suite.includes(marker), marker);
+ for(const marker of ['jest.unmock(\'../../src/config/redis\')','jest.unmock(\'../../src/utils/notificationService\')',"['jwtExpiresIn', '10s']",'expect(await snapshot()).toEqual(before)','expect(financial(after)).toEqual(financial(before))','expect(transporter.sendMail).toHaveBeenCalledTimes(recoveryMailCount + 1)','requireSafeCleanup();']) assert.ok(suite.includes(marker), marker);
  assert.doesNotMatch(suite, /jest\.mock\(['"]\.\.\/\.\.\/src\/(middleware\/auth|utils\/jwt|api\/orders\/service|utils\/notificationService)/);
  assert.ok(suite.indexOf('requireSafeCleanup();') < suite.indexOf('prisma.ticket.deleteMany'));
  assert.ok(suite.indexOf('await bounded(cleanup)') < suite.indexOf('for (const spy of spies.reverse())'));
  assert.match(suite, /unsafe = true/);
  assert.match(suite, /stdio: \['ignore', 'ignore', 'ignore', 'ipc'\]/);
+});
+
+test('current browser lost-password extension uses production CSP and real captured-link UI without financial POSTs', () => {
+ for (const marker of ["await build(buildConfig)", "await preview(", "tdash/nginx.security-headers.conf", "__TIXMO_RESET_CAPTURE_EARLY__", "await deadline(resetLink", "fixture.newPassword", "lostPasswordRecovered: true"]) assert.ok(worker.includes(marker), marker);
+ assert.ok(worker.includes('/api/v1/auth/forgot-password')); assert.ok(worker.includes('/api/v1/auth/reset-password'));
+ assert.ok(suite.includes("Reset your Tixmo buyer password")); assert.ok(suite.includes("Your Tixmo buyer password changed"));
+ assert.ok(suite.includes('recoveryMailCount + 1'));
+ const result = worker.slice(worker.indexOf('process.send?.({'));
+ assert.doesNotMatch(result, /capturedLink|resetLink:|token:|raw:/);
 });

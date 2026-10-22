@@ -275,6 +275,7 @@ export const BuyerAuthPanel = ({ currentUser, onAuthenticated }) => {
                     )}
                 </DashboardButton>
             </form>
+            {mode === 'login' ? <Link to="/reset-password">Forgot your password?</Link> : null}
         </DashboardSurface>
     );
 };

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { validateVerificationTargets } = require('./verification-safety.cjs');
 function validateWalletBrowser(env) {
   validateVerificationTargets(env);
+  assert.equal(env.NODE_ENV, 'production');
   const api = new URL(env.TIXMO_WALLET_API);
   assert.equal(api.protocol, 'http:'); assert.equal(api.hostname, '127.0.0.1');
   assert.ok(Number(api.port) > 1024 && Number(api.port) <= 65535);
@@ -19,6 +20,7 @@ function validateWalletBrowser(env) {
   assert.match(fixture.slug, /^wallet-[a-f0-9-]{36}$/);
   assert.match(fixture.orderNumber, /^WALLET-[a-f0-9-]{36}$/);
   assert.equal(fixture.password, 'Synthetic-Wallet-Only!');
+  assert.equal(fixture.newPassword, 'Synthetic-Recovered2!');
   assert.match(env.TIXMO_BROWSER_PATH || '', /^\/[a-zA-Z0-9_./-]+$/);
   return { api, frontendPort, fixture };
 }

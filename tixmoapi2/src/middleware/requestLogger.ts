@@ -1,3 +1,4 @@
+import { buyerRecoveryLogPath } from '../utils/buyerRecoveryLogPath';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../config/logger';
 
@@ -6,7 +7,8 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
 
   res.on('finish', () => {
     const duration = Date.now() - start;
-    const message = `${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`;
+    const safeUrl = buyerRecoveryLogPath(req.originalUrl) || req.originalUrl;
+    const message = `${req.method} ${safeUrl} ${res.statusCode} - ${duration}ms`;
 
     if (res.statusCode >= 500) {
       logger.error(message);

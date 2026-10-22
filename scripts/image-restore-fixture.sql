@@ -21,4 +21,6 @@ INSERT INTO payment_webhook_events(id,type,payment_intent_id,order_id,status,att
 VALUES('evt_restore','payment_intent.succeeded','pi_restore_paid','restore-paid','PROCESSED',9007199254740993,'restore-generation-token',2,now(),now());
 INSERT INTO event_sales_controls(id,event_id,organization_id,actor_id,request_id,reason,before_paused,after_paused)
 VALUES('restore-audit','restore-event','restore-org','restore-buyer','restore-request','Synthetic staffing review',false,true);
+INSERT INTO buyer_password_resets(user_id,token_hash,email,session_version,expires_at)
+VALUES('restore-buyer','9af2ef1474174840cb7e0b8e85e0af76768e4c8aa4ab9581e129ab2a81c22bfd','restore-buyer@test.invalid',7,now()+interval '15 minutes');
 COMMIT;

@@ -35,21 +35,25 @@ export const refreshTokenSchema = z.object({
 });
 
 export const forgotPasswordSchema = z.object({
-  body: z.object({
-    email: normalizedEmailSchema,
-  }),
+  body: z
+    .object({
+      email: normalizedEmailSchema,
+    })
+    .strict(),
 });
 
 export const resetPasswordSchema = z.object({
-  body: z.object({
-    token: z.string().min(1, 'Reset token is required'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-      .regex(/[0-9]/, 'Password must contain at least one number'),
-  }),
+  body: z
+    .object({
+      token: z.string().regex(/^[a-f0-9]{64}$/, 'Invalid reset link'),
+      password: registerSchema.shape.body.shape.password
+        .max(72)
+        .refine(
+          (value) => Buffer.byteLength(value, 'utf8') <= 72,
+          'Password must be at most 72 UTF-8 bytes'
+        ),
+    })
+    .strict(),
 });
 
 export const changePasswordSchema = z.object({
