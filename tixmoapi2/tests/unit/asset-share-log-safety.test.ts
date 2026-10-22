@@ -19,6 +19,10 @@ import { assetShareLogPath } from '../../src/utils/assetShareLogPath';
 const secret = 'synthetic-bearer-canary-never-log';
 const redacted = '/api/v1/assets/shares/[redacted]';
 const paths = [
+  `/api/v1/assets/shares/${secret}/../../health`,
+  `/api/v1/assets/shares/${secret}/%2e%2e/%2e%2e/health`,
+  `https://api.synthetic.test/api/v1/assets/shares/${secret}/../../health`,
+  `https://api.synthetic.test/api/v1/assets/shares/${secret}/%2E%2E/%2E%2E/health`,
   `/api/v1/assets/shares/${secret}`,
   `/api/v1/assets/shares/${secret}?token=${secret}#${secret}`,
   `https://api.synthetic.test/api/v1/assets/shares/${secret}`,
