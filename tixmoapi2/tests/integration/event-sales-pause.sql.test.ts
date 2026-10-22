@@ -37,6 +37,13 @@ function preserve(error: unknown): never {
   console.error(failClosed.message, error);
   throw failClosed;
 }
+// The observer can outlive bounded's race and the owning test body. Preserve
+// conservatively on ANY observer failure, before request drain or hook teardown.
+// This latch is not cancellation; even later settlement cannot authorize reuse.
+async function observe<T>(work: Promise<T>): Promise<T> {
+  try { return await bounded(work); }
+  catch (error) { preserve(error); }
+}
 beforeEach(() => { if (failClosed) throw failClosed; });
 afterEach(async () => {
   try {
@@ -219,7 +226,7 @@ test.each(['pause', 'create'] as const)('%s serialized first holds the actual ev
     await bounded(arrived.promise);
     const later = start(first === 'pause' ? f.create : () => f.control(true));
     let blocked = 0;
-    await bounded((async () => {
+    await observe((async () => {
       const deadline = Date.now() + 3000;
       while (!blocked && Date.now() < deadline) {
         const rows = await prisma.$queryRaw<Array<{ count: bigint }>>`SELECT count(*) AS count FROM pg_stat_activity WHERE ${holderPid} = ANY(pg_blocking_pids(pid))`;
