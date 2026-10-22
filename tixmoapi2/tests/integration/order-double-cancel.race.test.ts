@@ -312,37 +312,17 @@ test.each(['PAID', 'PROCESSING'] as const)(
       return original(callback, options);
     }) as any);
     try {
-      if (change === 'PAID')
-        await expect(new OrderService().cancelOrder(order.id)).rejects.toMatchObject({
-          statusCode: 400,
-        });
-      else {
-        await expect(new OrderService().cancelOrder(order.id)).resolves.toMatchObject({
-          status: 'CANCELLED',
-          paymentStatus: 'PROCESSING',
-        });
-        changed = {
-          ...changed,
-          status: 'CANCELLED',
-          updatedAt: expect.any(Date),
-          tickets: changed.tickets.map((ticket: any) => ({
-            ...ticket,
-            status: 'CANCELLED',
-            inventoryState: 'RELEASED',
-            updatedAt: expect.any(Date),
-          })),
-        };
-      }
+      // Both changes happen after the public request's PENDING observation.
+      // Stable PROCESSING is still cancellable; this is stale-observation refusal.
+      await expect(new OrderService().cancelOrder(order.id)).rejects.toMatchObject({
+        statusCode: 400,
+      });
     } finally {
       spy.mockRestore();
     }
     expect(
       await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { tickets: true } })
     ).toEqual(changed);
-    expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(
-      change === 'PROCESSING'
-        ? { ...type, quantityAvailable: 10, quantityHeld: 0, updatedAt: expect.any(Date) }
-        : type
-    );
+    expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(type);
   }
 );
