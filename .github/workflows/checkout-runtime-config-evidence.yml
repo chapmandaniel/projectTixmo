@@ -1,6 +1,12 @@
 name: Tixmo Checkout Runtime Config Evidence
 
 on:
+  push:
+    branches: [codex/task-583-target-probe]
+    paths:
+      - scripts/probe-public-test-target.mjs
+      - scripts/runtime-config-parser.mjs
+      - .github/workflows/checkout-runtime-config-evidence.yml
   workflow_dispatch:
     inputs:
       target:
@@ -26,7 +32,7 @@ on:
 
 jobs:
   public-test-target:
-    if: ${{ inputs.read_only_current_test_target }}
+    if: ${{ github.event_name == 'push' || inputs.read_only_current_test_target }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:
@@ -37,6 +43,7 @@ jobs:
         with:
           node-version: '24.21.0'
       - name: Require the confirmed production-named test environment
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
           TARGET: ${{ inputs.target }}
         run: test "$TARGET" = production
@@ -44,7 +51,7 @@ jobs:
         run: node scripts/probe-public-test-target.mjs
 
   checkout-runtime-config:
-    if: ${{ !inputs.read_only_current_test_target }}
+    if: ${{ github.event_name == 'workflow_dispatch' && !inputs.read_only_current_test_target }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
