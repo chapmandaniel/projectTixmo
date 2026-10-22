@@ -340,6 +340,8 @@ async function qualifyWallet() {
     let failureStage = 0;
     let currentStage = 0;
     let failureCategory = 0;
+    let currentStartupPhase = 0;
+    let failureStartupPhase = 0;
     browser.on('message', (message: any) => {
       const diagnostic =
         require('../../../scripts/wallet-browser-guard.cjs').walletBrowserDiagnostic(
@@ -347,8 +349,10 @@ async function qualifyWallet() {
         );
       if (diagnostic) {
         currentStage = diagnostic.stage;
+        currentStartupPhase = diagnostic.startupPhase ?? 0;
         if (diagnostic.category !== 'progress' && failureStage === 0) {
           failureStage = diagnostic.stage;
+          failureStartupPhase = currentStartupPhase;
           failureCategory = ['assertion', 'deadline', 'other'].indexOf(diagnostic.category) + 1;
         }
       }
@@ -364,6 +368,24 @@ async function qualifyWallet() {
     const workerExitCode = await bounded(browserExit, 120000);
     if (workerExitCode !== 0) {
       const failedStage = failureStage || currentStage;
+      const failedStartupPhase = failureStartupPhase || currentStartupPhase;
+      const assertStartupPhasePassed = (phase: number) => {
+        if (failedStartupPhase !== phase) return;
+        expect(failureCategory).not.toBe(1); // assertion
+        expect(failureCategory).not.toBe(2); // deadline
+        expect(failureCategory).not.toBe(3); // other
+        expect(failedStartupPhase).not.toBe(phase); // exit without diagnostic
+      };
+      assertStartupPhasePassed(1);
+      assertStartupPhasePassed(2);
+      assertStartupPhasePassed(3);
+      assertStartupPhasePassed(4);
+      assertStartupPhasePassed(5);
+      assertStartupPhasePassed(6);
+      assertStartupPhasePassed(7);
+      assertStartupPhasePassed(8);
+      assertStartupPhasePassed(9);
+
       // Category assertion + stage call site both survive the sanitized formatter.
       const assertStagePassed = (stage: number) => {
         if (failedStage !== stage) return;

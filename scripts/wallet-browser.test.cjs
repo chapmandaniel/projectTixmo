@@ -97,3 +97,23 @@ test('captured email opens a new document instead of only changing the request-f
   assert.ok(emailNavigation.includes('resetNavigation.loaderId.length > 0'));
   for (const invariant of ['location.hash', '__TIXMO_RESET_CAPTURE_EARLY__', 'location.search', 'resetDocumentCsp, true']) assert.ok(emailNavigation.includes(invariant));
 });
+
+
+test('startup diagnostics project only bounded numeric phases without payload content', () => {
+  for (let startupPhase = 0; startupPhase <= 9; startupPhase++) {
+    const result = walletBrowserDiagnostic({stage: 4, category: 'other', startupPhase, message: 'synthetic-canary', url: 'synthetic-canary'});
+    assert.deepEqual(result, {stage: 4, category: 'other', startupPhase});
+    assert.equal(JSON.stringify(result).includes('synthetic-canary'), false);
+  }
+  for (const startupPhase of [-1, 10, 1.5, Infinity, NaN, '1', null, {}, 'synthetic-canary']) {
+    assert.equal(walletBrowserDiagnostic({stage: 4, category: 'other', startupPhase}), null);
+  }
+  const parent = fs.readFileSync('tixmoapi2/tests/integration/wallet-browser-recovery.test.ts', 'utf8');
+  const worker = fs.readFileSync('scripts/browser/wallet-continuity.mjs', 'utf8');
+  for (let phase = 1; phase <= 9; phase++) {
+    assert.ok(parent.includes(`assertStartupPhasePassed(${phase})`));
+    assert.ok(worker.includes(`phase(${phase})`));
+  }
+  assert.ok(parent.indexOf('assertStartupPhasePassed(1)') < parent.indexOf('assertStagePassed(1)'));
+  assert.ok(worker.includes('startupPhase = 0;'));
+});
