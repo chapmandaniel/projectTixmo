@@ -95,3 +95,59 @@ jobs:
           REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/1
         run: npm run verify:market
 
+  configured-image-restore:
+    # Separate job-owned services: never the existing gate DB or a target backup.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: ghcr.io/railwayapp-templates/postgres-ssl:18
+        env:
+          POSTGRES_USER: tixmo_restore_ci
+          POSTGRES_PASSWORD: synthetic_restore_password
+          POSTGRES_DB: tixmo_disposable_restore_source
+          PGDATA: /var/lib/postgresql/data/pgdata
+        ports:
+          - '127.0.0.1::5432'
+        options: >-
+          --health-cmd "pg_isready -U tixmo_restore_ci -d tixmo_disposable_restore_source"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8.2.9
+        ports:
+          - '127.0.0.1::6379'
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: tixmoapi2/package-lock.json
+      - name: Install isolated API tools
+        run: npm ci --prefix tixmoapi2
+      - name: Check synthetic restore guards
+        run: node --test scripts/image-restore.test.cjs
+      - name: Qualify configured images with synthetic new-database restore
+        env:
+          TIXMO_IMAGE_RESTORE: synthetic-only
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+          REDIS_CONTAINER: ${{ job.services.redis.id }}
+          DATABASE_URL: postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_restore_source?schema=public
+        run: node scripts/verify-image-restore.cjs
+      - name: Remove only owned compatibility containers and anonymous volumes
+        if: always()
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+          REDIS_CONTAINER: ${{ job.services.redis.id }}
+        run: |
+          [[ "$PG_CONTAINER" =~ ^[a-f0-9]{64}$ && "$REDIS_CONTAINER" =~ ^[a-f0-9]{64}$ && "$PG_CONTAINER" != "$REDIS_CONTAINER" ]]
+          docker rm --force --volumes "$PG_CONTAINER" "$REDIS_CONTAINER"
+          ! docker inspect "$PG_CONTAINER" "$REDIS_CONTAINER" >/dev/null 2>&1
+        # GitHub also tears down this job's service network on success/failure/cancellation.
