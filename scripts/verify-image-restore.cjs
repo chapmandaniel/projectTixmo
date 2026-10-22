@@ -71,9 +71,11 @@ function verify(env = process.env, spawn = spawnSync) {
   assert.equal(sql(SOURCE, 'SELECT current_database();'), SOURCE);
   assert.equal(sql(SOURCE, "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';"), '0');
   const migrations = fs.readdirSync(path.join(__dirname, '../tixmoapi2/prisma/migrations')).filter(name => /^\d/.test(name)).sort();
-  assert.equal(migrations.length, 32);
+  assert.equal(migrations.length, 33);
+  assert.ok(migrations.includes('20261021120000_event_sales_pause'));
+  assert.ok(migrations.includes('20261022143000_buyer_password_recovery'));
   run(process.execPath, [path.join(__dirname, '../tixmoapi2/node_modules/prisma/build/index.js'), 'migrate', 'deploy', '--schema', path.join(__dirname, '../tixmoapi2/prisma/schema.prisma')]);
-  assert.equal(sql(SOURCE, 'SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;'), '32');
+  assert.equal(sql(SOURCE, 'SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;'), String(migrations.length));
   for (const migration of migrations) {
     assert.match(migration, /^[a-z0-9_]+$/);
     const checksum = createHash('sha256').update(fs.readFileSync(path.join(__dirname, '../tixmoapi2/prisma/migrations', migration, 'migration.sql'))).digest('hex');
@@ -116,7 +118,7 @@ function verify(env = process.env, spawn = spawnSync) {
   assert.equal(sql(RESTORE, "SELECT count(*) FROM users WHERE id='restore-after';"), '0');
   assert.equal(sql(SOURCE, "SELECT count(*) FROM users WHERE id='restore-after';"), '1');
   receipt.snapshotSha256 = createHash('sha256').update(JSON.stringify(before)).digest('hex');
-  console.log(JSON.stringify({ ...receipt, migrations: 32, restoredFingerprintMatch: true, sourcePostBackupWritePreserved: true }));
+  console.log(JSON.stringify({ ...receipt, migrations: migrations.length, restoredFingerprintMatch: true, sourcePostBackupWritePreserved: true }));
 }
 module.exports = { guard, verify, SOURCE, RESTORE, PG_IMAGE, REDIS_IMAGE };
 if (require.main === module) {

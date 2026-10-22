@@ -16,6 +16,38 @@ export interface SendEmailOptions {
 }
 
 export class NotificationService {
+  async sendBuyerPasswordChanged(to: string): Promise<boolean> {
+    try {
+      await transporter.sendMail({
+        from: `${emailFrom.name} <${emailFrom.address}>`,
+        to,
+        subject: 'Your Tixmo buyer password changed',
+        html: '<p>Your buyer password was changed and existing sessions were signed out. If you did not make this change, request a new password reset from the buyer sign-in page.</p>',
+        text: 'Your buyer password was changed and existing sessions were signed out. If you did not make this change, request a new password reset from the buyer sign-in page.',
+      });
+      return true;
+    } catch {
+      logger.warn('Buyer password change notification was not confirmed');
+      return false;
+    }
+  }
+  // Recovery transport must not log provider exceptions: they may contain the link/body.
+  async sendBuyerPasswordReset(to: string, link: string): Promise<boolean> {
+    try {
+      await transporter.sendMail({
+        from: `${emailFrom.name} <${emailFrom.address}>`,
+        to,
+        subject: 'Reset your Tixmo buyer password',
+        html: `<p>Use this single-use link within 15 minutes to choose a new buyer password.</p><p><a href="${link}">Reset buyer password</a></p><p>If you did not request this, ignore this email.</p>`,
+        text: `Choose a new buyer password within 15 minutes: ${link}\nIf you did not request this, ignore this email.`,
+      });
+      return true;
+    } catch {
+      logger.warn('Buyer password recovery delivery was not confirmed');
+      return false;
+    }
+  }
+
   /**
    * Send a generic email
    */

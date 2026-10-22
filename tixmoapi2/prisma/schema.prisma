@@ -78,6 +78,7 @@ model User {
   updatedAt         DateTime      @updatedAt @map("updated_at")
 
   // Relations
+  buyerPasswordReset BuyerPasswordReset?
   orders            Order[]
   tickets           Ticket[]
   notifications     Notification[]
@@ -928,4 +929,16 @@ model EventSalesControl {
   @@unique([eventId, requestId])
   @@index([eventId, createdAt])
   @@map("event_sales_controls")
+}
+
+// Email-possession recovery for active customers only; never invitation authority.
+model BuyerPasswordReset {
+  userId String @id @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique @map("token_hash")
+  email String
+  sessionVersion Int @map("session_version")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("buyer_password_resets")
 }

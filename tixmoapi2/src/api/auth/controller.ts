@@ -64,3 +64,28 @@ export const acceptInvitation = catchAsync(async (req: AuthRequest, res: Respons
   const result = await authService.acceptInvitation(token, password);
   res.status(200).json(successResponse(result, 'Invitation accepted'));
 });
+
+export const forgotPassword = catchAsync(async (req: AuthRequest, res: Response) => {
+  // Respond before account lookup/delivery so existence and transport latency cannot enumerate buyers.
+  res
+    .status(202)
+    .json(
+      successResponse(
+        null,
+        'If this email belongs to an eligible buyer, a reset link will be sent.'
+      )
+    );
+  try {
+    const { requestBuyerPasswordReset } = await import('./buyerPasswordRecovery');
+    await requestBuyerPasswordReset((req.body as { email: string }).email);
+  } catch {
+    const { logger } = await import('../../config/logger');
+    logger.warn('Buyer password recovery request could not complete');
+  }
+});
+export const resetPassword = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { redeemBuyerPasswordReset } = await import('./buyerPasswordRecovery');
+  const { token, password } = req.body as { token: string; password: string };
+  await redeemBuyerPasswordReset(token, password);
+  res.status(200).json(successResponse(null, 'Password changed. Sign in with your new password.'));
+});
