@@ -404,23 +404,33 @@ export class PaymentService {
     const recipient = await this.orderTransaction(claim, orderId, async (tx) => {
       const order = await tx.order.findUnique({
         where: { id: orderId },
-        include: { user: { select: { email: true } } },
+        include: { user: { select: { email: true } }, paymentAttempt: true },
       });
-      if (
-        !order ||
-        order.paymentIntentId !== intent.id ||
-        order.status !== 'PENDING' ||
-        order.paymentStatus === 'SUCCEEDED'
-      )
-        return null;
+      if (!order || order.status !== 'PENDING' || order.paymentStatus === 'SUCCEEDED') return null;
+      // A webhook can arrive before the create response links its durable attempt.
+      // Bind only the committed matching operation, never an unrelated intent.
+      const early =
+        !order.paymentIntentId &&
+        !!order.paymentAttempt &&
+        order.paymentAttempt.id === intent.metadata.attemptId &&
+        (!order.paymentAttempt.paymentIntentId ||
+          order.paymentAttempt.paymentIntentId === intent.id) &&
+        intent.amount === cents(order.totalAmount) &&
+        intent.currency === order.currency;
+      if (order.paymentIntentId !== intent.id && !early) return null;
+      if (early)
+        await tx.paymentAttempt.update({
+          where: { orderId },
+          data: { paymentIntentId: intent.id },
+        });
       const updated = await tx.order.updateMany({
         where: {
           id: orderId,
           status: 'PENDING',
-          paymentIntentId: intent.id,
+          paymentIntentId: early ? null : intent.id,
           paymentStatus: { not: 'SUCCEEDED' },
         },
-        data: { paymentStatus: 'FAILED' },
+        data: { paymentStatus: 'FAILED', ...(early ? { paymentIntentId: intent.id } : {}) },
       });
       return updated.count ? { email: order.user.email, orderNumber: order.orderNumber } : null;
     });
