@@ -28,6 +28,27 @@ def connection_data():
 
 
 class OfflineTests(unittest.TestCase):
+    def test_error_classifier_emits_only_fixed_enums(self):
+        cases = {"server certificate does not match host name NEVER_EMIT": "hostname_mismatch",
+                 "SSL error: certificate verify failed NEVER_EMIT": "certificate_untrusted",
+                 "self-signed certificate NEVER_EMIT": "certificate_untrusted",
+                 "root certificate file NEVER_EMIT does not exist": "certificate_file_unavailable",
+                 "server does not support SSL NEVER_EMIT": "tls_unavailable",
+                 "password authentication failed NEVER_EMIT": "authentication_failed",
+                 "permission denied NEVER_EMIT": "permission_denied",
+                 "could not translate host name NEVER_EMIT": "dns_resolution_failed",
+                 "timeout expired NEVER_EMIT": "connection_timeout",
+                 "connection refused NEVER_EMIT": "connection_refused",
+                 "canceling statement due to statement timeout NEVER_EMIT": "statement_timeout",
+                 "canceling statement due to lock timeout NEVER_EMIT": "lock_timeout",
+                 'relation "_prisma_migrations" does not exist NEVER_EMIT': "migration_catalog_absent",
+                 "NEVER_EMIT": "unclassified_client_failure"}
+        for raw, expected in cases.items():
+            self.assertEqual(wiring.classify_client_error(raw), expected)
+            self.assertNotIn("NEVER_EMIT", wiring.classify_client_error(raw))
+        self.assertEqual(wiring.classify_client_error("x" * 65537), "diagnostic_unavailable")
+        self.assertEqual(wiring.classify_client_error({"secret": "NEVER_EMIT"}), "diagnostic_unavailable")
+
     def test_canonical_catalog_redacts_package_suffix(self):
         data = valid_catalog()
         data["serverVersion"] = "18.6 (NEVER_EMIT)"

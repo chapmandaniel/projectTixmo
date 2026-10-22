@@ -17,6 +17,31 @@ SERVICES = {
 }
 
 
+def classify_client_error(raw):
+    """Return a fixed enum only; no raw diagnostic or captured text can escape."""
+    if not isinstance(raw, str) or len(raw) > 65536:
+        return "diagnostic_unavailable"
+    lowered = raw.lower()
+    classes = (
+        ("hostname_mismatch", ("does not match host name", "hostname mismatch")),
+        ("certificate_untrusted", ("certificate verify failed", "self-signed certificate", "unknown ca")),
+        ("certificate_file_unavailable", ("root certificate file", "could not read certificate")),
+        ("tls_unavailable", ("server does not support ssl", "ssl connection is required")),
+        ("authentication_failed", ("password authentication failed", "no password supplied")),
+        ("permission_denied", ("permission denied",)),
+        ("dns_resolution_failed", ("could not translate host name", "name or service not known")),
+        ("connection_timeout", ("connection timed out", "timeout expired")),
+        ("connection_refused", ("connection refused",)),
+        ("statement_timeout", ("canceling statement due to statement timeout",)),
+        ("lock_timeout", ("canceling statement due to lock timeout",)),
+        ("migration_catalog_absent", ('relation "_prisma_migrations" does not exist',)),
+    )
+    for code, needles in classes:
+        if any(needle in lowered for needle in needles):
+            return code
+    return "unclassified_client_failure"
+
+
 def query_data(query):
     proc = subprocess.run(["npx", "--yes", "@railway/cli", "api", "--compact"], input=query, capture_output=True, text=True, timeout=45)
     if proc.returncode or len(proc.stdout) > 2 * 1024 * 1024:
@@ -116,6 +141,7 @@ ROLLBACK;
                           input=sql, capture_output=True, text=True, env=env, timeout=25)
     if proc.returncode:
         print(json.dumps({"status": "catalog_connection_or_query_failed", "exitCode": proc.returncode,
+                          "diagnosticClass": classify_client_error(proc.stderr),
                           "raw_errors_suppressed": True, "retried": False}))
         sys.exit(1)
     result = validate_catalog(proc.stdout)
