@@ -117,3 +117,80 @@ test('startup diagnostics project only bounded numeric phases without payload co
   assert.ok(parent.indexOf('assertStartupPhasePassed(1)') < parent.indexOf('assertStagePassed(1)'));
   assert.ok(worker.includes('startupPhase = 0;'));
 });
+
+const { clearDevToolsActivePort, parseActivePort, readActivePort, discoverDevTools } = require('./browser/devtools-discovery.cjs');
+const path = require('node:path');
+const os = require('node:os');
+const { EventEmitter } = require('node:events');
+const { PassThrough } = require('node:stream');
+const browserPath = '/devtools/browser/11111111-1111-4111-8111-111111111111';
+const endpoint = `ws://127.0.0.1:49152${browserPath}`;
+function discoveryFixture(t) {
+ const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'tixmo-discovery-'));
+ const file = path.join(profile,'DevToolsActivePort');
+ const browser = new EventEmitter(); browser.stderr = new PassThrough(); browser.exitCode = null; browser.signalCode = null;
+ t.after(() => {browser.stderr.destroy(); fs.rmSync(profile,{recursive:true,force:true});});
+ return {profile,file,browser};
+}
+test('owned stale discovery file removal preserves wallet profile and all other files', t => {
+ const {profile,file} = discoveryFixture(t);
+ fs.mkdirSync(path.join(profile,'Default')); fs.writeFileSync(path.join(profile,'Default','Local Storage'),'synthetic-session');
+ fs.writeFileSync(file,`49152\n${browserPath}`); clearDevToolsActivePort(profile);
+ assert.equal(fs.existsSync(file),false); assert.equal(fs.readFileSync(path.join(profile,'Default','Local Storage'),'utf8'),'synthetic-session');
+ clearDevToolsActivePort(profile);
+ assert.ok(worker.indexOf('clearDevToolsActivePort(profile)') < worker.indexOf('browser = spawn('));
+});
+test('bounded current regular file yields canonical loopback endpoint without stderr', async t => {
+ const {profile,file,browser} = discoveryFixture(t);
+ clearDevToolsActivePort(profile);
+ const pending=discoverDevTools(browser,profile,()=>new Error('deadline'),200);
+ fs.writeFileSync(file,`49152\n${browserPath}\n`);
+ assert.equal(await pending,endpoint); assert.equal(browser.listenerCount('exit'),0); assert.equal(browser.listenerCount('error'),0); assert.equal(browser.stderr.listenerCount('data'),0);
+});
+test('partial port write is not accepted until complete path appears', async t => {
+ const {profile,file,browser}=discoveryFixture(t); fs.writeFileSync(file,'49152\n');
+ assert.equal(readActivePort(profile),null);
+ const pending=discoverDevTools(browser,profile,()=>new Error('deadline'),200);
+ fs.writeFileSync(file,`49152\n${browserPath}`); assert.equal(await pending,endpoint);
+});
+for(const content of ['80\n'+browserPath,'65536\n'+browserPath,'49152\nws://remote.invalid/path','49152\n/devtools/page/secret','49152\n'+browserPath+'?token=secret','49152\n'+browserPath+'\nextra','x'.repeat(513),'49152\n/devtools/browser/../../secret']) test('rejects malformed discovery content '+JSON.stringify(content.slice(0,28)), () => assert.throws(()=>parseActivePort(content)));
+test('discovery refuses symbolic links, directories and oversize files without following them', async t => {
+ const {profile,file,browser}=discoveryFixture(t); const outside=path.join(profile,'unrelated'); fs.writeFileSync(outside,`49152\n${browserPath}`);
+ fs.symlinkSync(outside,file); assert.throws(()=>readActivePort(profile)); assert.throws(()=>clearDevToolsActivePort(profile)); assert.equal(fs.readFileSync(outside,'utf8'),`49152\n${browserPath}`);
+ fs.unlinkSync(file); fs.mkdirSync(file); assert.throws(()=>readActivePort(profile)); assert.throws(()=>clearDevToolsActivePort(profile)); fs.rmdirSync(file);
+ fs.writeFileSync(file,'x'.repeat(513)); await assert.rejects(discoverDevTools(browser,profile,()=>new Error('deadline'),100));
+ assert.equal(browser.listenerCount('exit'),0);
+});
+test('validated stderr announcement remains supported and raw output is drained', async t => {
+ const {profile,browser}=discoveryFixture(t); const pending=discoverDevTools(browser,profile,()=>new Error('deadline'),200);
+ browser.stderr.write(`unrelated synthetic-canary\nDevTools listening on ${endpoint}\n`); assert.equal(await pending,endpoint);
+ browser.stderr.write('later synthetic-canary'); assert.equal(browser.stderr.listenerCount('data'),0);
+});
+test('file discovery survives absent or oversized stderr announcement chunks', async t => {
+ const {profile,file,browser}=discoveryFixture(t); const pending=discoverDevTools(browser,profile,()=>new Error('deadline'),200);
+ browser.stderr.write(`DevTools listening on ${endpoint}\n`+'x'.repeat(17000));
+ fs.writeFileSync(file,`49152\n${browserPath}`); assert.equal(await pending,endpoint);
+});
+test('external stderr endpoint cannot enter CDP transport', async t => {
+ const {profile,browser}=discoveryFixture(t); const pending=discoverDevTools(browser,profile,()=>new Error('deadline'),200);
+ browser.stderr.write(`DevTools listening on ws://external.invalid:49152${browserPath}\n`); await assert.rejects(pending);
+});
+for(const event of ['error','exit']) test(`startup ${event} cancels discovery polling and listeners`,async t => {
+ const {profile,browser}=discoveryFixture(t); const pending=discoverDevTools(browser,profile,()=>new Error('deadline'),200);
+ browser.emit(event,new Error('synthetic-canary')); await assert.rejects(pending); assert.equal(browser.listenerCount('exit'),0); assert.equal(browser.listenerCount('error'),0); assert.equal(browser.stderr.listenerCount('data'),0);
+});
+test('discovery preserves deadline classification and stops polling after timeout', async t => {
+ const {profile,browser}=discoveryFixture(t); class Deadline extends Error {}
+ await assert.rejects(discoverDevTools(browser,profile,()=>new Deadline(),30),Deadline);
+ assert.equal(browser.listenerCount('exit'),0); assert.equal(browser.stderr.listenerCount('data'),0);
+ assert.match(worker, /discoverDevTools\(\s*browser,\s*profile,\s*\(\) => new BrowserDeadline\(\),?\s*\)/);
+ assert.ok(fs.readFileSync('scripts/browser/devtools-discovery.cjs','utf8').includes('timeoutMs = 15000'));
+ const collection=fs.readFileSync('scripts/verify-market-local.mjs','utf8').match(/name: 'Root verification safety checks',[\s\S]*?args: \[([^\]]+)\]/)?.[1];
+ assert.ok(collection?.includes("'scripts/wallet-browser.test.cjs'"));
+});
+
+test('already exited browser never admits even a syntactically valid endpoint file', async t => {
+ const {profile,file,browser}=discoveryFixture(t); fs.writeFileSync(file,`49152\n${browserPath}`); browser.exitCode=1;
+ await assert.rejects(discoverDevTools(browser,profile,()=>new Error('deadline'),100));
+ assert.equal(browser.listenerCount('exit'),0); assert.equal(browser.stderr.listenerCount('data'),0);
+});
