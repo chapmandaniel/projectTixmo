@@ -18,7 +18,7 @@ let type: any;
 const tx = {
   $queryRaw: jest.fn(),
   event: { findUniqueOrThrow: jest.fn() },
-  ticketType: { findUnique: jest.fn(), updateMany: jest.fn() },
+  ticketType: { findUnique: jest.fn(), update: jest.fn() },
   order: { create: jest.fn() },
   ticket: { createMany: jest.fn() },
 };
@@ -52,7 +52,7 @@ beforeEach(() => {
   };
   tx.event.findUniqueOrThrow.mockImplementation(async () => event);
   tx.ticketType.findUnique.mockImplementation(async () => type);
-  tx.ticketType.updateMany.mockResolvedValue({ count: 1 });
+  tx.ticketType.update.mockResolvedValue({});
   tx.order.create.mockImplementation(async ({ data }) => ({ id: 'order', ...data }));
   (prisma.$transaction as jest.Mock).mockImplementation((callback) => callback(tx));
 });
@@ -61,10 +61,15 @@ afterEach(() => jest.useRealTimers());
 async function expectPurchase(allowed: boolean) {
   if (allowed) {
     await expect(buy()).resolves.toMatchObject({ id: 'order' });
-    expect(tx.ticketType.updateMany).toHaveBeenCalledTimes(1);
+    expect(tx.ticketType.update).toHaveBeenCalledTimes(1);
+    expect(tx.ticketType.update).toHaveBeenCalledWith({
+      where: { id: 'ga' },
+      data: { quantityAvailable: { decrement: 1 }, quantityHeld: { increment: 1 } },
+    });
+    expect(tx.ticket.createMany).toHaveBeenCalledTimes(1);
   } else {
     await expect(buy()).rejects.toMatchObject({ statusCode: 400 });
-    expect(tx.ticketType.updateMany).not.toHaveBeenCalled();
+    expect(tx.ticketType.update).not.toHaveBeenCalled();
     expect(tx.order.create).not.toHaveBeenCalled();
     expect(tx.ticket.createMany).not.toHaveBeenCalled();
   }

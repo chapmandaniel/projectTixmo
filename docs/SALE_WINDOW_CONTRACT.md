@@ -1,8 +1,13 @@
 # Individual-event sale-window contract (W01 / #238)
 
-Status: proposed source-backed contract and bounded implementation; independent
-non-author contract review and QA required. Base: `317754edc7b43eb8e27b60c5374679330326c575`
-(combined candidate #235, not independently accepted).
+Status: reviewed original W01 source contract (#238), now being integrated by
+#506 onto current GitHub main `ebfbce7dc697effa8e359006c7e71bfe61ff2c6a`.
+Original source: `0b4e30dccbc77d1213ca4f14ff34982f17c1d42c`, independently
+reviewed in #252/#253. Historical acceptance does not qualify this new composition;
+see #506 for exact-head checks and independent review. Main's locked inventory
+update and all newer storefront/payment code are retained. The mock fixture now
+asserts main's `ticketType.update` decrement/held-increment contract rather than
+the older candidate's `updateMany` call.
 
 ## Authoritative eligibility
 
