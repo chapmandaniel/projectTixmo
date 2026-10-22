@@ -13,7 +13,7 @@ const apiRequire = createRequire(path.join(api, 'package.json'));
 const { PrismaClient } = apiRequire('@prisma/client');
 const migration = '20261005003000_payment_and_inventory_integrity';
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'tixmo-upgrade-'));
-let prisma;
+let prisma, runtimePrisma;
 const runPrisma = (args) => {
   const result = spawnSync(process.execPath, [apiRequire.resolve('prisma/build/index.js'), ...args],
     { cwd: api, env: process.env, encoding: 'utf8' });
@@ -49,22 +49,33 @@ const runPrisma = (args) => {
   assert.equal(order.currency, 'usd'); assert.equal(order.receiptStatus, 'LEGACY_UNKNOWN');
   assert.equal(order.receiptSentAt, null);
   assert.equal((await prisma.paymentAttempt.findUniqueOrThrow({ where: { orderId: order.id } })).amount, 1600);
-  // Exercise the upgraded checkout runtime against the populated tier limit.
-  const { orderService } = require(path.join(api, 'dist/api/orders/service.js'));
-  await assert.rejects(orderService.createOrder('upgrade-buyer', { items: [{ ticketTypeId: known.id, quantity: 1 }] }), /pricing tier/);
-  await assert.rejects(orderService.createOrder('upgrade-buyer', { items: [{ ticketTypeId: unclear.id, quantity: 1 }] }), /requires inventory reconciliation/);
-  await require(path.join(api, 'dist/config/prisma.js')).default.$disconnect();
   // A real pre-generation ledger row must retain identity and receive generation zero.
   await prisma.$executeRaw`INSERT INTO payment_webhook_events (id, type, status, created_at, updated_at) VALUES ('upgrade-legacy-webhook', 'payment_intent.succeeded', 'FAILED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
+  // Select only legacy columns until every additive migration has been applied.
+  const eventSelection = { id: true, organizationId: true, name: true, slug: true,
+    status: true, startDatetime: true, endDatetime: true };
+  const existingEvent = await prisma.event.findUniqueOrThrow({
+    where: { id: 'upgrade-event' }, select: eventSelection,
+  });
   for (const name of fs.readdirSync(source).sort()) {
     if (name > migration) fs.cpSync(path.join(source, name), path.join(staged, 'migrations', name), { recursive: true });
   }
   runPrisma(['migrate', 'deploy', '--schema', path.join(staged, 'schema.prisma')]);
+  const upgradedEvent = await prisma.event.findUniqueOrThrow({
+    where: { id: 'upgrade-event' }, select: { ...eventSelection, salesPaused: true },
+  });
+  assert.deepEqual(upgradedEvent, { ...existingEvent, salesPaused: false });
+  assert.equal(await prisma.eventSalesControl.count(), 0, 'Upgrade must not fabricate pause audit history');
+  // Exercise the upgraded checkout runtime against the populated tier limit.
+  const { orderService } = require(path.join(api, 'dist/api/orders/service.js'));
+  runtimePrisma = require(path.join(api, 'dist/config/prisma.js')).default;
+  await assert.rejects(orderService.createOrder('upgrade-buyer', { items: [{ ticketTypeId: known.id, quantity: 1 }] }), /pricing tier/);
+  await assert.rejects(orderService.createOrder('upgrade-buyer', { items: [{ ticketTypeId: unclear.id, quantity: 1 }] }), /requires inventory reconciliation/);
   const legacy = await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id: 'upgrade-legacy-webhook' } });
   assert.equal(legacy.attemptGeneration, 0n);
   assert.equal(legacy.status, 'FAILED');
   assert.equal((await prisma.paymentWebhookEvent.updateMany({ where: { id: legacy.id, attemptGeneration: 0n, status: 'FAILED' }, data: { attemptGeneration: { increment: 1 }, status: 'PROCESSING' } })).count, 1);
   assert.equal((await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id: legacy.id } })).attemptGeneration, 1n);
-  process.stdout.write('Populated upgrade passed: transfer revocation, tier limits, ambiguous-history gate, historical currency, receipt safety and legacy webhook generation upgrade.\n');
+  process.stdout.write('Populated upgrade passed: transfer revocation, tier limits, ambiguous-history gate, historical currency, receipt safety, legacy webhook generation and additive unpaused event/audit upgrade.\n');
 })().catch(error => { process.stderr.write(error.message + '\n'); process.exitCode = 1; })
-  .finally(async () => { if (prisma) await prisma.$disconnect(); fs.rmSync(temp, { recursive: true, force: true }); });
+  .finally(async () => { if (runtimePrisma) await runtimePrisma.$disconnect(); if (prisma) await prisma.$disconnect(); fs.rmSync(temp, { recursive: true, force: true }); });
