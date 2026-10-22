@@ -196,3 +196,20 @@ pre-deploy rekey alone cannot prove completion. Only after this proof may the
 authentication key family rotate. A killed command, failed transaction, bound
 failure or CAS conflict is not completion: retain legacy configuration, audit
 again, and explicitly retry. No automatic retry or legacy-key retirement occurs.
+
+A separately authorized hash-only preservation policy requires BOTH
+`--preserve-hash-only` and runtime
+`TIXMO_ALLOW_HASH_ONLY_SHARE_PRESERVATION=true`. Without both, the default audit
+remains strict. This policy accepts only actual SQL NULL ciphertext with a canonical
+64-character lowercase hexadecimal bearer hash. It preserves those rows, joins and
+metadata unchanged; empty or corrupt non-NULL ciphertext still aborts the whole
+operation before writes. Apply still requires its separate apply flag and opt-in.
+
+The separate `hashOnly` count is unverified and nonreconstructable: it proves neither
+historical provenance nor possession of the original bearer. Existing public bearer
+links continue to use their unchanged hashes; staff cannot reconstruct these links.
+Only verified v1 ciphertext is rewritten. A complete final audit must separately
+report zero legacy rows and separately enumerate current ciphertext and hash-only
+counts; never describe all rows
+as cryptographically verified or infer provenance from these counts. Existing
+cutover, link checks, interruption and legacy-key-retirement gates still apply.

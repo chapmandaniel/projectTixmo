@@ -38,8 +38,11 @@ const shares = Array.from({ length: 4 }, () => randomUUID()).sort();
 const tokens = shares.map(() => randomBytes(32).toString('base64url'));
 const diagnosticShares = Array.from({ length: 6 }, () => randomUUID());
 const diagnosticTokens = diagnosticShares.map(() => randomBytes(32).toString('base64url'));
+const hashOnlyShares: string[] = Array.from({ length: 4 }, () => randomUUID());
+const hashOnlyTokens = hashOnlyShares.map(() => randomBytes(32).toString('base64url'));
 const foreignShare = randomUUID();
 const foreignToken = randomBytes(32).toString('base64url');
+const mismatchedToken = randomBytes(32).toString('base64url');
 const live = new Set<Promise<unknown>>();
 let unsafe = false;
 const restorers: Array<{ restore: () => void }> = [];
@@ -98,7 +101,7 @@ const legacy = (token: string) => {
 };
 const snapshot = () =>
   prisma.assetLibraryFolderShare.findMany({
-    where: { id: { in: [...shares, ...diagnosticShares, foreignShare] } },
+    where: { id: { in: [...shares, ...diagnosticShares, ...hashOnlyShares, foreignShare] } },
     include: { folders: { orderBy: { id: 'asc' } } },
     orderBy: { id: 'asc' },
   });
@@ -206,11 +209,13 @@ afterAll(async () => {
     track(async () => {
       safe();
       await prisma.assetLibraryFolderShareFolder.deleteMany({
-        where: { shareId: { in: [...shares, ...diagnosticShares, foreignShare] } },
+        where: {
+          shareId: { in: [...shares, ...diagnosticShares, ...hashOnlyShares, foreignShare] },
+        },
       });
       safe();
       await prisma.assetLibraryFolderShare.deleteMany({
-        where: { id: { in: [...shares, ...diagnosticShares, foreignShare] } },
+        where: { id: { in: [...shares, ...diagnosticShares, ...hashOnlyShares, foreignShare] } },
       });
       safe();
       await prisma.assetLibraryFolder.deleteMany({
@@ -373,6 +378,155 @@ owned(
 );
 
 owned(
+  'explicit NULL policy preserves unverified bearers and only rewrites verified legacy rows',
+  async () => {
+    await resetOwned();
+    const auth = [] as Array<{ restore: () => void }>;
+    try {
+      for (let i = 0; i < 3; i++) {
+        safe();
+        await prisma.assetLibraryFolderShare.create({
+          data: {
+            id: hashOnlyShares[i],
+            organizationId: ids.org,
+            folderId: ids.folder,
+            createdById: ids.user,
+            tokenHash: hashAssetShareToken(hashOnlyTokens[i]),
+            tokenCiphertext: null,
+            recipientLabel: 'Synthetic hash-only',
+            expiresAt: new Date(Date.now() + (i === 1 ? -86400000 : 86400000)),
+            revokedAt: i === 2 ? new Date() : null,
+            folders: { create: [ids.folder, ids.extraFolder].map((folderId) => ({ folderId })) },
+          },
+        });
+      }
+      safe();
+      const publicBefore = await assetLibraryService.getSharedFolder(hashOnlyTokens[0]);
+      expect(publicBefore.rootFolders.map((row: { id: string }) => row.id).sort()).toEqual(
+        [ids.folder, ids.extraFolder].sort()
+      );
+      expect(publicBefore.folders.some((row) => row.id === ids.foreignFolder)).toBe(false);
+      const before = await snapshot();
+      await expect(rekey(prisma, keys, { organizationId: ids.org })).rejects.toBeInstanceOf(
+        AssetShareValidationError
+      );
+      expect(await snapshot()).toEqual(before);
+      const options = { organizationId: ids.org, preserveHashOnly: true };
+      expect(await rekey(prisma, keys, options)).toMatchObject({
+        scanned: 7,
+        legacy: 3,
+        current: 1,
+        hashOnly: 3,
+        updated: 0,
+        hashOnlyPolicyEnabled: true,
+        hashOnlyCryptographicallyVerified: false,
+        hashOnlyReconstructable: false,
+      });
+      expect(await snapshot()).toEqual(before);
+      await expect(rekey(prisma, keys, { ...options, apply: true, limit: 6 })).rejects.toThrow(
+        'bound exceeded'
+      );
+      expect(await snapshot()).toEqual(before);
+      expect(await rekey(prisma, keys, { ...options, apply: true })).toMatchObject({
+        updated: 3,
+        hashOnly: 3,
+      });
+      const after = await snapshot();
+      expect(withoutCipher(after)).toEqual(withoutCipher(before));
+      expect(after.filter((row) => hashOnlyShares.includes(row.id))).toEqual(
+        before.filter((row) => hashOnlyShares.includes(row.id))
+      );
+      expect(after.find((row) => row.id === foreignShare)).toEqual(
+        before.find((row) => row.id === foreignShare)
+      );
+      expect(await rekey(prisma, keys, options)).toMatchObject({
+        legacy: 0,
+        current: 4,
+        hashOnly: 3,
+        updated: 0,
+      });
+      expect(await snapshot()).toEqual(after);
+      safe();
+      auth.push(
+        jest.replaceProperty(config, 'jwtSecret', 'synthetic-new-auth'),
+        jest.replaceProperty(config, 'jwtRefreshSecret', 'synthetic-new-refresh'),
+        jest.replaceProperty(config, 'sessionSecret', 'synthetic-new-session')
+      );
+      const publicAfter = await assetLibraryService.getSharedFolder(hashOnlyTokens[0]);
+      expect(publicAfter).toEqual(publicBefore);
+      const viewed = await snapshot();
+      const oldRow = after.find((row) => row.id === hashOnlyShares[0])!;
+      const newRow = viewed.find((row) => row.id === hashOnlyShares[0])!;
+      expect(newRow).toEqual({
+        ...oldRow,
+        viewCount: oldRow.viewCount + 1,
+        lastViewedAt: newRow.lastViewedAt,
+        updatedAt: newRow.updatedAt,
+      });
+      expect(newRow.lastViewedAt).toBeInstanceOf(Date);
+      for (const token of [
+        hashOnlyTokens[1],
+        hashOnlyTokens[2],
+        randomBytes(32).toString('base64url'),
+      ]) {
+        safe();
+        await expect(assetLibraryService.getSharedFolder(token)).rejects.toMatchObject({
+          statusCode: 404,
+        });
+      }
+      safe();
+      await expect(
+        assetLibraryService.listFolderShares(
+          ids.foreignUser,
+          ids.folder,
+          'https://synthetic.invalid'
+        )
+      ).rejects.toMatchObject({ statusCode: 404 });
+      safe();
+      const links = await assetLibraryService.listFolderShares(
+        ids.user,
+        ids.folder,
+        'https://synthetic.invalid'
+      );
+      expect(
+        links.shares.find((row: { id: string; shareUrl?: string }) => row.id === hashOnlyShares[0])
+          ?.shareUrl
+      ).toBeUndefined();
+      expect(await snapshot()).toEqual(viewed);
+      for (const [cipher, hash] of [
+        ['', hashAssetShareToken(hashOnlyTokens[0])],
+        [null, 'invalid'],
+        ['v2:a:b:c', hashAssetShareToken(hashOnlyTokens[0])],
+        [encryptAssetShareToken(hashOnlyTokens[0], keys), hashAssetShareToken(mismatchedToken)],
+      ] as const) {
+        safe();
+        await prisma.assetLibraryFolderShare.update({
+          where: { id: hashOnlyShares[0] },
+          data: { tokenCiphertext: cipher, tokenHash: hash },
+        });
+        const invalid = await snapshot();
+        for (const apply of [false, true]) {
+          await expect(rekey(prisma, keys, { ...options, apply })).rejects.toBeInstanceOf(
+            AssetShareValidationError
+          );
+          expect(await snapshot()).toEqual(invalid);
+        }
+      }
+    } finally {
+      if (!unsafe) {
+        auth.forEach((item) => item.restore());
+        safe();
+        await prisma.assetLibraryFolderShareFolder.deleteMany({
+          where: { shareId: { in: hashOnlyShares } },
+        });
+        safe();
+        await prisma.assetLibraryFolderShare.deleteMany({ where: { id: { in: hashOnlyShares } } });
+      }
+    }
+  }
+);
+
+owned(
   'mixed invalid audit reports only aggregate categories and apply aborts before every write',
   async () => {
     await resetOwned();
@@ -417,6 +571,7 @@ owned(
       expect(validationCounts(failure, AssetShareValidationError)).toEqual({
         scanned: 10,
         scope: 'organization',
+        hashOnly: 0,
         missingCipher: 1,
         unknownFormat: 1,
         malformedEnvelope: 1,
