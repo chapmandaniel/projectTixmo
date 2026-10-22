@@ -32,7 +32,7 @@ function failureReason(error) {
       ['Asset share rekey conflict', 'conflict'],
     ]);
     if (known.has(error.message)) return known.get(error.message);
-    if (['P1000', 'P1001', 'P1002', 'P1010', 'P2021', 'P2022', 'P2024', 'P2028'].includes(error.code)) return 'database';
+    if (['P1000', 'P1001', 'P1002', 'P1010', 'P2010', 'P2021', 'P2022', 'P2024', 'P2028'].includes(error.code)) return 'database';
   } catch {
     // Even a malformed error cannot expose arbitrary properties through diagnostics.
   }

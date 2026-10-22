@@ -53,7 +53,7 @@ test('failure diagnostics map only fixed source reasons and allowlisted database
     ['Asset share rekey verification failed', 'verification'],
     ['Asset share rekey conflict', 'conflict'],
   ]) assert.equal(failureReason(new Error(message)), expected);
-  for (const code of ['P1000', 'P1001', 'P1002', 'P1010', 'P2021', 'P2022', 'P2024', 'P2028']) {
+  for (const code of ['P1000', 'P1001', 'P1002', 'P1010', 'P2010', 'P2021', 'P2022', 'P2024', 'P2028']) {
     assert.equal(failureReason(Object.assign(new Error('synthetic-private-canary'), { code })), 'database');
   }
 });
