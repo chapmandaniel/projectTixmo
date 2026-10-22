@@ -25,9 +25,9 @@ import { config } from '../../src/config/environment';
 import { generateAccessToken } from '../../src/utils/jwt';
 
 function gate<T = void>() {
-  let resolve!: (value: T) => void;
+  let resolve!: (value?: T) => void;
   const promise = new Promise<T>((done) => {
-    resolve = done;
+    resolve = (value) => done(value as T);
   });
   return { promise, resolve };
 }
