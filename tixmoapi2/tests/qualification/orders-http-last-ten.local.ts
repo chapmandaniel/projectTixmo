@@ -17,7 +17,7 @@ test('100 authenticated barrier buyers compete for the last ten untiered units',
   const crypto = require('node:crypto');
   const http = require('node:http');
   const request = require('supertest');
-  const { checkoutOwnership, promiseMiddleware, preallocateCheckout } = require('./task499/ownership.cjs');
+  const { checkoutOwnership, promiseMiddleware, preallocateCheckout, criticalCall } = require('./task499/ownership.cjs');
   const ids = preallocateCheckout(() => crypto.randomUUID());
   const work = checkoutOwnership(ids, 8000);
   const spies: any[] = [];
@@ -52,7 +52,7 @@ test('100 authenticated barrier buyers compete for the last ten untiered units',
     //426 detached actual Redis promises, not only client or middleware wrappers.
     for (const name of ['zRem', 'eval', 'sendCommand']) {
       const original = redis[name].bind(redis);
-      spies.push(jest.spyOn(redis, name).mockImplementation((...args: any[]) => work.run(() => original(...args))));
+      spies.push(jest.spyOn(redis, name).mockImplementation(criticalCall(original, work)));
     }
     const limiter = require('../../src/middleware/rateLimiter');
     for (const name of ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter']) {

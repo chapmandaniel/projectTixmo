@@ -82,4 +82,16 @@ function preallocateCheckout(uuid) {
     buyers: Array.from({ length: 100 }, () => uuid()),
     foreign: { organization: uuid(), event: uuid(), ticketType: uuid(), buyer: uuid() } };
 }
-module.exports = { checkoutOwnership, promiseMiddleware, preallocateCheckout };
+// Detached critical commands need an early permanent failure latch, but must
+// NOT call critical()/join() from inside registered work (self-join deadlock).
+// Preserve before raw rejection escapes even when middleware swallows/logs it.
+function criticalCall(original, work) {
+  return function (...args) {
+    const receiver = this;
+    return work.run(async () => {
+      try { return await original.apply(receiver, args); }
+      catch (error) { return work.preserve(error); }
+    });
+  };
+}
+module.exports = { checkoutOwnership, promiseMiddleware, preallocateCheckout, criticalCall };

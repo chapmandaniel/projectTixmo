@@ -49,3 +49,28 @@ contract integration and callback/whole-fixture lifetimes before any separate
 runtime request. Source preparation is incomplete until independent review
 confirms those interfaces; no acceptance PASS is asserted. Runtime additionally
 requires explicit separate sole-disposable-target authority.
+
+## Lead505 F1 repair (same499)
+
+Read actual immutable REQUEST CHANGES report dd43b39b6410d79eeda61543a18b1444a8cc4dbe.
+Old b64d52bc detached Redis spies used ordinary run; waitingRoom's swallowed
+release/renewal errors could disappear from pending without preservation.
+Added exported criticalCall and installed it for actual zRem/eval/sendCommand
+spies. It catches synchronous throw or async rejection INSIDE registered raw
+operation and permanently preserves BEFORE wrapper rejection/settlement. It
+never calls critical()/join(), avoiding recursively instrumented self-join.
+
+New actual exported-wrapper inert probe uses fake receiver/methods, not regex
+extraction: all three Redis command async rejections swallowed/logged by consumer
+still latch before notification, retain IDs and block admission/cleanup/disconnect
+with pending0. Synchronous throw control also PASS; nested success returns8 and
+actually permits cleanup without self-join. Existing eight ownership controls
+remain PASS (including ordinary settled-client error/success cleanup). Twelve
+source text checks remain PASS. Node syntax checks of helper/new probe and
+whitespace checks PASS. No TypeScript syntax/type/runtime PASS claimed.
+
+Lead also confirms default Jest setup bootstraps DB BEFORE test body guard.
+The body guard only protects THIS source's imports/resources. A future reviewed
+process guard MUST admit before collection/setup; this source alone does not
+make Jest execution safe. No guard implementation, runner changes or runtime
+authority supplied. Fresh exact lead AND QA required; do not close499/246.
