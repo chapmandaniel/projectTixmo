@@ -1,6 +1,5 @@
 import request from 'supertest';
 import { UserRole } from '@prisma/client';
-import { config } from '../../src/config/environment';
 
 process.env.NODE_ENV = 'test';
 
@@ -64,6 +63,8 @@ jest.mock('../../src/services/upload.service', () => ({
   },
 }));
 
+const { config } =
+  require('../../src/config/environment') as typeof import('../../src/config/environment');
 const app = require('../../src/app').default;
 const { cleanupTestData, createOrganization, prisma, registerUser } = require('../utils/testUtils');
 
