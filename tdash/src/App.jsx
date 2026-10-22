@@ -39,6 +39,7 @@ const ExternalReviewPage = lazy(() => import('./pages/ExternalReviewPage'));
 const SharedAssetFolderPage = lazy(() => import('./pages/SharedAssetFolderPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const WalletPage = lazy(() => import('./pages/WalletPage'));
+const ScannerPage = lazy(() => import('./pages/ScannerPage'));
 const EventOnSalePage = lazy(() => import('./pages/EventOnSalePage'));
 const EventOnSalePreview = import.meta.env.DEV ? lazy(() => import('./pages/EventOnSalePreview')) : null;
 const FestivalPreview = import.meta.env.DEV ? lazy(() => import('./pages/FestivalPage')) : null;
@@ -129,7 +130,7 @@ const App = () => {
     const preservePublicLocation = () => {
         const current = latestLocation.current;
         const query = new URLSearchParams(current.search);
-        return matchPath('/wallet', current.pathname) || matchPath('/e/:slug', current.pathname) || (matchPath('/checkout/:slug', current.pathname)
+        return matchPath('/scan', current.pathname) || matchPath('/wallet', current.pathname) || matchPath('/e/:slug', current.pathname) || (matchPath('/checkout/:slug', current.pathname)
             && ['orderId', 'redirect_status', 'payment_intent', 'payment_intent_client_secret']
                 .some((field) => query.has(field)));
     };
@@ -284,6 +285,7 @@ const App = () => {
         <Suspense fallback={<PublicRouteFallback isDark={isDark} />}>
             <Routes>
                 {/* External unauthenticated routes */}
+                <Route path="/scan" element={<ScannerPage isDark={isDark} />} />
                 <Route path="/e/:slug" element={<EventOnSalePage />} />
                 {EventOnSalePreview && <Route path="/preview/event-onsale" element={<EventOnSalePreview />} />}
                 {FestivalPreview && <Route path="/preview/festival" element={<FestivalPreview />} />}
