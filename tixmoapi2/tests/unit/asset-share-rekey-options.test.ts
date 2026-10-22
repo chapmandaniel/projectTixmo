@@ -1,0 +1,45 @@
+const assert = require('node:assert/strict');
+const { options } = require('../../prisma/rekey-asset-shares');
+const env = {
+  TIXMO_ASSET_REKEY_DATABASE_URL: 'postgresql://synthetic@127.0.0.1:5432/tixmo_disposable_rekey',
+};
+test('default is bounded audit and apply requires explicit runtime opt-in', () => {
+  assert.deepEqual(options([], env), {
+    apply: false,
+    limit: 1000,
+    organizationId: undefined,
+    url: env.TIXMO_ASSET_REKEY_DATABASE_URL,
+  });
+  assert.throws(() => options(['--apply'], env));
+  assert.equal(options(['--apply'], { ...env, TIXMO_ALLOW_ASSET_SHARE_REKEY: 'true' }).apply, true);
+});
+for (const args of [
+  ['--limit', '0'],
+  ['--limit', '10001'],
+  ['--limit', '1.5'],
+  ['--limit', '1', '--limit', '2'],
+  ['--organization-id', 'bad'],
+  ['--unknown'],
+  ['--apply', '--apply'],
+])
+  test('rejects malformed operator arguments ' + JSON.stringify(args), () =>
+    assert.throws(() => options(args, env))
+  );
+for (const mutation of [
+  { TIXMO_ASSET_REKEY_DATABASE_URL: '' },
+  { DATABASE_URL: 'postgresql://other/other' },
+  { TIXMO_ASSET_REKEY_DATABASE_URL: 'https://invalid/db' },
+  { TIXMO_ASSET_REKEY_DATABASE_URL: env.TIXMO_ASSET_REKEY_DATABASE_URL + '?schema=private' },
+])
+  test('rejects ambiguous target', () => assert.throws(() => options([], { ...env, ...mutation })));
+test('CLI does not load .env, print raw failures or include record contents', () => {
+  const source = require('node:fs').readFileSync(
+    require.resolve('../../prisma/rekey-asset-shares'),
+    'utf8'
+  );
+  assert.doesNotMatch(
+    source,
+    /require\(['"]dotenv|console\.(log|error)\([^)]*(token|ciphertext|secret|error\.message|error\.stack)/i
+  );
+  assert.match(source, /log: \[\]/);
+});

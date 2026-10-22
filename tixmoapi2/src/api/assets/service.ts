@@ -1,5 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
+import {
+  encryptAssetShareToken,
+  verifiedAssetShareToken,
+  hashAssetShareToken,
+  validAssetShareKey,
+} from '../../services/asset-share-crypto';
 import prisma from '../../config/prisma';
 import { config } from '../../config/environment';
 import { logger } from '../../config/logger';
@@ -57,57 +63,20 @@ const FOLDER_SHARE_MAX_DAYS = 90;
 
 const assetLibraryFolderShare = (prisma as any).assetLibraryFolderShare;
 
-const hashShareToken = (token: string) => createHash('sha256').update(token).digest('hex');
-
-const getShareTokenEncryptionKey = () =>
-  createHash('sha256')
-    .update(
-      config.jwtRefreshSecret ||
-        config.jwtSecret ||
-        config.sessionSecret ||
-        'development-folder-share-token-key'
-    )
-    .digest();
-
+const hashShareToken = hashAssetShareToken;
+const shareKeys = () => ({
+  key: config.assetShareEncryptionKey,
+  legacySecret:
+    config.assetShareLegacySecret ||
+    config.jwtRefreshSecret ||
+    config.jwtSecret ||
+    config.sessionSecret,
+});
 const encryptShareToken = (token: string) => {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', getShareTokenEncryptionKey(), iv);
-  const encrypted = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()]);
-  const tag = cipher.getAuthTag();
-
-  return [
-    'v1',
-    iv.toString('base64url'),
-    tag.toString('base64url'),
-    encrypted.toString('base64url'),
-  ].join(':');
-};
-
-const decryptShareToken = (ciphertext?: string | null) => {
-  if (!ciphertext) {
-    return undefined;
+  if (!validAssetShareKey(config.assetShareEncryptionKey)) {
+    throw new ApiError(StatusCodes.SERVICE_UNAVAILABLE, 'Asset share encryption is unavailable');
   }
-
-  const [version, ivValue, tagValue, encryptedValue] = ciphertext.split(':');
-  if (version !== 'v1' || !ivValue || !tagValue || !encryptedValue) {
-    return undefined;
-  }
-
-  try {
-    const decipher = createDecipheriv(
-      'aes-256-gcm',
-      getShareTokenEncryptionKey(),
-      Buffer.from(ivValue, 'base64url')
-    );
-    decipher.setAuthTag(Buffer.from(tagValue, 'base64url'));
-
-    return Buffer.concat([
-      decipher.update(Buffer.from(encryptedValue, 'base64url')),
-      decipher.final(),
-    ]).toString('utf8');
-  } catch {
-    return undefined;
-  }
+  return encryptAssetShareToken(token, shareKeys());
 };
 
 const buildFolderShareUrl = (token: string, dashboardOrigin?: string) => {
@@ -250,6 +219,7 @@ class AssetLibraryService {
       updatedAt: Date;
       token?: string;
       tokenCiphertext?: string | null;
+      tokenHash?: string;
       folders?: Array<{ folderId: string }>;
     },
     dashboardOrigin?: string
@@ -258,7 +228,9 @@ class AssetLibraryService {
     const rootFolderIds = share.folders?.length
       ? share.folders.map((folder) => folder.folderId)
       : [share.folderId];
-    const token = share.token || decryptShareToken(share.tokenCiphertext);
+    const token =
+      share.token ||
+      verifiedAssetShareToken(share.tokenCiphertext, share.tokenHash || '', shareKeys());
 
     return {
       id: share.id,
