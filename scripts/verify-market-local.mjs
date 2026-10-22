@@ -26,7 +26,7 @@ const steps = [
   {
     name: 'Root verification safety checks',
     command: 'node',
-    args: ['--test', 'scripts/verification-safety.test.mjs', 'scripts/market-readiness-workflow.test.mjs', 'scripts/test-target.test.cjs'],
+    args: ['--test', 'scripts/verification-safety.test.mjs', 'scripts/market-readiness-workflow.test.mjs', 'scripts/test-target.test.cjs', 'scripts/share-startup-safety.test.mjs'],
   },
   {
     name: 'API build',
