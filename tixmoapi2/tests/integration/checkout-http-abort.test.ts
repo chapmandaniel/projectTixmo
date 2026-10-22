@@ -76,11 +76,7 @@ test('socket abort after Redis acquire and after service admission releases each
   const clients: http.ClientRequest[] = [];
   const clientClosed: Promise<void>[] = [];
   const releases: Array<() => void> = [];
-  const saved = {
-    stripeSecretKey: config.stripeSecretKey,
-    rateLimitWriteMax: config.rateLimitWriteMax,
-    waitingRoomMaxConcurrentRequests: config.waitingRoomMaxConcurrentRequests,
-  };
+  const configRestorers: Array<() => void> = [];
   let redis: Awaited<ReturnType<typeof connectRedis>> | undefined;
   let server: http.Server | undefined;
   let primary: unknown;
@@ -97,9 +93,15 @@ test('socket abort after Redis acquire and after service admission releases each
       }
     | undefined;
   try {
-    config.stripeSecretKey = ''; // Constructor cannot instantiate even synthetic provider transport.
-    config.rateLimitWriteMax = 10000;
-    config.waitingRoomMaxConcurrentRequests = 10;
+    // config is readonly to application callers; use Jest's reversible test seam.
+    for (const [name, value] of [
+      ['stripeSecretKey', ''],
+      ['rateLimitWriteMax', 10000],
+      ['waitingRoomMaxConcurrentRequests', 10],
+    ] as const) {
+      const replaced = jest.replaceProperty(config, name, value);
+      configRestorers.push(() => replaced.restore());
+    }
     redis = await connectRedis(); // Before app/limiter module initialization.
     const asyncModule = await import('../../src/utils/catchAsync');
     spies.push(
@@ -447,7 +449,7 @@ test('socket abort after Redis acquire and after service admission releases each
       } catch (error) {
         primary ??= error;
       }
-      Object.assign(config, saved);
+      for (const restore of configRestorers.reverse()) restore();
     } else {
       // Deadline is failure, not cancellation. Preserve services/fixtures for managed job teardown.
       console.error('Unjoined HTTP abort work: preserve owned fixture IDs', ids);
