@@ -24,6 +24,12 @@ import { connectRedis, disconnectRedis } from '../../src/config/redis';
 import { config } from '../../src/config/environment';
 import { generateAccessToken } from '../../src/utils/jwt';
 
+function normalizeError(error: unknown): Error {
+  return error instanceof Error
+    ? error
+    : new Error('HTTP abort qualification failure', { cause: error });
+}
+
 function gate<T = void>() {
   let resolve!: (value?: T) => void;
   const promise = new Promise<T>((done) => {
@@ -170,23 +176,26 @@ test('socket abort after Redis acquire and after service admission releases each
     spies.push(
       jest
         .spyOn(redis, 'sendCommand')
-        .mockImplementation(((...args: any[]) => track((realCommand as any)(...args))) as any)
+        .mockImplementation((...args: Parameters<typeof realCommand>) =>
+          track(realCommand(...args))
+        )
     );
     const { orderService } = await import('../../src/api/orders/service');
     const realCreate = orderService.createOrder.bind(orderService);
     spies.push(
-      jest.spyOn(orderService, 'createOrder').mockImplementation(((
-        ...args: Parameters<typeof realCreate>
-      ) =>
-        track(
-          (async () => {
-            if (phase?.kind === 'service') {
-              phase.reached.resolve();
-              await phase.resume.promise;
-            }
-            return realCreate(...args); // A committed pending reservation legitimately survives socket abort.
-          })()
-        )) as any)
+      jest
+        .spyOn(orderService, 'createOrder')
+        .mockImplementation((...args: Parameters<typeof realCreate>) =>
+          track(
+            (async () => {
+              if (phase?.kind === 'service') {
+                phase.reached.resolve();
+                await phase.resume.promise;
+              }
+              return realCreate(...args); // A committed pending reservation legitimately survives socket abort.
+            })()
+          )
+        )
     );
     const { default: app } = await import('../../src/app');
     const baselineLeases = await redis.zRangeWithScores(waiting.ACTIVE_REQUESTS_KEY, 0, -1);
@@ -358,7 +367,7 @@ test('socket abort after Redis acquire and after service admission releases each
           try {
             resolve({ status: res.statusCode!, data: JSON.parse(body).data });
           } catch (error) {
-            reject(error);
+            reject(normalizeError(error));
           }
         });
       });
@@ -455,5 +464,5 @@ test('socket abort after Redis acquire and after service admission releases each
       console.error('Unjoined HTTP abort work: preserve owned fixture IDs', ids);
     }
   }
-  if (primary) throw primary;
+  if (primary) throw normalizeError(primary);
 }, 60000);
