@@ -87,10 +87,17 @@ jobs:
           npm --prefix tixmoapi2 run build
           TIXMO_TEST_DATABASE_URL="$DATABASE_URL" node scripts/verify-payment-upgrade.cjs
 
+      - name: Require existing system Chrome for buyer continuity acceptance
+        run: |
+          node scripts/wallet-browser.test.cjs
+          test -x /usr/bin/google-chrome
+          /usr/bin/google-chrome --version
+
       - name: Run market readiness gates
         # job.services is available at step scope, not jobs.<job_id>.env.
         env:
           TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1'
+          TIXMO_BROWSER_PATH: /usr/bin/google-chrome
           DATABASE_URL: postgresql://tixmo_ci:synthetic_ci_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_ci?schema=public
           REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/1
         run: npm run verify:market
