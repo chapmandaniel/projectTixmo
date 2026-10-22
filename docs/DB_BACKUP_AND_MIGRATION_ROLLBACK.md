@@ -239,3 +239,12 @@ all temporary observation/apply permissions before normal recovery or another de
 Retain existing platform timeout, writer/key retention, post-audit/link receipts and
 interruption gates. A failed later startup does not undo an already committed apply;
 no authentication key rotation is authorized by deployment status alone.
+
+To observe actual runtime versions, temporarily set exact
+`TIXMO_RUNTIME_VERSION_PROBE=true` on the production-mode test API. The packaged
+observer runs after the other optional diagnostics and before API startup. It reads
+only PostgreSQL `server_version_num` and Redis `INFO server`, with no reconnect
+retries and bounded operations/cleanup. Success reports only the numeric PostgreSQL
+version and sanitized Redis version; failures prevent startup. Clear the flag and
+verify healthy normal recovery after collecting the actual receipt. This observation
+does not prove container digest, backup/restore success or the whole database release gate.

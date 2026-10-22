@@ -28,6 +28,7 @@ COPY prisma/schema.prisma ./prisma/schema.prisma
 COPY prisma/migrations ./prisma/migrations
 COPY prisma/bootstrap-owner.js prisma/rotate-account-credentials.js prisma/reconcile-approval-reminders.js prisma/reconcile-ticket-inventory.js prisma/rekey-asset-shares.js ./prisma/
 COPY scripts/stripe-read-probe.cjs ./scripts/stripe-read-probe.cjs
+COPY scripts/runtime-version-probe.cjs ./scripts/runtime-version-probe.cjs
 COPY prisma/check-asset-share-links.js ./prisma/check-asset-share-links.js
 RUN mkdir -p logs tmp && chown node:node logs tmp
 USER node
