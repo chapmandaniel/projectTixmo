@@ -213,3 +213,17 @@ report zero legacy rows and separately enumerate current ciphertext and hash-onl
 counts; never describe all rows
 as cryptographically verified or infer provenance from these counts. Existing
 cutover, link checks, interruption and legacy-key-retirement gates still apply.
+
+For visible read-only startup diagnostics, set `TIXMO_ASSET_SHARE_AUDIT_ON_START=true`.
+It remains a strict audit unless BOTH
+`TIXMO_ASSET_SHARE_AUDIT_PRESERVE_HASH_ONLY_ON_START=true` and
+`TIXMO_ALLOW_HASH_ONLY_SHARE_PRESERVATION=true` are explicitly set. The preservation
+selector alone does nothing without the parent audit flag. Retained encrypted-link
+observation requires BOTH `TIXMO_ASSET_LINK_CHECK_ON_START=true` and
+`TIXMO_ASSET_LINK_CHECK=true`; normal public GETs may increment share view counters.
+These hooks never apply rekey. They run after migration (the link observer also
+follows the optional Stripe probe); any failure prevents API startup. Keep a healthy
+qualified API available when observing links. Clear temporary flags after collecting
+actual complete decoded audit/link counts. Deployment success alone is not proof.
+Apply remains an explicitly authorized one-shot pre-deploy operation after the
+visible audit; all existing writer cutover, key retention and final-proof gates apply.
