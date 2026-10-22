@@ -50,12 +50,41 @@ export function verifyApi({ env = process.env, spawn = spawnSync, log = console.
 
 // Never surface assertion text, console output, URLs or test argument values.
 export function formatTestFailures(report) {
-  const suites = (report.testResults || []).filter(result => result.status === 'failed')
-    .map(result => path.basename(String(result.name || '')))
-    .filter(name => /^[A-Za-z0-9_.-]+\.test\.ts$/.test(name));
-  const failed = Number.isSafeInteger(report.numFailedTests) ? report.numFailedTests : 'unknown';
-  return ` Failed tests: ${failed}; suites: ${[...new Set(suites)].join(', ') || 'unavailable'}.`;
+  const suites = [], assertions = [];
+  const results = Array.isArray(report?.testResults) ? report.testResults.slice(0, 100) : [];
+  for (const result of results) {
+    if (result?.status !== 'failed' || typeof result.name !== 'string' || result.name.length > 4096) continue;
+    const name = path.basename(result.name);
+    if (name.length > 128 || !/^[A-Za-z0-9_.-]+\.test\.ts$/.test(name)) continue;
+    if (!suites.includes(name) && suites.length < 20) suites.push(name);
+    const cases = Array.isArray(result.assertionResults) ? result.assertionResults.slice(0, 1000) : [];
+    const source = /:(\d{1,6}):(\d{1,6})\)?\s*$/;
+    for (let index = 0; index < cases.length && assertions.length < 20; index++) {
+      const item = cases[index];
+      if (item?.status !== 'failed') continue;
+      const lines = [];
+      const messages = Array.isArray(item.failureMessages) ? item.failureMessages.slice(0, 3) : [];
+      for (const message of messages) {
+        if (typeof message !== 'string') continue;
+        for (const frame of message.slice(0, 20000).split('\n').slice(0, 100)) {
+          if (lines.length >= 3) break;
+          if (!/^\s*at\s/.test(frame) || frame.includes('://') || frame.length > 4096) continue;
+          const match = source.exec(frame);
+          const filename = match ? frame.slice(0, match.index) : '';
+          if (![ '/' + name, '\\' + name, ' ' + name, '(' + name ].some(suffix => filename.endsWith(suffix))) continue;
+          const line = match ? Number(match[1]) : 0;
+          const column = match ? Number(match[2]) : 0;
+          if (line >= 1 && line <= 100000 && column >= 1 && column <= 100000 && !lines.includes(line)) lines.push(line);
+        }
+      }
+      assertions.push(`${name}#${index + 1}${lines.length ? `@${lines.join(',')}` : ''}`);
+    }
+  }
+  const count = report?.numFailedTests;
+  const failed = Number.isSafeInteger(count) && count >= 0 && count <= 1000000 ? count : 'unknown';
+  return ` Failed tests: ${failed}; suites: ${suites.join(', ') || 'unavailable'}; assertions: ${assertions.join('; ') || 'unavailable'}.`;
 }
+
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
