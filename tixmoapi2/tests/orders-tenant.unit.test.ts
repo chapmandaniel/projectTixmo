@@ -172,7 +172,10 @@ describe('actor-bound order service', () => {
     db.user.findUnique.mockResolvedValue({ ...actor, role: 'ADMIN' });
     const result = await service.refundOrder('a', 'actor');
     expect(result).toMatchObject({ status: 'PAID', refundStatus: 'PROCESSING' });
-    expect(paymentService.refundOrder).toHaveBeenCalledWith('a');
+    expect(paymentService.refundOrder).toHaveBeenCalledWith(
+      'a',
+      expect.objectContaining({ id: 'a', status: 'PENDING' })
+    );
     expect(transitionInventory).not.toHaveBeenCalled();
     expect(orders[0].status).toBe('PENDING');
   });
@@ -322,3 +325,21 @@ describe('HTTP handler actor forwarding', () => {
     });
   });
 });
+
+test.each([undefined, 'actor'])(
+  'cancel rejects a payment change after public observation actor=%s',
+  async (actorId) => {
+    db.order.findFirst.mockImplementationOnce(async () => {
+      const observed = { ...orders[0] };
+      orders[0].paymentStatus = 'PROCESSING';
+      return observed;
+    });
+    await expect(service.cancelOrder('a', undefined, actorId)).rejects.toMatchObject({
+      statusCode: 400,
+    });
+    expect(lockOrder).toHaveBeenCalledWith(tx, 'a');
+    expect(transitionInventory).not.toHaveBeenCalled();
+    expect(tx.order.update).not.toHaveBeenCalled();
+    expect(orders[0].status).toBe('PENDING');
+  }
+);
