@@ -196,4 +196,32 @@ describe('Online scanner', () => {
         expect(screen.getByLabelText('Scanner API key')).toHaveValue('');
     });
 
+    it.each([
+        ['Ticket QR or barcode', `TICKET:${eventId}:TIX-OTHER:${ticketId}`],
+        ['Ticket ID (barcode entry only)', eventId],
+        ['Event ID (barcode entry only)', ticketId],
+    ])('clears the previous admission when %s changes without submitting another ticket', async (label, value) => {
+        render(<ScannerPage />); await connect(); enter();
+        fetch.mockResolvedValueOnce(reply({ success: true })); check();
+        expect(await screen.findByText('Admitted')).toBeInTheDocument();
+        fireEvent.change(screen.getByLabelText(label), { target: { value } });
+        expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
+        expect(screen.queryByText('Not admitted')).not.toBeInTheDocument();
+        expect(fetch).toHaveBeenCalledTimes(2);
+    });
+    it('manual field focus stops pending optical detection before any admission', async () => {
+        const found = deferred(), stop = vi.fn(), detect = vi.fn(() => found.promise);
+        class Detector { detect = detect; }
+        vi.stubGlobal('BarcodeDetector', Detector);
+        navigator.mediaDevices.getUserMedia.mockResolvedValue({ getTracks: () => [{ stop }] });
+        render(<ScannerPage />); await connect();
+        fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
+        await waitFor(() => expect(detect).toHaveBeenCalled());
+        fireEvent.focus(screen.getByLabelText('Ticket QR or barcode'));
+        fireEvent.change(screen.getByLabelText('Ticket QR or barcode'), { target: { value: qr } });
+        await act(async () => { found.resolve([{ rawValue: qr }]); });
+        expect(stop).toHaveBeenCalledTimes(1); expect(fetch).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
+    });
+
 });

@@ -27,6 +27,10 @@ export default function ScannerPage({ isDark = true }) {
         if (video.current) video.current.srcObject = null;
         if (live.current) setCamera(false);
     }
+    function editTicket(setter, value) {
+        stopCamera();
+        setResult(null); setNotice(''); setter(value);
+    }
     function endSession() {
         session.current++;
         stopCamera(); request.current?.abort(); key.current = ''; pending.current = false;
@@ -131,11 +135,11 @@ export default function ScannerPage({ isDark = true }) {
                 <DashboardSection isDark={isDark} title="Manual or hardware entry" description="Paste the full TICKET QR text. For a barcode alone, also enter its ticket ID and event ID.">
                     <form className="space-y-4" onSubmit={event => { event.preventDefault(); void submit(); }}>
                         <label htmlFor="ticket-input">Ticket QR or barcode</label>
-                        <DashboardTextInput isDark={isDark} id="ticket-input" autoComplete="off" value={input} onChange={event => setInput(event.target.value)} disabled={busy} />
+                        <DashboardTextInput isDark={isDark} id="ticket-input" autoComplete="off" value={input} onFocus={stopCamera} onChange={event => editTicket(setInput, event.target.value)} disabled={busy} />
                         <label htmlFor="ticket-id">Ticket ID (barcode entry only)</label>
-                        <DashboardTextInput isDark={isDark} id="ticket-id" value={ticketId} onChange={event => setTicketId(event.target.value)} disabled={busy} />
+                        <DashboardTextInput isDark={isDark} id="ticket-id" value={ticketId} onFocus={stopCamera} onChange={event => editTicket(setTicketId, event.target.value)} disabled={busy} />
                         <label htmlFor="event-id">Event ID (barcode entry only)</label>
-                        <DashboardTextInput isDark={isDark} id="event-id" value={eventId} onChange={event => setEventId(event.target.value)} disabled={busy} />
+                        <DashboardTextInput isDark={isDark} id="event-id" value={eventId} onFocus={stopCamera} onChange={event => editTicket(setEventId, event.target.value)} disabled={busy} />
                         <DashboardButton isDark={isDark} type="submit" disabled={busy}>{busy ? 'Checking ticket…' : 'Check ticket for entry'}</DashboardButton>
                     </form>
                 </DashboardSection>
