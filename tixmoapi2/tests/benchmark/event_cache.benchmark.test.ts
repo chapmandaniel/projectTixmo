@@ -45,6 +45,7 @@ describe('Event Public API Detail Freshness Benchmark', () => {
     name: 'Test Event',
     slug: SLUG,
     status: 'PUBLISHED',
+    ticketTypes: [],
     startDatetime: new Date(),
     endDatetime: new Date(),
   };
@@ -69,7 +70,7 @@ describe('Event Public API Detail Freshness Benchmark', () => {
 
     // 1. First Call (Cold Start / Cache Miss)
     const start1 = performance.now();
-    await eventService.getPublicEventBySlug(SLUG);
+    const first = await eventService.getPublicEventBySlug(SLUG);
     const end1 = performance.now();
     const duration1 = end1 - start1;
     console.log(`1. First Call (Cold): ${duration1.toFixed(2)}ms`);
@@ -86,7 +87,7 @@ describe('Event Public API Detail Freshness Benchmark', () => {
 
     // 2. Second Call (Fresh DB read expected)
     const start2 = performance.now();
-    await eventService.getPublicEventBySlug(SLUG);
+    const second = await eventService.getPublicEventBySlug(SLUG);
     const end2 = performance.now();
     const duration2 = end2 - start2;
     console.log(`2. Second Call (Hot): ${duration2.toFixed(2)}ms`);
@@ -96,6 +97,11 @@ describe('Event Public API Detail Freshness Benchmark', () => {
     } else {
       console.log('✅ FRESH DETAIL READ: Similar duration.');
     }
+    expect(first).toEqual(MOCK_EVENT);
+    expect(second).toEqual(MOCK_EVENT);
+    expect(prisma.event.findFirst).toHaveBeenCalledTimes(2);
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(mockSet).not.toHaveBeenCalled();
     console.log('--- END BENCHMARK ---');
   });
 });
