@@ -1,6 +1,7 @@
 // Observation only: no customer, payment, email, or authenticated requests.
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { observeResetDocument } from './reset-bootstrap-observation.mjs';
 import { parseRuntimeConfig } from './runtime-config-parser.mjs';
 
 const api = 'https://backend-api-production-cbfa.up.railway.app';
@@ -8,15 +9,7 @@ const dashboard = 'https://mightyquinton.tixmo.co';
 const limit = 131072;
 const digest = body => createHash('sha256').update(body).digest('hex');
 const expectedBootstrap = digest(readFileSync(new URL('../tdash/public/buyer-reset-intent.js', import.meta.url)));
-const resetPage = (body, headers) => {
-  const scripts = [...body.matchAll(/<script\b[^>]*>/gi)].map(match => match[0]);
-  const first = scripts[0] || '';
-  const moduleIndex = scripts.findIndex(tag => /\btype=["']module["']/i.test(tag));
-  const scriptPolicy = (headers.get('content-security-policy') || '').split(';').map(part => part.trim()).find(part => /^script-src\s/.test(part)) || '';
-  return { bootstrapFirst: /\bsrc=["']\/buyer-reset-intent\.js["']/.test(first) &&
-    !/\b(?:async|defer)\b|\btype=/i.test(first) && moduleIndex > 0,
-    scriptCsp: /(?:^|\s)'self'(?:\s|$)/.test(scriptPolicy) && !scriptPolicy.includes("'unsafe-inline'") };
-};
+
 
 async function get(url, parse) {
   let status = null;
@@ -50,7 +43,7 @@ const [health, ready, page, runtime, recovery, bootstrap] = await Promise.all([
   get(`${api}/ready`, body => JSON.parse(body)),
   get(`${dashboard}/`, body => /<html[\s>]/i.test(body)),
   get(`${dashboard}/runtime-config.js`, parseRuntimeConfig),
-  get(`${dashboard}/reset-password`, resetPage),
+  get(`${dashboard}/reset-password`, observeResetDocument),
   get(`${dashboard}/buyer-reset-intent.js`, body => digest(body) === expectedBootstrap),
 ]);
 const config = runtime.data || {};

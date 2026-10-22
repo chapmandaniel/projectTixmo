@@ -6,6 +6,8 @@ on:
     paths:
       - scripts/probe-public-test-target.mjs
       - scripts/runtime-config-parser.mjs
+      - scripts/reset-bootstrap-observation.mjs
+      - scripts/reset-bootstrap-observation.test.mjs
       - .github/workflows/checkout-runtime-config-evidence.yml
   workflow_dispatch:
     inputs:
@@ -47,6 +49,8 @@ jobs:
         env:
           TARGET: ${{ inputs.target }}
         run: test "$TARGET" = production
+      - name: Verify reset-document observation regressions
+        run: node scripts/reset-bootstrap-observation.test.mjs
       - name: Observe public readiness and runtime configuration
         run: node scripts/probe-public-test-target.mjs
 
