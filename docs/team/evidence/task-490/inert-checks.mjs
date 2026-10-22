@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const load = async (path) => import(`data:text/javascript;base64,${Buffer.from(fs.readFileSync(path,'utf8')).toString('base64')}`);
+const {commitSalesPause,isSalesPausedError}=await load('tdash/src/lib/salesPause.js');
+const {checkoutTicketState}=await load('tdash/src/lib/checkoutEligibility.js');
+const request={paused:true,reason:'incident',requestId:'same-key'};
+let writes=[];
+const api={post:async(path,body)=>{writes.push(body);return {data:{eventId:'e',requestId:body.requestId,salesPaused:true,replayed:true}}},get:async()=>({data:{salesPaused:false}})};
+assert.equal((await commitSalesPause(api,'e',request)).salesPaused,false); // historical replay is not current
+await commitSalesPause(api,'e',request);assert.equal(writes[0],writes[1]);
+await assert.rejects(commitSalesPause({...api,post:async()=>{throw Error('denied')}},'e',request),/denied/);
+await assert.rejects(commitSalesPause({...api,get:async()=>{throw Error('offline')}},'e',request),/acknowledged.*refreshed/);
+await assert.rejects(commitSalesPause({...api,post:async()=>({data:{}})},'e',request),/not acknowledged/);
+assert(isSalesPausedError({response:{data:{errors:{code:'SALES_PAUSED'}}}}));
+assert(!isSalesPausedError({response:{data:{code:'SALES_PAUSED'}}}));
+const ticket={status:'ACTIVE',tierInventoryStatus:'READY',quantityAvailable:5};
+assert.equal(checkoutTicketState({status:'ON_SALE'},ticket,0).max,5);
+for(const status of ['PUBLISHED','ON_SALE'])assert.equal(checkoutTicketState({status,salesPaused:true},ticket,0).max,0);
+assert.equal(checkoutTicketState({status:'CANCELLED',salesPaused:false},ticket,0).max,0);
+console.log('PASS inert helper mocks: historical replay/current refresh, same request retry, denial, refresh failure, invalid acknowledgement, strict error envelope, both sales lifecycles and cancellation');
