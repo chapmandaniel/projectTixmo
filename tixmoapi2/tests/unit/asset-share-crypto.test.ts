@@ -2,6 +2,7 @@ import { createCipheriv, createHash, randomBytes } from 'crypto';
 import {
   decryptAssetShareToken,
   classifyAssetShareToken,
+  classifyAssetShareForRekey,
   encryptAssetShareToken,
   hashAssetShareToken,
   verifiedAssetShareToken,
@@ -97,4 +98,26 @@ it('classifies all validation failures using the same acceptance path as token r
     expect(verifiedAssetShareToken(cipher, storedHash, config)).toBe(expected);
     if (expected === undefined) expect(result).toEqual({ category });
   }
+});
+
+it('hash-only compatibility is explicit, actual-NULL-only and never reconstructs or verifies a bearer', () => {
+  const hash = hashAssetShareToken(token);
+  expect(classifyAssetShareForRekey(null, hash, { key })).toEqual({ category: 'missingCipher' });
+  expect(classifyAssetShareForRekey(null, hash, { key }, true)).toEqual({ category: 'hashOnly' });
+  expect(verifiedAssetShareToken(null, hash, { key })).toBeUndefined();
+  for (const value of ['', undefined, 42, {}])
+    expect(classifyAssetShareForRekey(value as any, hash, { key }, true).category).not.toBe(
+      'hashOnly'
+    );
+  for (const invalid of ['', hash.toUpperCase(), hash + '\n', '00'.repeat(31), 'not-a-hash'])
+    expect(classifyAssetShareForRekey(null, invalid, { key }, true)).toEqual({
+      category: 'invalidHash',
+    });
+  const valid = encryptAssetShareToken(token, { key });
+  expect(classifyAssetShareForRekey(valid, hash, { key }, true)).toEqual(
+    classifyAssetShareToken(valid, hash, { key })
+  );
+  expect(classifyAssetShareForRekey(valid, '00'.repeat(32), { key }, true)).toEqual({
+    category: 'hashMismatch',
+  });
 });
