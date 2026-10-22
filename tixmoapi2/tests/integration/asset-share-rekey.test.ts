@@ -42,6 +42,7 @@ const hashOnlyShares: string[] = Array.from({ length: 4 }, () => randomUUID());
 const hashOnlyTokens = hashOnlyShares.map(() => randomBytes(32).toString('base64url'));
 const foreignShare = randomUUID();
 const foreignToken = randomBytes(32).toString('base64url');
+const mismatchedToken = randomBytes(32).toString('base64url');
 const live = new Set<Promise<unknown>>();
 let unsafe = false;
 const restorers: Array<{ restore: () => void }> = [];
@@ -496,7 +497,7 @@ owned(
         ['', hashAssetShareToken(hashOnlyTokens[0])],
         [null, 'invalid'],
         ['v2:a:b:c', hashAssetShareToken(hashOnlyTokens[0])],
-        [encryptAssetShareToken(hashOnlyTokens[0], keys), hashAssetShareToken(hashOnlyTokens[1])],
+        [encryptAssetShareToken(hashOnlyTokens[0], keys), hashAssetShareToken(mismatchedToken)],
       ] as const) {
         safe();
         await prisma.assetLibraryFolderShare.update({
