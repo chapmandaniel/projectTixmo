@@ -32,6 +32,10 @@ else if (script === 'prisma/check-asset-share-links.js') {
  try { require(process.env.LINK_GUARD).guard(args.slice(1), process.env); } catch { process.exit(94); }
 }
 else if (script === 'scripts/stripe-read-probe.cjs' && args.length === 1) phase = 'stripe';
+else if (script === 'scripts/runtime-version-probe.cjs' && args.length === 1) {
+ phase = 'versions';
+ try { require(process.env.VERSION_GUARD).guard([], process.env); } catch { process.exit(96); }
+}
 else if (script === 'dist/index.js' && args.length === 1) phase = 'api';
 else process.exit(95);
 require('node:fs').appendFileSync(process.env.PHASE_FILE, phase + '\\n');
@@ -54,6 +58,11 @@ if (process.env.FAIL_PHASE === phase) process.exit(7);
           ASSET_SHARE_ENCRYPTION_KEY: "12".repeat(32),
           REKEY_GUARD: join(root, "tixmoapi2/prisma/rekey-asset-shares.js"),
           LINK_GUARD: join(root, "tixmoapi2/prisma/check-asset-share-links.js"),
+          VERSION_GUARD: join(
+            root,
+            "tixmoapi2/scripts/runtime-version-probe.cjs",
+          ),
+          REDIS_URL: "redis://synthetic:synthetic@redis.test:6379/0",
           ...change,
           HARNESS_STAGE: stage,
         },
@@ -258,4 +267,54 @@ test("predeploy permissions never introduce startup apply", async () => {
     status: 0,
     phases: ["migrate", "preserve-audit", "api"],
   });
+});
+
+test("version observer runs last after all diagnostics before API", async () => {
+  assert.deepEqual(
+    await run({
+      ...preserve,
+      ...links,
+      TIXMO_STRIPE_READ_PROBE: "true",
+      TIXMO_RUNTIME_VERSION_PROBE: "true",
+      DATABASE_URL:
+        "postgresql://synthetic:synthetic@db.test/owned?synthetic=space%20value&x=1",
+    }),
+    {
+      status: 0,
+      phases: [
+        "migrate",
+        "preserve-audit",
+        "stripe",
+        "links",
+        "versions",
+        "api",
+      ],
+    },
+  );
+});
+test("nonexact version opt-in is a no-op", async () => {
+  for (const flag of ["", "false", "TRUE", "1", "true "])
+    assert.deepEqual(await run({ TIXMO_RUNTIME_VERSION_PROBE: flag }), {
+      status: 0,
+      phases: ["migrate", "api"],
+    });
+});
+test("version failure stops API and guard remains production-only", async () => {
+  assert.deepEqual(
+    await run({
+      TIXMO_RUNTIME_VERSION_PROBE: "true",
+      DATABASE_URL:
+        "postgresql://synthetic:synthetic@db.test/owned?synthetic=space%20value&x=1",
+      FAIL_PHASE: "versions",
+    }),
+    { status: 7, phases: ["migrate", "versions"] },
+  );
+  const rejected = await run({
+    TIXMO_RUNTIME_VERSION_PROBE: "true",
+    DATABASE_URL:
+      "postgresql://synthetic:synthetic@db.test/owned?synthetic=space%20value&x=1",
+    NODE_ENV: "test",
+  });
+  assert.notEqual(rejected.status, 0);
+  assert.deepEqual(rejected.phases, ["migrate"]);
 });
