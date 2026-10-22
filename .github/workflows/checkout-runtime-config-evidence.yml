@@ -18,8 +18,33 @@ on:
         default: false
         type: boolean
 
+      read_only_current_test_target:
+        description: Observe the confirmed test target without repository secrets
+        required: true
+        default: false
+        type: boolean
+
 jobs:
+  public-test-target:
+    if: ${{ inputs.read_only_current_test_target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+      - name: Require the confirmed production-named test environment
+        env:
+          TARGET: ${{ inputs.target }}
+        run: test "$TARGET" = production
+      - name: Observe public readiness and runtime configuration
+        run: node scripts/probe-public-test-target.mjs
+
   checkout-runtime-config:
+    if: ${{ !inputs.read_only_current_test_target }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
