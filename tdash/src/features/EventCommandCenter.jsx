@@ -182,7 +182,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                 </div>
             </div>
 
-            <EventSalesControl key={event.id} event={event} user={user} isDark={isDark} />
+            <EventSalesControl key={`${event.id}:${user?.id}:${user?.role}`} event={event} user={user} isDark={isDark} onUpdate={onUpdate} />
 
             {/* Split View (Sidebar + Main Content) */}
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-visible lg:flex-row lg:gap-0 lg:overflow-hidden">

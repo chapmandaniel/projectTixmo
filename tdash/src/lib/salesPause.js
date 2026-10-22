@@ -16,3 +16,7 @@ export const commitSalesPause = async (api, eventId, request) => {
         throw new Error('Request acknowledged, but current sales state could not be refreshed. Retry the same request.');
     }
 };
+
+export const isDefinitiveSalesControlFailure = (error) => [400, 401, 403, 404, 409, 422].includes(error?.response?.status);
+export const isCurrentSalesControlResult = (captured, latest, mounted) => mounted
+    && captured.event === latest.event && captured.user === latest.user;

@@ -28,3 +28,28 @@ No app/browser/runtime/services/DB/generation/migrations/network/install/env/sec
 config/scheduler/provider/production/spend/push/merge/deploy. Four-minute bounded
 checkpoint; independent lead and QA exact-SHA review mandatory. Author does not close.
 Full248/243/launch and later separately authorized synthetic acceptance remain OPEN.
+
+## Repair checkpoint after independent QA491
+
+Read immutable QA findings at4459bcd530878600cc765a7cd178bfae82cfb2f9,
+including both blocking P2 issues and bounded unmount gap. Inspected actual mounted
+EventManagementDashboard callback: onUpdate(updatedEvent) replaces parent eventData
+when id exists; otherwise fetches. The control now displays authoritative event props
+rather than an independently captured snapshot and passes freshly GET-fetched current
+event to that callback. A newer event/user object or unmount invalidates old async
+completion before any response-driven state update or parent callback. Parent key
+includes actor id/role as well as event id. Pending ambiguous requests keep their
+original intent/reason/UUID; definitive HTTP400/401/403/404/409/422 allows an explicit
+Discard rejected request action that only clears local input/request. It does not
+submit a mutation or automatically generate a replacement key. Server/transport or
+acknowledged-but-refresh failures remain retry-with-same-request.
+
+Added `node docs/team/evidence/task-490/repair-checks.mjs`: PASS actual extracted
+submit/discard bodies with inert setter/API ports: 403/409 rejection and explicit
+reset without mutation, transport retry retaining identical key+intent, late
+completion suppression after simulated unmount/same-id event replacement/user
+replacement, valid current snapshot parent propagation, plus authoritative-prop and
+callback source assertions. Original inert-checks rerun PASS unchanged. Diffcheck
+PASS. These are inert models/extraction, NOT mounted React lifecycle or tenant proof.
+No additional runtime authority used; prior limitations remain. New exact commit
+supersedes913b90d6 for independent QA491 re-review AND separate lead492 review.
