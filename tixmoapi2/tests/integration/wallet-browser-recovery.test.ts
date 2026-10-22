@@ -401,6 +401,7 @@ async function qualifyWallet() {
       foreignDenied: true,
       ownerReauthenticated: true,
       lostPasswordRecovered: true,
+      sameDocumentRecovered: true,
       fragmentCleared: true,
       earlyFragmentCapture: true,
       resetDocumentCsp: true,

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { buyerRecoveryRequest, clearResetIntent, getResetIntent } from '../lib/buyerRecovery';
+import { buyerRecoveryRequest, captureResetIntent, clearResetIntent, getResetIntent } from '../lib/buyerRecovery';
 import { getAccessToken, getSessionGeneration } from '../lib/session';
 import { DashboardButton, DashboardPage, DashboardPageHeader, DashboardSurface, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
 
@@ -15,6 +15,19 @@ export default function BuyerPasswordResetPage({ onPasswordReset = () => {} }) {
     const [changed, setChanged] = useState(false);
     const alive = useRef(false);
     const pending = useRef(false);
+    const intentGeneration = useRef(0);
+    useEffect(() => {
+        const receiveLink = () => {
+            if (window.location.pathname !== '/reset-password' || !window.location.hash) return;
+            captureResetIntent(); // Strip the fragment synchronously, before React updates.
+            intentGeneration.current += 1;
+            setToken(getResetIntent()); setPassword(''); setConfirm('');
+            setError(''); setNotice(''); setChanged(false);
+        };
+        window.addEventListener('hashchange', receiveLink);
+        receiveLink();
+        return () => window.removeEventListener('hashchange', receiveLink);
+    }, []);
     useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
     const submit = async event => {
         event.preventDefault(); if (pending.current) return;
@@ -22,16 +35,17 @@ export default function BuyerPasswordResetPage({ onPasswordReset = () => {} }) {
         if (token && password !== confirm) { setError('Passwords must match.'); return; }
         if (token && new TextEncoder().encode(password).length > 72) { setError('Choose a shorter password.'); return; }
         pending.current = true; setBusy(true);
+        const submittedIntent = intentGeneration.current;
         const session = { generation: getSessionGeneration(), accessToken: getAccessToken() };
         try {
             await buyerRecoveryRequest(token ? 'reset-password' : 'forgot-password', token ? { token, password } : { email: email.trim().toLowerCase() });
-            if (!alive.current) return;
+            if (!alive.current || submittedIntent !== intentGeneration.current) return;
             if (token) {
                 clearResetIntent(); setToken(''); setPassword(''); setConfirm(''); setChanged(true);
                 onPasswordReset(session);
                 setNotice('Password changed. Sign in with your new password. If another account is signed in, sign out first.');
             } else setNotice('If this email belongs to an eligible buyer, a reset link will be sent. Check your email.');
-        } catch (failure) { if (alive.current) setError(failure.message); }
+        } catch (failure) { if (alive.current && submittedIntent === intentGeneration.current) setError(failure.message); }
         finally { pending.current = false; if (alive.current) setBusy(false); }
     };
     return <main className="min-h-screen bg-dashboard-shell px-4 py-8 text-zinc-100 sm:px-8">
