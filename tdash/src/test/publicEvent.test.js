@@ -150,3 +150,15 @@ describe('public ticket selection', () => {
         ).toBe('123 Water St, St. John’s, NL');
     });
 });
+
+it('blocks a configured filtered-empty tier schedule without changing unconfigured base offers', () => {
+    expect(getPublicTicketOffer({ ...ticket, hasConfiguredTiers: true, tiers: [] }, now)).toMatchObject({ max: 0, label: 'Currently unavailable' });
+    expect(getPublicTicketOffer({ ...ticket, hasConfiguredTiers: false, tiers: [] }, now)).toMatchObject({ price: 35, max: 4, label: 'Available' });
+    expect(initialTicketQuantities([{ ...ticket, hasConfiguredTiers: true, tiers: [] }], 'ga:2', now)).toEqual({ ga: 0 });
+});
+it.each(['PUBLISHED', 'ON_SALE'])('honors incoming sales pause for %s and preserves terminal lifecycle labels', status => {
+    expect(getEventSaleState({ ...event, status, salesPaused: true }, now)).toEqual({ label: 'Sales paused', available: false });
+    expect(getEventSaleState({ ...event, status: 'SOLD_OUT', salesPaused: true }, now).label).toBe('Sold out');
+    expect(getEventSaleState({ ...event, status: 'CANCELLED', salesPaused: true }, now).label).toBe('Tickets unavailable');
+    expect(getEventSaleState({ ...event, salesEnd: new Date(now).toISOString(), salesPaused: true }, now).label).toBe('Sales ended');
+});

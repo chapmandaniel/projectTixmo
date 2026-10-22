@@ -19,6 +19,8 @@ export const getEventSaleState = (event, now = Date.now()) => {
         return { label: 'Sales ended', available: false };
     if (event.salesEnd && now >= Date.parse(event.salesEnd))
         return { label: 'Sales ended', available: false };
+    if (event.salesPaused)
+        return { label: 'Sales paused', available: false };
     if (event.salesStart && now < Date.parse(event.salesStart))
         return { label: 'On sale soon', available: false };
     return { label: 'On sale now', available: true };
@@ -77,7 +79,7 @@ export const getPublicTicketOffer = (ticket, now = Date.now()) => {
         label = 'Sales ended';
     else if (!inventory) label = 'Sold out';
     else if (
-        (tiers.length && !tier) ||
+        ((ticket.hasConfiguredTiers || tiers.length) && !tier) ||
         !Number.isFinite(price) ||
         price < 0 ||
         !max

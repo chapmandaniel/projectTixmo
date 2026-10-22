@@ -228,3 +228,25 @@ describe('customer event on-sale page', () => {
         await waitFor(() => expect(document.title).toBe('Neon Nights · Tixmo'));
     });
 });
+
+describe('composed storefront eligibility', () => {
+    afterEach(cleanup);
+    it.each([
+        { ticketTypes: [{ ...event.ticketTypes[0], hasConfiguredTiers: true, tiers: [] }] },
+        { status: 'PUBLISHED', salesPaused: true },
+        { status: 'ON_SALE', salesPaused: true },
+    ])('blocks selection and checkout handoff for %j', overrides => {
+        renderView(overrides);
+        const add = screen.getByRole('button', { name: 'Add one General admission ticket' });
+        const checkout = screen.getByRole('button', { name: 'Continue to checkout' });
+        expect(add).toBeDisabled();
+        fireEvent.click(add);
+        expect(checkout).toBeDisabled();
+        fireEvent.click(checkout);
+        expect(screen.queryByText(/\/checkout\/neon-nights/)).not.toBeInTheDocument();
+        if (overrides.salesPaused) {
+            expect(screen.queryByText('On sale now')).not.toBeInTheDocument();
+            expect(screen.getAllByText('Sales paused').length).toBeGreaterThan(0);
+        }
+    });
+});
