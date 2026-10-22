@@ -384,6 +384,7 @@ describe('Event cancellation interruption and authorized recovery', () => {
       const order = await reserve();
       const before = await foreignSnapshot();
       const initialRows = await targetRows();
+      let afterProcessing: Awaited<ReturnType<typeof targetRows>> | undefined;
       const realFindFirst = prisma.order.findFirst.bind(prisma.order);
       const observation = jest.spyOn(prisma.order, 'findFirst').mockImplementationOnce((async (
         args: any
@@ -394,6 +395,7 @@ describe('Event cancellation interruption and authorized recovery', () => {
           where: { id: order.id },
           data: { paymentStatus: 'PROCESSING' },
         });
+        afterProcessing = await targetRows();
         return observed;
       }) as any);
       try {
@@ -407,6 +409,8 @@ describe('Event cancellation interruption and authorized recovery', () => {
         status: 'CANCELLED',
       });
       const interruptedRows = await targetRows();
+      expect(afterProcessing).toBeDefined();
+      expect(interruptedRows).toEqual(afterProcessing);
       expect(interruptedRows.orders).toHaveLength(1);
       expect(interruptedRows.orders[0]).toMatchObject({
         status: 'PENDING',
