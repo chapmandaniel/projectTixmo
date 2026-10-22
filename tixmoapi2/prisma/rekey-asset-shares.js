@@ -2,6 +2,7 @@
 // Runtime environment only. Never load .env or emit database/provider/error contents.
 function options(args, env) {
   let apply = false;
+  let preserveHashOnly = false;
   let limit = 1000;
   let organizationId;
   const seen = new Set();
@@ -10,6 +11,7 @@ function options(args, env) {
     if (seen.has(flag)) throw new Error('Rejected');
     seen.add(flag);
     if (flag === '--apply') apply = true;
+    else if (flag === '--preserve-hash-only') preserveHashOnly = true;
     else if (flag === '--limit' && /^[0-9]{1,5}$/.test(args[i + 1] || ''))
       limit = Number(args[++i]);
     else if (
@@ -19,7 +21,12 @@ function options(args, env) {
       organizationId = args[++i];
     else throw new Error('Rejected');
   }
-  if (limit < 1 || limit > 10000 || (apply && env.TIXMO_ALLOW_ASSET_SHARE_REKEY !== 'true'))
+  if (
+    limit < 1 ||
+    limit > 10000 ||
+    (apply && env.TIXMO_ALLOW_ASSET_SHARE_REKEY !== 'true') ||
+    (preserveHashOnly && env.TIXMO_ALLOW_HASH_ONLY_SHARE_PRESERVATION !== 'true')
+  )
     throw new Error('Rejected');
   const explicit = env.TIXMO_ASSET_REKEY_DATABASE_URL;
   const target = new URL(explicit || '');
@@ -31,7 +38,7 @@ function options(args, env) {
     (env.DATABASE_URL && explicit !== env.DATABASE_URL)
   )
     throw new Error('Rejected');
-  return { apply, limit, organizationId, url: explicit };
+  return { apply, preserveHashOnly, limit, organizationId, url: explicit };
 }
 function failureReason(error) {
   try {
@@ -60,6 +67,7 @@ function validationCounts(error, ValidationError) {
       return undefined;
     const summary = error.summary;
     const names = [
+      'hashOnly',
       'missingCipher',
       'unknownFormat',
       'malformedEnvelope',
@@ -83,12 +91,13 @@ function validationCounts(error, ValidationError) {
           summary[name] > summary.scanned
       ) ||
       names.reduce((sum, name) => sum + summary[name], 0) !== summary.scanned ||
-      summary.validLegacy + summary.validCurrent === summary.scanned
+      summary.validLegacy + summary.validCurrent + summary.hashOnly === summary.scanned
     )
       return undefined;
     return {
       scanned: summary.scanned,
       scope: summary.scope,
+      hashOnly: summary.hashOnly,
       missingCipher: summary.missingCipher,
       unknownFormat: summary.unknownFormat,
       malformedEnvelope: summary.malformedEnvelope,

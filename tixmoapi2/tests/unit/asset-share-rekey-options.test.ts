@@ -10,6 +10,7 @@ const env = {
 test('default is bounded audit and apply requires explicit runtime opt-in', () => {
   assert.deepEqual(options([], env), {
     apply: false,
+    preserveHashOnly: false,
     limit: 1000,
     organizationId: undefined,
     url: env.TIXMO_ASSET_REKEY_DATABASE_URL,
@@ -101,6 +102,7 @@ const { validationCounts } = require('../../prisma/rekey-asset-shares');
 const validation: AssetShareValidationSummary = {
   scanned: 8,
   scope: 'all',
+  hashOnly: 0,
   missingCipher: 1,
   unknownFormat: 1,
   malformedEnvelope: 1,
@@ -173,4 +175,53 @@ test('count projection rejects forged, partial, out-of-bound or secret-bearing s
     );
   }
   assert.equal(validationCounts(new AssetShareValidationError(validation), undefined), undefined);
+});
+
+test('hash-only policy requires the dedicated flag AND exact runtime opt-in for audit and apply', () => {
+  const allowed = { ...env, TIXMO_ALLOW_HASH_ONLY_SHARE_PRESERVATION: 'true' };
+  assert.equal(options([], allowed).preserveHashOnly, false);
+  for (const value of [undefined, '', 'TRUE', ' true', '1'])
+    assert.throws(() =>
+      options(['--preserve-hash-only'], { ...env, TIXMO_ALLOW_HASH_ONLY_SHARE_PRESERVATION: value })
+    );
+  assert.equal(options(['--preserve-hash-only'], allowed).preserveHashOnly, true);
+  assert.throws(() => options(['--preserve-hash-only', '--apply'], allowed));
+  assert.equal(
+    options(['--preserve-hash-only', '--apply'], {
+      ...allowed,
+      TIXMO_ALLOW_ASSET_SHARE_REKEY: 'true',
+    }).apply,
+    true
+  );
+  assert.throws(() => options(['--preserve-hash-only', '--preserve-hash-only'], allowed));
+});
+test('aggregate hash-only counts remain bounded and cannot mask an invalid selected row', () => {
+  const counts = { ...validation, scanned: 9, hashOnly: 1 };
+  assert.deepEqual(
+    validationCounts(new AssetShareValidationError(counts), AssetShareValidationError),
+    counts
+  );
+  for (const hashOnly of [-1, 1.5, NaN, 10001, 'private-canary'])
+    assert.equal(
+      validationCounts(
+        new AssetShareValidationError({ ...counts, hashOnly } as any),
+        AssetShareValidationError
+      ),
+      undefined
+    );
+  const noFailures = {
+    ...validation,
+    scanned: 3,
+    hashOnly: 1,
+    missingCipher: 0,
+    unknownFormat: 0,
+    malformedEnvelope: 0,
+    decryptFailed: 0,
+    invalidHash: 0,
+    hashMismatch: 0,
+  };
+  assert.equal(
+    validationCounts(new AssetShareValidationError(noFailures), AssetShareValidationError),
+    undefined
+  );
 });
