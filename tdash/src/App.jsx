@@ -128,7 +128,7 @@ const App = () => {
     const preservePublicLocation = () => {
         const current = latestLocation.current;
         const query = new URLSearchParams(current.search);
-        return matchPath('/e/:slug', current.pathname) || (matchPath('/checkout/:slug', current.pathname)
+        return matchPath('/wallet', current.pathname) || matchPath('/e/:slug', current.pathname) || (matchPath('/checkout/:slug', current.pathname)
             && ['orderId', 'redirect_status', 'payment_intent', 'payment_intent_client_secret']
                 .some((field) => query.has(field)));
     };

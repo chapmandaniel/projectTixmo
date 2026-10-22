@@ -1,4 +1,5 @@
 import { transporter, emailFrom } from '../config/email';
+import { config } from '../config/environment';
 import { logger } from '../config/logger';
 import {
   orderConfirmationEmail,
@@ -47,14 +48,17 @@ export class NotificationService {
     ticketCount: number;
     totalAmount: string;
   }): Promise<boolean> {
-    const template = orderConfirmationEmail({
-      customerName: data.customerName,
-      orderNumber: data.orderNumber,
-      eventName: data.eventName,
-      eventDate: data.eventDate,
-      ticketCount: data.ticketCount,
-      totalAmount: data.totalAmount,
-    });
+    const template = orderConfirmationEmail(
+      {
+        customerName: data.customerName,
+        orderNumber: data.orderNumber,
+        eventName: data.eventName,
+        eventDate: data.eventDate,
+        ticketCount: data.ticketCount,
+        totalAmount: data.totalAmount,
+      },
+      config.clientUrl
+    );
 
     return await this.sendEmail({
       to: data.to,
