@@ -8,7 +8,9 @@ import test from "node:test";
 const root = resolve(import.meta.dirname, "..");
 const toml = readFileSync(join(root, "tixmoapi2/railway.toml"), "utf8");
 const command = JSON.parse(toml.match(/^startCommand = (".*")$/m)[1]);
-async function run(change = {}) {
+const preDeploy = JSON.parse(toml.match(/^preDeployCommand = (\[.*\])$/m)[1]);
+assert.equal(preDeploy.length, 1);
+async function run(change = {}, stage = "startup") {
   const directory = mkdtempSync(join(tmpdir(), "tixmo-share-startup-"));
   try {
     // These executable stubs load only pure argument guards. No SDK, app or DB client.
@@ -20,9 +22,10 @@ const script = args[0];
 let phase;
 if (tool === 'npm') { if (JSON.stringify(args) !== JSON.stringify(['run','migrate'])) process.exit(90); phase = 'migrate'; }
 else if (script === 'prisma/rekey-asset-shares.js') {
- phase = args.includes('--preserve-hash-only') ? 'preserve-audit' : 'strict-audit';
- if (args.includes('--apply')) process.exit(91);
- try { const plan = require(process.env.REKEY_GUARD).options(args.slice(1), process.env); if (plan.apply || plan.url !== process.env.DATABASE_URL) process.exit(92); } catch { process.exit(93); }
+ const apply = args.includes('--apply');
+ phase = apply ? 'apply' : args.includes('--preserve-hash-only') ? 'preserve-audit' : 'strict-audit';
+ if (apply && (process.env.HARNESS_STAGE !== 'predeploy' || JSON.stringify(args.slice(1)) !== JSON.stringify(['--preserve-hash-only','--apply']))) process.exit(91);
+ try { const plan = require(process.env.REKEY_GUARD).options(args.slice(1), process.env); if (plan.apply !== apply || plan.url !== process.env.DATABASE_URL) process.exit(92); } catch { process.exit(93); }
 }
 else if (script === 'prisma/check-asset-share-links.js') {
  phase = 'links';
@@ -36,22 +39,28 @@ if (process.env.FAIL_PHASE === phase) process.exit(7);
 `;
     for (const name of ["npm", "node"])
       writeFileSync(join(directory, name), stub, { mode: 0o700 });
-    const child = spawn("/bin/sh", ["-c", command], {
-      cwd: join(root, "tixmoapi2"),
-      env: {
-        PATH: directory,
-        PHASE_FILE: join(directory, "phases"),
-        NODE_ENV: "production",
-        DATABASE_URL:
-          "postgresql://synthetic:synthetic@db.test/owned?schema=public&synthetic=space value",
-        ASSET_SHARE_ENCRYPTION_KEY: "12".repeat(32),
-        REKEY_GUARD: join(root, "tixmoapi2/prisma/rekey-asset-shares.js"),
-        LINK_GUARD: join(root, "tixmoapi2/prisma/check-asset-share-links.js"),
-        ...change,
+    writeFileSync(join(directory, "phases"), "");
+    const child = spawn(
+      "/bin/sh",
+      ["-c", stage === "predeploy" ? preDeploy[0] : command],
+      {
+        cwd: join(root, "tixmoapi2"),
+        env: {
+          PATH: directory,
+          PHASE_FILE: join(directory, "phases"),
+          NODE_ENV: "production",
+          DATABASE_URL:
+            "postgresql://synthetic:synthetic@db.test/owned?schema=public&synthetic=space value",
+          ASSET_SHARE_ENCRYPTION_KEY: "12".repeat(32),
+          REKEY_GUARD: join(root, "tixmoapi2/prisma/rekey-asset-shares.js"),
+          LINK_GUARD: join(root, "tixmoapi2/prisma/check-asset-share-links.js"),
+          ...change,
+          HARNESS_STAGE: stage,
+        },
+        stdio: ["ignore", "pipe", "pipe"],
+        detached: true,
       },
-      stdio: ["ignore", "pipe", "pipe"],
-      detached: true,
-    });
+    );
     let stdout = "";
     let stderr = "";
     let boundedFailure = false;
@@ -191,4 +200,62 @@ test("nonexact nested selector retains strict audit and apply permission never e
       { status: 0, phases: ["migrate", "strict-audit", "api"] },
     );
   }
+});
+
+const applyPermissions = {
+  TIXMO_ASSET_SHARE_REKEY_ONCE: "true",
+  TIXMO_ALLOW_HASH_ONLY_SHARE_PRESERVATION: "true",
+  TIXMO_ALLOW_ASSET_SHARE_REKEY: "true",
+};
+test("predeploy default is a no-op even with both CLI permissions", async () => {
+  assert.deepEqual(await run({}, "predeploy"), { status: 0, phases: [] });
+  assert.deepEqual(
+    await run(
+      { ...applyPermissions, TIXMO_ASSET_SHARE_REKEY_ONCE: "false" },
+      "predeploy",
+    ),
+    { status: 0, phases: [] },
+  );
+});
+test("nonexact predeploy selector never invokes apply", async () => {
+  for (const flag of ["", "TRUE", "1", " true", "true "])
+    assert.deepEqual(
+      await run(
+        { ...applyPermissions, TIXMO_ASSET_SHARE_REKEY_ONCE: flag },
+        "predeploy",
+      ),
+      { status: 0, phases: [] },
+    );
+});
+test("predeploy invokes exactly one apply with three explicit permissions and quoted database URL", async () => {
+  assert.deepEqual(await run(applyPermissions, "predeploy"), {
+    status: 0,
+    phases: ["apply"],
+  });
+});
+test("predeploy rejects either missing CLI permission without invoking any later operation", async () => {
+  for (const name of [
+    "TIXMO_ALLOW_HASH_ONLY_SHARE_PRESERVATION",
+    "TIXMO_ALLOW_ASSET_SHARE_REKEY",
+  ])
+    for (const value of ["", "false", "TRUE", " true"]) {
+      const result = await run(
+        { ...applyPermissions, [name]: value },
+        "predeploy",
+      );
+      assert.notEqual(result.status, 0);
+      assert.deepEqual(result.phases, []);
+    }
+});
+test("failed predeploy apply returns failure after one attempt without retry or API startup", async () => {
+  assert.deepEqual(
+    await run({ ...applyPermissions, FAIL_PHASE: "apply" }, "predeploy"),
+    { status: 7, phases: ["apply"] },
+  );
+});
+test("predeploy permissions never introduce startup apply", async () => {
+  assert.deepEqual(await run({ ...applyPermissions, ...preserve }), {
+    status: 0,
+    phases: ["migrate", "preserve-audit", "api"],
+  });
 });
