@@ -26,7 +26,7 @@ New isolated branch `tixmo/task-491-independent-qa`, worktree `/home/daniel/proj
 
 After source/import/script inspection (including API wrapper, helper sources, package scripts, Vitest config/setup):
 
-- `node docs/team/evidence/task-490/inert-checks.mjs`: exit0, author's one suite with 12 assertions; historical/current, same identity retry, denial, refresh failure, malformed ack, envelope, lifecycle/cancel cases. Historical author result was rerun independently.
+- `node docs/team/evidence/task-490/inert-checks.mjs`: exit0, author's one suite with 11 assertions; historical/current, same identity retry, denial, refresh failure, malformed ack, envelope, lifecycle/cancel cases. Historical author result was rerun independently.
 - `node docs/team/evidence/task-491/adversarial.mjs`: exit0, **7 independent groups**: malformed acknowledgement/no GET; actual extracted wrapper shape/historical replay; strict error negatives; both lifecycle deleted/expiry boundary guards; definitive-conflict lock reproduction; simulated-unmount late setter reproduction; snapshot/callback source evidence. All expected assertions pass, including assertions demonstrating defects. These are NOT seven product acceptance passes.
 - `git diff --check 434bb2fda62ab0d9645896e2020e8a96202ee612 HEAD`: exit0 for exact candidate before evidence changes.
 - Searches using guessed flattened event routes/controllers initially exited2; corrected actual paths to `tixmoapi2/src/api/events/{routes,controller,service}.ts`. No test failure hidden.
