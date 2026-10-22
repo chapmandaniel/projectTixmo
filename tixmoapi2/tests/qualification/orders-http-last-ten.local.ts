@@ -20,48 +20,51 @@ test('100 authenticated barrier buyers compete for the last ten untiered units',
   const { checkoutOwnership, promiseMiddleware, preallocateCheckout, criticalCall } = require('./task499/ownership.cjs');
   const ids = preallocateCheckout(() => crypto.randomUUID());
   const work = checkoutOwnership(ids, 8000);
-  const spies: any[] = [];
-  let server: any, redis: any, prisma: any, disconnectRedis: any, revoke: any;
+  const spies: Array<Pick<jest.SpyInstance, 'mockRestore'>> = [];
+  // Type queries are erased: product evaluation remains behind process admission.
+  let redis!: Awaited<ReturnType<typeof import('../../src/config/redis').connectRedis>>;
+  let prisma!: typeof import('../../src/config/prisma').default;
+  let disconnectRedis: typeof import('../../src/config/redis').disconnectRedis | undefined;
+  let server: any, revoke: any;
   let primary: unknown, admitting = true;
   let active = 0, maxInFlight = 0;
-  const measurements: any[] = [];
+  const measurements: Array<{ i: number; started: number; settled: number }> = [];
   const key = `lastten499-${ids.event}`;
   // No timer/interval observer is created. Snapshot observations are raw tracked
   // operations and are finished before stopping admission and terminal drainage.
   try {
-    const redisModule = require('../../src/config/redis');
+    const redisModule: typeof import('../../src/config/redis') = require('../../src/config/redis');
     disconnectRedis = redisModule.disconnectRedis;
     redis = await work.critical(() => redisModule.connectRedis()); // before app capture
-    prisma = require('../../src/config/prisma').default;
-    const asyncModule = require('../../src/utils/catchAsync');
-    spies.push(jest.spyOn(asyncModule, 'catchAsync').mockImplementation((fn: any) =>
-      (req: any, res: any, next: any) => { void work.run(() => fn(req, res, next)).catch(next); }));
-    for (const [module, names] of [
-      [require('../../src/middleware/auth'), ['authenticate', 'optionalAuthenticate']],
-      [require('../../src/middleware/waitingRoom'), ['waitingRoom']],
-    ] as any[]) for (const name of names) {
-      const original = module[name];
-      spies.push(jest.spyOn(module, name).mockImplementation(promiseMiddleware(original, work)));
-    }
-    const validation = require('../../src/middleware/validate');
+    const prismaModule: typeof import('../../src/config/prisma') = require('../../src/config/prisma');
+    prisma = prismaModule.default;
+    const asyncModule: typeof import('../../src/utils/catchAsync') = require('../../src/utils/catchAsync');
+    spies.push(jest.spyOn(asyncModule, 'catchAsync').mockImplementation((fn) =>
+      (req, res, next) => { void work.run(() => fn(req, res, next)).catch(next); }));
+    const auth: typeof import('../../src/middleware/auth') = require('../../src/middleware/auth');
+    const waitingRoom: typeof import('../../src/middleware/waitingRoom') = require('../../src/middleware/waitingRoom');
+    spies.push(jest.spyOn(auth, 'authenticate').mockImplementation(promiseMiddleware(auth.authenticate, work)));
+    spies.push(jest.spyOn(auth, 'optionalAuthenticate').mockImplementation(promiseMiddleware(auth.optionalAuthenticate, work)));
+    spies.push(jest.spyOn(waitingRoom, 'waitingRoom').mockImplementation(promiseMiddleware(waitingRoom.waitingRoom, work)));
+    const validation: typeof import('../../src/middleware/validate') = require('../../src/middleware/validate');
     const realValidate = validation.validate;
-    spies.push(jest.spyOn(validation, 'validate').mockImplementation((schema: any) => {
+    spies.push(jest.spyOn(validation, 'validate').mockImplementation((schema) => {
       const handler = realValidate(schema);
-      return (...args: any[]) => work.run(() => handler(...args));
+      return (...args: Parameters<typeof handler>) => work.run(() => handler(...args));
     }));
     //426 detached actual Redis promises, not only client or middleware wrappers.
-    for (const name of ['zRem', 'eval', 'sendCommand']) {
+    for (const name of ['zRem', 'eval', 'sendCommand'] as const) {
       const original = redis[name].bind(redis);
       spies.push(jest.spyOn(redis, name).mockImplementation(criticalCall(original, work)));
     }
-    const limiter = require('../../src/middleware/rateLimiter');
-    for (const name of ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter']) {
+    const limiter: typeof import('../../src/middleware/rateLimiter') = require('../../src/middleware/rateLimiter');
+    for (const name of ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter'] as const) {
       const original = limiter[name];
       spies.push(jest.spyOn(limiter, name).mockImplementation(promiseMiddleware(original, work)));
     }
     const app = (await work.critical(() => import('../../src/app'))).default; // NOT bootstrap/jobs
-    const { orderService } = require('../../src/api/orders/service');
-    const { generateAccessToken } = require('../../src/utils/jwt');
+    const { orderService }: typeof import('../../src/api/orders/service') = require('../../src/api/orders/service');
+    const { generateAccessToken }: typeof import('../../src/utils/jwt') = require('../../src/utils/jwt');
     await work.critical(async () => { expect(await redis.dbSize()).toBe(0); });
     const buyers = ids.buyers.map((id: string, i: number) => ({ id, email: `${key}-${i}@example.test`, passwordHash: 'synthetic', firstName: 'Synthetic', lastName: `Buyer${i}`, emailVerified: true, sessionVersion: 0 }));
     await work.critical(async () => {
@@ -117,7 +120,7 @@ test('100 authenticated barrier buyers compete for the last ten untiered units',
     expect(maxInFlight).toBe(100); expect(active).toBe(0); expect(measurements).toHaveLength(100);
     console.info('task499 actual client start-to-settlement measurements', { maxInFlight, measurements });
     await work.critical(async () => {
-      const { ACTIVE_REQUESTS_KEY } = require('../../src/middleware/waitingRoom');
+      const { ACTIVE_REQUESTS_KEY }: typeof import('../../src/middleware/waitingRoom') = require('../../src/middleware/waitingRoom');
       expect(await redis.zCard(ACTIVE_REQUESTS_KEY)).toBe(0);
     });
     await work.critical(async () => {
