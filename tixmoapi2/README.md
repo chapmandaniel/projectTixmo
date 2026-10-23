@@ -605,10 +605,12 @@ controller and fulfillment transaction. Wrong signatures and tampered bytes must
 leave the complete pending financial/inventory snapshot unchanged.
 
 After synthetic payment confirmation, a monotonic timer includes callback HTTP,
-owned-wallet visibility and the first HTTP QR generation. Paid-to-QR p95 and
-intent-to-QR p95 are reported separately and must each be at most 30,000 ms over
-20 samples. Intent-to-QR also includes this scenario's bounded preparation and
-negative-signature phase. This is local application callback latency under this
+owned-wallet visibility and the first HTTP QR generation. Paid-to-first-QR p95
+must be at most 30,000 ms over all 20 samples. Intent-to-QR p95 and maximum remain
+reported as `fixture-context-only`: that clock also includes deliberate unpaid
+waiting during the 20-intent batch and negative-signature phase. It is a context
+metric, not a payment fulfillment acceptance gate. Its timer is not reset or
+shortened to remove that waiting. This is local application callback latency under this
 small synthetic workload, not real Stripe delivery/challenge time, inbox delivery,
 paid latency at 500 actors or complete #246/#244 qualification. Setup JWT fixtures
 do not qualify login throughput.

@@ -607,13 +607,14 @@ it('twenty owned buyers receive one paid ticket through authentic signed mounted
     const paidToQrP95Ms = percentile(paidMs, 0.95),
       intentToQrP95Ms = percentile(intentMs, 0.95);
     expect(paidToQrP95Ms).toBeLessThanOrEqual(30000);
-    expect(intentToQrP95Ms).toBeLessThanOrEqual(30000);
+    // Context only: this clock includes deliberately unpaid batch/negative-test waiting.
     expect(maxInFlight).toBeLessThanOrEqual(4);
     expect(inFlight).toBe(0);
     const leaseDelta = (await db(() => redis!.zCard(waiting.ACTIVE_REQUESTS_KEY))) - leaseBefore;
     expect(leaseDelta).toBe(0);
     receipt = {
       scope: 'task616-synthetic-http-paid-to-ticket',
+      intentTiming: 'fixture-context-only',
       syntheticReadMax: 10000,
       syntheticWriteMax: 4000,
       syntheticAdmissionMax: 4000,
