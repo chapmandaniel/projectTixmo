@@ -4,6 +4,7 @@ const { randomUUID } = require('node:crypto');
 const SCOPE = 'task602-existing-storage-canary';
 const ENDPOINT = 'https://t3.storageapi.dev';
 const BUCKET = 'mediabucket-ovwubxuyoklp';
+const PREFIX = 'task602-canary/';
 const BYTES = Buffer.from('Tixmo task602 synthetic storage canary\n');
 function guard(args, env) {
   if (args.length || env.NODE_ENV !== 'production' || env.TIXMO_STORAGE_CANARY !== 'true')
@@ -39,7 +40,7 @@ async function request(client, command) {
       new Promise((_, reject) => {
         timer = setTimeout(() => {
           controller.abort();
-          reject(new Error('Rejected'));
+          reject(Object.assign(new Error('Rejected'), { name: 'TimeoutError' }));
         }, 5000);
       }),
     ]);
@@ -69,8 +70,8 @@ async function readBody(body) {
       })(),
       new Promise((_, reject) => {
         timer = setTimeout(() => {
-          body.destroy(new Error('Rejected'));
-          reject(new Error('Rejected'));
+          body.destroy(Object.assign(new Error('Rejected'), { name: 'TimeoutError' }));
+          reject(Object.assign(new Error('Rejected'), { name: 'TimeoutError' }));
         }, 5000);
       }),
     ]);
@@ -79,9 +80,106 @@ async function readBody(body) {
     body.destroy();
   }
 }
+function classifyFailure(error) {
+  try {
+    const status = error?.$metadata?.httpStatusCode;
+    const httpStatus = Number.isInteger(status) && status >= 100 && status <= 599 ? status : null;
+    const categories = new Map([
+      ['InvalidAccessKeyId', 'authentication'],
+      ['SignatureDoesNotMatch', 'authentication'],
+      ['ExpiredToken', 'authentication'],
+      ['InvalidToken', 'authentication'],
+      ['AccessDenied', 'authorization'],
+      ['PreconditionFailed', 'conflict'],
+      ['ConditionalRequestConflict', 'conflict'],
+      ['NoSuchKey', 'not-found'],
+      ['NotFound', 'not-found'],
+      ['NoSuchBucket', 'not-found'],
+      ['InternalError', 'service'],
+      ['ServiceUnavailable', 'service'],
+      ['SlowDown', 'service'],
+      ['TimeoutError', 'timeout'],
+      ['AbortError', 'timeout'],
+    ]);
+    return { category: categories.get(error?.name) || 'generic', httpStatus };
+  } catch {
+    return { category: 'generic', httpStatus: null };
+  }
+}
+async function listOwnedNamespace(client, sdk) {
+  const result = await request(
+    client,
+    new sdk.ListObjectsV2Command({ Bucket: BUCKET, Prefix: PREFIX, MaxKeys: 100 })
+  );
+  const rows = result.Contents === undefined && result.KeyCount === 0 ? [] : result.Contents;
+  if (
+    result.IsTruncated !== false ||
+    !Array.isArray(rows) ||
+    rows.length > 100 ||
+    result.KeyCount !== rows.length ||
+    new Set(rows.map((row) => row.Key)).size !== rows.length ||
+    rows.some(
+      (row) =>
+        typeof row.Key !== 'string' ||
+        !/^task602-canary\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.txt$/.test(
+          row.Key
+        )
+    )
+  )
+    throw new Error('Rejected');
+  return rows;
+}
+async function cleanOwnedNamespace(client, sdk, counts) {
+  const rows = await listOwnedNamespace(client, sdk);
+  counts.scanned = rows.length;
+  // Validate EVERY candidate before deleting ANY candidate. Never trust prefix alone.
+  const verified = [];
+  for (const row of rows) {
+    const object = await request(
+      client,
+      new sdk.GetObjectCommand({ Bucket: BUCKET, Key: row.Key })
+    );
+    const matches = (await readBody(object.Body)).equals(BYTES);
+    if (
+      object.ContentType !== 'text/plain' ||
+      object.VersionId !== undefined ||
+      !matches ||
+      typeof object.ETag !== 'string' ||
+      !object.ETag.length ||
+      object.ETag.length > 256 ||
+      /[^\x21-\x7e]/.test(object.ETag)
+    )
+      throw new Error('Rejected');
+    verified.push({ key: row.Key, etag: object.ETag });
+  }
+  for (const row of verified) {
+    const removed = await request(
+      client,
+      new sdk.DeleteObjectCommand({ Bucket: BUCKET, Key: row.key, IfMatch: row.etag })
+    );
+    if (removed.$metadata?.httpStatusCode !== 204) throw new Error('Rejected');
+    counts.deleted++;
+    let absent = false;
+    try {
+      await request(client, new sdk.HeadObjectCommand({ Bucket: BUCKET, Key: row.key }));
+    } catch (error) {
+      absent = error?.$metadata?.httpStatusCode === 404;
+      if (!absent) throw error;
+    }
+    if (!absent) throw new Error('Rejected');
+  }
+  if ((await listOwnedNamespace(client, sdk)).length !== 0) throw new Error('Rejected');
+  counts.empty = true;
+}
 async function observe(args, env, dependencies = {}) {
   if (env.TIXMO_STORAGE_CANARY !== 'true') return { scope: SCOPE, skipped: true };
   let client, sdk, style;
+  const cleanupRequested = env.TIXMO_STORAGE_CANARY_CLEANUP === 'true';
+  const counts = { scanned: 0, deleted: 0, empty: false };
+  let failure;
+  const recordFailure = (error) => {
+    if (!failure) failure = { phase, ...classifyFailure(error) };
+  };
   let phase = 'guard',
     putAttempted = false,
     putConfirmed = false,
@@ -109,6 +207,10 @@ async function observe(args, env, dependencies = {}) {
         httpsAgent: { keepAlive: false, maxSockets: 1 },
       },
     });
+    if (cleanupRequested) {
+      phase = 'namespace-cleanup';
+      await cleanOwnedNamespace(client, sdk, counts);
+    }
     phase = 'put';
     putAttempted = true;
     const put = await request(
@@ -145,8 +247,8 @@ async function observe(args, env, dependencies = {}) {
     phase = 'read';
     readbackMatched = (await readBody(get.Body)).equals(BYTES);
     if (!readbackMatched) throw new Error('Rejected');
-  } catch {
-    /* Only fixed receipt fields are emitted. */
+  } catch (error) {
+    recordFailure(error);
   } finally {
     if (owned) {
       try {
@@ -172,16 +274,28 @@ async function observe(args, env, dependencies = {}) {
           );
         } catch (error) {
           removalVerified = error?.$metadata?.httpStatusCode === 404;
+          if (!removalVerified) recordFailure(error);
         }
-      } catch {
-        /* Preserve possible-orphan evidence; never retry deletion. */
+      } catch (error) {
+        recordFailure(error);
+      }
+    }
+    if (cleanupRequested && counts.empty) {
+      phase = 'namespace-verify';
+      try {
+        counts.empty = (await listOwnedNamespace(client, sdk)).length === 0;
+        if (!counts.empty) throw new Error('Rejected');
+      } catch (error) {
+        counts.empty = false;
+        recordFailure(error);
       }
     }
     try {
       client?.destroy();
-    } catch {
+    } catch (error) {
       removalVerified = false;
       phase = 'cleanup';
+      recordFailure(error);
     }
   }
   return {
@@ -194,8 +308,20 @@ async function observe(args, env, dependencies = {}) {
     readbackMatched,
     deleteConfirmed,
     removalVerified,
-    possibleOrphan: putAttempted && !removalVerified,
-    ok: putConfirmed && readbackMatched && deleteConfirmed && removalVerified,
+    failurePhase: failure?.phase || 'none',
+    failureCategory: failure?.category || 'none',
+    failureHttpStatus: failure?.httpStatus ?? null,
+    namespaceCleanupRequested: cleanupRequested,
+    namespaceScanned: counts.scanned,
+    namespaceDeleted: counts.deleted,
+    namespaceVerifiedEmpty: counts.empty,
+    possibleOrphan: (putAttempted && !removalVerified) || (cleanupRequested && !counts.empty),
+    ok:
+      putConfirmed &&
+      readbackMatched &&
+      deleteConfirmed &&
+      removalVerified &&
+      (!cleanupRequested || counts.empty),
   };
 }
 async function main(args = process.argv.slice(2), env = process.env, dependencies = {}) {
@@ -218,4 +344,4 @@ async function main(args = process.argv.slice(2), env = process.env, dependencie
   });
 }
 if (require.main === module) void main();
-module.exports = { guard, observe, main };
+module.exports = { guard, observe, main, classifyFailure };
