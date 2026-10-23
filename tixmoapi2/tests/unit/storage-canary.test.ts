@@ -424,3 +424,65 @@ it.each(['false', 'TRUE', ' true'])(
     expect(h.requests.map((r) => r.method)).toEqual(['PUT', 'GET', 'DELETE', 'HEAD']);
   }
 );
+
+it.each([
+  ['node-env', { NODE_ENV: 'test' }],
+  ['endpoint', { S3_ENDPOINT: 'private-config-canary' }],
+  ['bucket', { S3_BUCKET_NAME: 'private-config-canary' }],
+  ['region', { S3_REGION: 'private-config-canary' }],
+  ['style', { S3_URL_STYLE: 'private-config-canary' }],
+  ['access-key-missing', { S3_ACCESS_KEY_ID: '' }],
+  ['access-key-shape', { S3_ACCESS_KEY_ID: 'private-config-canary\n' }],
+  ['access-key-shape', { S3_ACCESS_KEY_ID: 'x'.repeat(4097) }],
+  ['secret-key-missing', { S3_SECRET_ACCESS_KEY: '' }],
+  ['secret-key-shape', { S3_SECRET_ACCESS_KEY: 'private-config-canary\t' }],
+  ['secret-key-shape', { S3_SECRET_ACCESS_KEY: 'x'.repeat(4097) }],
+])(
+  'guard reports only fixed %s without SDK requests or configuration echoes',
+  async (reason, patch) => {
+    const h = handler();
+    const result = await observe([], { ...env, ...(patch as object) }, h);
+    expect(result).toMatchObject({
+      guardReason: reason,
+      failurePhase: 'guard',
+      putAttempted: false,
+      ok: false,
+    });
+    expect(h.requests).toEqual([]);
+    expect(JSON.stringify(result)).not.toMatch(
+      /private-config-canary|synthetic-access|synthetic-secret|storageapi|mediabucket/
+    );
+  }
+);
+it('arguments are classified, while nonexact opt-in remains dependency-free skipped', async () => {
+  const h = handler();
+  expect(await observe(['private-config-canary'], env, h)).toMatchObject({
+    guardReason: 'arguments',
+    putAttempted: false,
+  });
+  expect(() => guard([], { ...env, TIXMO_STORAGE_CANARY: 'TRUE' })).toThrow('Rejected');
+  expect(await observe([], { ...env, TIXMO_STORAGE_CANARY: 'TRUE' }, h)).toEqual({
+    scope: 'task602-existing-storage-canary',
+    skipped: true,
+  });
+  expect(h.requests).toEqual([]);
+});
+it('valid aliases preserve guard acceptance and provider failures cannot forge guard reasons', async () => {
+  const aliases = {
+    NODE_ENV: 'production',
+    TIXMO_STORAGE_CANARY: 'true',
+    AWS_ENDPOINT: env.S3_ENDPOINT,
+    AWS_S3_BUCKET: env.S3_BUCKET_NAME,
+    AWS_REGION: 'auto',
+    AWS_S3_URL_STYLE: 'virtual',
+    AWS_ACCESS_KEY_ID: env.S3_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: env.S3_SECRET_ACCESS_KEY,
+  };
+  expect(guard([], aliases).style).toBe('virtual');
+  const h = handler({ failure: 'PUT' });
+  expect(await observe([], env, h)).toMatchObject({
+    guardReason: 'none',
+    failurePhase: 'put',
+    putAttempted: true,
+  });
+});
