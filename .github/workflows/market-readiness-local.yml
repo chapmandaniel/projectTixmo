@@ -93,14 +93,29 @@ jobs:
           test -x /usr/bin/google-chrome
           /usr/bin/google-chrome --version
 
+      - name: Prepare fresh aggregate-only HTTP pressure evidence
+        run: |
+          node --test scripts/http-pressure-receipt.test.cjs
+          node scripts/http-pressure-receipt.cjs clear
+
       - name: Run market readiness gates
+        id: market
         # job.services is available at step scope, not jobs.<job_id>.env.
         env:
           TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1'
+          TIXMO_PRESSURE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TIXMO_PRESSURE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
           TIXMO_BROWSER_PATH: /usr/bin/google-chrome
           DATABASE_URL: postgresql://tixmo_ci:synthetic_ci_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_ci?schema=public
           REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/1
         run: npm run verify:market
+
+      - name: Report validated current-run HTTP pressure aggregates
+        if: ${{ !cancelled() && (steps.market.outcome == 'success' || steps.market.outcome == 'failure') }}
+        env:
+          TIXMO_PRESSURE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TIXMO_PRESSURE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/http-pressure-receipt.cjs report
 
   configured-image-restore:
     # Separate job-owned services: never the existing gate DB or a target backup.
