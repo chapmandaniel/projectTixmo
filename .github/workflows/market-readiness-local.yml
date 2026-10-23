@@ -140,7 +140,7 @@ jobs:
       - name: Install isolated API tools
         run: npm ci --prefix tixmoapi2
       - name: Check synthetic restore guards
-        run: node --test scripts/image-restore.test.cjs scripts/application-rollback.test.cjs
+        run: node --test scripts/image-restore.test.cjs scripts/application-rollback.test.cjs scripts/parity-upgrade.test.cjs
       - name: Qualify configured images with synthetic new-database restore
         env:
           TIXMO_IMAGE_RESTORE: synthetic-only
@@ -204,6 +204,15 @@ jobs:
           DATABASE_URL: postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_restore_source?schema=public
           REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/6
         run: node scripts/verify-application-rollback.cjs
+      - name: Qualify populated prior-schema upgrade on configured images
+        env:
+          GITHUB_ACTIONS: 'true'
+          TIXMO_POPULATED_PARITY: synthetic-only
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+          REDIS_CONTAINER: ${{ job.services.redis.id }}
+          DATABASE_URL: postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_restore_source?schema=public
+          REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/7
+        run: node scripts/verify-parity-upgrade.cjs
       - name: Remove only owned compatibility containers and anonymous volumes
         if: always()
         env:
