@@ -64,6 +64,18 @@ npm test -- --runInBand
 
 Shared test utilities live in `tests/utils/testUtils.ts`. Documentation and usage examples are in `tests/utils/README.md`.
 
+### Managed CI HTTP pressure
+
+The collected `orders-http-pressure.test.ts` schedules 1,800 authenticated synthetic
+requests at 30 per second for 60 seconds and requires reservation p95 <= 2 seconds.
+Use the existing guarded managed-CI disposable PostgreSQL/Redis setup, never a
+shared application target. Its read/write/admission maxima are explicitly 4,000
+for this suite; aggregate receipts bind the source SHA and workflow run and report
+`syntheticMaxima: 4000` and `limitsQualified: false`. This does not qualify deployed
+limits, browser concurrency, ramp/soak traffic, paid-ticket latency or full capacity.
+A successful actual run and independent review are required for this slice.
+
+
 ---
 
 ## 🚀 Quick Start
