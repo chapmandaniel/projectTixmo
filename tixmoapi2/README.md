@@ -648,3 +648,20 @@ fixtures must join and clean up; uncertainty preserves context and fails.
 This is an emulated browser/HTTP/SQL proof. It does not qualify physical iOS or
 Android devices, optical decoding, offline admission, gate operators or whole
 #247. Source acceptance and a fresh hosted run are required independently.
+
+### Exact validation-security rollback transition (#619)
+
+The Zod 4.6.7 update intentionally changes validation source and dependency bytes.
+The synthetic rollback gate continues to require byte-identical Prisma schema
+and migrations. Its ordinary application contract remains byte-identical too;
+the sole migration exception is the reviewed `rollback-zod-transition.json`
+manifest. Every changed source/package path must match both its pinned historical
+and current SHA-256, with exact old/new locked versions. Unlisted edits, added
+paths, byte drift, symlinks and database-contract changes fail the gate.
+
+The real new-old-new mounted-application rehearsal still runs against retained
+synthetic data. The historical Zod 3 image is an isolated compatibility fixture
+with a known advisory, not an approved security rollback or deployment target.
+Receipts identify the application contract and keep rollback promotion approval
+false. A future secure rollback baseline must be independently qualified; the
+manifest does not approve arbitrary upgrades or relax any runtime assertions.
