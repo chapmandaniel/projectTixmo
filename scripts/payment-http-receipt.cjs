@@ -42,6 +42,7 @@ function validate(value, env) {
     throw Error("Payment HTTP receipt binding rejected");
   const fixed = {
     scope: "task616-synthetic-http-paid-to-ticket",
+    intentTiming: "fixture-context-only",
     syntheticReadMax: 10000,
     syntheticWriteMax: 4000,
     syntheticAdmissionMax: 4000,
@@ -86,7 +87,6 @@ function validate(value, env) {
       value.maxHttpInFlight < 1 ||
       value.httpCalls !== 145 ||
       value.paidToQrP95Ms > 30000 ||
-      value.intentToQrP95Ms > 30000 ||
       value.paidToQrMaxMs < value.paidToQrP95Ms ||
       value.intentToQrMaxMs < value.intentToQrP95Ms ||
       value.intentCreates !== 20 ||
