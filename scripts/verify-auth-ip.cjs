@@ -40,6 +40,60 @@ function childEnv(env) {
     TIXMO_AUTH_IP_RUN_ID: env.TIXMO_AUTH_IP_RUN_ID,
   };
 }
+// Shared with offline abort/continuation tests; a timeout permanently forbids cleanup.
+function createLifetime() {
+  const pending = new Set();
+  let unsafe = false;
+  const track = (promise) => {
+    pending.add(promise);
+    void promise.then(
+      () => pending.delete(promise),
+      () => pending.delete(promise),
+    );
+    return promise;
+  };
+  const check = () => {
+    if (unsafe) throw Error("Unjoined work");
+  };
+  const drain = async () => {
+    while (pending.size) await Promise.allSettled([...pending]);
+  };
+  const bounded = async (promise, ms = 10000) => {
+    let timer;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            unsafe = true;
+            reject(Error("Deadline"));
+          }, ms);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  return { track, check, drain, bounded, isUnsafe: () => unsafe };
+}
+function observeMiddleware(module, names, track) {
+  for (const name of names) {
+    const original = module[name];
+    assert.equal(typeof original, "function");
+    module[name] = function (...args) {
+      return track(Promise.resolve(Reflect.apply(original, this, args)));
+    };
+  }
+}
+function observeValidation(module, track) {
+  const original = module.validate;
+  module.validate = function (...args) {
+    const handler = Reflect.apply(original, this, args);
+    return function (...requestArgs) {
+      return track(Promise.resolve(Reflect.apply(handler, this, requestArgs)));
+    };
+  };
+}
 async function command(args, timeout = 30000, allowWorkerFailure = false) {
   const child = spawn("docker", args, {
     env: { PATH: process.env.PATH, HOME: process.env.HOME },
@@ -234,4 +288,13 @@ if (require.main === module)
     );
     process.exitCode = 1;
   });
-module.exports = { guard, childEnv, project, verify, SCOPE };
+module.exports = {
+  guard,
+  childEnv,
+  project,
+  verify,
+  SCOPE,
+  createLifetime,
+  observeMiddleware,
+  observeValidation,
+};

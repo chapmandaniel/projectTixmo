@@ -248,3 +248,134 @@ test("failed worker emits only bounded fixed phase projection before rejection",
   assert.equal(malformed[0].providerAttempts, null);
   assert.doesNotMatch(JSON.stringify(malformed), /private-canary/);
 });
+
+test("aborted client cannot authorize cleanup before delayed middleware validation and SQL join", async () => {
+  const {
+    createLifetime,
+    observeMiddleware,
+    observeValidation,
+  } = require("./verify-auth-ip.cjs");
+  const life = createLifetime();
+  let releaseMiddleware, releaseValidation, releaseSql;
+  const middlewareGate = new Promise((resolve) => {
+    releaseMiddleware = resolve;
+  });
+  const validationGate = new Promise((resolve) => {
+    releaseValidation = resolve;
+  });
+  const sqlGate = new Promise((resolve) => {
+    releaseSql = resolve;
+  });
+  const events = [];
+  const module = {
+    async authRateLimiter(req, res, next) {
+      assert.equal(this.marker, "preserved");
+      await middlewareGate;
+      events.push("next");
+      next();
+    },
+    marker: "preserved",
+  };
+  const validation = {
+    validate: () => async (req, res, next) => {
+      await validationGate;
+      events.push("validated");
+      next();
+    },
+  };
+  observeMiddleware(module, ["authRateLimiter"], life.track);
+  observeValidation(validation, life.track);
+  const handler = validation.validate({});
+  let cleaned = false;
+  const work = module.authRateLimiter({}, {}, () =>
+    handler({}, {}, () => {
+      life.track(
+        (async () => {
+          await sqlGate;
+          assert.equal(cleaned, false);
+          events.push("sql");
+        })(),
+      );
+    }),
+  );
+  events.push("client-abort"); // No real sockets: abort does not resolve middleware work.
+  const cleanup = life.drain().then(() => {
+    life.check();
+    cleaned = true;
+    events.push("cleanup");
+  });
+  await Promise.resolve();
+  assert.equal(cleaned, false);
+  releaseMiddleware();
+  await work;
+  assert.equal(cleaned, false);
+  releaseValidation();
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.equal(cleaned, false);
+  releaseSql();
+  await cleanup;
+  assert.deepEqual(events, [
+    "client-abort",
+    "next",
+    "validated",
+    "sql",
+    "cleanup",
+  ]);
+});
+test("unjoined delayed middleware permanently forbids cleanup even after late next completes", async () => {
+  const { createLifetime, observeMiddleware } = require("./verify-auth-ip.cjs");
+  const life = createLifetime();
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  let next = 0,
+    deletes = 0;
+  const module = {
+    async optionalAuthenticate(req, res, callback) {
+      await gate;
+      callback();
+    },
+  };
+  observeMiddleware(module, ["optionalAuthenticate"], life.track);
+  const work = module.optionalAuthenticate({}, {}, () => {
+    next++;
+  });
+  try {
+    await assert.rejects(life.bounded(life.drain(), 5));
+    assert.equal(life.isUnsafe(), true);
+    assert.throws(() => {
+      life.check();
+      deletes++;
+    });
+    assert.equal(deletes, 0);
+    assert.equal(next, 0);
+  } finally {
+    release();
+    await work;
+    await life.drain();
+  }
+  assert.equal(next, 1);
+  assert.throws(() => {
+    life.check();
+    deletes++;
+  });
+  assert.equal(deletes, 0);
+  const worker = fs.readFileSync(
+    path.join(__dirname, "auth-ip-worker.cjs"),
+    "utf8",
+  );
+  assert.ok(
+    worker.indexOf("observeValidation(") <
+      worker.indexOf("const app = require("),
+  );
+  assert.match(worker, /'optionalAuthenticate'|"optionalAuthenticate"/);
+  assert.match(worker, /'apiReadRateLimiter'|"apiReadRateLimiter"/);
+  assert.ok(
+    worker.indexOf(
+      "await bounded(drain())",
+      worker.indexOf("async function main"),
+    ) < worker.indexOf("redis.del(keys)"),
+  );
+});

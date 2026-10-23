@@ -2,13 +2,15 @@
 // Runs only inside the existing production image against guarded job-owned services.
 const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
-const { guard, SCOPE } = require("/task611-driver.cjs");
-const pending = new Set();
-let unsafe = false,
-  server,
-  prisma,
-  redisModule,
-  redis;
+const {
+  guard,
+  SCOPE,
+  createLifetime,
+  observeMiddleware,
+  observeValidation,
+} = require("/task611-driver.cjs");
+const { track, bounded, drain, check, isUnsafe } = createLifetime();
+let server, prisma, redisModule, redis;
 let providerAttempts = 0,
   writes = 0,
   dotenvCalls = 0;
@@ -20,36 +22,6 @@ const counts = {
   sharedAdmitted401: 0,
   sharedRejected429: 0,
   separateAdmitted401: 0,
-};
-const track = (promise) => {
-  pending.add(promise);
-  void promise.then(
-    () => pending.delete(promise),
-    () => pending.delete(promise),
-  );
-  return promise;
-};
-async function bounded(promise, ms = 10000) {
-  let timer;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise((_, reject) => {
-        timer = setTimeout(() => {
-          unsafe = true;
-          reject(Error("Deadline"));
-        }, ms);
-      }),
-    ]);
-  } finally {
-    clearTimeout(timer);
-  }
-}
-async function drain() {
-  while (pending.size) await Promise.allSettled([...pending]);
-}
-const check = () => {
-  if (unsafe) throw Error("Unjoined work");
 };
 async function body() {
   guard(process.env);
@@ -95,6 +67,18 @@ async function body() {
   const original = asyncModule.catchAsync;
   asyncModule.catchAsync = (fn) =>
     original((...args) => track(Promise.resolve(fn(...args))));
+  // Capture ALL async pre-controller continuations before app/router import.
+  observeMiddleware(
+    require("/app/dist/middleware/auth"),
+    ["authenticate", "optionalAuthenticate"],
+    track,
+  );
+  observeMiddleware(
+    require("/app/dist/middleware/rateLimiter"),
+    ["authRateLimiter", "apiReadRateLimiter", "apiWriteRateLimiter"],
+    track,
+  );
+  observeValidation(require("/app/dist/middleware/validate"), track);
   phase = "mounted";
   const app = require("/app/dist/app").default;
   server = await bounded(
@@ -214,7 +198,7 @@ async function main() {
     phase: failedPhase || phase,
     sourceSha: process.env.TIXMO_AUTH_IP_SOURCE_SHA,
     runId: process.env.TIXMO_AUTH_IP_RUN_ID,
-    ok: ok && !unsafe,
+    ok: ok && !isUnsafe(),
     ...counts,
     authLimit: 20,
     windowSeconds: 60,
