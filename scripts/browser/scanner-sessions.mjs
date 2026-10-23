@@ -36,6 +36,13 @@ const workspace = await mkdtemp(resolve(tmpdir(), "tixmo-scanner-browser-"));
 const identity = await lstat(workspace);
 const origin = `http://127.0.0.1:${frontendPort}`;
 class Deadline extends Error {}
+class FixedFailure extends Error {
+  constructor(reason) {
+    super("Scanner proof failed");
+    this.reason = reason;
+  }
+}
+let detail = 0;
 async function bounded(promise, ms = 10000) {
   let timer;
   try {
@@ -71,7 +78,18 @@ async function sendIpc(value) {
     5000,
   );
 }
+async function drainHandlers() {
+  while (handlers.size) await Promise.allSettled([...handlers]);
+}
 async function stopped(record) {
+  // Join actual paused-request continuations while CDP is still alive.
+  // A failed pre-close join still stops the owned browser, but cannot pass proof.
+  let handlerJoinFailed = false;
+  try {
+    await bounded(drainHandlers(), 5000);
+  } catch {
+    handlerJoinFailed = true;
+  }
   record.ws?.close();
   if (!record.child) return;
   const exists = () => {
@@ -93,34 +111,40 @@ async function stopped(record) {
     for (let i = 0; i < 30 && exists(); i++)
       await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  assert.equal(exists(), false);
-  await bounded(record.closed, 5000);
-  await bounded(Promise.allSettled([...handlers]), 5000);
+  if (exists()) throw new FixedFailure(1);
+  try {
+    await bounded(record.closed, 5000);
+  } catch {
+    throw new FixedFailure(2);
+  }
+  await bounded(drainHandlers(), 5000);
   if (record.debugOrigin)
     await assert.rejects(
       fetch(record.debugOrigin + "/json/list", {
         signal: AbortSignal.timeout(1000),
       }),
     );
+  if (handlerJoinFailed) throw new FixedFailure(3);
 }
 async function keyAbsent(profile) {
   let entries = 0,
     bytes = 0;
   async function visit(name, depth = 0) {
-    assert.ok(depth <= 20 && ++entries <= 10000);
+    if (!(depth <= 20 && ++entries <= 10000)) throw new FixedFailure(5);
     const stat = await lstat(name);
-    assert.equal(stat.isSymbolicLink(), false);
+    if (stat.isSymbolicLink()) throw new FixedFailure(4);
     if (stat.isDirectory()) {
       for (const item of await readdir(name))
         await visit(join(name, item), depth + 1);
     } else {
-      assert.ok(stat.isFile());
+      if (!stat.isFile()) throw new FixedFailure(4);
       bytes += stat.size;
-      assert.ok(bytes <= 268435456);
+      if (bytes > 268435456) throw new FixedFailure(5);
       const content = await readFile(name);
       for (const key of fixture.keys) {
-        assert.equal(content.includes(Buffer.from(key)), false);
-        assert.equal(content.includes(Buffer.from(key, "utf16le")), false);
+        if (content.includes(Buffer.from(key))) throw new FixedFailure(6);
+        if (content.includes(Buffer.from(key, "utf16le")))
+          throw new FixedFailure(6);
       }
     }
   }
@@ -415,9 +439,16 @@ try {
     "",
   );
   mark(8);
-  for (const record of browsers) await stopped(record);
-  for (const record of browsers) await keyAbsent(record.profile);
-  assert.equal(rejected, 0);
+  detail = 1;
+  await stopped(browsers[0]);
+  detail = 2;
+  await stopped(browsers[1]);
+  detail = 3;
+  await keyAbsent(browsers[0].profile);
+  detail = 4;
+  await keyAbsent(browsers[1].profile);
+  detail = 5;
+  if (rejected !== 0) throw new FixedFailure(7);
   result = {
     ok: true,
     browserProcesses: 2,
@@ -433,6 +464,9 @@ try {
   process.send?.({
     diagnostic: {
       stage,
+      detail: stage === 8 ? detail : 0,
+      reason: error instanceof FixedFailure ? error.reason : 0,
+      rejected: Math.min(100, rejected),
       category:
         error instanceof assert.AssertionError
           ? "assertion"

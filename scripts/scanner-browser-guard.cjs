@@ -20,6 +20,9 @@ const flags = [
 ];
 const numbers = [
   "diagnosticStage",
+  "diagnosticDetail",
+  "diagnosticReason",
+  "unexpectedBrowserRequests",
   "browserProcesses",
   "raceArrivals",
   "raceAdmissions",
@@ -80,7 +83,24 @@ function diagnostic(value) {
     !["progress", "assertion", "deadline", "other"].includes(value.category)
   )
     return null;
-  return { stage: value.stage, category: value.category };
+  const fixed = {
+    detail: value.detail ?? 0,
+    reason: value.reason ?? 0,
+    rejected: value.rejected ?? 0,
+  };
+  if (
+    !Number.isInteger(fixed.detail) ||
+    fixed.detail < 0 ||
+    fixed.detail > 5 ||
+    !Number.isInteger(fixed.reason) ||
+    fixed.reason < 0 ||
+    fixed.reason > 7 ||
+    !Number.isInteger(fixed.rejected) ||
+    fixed.rejected < 0 ||
+    fixed.rejected > 100
+  )
+    return null;
+  return { stage: value.stage, category: value.category, ...fixed };
 }
 function browserResult(value) {
   if (!value || value.ok !== true || value.browserProcesses !== 2) return null;
@@ -118,11 +138,18 @@ function validate(value, env) {
     assert.ok(
       Number.isSafeInteger(value[key]) && value[key] >= 0 && value[key] <= 100,
     );
-  assert.ok(value.diagnosticStage <= 12);
+  assert.ok(
+    value.diagnosticStage <= 12 &&
+      value.diagnosticDetail <= 5 &&
+      value.diagnosticReason <= 7,
+  );
   if (value.passed) {
     for (const key of flags) assert.equal(value[key], true);
     for (const [key, expected] of Object.entries({
       diagnosticStage: 0,
+      diagnosticDetail: 0,
+      diagnosticReason: 0,
+      unexpectedBrowserRequests: 0,
       browserProcesses: 2,
       raceArrivals: 2,
       raceAdmissions: 1,

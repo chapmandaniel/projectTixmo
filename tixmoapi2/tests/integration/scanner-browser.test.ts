@@ -49,7 +49,13 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
     scope: string;
     flags: string[];
     numbers: string[];
-    diagnostic: (value: unknown) => { stage: number; category: string } | null;
+    diagnostic: (value: unknown) => {
+      stage: number;
+      category: string;
+      detail: number;
+      reason: number;
+      rejected: number;
+    } | null;
     browserResult: (value: unknown) => Record<string, unknown> | null;
   };
   const ids = {
@@ -418,7 +424,12 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
       const diagnostic = evidence.diagnostic(value?.diagnostic);
       if (diagnostic && diagnostic.category !== 'progress' && !failureStage) {
         failureStage = diagnostic.stage;
-        if (receipt) receipt.diagnosticStage = failureStage;
+        if (receipt) {
+          receipt.diagnosticStage = failureStage;
+          receipt.diagnosticDetail = diagnostic.detail;
+          receipt.diagnosticReason = diagnostic.reason;
+          receipt.unexpectedBrowserRequests = diagnostic.rejected;
+        }
       }
       if (value?.revoke === true) {
         const work = (async () => {
@@ -489,6 +500,9 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
       passed: false,
       ...workerResult,
       diagnosticStage: failureStage,
+      diagnosticDetail: 0,
+      diagnosticReason: 0,
+      unexpectedBrowserRequests: 0,
       browserProcesses: 2,
       raceArrivals,
       raceAdmissions: 1,
