@@ -158,6 +158,22 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
       ...Object.fromEntries(evidence.numbers.map((key) => [key, 0])),
     };
     writeReceipt();
+    const { config } = await import('../../src/config/environment');
+    expect(config.nodeEnv).toBe('test');
+    probe = createServer();
+    await bounded(track(new Promise<void>((resolve) => probe!.listen(0, '127.0.0.1', resolve))));
+    const frontendPort = (probe.address() as { port: number }).port;
+    await bounded(
+      track(
+        new Promise<void>((resolve, reject) =>
+          probe!.close((error) => (error ? reject(error) : resolve()))
+        )
+      )
+    );
+    probe = undefined;
+    const clientOrigin = `http://127.0.0.1:${frontendPort}`;
+    const clientUrl = jest.replaceProperty(config, 'clientUrl', clientOrigin);
+    spies.push({ mockRestore: () => clientUrl.restore() });
     redis = await db(() => redisModule.connectRedis());
     for (const name of ['sendCommand', 'eval', 'zRem'])
       spies.push(observeFunction(redis, name, track));
@@ -189,8 +205,6 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
         return (...args: Parameters<typeof handler>) => track(Promise.resolve(handler(...args)));
       })
     );
-    const { config } = await import('../../src/config/environment');
-    expect(config.nodeEnv).toBe('test');
     const app = (await import('../../src/app')).default;
     server = await bounded(
       track(
@@ -372,17 +386,6 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
         )
       )
     );
-    probe = createServer();
-    await bounded(track(new Promise<void>((resolve) => probe!.listen(0, '127.0.0.1', resolve))));
-    const frontendPort = (probe.address() as { port: number }).port;
-    await bounded(
-      track(
-        new Promise<void>((resolve, reject) =>
-          probe!.close((error) => (error ? reject(error) : resolve()))
-        )
-      )
-    );
-    probe = undefined;
     const chrome = process.env.TIXMO_BROWSER_PATH;
     expect(chrome).toMatch(/^\/[a-zA-Z0-9_./-]+$/);
     worker = fork(path.resolve(__dirname, '../../../scripts/browser/scanner-sessions.mjs'), [], {
