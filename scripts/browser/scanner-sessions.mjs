@@ -9,7 +9,11 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const require = createRequire(import.meta.url);
-const { guard } = require("../scanner-browser-guard.cjs");
+const {
+  guard,
+  OwnedBrowserClosed,
+  requestBrowserClose,
+} = require("../scanner-browser-guard.cjs");
 const {
   discoverDevTools,
   clearDevToolsActivePort,
@@ -37,9 +41,10 @@ const identity = await lstat(workspace);
 const origin = `http://127.0.0.1:${frontendPort}`;
 class Deadline extends Error {}
 class FixedFailure extends Error {
-  constructor(reason) {
+  constructor(reason, entryType = 0) {
     super("Scanner proof failed");
     this.reason = reason;
+    this.entryType = entryType;
   }
 }
 let detail = 0;
@@ -90,8 +95,10 @@ async function stopped(record) {
   } catch {
     handlerJoinFailed = true;
   }
-  record.ws?.close();
-  if (!record.child) return;
+  if (!record.child) {
+    record.ws?.close();
+    return;
+  }
   const exists = () => {
     try {
       process.kill(-record.child.pid, 0);
@@ -101,6 +108,27 @@ async function stopped(record) {
       return false;
     }
   };
+  let gracefulFailure;
+  if (
+    record.send &&
+    record.ws?.readyState === WebSocket.OPEN &&
+    record.child.exitCode === null &&
+    record.child.signalCode === null
+  ) {
+    record.closingRequested = true;
+    try {
+      await requestBrowserClose(record.send);
+      await bounded(record.closed, 5000);
+      if (record.child.exitCode !== 0 || record.child.signalCode !== null)
+        throw new FixedFailure(2);
+      for (let poll = 0; poll < 20 && exists(); poll++)
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      if (exists()) throw new FixedFailure(1);
+    } catch (error) {
+      gracefulFailure = error;
+    }
+  }
+  record.ws?.close();
   for (const signal of ["SIGTERM", "SIGKILL"]) {
     if (!exists()) break;
     try {
@@ -124,6 +152,7 @@ async function stopped(record) {
         signal: AbortSignal.timeout(1000),
       }),
     );
+  if (gracefulFailure) throw gracefulFailure;
   if (handlerJoinFailed) throw new FixedFailure(3);
 }
 async function keyAbsent(profile) {
@@ -132,12 +161,12 @@ async function keyAbsent(profile) {
   async function visit(name, depth = 0) {
     if (!(depth <= 20 && ++entries <= 10000)) throw new FixedFailure(5);
     const stat = await lstat(name);
-    if (stat.isSymbolicLink()) throw new FixedFailure(4);
+    if (stat.isSymbolicLink()) throw new FixedFailure(4, 1);
     if (stat.isDirectory()) {
       for (const item of await readdir(name))
         await visit(join(name, item), depth + 1);
     } else {
-      if (!stat.isFile()) throw new FixedFailure(4);
+      if (!stat.isFile()) throw new FixedFailure(4, stat.isSocket() ? 2 : 3);
       bytes += stat.size;
       if (bytes > 268435456) throw new FixedFailure(5);
       const content = await readFile(name);
@@ -211,22 +240,30 @@ async function open(index) {
   );
   let sequence = 0;
   const commands = new Map();
-  const rejectAll = () => {
-    for (const row of commands.values()) row.reject(Error("CDP closed"));
+  const rejectAll = (closed = false) => {
+    for (const row of commands.values())
+      row.reject(
+        closed &&
+          record.closingRequested === true &&
+          row.method === "Browser.close"
+          ? new OwnedBrowserClosed()
+          : Error("CDP closed"),
+      );
     commands.clear();
   };
-  ws.addEventListener("close", rejectAll);
-  ws.addEventListener("error", rejectAll);
+  ws.addEventListener("close", () => rejectAll(true));
+  ws.addEventListener("error", () => rejectAll(false));
   const send = (method, params = {}) => {
     const id = ++sequence;
     return bounded(
       new Promise((resolve, reject) => {
-        commands.set(id, { resolve, reject });
+        commands.set(id, { resolve, reject, method });
         ws.send(JSON.stringify({ id, method, params }));
       }),
       5000,
     ).finally(() => commands.delete(id));
   };
+  record.send = send;
   ws.addEventListener("message", (event) => {
     let message;
     try {
@@ -467,6 +504,7 @@ try {
       detail: stage === 8 ? detail : 0,
       reason: error instanceof FixedFailure ? error.reason : 0,
       rejected: Math.min(100, rejected),
+      entryType: error instanceof FixedFailure ? error.entryType : 0,
       category:
         error instanceof assert.AssertionError
           ? "assertion"
