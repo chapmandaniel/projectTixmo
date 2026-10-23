@@ -2,9 +2,10 @@ name: Tixmo Checkout Runtime Config Evidence
 
 on:
   push:
-    branches: [codex/task-583-target-probe, codex/task-243-live-readiness]
+    branches: [codex/task-243-policy-verification]
     paths:
       - scripts/probe-public-test-target.mjs
+      - scripts/probe-policy-placeholders.mjs
       - scripts/runtime-config-parser.mjs
       - scripts/reset-bootstrap-observation.mjs
       - scripts/reset-bootstrap-observation.test.mjs
@@ -53,6 +54,8 @@ jobs:
         run: node scripts/reset-bootstrap-observation.test.mjs
       - name: Observe public readiness and runtime configuration
         run: node scripts/probe-public-test-target.mjs
+      - name: Verify published policy bytes and runtime links
+        run: node scripts/probe-policy-placeholders.mjs
 
   checkout-runtime-config:
     if: ${{ github.event_name == 'workflow_dispatch' && !inputs.read_only_current_test_target }}
