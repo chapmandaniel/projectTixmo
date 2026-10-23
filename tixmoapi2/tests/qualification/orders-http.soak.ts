@@ -8,6 +8,11 @@ import path from 'path';
 import request from 'supertest';
 
 let mockTransportCalls = 0;
+// Plain no-op methods: the shared setup logger's jest.fn history retains every log call.
+jest.mock('../../src/config/logger', () => ({
+  logger: { info() {}, error() {}, warn() {}, debug() {}, http() {} },
+}));
+
 jest.unmock('../../src/config/redis');
 jest.unmock('rate-limit-redis');
 jest.mock('../../src/utils/notificationService', () => ({
@@ -68,6 +73,14 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
     ACTORS,
   } = require('../../../scripts/http-soak.cjs');
   guard(process.env);
+  const { observeFunction } = require('../../../scripts/soak-lifetime.cjs') as {
+    observeFunction: (
+      module: any,
+      name: string,
+      track: <T>(promise: Promise<T>) => Promise<T>
+    ) => { mockRestore: () => void };
+  };
+
   const actorCount: number = ACTORS;
   const ids = {
     organization: randomUUID(),
@@ -150,15 +163,8 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
     // Capture real Redis before app/limiter modules initialize their stores.
     redis = await database(() => redisModule.connectRedis());
     expect(redis.isReady).toBe(true);
-    for (const name of ['zRem', 'eval', 'sendCommand'] as const) {
-      // Preserve redis's overloaded method contract while observing actual promises.
-      const target = redis as any;
-      const original = target[name].bind(redis);
-      spies.push(
-        jest
-          .spyOn(target, name)
-          .mockImplementation((...args: unknown[]) => track(original(...args)))
-      );
+    for (const name of ['zRem', 'eval', 'sendCommand']) {
+      spies.push(observeFunction(redis, name, track));
     }
     const asyncModule = await import('../../src/utils/catchAsync');
     spies.push(
@@ -195,12 +201,7 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
       [limiter, ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter']],
     ] as Array<[any, string[]]>) {
       for (const name of names) {
-        const original = module[name];
-        spies.push(
-          jest
-            .spyOn(module, name)
-            .mockImplementation((...args: any[]) => track(Promise.resolve(original(...args))))
-        );
+        spies.push(observeFunction(module, name, track));
       }
     }
     const validation = await import('../../src/middleware/validate');
@@ -451,6 +452,7 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
     const lags: number[] = [];
     const ownedCreated: Array<{ id: string; actor: number }> = [];
     const samples: Array<{
+      at: number;
       connections: number;
       active: number;
       lockWaiters: number;
@@ -513,6 +515,7 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
           );
           const m = process.memoryUsage();
           samples.push({
+            at: performance.now() - start,
             ...pg,
             rss: m.rss,
             heap: m.heapUsed,
@@ -703,7 +706,7 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
         where: { eventId: ids.event, status: 'PAID', receiptStatus: { not: 'SENT' } },
       })
     );
-    const buckets = Array.from({ length: 6 }, (_, i) => bucket(rows, i));
+    const buckets = Array.from({ length: 6 }, (_, i) => bucket(rows, i, samples));
     const cancelled = orders.filter((row) => row.status === 'CANCELLED');
     const metrics = {
       elapsedMs: elapsed,
@@ -759,6 +762,7 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
     };
     const fixed = {
       scope: 'task610-http-soak',
+      harnessVersion: 2,
       sourceSha: process.env.TIXMO_SOAK_SOURCE_SHA,
       runId: process.env.TIXMO_SOAK_RUN_ID,
       actorModel: 'authenticated-http-actors-not-browsers',

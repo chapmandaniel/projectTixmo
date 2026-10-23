@@ -92,11 +92,14 @@ const fixture = () => {
     maxHoldMs: 500,
     allRequests: 90600,
     sampleCount: 360,
+    maxRssBytes: 100000000,
+    maxHeapBytes: 50000000,
     gaAvailable: 400,
     gaSold: 200,
   });
   const buckets = Array.from({ length: 6 }, (_, index) => ({
     index,
+    resources: { samples: 60, maxRssBytes: 100000000, maxHeapBytes: 50000000 },
     endpoints: Object.fromEntries(
       kinds.map((kind) => [
         kind,
@@ -137,6 +140,7 @@ const fixture = () => {
   }));
   return {
     scope: "task610-http-soak",
+    harnessVersion: 2,
     sourceSha: env.TIXMO_SOAK_SOURCE_SHA,
     runId: env.TIXMO_SOAK_RUN_ID,
     actorModel: "authenticated-http-actors-not-browsers",
@@ -615,4 +619,87 @@ test("group disappearing between liveness check and kill is rechecked rather tha
   child.emit("exit", 0, null);
   child.emit("close", 0, null);
   assert.deepEqual(await work, { ok: true, cleanupVerified: true });
+});
+
+test("five-minute memory samples are assigned by completion time without retaining raw samples in receipt", () => {
+  const samples = [
+    { at: 0, rss: 10, heap: 5 },
+    { at: 299999, rss: 20, heap: 8 },
+    { at: 300000, rss: 30, heap: 9 },
+    { at: 1799999, rss: 40, heap: 10 },
+    { at: 1800000, rss: 100, heap: 50 },
+  ];
+  assert.deepEqual(bucket([], 0, samples).resources, {
+    samples: 2,
+    maxRssBytes: 20,
+    maxHeapBytes: 8,
+  });
+  assert.deepEqual(bucket([], 1, samples).resources, {
+    samples: 1,
+    maxRssBytes: 30,
+    maxHeapBytes: 9,
+  });
+  assert.deepEqual(bucket([], 5, samples).resources, {
+    samples: 1,
+    maxRssBytes: 40,
+    maxHeapBytes: 10,
+  });
+  assert.equal(
+    JSON.stringify(bucket([], 0, samples)).includes("299999"),
+    false,
+  );
+});
+test("version2 refuses silently upgrading historical610 receipts and rejects memory-field smuggling", () => {
+  const old = fixture();
+  delete old.harnessVersion;
+  assert.throws(() => validate(old, env));
+  for (const mutate of [
+    (v) => (v.buckets[0].resources.url = "private-canary"),
+    (v) => (v.buckets[0].resources.samples = 0),
+    (v) => (v.buckets[0].resources.samples = 0.5),
+    (v) => (v.buckets[0].resources.maxRssBytes = Infinity),
+    (v) => (v.buckets[0].resources.maxHeapBytes = NaN),
+    (v) => (v.buckets[0].resources.maxRssBytes = 100000001),
+    (v) => (v.buckets[0].resources.samples = 361),
+  ]) {
+    const v = fixture();
+    mutate(v);
+    assert.throws(() => validate(v, env));
+  }
+});
+test("soak installs plain observers and no-history logger while preserving actual workload and unsafe restore gates", () => {
+  const source = fs.readFileSync(
+    path.resolve(
+      __dirname,
+      "../tixmoapi2/tests/qualification/orders-http.soak.ts",
+    ),
+    "utf8",
+  );
+  assert.match(source, /observeFunction\(redis, name, track\)/);
+  assert.match(source, /observeFunction\(module, name, track\)/);
+  assert.match(source, /spyOn\(validation, 'validate'\)/);
+  assert.doesNotMatch(source, /spyOn\(target, name\)|spyOn\(module, name\)/);
+  const logger = source.slice(
+    source.indexOf("jest.mock('../../src/config/logger'"),
+    source.indexOf("jest.unmock"),
+  );
+  assert.doesNotMatch(logger, /jest.fn|mock.calls|push\(/);
+  assert.match(logger, /http\(\)/);
+  assert.match(source, /bucket\(rows, i, samples\)/);
+  assert.match(source, /at: performance.now\(\) - start/);
+  assert.ok(
+    source.indexOf(
+      "await bounded(drain())",
+      source.indexOf("const cleanup ="),
+    ) < source.indexOf("for (const spy of spies.reverse())"),
+  );
+  const workflow = fs.readFileSync(
+    path.resolve(__dirname, "../.github/workflows/http-soak-qualification.yml"),
+    "utf8",
+  );
+  assert.match(
+    workflow,
+    /node --test scripts\/http-soak.test.cjs scripts\/soak-lifetime.test.cjs/,
+  );
+  assert.match(workflow, /scripts\/soak-lifetime\*/);
 });
