@@ -230,7 +230,11 @@ it('executable retains bounded nonblocking watchdog and production packaging', a
     'COPY scripts/storage-canary.cjs ./scripts/storage-canary.cjs'
   );
   expect(fs.readFileSync(path.join(root, 'tixmoapi2/railway.toml'), 'utf8')).toContain(
-    'node scripts/storage-canary.cjs || true; fi && exec node dist/index.js'
+    'node scripts/storage-canary.cjs || true; fi'
+  );
+  const startup = fs.readFileSync(path.join(root, 'tixmoapi2/railway.toml'), 'utf8');
+  expect(startup.indexOf('exec node dist/index.js')).toBeGreaterThan(
+    startup.indexOf('node scripts/storage-canary.cjs || true; fi')
   );
 });
 
