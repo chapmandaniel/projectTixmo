@@ -249,7 +249,7 @@ jobs:
       - name: Checkout exact qualified rollback API source
         uses: actions/checkout@v4
         with:
-          ref: f7fbb1a4c43af495639740c2d8e2f6d77db19911
+          ref: 87240120dd7e010c89adc48e1c437f53eb03691e
           path: .rollback-old
           persist-credentials: false
       - name: Verify database parity and exact reviewed application rollback contract

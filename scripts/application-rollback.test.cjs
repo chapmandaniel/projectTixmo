@@ -108,7 +108,7 @@ test('parity checks every byte and refuses symlinks or missing migrations', () =
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
-test('reviewed Zod transition requires exact old/new bytes and never relaxes database parity', () => {
+test('secure rollback parity rejects legacy transition overrides and all byte differences', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'task619-contract-'));
   const current = path.join(dir, 'new'),
     old = path.join(dir, 'old');
@@ -157,10 +157,7 @@ test('reviewed Zod transition requires exact old/new bytes and never relaxes dat
       for (const name of ['prisma/schema.prisma', 'prisma/migrations/one/migration.sql'])
         write(base, name, 'unchanged database contract');
     }
-    assert.deepEqual(parity(current, old, manifest), {
-      mode: 'reviewed-zod4-transition',
-      rollbackPromotionApproved: false,
-    });
+    assert.throws(() => parity(current, old, manifest));
     for (const patch of [
       { id: 'arbitrary-exception' },
       { oldCommit: '0'.repeat(40) },

@@ -4,8 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const assert = require('node:assert/strict');
-const { createHash } = require('node:crypto');
-const OLD_COMMIT = 'f7fbb1a4c43af495639740c2d8e2f6d77db19911';
+const OLD_COMMIT = '87240120dd7e010c89adc48e1c437f53eb03691e';
 const IMAGES = {
   new: 'tixmo-task603-production:ci',
   old: 'tixmo-task606-old:ci',
@@ -50,90 +49,17 @@ function inventory(base, prefix) {
   visit(prefix);
   return result;
 }
-function applicationChanges(current, old) {
-  const collect = (base) =>
-    new Map(
-      ['src', 'package.json', 'package-lock.json'].flatMap((name) =>
-        inventory(base, name)
-      )
-    );
-  const before = collect(old),
-    after = collect(current);
-  const hash = (value) =>
-    value === undefined
-      ? null
-      : createHash('sha256').update(Buffer.from(value, 'base64')).digest('hex');
-  return [...new Set([...before.keys(), ...after.keys()])]
-    .sort()
-    .filter((name) => before.get(name) !== after.get(name))
-    .map((name) => ({
-      path: name,
-      oldSha256: hash(before.get(name)),
-      newSha256: hash(after.get(name)),
-    }));
-}
-function parity(current, old, approvedTransition) {
-  // Database contracts never receive an exception.
-  for (const name of ['prisma/schema.prisma', 'prisma/migrations'])
+function parity(current, old) {
+  for (const name of [
+    'src',
+    'prisma/schema.prisma',
+    'prisma/migrations',
+    'package-lock.json',
+    'package.json',
+  ])
     assert.deepEqual(inventory(current, name), inventory(old, name));
-  const changes = applicationChanges(current, old);
-  if (!changes.length)
-    return { mode: 'byte-identical', rollbackPromotionApproved: false };
-  let transition = approvedTransition;
-  if (!transition) {
-    const file = path.join(__dirname, 'rollback-zod-transition.json');
-    const stat = fs.lstatSync(file);
-    assert.ok(stat.isFile() && !stat.isSymbolicLink() && stat.size <= 65536);
-    transition = JSON.parse(fs.readFileSync(file, 'utf8'));
-  }
-  assert.deepEqual(Object.keys(transition).sort(), [
-    'changes',
-    'id',
-    'newZod',
-    'oldCommit',
-    'oldZod',
-    'schemaVersion',
-  ]);
-  assert.equal(transition.schemaVersion, 1);
-  assert.equal(transition.id, 'task619-zod4-validation');
-  assert.equal(transition.oldCommit, OLD_COMMIT);
-  assert.equal(transition.oldZod, '3.25.76');
-  assert.equal(transition.newZod, '4.6.7');
-  for (const [base, version] of [
-    [old, transition.oldZod],
-    [current, transition.newZod],
-  ]) {
-    const lock = JSON.parse(
-      fs.readFileSync(path.join(base, 'package-lock.json'), 'utf8')
-    );
-    assert.equal(lock.packages['node_modules/zod'].version, version);
-  }
-  assert.ok(
-    Array.isArray(transition.changes) &&
-      transition.changes.length > 0 &&
-      transition.changes.length <= 64
-  );
-  for (const entry of transition.changes) {
-    assert.deepEqual(Object.keys(entry).sort(), ['newSha256', 'oldSha256', 'path']);
-    assert.ok(
-      typeof entry.path === 'string' &&
-        /^(?:src\/[A-Za-z0-9_.\/-]+\.ts|package(?:-lock)?\.json)$/.test(entry.path)
-    );
-    assert.ok(!entry.path.split('/').some((part) => part === '.' || part === '..'));
-    for (const value of [entry.oldSha256, entry.newSha256])
-      assert.ok(
-        value === null || (typeof value === 'string' && /^[a-f0-9]{64}$/.test(value))
-      );
-    assert.notEqual(entry.oldSha256, entry.newSha256);
-  }
-  assert.ok(transition.changes.some((entry) => entry.path === 'package.json'));
-  assert.ok(transition.changes.some((entry) => entry.path === 'package-lock.json'));
-  // The complete sorted difference must match reviewed old AND new bytes.
-  // No version range, source subtree or arbitrary future change is admitted.
-  assert.deepEqual(changes, transition.changes);
-  return { mode: 'reviewed-zod4-transition', rollbackPromotionApproved: false };
+  return { mode: 'byte-identical', rollbackPromotionApproved: false };
 }
-
 async function command(program, args, timeout = 100000, allowWorkerFailure = false) {
   const child = spawn(program, args, {
     env: { PATH: process.env.PATH, HOME: process.env.HOME },
@@ -297,4 +223,4 @@ if (require.main === module)
     console.error('Synthetic application rollback qualification failed; child details suppressed.');
     process.exitCode = 1;
   });
-module.exports = { guard, parity, applicationChanges, containerArgs, receipt, verify, OLD_COMMIT };
+module.exports = { guard, parity, containerArgs, receipt, verify, OLD_COMMIT };
