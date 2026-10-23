@@ -17,10 +17,11 @@ const numeric = [
   'http503',
   'otherStatus',
   'networkErrors',
-  'latencyP50Ms',
-  'latencyP95Ms',
-  'latencyP99Ms',
-  'latencyMaxMs',
+  'allAttemptP50Ms',
+  'allAttemptP95Ms',
+  'reservationP95Ms',
+  'allAttemptP99Ms',
+  'allAttemptMaxMs',
   'latenessP95Ms',
   'latenessMaxMs',
   'lateStarts',
@@ -44,6 +45,11 @@ const booleans = [
   'lifetimeCleanupVerified',
   'limitsQualified',
 ];
+function percentile(values, fraction) {
+  return (
+    [...values].sort((a, b) => a - b)[Math.max(0, Math.ceil(values.length * fraction) - 1)] ?? 0
+  );
+}
 function rejected() {
   throw Error('Pressure receipt rejected');
 }
@@ -74,7 +80,8 @@ function validate(value, env) {
     if (!key.endsWith('Ms') && !Number.isSafeInteger(value[key])) rejected();
   for (const key of booleans) if (typeof value[key] !== 'boolean') rejected();
   if (value.syntheticMaxima !== 4000 || value.limitsQualified !== false) rejected();
-  if (value.testAssertionsPassed && value.latencyP95Ms > 2000) rejected();
+  if (value.testAssertionsPassed && (value.allAttemptP95Ms > 2000 || value.reservationP95Ms > 2000))
+    rejected();
   return Object.fromEntries(keys.map((key) => [key, value[key]]));
 }
 function run(mode, env = process.env, root = path.resolve(__dirname, '..')) {
@@ -107,4 +114,4 @@ if (require.main === module) {
     process.exitCode = 1;
   }
 }
-module.exports = { numeric, booleans, validate, run };
+module.exports = { numeric, booleans, validate, run, percentile };
