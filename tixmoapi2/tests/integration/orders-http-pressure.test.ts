@@ -1,5 +1,7 @@
 // Synthetic mounted HTTP pressure only; no browser sessions or production capacity claim.
 // Existing managed-CI setup admits and bootstraps the disposable SQL target first.
+// Reservation p95 must be <=2 seconds. Suite-only limiter/admission maxima4000
+// keep this measurement separate from deployed rate/capacity qualification.
 import { randomUUID } from 'crypto';
 import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
@@ -363,6 +365,8 @@ it('1800 authenticated HTTP attempts scheduled at30 per second for60 seconds con
     );
     const metrics = {
       scope: 'task608-http-reservation-pressure',
+      syntheticMaxima: 4000,
+      limitsQualified: false,
       testAssertionsPassed: false,
       cleanupVerified: false,
       lifetimeCleanupVerified: false,
@@ -425,6 +429,7 @@ it('1800 authenticated HTTP attempts scheduled at30 per second for60 seconds con
     expect(metrics.lastStartMs).toBeLessThan(65000);
     expect(metrics.latenessMaxMs).toBeLessThan(1000);
     expect(metrics.elapsedMs).toBeLessThan(90000);
+    expect(metrics.latencyP95Ms).toBeLessThanOrEqual(2000);
     expect(metrics.http201).toBe(900);
     expect(metrics.soldOut400).toBe(900);
     expect(metrics.networkErrors + metrics.otherStatus + metrics.http429 + metrics.http503).toBe(0);

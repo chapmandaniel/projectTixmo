@@ -11,6 +11,8 @@ const valid = () => ({
   runId: env.TIXMO_PRESSURE_RUN_ID,
   ...Object.fromEntries(numeric.map((key) => [key, 0])),
   ...Object.fromEntries(booleans.map((key) => [key, true])),
+  syntheticMaxima: 4000,
+  limitsQualified: false,
 });
 test('fixed complete schema accepts finite numeric aggregate only', () =>
   assert.deepEqual(validate(valid(), env), valid()));
@@ -134,4 +136,28 @@ test('fractional counts are rejected while monotonic duration fractions remain v
   value.orders = 0;
   value.latencyP95Ms = 0.5;
   assert.equal(validate(value, env).latencyP95Ms, 0.5);
+});
+
+test('p95 success claim includes the2second boundary but rejects any greater latency', () => {
+  const value = valid();
+  value.latencyP95Ms = 2000;
+  assert.equal(validate(value, env).latencyP95Ms, 2000);
+  value.latencyP95Ms = 2000.01;
+  assert.throws(() => validate(value, env));
+  value.testAssertionsPassed = false;
+  assert.equal(validate(value, env).latencyP95Ms, 2000.01);
+});
+test('synthetic maxima and unqualified deployed limits are fixed, never inferred from success', () => {
+  const value = valid();
+  value.syntheticMaxima = 1000;
+  assert.throws(() => validate(value, env));
+  value.syntheticMaxima = 4000;
+  value.limitsQualified = true;
+  assert.throws(() => validate(value, env));
+  const source = fs.readFileSync(
+    path.join(__dirname, '../tixmoapi2/tests/integration/orders-http-pressure.test.ts'),
+    'utf8'
+  );
+  assert.match(source, /expect\(metrics.latencyP95Ms\).toBeLessThanOrEqual\(2000\)/);
+  assert.match(source, /jest.replaceProperty\(config, name, 4000\)/);
 });

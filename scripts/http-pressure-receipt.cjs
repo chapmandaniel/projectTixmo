@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const scope = 'task608-http-reservation-pressure';
 const numeric = [
+  'syntheticMaxima',
   'scheduledAttempts',
   'startedAttempts',
   'completedAttempts',
@@ -37,7 +38,12 @@ const numeric = [
   'paymentAttempts',
   'leaseDelta',
 ];
-const booleans = ['testAssertionsPassed', 'cleanupVerified', 'lifetimeCleanupVerified'];
+const booleans = [
+  'testAssertionsPassed',
+  'cleanupVerified',
+  'lifetimeCleanupVerified',
+  'limitsQualified',
+];
 function rejected() {
   throw Error('Pressure receipt rejected');
 }
@@ -67,6 +73,8 @@ function validate(value, env) {
   for (const key of numeric)
     if (!key.endsWith('Ms') && !Number.isSafeInteger(value[key])) rejected();
   for (const key of booleans) if (typeof value[key] !== 'boolean') rejected();
+  if (value.syntheticMaxima !== 4000 || value.limitsQualified !== false) rejected();
+  if (value.testAssertionsPassed && value.latencyP95Ms > 2000) rejected();
   return Object.fromEntries(keys.map((key) => [key, value[key]]));
 }
 function run(mode, env = process.env, root = path.resolve(__dirname, '..')) {
