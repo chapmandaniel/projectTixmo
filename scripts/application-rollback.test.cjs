@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { createHash } = require('node:crypto');
 const {
   guard,
   parity,
@@ -103,6 +104,113 @@ test('parity checks every byte and refuses symlinks or missing migrations', () =
       path.join(b, 'prisma/migrations/one/migration.sql')
     );
     assert.throws(() => parity(a, b));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+test('reviewed Zod transition requires exact old/new bytes and never relaxes database parity', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'task619-contract-'));
+  const current = path.join(dir, 'new'),
+    old = path.join(dir, 'old');
+  const before = {
+    'src/a.ts': 'export const legacy = true;',
+    'package.json': JSON.stringify({ dependencies: { zod: '^3.22.4' } }),
+    'package-lock.json': JSON.stringify({
+      packages: { 'node_modules/zod': { version: '3.25.76' } },
+    }),
+  };
+  const after = {
+    'src/a.ts': 'export const patched = true;',
+    'src/compat.ts': 'export const compatible = true;',
+    'package.json': JSON.stringify({ dependencies: { zod: '4.6.7' } }),
+    'package-lock.json': JSON.stringify({
+      packages: { 'node_modules/zod': { version: '4.6.7' } },
+    }),
+  };
+  const write = (base, name, value) => {
+    const file = path.join(base, name);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, value);
+  };
+  const digest = (value) =>
+    value === undefined ? null : createHash('sha256').update(value).digest('hex');
+  const manifest = {
+    schemaVersion: 1,
+    id: 'task619-zod4-validation',
+    oldCommit: OLD_COMMIT,
+    oldZod: '3.25.76',
+    newZod: '4.6.7',
+    changes: Object.keys(after)
+      .sort()
+      .map((name) => ({
+        path: name,
+        oldSha256: digest(before[name]),
+        newSha256: digest(after[name]),
+      })),
+  };
+  try {
+    for (const [base, files] of [
+      [old, before],
+      [current, after],
+    ]) {
+      for (const [name, value] of Object.entries(files)) write(base, name, value);
+      for (const name of ['prisma/schema.prisma', 'prisma/migrations/one/migration.sql'])
+        write(base, name, 'unchanged database contract');
+    }
+    assert.deepEqual(parity(current, old, manifest), {
+      mode: 'reviewed-zod4-transition',
+      rollbackPromotionApproved: false,
+    });
+    for (const patch of [
+      { id: 'arbitrary-exception' },
+      { oldCommit: '0'.repeat(40) },
+      { newZod: '3.25.76' },
+      { extra: 'not admitted' },
+      { changes: manifest.changes.slice(1) },
+      { changes: [...manifest.changes].reverse() },
+      {
+        changes: manifest.changes.map((entry) => ({
+          ...entry,
+          newSha256: '0'.repeat(64),
+        })),
+      },
+    ])
+      assert.throws(() => parity(current, old, { ...manifest, ...patch }));
+    for (const [base, name, value, restore] of [
+      [current, 'src/a.ts', 'unreviewed new source', after['src/a.ts']],
+      [old, 'src/a.ts', 'unreviewed old source', before['src/a.ts']],
+      [current, 'prisma/schema.prisma', 'changed schema', 'unchanged database contract'],
+      [
+        old,
+        'prisma/migrations/one/migration.sql',
+        'changed DDL',
+        'unchanged database contract',
+      ],
+    ]) {
+      write(base, name, value);
+      assert.throws(() => parity(current, old, manifest));
+      write(base, name, restore);
+    }
+    write(current, 'src/unlisted.ts', 'unreviewed addition');
+    assert.throws(() => parity(current, old, manifest));
+    fs.unlinkSync(path.join(current, 'src/unlisted.ts'));
+    const downgraded = JSON.stringify({
+      packages: { 'node_modules/zod': { version: '4.6.5' } },
+    });
+    write(current, 'package-lock.json', downgraded);
+    const forged = {
+      ...manifest,
+      changes: manifest.changes.map((entry) =>
+        entry.path === 'package-lock.json'
+          ? { ...entry, newSha256: digest(downgraded) }
+          : entry
+      ),
+    };
+    assert.throws(() => parity(current, old, forged));
+    write(current, 'package-lock.json', after['package-lock.json']);
+    fs.unlinkSync(path.join(current, 'src/compat.ts'));
+    fs.symlinkSync(path.join(current, 'src/a.ts'), path.join(current, 'src/compat.ts'));
+    assert.throws(() => parity(current, old, manifest));
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

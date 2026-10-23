@@ -11,8 +11,8 @@ export const createPromoCodeSchema = z.object({
         .refine((val) => val.length >= 3, 'Code must not be empty or whitespace'),
       discountType: z.enum(['PERCENTAGE', 'FIXED_AMOUNT']),
       discountValue: z.number().positive('Discount value must be positive'),
-      organizationId: z.string().uuid('Invalid organization ID'),
-      eventId: z.string().uuid('Invalid event ID').optional(),
+      organizationId: z.string().guid('Invalid organization ID'),
+      eventId: z.string().guid('Invalid event ID').optional(),
       maxUses: z.number().int().positive().optional(),
       validFrom: z.string().datetime().optional(),
       validUntil: z.string().datetime().optional(),
@@ -73,7 +73,7 @@ export const updatePromoCodeSchema = z.object({
 export const validatePromoCodeSchema = z.object({
   body: z.object({
     code: z.string().min(1, 'Code is required'),
-    eventId: z.string().uuid('Invalid event ID').optional(),
+    eventId: z.string().guid('Invalid event ID').optional(),
     orderAmount: z.number().min(0, 'Order amount must be non-negative').optional(),
   }),
 });
@@ -82,8 +82,8 @@ export const listPromoCodesSchema = z.object({
   query: z.object({
     page: z.string().optional().default('1').transform(Number),
     limit: z.string().optional().default('20').transform(Number),
-    eventId: z.string().uuid().optional(),
-    organizationId: z.string().uuid().optional(),
+    eventId: z.string().guid('Invalid uuid').optional(),
+    organizationId: z.string().guid('Invalid uuid').optional(),
     status: z.enum(['ACTIVE', 'EXPIRED', 'DISABLED']).optional(),
   }),
 });

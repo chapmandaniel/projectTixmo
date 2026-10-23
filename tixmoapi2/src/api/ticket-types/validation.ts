@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const createTicketTypeSchema = z.object({
   body: z.object({
-    eventId: z.string().uuid('Invalid event ID'),
+    eventId: z.string().guid('Invalid event ID'),
     name: z.string().min(1, 'Ticket type name is required'),
     description: z.string().optional(),
     price: z.number().min(0, 'Price must be non-negative'),
@@ -29,7 +29,7 @@ export const updateTicketTypeSchema = z.object({
 
 export const listTicketTypesSchema = z.object({
   query: z.object({
-    eventId: z.string().uuid('Invalid event ID'),
+    eventId: z.string().guid('Invalid event ID'),
     sortBy: z.enum(['price', 'status', 'sold', 'name', 'createdAt']).optional(),
     sortOrder: z.enum(['asc', 'desc']).optional(),
   }),

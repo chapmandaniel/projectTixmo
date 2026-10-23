@@ -252,7 +252,7 @@ jobs:
           ref: f7fbb1a4c43af495639740c2d8e2f6d77db19911
           path: .rollback-old
           persist-credentials: false
-      - name: Verify identical application and migration contracts before rollback build
+      - name: Verify database parity and exact reviewed application rollback contract
         run: node -e "const p=require('./scripts/verify-application-rollback.cjs');p.parity('tixmoapi2','.rollback-old/tixmoapi2')"
       - name: Build exact previously qualified API image
         run: docker build --tag tixmo-task606-old:ci .rollback-old/tixmoapi2

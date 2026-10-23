@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const createTierSchema = z.object({
   body: z.object({
-    ticketTypeId: z.string().uuid(),
+    ticketTypeId: z.string().guid('Invalid uuid'),
     name: z.string().min(1).max(100),
     price: z.number().nonnegative(),
     quantityLimit: z.number().int().positive().optional().nullable(),
@@ -14,7 +14,7 @@ export const createTierSchema = z.object({
 
 export const updateTierSchema = z.object({
   params: z.object({
-    id: z.string().uuid(),
+    id: z.string().guid('Invalid uuid'),
   }),
   body: z.object({
     name: z.string().min(1).max(100).optional(),
@@ -29,19 +29,19 @@ export const updateTierSchema = z.object({
 
 export const listTiersSchema = z.object({
   query: z.object({
-    ticketTypeId: z.string().uuid(),
+    ticketTypeId: z.string().guid('Invalid uuid'),
   }),
 });
 
 export const tierIdSchema = z.object({
   params: z.object({
-    id: z.string().uuid(),
+    id: z.string().guid('Invalid uuid'),
   }),
 });
 
 export const reorderTiersSchema = z.object({
   body: z.object({
-    ticketTypeId: z.string().uuid(),
-    tierIds: z.array(z.string().uuid()).min(1),
+    ticketTypeId: z.string().guid('Invalid uuid'),
+    tierIds: z.array(z.string().guid('Invalid uuid')).min(1),
   }),
 });

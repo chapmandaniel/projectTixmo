@@ -4,8 +4,8 @@ export const analyticsQuerySchema = z.object({
   query: z.object({
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional(),
-    organizationId: z.string().uuid().optional(),
-    eventId: z.string().uuid().optional(),
+    organizationId: z.string().guid('Invalid uuid').optional(),
+    eventId: z.string().guid('Invalid uuid').optional(),
     currency: z
       .string()
       .regex(/^[A-Za-z]{3}$/)
@@ -16,6 +16,6 @@ export const analyticsQuerySchema = z.object({
 
 export const dashboardQuerySchema = z.object({
   query: z.object({
-    organizationId: z.string().uuid().optional(),
+    organizationId: z.string().guid('Invalid uuid').optional(),
   }),
 });
