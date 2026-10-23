@@ -541,3 +541,29 @@ unpaid workload; recovery jobs are not started. No provider traffic, deployed
 limits, browser capacity, regional latency, outage recovery, paid latency or
 complete #246 acceptance is inferred. Owned fixture deletion and connection
 cleanup must pass; hosted execution remains required before accepting results.
+
+### Native scheduled recovery timing (#612)
+
+`tests/integration/payment-native-recovery.test.ts` is an ordinary collected SQL
+case. It starts the actual payment recovery singleton job, observes its immediate
+synthetic transport failure and persisted retry timestamp, restores only the
+in-process synthetic transport, then measures recovery on the unchanged native
+60-second interval. No direct recovery invocation, fake clock or post-restoration
+SQL timestamp rewrite advances retries. A tick just before the persisted 60-second
+backoff can legitimately defer settlement to the following tick. Settlement must
+complete within 300,000 ms after restoration; one more actual tick must preserve
+the complete settled financial/ticket/stock snapshot with exactly one synthetic
+refund effect. Manual late-payment and foreign fixtures remain unchanged.
+
+The usual run is approximately two to three minutes; the case has a 390-second
+body bound and 450-second Jest limit. The interval is stopped and every observed
+actual recovery promise joined before strictly owned fixture deletion and
+connection teardown. A failed join permanently preserves context for managed
+cleanup. Real provider and notification transport is refused. This measures
+synthetic scheduled recovery on disposable CI services, not Stripe availability,
+production outage recovery, readiness/monitor delivery or whole #246 acceptance.
+
+The market workflow clears the owned receipt before execution and reports only
+validated source/run-bound numeric and boolean aggregates afterward. For a fresh
+standalone disposable run, clear it with
+`node scripts/native-recovery-receipt.cjs clear` before selecting this case.

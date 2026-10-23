@@ -99,6 +99,8 @@ jobs:
           node scripts/http-pressure-receipt.cjs clear
           node --test scripts/http-ramp-receipt.test.cjs
           node scripts/http-ramp-receipt.cjs clear
+          node --test scripts/native-recovery-receipt.test.cjs
+          node scripts/native-recovery-receipt.cjs clear
 
       - name: Run market readiness gates
         id: market
@@ -107,6 +109,8 @@ jobs:
           TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1'
           TIXMO_PRESSURE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TIXMO_PRESSURE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          TIXMO_RECOVERY_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TIXMO_RECOVERY_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
           TIXMO_RAMP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TIXMO_RAMP_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
           TIXMO_BROWSER_PATH: /usr/bin/google-chrome
@@ -127,6 +131,13 @@ jobs:
           TIXMO_RAMP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TIXMO_RAMP_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/http-ramp-receipt.cjs report
+
+      - name: Report current-run native scheduled recovery aggregates
+        if: ${{ !cancelled() && (steps.market.outcome == 'success' || steps.market.outcome == 'failure') }}
+        env:
+          TIXMO_RECOVERY_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TIXMO_RECOVERY_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/native-recovery-receipt.cjs report
 
   configured-image-restore:
     # Separate job-owned services: never the existing gate DB or a target backup.
