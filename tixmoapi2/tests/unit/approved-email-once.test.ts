@@ -1,3 +1,4 @@
+export {};
 const { guard, observe, main } = require('../../scripts/approved-email-once.cjs');
 const env = {
   NODE_ENV: 'production',
