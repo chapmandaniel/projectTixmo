@@ -35,7 +35,7 @@ const booleanish = z.preprocess((value) => {
 }, z.boolean());
 
 export const createApprovalBodySchema = z.object({
-  eventId: z.string().uuid('Invalid event ID'),
+  eventId: z.string().guid('Invalid event ID'),
   title: z.string().trim().min(1, 'Asset title is required').max(200),
   description: z.string().trim().max(4000).optional(),
   deadline: z.string().datetime('Deadline must be a valid ISO datetime'),
@@ -64,34 +64,34 @@ export const approvalMetadataUpdateSchema = z.object({
 
 export const approvalCommentBodySchema = z.object({
   content: z.string().trim().min(1, 'Comment content is required').max(4000),
-  revisionId: z.string().uuid('Invalid revision ID').optional(),
-  parentCommentId: z.string().uuid('Invalid parent comment ID').optional(),
+  revisionId: z.string().guid('Invalid revision ID').optional(),
+  parentCommentId: z.string().guid('Invalid parent comment ID').optional(),
   visibility: z.enum(['INTERNAL', 'GLOBAL']).optional(),
 });
 
 export const approvalDecisionBodySchema = z.object({
   decision: z.enum(['APPROVED', 'CHANGES_REQUESTED', 'DECLINED']),
   note: z.string().trim().max(4000).optional(),
-  revisionId: z.string().uuid('Invalid revision ID').optional(),
+  revisionId: z.string().guid('Invalid revision ID').optional(),
 });
 
 export const approvalIdParamsSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid approval ID'),
+    id: z.string().guid('Invalid approval ID'),
   }),
 });
 
 export const approvalReviewerParamsSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid approval ID'),
-    reviewerId: z.string().uuid('Invalid reviewer ID'),
+    id: z.string().guid('Invalid approval ID'),
+    reviewerId: z.string().guid('Invalid reviewer ID'),
   }),
 });
 
 export const approvalCommentParamsSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Invalid approval ID'),
-    commentId: z.string().uuid('Invalid comment ID'),
+    id: z.string().guid('Invalid approval ID'),
+    commentId: z.string().guid('Invalid comment ID'),
   }),
 });
 
@@ -104,13 +104,13 @@ export const tokenParamsSchema = z.object({
 export const tokenCommentParamsSchema = z.object({
   params: z.object({
     token: z.string().min(1, 'Token is required'),
-    commentId: z.string().uuid('Invalid comment ID'),
+    commentId: z.string().guid('Invalid comment ID'),
   }),
 });
 
 export const listApprovalsQuerySchema = z.object({
   query: z.object({
-    eventId: z.string().uuid().optional(),
+    eventId: z.string().guid('Invalid uuid').optional(),
     status: z
       .enum(['PENDING_REVIEW', 'CHANGES_REQUESTED', 'UPDATED', 'APPROVED', 'DECLINED'])
       .optional(),

@@ -7,13 +7,13 @@ import { z } from 'zod';
 // Validation schemas
 const joinWaitlistSchema = z.object({
   body: z.object({
-    eventId: z.string().uuid(),
+    eventId: z.string().guid('Invalid uuid'),
   }),
 });
 
 const leaveWaitlistSchema = z.object({
   body: z.object({
-    eventId: z.string().uuid(),
+    eventId: z.string().guid('Invalid uuid'),
   }),
 });
 

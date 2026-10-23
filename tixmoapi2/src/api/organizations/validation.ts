@@ -21,14 +21,14 @@ export const updateOrganizationSchema = z.object({
       .optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'PENDING']).optional(),
     stripeAccountId: z.string().optional(),
-    settings: z.record(z.unknown()).optional(),
+    settings: z.record(z.string(), z.unknown()).optional(),
   }),
 });
 
 export const listOrganizationsSchema = z.object({
   query: z.object({
-    page: z.string().transform(Number).default('1'),
-    limit: z.string().transform(Number).default('20'),
+    page: z.string().transform(Number).prefault('1'),
+    limit: z.string().transform(Number).prefault('20'),
     type: z.enum(['PROMOTER', 'VENUE', 'RESELLER']).optional(),
     status: z.enum(['ACTIVE', 'SUSPENDED', 'PENDING']).optional(),
   }),
@@ -36,6 +36,6 @@ export const listOrganizationsSchema = z.object({
 
 export const addMemberSchema = z.object({
   body: z.object({
-    userId: z.string().uuid('Invalid user ID'),
+    userId: z.string().guid('Invalid user ID'),
   }),
 });

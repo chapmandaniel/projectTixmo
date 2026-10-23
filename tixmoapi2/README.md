@@ -593,3 +593,75 @@ a successor PR. The same fixed-branch, 50-minute job checks out that immutable P
 head and runs the full workload; no shorter rerun, timer substitution, target load
 or provider traffic qualifies this comparison. No successor result is inferred
 from source or inert tests alone.
+
+### Synthetic mounted payment-to-ticket visibility (#616)
+
+The collected `payment-http-visibility.test.ts` scenario uses 20 distinct owned
+buyers and at most four HTTP requests in flight. Actual mounted reservation and
+intent preparation run against real SQL and Redis. Only processor intent
+create/retrieve calls and outbound email transport are simulated; the real SDK
+signs and verifies exact webhook bytes through the application's raw-body parser,
+controller and fulfillment transaction. Wrong signatures and tampered bytes must
+leave the complete pending financial/inventory snapshot unchanged.
+
+After synthetic payment confirmation, a monotonic timer includes callback HTTP,
+owned-wallet visibility and the first HTTP QR generation. Paid-to-first-QR p95
+must be at most 30,000 ms over all 20 samples. Intent-to-QR p95 and maximum remain
+reported as `fixture-context-only`: that clock also includes deliberate unpaid
+waiting during the 20-intent batch and negative-signature phase. It is a context
+metric, not a payment fulfillment acceptance gate. Its timer is not reset or
+shortened to remove that waiting. This is local application callback latency under this
+small synthetic workload, not real Stripe delivery/challenge time, inbox delivery,
+paid latency at 500 actors or complete #246/#244 qualification. Setup JWT fixtures
+do not qualify login throughput.
+
+The full replay baseline is captured after first QR caching, which legitimately
+writes QR metadata. Same-ID and distinct signed callback replays must preserve
+all order, attempt, ticket, receipt and inventory fields, with one intent and one
+inert receipt acknowledgement per buyer, one SOLD allocation per ticket, and no
+refunds. Foreign wallet/QR denial and an unchanged foreign fixture are checked.
+Every middleware/Redis/server/HTTP continuation is joined before owned fixture
+cleanup; a deadline never authorizes deleting context with work still running.
+The market workflow clears and validates a fixed source/run-bound aggregate
+receipt. No token, signature, client secret, customer row or message body is
+printed. A hosted actual pass and independent review remain mandatory.
+
+This fixture explicitly uses read 10,000 / write 4,000 / admission 4,000 synthetic
+controls, restored after joined cleanup; `limitsQualified=false`. Shared CI
+limiter history must not be confused with deployed admission or rate-budget proof.
+
+### Emulated two-session scanner integration (#615)
+
+The collected `scanner-browser.test.ts` builds the current frontend and uses two
+independent headless Chrome processes with separate temporary profiles. Both use
+`/scan`, real scanner-key authentication and documented manual full-QR entry.
+Two actual scan requests arrive at a barrier before the real ticket-locking
+service runs. Exactly one UI admission and one rejection must match one successful
+SQL ENTRY log and two attempts. An explicit duplicate is denied; after actual
+scanner revocation the still-connected second UI cannot admit a fresh paid QR.
+Keys are checked absent from browser storage, URLs and raw profile bytes after
+Chrome stops; no credential or fixture identifiers enter aggregate receipts.
+Owned financial/foreign rows, unscanned paid tickets and stock must remain intact.
+Browser groups, CDP handlers, frontend/API servers, middleware/Redis work and owned
+fixtures must join and clean up; uncertainty preserves context and fails.
+
+This is an emulated browser/HTTP/SQL proof. It does not qualify physical iOS or
+Android devices, optical decoding, offline admission, gate operators or whole
+#247. Source acceptance and a fresh hosted run are required independently.
+
+### Exact validation-security rollback transition (#619)
+
+The Zod 4.6.7 update intentionally changes validation source and dependency bytes.
+The synthetic rollback gate continues to require byte-identical Prisma schema
+and migrations. Its ordinary application contract remains byte-identical too;
+the sole migration exception is the reviewed `rollback-zod-transition.json`
+manifest. Every changed source/package path must match both its pinned historical
+and current SHA-256, with exact old/new locked versions. Unlisted edits, added
+paths, byte drift, symlinks and database-contract changes fail the gate.
+
+The real new-old-new mounted-application rehearsal still runs against retained
+synthetic data. The historical Zod 3 image is an isolated compatibility fixture
+with a known advisory, not an approved security rollback or deployment target.
+Receipts identify the application contract and keep rollback promotion approval
+false. A future secure rollback baseline must be independently qualified; the
+manifest does not approve arbitrary upgrades or relax any runtime assertions.

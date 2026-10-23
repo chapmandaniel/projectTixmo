@@ -12,8 +12,8 @@ const currency = z
  */
 export const getSalesReportSchema = z.object({
   query: z.object({
-    organizationId: z.string().uuid().optional(),
-    eventId: z.string().uuid().optional(),
+    organizationId: z.string().guid('Invalid uuid').optional(),
+    eventId: z.string().guid('Invalid uuid').optional(),
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional(),
     groupBy: z.enum(['day', 'week', 'month', 'event']).optional().default('day'),
@@ -26,7 +26,7 @@ export const getSalesReportSchema = z.object({
  */
 export const getAttendanceReportSchema = z.object({
   query: z.object({
-    eventId: z.string().uuid('Event ID is required'),
+    eventId: z.string().guid('Event ID is required'),
   }),
 });
 
@@ -35,7 +35,7 @@ export const getAttendanceReportSchema = z.object({
  */
 export const getDashboardStatsSchema = z.object({
   query: z.object({
-    organizationId: z.string().uuid().optional(),
+    organizationId: z.string().guid('Invalid uuid').optional(),
     currency,
   }),
 });

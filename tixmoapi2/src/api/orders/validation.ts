@@ -5,7 +5,7 @@ export const createOrderSchema = z.object({
     items: z
       .array(
         z.object({
-          ticketTypeId: z.string().uuid('Invalid ticket type ID'),
+          ticketTypeId: z.string().guid('Invalid ticket type ID'),
           quantity: z.number().int().positive('Quantity must be positive'),
         })
       )
@@ -16,14 +16,14 @@ export const createOrderSchema = z.object({
 
 export const listOrdersSchema = z.object({
   query: z.object({
-    page: z.string().transform(Number).default('1'),
-    limit: z.string().transform(Number).default('20'),
+    page: z.string().transform(Number).prefault('1'),
+    limit: z.string().transform(Number).prefault('20'),
     status: z.enum(['PENDING', 'PAID', 'CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED']).optional(),
-    eventId: z.string().uuid().optional(),
+    eventId: z.string().guid('Invalid uuid').optional(),
     search: z.string().trim().max(200).optional(),
   }),
 });
 
 export const consumerOrderRecoverySchema = z.object({
-  params: z.object({ id: z.string().uuid('Invalid order ID') }),
+  params: z.object({ id: z.string().guid('Invalid order ID') }),
 });

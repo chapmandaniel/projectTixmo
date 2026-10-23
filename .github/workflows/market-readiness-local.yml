@@ -101,6 +101,10 @@ jobs:
           node scripts/http-ramp-receipt.cjs clear
           node --test scripts/native-recovery-receipt.test.cjs
           node scripts/native-recovery-receipt.cjs clear
+          node --test scripts/payment-http-receipt.test.cjs
+          node scripts/payment-http-receipt.cjs clear
+          node --test scripts/scanner-browser.test.cjs
+          node scripts/scanner-browser-guard.cjs clear
 
       - name: Run market readiness gates
         id: market
@@ -109,6 +113,10 @@ jobs:
           TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1'
           TIXMO_PRESSURE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TIXMO_PRESSURE_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          TIXMO_PAID_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TIXMO_PAID_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          TIXMO_SCANNER_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TIXMO_SCANNER_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
           TIXMO_RECOVERY_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TIXMO_RECOVERY_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
           TIXMO_RAMP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -138,6 +146,20 @@ jobs:
           TIXMO_RECOVERY_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           TIXMO_RECOVERY_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/native-recovery-receipt.cjs report
+
+      - name: Report synthetic mounted payment application latency
+        if: ${{ !cancelled() && (steps.market.outcome == 'success' || steps.market.outcome == 'failure') }}
+        env:
+          TIXMO_PAID_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TIXMO_PAID_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/payment-http-receipt.cjs report
+
+      - name: Report current-run emulated scanner browser aggregates
+        if: ${{ !cancelled() && (steps.market.outcome == 'success' || steps.market.outcome == 'failure') }}
+        env:
+          TIXMO_SCANNER_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TIXMO_SCANNER_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/scanner-browser-guard.cjs report
 
   configured-image-restore:
     # Separate job-owned services: never the existing gate DB or a target backup.
@@ -230,7 +252,7 @@ jobs:
           ref: f7fbb1a4c43af495639740c2d8e2f6d77db19911
           path: .rollback-old
           persist-credentials: false
-      - name: Verify identical application and migration contracts before rollback build
+      - name: Verify database parity and exact reviewed application rollback contract
         run: node -e "const p=require('./scripts/verify-application-rollback.cjs');p.parity('tixmoapi2','.rollback-old/tixmoapi2')"
       - name: Build exact previously qualified API image
         run: docker build --tag tixmo-task606-old:ci .rollback-old/tixmoapi2
