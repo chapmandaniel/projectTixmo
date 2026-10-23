@@ -82,6 +82,23 @@ A successful actual run and independent review are required for this slice.
 
 ## 🚀 Quick Start
 
+### Managed CI authenticated HTTP actor ramp
+
+`orders-http-ramp.test.ts` runs fresh 100, 250 and 500 actor stages, each with a
+20-second nominal schedule: ten public event reads at a two-second cadence, one
+checkout offered across seconds 4–16, then one authenticated order-recovery read.
+Each actor has at most one request in flight. Actual actor lifetimes must overlap
+for at least 14 seconds; simultaneous HTTP requests are measured separately.
+Successful public-read p95 must be <= 500 ms and reservation p95 <= 2 seconds;
+unexpected 5xx must remain below 0.5%, with 429, 503 and network deadlines failing
+explicitly. Scheduling lateness, missed cadence and actual offered/completion rates
+are reported. Suite-only read/write/admission maxima are 10000/4000/4000 and
+`limitsQualified` stays false. Generated JWT actors do not qualify login limits.
+CPU, memory and event-loop observations combine the API and load driver in one
+Jest process; PostgreSQL connection/lock and Redis numeric observations cover only
+the owned CI services. This is not browser, deployed-limit, region-latency,
+30-minute soak, payment-queue or paid-ticket capacity proof.
+
 ### Prerequisites
 
 - **Node.js** >= 18.0.0
