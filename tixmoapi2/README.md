@@ -526,7 +526,10 @@ network/deadline errors, malformed successes, missed slots and duplicate/changed
 financial effects fail the test. Tail requests draining after the window are
 counted separately, checked for correctness, and do not enlarge its duration.
 The aggregate-only receipt binds the source SHA and run attempt; raw child output
-is suppressed. All HTTP, middleware, Redis and setup/cleanup work is joined;
+is suppressed. The outer runner owns detached child process groups, bounds and
+discards child output, and joins close plus group absence before report access
+or deletion. A failed join preserves reports and emits no success. All HTTP,
+middleware, Redis and setup/cleanup work is joined;
 unjoined work permanently preserves context for managed job teardown.
 
 Synthetic controls are read 10,000, write 4,000 and admission 4,000, explicitly

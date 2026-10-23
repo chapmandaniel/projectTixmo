@@ -388,10 +388,10 @@ test("actual failure diagnostics project only fixed suite flag/count and numeric
   });
 });
 
-test("runner refuses target before subprocess and scrubs inherited secrets/rate controls", () => {
+test("runner refuses target before subprocess and scrubs inherited secrets/rate controls", async () => {
   const { run, syntheticEnv } = require("./http-soak.cjs");
   let calls = 0;
-  assert.throws(() =>
+  await assert.rejects(
     run({ ...env, TIXMO_SOAK_BRANCH: "main" }, () => {
       calls++;
     }),
@@ -426,4 +426,193 @@ test("successful counts cannot be inflated or silently omit bucketed requests", 
     mutate(v);
     assert.throws(() => validate(v, env));
   }
+});
+
+// Inert child/group protocol; no process, socket, service or fake workload clock.
+function protocol({ onKill, groupInitially = true, pid = 62010 } = {}) {
+  const { EventEmitter } = require("node:events");
+  const child = new EventEmitter();
+  child.pid = pid;
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  let group = groupInitially;
+  const signals = [];
+  let options;
+  return {
+    child,
+    signals,
+    setGroup: (value) => {
+      group = value;
+    },
+    options: () => options,
+    io: {
+      spawn: (_executable, _args, opts) => {
+        options = opts;
+        return child;
+      },
+      kill: (target, why) => {
+        assert.equal(target, -pid);
+        signals.push(why);
+        if (!group) {
+          const e = Error("inert");
+          e.code = "ESRCH";
+          throw e;
+        }
+        if (why === "SIGKILL")
+          onKill?.(child, () => {
+            group = false;
+          });
+      },
+      joinMs: 60,
+      pollMs: 1,
+    },
+  };
+}
+test("owned command waits for close AND delayed descendant group absence before cleanup", async () => {
+  const { ownedCommand } = require("./http-soak.cjs");
+  const events = [];
+  const p = protocol({
+    onKill: () => {
+      events.push("kill-group");
+    },
+  });
+  let done = false;
+  const work = ownedCommand(
+    ["inert"],
+    { cwd: "/tmp", env: {}, timeout: 200 },
+    p.io,
+  ).then((value) => {
+    done = true;
+    events.push("report-cleanup");
+    return value;
+  });
+  p.child.emit("exit", 0, null);
+  p.child.emit("close", 0, null);
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.equal(done, false);
+  p.setGroup(false);
+  events.push("descendants-gone");
+  assert.deepEqual(await work, { ok: true, cleanupVerified: true });
+  assert.ok(
+    events.indexOf("descendants-gone") < events.indexOf("report-cleanup"),
+  );
+  assert.equal(p.options().detached, true);
+  assert.equal(p.options().shell, false);
+  assert.deepEqual(p.options().stdio, ["ignore", "pipe", "pipe"]);
+});
+test("timeout kills only owned group and joins actual close before returning failed outcome", async () => {
+  const { ownedCommand } = require("./http-soak.cjs");
+  let released = false;
+  const p = protocol({
+    onKill: (child, absent) => {
+      if (released) return;
+      released = true;
+      setTimeout(() => {
+        absent();
+        child.emit("exit", null, "SIGKILL");
+        child.emit("close", null, "SIGKILL");
+      }, 5);
+    },
+  });
+  const result = await ownedCommand(
+    ["inert"],
+    { cwd: "/tmp", env: {}, timeout: 5 },
+    p.io,
+  );
+  assert.deepEqual(result, { ok: false, cleanupVerified: true });
+  assert.ok(p.signals.includes("SIGKILL"));
+});
+test("close cannot be inferred from group disappearance and join failure preserves report context", async () => {
+  const { ownedCommand } = require("./http-soak.cjs");
+  const p = protocol({ onKill: (_child, absent) => absent() });
+  p.io.joinMs = 12;
+  let cleanup = false;
+  await assert.rejects(
+    ownedCommand(["inert"], { cwd: "/tmp", env: {}, timeout: 3 }, p.io).then(
+      () => {
+        cleanup = true;
+      },
+    ),
+    /context retained/,
+  );
+  assert.equal(cleanup, false); // No close event; report access/deletion is forbidden.
+});
+test("unjoined descendant despite direct close fails without report cleanup or success", async () => {
+  const { ownedCommand } = require("./http-soak.cjs");
+  const p = protocol();
+  p.io.joinMs = 12;
+  const work = ownedCommand(
+    ["inert"],
+    { cwd: "/tmp", env: {}, timeout: 100 },
+    p.io,
+  );
+  p.child.emit("exit", 0, null);
+  p.child.emit("close", 0, null);
+  await assert.rejects(work, /context retained/);
+  assert.ok(p.signals.includes("SIGKILL"));
+});
+test("overflow output is discarded, fails closed and still joins group and close", async () => {
+  const { ownedCommand } = require("./http-soak.cjs");
+  let stopped = false;
+  const p = protocol({
+    onKill: (child, absent) => {
+      if (stopped) return;
+      stopped = true;
+      queueMicrotask(() => {
+        absent();
+        child.emit("close", 0, null);
+      });
+    },
+  });
+  const work = ownedCommand(
+    ["inert"],
+    { cwd: "/tmp", env: {}, timeout: 100 },
+    p.io,
+  );
+  p.child.stderr.emit("data", Buffer.alloc(1000001, 97));
+  assert.deepEqual(await work, { ok: false, cleanupVerified: true });
+});
+test("spawn failure is safely joined and cannot claim a successful command", async () => {
+  const { ownedCommand } = require("./http-soak.cjs");
+  const p = protocol({ groupInitially: false });
+  p.child.pid = undefined;
+  const work = ownedCommand(
+    ["inert"],
+    { cwd: "/tmp", env: {}, timeout: 100 },
+    p.io,
+  );
+  p.child.emit("error", Error("private-canary"));
+  p.child.emit("close", -2, null);
+  assert.deepEqual(await work, { ok: false, cleanupVerified: true });
+  assert.equal(p.signals.length, 0);
+});
+
+test("group disappearing between liveness check and kill is rechecked rather than falsely retained", async () => {
+  const { ownedCommand } = require("./http-soak.cjs");
+  const { EventEmitter } = require("node:events");
+  const child = new EventEmitter();
+  child.pid = 62011;
+  let alive = true;
+  const io = {
+    spawn: () => child,
+    kill: (pid, why) => {
+      assert.equal(pid, -62011);
+      if (why === "SIGKILL") alive = false;
+      if (!alive) {
+        const error = Error("inert");
+        error.code = "ESRCH";
+        throw error;
+      }
+    },
+    joinMs: 30,
+    pollMs: 1,
+  };
+  const work = ownedCommand(
+    ["inert"],
+    { cwd: "/tmp", env: {}, timeout: 100 },
+    io,
+  );
+  child.emit("exit", 0, null);
+  child.emit("close", 0, null);
+  assert.deepEqual(await work, { ok: true, cleanupVerified: true });
 });

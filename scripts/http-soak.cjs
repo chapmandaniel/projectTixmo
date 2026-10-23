@@ -2,7 +2,7 @@
 // No app imports: fixed synthetic CI admission, scheduling and aggregate projection.
 const fs = require("node:fs");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+const { spawn } = require("node:child_process");
 const DURATION = 1800000;
 const ACTORS = 200;
 const receiptPath = path.resolve(
@@ -391,7 +391,123 @@ function syntheticEnv(env) {
     PAYMENT_CURRENCY: "cad",
   };
 }
-function run(env = process.env, spawn = spawnSync, log = console.log) {
+// Only the detached group returned by our own spawn may be signalled.
+// Output is counted and discarded; neither child bytes nor errors are retained.
+function ownedCommand(args, options, io = {}) {
+  const launch = io.spawn || spawn,
+    signal = io.kill || process.kill.bind(process);
+  const joinMs = io.joinMs || 5000,
+    pollMs = io.pollMs || 20;
+  return new Promise((resolve, reject) => {
+    let child;
+    try {
+      child = launch(process.execPath, args, {
+        cwd: options.cwd,
+        env: options.env,
+        detached: true,
+        shell: false,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } catch {
+      reject(Error("Soak child could not start"));
+      return;
+    }
+    const pid = child.pid;
+    if (
+      pid !== undefined &&
+      (!Number.isSafeInteger(pid) || pid <= 1 || pid === process.pid)
+    ) {
+      reject(Error("Soak child ownership rejected"));
+      return;
+    }
+    let closed = false,
+      failed = false,
+      joining = false,
+      settled = false,
+      code = null,
+      exitSignal = null,
+      bytes = 0;
+    let deadline, joinDeadline, poll;
+    const clear = () => {
+      clearTimeout(deadline);
+      clearTimeout(joinDeadline);
+      clearInterval(poll);
+    };
+    const failJoin = () => {
+      if (settled) return;
+      settled = true;
+      clear();
+      reject(Error("Soak child group could not join; context retained"));
+    };
+    const exists = () => {
+      if (pid === undefined) return false;
+      try {
+        signal(-pid, 0);
+        return true;
+      } catch (error) {
+        if (error?.code === "ESRCH") return false;
+        throw Error("Group state unavailable");
+      }
+    };
+    const inspect = () => {
+      if (settled) return;
+      try {
+        if (exists()) {
+          try {
+            signal(-pid, "SIGKILL");
+          } catch (error) {
+            if (error?.code !== "ESRCH") throw error;
+          }
+        }
+        if (closed && !exists()) {
+          settled = true;
+          clear();
+          resolve({
+            ok:
+              pid !== undefined && !failed && code === 0 && exitSignal === null,
+            cleanupVerified: true,
+          });
+        }
+      } catch {
+        failJoin();
+      }
+    };
+    const join = () => {
+      if (joining) return;
+      joining = true;
+      clearTimeout(deadline);
+      joinDeadline = setTimeout(failJoin, joinMs);
+      poll = setInterval(inspect, pollMs);
+      inspect();
+    };
+    const discard = (chunk) => {
+      bytes += Buffer.byteLength(chunk);
+      if (bytes > 1000000) {
+        failed = true;
+        join();
+      }
+    };
+    child.stdout?.on("data", discard);
+    child.stderr?.on("data", discard);
+    child.once("error", () => {
+      failed = true;
+      join();
+    });
+    child.once("exit", () => join());
+    child.once("close", (status, why) => {
+      closed = true;
+      code = status;
+      exitSignal = why;
+      join();
+      inspect();
+    });
+    deadline = setTimeout(() => {
+      failed = true;
+      join();
+    }, options.timeout);
+  });
+}
+async function run(env = process.env, launch = spawn, log = console.log) {
   guard(env);
   const repo = path.resolve(__dirname, ".."),
     api = path.join(repo, "tixmoapi2");
@@ -402,19 +518,41 @@ function run(env = process.env, spawn = spawnSync, log = console.log) {
     fs.unlinkSync(receiptPath);
   }
   const childEnv = syntheticEnv(env);
-  const execute = (args, timeout) => {
-    const result = spawn(process.execPath, args, {
-      cwd: api,
-      env: childEnv,
-      stdio: "ignore",
-      shell: false,
-      timeout,
-      killSignal: "SIGKILL",
-    });
-    if (result.error || result.status !== 0 || result.signal)
-      throw Error("Soak child failed");
+  let commands = 0;
+  const lifetime = (verified) =>
+    log(
+      JSON.stringify({
+        scope: "task610-driver-lifetime",
+        sourceSha: env.TIXMO_SOAK_SOURCE_SHA,
+        runId: env.TIXMO_SOAK_RUN_ID,
+        commands,
+        processCleanupVerified: verified,
+      }),
+    );
+  const execute = async (args, timeout) => {
+    let result;
+    try {
+      result = await ownedCommand(
+        args,
+        { cwd: api, env: childEnv, timeout },
+        { spawn: launch },
+      );
+    } catch {
+      lifetime(false);
+      throw Error("Soak child unjoined; reports retained");
+    }
+    commands++;
+    return result.ok;
   };
-  execute(["node_modules/prisma/build/index.js", "migrate", "deploy"], 120000);
+  if (
+    !(await execute(
+      ["node_modules/prisma/build/index.js", "migrate", "deploy"],
+      120000,
+    ))
+  ) {
+    lifetime(true);
+    throw Error("Soak schema preparation failed");
+  }
   const report = path.join(repo, "runtime/task610-jest.json");
   fs.mkdirSync(path.dirname(report), { recursive: true });
   if (fs.existsSync(report)) {
@@ -426,7 +564,7 @@ function run(env = process.env, spawn = spawnSync, log = console.log) {
 
   let failed = false;
   try {
-    execute(
+    failed = !(await execute(
       [
         "node_modules/jest/bin/jest.js",
         "--config",
@@ -437,10 +575,11 @@ function run(env = process.env, spawn = spawnSync, log = console.log) {
         report,
       ],
       2100000,
-    );
+    ));
   } catch {
-    failed = true;
+    throw Error("Soak child unjoined; reports retained");
   }
+  lifetime(true);
   if (failed) {
     let reportValue;
     try {
@@ -468,12 +607,16 @@ function run(env = process.env, spawn = spawnSync, log = console.log) {
   if (failed || !value.passed) throw Error("Soak qualification failed");
 }
 if (require.main === module) {
-  try {
-    run();
-  } catch {
-    console.error("HTTP soak qualification failed (raw output suppressed)");
-    process.exitCode = 1;
-  }
+  void run().catch(() => {
+    const watchdog = setTimeout(() => process.exit(1), 1000);
+    process.stderr.write(
+      "HTTP soak qualification failed (raw output suppressed)\n",
+      () => {
+        clearTimeout(watchdog);
+        process.exit(1);
+      },
+    );
+  });
 }
 module.exports = {
   guard,
@@ -487,6 +630,7 @@ module.exports = {
   run,
   failureSummary,
   syntheticEnv,
+  ownedCommand,
   DURATION,
   ACTORS,
   kinds,
