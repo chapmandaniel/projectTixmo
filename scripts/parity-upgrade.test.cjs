@@ -244,3 +244,80 @@ test('pending upgrade child is joined before any owned database drop', async () 
     f.close();
   }
 });
+test('tool-created nested staging files are removed only within the original0700 owned root', async () => {
+  const f = fixture();
+  const original = f.command;
+  f.command = async (program, args, options) => {
+    if (program === process.execPath) {
+      const cache = path.join(options.env.TMPDIR, 'tool-cache', 'nested');
+      fs.mkdirSync(cache, { recursive: true });
+      fs.writeFileSync(path.join(cache, 'synthetic.cache'), 'synthetic');
+    }
+    return original(program, args, options);
+  };
+  try {
+    const result = await verify(valid, f);
+    assert.equal(result.ok, true);
+    assert.equal(result.stagingCleanupVerified, true);
+    assert.deepEqual(fs.readdirSync(path.join(f.root, 'runtime')), []);
+  } finally {
+    f.close();
+  }
+});
+test('foreign symlink anywhere rejects the entire cleanup before removing ordinary files', () => {
+  const { cleanupStaging } = require('./verify-parity-upgrade.cjs');
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'task607-staging-'));
+  try {
+    const owned = path.join(base, 'owned'),
+      outside = path.join(base, 'outside');
+    fs.mkdirSync(owned, { mode: 0o700 });
+    fs.mkdirSync(outside);
+    fs.writeFileSync(path.join(outside, 'keep'), 'private-canary');
+    fs.writeFileSync(path.join(owned, 'ordinary'), 'synthetic');
+    fs.symlinkSync(outside, path.join(owned, 'link'));
+    assert.throws(() => cleanupStaging(owned, fs.lstatSync(owned)));
+    assert.equal(fs.readFileSync(path.join(outside, 'keep'), 'utf8'), 'private-canary');
+    assert.equal(fs.existsSync(path.join(owned, 'ordinary')), true);
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+});
+test('changed root inode or symlink root never authorizes replacement cleanup', () => {
+  const { cleanupStaging } = require('./verify-parity-upgrade.cjs');
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'task607-staging-'));
+  try {
+    const owned = path.join(base, 'owned'),
+      original = path.join(base, 'original');
+    fs.mkdirSync(owned, { mode: 0o700 });
+    const identity = fs.lstatSync(owned);
+    fs.renameSync(owned, original);
+    fs.mkdirSync(owned, { mode: 0o700 });
+    fs.writeFileSync(path.join(owned, 'keep'), 'private-canary');
+    assert.throws(() => cleanupStaging(owned, identity));
+    assert.equal(fs.existsSync(path.join(owned, 'keep')), true);
+    fs.rmSync(owned, { recursive: true });
+    fs.symlinkSync(original, owned);
+    assert.throws(() => cleanupStaging(owned, identity));
+    assert.equal(fs.existsSync(original), true);
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+});
+test('wrong ownership and traversal depth bounds fail closed without deleting root', () => {
+  const { cleanupStaging } = require('./verify-parity-upgrade.cjs');
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'task607-staging-'));
+  try {
+    fs.chmodSync(base, 0o700);
+    const identity = fs.lstatSync(base);
+    assert.throws(() => cleanupStaging(base, { ...identity, uid: identity.uid + 1 }));
+    let directory = base;
+    for (let i = 0; i < 17; i++) {
+      directory = path.join(directory, 'nested');
+      fs.mkdirSync(directory);
+    }
+    assert.throws(() => cleanupStaging(base, identity));
+    assert.equal(fs.existsSync(directory), true);
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+});

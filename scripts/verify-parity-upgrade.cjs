@@ -21,6 +21,62 @@ function guard(env) {
   assert.equal(redis.hash, '');
   return source;
 }
+function cleanupStaging(directory, ownership) {
+  const same = (stat, expected) =>
+    stat.dev === expected.dev && stat.ino === expected.ino && stat.uid === expected.uid;
+  const verifyRoot = () => {
+    const stat = fs.lstatSync(directory);
+    assert.ok(stat.isDirectory() && !stat.isSymbolicLink() && same(stat, ownership));
+    assert.equal(stat.mode & 0o777, 0o700);
+    assert.equal(stat.uid, process.getuid());
+  };
+  verifyRoot();
+  const entries = new Map();
+  let bytes = 0;
+  // Validate the ENTIRE bounded tree before removing any entry.
+  const visit = (relative, depth) => {
+    assert.ok(depth <= 16 && entries.size < 4096);
+    const absolute = path.join(directory, relative);
+    const stat = fs.lstatSync(absolute);
+    assert.ok(!stat.isSymbolicLink() && (stat.isFile() || stat.isDirectory()));
+    assert.equal(stat.dev, ownership.dev);
+    assert.equal(stat.uid, ownership.uid);
+    entries.set(relative, stat);
+    if (stat.isFile()) {
+      bytes += stat.size;
+      assert.ok(bytes <= 268435456);
+    } else
+      for (const name of fs.readdirSync(absolute)) {
+        assert.ok(name !== '.' && name !== '..' && !name.includes(path.sep));
+        visit(path.join(relative, name), depth + 1);
+      }
+  };
+  for (const name of fs.readdirSync(directory)) visit(name, 1);
+  verifyRoot();
+  const verifyPath = (relative) => {
+    verifyRoot();
+    let prefix = '';
+    const names = relative.split(path.sep);
+    for (let index = 0; index < names.length; index++) {
+      prefix = path.join(prefix, names[index]);
+      const stat = fs.lstatSync(path.join(directory, prefix));
+      const original = entries.get(prefix);
+      assert.ok(original && !stat.isSymbolicLink() && same(stat, original));
+      if (index < names.length - 1) assert.ok(stat.isDirectory());
+      else assert.equal(stat.isDirectory(), original.isDirectory());
+    }
+  };
+  // Children are joined by command() before this cleanup can be reached.
+  for (const [relative, stat] of [...entries].reverse()) {
+    verifyPath(relative);
+    const absolute = path.join(directory, relative);
+    if (stat.isDirectory()) fs.rmdirSync(absolute);
+    else fs.unlinkSync(absolute);
+  }
+  verifyRoot();
+  fs.rmdirSync(directory);
+  assert.equal(fs.existsSync(directory), false);
+}
 async function command(program, args, options) {
   const child = spawn(program, args, {
     env: options.env,
@@ -69,7 +125,7 @@ async function verify(env = process.env, dependencies = {}) {
   const started = Date.now();
   let postgresqlVersionNum = 0,
     redisVersion = 'unverified';
-  let directory, database, source, safeEnv;
+  let directory, ownership, database, source, safeEnv;
   const root = dependencies.root || path.resolve(__dirname, '..');
   const run = dependencies.command || command;
   const sql = async (db, input) =>
@@ -127,6 +183,7 @@ async function verify(env = process.env, dependencies = {}) {
     fs.mkdirSync(path.join(root, 'runtime'), { recursive: true });
     directory = fs.mkdtempSync(path.join(root, 'runtime/task607-'));
     fs.chmodSync(directory, 0o700);
+    ownership = fs.lstatSync(directory);
     database =
       'tixmo_disposable_upgrade_' + (dependencies.uuid || randomUUID)().replaceAll('-', '');
     assert.match(database, /^tixmo_disposable_upgrade_[a-f0-9]{32}$/);
@@ -228,10 +285,10 @@ async function verify(env = process.env, dependencies = {}) {
     }
     if (directory) {
       try {
-        fs.rmdirSync(directory);
+        cleanupStaging(directory, ownership);
         stageRemoved = true;
       } catch {
-        /* preserve uncertain staging, never recursively delete */
+        /* Preserve changed/unrecognized staging; never traverse symlinks. */
       }
     }
   }
@@ -261,4 +318,4 @@ if (require.main === module)
       console.error('Synthetic parity upgrade failed; child details suppressed.');
       process.exitCode = 1;
     });
-module.exports = { guard, verify };
+module.exports = { guard, verify, cleanupStaging };
