@@ -224,3 +224,59 @@ test("collected mounted test and worker keep real transport, barrier, isolation 
   assert.match(worker, /SIGKILL/);
   assert.match(workflow, /node scripts\/scanner-browser-guard.cjs report/);
 });
+
+test("actual origin validator snapshots configuration: late repair fails, early frontend origin works", () => {
+  const ts = require("../tixmoapi2/node_modules/typescript");
+  const vm = require("node:vm");
+  const source = fs.readFileSync(
+    path.join(__dirname, "../tixmoapi2/src/utils/clientOrigin.ts"),
+    "utf8",
+  );
+  const compiled = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+    },
+  }).outputText;
+  const origin = "http://127.0.0.1:49155";
+  const load = (config) => {
+    const exports = {};
+    vm.runInNewContext(compiled, {
+      exports,
+      URL,
+      require: (name) => {
+        assert.equal(name, "../config/environment");
+        return { config };
+      },
+    });
+    return exports.isTrustedClientOrigin;
+  };
+  const config = {
+    clientUrl: "http://localhost:3001",
+    corsOrigin: ["http://localhost:3001"],
+  };
+  const original = load(config);
+  assert.equal(original(origin), false);
+  config.clientUrl = origin;
+  assert.equal(original(origin), false);
+  assert.equal(load(config)(origin), true);
+  assert.equal(load(config)("https://foreign.invalid"), false);
+  const testSource = fs.readFileSync(
+    path.join(
+      __dirname,
+      "../tixmoapi2/tests/integration/scanner-browser.test.ts",
+    ),
+    "utf8",
+  );
+  const wired = testSource.indexOf(
+    "jest.replaceProperty(config, 'clientUrl', clientOrigin)",
+  );
+  assert.ok(wired > 0);
+  for (const module of [
+    "../../src/middleware/auth",
+    "../../src/api/scanners/controller",
+    "../../src/app",
+  ])
+    assert.ok(wired < testSource.indexOf("import('" + module + "')"));
+  assert.ok(testSource.indexOf("clientUrl.restore()") > wired);
+});
