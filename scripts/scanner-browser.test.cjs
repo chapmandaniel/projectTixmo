@@ -141,7 +141,7 @@ test("IPC results project only expected booleans and bounded diagnostics", () =>
   assert.equal(browserResult({ ...value, revokedDenied: false }), null);
   assert.deepEqual(
     diagnostic({ stage: 4, category: "assertion", message: "private-canary" }),
-    { stage: 4, category: "assertion" },
+    { stage: 4, category: "assertion", detail: 0, reason: 0, rejected: 0 },
   );
   for (const v of [
     { stage: 0, category: "other" },
@@ -219,8 +219,9 @@ test("collected mounted test and worker keep real transport, barrier, isolation 
     worker,
     /Fetch.fulfillRequest|BarcodeDetector|getUserMedia/,
   );
-  assert.match(worker, /keyAbsent\(record.profile\)/);
-  assert.match(worker, /isSymbolicLink\(\), false/);
+  assert.match(worker, /keyAbsent\(browsers\[0\].profile\)/);
+  assert.match(worker, /keyAbsent\(browsers\[1\].profile\)/);
+  assert.match(worker, /stat.isSymbolicLink\(\)\) throw new FixedFailure\(4\)/);
   assert.match(worker, /SIGKILL/);
   assert.match(workflow, /node scripts\/scanner-browser-guard.cjs report/);
 });
@@ -279,4 +280,167 @@ test("actual origin validator snapshots configuration: late repair fails, early 
   ])
     assert.ok(wired < testSource.indexOf("import('" + module + "')"));
   assert.ok(testSource.indexOf("clientUrl.restore()") > wired);
+});
+
+test("granular failure fields are fixed numeric only and cannot qualify a failed proof", () => {
+  const projected = diagnostic({
+    stage: 8,
+    category: "assertion",
+    detail: 5,
+    reason: 7,
+    rejected: 1,
+    message: "private-canary",
+  });
+  assert.deepEqual(projected, {
+    stage: 8,
+    category: "assertion",
+    detail: 5,
+    reason: 7,
+    rejected: 1,
+  });
+  assert.doesNotMatch(JSON.stringify(projected), /private-canary|message/);
+  for (const patch of [
+    { detail: 6 },
+    { reason: 8 },
+    { rejected: 101 },
+    { reason: "private-canary" },
+    { rejected: NaN },
+  ])
+    assert.equal(diagnostic({ stage: 8, category: "other", ...patch }), null);
+  assert.throws(() =>
+    validate(
+      {
+        ...receipt(),
+        diagnosticDetail: 5,
+        diagnosticReason: 7,
+        unexpectedBrowserRequests: 1,
+      },
+      env,
+    ),
+  );
+  assert.equal(
+    validate(
+      {
+        ...receipt(),
+        passed: false,
+        diagnosticStage: 8,
+        diagnosticDetail: 5,
+        diagnosticReason: 7,
+        unexpectedBrowserRequests: 1,
+      },
+      env,
+    ).passed,
+    false,
+  );
+});
+test("actual CDP close rejects pending continuation; closing before handler join can increment old rejection counter", async () => {
+  const vm = require("node:vm");
+  const source = fs.readFileSync(
+    path.join(__dirname, "browser/scanner-sessions.mjs"),
+    "utf8",
+  );
+  const start = source.indexOf("  const rejectAll = () => {");
+  const end = source.indexOf(
+    '  ws.addEventListener("close", rejectAll);',
+    start,
+  );
+  assert.ok(start >= 0 && end > start);
+  for (const closeFirst of [true, false]) {
+    const commands = new Map();
+    let resolve,
+      reject,
+      rejected = 0;
+    const pending = new Promise((a, b) => {
+      resolve = a;
+      reject = b;
+    });
+    commands.set(1, { resolve, reject });
+    const close = vm.runInNewContext(
+      source.slice(start, end) + "; rejectAll;",
+      { commands, Error },
+    );
+    const handler = pending.catch(() => {
+      rejected++;
+    });
+    if (closeFirst) close();
+    else {
+      resolve();
+      await handler;
+      close();
+    }
+    await handler;
+    assert.equal(rejected, closeFirst ? 1 : 0);
+  }
+});
+
+test("owned shutdown joins actual paused handlers before WebSocket close without relaxing counters", () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, "browser/scanner-sessions.mjs"),
+    "utf8",
+  );
+  const start = source.indexOf("async function stopped(record)");
+  assert.ok(
+    source.indexOf("await bounded(drainHandlers(), 5000)", start) <
+      source.indexOf("record.ws?.close()", start),
+  );
+  assert.match(source, /while \(handlers.size\) await Promise.allSettled/);
+  assert.match(source, /if \(rejected !== 0\) throw new FixedFailure\(7\)/);
+});
+
+test("actual profile proof still rejects UTF8/UTF16 keys and symlinks with fixed reasons", async () => {
+  const vm = require("node:vm"),
+    os = require("node:os"),
+    fsp = require("node:fs/promises");
+  const source = fs.readFileSync(
+    path.join(__dirname, "browser/scanner-sessions.mjs"),
+    "utf8",
+  );
+  const classSource = source.slice(
+    source.indexOf("class FixedFailure extends Error"),
+    source.indexOf("let detail = 0;"),
+  );
+  const proofSource = source.slice(
+    source.indexOf("async function keyAbsent(profile)"),
+    source.indexOf("async function open(index)"),
+  );
+  const key = "synthetic-profile-canary";
+  const proof = vm.runInNewContext(
+    classSource + "\n" + proofSource + "\nkeyAbsent;",
+    {
+      lstat: fsp.lstat,
+      readdir: fsp.readdir,
+      readFile: fsp.readFile,
+      join: path.join,
+      fixture: { keys: [key] },
+      Buffer,
+    },
+  );
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "task615-profile-proof-"));
+  try {
+    const profile = path.join(base, "profile"),
+      file = path.join(profile, "ordinary");
+    fs.mkdirSync(profile);
+    fs.writeFileSync(file, "safe");
+    await proof(profile);
+    for (const encoding of ["utf8", "utf16le"]) {
+      fs.writeFileSync(file, Buffer.from(key, encoding));
+      await assert.rejects(
+        proof(profile),
+        (error) =>
+          error.reason === 6 && error.message === "Scanner proof failed",
+      );
+    }
+    fs.unlinkSync(file);
+    const outside = path.join(base, "outside");
+    fs.writeFileSync(outside, "preserve");
+    fs.symlinkSync(outside, file);
+    await assert.rejects(proof(profile), (error) => error.reason === 4);
+    assert.equal(fs.readFileSync(outside, "utf8"), "preserve");
+    fs.unlinkSync(file);
+    fs.writeFileSync(file, "");
+    fs.truncateSync(file, 268435457);
+    await assert.rejects(proof(profile), (error) => error.reason === 5);
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
 });
