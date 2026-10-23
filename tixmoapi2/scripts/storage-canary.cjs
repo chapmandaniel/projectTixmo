@@ -6,29 +6,33 @@ const ENDPOINT = 'https://t3.storageapi.dev';
 const BUCKET = 'mediabucket-ovwubxuyoklp';
 const PREFIX = 'task602-canary/';
 const BYTES = Buffer.from('Tixmo task602 synthetic storage canary\n');
+class GuardError extends Error {
+  constructor(reason) {
+    super('Rejected');
+    this.reason = reason;
+  }
+}
 function guard(args, env) {
-  if (args.length || env.NODE_ENV !== 'production' || env.TIXMO_STORAGE_CANARY !== 'true')
-    throw new Error('Rejected');
+  if (args.length) throw new GuardError('arguments');
+  if (env.NODE_ENV !== 'production') throw new GuardError('node-env');
+  if (env.TIXMO_STORAGE_CANARY !== 'true') throw new GuardError('opt-in');
   const endpoint = env.S3_ENDPOINT || env.AWS_ENDPOINT;
   const bucket = env.S3_BUCKET_NAME || env.AWS_S3_BUCKET;
   const region = env.S3_REGION || env.AWS_REGION || 'us-east-1';
   const style = env.S3_URL_STYLE || env.AWS_S3_URL_STYLE || 'path';
   const accessKeyId = env.S3_ACCESS_KEY_ID || env.AWS_ACCESS_KEY_ID;
   const secretAccessKey = env.S3_SECRET_ACCESS_KEY || env.AWS_SECRET_ACCESS_KEY;
-  if (
-    endpoint !== ENDPOINT ||
-    bucket !== BUCKET ||
-    region !== 'auto' ||
-    !['path', 'virtual'].includes(style) ||
-    [accessKeyId, secretAccessKey].some(
-      (value) =>
-        typeof value !== 'string' ||
-        !value.length ||
-        value.length > 4096 ||
-        /[^\x21-\x7e]/.test(value)
-    )
-  )
-    throw new Error('Rejected');
+  if (endpoint !== ENDPOINT) throw new GuardError('endpoint');
+  if (bucket !== BUCKET) throw new GuardError('bucket');
+  if (region !== 'auto') throw new GuardError('region');
+  if (!['path', 'virtual'].includes(style)) throw new GuardError('style');
+  for (const [name, value] of [
+    ['access-key', accessKeyId],
+    ['secret-key', secretAccessKey],
+  ]) {
+    if (typeof value !== 'string' || !value.length) throw new GuardError(name + '-missing');
+    if (value.length > 4096 || /[^\x21-\x7e]/.test(value)) throw new GuardError(name + '-shape');
+  }
   return { style, credentials: { accessKeyId, secretAccessKey } };
 }
 async function request(client, command) {
@@ -177,6 +181,7 @@ async function observe(args, env, dependencies = {}) {
   const cleanupRequested = env.TIXMO_STORAGE_CANARY_CLEANUP === 'true';
   const counts = { scanned: 0, deleted: 0, empty: false };
   let failure;
+  let guardReason = 'none';
   const recordFailure = (error) => {
     if (!failure) failure = { phase, ...classifyFailure(error) };
   };
@@ -248,6 +253,7 @@ async function observe(args, env, dependencies = {}) {
     readbackMatched = (await readBody(get.Body)).equals(BYTES);
     if (!readbackMatched) throw new Error('Rejected');
   } catch (error) {
+    if (phase === 'guard' && error instanceof GuardError) guardReason = error.reason;
     recordFailure(error);
   } finally {
     if (owned) {
@@ -308,6 +314,7 @@ async function observe(args, env, dependencies = {}) {
     readbackMatched,
     deleteConfirmed,
     removalVerified,
+    guardReason,
     failurePhase: failure?.phase || 'none',
     failureCategory: failure?.category || 'none',
     failureHttpStatus: failure?.httpStatus ?? null,
