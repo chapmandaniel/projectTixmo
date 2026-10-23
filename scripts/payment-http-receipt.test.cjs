@@ -11,6 +11,7 @@ const env = {
 function fixture() {
   return {
     scope: "task616-synthetic-http-paid-to-ticket",
+    intentTiming: "fixture-context-only",
     syntheticReadMax: 10000,
     syntheticWriteMax: 4000,
     syntheticAdmissionMax: 4000,
@@ -40,7 +41,6 @@ test("complete source/run-bound synthetic application receipt qualifies", () =>
   assert.deepEqual(validate(fixture(), env), fixture()));
 for (const [name, mutate] of Object.entries({
   paidLatency: (v) => (v.paidToQrP95Ms = 30001),
-  intentLatency: (v) => (v.intentToQrP95Ms = 30001),
   samples: (v) => (v.samples = 19),
   concurrency: (v) => (v.maxHttpInFlight = 5),
   path: (v) => (v.httpCalls = 144),
@@ -157,5 +157,31 @@ test("synthetic limiter controls cannot be relabelled as deployed limits", () =>
     const v = fixture();
     mutate(v);
     assert.throws(() => validate(v, env));
+  }
+});
+
+test("long deliberately unpaid intent context is retained and reportable while paid SLA stays mandatory", () => {
+  const value = fixture();
+  value.intentToQrP95Ms = 45000;
+  value.intentToQrMaxMs = 55000;
+  const projected = validate(value, env);
+  assert.equal(projected.intentToQrP95Ms, 45000);
+  assert.equal(projected.intentToQrMaxMs, 55000);
+  assert.equal(projected.intentTiming, "fixture-context-only");
+  assert.equal(projected.externalProviderQualified, false);
+  assert.equal(projected.limitsQualified, false);
+  value.paidToQrP95Ms = 30001;
+  value.paidToQrMaxMs = 31000;
+  assert.throws(() => validate(value, env));
+});
+test("intent context label and metric consistency remain strict", () => {
+  for (const mutate of [
+    (v) => (v.intentTiming = "qualified-provider-latency"),
+    (v) => (v.intentToQrMaxMs = v.intentToQrP95Ms - 1),
+    (v) => (v.intentToQrP95Ms = "private-canary"),
+  ]) {
+    const value = fixture();
+    mutate(value);
+    assert.throws(() => validate(value, env));
   }
 });
