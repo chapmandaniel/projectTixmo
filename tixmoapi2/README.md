@@ -567,3 +567,29 @@ The market workflow clears the owned receipt before execution and reports only
 validated source/run-bound numeric and boolean aggregates afterward. For a fresh
 standalone disposable run, clear it with
 `node scripts/native-recovery-receipt.cjs clear` before selecting this case.
+
+#### Soak harness retention comparison (#613)
+
+The successor keeps the complete real 30-minute, 200-actor workload and all
+latency, authentication, inventory and cleanup gates. High-volume middleware
+and Redis observations now use plain functions preserving receivers, arguments,
+exact return values and rejection/next behavior; their only live bookkeeping is
+the existing set of unfinished promises. They do not store Jest call histories.
+The fixture logger is also a plain no-op object. Original properties are restored
+only after the existing joined-work and permanent-unsafe checks permit cleanup.
+Low-volume factory/config test seams remain unchanged.
+
+Receipt `harnessVersion: 2` adds only fixed numeric sample counts and RSS/heap
+maxima to each of the six five-minute buckets, grouped by sample completion time.
+These still describe the combined API and driver process. Global maxima retain
+the existing scope, including draining samples. There is no invented memory
+budget or claim that this separates an application leak from all driver costs.
+The original #610 pass remains evidence for its exact historical harness; a
+version-2 result requires its own full-duration execution and source/run binding.
+
+After independent review, the operator can update the existing explicit
+`codex/http-soak-qualification` branch against its expected current head and open
+a successor PR. The same fixed-branch, 50-minute job checks out that immutable PR
+head and runs the full workload; no shorter rerun, timer substitution, target load
+or provider traffic qualifies this comparison. No successor result is inferred
+from source or inert tests alone.

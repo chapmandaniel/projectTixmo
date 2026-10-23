@@ -78,7 +78,7 @@ function percentile(values, fraction = 0.95) {
   const sorted = [...values].sort((a, b) => a - b);
   return sorted[Math.max(0, Math.ceil(sorted.length * fraction) - 1)];
 }
-function bucket(rows, index) {
+function bucket(rows, index, samples = []) {
   const selected = rows.filter(
     (row) => Math.floor(row.started / 300000) === index,
   );
@@ -99,7 +99,21 @@ function bucket(rows, index) {
       unexpected: all.length - good.length,
     };
   }
-  return { index, endpoints };
+  const selectedSamples = samples.filter(
+    (sample) => Math.floor(sample.at / 300000) === index,
+  );
+  return {
+    index,
+    endpoints,
+    resources: {
+      samples: selectedSamples.length,
+      maxRssBytes: Math.max(0, ...selectedSamples.map((sample) => sample.rss)),
+      maxHeapBytes: Math.max(
+        0,
+        ...selectedSamples.map((sample) => sample.heap),
+      ),
+    },
+  };
 }
 function assertBuckets(buckets) {
   if (buckets.length !== 6) throw Error("Soak buckets missing");
@@ -123,6 +137,7 @@ function assertBuckets(buckets) {
 function validate(value, env) {
   const fixed = {
     scope: "task610-http-soak",
+    harnessVersion: 2,
     sourceSha: env.TIXMO_SOAK_SOURCE_SHA,
     runId: env.TIXMO_SOAK_RUN_ID,
     actorModel: "authenticated-http-actors-not-browsers",
@@ -218,13 +233,24 @@ function validate(value, env) {
     const b = value.buckets[i];
     if (
       !b ||
-      Object.keys(b).sort().join() !== "endpoints,index" ||
+      Object.keys(b).sort().join() !== "endpoints,index,resources" ||
       b.index !== i ||
       Object.keys(b.endpoints || {})
         .sort()
         .join() !== [...kinds].sort().join()
     )
       throw Error("Soak bucket fields rejected");
+    if (
+      !b.resources ||
+      Object.keys(b.resources).sort().join() !==
+        "maxHeapBytes,maxRssBytes,samples"
+    )
+      throw Error("Soak bucket resources rejected");
+    for (const n of Object.values(b.resources))
+      if (typeof n !== "number" || !Number.isFinite(n) || n < 0 || n > 1e13)
+        throw Error("Soak bucket resource bounds rejected");
+    if (!Number.isSafeInteger(b.resources.samples))
+      throw Error("Soak resource sample count rejected");
     for (const e of Object.values(b.endpoints)) {
       if (
         !e ||
@@ -252,6 +278,18 @@ function validate(value, env) {
   }
   if (value.passed) {
     const m = value.metrics;
+    if (
+      value.buckets.some(
+        (b) =>
+          b.resources.samples === 0 ||
+          b.resources.maxRssBytes > m.maxRssBytes ||
+          b.resources.maxHeapBytes > m.maxHeapBytes,
+      ) ||
+      value.buckets.reduce((sum, b) => sum + b.resources.samples, 0) >
+        m.sampleCount
+    )
+      throw Error("Soak resource consistency rejected");
+
     assertBuckets(value.buckets);
     const total = (kind, field = "requests") =>
       value.buckets.reduce((sum, b) => sum + b.endpoints[kind][field], 0);

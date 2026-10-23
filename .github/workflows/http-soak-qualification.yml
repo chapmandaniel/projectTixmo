@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/http-soak-qualification.yml'
       - 'scripts/http-soak*'
+      - 'scripts/soak-lifetime*'
       - 'tixmoapi2/**'
 permissions:
   contents: read
@@ -50,7 +51,7 @@ jobs:
       - name: Build current API and generated schema client
         run: npm --prefix tixmoapi2 run build
       - name: Qualify inert soak guards, cadence and aggregate reporting
-        run: node --test scripts/http-soak.test.cjs
+        run: node --test scripts/http-soak.test.cjs scripts/soak-lifetime.test.cjs
       - name: Run one real thirty-minute synthetic HTTP soak
         env:
           NODE_ENV: test
