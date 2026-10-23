@@ -627,3 +627,22 @@ printed. A hosted actual pass and independent review remain mandatory.
 This fixture explicitly uses read 10,000 / write 4,000 / admission 4,000 synthetic
 controls, restored after joined cleanup; `limitsQualified=false`. Shared CI
 limiter history must not be confused with deployed admission or rate-budget proof.
+
+### Emulated two-session scanner integration (#615)
+
+The collected `scanner-browser.test.ts` builds the current frontend and uses two
+independent headless Chrome processes with separate temporary profiles. Both use
+`/scan`, real scanner-key authentication and documented manual full-QR entry.
+Two actual scan requests arrive at a barrier before the real ticket-locking
+service runs. Exactly one UI admission and one rejection must match one successful
+SQL ENTRY log and two attempts. An explicit duplicate is denied; after actual
+scanner revocation the still-connected second UI cannot admit a fresh paid QR.
+Keys are checked absent from browser storage, URLs and raw profile bytes after
+Chrome stops; no credential or fixture identifiers enter aggregate receipts.
+Owned financial/foreign rows, unscanned paid tickets and stock must remain intact.
+Browser groups, CDP handlers, frontend/API servers, middleware/Redis work and owned
+fixtures must join and clean up; uncertainty preserves context and fails.
+
+This is an emulated browser/HTTP/SQL proof. It does not qualify physical iOS or
+Android devices, optical decoding, offline admission, gate operators or whole
+#247. Source acceptance and a fresh hosted run are required independently.
