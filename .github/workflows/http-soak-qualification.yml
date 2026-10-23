@@ -1,0 +1,64 @@
+name: Opt-in disposable HTTP soak qualification
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/http-soak-qualification.yml'
+      - 'scripts/http-soak*'
+      - 'tixmoapi2/**'
+permissions:
+  contents: read
+jobs:
+  http-soak:
+    if: github.head_ref == 'codex/http-soak-qualification'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    services:
+      postgres:
+        image: ghcr.io/railwayapp-templates/postgres-ssl:18
+        env:
+          POSTGRES_USER: tixmo_soak_ci
+          POSTGRES_PASSWORD: synthetic_soak_password
+          POSTGRES_DB: tixmo_disposable_soak
+          PGDATA: /var/lib/postgresql/data/pgdata
+        ports:
+          - '127.0.0.1::5432'
+        options: >-
+          --health-cmd "pg_isready -U tixmo_soak_ci -d tixmo_disposable_soak"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8.2.9
+        ports:
+          - '127.0.0.1::6379'
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: tixmoapi2/package-lock.json
+      - name: Install current API dependencies and generate current client
+        run: npm ci --prefix tixmoapi2
+      - name: Build current API and generated schema client
+        run: npm --prefix tixmoapi2 run build
+      - name: Qualify inert soak guards, cadence and aggregate reporting
+        run: node --test scripts/http-soak.test.cjs
+      - name: Run one real thirty-minute synthetic HTTP soak
+        env:
+          NODE_ENV: test
+          TIXMO_HTTP_SOAK: synthetic-only
+          TIXMO_SOAK_BRANCH: ${{ github.head_ref }}
+          TIXMO_SOAK_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+          TIXMO_SOAK_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+          TIXMO_ALLOW_DESTRUCTIVE_TESTS: '1'
+          DATABASE_URL: postgresql://tixmo_soak_ci:synthetic_soak_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_soak?schema=public
+          REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/9
+        run: node scripts/http-soak.cjs
