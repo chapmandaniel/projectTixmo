@@ -1,6 +1,6 @@
 // Synthetic mounted HTTP pressure only; no browser sessions or production capacity claim.
 // Existing managed-CI setup admits and bootstraps the disposable SQL target first.
-// Reservation p95 must be <=2 seconds. Suite-only limiter/admission maxima4000
+// Successful201 reservation p95 must be <=2 seconds; all-attempt latency is separate. Suite-only limiter/admission maxima4000
 // keep this measurement separate from deployed rate/capacity qualification.
 import { randomUUID } from 'crypto';
 import { createServer, Server } from 'http';
@@ -347,8 +347,9 @@ it('1800 authenticated HTTP attempts scheduled at30 per second for60 seconds con
     if (remainingWindow > 0) await new Promise((resolve) => setTimeout(resolve, remainingWindow));
     await Promise.all(clients);
     await bounded(drain());
-    const percentile = (values: number[], fraction: number) =>
-      [...values].sort((a, b) => a - b)[Math.max(0, Math.ceil(values.length * fraction) - 1)] ?? 0;
+    const { percentile } = require('../../../scripts/http-pressure-receipt.cjs') as {
+      percentile: (values: number[], fraction: number) => number;
+    };
     const latency = measurements.map((row) => row.settled - row.started);
     const lateness = measurements.map((row) => Math.max(0, row.started - row.target));
     const successes = measurements.filter((row) => row.status === 201);
@@ -392,10 +393,14 @@ it('1800 authenticated HTTP attempts scheduled at30 per second for60 seconds con
           row.status !== 503
       ).length,
       networkErrors: measurements.filter((row) => row.status === 0).length,
-      latencyP50Ms: percentile(latency, 0.5),
-      latencyP95Ms: percentile(latency, 0.95),
-      latencyP99Ms: percentile(latency, 0.99),
-      latencyMaxMs: Math.max(0, ...latency),
+      allAttemptP50Ms: percentile(latency, 0.5),
+      allAttemptP95Ms: percentile(latency, 0.95),
+      reservationP95Ms: percentile(
+        successes.map((row) => row.settled - row.started),
+        0.95
+      ),
+      allAttemptP99Ms: percentile(latency, 0.99),
+      allAttemptMaxMs: Math.max(0, ...latency),
       latenessP95Ms: percentile(lateness, 0.95),
       latenessMaxMs: Math.max(0, ...lateness),
       lateStarts: measurements.filter((row) => row.started - row.target > 100).length,
@@ -429,7 +434,8 @@ it('1800 authenticated HTTP attempts scheduled at30 per second for60 seconds con
     expect(metrics.lastStartMs).toBeLessThan(65000);
     expect(metrics.latenessMaxMs).toBeLessThan(1000);
     expect(metrics.elapsedMs).toBeLessThan(90000);
-    expect(metrics.latencyP95Ms).toBeLessThanOrEqual(2000);
+    expect(metrics.allAttemptP95Ms).toBeLessThanOrEqual(2000);
+    expect(metrics.reservationP95Ms).toBeLessThanOrEqual(2000);
     expect(metrics.http201).toBe(900);
     expect(metrics.soldOut400).toBe(900);
     expect(metrics.networkErrors + metrics.otherStatus + metrics.http429 + metrics.http503).toBe(0);

@@ -67,7 +67,9 @@ Shared test utilities live in `tests/utils/testUtils.ts`. Documentation and usag
 ### Managed CI HTTP pressure
 
 The collected `orders-http-pressure.test.ts` schedules 1,800 authenticated synthetic
-requests at 30 per second for 60 seconds and requires reservation p95 <= 2 seconds.
+requests at 30 per second for 60 seconds. Successful HTTP 201 reservations must
+have p95 <= 2 seconds; all-attempt latency is reported separately so fast sold-out
+responses cannot hide the successful-reservation tail.
 Use the existing guarded managed-CI disposable PostgreSQL/Redis setup, never a
 shared application target. Its read/write/admission maxima are explicitly 4,000
 for this suite; aggregate receipts bind the source SHA and workflow run and report

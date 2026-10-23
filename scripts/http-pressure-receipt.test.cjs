@@ -26,7 +26,7 @@ for (const [name, mutate] of [
   [
     'raw-string',
     (value) => {
-      value.latencyP95Ms = 'private-canary';
+      value.allAttemptP95Ms = 'private-canary';
     },
   ],
   [
@@ -38,7 +38,7 @@ for (const [name, mutate] of [
   [
     'nonfinite',
     (value) => {
-      value.latencyP95Ms = Infinity;
+      value.allAttemptP95Ms = Infinity;
     },
   ],
   [
@@ -134,18 +134,18 @@ test('fractional counts are rejected while monotonic duration fractions remain v
   value.orders = 0.5;
   assert.throws(() => validate(value, env));
   value.orders = 0;
-  value.latencyP95Ms = 0.5;
-  assert.equal(validate(value, env).latencyP95Ms, 0.5);
+  value.allAttemptP95Ms = 0.5;
+  assert.equal(validate(value, env).allAttemptP95Ms, 0.5);
 });
 
 test('p95 success claim includes the2second boundary but rejects any greater latency', () => {
   const value = valid();
-  value.latencyP95Ms = 2000;
-  assert.equal(validate(value, env).latencyP95Ms, 2000);
-  value.latencyP95Ms = 2000.01;
+  value.allAttemptP95Ms = 2000;
+  assert.equal(validate(value, env).allAttemptP95Ms, 2000);
+  value.allAttemptP95Ms = 2000.01;
   assert.throws(() => validate(value, env));
   value.testAssertionsPassed = false;
-  assert.equal(validate(value, env).latencyP95Ms, 2000.01);
+  assert.equal(validate(value, env).allAttemptP95Ms, 2000.01);
 });
 test('synthetic maxima and unqualified deployed limits are fixed, never inferred from success', () => {
   const value = valid();
@@ -158,6 +158,44 @@ test('synthetic maxima and unqualified deployed limits are fixed, never inferred
     path.join(__dirname, '../tixmoapi2/tests/integration/orders-http-pressure.test.ts'),
     'utf8'
   );
-  assert.match(source, /expect\(metrics.latencyP95Ms\).toBeLessThanOrEqual\(2000\)/);
+  assert.match(source, /expect\(metrics.allAttemptP95Ms\).toBeLessThanOrEqual\(2000\)/);
   assert.match(source, /jest.replaceProperty\(config, name, 4000\)/);
+});
+
+test('fast sold-out outcomes cannot mask the successful reservation tail', () => {
+  const { percentile } = require('./http-pressure-receipt.cjs');
+  const outcomes = [
+    ...Array.from({ length: 820 }, () => ({ status: 201, latency: 10 })),
+    ...Array.from({ length: 80 }, () => ({ status: 201, latency: 3000 })),
+    ...Array.from({ length: 900 }, () => ({ status: 400, latency: 10 })),
+  ];
+  const value = valid();
+  value.allAttemptP95Ms = percentile(
+    outcomes.map((row) => row.latency),
+    0.95
+  );
+  value.reservationP95Ms = percentile(
+    outcomes.filter((row) => row.status === 201).map((row) => row.latency),
+    0.95
+  );
+  assert.equal(value.allAttemptP95Ms, 10);
+  assert.equal(value.reservationP95Ms, 3000);
+  assert.ok(value.allAttemptP95Ms <= 2000);
+  assert.throws(() => validate(value, env));
+  value.testAssertionsPassed = false;
+  assert.equal(validate(value, env).reservationP95Ms, 3000);
+});
+test('successful reservation p95 boundary is independently enforced in schema and collectedtest', () => {
+  const value = valid();
+  value.allAttemptP95Ms = 10;
+  value.reservationP95Ms = 2000;
+  assert.doesNotThrow(() => validate(value, env));
+  value.reservationP95Ms = 2000.01;
+  assert.throws(() => validate(value, env));
+  const source = fs.readFileSync(
+    path.join(__dirname, '../tixmoapi2/tests/integration/orders-http-pressure.test.ts'),
+    'utf8'
+  );
+  assert.match(source, /expect\(metrics.reservationP95Ms\).toBeLessThanOrEqual\(2000\)/);
+  assert.match(source, /reservationP95Ms: percentile\(\s*successes.map/);
 });
