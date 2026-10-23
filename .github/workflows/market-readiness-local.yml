@@ -140,7 +140,7 @@ jobs:
       - name: Install isolated API tools
         run: npm ci --prefix tixmoapi2
       - name: Check synthetic restore guards
-        run: node --test scripts/image-restore.test.cjs
+        run: node --test scripts/image-restore.test.cjs scripts/application-rollback.test.cjs
       - name: Qualify configured images with synthetic new-database restore
         env:
           TIXMO_IMAGE_RESTORE: synthetic-only
@@ -187,6 +187,23 @@ jobs:
           docker rm "$owned_container" >/dev/null
           ! docker inspect "$owned_container" >/dev/null 2>&1
           owned_container=''
+      - name: Checkout exact qualified rollback API source
+        uses: actions/checkout@v4
+        with:
+          ref: f7fbb1a4c43af495639740c2d8e2f6d77db19911
+          path: .rollback-old
+          persist-credentials: false
+      - name: Verify identical application and migration contracts before rollback build
+        run: node -e "const p=require('./scripts/verify-application-rollback.cjs');p.parity('tixmoapi2','.rollback-old/tixmoapi2')"
+      - name: Build exact previously qualified API image
+        run: docker build --tag tixmo-task606-old:ci .rollback-old/tixmoapi2
+      - name: Qualify new-old-new mounted applications on retained migrated database
+        env:
+          GITHUB_ACTIONS: 'true'
+          TIXMO_APPLICATION_ROLLBACK: synthetic-only
+          DATABASE_URL: postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_restore_source?schema=public
+          REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/6
+        run: node scripts/verify-application-rollback.cjs
       - name: Remove only owned compatibility containers and anonymous volumes
         if: always()
         env:
