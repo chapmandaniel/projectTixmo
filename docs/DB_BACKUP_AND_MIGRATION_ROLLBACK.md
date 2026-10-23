@@ -248,3 +248,39 @@ retries and bounded operations/cleanup. Success reports only the numeric Postgre
 version and sanitized Redis version; failures prevent startup. Clear the flag and
 verify healthy normal recovery after collecting the actual receipt. This observation
 does not prove container digest, backup/restore success or the whole database release gate.
+
+A separate bounded logical-roundtrip observer is selected by exact
+`TIXMO_BACKUP_REHEARSAL=true` in the expected test API project/environment/service.
+Production also requires `TIXMO_BACKUP_EXPECTED_DATABASE_HOST` and
+`TIXMO_BACKUP_EXPECTED_DATABASE_NAME`, supplied as references to the existing
+Postgres service's `PGHOST` and `PGDATABASE` (for example
+`${{Postgres.PGHOST}}` and `${{Postgres.PGDATABASE}}`). Both must match the runtime
+URL exactly before any client/tool loads; no values are printed. It uses only
+that runtime's explicit `DATABASE_URL`, native PostgreSQL 18 clients
+packaged at image build, and one held REPEATABLE READ READ ONLY source snapshot.
+All public tables receive sorted full-row SHA-256 fingerprints and counts, and all
+33 finished migration checksums must match the packaged migrations. The exported
+snapshot is passed to the full native custom-format `pg_dump` while its transaction
+is still held. Public sequences are unsupported and cause preflight failure; no
+sequence-value snapshot proof is claimed. Limits include 256 MiB source/archive,
+128 public tables, 100,000 rows per public table, 250,000 total public rows, SQL/lock
+and child-process deadlines, and a 240-second executable ceiling.
+
+Restore uses a fresh UUID-named database created from template0 on the same service,
+only when the existing role already has CREATEDB capability. No source writes,
+source migration, role grants, connection-target switch, existing database drop or
+`--clean` is allowed. Full-archive restoration must succeed, then public-table and
+migration-ledger fingerprints must match the exported snapshot rather than later
+live data. Role/ACL restoration, other-schema semantic validation, provider backup
+retention, PITR and disaster RTO/RPO remain separate qualifications.
+
+The sole archive is an owned runtime temporary file with mode 0600, never a repository
+artifact. Cleanup drops only an acknowledged newly created database, verifies its
+absence, removes the archive and its owned directory, and reports only aggregate
+receipts. Ambiguous CREATE, failed cleanup or an unjoined operation never proves
+cleanup; preserve keys/runtime context and obtain operator disposition. No automatic
+retry or escalation occurs. The helper fails without blocking normal API startup;
+actual receipts, flag removal and healthy recovery are mandatory. Hosted CI first
+builds this exact production image and runs the packaged helper against its existing
+synthetic loopback PostgreSQL service. This is logical-roundtrip evidence, not
+completion of the whole database release or backup-retention gate.
