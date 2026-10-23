@@ -1,29 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, ZodIssue, SafeParseReturnType } from 'zod';
+import { ZodObject, ZodIssue } from 'zod';
 import { ApiError } from '../utils/ApiError';
 
 type ParseInput = { body: unknown; query: unknown; params: unknown };
 type Validated = { body?: Request['body']; query?: Request['query']; params?: Request['params'] };
 
-export const validate = (schema: AnyZodObject) => {
+export const validate = (schema: ZodObject) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const parseInput: ParseInput = { body: req.body, query: req.query, params: req.params };
 
-      const result = (await schema.safeParseAsync(parseInput)) as SafeParseReturnType<
-        ParseInput,
-        Validated
-      >;
+      const result = await schema.safeParseAsync(parseInput);
 
       if (!result.success) {
-        const errors = result.error.errors.map((e: ZodIssue) => ({
+        const errors = result.error.issues.map((e: ZodIssue) => ({
           path: e.path.join('.'),
           message: e.message,
         })) as { path: string; message: string }[];
         return next(ApiError.badRequest('Validation failed', errors));
       }
 
-      const validatedObj = result.data;
+      const validatedObj = result.data as Validated;
       if (validatedObj.body !== undefined) {
         // Zod validated this shape; assert for the runtime-assigned value.
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

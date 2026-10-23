@@ -7,8 +7,8 @@ export const registerScannerSchema = z.object({
   body: z.object({
     name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
     deviceId: z.string().optional(),
-    organizationId: z.string().uuid('Invalid organization ID'),
-    eventId: z.string().uuid('Invalid event ID').optional(),
+    organizationId: z.string().guid('Invalid organization ID'),
+    eventId: z.string().guid('Invalid event ID').optional(),
   }),
 });
 
@@ -26,8 +26,8 @@ export const authenticateScannerSchema = z.object({
  */
 export const listScannersSchema = z.object({
   query: z.object({
-    organizationId: z.string().uuid().optional(),
-    eventId: z.string().uuid().optional(),
+    organizationId: z.string().guid('Invalid uuid').optional(),
+    eventId: z.string().guid('Invalid uuid').optional(),
     status: z.enum(['ACTIVE', 'DISABLED', 'REVOKED']).optional(),
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().max(100).default(20),
@@ -41,7 +41,7 @@ export const updateScannerSchema = z.object({
   body: z.object({
     name: z.string().min(1).max(100).optional(),
     status: z.enum(['ACTIVE', 'DISABLED', 'REVOKED']).optional(),
-    eventId: z.string().uuid().nullable().optional(),
+    eventId: z.string().guid('Invalid uuid').nullable().optional(),
   }),
 });
 
@@ -52,7 +52,7 @@ export const scanTicketSchema = z.object({
   body: z.object({
     qrData: z.string().min(1, 'QR data is required'),
     scanType: z.enum(['ENTRY', 'EXIT', 'VALIDATION']).default('ENTRY'),
-    metadata: z.record(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
 });
 
@@ -61,9 +61,9 @@ export const scanTicketSchema = z.object({
  */
 export const getScanLogsSchema = z.object({
   query: z.object({
-    scannerId: z.string().uuid().optional(),
-    ticketId: z.string().uuid().optional(),
-    eventId: z.string().uuid().optional(),
+    scannerId: z.string().guid('Invalid uuid').optional(),
+    ticketId: z.string().guid('Invalid uuid').optional(),
+    eventId: z.string().guid('Invalid uuid').optional(),
     success: z.coerce.boolean().optional(),
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().max(100).default(20),
@@ -75,7 +75,7 @@ export const getScanLogsSchema = z.object({
  */
 export const syncTicketsSchema = z.object({
   query: z.object({
-    eventId: z.string().uuid().optional(),
+    eventId: z.string().guid('Invalid uuid').optional(),
     since: z.string().datetime().optional(), // For incremental sync
   }),
 });
@@ -91,7 +91,7 @@ export const offlineScanSchema = z.object({
           qrData: z.string().min(1),
           scannedAt: z.string().datetime(),
           scanType: z.enum(['ENTRY', 'EXIT', 'VALIDATION']).default('ENTRY'),
-          metadata: z.record(z.unknown()).optional(),
+          metadata: z.record(z.string(), z.unknown()).optional(),
         })
       )
       .min(1),

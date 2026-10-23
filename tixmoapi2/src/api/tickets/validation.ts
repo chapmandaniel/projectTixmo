@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 export const listTicketsSchema = z.object({
   query: z.object({
-    page: z.string().transform(Number).default('1'),
-    limit: z.string().transform(Number).default('20'),
-    eventId: z.string().uuid().optional(),
+    page: z.string().transform(Number).prefault('1'),
+    limit: z.string().transform(Number).prefault('20'),
+    eventId: z.string().guid('Invalid uuid').optional(),
     status: z.enum(['VALID', 'USED', 'CANCELLED', 'TRANSFERRED']).optional(),
   }),
 });

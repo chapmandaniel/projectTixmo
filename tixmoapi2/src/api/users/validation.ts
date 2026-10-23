@@ -17,9 +17,9 @@ export const createUserSchema = z.object({
     firstName: z.string().min(1),
     lastName: z.string().min(1),
     role: userRoleSchema,
-    organizationId: z.string().uuid().optional(),
+    organizationId: z.string().guid('Invalid uuid').optional(),
     title: z.string().optional(),
-    permissions: z.record(z.boolean()).optional(),
+    permissions: z.record(z.string(), z.boolean()).optional(),
     password: z.string().min(8).optional(), // Optional, generates random if not provided
   }),
 });
@@ -31,20 +31,20 @@ export const updateUserSchema = z.object({
     phone: z.string().optional(),
     title: z.string().nullable().optional(),
     role: userRoleSchema.optional(),
-    organizationId: z.string().uuid().nullable().optional(),
-    permissions: z.record(z.boolean()).nullable().optional(),
+    organizationId: z.string().guid('Invalid uuid').nullable().optional(),
+    permissions: z.record(z.string(), z.boolean()).nullable().optional(),
   }),
 });
 
 export const listUsersSchema = z.object({
   query: z.object({
-    page: z.string().transform(Number).default('1'),
-    limit: z.string().transform(Number).default('20'),
+    page: z.string().transform(Number).prefault('1'),
+    limit: z.string().transform(Number).prefault('20'),
     role: userRoleSchema.optional(),
-    organizationId: z.string().uuid().optional(),
+    organizationId: z.string().guid('Invalid uuid').optional(),
   }),
 });
 
 export const resendInvitationSchema = z.object({
-  params: z.object({ id: z.string().uuid() }),
+  params: z.object({ id: z.string().guid('Invalid uuid') }),
 });

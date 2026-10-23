@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const createVenueSchema = z.object({
   body: z.object({
     name: z.string().min(1, 'Venue name is required'),
-    organizationId: z.string().uuid('Invalid organization ID'),
+    organizationId: z.string().guid('Invalid organization ID'),
     address: z.object({
       street: z.string().min(1, 'Street is required'),
       city: z.string().min(1, 'City is required'),
@@ -38,9 +38,9 @@ export const updateVenueSchema = z.object({
 
 export const listVenuesSchema = z.object({
   query: z.object({
-    page: z.string().transform(Number).default('1'),
-    limit: z.string().transform(Number).default('20'),
-    organizationId: z.string().uuid().optional(),
+    page: z.string().transform(Number).prefault('1'),
+    limit: z.string().transform(Number).prefault('20'),
+    organizationId: z.string().guid('Invalid uuid').optional(),
     city: z.string().optional(),
   }),
 });

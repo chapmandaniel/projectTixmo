@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 export const getNotificationsSchema = z.object({
   query: z.object({
-    page: z.coerce.number().int().positive().default(1).optional(),
-    limit: z.coerce.number().int().positive().max(100).default(20).optional(),
+    page: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
     unreadOnly: z.enum(['true', 'false']).optional(),
   }),
 });

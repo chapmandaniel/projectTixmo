@@ -56,7 +56,7 @@ const parseSchema = <T>(schema: { parse: (value: unknown) => T }, value: unknown
     if (error instanceof ZodError) {
       throw ApiError.badRequest(
         'Validation failed',
-        error.errors.map((issue) => ({
+        error.issues.map((issue) => ({
           path: issue.path.join('.'),
           message: issue.message,
         }))
