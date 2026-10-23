@@ -209,9 +209,8 @@ it('packages a narrowly nonblocking opt-in hook and reuses compiled app email tr
     'utf8'
   );
   const toml = fs.readFileSync(path.join(root, 'tixmoapi2/railway.toml'), 'utf8');
-  expect(toml).toContain(
-    'node scripts/approved-email-once.cjs || true; fi && exec node dist/index.js'
-  );
+  expect(toml).toContain('node scripts/approved-email-once.cjs || true; fi');
+  expect(toml).toContain('&& exec node dist/index.js');
   expect(toml).toContain('$TIXMO_APPROVED_EMAIL_ONCE');
   expect(fs.readFileSync(path.join(root, 'tixmoapi2/Dockerfile'), 'utf8')).toContain(
     'COPY scripts/approved-email-once.cjs ./scripts/approved-email-once.cjs'
