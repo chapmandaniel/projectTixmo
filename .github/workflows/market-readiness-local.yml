@@ -166,7 +166,7 @@ jobs:
       - name: Install isolated API tools
         run: npm ci --prefix tixmoapi2
       - name: Check synthetic restore guards
-        run: node --test scripts/image-restore.test.cjs scripts/application-rollback.test.cjs scripts/parity-upgrade.test.cjs
+        run: node --test scripts/image-restore.test.cjs scripts/application-rollback.test.cjs scripts/parity-upgrade.test.cjs scripts/auth-ip.test.cjs
       - name: Qualify configured images with synthetic new-database restore
         env:
           TIXMO_IMAGE_RESTORE: synthetic-only
@@ -239,6 +239,17 @@ jobs:
           DATABASE_URL: postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_restore_source?schema=public
           REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/7
         run: node scripts/verify-parity-upgrade.cjs
+      - name: Measure unchanged production auth shared-IP limits on disposable services
+        env:
+          GITHUB_ACTIONS: "true"
+          TIXMO_AUTH_IP: synthetic-only
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+          REDIS_CONTAINER: ${{ job.services.redis.id }}
+          DATABASE_URL: postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_restore_source?schema=public
+          REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/8
+          TIXMO_AUTH_IP_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TIXMO_AUTH_IP_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/verify-auth-ip.cjs
       - name: Remove only owned compatibility containers and anonymous volumes
         if: always()
         env:
