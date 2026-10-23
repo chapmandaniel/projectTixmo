@@ -22,6 +22,7 @@ const numbers = [
   "diagnosticStage",
   "diagnosticDetail",
   "diagnosticReason",
+  "diagnosticEntryType",
   "unexpectedBrowserRequests",
   "browserProcesses",
   "raceArrivals",
@@ -74,6 +75,15 @@ function guard(env) {
   assert.notEqual(fixture.qr, fixture.freshQr);
   return { api, frontendPort, fixture };
 }
+// Only an owned Browser.close command may lose its ack when that socket closes.
+class OwnedBrowserClosed extends Error {}
+async function requestBrowserClose(send) {
+  try {
+    await send("Browser.close");
+  } catch (error) {
+    if (!(error instanceof OwnedBrowserClosed)) throw error;
+  }
+}
 function diagnostic(value) {
   if (
     !value ||
@@ -87,6 +97,7 @@ function diagnostic(value) {
     detail: value.detail ?? 0,
     reason: value.reason ?? 0,
     rejected: value.rejected ?? 0,
+    entryType: value.entryType ?? 0,
   };
   if (
     !Number.isInteger(fixed.detail) ||
@@ -97,7 +108,10 @@ function diagnostic(value) {
     fixed.reason > 7 ||
     !Number.isInteger(fixed.rejected) ||
     fixed.rejected < 0 ||
-    fixed.rejected > 100
+    fixed.rejected > 100 ||
+    !Number.isInteger(fixed.entryType) ||
+    fixed.entryType < 0 ||
+    fixed.entryType > 3
   )
     return null;
   return { stage: value.stage, category: value.category, ...fixed };
@@ -141,7 +155,8 @@ function validate(value, env) {
   assert.ok(
     value.diagnosticStage <= 12 &&
       value.diagnosticDetail <= 5 &&
-      value.diagnosticReason <= 7,
+      value.diagnosticReason <= 7 &&
+      value.diagnosticEntryType <= 3,
   );
   if (value.passed) {
     for (const key of flags) assert.equal(value[key], true);
@@ -149,6 +164,7 @@ function validate(value, env) {
       diagnosticStage: 0,
       diagnosticDetail: 0,
       diagnosticReason: 0,
+      diagnosticEntryType: 0,
       unexpectedBrowserRequests: 0,
       browserProcesses: 2,
       raceArrivals: 2,
@@ -196,6 +212,8 @@ if (require.main === module) {
   }
 }
 module.exports = {
+  OwnedBrowserClosed,
+  requestBrowserClose,
   guard,
   loopback,
   diagnostic,

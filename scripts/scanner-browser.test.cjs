@@ -141,7 +141,14 @@ test("IPC results project only expected booleans and bounded diagnostics", () =>
   assert.equal(browserResult({ ...value, revokedDenied: false }), null);
   assert.deepEqual(
     diagnostic({ stage: 4, category: "assertion", message: "private-canary" }),
-    { stage: 4, category: "assertion", detail: 0, reason: 0, rejected: 0 },
+    {
+      stage: 4,
+      category: "assertion",
+      detail: 0,
+      reason: 0,
+      rejected: 0,
+      entryType: 0,
+    },
   );
   for (const v of [
     { stage: 0, category: "other" },
@@ -221,7 +228,10 @@ test("collected mounted test and worker keep real transport, barrier, isolation 
   );
   assert.match(worker, /keyAbsent\(browsers\[0\].profile\)/);
   assert.match(worker, /keyAbsent\(browsers\[1\].profile\)/);
-  assert.match(worker, /stat.isSymbolicLink\(\)\) throw new FixedFailure\(4\)/);
+  assert.match(
+    worker,
+    /stat.isSymbolicLink\(\)\) throw new FixedFailure\(4, 1\)/,
+  );
   assert.match(worker, /SIGKILL/);
   assert.match(workflow, /node scripts\/scanner-browser-guard.cjs report/);
 });
@@ -297,6 +307,7 @@ test("granular failure fields are fixed numeric only and cannot qualify a failed
     detail: 5,
     reason: 7,
     rejected: 1,
+    entryType: 0,
   });
   assert.doesNotMatch(JSON.stringify(projected), /private-canary|message/);
   for (const patch of [
@@ -304,6 +315,7 @@ test("granular failure fields are fixed numeric only and cannot qualify a failed
     { reason: 8 },
     { rejected: 101 },
     { reason: "private-canary" },
+    { entryType: 4 },
     { rejected: NaN },
   ])
     assert.equal(diagnostic({ stage: 8, category: "other", ...patch }), null);
@@ -339,11 +351,8 @@ test("actual CDP close rejects pending continuation; closing before handler join
     path.join(__dirname, "browser/scanner-sessions.mjs"),
     "utf8",
   );
-  const start = source.indexOf("  const rejectAll = () => {");
-  const end = source.indexOf(
-    '  ws.addEventListener("close", rejectAll);',
-    start,
-  );
+  const start = source.indexOf("  const rejectAll =");
+  const end = source.indexOf('  ws.addEventListener("close"', start);
   assert.ok(start >= 0 && end > start);
   for (const closeFirst of [true, false]) {
     const commands = new Map();
@@ -354,15 +363,15 @@ test("actual CDP close rejects pending continuation; closing before handler join
       resolve = a;
       reject = b;
     });
-    commands.set(1, { resolve, reject });
+    commands.set(1, { resolve, reject, method: "Fetch.continueRequest" });
     const close = vm.runInNewContext(
       source.slice(start, end) + "; rejectAll;",
-      { commands, Error },
+      { commands, Error, record: { closingRequested: false } },
     );
     const handler = pending.catch(() => {
       rejected++;
     });
-    if (closeFirst) close();
+    if (closeFirst) close(true);
     else {
       resolve();
       await handler;
@@ -434,7 +443,10 @@ test("actual profile proof still rejects UTF8/UTF16 keys and symlinks with fixed
     const outside = path.join(base, "outside");
     fs.writeFileSync(outside, "preserve");
     fs.symlinkSync(outside, file);
-    await assert.rejects(proof(profile), (error) => error.reason === 4);
+    await assert.rejects(
+      proof(profile),
+      (error) => error.reason === 4 && error.entryType === 1,
+    );
     assert.equal(fs.readFileSync(outside, "utf8"), "preserve");
     fs.unlinkSync(file);
     fs.writeFileSync(file, "");
@@ -442,5 +454,155 @@ test("actual profile proof still rejects UTF8/UTF16 keys and symlinks with fixed
     await assert.rejects(proof(profile), (error) => error.reason === 5);
   } finally {
     fs.rmSync(base, { recursive: true, force: true });
+  }
+});
+
+test("graceful Browser.close accepts only typed owned socket-close ack loss", async () => {
+  const {
+    OwnedBrowserClosed,
+    requestBrowserClose,
+  } = require("./scanner-browser-guard.cjs");
+  const calls = [];
+  await requestBrowserClose(async (method) => {
+    calls.push(method);
+  });
+  assert.deepEqual(calls, ["Browser.close"]);
+  await requestBrowserClose(async () => {
+    throw new OwnedBrowserClosed();
+  });
+  for (const error of [
+    Error("CDP closed"),
+    Error("CDP rejected"),
+    Error("deadline"),
+    { message: "Browser.close" },
+  ])
+    await assert.rejects(
+      requestBrowserClose(async () => {
+        throw error;
+      }),
+      (value) => value === error,
+    );
+});
+test("actual CDP rejection classifier brands only requested Browser.close on close event", async () => {
+  const { OwnedBrowserClosed } = require("./scanner-browser-guard.cjs"),
+    vm = require("node:vm");
+  const source = fs.readFileSync(
+    path.join(__dirname, "browser/scanner-sessions.mjs"),
+    "utf8",
+  );
+  const start = source.indexOf("  const rejectAll ="),
+    end = source.indexOf('  ws.addEventListener("close"', start);
+  assert.ok(start > 0 && end > start);
+  for (const [method, requested, closed, expected] of [
+    ["Browser.close", true, true, true],
+    ["Browser.close", true, false, false],
+    ["Browser.close", false, true, false],
+    ["Fetch.continueRequest", true, true, false],
+  ]) {
+    const commands = new Map();
+    let reject;
+    const pending = new Promise((_, fail) => {
+      reject = fail;
+    });
+    commands.set(1, { reject, method });
+    const close = vm.runInNewContext(source.slice(start, end) + ";rejectAll;", {
+      commands,
+      record: { closingRequested: requested },
+      OwnedBrowserClosed,
+      Error,
+    });
+    close(closed);
+    await assert.rejects(
+      pending,
+      (error) => error instanceof OwnedBrowserClosed === expected,
+    );
+  }
+  const stop = source.indexOf("async function stopped(record)");
+  assert.ok(
+    source.indexOf("await requestBrowserClose(record.send)", stop) <
+      source.indexOf("process.kill(-record.child.pid, signal)", stop),
+  );
+  assert.ok(
+    source.indexOf("await bounded(record.closed, 5000)", stop) <
+      source.indexOf("process.kill(-record.child.pid, signal)", stop),
+  );
+  assert.match(source, /if \(gracefulFailure\) throw gracefulFailure/);
+});
+
+test("actual stop protocol requests graceful Chrome exit before socket close or forced fallback", async () => {
+  const vm = require("node:vm");
+  const {
+    OwnedBrowserClosed,
+    requestBrowserClose,
+  } = require("./scanner-browser-guard.cjs");
+  const source = fs.readFileSync(
+    path.join(__dirname, "browser/scanner-sessions.mjs"),
+    "utf8",
+  );
+  const body = source.slice(
+    source.indexOf("async function stopped(record)"),
+    source.indexOf("async function keyAbsent(profile)"),
+  );
+  for (const outcome of ["ack", "owned-close", "rejected"]) {
+    const trace = [];
+    let alive = true,
+      resolve;
+    const record = {
+      child: { pid: 12345, exitCode: null, signalCode: null },
+      ws: {
+        readyState: 1,
+        close() {
+          trace.push("socket-close");
+        },
+      },
+      closed: new Promise((done) => {
+        resolve = done;
+      }),
+      debugOrigin: "http://127.0.0.1:49155",
+    };
+    const failure = Error("CDP rejected");
+    record.send = async (method) => {
+      assert.equal(method, "Browser.close");
+      trace.push(method);
+      if (outcome === "rejected") throw failure;
+      alive = false;
+      record.child.exitCode = 0;
+      resolve();
+      if (outcome === "owned-close") throw new OwnedBrowserClosed();
+    };
+    const stop = vm.runInNewContext(body + "; stopped;", {
+      drainHandlers: async () => {
+        trace.push("drain");
+      },
+      bounded: async (promise) => promise,
+      requestBrowserClose,
+      WebSocket: { OPEN: 1 },
+      process: {
+        kill(_pid, signal) {
+          assert.equal(_pid, -record.child.pid);
+          if (signal === 0) {
+            if (!alive) throw Object.assign(Error("absent"), { code: "ESRCH" });
+            return;
+          }
+          trace.push("forced");
+          alive = false;
+          record.child.signalCode = signal;
+          resolve();
+        },
+      },
+      assert,
+      FixedFailure: class extends Error {},
+      fetch: async () => {
+        throw Error("closed");
+      },
+      AbortSignal,
+    });
+    if (outcome === "rejected")
+      await assert.rejects(stop(record), (error) => error === failure);
+    else await stop(record);
+    assert.equal(alive, false);
+    assert.ok(trace.indexOf("drain") < trace.indexOf("Browser.close"));
+    assert.ok(trace.indexOf("Browser.close") < trace.indexOf("socket-close"));
+    assert.equal(trace.includes("forced"), outcome === "rejected");
   }
 });

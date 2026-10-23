@@ -55,6 +55,7 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
       detail: number;
       reason: number;
       rejected: number;
+      entryType: number;
     } | null;
     browserResult: (value: unknown) => Record<string, unknown> | null;
   };
@@ -428,6 +429,7 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
           receipt.diagnosticStage = failureStage;
           receipt.diagnosticDetail = diagnostic.detail;
           receipt.diagnosticReason = diagnostic.reason;
+          receipt.diagnosticEntryType = diagnostic.entryType;
           receipt.unexpectedBrowserRequests = diagnostic.rejected;
         }
       }
@@ -502,6 +504,7 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
       diagnosticStage: failureStage,
       diagnosticDetail: 0,
       diagnosticReason: 0,
+      diagnosticEntryType: 0,
       unexpectedBrowserRequests: 0,
       browserProcesses: 2,
       raceArrivals,
