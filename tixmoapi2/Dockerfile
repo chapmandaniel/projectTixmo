@@ -30,6 +30,7 @@ COPY prisma/bootstrap-owner.js prisma/rotate-account-credentials.js prisma/recon
 COPY scripts/stripe-read-probe.cjs ./scripts/stripe-read-probe.cjs
 COPY scripts/runtime-version-probe.cjs ./scripts/runtime-version-probe.cjs
 COPY scripts/approved-email-once.cjs ./scripts/approved-email-once.cjs
+COPY scripts/storage-canary.cjs ./scripts/storage-canary.cjs
 COPY prisma/check-asset-share-links.js ./prisma/check-asset-share-links.js
 RUN mkdir -p logs tmp && chown node:node logs tmp
 USER node
