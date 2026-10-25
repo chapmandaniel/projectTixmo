@@ -216,10 +216,11 @@ it('guards the production COPY and explicit opt-in hook while keeping default st
   const root = path.resolve(__dirname, '../../..');
   const docker = fs.readFileSync(path.join(root, 'tixmoapi2/Dockerfile'), 'utf8');
   const railway = fs.readFileSync(path.join(root, 'tixmoapi2/railway.toml'), 'utf8');
-  expect(docker).toContain('COPY scripts/stripe-read-probe.cjs ./scripts/stripe-read-probe.cjs');
-  expect(railway).toContain(
-    'if [ \\"$TIXMO_STRIPE_READ_PROBE\\" = true ]; then node scripts/stripe-read-probe.cjs; fi && exec node dist/index.js'
-  );
+  expect(docker).toContain('COPY scripts/stripe-read-probe.cjs scripts/start-api.sh ./scripts/');
+  expect(railway).toContain('startCommand = "sh scripts/start-api.sh"');
+  const startup = fs.readFileSync(path.join(root, 'tixmoapi2/scripts/start-api.sh'), 'utf8');
+  expect(startup).toContain('if [ "${TIXMO_STRIPE_READ_PROBE:-}" = true ]; then');
+  expect(startup).toContain('node scripts/stripe-read-probe.cjs');
   const source = fs.readFileSync(
     path.join(root, 'tixmoapi2/scripts/stripe-read-probe.cjs'),
     'utf8'

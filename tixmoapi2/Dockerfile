@@ -27,8 +27,8 @@ COPY --from=build /app/dist ./dist
 COPY prisma/schema.prisma ./prisma/schema.prisma
 COPY prisma/migrations ./prisma/migrations
 COPY prisma/bootstrap-owner.js prisma/rotate-account-credentials.js prisma/reconcile-approval-reminders.js prisma/reconcile-ticket-inventory.js prisma/rekey-asset-shares.js ./prisma/
-COPY scripts/stripe-read-probe.cjs ./scripts/stripe-read-probe.cjs
+COPY scripts/stripe-read-probe.cjs scripts/start-api.sh ./scripts/
 RUN mkdir -p logs tmp && chown node:node logs tmp
 USER node
 EXPOSE 3000
-CMD ["sh", "-c", "npm run migrate && exec node dist/index.js"]
+CMD ["sh", "scripts/start-api.sh"]
