@@ -115,3 +115,44 @@ test('succeeded payment is rejected before contacting Stripe even if order is pe
   await expect(prepare()).rejects.toMatchObject({ statusCode: 400 });
   expect(stripe.paymentIntents.create).not.toHaveBeenCalled();
 });
+
+// QA84 reviewer-only additions; not part of reviewed commit.
+test.each([-1, 0, 1])('QA84 exact 23h cutoff offset %s milliseconds', async offset => {
+  const now = Date.now(); const clock = jest.spyOn(Date, 'now').mockReturnValue(now);
+  order.createdAt = new Date(now - 23 * 60 * 60 * 1000 - offset);
+  try {
+    if (offset < 0) await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
+    else { await expect(prepare()).rejects.toMatchObject({ statusCode: 409 }); expect(stripe.paymentIntents.create).not.toHaveBeenCalled(); expect(db.updateMany).not.toHaveBeenCalled(); }
+  } finally { clock.mockRestore(); }
+});
+test('QA84 linked intent remains retrievable beyond cutoff without new create', async () => {
+  await prepare(); order.createdAt = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
+  expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+});
+test.each(['requires_confirmation', 'requires_action'])('QA84 valid reusable %s status', async status => {
+  await prepare(); [...intents.values()][0].status = status;
+  await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
+  expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+});
+test('QA84 missing client secret never writes order', async () => {
+  stripe.paymentIntents.create.mockResolvedValue({ id: 'pi-one', amount: 1200, currency: 'cad', metadata: { orderId: order.id, userId: order.userId }, status: 'requires_payment_method', client_secret: null });
+  await expect(prepare()).rejects.toMatchObject({ statusCode: 500 }); expect(db.updateMany).not.toHaveBeenCalled();
+});
+test('QA84 simultaneous Stripe key-in-use failure is retryable without DB write', async () => {
+  stripe.paymentIntents.create.mockRejectedValueOnce(new Error('idempotency_key_in_use'));
+  await expect(prepare()).rejects.toThrow('idempotency_key_in_use'); expect(db.updateMany).not.toHaveBeenCalled();
+  await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' }); expect(intents.size).toBe(1);
+});
+test('QA84 currency change after lost response cannot create second intent', async () => {
+  const config = require('../../src/config/environment').config;
+  loseResponse = true; await expect(prepare()).rejects.toThrow('lost response');
+  config.paymentCurrency = 'USD';
+  try { await expect(prepare()).rejects.toThrow('idempotency parameter conflict'); expect(intents.size).toBe(1); }
+  finally { config.paymentCurrency = 'CAD'; }
+});
+test('QA84 buyer mutation during Stripe call cannot be overwritten', async () => {
+  const create = stripe.paymentIntents.create.getMockImplementation();
+  stripe.paymentIntents.create.mockImplementation(async (...args: any[]) => { const intent = await create(...args); order.userId = 'other-buyer'; return intent; });
+  await expect(prepare()).rejects.toMatchObject({ statusCode: 409 }); expect(order.paymentIntentId).toBeNull();
+});
