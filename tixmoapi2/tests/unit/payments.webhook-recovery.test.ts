@@ -100,4 +100,30 @@ describe('public webhook fulfillment recovery (fully mocked)', () => {
     expect(stored.status).toBe('PROCESSED');
     expect(orderService.confirmOrder).not.toHaveBeenCalled();
   });
+
+  // QA87 reviewer-only adverse cases, not part of the reviewed commit.
+  it('QA87 preserves the final exhaustion error and attempts FAILED, never PROCESSED', async () => {
+    const first = new Error('transient first'); const last = new Error('final inventory failure');
+    (orderService.confirmOrder as jest.Mock).mockRejectedValueOnce(first).mockRejectedValue(last);
+    (notificationService.sendAdminAlert as jest.Mock).mockRejectedValue(new Error('alert failure'));
+    const rejected = deliver().catch((error: unknown) => error);
+    await jest.runAllTimersAsync(); expect(await rejected).toBe(last);
+    const updates = (prisma.paymentWebhookEvent.update as jest.Mock).mock.calls;
+    expect(updates).toHaveLength(1);
+    expect(updates[0][0]).toMatchObject({ where: { id: event.id }, data: { status: 'FAILED', errorMessage: last.message } });
+    expect(orderService.confirmOrder).toHaveBeenCalledTimes(6);
+  });
+  it('QA87 transient confirmation failure recovers within retry without false alert', async () => {
+    (orderService.confirmOrder as jest.Mock).mockRejectedValueOnce(new Error('temporary'));
+    const pending = deliver(); await jest.runAllTimersAsync(); await pending;
+    expect(orderService.confirmOrder).toHaveBeenCalledTimes(2); expect(stored.status).toBe('PROCESSED');
+    expect(orderService.sendOrderConfirmationEmail).toHaveBeenCalledTimes(1);
+    expect(notificationService.sendAdminAlert).not.toHaveBeenCalled();
+  });
+  it('QA87 public mismatched intent remains FAILED with no inventory or email effects', async () => {
+    order.paymentIntentId = 'pi-other';
+    await expect(deliver()).rejects.toMatchObject({ statusCode: 400 });
+    expect(stored.status).toBe('FAILED');
+    expect(orderService.confirmOrder).not.toHaveBeenCalled(); expect(orderService.sendOrderConfirmationEmail).not.toHaveBeenCalled();
+  });
 });
