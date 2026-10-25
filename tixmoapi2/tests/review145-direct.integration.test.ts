@@ -1,0 +1,27 @@
+jest.mock('../src/utils/notificationService', () => ({ notificationService: {} }));
+import prisma from '../src/config/prisma';
+import { OrderService } from '../src/api/orders/service';
+const svc = new OrderService();
+afterAll(async()=>{await prisma.$disconnect();});
+test('caller-owned realDB transaction commits, rolls back on caller throw and inventory failure; preserves foreign buyer and error contracts',async()=>{
+ const key=`qa145-${Date.now()}`;
+ const org=await prisma.organization.create({data:{name:key,slug:key,type:'PROMOTER'}});
+ const buyer=await prisma.user.create({data:{email:`${key}@example.test`,passwordHash:'fixture',firstName:'A',lastName:'B'}});
+ const foreign=await prisma.user.create({data:{email:`${key}-foreign@example.test`,passwordHash:'fixture',firstName:'C',lastName:'D'}});
+ const event=await prisma.event.create({data:{organizationId:org.id,name:key,slug:key,tags:[]}});
+ const type=await prisma.ticketType.create({data:{eventId:event.id,name:key,price:10,quantityTotal:10,quantityAvailable:6,quantityHeld:4}});
+ const make=(suffix:string,userId:string)=>prisma.order.create({data:{orderNumber:`${key}-${suffix}`,userId,eventId:event.id,totalAmount:20,tickets:{create:[0,1].map(i=>({eventId:event.id,userId,ticketTypeId:type.id,barcode:`${key}-${suffix}-${i}`,pricePaid:10}))}},include:{tickets:{orderBy:{id:'asc'}}}});
+ const a=await make('a',buyer.id); const b=await make('b',foreign.id);
+ const snap=async()=>({a:await prisma.order.findUniqueOrThrow({where:{id:a.id},include:{tickets:{orderBy:{id:'asc'}}}}),b:await prisma.order.findUniqueOrThrow({where:{id:b.id},include:{tickets:{orderBy:{id:'asc'}}}}),inventory:await prisma.ticketType.findUniqueOrThrow({where:{id:type.id}})});
+ const before=await snap();
+ await expect(prisma.$transaction(tx=>svc.confirmOrderInTransaction(tx,'missing'))).rejects.toMatchObject({statusCode:404});
+ await expect(prisma.$transaction(tx=>svc.confirmOrderInTransaction(tx,b.id,{userId:buyer.id}))).rejects.toMatchObject({statusCode:404});
+ expect(await snap()).toEqual(before);
+ await expect(prisma.$transaction(async tx=>{const result:any=await svc.confirmOrderInTransaction(tx,a.id,{userId:buyer.id});expect(result.status).toBe('PAID');expect(result.tickets[0].ticketType.name).toBe(key);expect(result.user.email).toBe(buyer.email);expect(result.event.name).toBe(key);throw new Error('caller-abort145');})).rejects.toThrow('caller-abort145');
+ expect(await snap()).toEqual(before);
+ await expect(prisma.$transaction(async tx=>{await tx.ticketType.update({where:{id:type.id},data:{quantityHeld:0}});return svc.confirmOrderInTransaction(tx,a.id);})).rejects.toMatchObject({statusCode:500});
+ expect(await snap()).toEqual(before);
+ const response:any=await prisma.$transaction(async tx=>{const result=await svc.confirmOrderInTransaction(tx,a.id,{userId:buyer.id});expect((await tx.order.findUniqueOrThrow({where:{id:a.id}})).status).toBe('PAID');return result;});
+ const after=await snap();expect(response.status).toBe('PAID');expect(after.a.paymentStatus).toBe('SUCCEEDED');expect(after.a.tickets).toEqual(a.tickets);expect(after.b).toEqual(b);expect([after.inventory.quantityAvailable,after.inventory.quantityHeld,after.inventory.quantitySold]).toEqual([6,2,2]);
+ await expect(prisma.$transaction(tx=>svc.confirmOrderInTransaction(tx,a.id))).rejects.toMatchObject({statusCode:400});expect(await snap()).toEqual(after);
+},20000);
