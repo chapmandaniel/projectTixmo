@@ -245,9 +245,9 @@ describe('dispute webhooks and staff void', () => {
     const denied = await scan(saved.tickets[0]);
     expect(denied.status).toBe(200);
     expect(denied.body.data).toMatchObject({
-      success: false,
-      reason: DISPUTE_SCAN_REASON,
-      reasonCode: VOID_DISPUTED_CODE,
+      valid: false,
+      reason: VOID_DISPUTED_CODE,
+      message: DISPUTE_SCAN_REASON,
     });
     expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(
@@ -288,9 +288,9 @@ describe('dispute webhooks and staff void', () => {
     expect(closedAudit.after).toMatchObject({ inventoryReleased: false });
     const denied = await scan(saved.tickets[0]);
     expect(denied.body.data).toMatchObject({
-      success: false,
-      reason: DISPUTE_SCAN_REASON,
-      reasonCode: VOID_DISPUTED_CODE,
+      valid: false,
+      reason: VOID_DISPUTED_CODE,
+      message: DISPUTE_SCAN_REASON,
     });
     expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(
@@ -316,9 +316,9 @@ describe('dispute webhooks and staff void', () => {
     expect(saved.tickets.every((ticket) => ticket.status === 'VALID')).toBe(true);
     const early = await scan(saved.tickets[0]);
     expect(early.body.data).toMatchObject({
-      success: false,
-      reason: DISPUTE_SCAN_REASON,
-      reasonCode: VOID_DISPUTED_CODE,
+      valid: false,
+      reason: VOID_DISPUTED_CODE,
+      message: DISPUTE_SCAN_REASON,
     });
     expect(early.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(
@@ -410,9 +410,9 @@ describe('dispute webhooks and staff void', () => {
 
     for (const body of [live.body.data, validation.body.data]) {
       expect(body).toMatchObject({
-        success: false,
-        reason: DISPUTE_SCAN_REASON,
-        reasonCode: VOID_DISPUTED_CODE,
+        valid: false,
+        reason: VOID_DISPUTED_CODE,
+        message: DISPUTE_SCAN_REASON,
       });
       expect(body.reason).not.toBe('Ticket credential must be reissued');
     }
@@ -478,9 +478,12 @@ describe('dispute webhooks and staff void', () => {
     expect(audit.createdAt.getTime()).toBeGreaterThanOrEqual(before - 1000);
     expect(audit.createdAt.getTime()).toBeLessThanOrEqual(Date.now() + 1000);
     const denied = await scan(order.tickets[0]);
-    expect(denied.body.data).toMatchObject({ success: false, reason: 'Ticket has been cancelled' });
+    expect(denied.body.data).toMatchObject({
+      valid: false,
+      reason: 'CANCELLED',
+      message: 'Ticket has been cancelled',
+    });
     expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
-    expect(denied.body.data.success).toBe(false);
   });
 
   it('writes an audit row for an owner void and scan denies that ticket', async () => {
@@ -538,13 +541,15 @@ describe('dispute webhooks and staff void', () => {
     const denied = await scan(first);
     expect(denied.status).toBe(200);
     expect(denied.body.data).toMatchObject({
-      success: false,
-      reason: 'Ticket has been cancelled',
+      valid: false,
+      reason: 'CANCELLED',
+      message: 'Ticket has been cancelled',
     });
     expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(audit.createdAt).toBeInstanceOf(Date);
     const admitted = await scan(second);
-    expect(admitted.body.data.success).toBe(true);
+    expect(admitted.body.data.valid).toBe(true);
+    expect(admitted.body.data.reason).toBeNull();
 
     const rest = await request(app)
       .post(`/api/v1/orders/${order.id}/void`)
