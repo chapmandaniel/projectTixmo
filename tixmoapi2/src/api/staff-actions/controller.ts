@@ -6,7 +6,14 @@ import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { resolveOrganizationFilter, getActorScope } from '../../utils/tenantScope';
 
-const ACTIONS = new Set(['SCANNER_REVOKE', 'EVENT_EDIT', 'EVENT_CANCEL', 'EVENT_STATUS']);
+const ACTIONS = new Set([
+  'SCANNER_REVOKE',
+  'EVENT_EDIT',
+  'EVENT_CANCEL',
+  'EVENT_STATUS',
+  'STAFF_PII_VIEW',
+  'CHECK_IN',
+]);
 
 export const listStaffActions = catchAsync(async (req: AuthRequest, res: Response) => {
   const actor = await getActorScope(req);

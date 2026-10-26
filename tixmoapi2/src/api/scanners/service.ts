@@ -381,7 +381,8 @@ export class ScannerService {
         };
       }
       const reasonCode =
-        denial?.reasonCode || recordedScanReason({ success: !denial, reason: denial?.reason, ticket });
+        denial?.reasonCode ||
+        recordedScanReason({ success: !denial, reason: denial?.reason, ticket });
       const scanLog = await tx.scanLog.create({
         data: {
           scannerId: data.scannerId,

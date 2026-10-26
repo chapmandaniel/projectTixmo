@@ -1,5 +1,6 @@
 import {
   presentScanResult,
+  recordedScanReason,
   SCAN_REASON,
   VOID_DISPUTED_MESSAGE,
 } from '../src/api/scanners/public-scan';
@@ -92,6 +93,31 @@ describe('scan reason codes', () => {
     });
     expect(presented.reason).toBe(SCAN_REASON.CANCELLED);
     expect(presented.message).toBe('Ticket has been cancelled');
+  });
+});
+
+describe('recorded scan reason codes', () => {
+  const ticket = gateTicket();
+
+  test('admitted and denied scans keep a machine code', () => {
+    expect(recordedScanReason({ success: true, ticket })).toBe(SCAN_REASON.ADMITTED);
+    expect(
+      recordedScanReason({ success: false, reason: 'Ticket has already been used', ticket })
+    ).toBe(SCAN_REASON.ALREADY_USED);
+    expect(
+      recordedScanReason({ success: false, reason: 'Event has not started yet', ticket })
+    ).toBe(SCAN_REASON.NOT_STARTED);
+    expect(
+      recordedScanReason({
+        success: false,
+        reason: 'Ticket has been cancelled',
+        ticket: gateTicket({ order: { status: 'REFUNDED', refundStatus: 'SUCCEEDED' } }),
+      })
+    ).toBe(SCAN_REASON.REFUNDED);
+    expect(recordedScanReason({ success: false, reason: 'WRONG_EVENT', ticket })).toBe(
+      SCAN_REASON.WRONG_EVENT
+    );
+    expect(recordedScanReason({ success: false, reason: 'REVOKED' })).toBe(SCAN_REASON.REVOKED);
   });
 });
 

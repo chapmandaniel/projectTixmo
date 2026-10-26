@@ -204,6 +204,7 @@ export const presentScanResult = (result: {
 };
 
 // Persisted on scan_logs.failure_reason. Admitted scans use ADMITTED.
+// NOT_STARTED is the doors denial. REFUNDED is the refunded-order denial.
 export const recordedScanReason = (result: {
   success?: boolean;
   reason?: string | null;

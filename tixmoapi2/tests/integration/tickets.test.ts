@@ -1,6 +1,9 @@
+import { randomUUID } from 'crypto';
 import request from 'supertest';
 import app from '../../src/app';
+import { scannerService } from '../../src/api/scanners/service';
 import { DOORS_BEFORE_START_MS } from '../../src/config/doors';
+import { generateTicketQRData } from '../../src/utils/qrcode';
 import {
   cleanupTestData,
   confirmOrderForTest,
@@ -207,6 +210,12 @@ describe('Tickets API', () => {
         promoter.body.data.tickets.every((ticket: { user?: unknown }) => ticket.user === undefined)
       ).toBe(true);
 
+      expect(
+        await prisma.staffActionAudit.count({
+          where: { action: 'STAFF_PII_VIEW', subjectId: eventId },
+        })
+      ).toBe(0);
+
       const holder = {
         firstName: 'Tickets',
         lastName: 'Test',
@@ -224,7 +233,74 @@ describe('Tickets API', () => {
         const row = res.body.data.tickets.find((ticket: { id: string }) => ticket.id === ticketId);
         expect(row.user).toEqual(holder);
         expect(Object.keys(row.user).sort()).toEqual(['email', 'firstName', 'lastName']);
+        const listAudit = await prisma.staffActionAudit.findFirst({
+          where: {
+            action: 'STAFF_PII_VIEW',
+            subjectType: 'EVENT',
+            subjectId: eventId,
+            actorId: staff.user.id,
+          },
+        });
+        expect(listAudit?.reason).toBe('Staff ticket list');
+        expect(listAudit?.createdAt).toEqual(expect.any(Date));
       }
+
+      const customerOrder = await request(app)
+        .get(`/api/v1/orders/${orderId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(customerOrder.status).toBe(200);
+      expect(
+        await prisma.staffActionAudit.count({
+          where: { action: 'STAFF_PII_VIEW', subjectType: 'ORDER', subjectId: orderId },
+        })
+      ).toBe(0);
+    });
+
+    it('records admitted and denied scan reason codes', async () => {
+      const ticket = await prisma.ticket.findUniqueOrThrow({ where: { id: ticketId } });
+      const scanner = await prisma.scanner.create({
+        data: {
+          name: 'Audit gate',
+          apiKey: `sk_scanner_${randomUUID()}`,
+          organizationId,
+          eventId,
+          createdBy: userId,
+          status: 'ACTIVE',
+        },
+      });
+      const qr = generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId);
+      const admitted = await scannerService.scanTicket({
+        scannerId: scanner.id,
+        qrData: qr,
+        scanType: 'VALIDATION',
+      });
+      expect(admitted.success).toBe(true);
+      expect(admitted.scanLog.failureReason).toBe('ADMITTED');
+
+      const otherEvent = await prisma.event.create({
+        data: { organizationId, name: 'Other gate', slug: randomUUID(), status: 'DRAFT', tags: [] },
+      });
+      await prisma.scanner.update({ where: { id: scanner.id }, data: { eventId: otherEvent.id } });
+      await expect(
+        scannerService.scanTicket({ scannerId: scanner.id, qrData: qr, scanType: 'VALIDATION' })
+      ).rejects.toMatchObject({ statusCode: 403, data: { reason: 'WRONG_EVENT' } });
+      const wrong = await prisma.scanLog.findFirst({
+        where: { scannerId: scanner.id, failureReason: 'WRONG_EVENT' },
+      });
+      expect(wrong?.success).toBe(false);
+      expect(wrong?.ticketId).toBe(ticket.id);
+
+      await prisma.scanner.update({
+        where: { id: scanner.id },
+        data: { eventId, status: 'REVOKED' },
+      });
+      await expect(
+        scannerService.scanTicket({ scannerId: scanner.id, qrData: qr, scanType: 'ENTRY' })
+      ).rejects.toThrow('not active');
+      const revoked = await prisma.scanLog.findFirst({
+        where: { scannerId: scanner.id, failureReason: 'REVOKED' },
+      });
+      expect(revoked?.success).toBe(false);
     });
 
     it('checks in from start minus two hours and refuses earlier', async () => {
@@ -255,6 +331,18 @@ describe('Tickets API', () => {
           .send({ barcode: spare.barcode });
         expect(open.status).toBe(200);
         expect(open.body.data.status).toBe('USED');
+        const checkInAudit = await prisma.staffActionAudit.findFirst({
+          where: { action: 'CHECK_IN', subjectId: spare.id },
+        });
+        const promoter = await prisma.user.findUnique({
+          where: { email: 'tickets-promoter@example.com' },
+        });
+        expect(checkInAudit).toMatchObject({
+          actorId: promoter?.id,
+          reason: 'Attendee check-in',
+          subjectType: 'TICKET',
+        });
+        expect(checkInAudit?.createdAt).toEqual(expect.any(Date));
       } finally {
         if (originalStart) {
           await prisma.event.update({

@@ -1,11 +1,36 @@
 import { Response } from 'express';
+import prisma from '../../config/prisma';
 import { AuthRequest } from '../../middleware/auth';
 import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
+import { writeStaffAction } from '../../services/staff-action-audit';
 import { ticketService } from './service';
 
 const canManageTickets = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
+
+const recordTicketPiiView = async (
+  actorId: string,
+  reason: string,
+  subjectType: 'EVENT' | 'TICKET',
+  subjectId: string,
+  eventId?: string | null
+) => {
+  if (!eventId) return;
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: { organizationId: true },
+  });
+  if (!event) return;
+  await writeStaffAction({
+    action: 'STAFF_PII_VIEW',
+    subjectType,
+    subjectId,
+    organizationId: event.organizationId,
+    actorId,
+    reason,
+  });
+};
 
 export const listMyTickets = catchAsync(async (req: AuthRequest, res: Response) => {
   res.json(
@@ -26,6 +51,13 @@ export const listTickets = catchAsync(async (req: AuthRequest, res: Response) =>
     userId: staff ? undefined : req.user!.userId,
     includeHolder: staff,
   });
+  if (staff) {
+    const requestedEventId = typeof req.query.eventId === 'string' ? req.query.eventId : undefined;
+    const eventId = requestedEventId || result.tickets[0]?.eventId;
+    if (eventId) {
+      await recordTicketPiiView(req.user!.userId, 'Staff ticket list', 'EVENT', eventId, eventId);
+    }
+  }
 
   res.json(successResponse(result));
 });
@@ -38,6 +70,16 @@ export const getTicket = catchAsync(async (req: AuthRequest, res: Response) => {
 
   if (!ticket) {
     throw ApiError.notFound('Ticket not found');
+  }
+
+  if (canManageTickets(req.user!.role)) {
+    await recordTicketPiiView(
+      req.user!.userId,
+      'Staff ticket detail',
+      'TICKET',
+      ticket.id,
+      ticket.eventId
+    );
   }
 
   res.json(successResponse(ticket));
@@ -85,7 +127,10 @@ export const checkInTicket = catchAsync(async (req: AuthRequest, res: Response) 
   const { barcode } = req.body as { barcode: string };
   const checkedInBy = req.user!.email;
 
-  const ticket = await ticketService.checkInTicket(barcode, checkedInBy);
+  const ticket = await ticketService.checkInTicket(barcode, checkedInBy, {
+    actorId: req.user!.userId,
+    reason: 'Attendee check-in',
+  });
   res.json(successResponse(ticket, 'Ticket checked in successfully'));
 });
 
