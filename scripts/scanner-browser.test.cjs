@@ -228,6 +228,11 @@ test("collected mounted test and worker keep real transport, barrier, isolation 
   );
   assert.match(worker, /keyAbsent\(browsers\[0\].profile\)/);
   assert.match(worker, /keyAbsent\(browsers\[1\].profile\)/);
+  assert.match(worker, /tixmo_scanner_api_key/);
+  assert.match(worker, /Forget scanner/);
+  assert.match(worker, /\/Local Storage\//);
+  assert.match(worker, /This scanner was revoked, enter a new key/);
+  assert.doesNotMatch(worker, /End scanner session/);
   assert.match(
     worker,
     /stat.isSymbolicLink\(\)\) throw new FixedFailure\(4, 1\)/,
@@ -439,6 +444,17 @@ test("actual profile proof still rejects UTF8/UTF16 keys and symlinks with fixed
           error.reason === 6 && error.message === "Scanner proof failed",
       );
     }
+    const localLog = path.join(profile, "Default", "Local Storage", "leveldb", "000003.log");
+    fs.mkdirSync(path.dirname(localLog), { recursive: true });
+    fs.writeFileSync(localLog, Buffer.from(key, "utf16le"));
+    await assert.rejects(proof(profile), (error) => error.reason === 6);
+    fs.writeFileSync(file, "safe");
+    await proof(profile);
+    const sessionLog = path.join(profile, "Default", "Session Storage", "000003.log");
+    fs.mkdirSync(path.dirname(sessionLog), { recursive: true });
+    fs.writeFileSync(sessionLog, Buffer.from(key));
+    await assert.rejects(proof(profile), (error) => error.reason === 6);
+    fs.rmSync(path.join(profile, "Default"), { recursive: true, force: true });
     fs.unlinkSync(file);
     const outside = path.join(base, "outside");
     fs.writeFileSync(outside, "preserve");

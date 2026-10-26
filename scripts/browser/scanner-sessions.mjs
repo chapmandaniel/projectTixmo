@@ -170,10 +170,14 @@ async function keyAbsent(profile) {
       bytes += stat.size;
       if (bytes > 268435456) throw new FixedFailure(5);
       const content = await readFile(name);
-      for (const key of fixture.keys) {
-        if (content.includes(Buffer.from(key))) throw new FixedFailure(6);
-        if (content.includes(Buffer.from(key, "utf16le")))
-          throw new FixedFailure(6);
+      // The saved scanner key belongs in Chrome's Local Storage. It must not
+      // appear in session storage, cookies, or any other profile file.
+      if (!name.split("\\").join("/").includes("/Local Storage/")) {
+        for (const key of fixture.keys) {
+          if (content.includes(Buffer.from(key))) throw new FixedFailure(6);
+          if (content.includes(Buffer.from(key, "utf16le")))
+            throw new FixedFailure(6);
+        }
       }
     }
   }
@@ -396,12 +400,12 @@ try {
   mark(3);
   assert.notEqual(a.record.child.pid, b.record.child.pid);
   assert.notEqual(a.record.profile, b.record.profile);
-  const storageSafe = async (client) => {
+  const sessionClean = async (client) => {
     assert.equal(
       await client.evaluate(
-        `JSON.stringify([Object.entries(localStorage),Object.entries(sessionStorage)]).includes('sk_scanner_')`,
+        `!JSON.stringify(Object.entries(sessionStorage)).includes('sk_scanner_')`,
       ),
-      false,
+      true,
     );
     assert.equal(
       await client.evaluate(
@@ -410,8 +414,26 @@ try {
       true,
     );
   };
-  await storageSafe(a);
-  await storageSafe(b);
+  const deviceKey = async (client, index) => {
+    await sessionClean(client);
+    assert.equal(
+      await client.evaluate(
+        `localStorage.getItem('tixmo_scanner_api_key')===${JSON.stringify(fixture.keys[index])} && Object.entries(localStorage).every(([name,value])=>name==='tixmo_scanner_api_key'||!String(value).includes('sk_scanner_'))`,
+      ),
+      true,
+    );
+  };
+  const keyCleared = async (client) => {
+    await sessionClean(client);
+    assert.equal(
+      await client.evaluate(
+        `localStorage.getItem('tixmo_scanner_api_key')===null && !JSON.stringify(Object.entries(localStorage)).includes('sk_scanner_')`,
+      ),
+      true,
+    );
+  };
+  await deviceKey(a, 0);
+  await deviceKey(b, 1);
   await a.fill("#ticket-input", fixture.qr);
   await b.fill("#ticket-input", fixture.qr);
   mark(4);
@@ -446,20 +468,25 @@ try {
     ),
     false,
   );
-  await storageSafe(a);
-  await storageSafe(b);
+  await deviceKey(a, 0);
+  await deviceKey(b, 1);
   mark(7);
-  // End A cannot end B, whose memory session remains connected even though revoked remotely.
-  await a.click("End scanner session");
+  // Forget on A cannot end B. B stays connected: a scan-time inactive scanner is
+  // not the auth response "Scanner is revoked", so its saved key remains.
+  await a.click("Forget scanner");
   await a.wait(`!!document.querySelector('#scanner-key')`);
+  await keyCleared(a);
   assert.equal(
     await b.evaluate(`!!document.querySelector('#ticket-input')`),
     true,
   );
   await b.send("Page.reload");
   await b.wait(`!!document.querySelector('#scanner-key')`);
-  await storageSafe(a);
-  await storageSafe(b);
+  await b.wait(
+    `document.querySelector('[role="status"]')?.textContent.includes('This scanner was revoked, enter a new key.')`,
+  );
+  await keyCleared(a);
+  await keyCleared(b);
   assert.equal(
     await a.evaluate(`document.querySelector('#scanner-key').value`),
     "",
@@ -468,7 +495,7 @@ try {
     await b.evaluate(`document.querySelector('#scanner-key').value`),
     "",
   );
-  // Leaving/reloading also starts an empty key session; no browser storage fallback.
+  // A forgotten or revoked key is not restored. Reload keeps a key only while it is still saved.
   await a.send("Page.reload");
   await a.wait(`!!document.querySelector('#scanner-key')`);
   assert.equal(
