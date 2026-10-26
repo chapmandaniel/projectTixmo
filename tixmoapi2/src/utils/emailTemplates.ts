@@ -51,7 +51,28 @@ export interface OrderConfirmationData {
   venueAddress?: string | null;
   hstNumber?: string | null;
   hstAmountLine?: string | null;
+  sellerName?: string | null;
+  supportEmail?: string | null;
+  refundPolicyUrl?: string | null;
+  termsUrl?: string | null;
 }
+
+// Published policy pages only. Anything else is omitted from the receipt.
+const receiptPolicyUrl = (value: string | null | undefined): string | undefined => {
+  try {
+    if (typeof value !== 'string') return undefined;
+    const url = new URL(value.trim());
+    if (url.protocol !== 'https:' || url.username || url.password) return undefined;
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+};
+
+const receiptSupportEmail = (value: string | null | undefined): string => {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  return /^[^\s@<>"']+@[^\s@<>"']+$/.test(trimmed) ? trimmed : 'info@tixmo.co';
+};
 
 const receiptVenue = (data: OrderConfirmationData): string => {
   const line = [data.venueName?.trim(), data.venueAddress?.trim()].filter(Boolean).join(', ');
@@ -77,6 +98,23 @@ export function orderConfirmationEmail(
   const walletText = walletUrl
     ? `View your tickets: ${walletUrl}\nSign in with the account used for this order.\n`
     : '';
+  const seller = data.sellerName?.trim() || '';
+  const sellerHtml = seller ? `<p>Sold by ${escapeReceiptHtml(seller)}</p>` : '';
+  const sellerText = seller ? `Sold by ${seller}\n` : '';
+  const support = receiptSupportEmail(data.supportEmail);
+  const supportHtml = escapeReceiptHtml(support);
+  const refundUrl = receiptPolicyUrl(data.refundPolicyUrl);
+  const termsUrl = receiptPolicyUrl(data.termsUrl);
+  const policyLinks = [
+    refundUrl ? `<a href="${escapeReceiptHtml(refundUrl)}">Refund policy</a>` : '',
+    termsUrl ? `<a href="${escapeReceiptHtml(termsUrl)}">Terms of Sale</a>` : '',
+  ].filter(Boolean);
+  const policyHtml = policyLinks.length ? ` ${policyLinks.join(' · ')}` : '';
+  const policyTextParts = [
+    refundUrl ? `Refund policy: ${refundUrl}` : '',
+    termsUrl ? `Terms: ${termsUrl}` : '',
+  ].filter(Boolean);
+  const policyText = policyTextParts.length ? `${policyTextParts.join(' · ')}\n` : '';
   const total = escapeReceiptHtml(data.totalAmount);
   const subtotal = data.subtotalAmount?.trim() ? escapeReceiptHtml(data.subtotalAmount.trim()) : '';
   const subtotalHtml = subtotal ? `<p><strong>Subtotal:</strong> ${subtotal}</p>` : '';
@@ -115,12 +153,14 @@ export function orderConfirmationEmail(
                 <p><strong>Total paid:</strong> ${total} (includes HST and all fees)</p>
                 ${hstAmountHtml}
                 ${hstHtml}
+                ${sellerHtml}
               </div>
               ${walletHtml}
-              <p>All sales are final unless the event is cancelled or rescheduled.</p>
+              <p>All sales are final unless the event is cancelled or rescheduled.${policyHtml}</p>
+              <p>Questions? <a href="mailto:${supportHtml}">${supportHtml}</a></p>
             </div>
             <div class="footer">
-              <p>Tixmo · Ticketing for live events. Please don't reply to this email.</p>
+              <p>Tixmo · Ticketing for live events. Please don't reply to this email. Contact <a href="mailto:${supportHtml}">${supportHtml}</a>.</p>
             </div>
           </div>
         </body>
@@ -135,10 +175,11 @@ export function orderConfirmationEmail(
       Where: ${venue}
       Tickets: ${data.ticketSummary}
       ${subtotalText}Total paid: ${data.totalAmount} (includes HST and all fees)
-      ${hstAmountText}${hstText}${walletText}
+      ${hstAmountText}${hstText}${sellerText}${walletText}
       All sales are final unless the event is cancelled or rescheduled.
+      ${policyText}Questions? ${support}
 
-      Tixmo · Ticketing for live events. Please don't reply to this email.
+      Tixmo · Ticketing for live events. Please don't reply to this email. Contact ${support}.
     `,
   };
 }
@@ -153,9 +194,12 @@ export function ticketTransferEmail(
     ticketCount: number;
     venueName?: string | null;
     venueAddress?: string | null;
+    supportEmail?: string | null;
   },
   clientUrl: string
 ): EmailTemplate {
+  const support = receiptSupportEmail(data.supportEmail);
+  const supportHtml = escapeReceiptHtml(support);
   const when = escapeReceiptHtml(data.eventDate);
   const venue = escapeReceiptHtml(
     [data.venueName?.trim(), data.venueAddress?.trim()].filter(Boolean).join(', ') ||
@@ -186,37 +230,39 @@ export function ticketTransferEmail(
         <body>
           <div class="container">
             <div class="header">
-              <h1>Tickets Transferred to You!</h1>
+              <h1>Tickets sent to you</h1>
             </div>
             <div class="content">
               <p>Hi ${escapeReceiptHtml(data.recipientName)},</p>
-              <p>${escapeReceiptHtml(data.senderName)} has transferred ${data.ticketCount} ticket(s) to you for:</p>
+              <p>${escapeReceiptHtml(data.senderName)} sent you ${data.ticketCount} ticket(s) for:</p>
               <p><strong>${escapeReceiptHtml(data.eventName)}</strong></p>
               <p>Date: ${when}</p>
               <p>Venue: ${venue}</p>
               ${walletHtml}
-              <p>The tickets are now available in your Tixmo account.</p>
+              <p>Sign in to Tixmo and open My tickets. Show the QR code at the door. Each ticket gets one person in, once.</p>
+              <p>Questions? <a href="mailto:${supportHtml}">${supportHtml}</a></p>
             </div>
             <div class="footer">
-              <p>Tixmo - Event Ticketing Platform</p>
+              <p>Tixmo · Ticketing for live events. Please don't reply to this email.</p>
             </div>
           </div>
         </body>
       </html>
     `,
     text: `
-      Tickets Transferred to You!
+      Tickets sent to you
       
       Hi ${data.recipientName},
       
-      ${data.senderName} has transferred ${data.ticketCount} ticket(s) to you for:
+      ${data.senderName} sent you ${data.ticketCount} ticket(s) for:
       ${data.eventName}
       Date: ${data.eventDate}
       Venue: ${venueText}
       ${walletText}
-      The tickets are now available in your Tixmo account.
+      Sign in to Tixmo and open My tickets. Show the QR code at the door. Each ticket gets one person in, once.
+      Questions? ${support}
       
-      Tixmo - Event Ticketing Platform
+      Tixmo · Ticketing for live events. Please don't reply to this email.
     `,
   };
 }

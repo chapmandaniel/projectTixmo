@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, User, CheckCircle, XCircle, MoreHorizontal, Download, UserCheck, UserX } from 'lucide-react';
 import api from '../lib/api';
+import { attendeesToCsv, ticketMatches, unwrapTicketPage } from '../lib/attendees';
+import { DashboardButton } from '../components/dashboard/DashboardPrimitives';
 import StatusBadge from '../components/StatusBadge';
 
 const AttendeeRow = ({ ticket, isDark, onCheckIn, onRevoke }) => (
@@ -62,33 +64,107 @@ const AttendeeRow = ({ ticket, isDark, onCheckIn, onRevoke }) => (
     </tr>
 );
 
+const STATUS_FILTERS = [
+    { value: '', label: 'Filter' },
+    { value: 'VALID', label: 'Filter: Confirmed' },
+    { value: 'USED', label: 'Filter: Checked in' },
+    { value: 'CANCELLED', label: 'Filter: Cancelled' },
+    { value: 'TRANSFERRED', label: 'Filter: Transferred' },
+];
+
+const loadAllTickets = async (eventId, status) => {
+    const rows = new Map();
+    let page = 1;
+    let pages = 1;
+    let expectedTotal;
+    do {
+        const { tickets, pagination } = unwrapTicketPage(await api.get('/tickets', { params: { eventId, page, limit: 100, ...(status ? { status } : {}) } }));
+        const total = pagination.total ?? tickets.length;
+        if (expectedTotal !== undefined && expectedTotal !== total) throw new Error('Attendees changed during export. Please try again.');
+        expectedTotal = total;
+        if (expectedTotal > 50000) throw new Error('Narrow the list to export up to 50,000 attendees.');
+        for (const ticket of tickets) rows.set(ticket.id, ticket);
+        pages = pagination.pages || 1;
+        page += 1;
+    } while (page <= pages);
+    if (rows.size !== expectedTotal) throw new Error('Attendees changed during export. Please try again.');
+    return [...rows.values()];
+};
+
 const ECC_Attendees = ({ event, isDark }) => {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [limit] = useState(20);
     const [total, setTotal] = useState(0);
-
-    const fetchTickets = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get(`/tickets?eventId=${event.id}&page=${page}&limit=${limit}&sortBy=createdAt`);
-            // Check for wrapped response structure
-            const data = res.data.data ? res.data.data.tickets : (res.data.tickets || []);
-            const meta = res.data.data ? res.data.data.pagination : (res.data.pagination || {});
-
-            setTickets(Array.isArray(data) ? data : []);
-            setTotal(meta.total || 0);
-        } catch (error) {
-            console.error('Failed to fetch tickets:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [searchInput, setSearchInput] = useState('');
+    const [search, setSearch] = useState('');
+    const [status, setStatus] = useState('');
+    const [exporting, setExporting] = useState(false);
+    const [actionError, setActionError] = useState('');
 
     useEffect(() => {
-        fetchTickets();
-    }, [event.id, page]);
+        let active = true;
+        const load = async () => {
+            setLoading(true);
+            setActionError('');
+            try {
+                if (search) {
+                    const matches = (await loadAllTickets(event.id, status)).filter((ticket) => ticketMatches(ticket, search));
+                    if (!active) return;
+                    setTickets(matches);
+                    setTotal(matches.length);
+                    return;
+                }
+                const res = await api.get(`/tickets?eventId=${event.id}&page=${page}&limit=${limit}&sortBy=createdAt${status ? `&status=${status}` : ''}`);
+                if (!active) return;
+                const { tickets: data, pagination } = unwrapTicketPage(res);
+                setTickets(data);
+                setTotal(pagination.total || 0);
+            } catch (error) {
+                console.error('Failed to fetch tickets:', error);
+                if (!active) return;
+                setTickets([]);
+                setTotal(0);
+                setActionError(error.response?.data?.message || error.message || 'Unable to load attendees.');
+            } finally {
+                if (active) setLoading(false);
+            }
+        };
+        void load();
+        return () => { active = false; };
+    }, [event.id, page, limit, search, status]);
+
+    const cycleStatus = () => {
+        const current = STATUS_FILTERS.findIndex((item) => item.value === status);
+        setPage(1);
+        setStatus(STATUS_FILTERS[(current + 1) % STATUS_FILTERS.length].value);
+    };
+
+    const submitSearch = (submitEvent) => {
+        submitEvent.preventDefault();
+        setPage(1);
+        setSearch(searchInput.trim());
+    };
+
+    const exportAttendees = async () => {
+        setExporting(true);
+        setActionError('');
+        try {
+            const rows = await loadAllTickets(event.id, status);
+            const exported = search ? rows.filter((ticket) => ticketMatches(ticket, search)) : rows;
+            const url = URL.createObjectURL(new Blob(['\uFEFF', attendeesToCsv(exported)], { type: 'text/csv;charset=utf-8' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `event-${event.id}-attendees.csv`;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+            setActionError(error.response?.data?.message || error.message || 'Unable to export attendees.');
+        } finally {
+            setExporting(false);
+        }
+    };
 
     const handleCheckIn = async (ticket) => {
         // Optimistic update
@@ -110,26 +186,34 @@ const ECC_Attendees = ({ event, isDark }) => {
         <div className="space-y-6 animate-fade-in">
             {/* Toolbar */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <form onSubmit={submitSearch} className="flex w-full flex-col gap-3 sm:flex-row sm:items-center md:w-auto">
                 <div className={`relative w-full md:w-96 flex items-center px-4 py-2.5 rounded-md border transition-colors ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 focus-within:border-pink-500' : 'bg-white border-gray-200/60 focus-within:border-indigo-500 shadow-sm'}`}>
                     <Search size={18} className={`mr-3 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`} />
                     <input
                         type="text"
+                        aria-label="Search attendees"
                         placeholder="Search guest name, email, order #..."
+                        value={searchInput}
+                        onChange={(inputEvent) => setSearchInput(inputEvent.target.value)}
                         className={`w-full bg-transparent outline-hidden text-sm font-light tracking-wide ${isDark ? 'text-gray-100 placeholder-[#5a5c6e]' : 'text-gray-800 placeholder-gray-400'}`}
                     />
                 </div>
+                <DashboardButton isDark={isDark} type="submit">Search</DashboardButton>
+                </form>
 
                 <div className="flex space-x-3 w-full md:w-auto">
                     <button className={`flex-1 md:flex-none px-4 py-2.5 text-sm font-light tracking-wide rounded-md flex items-center justify-center border transition-colors ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 text-gray-300 hover:bg-[#232336]' : 'bg-white border-gray-200/60 text-gray-700 hover:bg-gray-50 shadow-sm'
-                        }`}>
-                        <Filter size={16} className="mr-2" /> Filter
+                        }`} type="button" onClick={cycleStatus} aria-label="Filter attendees">
+                        <Filter size={16} className="mr-2" /> {STATUS_FILTERS.find((item) => item.value === status)?.label || 'Filter'}
                     </button>
                     <button className={`flex-1 md:flex-none px-4 py-2.5 text-sm font-light tracking-wide rounded-md flex items-center justify-center border transition-colors ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 text-gray-300 hover:bg-[#232336]' : 'bg-white border-gray-200/60 text-gray-700 hover:bg-gray-50 shadow-sm'
-                        }`}>
-                        <Download size={16} className="mr-2" /> Export List
+                        }`} type="button" onClick={exportAttendees} disabled={exporting || loading}>
+                        <Download size={16} className="mr-2" /> {exporting ? 'Exporting…' : 'Export List'}
                     </button>
                 </div>
             </div>
+            {actionError && <p role="alert">{actionError}</p>}
+            {search && !loading && !actionError && <p role="status">Showing {total} {total === 1 ? 'attendee' : 'attendees'} matching "{search}".</p>}
 
             {/* Table Card */}
             <div className={`rounded-md border overflow-hidden ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60' : 'bg-white border-gray-200/60 shadow-sm'}`}>
@@ -161,8 +245,8 @@ const ECC_Attendees = ({ event, isDark }) => {
                                         <div className={`p-4 rounded-md mb-3 ${isDark ? 'bg-[#232336]' : 'bg-gray-100'}`}>
                                             <User size={24} />
                                         </div>
-                                        <p className="font-normal mb-1">No attendees found</p>
-                                        <p className="text-xs tracking-wide">Guest list will populate as tickets are sold.</p>
+                                        <p className="font-normal mb-1">{actionError ? 'Attendees could not be loaded' : search ? 'No attendees match this search' : 'No attendees found'}</p>
+                                        <p className="text-xs tracking-wide">{actionError ? 'Try the list again.' : search ? 'Try a different name, email, or order number.' : 'Guest list will populate as tickets are sold.'}</p>
                                     </td>
                                 </tr>
                             ) : (
@@ -180,7 +264,7 @@ const ECC_Attendees = ({ event, isDark }) => {
                 </div>
 
                 {/* Pagination */}
-                {total > limit && (
+                {!search && total > limit && (
                     <div className={`px-6 py-4 border-t flex items-center justify-between ${isDark ? 'border-[#2b2b40]/60' : 'border-gray-100'}`}>
                         <span className={`text-sm font-light tracking-wide ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>
                             Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, total)} of {total} attendees

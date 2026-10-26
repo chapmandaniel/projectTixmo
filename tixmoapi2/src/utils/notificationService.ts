@@ -90,6 +90,10 @@ export class NotificationService {
         venueAddress: data.venueAddress,
         hstNumber: data.hstNumber,
         hstAmountLine: data.hstAmountLine,
+        sellerName: config.sellerName,
+        supportEmail: config.supportEmail,
+        refundPolicyUrl: config.refundPolicyUrl,
+        termsUrl: config.termsUrl,
       },
       config.clientUrl
     );
@@ -124,6 +128,7 @@ export class NotificationService {
         ticketCount: data.ticketCount,
         venueName: data.venueName,
         venueAddress: data.venueAddress,
+        supportEmail: config.supportEmail,
       },
       config.clientUrl
     );

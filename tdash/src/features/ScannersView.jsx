@@ -38,6 +38,8 @@ const extractLogPayload = (body) => {
     };
 };
 
+const scannerEventName = (scanner) => scanner.event?.name || 'Not bound to an event';
+
 const formatDateTime = (value) => {
     if (!value) return 'Never';
 
@@ -83,6 +85,7 @@ const ScannersView = ({
     const [fetchError, setFetchError] = useState(null);
     const latestRequest = useRef(0);
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+    const [bindingScanner, setBindingScanner] = useState(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
@@ -138,9 +141,10 @@ const ScannersView = ({
 
     return (
         <DashboardPage className={wrapperClassName}>
-            {isRegisterModalOpen && (
+            {(isRegisterModalOpen || bindingScanner) && (
                 <RegisterScannerModal
-                    onClose={() => setIsRegisterModalOpen(false)}
+                    scanner={bindingScanner}
+                    onClose={() => { setIsRegisterModalOpen(false); setBindingScanner(null); }}
                     onSuccess={fetchScanners}
                     isDark={isDark}
                 />
@@ -157,7 +161,7 @@ const ScannersView = ({
                     <DashboardButton
                         isDark={isDark}
                         className="w-full sm:w-auto"
-                        onClick={() => setIsRegisterModalOpen(true)}
+                        onClick={() => { setBindingScanner(null); setIsRegisterModalOpen(true); }}
                     >
                         <Plus size={18} />
                         Register New Scanner
@@ -238,6 +242,9 @@ const ScannersView = ({
                                                 <p className={cn('mt-1 truncate font-mono text-xs', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>
                                                     {scanner.deviceId || 'No device ID'}
                                                 </p>
+                                                <p className={cn('mt-1 truncate text-xs', isDark ? 'text-zinc-100' : 'text-slate-800')}>
+                                                    {scannerEventName(scanner)}
+                                                </p>
                                             </div>
                                             <ScannerStatusChip scanner={scanner} isDark={isDark} />
                                         </div>
@@ -247,6 +254,17 @@ const ScannersView = ({
                                                 {formatDateTime(scanner.lastUsedAt || scanner.lastActiveAt)}
                                             </span>
                                         </div>
+                                        {scanner.status !== 'REVOKED' && (
+                                            <DashboardButton
+                                                isDark={isDark}
+                                                variant="secondary"
+                                                className="mt-4 w-full"
+                                                aria-label={`Change event for ${scanner.name}`}
+                                                onClick={() => { setIsRegisterModalOpen(false); setBindingScanner(scanner); }}
+                                            >
+                                                Change event
+                                            </DashboardButton>
+                                        )}
                                         <DashboardButton
                                             isDark={isDark}
                                             variant="danger"
@@ -265,6 +283,7 @@ const ScannersView = ({
                                         <tr>
                                             <th className="p-4 font-light tracking-wide">Name</th>
                                             <th className="p-4 font-light tracking-wide">Device ID</th>
+                                            <th className="p-4 font-light tracking-wide">Event</th>
                                             <th className="p-4 font-light tracking-wide">Status</th>
                                             <th className="p-4 font-light tracking-wide">Last Active</th>
                                             <th className="p-4 text-right font-light tracking-wide">Actions</th>
@@ -275,9 +294,21 @@ const ScannersView = ({
                                             <tr key={scanner.id} className={cn('group transition-colors', isDark ? 'hover:bg-dashboard-panelAlt' : 'hover:bg-slate-50')}>
                                                 <td className="p-4">{scanner.name}</td>
                                                 <td className="p-4 font-mono text-xs opacity-70">{scanner.deviceId || 'N/A'}</td>
+                                                <td className="p-4">{scannerEventName(scanner)}</td>
                                                 <td className="p-4"><ScannerStatusChip scanner={scanner} isDark={isDark} /></td>
                                                 <td className="p-4 text-xs">{formatDateTime(scanner.lastUsedAt || scanner.lastActiveAt)}</td>
                                                 <td className="p-4 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                    {scanner.status !== 'REVOKED' && (
+                                                        <DashboardButton
+                                                            isDark={isDark}
+                                                            variant="secondary"
+                                                            aria-label={`Change event for ${scanner.name}`}
+                                                            onClick={() => { setIsRegisterModalOpen(false); setBindingScanner(scanner); }}
+                                                        >
+                                                            Change event
+                                                        </DashboardButton>
+                                                    )}
                                                     <button
                                                         onClick={() => handleRevoke(scanner.id)}
                                                         className={cn('rounded-md p-2 transition-colors', isDark ? 'text-rose-300 hover:bg-rose-500/10' : 'text-rose-600 hover:bg-rose-50')}
@@ -285,6 +316,7 @@ const ScannersView = ({
                                                     >
                                                         <PowerOff size={16} />
                                                     </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
