@@ -31,7 +31,7 @@ describe('staff order detail trimmed fields', () => {
     it.each(roles)('%s sees a masked barcode and email only when the API includes it', (role) => {
         render(<OrderDetailModal order={orderFor(role)} isDark onClose={() => {}} onOrderUpdated={() => {}} />);
         expect(screen.getByText('Barcode: ••••9999')).toBeInTheDocument();
-        expect(screen.getAllByText('$10.00').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('CA$10.00').length).toBeGreaterThan(0);
         expect(screen.queryByText(rawBarcode)).not.toBeInTheDocument();
         expect(screen.queryByText(/Generating/)).not.toBeInTheDocument();
         if (emailRoles.has(role)) {
@@ -48,6 +48,6 @@ describe('staff order detail trimmed fields', () => {
         render(<OrderDetailModal order={order} isDark onClose={() => {}} onOrderUpdated={() => {}} />);
         expect(screen.queryByText(/Barcode:/)).not.toBeInTheDocument();
         expect(screen.queryByText(/Generating/)).not.toBeInTheDocument();
-        expect(screen.getAllByText('$10.00').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('CA$10.00').length).toBeGreaterThan(0);
     });
 });

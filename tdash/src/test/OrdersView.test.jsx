@@ -65,11 +65,11 @@ describe('OrdersView staff refunds', () => {
         await waitFor(() => expect(eventFetches()).toBe(1));
 
         fireEvent.click(screen.getByRole('button', { name: 'View order ORD-7344' }));
-        expect(await screen.findAllByText('$10.00')).toHaveLength(2);
+        expect(await screen.findAllByText('CA$10.00')).toHaveLength(2);
         expect(screen.getAllByText('Barcode: ••••NDER')).toHaveLength(2);
         expect(screen.queryByText(/Generating/)).not.toBeInTheDocument();
         expect(screen.queryByText(rawBarcode)).not.toBeInTheDocument();
-        expect(screen.getAllByText('$20.00').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('CA$20.00').length).toBeGreaterThan(0);
 
         fireEvent.click(screen.getByRole('button', { name: 'Refund Order' }));
         fireEvent.click(screen.getByRole('button', { name: 'Confirm full refund' }));
