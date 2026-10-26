@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { scannerService } from './service';
+import { presentScanResult } from './public-scan';
 import { ApiError } from '../../utils/ApiError';
 import { successResponse } from '../../utils/response';
 import { AuthRequest } from '../../middleware/auth';
@@ -174,7 +175,7 @@ export const scanTicket = async (
     });
     res.json(
       successResponse(
-        result,
+        presentScanResult(result),
         result.success ? 'Ticket scanned successfully' : 'Scan validation failed'
       )
     );

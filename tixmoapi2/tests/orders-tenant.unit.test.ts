@@ -252,7 +252,7 @@ describe('actor-bound order service', () => {
     const detail = (await service.getOrderById('a', 'buyer-a')) as any;
     expect(detail.tickets).toEqual([
       orders[0].tickets[0],
-      { ...orders[0].tickets[1], barcode: '', qrCodeUrl: null },
+      { ...orders[0].tickets[1], barcode: '••••code', qrCodeUrl: null },
     ]);
   });
 });

@@ -349,10 +349,12 @@ describe('Mounted event sales-pause authorization and paid access', () => {
           });
       const accepted = await scan(paidTicket);
       expect(accepted.status).toBe(200);
-      expect(accepted.body.data.success).toBe(true);
+      expect(accepted.body.data.valid).toBe(true);
+      expect(JSON.stringify(accepted.body.data)).not.toContain(paidTicket.barcode);
+      expect(accepted.body.data.ticket).toBeUndefined();
       const duplicate = await scan(paidTicket);
       expect(duplicate.status).toBe(200);
-      expect(duplicate.body.data.success).toBe(false);
+      expect(duplicate.body.data.valid).toBe(false);
       expect(duplicate.body.data.reason).toContain('already been used');
       const provider = {
         paymentIntents: {
@@ -419,7 +421,7 @@ describe('Mounted event sales-pause authorization and paid access', () => {
         .get(`/api/v1/tickets/${recoveredTicket.id}/qr`)
         .set('Authorization', `Bearer ${token(buyer, 'CUSTOMER')}`);
       expect(recoveredQR.status).toBe(200);
-      expect((await scan(recoveredTicket)).body.data.success).toBe(true);
+      expect((await scan(recoveredTicket)).body.data.valid).toBe(true);
       const logs = await prisma.scanLog.findMany({ where: { scannerId: ids.scanner } });
       expect(logs).toHaveLength(3);
       expect(logs.filter((log) => log.success)).toHaveLength(2);

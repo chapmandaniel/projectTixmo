@@ -4,6 +4,7 @@ import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { orderService } from './service';
+import { presentOrderDetail } from './order-privacy';
 import { receiptDisclosure } from '../../utils/receipt';
 
 const canManageOrders = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
@@ -71,7 +72,8 @@ export const getConsumerOrderRecovery = catchAsync(async (req: AuthRequest, res:
 export const getOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const order = await orderService.getOrderById(req.params.id, undefined, req.user!.userId);
   if (!order) throw ApiError.notFound('Order not found');
-  res.json(successResponse({ ...order, receiptDisclosure: receiptDisclosure(order.totalAmount) }));
+  const detail = { ...order, receiptDisclosure: receiptDisclosure(order.totalAmount) };
+  res.json(successResponse(presentOrderDetail(detail, req.user!.role)));
 });
 
 export const confirmOrder = catchAsync(async (req: AuthRequest, res: Response) => {

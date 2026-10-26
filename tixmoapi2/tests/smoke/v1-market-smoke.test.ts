@@ -286,7 +286,15 @@ describe('V1 market readiness smoke', () => {
         scanType: 'ENTRY',
       });
     expectSuccess(scanResponse, 200, 'Scan paid ticket');
-    expect(scanResponse.body.data.success).toBe(true);
+    expect(scanResponse.body.data).toEqual({
+      valid: true,
+      reason: null,
+      ticketTypeName: expect.any(String),
+      holderFirstName: 'V1',
+    });
+    const scanBody = JSON.stringify(scanResponse.body.data);
+    expect(scanBody).not.toContain(ticketToScan.barcode);
+    expect(scanBody).not.toContain('v1-smoke-attendee@test.com');
 
     const analyticsResponse = await request(app)
       .get('/api/v1/analytics/dashboard')

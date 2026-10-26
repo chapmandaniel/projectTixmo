@@ -26,6 +26,7 @@ import {
   transitionPromo,
 } from '../../services/order-inventory.service';
 import { voidOrderTickets } from '../../services/ticket-void.service';
+import { maskBarcode } from './order-privacy';
 
 interface OrderItemInput {
   ticketTypeId: string;
@@ -299,7 +300,7 @@ export class OrderService {
             ? ticket
             : {
                 ...ticket,
-                barcode: '',
+                barcode: maskBarcode(ticket.barcode),
                 qrCodeUrl: null,
               }
         ),
