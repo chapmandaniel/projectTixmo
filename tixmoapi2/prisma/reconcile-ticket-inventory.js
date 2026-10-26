@@ -8,6 +8,8 @@ const MAX_TICKETS = 25000;
 const SYSTEM_ACTOR = 'system-inventory-reconcile';
 const SYSTEM_EVIDENCE =
   'System inventory reconcile. Counters follow allocated tickets that already have a tier. UNKNOWN inventory and tickets with no tier stay flagged.';
+const RESOLVE_EVIDENCE =
+  'System inventory reconcile. A PAID or PARTIALLY_REFUNDED order with a VALID or USED ticket becomes SOLD. A REFUNDED or CANCELLED order becomes RELEASED. Ambiguous tickets are listed and not written. A paid valid seat is never released.';
 const MAX_PLAN_BYTES = 8 * 1024 * 1024;
 const allocated = (state) => ['HELD', 'SOLD'].includes(state);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -518,7 +520,254 @@ function isUpcoming(event, now) {
   return Boolean(boundary) && new Date(boundary).getTime() > now.getTime();
 }
 
-function systemDecision(snapshot) {
+function paidLike(status) {
+  return status === 'PAID' || status === 'PARTIALLY_REFUNDED';
+}
+
+function seatKept(ticket) {
+  return ticket.status === 'VALID' || ticket.status === 'USED';
+}
+
+function windowMatch(ticket, tier) {
+  const created = new Date(ticket.createdAt).getTime();
+  if (created < new Date(tier.createdAt).getTime()) return false;
+  if (tier.startsAt && created < new Date(tier.startsAt).getTime()) return false;
+  if (tier.endsAt && created >= new Date(tier.endsAt).getTime()) return false;
+  return true;
+}
+
+function bySchedule(left, right) {
+  if (left.sortOrder !== right.sortOrder) return left.sortOrder - right.sortOrder;
+  const created = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+  if (created !== 0) return created;
+  return left.id.localeCompare(right.id);
+}
+
+function promoPriced(order) {
+  return Boolean(
+    order && (order.promoCodeId || new Prisma.Decimal(order.discountAmount || 0).greaterThan(0))
+  );
+}
+
+function chooseTier(ticket, tiers, order) {
+  if (ticket.tierId && tiers.some((tier) => tier.id === ticket.tierId)) return ticket.tierId;
+  if (!tiers.length) return null;
+  const priced = tiers.filter(
+    (tier) => windowMatch(ticket, tier) && new Prisma.Decimal(ticket.pricePaid).equals(tier.price)
+  );
+  if (priced.length) return [...priced].sort(bySchedule)[0].id;
+  const samePrice = tiers.filter((tier) => new Prisma.Decimal(ticket.pricePaid).equals(tier.price));
+  if (samePrice.length) return [...samePrice].sort(bySchedule)[0].id;
+  if (promoPriced(order)) {
+    const windows = tiers.filter((tier) => windowMatch(ticket, tier));
+    if (windows.length) return [...windows].sort(bySchedule)[0].id;
+    if (tiers.length === 1) return tiers[0].id;
+  }
+  return undefined;
+}
+
+function listTicket(ticket, order, reason) {
+  return {
+    ticketId: ticket.id,
+    fromState: ticket.inventoryState,
+    orderStatus: order ? order.status : 'MISSING',
+    ticketStatus: ticket.status,
+    reason,
+  };
+}
+
+function resolveUnknownDecision(snapshot, context) {
+  const orders = new Map(snapshot.orders.map((order) => [order.id, order]));
+  const tiers = snapshot.tiers.map((tier) => ({
+    ...tier,
+    sortOrder: context.sortOrder.get(tier.id) || 0,
+  }));
+  const unresolved = [];
+  const ticketChanges = [];
+  const finalState = new Map();
+  for (const ticket of snapshot.tickets) {
+    const order = orders.get(ticket.orderId);
+    const keep = () =>
+      finalState.set(ticket.id, { state: ticket.inventoryState, tierId: ticket.tierId });
+    if (
+      !order ||
+      order.eventId !== snapshot.type.eventId ||
+      ticket.eventId !== snapshot.type.eventId
+    ) {
+      unresolved.push(listTicket(ticket, order, 'inconsistent-ticket'));
+      keep();
+      continue;
+    }
+    if (ticket.inventoryState !== 'UNKNOWN') {
+      if (ticket.inventoryState === 'HELD' && order.status !== 'PENDING') {
+        unresolved.push(listTicket(ticket, order, 'held-on-non-pending-order'));
+        keep();
+        continue;
+      }
+      if (
+        allocated(ticket.inventoryState) &&
+        !paidLike(order.status) &&
+        ticket.inventoryState === 'SOLD'
+      ) {
+        unresolved.push(listTicket(ticket, order, 'sold-on-unpaid-order'));
+        keep();
+        continue;
+      }
+      if (
+        ticket.inventoryState === 'SOLD' &&
+        (order.paymentStatus !== 'SUCCEEDED' ||
+          ['REQUESTED', 'PENDING', 'UNCERTAIN'].includes(order.refundStatus))
+      ) {
+        unresolved.push(listTicket(ticket, order, 'financial-state'));
+        keep();
+        continue;
+      }
+      if (
+        allocated(ticket.inventoryState) &&
+        (!ticket.tierId || !tiers.some((tier) => tier.id === ticket.tierId))
+      ) {
+        unresolved.push(listTicket(ticket, order, 'unattributed'));
+        keep();
+        continue;
+      }
+      keep();
+      continue;
+    }
+    let next = null;
+    let reason = null;
+    if (paidLike(order.status) && order.paymentStatus === 'SUCCEEDED' && seatKept(ticket)) {
+      next = 'SOLD';
+      reason = 'paid-valid-or-used';
+    } else if (order.status === 'REFUNDED' || order.status === 'CANCELLED') {
+      next = 'RELEASED';
+      reason = 'refunded-or-cancelled-order';
+    } else {
+      unresolved.push(
+        listTicket(
+          ticket,
+          order,
+          paidLike(order.status)
+            ? 'paid-ticket-not-valid'
+            : order.status === 'PENDING'
+              ? 'pending-order'
+              : 'unclassified-unknown'
+        )
+      );
+      keep();
+      continue;
+    }
+    let tierId = ticket.tierId;
+    if (next === 'SOLD') {
+      const chosen = chooseTier(ticket, tiers, context.promo.get(ticket.orderId) || order);
+      if (chosen === undefined) {
+        unresolved.push(listTicket(ticket, order, 'tier-unattributed'));
+        keep();
+        continue;
+      }
+      tierId = chosen;
+    }
+    finalState.set(ticket.id, { state: next, tierId });
+    if (next !== ticket.inventoryState || tierId !== ticket.tierId) {
+      ticketChanges.push({
+        ticketId: ticket.id,
+        fromState: ticket.inventoryState,
+        toState: next,
+        fromTierId: ticket.tierId,
+        toTierId: tierId,
+        reason,
+      });
+    }
+  }
+  const counted = new Map(
+    snapshot.tiers.map((tier) => [tier.id, { id: tier.id, quantitySold: 0, quantityHeld: 0 }])
+  );
+  let held = 0,
+    sold = 0;
+  for (const ticket of snapshot.tickets) {
+    const final = finalState.get(ticket.id);
+    if (final.state === 'HELD') held++;
+    if (final.state === 'SOLD') sold++;
+    if (
+      (final.state === 'HELD' || final.state === 'SOLD') &&
+      final.tierId &&
+      counted.has(final.tierId)
+    ) {
+      counted.get(final.tierId)[final.state === 'HELD' ? 'quantityHeld' : 'quantitySold']++;
+    }
+  }
+  const overCapacity =
+    held + sold > snapshot.type.quantityTotal ||
+    snapshot.tiers.some((tier) => {
+      const count = counted.get(tier.id);
+      return (
+        tier.quantityLimit !== null && count.quantityHeld + count.quantitySold > tier.quantityLimit
+      );
+    });
+  if (overCapacity) {
+    return {
+      action: 'leave-flagged',
+      reason: 'over-capacity',
+      changes: null,
+      unresolved: snapshot.tickets
+        .filter((ticket) => ticket.inventoryState !== 'RELEASED')
+        .map((ticket) => listTicket(ticket, orders.get(ticket.orderId), 'over-capacity')),
+    };
+  }
+  const ready = unresolved.length === 0;
+  const typeAfter = {
+    quantityTotal: snapshot.type.quantityTotal,
+    quantityHeld: held,
+    quantitySold: sold,
+    quantityAvailable: snapshot.type.quantityTotal - held - sold,
+    tierInventoryStatus: ready ? 'READY' : 'REQUIRES_RECONCILIATION',
+  };
+  const countersDiffer =
+    snapshot.type.quantityHeld !== held ||
+    snapshot.type.quantitySold !== sold ||
+    snapshot.type.quantityAvailable !== typeAfter.quantityAvailable ||
+    snapshot.type.tierInventoryStatus !== typeAfter.tierInventoryStatus ||
+    snapshot.tiers.some((tier) => {
+      const count = counted.get(tier.id);
+      return tier.quantityHeld !== count.quantityHeld || tier.quantitySold !== count.quantitySold;
+    });
+  if (!ticketChanges.length && (!countersDiffer || !ready)) {
+    return {
+      action: unresolved.length ? 'list' : 'unchanged',
+      reason: unresolved.length ? unresolved[0].reason : 'already-consistent',
+      changes: null,
+      unresolved,
+    };
+  }
+  return {
+    action: 'reconcile',
+    reason: ready ? (ticketChanges.length ? 'resolve-unknown' : 'counters') : unresolved[0].reason,
+    changes: { type: typeAfter, tiers: [...counted.values()], tickets: ticketChanges },
+    unresolved,
+  };
+}
+
+async function resolveContext(db, snapshot) {
+  const orderIds = snapshot.orders.map((order) => order.id);
+  const [tiers, orders] = await Promise.all([
+    db.ticketTier.findMany({
+      where: { ticketTypeId: snapshot.type.id },
+      select: { id: true, sortOrder: true },
+    }),
+    orderIds.length
+      ? db.order.findMany({
+          where: { id: { in: orderIds } },
+          select: { id: true, promoCodeId: true, discountAmount: true },
+        })
+      : [],
+  ]);
+  return {
+    sortOrder: new Map(tiers.map((tier) => [tier.id, tier.sortOrder])),
+    promo: new Map(orders.map((order) => [order.id, order])),
+  };
+}
+
+function systemDecision(snapshot, context = null) {
+  if (context) return resolveUnknownDecision(snapshot, context);
   // UNKNOWN stays UNKNOWN. This path never assigns a tier or clears that state.
   if (snapshot.tickets.some((ticket) => ticket.inventoryState === 'UNKNOWN')) {
     return { action: 'leave-flagged', reason: 'unknown-inventory', changes: null };
@@ -551,7 +800,9 @@ function systemDecision(snapshot) {
     }
     if (ticket.inventoryState === 'HELD') held++;
     else sold++;
-    counters.get(ticket.tierId)[ticket.inventoryState === 'HELD' ? 'quantityHeld' : 'quantitySold']++;
+    counters.get(ticket.tierId)[
+      ticket.inventoryState === 'HELD' ? 'quantityHeld' : 'quantitySold'
+    ]++;
   }
   if (held + sold > snapshot.type.quantityTotal) {
     return { action: 'leave-flagged', reason: 'over-capacity', changes: null };
@@ -580,7 +831,9 @@ function systemDecision(snapshot) {
     snapshot.type.tierInventoryStatus !== 'READY' ||
     snapshot.tiers.some((tier) => {
       const counted = counters.get(tier.id);
-      return tier.quantityHeld !== counted.quantityHeld || tier.quantitySold !== counted.quantitySold;
+      return (
+        tier.quantityHeld !== counted.quantityHeld || tier.quantitySold !== counted.quantitySold
+      );
     });
   if (!countersDiffer) return { action: 'unchanged', reason: 'already-consistent', changes: null };
   return { action: 'reconcile', reason: 'counters', changes: { type: typeAfter, tiers } };
@@ -598,12 +851,20 @@ function systemSummary(event, snapshot, decision) {
     action: decision.action,
     reason: decision.reason,
     changes: decision.changes,
+    unresolved: decision.unresolved || [],
   };
 }
 
-async function flaggedTicketTypes(db) {
+async function flaggedTicketTypes(db, resolveUnknown) {
   return db.ticketType.findMany({
-    where: { tierInventoryStatus: 'REQUIRES_RECONCILIATION' },
+    where: resolveUnknown
+      ? {
+          OR: [
+            { tierInventoryStatus: 'REQUIRES_RECONCILIATION' },
+            { tickets: { some: { inventoryState: 'UNKNOWN' } } },
+          ],
+        }
+      : { tierInventoryStatus: 'REQUIRES_RECONCILIATION' },
     orderBy: { id: 'asc' },
     select: {
       id: true,
@@ -620,22 +881,24 @@ async function flaggedTicketTypes(db) {
   });
 }
 
-async function systemDryRun(prisma, { upcomingOnly, now = new Date() }) {
+async function systemDryRun(prisma, { upcomingOnly, resolveUnknown = false, now = new Date() }) {
   return prisma.$transaction(
     async (db) => {
       await db.$executeRawUnsafe('SET TRANSACTION READ ONLY');
-      const selected = (await flaggedTicketTypes(db)).filter(
+      const selected = (await flaggedTicketTypes(db, resolveUnknown)).filter(
         (row) => !upcomingOnly || isUpcoming(row.event, now)
       );
       const types = [];
       for (const row of selected) {
         const snapshot = await readSnapshot(db, row.id);
-        types.push(systemSummary(row.event, snapshot, systemDecision(snapshot)));
+        const context = resolveUnknown ? await resolveContext(db, snapshot) : null;
+        types.push(systemSummary(row.event, snapshot, systemDecision(snapshot, context)));
       }
       return {
         mode: 'dry-run',
         actorId: SYSTEM_ACTOR,
         upcomingOnly,
+        resolveUnknown,
         writes: false,
         changed: types.filter((row) => row.action === 'reconcile').length,
         types,
@@ -645,7 +908,7 @@ async function systemDryRun(prisma, { upcomingOnly, now = new Date() }) {
   );
 }
 
-async function applySystemType(prisma, id, env) {
+async function applySystemType(prisma, id, env, resolveUnknown) {
   if (
     env.TIXMO_ALLOW_INVENTORY_RECONCILIATION !== 'true' ||
     env.TIXMO_INVENTORY_WRITERS_QUIESCED !== 'true'
@@ -666,9 +929,30 @@ async function applySystemType(prisma, id, env) {
       }
       await db.$queryRaw`SELECT id FROM ticket_types WHERE id = ${id} FOR UPDATE`;
       const snapshot = await readSnapshot(db, id);
-      const decision = systemDecision(snapshot);
+      const context = resolveUnknown ? await resolveContext(db, snapshot) : null;
+      const decision = systemDecision(snapshot, context);
       if (decision.action !== 'reconcile')
         return { decision, auditId: null, wrote: false, snapshot };
+      for (const change of decision.changes.tickets || []) {
+        if (
+          change.fromState === 'SOLD' &&
+          change.toState === 'RELEASED' &&
+          change.reason !== 'refunded-or-cancelled-order'
+        ) {
+          reject('Refusing to release a sold seat on a paid, valid ticket.');
+        }
+        const written = await db.ticket.updateMany({
+          where: {
+            id: change.ticketId,
+            ticketTypeId: id,
+            inventoryState: change.fromState,
+            tierId: change.fromTierId,
+          },
+          data: { inventoryState: change.toState, tierId: change.toTierId },
+        });
+        if (written.count !== 1)
+          reject('Inventory changed while the system reconcile was applying.');
+      }
       for (const tier of decision.changes.tiers) {
         await db.ticketTier.update({
           where: { id: tier.id },
@@ -688,7 +972,10 @@ async function applySystemType(prisma, id, env) {
         data: {
           ticketTypeId: id,
           actorId: SYSTEM_ACTOR,
-          evidence: SYSTEM_EVIDENCE,
+          evidence:
+            resolveUnknown && (decision.changes.tickets || []).length
+              ? RESOLVE_EVIDENCE
+              : SYSTEM_EVIDENCE,
           snapshotFingerprint: snapshotFingerprint(snapshot),
           planFingerprint: digest({
             actorId: SYSTEM_ACTOR,
@@ -712,7 +999,9 @@ async function applySystemType(prisma, id, env) {
           after: {
             type: decision.changes.type,
             tiers: decision.changes.tiers,
-            unknownResolved: false,
+            tickets: decision.changes.tickets || [],
+            unresolved: decision.unresolved || [],
+            unknownResolved: Boolean(resolveUnknown && (decision.changes.tickets || []).length),
           },
         },
         select: { id: true },
@@ -727,14 +1016,17 @@ async function applySystemType(prisma, id, env) {
   );
 }
 
-async function systemApply(prisma, { upcomingOnly, now = new Date(), env = process.env }) {
-  const selected = (await flaggedTicketTypes(prisma)).filter(
+async function systemApply(
+  prisma,
+  { upcomingOnly, resolveUnknown = false, now = new Date(), env = process.env }
+) {
+  const selected = (await flaggedTicketTypes(prisma, resolveUnknown)).filter(
     (row) => !upcomingOnly || isUpcoming(row.event, now)
   );
   const types = [];
   let changed = 0;
   for (const row of selected) {
-    const result = await applySystemType(prisma, row.id, env);
+    const result = await applySystemType(prisma, row.id, env, resolveUnknown);
     if (result.wrote) changed++;
     types.push(systemSummary(row.event, result.snapshot, result.decision));
   }
@@ -742,6 +1034,7 @@ async function systemApply(prisma, { upcomingOnly, now = new Date(), env = proce
     mode: 'apply',
     actorId: SYSTEM_ACTOR,
     upcomingOnly,
+    resolveUnknown,
     writes: changed > 0,
     changed,
     types,
@@ -756,28 +1049,31 @@ function readPlan(file) {
 }
 
 function systemOptions(args) {
-  if (args.some((arg) => !['--dry-run', '--apply', '--upcoming-only'].includes(arg))) {
+  const allowed = ['--dry-run', '--apply', '--upcoming-only', '--resolve-unknown'];
+  if (args.some((arg) => !allowed.includes(arg))) {
     reject('Unknown inventory reconciliation command.');
   }
-  if (args.filter((arg) => arg === '--dry-run').length > 1 ||
-      args.filter((arg) => arg === '--apply').length > 1 ||
-      args.filter((arg) => arg === '--upcoming-only').length > 1) {
+  if (allowed.some((flag) => args.filter((arg) => arg === flag).length > 1)) {
     reject('Invalid or duplicate reconciliation option.');
   }
   const dryRun = args.includes('--dry-run');
   const apply = args.includes('--apply');
   if (dryRun === apply) reject('Choose either --dry-run or --apply.');
-  return { dryRun, upcomingOnly: args.includes('--upcoming-only') };
+  return {
+    dryRun,
+    upcomingOnly: args.includes('--upcoming-only'),
+    resolveUnknown: args.includes('--resolve-unknown'),
+  };
 }
 
 async function main() {
   const args = process.argv.slice(2);
   if (!args.length || ['--help', '-h'].includes(args[0])) {
     console.log(
-      'Usage: npm run inventory:reconcile -- inspect --id TYPE --output PRIVATE_JSON | preview --file PRIVATE_JSON | apply --file PRIVATE_JSON --confirm-plan SHA256 | --dry-run [--upcoming-only] | --apply [--upcoming-only]'
+      'Usage: npm run inventory:reconcile -- inspect --id TYPE --output PRIVATE_JSON | preview --file PRIVATE_JSON | apply --file PRIVATE_JSON --confirm-plan SHA256 | --dry-run [--upcoming-only] [--resolve-unknown] | --apply [--upcoming-only] [--resolve-unknown]'
     );
     console.log(
-      'Requires explicit TIXMO_INVENTORY_DATABASE_URL matching DATABASE_URL if present. Apply also requires TIXMO_ALLOW_INVENTORY_RECONCILIATION=true and TIXMO_INVENTORY_WRITERS_QUIESCED=true. --dry-run and --apply use the system actor and do not need an enabled OWNER/ADMIN. --upcoming-only limits the run to events whose end, or start when there is no end, is still in the future. Ended flagged types are left unchanged and are not an error. Review allocations and provider evidence, stop old writers, and retain the backup before applying. This tool does not change financial state, pricing, currency, capacity, or UNKNOWN inventory.'
+      'Requires explicit TIXMO_INVENTORY_DATABASE_URL matching DATABASE_URL if present. Apply also requires TIXMO_ALLOW_INVENTORY_RECONCILIATION=true and TIXMO_INVENTORY_WRITERS_QUIESCED=true. --dry-run and --apply use the system actor system-inventory-reconcile and do not need an enabled OWNER/ADMIN. --upcoming-only limits the run to events whose end, or start when there is no end, is still in the future. Ended flagged types are left unchanged and are not an error. --resolve-unknown maps a PAID or PARTIALLY_REFUNDED VALID or USED ticket to SOLD and a REFUNDED or CANCELLED order to RELEASED. Ambiguous tickets are listed and not written. This tool does not change financial state, pricing, currency, or capacity, and it never releases a paid valid seat.'
     );
     return;
   }
@@ -788,8 +1084,8 @@ async function main() {
       prisma = new PrismaClient({ datasources: { db: { url: target.url } } });
     try {
       const result = options.dryRun
-        ? await systemDryRun(prisma, { upcomingOnly: options.upcomingOnly })
-        : await systemApply(prisma, { upcomingOnly: options.upcomingOnly });
+        ? await systemDryRun(prisma, options)
+        : await systemApply(prisma, options);
       console.log(JSON.stringify(result, null, 2));
     } finally {
       await prisma.$disconnect();
