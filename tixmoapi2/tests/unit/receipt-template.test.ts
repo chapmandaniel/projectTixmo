@@ -52,7 +52,7 @@ describe('receipt wallet retrieval', () => {
     expect(email.text).toContain('https://dashboard.example.test/wallet');
     expect(email.html).toContain('Sign in with the account used for this order');
     expect(email.text).toContain('Sign in with the account used for this order');
-    expect(email.subject).toBe('Your Tixmo tickets for Test & Event');
+    expect(email.subject).toBe('Order Confirmation - Test & Event');
     expect(email.html).toContain('Total paid:</strong> $25.50 (includes HST and all fees)');
     expect(email.text).toContain('Total paid: $25.50 (includes HST and all fees)');
     expect(email.html).toContain('Includes HST (15%): CA$3.33');

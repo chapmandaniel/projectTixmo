@@ -4,6 +4,7 @@ import {
   formatVenueAddress,
   includedHstAmount,
   receiptDisclosure,
+  receiptHstAmount,
   summarizeTickets,
   venueLine,
 } from '../../src/utils/receipt';
@@ -48,6 +49,9 @@ describe('Canadian money formatting', () => {
     expect(includedHstAmount(33.33, 0.15)).toBe(4.35);
     expect(includedHstAmount(0.01, 0.15)).toBe(0);
     expect(formatHstAmountLine(6.52, 0.15)).toBe('Includes HST (15%): CA$6.52');
+    expect(receiptHstAmount(50, 0.15, 6.52)).toBe(6.52);
+    expect(receiptHstAmount(50, 0.15, 0)).toBe(includedHstAmount(50, 0.15));
+    expect(receiptHstAmount(50, 0.15, null)).toBe(includedHstAmount(50, 0.15));
     expect(receiptDisclosure(50).hstAmount).toBe(
       includedHstAmount(50, receiptDisclosure(50).hstRate)
     );
