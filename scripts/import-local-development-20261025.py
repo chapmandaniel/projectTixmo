@@ -88,6 +88,7 @@ def run(remote, apply):
     before = remote_heads(remote)
     plan = make_plan(manifest, before)
     pending = [e for e in plan if e['action'] == 'create']
+    pending.sort(key=lambda e: e['sha'] != manifest['main'])
     print(json.dumps({'phase': 'plan', 'snapshotBranches': len(plan),
                       'alreadyPresent': len(plan) - len(pending),
                       'createOnly': len(pending),
@@ -111,8 +112,16 @@ def run(remote, apply):
             try:
                 pushed = git('push', '--porcelain', *leases, remote, *specs, check=False)
                 reason = 'accepted' if pushed.returncode == 0 else 'server_refusal'
-                if 'workflows permission' in pushed.stderr.lower():
+                if 'workflow' in pushed.stderr.lower() and 'permission' in pushed.stderr.lower():
                     reason = 'workflow_permission_required'
+                if pushed.returncode:
+                    # GitHub masks its job token too; additionally remove URLs,
+                    # authorization lines and long credential-shaped strings.
+                    diagnostic = re.sub(r'(?im)^.*authorization.*$', '[authorization redacted]', pushed.stderr)
+                    diagnostic = re.sub(r'https?://\S+', '[url]', diagnostic)
+                    diagnostic = re.sub(r'[A-Za-z0-9_/+=.\-]{32,}', '[long identifier]', diagnostic)
+                    print(json.dumps({'phase': 'push-diagnostic',
+                                      'message': diagnostic[-2000:]}), flush=True)
             except subprocess.TimeoutExpired:
                 reason = 'push_timeout'
             observed = remote_heads(remote)
