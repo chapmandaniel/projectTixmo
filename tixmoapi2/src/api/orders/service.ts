@@ -21,6 +21,7 @@ import {
   transitionInventory,
   transitionPromo,
 } from '../../services/order-inventory.service';
+import { voidOrderTickets } from '../../services/ticket-void.service';
 
 interface OrderItemInput {
   ticketTypeId: string;
@@ -56,11 +57,14 @@ export class OrderService {
   // trusted payment/free-order/expiry jobs; never populate it from query input.
   private async actorOrderScope(
     actorId: string,
-    action: 'read' | 'confirm' | 'refund' = 'read'
+    action: 'read' | 'confirm' | 'refund' | 'void' = 'read'
   ): Promise<Prisma.OrderWhereInput> {
     const actor = await getActorScopeById(actorId);
     if (action === 'refund' && !['OWNER', 'ADMIN'].includes(actor.role)) {
       throw ApiError.forbidden('Not authorized to refund orders');
+    }
+    if (action === 'void' && !['OWNER', 'ADMIN'].includes(actor.role)) {
+      throw ApiError.forbidden('Not authorized to void tickets');
     }
     if (action === 'confirm' && !['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'].includes(actor.role)) {
       throw ApiError.forbidden('Not authorized to confirm orders');
@@ -526,6 +530,7 @@ export class OrderService {
           tickets: {
             select: {
               id: true,
+              status: true,
               ticketType: {
                 select: {
                   name: true,
@@ -562,6 +567,42 @@ export class OrderService {
   /**
    * Refund an order (ADMIN only)
    */
+  /**
+   * Void admission without a refund or inventory release. OWNER/ADMIN only.
+   */
+  async voidPaidTickets(
+    id: string,
+    actorId: string,
+    input: { reason: string; ticketId?: string }
+  ): Promise<Order> {
+    const scope = await this.actorOrderScope(actorId, 'void');
+    return prisma.$transaction(async (tx) => {
+      await lockOrder(tx, id);
+      const order = await tx.order.findFirst({ where: { id, ...scope } });
+      if (!order) throw ApiError.notFound('Order not found');
+      if (order.status !== 'PAID' && order.status !== 'PARTIALLY_REFUNDED') {
+        throw ApiError.badRequest('Only paid orders can be voided without a refund');
+      }
+      await voidOrderTickets(tx, {
+        orderId: id,
+        ticketId: input.ticketId,
+        actorId,
+        reason: input.reason,
+        action: 'STAFF_VOID',
+        sourceId: crypto.randomUUID(),
+        voidTickets: true,
+      });
+      return tx.order.findUniqueOrThrow({
+        where: { id },
+        include: {
+          tickets: { include: { ticketType: { select: { name: true } } } },
+          event: { select: { name: true, startDatetime: true } },
+          user: { select: { email: true, firstName: true, lastName: true } },
+        },
+      });
+    });
+  }
+
   async refundOrder(id: string, actorId?: string): Promise<Order> {
     const scope = actorId ? await this.actorOrderScope(actorId, 'refund') : {};
     const observed = await prisma.order.findFirst({ where: { id, ...scope } });

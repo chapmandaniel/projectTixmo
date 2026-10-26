@@ -9,6 +9,7 @@ import {
   ticketFailure,
   consumeTicket,
 } from '../../services/ticket-admission.service';
+import { orderDisputed } from '../../services/ticket-void.service';
 
 interface RegisterScannerData {
   name: string;
@@ -444,6 +445,8 @@ export class ScannerService {
     order: { status: string; refundStatus: string };
     event: { status: string; deletedAt: Date | null };
   }): string {
+    if (orderDisputed(ticket.order.refundStatus) || ticket.status === 'CANCELLED')
+      return 'CANCELLED';
     return ticket.order.status === 'PAID' &&
       ticket.order.refundStatus !== 'PROCESSING' &&
       !ticket.event.deletedAt &&

@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { ApiError } from '../utils/ApiError';
 import { lockOrder } from './order-inventory.service';
+import { DISPUTE_SCAN_REASON, orderDisputed } from './ticket-void.service';
 
 export async function lockedTicket(tx: Prisma.TransactionClient, id: string) {
   const reference = await tx.ticket.findUnique({
@@ -26,6 +27,7 @@ export function ticketFailure(
   entry: boolean,
   enforceTime: boolean
 ): string | undefined {
+  if (orderDisputed(ticket.order.refundStatus)) return DISPUTE_SCAN_REASON;
   if (ticket.status === 'CANCELLED') return 'Ticket has been cancelled';
   if (entry && ticket.status === 'USED') return 'Ticket has already been used';
   if (!['VALID', 'USED'].includes(ticket.status)) return 'Ticket credential must be reissued';
