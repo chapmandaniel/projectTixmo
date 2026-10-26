@@ -4,6 +4,7 @@ import {
     getPaymentCurrency,
     getPolicyLinks,
     getStripePublishableKey,
+    orderDisplayCurrency,
 } from '../lib/runtimeConfig';
 
 describe('runtimeConfig', () => {
@@ -60,5 +61,12 @@ describe('runtimeConfig', () => {
         };
 
         expect(getPaymentCurrency()).toBe('cad');
+    });
+
+    it('formats a recorded order currency and falls back to cad', () => {
+        expect(orderDisplayCurrency('usd')).toBe('usd');
+        expect(orderDisplayCurrency('CAD')).toBe('cad');
+        expect(orderDisplayCurrency('')).toBe('cad');
+        expect(orderDisplayCurrency(undefined)).toBe('cad');
     });
 });

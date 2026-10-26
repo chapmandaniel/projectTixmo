@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
+import { orderDisplayCurrency } from '../lib/runtimeConfig';
 import { BuyerAuthPanel } from './CheckoutPage';
 import { DashboardButton, DashboardChip, DashboardPage, DashboardPageHeader, DashboardSurface, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
 
 const payload = (response) => response?.data?.data || response?.data || response;
-const money = (order) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: (order.currency || 'usd').toUpperCase() }).format(order.totalAmount);
+const money = (order) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: orderDisplayCurrency(order.currency).toUpperCase() }).format(order.totalAmount);
 const WalletPage = ({ user, onAuthenticated }) => {
     const [sessionExpired, setSessionExpired] = useState(false);
     const [orders, setOrders] = useState([]);

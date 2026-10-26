@@ -203,7 +203,7 @@ async function verify(env = process.env, dependencies = {}) {
         oldCommit: OLD_COMMIT,
         applicationContract: contract.mode,
         rollbackPromotionApproved: false,
-        migrations: 33,
+        migrations: 34,
         postUpgradeWriteRetained: true,
         newOldNew: true,
         providerAttempts: 0,

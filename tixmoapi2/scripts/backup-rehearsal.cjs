@@ -155,7 +155,7 @@ function migrations() {
     .readdirSync(base)
     .filter((name) => /^[0-9]/.test(name))
     .sort();
-  if (names.length !== 33) throw new Error('Rejected');
+  if (names.length !== 34) throw new Error('Rejected');
   return names.map((name) => {
     if (!/^[0-9][a-z0-9_]{1,127}$/.test(name)) throw new Error('Rejected');
     return {
@@ -440,7 +440,7 @@ async function observe(args, env, dependencies = {}) {
     snapshotRowsMatch: matched,
     tableCount,
     rowCount,
-    migrations: matched ? 33 : 0,
+    migrations: matched ? 34 : 0,
     serverVersionNum,
     databaseCleanupVerified: databaseRemoved,
     archiveCleanupVerified: fileRemoved,

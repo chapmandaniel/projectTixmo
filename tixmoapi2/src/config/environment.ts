@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { resolvePaymentCurrency } from './payment-currency';
 
 // Tests must not inherit application database or provider credentials from .env.
 if (process.env.NODE_ENV !== 'test') dotenv.config();
@@ -86,7 +87,7 @@ export const config = {
   stripeSecretKey: normalizeOptionalCredential(process.env.STRIPE_SECRET_KEY),
   stripePublishableKey: normalizeOptionalCredential(process.env.STRIPE_PUBLISHABLE_KEY),
   stripeWebhookSecret: normalizeOptionalCredential(process.env.STRIPE_WEBHOOK_SECRET),
-  paymentCurrency: (process.env.PAYMENT_CURRENCY || 'cad').toLowerCase(),
+  paymentCurrency: resolvePaymentCurrency(process.env.PAYMENT_CURRENCY, nodeEnv),
 
   // Email
   postmarkServerToken: process.env.POSTMARK_SERVER_TOKEN || '',

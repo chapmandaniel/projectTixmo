@@ -235,14 +235,14 @@ async function verify(env = process.env, dependencies = {}) {
       .readdirSync(path.join(root, 'tixmoapi2/prisma/migrations'))
       .filter((name) => /^\d/.test(name))
       .sort();
-    assert.equal(migrations.length, 33);
-    assert.equal(await sql(database, 'SELECT count(*) FROM _prisma_migrations;'), '33');
+    assert.equal(migrations.length, 34);
+    assert.equal(await sql(database, 'SELECT count(*) FROM _prisma_migrations;'), '34');
     assert.equal(
       await sql(
         database,
         'SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;'
       ),
-      '33'
+      '34'
     );
     for (const name of migrations) {
       assert.match(name, /^[a-z0-9_]+$/);
@@ -296,7 +296,7 @@ async function verify(env = process.env, dependencies = {}) {
     scope: 'task607-configured-image-populated-upgrade',
     phase,
     ok: verified && databaseRemoved && stageRemoved,
-    migrations: verified ? 33 : 0,
+    migrations: verified ? 34 : 0,
     unchangedHarnessPassed: verified,
     databaseCleanupVerified: databaseRemoved,
     stagingCleanupVerified: stageRemoved,

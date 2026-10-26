@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Filter, ArrowUpDown, RefreshCw, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import api from '../lib/api';
+import { orderDisplayCurrency } from '../lib/runtimeConfig';
 import StatusBadge from '../components/StatusBadge';
 import OrderDetailModal from './OrderDetailModal';
 
@@ -271,7 +272,7 @@ const OrdersView = ({
                                         </td>
                                         <td className="p-4">{normalizeEventName(order)}</td>
                                         <td className="p-4">
-                                            {new Intl.NumberFormat('en-CA', { style: 'currency', currency: (order.currency || 'usd').toUpperCase() }).format(order.totalAmount)}
+                                            {new Intl.NumberFormat('en-CA', { style: 'currency', currency: orderDisplayCurrency(order.currency).toUpperCase() }).format(order.totalAmount)}
                                         </td>
                                         <td className="p-4 whitespace-nowrap">
                                             {new Date(order.createdAt).toLocaleDateString()}

@@ -114,3 +114,9 @@ it('exports customer-controlled values as text with CSV quotes escaped', () => {
     expect(csv).toContain('"\'\tformula"');
     expect(csv).toContain('"CAD","15.00"');
 });
+
+it('exports a missing order currency as the configured payment currency', () => {
+    const csv = ordersToCsv([{ orderNumber: 'REC-missing', createdAt: '2026-10-04T03:05:00Z', status: 'PAID', totalAmount: 10, tickets: [] }]);
+    expect(csv).toContain('"CAD","10.00"');
+    expect(csv).not.toContain('"USD"');
+});

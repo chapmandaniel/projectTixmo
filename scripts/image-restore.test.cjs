@@ -73,7 +73,7 @@ for (const marker of [PG_IMAGE, REDIS_IMAGE, 'PGDATA: /var/lib/postgresql/data/p
 test('restore source uses a new empty destination, exact snapshots and post-backup writes', () => {
   const source = fs.readFileSync('scripts/verify-image-restore.cjs', 'utf8');
   assert.ok(source.indexOf('guard(env)') < source.indexOf('const url = guard(env)'));
-  assert.match(source, /assert\.equal\(migrations\.length, 33\)/);
+  assert.match(source, /assert\.equal\(migrations\.length, 34\)/);
   assert.match(source, /20261021120000_event_sales_pause/);
   assert.match(source, /20261022143000_buyer_password_recovery/);
   assert.match(source, /--template=template0/);

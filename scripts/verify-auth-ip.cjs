@@ -36,6 +36,7 @@ function childEnv(env) {
     JWT_SECRET: "synthetic-task611-access",
     JWT_REFRESH_SECRET: "synthetic-task611-refresh",
     SESSION_SECRET: "synthetic-task611-session",
+    PAYMENT_CURRENCY: "cad",
     TIXMO_AUTH_IP_SOURCE_SHA: env.TIXMO_AUTH_IP_SOURCE_SHA,
     TIXMO_AUTH_IP_RUN_ID: env.TIXMO_AUTH_IP_RUN_ID,
   };

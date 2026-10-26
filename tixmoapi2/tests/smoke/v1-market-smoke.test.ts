@@ -2,6 +2,7 @@ import request from 'supertest';
 import { UserRole } from '@prisma/client';
 
 process.env.NODE_ENV = 'test';
+process.env.PAYMENT_CURRENCY = 'cad';
 
 const isPlaceholderCredential = (value?: string) => {
   const lowerValue = value?.trim().toLowerCase() || '';
@@ -202,6 +203,8 @@ describe('V1 market readiness smoke', () => {
       });
     expectSuccess(orderResponse, 201, 'Create multi-ticket order');
     expect(orderResponse.body.data.status).toBe('PENDING');
+    expect(orderResponse.body.data.currency).toBe('cad');
+    expect(config.paymentCurrency).toBe('cad');
     expect(Number(orderResponse.body.data.totalAmount)).toBe(85);
 
     const paymentIntentResponse = await request(app)
@@ -212,6 +215,14 @@ describe('V1 market readiness smoke', () => {
     expect(paymentIntentResponse.body.data.paymentIntentId).toContain(orderResponse.body.data.id);
 
     const { paymentService } = require('../../src/api/payments/service');
+    expect(paymentService.stripe.paymentIntents.create).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 8500, currency: 'cad' }),
+      expect.any(Object)
+    );
+    const attempt = await prisma.paymentAttempt.findUnique({
+      where: { orderId: orderResponse.body.data.id },
+    });
+    expect(attempt).toMatchObject({ amount: 8500, currency: 'cad' });
     paymentService.stripe.webhooks.constructEvent.mockReturnValue({
       id: `evt_v1_smoke_${orderResponse.body.data.id}`,
       type: 'payment_intent.succeeded',
@@ -240,6 +251,7 @@ describe('V1 market readiness smoke', () => {
       include: { tickets: true },
     });
     expect(paidOrder?.status).toBe('PAID');
+    expect(paidOrder?.currency).toBe('cad');
     expect(paidOrder?.tickets).toHaveLength(2);
 
     const scannerResponse = await request(app)

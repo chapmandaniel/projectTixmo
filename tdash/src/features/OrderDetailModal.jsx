@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Calendar, User, CreditCard, Mail, Phone, ShoppingBag, AlertTriangle, CheckCircle } from 'lucide-react';
 import api from '../lib/api';
+import { orderDisplayCurrency } from '../lib/runtimeConfig';
 import { DashboardButton, DashboardSurface } from '../components/dashboard/DashboardPrimitives';
 
 const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
@@ -17,7 +18,7 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
-            currency: (order.currency || 'usd').toUpperCase()
+            currency: orderDisplayCurrency(order.currency).toUpperCase()
         }).format(amount);
     };
 

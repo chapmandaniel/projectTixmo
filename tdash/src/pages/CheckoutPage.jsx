@@ -28,6 +28,7 @@ import {
     getPaymentCurrency,
     getPolicyLinks,
     getStripePublishableKey,
+    orderDisplayCurrency,
 } from '../lib/runtimeConfig';
 import { checkoutTicketState, checkoutBoundaryDelay } from '../lib/checkoutEligibility';
 import { SALES_PAUSED_MESSAGE, isSalesPausedError } from '../lib/salesPause';
@@ -35,11 +36,11 @@ import { cn } from '../lib/utils';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import { initialTicketQuantities } from '../lib/publicEvent';
 
-const formatMoney = (value, currency = 'usd') => {
+const formatMoney = (value, currency) => {
     const amount = Number(value) || 0;
     return new Intl.NumberFormat(undefined, {
         style: 'currency',
-        currency: String(currency || 'usd').toUpperCase(),
+        currency: orderDisplayCurrency(currency).toUpperCase(),
     }).format(amount);
 };
 

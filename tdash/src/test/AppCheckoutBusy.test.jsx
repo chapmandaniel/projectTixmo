@@ -52,7 +52,10 @@ const signIn = async () => {
 
 
 vi.mock('../lib/runtimeConfig', () => ({
-    getApiBaseUrl: () => '/api/v1', getPaymentCurrency: () => 'usd', getStripePublishableKey: () => 'pk_test_mock',
+    getApiBaseUrl: () => '/api/v1', getPaymentCurrency: () => 'cad', orderDisplayCurrency: (currency) => {
+        const value = String(currency || '').trim().toLowerCase();
+        return /^[a-z]{3}$/.test(value) ? value : 'cad';
+    }, getStripePublishableKey: () => 'pk_test_mock',
     getPolicyLinks: () => ({ termsUrl: '/terms', privacyPolicyUrl: '/privacy', refundPolicyUrl: '/refunds' }),
 }));
 describe('actual App checkout busy feedback', () => {

@@ -222,7 +222,7 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
           >`SELECT migration_name::text AS name,checksum::text AS checksum,finished_at AS finished,rolled_back_at AS rolled FROM public._prisma_migrations ORDER BY migration_name`
       );
     const beforeLedger = await ledger();
-    expect(beforeLedger).toHaveLength(33);
+    expect(beforeLedger).toHaveLength(34);
     for (const row of beforeLedger) {
       expect(row.finished).not.toBeNull();
       expect(row.rolled).toBeNull();

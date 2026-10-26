@@ -5,6 +5,7 @@ import OrderDetailModal from './OrderDetailModal';
 import { DashboardButton, DashboardSelect, DashboardSurface, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../lib/dashboardTheme';
 import { ordersToCsv } from '../lib/ordersCsv';
+import { orderDisplayCurrency } from '../lib/runtimeConfig';
 
 const unwrap = (response) => response.data.data || response.data;
 const ECC_Orders = ({ event, isDark }) => {
@@ -70,7 +71,7 @@ const ECC_Orders = ({ event, isDark }) => {
         } catch (requestError) { setActionError(requestError.response?.data?.message || requestError.message || 'Unable to export orders.'); }
         finally { setExporting(false); }
     };
-    const money = (order) => new Intl.NumberFormat(undefined, { style: 'currency', currency: (order.currency || 'usd').toUpperCase(), currencyDisplay: 'code' }).format(Number(order.totalAmount));
+    const money = (order) => new Intl.NumberFormat(undefined, { style: 'currency', currency: orderDisplayCurrency(order.currency).toUpperCase(), currencyDisplay: 'code' }).format(Number(order.totalAmount));
     return <div className={`space-y-5 ${theme.textPrimary}`}>
         <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); setSearch(searchInput.trim()); setPage(1); }}>
             <label className="block w-full space-y-2 text-sm sm:w-80">Search orders<DashboardTextInput isDark={isDark} aria-label="Search orders" placeholder="Order number, name, email" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} maxLength={200} /></label>

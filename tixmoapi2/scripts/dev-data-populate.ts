@@ -33,6 +33,12 @@ import {
   assertDevelopmentClient,
   createDevelopmentClient,
 } from '../prisma/utils/development-client';
+import { resolvePaymentCurrency } from '../src/config/payment-currency';
+
+const paymentCurrency = resolvePaymentCurrency(
+  process.env.PAYMENT_CURRENCY,
+  process.env.NODE_ENV || 'development'
+);
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -93,7 +99,7 @@ async function populateFixtures(prisma: PrismaClient) {
         slug: faker.helpers.slugify(od.name).toLowerCase() + '-' + faker.string.alphanumeric(4),
         type: od.type,
         status: od.status,
-        settings: { theme: 'dark', currency: 'USD' },
+        settings: { theme: 'dark', currency: paymentCurrency.toUpperCase() },
       },
     });
     orgs.push(org);
@@ -787,6 +793,7 @@ async function populateFixtures(prisma: PrismaClient) {
               ? `pi_${faker.string.alphanumeric(24)}`
               : null,
           paymentMethod: paymentStatus === PaymentStatus.SUCCEEDED ? 'card' : null,
+          currency: paymentCurrency,
           promoCodeId: promoCode?.id || null,
           ipAddress: faker.internet.ipv4(),
           userAgent: faker.internet.userAgent(),

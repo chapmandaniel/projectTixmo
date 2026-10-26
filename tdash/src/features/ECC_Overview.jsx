@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { DashboardButton, DashboardEmptyState, DashboardSelect, DashboardStat, DashboardSurface } from '../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../lib/dashboardTheme';
+import { orderDisplayCurrency } from '../lib/runtimeConfig';
 
 const payload = (response) => response.data.data || response.data;
 const ECC_Overview = ({ event, isDark, onViewOrders }) => {
@@ -51,7 +52,7 @@ const ECC_Overview = ({ event, isDark, onViewOrders }) => {
                 </DashboardSurface>
                 <DashboardSurface isDark={isDark} className="space-y-4 p-5">
                     <h3 className="text-xl font-light">Recent paid orders</h3>
-                    {!data.orders.length ? <p className={`text-sm ${theme.textSecondary}`}>No paid orders recorded.</p> : <ul className="space-y-4">{data.orders.map((order) => <li key={order.id} className="text-sm"><p>{order.orderNumber} · {money(order.totalAmount, order.currency || 'usd')}</p><p className={theme.textSecondary}>{new Date(order.createdAt).toLocaleString()}</p></li>)}</ul>}
+                    {!data.orders.length ? <p className={`text-sm ${theme.textSecondary}`}>No paid orders recorded.</p> : <ul className="space-y-4">{data.orders.map((order) => <li key={order.id} className="text-sm"><p>{order.orderNumber} · {money(order.totalAmount, orderDisplayCurrency(order.currency))}</p><p className={theme.textSecondary}>{new Date(order.createdAt).toLocaleString()}</p></li>)}</ul>}
                     {onViewOrders && <DashboardButton isDark={isDark} variant="secondary" onClick={onViewOrders}>View orders</DashboardButton>}
                 </DashboardSurface>
             </div>

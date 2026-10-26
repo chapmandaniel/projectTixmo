@@ -27,6 +27,15 @@ export const getStripePublishableKey = () => (
     getRuntimeConfigValue('stripePublishableKey') || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ''
 );
 
+const normalizeCurrency = (value) => {
+    const currency = String(value || '').trim().toLowerCase();
+    return /^[a-z]{3}$/.test(currency) ? currency : '';
+};
+
 export const getPaymentCurrency = () => (
-    getRuntimeConfigValue('paymentCurrency') || import.meta.env.VITE_PAYMENT_CURRENCY || 'cad'
+    normalizeCurrency(getRuntimeConfigValue('paymentCurrency'))
+    || normalizeCurrency(import.meta.env.VITE_PAYMENT_CURRENCY)
+    || 'cad'
 );
+
+export const orderDisplayCurrency = (currency) => normalizeCurrency(currency) || getPaymentCurrency();

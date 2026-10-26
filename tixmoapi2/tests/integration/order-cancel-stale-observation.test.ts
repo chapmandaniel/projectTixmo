@@ -64,6 +64,7 @@ async function fixture(paymentStatus: 'PENDING' | 'PROCESSING' = 'PENDING') {
         userId,
         eventId: event.id,
         totalAmount: 20,
+        currency: 'cad',
         paymentStatus,
         tickets: {
           create: [0, 1].map((i) => ({

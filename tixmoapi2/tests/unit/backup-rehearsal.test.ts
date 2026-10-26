@@ -10,7 +10,7 @@ const env = {
   DATABASE_URL:
     'postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:49152/tixmo_disposable_restore_source?schema=public',
 };
-const expected = Array.from({ length: 33 }, (_, i) => ({
+const expected = Array.from({ length: 34 }, (_, i) => ({
   name: `20261022${String(i).padStart(6, '0')}_synthetic`,
   checksum: 'a'.repeat(64),
 }));
@@ -213,7 +213,7 @@ it('snapshot fingerprints and native dump share held read-only transaction; only
     snapshotRowsMatch: true,
     tableCount: 2,
     rowCount: 2,
-    migrations: 33,
+    migrations: 34,
     databaseCleanupVerified: true,
     archiveCleanupVerified: true,
     possibleDatabaseOrphan: false,
