@@ -170,6 +170,12 @@ describe('Payment, admission and inventory integrity', () => {
     fake.events.set(id, event);
     return service.handleWebhook('synthetic_signature', Buffer.from(JSON.stringify(event)));
   }
+  async function deliverExternal(type: string, object: any, id = 'evt_' + randomUUID()) {
+    const event = { id, type, data: { object } };
+    fake.events.set(id, event);
+    return service.handleWebhook('synthetic_signature', Buffer.from(JSON.stringify(event)));
+  }
+  const orderCents = (value: { toNumber(): number }) => Math.round(value.toNumber() * 100);
   const stock = () => prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } });
 
   it('reuses one durable payment session across concurrent requests and a lost response', async () => {
@@ -709,5 +715,246 @@ describe('Payment, admission and inventory integrity', () => {
     expect((await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } })).status).toBe(
       'VALID'
     );
+  });
+
+  it('voids tickets once when Stripe Dashboard refunds the full charge', async () => {
+    const order = await paid();
+    const amount = orderCents(order.totalAmount);
+    const paymentIntentId = order.paymentIntentId;
+    if (!paymentIntentId) throw new Error('paid order has no payment intent');
+    const refund = {
+      id: 're_dashboard',
+      amount,
+      currency: order.currency,
+      payment_intent: paymentIntentId,
+      metadata: {},
+    };
+    await deliverExternal('refund.created', { ...refund, status: 'pending' }, 'evt_pending');
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe('PAID');
+    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(0);
+
+    await Promise.all([
+      deliverExternal('refund.updated', { ...refund, status: 'succeeded' }, 'evt_updated'),
+      deliverExternal('refund.created', { ...refund, status: 'succeeded' }, 'evt_created_dup'),
+    ]);
+    await deliverExternal(
+      'charge.refunded',
+      {
+        id: 'ch_dashboard',
+        amount,
+        amount_refunded: amount,
+        currency: order.currency,
+        refunded: true,
+        payment_intent: paymentIntentId,
+        refunds: { object: 'list', data: [{ ...refund, status: 'succeeded' }], has_more: false },
+      },
+      'evt_charge'
+    );
+
+    expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
+    expect(fake.stripe.refunds.list).not.toHaveBeenCalled();
+    const rows = await prisma.paymentRefund.findMany({ where: { orderId: order.id } });
+    expect(rows).toEqual([
+      expect.objectContaining({
+        reason: 'ORDER_REFUND',
+        status: 'SUCCEEDED',
+        stripeRefundId: 're_dashboard',
+        amount,
+        currency: order.currency,
+        paymentIntentId,
+      }),
+    ]);
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
+      status: 'REFUNDED',
+      refundStatus: 'SUCCEEDED',
+    });
+    expect(await stock()).toMatchObject({ quantitySold: 0, quantityAvailable: 20 });
+    expect(
+      await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id: 'evt_updated' } })
+    ).toMatchObject({ paymentIntentId, status: 'PROCESSED' });
+    const ticket = await prisma.ticket.findFirstOrThrow({ where: { orderId: order.id } });
+    expect(ticket).toMatchObject({ status: 'CANCELLED', inventoryState: 'RELEASED' });
+    const scan = await scannerService.scanTicket({
+      scannerId: scanner.id,
+      qrData: generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId),
+      scanType: 'ENTRY',
+    });
+    expect(scan.success).toBe(false);
+    expect(scan.reason).toMatch(/cancelled/i);
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } })).status).toBe(
+      'CANCELLED'
+    );
+  });
+
+  it('settles charge.refunded from the processor refund list without creating a refund', async () => {
+    const order = await paid();
+    const amount = orderCents(order.totalAmount);
+    const paymentIntentId = order.paymentIntentId;
+    if (!paymentIntentId) throw new Error('paid order has no payment intent');
+    fake.refunds.set('re_listed', {
+      id: 're_listed',
+      amount,
+      currency: order.currency,
+      status: 'succeeded',
+      payment_intent: paymentIntentId,
+    });
+    await deliverExternal('charge.refunded', {
+      id: 'ch_listed',
+      amount,
+      amount_refunded: amount,
+      currency: order.currency,
+      refunded: true,
+      payment_intent: paymentIntentId,
+      refunds: { object: 'list', data: [], has_more: true },
+    });
+    await deliverExternal('charge.refunded', {
+      id: 'ch_listed',
+      amount,
+      amount_refunded: amount,
+      currency: order.currency,
+      refunded: true,
+      payment_intent: paymentIntentId,
+      refunds: { object: 'list', data: [], has_more: true },
+    });
+    expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
+    expect(fake.stripe.refunds.list).toHaveBeenCalledTimes(1);
+    expect(await prisma.paymentRefund.count({ where: { paymentIntentId } })).toBe(1);
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
+      status: 'REFUNDED',
+      refundStatus: 'SUCCEEDED',
+    });
+    expect(await prisma.ticket.findFirstOrThrow({ where: { orderId: order.id } })).toMatchObject({
+      status: 'CANCELLED',
+    });
+  });
+
+  it('does not create another Stripe refund for a refund the app already started', async () => {
+    const order = await paid();
+    await service.refundOrder(order.id);
+    expect(fake.stripe.refunds.create).toHaveBeenCalledTimes(1);
+    const providerRefund = [...fake.refunds.values()][0];
+    await deliverExternal('refund.created', providerRefund, 'evt_app_refund');
+    await deliverExternal('refund.updated', providerRefund, 'evt_app_refund_dup');
+    expect(fake.stripe.refunds.create).toHaveBeenCalledTimes(1);
+    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(1);
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe(
+      'REFUNDED'
+    );
+
+    const inflight = await paid();
+    const amount = orderCents(inflight.totalAmount);
+    const paymentIntentId = inflight.paymentIntentId;
+    if (!paymentIntentId) throw new Error('paid order has no payment intent');
+    await prisma.paymentRefund.create({
+      data: {
+        orderId: inflight.id,
+        paymentIntentId,
+        amount,
+        currency: inflight.currency,
+        reason: 'ORDER_REFUND',
+        status: 'REQUESTED',
+      },
+    });
+    await deliverExternal('refund.updated', {
+      id: 're_external',
+      amount,
+      currency: inflight.currency,
+      status: 'succeeded',
+      payment_intent: paymentIntentId,
+      metadata: {},
+    });
+    expect(fake.stripe.refunds.create).toHaveBeenCalledTimes(1);
+    expect(
+      await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId } })
+    ).toMatchObject({ status: 'SUCCEEDED', stripeRefundId: 're_external', reason: 'ORDER_REFUND' });
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: inflight.id } })).status).toBe(
+      'REFUNDED'
+    );
+    expect(await stock()).toMatchObject({ quantitySold: 0, quantityAvailable: 20 });
+  });
+
+  it('leaves a partial or failed dashboard refund paid so the ticket can still scan', async () => {
+    const order = await paid();
+    const amount = orderCents(order.totalAmount);
+    const paymentIntentId = order.paymentIntentId;
+    if (!paymentIntentId) throw new Error('paid order has no payment intent');
+    await deliverExternal('refund.failed', {
+      id: 're_failed',
+      amount,
+      currency: order.currency,
+      status: 'failed',
+      payment_intent: paymentIntentId,
+    });
+    await deliverExternal('refund.created', {
+      id: 're_partial',
+      amount: amount - 1,
+      currency: order.currency,
+      status: 'succeeded',
+      payment_intent: paymentIntentId,
+      metadata: {},
+    });
+    await deliverExternal('charge.refunded', {
+      id: 'ch_partial',
+      amount,
+      amount_refunded: amount - 1,
+      currency: order.currency,
+      refunded: false,
+      payment_intent: paymentIntentId,
+    });
+    expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
+    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(0);
+    const current = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      include: { tickets: true },
+    });
+    expect(current).toMatchObject({ status: 'PAID', refundStatus: 'NONE' });
+    expect(current.tickets[0]).toMatchObject({ status: 'VALID', inventoryState: 'SOLD' });
+    const ticket = current.tickets[0];
+    expect(
+      (
+        await scannerService.scanTicket({
+          scannerId: scanner.id,
+          qrData: generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId),
+          scanType: 'ENTRY',
+        })
+      ).success
+    ).toBe(true);
+  });
+
+  it('voids tickets when dashboard partial refunds together cover the full charge', async () => {
+    const order = await paid();
+    const amount = orderCents(order.totalAmount);
+    const paymentIntentId = order.paymentIntentId;
+    if (!paymentIntentId) throw new Error('paid order has no payment intent');
+    const first = {
+      id: 're_part_1',
+      amount: Math.floor(amount / 2),
+      currency: order.currency,
+      status: 'succeeded',
+      payment_intent: paymentIntentId,
+    };
+    const second = {
+      id: 're_part_2',
+      amount: amount - first.amount,
+      currency: order.currency,
+      status: 'succeeded',
+      payment_intent: paymentIntentId,
+    };
+    fake.refunds.set(first.id, first);
+    await deliverExternal('refund.created', first, 'evt_part_1');
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe('PAID');
+    fake.refunds.set(second.id, second);
+    await deliverExternal('refund.updated', second, 'evt_part_2');
+    expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
+    expect(await prisma.paymentRefund.count({ where: { paymentIntentId } })).toBe(1);
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
+      status: 'REFUNDED',
+      refundStatus: 'SUCCEEDED',
+    });
+    expect(await prisma.ticket.findFirstOrThrow({ where: { orderId: order.id } })).toMatchObject({
+      status: 'CANCELLED',
+      inventoryState: 'RELEASED',
+    });
+    expect(await stock()).toMatchObject({ quantitySold: 0, quantityAvailable: 20 });
   });
 });

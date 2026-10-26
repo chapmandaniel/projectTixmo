@@ -156,7 +156,9 @@ export class PaymentService {
       else if (event.type === 'payment_intent.payment_failed')
         await this.handlePaymentFailure(intent, claim);
       else if (event.type.startsWith('refund.') || event.type === 'charge.refunded') {
-        // Existing refund records own their independent, idempotent reconciliation.
+        // Full out-of-band refunds void the order. Partials stay paid.
+        // An app-owned row is settled in place and is never sent to Stripe again.
+        await this.applyExternalRefund(event);
         await this.recoverRefunds();
       }
       await this.finishWebhookEvent(claim, 'PROCESSED');
@@ -169,8 +171,7 @@ export class PaymentService {
 
   private async beginWebhookEvent(event: Stripe.Event): Promise<WebhookClaim | null> {
     if (!event.id) throw ApiError.badRequest('Webhook event ID is required');
-    const object = event.data.object as Stripe.PaymentIntent;
-    const context = { paymentIntentId: object.id, orderId: object.metadata?.orderId };
+    const context = this.eventContext(event);
     const [{ now }] = await prisma.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp() AS now`;
     const cutoff = new Date(now.getTime() - 300_000);
     try {
@@ -666,6 +667,220 @@ export class PaymentService {
         }
       }
     }
+  }
+
+  private eventContext(event: Stripe.Event): {
+    paymentIntentId: string | null;
+    orderId: string | null;
+  } {
+    const object = event.data.object as { id?: string; metadata?: { orderId?: string } | null };
+    if (event.type.startsWith('refund.') || event.type === 'charge.refunded') {
+      return {
+        paymentIntentId: this.refundPaymentIntentId(event),
+        orderId: object.metadata?.orderId || null,
+      };
+    }
+    return { paymentIntentId: object.id || null, orderId: object.metadata?.orderId || null };
+  }
+
+  private refundPaymentIntentId(event: Stripe.Event): string | null {
+    const paymentIntent = (
+      event.data.object as { payment_intent?: string | { id?: string } | null }
+    ).payment_intent;
+    if (!paymentIntent) return null;
+    return typeof paymentIntent === 'string' ? paymentIntent : paymentIntent.id || null;
+  }
+
+  /**
+   * Stripe Dashboard refunds arrive with no local row. A succeeded refund that
+   * covers the whole order reuses ORDER_REFUND settlement and does not call
+   * refunds.create. Partial, pending, and failed refunds leave tickets scannable.
+   */
+  private async applyExternalRefund(event: Stripe.Event): Promise<void> {
+    const paymentIntentId = this.refundPaymentIntentId(event);
+    if (!paymentIntentId) return;
+    const orders = await prisma.order.findMany({ where: { paymentIntentId } });
+    if (orders.length === 0) return;
+    if (orders.length > 1) throw ApiError.conflict('Payment matches more than one order');
+    const order = orders[0];
+    if (!order || order.status !== 'PAID') return;
+    const orderCents = cents(order.totalAmount);
+    if (orderCents === 0) return;
+    const stripeRefundId = await this.fullSucceededRefund(
+      event,
+      paymentIntentId,
+      orderCents,
+      order.currency
+    );
+    if (!stripeRefundId) {
+      if (this.shouldNoteUnappliedRefund(event, orderCents, order.currency)) {
+        logger.warn(
+          `External refund for order ${order.id} was not applied. Partial refunds stay paid until the refunded total succeeds in full.`
+        );
+      }
+      return;
+    }
+    try {
+      const saved = await prisma.$transaction(async (tx) => {
+        await lockOrder(tx, order.id);
+        const current = await tx.order.findUnique({ where: { id: order.id } });
+        if (
+          !current ||
+          current.status !== 'PAID' ||
+          current.paymentIntentId !== paymentIntentId ||
+          current.currency !== order.currency ||
+          cents(current.totalAmount) !== orderCents
+        ) {
+          return null;
+        }
+        const row = await tx.paymentRefund.findUnique({ where: { paymentIntentId } });
+        if (
+          row &&
+          (row.reason !== 'ORDER_REFUND' ||
+            row.amount !== orderCents ||
+            row.currency !== current.currency)
+        ) {
+          return null;
+        }
+        if (row?.stripeRefundId && row.stripeRefundId !== stripeRefundId) {
+          logger.warn(
+            `External refund ${stripeRefundId} does not match refund record ${row.id} for order ${order.id}`
+          );
+          return null;
+        }
+        if (row?.status === 'SUCCEEDED') return row;
+        if (row) {
+          await tx.paymentRefund.updateMany({
+            where: {
+              id: row.id,
+              reason: 'ORDER_REFUND',
+              amount: orderCents,
+              currency: current.currency,
+              status: { not: 'SUCCEEDED' },
+              stripeRefundId: row.stripeRefundId,
+            },
+            data: { status: 'SUCCEEDED', stripeRefundId, errorMessage: null },
+          });
+          return tx.paymentRefund.findUnique({ where: { id: row.id } });
+        }
+        return tx.paymentRefund.create({
+          data: {
+            orderId: order.id,
+            paymentIntentId,
+            amount: orderCents,
+            currency: current.currency,
+            reason: 'ORDER_REFUND',
+            status: 'SUCCEEDED',
+            stripeRefundId,
+          },
+        });
+      });
+      if (saved?.status === 'SUCCEEDED' && saved.reason === 'ORDER_REFUND') {
+        await orderService.finalizeRefund(saved.orderId);
+      }
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+        throw error;
+      }
+      const raced = await prisma.paymentRefund.findUnique({ where: { paymentIntentId } });
+      if (
+        raced?.reason === 'ORDER_REFUND' &&
+        raced.status === 'SUCCEEDED' &&
+        raced.amount === orderCents
+      ) {
+        await orderService.finalizeRefund(raced.orderId);
+      }
+    }
+  }
+
+  private shouldNoteUnappliedRefund(
+    event: Stripe.Event,
+    orderCents: number,
+    currency: string
+  ): boolean {
+    if (event.type === 'charge.refunded') return true;
+    if (!event.type.startsWith('refund.')) return false;
+    const refund = event.data.object as Stripe.Refund;
+    return (
+      refund.status === 'succeeded' &&
+      (refund.amount !== orderCents || refund.currency !== currency)
+    );
+  }
+
+  private async fullSucceededRefund(
+    event: Stripe.Event,
+    paymentIntentId: string,
+    orderCents: number,
+    currency: string
+  ): Promise<string | null> {
+    if (event.type.startsWith('refund.')) {
+      const refund = event.data.object as Stripe.Refund;
+      if (refund.status !== 'succeeded' || refund.currency !== currency || !refund.id) return null;
+      if (refund.amount === orderCents) return refund.id;
+      // A later partial can be what makes the charge fully refunded.
+      if (refund.amount <= 0 || refund.amount > orderCents) return null;
+      return this.refundIdCovering(paymentIntentId, orderCents, currency);
+    }
+    if (event.type !== 'charge.refunded') return null;
+    const charge = event.data.object;
+    if (
+      charge.refunded !== true ||
+      charge.amount !== orderCents ||
+      charge.amount_refunded !== orderCents ||
+      charge.currency !== currency
+    ) {
+      return null;
+    }
+    const refunds = await this.chargeRefunds(charge, paymentIntentId);
+    return this.coveringRefundId(refunds, orderCents, currency);
+  }
+
+  private async refundIdCovering(
+    paymentIntentId: string,
+    orderCents: number,
+    currency: string
+  ): Promise<string | null> {
+    const listed = await this.provider().refunds.list({
+      payment_intent: paymentIntentId,
+      limit: 100,
+    });
+    if (listed.has_more) {
+      logger.warn('External refund list was truncated; order left unchanged.');
+      return null;
+    }
+    return this.coveringRefundId(listed.data, orderCents, currency);
+  }
+
+  private coveringRefundId(
+    refunds: Stripe.Refund[] | null,
+    orderCents: number,
+    currency: string
+  ): string | null {
+    if (!refunds?.length) return null;
+    if (refunds.some((refund) => refund.status !== 'succeeded' || refund.currency !== currency)) {
+      return null;
+    }
+    const sum = refunds.reduce((total, refund) => total + refund.amount, 0);
+    if (sum !== orderCents) return null;
+    const exact = refunds.find((refund) => refund.amount === orderCents && refund.id);
+    return (exact ?? refunds[refunds.length - 1])?.id || null;
+  }
+
+  private async chargeRefunds(
+    charge: Stripe.Charge,
+    paymentIntentId: string
+  ): Promise<Stripe.Refund[] | null> {
+    const embedded = charge.refunds;
+    if (embedded && !embedded.has_more && embedded.data.length > 0) return embedded.data;
+    const listed = await this.provider().refunds.list({
+      payment_intent: paymentIntentId,
+      limit: 100,
+    });
+    if (listed.has_more) {
+      logger.warn('External refund list was truncated; order left unchanged.');
+      return null;
+    }
+    return listed.data;
   }
 
   async recoverRefunds(): Promise<void> {
