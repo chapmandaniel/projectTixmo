@@ -56,6 +56,14 @@ interface PaginatedEvents {
   };
 }
 
+export const DEFAULT_EVENT_TIMEZONE = 'America/St_Johns';
+
+/** Blank or missing zones become the launch default. A provided zone is only trimmed. */
+export const resolveEventTimeZone = (zone?: string | null): string => {
+  const trimmed = typeof zone === 'string' ? zone.trim() : '';
+  return trimmed || DEFAULT_EVENT_TIMEZONE;
+};
+
 /**
  * Valid event status transitions.
  * Key = current status, Value = set of allowed next statuses.
@@ -146,7 +154,8 @@ export class EventService {
   async createEvent(data: CreateEventInput, db: Prisma.TransactionClient = prisma): Promise<Event> {
     if (data.status && data.status !== 'DRAFT')
       throw ApiError.badRequest('New events must start as drafts');
-    this.assertTimeZone(data.timezone);
+    const timezone = resolveEventTimeZone(data.timezone);
+    this.assertTimeZone(timezone);
     // Check if organization exists
     const organization = await db.organization.findUnique({
       where: { id: data.organizationId },
@@ -197,7 +206,7 @@ export class EventService {
         venueId: data.venueId || null,
         startDatetime: startDate || null,
         endDatetime: endDate || null,
-        timezone: data.timezone || null,
+        timezone,
         status: data.status || 'DRAFT',
         capacity: data.capacity || null,
         category: data.category || null,
@@ -684,7 +693,7 @@ export class EventService {
           venueId: event.venueId,
           startDatetime: null,
           endDatetime: null,
-          timezone: event.timezone,
+          timezone: resolveEventTimeZone(event.timezone),
           status: 'DRAFT',
           capacity: event.capacity,
           category: event.category,

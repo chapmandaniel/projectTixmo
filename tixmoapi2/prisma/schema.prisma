@@ -184,7 +184,7 @@ model Event {
   tags             String[]
   startDatetime    DateTime?    @map("start_datetime")
   endDatetime      DateTime?    @map("end_datetime")
-  timezone         String?
+  timezone         String?      @default("America/St_Johns")
   status           EventStatus  @default(DRAFT)
   images           Json?
   metadata         Json?

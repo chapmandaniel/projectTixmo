@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fromEventLocalInput, toEventLocalInput, formatEventDate } from '../lib/eventTime';
+import { fromEventLocalInput, toEventLocalInput, formatEventDate, resolveEventTimeZone } from '../lib/eventTime';
 
 describe('Event timezone inputs', () => {
     it('preserves an untouched Newfoundland timestamp including seconds', () => {
@@ -20,6 +20,14 @@ describe('Event timezone inputs', () => {
     it('resolves Nov 9 using the date-specific standard offset, not the current offset', () => {
         expect(fromEventLocalInput('2026-11-09T12:00', 'America/St_Johns')).toBe('2026-11-09T15:30:00.000Z');
         expect(fromEventLocalInput('2026-10-21T12:00', 'America/St_Johns')).toBe('2026-10-21T14:30:00.000Z');
+    });
+    it('defaults a blank timezone to America/St_Johns and preserves an explicit one', () => {
+        expect(resolveEventTimeZone(undefined)).toBe('America/St_Johns');
+        expect(resolveEventTimeZone(null)).toBe('America/St_Johns');
+        expect(resolveEventTimeZone('')).toBe('America/St_Johns');
+        expect(resolveEventTimeZone('   ')).toBe('America/St_Johns');
+        expect(resolveEventTimeZone('America/Halifax')).toBe('America/Halifax');
+        expect(resolveEventTimeZone(' UTC ')).toBe('UTC');
     });
     it('formats the actual event zone and rejects invalid timezone names', () => {
         expect(formatEventDate('2026-10-04T21:30:00Z', 'America/Los_Angeles')).toMatch(/2:30|14:30/);
