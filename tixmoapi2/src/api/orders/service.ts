@@ -25,7 +25,7 @@ import {
   transitionInventory,
   transitionPromo,
 } from '../../services/order-inventory.service';
-import { voidOrderTickets } from '../../services/ticket-void.service';
+import { voidDisputedAdmission, voidOrderTickets } from '../../services/ticket-void.service';
 
 interface OrderItemInput {
   ticketTypeId: string;
@@ -362,7 +362,10 @@ export class OrderService {
     await lockOrder(tx, id);
     const order = await tx.order.findFirst({ where: { id, ...scope }, include: { event: true } });
     if (!order) throw ApiError.notFound('Order not found');
-    if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED') return order;
+    if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED') {
+      await voidDisputedAdmission(tx, order);
+      return tx.order.findUniqueOrThrow({ where: { id } });
+    }
     await tx.$queryRaw`SELECT id FROM events WHERE id = ${order.eventId} FOR UPDATE`;
     const currentEvent = await tx.event.findUniqueOrThrow({ where: { id: order.eventId } });
     if (
@@ -374,7 +377,14 @@ export class OrderService {
       throw ApiError.conflict('Order can no longer be fulfilled');
     await transitionInventory(tx, id, 'HELD', 'SOLD');
     await transitionPromo(tx, id, 'USED');
-    return tx.order.update({ where: { id }, data: { status: 'PAID', paymentStatus: 'SUCCEEDED' } });
+    const paid = await tx.order.update({
+      where: { id },
+      data: { status: 'PAID', paymentStatus: 'SUCCEEDED' },
+    });
+    // S-BUG-8: a dispute that arrived while this order was still pending has
+    // already set refund_status and must cancel admission in this commit.
+    await voidDisputedAdmission(tx, paid);
+    return paid;
   }
 
   /**
