@@ -1,7 +1,8 @@
 import { config } from '../config/environment';
 
-// Prices are tax-inclusive. The HST portion is derived for display only.
-// Stored taxAmount and the amount charged stay as they are.
+// Prices are tax-inclusive. New orders store includedHstAmount in taxAmount.
+// Historical rows were left at 0 and are not backfilled; a receipt falls back
+// to the same formula when the stored amount is still zero.
 export const HST_INCLUDED_NOTE = 'Includes HST and all fees';
 
 export interface ReceiptDisclosure {
@@ -42,13 +43,28 @@ export const formatHstPercent = (rate: number): string => {
   return Number(scaled.toFixed(2)).toString();
 };
 
-export const formatHstAmountLine = (amount: number, rate: number): string =>
-  `Includes HST (${formatHstPercent(rate)}%): CA$${amount.toFixed(2)}`;
+export const formatHstAmountLine = (amount: number, rate: number, currency = 'CAD'): string =>
+  `Includes HST (${formatHstPercent(rate)}%): ${formatMoney(amount, currency)}`;
 
-const configuredRate = (): number => (typeof config.hstRate === 'number' ? config.hstRate : 0.15);
+export const configuredHstRate = (): number =>
+  typeof config.hstRate === 'number' ? config.hstRate : 0.15;
+
+// Prefer the amount stored on the order. Zero means a historical row that was
+// never filled, or a total whose included tax rounds to nothing.
+export const receiptHstAmount = (
+  total: MoneyInput,
+  rate: number,
+  stored?: MoneyInput | null
+): number => {
+  if (stored !== undefined && stored !== null && stored !== '') {
+    const value = asNumber(stored);
+    if (value > 0) return toCents(value) / 100;
+  }
+  return includedHstAmount(total, rate);
+};
 
 export const receiptDisclosure = (total?: MoneyInput | null): ReceiptDisclosure => {
-  const rate = configuredRate();
+  const rate = configuredHstRate();
   const hasTotal = total !== undefined && total !== null && total !== '';
   return {
     includesHstAndFees: true,
@@ -60,11 +76,19 @@ export const receiptDisclosure = (total?: MoneyInput | null): ReceiptDisclosure 
 
 export const formatMoney = (amount: MoneyInput, currency = 'CAD'): string => {
   const value = asNumber(amount);
+  const code = String(currency || 'CAD')
+    .trim()
+    .toUpperCase();
+  if (code === 'CAD') {
+    const formatted = new Intl.NumberFormat('en-CA', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Math.abs(value));
+    return `${value < 0 ? '-' : ''}CA$${formatted}`;
+  }
   return new Intl.NumberFormat('en-CA', {
     style: 'currency',
-    currency: String(currency || 'CAD')
-      .trim()
-      .toUpperCase(),
+    currency: code,
   }).format(value);
 };
 

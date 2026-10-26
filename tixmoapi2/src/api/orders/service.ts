@@ -7,12 +7,15 @@ import { getActorScopeById, resolveOrganizationFilter } from '../../utils/tenant
 
 import prisma from '../../config/prisma';
 import { config } from '../../config/environment';
+import { formatNewfoundlandDateTime } from '../../utils/eventTime';
 import {
+  configuredHstRate,
   formatHstAmountLine,
   formatMoney,
   formatVenueAddress,
   includedHstAmount,
   receiptDisclosure,
+  receiptHstAmount,
   summarizeTickets,
   type ReceiptDisclosure,
 } from '../../utils/receipt';
@@ -205,12 +208,17 @@ export class OrderService {
             data: { usesHeld: { increment: 1 } },
           });
         }
+        const totalAmount = Decimal.max(subtotal.sub(discount), new Decimal(0));
+        const taxAmount = new Decimal(
+          includedHstAmount(totalAmount, configuredHstRate()).toFixed(2)
+        );
         const created = await tx.order.create({
           data: {
             orderNumber: `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,
             userId,
             eventId: event.id,
-            totalAmount: Decimal.max(subtotal.sub(discount), new Decimal(0)),
+            totalAmount,
+            taxAmount,
             discountAmount: discount,
             currency: config.paymentCurrency,
             promoCodeId: promoId,
@@ -408,12 +416,9 @@ export class OrderService {
     }
     try {
       const date = order.event.startDatetime
-        ? new Intl.DateTimeFormat('en-CA', {
-            dateStyle: 'long',
-            timeStyle: 'short',
-            timeZone: order.event.timezone || order.event.venue?.timezone || 'America/St_Johns',
-          }).format(order.event.startDatetime)
+        ? formatNewfoundlandDateTime(order.event.startDatetime)
         : 'Date to be announced';
+      const hstRate = configuredHstRate();
       const delivered = await notificationService.sendOrderConfirmation({
         to: order.user.email,
         customerName: `${order.user.firstName} ${order.user.lastName}`,
@@ -426,8 +431,8 @@ export class OrderService {
         venueAddress: formatVenueAddress(order.event.venue?.address),
         hstNumber: config.hstNumber || null,
         hstAmountLine: formatHstAmountLine(
-          includedHstAmount(order.totalAmount, config.hstRate),
-          config.hstRate
+          receiptHstAmount(order.totalAmount, hstRate, order.taxAmount),
+          hstRate
         ),
       });
       if (!delivered) throw ApiError.internal('Receipt could not be delivered');
