@@ -5,6 +5,9 @@ const { createHash } = require('node:crypto');
 const { PrismaClient, Prisma } = require('@prisma/client');
 
 const MAX_TICKETS = 25000;
+const SYSTEM_ACTOR = 'system-inventory-reconcile';
+const SYSTEM_EVIDENCE =
+  'System inventory reconcile. Counters follow allocated tickets that already have a tier. UNKNOWN inventory and tickets with no tier stay flagged.';
 const MAX_PLAN_BYTES = 8 * 1024 * 1024;
 const allocated = (state) => ['HELD', 'SOLD'].includes(state);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -506,6 +509,245 @@ async function applyInventory(prisma, input, confirmation, targetFingerprint, en
   );
 }
 
+function eventBoundary(event) {
+  return event.endDatetime || event.startDatetime || null;
+}
+
+function isUpcoming(event, now) {
+  const boundary = eventBoundary(event);
+  return Boolean(boundary) && new Date(boundary).getTime() > now.getTime();
+}
+
+function systemDecision(snapshot) {
+  // UNKNOWN stays UNKNOWN. This path never assigns a tier or clears that state.
+  if (snapshot.tickets.some((ticket) => ticket.inventoryState === 'UNKNOWN')) {
+    return { action: 'leave-flagged', reason: 'unknown-inventory', changes: null };
+  }
+  const counters = new Map(
+    snapshot.tiers.map((tier) => [tier.id, { id: tier.id, quantitySold: 0, quantityHeld: 0 }])
+  );
+  const orders = new Map(snapshot.orders.map((order) => [order.id, order]));
+  let held = 0,
+    sold = 0;
+  for (const ticket of snapshot.tickets) {
+    if (ticket.eventId !== snapshot.type.eventId) {
+      return { action: 'leave-flagged', reason: 'inconsistent-ticket', changes: null };
+    }
+    if (!allocated(ticket.inventoryState)) continue;
+    const order = orders.get(ticket.orderId);
+    if (
+      !order ||
+      order.eventId !== snapshot.type.eventId ||
+      (ticket.inventoryState === 'HELD' && order.status !== 'PENDING') ||
+      (ticket.inventoryState === 'SOLD' &&
+        (!['PAID', 'PARTIALLY_REFUNDED'].includes(order.status) ||
+          order.paymentStatus !== 'SUCCEEDED' ||
+          ['REQUESTED', 'PENDING', 'UNCERTAIN'].includes(order.refundStatus)))
+    ) {
+      return { action: 'leave-flagged', reason: 'financial-state', changes: null };
+    }
+    if (!ticket.tierId || !counters.has(ticket.tierId)) {
+      return { action: 'leave-flagged', reason: 'unattributed', changes: null };
+    }
+    if (ticket.inventoryState === 'HELD') held++;
+    else sold++;
+    counters.get(ticket.tierId)[ticket.inventoryState === 'HELD' ? 'quantityHeld' : 'quantitySold']++;
+  }
+  if (held + sold > snapshot.type.quantityTotal) {
+    return { action: 'leave-flagged', reason: 'over-capacity', changes: null };
+  }
+  for (const tier of snapshot.tiers) {
+    const counted = counters.get(tier.id);
+    if (
+      tier.quantityLimit !== null &&
+      counted.quantityHeld + counted.quantitySold > tier.quantityLimit
+    ) {
+      return { action: 'leave-flagged', reason: 'over-capacity', changes: null };
+    }
+  }
+  const typeAfter = {
+    quantityTotal: snapshot.type.quantityTotal,
+    quantityHeld: held,
+    quantitySold: sold,
+    quantityAvailable: snapshot.type.quantityTotal - held - sold,
+    tierInventoryStatus: 'READY',
+  };
+  const tiers = [...counters.values()];
+  const countersDiffer =
+    snapshot.type.quantityHeld !== held ||
+    snapshot.type.quantitySold !== sold ||
+    snapshot.type.quantityAvailable !== typeAfter.quantityAvailable ||
+    snapshot.type.tierInventoryStatus !== 'READY' ||
+    snapshot.tiers.some((tier) => {
+      const counted = counters.get(tier.id);
+      return tier.quantityHeld !== counted.quantityHeld || tier.quantitySold !== counted.quantitySold;
+    });
+  if (!countersDiffer) return { action: 'unchanged', reason: 'already-consistent', changes: null };
+  return { action: 'reconcile', reason: 'counters', changes: { type: typeAfter, tiers } };
+}
+
+function systemSummary(event, snapshot, decision) {
+  return {
+    ticketTypeId: snapshot.type.id,
+    eventId: event.id,
+    eventName: event.name,
+    eventStatus: event.status,
+    tierInventoryStatus: snapshot.type.tierInventoryStatus,
+    quantitySold: snapshot.type.quantitySold,
+    quantityTotal: snapshot.type.quantityTotal,
+    action: decision.action,
+    reason: decision.reason,
+    changes: decision.changes,
+  };
+}
+
+async function flaggedTicketTypes(db) {
+  return db.ticketType.findMany({
+    where: { tierInventoryStatus: 'REQUIRES_RECONCILIATION' },
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      event: {
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          startDatetime: true,
+          endDatetime: true,
+        },
+      },
+    },
+  });
+}
+
+async function systemDryRun(prisma, { upcomingOnly, now = new Date() }) {
+  return prisma.$transaction(
+    async (db) => {
+      await db.$executeRawUnsafe('SET TRANSACTION READ ONLY');
+      const selected = (await flaggedTicketTypes(db)).filter(
+        (row) => !upcomingOnly || isUpcoming(row.event, now)
+      );
+      const types = [];
+      for (const row of selected) {
+        const snapshot = await readSnapshot(db, row.id);
+        types.push(systemSummary(row.event, snapshot, systemDecision(snapshot)));
+      }
+      return {
+        mode: 'dry-run',
+        actorId: SYSTEM_ACTOR,
+        upcomingOnly,
+        writes: false,
+        changed: types.filter((row) => row.action === 'reconcile').length,
+        types,
+      };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: 60000 }
+  );
+}
+
+async function applySystemType(prisma, id, env) {
+  if (
+    env.TIXMO_ALLOW_INVENTORY_RECONCILIATION !== 'true' ||
+    env.TIXMO_INVENTORY_WRITERS_QUIESCED !== 'true'
+  ) {
+    reject(
+      'Apply requires TIXMO_ALLOW_INVENTORY_RECONCILIATION=true and TIXMO_INVENTORY_WRITERS_QUIESCED=true.'
+    );
+  }
+  return prisma.$transaction(
+    async (db) => {
+      const initial = await readSnapshot(db, id);
+      await db.$queryRaw`SELECT id FROM events WHERE id = ${initial.type.eventId} FOR UPDATE`;
+      const orderIds = [...new Set(initial.tickets.map((ticket) => ticket.orderId))].sort();
+      if (orderIds.length) {
+        await db.$queryRaw(
+          Prisma.sql`SELECT id FROM orders WHERE id IN (${Prisma.join(orderIds)}) ORDER BY id FOR UPDATE`
+        );
+      }
+      await db.$queryRaw`SELECT id FROM ticket_types WHERE id = ${id} FOR UPDATE`;
+      const snapshot = await readSnapshot(db, id);
+      const decision = systemDecision(snapshot);
+      if (decision.action !== 'reconcile')
+        return { decision, auditId: null, wrote: false, snapshot };
+      for (const tier of decision.changes.tiers) {
+        await db.ticketTier.update({
+          where: { id: tier.id },
+          data: { quantitySold: tier.quantitySold, quantityHeld: tier.quantityHeld },
+        });
+      }
+      await db.ticketType.update({
+        where: { id },
+        data: {
+          quantityHeld: decision.changes.type.quantityHeld,
+          quantitySold: decision.changes.type.quantitySold,
+          quantityAvailable: decision.changes.type.quantityAvailable,
+          tierInventoryStatus: 'READY',
+        },
+      });
+      const audit = await db.ticketInventoryReconciliation.create({
+        data: {
+          ticketTypeId: id,
+          actorId: SYSTEM_ACTOR,
+          evidence: SYSTEM_EVIDENCE,
+          snapshotFingerprint: snapshotFingerprint(snapshot),
+          planFingerprint: digest({
+            actorId: SYSTEM_ACTOR,
+            ticketTypeId: id,
+            changes: decision.changes,
+          }),
+          before: {
+            type: {
+              quantityTotal: snapshot.type.quantityTotal,
+              quantityHeld: snapshot.type.quantityHeld,
+              quantitySold: snapshot.type.quantitySold,
+              quantityAvailable: snapshot.type.quantityAvailable,
+              tierInventoryStatus: snapshot.type.tierInventoryStatus,
+            },
+            tiers: snapshot.tiers.map((tier) => ({
+              id: tier.id,
+              quantityHeld: tier.quantityHeld,
+              quantitySold: tier.quantitySold,
+            })),
+          },
+          after: {
+            type: decision.changes.type,
+            tiers: decision.changes.tiers,
+            unknownResolved: false,
+          },
+        },
+        select: { id: true },
+      });
+      return { decision, auditId: audit.id, wrote: true, snapshot };
+    },
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      timeout: 60000,
+      maxWait: 10000,
+    }
+  );
+}
+
+async function systemApply(prisma, { upcomingOnly, now = new Date(), env = process.env }) {
+  const selected = (await flaggedTicketTypes(prisma)).filter(
+    (row) => !upcomingOnly || isUpcoming(row.event, now)
+  );
+  const types = [];
+  let changed = 0;
+  for (const row of selected) {
+    const result = await applySystemType(prisma, row.id, env);
+    if (result.wrote) changed++;
+    types.push(systemSummary(row.event, result.snapshot, result.decision));
+  }
+  return {
+    mode: 'apply',
+    actorId: SYSTEM_ACTOR,
+    upcomingOnly,
+    writes: changed > 0,
+    changed,
+    types,
+  };
+}
+
 function readPlan(file) {
   const stat = fs.statSync(file);
   if (!stat.isFile() || stat.size > MAX_PLAN_BYTES)
@@ -513,18 +755,48 @@ function readPlan(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
+function systemOptions(args) {
+  if (args.some((arg) => !['--dry-run', '--apply', '--upcoming-only'].includes(arg))) {
+    reject('Unknown inventory reconciliation command.');
+  }
+  if (args.filter((arg) => arg === '--dry-run').length > 1 ||
+      args.filter((arg) => arg === '--apply').length > 1 ||
+      args.filter((arg) => arg === '--upcoming-only').length > 1) {
+    reject('Invalid or duplicate reconciliation option.');
+  }
+  const dryRun = args.includes('--dry-run');
+  const apply = args.includes('--apply');
+  if (dryRun === apply) reject('Choose either --dry-run or --apply.');
+  return { dryRun, upcomingOnly: args.includes('--upcoming-only') };
+}
+
 async function main() {
-  const args = process.argv.slice(2),
-    command = args.shift();
-  if (!command || ['--help', '-h'].includes(command)) {
+  const args = process.argv.slice(2);
+  if (!args.length || ['--help', '-h'].includes(args[0])) {
     console.log(
-      'Usage: npm run inventory:reconcile -- inspect --id TYPE --output PRIVATE_JSON | preview --file PRIVATE_JSON | apply --file PRIVATE_JSON --confirm-plan SHA256'
+      'Usage: npm run inventory:reconcile -- inspect --id TYPE --output PRIVATE_JSON | preview --file PRIVATE_JSON | apply --file PRIVATE_JSON --confirm-plan SHA256 | --dry-run [--upcoming-only] | --apply [--upcoming-only]'
     );
     console.log(
-      'Requires explicit TIXMO_INVENTORY_DATABASE_URL matching DATABASE_URL if present. Apply also requires TIXMO_ALLOW_INVENTORY_RECONCILIATION=true and TIXMO_INVENTORY_WRITERS_QUIESCED=true. Review allocations and provider evidence, stop old writers, and retain the backup before applying. This tool does not change financial state, pricing, currency or capacity.'
+      'Requires explicit TIXMO_INVENTORY_DATABASE_URL matching DATABASE_URL if present. Apply also requires TIXMO_ALLOW_INVENTORY_RECONCILIATION=true and TIXMO_INVENTORY_WRITERS_QUIESCED=true. --dry-run and --apply use the system actor and do not need an enabled OWNER/ADMIN. --upcoming-only limits the run to events whose end, or start when there is no end, is still in the future. Ended flagged types are left unchanged and are not an error. Review allocations and provider evidence, stop old writers, and retain the backup before applying. This tool does not change financial state, pricing, currency, capacity, or UNKNOWN inventory.'
     );
     return;
   }
+  if (args[0].startsWith('--')) {
+    const options = systemOptions(args);
+    require('dotenv').config();
+    const target = explicitTarget(process.env),
+      prisma = new PrismaClient({ datasources: { db: { url: target.url } } });
+    try {
+      const result = options.dryRun
+        ? await systemDryRun(prisma, { upcomingOnly: options.upcomingOnly })
+        : await systemApply(prisma, { upcomingOnly: options.upcomingOnly });
+      console.log(JSON.stringify(result, null, 2));
+    } finally {
+      await prisma.$disconnect();
+    }
+    return;
+  }
+  const command = args.shift();
   if (!['inspect', 'preview', 'apply'].includes(command))
     reject('Unknown inventory reconciliation command.');
   const allowed =
@@ -588,5 +860,8 @@ module.exports = {
   inspectInventory,
   previewInventory,
   applyInventory,
+  systemDryRun,
+  systemApply,
+  SYSTEM_ACTOR,
   OperatorError,
 };
