@@ -42,9 +42,30 @@ export const fromEventLocalInput = (value, zone = DEFAULT_EVENT_TIMEZONE, previo
     return new Date(matches[0]).toISOString();
 };
 
+const shortZoneName = (value, zone) => {
+    const date = new Date(value);
+    const part = (timeZoneName) => new Intl.DateTimeFormat('en-CA', {
+        timeZone: zone, hour: 'numeric', timeZoneName,
+    }).formatToParts(date).find((item) => item.type === 'timeZoneName')?.value || '';
+    const short = part('short');
+    if (short && !/^GMT/i.test(short)) return short;
+    if (zone === DEFAULT_EVENT_TIMEZONE) {
+        const offset = part('longOffset').replace(/\u2212/g, '-');
+        if (offset.includes('-02:30')) return 'NDT';
+        if (offset.includes('-03:30')) return 'NST';
+    }
+    return short;
+};
+
 export const formatEventDate = (value, zone = DEFAULT_EVENT_TIMEZONE, options = {}) => {
     if (!value || Number.isNaN(new Date(value).getTime())) return 'Date to be announced';
     if (!validTimeZone(zone)) return 'Event timezone unavailable';
-    return new Intl.DateTimeFormat(undefined, { timeZone: zone, weekday: 'short', month: 'short',
-        day: 'numeric', hour: 'numeric', minute: '2-digit', ...options }).format(new Date(value));
+    const { timeZoneName, ...rest } = options;
+    const formatted = new Intl.DateTimeFormat('en-CA', {
+        timeZone: zone, weekday: 'short', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit', ...rest,
+    }).format(new Date(value));
+    if (!timeZoneName) return formatted;
+    const abbreviation = shortZoneName(value, zone);
+    return abbreviation ? `${formatted} ${abbreviation}` : formatted;
 };

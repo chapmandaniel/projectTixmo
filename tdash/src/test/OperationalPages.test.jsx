@@ -56,7 +56,7 @@ describe('Recorded event operations', () => {
     it('loads recorded metrics, changes currency, and reports unavailable traffic', async () => {
         mocks.get.mockImplementation((url, options) => Promise.resolve(wrapped(url === '/analytics/sales' ? { totalRevenue: options.params.currency === 'cad' ? 150 : 400, totalOrders: 2, salesByDay: [] } : url.endsWith('/stats') ? { ticketsSold: 4, ticketsUsed: 1 } : { orders: [order()] })));
         render(<ECC_Overview event={event} isDark />);
-        await screen.findByText('$150.00');
+        await screen.findByText('CA$150.00');
         expect(screen.getByText(/Page views and conversion rate are unavailable/)).toBeInTheDocument();
         expect(screen.queryByText('Alex M.')).not.toBeInTheDocument();
         fireEvent.change(screen.getByLabelText('Revenue currency'), { target: { value: 'usd' } });

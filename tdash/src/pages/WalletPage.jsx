@@ -4,10 +4,12 @@ import { api } from '../lib/api';
 import { getPolicyLinks, orderDisplayCurrency } from '../lib/runtimeConfig';
 import { BuyerAuthPanel } from './CheckoutPage';
 import { DashboardButton, DashboardChip, DashboardPage, DashboardPageHeader, DashboardSurface, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
+import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import { eventAddress, formatEventMoney, hstAmountLine, hstRegistrationLine } from '../lib/publicEvent';
 
 const payload = (response) => response?.data?.data || response?.data || response;
 const money = (order) => formatEventMoney(order.totalAmount, orderDisplayCurrency(order.currency));
+const eventWhen = (event) => formatEventDate(event?.startDatetime, event?.timezone || event?.venue?.timezone || DEFAULT_EVENT_TIMEZONE, { timeZoneName: 'short' });
 const venueLine = (order) => [order.event?.venue?.name, eventAddress(order.event?.venue)].filter(Boolean).join(', ') || 'Venue to be announced';
 const WalletPage = ({ user, onAuthenticated }) => {
     const [sessionExpired, setSessionExpired] = useState(false);
@@ -72,7 +74,7 @@ const WalletPage = ({ user, onAuthenticated }) => {
                         {!tickets.length ? <p className="text-dashboard-muted">No tickets yet.</p> : tickets.map(ticket => {
                             const usable = ticket.status === 'VALID' && ticket.order?.status === 'PAID' && ticket.order?.refundStatus !== 'PROCESSING';
                             return <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-4 border-b border-dashboard-border py-4">
-                                <div><p>{ticket.event?.name}</p><p className="text-sm text-dashboard-muted">{ticket.ticketType?.name}</p></div>
+                                <div><p>{ticket.event?.name}</p><p className="text-sm text-dashboard-muted">{eventWhen(ticket.event)}</p><p className="text-sm text-dashboard-muted">{ticket.ticketType?.name}</p></div>
                                 <DashboardChip isDark>{ticket.order?.refundStatus === 'PROCESSING' ? 'Refund processing' : ticket.order?.status === 'PENDING' ? 'Awaiting payment' : ticket.status}</DashboardChip>
                                 {usable ? <div className="flex flex-wrap gap-2">
                                     <DashboardButton isDark disabled={busy} onClick={() => action(async () => {
@@ -94,6 +96,7 @@ const WalletPage = ({ user, onAuthenticated }) => {
                         <p className="mb-4 text-sm text-dashboard-muted">All sales are final.</p>
                         {!orders.length ? <p className="text-dashboard-muted">No orders yet.</p> : orders.map(order => <div key={order.id} className="space-y-3 border-b border-dashboard-border py-4">
                             <div className="flex flex-wrap items-center justify-between gap-3"><p>{order.event?.name} · {order.orderNumber}</p><p>{money(order)}</p></div>
+                            <p className="text-sm text-dashboard-muted">{eventWhen(order.event)}</p>
                             <p className="text-sm text-dashboard-muted">{venueLine(order)}</p>
                             <p className="text-sm text-dashboard-muted">{hstAmountLine(order.totalAmount, order.receiptDisclosure?.hstRate, order.receiptDisclosure?.hstAmount)}</p>
                             {hstRegistrationLine(order.receiptDisclosure?.hstNumber) ? <p className="text-sm text-dashboard-muted">{hstRegistrationLine(order.receiptDisclosure?.hstNumber)}</p> : null}

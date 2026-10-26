@@ -107,7 +107,7 @@ describe('festival customer journey', () => {
             }),
         );
         expect(friday.getByRole('link', { name: /After Dark/ })).toBeVisible();
-        expect(friday.getByText('11:00 PM')).toBeVisible();
+        expect(friday.getByText('11:00 p.m.')).toBeVisible();
         const soldOutEvent = screen
             .getByRole('link', { name: 'View event: Rooftop Sessions' })
             .closest('article');

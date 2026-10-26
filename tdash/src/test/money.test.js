@@ -9,10 +9,11 @@ import {
 } from '../lib/money';
 
 describe('Canadian money formatting', () => {
-    it('formats CAD with en-CA instead of a $CAD prefix', () => {
-        expect(formatEventMoney(50, 'cad')).toBe('$50.00');
-        expect(formatEventMoney('50.5', 'CAD')).toBe('$50.50');
+    it('formats CAD as CA$ from one formatter', () => {
+        expect(formatEventMoney(50, 'cad')).toBe('CA$50.00');
+        expect(formatEventMoney('50.5', 'CAD')).toBe('CA$50.50');
         expect(formatEventMoney(50, 'cad')).not.toMatch(/\$CAD|CAD\s*50/);
+        expect(hstAmountLine(6.52, 0.15, 6.52)).toBe(`Includes HST (15%): ${formatEventMoney(6.52, 'CAD')}`);
     });
 
     it('keeps other currencies distinct', () => {
