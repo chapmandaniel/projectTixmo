@@ -281,3 +281,85 @@ test('changed amount after lost response requires reconciliation while attempt r
   expect(attempt.amount).toBe(1200);
   expect(order.paymentIntentId).toBeNull();
 });
+
+// Recovered QA84 cases, adapted to the durable attempt contract.
+test.each([-1, 0, 1])('exact 23h attempt cutoff offset %s milliseconds', async (offset) => {
+  const now = Date.now();
+  jest.spyOn(Date, 'now').mockReturnValue(now);
+  loseResponse = true;
+  await expect(prepare()).rejects.toThrow('lost response');
+  attempt.createdAt = new Date(now - 23 * 60 * 60 * 1000 - offset);
+  stripe.paymentIntents.create.mockClear();
+  tx.order.update.mockClear();
+  if (offset < 0) {
+    await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
+    expect(intents.size).toBe(1);
+  } else {
+    await expect(prepare()).rejects.toMatchObject({ statusCode: 409 });
+    expect(stripe.paymentIntents.create).not.toHaveBeenCalled();
+    expect(stripe.paymentIntents.retrieve).not.toHaveBeenCalled();
+    expect(tx.order.update).not.toHaveBeenCalled();
+  }
+});
+test('linked intent remains retrievable after the attempt cutoff without another create', async () => {
+  await prepare();
+  attempt.createdAt = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
+  expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+  expect(stripe.paymentIntents.retrieve).toHaveBeenCalledWith('pi-one');
+});
+test.each(['requires_confirmation', 'requires_action'])(
+  'reuses a valid %s intent',
+  async (status) => {
+    await prepare();
+    [...intents.values()][0].status = status;
+    await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
+    expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+  }
+);
+test('missing client secret retains durable linkage and retry never creates another intent', async () => {
+  duringCreate = () => {
+    [...intents.values()][0].client_secret = null;
+  };
+  await expect(prepare()).rejects.toMatchObject({ statusCode: 500 });
+  expect(order.paymentIntentId).toBe('pi-one');
+  expect(attempt.paymentIntentId).toBe('pi-one');
+  await expect(prepare()).rejects.toMatchObject({ statusCode: 500 });
+  expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+  expect(stripe.paymentIntents.retrieve).toHaveBeenCalledWith('pi-one');
+});
+test('provider key-in-use failure is retryable without linking an order', async () => {
+  stripe.paymentIntents.create.mockRejectedValueOnce(new Error('idempotency_key_in_use'));
+  await expect(prepare()).rejects.toThrow('idempotency_key_in_use');
+  expect(tx.order.update).not.toHaveBeenCalled();
+  expect(tx.paymentAttempt.update).not.toHaveBeenCalled();
+  expect(attempt.paymentIntentId).toBeNull();
+  await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
+  expect(intents.size).toBe(1);
+  expect(
+    stripe.paymentIntents.create.mock.calls.map((call: any) => call[1].idempotencyKey)
+  ).toEqual(['payment-attempt-a', 'payment-attempt-a']);
+});
+test('currency change after lost response rejects before further provider I/O', async () => {
+  loseResponse = true;
+  await expect(prepare()).rejects.toThrow('lost response');
+  order.currency = 'usd';
+  stripe.paymentIntents.create.mockClear();
+  await expect(prepare()).rejects.toMatchObject({ statusCode: 409 });
+  expect(stripe.paymentIntents.create).not.toHaveBeenCalled();
+  expect(stripe.paymentIntents.retrieve).not.toHaveBeenCalled();
+  expect(intents.size).toBe(1);
+  expect(attempt.currency).toBe('cad');
+  expect(order.paymentIntentId).toBeNull();
+});
+test('buyer mutation during provider call cannot link a client session to a different owner', async () => {
+  duringCreate = () => {
+    order.userId = 'other-buyer';
+  };
+  await expect(prepare()).rejects.toMatchObject({ statusCode: 409 });
+  expect(order.userId).toBe('other-buyer');
+  expect(order.paymentIntentId).toBeNull();
+  expect(attempt.paymentIntentId).toBeNull();
+  expect(tx.order.update).not.toHaveBeenCalled();
+  expect(tx.paymentAttempt.update).not.toHaveBeenCalled();
+});

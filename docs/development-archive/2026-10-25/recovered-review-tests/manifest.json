@@ -1,0 +1,66 @@
+[
+  {
+    "source_commit": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+    "source_path": "docs/team/evidence/recovered-review-tests-20261025.md",
+    "snapshot_path": "docs/development-archive/2026-10-25/recovered-review-tests/docs/team/evidence/recovered-review-tests-20261025.md.txt",
+    "source_blob": "c7d6546e6d4b7cfa17af4d07676c55d8ceb26217",
+    "bytes": 1442,
+    "sha256": "44b18d772277ac8ec6d40c9ebbf5ecfa0df2785c9b14e084f0ddf7553b4f1ad4"
+  },
+  {
+    "source_commit": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+    "source_path": "tdash/src/test/ScannerPage.qa.test.jsx",
+    "snapshot_path": "docs/development-archive/2026-10-25/recovered-review-tests/tdash/src/test/ScannerPage.qa.test.jsx.txt",
+    "source_blob": "2715dbbe69b4f04a0db5dd09dac9d2c14c8843bc",
+    "bytes": 1540,
+    "sha256": "8cdd7ed0b65720594743c22418fafd44ea22700fe3fd65341ad69bc25eedc7b4"
+  },
+  {
+    "source_commit": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+    "source_path": "tixmoapi2/tests/integration/review146-checkpoint.test.ts",
+    "snapshot_path": "docs/development-archive/2026-10-25/recovered-review-tests/tixmoapi2/tests/integration/review146-checkpoint.test.ts.txt",
+    "source_blob": "c78fe887ad78f175d31bf5284ebc70ba442acde1",
+    "bytes": 6587,
+    "sha256": "06c8abb97acfb56613d422882a8d450f0ce88e62ba1f2c7e2c0653f4e13342dd"
+  },
+  {
+    "source_commit": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+    "source_path": "tixmoapi2/tests/integration/review147-checkpoint.test.ts",
+    "snapshot_path": "docs/development-archive/2026-10-25/recovered-review-tests/tixmoapi2/tests/integration/review147-checkpoint.test.ts.txt",
+    "source_blob": "c74b2c8698b88f0f8afcd9f80fa64290b3d6fe08",
+    "bytes": 7176,
+    "sha256": "6de5ef3b627186936b85257a43d29462504f02cfeacb4b5dda78a98427bce673"
+  },
+  {
+    "source_commit": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+    "source_path": "tixmoapi2/tests/integration/task113-rollback.review.test.ts",
+    "snapshot_path": "docs/development-archive/2026-10-25/recovered-review-tests/tixmoapi2/tests/integration/task113-rollback.review.test.ts.txt",
+    "source_blob": "e9ff6544e3235d44f43bfb559b012a9349c01934",
+    "bytes": 2034,
+    "sha256": "dcd7177af28ee35aeb1f0a5a36ce1712f3e927dea15e85d0f7264c74e0f9211d"
+  },
+  {
+    "source_commit": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+    "source_path": "tixmoapi2/tests/qa90-adverse.unit.test.ts",
+    "snapshot_path": "docs/development-archive/2026-10-25/recovered-review-tests/tixmoapi2/tests/qa90-adverse.unit.test.ts.txt",
+    "source_blob": "0e12b2d4b186e48bf0778cd0812958eca913ae5c",
+    "bytes": 5678,
+    "sha256": "54c51597afb919178467846dda1766fd792d13628c46a9dce41719f73f8fe67a"
+  },
+  {
+    "source_commit": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+    "source_path": "tixmoapi2/tests/review144-transaction.unit.test.ts",
+    "snapshot_path": "docs/development-archive/2026-10-25/recovered-review-tests/tixmoapi2/tests/review144-transaction.unit.test.ts.txt",
+    "source_blob": "a6675c4e4482501a8b118e42408c47b683badcf2",
+    "bytes": 2529,
+    "sha256": "c5c305eedb6f8abb3efc59939353c30a796ba7dabc5f4491460bb0f5505fb549"
+  },
+  {
+    "source_commit": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+    "source_path": "tixmoapi2/tests/review145-direct.integration.test.ts",
+    "snapshot_path": "docs/development-archive/2026-10-25/recovered-review-tests/tixmoapi2/tests/review145-direct.integration.test.ts.txt",
+    "source_blob": "9a65dc8b966b3ba8d787f923d5bec60f782191a4",
+    "bytes": 3401,
+    "sha256": "d0ffd34a7826caf33593b27fb243b2caada31f5defc0de2780f1a12857b2de8d"
+  }
+]

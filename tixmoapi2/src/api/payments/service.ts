@@ -97,6 +97,7 @@ export class PaymentService {
       await lockOrder(tx, orderId);
       const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
       if (
+        order.userId !== userId ||
         cents(order.totalAmount) !== attempt.amount ||
         order.currency !== attempt.currency ||
         order.paymentStatus === 'SUCCEEDED' ||
