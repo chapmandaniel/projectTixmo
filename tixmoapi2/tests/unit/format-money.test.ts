@@ -9,11 +9,13 @@ import {
 } from '../../src/utils/receipt';
 
 describe('Canadian money formatting', () => {
-  it('formats CAD with en-CA instead of a $CAD prefix', () => {
-    expect(formatMoney(50, 'cad')).toBe('$50.00');
-    expect(formatMoney('50.5', 'CAD')).toBe('$50.50');
-    expect(formatMoney({ toNumber: () => 12 }, 'cad')).toBe('$12.00');
+  it('formats CAD as CA$ from one formatter', () => {
+    expect(formatMoney(50, 'cad')).toBe('CA$50.00');
+    expect(formatMoney('50.5', 'CAD')).toBe('CA$50.50');
+    expect(formatMoney({ toNumber: () => 12 }, 'cad')).toBe('CA$12.00');
+    expect(formatMoney(-2, 'cad')).toBe('-CA$2.00');
     expect(formatMoney(50, 'cad')).not.toMatch(/\$CAD|CAD\s*50/);
+    expect(formatHstAmountLine(6.52, 0.15)).toBe(`Includes HST (15%): ${formatMoney(6.52, 'CAD')}`);
   });
 
   it('keeps other currencies distinct', () => {
