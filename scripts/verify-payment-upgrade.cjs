@@ -62,7 +62,10 @@ const runPrisma = (args) => {
   assert.match(refundedSql, /ALTER TYPE "PaymentStatus" ADD VALUE 'REFUNDED';/);
   assert.doesNotMatch(refundedSql, /\b(INSERT|UPDATE|DELETE)\b/);
   for (const name of fs.readdirSync(source).sort()) {
-    if (name > migration && name !== refundedMigration) fs.cpSync(path.join(source, name), path.join(staged, 'migrations', name), { recursive: true });
+    if (name > migration) {
+      if (name === refundedMigration) continue;
+      fs.cpSync(path.join(source, name), path.join(staged, 'migrations', name), { recursive: true });
+    }
   }
   runPrisma(['migrate', 'deploy', '--schema', path.join(staged, 'schema.prisma')]);
   const labelsBefore = await prisma.$queryRaw`SELECT e.enumlabel AS label FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid WHERE t.typname = 'PaymentStatus'`;
@@ -119,7 +122,9 @@ const runPrisma = (args) => {
   assert.match(freshName, /^tixmo_disposable_[a-z0-9_]+$/);
   const savedUrl = process.env.DATABASE_URL;
   await prisma.$executeRawUnsafe(`DROP DATABASE IF EXISTS ${freshName} WITH (FORCE)`);
-  await prisma.$executeRawUnsafe(`CREATE DATABASE ${freshName}`);
+  // template0 accepts no sessions, so this still works while the service image
+  // has other connections to template1.
+  await prisma.$executeRawUnsafe(`CREATE DATABASE ${freshName} TEMPLATE template0`);
   const freshUrl = new URL(savedUrl);
   freshUrl.pathname = `/${freshName}`;
   let freshPrisma;
