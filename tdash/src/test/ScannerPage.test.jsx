@@ -37,7 +37,7 @@ describe('Online scanner', () => {
     it('uses only scanner auth and shows nested denial despite a successful HTTP envelope', async () => {
         const storage = vi.spyOn(Storage.prototype, 'setItem');
         render(<ScannerPage />); await connect();
-        fetch.mockResolvedValueOnce(reply({ success: false, reason: 'Ticket already used' }));
+        fetch.mockResolvedValueOnce(reply({ valid: false, reason: 'Ticket already used' }));
         enter(); check();
         expect(await screen.findByText('Not admitted')).toBeInTheDocument();
         expect(screen.getByText('Ticket already used')).toBeInTheDocument();
@@ -62,7 +62,7 @@ describe('Online scanner', () => {
         enter('TIX-ABC123');
         fireEvent.change(screen.getByLabelText('Ticket ID (barcode entry only)'), { target: { value: ticketId } });
         fireEvent.change(screen.getByLabelText('Event ID (barcode entry only)'), { target: { value: eventId } });
-        fetch.mockResolvedValueOnce(reply({ success: true })); check();
+        fetch.mockResolvedValueOnce(reply({ valid: true })); check();
         expect(await screen.findByText('Admitted')).toBeInTheDocument();
         expect(JSON.parse(fetch.mock.calls[1][1].body).qrData).toBe(qr);
     });
@@ -73,7 +73,7 @@ describe('Online scanner', () => {
         fireEvent.submit(form); fireEvent.submit(form);
         expect(fetch).toHaveBeenCalledTimes(2);
         expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
-        await act(async () => { pending.resolve(reply({ success: true })); });
+        await act(async () => { pending.resolve(reply({ valid: true })); });
         expect(await screen.findByText('Admitted')).toBeInTheDocument();
     });
     it('shows the server reason when the gate rate limit rejects a scan', async () => {
@@ -92,7 +92,7 @@ describe('Online scanner', () => {
         fetch.mockResolvedValueOnce(reply({ ticket: {} })); check();
         await waitFor(() => expect(screen.getByRole('button', { name: 'Check ticket for entry' })).not.toBeDisabled());
         expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
-        fetch.mockResolvedValueOnce(reply({ success: false, reason: 'Event cancelled' })); check();
+        fetch.mockResolvedValueOnce(reply({ valid: false, reason: 'Event cancelled' })); check();
         expect(await screen.findByText('Event cancelled')).toBeInTheDocument();
     });
     it('does not queue offline scans', async () => {
@@ -120,7 +120,7 @@ describe('Online scanner', () => {
         vi.stubGlobal('BarcodeDetector', Detector);
         navigator.mediaDevices.getUserMedia.mockResolvedValue({ getTracks: () => [{ stop }] });
         const { unmount } = render(<ScannerPage />); await connect();
-        fetch.mockResolvedValueOnce(reply({ success: true }));
+        fetch.mockResolvedValueOnce(reply({ valid: true }));
         fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
         expect(await screen.findByText('Admitted')).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledTimes(2); expect(detect).toHaveBeenCalledTimes(1); expect(stop).toHaveBeenCalledTimes(1);
@@ -167,7 +167,7 @@ describe('Online scanner', () => {
         fetch.mockReturnValueOnce(response.promise); check();
         await act(async () => { found.resolve([{ rawValue: qr }]); });
         expect(fetch).toHaveBeenCalledTimes(2); expect(stop).toHaveBeenCalledTimes(1);
-        await act(async () => { response.resolve(reply({ success: true })); });
+        await act(async () => { response.resolve(reply({ valid: true })); });
         expect(await screen.findByText('Admitted')).toBeInTheDocument();
     });
     it('stops camera tracks resolving after stop and keeps manual entry available', async () => {
@@ -188,7 +188,7 @@ describe('Online scanner', () => {
         fireEvent.click(screen.getByRole('button', { name: 'End scanner session' }));
         expect(oldSignal.aborted).toBe(true);
         await connect();
-        await act(async () => { old.resolve(reply({ success: true })); });
+        await act(async () => { old.resolve(reply({ valid: true })); });
         expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Check ticket for entry' })).toBeEnabled();
     });
@@ -210,7 +210,7 @@ describe('Online scanner', () => {
         ['Event ID (barcode entry only)', ticketId],
     ])('clears the previous admission when %s changes without submitting another ticket', async (label, value) => {
         render(<ScannerPage />); await connect(); enter();
-        fetch.mockResolvedValueOnce(reply({ success: true })); check();
+        fetch.mockResolvedValueOnce(reply({ valid: true })); check();
         expect(await screen.findByText('Admitted')).toBeInTheDocument();
         fireEvent.change(screen.getByLabelText(label), { target: { value } });
         expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
@@ -230,6 +230,22 @@ describe('Online scanner', () => {
         await act(async () => { found.resolve([{ rawValue: qr }]); });
         expect(stop).toHaveBeenCalledTimes(1); expect(fetch).toHaveBeenCalledTimes(1);
         expect(screen.queryByText('Admitted')).not.toBeInTheDocument();
+    });
+    it('shows the ticket type and first name and ignores email and barcode fields', async () => {
+        render(<ScannerPage />); await connect(); enter();
+        fetch.mockResolvedValueOnce(reply({
+            valid: true,
+            ticketTypeName: 'QA GA (test)',
+            holderFirstName: 'Ada',
+            email: 'buyer@example.com',
+            barcode: 'TIX-SECRET-SHOULD-NOT-RENDER',
+        }));
+        check();
+        expect(await screen.findByText('Admitted')).toBeInTheDocument();
+        expect(screen.getByText('QA GA (test)')).toBeInTheDocument();
+        expect(screen.getByText('Ada')).toBeInTheDocument();
+        expect(screen.queryByText('buyer@example.com')).not.toBeInTheDocument();
+        expect(screen.queryByText('TIX-SECRET-SHOULD-NOT-RENDER')).not.toBeInTheDocument();
     });
 
 });

@@ -5,10 +5,11 @@ import { eventService } from './service';
 import { ticketTypeService } from '../ticket-types/service';
 import { ticketTierService } from '../ticket-tiers/service';
 import { eventConfigurationSchema } from './validation';
+import { StaffAudit } from '../../services/staff-action-audit';
 
 type Configuration = z.infer<typeof eventConfigurationSchema>['body'];
 
-export async function saveEventConfiguration(data: Configuration, id?: string) {
+export async function saveEventConfiguration(data: Configuration, id?: string, audit?: StaffAudit) {
   return prisma.$transaction(
     async (tx) => {
       if (id) await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
@@ -26,7 +27,8 @@ export async function saveEventConfiguration(data: Configuration, id?: string) {
             { ...data.event, status: current.status } as Parameters<
               typeof eventService.updateEvent
             >[1],
-            tx
+            tx,
+            audit
           )
         : await eventService.createEvent(
             { ...data.event, status: 'DRAFT' } as Parameters<typeof eventService.createEvent>[0],
@@ -81,7 +83,8 @@ export async function saveEventConfiguration(data: Configuration, id?: string) {
         }
         await tx.ticketType.delete({ where: { id: type.id } });
       }
-      if (data.publish && event.status === 'DRAFT') return eventService.publishEvent(event.id, tx);
+      if (data.publish && event.status === 'DRAFT')
+        return eventService.publishEvent(event.id, tx, audit);
       return tx.event.findUniqueOrThrow({ where: { id: event.id } });
     },
     { timeout: 15000 }

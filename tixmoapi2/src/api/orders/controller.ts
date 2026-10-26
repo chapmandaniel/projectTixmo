@@ -1,9 +1,12 @@
 import { Response } from 'express';
+import prisma from '../../config/prisma';
 import { AuthRequest } from '../../middleware/auth';
 import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
+import { writeStaffAction } from '../../services/staff-action-audit';
 import { orderService } from './service';
+import { buyerEmailVisible, presentOrderDetail } from './order-privacy';
 import { receiptDisclosure } from '../../utils/receipt';
 
 const canManageOrders = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
@@ -71,7 +74,24 @@ export const getConsumerOrderRecovery = catchAsync(async (req: AuthRequest, res:
 export const getOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const order = await orderService.getOrderById(req.params.id, undefined, req.user!.userId);
   if (!order) throw ApiError.notFound('Order not found');
-  res.json(successResponse({ ...order, receiptDisclosure: receiptDisclosure(order.totalAmount) }));
+  const detail = { ...order, receiptDisclosure: receiptDisclosure(order.totalAmount) };
+  if (buyerEmailVisible(req.user!.role)) {
+    const event = await prisma.event.findUnique({
+      where: { id: order.eventId },
+      select: { organizationId: true },
+    });
+    if (event) {
+      await writeStaffAction({
+        action: 'STAFF_PII_VIEW',
+        subjectType: 'ORDER',
+        subjectId: order.id,
+        organizationId: event.organizationId,
+        actorId: req.user!.userId,
+        reason: 'Staff order detail',
+      });
+    }
+  }
+  res.json(successResponse(presentOrderDetail(detail, req.user!.role)));
 });
 
 export const confirmOrder = catchAsync(async (req: AuthRequest, res: Response) => {

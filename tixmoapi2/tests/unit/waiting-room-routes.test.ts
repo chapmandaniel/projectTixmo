@@ -135,6 +135,7 @@ jest.doMock('../../src/api/venues/routes', () => require('express').Router());
 jest.doMock('../../src/api/ticket-tiers/routes', () => require('express').Router());
 jest.doMock('../../src/api/events/routes', () => require('express').Router());
 jest.doMock('../../src/api/events/public.routes', () => require('express').Router());
+jest.doMock('../../src/api/staff-actions/routes', () => require('express').Router());
 const app = require('../../src/app').default;
 const scanners: [string, string][] = [
   ['post', '/scanners/register'],

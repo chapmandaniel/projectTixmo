@@ -954,6 +954,25 @@ model EventSalesControl {
   @@map("event_sales_controls")
 }
 
+// Staff revoke/edit/cancel/status evidence. No user or subject FK: the row
+// stays readable after the account or scanner is removed.
+model StaffActionAudit {
+  id             String   @id @default(uuid())
+  action         String
+  subjectType    String   @map("subject_type")
+  subjectId      String   @map("subject_id")
+  organizationId String   @map("organization_id")
+  actorId        String   @map("actor_id")
+  reason         String   @db.VarChar(1000)
+  before         Json?
+  after          Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@index([subjectType, subjectId, createdAt])
+  @@map("staff_action_audits")
+}
+
 // Email-possession recovery for active customers only; never invitation authority.
 model BuyerPasswordReset {
   userId String @id @map("user_id")

@@ -124,8 +124,10 @@ const ScannersView = ({
 
     const handleRevoke = async (id) => {
         if (!window.confirm('Are you sure you want to revoke this scanner? It will no longer be able to scan tickets.')) return;
+        const reason = window.prompt('Why is this scanner being revoked?');
+        if (!reason || !reason.trim()) return;
         try {
-            await api.delete(`/scanners/${id}`);
+            await api.delete(`/scanners/${id}`, { data: { reason: reason.trim() } });
             fetchScanners();
         } catch (error) {
             alert('Failed to revoke scanner');

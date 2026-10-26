@@ -13,6 +13,7 @@ import {
   requireOrganizationId,
   resolveOrganizationFilter,
 } from '../../utils/tenantScope';
+import { staffReason } from '../../services/staff-action-audit';
 
 export const createEvent = catchAsync(async (req: AuthRequest, res: Response) => {
   const payload = req.body as Parameters<typeof eventService.createEvent>[0];
@@ -37,7 +38,11 @@ export const configureEvent = catchAsync(async (req: AuthRequest, res: Response)
   payload.event.organizationId = organizationId;
   if (payload.event.venueId)
     await assertVenueBelongsToOrganization(payload.event.venueId, organizationId);
-  const event = await saveEventConfiguration(payload, id);
+  const event = await saveEventConfiguration(
+    payload,
+    id,
+    id ? { actorId: actor.userId, reason: staffReason(payload.reason) } : undefined
+  );
   res.status(id ? 200 : 201).json(successResponse(event, 'Event configuration saved successfully'));
 });
 
@@ -65,7 +70,10 @@ export const updateEvent = catchAsync(async (req: AuthRequest, res: Response) =>
     await assertVenueBelongsToOrganization(payload.venueId, eventScope.organizationId);
   }
 
-  const event = await eventService.updateEvent(id, payload);
+  const event = await eventService.updateEvent(id, payload, undefined, {
+    actorId: actor.userId,
+    reason: staffReason((req.body as { reason?: unknown }).reason),
+  });
   res.json(successResponse(event, 'Event updated successfully'));
 });
 
@@ -128,7 +136,10 @@ export const publishEvent = catchAsync(async (req: AuthRequest, res: Response) =
   const actor = await getActorScope(req);
   await assertEventAccess(actor, id);
 
-  const event = await eventService.publishEvent(id);
+  const event = await eventService.publishEvent(id, undefined, {
+    actorId: actor.userId,
+    reason: staffReason((req.body as { reason?: unknown } | undefined)?.reason),
+  });
   res.json(successResponse(event, 'Event published successfully'));
 });
 
@@ -137,7 +148,10 @@ export const cancelEvent = catchAsync(async (req: AuthRequest, res: Response) =>
   const actor = await getActorScope(req);
   await assertEventAccess(actor, id);
 
-  const event = await eventService.cancelEvent(id);
+  const event = await eventService.cancelEvent(id, {
+    actorId: actor.userId,
+    reason: staffReason((req.body as { reason?: unknown } | undefined)?.reason),
+  });
   res.json(successResponse(event, 'Event cancelled successfully'));
 });
 
@@ -184,7 +198,10 @@ export const updateEventStatus = catchAsync(async (req: AuthRequest, res: Respon
   const actor = await getActorScope(req);
   await assertEventAccess(actor, id);
 
-  const event = await eventService.transitionEventStatus(id, status);
+  const event = await eventService.transitionEventStatus(id, status, {
+    actorId: actor.userId,
+    reason: staffReason((req.body as { reason?: unknown }).reason),
+  });
   res.json(successResponse(event, `Event status updated to ${status}`));
 });
 

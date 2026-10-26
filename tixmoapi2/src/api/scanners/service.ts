@@ -11,6 +11,8 @@ import {
   consumeTicket,
 } from '../../services/ticket-admission.service';
 import { orderDisputed } from '../../services/ticket-void.service';
+import { recordStaffAction, StaffAudit } from '../../services/staff-action-audit';
+import { presentScanResult, recordedScanReason, SCAN_REASON } from './public-scan';
 
 interface RegisterScannerData {
   name: string;
@@ -165,6 +167,17 @@ export class ScannerService {
     }
 
     if (scanner.status !== 'ACTIVE') {
+      if (scanner.status === 'REVOKED') {
+        await prisma.scanLog.create({
+          data: {
+            scannerId: scanner.id,
+            scanType: 'ENTRY',
+            success: false,
+            failureReason: SCAN_REASON.REVOKED,
+            metadata: { reasonCode: SCAN_REASON.REVOKED },
+          },
+        });
+      }
       throw ApiError.forbidden(`Scanner is ${scanner.status.toLowerCase()}`);
     }
 
@@ -303,19 +316,26 @@ export class ScannerService {
   /**
    * Delete/revoke scanner
    */
-  async deleteScanner(id: string): Promise<void> {
-    const scanner = await prisma.scanner.findUnique({
-      where: { id },
-    });
-
-    if (!scanner) {
-      throw ApiError.notFound('Scanner not found');
-    }
-
-    // Soft delete by setting status to REVOKED
-    await prisma.scanner.update({
-      where: { id },
-      data: { status: 'REVOKED' },
+  async deleteScanner(id: string, audit?: StaffAudit): Promise<void> {
+    await prisma.$transaction(async (tx) => {
+      const scanner = await tx.scanner.findUnique({ where: { id } });
+      if (!scanner) throw ApiError.notFound('Scanner not found');
+      await tx.scanner.update({
+        where: { id },
+        data: { status: 'REVOKED' },
+      });
+      if (audit && scanner.status !== 'REVOKED') {
+        await recordStaffAction(tx, {
+          action: 'SCANNER_REVOKE',
+          subjectType: 'SCANNER',
+          subjectId: id,
+          organizationId: scanner.organizationId,
+          actorId: audit.actorId,
+          reason: audit.reason,
+          before: { status: scanner.status },
+          after: { status: 'REVOKED' },
+        });
+      }
     });
   }
 
@@ -336,30 +356,18 @@ export class ScannerService {
       // uploads and internal callers that don't pass through HTTP middleware.
       await tx.$queryRaw`SELECT id FROM scanners WHERE id = ${data.scannerId} FOR UPDATE`;
       const scanner = await tx.scanner.findUnique({ where: { id: data.scannerId } });
-      if (!scanner || scanner.status !== 'ACTIVE')
-        throw ApiError.forbidden('Scanner is not active');
-      if (
-        ticket &&
-        (scanner.organizationId !== ticket.event.organizationId ||
-          (scanner.eventId && scanner.eventId !== ticket.eventId))
-      ) {
-        const scanLog = await tx.scanLog.create({
-          data: {
-            scannerId: data.scannerId,
-            ticketId: ticket.id,
-            eventId: ticket.eventId,
-            scanType: data.scanType,
-            success: false,
-            failureReason: 'Scanner is not assigned to this event',
-            metadata: data.metadata as Prisma.InputJsonValue,
-          },
-        });
-        return { denied: true as const, scanLog };
+      if (!scanner || scanner.status !== 'ACTIVE') {
+        return { kind: 'inactive' as const, revoked: scanner?.status === 'REVOKED' };
       }
       let denial: AdmissionDenial | undefined;
       if (!parsed) denial = { reason: 'Invalid QR code format' };
       else if (!ticket) denial = { reason: 'Ticket not found' };
-      else if (parsed.eventId !== ticket.eventId || parsed.barcode !== ticket.barcode) {
+      else if (
+        scanner.organizationId !== ticket.event.organizationId ||
+        (scanner.eventId && scanner.eventId !== ticket.eventId)
+      ) {
+        denial = { reason: 'WRONG_EVENT', reasonCode: SCAN_REASON.WRONG_EVENT };
+      } else if (parsed.eventId !== ticket.eventId || parsed.barcode !== ticket.barcode) {
         denial = { reason: 'Ticket credential is no longer valid' };
       } else denial = ticketFailure(ticket, data.scanType === 'ENTRY', false);
       let admitted = ticket;
@@ -372,6 +380,9 @@ export class ScannerService {
           checkedInBy: consumed.checkedInBy,
         };
       }
+      const reasonCode =
+        denial?.reasonCode ||
+        recordedScanReason({ success: !denial, reason: denial?.reason, ticket });
       const scanLog = await tx.scanLog.create({
         data: {
           scannerId: data.scannerId,
@@ -379,20 +390,42 @@ export class ScannerService {
           eventId: ticket?.eventId ?? null,
           scanType: data.scanType,
           success: !denial,
-          failureReason: denial?.reason,
-          metadata: data.metadata as Prisma.InputJsonValue,
+          failureReason: reasonCode,
+          metadata: { ...(data.metadata ?? {}), reasonCode },
         },
       });
       return {
-        denied: false as const,
+        kind: 'scanned' as const,
         success: !denial,
         reason: denial?.reason,
-        reasonCode: denial?.reasonCode,
+        reasonCode,
         ticket: admitted || undefined,
         scanLog,
+        wrongEvent: denial?.reasonCode === SCAN_REASON.WRONG_EVENT,
       };
     });
-    if (outcome.denied) throw ApiError.forbidden('Scanner is not assigned to this event');
+    if (outcome.kind === 'inactive') {
+      if (outcome.revoked) {
+        await prisma.scanLog.create({
+          data: {
+            scannerId: data.scannerId,
+            scanType: data.scanType,
+            success: false,
+            failureReason: SCAN_REASON.REVOKED,
+            metadata: { reasonCode: SCAN_REASON.REVOKED },
+          },
+        });
+      }
+      throw ApiError.forbidden('Scanner is not active');
+    }
+    if (outcome.wrongEvent) {
+      const denial = presentScanResult({
+        success: false,
+        reason: 'WRONG_EVENT',
+        ticket: outcome.ticket,
+      });
+      throw ApiError.forbidden('Scanner is not assigned to this event', denial);
+    }
     return {
       success: outcome.success,
       reason: outcome.reason,

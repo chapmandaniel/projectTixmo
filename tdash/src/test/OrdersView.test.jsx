@@ -66,7 +66,7 @@ describe('OrdersView staff refunds', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'View order ORD-7344' }));
         expect(await screen.findAllByText('CA$10.00')).toHaveLength(2);
-        expect(screen.getAllByText('Barcode: Issued')).toHaveLength(2);
+        expect(screen.getAllByText('Barcode: ••••NDER')).toHaveLength(2);
         expect(screen.queryByText(/Generating/)).not.toBeInTheDocument();
         expect(screen.queryByText(rawBarcode)).not.toBeInTheDocument();
         expect(screen.getAllByText('CA$20.00').length).toBeGreaterThan(0);

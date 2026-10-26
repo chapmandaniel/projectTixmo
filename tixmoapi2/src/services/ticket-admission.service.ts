@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { DOORS_BEFORE_START_MS } from '../config/doors';
 import { ApiError } from '../utils/ApiError';
 import { lockOrder } from './order-inventory.service';
 import { DISPUTE_SCAN_REASON, orderDisputed, VOID_DISPUTED_CODE } from './ticket-void.service';
@@ -7,6 +8,8 @@ export type AdmissionDenial = {
   reason: string;
   reasonCode?: string;
 };
+
+export { DOORS_BEFORE_START_MS };
 
 export async function lockedTicket(tx: Prisma.TransactionClient, id: string) {
   const reference = await tx.ticket.findUnique({
@@ -50,7 +53,11 @@ export function ticketFailure(
     return { reason: 'Ticket has a refund in progress' };
   if (ticket.event.deletedAt || !['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(ticket.event.status))
     return { reason: 'Event is not active for scanning' };
-  if (enforceTime && ticket.event.startDatetime && new Date() < ticket.event.startDatetime)
+  if (
+    enforceTime &&
+    ticket.event.startDatetime &&
+    new Date() < new Date(ticket.event.startDatetime.getTime() - DOORS_BEFORE_START_MS)
+  )
     return { reason: 'Event has not started yet' };
   if (enforceTime && ticket.event.endDatetime && new Date() > ticket.event.endDatetime)
     return { reason: 'Event has already ended' };

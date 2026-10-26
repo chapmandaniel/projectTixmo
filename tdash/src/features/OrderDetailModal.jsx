@@ -7,6 +7,13 @@ import { eventAddress, formatEventMoney, hstAmountLine, hstRegistrationLine } fr
 import { getStoredUser } from '../lib/session';
 import { disputeOutcomeLabel, isDisputedOrder, orderListStatus } from '../lib/orderDispute';
 
+const staffBarcode = (barcode) => {
+    const value = typeof barcode === 'string' ? barcode.trim() : '';
+    if (!value) return '';
+    const tail = value.replace(/^•+/, '').slice(-4);
+    return tail ? `••••${tail}` : '';
+};
+
 const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
     const [isRefunding, setIsRefunding] = useState(false);
     const [refundError, setRefundError] = useState(null);
@@ -116,15 +123,15 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
                                     <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Customer</p>
                                 </div>
                             </div>
-                            <div className="flex items-start space-x-3">
+                            {order.user?.email ? <div className="flex items-start space-x-3">
                                 <Mail className={`mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} size={18} />
                                 <div>
                                     <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
-                                        {order.user?.email}
+                                        {order.user.email}
                                     </p>
                                     <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Email</p>
                                 </div>
-                            </div>
+                            </div> : null}
                         </div>
                     </div>
 
@@ -163,9 +170,9 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
                                                 <p className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
                                                     {ticket.ticketType?.name || 'General Admission'}
                                                 </p>
-                                                {ticket.barcode ? (
+                                                {staffBarcode(ticket.barcode) ? (
                                                     <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                                                        Barcode: Issued
+                                                        Barcode: {staffBarcode(ticket.barcode)}
                                                     </p>
                                                 ) : null}
                                             </div>
