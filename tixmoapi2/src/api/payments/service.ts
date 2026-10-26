@@ -695,6 +695,9 @@ export class PaymentService {
    * Stripe Dashboard refunds arrive with no local row. A succeeded refund that
    * covers the whole order reuses ORDER_REFUND settlement and does not call
    * refunds.create. Partial, pending, and failed refunds leave tickets scannable.
+   * Staff refund through the app, which refuses used or transferred tickets.
+   * This webhook is the safety net for a refund already issued in Stripe: it
+   * voids the tickets anyway so a refunded ticket cannot scan.
    */
   private async applyExternalRefund(event: Stripe.Event): Promise<void> {
     const paymentIntentId = this.refundPaymentIntentId(event);
