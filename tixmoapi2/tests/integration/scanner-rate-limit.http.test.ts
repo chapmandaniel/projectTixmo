@@ -92,8 +92,9 @@ describe('scanner admission rate limit', () => {
       for (const response of batch) {
         expect(response.status).not.toBe(429);
         expect(response.status).toBe(200);
-        expect(response.body.data.success).toBe(false);
-        expect(response.body.data.reason).toBe('Invalid QR code format');
+        expect(response.body.data.valid).toBe(false);
+        expect(response.body.data.reason).toBe('INVALID_QR');
+        expect(response.body.data.message).toBe('Invalid QR code format');
       }
     }
 
