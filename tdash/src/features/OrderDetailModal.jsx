@@ -163,13 +163,15 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
                                                 <p className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
                                                     {ticket.ticketType?.name || 'General Admission'}
                                                 </p>
-                                                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                                                    Barcode: {ticket.barcode || 'Generating...'}
-                                                </p>
+                                                {ticket.barcode ? (
+                                                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                                                        Barcode: Issued
+                                                    </p>
+                                                ) : null}
                                             </div>
                                         </div>
                                         <div className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
-                                            {formatCurrency(ticket.pricePaid || 0)}
+                                            {formatCurrency(ticket.pricePaid ?? 0)}
                                         </div>
                                     </div>
                                 ))}
