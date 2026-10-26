@@ -15,6 +15,9 @@ REPOSITORY = 'chapmandaniel/projectTixmo'
 CONTROL_REF = 'refs/heads/codex/import-local-development-20261025'
 PREFIX = 'refs/heads/archive/local-20261025/'
 SHA = re.compile(r'[0-9a-f]{40}')
+# GitHub push protection identified three synthetic Stripe fixture literals in
+# this historical commit. Never attempt to bypass the rule or push its ancestry.
+BLOCKED_FIXTURE_COMMIT = '32e2c0b114412f03b588bbd1e768679c0ea470fc'
 
 
 def git(*args, check=True):
@@ -85,17 +88,23 @@ def run(remote, apply):
     if hashlib.sha256(bundle.read_bytes()).hexdigest() != BUNDLE_HASH:
         raise ValueError('Bundle checksum mismatch')
     git('bundle', 'verify', str(bundle))
+    git('fetch', '--no-tags', str(bundle), 'refs/heads/*:refs/remotes/local-history/*')
     before = remote_heads(remote)
     plan = make_plan(manifest, before)
-    pending = [e for e in plan if e['action'] == 'create']
+    blocked = [e for e in plan if e['action'] == 'create'
+               and git('merge-base', '--is-ancestor', BLOCKED_FIXTURE_COMMIT,
+                       e['sha'], check=False).returncode == 0]
+    blocked_destinations = {e['destination'] for e in blocked}
+    pending = [e for e in plan if e['action'] == 'create'
+               and e['destination'] not in blocked_destinations]
     pending.sort(key=lambda e: e['sha'] != manifest['main'])
     print(json.dumps({'phase': 'plan', 'snapshotBranches': len(plan),
-                      'alreadyPresent': len(plan) - len(pending),
+                      'alreadyPresent': sum(e['action'] == 'already_present' for e in plan),
                       'createOnly': len(pending),
+                      'protectedHistoricalRefsNotAttempted': len(blocked),
                       'historicalAliases': sum(e['destination'].startswith(PREFIX) for e in plan)}), flush=True)
     if not apply:
         return
-    git('fetch', '--no-tags', str(bundle), 'refs/heads/*:refs/remotes/local-history/*')
     for e in plan:
         if git('rev-parse', e['sha'] + '^{commit}').stdout.strip() != e['sha']:
             raise ValueError('Source commit unavailable')
@@ -136,14 +145,18 @@ def run(remote, apply):
         if after.get(ref) != sha:
             raise ValueError('Pre-existing remote ref changed during import: ' + ref)
     missing = [e for e in plan if after.get(e['destination']) != e['sha']]
+    unexpected = [e for e in missing if e['destination'] not in blocked_destinations]
     summary = {'phase': 'verified', 'snapshotBranches': len(plan),
                'exactDestinations': len(plan) - len(missing), 'missing': len(missing),
-               'existingRefsPreserved': len(before), 'created': len(pending) - len(missing)}
+               'protectedHistoricalRefsNotAttempted': len(blocked),
+               'unexpectedMissing': len(unexpected),
+               'existingRefsPreserved': len(before), 'created': len(pending) - len(unexpected)}
     Path('local-development-import-result.json').write_text(
-        json.dumps({'summary': summary, 'branches': plan, 'missing': missing}, indent=2) + '\n')
+        json.dumps({'summary': summary, 'branches': plan, 'missing': missing,
+                    'protectedHistoricalRefsNotAttempted': blocked}, indent=2) + '\n')
     print(json.dumps(summary), flush=True)
-    if missing:
-        print(json.dumps({'missingDestinations': [e['destination'] for e in missing]}), flush=True)
+    if unexpected:
+        print(json.dumps({'missingDestinations': [e['destination'] for e in unexpected]}), flush=True)
         raise RuntimeError('Some branch creations were refused; result records the exact remaining refs')
 
 
