@@ -27,6 +27,9 @@ export async function lockedTicket(tx: Prisma.TransactionClient, id: string) {
   });
 }
 
+// Attendees check-in opens at doors, two hours before the event start.
+export const DOORS_BEFORE_START_MS = 2 * 60 * 60 * 1000;
+
 export function ticketFailure(
   ticket: NonNullable<Awaited<ReturnType<typeof lockedTicket>>>,
   entry: boolean,
@@ -50,7 +53,11 @@ export function ticketFailure(
     return { reason: 'Ticket has a refund in progress' };
   if (ticket.event.deletedAt || !['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(ticket.event.status))
     return { reason: 'Event is not active for scanning' };
-  if (enforceTime && ticket.event.startDatetime && new Date() < ticket.event.startDatetime)
+  if (
+    enforceTime &&
+    ticket.event.startDatetime &&
+    new Date() < new Date(ticket.event.startDatetime.getTime() - DOORS_BEFORE_START_MS)
+  )
     return { reason: 'Event has not started yet' };
   if (enforceTime && ticket.event.endDatetime && new Date() > ticket.event.endDatetime)
     return { reason: 'Event has already ended' };

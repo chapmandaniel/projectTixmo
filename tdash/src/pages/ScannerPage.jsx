@@ -58,7 +58,7 @@ export default function ScannerPage({ isDark = true }) {
                 if (typeof data.valid !== 'boolean') throw new Error('No confirmed admission result. Check the ticket before trying again.');
                 setResult({
                     accepted: data.valid,
-                    message: data.valid ? 'Admitted' : (data.reason || 'Admission denied'),
+                    message: data.valid ? 'Admitted' : (data.message || data.reason || 'Admission denied'),
                     ticketTypeName: typeof data.ticketTypeName === 'string' ? data.ticketTypeName : '',
                     holderFirstName: typeof data.holderFirstName === 'string' ? data.holderFirstName : '',
                 });

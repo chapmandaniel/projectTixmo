@@ -289,6 +289,8 @@ describe('V1 market readiness smoke', () => {
     expect(scanResponse.body.data).toEqual({
       valid: true,
       reason: null,
+      message: null,
+      eventName: null,
       ticketTypeName: expect.any(String),
       holderFirstName: 'V1',
     });

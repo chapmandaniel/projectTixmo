@@ -6,9 +6,12 @@ import { Request, Response, NextFunction } from 'express';
 export const errorHandler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ApiError) {
     logger.warn('API error', err);
-    return res
-      .status(err.statusCode)
-      .json({ success: false, message: err.message, errors: err.errors });
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      errors: err.errors,
+      ...(err.data !== undefined ? { data: err.data } : {}),
+    });
   }
 
   logger.error('Unexpected error', err as Error);

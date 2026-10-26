@@ -66,11 +66,15 @@ describe('scanner scan response', () => {
     expect(presented).toEqual({
       valid: true,
       reason: null,
+      message: null,
+      eventName: null,
       ticketTypeName: 'QA GA (test)',
       holderFirstName: 'Ada',
     });
     expect(Object.keys(presented).sort()).toEqual([
+      'eventName',
       'holderFirstName',
+      'message',
       'reason',
       'ticketTypeName',
       'valid',
@@ -87,7 +91,9 @@ describe('scanner scan response', () => {
       presentScanResult({ success: false, reason: 'Ticket has been cancelled', ticket: null })
     ).toEqual({
       valid: false,
-      reason: 'Ticket has been cancelled',
+      reason: 'CANCELLED',
+      message: 'Ticket has been cancelled',
+      eventName: null,
       ticketTypeName: null,
       holderFirstName: null,
     });

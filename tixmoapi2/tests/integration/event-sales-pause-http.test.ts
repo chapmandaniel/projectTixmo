@@ -355,7 +355,8 @@ describe('Mounted event sales-pause authorization and paid access', () => {
       const duplicate = await scan(paidTicket);
       expect(duplicate.status).toBe(200);
       expect(duplicate.body.data.valid).toBe(false);
-      expect(duplicate.body.data.reason).toContain('already been used');
+      expect(duplicate.body.data.reason).toBe('ALREADY_USED');
+      expect(duplicate.body.data.message).toContain('already been used');
       const provider = {
         paymentIntents: {
           retrieve: jest.fn((id: string) => {
