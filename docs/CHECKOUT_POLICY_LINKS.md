@@ -10,7 +10,7 @@ Before live ticket sales, the customer checkout must link to the approved:
 - Refund Policy.
 - Privacy Policy.
 
-Organizer Terms should be linked from organizer onboarding/settings, not from attendee checkout unless counsel requires it.
+Organizer Terms are not part of attendee checkout. `getPolicyLinks()` in `tdash/src/lib/runtimeConfig.js` reads `organizerTermsUrl` from runtime config or `VITE_ORGANIZER_TERMS_URL` and returns it. No page, onboarding flow, or settings screen under `tdash/src` reads that returned value.
 
 ## Runtime Configuration
 
@@ -21,19 +21,23 @@ Dashboard runtime config supports these public URLs and keys:
 | `privacyPolicyUrl` | `VITE_PRIVACY_POLICY_URL` | Yes |
 | `termsUrl` | `VITE_TERMS_URL` | Yes |
 | `refundPolicyUrl` | `VITE_REFUND_POLICY_URL` | Yes |
-| `organizerTermsUrl` | `VITE_ORGANIZER_TERMS_URL` | Organizer onboarding/settings |
+| `organizerTermsUrl` | `VITE_ORGANIZER_TERMS_URL` | No. Parsed by `getPolicyLinks()` and not read by any page |
 | `stripePublishableKey` | `VITE_STRIPE_PUBLISHABLE_KEY` | Yes for paid checkout |
 | `paymentCurrency` | `VITE_PAYMENT_CURRENCY` | Yes, must match API `PAYMENT_CURRENCY` |
 
 The Docker entrypoint writes these into `runtime-config.js` alongside `apiUrl`.
 
-Code source:
+What the dashboard actually reads from `getPolicyLinks()`:
 
-- `tdash/src/lib/runtimeConfig.js`
-- `tdash/docker-entrypoint.d/40-runtime-config.sh`
-- `tdash/src/test/runtimeConfig.test.jsx`
-- `scripts/local-checkout-smoke.mjs`
-- `scripts/check-checkout-runtime-config.mjs`
+- `tdash/src/pages/CheckoutPage.jsx` reads `privacyPolicyUrl`, `termsUrl`, and `refundPolicyUrl`.
+- `tdash/src/pages/EventOnSalePage.jsx` reads `refundPolicyUrl`, `termsUrl`, and `privacyPolicyUrl`.
+- `tdash/src/pages/FestivalPage.jsx` reads `termsUrl` and `privacyPolicyUrl`.
+- `tdash/src/lib/runtimeConfig.js` reads those keys and also `organizerTermsUrl`. No other file under `tdash/src` reads `organizerTermsUrl`.
+- `tdash/docker-entrypoint.d/40-runtime-config.sh` writes all four URL keys into `runtime-config.js`.
+- `scripts/check-checkout-runtime-config.mjs` records `organizerTermsUrl`. It requires and fetches only the privacy, terms, and refund URLs.
+- `tdash/src/test/runtimeConfig.test.jsx` asserts that `getPolicyLinks()` returns `organizerTermsUrl`.
+
+`scripts/local-checkout-smoke.mjs` does not read policy URLs.
 
 ## Checkout Placement Requirement
 

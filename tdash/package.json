@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node ./scripts/check-buyer-policy-pages.mjs",
     "preview": "vite preview",
     "test": "vitest",
     "design:guard": "node ./scripts/design-system-guard.mjs",
