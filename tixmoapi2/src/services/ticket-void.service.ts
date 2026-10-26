@@ -2,7 +2,8 @@ import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { ApiError } from '../utils/ApiError';
 
-export const DISPUTE_SCAN_REASON = 'Ticket voided: payment disputed';
+export const VOID_DISPUTED_CODE = 'VOID_DISPUTED';
+export const DISPUTE_SCAN_REASON = 'VOID: disputed, see gate lead';
 export const STRIPE_DISPUTE_ACTOR = 'stripe-dispute';
 const VOID_AUDIT_PREFIX = 'ticket-void:';
 

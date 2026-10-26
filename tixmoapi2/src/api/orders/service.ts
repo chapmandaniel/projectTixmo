@@ -63,7 +63,7 @@ export class OrderService {
     if (action === 'refund' && !['OWNER', 'ADMIN'].includes(actor.role)) {
       throw ApiError.forbidden('Not authorized to refund orders');
     }
-    if (action === 'void' && !['OWNER', 'ADMIN'].includes(actor.role)) {
+    if (action === 'void' && !['OWNER', 'ADMIN', 'MANAGER'].includes(actor.role)) {
       throw ApiError.forbidden('Not authorized to void tickets');
     }
     if (action === 'confirm' && !['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'].includes(actor.role)) {
@@ -568,7 +568,7 @@ export class OrderService {
    * Refund an order (ADMIN only)
    */
   /**
-   * Void admission without a refund or inventory release. OWNER/ADMIN only.
+   * Void admission without a refund or inventory release. OWNER, ADMIN, and MANAGER.
    */
   async voidPaidTickets(
     id: string,

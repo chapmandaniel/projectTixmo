@@ -28,12 +28,12 @@ describe('staff void button', () => {
         mocks.getStoredUser.mockReset();
     });
 
-    it('hides void from other roles and posts a required reason for an owner', async () => {
-        mocks.getStoredUser.mockReturnValue({ role: 'MANAGER' });
+    it('hides void from a promoter and posts a required reason for a manager', async () => {
+        mocks.getStoredUser.mockReturnValue({ role: 'PROMOTER' });
         const { rerender } = render(<OrderDetailModal order={order} isDark={false} onClose={() => {}} onOrderUpdated={() => {}} />);
         expect(screen.queryByRole('button', { name: 'Void all tickets' })).not.toBeInTheDocument();
 
-        mocks.getStoredUser.mockReturnValue({ role: 'OWNER' });
+        mocks.getStoredUser.mockReturnValue({ role: 'MANAGER' });
         rerender(<OrderDetailModal order={order} isDark={false} onClose={() => {}} onOrderUpdated={() => {}} />);
         fireEvent.click(screen.getByRole('button', { name: 'Void all tickets' }));
         expect(await screen.findByRole('alert')).toHaveTextContent('A reason is required.');

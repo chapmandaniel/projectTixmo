@@ -29,7 +29,7 @@ import prisma from '../../src/config/prisma';
 import { logger } from '../../src/config/logger';
 import { paymentService } from '../../src/api/payments/service';
 import { generateAccessToken } from '../../src/utils/jwt';
-import { DISPUTE_SCAN_REASON } from '../../src/services/ticket-void.service';
+import { DISPUTE_SCAN_REASON, VOID_DISPUTED_CODE } from '../../src/services/ticket-void.service';
 
 jest.setTimeout(30000);
 
@@ -59,6 +59,7 @@ describe('dispute webhooks and staff void', () => {
   let typeId = '';
   let scannerKey = '';
   let owner: { id: string; email: string; role: string; organizationId: string | null };
+  let manager: { id: string; email: string; role: string; organizationId: string | null };
   let buyerId = '';
   const userIds: string[] = [];
   const orderIds: string[] = [];
@@ -95,7 +96,13 @@ describe('dispute webhooks and staff void', () => {
       role: ownerRow.role,
       organizationId: ownerRow.organizationId,
     };
-    await makeUser('MANAGER', organizationId);
+    const managerRow = await makeUser('MANAGER', organizationId);
+    manager = {
+      id: managerRow.id,
+      email: managerRow.email,
+      role: managerRow.role,
+      organizationId: managerRow.organizationId,
+    };
     await makeUser('PROMOTER', organizationId);
     await makeUser('CUSTOMER', null);
     buyerId = (await makeUser('CUSTOMER', null, false, 'buyer')).id;
@@ -237,7 +244,12 @@ describe('dispute webhooks and staff void', () => {
 
     const denied = await scan(saved.tickets[0]);
     expect(denied.status).toBe(200);
-    expect(denied.body.data).toMatchObject({ success: false, reason: DISPUTE_SCAN_REASON });
+    expect(denied.body.data).toMatchObject({
+      success: false,
+      reason: DISPUTE_SCAN_REASON,
+      reasonCode: VOID_DISPUTED_CODE,
+    });
+    expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(
       (await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id: eventIdStripe } })).status
     ).toBe('PROCESSED');
@@ -275,7 +287,12 @@ describe('dispute webhooks and staff void', () => {
     expect(closedAudit.actorId).toBe('stripe-dispute');
     expect(closedAudit.after).toMatchObject({ inventoryReleased: false });
     const denied = await scan(saved.tickets[0]);
-    expect(denied.body.data.reason).toBe(DISPUTE_SCAN_REASON);
+    expect(denied.body.data).toMatchObject({
+      success: false,
+      reason: DISPUTE_SCAN_REASON,
+      reasonCode: VOID_DISPUTED_CODE,
+    });
+    expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(
       await prisma.ticketInventoryReconciliation.count({
         where: { evidence: `Dispute ${disputeId} closed: won` },
@@ -297,7 +314,16 @@ describe('dispute webhooks and staff void', () => {
     });
     expect(saved.refundStatus).toBe('DISPUTE_LOST');
     expect(saved.tickets.every((ticket) => ticket.status === 'VALID')).toBe(true);
-    expect((await scan(saved.tickets[0])).body.data.reason).toBe(DISPUTE_SCAN_REASON);
+    const early = await scan(saved.tickets[0]);
+    expect(early.body.data).toMatchObject({
+      success: false,
+      reason: DISPUTE_SCAN_REASON,
+      reasonCode: VOID_DISPUTED_CODE,
+    });
+    expect(early.body.data.reason).not.toBe('Ticket credential must be reissued');
+    expect(
+      (await prisma.ticket.findUniqueOrThrow({ where: { id: saved.tickets[0].id } })).status
+    ).toBe('VALID');
 
     await deliver(
       'charge.dispute.created',
@@ -355,17 +381,115 @@ describe('dispute webhooks and staff void', () => {
     warn.mockRestore();
   });
 
-  it('lets only OWNER/ADMIN void, writes an audit row, and scan denies that ticket', async () => {
+  it('rejects a disputed ticket on scan, validate, check-in, and offline upload', async () => {
+    const order = await paidOrder('gate');
+    const ticket = order.tickets[0];
+    await deliver(
+      'charge.dispute.created',
+      { id: `dp_${key}_gate`, status: 'needs_response', payment_intent: order.paymentIntentId },
+      `evt_${key}_gate`
+    );
+    const qrData = `TICKET:${ticket.id}:${ticket.barcode}:${eventId}`;
+    const live = await scan(ticket);
+    const validation = await request(app)
+      .post('/api/v1/scanners/scan')
+      .set('Authorization', `Bearer ${scannerKey}`)
+      .send({ qrData, scanType: 'VALIDATION' });
+    const checked = await request(app)
+      .post('/api/v1/tickets/validate')
+      .set('Authorization', `Bearer ${token(owner)}`)
+      .send({ barcode: ticket.barcode });
+    const checkIn = await request(app)
+      .post('/api/v1/tickets/check-in')
+      .set('Authorization', `Bearer ${token(owner)}`)
+      .send({ barcode: ticket.barcode });
+    const offline = await request(app)
+      .post('/api/v1/scanners/validate')
+      .set('Authorization', `Bearer ${scannerKey}`)
+      .send({ scans: [{ qrData, scannedAt: new Date().toISOString(), scanType: 'ENTRY' }] });
+
+    for (const body of [live.body.data, validation.body.data]) {
+      expect(body).toMatchObject({
+        success: false,
+        reason: DISPUTE_SCAN_REASON,
+        reasonCode: VOID_DISPUTED_CODE,
+      });
+      expect(body.reason).not.toBe('Ticket credential must be reissued');
+    }
+    expect(checked.status).toBe(200);
+    expect(checked.body.data).toMatchObject({
+      valid: false,
+      reason: DISPUTE_SCAN_REASON,
+      reasonCode: VOID_DISPUTED_CODE,
+    });
+    expect(checkIn.status).toBe(400);
+    expect(checkIn.body.message).toBe(DISPUTE_SCAN_REASON);
+    expect(checkIn.body.errors).toMatchObject({ reasonCode: VOID_DISPUTED_CODE });
+    expect(offline.status).toBe(200);
+    expect(offline.body.data.success).toBe(0);
+    expect(offline.body.data.results[0]).toMatchObject({
+      success: false,
+      reason: DISPUTE_SCAN_REASON,
+      reasonCode: VOID_DISPUTED_CODE,
+    });
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } })).status).toBe(
+      'CANCELLED'
+    );
+  });
+
+  it('lets a manager void, rejects a promoter, and keeps refunds on owner and admin', async () => {
+    const order = await paidOrder('roles');
+    const promoter = await prisma.user.findFirstOrThrow({
+      where: { email: `promoter-${key}@test.invalid` },
+    });
+    const promoterVoid = await request(app)
+      .post(`/api/v1/orders/${order.id}/void`)
+      .set(
+        'Authorization',
+        `Bearer ${token({
+          id: promoter.id,
+          email: promoter.email,
+          role: promoter.role,
+          organizationId: promoter.organizationId,
+        })}`
+      )
+      .send({ reason: 'promoter should not void' });
+    expect(promoterVoid.status).toBe(403);
+    const managerRefund = await request(app)
+      .post(`/api/v1/orders/${order.id}/refund`)
+      .set('Authorization', `Bearer ${token(manager)}`)
+      .send({});
+    expect(managerRefund.status).toBe(403);
+
+    const before = Date.now();
+    const voided = await request(app)
+      .post(`/api/v1/orders/${order.id}/void`)
+      .set('Authorization', `Bearer ${token(manager)}`)
+      .send({ reason: 'manager gate hold' });
+    expect(voided.status).toBe(200);
+    expect(
+      voided.body.data.tickets.every((ticket: { status: string }) => ticket.status === 'CANCELLED')
+    ).toBe(true);
+    const audit = await prisma.ticketInventoryReconciliation.findFirstOrThrow({
+      where: { actorId: manager.id, evidence: 'manager gate hold' },
+    });
+    expect(audit.actorId).toBe(manager.id);
+    expect(audit.evidence).toBe('manager gate hold');
+    expect(audit.createdAt.getTime()).toBeGreaterThanOrEqual(before - 1000);
+    expect(audit.createdAt.getTime()).toBeLessThanOrEqual(Date.now() + 1000);
+    const denied = await scan(order.tickets[0]);
+    expect(denied.body.data).toMatchObject({ success: false, reason: 'Ticket has been cancelled' });
+    expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
+    expect(denied.body.data.success).toBe(false);
+  });
+
+  it('writes an audit row for an owner void and scan denies that ticket', async () => {
     const order = await paidOrder('staff');
     const [first, second] = order.tickets;
     const users = await prisma.user.findMany({
       where: {
         email: {
-          in: [
-            `manager-${key}@test.invalid`,
-            `promoter-${key}@test.invalid`,
-            `customer-${key}@test.invalid`,
-          ],
+          in: [`promoter-${key}@test.invalid`, `customer-${key}@test.invalid`],
         },
       },
     });
@@ -417,6 +541,8 @@ describe('dispute webhooks and staff void', () => {
       success: false,
       reason: 'Ticket has been cancelled',
     });
+    expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
+    expect(audit.createdAt).toBeInstanceOf(Date);
     const admitted = await scan(second);
     expect(admitted.body.data.success).toBe(true);
 

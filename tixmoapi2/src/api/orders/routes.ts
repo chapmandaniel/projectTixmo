@@ -156,7 +156,7 @@ router.post('/:id/cancel', controller.cancelOrder);
 router.post('/:id/refund', authorize('OWNER', 'ADMIN'), controller.refundOrder);
 router.post(
   '/:id/void',
-  authorize('OWNER', 'ADMIN'),
+  authorize('OWNER', 'ADMIN', 'MANAGER'),
   validate(validation.voidOrderSchema),
   controller.voidOrder
 );

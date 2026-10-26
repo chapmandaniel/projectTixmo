@@ -17,7 +17,7 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
     const [voiding, setVoiding] = useState(false);
     if (!order) return null;
     const openTickets = (order?.tickets || []).filter((ticket) => ticket.status !== 'CANCELLED');
-    const canVoid = ['OWNER', 'ADMIN'].includes(getStoredUser()?.role)
+    const canVoid = ['OWNER', 'ADMIN', 'MANAGER'].includes(getStoredUser()?.role)
         && (order?.status === 'PAID' || order?.status === 'PARTIALLY_REFUNDED')
         && openTickets.length > 0;
     const voidTickets = async (ticketId) => {
