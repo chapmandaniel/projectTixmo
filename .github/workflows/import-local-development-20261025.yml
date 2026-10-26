@@ -23,3 +23,5 @@ jobs:
           fetch-tags: false
       - name: Verify bundle and create missing refs without updating existing heads
         run: python3 scripts/import-local-development-20261025.py --apply
+      - name: Publish fixture-cleaned export copies without changing original branches
+        run: python3 scripts/import-local-development-20261025.py --snapshot sanitized --apply

@@ -11,6 +11,8 @@ import subprocess
 ARCHIVE = Path('docs/development-archive/2026-10-25')
 MANIFEST_HASH = '763069c4e3cb27ce8b5b05c46f5a37425088c36d00d82bdeb814bec8b469e4d6'
 BUNDLE_HASH = 'dc0a8377db99a1146d05a800fb677166cccd09d5bd876a9e661f0b43423f587b'
+SANITIZED_MANIFEST_HASH = 'a96daa54a301b48ab6a2aaabb0aa4af3daeb5e0442bf79bf23079c231157b1bc'
+SANITIZED_BUNDLE_HASH = 'b8d072193c3b603f6c584699cbc74f4e6fa43af38e2fe94e155ae5a231e487ea'
 REPOSITORY = 'chapmandaniel/projectTixmo'
 CONTROL_REF = 'refs/heads/codex/import-local-development-20261025'
 PREFIX = 'refs/heads/archive/local-20261025/'
@@ -69,7 +71,7 @@ def make_plan(manifest, existing):
     return entries
 
 
-def run(remote, apply):
+def run(remote, apply, snapshot='original'):
     if remote != 'origin' and not (Path(remote).is_absolute() and Path(remote).is_dir()):
         raise ValueError('Only origin or an existing local test repository is supported')
     if os.environ.get('GITHUB_ACTIONS') == 'true':
@@ -80,25 +82,30 @@ def run(remote, apply):
         if url not in ('https://github.com/' + REPOSITORY,
                        'https://github.com/' + REPOSITORY + '.git'):
             raise ValueError('Unexpected origin URL')
-    raw = (ARCHIVE / 'manifest.json').read_bytes()
-    if hashlib.sha256(raw).hexdigest() != MANIFEST_HASH:
+    if snapshot not in ('original', 'sanitized'):
+        raise ValueError('Unknown fixed export snapshot')
+    folder = ARCHIVE if snapshot == 'original' else ARCHIVE / 'sanitized'
+    manifest_hash = MANIFEST_HASH if snapshot == 'original' else SANITIZED_MANIFEST_HASH
+    bundle_hash = BUNDLE_HASH if snapshot == 'original' else SANITIZED_BUNDLE_HASH
+    raw = (folder / 'manifest.json').read_bytes()
+    if hashlib.sha256(raw).hexdigest() != manifest_hash:
         raise ValueError('Manifest checksum mismatch')
     manifest = json.loads(raw)
-    bundle = ARCHIVE / 'unpublished-development.bundle'
-    if hashlib.sha256(bundle.read_bytes()).hexdigest() != BUNDLE_HASH:
+    bundle = folder / ('unpublished-development.bundle' if snapshot == 'original' else 'development.bundle')
+    if hashlib.sha256(bundle.read_bytes()).hexdigest() != bundle_hash:
         raise ValueError('Bundle checksum mismatch')
     git('bundle', 'verify', str(bundle))
     git('fetch', '--no-tags', str(bundle), 'refs/heads/*:refs/remotes/local-history/*')
     before = remote_heads(remote)
     plan = make_plan(manifest, before)
-    blocked = [e for e in plan if e['action'] == 'create'
+    blocked = [e for e in plan if snapshot == 'original' and e['action'] == 'create'
                and git('merge-base', '--is-ancestor', BLOCKED_FIXTURE_COMMIT,
                        e['sha'], check=False).returncode == 0]
     blocked_destinations = {e['destination'] for e in blocked}
     pending = [e for e in plan if e['action'] == 'create'
                and e['destination'] not in blocked_destinations]
     pending.sort(key=lambda e: e['sha'] != manifest['main'])
-    print(json.dumps({'phase': 'plan', 'snapshotBranches': len(plan),
+    print(json.dumps({'phase': 'plan', 'snapshot': snapshot, 'snapshotBranches': len(plan),
                       'alreadyPresent': sum(e['action'] == 'already_present' for e in plan),
                       'createOnly': len(pending),
                       'protectedHistoricalRefsNotAttempted': len(blocked),
@@ -147,7 +154,7 @@ def run(remote, apply):
             raise ValueError('Pre-existing remote ref changed during import: ' + ref)
     missing = [e for e in plan if after.get(e['destination']) != e['sha']]
     unexpected = [e for e in missing if e['destination'] not in blocked_destinations]
-    summary = {'phase': 'verified', 'snapshotBranches': len(plan),
+    summary = {'phase': 'verified', 'snapshot': snapshot, 'snapshotBranches': len(plan),
                'exactDestinations': len(plan) - len(missing), 'missing': len(missing),
                'protectedHistoricalRefsNotAttempted': len(blocked),
                'unexpectedMissing': len(unexpected),
@@ -165,5 +172,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--remote', default='origin')
     parser.add_argument('--apply', action='store_true')
+    parser.add_argument('--snapshot', choices=['original', 'sanitized'], default='original')
     args = parser.parse_args()
-    run(args.remote, args.apply)
+    run(args.remote, args.apply, args.snapshot)
