@@ -132,6 +132,16 @@ test('a wider ticket window cannot override the event close', async () => {
   jest.setSystemTime(closing);
   await expectPurchase(false);
 });
+test('stores the included HST with the same cent rounding as the receipt', async () => {
+  const order = await buy();
+  expect(order.taxAmount.toString()).toBe('6.52');
+  expect(tx.order.create).toHaveBeenCalledWith({
+    data: expect.objectContaining({
+      totalAmount: new Decimal(50),
+      taxAmount: new Decimal('6.52'),
+    }),
+  });
+});
 test('client clock fields cannot authorize an early direct request', async () => {
   jest.setSystemTime(opening - 1);
   await expect(

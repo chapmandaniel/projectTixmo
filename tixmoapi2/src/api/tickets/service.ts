@@ -10,6 +10,7 @@ import {
   ticketFailure,
   consumeTicket,
 } from '../../services/ticket-admission.service';
+import { formatNewfoundlandDateTime } from '../../utils/eventTime';
 
 const assertPaidTicketOrder = (orderStatus: string): void => {
   if (orderStatus !== 'PAID') {
@@ -214,7 +215,7 @@ export class TicketService {
           recipientName: `${recipient.firstName} ${recipient.lastName}`,
           senderName: `${sender.firstName} ${sender.lastName}`,
           eventName: transferred.event.name,
-          eventDate: transferred.event.startDatetime.toLocaleDateString(),
+          eventDate: formatNewfoundlandDateTime(transferred.event.startDatetime),
           ticketCount: 1,
         })
         .catch(() => false);

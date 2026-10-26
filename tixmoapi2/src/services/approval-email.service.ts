@@ -9,6 +9,7 @@ import {
   approvalRequestEmail,
   approvalRevisionEmail,
 } from '../utils/emailTemplates';
+import { formatNewfoundlandDateTime } from '../utils/eventTime';
 
 export interface ReviewerInfo {
   email: string;
@@ -75,7 +76,7 @@ class ApprovalEmailService {
         title: approval.title,
         eventName: approval.eventName,
         description: approval.description,
-        deadline: approval.deadline.toLocaleString(),
+        deadline: formatNewfoundlandDateTime(approval.deadline),
         revisionNumber: approval.revisionNumber,
         reviewUrl,
       });
@@ -120,7 +121,7 @@ class ApprovalEmailService {
           requesterName: `${requester.firstName} ${requester.lastName}`.trim(),
           title: approval.title,
           eventName: approval.eventName,
-          deadline: approval.deadline.toLocaleString(),
+          deadline: formatNewfoundlandDateTime(approval.deadline),
           revisionNumber: approval.revisionNumber,
           summary: approval.summary,
           reviewUrl,
@@ -165,7 +166,7 @@ class ApprovalEmailService {
         requesterName: `${requester.firstName} ${requester.lastName}`.trim(),
         title: approval.title,
         eventName: approval.eventName,
-        deadline: approval.deadline.toLocaleString(),
+        deadline: formatNewfoundlandDateTime(approval.deadline),
         revisionNumber: approval.revisionNumber,
         reviewUrl,
       });
