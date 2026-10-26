@@ -1,5 +1,6 @@
 import { getRedisClient } from '../config/redis';
 import { logger } from '../config/logger';
+import { ApiError } from '../utils/ApiError';
 import crypto from 'crypto';
 
 export class RedisLockService {
@@ -25,8 +26,12 @@ export class RedisLockService {
 
       return result === 'OK' ? token : null;
     } catch (error) {
+      // Null means another holder has the lock. A Redis error is different:
+      // this primitive fails closed so a caller cannot treat the outage as
+      // "lock not held" and continue. Order inventory and payment idempotency
+      // use Postgres row locks and Stripe idempotency keys, not this service.
       logger.error(`Failed to acquire lock for ${key}`, error);
-      return null;
+      throw new ApiError(503, 'Unable to acquire a consistency lock while Redis is unavailable');
     }
   }
 

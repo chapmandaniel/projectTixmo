@@ -1,7 +1,7 @@
 import { config } from '@config/environment';
 import { logger } from '@config/logger';
 import { connectDatabase } from '@config/database';
-import { connectRedis } from '@config/redis';
+import { connectRedis, getRedisClient } from '@config/redis';
 import { startApprovalReminderJob } from './jobs/approval-reminder.job';
 import { startOrderExpiryJob } from './jobs/order-expiry.job';
 import { startPaymentRecoveryJob } from './jobs/payment-recovery.job';
@@ -16,9 +16,14 @@ void (async () => {
     await connectDatabase();
     logger.info('✅ Database connected successfully');
 
-    // Connect to Redis
+    // Redis is optional for login and scan. A short connect timeout still leaves
+    // the client reconnecting so /ready recovers when Redis returns.
     await connectRedis();
-    logger.info('✅ Redis connected successfully');
+    if (getRedisClient().isReady) {
+      logger.info('✅ Redis connected successfully');
+    } else {
+      logger.warn('Redis not ready; serving requests with local fallbacks until it reconnects');
+    }
 
     // Start Express server
     const app = (await import('./app')).default;

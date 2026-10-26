@@ -21,6 +21,9 @@ SupertestTest.prototype.serverAddress = function (app: Server, route: string) {
 };
 
 jest.mock('../src/config/redis', () => {
+  if (process.env.TIXMO_REDIS_OUTAGE_TEST === '1') {
+    return jest.requireActual('../src/config/redis');
+  }
   const mockClient = {
     sendCommand: jest.fn().mockResolvedValue('OK'), // Generic success for unknown commands
     on: jest.fn(),
@@ -38,11 +41,19 @@ jest.mock('../src/config/redis', () => {
     connectRedis: jest.fn().mockResolvedValue(mockClient),
     getRedisClient: jest.fn().mockReturnValue(mockClient),
     disconnectRedis: jest.fn(),
+    withRedisTimeout: (operation: Promise<unknown>) => operation,
+    logRedisFallback: jest.fn(),
+    resetRedisFallbackLogForTests: jest.fn(),
+    REDIS_COMMAND_TIMEOUT_MS: 400,
+    REDIS_CONNECT_TIMEOUT_MS: 1000,
   };
 });
 
 // Mock rate-limit-redis to avoid complex Redis interactions
 jest.mock('rate-limit-redis', () => {
+  if (process.env.TIXMO_REDIS_OUTAGE_TEST === '1') {
+    return jest.requireActual('rate-limit-redis');
+  }
   class MockRedisStore {
     localKeys = true;
     prefix: string;

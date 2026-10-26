@@ -42,12 +42,12 @@ describe('RedisLockService', () => {
       expect(mockSet).toHaveBeenCalledWith('test-key', expect.any(String), { PX: 5000, NX: true });
     });
 
-    it('should return false if redis throws an error', async () => {
+    it('should fail closed if redis throws an error', async () => {
       mockSet.mockRejectedValue(new Error('Redis error'));
 
-      const result = await redisLockService.acquireLock('test-key', 5000);
-
-      expect(result).toBeNull();
+      await expect(redisLockService.acquireLock('test-key', 5000)).rejects.toMatchObject({
+        statusCode: 503,
+      });
     });
   });
 
