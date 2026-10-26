@@ -187,11 +187,13 @@ describe('Redis outage on request paths', () => {
 
     const admitted = await scan(firstQr);
     expect(admitted.status).toBe(200);
-    expect(admitted.body.data.success).toBe(true);
+    expect(admitted.body.data.valid).toBe(true);
+    expect(admitted.body.data.reason).toBeNull();
     const replay = await scan(firstQr);
     expect(replay.status).toBe(200);
-    expect(replay.body.data.success).toBe(false);
-    expect(replay.body.data.reason).toMatch(/already been used/i);
+    expect(replay.body.data.valid).toBe(false);
+    expect(replay.body.data.reason).toBe('ALREADY_USED');
+    expect(replay.body.data.message).toMatch(/already been used/i);
     const ticket = await prisma.ticket.findUniqueOrThrow({ where: { id: firstTicketId } });
     expect(ticket.status).toBe('USED');
     const successes = await prisma.scanLog.count({
@@ -223,7 +225,8 @@ describe('Redis outage on request paths', () => {
       resetFallback();
       const admitted = await scan(secondQr);
       expect(admitted.status).toBe(200);
-      expect(admitted.body.data.success).toBe(true);
+      expect(admitted.body.data.valid).toBe(true);
+      expect(admitted.body.data.reason).toBeNull();
 
       const started = Date.now();
       await expect(
