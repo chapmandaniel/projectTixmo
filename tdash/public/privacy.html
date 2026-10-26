@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Privacy Policy — Tixmo Test Environment</title>
+  <title>Privacy Policy — Tixmo</title>
   <style>
     body { margin: 0; background: #fafafa; color: #202020; font: 1rem/1.65 system-ui, sans-serif; }
     main { max-width: 44rem; margin: 3rem auto; padding: 0 1.5rem; }
@@ -13,15 +13,70 @@
   </style>
 </head>
 <body>
+  <!-- DRAFT, NOT FOR PUBLICATION UNTIL DANIEL APPROVES. Lawyer review required under PIPEDA (and confirm whether any other regime applies). Built from docs/policies/PRIVACY_POLICY_DRAFT.md, narrowed to what the app actually collects as of Oct 26, 2026. Retention periods are taken from docs/policies/DATA_RETENTION_NOTES.md (proposed, not approved). Hosting regions are unknown. Prepared Oct 26, 2026 (America/St_Johns). Remove this comment and the robots noindex line only after approval. -->
   <main>
     <h1>Privacy Policy</h1>
-    <p class="notice"><strong>Temporary placeholder for testing.</strong> Tixmo is currently being tested. A complete privacy policy will replace this page before customer launch.</p>
-    <p>This page is a placeholder and does not describe Tixmo’s complete data practices. It has not been approved as the privacy policy for customer use.</p>
-    <h2>While testing</h2>
-    <p>Use synthetic test information. Do not enter real payment-card details or sensitive personal information.</p>
-    <h2>Before customer launch</h2>
-    <p>The final policy must explain what information is collected, why it is used, which service providers receive it, how long it is retained, and how to contact the responsible business about privacy requests.</p>
-    <p>Placeholder created October 22, 2026.</p>
+    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br>Organization: [LEGAL_ENTITY_NAME], [MAILING_ADDRESS]<br>Privacy questions: <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a> <!-- PROPOSED DEFAULT (Daniel to approve): privacy contact = support email --></p>
+    <p>This policy explains what personal information Tixmo collects when you buy tickets, use your account or work in the organizer dashboard, why we collect it, who we share it with, and your choices. We follow Canada’s <em>Personal Information Protection and Electronic Documents Act</em> (PIPEDA).</p>
+    <h2>1. What we collect</h2>
+    <h3>When you create an account</h3>
+    <ul>
+      <li>Your first and last name, email address and password. We store the password only in hashed form, never in plain text.</li>
+      <li>Your phone number, if you choose to give it.</li>
+      <li>Account details such as your role, when you last signed in, and security settings (for example, whether two-step sign-in is on).</li>
+    </ul>
+    <h3>When you buy tickets</h3>
+    <ul>
+      <li>Your order: event, tickets, prices, total, currency, order number, order and payment status, and any refund.</li>
+      <li>Your tickets: ticket ID, QR code reference, status, and whether and when the ticket was scanned or transferred (including to whom).</li>
+      <li>A reference to your Stripe payment, but <strong>not your card number</strong>. You enter card details directly into Stripe’s secure form, and Stripe processes them.</li>
+    </ul>
+    <h3>At the door</h3>
+    <p>When your ticket is scanned, we record the scan result, the time and which scanner was used.</p>
+    <h3>If you work for an organizer</h3>
+    <p>Staff accounts may also include a job title, organization and permissions, plus records of your work in the dashboard (such as events, tasks, approvals, comments and files you upload).</p>
+    <h3>Technical information</h3>
+    <ul>
+      <li>Our servers keep short-term request logs (the page or address requested, the result and the timing).</li>
+      <li>To prevent abuse, we briefly keep rate-limit counters keyed to your account or, if you’re signed out, your IP address.</li>
+      <li>If something breaks, error reports (technical details about the failed request) go to our error-monitoring provider. We remove sensitive details such as passwords and password-reset links.</li>
+      <li>Your browser stores your sign-in session in local storage so you stay signed in. We don’t use advertising cookies or analytics tracking on the ticketing pages.</li>
+    </ul>
+    <h2>2. Why we use it</h2>
+    <ul>
+      <li>To create your account, sell and deliver your tickets, and let you transfer them.</li>
+      <li>To process payments and refunds, and to handle chargebacks.</li>
+      <li>To check tickets at the door and stop duplicate or fake tickets.</li>
+      <li>To send service emails: a welcome email, order confirmations and payment notices, ticket transfer notices, waitlist alerts (if you join a waitlist) and password resets. We don’t send marketing email.</li>
+      <li>To keep Tixmo secure, fix problems and meet legal, tax and accounting obligations.</li>
+    </ul>
+    <h2>3. Who we share it with</h2>
+    <ul>
+      <li><strong>The event organizer</strong> and their authorized staff see the orders and tickets for their events, so they can run entry and help you.</li>
+      <li><strong>Stripe</strong> processes payments and refunds and may use payment information to prevent fraud.</li>
+      <li><strong>Postmark</strong> (or our configured email provider) sends our emails, so it receives your email address and the message content.</li>
+      <li><strong>Sentry</strong> receives error reports.</li>
+      <li><strong>Railway</strong> hosts our servers, our database and the short-term cache (Redis). Files that organizers upload are stored with <strong>Amazon Web Services (S3)</strong>.</li>
+      <li><strong>Google Fonts</strong>: our pages load a font from Google, which receives your IP address when the font loads.</li>
+      <li>Advisors or authorities, when the law requires it or to deal with fraud, safety or disputes.</li>
+    </ul>
+    <p>We don’t sell your personal information.</p>
+    <p>Your information is stored on servers in the United States, and some of our other providers also store or process information outside Canada. Information held outside Canada may be accessible to authorities under the laws of that country. <!-- PROPOSED DEFAULT (Daniel to approve): hosting regions = United States (Railway us-west2 and us-east4) --></p>
+    <h2>4. How long we keep it</h2>
+    <p>We keep order, payment and tax records for 6 years, as the Canada Revenue Agency requires. Records of ticket scans are kept with the order they belong to. We keep your account until you ask us to delete it. Error reports are kept only as long as our error-monitoring provider (Sentry) retains them. Deleted information may stay in backups until those backups expire. <!-- PROPOSED DEFAULT (Daniel to approve): retention: orders/payments/tax 6 years (CRA); accounts until the user asks for deletion (the app has no buyer self-delete today, only an OWNER/ADMIN DELETE /users/:id); scan logs with the order; error reports per Sentry retention. Replaces the 7-year figure from DATA_RETENTION_NOTES.md --></p>
+    <h2>5. How we protect it</h2>
+    <p>We use access controls by role and organization, hashed passwords, signed sign-in tokens, expiring password-reset links and encrypted connections. No system is perfectly secure, so please keep your password and ticket QR codes private.</p>
+    <h2>6. Your choices and rights</h2>
+    <p>You can ask to see the personal information we hold about you, ask us to correct it, or withdraw consent and ask us to delete your account (subject to legal and financial record-keeping). Email <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a>, and we’ll verify your identity before acting. If you’re not satisfied with our answer, you can complain to the Office of the Privacy Commissioner of Canada.</p>
+    <h2>7. Children</h2>
+    <p>Tixmo isn’t meant for children under 13, and they shouldn’t create accounts.</p>
+    <h2>8. Changes</h2>
+    <p>If we make significant changes to this policy, we’ll post them here and tell account holders by email where appropriate.</p>
+    <h2>9. Contact</h2>
+    <p>Privacy officer: Daniel Chapman, <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a> <!-- PROPOSED DEFAULT (Daniel to approve): privacy officer = Daniel Chapman; privacy and legal contact = support email --><br>Legal: <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a><br>Mail: [MAILING_ADDRESS]</p>
+    <hr>
+    <p>Tixmo policies: <a href="terms.html">Terms of Service</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
+    <p>[LEGAL_ENTITY_NAME] · [MAILING_ADDRESS] · <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a></p>
   </main>
 </body>
 </html>

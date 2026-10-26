@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Terms of Service — Tixmo Test Environment</title>
+  <title>Terms of Service — Tixmo</title>
   <style>
     body { margin: 0; background: #fafafa; color: #202020; font: 1rem/1.65 system-ui, sans-serif; }
     main { max-width: 44rem; margin: 3rem auto; padding: 0 1.5rem; }
@@ -13,16 +13,54 @@
   </style>
 </head>
 <body>
+  <!-- DRAFT, NOT FOR PUBLICATION UNTIL DANIEL APPROVES. Lawyer review required (licensed in Newfoundland and Labrador): liability, governing law, consumer protection, resale. Accountant to confirm HST-inclusive wording (decision 4A). Prepared Oct 26, 2026 (America/St_Johns). Remove this comment and the robots noindex line only after approval. -->
   <main>
     <h1>Terms of Service</h1>
-    <p class="notice"><strong>Temporary placeholder for testing.</strong> Tixmo is currently being tested. Complete Terms of Service will replace this page before customer launch.</p>
-    <p>This page marks where the Terms of Service will appear. Final customer terms have not yet been established or approved.</p>
-    <h2>While testing</h2>
-    <p>Use synthetic test information and test payment methods. Do not enter real payment-card details or sensitive personal information.</p>
-    <h2>Before customer launch</h2>
-    <p>The final terms must identify the responsible business and explain account use, ticket purchases, event-organizer responsibilities, applicable fees, cancellations, refunds, support and dispute handling.</p>
-    <p>Refund and cancellation rules remain to be finalized. This placeholder does not set those rules.</p>
-    <p>Placeholder created October 22, 2026.</p>
+    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br>Sold by: [LEGAL_ENTITY_NAME], [MAILING_ADDRESS]<br>Questions: <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a><br>HST registration no.: [HST_REGISTRATION_NUMBER]</p>
+    <p>These terms apply when you create a Tixmo account or buy tickets on Tixmo. By placing an order, you agree to them, to our <a href="refunds.html">Refund Policy</a>, our <a href="cancellation.html">Cancellation and Postponement Policy</a> and our <a href="privacy.html">Privacy Policy</a>.</p>
+    <h2>1. Your account</h2>
+    <p>You need a Tixmo account to buy and hold tickets. Please give accurate details and keep your password private. We may suspend an account if we see fraud, abuse or a security risk.</p>
+    <h2>2. Prices and payment</h2>
+    <ul>
+      <li>All prices are in <strong>Canadian dollars (CAD)</strong>.</li>
+      <li>The price you see is the price you pay. It <strong>includes HST and all fees</strong>. Nothing is added at checkout.</li>
+      <li>Card payments are processed by Stripe. Tixmo does not store your full card number. The charge appears on your statement as <strong>TIXMO TICKETS</strong>.</li>
+      <li>Your order is confirmed only when you see “Order confirmed” or receive our confirmation email. If you see “Awaiting server confirmation”, please don’t buy again. We’re still checking with the payment processor.</li>
+      <li>If a payment error appears, check <a href="/wallet">My tickets</a> or your email before paying again. If your tickets arrive, your payment went through.</li>
+      <li>When you start checkout, your tickets are held for a short time (currently 15 minutes). If you don’t finish paying in time, they go back on sale.</li>
+      <li>Each ticket type has a maximum number of tickets per order, shown on the event page.</li>
+    </ul>
+    <h2>3. Your tickets</h2>
+    <ul>
+      <li>Your tickets are in <a href="/wallet">My tickets</a>. Show the QR code at the door.</li>
+      <li><strong>Each ticket admits one person, once.</strong> The first scan wins, so copies or screenshots of a ticket that has already been scanned won’t get in.</li>
+      <li>A ticket isn’t valid if it has been refunded, cancelled or transferred away, or if its order isn’t paid.</li>
+      <li>Keep your QR code private. Anyone holding it could use it first.</li>
+    </ul>
+    <h2>4. Transfers</h2>
+    <ul>
+      <li>You can transfer a ticket for free in My tickets, before the event starts.</li>
+      <li>The person receiving it needs a <strong>Tixmo account</strong> under the email address you enter.</li>
+      <li>Once transferred, <strong>your old QR code stops working</strong> and the ticket belongs to the new holder.</li>
+      <li>The only way to pass a ticket to someone else is <strong>Transfer</strong> in My tickets. Please don’t resell tickets for more than face value (the price you paid). <!-- PROPOSED DEFAULT (Daniel to approve): resale rule. The code supports free wallet transfer only (POST /tickets/:id/transfer, WalletPage Transfer); there is no resale feature and the platform cannot technically stop off-platform sales --></li>
+    </ul>
+    <h2>5. Refunds, cancellations and postponements</h2>
+    <p>All sales are final unless the event is cancelled or rescheduled. See the <a href="refunds.html">Refund Policy</a> and the <a href="cancellation.html">Cancellation and Postponement Policy</a>.</p>
+    <h2>6. Entry and conduct</h2>
+    <ul>
+      <li>Venue and event staff may refuse entry or remove anyone who breaks venue rules, the law or any age or ID requirement, or who puts others at risk. Events are open to all ages unless the event listing says otherwise. <!-- PROPOSED DEFAULT (Daniel to approve): age restriction = none (all ages) unless the event listing says otherwise --> There is no refund in that case.</li>
+      <li>Bags may be searched, and the <a href="[VENUE_POLICY_URL]">venue’s own rules</a> apply. <!-- [VENUE_POLICY_URL] comes from the event data. If there is none, remove the link and keep the words as plain text. --></li>
+      <li>Times, lineups and running orders can change. Small changes like these aren’t a cancellation or a rescheduling.</li>
+    </ul>
+    <h2>7. Liability</h2>
+    <p>[LEGAL_ENTITY_NAME] is responsible for providing the event as described, or refunding you under our policies. To the extent the law allows, we aren’t responsible for indirect costs such as travel, accommodation or lost earnings. Nothing in these terms limits rights you have under Newfoundland and Labrador or Canadian consumer protection law.</p>
+    <h2>8. Governing law</h2>
+    <p>These terms are governed by the laws of Newfoundland and Labrador and the federal laws of Canada that apply there.</p>
+    <h2>9. Changes</h2>
+    <p>We may update these terms for future orders. The terms in effect when you bought apply to your order.</p>
+    <hr>
+    <p>Tixmo policies: <a href="terms.html">Terms of Service</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
+    <p>[LEGAL_ENTITY_NAME] · [MAILING_ADDRESS] · <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a></p>
   </main>
 </body>
 </html>
