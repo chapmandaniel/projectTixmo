@@ -35,11 +35,6 @@ import {
 } from '../prisma/utils/development-client';
 import { resolvePaymentCurrency } from '../src/config/payment-currency';
 
-const paymentCurrency = resolvePaymentCurrency(
-  process.env.PAYMENT_CURRENCY,
-  process.env.NODE_ENV || 'development'
-);
-
 // ─── Helpers ──────────────────────────────────────────────
 
 function randomDate(start: Date, end: Date): Date {
@@ -70,6 +65,14 @@ export async function populateDatabase(prisma?: PrismaClient) {
 }
 
 async function populateFixtures(prisma: PrismaClient) {
+  assertDevelopmentClient(prisma);
+  // Development and test omit PAYMENT_CURRENCY and use cad. Resolve it only
+  // after the local-target guard so a production invocation refuses the
+  // database before it can fail on the missing currency.
+  const paymentCurrency = resolvePaymentCurrency(
+    process.env.PAYMENT_CURRENCY,
+    process.env.NODE_ENV || 'development'
+  );
   faker.seed(42);
   const passwordHash = await bcrypt.hash('Password123!', 10);
   const now = new Date();
