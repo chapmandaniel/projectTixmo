@@ -36,6 +36,7 @@ const ApprovalsDashboard = lazy(() => import('./features/ApprovalsDashboard'));
 const OrdersView = lazy(() => import('./features/OrdersView'));
 const DevDashboard = lazy(() => import('./features/DevDashboard'));
 const ScannersView = lazy(() => import('./features/ScannersView'));
+const StaffActionsView = lazy(() => import('./features/StaffActionsView'));
 // Busy feedback must be immediately available without suspending the retained form.
 import WaitingRoomView from './features/WaitingRoomView';
 const ExternalReviewPage = lazy(() => import('./pages/ExternalReviewPage'));
@@ -108,6 +109,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         {/* Coming Soon hubs */}
                         <Route path="/marketing" element={<DashboardPlaceholderView isDark={isDark} title="Marketing Hub" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/scanners" element={<ScannersView isDark={isDark} user={user} />} />
+                        <Route path="/staff-actions" element={<StaffActionsView isDark={isDark} user={user} />} />
                         <Route path="/promo" element={<Navigate to="/dashboard" replace />} />
 
                         {/* Fallback to dashboard */}

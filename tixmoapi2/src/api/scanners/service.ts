@@ -11,6 +11,7 @@ import {
   consumeTicket,
 } from '../../services/ticket-admission.service';
 import { orderDisputed } from '../../services/ticket-void.service';
+import { recordStaffAction, StaffAudit } from '../../services/staff-action-audit';
 import { presentScanResult, recordedScanReason, SCAN_REASON } from './public-scan';
 
 interface RegisterScannerData {
@@ -315,19 +316,26 @@ export class ScannerService {
   /**
    * Delete/revoke scanner
    */
-  async deleteScanner(id: string): Promise<void> {
-    const scanner = await prisma.scanner.findUnique({
-      where: { id },
-    });
-
-    if (!scanner) {
-      throw ApiError.notFound('Scanner not found');
-    }
-
-    // Soft delete by setting status to REVOKED
-    await prisma.scanner.update({
-      where: { id },
-      data: { status: 'REVOKED' },
+  async deleteScanner(id: string, audit?: StaffAudit): Promise<void> {
+    await prisma.$transaction(async (tx) => {
+      const scanner = await tx.scanner.findUnique({ where: { id } });
+      if (!scanner) throw ApiError.notFound('Scanner not found');
+      await tx.scanner.update({
+        where: { id },
+        data: { status: 'REVOKED' },
+      });
+      if (audit && scanner.status !== 'REVOKED') {
+        await recordStaffAction(tx, {
+          action: 'SCANNER_REVOKE',
+          subjectType: 'SCANNER',
+          subjectId: id,
+          organizationId: scanner.organizationId,
+          actorId: audit.actorId,
+          reason: audit.reason,
+          before: { status: scanner.status },
+          after: { status: 'REVOKED' },
+        });
+      }
     });
   }
 

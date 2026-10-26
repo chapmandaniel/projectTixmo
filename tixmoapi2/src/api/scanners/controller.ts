@@ -151,7 +151,10 @@ export const deleteScanner = async (
     const actor = await getActorScope(req);
     await assertScannerAccess(actor, req.params.id);
 
-    await scannerService.deleteScanner(req.params.id);
+    await scannerService.deleteScanner(req.params.id, {
+      actorId: actor.userId,
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+    });
     res.status(204).send();
   } catch (error) {
     next(error);

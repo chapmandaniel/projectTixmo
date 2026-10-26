@@ -4,6 +4,7 @@ import { Event, Prisma, EventStatus } from '@prisma/client';
 import prisma from '../../config/prisma';
 import { ActorScope, assertOrganizationAccess } from '../../utils/tenantScope';
 import { lockOrder, markAttendedTickets } from '../../services/order-inventory.service';
+import { recordStaffAction, StaffAudit } from '../../services/staff-action-audit';
 import { orderService } from '../orders/service';
 import { receiptDisclosure } from '../../utils/receipt';
 import { ticketTypeDisplayOrder } from '../ticket-types/service';
@@ -311,9 +312,11 @@ export class EventService {
   async updateEvent(
     id: string,
     data: UpdateEventInput,
-    db: Prisma.TransactionClient = prisma
+    db?: Prisma.TransactionClient,
+    audit?: StaffAudit
   ): Promise<Event> {
-    if (db === prisma) return prisma.$transaction((tx) => this.updateEvent(id, data, tx));
+    if (!db || db === prisma)
+      return prisma.$transaction((tx) => this.updateEvent(id, data, tx, audit));
     await db.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
     // Check if event exists
     const existingEvent = await db.event.findUnique({
@@ -388,10 +391,23 @@ export class EventService {
       ...updateData,
     } as unknown as Prisma.EventUpdateInput;
 
-    return await db.event.update({
+    const updated = await db.event.update({
       where: { id },
       data: updatePayload,
     });
+    if (audit) {
+      await recordStaffAction(db, {
+        action: 'EVENT_EDIT',
+        subjectType: 'EVENT',
+        subjectId: id,
+        organizationId: existingEvent.organizationId,
+        actorId: audit.actorId,
+        reason: audit.reason,
+        before: { name: existingEvent.name, status: existingEvent.status },
+        after: { name: updated.name, status: updated.status },
+      });
+    }
+    return updated;
   }
 
   /**
@@ -555,10 +571,14 @@ export class EventService {
   /**
    * Generic event status transition (enforces state machine + readiness checks)
    */
-  async transitionEventStatus(id: string, newStatus: EventStatus): Promise<Event> {
+  async transitionEventStatus(
+    id: string,
+    newStatus: EventStatus,
+    audit?: StaffAudit
+  ): Promise<Event> {
     // Delegate to existing methods for PUBLISHED and CANCELLED
-    if (newStatus === EventStatus.PUBLISHED) return this.publishEvent(id);
-    if (newStatus === EventStatus.CANCELLED) return this.cancelEvent(id);
+    if (newStatus === EventStatus.PUBLISHED) return this.publishEvent(id, prisma, audit);
+    if (newStatus === EventStatus.CANCELLED) return this.cancelEvent(id, audit);
     if (newStatus === EventStatus.DELETED)
       throw ApiError.badRequest('Use the dedicated delete action');
     if (newStatus === EventStatus.DRAFT)
@@ -572,18 +592,35 @@ export class EventService {
 
       this.validateStatusTransition(event.status, newStatus);
 
-      return await tx.event.update({
+      const updated = await tx.event.update({
         where: { id },
         data: { status: newStatus },
       });
+      if (audit) {
+        await recordStaffAction(tx, {
+          action: 'EVENT_STATUS',
+          subjectType: 'EVENT',
+          subjectId: id,
+          organizationId: event.organizationId,
+          actorId: audit.actorId,
+          reason: audit.reason,
+          before: { status: event.status },
+          after: { status: updated.status },
+        });
+      }
+      return updated;
     });
   }
 
   /**
    * Publish event (change status from DRAFT to PUBLISHED)
    */
-  async publishEvent(id: string, db: Prisma.TransactionClient = prisma): Promise<Event> {
-    if (db === prisma) return prisma.$transaction((tx) => this.publishEvent(id, tx));
+  async publishEvent(
+    id: string,
+    db?: Prisma.TransactionClient,
+    audit?: StaffAudit
+  ): Promise<Event> {
+    if (!db || db === prisma) return prisma.$transaction((tx) => this.publishEvent(id, tx, audit));
     await db.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
     const event = await db.event.findUnique({
       where: { id },
@@ -626,18 +663,31 @@ export class EventService {
     if (event.endDatetime! <= event.startDatetime! || event.startDatetime! <= new Date())
       throw ApiError.badRequest('Cannot publish an event with invalid or past dates');
     this.assertTimeZone(event.timezone || undefined);
-    return await db.event.update({
+    const updated = await db.event.update({
       where: { id },
       data: {
         status: 'PUBLISHED',
       },
     });
+    if (audit) {
+      await recordStaffAction(db, {
+        action: 'EVENT_STATUS',
+        subjectType: 'EVENT',
+        subjectId: id,
+        organizationId: event.organizationId,
+        actorId: audit.actorId,
+        reason: audit.reason,
+        before: { status: event.status },
+        after: { status: 'PUBLISHED' },
+      });
+    }
+    return updated;
   }
 
   /**
    * Cancel event — also invalidates all tickets and handles orders
    */
-  async cancelEvent(id: string): Promise<Event> {
+  async cancelEvent(id: string, audit?: StaffAudit): Promise<Event> {
     // Close sales first under the same event lock used by checkout and
     // admission. The resumable per-order pass takes no event-first order locks.
     const cancelled = await prisma.$transaction(async (tx) => {
@@ -646,7 +696,20 @@ export class EventService {
       if (!event) throw ApiError.notFound('Event not found');
       if (event.deletedAt) throw ApiError.badRequest('Cannot cancel a deleted event');
       if (event.status !== 'CANCELLED') this.validateStatusTransition(event.status, 'CANCELLED');
-      return tx.event.update({ where: { id }, data: { status: 'CANCELLED' } });
+      const updated = await tx.event.update({ where: { id }, data: { status: 'CANCELLED' } });
+      if (audit && event.status !== 'CANCELLED') {
+        await recordStaffAction(tx, {
+          action: 'EVENT_CANCEL',
+          subjectType: 'EVENT',
+          subjectId: id,
+          organizationId: event.organizationId,
+          actorId: audit.actorId,
+          reason: audit.reason,
+          before: { status: event.status },
+          after: { status: 'CANCELLED' },
+        });
+      }
+      return updated;
     });
     const orders = await prisma.order.findMany({
       where: { eventId: id, status: { in: ['PENDING', 'PAID'] } },
