@@ -11,8 +11,14 @@ import {
   consumeTicket,
 } from '../../services/ticket-admission.service';
 
-const assertPaidTicketOrder = (orderStatus: string): void => {
-  if (orderStatus !== 'PAID') {
+const assertQrAdmission = (ticket: NonNullable<Awaited<ReturnType<typeof lockedTicket>>>): void => {
+  if (ticket.order.status === 'REFUNDED') {
+    throw ApiError.badRequest('Ticket has been refunded');
+  }
+  if (ticket.status === 'CANCELLED' || ticket.order.status === 'CANCELLED') {
+    throw ApiError.badRequest('Ticket has been cancelled');
+  }
+  if (ticket.order.status !== 'PAID') {
     throw ApiError.badRequest('Ticket is not valid until payment is completed');
   }
 };
@@ -298,7 +304,7 @@ export class TicketService {
       if (!ticket) throw ApiError.notFound('Ticket not found');
       if (userId && ticket.userId !== userId)
         throw ApiError.forbidden('You can only access QR codes for your own tickets');
-      assertPaidTicketOrder(ticket.order.status);
+      assertQrAdmission(ticket);
       const failure = ticketFailure(ticket, false, false);
       if (failure) throw ApiError.badRequest(failure);
       if (ticket.qrCodeUrl) return ticket.qrCodeUrl;

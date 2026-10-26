@@ -11,6 +11,18 @@ const payload = (response) => response?.data?.data || response?.data || response
 const money = (order) => formatEventMoney(order.totalAmount, orderDisplayCurrency(order.currency));
 const eventWhen = (event) => formatEventDate(event?.startDatetime, event?.timezone || event?.venue?.timezone || DEFAULT_EVENT_TIMEZONE, { timeZoneName: 'short' });
 const venueLine = (order) => [order.event?.venue?.name, eventAddress(order.event?.venue)].filter(Boolean).join(', ') || 'Venue to be announced';
+const reservationExpired = (order) => {
+    const expires = Date.parse(order?.expiresAt || '');
+    return Number.isFinite(expires) && expires <= Date.now();
+};
+const orderStatusLabel = (order) => {
+    const refund = order.refundStatus && order.refundStatus !== 'NONE' ? ` · Refund ${order.refundStatus.toLowerCase()}` : '';
+    if (order.status !== 'PENDING') return `${order.status}${refund}`;
+    if (reservationExpired(order)) return `Reservation expired${refund}`;
+    if (order.paymentStatus === 'FAILED') return `Payment failed${refund}`;
+    return `Awaiting payment${refund}`;
+};
+const admittedTicket = (ticket) => ticket.order?.status === 'PAID' && ticket.status !== 'CANCELLED';
 const WalletPage = ({ user, onAuthenticated }) => {
     const [sessionExpired, setSessionExpired] = useState(false);
     const [orders, setOrders] = useState([]);
@@ -71,11 +83,11 @@ const WalletPage = ({ user, onAuthenticated }) => {
                 {loading ? <p role="status">Loading wallet…</p> : <>
                     <DashboardSurface isDark className="p-5">
                         <h2 className="mb-4 text-xl">Tickets</h2>
-                        {!tickets.length ? <p className="text-dashboard-muted">No tickets yet.</p> : tickets.map(ticket => {
+                        {!tickets.filter(admittedTicket).length ? <p className="text-dashboard-muted">No tickets yet.</p> : tickets.filter(admittedTicket).map(ticket => {
                             const usable = ticket.status === 'VALID' && ticket.order?.status === 'PAID' && ticket.order?.refundStatus !== 'PROCESSING';
                             return <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-4 border-b border-dashboard-border py-4">
                                 <div><p>{ticket.event?.name}</p><p className="text-sm text-dashboard-muted">{eventWhen(ticket.event)}</p><p className="text-sm text-dashboard-muted">{ticket.ticketType?.name}</p></div>
-                                <DashboardChip isDark>{ticket.order?.refundStatus === 'PROCESSING' ? 'Refund processing' : ticket.order?.status === 'PENDING' ? 'Awaiting payment' : ticket.status}</DashboardChip>
+                                <DashboardChip isDark>{ticket.order?.refundStatus === 'PROCESSING' ? 'Refund processing' : ticket.status}</DashboardChip>
                                 {usable ? <div className="flex flex-wrap gap-2">
                                     <DashboardButton isDark disabled={busy} onClick={() => action(async () => {
                                         const result = payload(await api.get(`/tickets/${ticket.id}/qr`));
@@ -100,7 +112,7 @@ const WalletPage = ({ user, onAuthenticated }) => {
                             <p className="text-sm text-dashboard-muted">{venueLine(order)}</p>
                             <p className="text-sm text-dashboard-muted">{hstAmountLine(order.totalAmount, order.receiptDisclosure?.hstRate, order.receiptDisclosure?.hstAmount)}</p>
                             {hstRegistrationLine(order.receiptDisclosure?.hstNumber) ? <p className="text-sm text-dashboard-muted">{hstRegistrationLine(order.receiptDisclosure?.hstNumber)}</p> : null}
-                            <p className="text-sm text-dashboard-muted">{order.status}{order.refundStatus && order.refundStatus !== 'NONE' ? ` · Refund ${order.refundStatus.toLowerCase()}` : ''}</p>
+                            <p className="text-sm text-dashboard-muted">{orderStatusLabel(order)}</p>
                             {order.status === 'PAID' ? <DashboardButton isDark variant="secondary" disabled={busy} onClick={() => action(async () => { await api.post(`/orders/${order.id}/receipt`); setNotice('Receipt sent to your email.'); })}>Resend receipt</DashboardButton> : order.status === 'PENDING' ? <DashboardButton isDark variant="secondary" disabled={busy} onClick={() => action(async () => { await api.post(`/orders/${order.id}/cancel`); setNotice('Reservation cancelled.'); })}>Cancel reservation</DashboardButton> : null}
                         </div>)}
                     </DashboardSurface>
