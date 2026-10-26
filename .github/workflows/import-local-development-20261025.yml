@@ -1,0 +1,25 @@
+name: Import verified local development branch refs
+
+on:
+  push:
+    branches: [codex/import-local-development-20261025]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-local-development-20261025
+  cancel-in-progress: false
+
+jobs:
+  import:
+    if: github.repository == 'chapmandaniel/projectTixmo' && github.ref == 'refs/heads/codex/import-local-development-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-10-25
+        with:
+          fetch-depth: 0
+          fetch-tags: false
+      - name: Verify bundle and create missing refs without updating existing heads
+        run: python3 scripts/import-local-development-20261025.py --apply
