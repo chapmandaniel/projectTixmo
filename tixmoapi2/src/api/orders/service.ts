@@ -271,6 +271,10 @@ export class OrderService {
   async getOrderById(id: string, userId?: string, actorId?: string): Promise<Order | null> {
     if (userId || actorId) {
       const scope = actorId ? await this.actorOrderScope(actorId) : { userId };
+      const actor = actorId ? await getActorScopeById(actorId) : null;
+      // Staff may see a last-four mask. Everyone else, including the original
+      // buyer of a transferred ticket, gets no credential at all.
+      const maskForStaff = Boolean(actor && ['OWNER', 'ADMIN', 'MANAGER'].includes(actor.role));
       // when userId provided, findFirst with both id and userId
       const order = await prisma.order.findFirst({
         where: { id, ...scope },
@@ -300,7 +304,7 @@ export class OrderService {
             ? ticket
             : {
                 ...ticket,
-                barcode: maskBarcode(ticket.barcode),
+                barcode: maskForStaff ? maskBarcode(ticket.barcode) : '',
                 qrCodeUrl: null,
               }
         ),
