@@ -154,3 +154,36 @@ test.each([0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])(
     expect(prisma.$transaction).not.toHaveBeenCalled();
   }
 );
+
+// Ported from historical QA90 using the current single aggregate reservation per type.
+test('interleaved duplicates exceeding the cap perform no holds or ticket creation', async () => {
+  await expect(service.createOrder('buyer', { items: [
+    { ticketTypeId: 'a', quantity: 2 },
+    { ticketTypeId: 'b', quantity: 1 },
+    { ticketTypeId: 'a', quantity: 3 },
+  ] })).rejects.toMatchObject({ statusCode: 400, message: 'Maximum 4 tickets per order for a' });
+  expect(tx.ticketType.update).not.toHaveBeenCalled();
+  expect(tx.ticketTier.update).not.toHaveBeenCalled();
+  expect(tx.order.create).not.toHaveBeenCalled();
+  expect(tx.ticket.createMany).not.toHaveBeenCalled();
+});
+
+test('each distinct type reaches its exact aggregate cap with the server tier price', async () => {
+  types[0].tiers = [{ id: 'tier-a', price: new Decimal(7), isActive: true,
+    quantityLimit: 10, quantityHeld: 0, quantitySold: 0 }];
+  const order = await service.createOrder('buyer', { items: [
+    { ticketTypeId: 'a', quantity: 2 },
+    { ticketTypeId: 'b', quantity: 4 },
+    { ticketTypeId: 'a', quantity: 2 },
+  ] });
+  expect(order.totalAmount.toNumber()).toBe(108);
+  expect(types.map(type => [type.quantityAvailable, type.quantityHeld])).toEqual([[16, 4], [16, 4]]);
+  expect(tx.ticketType.update).toHaveBeenCalledTimes(2);
+  expect(tx.ticketTier.update).toHaveBeenCalledWith({ where: { id: 'tier-a' }, data: { quantityHeld: { increment: 4 } } });
+  const tickets = tx.ticket.createMany.mock.calls[0][0].data;
+  expect(tickets).toHaveLength(8);
+  expect(tickets.filter((ticket: any) => ticket.ticketTypeId === 'a')).toHaveLength(4);
+  expect(tickets.filter((ticket: any) => ticket.ticketTypeId === 'b')).toHaveLength(4);
+  expect(tickets.filter((ticket: any) => ticket.ticketTypeId === 'a').every((ticket: any) => ticket.pricePaid.eq(7) && ticket.tierId === 'tier-a' && ticket.inventoryState === 'HELD')).toBe(true);
+  expect(tickets.filter((ticket: any) => ticket.ticketTypeId === 'b').every((ticket: any) => ticket.pricePaid.eq(20) && !ticket.tierId && ticket.inventoryState === 'HELD')).toBe(true);
+});
