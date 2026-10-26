@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, Filter, ArrowUpDown, RefreshCw, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import api from '../lib/api';
 import { orderDisplayCurrency } from '../lib/runtimeConfig';
 import StatusBadge from '../components/StatusBadge';
 import OrderDetailModal from './OrderDetailModal';
 import { formatEventMoney } from '../lib/publicEvent';
+
+// A fresh [] default is a new reference on every render and retriggers the events effect.
+const EMPTY_EVENT_OPTIONS = [];
 
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Newest first' },
@@ -52,44 +55,50 @@ const OrdersView = ({
     title = 'Orders',
     description = 'View and manage ticket sales and transactions.',
     embedded = false,
-    eventOptions = [],
+    eventOptions = EMPTY_EVENT_OPTIONS,
 }) => {
     const [orders, setOrders] = useState([]);
     const [events, setEvents] = useState(eventOptions);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [detailError, setDetailError] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [eventFilter, setEventFilter] = useState('');
     const [sortBy, setSortBy] = useState('newest');
+    const openRequest = useRef(0);
+    const hasProvidedEvents = eventOptions.length > 0;
 
     useEffect(() => {
-        setEvents(eventOptions);
-    }, [eventOptions]);
+        if (hasProvidedEvents) setEvents(eventOptions);
+    }, [hasProvidedEvents, eventOptions]);
 
     useEffect(() => {
         fetchOrders();
     }, [page, statusFilter]);
 
     useEffect(() => {
-        if (eventOptions.length > 0) {
-            return;
-        }
+        if (hasProvidedEvents) return undefined;
 
+        let cancelled = false;
         const fetchEvents = async () => {
             try {
                 const response = await api.get('/events?limit=100');
+                if (cancelled) return;
                 const payload = response.data?.data?.events || response.data?.events || [];
-                setEvents(payload);
+                setEvents(Array.isArray(payload) ? payload : []);
             } catch (error) {
                 console.error('Failed to fetch events for order filters:', error);
             }
         };
 
         fetchEvents();
-    }, [eventOptions]);
+        return () => {
+            cancelled = true;
+        };
+    }, [hasProvidedEvents]);
 
     const fetchOrders = async () => {
         try {
@@ -106,6 +115,23 @@ const OrdersView = ({
             console.error('Failed to fetch orders:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const openOrder = async (order) => {
+        const requestId = openRequest.current + 1;
+        openRequest.current = requestId;
+        setDetailError('');
+        try {
+            const response = await api.get(`/orders/${order.id}`);
+            if (openRequest.current !== requestId) return;
+            const body = response.data;
+            const detail = body?.data?.id ? body.data : body?.id ? body : null;
+            if (!detail?.id) throw new Error('Unable to open this order.');
+            setSelectedOrder(detail);
+        } catch (error) {
+            if (openRequest.current !== requestId) return;
+            setDetailError(error.response?.data?.message || 'Unable to open this order.');
         }
     };
 
@@ -141,6 +167,8 @@ const OrdersView = ({
                     onOrderUpdated={fetchOrders}
                 />
             )}
+
+            {detailError ? <p role="alert">{detailError}</p> : null}
 
             <div>
                 <h2 className={`text-3xl font-light tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{title}</h2>
@@ -283,7 +311,9 @@ const OrdersView = ({
                                         </td>
                                         <td className="p-4 text-right">
                                             <button
-                                                onClick={() => setSelectedOrder(order)}
+                                                type="button"
+                                                aria-label={`View order ${order.orderNumber}`}
+                                                onClick={() => openOrder(order)}
                                                 className={`p-2 rounded-md transition-all opacity-0 group-hover:opacity-100 ${isDark
                                                     ? 'hover:bg-pink-500/20 text-pink-400'
                                                     : 'hover:bg-pink-50 text-pink-600'
