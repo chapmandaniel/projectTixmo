@@ -7,9 +7,15 @@ const scannerKeyPattern = /^sk_scanner_[A-Za-z0-9_-]{1,256}$/;
 export const SCANNER_KEY_STORAGE = 'tixmo_scanner_api_key';
 
 const ASSIGNMENT_MESSAGE = 'Scanner is not assigned to this event';
+const REVOKED_MESSAGE = 'Scanner is revoked';
+const INVALID_KEY_MESSAGE = 'Invalid API key';
 const ALREADY_USED_REASON = 'Ticket has already been used';
 export const SCANNER_UNAVAILABLE = 'Scanner key rejected or scanner unavailable. Check its assignment and active status.';
+export const SCANNER_REVOKED = 'This scanner was revoked, enter a new key.';
+export const SCANNER_INVALID_KEY = 'Invalid key.';
 const ALREADY_USED = 'Already used';
+const REVOKED_CODES = new Set(['SCANNER_REVOKED']);
+const INVALID_KEY_CODES = new Set(['INVALID_API_KEY']);
 
 const DISPUTE_CODES = new Set([
     'DISPUTED',
@@ -130,11 +136,25 @@ export function admissionMessage(data) {
     return reason || 'Admission denied';
 }
 
-function keyRejected(status, payload) {
-    if (status === 401) return true;
-    if (status !== 403) return false;
+function explicitErrorCodes(payload) {
+    return [payload, payload?.errors, payload?.data, payload?.data?.errors].flatMap((source) => {
+        const object = asObject(source);
+        if (!object) return [];
+        return ['code', 'errorCode', 'reasonCode'].flatMap((key) => {
+            const value = textValue(object[key]);
+            return value ? [value.toUpperCase()] : [];
+        });
+    });
+}
+
+// Auth failures are identified by the API message. There is no stable error code
+// on these responses today: authenticateScanner throws the message alone.
+function savedKeyFailure(payload) {
     const message = textValue(payload?.message);
-    return /scanner is (not active|revoked|disabled)/i.test(message) || /invalid (scanner )?api key/i.test(message) || /api key required/i.test(message);
+    const codes = explicitErrorCodes(payload);
+    if (message === REVOKED_MESSAGE || codes.some((code) => REVOKED_CODES.has(code))) return SCANNER_REVOKED;
+    if (message === INVALID_KEY_MESSAGE || codes.some((code) => INVALID_KEY_CODES.has(code))) return SCANNER_INVALID_KEY;
+    return '';
 }
 
 function scannerFailure(status, message, flags, body) {
@@ -164,10 +184,10 @@ export async function scannerRequest(endpoint, key, body, signal) {
         if (voided) throw scannerFailure(response.status, voided, { voided: true }, payload);
         if (isWrongEvent(response.status, payload)) throw scannerFailure(response.status, wrongEventMessage(payload), { wrongEvent: true }, payload);
         if (isAlreadyUsed(response.status, payload)) throw scannerFailure(response.status, ALREADY_USED, { alreadyUsed: true }, payload);
+        const keyFailure = savedKeyFailure(payload);
+        if (keyFailure) throw scannerFailure(response.status, keyFailure, { forgetKey: true }, payload);
         if (response.status === 401 || response.status === 403) {
-            throw scannerFailure(response.status, SCANNER_UNAVAILABLE, {
-                forgetKey: keyRejected(response.status, payload),
-            }, payload);
+            throw scannerFailure(response.status, SCANNER_UNAVAILABLE, {}, payload);
         }
         throw scannerFailure(response.status, 'No confirmed result from the server. Check the ticket before trying again.', {}, payload);
     }
