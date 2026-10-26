@@ -14,7 +14,7 @@ vi.mock('../lib/api', () => ({
 }));
 
 vi.mock('../features/RegisterScannerModal', () => ({
-    default: () => <div>Register scanner modal</div>,
+    default: ({ scanner }) => <div>{scanner ? `Rebind ${scanner.name}` : 'Register scanner modal'}</div>,
 }));
 
 describe('ScannersView', () => {
@@ -74,6 +74,10 @@ describe('ScannersView', () => {
         expect(screen.getAllByText('iphone-ops-01').length).toBeGreaterThan(0);
         expect(screen.getAllByText('Revoke access')[0]).toBeInTheDocument();
         expect(screen.getByRole('columnheader', { name: 'Device ID' })).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: 'Event' })).toBeInTheDocument();
+        expect(screen.getAllByText('Not bound to an event').length).toBeGreaterThan(0);
+        fireEvent.click(screen.getAllByRole('button', { name: 'Change event for Harborlight Main Gate' })[0]);
+        expect(screen.getByText('Rebind Harborlight Main Gate')).toBeInTheDocument();
     });
 
     it('renders scan logs as mobile cards after switching tabs', async () => {
