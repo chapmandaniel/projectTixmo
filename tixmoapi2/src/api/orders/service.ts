@@ -18,6 +18,7 @@ import {
 } from '../../utils/receipt';
 import {
   lockOrder,
+  markAttendedTickets,
   transitionInventory,
   transitionPromo,
 } from '../../services/order-inventory.service';
@@ -579,19 +580,25 @@ export class OrderService {
       if (order.status === 'REFUNDED') return order;
       if (order.status !== 'PAID') throw ApiError.conflict('Order is not paid');
       if (!order.totalAmount.eq(0)) {
-        const refund = await tx.paymentRefund.findUnique({
-          where: { paymentIntentId: order.paymentIntentId || '' },
+        const refunds = await tx.paymentRefund.findMany({
+          where: { orderId: id, reason: 'ORDER_REFUND', status: 'SUCCEEDED' },
         });
+        const sum = refunds.reduce((total, refund) => total + refund.amount, 0);
+        const orderCents = Math.round(order.totalAmount.toNumber() * 100);
         if (
-          !refund ||
-          refund.reason !== 'ORDER_REFUND' ||
-          refund.status !== 'SUCCEEDED' ||
-          refund.amount !== Math.round(order.totalAmount.toNumber() * 100) ||
-          refund.currency !== order.currency
+          refunds.length === 0 ||
+          refunds.some((refund) => refund.currency !== order.currency) ||
+          sum !== orderCents
         ) {
-          throw ApiError.conflict('Processor refund has not been confirmed');
+          // A partial sum is already recorded on its own rows. Recovery must not
+          // fail the webhook or release inventory until the refunds cover the order.
+          if (sum > orderCents || refunds.some((refund) => refund.currency !== order.currency)) {
+            throw ApiError.conflict('Processor refund has not been confirmed');
+          }
+          return order;
         }
       }
+      await markAttendedTickets(tx, id);
       await transitionInventory(tx, id, 'SOLD', 'RELEASED');
       return tx.order.update({
         where: { id },

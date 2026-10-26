@@ -3,7 +3,7 @@ import { Event, Prisma, EventStatus } from '@prisma/client';
 
 import prisma from '../../config/prisma';
 import { ActorScope, assertOrganizationAccess } from '../../utils/tenantScope';
-import { lockOrder } from '../../services/order-inventory.service';
+import { lockOrder, markAttendedTickets } from '../../services/order-inventory.service';
 import { orderService } from '../orders/service';
 import { receiptDisclosure } from '../../utils/receipt';
 
@@ -655,11 +655,14 @@ export class EventService {
       await prisma.$transaction(async (tx) => {
         await lockOrder(tx, order.id);
         const current = await tx.order.findUniqueOrThrow({ where: { id: order.id } });
-        if (current.status === 'PAID')
+        if (current.status === 'PAID') {
+          // Attended seats stay SOLD. Mark them cancelled for the record only.
+          await markAttendedTickets(tx, order.id);
           await tx.ticket.updateMany({
             where: { orderId: order.id, status: { in: ['VALID', 'TRANSFERRED'] } },
             data: { status: 'CANCELLED' },
           });
+        }
       });
       // Pending orders release their own holds exactly once. Paid tickets keep
       // SOLD accounting until an actual refund succeeds.

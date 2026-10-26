@@ -375,7 +375,7 @@ model PaymentRefund {
   id              String   @id @default(uuid())
   orderId         String   @map("order_id")
   order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  paymentIntentId String   @unique @map("payment_intent_id")
+  paymentIntentId String   @map("payment_intent_id")
   amount          Int
   currency        String
   reason          String
@@ -384,6 +384,7 @@ model PaymentRefund {
   errorMessage    String?  @map("error_message") @db.Text
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
+  @@index([paymentIntentId], map: "payment_refunds_payment_intent_id_idx")
   @@index([status, updatedAt])
   @@map("payment_refunds")
 }

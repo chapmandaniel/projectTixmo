@@ -18,6 +18,7 @@ jest.mock('../../src/config/prisma', () => ({
     $queryRaw: jest.fn(),
     paymentRefund: {
       upsert: jest.fn(),
+      findFirst: jest.fn(),
       findUniqueOrThrow: jest.fn(),
       findMany: jest.fn(),
       updateMany: jest.fn(),
@@ -84,6 +85,11 @@ beforeEach(() => {
   (prisma.event.findUniqueOrThrow as jest.Mock).mockImplementation(async () => order.event);
   (prisma.order.findUnique as jest.Mock).mockImplementation(async () => ({ ...order }));
   (prisma.paymentRefund.findUniqueOrThrow as jest.Mock).mockImplementation(async () => record);
+  (prisma.paymentRefund.findFirst as jest.Mock).mockImplementation(async () => record);
+  (prisma.paymentRefund.update as jest.Mock).mockImplementation(async ({ data }) => {
+    Object.assign(record, data);
+    return record;
+  });
   (prisma.paymentRefund.upsert as jest.Mock).mockImplementation(async ({ create, update }) => {
     Object.assign(record, create, update);
     return record;
