@@ -111,14 +111,21 @@ export class NotificationService {
     eventName: string;
     eventDate: string;
     ticketCount: number;
+    venueName?: string | null;
+    venueAddress?: string | null;
   }): Promise<boolean> {
-    const template = ticketTransferEmail({
-      recipientName: data.recipientName,
-      senderName: data.senderName,
-      eventName: data.eventName,
-      eventDate: data.eventDate,
-      ticketCount: data.ticketCount,
-    });
+    const template = ticketTransferEmail(
+      {
+        recipientName: data.recipientName,
+        senderName: data.senderName,
+        eventName: data.eventName,
+        eventDate: data.eventDate,
+        ticketCount: data.ticketCount,
+        venueName: data.venueName,
+        venueAddress: data.venueAddress,
+      },
+      config.clientUrl
+    );
 
     return await this.sendEmail({
       to: data.to,

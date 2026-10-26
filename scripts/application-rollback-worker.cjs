@@ -73,7 +73,10 @@ async function main() {
     );
   const { MIGRATION_COUNT } = require('/app/scripts/migration-census.cjs');
   const rows = await ledger();
-  assert.equal(rows.length, MIGRATION_COUNT);
+  // Previous image: its census is smaller once a newer additive migration is in
+  // the retained ledger. Candidate phases still require an exact count.
+  if (mode === 'old') assert.equal(Math.min(rows.length, MIGRATION_COUNT), MIGRATION_COUNT);
+  else assert.equal(rows.length, MIGRATION_COUNT);
   assert.ok(rows.every((row) => row.finished_at && !row.rolled_back_at));
   let state;
   if (mode === 'new') {

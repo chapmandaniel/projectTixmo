@@ -7,6 +7,37 @@ export async function lockOrder(tx: Prisma.TransactionClient, id: string): Promi
   await tx.$queryRaw`SELECT id FROM orders WHERE id = ${id} FOR UPDATE`;
 }
 
+const attendedTicket = (ticket: { status: string; checkedInAt: Date | null }): boolean =>
+  ticket.status === 'USED' || ticket.checkedInAt != null;
+
+// A scanned seat stays sold. Callers mark it cancelled for the record first.
+export async function markAttendedTickets(
+  tx: Prisma.TransactionClient,
+  orderId: string
+): Promise<void> {
+  const attended = await tx.ticket.findMany({
+    where: {
+      orderId,
+      inventoryState: 'SOLD',
+      OR: [{ status: 'USED' }, { checkedInAt: { not: null } }],
+    },
+    select: { id: true, checkedInAt: true },
+  });
+  const unstamped = attended.filter((ticket) => !ticket.checkedInAt).map((ticket) => ticket.id);
+  if (unstamped.length) {
+    await tx.ticket.updateMany({
+      where: { id: { in: unstamped } },
+      data: { checkedInAt: new Date() },
+    });
+  }
+  if (attended.length) {
+    await tx.ticket.updateMany({
+      where: { id: { in: attended.map((ticket) => ticket.id) } },
+      data: { status: 'CANCELLED' },
+    });
+  }
+}
+
 export async function transitionInventory(
   tx: Prisma.TransactionClient,
   orderId: string,
@@ -14,12 +45,17 @@ export async function transitionInventory(
   to: 'SOLD' | 'RELEASED'
 ): Promise<void> {
   const tickets = await tx.ticket.findMany({ where: { orderId, inventoryState: from } });
+  const moving =
+    from === 'SOLD' && to === 'RELEASED'
+      ? tickets.filter((ticket) => !attendedTicket(ticket))
+      : tickets;
   if (await tx.ticket.count({ where: { orderId, inventoryState: 'UNKNOWN' } })) {
     throw ApiError.conflict('Historical inventory must be reconciled before this order can change');
   }
+  if (!moving.length) return;
   const types = new Map<string, number>();
   const tiers = new Map<string, number>();
-  for (const ticket of tickets) {
+  for (const ticket of moving) {
     types.set(ticket.ticketTypeId, (types.get(ticket.ticketTypeId) || 0) + 1);
     if (ticket.tierId) tiers.set(ticket.tierId, (tiers.get(ticket.tierId) || 0) + 1);
   }
@@ -47,7 +83,7 @@ export async function transitionInventory(
     if (result.count !== 1) throw ApiError.conflict('Order tier allocation is inconsistent');
   }
   await tx.ticket.updateMany({
-    where: { orderId, inventoryState: from },
+    where: { id: { in: moving.map((ticket) => ticket.id) }, inventoryState: from },
     data: { inventoryState: to, ...(to === 'RELEASED' ? { status: 'CANCELLED' } : {}) },
   });
 }

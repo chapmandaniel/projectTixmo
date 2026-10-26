@@ -19,7 +19,12 @@ jest.mock('../../src/config/prisma', () => ({
     order: { findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn(), findMany: jest.fn() },
     event: { findUniqueOrThrow: jest.fn() },
     paymentAttempt: { update: jest.fn() },
-    paymentRefund: { upsert: jest.fn() },
+    paymentRefund: {
+      upsert: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
   },
 }));
 jest.mock('../../src/api/orders/service', () => ({
@@ -180,6 +185,11 @@ describe('public webhook fulfillment recovery (mocked boundaries)', () => {
     db.paymentAttempt.update.mockImplementation(async ({ data }: any) =>
       Object.assign(order.paymentAttempt, data)
     );
+    db.paymentRefund.findFirst.mockResolvedValue(null);
+    db.paymentRefund.create.mockImplementation(async ({ data }: any) => {
+      refund = { id: 'refund', status: 'REQUESTED', ...data };
+      return { ...refund };
+    });
     db.paymentRefund.upsert.mockImplementation(async ({ create }: any) => {
       refund ||= { id: 'refund', status: 'REQUESTED', ...create };
       return { ...refund };

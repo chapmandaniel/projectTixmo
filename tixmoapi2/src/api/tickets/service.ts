@@ -2,6 +2,8 @@ import { Ticket, TicketStatus, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { generateQRCode, generateTicketQRData } from '../../utils/qrcode';
 import { notificationService } from '../../utils/notificationService';
+import { formatNewfoundlandDateTime } from '../../utils/eventTime';
+import { formatVenueAddress } from '../../utils/receipt';
 
 import prisma from '../../config/prisma';
 import crypto from 'crypto';
@@ -10,7 +12,6 @@ import {
   ticketFailure,
   consumeTicket,
 } from '../../services/ticket-admission.service';
-import { formatNewfoundlandDateTime } from '../../utils/eventTime';
 
 const assertPaidTicketOrder = (orderStatus: string): void => {
   if (orderStatus !== 'PAID') {
@@ -208,7 +209,15 @@ export class TicketService {
           barcode: `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,
           qrCodeUrl: null,
         },
-        include: { event: { select: { name: true, startDatetime: true } } },
+        include: {
+          event: {
+            select: {
+              name: true,
+              startDatetime: true,
+              venue: { select: { name: true, address: true } },
+            },
+          },
+        },
       });
     });
     const sender = await prisma.user.findUnique({ where: { id: currentUserId } });
@@ -220,6 +229,8 @@ export class TicketService {
           senderName: `${sender.firstName} ${sender.lastName}`,
           eventName: transferred.event.name,
           eventDate: formatNewfoundlandDateTime(transferred.event.startDatetime),
+          venueName: transferred.event.venue?.name || null,
+          venueAddress: formatVenueAddress(transferred.event.venue?.address),
           ticketCount: 1,
         })
         .catch(() => false);

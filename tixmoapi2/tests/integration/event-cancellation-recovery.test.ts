@@ -510,8 +510,11 @@ describe('Event cancellation interruption and authorized recovery', () => {
       await service.handleWebhook('synthetic', Buffer.from('synthetic'));
       deliveryId = 'evt_' + randomUUID();
       await service.handleWebhook('synthetic', Buffer.from('synthetic'));
-      await prisma.paymentRefund.update({
+      const latePaid = await prisma.paymentRefund.findFirstOrThrow({
         where: { paymentIntentId: intent.id },
+      });
+      await prisma.paymentRefund.update({
+        where: { id: latePaid.id },
         data: { updatedAt: new Date(Date.now() - 120000) },
       });
       const realRefundSelection = prisma.paymentRefund.findMany.bind(prisma.paymentRefund);
@@ -532,7 +535,7 @@ describe('Event cancellation interruption and authorized recovery', () => {
       await eventService.cancelEvent(ids.event);
       expect(refuse).not.toHaveBeenCalled();
       expect(
-        await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId: intent.id } })
+        await prisma.paymentRefund.findFirstOrThrow({ where: { paymentIntentId: intent.id } })
       ).toMatchObject({
         reason: 'LATE_PAYMENT',
         status: 'REQUESTED',
