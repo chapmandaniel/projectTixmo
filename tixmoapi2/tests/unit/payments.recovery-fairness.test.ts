@@ -23,6 +23,7 @@ jest.mock('../../src/config/prisma', () => ({
       findMany: jest.fn(),
       updateMany: jest.fn(),
     },
+    paymentRefundLine: { upsert: jest.fn().mockResolvedValue({}) },
     order: { findUnique: jest.fn(), updateMany: jest.fn(), findMany: jest.fn() },
     paymentWebhookEvent: { findMany: jest.fn(), updateMany: jest.fn() },
     paymentAttempt: { findMany: jest.fn() },

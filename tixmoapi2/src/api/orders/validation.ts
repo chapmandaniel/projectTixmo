@@ -24,6 +24,14 @@ export const listOrdersSchema = z.object({
   }),
 });
 
+export const voidOrderSchema = z.object({
+  params: z.object({ id: z.string().guid('Invalid order ID') }),
+  body: z.object({
+    reason: z.string().trim().min(1, 'Reason is required').max(1000),
+    ticketId: z.string().guid('Invalid ticket ID').optional(),
+  }),
+});
+
 export const consumerOrderRecoverySchema = z.object({
   params: z.object({ id: z.string().guid('Invalid order ID') }),
 });

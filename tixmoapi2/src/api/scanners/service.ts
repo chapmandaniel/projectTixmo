@@ -5,10 +5,12 @@ import crypto from 'crypto';
 
 import prisma from '../../config/prisma';
 import {
+  AdmissionDenial,
   lockedTicket,
   ticketFailure,
   consumeTicket,
 } from '../../services/ticket-admission.service';
+import { orderDisputed } from '../../services/ticket-void.service';
 
 interface RegisterScannerData {
   name: string;
@@ -325,9 +327,10 @@ export class ScannerService {
     ticket?: unknown;
     scanLog: ScanLog;
     reason?: string;
+    reasonCode?: string;
   }> {
     const parsed = parseTicketQRData(data.qrData);
-    return prisma.$transaction(async (tx) => {
+    const outcome = await prisma.$transaction(async (tx) => {
       const ticket = parsed ? await lockedTicket(tx, parsed.ticketId) : null;
       // Recheck scope and active status at the use boundary, including offline
       // uploads and internal callers that don't pass through HTTP middleware.
@@ -335,32 +338,68 @@ export class ScannerService {
       const scanner = await tx.scanner.findUnique({ where: { id: data.scannerId } });
       if (!scanner || scanner.status !== 'ACTIVE')
         throw ApiError.forbidden('Scanner is not active');
-      let reason: string | undefined;
-      if (!parsed) reason = 'Invalid QR code format';
-      else if (!ticket) reason = 'Ticket not found';
-      else if (
-        scanner.organizationId !== ticket.event.organizationId ||
-        (scanner.eventId && scanner.eventId !== ticket.eventId)
+      if (
+        ticket &&
+        (scanner.organizationId !== ticket.event.organizationId ||
+          (scanner.eventId && scanner.eventId !== ticket.eventId))
       ) {
-        throw ApiError.forbidden('Scanner is not assigned to this event');
-      } else if (parsed.eventId !== ticket.eventId || parsed.barcode !== ticket.barcode) {
-        reason = 'Ticket credential is no longer valid';
-      } else reason = ticketFailure(ticket, data.scanType === 'ENTRY', false);
-      if (!reason && ticket && data.scanType === 'ENTRY')
-        await consumeTicket(tx, ticket.id, data.scannerId);
+        const scanLog = await tx.scanLog.create({
+          data: {
+            scannerId: data.scannerId,
+            ticketId: ticket.id,
+            eventId: ticket.eventId,
+            scanType: data.scanType,
+            success: false,
+            failureReason: 'Scanner is not assigned to this event',
+            metadata: data.metadata as Prisma.InputJsonValue,
+          },
+        });
+        return { denied: true as const, scanLog };
+      }
+      let denial: AdmissionDenial | undefined;
+      if (!parsed) denial = { reason: 'Invalid QR code format' };
+      else if (!ticket) denial = { reason: 'Ticket not found' };
+      else if (parsed.eventId !== ticket.eventId || parsed.barcode !== ticket.barcode) {
+        denial = { reason: 'Ticket credential is no longer valid' };
+      } else denial = ticketFailure(ticket, data.scanType === 'ENTRY', false);
+      let admitted = ticket;
+      if (!denial && ticket && data.scanType === 'ENTRY') {
+        const consumed = await consumeTicket(tx, ticket.id, data.scannerId);
+        admitted = {
+          ...ticket,
+          status: consumed.status,
+          checkedInAt: consumed.checkedInAt,
+          checkedInBy: consumed.checkedInBy,
+        };
+      }
       const scanLog = await tx.scanLog.create({
         data: {
           scannerId: data.scannerId,
           ticketId: ticket?.id ?? null,
           eventId: ticket?.eventId ?? null,
           scanType: data.scanType,
-          success: !reason,
-          failureReason: reason,
+          success: !denial,
+          failureReason: denial?.reason,
           metadata: data.metadata as Prisma.InputJsonValue,
         },
       });
-      return { success: !reason, reason, ticket: ticket || undefined, scanLog };
+      return {
+        denied: false as const,
+        success: !denial,
+        reason: denial?.reason,
+        reasonCode: denial?.reasonCode,
+        ticket: admitted || undefined,
+        scanLog,
+      };
     });
+    if (outcome.denied) throw ApiError.forbidden('Scanner is not assigned to this event');
+    return {
+      success: outcome.success,
+      reason: outcome.reason,
+      reasonCode: outcome.reasonCode,
+      ticket: outcome.ticket,
+      scanLog: outcome.scanLog,
+    };
   }
 
   /**
@@ -444,6 +483,8 @@ export class ScannerService {
     order: { status: string; refundStatus: string };
     event: { status: string; deletedAt: Date | null };
   }): string {
+    if (orderDisputed(ticket.order.refundStatus) || ticket.status === 'CANCELLED')
+      return 'CANCELLED';
     return ticket.order.status === 'PAID' &&
       ticket.order.refundStatus !== 'PROCESSING' &&
       !ticket.event.deletedAt &&
@@ -602,6 +643,7 @@ export class ScannerService {
       qrData: string;
       success: boolean;
       reason?: string;
+      reasonCode?: string;
     }>;
   }> {
     const results = [];
@@ -634,6 +676,7 @@ export class ScannerService {
           qrData: scan.qrData,
           success: result.success,
           reason: result.reason,
+          reasonCode: result.reasonCode,
         });
       } catch (error) {
         failedCount++;

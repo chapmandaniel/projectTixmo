@@ -45,6 +45,7 @@ export interface OrderConfirmationData {
   eventName: string;
   eventDate: string;
   ticketSummary: string;
+  subtotalAmount?: string | null;
   totalAmount: string;
   venueName?: string | null;
   venueAddress?: string | null;
@@ -77,8 +78,13 @@ export function orderConfirmationEmail(
     ? `View your tickets: ${walletUrl}\nSign in with the account used for this order.\n`
     : '';
   const total = escapeReceiptHtml(data.totalAmount);
+  const subtotal = data.subtotalAmount?.trim() ? escapeReceiptHtml(data.subtotalAmount.trim()) : '';
+  const subtotalHtml = subtotal ? `<p><strong>Subtotal:</strong> ${subtotal}</p>` : '';
+  const subtotalText = data.subtotalAmount?.trim()
+    ? `Subtotal: ${data.subtotalAmount.trim()}\n`
+    : '';
   return {
-    subject: `Order Confirmation - ${data.eventName}`,
+    subject: `Your Tixmo tickets for ${data.eventName}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -105,6 +111,7 @@ export function orderConfirmationEmail(
                 <p><strong>When:</strong> ${escapeReceiptHtml(data.eventDate)}</p>
                 <p><strong>Where:</strong> ${escapeReceiptHtml(venue)}</p>
                 <p><strong>Tickets:</strong> ${escapeReceiptHtml(data.ticketSummary)}</p>
+                ${subtotalHtml}
                 <p><strong>Total paid:</strong> ${total} (includes HST and all fees)</p>
                 ${hstAmountHtml}
                 ${hstHtml}
@@ -127,7 +134,7 @@ export function orderConfirmationEmail(
       When: ${data.eventDate}
       Where: ${venue}
       Tickets: ${data.ticketSummary}
-      Total paid: ${data.totalAmount} (includes HST and all fees)
+      ${subtotalText}Total paid: ${data.totalAmount} (includes HST and all fees)
       ${hstAmountText}${hstText}${walletText}
       All sales are final unless the event is cancelled or rescheduled.
 
@@ -137,13 +144,31 @@ export function orderConfirmationEmail(
 }
 
 // Ticket transfer email
-export function ticketTransferEmail(data: {
-  recipientName: string;
-  senderName: string;
-  eventName: string;
-  eventDate: string;
-  ticketCount: number;
-}): EmailTemplate {
+export function ticketTransferEmail(
+  data: {
+    recipientName: string;
+    senderName: string;
+    eventName: string;
+    eventDate: string;
+    ticketCount: number;
+    venueName?: string | null;
+    venueAddress?: string | null;
+  },
+  clientUrl: string
+): EmailTemplate {
+  const when = escapeReceiptHtml(data.eventDate);
+  const venue = escapeReceiptHtml(
+    [data.venueName?.trim(), data.venueAddress?.trim()].filter(Boolean).join(', ') ||
+      'Venue to be announced'
+  );
+  const venueText =
+    [data.venueName?.trim(), data.venueAddress?.trim()].filter(Boolean).join(', ') ||
+    'Venue to be announced';
+  const walletUrl = receiptWalletUrl(clientUrl);
+  const walletHtml = walletUrl
+    ? `<p><a href="${escapeReceiptHtml(walletUrl)}">View your tickets</a></p>`
+    : '';
+  const walletText = walletUrl ? `View your tickets: ${walletUrl}\n` : '';
   return {
     subject: `A Tixmo ticket for ${data.eventName} was sent to you`,
     html: `
@@ -164,10 +189,12 @@ export function ticketTransferEmail(data: {
               <h1>Tickets Transferred to You!</h1>
             </div>
             <div class="content">
-              <p>Hi ${data.recipientName},</p>
-              <p>${data.senderName} has transferred ${data.ticketCount} ticket(s) to you for:</p>
-              <p><strong>${data.eventName}</strong></p>
-              <p>Date: ${data.eventDate}</p>
+              <p>Hi ${escapeReceiptHtml(data.recipientName)},</p>
+              <p>${escapeReceiptHtml(data.senderName)} has transferred ${data.ticketCount} ticket(s) to you for:</p>
+              <p><strong>${escapeReceiptHtml(data.eventName)}</strong></p>
+              <p>Date: ${when}</p>
+              <p>Venue: ${venue}</p>
+              ${walletHtml}
               <p>The tickets are now available in your Tixmo account.</p>
             </div>
             <div class="footer">
@@ -185,7 +212,8 @@ export function ticketTransferEmail(data: {
       ${data.senderName} has transferred ${data.ticketCount} ticket(s) to you for:
       ${data.eventName}
       Date: ${data.eventDate}
-      
+      Venue: ${venueText}
+      ${walletText}
       The tickets are now available in your Tixmo account.
       
       Tixmo - Event Ticketing Platform

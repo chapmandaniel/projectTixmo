@@ -354,7 +354,10 @@ test.each([false, true])(
       const finalized = await snapshot(value);
       expectFinalized(finalized, value);
       await value.service.recoverRefunds();
-      await value.service.refundOrder(value.target.id);
+      await expect(value.service.refundOrder(value.target.id)).rejects.toMatchObject({
+        statusCode: 409,
+        message: 'Order is already refunded',
+      });
       expect(await snapshot(value)).toEqual(finalized);
       expect(value.fake.stripe.refunds.create).toHaveBeenCalledTimes(2);
     } finally {

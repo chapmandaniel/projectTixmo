@@ -119,15 +119,16 @@ test('matching inert provider success finalizes SOLD inventory once and retry is
   expect(tickets.every((t) => t.status === 'CANCELLED' && t.inventoryState === 'RELEASED')).toBe(
     true
   );
-  const refund = await prisma.paymentRefund.findUniqueOrThrow({
+  const refund = await prisma.paymentRefund.findFirstOrThrow({
     where: { paymentIntentId: order.paymentIntentId! },
   });
   expect(refund).toMatchObject({ status: 'SUCCEEDED', amount: 2000, reason: 'ORDER_REFUND' });
   expect(provider.refunds.create).toHaveBeenCalledWith(expect.objectContaining({ amount: 2000 }), {
     idempotencyKey: `refund-${refund.id}`,
   });
-  await expect(new OrderService().refundOrder(order.id)).resolves.toMatchObject({
-    status: 'REFUNDED',
+  await expect(new OrderService().refundOrder(order.id)).rejects.toMatchObject({
+    statusCode: 409,
+    message: 'Order is already refunded',
   });
   expect(provider.refunds.create).toHaveBeenCalledTimes(1);
   expect(await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } })).toEqual(after);
@@ -146,7 +147,7 @@ test('pending inert refund does not finalize financial or inventory state', asyn
     refundStatus: 'PROCESSING',
   });
   expect(
-    await prisma.paymentRefund.findUniqueOrThrow({
+    await prisma.paymentRefund.findFirstOrThrow({
       where: { paymentIntentId: order.paymentIntentId! },
     })
   ).toMatchObject({

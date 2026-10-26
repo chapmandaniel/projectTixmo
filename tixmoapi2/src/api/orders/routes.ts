@@ -154,6 +154,12 @@ router.post('/:id/cancel', controller.cancelOrder);
  *         description: Order not found
  */
 router.post('/:id/refund', authorize('OWNER', 'ADMIN'), controller.refundOrder);
+router.post(
+  '/:id/void',
+  authorize('OWNER', 'ADMIN', 'MANAGER'),
+  validate(validation.voidOrderSchema),
+  controller.voidOrder
+);
 // Buyer self-service is rejected in the controller. OWNER/ADMIN keep this flow.
 router.post('/:id/request-refund', controller.requestRefund);
 

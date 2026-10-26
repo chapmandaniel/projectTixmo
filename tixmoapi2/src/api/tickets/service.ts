@@ -2,6 +2,8 @@ import { Ticket, TicketStatus, Prisma } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { generateQRCode, generateTicketQRData } from '../../utils/qrcode';
 import { notificationService } from '../../utils/notificationService';
+import { formatNewfoundlandDateTime } from '../../utils/eventTime';
+import { formatVenueAddress } from '../../utils/receipt';
 
 import prisma from '../../config/prisma';
 import crypto from 'crypto';
@@ -10,10 +12,15 @@ import {
   ticketFailure,
   consumeTicket,
 } from '../../services/ticket-admission.service';
-import { formatNewfoundlandDateTime } from '../../utils/eventTime';
 
-const assertPaidTicketOrder = (orderStatus: string): void => {
-  if (orderStatus !== 'PAID') {
+const assertQrAdmission = (ticket: NonNullable<Awaited<ReturnType<typeof lockedTicket>>>): void => {
+  if (ticket.order.status === 'REFUNDED') {
+    throw ApiError.badRequest('Ticket has been refunded');
+  }
+  if (ticket.status === 'CANCELLED' || ticket.order.status === 'CANCELLED') {
+    throw ApiError.badRequest('Ticket has been cancelled');
+  }
+  if (ticket.order.status !== 'PAID') {
     throw ApiError.badRequest('Ticket is not valid until payment is completed');
   }
 };
@@ -191,7 +198,11 @@ export class TicketService {
       if (ticket.userId !== currentUserId)
         throw ApiError.forbidden('You can only transfer your own tickets');
       const failure = ticketFailure(ticket, true, false);
-      if (failure) throw ApiError.badRequest(failure);
+      if (failure)
+        throw ApiError.badRequest(
+          failure.reason,
+          failure.reasonCode ? { reasonCode: failure.reasonCode } : undefined
+        );
       if (ticket.event.startDatetime && new Date() >= ticket.event.startDatetime)
         throw ApiError.badRequest('Cannot transfer tickets for events that have already started');
       return tx.ticket.update({
@@ -204,7 +215,15 @@ export class TicketService {
           barcode: `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,
           qrCodeUrl: null,
         },
-        include: { event: { select: { name: true, startDatetime: true } } },
+        include: {
+          event: {
+            select: {
+              name: true,
+              startDatetime: true,
+              venue: { select: { name: true, address: true } },
+            },
+          },
+        },
       });
     });
     const sender = await prisma.user.findUnique({ where: { id: currentUserId } });
@@ -216,6 +235,8 @@ export class TicketService {
           senderName: `${sender.firstName} ${sender.lastName}`,
           eventName: transferred.event.name,
           eventDate: formatNewfoundlandDateTime(transferred.event.startDatetime),
+          venueName: transferred.event.venue?.name || null,
+          venueAddress: formatVenueAddress(transferred.event.venue?.address),
           ticketCount: 1,
         })
         .catch(() => false);
@@ -263,6 +284,7 @@ export class TicketService {
     valid: boolean;
     ticket?: Ticket;
     reason?: string;
+    reasonCode?: string;
   }> {
     return prisma.$transaction(async (tx) => {
       const reference = await tx.ticket.findUnique({ where: { barcode }, select: { id: true } });
@@ -270,8 +292,13 @@ export class TicketService {
       if (!ticket) return { valid: false, reason: 'Ticket not found' };
       if (ticket.barcode !== barcode)
         return { valid: false, reason: 'Ticket credential is no longer valid' };
-      const reason = ticketFailure(ticket, true, true);
-      return { valid: !reason, ticket, reason };
+      const failure = ticketFailure(ticket, true, true);
+      return {
+        valid: !failure,
+        ticket,
+        reason: failure?.reason,
+        reasonCode: failure?.reasonCode,
+      };
     });
   }
 
@@ -285,7 +312,11 @@ export class TicketService {
       if (!ticket || ticket.barcode !== barcode)
         throw ApiError.badRequest('Ticket credential is no longer valid');
       const failure = ticketFailure(ticket, true, true);
-      if (failure) throw ApiError.badRequest(failure);
+      if (failure)
+        throw ApiError.badRequest(
+          failure.reason,
+          failure.reasonCode ? { reasonCode: failure.reasonCode } : undefined
+        );
       return consumeTicket(tx, ticket.id, checkedInBy);
     });
   }
@@ -299,9 +330,13 @@ export class TicketService {
       if (!ticket) throw ApiError.notFound('Ticket not found');
       if (userId && ticket.userId !== userId)
         throw ApiError.forbidden('You can only access QR codes for your own tickets');
-      assertPaidTicketOrder(ticket.order.status);
+      assertQrAdmission(ticket);
       const failure = ticketFailure(ticket, false, false);
-      if (failure) throw ApiError.badRequest(failure);
+      if (failure)
+        throw ApiError.badRequest(
+          failure.reason,
+          failure.reasonCode ? { reasonCode: failure.reasonCode } : undefined
+        );
       if (ticket.qrCodeUrl) return ticket.qrCodeUrl;
       const qr = await generateQRCode(
         generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId)
@@ -321,7 +356,11 @@ export class TicketService {
       if (userId && ticket.userId !== userId)
         throw ApiError.forbidden('You can only regenerate QR codes for your own tickets');
       const failure = ticketFailure(ticket, true, false);
-      if (failure) throw ApiError.badRequest(failure);
+      if (failure)
+        throw ApiError.badRequest(
+          failure.reason,
+          failure.reasonCode ? { reasonCode: failure.reasonCode } : undefined
+        );
       const barcode = `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`;
       const qr = await generateQRCode(generateTicketQRData(ticket.id, barcode, ticket.eventId));
       await tx.ticket.update({ where: { id: ticketId }, data: { barcode, qrCodeUrl: qr } });

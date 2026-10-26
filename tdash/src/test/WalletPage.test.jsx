@@ -118,6 +118,47 @@ describe('Buyer wallet', () => {
     expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
   });
 
+  it('hides unpaid tickets and labels a failed or expired reservation', async () => {
+    const failed = {
+      id: 'order-failed',
+      orderNumber: 'ORD-FAILED',
+      status: 'PENDING',
+      paymentStatus: 'FAILED',
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      totalAmount: 10,
+      currency: 'cad',
+      event: { name: 'Night show' },
+    };
+    const expired = {
+      id: 'order-expired',
+      orderNumber: 'ORD-EXPIRED',
+      status: 'PENDING',
+      paymentStatus: 'FAILED',
+      expiresAt: new Date(Date.now() - 60 * 1000).toISOString(),
+      totalAmount: 10,
+      currency: 'cad',
+      event: { name: 'Night show' },
+    };
+    const held = {
+      id: 'ticket-held',
+      status: 'VALID',
+      ticketType: { name: 'Admission' },
+      event: { name: 'Night show' },
+      order: { status: 'PENDING', paymentStatus: 'FAILED', refundStatus: 'NONE' },
+    };
+    calls.get.mockImplementation(async path => path.startsWith('/orders/mine')
+      ? { data: { orders: [failed, expired], pagination: { pages: 1 } } }
+      : path.startsWith('/tickets/mine') ? { data: { tickets: [held], pagination: { pages: 1 } } }
+      : Promise.reject(new Error(`Unexpected API route: ${path}`)));
+    mount();
+    expect(await screen.findByText('ORD-FAILED', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Payment failed')).toBeInTheDocument();
+    expect(screen.getByText('Reservation expired')).toBeInTheDocument();
+    expect(screen.getByText('No tickets yet.')).toBeInTheDocument();
+    expect(screen.queryByText('Awaiting payment')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show ticket' })).not.toBeInTheDocument();
+  });
+
   it('fails closed when the initial owned-record lookup has an expired session', async () => {
     calls.get.mockRejectedValue({ response: { status: 401 } });
     mount();

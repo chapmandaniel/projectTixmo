@@ -266,7 +266,7 @@ describe('Payment, admission and inventory integrity', () => {
     await deliver(intent);
     await deliver(intent);
     expect(fake.refunds.size).toBe(0);
-    const manual = await prisma.paymentRefund.findUniqueOrThrow({
+    const manual = await prisma.paymentRefund.findFirstOrThrow({
       where: { paymentIntentId: intent.id },
     });
     expect(manual).toMatchObject({
@@ -466,6 +466,16 @@ describe('Payment, admission and inventory integrity', () => {
     await expect(
       scannerService.scanTicket({ scannerId: scanner.id, qrData: qr, scanType: 'ENTRY' })
     ).rejects.toThrow('not assigned');
+    expect(
+      await prisma.scanLog.findFirst({
+        where: {
+          scannerId: scanner.id,
+          ticketId: ticket.id,
+          success: false,
+          failureReason: 'Scanner is not assigned to this event',
+        },
+      })
+    ).toBeTruthy();
     await expect(scannerService.syncTickets(scanner.id, event.id)).rejects.toThrow('not assigned');
     await prisma.scanner.update({ where: { id: scanner.id }, data: { eventId: event.id } });
     const invalid = await scannerService.scanTicket({
@@ -599,7 +609,7 @@ describe('Payment, admission and inventory integrity', () => {
       ])
     );
     expect(
-      await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId: intent.id } })
+      await prisma.paymentRefund.findFirstOrThrow({ where: { paymentIntentId: intent.id } })
     ).toMatchObject({
       orderId: order.id,
       amount: intent.amount_received,
@@ -731,7 +741,12 @@ describe('Payment, admission and inventory integrity', () => {
     };
     await deliverExternal('refund.created', { ...refund, status: 'pending' }, 'evt_pending');
     expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe('PAID');
-    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(0);
+    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(1);
+    expect(await prisma.paymentRefund.findFirst({ where: { orderId: order.id } })).toMatchObject({
+      stripeRefundId: 're_dashboard',
+      amount,
+      status: 'PROCESSING',
+    });
 
     await Promise.all([
       deliverExternal('refund.updated', { ...refund, status: 'succeeded' }, 'evt_updated'),
@@ -865,7 +880,7 @@ describe('Payment, admission and inventory integrity', () => {
     });
     expect(fake.stripe.refunds.create).toHaveBeenCalledTimes(1);
     expect(
-      await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId } })
+      await prisma.paymentRefund.findFirstOrThrow({ where: { paymentIntentId } })
     ).toMatchObject({ status: 'SUCCEEDED', stripeRefundId: 're_external', reason: 'ORDER_REFUND' });
     expect((await prisma.order.findUniqueOrThrow({ where: { id: inflight.id } })).status).toBe(
       'REFUNDED'
@@ -902,23 +917,39 @@ describe('Payment, admission and inventory integrity', () => {
       payment_intent: paymentIntentId,
     });
     expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
-    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(0);
+    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(1);
+    expect(await prisma.paymentRefund.findFirst({ where: { orderId: order.id } })).toMatchObject({
+      amount: amount - 1,
+      status: 'SUCCEEDED',
+      stripeRefundId: 're_partial',
+    });
+    const rows = await prisma.paymentRefundLine.findMany({
+      where: { orderId: order.id },
+      orderBy: { stripeRefundId: 'asc' },
+    });
+    expect(rows).toEqual([
+      expect.objectContaining({ stripeRefundId: 're_failed', amount, status: 'FAILED' }),
+      expect.objectContaining({
+        stripeRefundId: 're_partial',
+        amount: amount - 1,
+        status: 'SUCCEEDED',
+      }),
+    ]);
     const current = await prisma.order.findUniqueOrThrow({
       where: { id: order.id },
       include: { tickets: true },
     });
-    expect(current).toMatchObject({ status: 'PAID', refundStatus: 'NONE' });
+    expect(current).toMatchObject({ status: 'PAID', refundStatus: 'PARTIALLY_REFUNDED' });
+    expect(await stock()).toMatchObject({ quantitySold: 1, quantityAvailable: 19 });
     expect(current.tickets[0]).toMatchObject({ status: 'VALID', inventoryState: 'SOLD' });
     const ticket = current.tickets[0];
-    expect(
-      (
-        await scannerService.scanTicket({
-          scannerId: scanner.id,
-          qrData: generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId),
-          scanType: 'ENTRY',
-        })
-      ).success
-    ).toBe(true);
+    const admitted = await scannerService.scanTicket({
+      scannerId: scanner.id,
+      qrData: generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId),
+      scanType: 'ENTRY',
+    });
+    expect(admitted.success).toBe(true);
+    expect(admitted.ticket).toMatchObject({ status: 'USED' });
   });
 
   it('voids tickets when dashboard partial refunds together cover the full charge', async () => {
@@ -942,11 +973,37 @@ describe('Payment, admission and inventory integrity', () => {
     };
     fake.refunds.set(first.id, first);
     await deliverExternal('refund.created', first, 'evt_part_1');
-    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe('PAID');
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
+      status: 'PAID',
+      refundStatus: 'PARTIALLY_REFUNDED',
+    });
+    expect(await prisma.paymentRefund.count({ where: { paymentIntentId } })).toBe(1);
+    expect(await stock()).toMatchObject({ quantitySold: 1, quantityAvailable: 19 });
     fake.refunds.set(second.id, second);
     await deliverExternal('refund.updated', second, 'evt_part_2');
     expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
     expect(await prisma.paymentRefund.count({ where: { paymentIntentId } })).toBe(1);
+    expect(await prisma.paymentRefund.findFirst({ where: { paymentIntentId } })).toMatchObject({
+      amount,
+      status: 'SUCCEEDED',
+    });
+    const rows = await prisma.paymentRefundLine.findMany({
+      where: { paymentIntentId },
+      orderBy: { stripeRefundId: 'asc' },
+    });
+    expect(rows).toEqual([
+      expect.objectContaining({
+        stripeRefundId: 're_part_1',
+        amount: first.amount,
+        status: 'SUCCEEDED',
+      }),
+      expect.objectContaining({
+        stripeRefundId: 're_part_2',
+        amount: second.amount,
+        status: 'SUCCEEDED',
+      }),
+    ]);
+    expect(rows.reduce((total, row) => total + row.amount, 0)).toBe(amount);
     expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
       status: 'REFUNDED',
       refundStatus: 'SUCCEEDED',
@@ -956,5 +1013,182 @@ describe('Payment, admission and inventory integrity', () => {
       inventoryState: 'RELEASED',
     });
     expect(await stock()).toMatchObject({ quantitySold: 0, quantityAvailable: 20 });
+  });
+
+  it('stores a 1000 then 1000 refund as two rows, including replay and out-of-order delivery', async () => {
+    const order = await paid(2);
+    const paymentIntentId = order.paymentIntentId;
+    if (!paymentIntentId) throw new Error('paid order has no payment intent');
+    expect(orderCents(order.totalAmount)).toBe(2000);
+    const first = {
+      id: 're_3UUmp4IxFK3TfP5Q1W0ln7qn',
+      amount: 1000,
+      currency: order.currency,
+      status: 'succeeded',
+      payment_intent: paymentIntentId,
+    };
+    const second = {
+      id: 're_3UUmp4IxFK3TfP5Q1EWNPmKH',
+      amount: 1000,
+      currency: order.currency,
+      status: 'succeeded',
+      payment_intent: paymentIntentId,
+    };
+    fake.refunds.set(second.id, second);
+    await deliverExternal('refund.updated', second, 'evt_second_first');
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
+      status: 'PAID',
+      refundStatus: 'PARTIALLY_REFUNDED',
+    });
+    expect(await prisma.paymentRefund.findMany({ where: { paymentIntentId } })).toEqual([
+      expect.objectContaining({ stripeRefundId: second.id, amount: 1000, status: 'SUCCEEDED' }),
+    ]);
+    expect(await stock()).toMatchObject({ quantitySold: 2, quantityAvailable: 18 });
+    fake.refunds.set(first.id, first);
+    await deliverExternal('refund.created', first, 'evt_first_later');
+    await deliverExternal('refund.created', first, 'evt_first_later');
+    await deliverExternal(
+      'charge.refunded',
+      {
+        id: 'ch_two_part',
+        amount: 2000,
+        amount_refunded: 2000,
+        currency: order.currency,
+        refunded: true,
+        payment_intent: paymentIntentId,
+        refunds: { object: 'list', data: [second, first], has_more: false },
+      },
+      'evt_charge_two'
+    );
+    await deliverExternal(
+      'charge.refunded',
+      {
+        id: 'ch_two_part',
+        amount: 2000,
+        amount_refunded: 2000,
+        currency: order.currency,
+        refunded: true,
+        payment_intent: paymentIntentId,
+        refunds: { object: 'list', data: [second, first], has_more: false },
+      },
+      'evt_charge_two'
+    );
+    expect(await prisma.paymentRefund.count({ where: { paymentIntentId } })).toBe(1);
+    expect(await prisma.paymentRefund.findFirst({ where: { paymentIntentId } })).toMatchObject({
+      amount: 2000,
+      status: 'SUCCEEDED',
+    });
+    const rows = await prisma.paymentRefundLine.findMany({
+      where: { paymentIntentId },
+      orderBy: { stripeRefundId: 'asc' },
+    });
+    expect(rows.map((row) => [row.stripeRefundId, row.amount])).toEqual([
+      [second.id, 1000],
+      [first.id, 1000],
+    ]);
+    expect(rows.reduce((total, row) => total + row.amount, 0)).toBe(2000);
+    expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
+      status: 'REFUNDED',
+      refundStatus: 'SUCCEEDED',
+    });
+    expect(await stock()).toMatchObject({ quantitySold: 0, quantityAvailable: 20 });
+  });
+
+  it('does not restock a scanned ticket when the refund or the event cancellation completes', async () => {
+    const order = await paid(2);
+    const tickets = [...order.tickets].sort((a, b) => a.id.localeCompare(b.id));
+    const scannedAt = new Date('2026-10-26T10:28:26.000Z');
+    await prisma.ticket.update({
+      where: { id: tickets[0].id },
+      data: { status: 'USED', checkedInAt: scannedAt, checkedInBy: scanner.id },
+    });
+    const before = await stock();
+    const amount = orderCents(order.totalAmount);
+    const paymentIntentId = order.paymentIntentId;
+    if (!paymentIntentId) throw new Error('paid order has no payment intent');
+    await deliverExternal('charge.refunded', {
+      id: 'ch_attended',
+      amount,
+      amount_refunded: amount,
+      currency: order.currency,
+      refunded: true,
+      payment_intent: paymentIntentId,
+      refunds: {
+        object: 'list',
+        has_more: false,
+        data: [
+          {
+            id: 're_attended_full',
+            amount,
+            currency: order.currency,
+            status: 'succeeded',
+            payment_intent: paymentIntentId,
+          },
+        ],
+      },
+    });
+    expect(await prisma.ticket.findUniqueOrThrow({ where: { id: tickets[0].id } })).toMatchObject({
+      status: 'CANCELLED',
+      inventoryState: 'SOLD',
+      checkedInAt: scannedAt,
+    });
+    expect(await prisma.ticket.findUniqueOrThrow({ where: { id: tickets[1].id } })).toMatchObject({
+      status: 'CANCELLED',
+      inventoryState: 'RELEASED',
+    });
+    const after = await stock();
+    expect(after.quantitySold).toBe(before.quantitySold - 1);
+    expect(after.quantityAvailable).toBe(before.quantityAvailable + 1);
+
+    const cancelled = await paid();
+    const attended = cancelled.tickets[0];
+    await prisma.ticket.update({
+      where: { id: attended.id },
+      data: { status: 'USED', checkedInAt: scannedAt, checkedInBy: scanner.id },
+    });
+    const held = await stock();
+    await eventService.cancelEvent(event.id);
+    expect(await prisma.ticket.findUniqueOrThrow({ where: { id: attended.id } })).toMatchObject({
+      status: 'CANCELLED',
+      inventoryState: 'SOLD',
+      checkedInAt: scannedAt,
+    });
+    expect(await stock()).toMatchObject({
+      quantitySold: held.quantitySold,
+      quantityAvailable: held.quantityAvailable,
+    });
+    const cancelledAmount = orderCents(cancelled.totalAmount);
+    const cancelledIntent = cancelled.paymentIntentId;
+    if (!cancelledIntent) throw new Error('paid order has no payment intent');
+    await deliverExternal('charge.refunded', {
+      id: 'ch_event_cancel_attended',
+      amount: cancelledAmount,
+      amount_refunded: cancelledAmount,
+      currency: cancelled.currency,
+      refunded: true,
+      payment_intent: cancelledIntent,
+      refunds: {
+        object: 'list',
+        has_more: false,
+        data: [
+          {
+            id: 're_event_cancel_attended',
+            amount: cancelledAmount,
+            currency: cancelled.currency,
+            status: 'succeeded',
+            payment_intent: cancelledIntent,
+          },
+        ],
+      },
+    });
+    expect(await prisma.ticket.findUniqueOrThrow({ where: { id: attended.id } })).toMatchObject({
+      status: 'CANCELLED',
+      inventoryState: 'SOLD',
+    });
+    expect(await stock()).toMatchObject({
+      quantitySold: held.quantitySold,
+      quantityAvailable: held.quantityAvailable,
+    });
   });
 });

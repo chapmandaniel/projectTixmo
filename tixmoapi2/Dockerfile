@@ -33,7 +33,9 @@ COPY --from=build /app/dist ./dist
 COPY prisma/schema.prisma ./prisma/schema.prisma
 COPY prisma/migrations ./prisma/migrations
 COPY prisma/bootstrap-owner.js prisma/rotate-account-credentials.js prisma/reconcile-approval-reminders.js prisma/reconcile-ticket-inventory.js prisma/rekey-asset-shares.js ./prisma/
+COPY prisma/lib/upcoming.cjs ./prisma/lib/upcoming.cjs
 COPY scripts/start-api.sh ./scripts/start-api.sh
+COPY scripts/run-task.cjs ./scripts/run-task.cjs
 COPY scripts/stripe-read-probe.cjs ./scripts/stripe-read-probe.cjs
 COPY scripts/runtime-version-probe.cjs ./scripts/runtime-version-probe.cjs
 COPY scripts/approved-email-once.cjs ./scripts/approved-email-once.cjs

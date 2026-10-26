@@ -145,7 +145,7 @@ test('FAILED retry generation, real transaction fulfillment, stale finish and fa
       }),
       Buffer.from(mismatchPayload)
     );
-    const unexpected = await prisma.paymentRefund.findUniqueOrThrow({
+    const unexpected = await prisma.paymentRefund.findFirstOrThrow({
       where: { paymentIntentId: 'pi_wrong' },
     });
     expect(unexpected).toMatchObject({

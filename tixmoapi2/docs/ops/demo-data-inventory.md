@@ -157,6 +157,78 @@ ORDER BY organization_id, event_id NULLS FIRST;
 
 ## 4. Tickets, payment attempts, and users
 
+Every column in these unions is `text`, including enums (`inventory_state`, `status`, `role`). Untyped `NULL`s are `NULL::text`.
+
+`payment_attempts` and `tickets.inventory_state` arrive in migration `20261005003000_payment_and_inventory_integrity` (migration 28). A T-1 database that has not applied that migration cannot run the detail union below. `payment_webhook_events` is not used here.
+
+Gate. This does not read `payment_attempts`:
+
+```sql
+SELECT CASE
+  WHEN to_regclass('public.payment_attempts') IS NULL
+    OR NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'tickets' AND column_name = 'inventory_state'
+    )
+  THEN 'skipped: table payment_attempts absent'
+  ELSE 'payment_attempts present'
+END AS payment_attempts_gate;
+```
+
+When the gate prints `skipped: table payment_attempts absent`, run the T-1 union and do not run the detail union. The T-1 union does not reference `payment_attempts` or `inventory_state`.
+
+```sql
+WITH demo_orgs AS (
+  SELECT id FROM organizations
+  WHERE settings->>'demoData' = 'true'
+     OR slug IN ('tixmo-market-demo', 'tixmo-approvals-dev', 'tixmo-hq')
+     OR name IN (
+       'Tixmo Market Demo', 'TixMo HQ',
+       'Starlight Events', 'Underground Productions', 'Champions Sports Group',
+       'The Grand Theater', 'Metro Convention Center', 'TicketHub Resale',
+       'Neon Events Co', 'Metro Venues Inc', 'Ticket Hub Resellers',
+       'Simulation Entertainment Group'
+     )
+),
+demo_orders AS (
+  SELECT o.id, o.user_id
+  FROM orders o
+  JOIN events e ON e.id = o.event_id
+  WHERE e.organization_id IN (SELECT id FROM demo_orgs)
+     OR o.order_number LIKE 'MKT-DEMO-%'
+     OR o.payment_intent_id LIKE 'pi_market_demo_%'
+     OR o.user_agent = 'Tixmo market demo seed'
+)
+SELECT 'ticket'::text AS kind, t.id::text, t.order_id::text, t.event_id::text, t.user_id::text,
+       t.barcode::text, NULL::text AS state_or_role, t.status::text, NULL::text AS email
+FROM tickets t
+WHERE t.order_id IN (SELECT id FROM demo_orders)
+   OR t.barcode ~ '^MKT-[0-9]{5}-[0-9]{2}$'
+   OR t.qr_code_url LIKE 'https://demo.tixmo.test/qr/%'
+UNION ALL
+SELECT 'user'::text, u.id::text, NULL::text, NULL::text, u.id::text,
+       NULL::text, u.role::text,
+       (CASE WHEN u.disabled_at IS NULL THEN 'enabled' ELSE 'disabled' END)::text,
+       u.email::text
+FROM users u
+WHERE u.organization_id IN (SELECT id FROM demo_orgs)
+   OR u.id IN (SELECT user_id FROM demo_orders)
+   OR u.email IN (
+     'demo.admin@tixmo.test', 'demo.manager@tixmo.test', 'demo.ops@tixmo.test',
+     'demo.scanner@tixmo.test', 'demo.customer+maya@tixmo.test',
+     'demo.customer+eli@tixmo.test', 'demo.customer+nia@tixmo.test',
+     'demo.customer+omar@tixmo.test', 'demo.customer+jules@tixmo.test',
+     'demo.customer+sam@tixmo.test', 'demo.customer+alex@tixmo.test',
+     'demo.customer+ren@tixmo.test', 'demo.customer+taylor@tixmo.test',
+     'demo.customer+casey@tixmo.test', 'demo.customer+morgan@tixmo.test',
+     'demo.customer+riley@tixmo.test', 'approvals.admin@tixmo.test'
+   )
+   OR lower(u.email) = 'admin@tixmo.com'
+ORDER BY kind, email NULLS LAST, id;
+```
+
+Detail union for a database that has applied migration 28. All nine columns are `text`.
+
 ```sql
 WITH demo_orgs AS (
   SELECT id FROM organizations
@@ -179,22 +251,23 @@ demo_orders AS (
      OR o.payment_intent_id LIKE 'pi_market_demo_%'
      OR o.user_agent = 'Tixmo market demo seed'
 )
-SELECT 'ticket' AS kind, t.id, t.order_id, t.event_id, t.user_id,
-       t.barcode, t.inventory_state, t.status, NULL::text AS email
+SELECT 'ticket'::text AS kind, t.id::text, t.order_id::text, t.event_id::text, t.user_id::text,
+       t.barcode::text, t.inventory_state::text, t.status::text, NULL::text AS email
 FROM tickets t
 WHERE t.order_id IN (SELECT id FROM demo_orders)
    OR t.barcode ~ '^MKT-[0-9]{5}-[0-9]{2}$'
    OR t.qr_code_url LIKE 'https://demo.tixmo.test/qr/%'
 UNION ALL
-SELECT 'payment_attempt', pa.id, pa.order_id, NULL, NULL,
-       pa.payment_intent_id, pa.currency, NULL, NULL
+SELECT 'payment_attempt'::text, pa.id::text, pa.order_id::text, NULL::text, NULL::text,
+       pa.payment_intent_id::text, pa.currency::text, NULL::text, NULL::text
 FROM payment_attempts pa
 WHERE pa.order_id IN (SELECT id FROM demo_orders)
    OR pa.payment_intent_id LIKE 'pi_market_demo_%'
 UNION ALL
-SELECT 'user', u.id, NULL, NULL, u.id,
-       NULL, u.role::text, CASE WHEN u.disabled_at IS NULL THEN 'enabled' ELSE 'disabled' END,
-       u.email
+SELECT 'user'::text, u.id::text, NULL::text, NULL::text, u.id::text,
+       NULL::text, u.role::text,
+       (CASE WHEN u.disabled_at IS NULL THEN 'enabled' ELSE 'disabled' END)::text,
+       u.email::text
 FROM users u
 WHERE u.organization_id IN (SELECT id FROM demo_orgs)
    OR u.id IN (SELECT user_id FROM demo_orders)
@@ -215,6 +288,20 @@ ORDER BY kind, email NULLS LAST, id;
 `admin@tixmo.com` is included so the disabled bootstrap account is visible. It is a heuristic, not a market-demo user.
 
 ## 5. One count per category
+
+`payment_attempts` is migration 28. `payment_webhook_events` is migration `20260602010000_add_payment_webhook_events` (migration 26). Neither count can run on a database that does not have that table. The gate prints one skip row per missing table and does not read them.
+
+```sql
+SELECT note FROM (
+  SELECT 'skipped: table payment_attempts absent'::text AS note
+  WHERE to_regclass('public.payment_attempts') IS NULL
+  UNION ALL
+  SELECT 'skipped: table payment_webhook_events absent'::text
+  WHERE to_regclass('public.payment_webhook_events') IS NULL
+) gates;
+```
+
+T-1 counts. Run these when either skip row is present. They do not reference `payment_attempts` or `payment_webhook_events`.
 
 ```sql
 WITH demo_orgs AS (
@@ -238,7 +325,74 @@ demo_orders AS (
      OR o.payment_intent_id LIKE 'pi_market_demo_%'
      OR o.user_agent = 'Tixmo market demo seed'
 )
-SELECT category, row_count
+SELECT category::text, row_count
+FROM (
+  SELECT 'organizations_demo_flag' AS category, count(*) AS row_count
+  FROM organizations WHERE settings->>'demoData' = 'true'
+  UNION ALL
+  SELECT 'organizations_named_or_slugged', count(*) FROM demo_orgs
+  UNION ALL
+  SELECT 'events', count(*) FROM events WHERE organization_id IN (SELECT id FROM demo_orgs)
+  UNION ALL
+  SELECT 'orders', count(*) FROM demo_orders
+  UNION ALL
+  SELECT 'orders_mkt_demo_number', count(*) FROM orders WHERE order_number LIKE 'MKT-DEMO-%'
+  UNION ALL
+  SELECT 'orders_pi_market_demo', count(*)
+  FROM orders WHERE payment_intent_id LIKE 'pi_market_demo_%'
+  UNION ALL
+  SELECT 'tickets', count(*) FROM tickets
+  WHERE order_id IN (SELECT id FROM demo_orders)
+     OR barcode ~ '^MKT-[0-9]{5}-[0-9]{2}$'
+     OR qr_code_url LIKE 'https://demo.tixmo.test/qr/%'
+  UNION ALL
+  SELECT 'users_reliable_demo_emails', count(*) FROM users
+  WHERE email IN (
+    'demo.admin@tixmo.test', 'demo.manager@tixmo.test', 'demo.ops@tixmo.test',
+    'demo.scanner@tixmo.test', 'demo.customer+maya@tixmo.test',
+    'demo.customer+eli@tixmo.test', 'demo.customer+nia@tixmo.test',
+    'demo.customer+omar@tixmo.test', 'demo.customer+jules@tixmo.test',
+    'demo.customer+sam@tixmo.test', 'demo.customer+alex@tixmo.test',
+    'demo.customer+ren@tixmo.test', 'demo.customer+taylor@tixmo.test',
+    'demo.customer+casey@tixmo.test', 'demo.customer+morgan@tixmo.test',
+    'demo.customer+riley@tixmo.test', 'approvals.admin@tixmo.test'
+  )
+  UNION ALL
+  SELECT 'users_on_named_orgs_or_orders', count(*) FROM users
+  WHERE organization_id IN (SELECT id FROM demo_orgs)
+     OR id IN (SELECT user_id FROM orders WHERE id IN (SELECT id FROM demo_orders))
+  UNION ALL
+  SELECT 'users_admin_tixmo_com_heuristic', count(*) FROM users
+  WHERE lower(email) = 'admin@tixmo.com'
+) counts
+ORDER BY category;
+```
+
+Current-schema counts. Run this only when the gate returns no skip rows. It adds the two categories the T-1 count leaves out.
+
+```sql
+WITH demo_orgs AS (
+  SELECT id FROM organizations
+  WHERE settings->>'demoData' = 'true'
+     OR slug IN ('tixmo-market-demo', 'tixmo-approvals-dev', 'tixmo-hq')
+     OR name IN (
+       'Tixmo Market Demo', 'TixMo HQ',
+       'Starlight Events', 'Underground Productions', 'Champions Sports Group',
+       'The Grand Theater', 'Metro Convention Center', 'TicketHub Resale',
+       'Neon Events Co', 'Metro Venues Inc', 'Ticket Hub Resellers',
+       'Simulation Entertainment Group'
+     )
+),
+demo_orders AS (
+  SELECT o.id
+  FROM orders o
+  JOIN events e ON e.id = o.event_id
+  WHERE e.organization_id IN (SELECT id FROM demo_orgs)
+     OR o.order_number LIKE 'MKT-DEMO-%'
+     OR o.payment_intent_id LIKE 'pi_market_demo_%'
+     OR o.user_agent = 'Tixmo market demo seed'
+)
+SELECT category::text, row_count
 FROM (
   SELECT 'organizations_demo_flag' AS category, count(*) AS row_count
   FROM organizations WHERE settings->>'demoData' = 'true'
@@ -290,7 +444,7 @@ ORDER BY category;
 
 ## 6. Stale ON_SALE and PUBLISHED events
 
-Separate from the demo inventory. This is the review list for events that are still on sale or published after their end, or after their start when they have no end. It does not change rows. A null start and null end is listed on its own so an undated event is not treated as ended.
+Separate from the demo inventory. Ended means `COALESCE(end_datetime, start_datetime) <= now()`, the complement of the shared upcoming rule in `tixmoapi2/prisma/lib/upcoming.cjs`: `COALESCE(end_datetime, start_datetime) > now()`. A no-end event uses its start. A no-end event with a past start is ended. An event with no start and no end is not upcoming and is not in this list. The statement does not change rows.
 
 ```sql
 SELECT e.id, e.name, e.slug, e.status, e.start_datetime, e.end_datetime,

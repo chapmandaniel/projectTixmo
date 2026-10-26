@@ -5,6 +5,7 @@ import { orderDisplayCurrency } from '../lib/runtimeConfig';
 import StatusBadge from '../components/StatusBadge';
 import OrderDetailModal from './OrderDetailModal';
 import { formatEventMoney } from '../lib/publicEvent';
+import { orderListStatus } from '../lib/orderDispute';
 
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Newest first' },
@@ -279,7 +280,7 @@ const OrdersView = ({
                                             {new Date(order.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="p-4">
-                                            <StatusBadge status={order.status} isDark={isDark} />
+                                            <StatusBadge status={orderListStatus(order)} isDark={isDark} />
                                         </td>
                                         <td className="p-4 text-right">
                                             <button

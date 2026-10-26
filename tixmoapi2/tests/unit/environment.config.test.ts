@@ -95,17 +95,20 @@ describe('environment config', () => {
   });
 
   it('defaults the buyer sender name to Tixmo and hides an unset HST number', () => {
-    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     process.env.FROM_NAME = '';
     process.env.TIXMO_HST_NUMBER = '';
 
-    const { config } = require('../../src/config/environment');
+    const loaded = require('../../src/config/environment');
+    loaded.readHstRegistrationNumber('');
+    loaded.readHstRegistrationNumber('your_hst_number');
 
-    expect(config.fromName).toBe('Tixmo');
-    expect(config.hstNumber).toBe('');
-    expect(config.hstRate).toBe(0.15);
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is missing/));
-    error.mockRestore();
+    expect(loaded.config.fromName).toBe('Tixmo');
+    expect(loaded.config.hstNumber).toBe('');
+    expect(loaded.config.hstRate).toBe(0.15);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is missing/));
+    warn.mockRestore();
   });
 
   it('normalizes a configured GST/HST registration number', () => {
@@ -117,29 +120,29 @@ describe('environment config', () => {
   });
 
   it('treats a placeholder HST number as unset and logs it', () => {
-    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     process.env.TIXMO_HST_NUMBER = 'your_hst_number';
 
     const { config } = require('../../src/config/environment');
 
     expect(config.hstNumber).toBe('');
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is missing/));
-    error.mockRestore();
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is missing/));
+    warn.mockRestore();
   });
 
   it('hides a malformed HST number instead of stopping boot', () => {
-    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     process.env.TIXMO_HST_NUMBER = 'not-a-number';
 
     const { config } = require('../../src/config/environment');
 
     expect(config.hstNumber).toBe('');
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is invalid/));
-    error.mockRestore();
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is invalid/));
+    warn.mockRestore();
   });
 
   it('keeps booting in production when the HST number is missing or invalid', () => {
-    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     process.env.NODE_ENV = 'production';
     process.env.DATABASE_URL =
       process.env.DATABASE_URL || 'postgresql://disposable@127.0.0.1/tixmo';
@@ -153,9 +156,9 @@ describe('environment config', () => {
     jest.resetModules();
     process.env.TIXMO_HST_NUMBER = 'not-a-number';
     expect(require('../../src/config/environment').config.hstNumber).toBe('');
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is missing/));
-    expect(error).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is invalid/));
-    error.mockRestore();
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is missing/));
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/TIXMO_HST_NUMBER is invalid/));
+    warn.mockRestore();
   });
 
   it('defaults the HST rate to 0.15 and accepts another decimal in range', () => {
