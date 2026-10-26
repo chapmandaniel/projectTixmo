@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import rateLimit, { MemoryStore, type Options as RateLimitOptions } from 'express-rate-limit';
-import { Request } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import RedisStore from 'rate-limit-redis';
 import {
   getRedisClient,
@@ -368,7 +368,7 @@ const checkoutIpMax = (req: Request) => {
   return config.checkoutIpRateLimitMax;
 };
 
-export const checkoutActorRateLimiter = rateLimit({
+const checkoutActorLimiter = rateLimit({
   windowMs: config.checkoutRateLimitWindowMs,
   max: checkoutActorMax,
   message: {
@@ -382,7 +382,7 @@ export const checkoutActorRateLimiter = rateLimit({
   store: createStore('rl:checkout:actor:'),
 });
 
-export const checkoutIpRateLimiter = rateLimit({
+const checkoutIpLimiter = rateLimit({
   windowMs: config.checkoutIpRateLimitWindowMs,
   max: checkoutIpMax,
   message: {
@@ -395,3 +395,22 @@ export const checkoutIpRateLimiter = rateLimit({
   skip: (req) => !isCheckoutWrite(req),
   store: createStore('rl:checkout:ip:'),
 });
+
+// Public reads share this app middleware. express-rate-limit always awaits
+// skip(), and that extra turn pushed the 500-actor public-read p95 over its
+// budget. Non-checkout requests return before entering that limiter.
+export const checkoutActorRateLimiter = (req: Request, res: Response, next: NextFunction) => {
+  if (!isCheckoutWrite(req) || !checkoutActorKey(req)) {
+    next();
+    return;
+  }
+  return checkoutActorLimiter(req, res, next);
+};
+
+export const checkoutIpRateLimiter = (req: Request, res: Response, next: NextFunction) => {
+  if (!isCheckoutWrite(req)) {
+    next();
+    return;
+  }
+  return checkoutIpLimiter(req, res, next);
+};
