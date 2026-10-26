@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const assert = require('node:assert/strict');
-const OLD_COMMIT = 'ff1626d8551b954825d3b1d9749a32b35305091c';
+const OLD_COMMIT = '37a6049c025e033fa32ed7a583fef0eeacbe69bc';
 const IMAGES = {
   new: 'tixmo-task603-production:ci',
   old: 'tixmo-task606-old:ci',
