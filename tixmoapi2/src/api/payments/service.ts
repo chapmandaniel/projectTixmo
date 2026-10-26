@@ -349,13 +349,16 @@ export class PaymentService {
               });
             } else if (order.paymentIntentId !== intent.id)
               return queueRefund('UNEXPECTED_PAYMENT');
-            if (intent.amount !== cents(order.totalAmount) || intent.currency !== order.currency) {
+            const amountMatches = intent.amount === cents(order.totalAmount);
+            const settled = order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED';
+            // The PaymentIntent currency is the captured currency. A settled order
+            // whose row still says usd was labeled by migration #28, not mis-charged.
+            if (!amountMatches || (intent.currency !== order.currency && !settled)) {
               if (order.status === 'PENDING')
                 await orderService.cancelOrderInTransaction(tx, orderId);
               return queueRefund('INCORRECT_AMOUNT');
             }
-            if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED')
-              return { receipt: false };
+            if (settled) return { receipt: false };
             await tx.$queryRaw`SELECT id FROM events WHERE id = ${order.eventId} FOR UPDATE`;
             const event = await tx.event.findUniqueOrThrow({ where: { id: order.eventId } });
             if (
@@ -508,12 +511,19 @@ export class PaymentService {
     if (order.status === 'REFUNDED') return order;
     if (order.totalAmount.eq(0)) return orderService.finalizeRefund(orderId);
     const intent = await this.provider().paymentIntents.retrieve(order.paymentIntentId!);
-    if (
-      intent.status !== 'succeeded' ||
-      intent.amount_received !== cents(order.totalAmount) ||
-      intent.currency !== order.currency
-    )
+    if (intent.status !== 'succeeded' || intent.amount_received !== cents(order.totalAmount))
       throw ApiError.conflict('Processor payment needs reconciliation');
+    // The refund row is opened from the order before Stripe is read. The
+    // PaymentIntent currency replaces that stored label before any refund call.
+    await prisma.paymentRefund.updateMany({
+      where: {
+        paymentIntentId: intent.id,
+        orderId,
+        amount: intent.amount_received,
+        status: { not: 'SUCCEEDED' },
+      },
+      data: { currency: intent.currency },
+    });
     await this.ensureRefund(orderId, intent, 'ORDER_REFUND');
     return prisma.order.findUniqueOrThrow({ where: { id: orderId } });
   }
@@ -559,12 +569,22 @@ export class PaymentService {
       return;
     }
     const intent = await stripe.paymentIntents.retrieve(record.paymentIntentId);
-    if (
-      intent.status !== 'succeeded' ||
-      intent.amount_received !== record.amount ||
-      intent.currency !== record.currency
-    ) {
+    if (intent.status !== 'succeeded' || intent.amount_received !== record.amount) {
       throw ApiError.conflict('Processor payment needs reconciliation before refunding');
+    }
+    if (intent.currency !== record.currency) {
+      const aligned = await prisma.paymentRefund.updateMany({
+        where: {
+          id: record.id,
+          amount: record.amount,
+          currency: record.currency,
+          status: { not: 'SUCCEEDED' },
+        },
+        data: { currency: intent.currency },
+      });
+      if (!aligned.count)
+        throw ApiError.conflict('Processor payment needs reconciliation before refunding');
+      record.currency = intent.currency;
     }
     let refund: Stripe.Refund;
     if (record.stripeRefundId) refund = await stripe.refunds.retrieve(record.stripeRefundId);
@@ -709,14 +729,16 @@ export class PaymentService {
     if (!order || order.status !== 'PAID') return;
     const orderCents = cents(order.totalAmount);
     if (orderCents === 0) return;
+    const currency = this.refundEventCurrency(event);
+    if (!currency) return;
     const stripeRefundId = await this.fullSucceededRefund(
       event,
       paymentIntentId,
       orderCents,
-      order.currency
+      currency
     );
     if (!stripeRefundId) {
-      if (this.shouldNoteUnappliedRefund(event, orderCents, order.currency)) {
+      if (this.shouldNoteUnappliedRefund(event, orderCents, currency)) {
         logger.warn(
           `External refund for order ${order.id} was not applied. Partial refunds stay paid until the refunded total succeeds in full.`
         );
@@ -737,14 +759,10 @@ export class PaymentService {
           return null;
         }
         const row = await tx.paymentRefund.findUnique({ where: { paymentIntentId } });
-        if (
-          row &&
-          (row.reason !== 'ORDER_REFUND' ||
-            row.amount !== orderCents ||
-            row.currency !== current.currency)
-        ) {
+        if (row && (row.reason !== 'ORDER_REFUND' || row.amount !== orderCents)) {
           return null;
         }
+        if (row?.status === 'SUCCEEDED' && row.currency !== currency) return null;
         if (row?.stripeRefundId && row.stripeRefundId !== stripeRefundId) {
           logger.warn(
             `External refund ${stripeRefundId} does not match refund record ${row.id} for order ${order.id}`
@@ -758,11 +776,10 @@ export class PaymentService {
               id: row.id,
               reason: 'ORDER_REFUND',
               amount: orderCents,
-              currency: current.currency,
               status: { not: 'SUCCEEDED' },
               stripeRefundId: row.stripeRefundId,
             },
-            data: { status: 'SUCCEEDED', stripeRefundId, errorMessage: null },
+            data: { status: 'SUCCEEDED', stripeRefundId, errorMessage: null, currency },
           });
           return tx.paymentRefund.findUnique({ where: { id: row.id } });
         }
@@ -771,7 +788,7 @@ export class PaymentService {
             orderId: order.id,
             paymentIntentId,
             amount: orderCents,
-            currency: current.currency,
+            currency,
             reason: 'ORDER_REFUND',
             status: 'SUCCEEDED',
             stripeRefundId,
@@ -808,6 +825,16 @@ export class PaymentService {
       refund.status === 'succeeded' &&
       (refund.amount !== orderCents || refund.currency !== currency)
     );
+  }
+
+  private refundEventCurrency(event: Stripe.Event): string | null {
+    if (event.type.startsWith('refund.')) {
+      return (event.data.object as Stripe.Refund).currency || null;
+    }
+    if (event.type === 'charge.refunded') {
+      return event.data.object.currency || null;
+    }
+    return null;
   }
 
   private async fullSucceededRefund(

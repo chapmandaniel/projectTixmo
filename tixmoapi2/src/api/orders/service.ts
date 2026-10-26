@@ -365,6 +365,26 @@ export class OrderService {
   }
 
   /**
+   * Refunded receipts use the payment-refund currency recorded from the
+   * PaymentIntent or charge. The order row can still say usd.
+   */
+  private async receiptCurrency(order: {
+    status: string;
+    currency: string;
+    paymentIntentId: string | null;
+  }): Promise<string> {
+    if (order.status !== 'REFUNDED' || !order.paymentIntentId) return order.currency;
+    const refund = await prisma.paymentRefund.findUnique({
+      where: { paymentIntentId: order.paymentIntentId },
+      select: { currency: true, reason: true, status: true },
+    });
+    if (refund?.reason === 'ORDER_REFUND' && refund.status === 'SUCCEEDED' && refund.currency) {
+      return refund.currency;
+    }
+    return order.currency;
+  }
+
+  /**
    * Send order confirmation email (called after confirmOrder)
    */
   async sendOrderConfirmationEmail(orderId: string, resend = false): Promise<void> {
@@ -377,12 +397,12 @@ export class OrderService {
       },
     });
     if (!order) throw ApiError.notFound('Order not found');
+    if (order.status !== 'PAID' && order.status !== 'REFUNDED') return;
     if (
-      order.status !== 'PAID' ||
-      (!resend &&
-        (order.receiptSentAt ||
-          order.receiptStatus === 'LEGACY_UNKNOWN' ||
-          order.receiptStatus === 'SENT'))
+      !resend &&
+      (order.receiptSentAt ||
+        order.receiptStatus === 'LEGACY_UNKNOWN' ||
+        order.receiptStatus === 'SENT')
     )
       return;
     const leaseToken = crypto.randomUUID();
@@ -390,7 +410,7 @@ export class OrderService {
     const claimed = await prisma.order.updateMany({
       where: {
         id: orderId,
-        status: 'PAID',
+        status: order.status,
         OR: [
           resend ? { receiptStatus: { not: 'PROCESSING' } } : { receiptStatus: 'PENDING' },
           { receiptStatus: 'PROCESSING', receiptStartedAt: { lt: stale } },
@@ -421,7 +441,7 @@ export class OrderService {
         eventName: order.event.name,
         eventDate: date,
         ticketSummary: summarizeTickets(order.tickets),
-        totalAmount: formatMoney(order.totalAmount, order.currency),
+        totalAmount: formatMoney(order.totalAmount, await this.receiptCurrency(order)),
         venueName: order.event.venue?.name || null,
         venueAddress: formatVenueAddress(order.event.venue?.address),
         hstNumber: config.hstNumber || null,
@@ -582,12 +602,14 @@ export class OrderService {
         const refund = await tx.paymentRefund.findUnique({
           where: { paymentIntentId: order.paymentIntentId || '' },
         });
+        // Amount must match the order. Currency is the processor currency on
+        // the refund row, not the historical order.currency label.
         if (
           !refund ||
           refund.reason !== 'ORDER_REFUND' ||
           refund.status !== 'SUCCEEDED' ||
           refund.amount !== Math.round(order.totalAmount.toNumber() * 100) ||
-          refund.currency !== order.currency
+          !refund.currency
         ) {
           throw ApiError.conflict('Processor refund has not been confirmed');
         }

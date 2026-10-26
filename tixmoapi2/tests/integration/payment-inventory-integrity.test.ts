@@ -10,6 +10,7 @@ import { eventService } from '../../src/api/events/service';
 import { notificationService } from '../../src/utils/notificationService';
 import { cleanupTestData, prisma } from '../utils/testUtils';
 import { generateTicketQRData } from '../../src/utils/qrcode';
+import { formatMoney } from '../../src/utils/receipt';
 
 function processor() {
   const intents = new Map<string, any>(),
@@ -956,5 +957,116 @@ describe('Payment, admission and inventory integrity', () => {
       inventoryState: 'RELEASED',
     });
     expect(await stock()).toMatchObject({ quantitySold: 0, quantityAvailable: 20 });
+  });
+
+  async function storeHistoricalUsd(order: { id: string; paymentIntentId: string | null }) {
+    const paymentIntentId = order.paymentIntentId;
+    if (!paymentIntentId) throw new Error('paid order has no payment intent');
+    const intent = fake.intents.get(paymentIntentId);
+    intent.currency = 'cad';
+    await prisma.order.update({ where: { id: order.id }, data: { currency: 'usd' } });
+    await prisma.paymentAttempt.update({
+      where: { orderId: order.id },
+      data: { currency: 'usd' },
+    });
+    return intent;
+  }
+
+  it('refunds a usd-stored order from the cad PaymentIntent and receipts that charge currency', async () => {
+    const order = await paid();
+    const intent = await storeHistoricalUsd(order);
+    const result = await service.refundOrder(order.id);
+    expect(result).toMatchObject({
+      status: 'REFUNDED',
+      refundStatus: 'SUCCEEDED',
+      currency: 'usd',
+    });
+    expect(fake.stripe.refunds.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payment_intent: order.paymentIntentId,
+        amount: intent.amount_received,
+      }),
+      expect.any(Object)
+    );
+    expect(fake.stripe.refunds.create.mock.calls[0][0].currency).toBeUndefined();
+    expect(
+      await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId: intent.id } })
+    ).toMatchObject({ currency: 'cad', status: 'SUCCEEDED', reason: 'ORDER_REFUND' });
+    expect(
+      await prisma.paymentAttempt.findUniqueOrThrow({ where: { orderId: order.id } })
+    ).toMatchObject({
+      currency: 'usd',
+    });
+    (notificationService.sendOrderConfirmation as jest.Mock).mockClear();
+    await orderService.sendOrderConfirmationEmail(order.id, true);
+    expect(notificationService.sendOrderConfirmation).toHaveBeenCalledWith(
+      expect.objectContaining({ totalAmount: formatMoney(order.totalAmount, 'cad') })
+    );
+    expect(formatMoney(order.totalAmount, 'cad')).not.toBe(formatMoney(order.totalAmount, 'usd'));
+  });
+
+  it('still refuses the refund when the cad PaymentIntent amount does not match', async () => {
+    const order = await paid();
+    const intent = await storeHistoricalUsd(order);
+    intent.amount_received -= 1;
+    await expect(service.refundOrder(order.id)).rejects.toThrow(
+      'Processor payment needs reconciliation'
+    );
+    expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status).toBe('PAID');
+  });
+
+  it('settles charge.refunded in cad when the order row says usd', async () => {
+    const order = await paid();
+    await storeHistoricalUsd(order);
+    const amount = orderCents(order.totalAmount);
+    const paymentIntentId = order.paymentIntentId;
+    if (!paymentIntentId) throw new Error('paid order has no payment intent');
+    const refund = {
+      id: 're_cad_dashboard',
+      amount,
+      currency: 'cad',
+      status: 'succeeded',
+      payment_intent: paymentIntentId,
+      metadata: {},
+    };
+    await deliverExternal('charge.refunded', {
+      id: 'ch_cad_dashboard',
+      amount,
+      amount_refunded: amount,
+      currency: 'cad',
+      refunded: true,
+      payment_intent: paymentIntentId,
+      refunds: { object: 'list', data: [refund], has_more: false },
+    });
+    expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
+      status: 'REFUNDED',
+      refundStatus: 'SUCCEEDED',
+      currency: 'usd',
+    });
+    expect(
+      await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId } })
+    ).toMatchObject({
+      currency: 'cad',
+      status: 'SUCCEEDED',
+      stripeRefundId: 're_cad_dashboard',
+      amount,
+    });
+    const ticket = await prisma.ticket.findFirstOrThrow({ where: { orderId: order.id } });
+    expect(ticket).toMatchObject({ status: 'CANCELLED', inventoryState: 'RELEASED' });
+  });
+
+  it('does not refund a settled cad charge only because the order row says usd', async () => {
+    const order = await paid();
+    const intent = await storeHistoricalUsd(order);
+    await deliver(intent, 'evt_replay_usd_label');
+    expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
+    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(0);
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
+      status: 'PAID',
+      currency: 'usd',
+      refundStatus: 'NONE',
+    });
   });
 });

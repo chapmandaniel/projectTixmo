@@ -212,6 +212,20 @@ test.each([
   expect(finalizeRefund).toHaveBeenCalledTimes(expected === 'SUCCEEDED' ? 1 : 0);
 });
 
+test('a usd refund row follows the cad PaymentIntent before the provider refund is created', async () => {
+  record.currency = 'usd';
+  record.stripeRefundId = null;
+  await reconcile();
+  expect(provider.paymentIntents.retrieve).toHaveBeenCalledWith(record.paymentIntentId);
+  expect(provider.refunds.create).toHaveBeenCalledWith(
+    expect.objectContaining({ payment_intent: record.paymentIntentId, amount: record.amount }),
+    expect.objectContaining({ idempotencyKey: `refund-${record.id}` })
+  );
+  expect(record.currency).toBe('cad');
+  expect(record.status).toBe('SUCCEEDED');
+  expect(finalizeRefund).toHaveBeenCalledWith(record.orderId);
+});
+
 test.each([{ amount: 1300 }, { currency: 'usd' }, { payment_intent: 'pi_another_order' }])(
   'mismatched provider response %j cannot settle a refund',
   async (mismatch) => {
