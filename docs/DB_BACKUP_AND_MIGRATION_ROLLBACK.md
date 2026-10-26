@@ -95,6 +95,26 @@ TIXMO_INVENTORY_WRITERS_QUIESCED=true \
 
 A PAID or PARTIALLY_REFUNDED order with a succeeded payment turns UNKNOWN VALID or USED tickets into SOLD, including promo-priced tickets and overlapping same-price tiers. A REFUNDED or CANCELLED order turns UNKNOWN tickets into RELEASED. Ambiguous tickets stay unchanged. The command never releases a VALID or USED seat on a PAID or PARTIALLY_REFUNDED order and never sells past `quantity_total` or a tier `quantity_limit`. A second apply with nothing left to change writes no audit row.
 
+When the operator machine cannot open a service shell, set the API service start command temporarily, deploy, and read the deploy logs. The task process does not start the HTTP server. `DATABASE_URL` is used when `TIXMO_INVENTORY_DATABASE_URL` is unset.
+
+Dry-run start command:
+
+```bash
+npm run task -- inventory-reconcile-dry-run
+```
+
+Apply start command, after `TIXMO_ALLOW_INVENTORY_RECONCILIATION=true` and `TIXMO_INVENTORY_WRITERS_QUIESCED=true` are set on the service:
+
+```bash
+npm run task -- inventory-reconcile-apply
+```
+
+Revert the start command to the normal server before the next deploy, and remove those two variables:
+
+```bash
+/bin/sh scripts/start-api.sh
+```
+
 6. Restart or redeploy the API only if the deploy platform does not do this automatically.
 7. Run smoke checks:
    - Health endpoint.
