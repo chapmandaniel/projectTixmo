@@ -63,7 +63,9 @@ const runPrisma = (args) => {
   assert.match(refundedSql, /ALTER TYPE "PaymentStatus" ADD VALUE 'REFUNDED';/);
   assert.doesNotMatch(refundedSql, /\b(INSERT|UPDATE|DELETE)\b/);
   for (const name of fs.readdirSync(source).sort()) {
-    if (name > migration && name !== refundedMigration) {
+    if (name > migration) {
+      // The new PaymentStatus label is proved on its own, after every other migration.
+      if (name === refundedMigration) continue;
       fs.cpSync(path.join(source, name), path.join(staged, 'migrations', name), { recursive: true });
     }
   }
@@ -75,10 +77,13 @@ const runPrisma = (args) => {
   assert.equal(ledgerBefore.some((row) => row.migration_name === refundedMigration), false);
   const version = await prisma.$queryRaw`SELECT current_setting('server_version_num') AS version`;
   assert.ok(Number(version[0].version) >= 120000);
+  // The type must already be committed. PostgreSQL 18 allows a new label on a
+  // type created in the same transaction; a label added to an existing type
+  // still cannot be used until that transaction commits.
+  await prisma.$executeRawUnsafe(`CREATE TYPE "RefundedProbe" AS ENUM ('SUCCEEDED')`);
   let rejectedUncommittedUse = false;
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.$executeRawUnsafe(`CREATE TYPE "RefundedProbe" AS ENUM ('SUCCEEDED')`);
       await tx.$executeRawUnsafe(`ALTER TYPE "RefundedProbe" ADD VALUE 'REFUNDED'`);
       await tx.$queryRawUnsafe(`SELECT 'REFUNDED'::"RefundedProbe" AS label`);
     });
@@ -86,8 +91,9 @@ const runPrisma = (args) => {
     rejectedUncommittedUse = /unsafe use of new value/.test(String(error && error.message));
   }
   assert.equal(rejectedUncommittedUse, true);
-  const probeLeft = await prisma.$queryRaw`SELECT COUNT(*)::int AS count FROM pg_type WHERE typname = 'RefundedProbe'`;
-  assert.equal(probeLeft[0].count, 0);
+  const probeLabels = await prisma.$queryRaw`SELECT e.enumlabel AS label FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid WHERE t.typname = 'RefundedProbe' ORDER BY e.enumsortorder`;
+  assert.deepEqual(probeLabels.map((row) => row.label), ['SUCCEEDED']);
+  await prisma.$executeRawUnsafe(`DROP TYPE "RefundedProbe"`);
   fs.cpSync(path.join(source, refundedMigration), path.join(staged, 'migrations', refundedMigration), { recursive: true });
   runPrisma(['migrate', 'deploy', '--schema', path.join(staged, 'schema.prisma')]);
   const labelsAfter = await prisma.$queryRaw`SELECT e.enumlabel AS label FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid WHERE t.typname = 'PaymentStatus'`;
