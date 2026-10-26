@@ -105,6 +105,10 @@ def run(remote, apply, snapshot='original'):
     pending = [e for e in plan if e['action'] == 'create'
                and e['destination'] not in blocked_destinations]
     pending.sort(key=lambda e: e['sha'] != manifest['main'])
+    if snapshot == 'sanitized':
+        # This final implementation's code/workflow tree matches main; publish
+        # its complete cleaned ancestry before historical workflow variants.
+        pending.sort(key=lambda e: not e['destination'].endswith('/codex/task-621-secure-rollback'))
     print(json.dumps({'phase': 'plan', 'snapshot': snapshot, 'snapshotBranches': len(plan),
                       'alreadyPresent': sum(e['action'] == 'already_present' for e in plan),
                       'createOnly': len(pending),
