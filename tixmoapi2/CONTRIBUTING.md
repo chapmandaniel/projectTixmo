@@ -68,6 +68,18 @@ npm run test:coverage
 6. Push to your fork: `git push origin feature/your-feature-name`
 7. Create a Pull Request
 
+### Configured-image rollback pin
+
+The `configured-image-restore` job proves the pull request API image can roll
+back onto the previous main image. A PR sets `OLD_COMMIT` in
+`scripts/verify-application-rollback.cjs` and the workflow `ref` in
+`.github/workflows/market-readiness-local.yml` to the main commit it is based
+on, never to its own commit. The job proves the PR image can roll back to that
+previous main image. `parity()` checks that `OLD_COMMIT` is an ancestor of
+`origin/main` and that the old tree differs from or predates the candidate.
+The receipt keeps `rollbackPromotionApproved` false. This check does not
+approve a production rollback.
+
 ### Pull Request Template
 
 ```markdown

@@ -2,9 +2,11 @@
 // Hosted-only, synthetic source. No target/environment credentials are inherited.
 const fs = require('node:fs');
 const path = require('node:path');
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 const assert = require('node:assert/strict');
-const OLD_COMMIT = 'df0de4bde792e3b695939f90a18c4e3bd2468446';
+// Previous main API image. A PR sets this to the main commit it is based on,
+// never to its own commit. parity() rejects that self-pin.
+const OLD_COMMIT = '105601996d17684cff2e6e8de40d29894e2eb370';
 const IMAGES = {
   new: 'tixmo-task603-production:ci',
   old: 'tixmo-task606-old:ci',
@@ -49,16 +51,51 @@ function inventory(base, prefix) {
   visit(prefix);
   return result;
 }
-function parity(current, old) {
-  for (const name of [
-    'src',
-    'prisma/schema.prisma',
-    'prisma/migrations',
-    'package-lock.json',
-    'package.json',
-  ])
-    assert.deepEqual(inventory(current, name), inventory(old, name));
-  return { mode: 'byte-identical', rollbackPromotionApproved: false };
+const CONTRACT_PATHS = [
+  'src',
+  'prisma/schema.prisma',
+  'prisma/migrations',
+  'package-lock.json',
+  'package.json',
+];
+function gitSync(args, cwd) {
+  const result = spawnSync('git', args, {
+    cwd,
+    encoding: 'utf8',
+    env: { PATH: process.env.PATH, HOME: process.env.HOME },
+    timeout: 30000,
+  });
+  if (result.error) throw result.error;
+  return {
+    status: result.status,
+    stdout: String(result.stdout || '').trim(),
+    stderr: String(result.stderr || '').trim(),
+  };
+}
+function treesDiffer(current, old) {
+  for (const name of CONTRACT_PATHS) {
+    const left = inventory(current, name);
+    const right = inventory(old, name);
+    if (left.length !== right.length) return true;
+    for (let index = 0; index < left.length; index += 1)
+      if (left[index][0] !== right[index][0] || left[index][1] !== right[index][1]) return true;
+  }
+  return false;
+}
+function parity(current, old, options = {}) {
+  const repo = options.repo || path.resolve(__dirname, '..');
+  const git = options.git || ((args) => gitSync(args, repo));
+  const ancestor = git(['merge-base', '--is-ancestor', OLD_COMMIT, 'origin/main']);
+  assert.equal(ancestor.status, 0, 'OLD_COMMIT must be an ancestor of origin/main');
+  const head = git(['rev-parse', 'HEAD']);
+  assert.equal(head.status, 0);
+  const headSha = String(head.stdout || '').trim();
+  assert.match(headSha, /^[0-9a-f]{40}$/);
+  assert.notEqual(headSha, OLD_COMMIT, 'OLD_COMMIT must not be the candidate commit');
+  const predates = git(['merge-base', '--is-ancestor', OLD_COMMIT, 'HEAD']).status === 0;
+  const differs = predates ? false : treesDiffer(current, old);
+  assert.ok(differs || predates, 'old image must differ from or predate the candidate');
+  return { mode: 'previous-main-image', rollbackPromotionApproved: false };
 }
 async function command(program, args, timeout = 100000, allowWorkerFailure = false) {
   const child = spawn(program, args, {
@@ -175,7 +212,10 @@ async function verify(env = process.env, dependencies = {}) {
   const { MIGRATION_COUNT } = require(path.join(__dirname, '../tixmoapi2/scripts/migration-census.cjs'));
   guard(env);
   const root = dependencies.root || path.resolve(__dirname, '..');
-  const contract = parity(path.join(root, 'tixmoapi2'), path.join(root, '.rollback-old/tixmoapi2'));
+  const contract = parity(path.join(root, 'tixmoapi2'), path.join(root, '.rollback-old/tixmoapi2'), {
+    repo: root,
+    git: dependencies.git,
+  });
   const run = dependencies.command || command;
   assert.equal(
     await run('git', ['-C', path.join(root, '.rollback-old'), 'rev-parse', 'HEAD']),

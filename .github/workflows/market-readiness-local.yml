@@ -191,6 +191,11 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so OLD_COMMIT can be proved to predate this candidate.
+          fetch-depth: 0
+      - name: Fetch main history for the rollback ancestor check
+        run: git fetch --no-tags origin main
       - uses: actions/setup-node@v4
         with:
           node-version: '24.21.0'
@@ -250,10 +255,10 @@ jobs:
       - name: Checkout exact qualified rollback API source
         uses: actions/checkout@v4
         with:
-          ref: df0de4bde792e3b695939f90a18c4e3bd2468446
+          ref: 105601996d17684cff2e6e8de40d29894e2eb370
           path: .rollback-old
           persist-credentials: false
-      - name: Verify database parity and exact reviewed application rollback contract
+      - name: Verify previous-main rollback pin
         run: node -e "const p=require('./scripts/verify-application-rollback.cjs');p.parity('tixmoapi2','.rollback-old/tixmoapi2')"
       - name: Build exact previously qualified API image
         run: docker build --tag tixmo-task606-old:ci .rollback-old/tixmoapi2

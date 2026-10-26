@@ -651,10 +651,11 @@ Android devices, optical decoding, offline admission, gate operators or whole
 
 ### Secure validation rollback baseline (#619/#621)
 
-The rollback fixture is pinned to the reviewed, deployed Zod 4.6.7 release.
-Both images must have byte-identical application source, dependency files,
-Prisma schema and migrations. The temporary historical-v3 transition manifest
-and exception are retired; legacy override arguments cannot relax parity.
-The real new-old-new rehearsal still preserves retained synthetic writes and
-requires joined cleanup. Its receipt keeps rollback promotion approval false:
-a CI compatibility test never authorizes a deployment by itself.
+A PR sets `OLD_COMMIT` and the configured-image-restore workflow `ref` to the
+main commit it is based on, never to its own commit. The job proves the PR
+image can roll back to that previous main image. `parity()` requires that
+commit to be an ancestor of `origin/main` and to differ from or predate the
+candidate under test. The real new-old-new rehearsal still preserves retained
+synthetic writes and requires joined cleanup. Its receipt keeps rollback
+promotion approval false: a CI compatibility test never authorizes a deployment
+by itself.
