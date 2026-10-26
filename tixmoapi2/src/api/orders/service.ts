@@ -454,8 +454,12 @@ export class OrderService {
     const order = await tx.order.findFirst({ where: { id, ...scope } });
     if (!order) throw ApiError.notFound('Order not found');
     if (order.status === 'CANCELLED') return order;
+    // A pending cancellation only releases the reservation. It does not refund,
+    // including when a payment was already captured and is waiting on reconciliation.
     if (order.status !== 'PENDING')
-      throw ApiError.badRequest('Cannot cancel paid orders. Request a refund instead.');
+      throw ApiError.badRequest(
+        'Cannot cancel paid orders. All sales are final. Refunds are issued by Tixmo staff.'
+      );
     await transitionInventory(tx, id, 'HELD', 'RELEASED');
     await transitionPromo(tx, id, 'RELEASED');
     return tx.order.update({ where: { id }, data: { status: 'CANCELLED' } });

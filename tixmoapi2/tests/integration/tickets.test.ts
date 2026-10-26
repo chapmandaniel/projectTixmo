@@ -391,27 +391,38 @@ describe('Tickets API', () => {
       cancelTicketId = orderDetails.body.data.tickets[0].id;
     });
 
-    it('should cancel a ticket', async () => {
+    it('should reject a buyer ticket cancellation that would refund the order', async () => {
       const res = await request(app)
         .post(`/api/v1/tickets/${cancelTicketId}/cancel`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.status).toBe('CANCELLED');
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('All sales are final. Refunds are issued by Tixmo staff.');
+      expect(res.body.errors).toMatchObject({ code: 'BUYER_REFUNDS_DISABLED' });
+
+      const ticket = await prisma.ticket.findUniqueOrThrow({ where: { id: cancelTicketId } });
+      expect(ticket.status).toBe('VALID');
+      const order = await prisma.order.findUniqueOrThrow({ where: { id: cancelOrderId } });
+      expect(order.status).toBe('PAID');
+      expect(order.refundStatus).toBe('NONE');
     });
 
-    it('should fail to cancel already cancelled ticket', async () => {
-      await request(app)
-        .post(`/api/v1/tickets/${cancelTicketId}/cancel`)
-        .set('Authorization', `Bearer ${authToken}`);
+    it('should keep rejecting a buyer when the ticket is already cancelled', async () => {
+      await prisma.ticket.update({
+        where: { id: cancelTicketId },
+        data: { status: 'CANCELLED' },
+      });
 
       const res = await request(app)
         .post(`/api/v1/tickets/${cancelTicketId}/cancel`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain('already cancelled');
+      expect(res.status).toBe(403);
+      expect(res.body.errors).toMatchObject({ code: 'BUYER_REFUNDS_DISABLED' });
+      const order = await prisma.order.findUniqueOrThrow({ where: { id: cancelOrderId } });
+      expect(order.status).toBe('PAID');
+      expect(order.refundStatus).toBe('NONE');
     });
 
     it('should fail without authentication', async () => {
