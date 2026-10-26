@@ -232,7 +232,9 @@ it('executable retains bounded nonblocking watchdog and production packaging', a
   expect(fs.readFileSync(path.join(root, 'tixmoapi2/scripts/start-api.sh'), 'utf8')).toContain(
     'node scripts/storage-canary.cjs || true; fi'
   );
-  expect(fs.readFileSync(path.join(root, 'tixmoapi2/railway.toml'), 'utf8')).toContain('startCommand = "/bin/sh scripts/start-api.sh"');
+  expect(fs.readFileSync(path.join(root, 'tixmoapi2/railway.toml'), 'utf8')).toContain(
+    'startCommand = "/bin/sh scripts/start-api.sh"'
+  );
   const startup = fs.readFileSync(path.join(root, 'tixmoapi2/scripts/start-api.sh'), 'utf8');
   expect(startup.indexOf('exec node dist/index.js')).toBeGreaterThan(
     startup.indexOf('node scripts/storage-canary.cjs || true; fi')

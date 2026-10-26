@@ -205,15 +205,17 @@ describe('public webhook fulfillment recovery (mocked boundaries)', () => {
     const first = new Error('transient first');
     const last = new Error('final inventory failure');
     (orderService.confirmOrderInTransaction as jest.Mock)
-      .mockRejectedValueOnce(first).mockRejectedValue(last);
+      .mockRejectedValueOnce(first)
+      .mockRejectedValue(last);
     (notificationService.sendAdminAlert as jest.Mock).mockRejectedValue(new Error('alert failure'));
     const rejected = deliver().catch((error: unknown) => error);
     await jest.runAllTimersAsync();
     expect(await rejected).toBe(last);
     expect(orderService.confirmOrderInTransaction).toHaveBeenCalledTimes(6);
     expect(stored).toMatchObject({ status: 'FAILED', errorMessage: last.message });
-    const terminalWrites = db.paymentWebhookEvent.updateMany.mock.calls
-      .filter(([arg]: any[]) => ['FAILED', 'PROCESSED'].includes(arg.data.status));
+    const terminalWrites = db.paymentWebhookEvent.updateMany.mock.calls.filter(([arg]: any[]) =>
+      ['FAILED', 'PROCESSED'].includes(arg.data.status)
+    );
     expect(terminalWrites).toHaveLength(1);
     expect(terminalWrites[0][0]).toMatchObject({
       where: { id: event.id, status: 'PROCESSING', attemptGeneration: 1n },
@@ -223,8 +225,9 @@ describe('public webhook fulfillment recovery (mocked boundaries)', () => {
     expect(orderService.sendOrderConfirmationEmail).not.toHaveBeenCalled();
   });
   it('recovers a transient confirmation failure within the same delivery without a false alert', async () => {
-    (orderService.confirmOrderInTransaction as jest.Mock)
-      .mockRejectedValueOnce(new Error('temporary'));
+    (orderService.confirmOrderInTransaction as jest.Mock).mockRejectedValueOnce(
+      new Error('temporary')
+    );
     const pending = deliver();
     await jest.runAllTimersAsync();
     await pending;

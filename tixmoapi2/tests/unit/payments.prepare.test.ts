@@ -308,14 +308,19 @@ test('linked intent remains retrievable after the attempt cutoff without another
   expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
   expect(stripe.paymentIntents.retrieve).toHaveBeenCalledWith('pi-one');
 });
-test.each(['requires_confirmation', 'requires_action'])('reuses a valid %s intent', async (status) => {
-  await prepare();
-  [...intents.values()][0].status = status;
-  await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
-  expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
-});
+test.each(['requires_confirmation', 'requires_action'])(
+  'reuses a valid %s intent',
+  async (status) => {
+    await prepare();
+    [...intents.values()][0].status = status;
+    await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
+    expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+  }
+);
 test('missing client secret retains durable linkage and retry never creates another intent', async () => {
-  duringCreate = () => { [...intents.values()][0].client_secret = null; };
+  duringCreate = () => {
+    [...intents.values()][0].client_secret = null;
+  };
   await expect(prepare()).rejects.toMatchObject({ statusCode: 500 });
   expect(order.paymentIntentId).toBe('pi-one');
   expect(attempt.paymentIntentId).toBe('pi-one');
@@ -331,8 +336,9 @@ test('provider key-in-use failure is retryable without linking an order', async 
   expect(attempt.paymentIntentId).toBeNull();
   await expect(prepare()).resolves.toMatchObject({ paymentIntentId: 'pi-one' });
   expect(intents.size).toBe(1);
-  expect(stripe.paymentIntents.create.mock.calls.map((call: any) => call[1].idempotencyKey))
-    .toEqual(['payment-attempt-a', 'payment-attempt-a']);
+  expect(
+    stripe.paymentIntents.create.mock.calls.map((call: any) => call[1].idempotencyKey)
+  ).toEqual(['payment-attempt-a', 'payment-attempt-a']);
 });
 test('currency change after lost response rejects before further provider I/O', async () => {
   loseResponse = true;
@@ -347,7 +353,9 @@ test('currency change after lost response rejects before further provider I/O', 
   expect(order.paymentIntentId).toBeNull();
 });
 test('buyer mutation during provider call cannot link a client session to a different owner', async () => {
-  duringCreate = () => { order.userId = 'other-buyer'; };
+  duringCreate = () => {
+    order.userId = 'other-buyer';
+  };
   await expect(prepare()).rejects.toMatchObject({ statusCode: 409 });
   expect(order.userId).toBe('other-buyer');
   expect(order.paymentIntentId).toBeNull();
