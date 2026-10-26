@@ -455,6 +455,22 @@ describe('Payment, admission and inventory integrity', () => {
     ).toBeLessThanOrEqual(1);
   });
 
+  it('returns the consumed ticket after a successful entry scan', async () => {
+    const order = await paid(),
+      ticket = order.tickets[0];
+    const result = await scannerService.scanTicket({
+      scannerId: scanner.id,
+      qrData: generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId),
+      scanType: 'ENTRY',
+    });
+    expect(result.success).toBe(true);
+    expect(result.ticket).toMatchObject({ id: ticket.id, status: 'USED' });
+    expect(result.scanLog).toMatchObject({ success: true, ticketId: ticket.id });
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } })).status).toBe(
+      'USED'
+    );
+  });
+
   it('enforces scanner event scope, active state, and truthful unknown-ticket logs', async () => {
     const order = await paid(),
       ticket = order.tickets[0],
@@ -465,7 +481,18 @@ describe('Payment, admission and inventory integrity', () => {
     await prisma.scanner.update({ where: { id: scanner.id }, data: { eventId: otherEvent.id } });
     await expect(
       scannerService.scanTicket({ scannerId: scanner.id, qrData: qr, scanType: 'ENTRY' })
-    ).rejects.toThrow('not assigned');
+    ).rejects.toMatchObject({ statusCode: 403, message: 'Scanner is not assigned to this event' });
+    expect(
+      await prisma.scanLog.findFirst({ where: { scannerId: scanner.id, ticketId: ticket.id } })
+    ).toMatchObject({
+      success: false,
+      failureReason: 'Scanner is not assigned to this event',
+      eventId: ticket.eventId,
+      scanType: 'ENTRY',
+    });
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } })).status).toBe(
+      'VALID'
+    );
     await expect(scannerService.syncTickets(scanner.id, event.id)).rejects.toThrow('not assigned');
     await prisma.scanner.update({ where: { id: scanner.id }, data: { eventId: event.id } });
     const invalid = await scannerService.scanTicket({

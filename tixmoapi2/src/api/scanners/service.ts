@@ -327,7 +327,7 @@ export class ScannerService {
     reason?: string;
   }> {
     const parsed = parseTicketQRData(data.qrData);
-    return prisma.$transaction(async (tx) => {
+    const outcome = await prisma.$transaction(async (tx) => {
       const ticket = parsed ? await lockedTicket(tx, parsed.ticketId) : null;
       // Recheck scope and active status at the use boundary, including offline
       // uploads and internal callers that don't pass through HTTP middleware.
@@ -336,18 +336,30 @@ export class ScannerService {
       if (!scanner || scanner.status !== 'ACTIVE')
         throw ApiError.forbidden('Scanner is not active');
       let reason: string | undefined;
+      let wrongEvent = false;
       if (!parsed) reason = 'Invalid QR code format';
       else if (!ticket) reason = 'Ticket not found';
       else if (
         scanner.organizationId !== ticket.event.organizationId ||
         (scanner.eventId && scanner.eventId !== ticket.eventId)
       ) {
-        throw ApiError.forbidden('Scanner is not assigned to this event');
+        // Commit the denial. Throwing here would roll the log back with the transaction.
+        wrongEvent = true;
+        reason = 'Scanner is not assigned to this event';
       } else if (parsed.eventId !== ticket.eventId || parsed.barcode !== ticket.barcode) {
         reason = 'Ticket credential is no longer valid';
       } else reason = ticketFailure(ticket, data.scanType === 'ENTRY', false);
-      if (!reason && ticket && data.scanType === 'ENTRY')
-        await consumeTicket(tx, ticket.id, data.scannerId);
+      let presented = ticket;
+      if (!reason && ticket && data.scanType === 'ENTRY') {
+        const consumed = await consumeTicket(tx, ticket.id, data.scannerId);
+        presented = {
+          ...ticket,
+          status: consumed.status,
+          checkedInAt: consumed.checkedInAt,
+          checkedInBy: consumed.checkedInBy,
+          updatedAt: consumed.updatedAt,
+        };
+      }
       const scanLog = await tx.scanLog.create({
         data: {
           scannerId: data.scannerId,
@@ -359,8 +371,15 @@ export class ScannerService {
           metadata: data.metadata as Prisma.InputJsonValue,
         },
       });
-      return { success: !reason, reason, ticket: ticket || undefined, scanLog };
+      return { success: !reason, reason, ticket: presented || undefined, scanLog, wrongEvent };
     });
+    if (outcome.wrongEvent) throw ApiError.forbidden('Scanner is not assigned to this event');
+    return {
+      success: outcome.success,
+      reason: outcome.reason,
+      ticket: outcome.ticket,
+      scanLog: outcome.scanLog,
+    };
   }
 
   /**
