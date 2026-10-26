@@ -132,7 +132,7 @@ describe('attendee doors time', () => {
     const ticket = admission();
     jest.useFakeTimers();
     jest.setSystemTime(start.getTime() - DOORS_BEFORE_START_MS - 1000);
-    expect(ticketFailure(ticket, true, true)).toBe('Event has not started yet');
+    expect(ticketFailure(ticket, true, true)).toEqual({ reason: 'Event has not started yet' });
 
     jest.setSystemTime(start.getTime() - DOORS_BEFORE_START_MS);
     expect(ticketFailure(ticket, true, true)).toBeUndefined();
@@ -147,6 +147,9 @@ describe('attendee doors time', () => {
     ticket.status = 'VALID';
     jest.useFakeTimers();
     jest.setSystemTime(start.getTime() - DOORS_BEFORE_START_MS - 1000);
-    expect(ticketFailure(ticket, true, true)).toBe(VOID_DISPUTED_MESSAGE);
+    expect(ticketFailure(ticket, true, true)).toEqual({
+      reason: VOID_DISPUTED_MESSAGE,
+      reasonCode: SCAN_REASON.VOID_DISPUTED,
+    });
   });
 });
