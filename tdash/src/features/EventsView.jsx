@@ -18,6 +18,7 @@ import ScannersView from './ScannersView';
 import VenuesView from './VenuesView';
 import StatusBadge from '../components/StatusBadge';
 import api from '../lib/api';
+import { getPaymentCurrency } from '../lib/runtimeConfig';
 import { generateEventSlug } from '../lib/utils';
 import {
     DashboardButton,
@@ -145,7 +146,7 @@ const matchesLibraryFilter = (event, filterId) => {
 
 const formatCurrency = (value) => new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: getPaymentCurrency().toUpperCase(),
     maximumFractionDigits: 0,
 }).format(Number(value) || 0);
 

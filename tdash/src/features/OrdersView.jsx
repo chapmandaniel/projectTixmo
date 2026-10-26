@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Filter, ArrowUpDown, RefreshCw, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import api from '../lib/api';
+import { orderDisplayCurrency } from '../lib/runtimeConfig';
 import StatusBadge from '../components/StatusBadge';
 import OrderDetailModal from './OrderDetailModal';
+import { formatEventMoney } from '../lib/publicEvent';
 
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Newest first' },
@@ -271,7 +273,7 @@ const OrdersView = ({
                                         </td>
                                         <td className="p-4">{normalizeEventName(order)}</td>
                                         <td className="p-4">
-                                            {new Intl.NumberFormat('en-CA', { style: 'currency', currency: (order.currency || 'usd').toUpperCase() }).format(order.totalAmount)}
+                                            {formatEventMoney(order.totalAmount, orderDisplayCurrency(order.currency))}
                                         </td>
                                         <td className="p-4 whitespace-nowrap">
                                             {new Date(order.createdAt).toLocaleDateString()}

@@ -23,7 +23,7 @@ void (async () => {
     // Start Express server
     const app = (await import('./app')).default;
     app.listen(port, () => {
-      logger.info(`🚀 TixMo API Server started on port ${port}`);
+      logger.info(`🚀 Tixmo API Server started on port ${port}`);
       logger.info(`📝 Environment: ${config.nodeEnv}`);
       logger.info(`🔗 API URL: http://localhost:${port}/api/${config.apiVersion}`);
       logger.info(`❤️  Health Check: http://localhost:${port}/health`);

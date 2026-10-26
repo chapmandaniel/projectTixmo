@@ -4,6 +4,7 @@ import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { orderService } from './service';
+import { receiptDisclosure } from '../../utils/receipt';
 
 const canManageOrders = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
 
@@ -70,7 +71,7 @@ export const getConsumerOrderRecovery = catchAsync(async (req: AuthRequest, res:
 export const getOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const order = await orderService.getOrderById(req.params.id, undefined, req.user!.userId);
   if (!order) throw ApiError.notFound('Order not found');
-  res.json(successResponse(order));
+  res.json(successResponse({ ...order, receiptDisclosure: receiptDisclosure(order.totalAmount) }));
 });
 
 export const confirmOrder = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -130,6 +131,11 @@ export const refundOrder = catchAsync(async (req: AuthRequest, res: Response) =>
 });
 
 export const requestRefund = catchAsync(async (req: AuthRequest, res: Response) => {
+  if (!['OWNER', 'ADMIN'].includes(req.user!.role)) {
+    throw new ApiError(403, 'All sales are final. Refunds are issued by Tixmo staff.', {
+      code: 'BUYER_REFUNDS_DISABLED',
+    });
+  }
   const order = await orderService.getOrderById(req.params.id, req.user!.userId);
   if (!order) throw ApiError.notFound('Order not found');
   const result = await orderService.refundOrder(order.id);

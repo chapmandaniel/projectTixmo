@@ -6,6 +6,7 @@ import { monitorEventLoopDelay } from 'perf_hooks';
 import fs from 'fs';
 import path from 'path';
 import request from 'supertest';
+const { MIGRATION_COUNT } = require('../../scripts/migration-census.cjs');
 
 let mockTransportCalls = 0;
 // Plain no-op methods: the shared setup logger's jest.fn history retains every log call.
@@ -222,7 +223,7 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
           >`SELECT migration_name::text AS name,checksum::text AS checksum,finished_at AS finished,rolled_back_at AS rolled FROM public._prisma_migrations ORDER BY migration_name`
       );
     const beforeLedger = await ledger();
-    expect(beforeLedger).toHaveLength(33);
+    expect(beforeLedger).toHaveLength(MIGRATION_COUNT);
     for (const row of beforeLedger) {
       expect(row.finished).not.toBeNull();
       expect(row.rolled).toBeNull();

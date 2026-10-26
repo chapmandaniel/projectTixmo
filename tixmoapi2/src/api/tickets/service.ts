@@ -230,9 +230,14 @@ export class TicketService {
   }
 
   /**
-   * Cancel ticket
+   * Cancel ticket. This always refunds the full order, so only OWNER/ADMIN may call it.
    */
-  async cancelTicket(id: string, userId: string): Promise<Ticket> {
+  async cancelTicket(id: string, userId: string, role?: string): Promise<Ticket> {
+    if (!['OWNER', 'ADMIN'].includes(role || '')) {
+      throw new ApiError(403, 'All sales are final. Refunds are issued by Tixmo staff.', {
+        code: 'BUYER_REFUNDS_DISABLED',
+      });
+    }
     const ticket = await prisma.ticket.findUnique({ where: { id }, include: { order: true } });
     if (!ticket) throw ApiError.notFound('Ticket not found');
     if (ticket.userId !== userId || ticket.order.userId !== userId)

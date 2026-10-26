@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import WalletPage from '../pages/WalletPage';
 const calls = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
@@ -27,14 +27,14 @@ describe('Buyer wallet', () => {
     await waitFor(() => expect(calls.get).toHaveBeenCalledWith('/tickets/ticket-owned/qr'));
     expect(await screen.findByAltText('Ticket admission QR code')).toHaveAttribute('src', 'data:image/png;base64,synthetic');
   });
-  it('requires explicit full-order confirmation and reports a pending refund truthfully', async () => {
+  it('does not offer buyers a self-service refund', async () => {
     mount();
     await screen.findByText('ORD-OWNED', { exact: false });
-    fireEvent.click(screen.getByRole('button', { name: 'Refund full order' }));
+    expect(screen.getByText('All sales are final.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Refund full order' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Confirm full refund' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Confirm full refund' })).not.toBeInTheDocument();
     expect(calls.post).not.toHaveBeenCalled();
-    fireEvent.click(within(screen.getByRole('dialog', { name: 'Confirm full refund' })).getByRole('button', { name: 'Confirm full refund' }));
-    await waitFor(() => expect(calls.post).toHaveBeenCalledWith('/orders/order-owned/request-refund'));
-    expect(await screen.findByText(/Refund processing. Refresh/)).toBeInTheDocument();
   });
   it('does not load private records before sign in', () => {
     mount(null);
@@ -86,6 +86,34 @@ describe('Buyer wallet', () => {
     expect(calls.get).toHaveBeenCalledWith('/tickets/mine?page=1&limit=20');
     expect(screen.queryByAltText('Ticket admission QR code')).not.toBeInTheDocument();
     expect(calls.post).not.toHaveBeenCalled();
+  });
+
+  it('shows the venue and HST registration number on the on-screen receipt', async () => {
+    const disclosed = {
+      ...order,
+      event: {
+        name: 'Night show',
+        venue: { name: 'Signal Hall', address: { street: '1 Harbour Dr', city: "St. John's", state: 'NL' } },
+      },
+      receiptDisclosure: { hstNumber: '123456789RT0001', hstRate: 0.13, hstAmount: 1.15 },
+    };
+    calls.get.mockImplementation(async path => path.startsWith('/orders/mine')
+      ? { data: { orders: [disclosed], pagination: { pages: 1 } } }
+      : path.startsWith('/tickets/mine') ? { data: { tickets: [ticket], pagination: { pages: 1 } } }
+      : Promise.reject(new Error(`Unexpected API route: ${path}`)));
+    mount();
+    expect(await screen.findByText(/Signal Hall, 1 Harbour Dr, St\. John's, NL/)).toBeInTheDocument();
+    expect(screen.getByText('HST no. 123456789RT0001')).toBeInTheDocument();
+    expect(screen.getByText('Includes HST (13%): CA$1.15')).toBeInTheDocument();
+    expect(screen.getByText('$25.00')).toBeInTheDocument();
+  });
+
+  it('hides the HST registration line when the number is unset', async () => {
+    mount();
+    await screen.findByText('ORD-OWNED', { exact: false });
+    expect(screen.getByText('Includes HST (15%): CA$3.26')).toBeInTheDocument();
+    expect(screen.getByText('Venue to be announced')).toBeInTheDocument();
+    expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
   });
 
   it('fails closed when the initial owned-record lookup has an expired session', async () => {

@@ -47,10 +47,17 @@ export const transferTicket = catchAsync(async (req: AuthRequest, res: Response)
 });
 
 export const cancelTicket = catchAsync(async (req: AuthRequest, res: Response) => {
+  // Cancelling a ticket refunds the order. Buyers keep unpaid reservation
+  // cancellation on POST /orders/:id/cancel, where no money moves.
+  if (!['OWNER', 'ADMIN'].includes(req.user!.role)) {
+    throw new ApiError(403, 'All sales are final. Refunds are issued by Tixmo staff.', {
+      code: 'BUYER_REFUNDS_DISABLED',
+    });
+  }
   const { id } = req.params;
   const userId = req.user!.userId;
 
-  const ticket = await ticketService.cancelTicket(id, userId);
+  const ticket = await ticketService.cancelTicket(id, userId, req.user!.role);
   res.json(
     successResponse(
       ticket,

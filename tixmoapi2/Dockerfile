@@ -39,6 +39,7 @@ COPY scripts/runtime-version-probe.cjs ./scripts/runtime-version-probe.cjs
 COPY scripts/approved-email-once.cjs ./scripts/approved-email-once.cjs
 COPY scripts/storage-canary.cjs ./scripts/storage-canary.cjs
 COPY scripts/backup-rehearsal.cjs ./scripts/backup-rehearsal.cjs
+COPY scripts/migration-census.cjs ./scripts/migration-census.cjs
 COPY prisma/check-asset-share-links.js ./prisma/check-asset-share-links.js
 RUN mkdir -p logs tmp && chown node:node logs tmp
 USER node

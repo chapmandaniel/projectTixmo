@@ -32,7 +32,7 @@ const versionRouter = Router();
 versionRouter.get('/health', (_req, res) => {
   res.json({
     success: true,
-    message: 'TixMo API is running',
+    message: 'Tixmo API is running',
     version: config.apiVersion,
     timestamp: new Date().toISOString(),
   });

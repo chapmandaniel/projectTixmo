@@ -33,6 +33,7 @@ import {
     eventArtwork,
     eventTimeZone,
     formatEventMoney,
+    PRICE_INCLUDES_NOTE,
     getEventSaleState,
     getPublicTicketOffer,
 } from '../lib/publicEvent';
@@ -360,9 +361,10 @@ export const EventOnSaleView = ({
                                     <ChevronDown size={17} aria-hidden="true" />
                                 </summary>
                                 <p>
-                                    After your order is confirmed, sign in to{' '}
-                                    <Link to="/wallet">My tickets</Link> to view
-                                    your tickets and admission codes.
+                                    After your order is confirmed, sign in and
+                                    open <Link to="/wallet">My tickets</Link>.
+                                    Show the QR code at the door. Each ticket
+                                    gets one person in, once.
                                 </p>
                             </details>
                             <details>
@@ -371,33 +373,46 @@ export const EventOnSaleView = ({
                                     <ChevronDown size={17} aria-hidden="true" />
                                 </summary>
                                 <p>
-                                    Choosing a quantity does not reserve
-                                    tickets. Availability and the final total
-                                    are confirmed during checkout.
+                                    Choosing a quantity doesn't hold tickets.
+                                    They're held for 15 minutes once you start
+                                    checkout.
                                 </p>
                             </details>
-                            {policies.refundPolicyUrl && (
-                                <details>
-                                    <summary>
-                                        What is the refund policy?
-                                        <ChevronDown
-                                            size={17}
-                                            aria-hidden="true"
-                                        />
-                                    </summary>
-                                    <p>
-                                        Read the{' '}
-                                        <a
-                                            href={policies.refundPolicyUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            refund policy
-                                        </a>{' '}
-                                        before placing your order.
-                                    </p>
-                                </details>
-                            )}
+                            <details>
+                                <summary>
+                                    What is the refund policy?
+                                    <ChevronDown size={17} aria-hidden="true" />
+                                </summary>
+                                <p>
+                                    All sales are final unless the event is
+                                    cancelled or rescheduled. If it's cancelled,
+                                    we'll refund you in full within 14 days.
+                                    {policies.refundPolicyUrl ? (
+                                        <>
+                                            {' '}
+                                            <a
+                                                href={policies.refundPolicyUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                Read the refund policy
+                                            </a>
+                                        </>
+                                    ) : null}
+                                </p>
+                            </details>
+                            <details>
+                                <summary>
+                                    Can I give my ticket to a friend?
+                                    <ChevronDown size={17} aria-hidden="true" />
+                                </summary>
+                                <p>
+                                    Yes. Use <Link to="/wallet">Transfer</Link>{' '}
+                                    in My tickets before the event. Your friend
+                                    needs a Tixmo account, and your old QR code
+                                    stops working.
+                                </p>
+                            </details>
                         </section>
                         {event.organization?.name && (
                             <div className="sf-organizer">
@@ -581,7 +596,7 @@ export const EventOnSaleView = ({
                             </div>
                             <p className="sf-fee-note">
                                 {count
-                                    ? 'Subtotal · final total confirmed at checkout.'
+                                    ? PRICE_INCLUDES_NOTE
                                     : 'Choose a quantity to continue.'}
                             </p>
                             <StorefrontButton
@@ -656,6 +671,15 @@ export const EventOnSaleView = ({
                             rel="noreferrer"
                         >
                             Terms
+                        </a>
+                    )}
+                    {policies.refundPolicyUrl && (
+                        <a
+                            href={policies.refundPolicyUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Refund policy
                         </a>
                     )}
                     {policies.privacyPolicyUrl && (

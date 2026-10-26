@@ -231,6 +231,7 @@ jobs:
           node - "$receipt_file" "$error_file" <<'NODE'
           const fs = require('node:fs');
           const assert = require('node:assert/strict');
+          const { MIGRATION_COUNT } = require('./tixmoapi2/scripts/migration-census.cjs');
           assert.equal(fs.statSync(process.argv[3]).size, 0, 'Packaged roundtrip emitted unexpected diagnostics');
           let result;
           try { result = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); } catch { throw new Error('Packaged roundtrip receipt malformed'); }
@@ -238,7 +239,7 @@ jobs:
           console.log(JSON.stringify({scope:'synthetic-packaged-task603',phase:phases.includes(result.phase)?result.phase:'unclassified',ok:result.ok===true,dumpComplete:result.dumpComplete===true,snapshotRowsMatch:result.snapshotRowsMatch===true,databaseCleanupVerified:result.databaseCleanupVerified===true,archiveCleanupVerified:result.archiveCleanupVerified===true,possibleDatabaseOrphan:result.possibleDatabaseOrphan===true}));
           assert.equal(result.scope, 'task603-snapshot-logical-roundtrip');
           for (const field of ['ok', 'dumpComplete', 'snapshotRowsMatch', 'databaseCleanupVerified', 'archiveCleanupVerified']) assert.equal(result[field], true, 'Packaged roundtrip incomplete');
-          assert.equal(result.migrations, 33);
+          assert.equal(result.migrations, MIGRATION_COUNT);
           assert.ok(result.tableCount >= 33);
           assert.equal(result.possibleDatabaseOrphan, false);
           console.log(JSON.stringify({scope:'synthetic-packaged-task603',ok:true,migrations:result.migrations,tableCount:result.tableCount,rowCount:result.rowCount,durationMs:result.durationMs}));
@@ -249,7 +250,7 @@ jobs:
       - name: Checkout exact qualified rollback API source
         uses: actions/checkout@v4
         with:
-          ref: dd19d3c3cd68923833b5a24c938d8a68db37dc39
+          ref: 105601996d17684cff2e6e8de40d29894e2eb370
           path: .rollback-old
           persist-credentials: false
       - name: Verify database parity and exact reviewed application rollback contract

@@ -39,27 +39,46 @@ const receiptWalletUrl = (clientUrl: string): string | undefined => {
   }
 };
 
+export interface OrderConfirmationData {
+  customerName: string;
+  orderNumber: string;
+  eventName: string;
+  eventDate: string;
+  ticketSummary: string;
+  totalAmount: string;
+  venueName?: string | null;
+  venueAddress?: string | null;
+  hstNumber?: string | null;
+  hstAmountLine?: string | null;
+}
+
+const receiptVenue = (data: OrderConfirmationData): string => {
+  const line = [data.venueName?.trim(), data.venueAddress?.trim()].filter(Boolean).join(', ');
+  return line || 'Venue to be announced';
+};
+
 // Order confirmation email
 export function orderConfirmationEmail(
-  data: {
-    customerName: string;
-    orderNumber: string;
-    eventName: string;
-    eventDate: string;
-    ticketCount: number;
-    totalAmount: string;
-  },
+  data: OrderConfirmationData,
   clientUrl: string
 ): EmailTemplate {
   const walletUrl = receiptWalletUrl(clientUrl);
+  const venue = receiptVenue(data);
+  const hstNumber = data.hstNumber?.trim() || '';
+  const hstAmountLine = data.hstAmountLine?.trim() || '';
+  const hstHtml = hstNumber ? `<p>HST no. ${escapeReceiptHtml(hstNumber)}</p>` : '';
+  const hstText = hstNumber ? `HST no. ${hstNumber}\n` : '';
+  const hstAmountHtml = hstAmountLine ? `<p>${escapeReceiptHtml(hstAmountLine)}</p>` : '';
+  const hstAmountText = hstAmountLine ? `${hstAmountLine}\n` : '';
   const walletHtml = walletUrl
     ? `<p><a href="${escapeReceiptHtml(walletUrl)}">View your tickets</a>. Sign in with the account used for this order.</p>`
     : '';
   const walletText = walletUrl
-    ? `View your tickets: ${walletUrl}\n      Sign in with the account used for this order.`
+    ? `View your tickets: ${walletUrl}\nSign in with the account used for this order.\n`
     : '';
+  const total = escapeReceiptHtml(data.totalAmount);
   return {
-    subject: `Order Confirmation - ${data.eventName}`,
+    subject: `Your Tixmo tickets for ${data.eventName}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -76,46 +95,43 @@ export function orderConfirmationEmail(
         <body>
           <div class="container">
             <div class="header">
-              <h1>Order Confirmed!</h1>
+              <h1>Order confirmed</h1>
             </div>
             <div class="content">
-              <p>Hi ${escapeReceiptHtml(data.customerName)},</p>
-              <p>Thank you for your order! Your tickets are confirmed.</p>
+              <p>Hi ${escapeReceiptHtml(data.customerName)}, your order is confirmed.</p>
               <div class="details">
-                <p><strong>Order Number:</strong> ${escapeReceiptHtml(data.orderNumber)}</p>
+                <p><strong>Order:</strong> ${escapeReceiptHtml(data.orderNumber)}</p>
                 <p><strong>Event:</strong> ${escapeReceiptHtml(data.eventName)}</p>
-                <p><strong>Date:</strong> ${escapeReceiptHtml(data.eventDate)}</p>
-                <p><strong>Tickets:</strong> ${escapeReceiptHtml(data.ticketCount)}</p>
-                <p><strong>Total:</strong> $${escapeReceiptHtml(data.totalAmount)}</p>
+                <p><strong>When:</strong> ${escapeReceiptHtml(data.eventDate)}</p>
+                <p><strong>Where:</strong> ${escapeReceiptHtml(venue)}</p>
+                <p><strong>Tickets:</strong> ${escapeReceiptHtml(data.ticketSummary)}</p>
+                <p><strong>Total paid:</strong> ${total} (includes HST and all fees)</p>
+                ${hstAmountHtml}
+                ${hstHtml}
               </div>
-              <p>Your tickets will be available in your account shortly.</p>
               ${walletHtml}
+              <p>All sales are final unless the event is cancelled or rescheduled.</p>
             </div>
             <div class="footer">
-              <p>TixMo - Event Ticketing Platform</p>
-              <p>This is an automated message, please do not reply.</p>
+              <p>Tixmo · Ticketing for live events. Please don't reply to this email.</p>
             </div>
           </div>
         </body>
       </html>
     `,
     text: `
-      Order Confirmed!
-      
-      Hi ${data.customerName},
-      
-      Thank you for your order! Your tickets are confirmed.
-      
-      Order Number: ${data.orderNumber}
+      Hi ${data.customerName}, your order is confirmed.
+
+      Order: ${data.orderNumber}
       Event: ${data.eventName}
-      Date: ${data.eventDate}
-      Tickets: ${data.ticketCount}
-      Total: $${data.totalAmount}
-      
-      Your tickets will be available in your account shortly.
-      ${walletText}
-      
-      TixMo - Event Ticketing Platform
+      When: ${data.eventDate}
+      Where: ${venue}
+      Tickets: ${data.ticketSummary}
+      Total paid: ${data.totalAmount} (includes HST and all fees)
+      ${hstAmountText}${hstText}${walletText}
+      All sales are final unless the event is cancelled or rescheduled.
+
+      Tixmo · Ticketing for live events. Please don't reply to this email.
     `,
   };
 }
@@ -129,7 +145,7 @@ export function ticketTransferEmail(data: {
   ticketCount: number;
 }): EmailTemplate {
   return {
-    subject: `Ticket Transfer - ${data.eventName}`,
+    subject: `A Tixmo ticket for ${data.eventName} was sent to you`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -152,10 +168,10 @@ export function ticketTransferEmail(data: {
               <p>${data.senderName} has transferred ${data.ticketCount} ticket(s) to you for:</p>
               <p><strong>${data.eventName}</strong></p>
               <p>Date: ${data.eventDate}</p>
-              <p>The tickets are now available in your TixMo account.</p>
+              <p>The tickets are now available in your Tixmo account.</p>
             </div>
             <div class="footer">
-              <p>TixMo - Event Ticketing Platform</p>
+              <p>Tixmo - Event Ticketing Platform</p>
             </div>
           </div>
         </body>
@@ -170,9 +186,9 @@ export function ticketTransferEmail(data: {
       ${data.eventName}
       Date: ${data.eventDate}
       
-      The tickets are now available in your TixMo account.
+      The tickets are now available in your Tixmo account.
       
-      TixMo - Event Ticketing Platform
+      Tixmo - Event Ticketing Platform
     `,
   };
 }
@@ -186,7 +202,7 @@ export function eventReminderEmail(data: {
   venueAddress: string;
 }): EmailTemplate {
   return {
-    subject: `Reminder: ${data.eventName} is Coming Up!`,
+    subject: `Reminder: ${data.eventName} is coming up`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -214,7 +230,7 @@ export function eventReminderEmail(data: {
               <p>Don't forget to bring your tickets!</p>
             </div>
             <div class="footer">
-              <p>TixMo - Event Ticketing Platform</p>
+              <p>Tixmo - Event Ticketing Platform</p>
             </div>
           </div>
         </body>
@@ -233,7 +249,7 @@ export function eventReminderEmail(data: {
       
       Don't forget to bring your tickets!
       
-      TixMo - Event Ticketing Platform
+      Tixmo - Event Ticketing Platform
     `,
   };
 }
@@ -241,7 +257,7 @@ export function eventReminderEmail(data: {
 // Welcome email
 export function welcomeEmail(data: { name: string }): EmailTemplate {
   return {
-    subject: 'Welcome to TixMo!',
+    subject: 'Welcome to Tixmo',
     html: `
       <!DOCTYPE html>
       <html>
@@ -257,33 +273,33 @@ export function welcomeEmail(data: { name: string }): EmailTemplate {
         <body>
           <div class="container">
             <div class="header">
-              <h1>Welcome to TixMo!</h1>
+              <h1>Welcome to Tixmo!</h1>
             </div>
             <div class="content">
               <p>Hi ${data.name},</p>
-              <p>Welcome to TixMo! We're excited to have you on board.</p>
-              <p>With TixMo, you can easily discover and purchase tickets for amazing events.</p>
+              <p>Welcome to Tixmo! We're excited to have you on board.</p>
+              <p>With Tixmo, you can easily discover and purchase tickets for amazing events.</p>
               <p>Start exploring events now!</p>
             </div>
             <div class="footer">
-              <p>TixMo - Event Ticketing Platform</p>
+              <p>Tixmo - Event Ticketing Platform</p>
             </div>
           </div>
         </body>
       </html>
     `,
     text: `
-      Welcome to TixMo!
+      Welcome to Tixmo!
       
       Hi ${data.name},
       
-      Welcome to TixMo! We're excited to have you on board.
+      Welcome to Tixmo! We're excited to have you on board.
       
-      With TixMo, you can easily discover and purchase tickets for amazing events.
+      With Tixmo, you can easily discover and purchase tickets for amazing events.
       
       Start exploring events now!
       
-      TixMo - Event Ticketing Platform
+      Tixmo - Event Ticketing Platform
     `,
   };
 }
@@ -313,7 +329,7 @@ export function userInvitationEmail(data: {
     : '';
 
   return {
-    subject: 'You have been invited to TixMo',
+    subject: 'You have been invited to Tixmo',
     html: `
       <!DOCTYPE html>
       <html>
@@ -330,37 +346,37 @@ export function userInvitationEmail(data: {
         <body>
           <div class="container">
             <div class="header">
-              <h1>Welcome to TixMo!</h1>
+              <h1>Welcome to Tixmo!</h1>
             </div>
             <div class="content">
               <p>Hi ${data.name},</p>
-              <p>An account has been created for you on TixMo.</p>
+              <p>An account has been created for you on Tixmo.</p>
               
               <p><strong>Username:</strong> ${data.email}</p>
               ${passwordSection}
               
-              <a href="${data.loginUrl}" class="button">Log In to TixMo</a>
+              <a href="${data.loginUrl}" class="button">Log In to Tixmo</a>
             </div>
             <div class="footer">
-              <p>TixMo - Event Ticketing Platform</p>
+              <p>Tixmo - Event Ticketing Platform</p>
             </div>
           </div>
         </body>
       </html>
     `,
     text: `
-      Welcome to TixMo!
+      Welcome to Tixmo!
       
       Hi ${data.name},
       
-      An account has been created for you on TixMo.
+      An account has been created for you on Tixmo.
       
       Username: ${data.email}
       ${passwordText}
       
       Log in here: ${data.loginUrl}
       
-      TixMo - Event Ticketing Platform
+      Tixmo - Event Ticketing Platform
     `,
   };
 }
@@ -422,7 +438,7 @@ export function approvalRequestEmail(data: {
               <p style="margin-top: 25px; color: #6b7280; font-size: 14px;">This link expires in 30 days.</p>
             </div>
             <div class="footer">
-              <p>TixMo - Creative Approvals</p>
+              <p>Tixmo - Creative Approvals</p>
             </div>
           </div>
         </body>
@@ -445,7 +461,7 @@ export function approvalRequestEmail(data: {
       
       This link expires in 30 days.
       
-      TixMo - Creative Approvals
+      Tixmo - Creative Approvals
     `,
   };
 }
@@ -490,7 +506,7 @@ export function approvalReminderEmail(data: {
               <a href="${data.reviewUrl}" class="button">Complete Review →</a>
             </div>
             <div class="footer">
-              <p>TixMo - Creative Approvals</p>
+              <p>Tixmo - Creative Approvals</p>
             </div>
           </div>
         </body>
@@ -510,7 +526,7 @@ export function approvalReminderEmail(data: {
       
       Review here: ${data.reviewUrl}
       
-      TixMo - Creative Approvals
+      Tixmo - Creative Approvals
     `,
   };
 }
@@ -565,7 +581,7 @@ export function approvalDecisionEmail(data: {
               <a href="${data.dashboardUrl}" class="button">View Details →</a>
             </div>
             <div class="footer">
-              <p>TixMo - Creative Approvals</p>
+              <p>Tixmo - Creative Approvals</p>
             </div>
           </div>
         </body>
@@ -585,7 +601,7 @@ export function approvalDecisionEmail(data: {
       
       View details: ${data.dashboardUrl}
       
-      TixMo - Creative Approvals
+      Tixmo - Creative Approvals
     `,
   };
 }
@@ -633,7 +649,7 @@ export function approvalRevisionEmail(data: {
               <a href="${data.reviewUrl}" class="button">Review Revision →</a>
             </div>
             <div class="footer">
-              <p>TixMo - Creative Approvals</p>
+              <p>Tixmo - Creative Approvals</p>
             </div>
           </div>
         </body>
@@ -654,7 +670,7 @@ export function approvalRevisionEmail(data: {
       
       Review here: ${data.reviewUrl}
       
-      TixMo - Creative Approvals
+      Tixmo - Creative Approvals
     `,
   };
 }
@@ -696,7 +712,7 @@ export function approvalCommentEmail(data: {
               <a href="${data.actionUrl}" class="button">${data.actionLabel} →</a>
             </div>
             <div class="footer">
-              <p>TixMo - Creative Approvals</p>
+              <p>Tixmo - Creative Approvals</p>
             </div>
           </div>
         </body>
@@ -712,7 +728,7 @@ export function approvalCommentEmail(data: {
 
       View details: ${data.actionUrl}
 
-      TixMo - Creative Approvals
+      Tixmo - Creative Approvals
     `,
   };
 }

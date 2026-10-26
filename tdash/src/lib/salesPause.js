@@ -1,4 +1,4 @@
-export const SALES_PAUSED_MESSAGE = 'Ticket sales are temporarily paused. Existing orders and tickets remain available.';
+export const SALES_PAUSED_MESSAGE = 'Ticket sales are paused for a moment. Orders and tickets you already have are safe. Please check back soon.';
 export const isSalesPausedError = (error) => error?.response?.data?.errors?.code === 'SALES_PAUSED';
 
 // The request object is retained by the caller across ambiguous failures/retries.

@@ -193,7 +193,7 @@ router.post('/:id/transfer', validate(validation.transferTicketSchema), controll
  * /tickets/{id}/cancel:
  *   post:
  *     summary: Cancel ticket
- *     description: Cancel a ticket and request refund
+ *     description: OWNER/ADMIN may cancel their own ticket, which refunds the full order. Every other role receives 403 BUYER_REFUNDS_DISABLED. Buyers cancel unpaid reservations with POST /orders/{id}/cancel, which does not refund.
  *     tags: [Tickets]
  *     security:
  *       - bearerAuth: []
@@ -211,6 +211,8 @@ router.post('/:id/transfer', validate(validation.transferTicketSchema), controll
  *         description: Cannot cancel ticket
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Buyer refunds are disabled, or the caller does not own the order
  *       404:
  *         description: Ticket not found
  */

@@ -117,6 +117,8 @@ test('upgrade verifier retains legacy transfer tier history currency receipt and
     "assert.equal(tier.quantityHeld, 1)",
     "assert.equal(unclear.tierInventoryStatus, 'REQUIRES_RECONCILIATION')",
     "assert.equal(order.currency, 'usd')",
+    "assert.equal(defaults[0].column_default, \"'cad'::text\")",
+    "upgrade-default-cad",
     "assert.equal(order.receiptStatus, 'LEGACY_UNKNOWN')",
     "assert.equal(order.receiptSentAt, null)",
     "assert.equal(legacy.attemptGeneration, 0n)",

@@ -276,10 +276,19 @@ test('hosted workflow actually builds old image and invokes current worker on co
   assert.match(worker, /require\(["']\/app\/dist\/app["']\)/);
   assert.doesNotMatch(worker, /dist\/index|startOrderExpiryJob|startPaymentRecoveryJob/);
   assert.match(worker, /assert.deepEqual\(normalized,\s*state.snapshot\)/);
-  assert.match(worker, /rows.length, 33/);
+  assert.match(worker, /\/app\/scripts\/migration-census\.cjs/);
+  assert.match(worker, /rows\.length, MIGRATION_COUNT/);
   assert.match(worker, /providerAttempts,\s*0/);
   assert.match(worker, /fs.unlinkSync\(stateFile\)/);
   assert.ok(workflow.includes('scripts/application-rollback.test.cjs'));
+});
+test('bind-mounted driver loads without the host migration census path', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'task606-driver-'));
+  const mounted = path.join(dir, 'task606-driver.cjs');
+  fs.copyFileSync(path.join(__dirname, 'verify-application-rollback.cjs'), mounted);
+  const driver = require(mounted);
+  assert.equal(typeof driver.guard, 'function');
+  assert.doesNotThrow(() => driver.guard(env));
 });
 test('owned subprocess protocol executes new-old-forward-cleanup, and failure never starts successor', async () => {
   const { verify } = require('./verify-application-rollback.cjs');

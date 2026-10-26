@@ -219,6 +219,7 @@ test('inconsistent hold rolls back cancellation claim and leaves tickets and inv
       userId: user.id,
       eventId: event.id,
       totalAmount: 10,
+      currency: 'cad',
       tickets: {
         create: [
           {
@@ -285,6 +286,7 @@ test.each(['PAID', 'PROCESSING'] as const)(
         userId: user.id,
         eventId: event.id,
         totalAmount: 10,
+        currency: 'cad',
         tickets: {
           create: [
             {

@@ -11,7 +11,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 // development Compose stack or infer disposability from a localhost URL alone.
 export function verifyApi({ env = process.env, spawn = spawnSync, log = console.log } = {}) {
   safety.validateVerificationTargets(env); // Before any subprocess or service action.
-  const testEnv = { ...env, NODE_ENV: 'test' };
+  const testEnv = { ...env, NODE_ENV: 'test', PAYMENT_CURRENCY: 'cad' };
   // Preserve the existing verifier's synthetic test-key fallback, without
   // loading implicit .env credentials or mutating the parent environment.
   for (const [key, fallback] of Object.entries({

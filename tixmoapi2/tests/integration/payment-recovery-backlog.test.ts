@@ -290,6 +290,7 @@ describe('Recovery queue and old-window durable effects on real SQL', () => {
           userId: ids.user,
           eventId: ids.foreignEvent,
           totalAmount: 10,
+          currency: 'cad',
           status: 'PAID',
           paymentStatus: 'SUCCEEDED',
           receiptStatus: 'SENT',

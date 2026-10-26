@@ -13,7 +13,11 @@ import EventOnSalePage, { EventOnSaleView } from '../pages/EventOnSalePage';
 vi.mock('../lib/runtimeConfig', () => ({
     getApiBaseUrl: () => '/api/v1',
     getPaymentCurrency: () => 'cad',
-    getPolicyLinks: () => ({}),
+    getPolicyLinks: () => ({
+        termsUrl: 'https://tixmo.example/terms',
+        privacyPolicyUrl: 'https://tixmo.example/privacy',
+        refundPolicyUrl: 'https://tixmo.example/refunds',
+    }),
 }));
 
 const event = {
@@ -91,6 +95,12 @@ describe('customer event on-sale page', () => {
         fireEvent.click(add);
         expect(add).toBeDisabled();
         expect(screen.getAllByText(/70\.00/)).toHaveLength(2);
+        expect(screen.getByText('Price includes HST and all fees.')).toBeInTheDocument();
+        expect(screen.getByText(/Each ticket gets one person in, once/)).toBeInTheDocument();
+        expect(screen.getByText(/held for 15 minutes/)).toBeInTheDocument();
+        expect(screen.getByText(/refund you in full within 14 days/)).toBeInTheDocument();
+        expect(screen.getByText(/your old QR code stops working/)).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Refund policy' })).toHaveAttribute('href', 'https://tixmo.example/refunds');
         fireEvent.click(
             screen.getByRole('button', { name: 'Continue to checkout' }),
         );

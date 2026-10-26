@@ -2,6 +2,7 @@ export {};
 import fs from 'node:fs';
 import path from 'node:path';
 const { guard, pgEnv, observe } = require('../../scripts/backup-rehearsal.cjs');
+const { MIGRATION_COUNT } = require('../../scripts/migration-census.cjs');
 const env = {
   NODE_ENV: 'production',
   TIXMO_BACKUP_REHEARSAL: 'true',
@@ -10,7 +11,7 @@ const env = {
   DATABASE_URL:
     'postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:49152/tixmo_disposable_restore_source?schema=public',
 };
-const expected = Array.from({ length: 33 }, (_, i) => ({
+const expected = Array.from({ length: MIGRATION_COUNT }, (_, i) => ({
   name: `20261022${String(i).padStart(6, '0')}_synthetic`,
   checksum: 'a'.repeat(64),
 }));
@@ -213,7 +214,7 @@ it('snapshot fingerprints and native dump share held read-only transaction; only
     snapshotRowsMatch: true,
     tableCount: 2,
     rowCount: 2,
-    migrations: 33,
+    migrations: MIGRATION_COUNT,
     databaseCleanupVerified: true,
     archiveCleanupVerified: true,
     possibleDatabaseOrphan: false,

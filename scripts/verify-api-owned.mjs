@@ -39,6 +39,7 @@ try {
   const env = { ...process.env, NODE_ENV: 'test' };
   // Never load application dotenv files or inherit real provider credentials for local gates.
   for (const key of Object.keys(env)) if (/^(AWS_|S3_|POSTMARK_|SMTP_|STRIPE_|SENTRY_)/.test(key)) delete env[key];
+  env.PAYMENT_CURRENCY = 'cad';
   env.STRIPE_SECRET_KEY = 'sk_test_local_gate_mock';
   env.STRIPE_WEBHOOK_SECRET = 'whsec_local_gate_mock';
   env.JWT_SECRET = 'disposable_local_jwt_secret_32_characters';

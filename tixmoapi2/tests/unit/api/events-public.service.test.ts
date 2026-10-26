@@ -1,5 +1,6 @@
 import { EventService } from '../../../src/api/events/service';
 import prisma from '../../../src/config/prisma';
+import { receiptDisclosure } from '../../../src/utils/receipt';
 
 jest.mock('../../../src/config/prisma', () => ({
   __esModule: true,
@@ -72,6 +73,7 @@ describe('EventService public event detail', () => {
 
     expect(first).toEqual({
       ...event,
+      receiptDisclosure: receiptDisclosure(),
       ticketTypes: [
         {
           id: 'ticket-fresh',
@@ -84,6 +86,7 @@ describe('EventService public event detail', () => {
     });
     expect(second).toEqual({
       ...nextEvent,
+      receiptDisclosure: receiptDisclosure(),
       ticketTypes: [
         {
           id: 'ticket-recreated',
@@ -113,6 +116,7 @@ describe('EventService public event detail', () => {
 
     expect(result).toEqual({
       ...event,
+      receiptDisclosure: receiptDisclosure(),
       ticketTypes: [
         {
           id: 'ticket-fresh',

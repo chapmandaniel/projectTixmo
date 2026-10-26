@@ -71,8 +71,9 @@ async function main() {
     prisma.$queryRawUnsafe(
       'SELECT id,migration_name,checksum,finished_at,rolled_back_at,applied_steps_count FROM _prisma_migrations ORDER BY migration_name,id'
     );
+  const { MIGRATION_COUNT } = require('/app/scripts/migration-census.cjs');
   const rows = await ledger();
-  assert.equal(rows.length, 33);
+  assert.equal(rows.length, MIGRATION_COUNT);
   assert.ok(rows.every((row) => row.finished_at && !row.rolled_back_at));
   let state;
   if (mode === 'new') {
