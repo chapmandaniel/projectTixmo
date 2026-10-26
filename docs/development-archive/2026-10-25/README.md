@@ -33,3 +33,21 @@ Recovered branch names appear under `local-history/`, preserving current local b
 Two older registered worktrees under the server's agentbox archive also had uncommitted package-script changes. Their original HEADs and exact working-tree patches are preserved under `archived-worktrees/`; these patches are historical source, not changes to current package scripts.
 
 The final worktree audit also found 71 untracked reviewer shell/Python helpers and SQL fixtures. Their unchanged bytes are preserved as inert `.txt` files under `untracked-review-helpers/`, with original worktrees, paths, HEADs, sizes, and SHA-256 values in its manifest. They were not executed during recovery and are not current release qualification.
+
+## Final synchronization result
+
+Every one of the 535 snapshotted local branch sources is now available through an ordinary GitHub branch ref, verified against a fresh complete remote branch listing:
+
+| Representation | Branch snapshots |
+| --- | ---: |
+| Original name and exact original commit | 481 |
+| Exact original commit under archive/local-20261025/ to preserve an existing different GitHub head | 14 |
+| Fixture-cleaned history copy under sanitized/local-20261025/ | 40 |
+
+All 46 GitHub heads that existed before this synchronization remain unchanged. Local main matches GitHub main at 822dcf02a80958b65986bd5eb3f4635760ec9275. Original local branch heads and recovered working copies were preserved.
+
+The cleaned copies remove three explicit synthetic Stripe test-key literals from old fixture history using the existing cleanup already represented in main. Their runtime values are identical. Forty copied histories have 81 changed commit identities; 39 final source trees are byte-identical, and one old tip changes only that fixture construction. The complete original histories remain in the original bundle. See sanitized/README.md and its provenance mapping.
+
+SYNC-RESULT.json maps every original source ref/SHA to its verified remote destination/SHA. GitHub currently has 575 branch refs, including pre-existing remote-only work and the backup/control branches. The one-off importer workflow was retired after publication. Native Actions imports and the connected user's appropriately scoped ref-creation tools were used; no push-protection override or existing canonical-head overwrite was performed.
+
+PRs 112–118 remain drafts. These publications preserve source for review; no default-branch merge or production deployment was performed. Source/hash checks and the 13 offline release-helper tests are the verification performed here, not fresh runtime qualification of historical implementations.

@@ -1,0 +1,287 @@
+{
+  "main": "822dcf02a80958b65986bd5eb3f4635760ec9275",
+  "branch_count": 40,
+  "bundle_branch_count": 40,
+  "branches": [
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-231-asset-share-integration",
+      "sha": "8b56360b00b2a235adc8422e9d603bb900fa0dbc",
+      "original_ref": "refs/heads/codex/task-231-asset-share-integration",
+      "original_sha": "134bd2686639a6e0ec2c0348be856196a336b8d2",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-243-privacy-placeholder",
+      "sha": "f7c97e682bf76b884cd237ae8d430af0a7638af8",
+      "original_ref": "refs/heads/codex/task-243-privacy-placeholder",
+      "original_sha": "c824899a84fa8f41f242944b3aac213c3a832084",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-587-stripe-read-probe",
+      "sha": "6d658aa989f5933cd6357c8f51d021985dfaef87",
+      "original_ref": "refs/heads/codex/task-587-stripe-read-probe",
+      "original_sha": "32e2c0b114412f03b588bbd1e768679c0ea470fc",
+      "tip_tree_identical": false
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-589-api-startup-script",
+      "sha": "eb3856589951cb3222f0f9841e07ec1b96a15211",
+      "original_ref": "refs/heads/codex/task-589-api-startup-script",
+      "original_sha": "00f33e36e2364eac9dbc74d96bf5a652b8d09a49",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-589-stripe-guard-reasons",
+      "sha": "94cbd536808bf6749755187211dbb7815079f6cf",
+      "original_ref": "refs/heads/codex/task-589-stripe-guard-reasons",
+      "original_sha": "5c33963df19c0fa2cb6cac9a217b8ec5d62a92a3",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-590-asset-rekey-diagnostics",
+      "sha": "2d51989c1de49931728c651a64c493a46c8e386e",
+      "original_ref": "refs/heads/codex/task-590-asset-rekey-diagnostics",
+      "original_sha": "fc9b1c6ebcd831e4c09f22381454ca7b2cc60360",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-591-stripe-test-key-compat",
+      "sha": "f65f33ad3ff91ab1ea9aa49c6ad47cbaf78b2a70",
+      "original_ref": "refs/heads/codex/task-591-stripe-test-key-compat",
+      "original_sha": "61da995acb49b9135ca8fba3c16b214ab8d9f1d1",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-592-hash-only-share-policy",
+      "sha": "d3b37411cd3162a306fa64bcb43a870acd59b987",
+      "original_ref": "refs/heads/codex/task-592-hash-only-share-policy",
+      "original_sha": "d73f3f79fa3504f99c95db0d4bd4017b2444642e",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-594-share-link-observer",
+      "sha": "93222b88d6feddc5041ac231a420afd43c270a5c",
+      "original_ref": "refs/heads/codex/task-594-share-link-observer",
+      "original_sha": "3d7e454e60394b7f9de5733fb324d733fb55363c",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-595-observable-share-audit",
+      "sha": "03122f08d96b5ae7ba76b722db2c1a22c090dd3d",
+      "original_ref": "refs/heads/codex/task-595-observable-share-audit",
+      "original_sha": "68821f37a6b8ec080ade6982a530c9a7366311d3",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-596-explicit-predeploy-rekey",
+      "sha": "47a6282980ea3eb32c79a37612ee04efb24c1eb3",
+      "original_ref": "refs/heads/codex/task-596-explicit-predeploy-rekey",
+      "original_sha": "542dcb9a09fe47af7dcbdffbc12e6a5239e14199",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-597-redis-handshake",
+      "sha": "ead89f88e22050794320b67d142462050d5666b8",
+      "original_ref": "refs/heads/codex/task-597-redis-handshake",
+      "original_sha": "cf14341889f80d1732f330998737756f7bb01ba4",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-597-runtime-version-observer",
+      "sha": "a7c2d671cd516f8e4ed47f82c5665479c3645605",
+      "original_ref": "refs/heads/codex/task-597-runtime-version-observer",
+      "original_sha": "075b18f08d5110646d5a842b9704f2e2d3c6c098",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-598-evidence-status-regressions",
+      "sha": "48935e47ecd0241577ba89e0d34e0f9613d29216",
+      "original_ref": "refs/heads/codex/task-598-evidence-status-regressions",
+      "original_sha": "db9978936c5a8d663fc5a36808a5f531ffe4ee13",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-599-browser-endpoint-discovery",
+      "sha": "c41eaa1f9b3e6a5d35c685702d7a26589ada8a97",
+      "original_ref": "refs/heads/codex/task-599-browser-endpoint-discovery",
+      "original_sha": "ccb66c33b51bd339a3590e3a3fbf1d5b49c70c3e",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-600-one-approved-email",
+      "sha": "6199e2a66cdd041e806dae84ff327177305272bb",
+      "original_ref": "refs/heads/codex/task-600-one-approved-email",
+      "original_sha": "751d844ce6323b6a51a4d99be29f7a17e643539f",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-602-guard-diagnostics",
+      "sha": "7815da45c9eb4fe4823a08079c04f68305608589",
+      "original_ref": "refs/heads/codex/task-602-guard-diagnostics",
+      "original_sha": "8bc92f3474ede5e39fce536933dfee6b2594a19f",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-602-startup-assertion",
+      "sha": "3c6653f1bc4964459b504c1f273bb189f6ac284d",
+      "original_ref": "refs/heads/codex/task-602-startup-assertion",
+      "original_sha": "fab53b3db2bd9ff8fd22f4be7b742194f4f6cc38",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-602-storage-canary",
+      "sha": "afa43e6f822d3e2e9a3bff7c907bc5aab60f8020",
+      "original_ref": "refs/heads/codex/task-602-storage-canary",
+      "original_sha": "739a10c451cc295773296c94660cc74300c42d50",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-603-logical-roundtrip",
+      "sha": "8b6c9cc319a6d3b0afb9d5d05d27b26083fb36d7",
+      "original_ref": "refs/heads/codex/task-603-logical-roundtrip",
+      "original_sha": "09016d47dbac61ce9856c64b1535afb75f930ca8",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-606-application-rollback",
+      "sha": "f99a99816e20659681d9f7a83064df56f501b1b0",
+      "original_ref": "refs/heads/codex/task-606-application-rollback",
+      "original_sha": "553514b2afcccf67f452371c8c3a2a223bf57a7b",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-606-integration",
+      "sha": "b9397adaf32b1beed5b9348f52c556d47e32cec9",
+      "original_ref": "refs/heads/codex/task-606-integration",
+      "original_sha": "57deea6619838c114240d9b542b2bc3cc9b06613",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-607-parity-upgrade",
+      "sha": "cd48b3da999068c8d3947ad3853a462a02708d59",
+      "original_ref": "refs/heads/codex/task-607-parity-upgrade",
+      "original_sha": "313923d6d10196120cca006a2d8b65ad0177021f",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-608-http-pressure",
+      "sha": "d8f87fcda0c3b9738f596a9113edf1378c42c9eb",
+      "original_ref": "refs/heads/codex/task-608-http-pressure",
+      "original_sha": "e4e501c9ce4986ad3ef40a189c94d330018958e8",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-608-integration",
+      "sha": "e1ae1954bde5c11802e5f036637791ba7d48672d",
+      "original_ref": "refs/heads/codex/task-608-integration",
+      "original_sha": "e6e7c86f9458f7faf0d4f7bddb1ce3457e04361e",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-609-http-ramp",
+      "sha": "b07412e46aa22ee4dc93d68188571d4530f2f2a6",
+      "original_ref": "refs/heads/codex/task-609-http-ramp",
+      "original_sha": "3bc6076366530eb3fd133334d1e5a2c7ab3e0df9",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-610-http-soak",
+      "sha": "d4c31be62f968aba831aab9d96c7c288cceb3d3c",
+      "original_ref": "refs/heads/codex/task-610-http-soak",
+      "original_sha": "b88a58d3604184effebd5752c6e06eabd92d142b",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-610-integration",
+      "sha": "b3b7504a45d096f4ddaa174d6adf985df3b12193",
+      "original_ref": "refs/heads/codex/task-610-integration",
+      "original_sha": "8c1a8ef630a73a6a9c01dedb11f8e833d1490b5b",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-611-auth-ip",
+      "sha": "9a312bfdd1e3f0b60870d93639bd6f74892a0fa4",
+      "original_ref": "refs/heads/codex/task-611-auth-ip",
+      "original_sha": "d71427b976119344b3fe6429e61162d6879222bc",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-612-native-recovery",
+      "sha": "b08edf1901c0be60235b3edffc50f368ec1bd16a",
+      "original_ref": "refs/heads/codex/task-612-native-recovery",
+      "original_sha": "9850b40737e2a71f21eaaec5d97fa3e5d1313fb5",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-613-soak-retention",
+      "sha": "9420f2791fa2b917a0369aeab9fa5d9eb6f7690a",
+      "original_ref": "refs/heads/codex/task-613-soak-retention",
+      "original_sha": "b347857587ab6dbbb2b5786625ee859b487bec65",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-615-scanner-browser",
+      "sha": "ee50f94f769a6ca3b0ff22ee3ade33fbaae8dd4d",
+      "original_ref": "refs/heads/codex/task-615-scanner-browser",
+      "original_sha": "a82a1f6f24784b554259388e501519412adbd915",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-616-paid-ticket-http",
+      "sha": "5571bbb2fd3084977c4fa9b135afe248681ab9bf",
+      "original_ref": "refs/heads/codex/task-616-paid-ticket-http",
+      "original_sha": "33aa2b1b65ed9d11df3182de7547fec54540f208",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-619-zod-security",
+      "sha": "51b4932a8324440650778077be4c0b962c01cfa4",
+      "original_ref": "refs/heads/codex/task-619-zod-security",
+      "original_sha": "52320a49ad9be6717b1ed48e3c3e0751b42b76c4",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/task-621-secure-rollback",
+      "sha": "50bbcb8a083cd92b23bcbb2feb43b4f659589422",
+      "original_ref": "refs/heads/codex/task-621-secure-rollback",
+      "original_sha": "9680b881531f116eab7e08d2e83437499ef8f9fe",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/tasks-603-605-integration",
+      "sha": "e120e68d7ebba205d9f22aba4ef21af026ef6076",
+      "original_ref": "refs/heads/codex/tasks-603-605-integration",
+      "original_sha": "330965bc30ec14eb05eee6124aa4eda9b1b7270d",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/tasks-609-611-integration",
+      "sha": "ab7b35ec699f4c725106fd9acbde247aa324b5cc",
+      "original_ref": "refs/heads/codex/tasks-609-611-integration",
+      "original_sha": "7d6f1cd16dab475ea0a604a28559551de14a8874",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/codex/tasks-615-616-integration",
+      "sha": "84bb9ac2a3b60ed4d4b3e7a39aefe7b6ccaf8212",
+      "original_ref": "refs/heads/codex/tasks-615-616-integration",
+      "original_sha": "60989c7bfccab1bdd38d1d1f154e4336d709bb46",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/tixmo/task-593-asset-log-redaction",
+      "sha": "36f6c77e0c7a0b2f34d1f2b5e1403431cf5b4320",
+      "original_ref": "refs/heads/tixmo/task-593-asset-log-redaction",
+      "original_sha": "efc38b70d2eebaa1df511f425ccbdb9828894d6b",
+      "tip_tree_identical": true
+    },
+    {
+      "ref": "refs/heads/sanitized/local-20261025/tixmo/task-605-storage-diagnostics",
+      "sha": "07379772a2e69bab40c47a27cc4e4c1479f88b90",
+      "original_ref": "refs/heads/tixmo/task-605-storage-diagnostics",
+      "original_sha": "8f757462d5586ea3cb75829e0e418accbb80c62f",
+      "tip_tree_identical": true
+    }
+  ]
+}
