@@ -281,6 +281,12 @@ export async function cleanupTestData() {
     await prisma.task.deleteMany();
   } catch (e) {}
   try {
+    await prisma.paymentRefundLine.deleteMany();
+  } catch (e) {}
+  try {
+    await prisma.paymentRefund.deleteMany();
+  } catch (e) {}
+  try {
     await prisma.ticket.deleteMany();
   } catch (e) {}
   try {
