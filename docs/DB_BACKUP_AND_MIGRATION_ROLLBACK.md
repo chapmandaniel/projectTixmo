@@ -151,6 +151,19 @@ Only check off "Production backup and rollback are confirmed" when all of these 
 - The last known good API deployment ID is recorded.
 - The migration command and smoke-test result are recorded.
 
+## CI application image rollback pin
+
+`configured-image-restore` in `.github/workflows/market-readiness-local.yml`
+builds the pull request API as the new image and checks out `OLD_COMMIT` from
+`scripts/verify-application-rollback.cjs` as the old image. A PR sets
+`OLD_COMMIT` and the workflow `ref` to the main commit it is based on, never
+to its own commit. The job proves the PR image can roll back to that previous
+main image. `parity()` requires `OLD_COMMIT` to be an ancestor of `origin/main`
+and to differ from or predate the candidate under test. The receipt keeps
+`rollbackPromotionApproved` false. A green run is synthetic compatibility
+evidence only; it does not approve a production database restore or deployment
+rollback. Production backup and restore evidence stays in the sections above.
+
 ## References
 
 - Railway backups: https://docs.railway.com/volumes/backups

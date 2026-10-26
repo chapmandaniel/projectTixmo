@@ -4,7 +4,6 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { createHash } = require('node:crypto');
 const {
   guard,
   parity,
@@ -75,139 +74,96 @@ test('containers receive only scrubbed synthetic values and explicit worker bypa
   }
   assert.throws(() => containerArgs(env, 'arbitrary', '/owned', '/repo'));
 });
-test('parity checks every byte and refuses symlinks or missing migrations', () => {
+const CANDIDATE = 'a'.repeat(40);
+function previousMainGit(overrides = {}) {
+  const answers = {
+    [`merge-base --is-ancestor ${OLD_COMMIT} origin/main`]: { status: 0, stdout: '' },
+    'rev-parse HEAD': { status: 0, stdout: CANDIDATE },
+    [`merge-base --is-ancestor ${OLD_COMMIT} HEAD`]: { status: 0, stdout: '' },
+    ...overrides,
+  };
+  return (args) => {
+    const answer = answers[args.join(' ')];
+    assert.ok(answer, 'unexpected git ' + args.join(' '));
+    return answer;
+  };
+}
+function writeApiTree(dir, source) {
+  for (const entry of [
+    'src/a.js',
+    'prisma/schema.prisma',
+    'prisma/migrations/one/migration.sql',
+    'package.json',
+    'package-lock.json',
+  ]) {
+    const name = path.join(dir, entry);
+    fs.mkdirSync(path.dirname(name), { recursive: true });
+    fs.writeFileSync(name, source);
+  }
+}
+test('parity accepts a previous main image and rejects a self-pin', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'task606-contract-'));
   try {
-    for (const root of ['a', 'b']) {
-      for (const entry of [
-        'src/a.js',
-        'prisma/schema.prisma',
-        'prisma/migrations/one/migration.sql',
-        'package.json',
-        'package-lock.json',
-      ]) {
-        const name = path.join(dir, root, entry);
-        fs.mkdirSync(path.dirname(name), { recursive: true });
-        fs.writeFileSync(name, 'same');
-      }
-    }
-    const a = path.join(dir, 'a'),
-      b = path.join(dir, 'b');
-    parity(a, b);
-    fs.writeFileSync(path.join(b, 'src/a.js'), 'different');
-    assert.throws(() => parity(a, b));
-    fs.writeFileSync(path.join(b, 'src/a.js'), 'same');
-    fs.unlinkSync(path.join(b, 'prisma/migrations/one/migration.sql'));
-    assert.throws(() => parity(a, b));
-    fs.symlinkSync(
-      path.join(a, 'prisma/migrations/one/migration.sql'),
-      path.join(b, 'prisma/migrations/one/migration.sql')
+    const current = path.join(dir, 'new');
+    const old = path.join(dir, 'old');
+    writeApiTree(current, 'candidate');
+    writeApiTree(old, 'previous-main');
+    const accepted = parity(current, old, { git: previousMainGit() });
+    assert.equal(accepted.mode, 'previous-main-image');
+    assert.equal(accepted.rollbackPromotionApproved, false);
+    writeApiTree(old, 'candidate');
+    assert.equal(parity(current, old, { git: previousMainGit() }).mode, 'previous-main-image');
+    assert.throws(() =>
+      parity(current, old, {
+        git: previousMainGit({
+          'rev-parse HEAD': { status: 0, stdout: OLD_COMMIT },
+        }),
+      })
     );
-    assert.throws(() => parity(a, b));
-  } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
-  }
-});
-test('secure rollback parity rejects legacy transition overrides and all byte differences', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'task619-contract-'));
-  const current = path.join(dir, 'new'),
-    old = path.join(dir, 'old');
-  const before = {
-    'src/a.ts': 'export const legacy = true;',
-    'package.json': JSON.stringify({ dependencies: { zod: '^3.22.4' } }),
-    'package-lock.json': JSON.stringify({
-      packages: { 'node_modules/zod': { version: '3.25.76' } },
-    }),
-  };
-  const after = {
-    'src/a.ts': 'export const patched = true;',
-    'src/compat.ts': 'export const compatible = true;',
-    'package.json': JSON.stringify({ dependencies: { zod: '4.6.7' } }),
-    'package-lock.json': JSON.stringify({
-      packages: { 'node_modules/zod': { version: '4.6.7' } },
-    }),
-  };
-  const write = (base, name, value) => {
-    const file = path.join(base, name);
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, value);
-  };
-  const digest = (value) =>
-    value === undefined ? null : createHash('sha256').update(value).digest('hex');
-  const manifest = {
-    schemaVersion: 1,
-    id: 'task619-zod4-validation',
-    oldCommit: OLD_COMMIT,
-    oldZod: '3.25.76',
-    newZod: '4.6.7',
-    changes: Object.keys(after)
-      .sort()
-      .map((name) => ({
-        path: name,
-        oldSha256: digest(before[name]),
-        newSha256: digest(after[name]),
-      })),
-  };
-  try {
-    for (const [base, files] of [
-      [old, before],
-      [current, after],
-    ]) {
-      for (const [name, value] of Object.entries(files)) write(base, name, value);
-      for (const name of ['prisma/schema.prisma', 'prisma/migrations/one/migration.sql'])
-        write(base, name, 'unchanged database contract');
-    }
-    assert.throws(() => parity(current, old, manifest));
-    for (const patch of [
-      { id: 'arbitrary-exception' },
-      { oldCommit: '0'.repeat(40) },
-      { newZod: '3.25.76' },
-      { extra: 'not admitted' },
-      { changes: manifest.changes.slice(1) },
-      { changes: [...manifest.changes].reverse() },
-      {
-        changes: manifest.changes.map((entry) => ({
-          ...entry,
-          newSha256: '0'.repeat(64),
-        })),
-      },
-    ])
-      assert.throws(() => parity(current, old, { ...manifest, ...patch }));
-    for (const [base, name, value, restore] of [
-      [current, 'src/a.ts', 'unreviewed new source', after['src/a.ts']],
-      [old, 'src/a.ts', 'unreviewed old source', before['src/a.ts']],
-      [current, 'prisma/schema.prisma', 'changed schema', 'unchanged database contract'],
-      [
-        old,
-        'prisma/migrations/one/migration.sql',
-        'changed DDL',
-        'unchanged database contract',
-      ],
-    ]) {
-      write(base, name, value);
-      assert.throws(() => parity(current, old, manifest));
-      write(base, name, restore);
-    }
-    write(current, 'src/unlisted.ts', 'unreviewed addition');
-    assert.throws(() => parity(current, old, manifest));
-    fs.unlinkSync(path.join(current, 'src/unlisted.ts'));
-    const downgraded = JSON.stringify({
-      packages: { 'node_modules/zod': { version: '4.6.5' } },
-    });
-    write(current, 'package-lock.json', downgraded);
-    const forged = {
-      ...manifest,
-      changes: manifest.changes.map((entry) =>
-        entry.path === 'package-lock.json'
-          ? { ...entry, newSha256: digest(downgraded) }
-          : entry
-      ),
-    };
-    assert.throws(() => parity(current, old, forged));
-    write(current, 'package-lock.json', after['package-lock.json']);
-    fs.unlinkSync(path.join(current, 'src/compat.ts'));
-    fs.symlinkSync(path.join(current, 'src/a.ts'), path.join(current, 'src/compat.ts'));
-    assert.throws(() => parity(current, old, manifest));
+    assert.throws(() =>
+      parity(current, old, {
+        git: previousMainGit({
+          [`merge-base --is-ancestor ${OLD_COMMIT} origin/main`]: { status: 1, stdout: '' },
+        }),
+      })
+    );
+    assert.throws(() =>
+      parity(current, old, {
+        git: previousMainGit({
+          [`merge-base --is-ancestor ${OLD_COMMIT} HEAD`]: { status: 1, stdout: '' },
+        }),
+      })
+    );
+    fs.writeFileSync(path.join(old, 'src/a.js'), 'previous-main');
+    assert.equal(
+      parity(current, old, {
+        git: previousMainGit({
+          [`merge-base --is-ancestor ${OLD_COMMIT} HEAD`]: { status: 1, stdout: '' },
+        }),
+      }).mode,
+      'previous-main-image'
+    );
+    fs.writeFileSync(path.join(old, 'src/a.js'), 'candidate');
+    fs.unlinkSync(path.join(old, 'prisma/migrations/one/migration.sql'));
+    assert.equal(
+      parity(current, old, {
+        git: previousMainGit({
+          [`merge-base --is-ancestor ${OLD_COMMIT} HEAD`]: { status: 1, stdout: '' },
+        }),
+      }).mode,
+      'previous-main-image'
+    );
+    fs.symlinkSync(
+      path.join(current, 'prisma/migrations/one/migration.sql'),
+      path.join(old, 'prisma/migrations/one/migration.sql')
+    );
+    assert.throws(() =>
+      parity(current, old, {
+        git: previousMainGit({
+          [`merge-base --is-ancestor ${OLD_COMMIT} HEAD`]: { status: 1, stdout: '' },
+        }),
+      })
+    );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -267,6 +223,16 @@ test('hosted workflow actually builds old image and invokes current worker on co
     'utf8'
   );
   assert.ok(workflow.includes('ref: ' + OLD_COMMIT));
+  assert.equal(workflow.includes('df0de4bde792e3b695939f90a18c4e3bd2468446'), false);
+  const lane = workflow.split('  configured-image-restore:')[1];
+  assert.match(lane, /fetch-depth: 0/);
+  const fetchAt = lane.indexOf('git fetch --no-tags origin main');
+  const parityAt = lane.indexOf("p.parity('tixmoapi2','.rollback-old/tixmoapi2')");
+  assert.ok(fetchAt > 0 && parityAt > fetchAt);
+  const source = fs.readFileSync(path.join(__dirname, 'verify-application-rollback.cjs'), 'utf8');
+  assert.match(source, /previous-main-image/);
+  assert.doesNotMatch(source, /byte-identical/);
+  assert.match(source, /merge-base', '--is-ancestor', OLD_COMMIT, 'origin\/main'/);
   assert.match(workflow, /persist-credentials: false/);
   assert.match(workflow, /docker build --tag tixmo-task606-old:ci \.rollback-old\/tixmoapi2/);
   assert.match(workflow, /run: node scripts\/verify-application-rollback.cjs/);
@@ -307,6 +273,7 @@ test('owned subprocess protocol executes new-old-forward-cleanup, and failure ne
     }
   const log = console.log;
   console.log = () => {};
+  const git = previousMainGit();
   try {
     for (const fail of [false, true]) {
       let phase;
@@ -333,7 +300,7 @@ test('owned subprocess protocol executes new-old-forward-cleanup, and failure ne
         removed.push(args);
         return '';
       };
-      const work = verify(env, { root, command });
+      const work = verify(env, { root, command, git });
       if (fail) {
         await assert.rejects(work);
         assert.deepEqual(modes, ['new', 'old']);
