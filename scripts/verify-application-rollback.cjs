@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const assert = require('node:assert/strict');
-const { MIGRATION_COUNT } = require('../tixmoapi2/scripts/migration-census.cjs');
 const OLD_COMMIT = '105601996d17684cff2e6e8de40d29894e2eb370';
 const IMAGES = {
   new: 'tixmo-task603-production:ci',
@@ -171,6 +170,9 @@ function receipt(output, mode) {
   assert.equal(row.providerAttempts, 0);
 }
 async function verify(env = process.env, dependencies = {}) {
+  // Loaded only on the host. This file is bind-mounted as /task606-driver.cjs,
+  // so a top-level relative require would fail inside the production image.
+  const { MIGRATION_COUNT } = require(path.join(__dirname, '../tixmoapi2/scripts/migration-census.cjs'));
   guard(env);
   const root = dependencies.root || path.resolve(__dirname, '..');
   const contract = parity(path.join(root, 'tixmoapi2'), path.join(root, '.rollback-old/tixmoapi2'));
