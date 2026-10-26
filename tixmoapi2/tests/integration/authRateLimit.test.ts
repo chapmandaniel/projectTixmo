@@ -73,4 +73,35 @@ describe('Authentication Rate Limiting', () => {
     expect(response.body.success).toBe(false);
     expect(response.body.message).toMatch(/too many authentication attempts/i);
   });
+
+  it('limits one account across IP addresses and still allows a different account', async () => {
+    const email = 'account-rate-limit@example.com';
+    for (let index = 0; index < 3; index += 1) {
+      const response = await request(app)
+        .post('/api/v1/auth/login')
+        .set('X-Forwarded-For', `203.0.113.${120 + index}`)
+        .set('X-Test-Auth-Account-Rate-Limit', 'low')
+        .send({ email, password: 'wrong-password' });
+
+      expect(response.status).not.toBe(429);
+    }
+
+    const blocked = await request(app)
+      .post('/api/v1/auth/login')
+      .set('X-Forwarded-For', '203.0.113.130')
+      .set('X-Test-Auth-Account-Rate-Limit', 'low')
+      .send({ email: 'Account-Rate-Limit@example.com', password: 'wrong-password' });
+
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.success).toBe(false);
+    expect(blocked.body.message).toMatch(/too many attempts for this account/i);
+
+    const otherAccount = await request(app)
+      .post('/api/v1/auth/login')
+      .set('X-Forwarded-For', '203.0.113.131')
+      .set('X-Test-Auth-Account-Rate-Limit', 'low')
+      .send({ email: 'other-account-rate-limit@example.com', password: 'wrong-password' });
+
+    expect(otherAccount.status).not.toBe(429);
+  });
 });

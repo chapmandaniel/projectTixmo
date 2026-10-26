@@ -75,7 +75,7 @@ async function body() {
   );
   observeMiddleware(
     require("/app/dist/middleware/rateLimiter"),
-    ["authRateLimiter", "apiReadRateLimiter", "apiWriteRateLimiter"],
+    ["authRateLimiter", "authAccountRateLimiter", "apiReadRateLimiter", "apiWriteRateLimiter"],
     track,
   );
   observeValidation(require("/app/dist/middleware/validate"), track);

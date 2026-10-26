@@ -25,7 +25,8 @@ import {
   transitionInventory,
   transitionPromo,
 } from '../../services/order-inventory.service';
-import { voidOrderTickets } from '../../services/ticket-void.service';
+import { voidDisputedAdmission, voidOrderTickets } from '../../services/ticket-void.service';
+import { maskBarcode } from './order-privacy';
 
 interface OrderItemInput {
   ticketTypeId: string;
@@ -270,6 +271,10 @@ export class OrderService {
   async getOrderById(id: string, userId?: string, actorId?: string): Promise<Order | null> {
     if (userId || actorId) {
       const scope = actorId ? await this.actorOrderScope(actorId) : { userId };
+      const actor = actorId ? await getActorScopeById(actorId) : null;
+      // Staff may see a last-four mask. Everyone else, including the original
+      // buyer of a transferred ticket, gets no credential at all.
+      const maskForStaff = Boolean(actor && ['OWNER', 'ADMIN', 'MANAGER'].includes(actor.role));
       // when userId provided, findFirst with both id and userId
       const order = await prisma.order.findFirst({
         where: { id, ...scope },
@@ -299,7 +304,7 @@ export class OrderService {
             ? ticket
             : {
                 ...ticket,
-                barcode: '',
+                barcode: maskForStaff ? maskBarcode(ticket.barcode) : '',
                 qrCodeUrl: null,
               }
         ),
@@ -362,7 +367,10 @@ export class OrderService {
     await lockOrder(tx, id);
     const order = await tx.order.findFirst({ where: { id, ...scope }, include: { event: true } });
     if (!order) throw ApiError.notFound('Order not found');
-    if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED') return order;
+    if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED') {
+      await voidDisputedAdmission(tx, order);
+      return tx.order.findUniqueOrThrow({ where: { id } });
+    }
     await tx.$queryRaw`SELECT id FROM events WHERE id = ${order.eventId} FOR UPDATE`;
     const currentEvent = await tx.event.findUniqueOrThrow({ where: { id: order.eventId } });
     if (
@@ -374,7 +382,35 @@ export class OrderService {
       throw ApiError.conflict('Order can no longer be fulfilled');
     await transitionInventory(tx, id, 'HELD', 'SOLD');
     await transitionPromo(tx, id, 'USED');
-    return tx.order.update({ where: { id }, data: { status: 'PAID', paymentStatus: 'SUCCEEDED' } });
+    const paid = await tx.order.update({
+      where: { id },
+      data: { status: 'PAID', paymentStatus: 'SUCCEEDED' },
+    });
+    // S-BUG-8: a dispute that arrived while this order was still pending has
+    // already set refund_status and must cancel admission in this commit.
+    await voidDisputedAdmission(tx, paid);
+    return paid;
+  }
+
+  /**
+   * Refunded receipts use the payment-refund currency recorded from the
+   * PaymentIntent or charge. The order row can still say usd. Lines keep each
+   * Stripe refund id; the one payment_refunds row carries that charge currency.
+   */
+  private async receiptCurrency(order: {
+    status: string;
+    currency: string;
+    paymentIntentId: string | null;
+  }): Promise<string> {
+    if (order.status !== 'REFUNDED' || !order.paymentIntentId) return order.currency;
+    const refund = await prisma.paymentRefund.findUnique({
+      where: { paymentIntentId: order.paymentIntentId },
+      select: { currency: true, reason: true, status: true },
+    });
+    if (refund?.reason === 'ORDER_REFUND' && refund.status === 'SUCCEEDED' && refund.currency) {
+      return refund.currency;
+    }
+    return order.currency;
   }
 
   /**
@@ -390,12 +426,12 @@ export class OrderService {
       },
     });
     if (!order) throw ApiError.notFound('Order not found');
+    if (order.status !== 'PAID' && order.status !== 'REFUNDED') return;
     if (
-      order.status !== 'PAID' ||
-      (!resend &&
-        (order.receiptSentAt ||
-          order.receiptStatus === 'LEGACY_UNKNOWN' ||
-          order.receiptStatus === 'SENT'))
+      !resend &&
+      (order.receiptSentAt ||
+        order.receiptStatus === 'LEGACY_UNKNOWN' ||
+        order.receiptStatus === 'SENT')
     )
       return;
     const leaseToken = crypto.randomUUID();
@@ -403,7 +439,7 @@ export class OrderService {
     const claimed = await prisma.order.updateMany({
       where: {
         id: orderId,
-        status: 'PAID',
+        status: order.status,
         OR: [
           resend ? { receiptStatus: { not: 'PROCESSING' } } : { receiptStatus: 'PENDING' },
           { receiptStatus: 'PROCESSING', receiptStartedAt: { lt: stale } },
@@ -424,6 +460,7 @@ export class OrderService {
         ? formatNewfoundlandDateTime(order.event.startDatetime)
         : 'Date to be announced';
       const hstRate = configuredHstRate();
+      const currency = await this.receiptCurrency(order);
       const delivered = await notificationService.sendOrderConfirmation({
         to: order.user.email,
         customerName: `${order.user.firstName} ${order.user.lastName}`,
@@ -433,15 +470,16 @@ export class OrderService {
         ticketSummary: summarizeTickets(order.tickets),
         subtotalAmount: formatMoney(
           new Decimal(order.totalAmount).plus(order.discountAmount),
-          order.currency
+          currency
         ),
-        totalAmount: formatMoney(order.totalAmount, order.currency),
+        totalAmount: formatMoney(order.totalAmount, currency),
         venueName: order.event.venue?.name || null,
         venueAddress: formatVenueAddress(order.event.venue?.address),
         hstNumber: config.hstNumber || null,
         hstAmountLine: formatHstAmountLine(
           receiptHstAmount(order.totalAmount, hstRate, order.taxAmount),
-          hstRate
+          hstRate,
+          currency
         ),
       });
       if (!delivered) throw ApiError.internal('Receipt could not be delivered');
@@ -640,14 +678,14 @@ export class OrderService {
             });
         const sum = recorded.reduce((total, refund) => total + refund.amount, 0);
         const orderCents = Math.round(order.totalAmount.toNumber() * 100);
-        if (
-          recorded.length === 0 ||
-          recorded.some((refund) => refund.currency !== order.currency) ||
-          sum !== orderCents
-        ) {
+        // Amount must match the order. Currency is the processor currency on the
+        // refund lines, not the historical order.currency label.
+        const currencies = new Set(recorded.map((refund) => refund.currency).filter(Boolean));
+        const currencyMismatch = recorded.some((refund) => !refund.currency) || currencies.size > 1;
+        if (recorded.length === 0 || currencyMismatch || sum !== orderCents) {
           // A partial sum is already recorded on its own lines. Recovery must not
           // fail the webhook or release inventory until the refunds cover the order.
-          if (sum > orderCents || recorded.some((refund) => refund.currency !== order.currency)) {
+          if (sum > orderCents || currencyMismatch) {
             throw ApiError.conflict('Processor refund has not been confirmed');
           }
           return order;
@@ -657,7 +695,7 @@ export class OrderService {
       await transitionInventory(tx, id, 'SOLD', 'RELEASED');
       return tx.order.update({
         where: { id },
-        data: { status: 'REFUNDED', refundStatus: 'SUCCEEDED' },
+        data: { status: 'REFUNDED', refundStatus: 'SUCCEEDED', paymentStatus: 'REFUNDED' },
       });
     });
   }

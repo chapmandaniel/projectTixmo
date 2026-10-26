@@ -1,6 +1,7 @@
 export class ApiError extends Error {
   statusCode: number;
   errors?: unknown;
+  data?: unknown;
 
   constructor(statusCode: number, message: string, errors?: unknown) {
     super(message);
@@ -20,8 +21,10 @@ export class ApiError extends Error {
     return new ApiError(401, message);
   }
 
-  static forbidden(message: string = 'Forbidden') {
-    return new ApiError(403, message);
+  static forbidden(message: string = 'Forbidden', data?: unknown) {
+    const error = new ApiError(403, message);
+    if (data !== undefined) error.data = data;
+    return error;
   }
 
   static notFound(message: string = 'Not Found') {

@@ -79,6 +79,7 @@ function verify(env = process.env, spawn = spawnSync) {
   assert.ok(migrations.includes('20261022143000_buyer_password_recovery'));
   assert.ok(migrations.includes('20261026031400_default_event_timezone_america_st_johns'));
   assert.ok(migrations.includes('20261026120000_order_currency_default_cad'));
+  assert.ok(migrations.includes('20261026180000_payment_status_refunded'));
   run(process.execPath, [path.join(__dirname, '../tixmoapi2/node_modules/prisma/build/index.js'), 'migrate', 'deploy', '--schema', path.join(__dirname, '../tixmoapi2/prisma/schema.prisma')]);
   assert.equal(sql(SOURCE, 'SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;'), String(migrations.length));
   for (const migration of migrations) {

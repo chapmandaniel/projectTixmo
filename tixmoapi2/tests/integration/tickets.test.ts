@@ -1,5 +1,9 @@
+import { randomUUID } from 'crypto';
 import request from 'supertest';
 import app from '../../src/app';
+import { scannerService } from '../../src/api/scanners/service';
+import { DOORS_BEFORE_START_MS } from '../../src/config/doors';
+import { generateTicketQRData } from '../../src/utils/qrcode';
 import {
   cleanupTestData,
   confirmOrderForTest,
@@ -179,6 +183,174 @@ describe('Tickets API', () => {
       const res = await request(app).get('/api/v1/tickets');
 
       expect(res.status).toBe(401);
+    });
+
+    it('includes holder name and email for owner, admin, and manager only', async () => {
+      const customer = await request(app)
+        .get(`/api/v1/tickets?eventId=${eventId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(customer.status).toBe(200);
+      expect(customer.body.data.tickets.length).toBeGreaterThan(0);
+      expect(
+        customer.body.data.tickets.every((ticket: { user?: unknown }) => ticket.user === undefined)
+      ).toBe(true);
+
+      const mine = await request(app)
+        .get('/api/v1/tickets/mine')
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(
+        mine.body.data.tickets.every((ticket: { user?: unknown }) => ticket.user === undefined)
+      ).toBe(true);
+
+      const promoter = await request(app)
+        .get(`/api/v1/tickets?eventId=${eventId}&includeHolder=true`)
+        .set('Authorization', `Bearer ${promoterToken}`);
+      expect(promoter.status).toBe(200);
+      expect(
+        promoter.body.data.tickets.every((ticket: { user?: unknown }) => ticket.user === undefined)
+      ).toBe(true);
+
+      expect(
+        await prisma.staffActionAudit.count({
+          where: { action: 'STAFF_PII_VIEW', subjectId: eventId },
+        })
+      ).toBe(0);
+
+      const holder = {
+        firstName: 'Tickets',
+        lastName: 'Test',
+        email: 'tickets-test@example.com',
+      };
+      for (const role of ['OWNER', 'ADMIN', 'MANAGER'] as const) {
+        const staff = await registerUser(app, {
+          role,
+          email: `tickets-holder-${role.toLowerCase()}-${Date.now()}@example.com`,
+        });
+        const res = await request(app)
+          .get(`/api/v1/tickets?eventId=${eventId}`)
+          .set('Authorization', `Bearer ${staff.accessToken}`);
+        expect(res.status).toBe(200);
+        const row = res.body.data.tickets.find((ticket: { id: string }) => ticket.id === ticketId);
+        expect(row.user).toEqual(holder);
+        expect(Object.keys(row.user).sort()).toEqual(['email', 'firstName', 'lastName']);
+        const listAudit = await prisma.staffActionAudit.findFirst({
+          where: {
+            action: 'STAFF_PII_VIEW',
+            subjectType: 'EVENT',
+            subjectId: eventId,
+            actorId: staff.user.id,
+          },
+        });
+        expect(listAudit?.reason).toBe('Staff ticket list');
+        expect(listAudit?.createdAt).toEqual(expect.any(Date));
+      }
+
+      const customerOrder = await request(app)
+        .get(`/api/v1/orders/${orderId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(customerOrder.status).toBe(200);
+      expect(
+        await prisma.staffActionAudit.count({
+          where: { action: 'STAFF_PII_VIEW', subjectType: 'ORDER', subjectId: orderId },
+        })
+      ).toBe(0);
+    });
+
+    it('records admitted and denied scan reason codes', async () => {
+      const ticket = await prisma.ticket.findUniqueOrThrow({ where: { id: ticketId } });
+      const scanner = await prisma.scanner.create({
+        data: {
+          name: 'Audit gate',
+          apiKey: `sk_scanner_${randomUUID()}`,
+          organizationId,
+          eventId,
+          createdBy: userId,
+          status: 'ACTIVE',
+        },
+      });
+      const qr = generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId);
+      const admitted = await scannerService.scanTicket({
+        scannerId: scanner.id,
+        qrData: qr,
+        scanType: 'VALIDATION',
+      });
+      expect(admitted.success).toBe(true);
+      expect(admitted.scanLog.failureReason).toBe('ADMITTED');
+
+      const otherEvent = await prisma.event.create({
+        data: { organizationId, name: 'Other gate', slug: randomUUID(), status: 'DRAFT', tags: [] },
+      });
+      await prisma.scanner.update({ where: { id: scanner.id }, data: { eventId: otherEvent.id } });
+      await expect(
+        scannerService.scanTicket({ scannerId: scanner.id, qrData: qr, scanType: 'VALIDATION' })
+      ).rejects.toMatchObject({ statusCode: 403, data: { reason: 'WRONG_EVENT' } });
+      const wrong = await prisma.scanLog.findFirst({
+        where: { scannerId: scanner.id, failureReason: 'WRONG_EVENT' },
+      });
+      expect(wrong?.success).toBe(false);
+      expect(wrong?.ticketId).toBe(ticket.id);
+
+      await prisma.scanner.update({
+        where: { id: scanner.id },
+        data: { eventId, status: 'REVOKED' },
+      });
+      await expect(
+        scannerService.scanTicket({ scannerId: scanner.id, qrData: qr, scanType: 'ENTRY' })
+      ).rejects.toThrow('not active');
+      const revoked = await prisma.scanLog.findFirst({
+        where: { scannerId: scanner.id, failureReason: 'REVOKED' },
+      });
+      expect(revoked?.success).toBe(false);
+    });
+
+    it('checks in from start minus two hours and refuses earlier', async () => {
+      const event = await prisma.event.findUniqueOrThrow({ where: { id: eventId } });
+      const spare = await prisma.ticket.findFirstOrThrow({
+        where: { orderId, status: 'VALID', id: { not: ticketId } },
+      });
+      const originalStart = event.startDatetime;
+      try {
+        await prisma.event.update({
+          where: { id: eventId },
+          data: { startDatetime: new Date(Date.now() + DOORS_BEFORE_START_MS + 60_000) },
+        });
+        const early = await request(app)
+          .post('/api/v1/tickets/check-in')
+          .set('Authorization', `Bearer ${promoterToken}`)
+          .send({ barcode: spare.barcode });
+        expect(early.status).toBe(400);
+        expect(early.body.message).toBe('Event has not started yet');
+
+        await prisma.event.update({
+          where: { id: eventId },
+          data: { startDatetime: new Date(Date.now() + DOORS_BEFORE_START_MS) },
+        });
+        const open = await request(app)
+          .post('/api/v1/tickets/check-in')
+          .set('Authorization', `Bearer ${promoterToken}`)
+          .send({ barcode: spare.barcode });
+        expect(open.status).toBe(200);
+        expect(open.body.data.status).toBe('USED');
+        const checkInAudit = await prisma.staffActionAudit.findFirst({
+          where: { action: 'CHECK_IN', subjectId: spare.id },
+        });
+        const promoter = await prisma.user.findUnique({
+          where: { email: 'tickets-promoter@example.com' },
+        });
+        expect(checkInAudit).toMatchObject({
+          actorId: promoter?.id,
+          reason: 'Attendee check-in',
+          subjectType: 'TICKET',
+        });
+        expect(checkInAudit?.createdAt).toEqual(expect.any(Date));
+      } finally {
+        if (originalStart) {
+          await prisma.event.update({
+            where: { id: eventId },
+            data: { startDatetime: originalStart },
+          });
+        }
+      }
     });
   });
 

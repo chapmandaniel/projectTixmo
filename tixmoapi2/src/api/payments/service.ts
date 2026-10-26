@@ -352,13 +352,16 @@ export class PaymentService {
               });
             } else if (order.paymentIntentId !== intent.id)
               return queueRefund('UNEXPECTED_PAYMENT');
-            if (intent.amount !== cents(order.totalAmount) || intent.currency !== order.currency) {
+            const amountMatches = intent.amount === cents(order.totalAmount);
+            const settled = order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED';
+            // The PaymentIntent currency is the captured currency. A settled order
+            // whose row still says usd was labeled by migration #28, not mis-charged.
+            if (!amountMatches || (intent.currency !== order.currency && !settled)) {
               if (order.status === 'PENDING')
                 await orderService.cancelOrderInTransaction(tx, orderId);
               return queueRefund('INCORRECT_AMOUNT');
             }
-            if (order.status === 'PAID' && order.paymentStatus === 'SUCCEEDED')
-              return { receipt: false };
+            if (settled) return { receipt: false };
             await tx.$queryRaw`SELECT id FROM events WHERE id = ${order.eventId} FOR UPDATE`;
             const event = await tx.event.findUniqueOrThrow({ where: { id: order.eventId } });
             if (
@@ -507,12 +510,19 @@ export class PaymentService {
     if (order.status === 'REFUNDED') return order;
     if (order.totalAmount.eq(0)) return orderService.finalizeRefund(orderId);
     const intent = await this.provider().paymentIntents.retrieve(order.paymentIntentId!);
-    if (
-      intent.status !== 'succeeded' ||
-      intent.amount_received !== cents(order.totalAmount) ||
-      intent.currency !== order.currency
-    )
+    if (intent.status !== 'succeeded' || intent.amount_received !== cents(order.totalAmount))
       throw ApiError.conflict('Processor payment needs reconciliation');
+    // The refund row is opened from the order before Stripe is read. The
+    // PaymentIntent currency replaces that stored label before any refund call.
+    await prisma.paymentRefund.updateMany({
+      where: {
+        paymentIntentId: intent.id,
+        orderId,
+        amount: intent.amount_received,
+        status: { not: 'SUCCEEDED' },
+      },
+      data: { currency: intent.currency },
+    });
     await this.ensureRefund(orderId, intent, 'ORDER_REFUND');
     return prisma.order.findUniqueOrThrow({ where: { id: orderId } });
   }
@@ -600,12 +610,22 @@ export class PaymentService {
       return;
     }
     const intent = await stripe.paymentIntents.retrieve(record.paymentIntentId);
-    if (
-      intent.status !== 'succeeded' ||
-      intent.amount_received !== record.amount ||
-      intent.currency !== record.currency
-    ) {
+    if (intent.status !== 'succeeded' || intent.amount_received !== record.amount) {
       throw ApiError.conflict('Processor payment needs reconciliation before refunding');
+    }
+    if (intent.currency !== record.currency) {
+      const aligned = await prisma.paymentRefund.updateMany({
+        where: {
+          id: record.id,
+          amount: record.amount,
+          currency: record.currency,
+          status: { not: 'SUCCEEDED' },
+        },
+        data: { currency: intent.currency },
+      });
+      if (!aligned.count)
+        throw ApiError.conflict('Processor payment needs reconciliation before refunding');
+      record.currency = intent.currency;
     }
     let refund: Stripe.Refund;
     if (record.stripeRefundId) refund = await stripe.refunds.retrieve(record.stripeRefundId);
@@ -846,7 +866,11 @@ export class PaymentService {
    * first partial. payment_refunds stays one row per payment intent, which is
    * the row the previous image upserts and findUnique's. A sum that matches
    * amount_refunded and covers the order reuses ORDER_REFUND settlement and does
-   * not call refunds.create. Attended tickets stay sold.
+   * not call refunds.create. Attended tickets stay sold. Staff refund normal
+   * orders in the app. Used, transferred, and refused cancellation cases fall
+   * back to one full Stripe Dashboard refund, which this webhook settles.
+   * Lines and the canonical row store the charge currency, not a historical
+   * usd label on the order.
    */
   private async applyExternalRefund(event: Stripe.Event, claim: WebhookClaim): Promise<void> {
     const paymentIntentId = this.refundPaymentIntentId(event);
@@ -858,7 +882,9 @@ export class PaymentService {
     if (!order || order.status !== 'PAID') return;
     const orderCents = cents(order.totalAmount);
     if (orderCents === 0) return;
-    const snapshot = await this.refundSnapshots(event, paymentIntentId, orderCents, order.currency);
+    const currency = this.refundEventCurrency(event);
+    if (!currency) return;
+    const snapshot = await this.refundSnapshots(event, paymentIntentId, orderCents, currency);
     if (!snapshot) return;
     const covered = await this.withWebhookFence(claim, order.id, async (tx) => {
       const current = await tx.order.findUnique({ where: { id: order.id } });
@@ -882,10 +908,7 @@ export class PaymentService {
         },
       });
       const sum = rows.reduce((total, row) => total + row.amount, 0);
-      if (
-        sum !== snapshot.amountRefunded ||
-        rows.some((row) => row.currency !== current.currency)
-      ) {
+      if (sum !== snapshot.amountRefunded || rows.some((row) => row.currency !== currency)) {
         return false;
       }
       if (sum <= 0 || sum > orderCents) return false;
@@ -899,6 +922,16 @@ export class PaymentService {
       return true;
     });
     if (covered) await orderService.finalizeRefund(order.id);
+  }
+
+  private refundEventCurrency(event: Stripe.Event): string | null {
+    if (event.type.startsWith('refund.')) {
+      return (event.data.object as Stripe.Refund).currency || null;
+    }
+    if (event.type === 'charge.refunded') {
+      return event.data.object.currency || null;
+    }
+    return null;
   }
 
   private refundRecordStatus(

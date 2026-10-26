@@ -255,6 +255,29 @@ describe('actor-bound order service', () => {
       { ...orders[0].tickets[1], barcode: '', qrCodeUrl: null },
     ]);
   });
+  test.each(['OWNER', 'ADMIN', 'MANAGER'])(
+    '%s detail masks another buyer barcode to the last four characters',
+    async (role) => {
+      db.user.findUnique.mockResolvedValue({ ...actor, role });
+      orders[0].tickets = [
+        { id: 'own', userId: 'buyer-a', barcode: 'own-code-9999', qrCodeUrl: 'own-qr' },
+      ];
+      const detail = (await service.getOrderById('a', undefined, 'actor')) as any;
+      expect(detail.tickets[0]).toMatchObject({ barcode: '••••9999', qrCodeUrl: null });
+    }
+  );
+  test.each(['PROMOTER', 'TEAM_MEMBER', 'SCANNER', 'CUSTOMER'])(
+    '%s detail does not reveal another buyer barcode',
+    async (role) => {
+      db.user.findUnique.mockResolvedValue({ ...actor, role });
+      orders[0].userId = 'actor';
+      orders[0].tickets = [
+        { id: 'own', userId: 'buyer-a', barcode: 'own-code-9999', qrCodeUrl: 'own-qr' },
+      ];
+      const detail = (await service.getOrderById('a', undefined, 'actor')) as any;
+      expect(detail.tickets[0]).toMatchObject({ barcode: '', qrCodeUrl: null });
+    }
+  );
 });
 
 describe('scope remains authoritative after acquiring the order lock', () => {

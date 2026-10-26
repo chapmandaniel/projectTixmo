@@ -28,6 +28,8 @@ import app from '../../src/app';
 import prisma from '../../src/config/prisma';
 import { logger } from '../../src/config/logger';
 import { paymentService } from '../../src/api/payments/service';
+import { orderService } from '../../src/api/orders/service';
+import { notificationService } from '../../src/utils/notificationService';
 import { generateAccessToken } from '../../src/utils/jwt';
 import { DISPUTE_SCAN_REASON, VOID_DISPUTED_CODE } from '../../src/services/ticket-void.service';
 
@@ -63,6 +65,7 @@ describe('dispute webhooks and staff void', () => {
   let buyerId = '';
   const userIds: string[] = [];
   const orderIds: string[] = [];
+  const extraTypeIds: string[] = [];
 
   beforeAll(async () => {
     const organization = await prisma.organization.create({
@@ -164,7 +167,7 @@ describe('dispute webhooks and staff void', () => {
     });
     await prisma.order.deleteMany({ where: { id: { in: orderIds } } });
     await prisma.scanner.deleteMany({ where: { eventId } });
-    await prisma.ticketType.deleteMany({ where: { id: typeId } });
+    await prisma.ticketType.deleteMany({ where: { id: { in: [typeId, ...extraTypeIds] } } });
     await prisma.event.deleteMany({ where: { id: eventId } });
     await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     await prisma.organization.deleteMany({ where: { id: organizationId } });
@@ -245,9 +248,9 @@ describe('dispute webhooks and staff void', () => {
     const denied = await scan(saved.tickets[0]);
     expect(denied.status).toBe(200);
     expect(denied.body.data).toMatchObject({
-      success: false,
-      reason: DISPUTE_SCAN_REASON,
-      reasonCode: VOID_DISPUTED_CODE,
+      valid: false,
+      reason: VOID_DISPUTED_CODE,
+      message: DISPUTE_SCAN_REASON,
     });
     expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(
@@ -288,9 +291,9 @@ describe('dispute webhooks and staff void', () => {
     expect(closedAudit.after).toMatchObject({ inventoryReleased: false });
     const denied = await scan(saved.tickets[0]);
     expect(denied.body.data).toMatchObject({
-      success: false,
-      reason: DISPUTE_SCAN_REASON,
-      reasonCode: VOID_DISPUTED_CODE,
+      valid: false,
+      reason: VOID_DISPUTED_CODE,
+      message: DISPUTE_SCAN_REASON,
     });
     expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(
@@ -316,9 +319,9 @@ describe('dispute webhooks and staff void', () => {
     expect(saved.tickets.every((ticket) => ticket.status === 'VALID')).toBe(true);
     const early = await scan(saved.tickets[0]);
     expect(early.body.data).toMatchObject({
-      success: false,
-      reason: DISPUTE_SCAN_REASON,
-      reasonCode: VOID_DISPUTED_CODE,
+      valid: false,
+      reason: VOID_DISPUTED_CODE,
+      message: DISPUTE_SCAN_REASON,
     });
     expect(early.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(
@@ -410,9 +413,9 @@ describe('dispute webhooks and staff void', () => {
 
     for (const body of [live.body.data, validation.body.data]) {
       expect(body).toMatchObject({
-        success: false,
-        reason: DISPUTE_SCAN_REASON,
-        reasonCode: VOID_DISPUTED_CODE,
+        valid: false,
+        reason: VOID_DISPUTED_CODE,
+        message: DISPUTE_SCAN_REASON,
       });
       expect(body.reason).not.toBe('Ticket credential must be reissued');
     }
@@ -478,9 +481,12 @@ describe('dispute webhooks and staff void', () => {
     expect(audit.createdAt.getTime()).toBeGreaterThanOrEqual(before - 1000);
     expect(audit.createdAt.getTime()).toBeLessThanOrEqual(Date.now() + 1000);
     const denied = await scan(order.tickets[0]);
-    expect(denied.body.data).toMatchObject({ success: false, reason: 'Ticket has been cancelled' });
+    expect(denied.body.data).toMatchObject({
+      valid: false,
+      reason: 'CANCELLED',
+      message: 'Ticket has been cancelled',
+    });
     expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
-    expect(denied.body.data.success).toBe(false);
   });
 
   it('writes an audit row for an owner void and scan denies that ticket', async () => {
@@ -538,13 +544,15 @@ describe('dispute webhooks and staff void', () => {
     const denied = await scan(first);
     expect(denied.status).toBe(200);
     expect(denied.body.data).toMatchObject({
-      success: false,
-      reason: 'Ticket has been cancelled',
+      valid: false,
+      reason: 'CANCELLED',
+      message: 'Ticket has been cancelled',
     });
     expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(audit.createdAt).toBeInstanceOf(Date);
     const admitted = await scan(second);
-    expect(admitted.body.data.success).toBe(true);
+    expect(admitted.body.data.valid).toBe(true);
+    expect(admitted.body.data.reason).toBeNull();
 
     const rest = await request(app)
       .post(`/api/v1/orders/${order.id}/void`)
@@ -565,5 +573,100 @@ describe('dispute webhooks and staff void', () => {
         },
       })
     ).toBe(2);
+  });
+
+  it('S-BUG-8 cancels tickets when dispute.created arrives before payment succeeds', async () => {
+    (notificationService.sendOrderConfirmation as jest.Mock).mockResolvedValue(true);
+    const localType = await prisma.ticketType.create({
+      data: {
+        eventId,
+        name: 'Disputed hold',
+        price: 20,
+        quantityTotal: 4,
+        quantityAvailable: 2,
+        quantityHeld: 2,
+        quantitySold: 0,
+      },
+    });
+    extraTypeIds.push(localType.id);
+    const label = 'early-dispute';
+    const order = await prisma.order.create({
+      data: {
+        orderNumber: `${key}-${label}`,
+        userId: buyerId,
+        eventId,
+        totalAmount: 40,
+        currency: 'cad',
+        status: 'PENDING',
+        paymentStatus: 'PENDING',
+        paymentIntentId: `pi_${key}_${label}`,
+        expiresAt: new Date(Date.now() + 600_000),
+        tickets: {
+          create: [0, 1].map((index) => ({
+            eventId,
+            userId: buyerId,
+            ticketTypeId: localType.id,
+            barcode: `${key}-${label}-${index}`,
+            pricePaid: 20,
+            status: 'VALID',
+            inventoryState: 'HELD',
+          })),
+        },
+      },
+      include: { tickets: true },
+    });
+    orderIds.push(order.id);
+    const disputeId = `dp_${key}_early`;
+    await deliver(
+      'charge.dispute.created',
+      { id: disputeId, status: 'needs_response', payment_intent: order.paymentIntentId },
+      `evt_${key}_early_dispute`
+    );
+    const held = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      include: { tickets: true },
+    });
+    expect(held.status).toBe('PENDING');
+    expect(held.refundStatus).toBe('DISPUTED');
+    expect(held.tickets.every((ticket) => ticket.status === 'VALID')).toBe(true);
+
+    await deliver(
+      'payment_intent.succeeded',
+      {
+        id: order.paymentIntentId,
+        status: 'succeeded',
+        amount: 4000,
+        amount_received: 4000,
+        currency: 'cad',
+        metadata: { orderId: order.id },
+      },
+      `evt_${key}_early_paid`
+    );
+    await orderService.confirmOrder(order.id);
+
+    const saved = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      include: { tickets: true },
+    });
+    const stock = await prisma.ticketType.findUniqueOrThrow({ where: { id: localType.id } });
+    expect(saved.status).toBe('PAID');
+    expect(saved.paymentStatus).toBe('SUCCEEDED');
+    expect(saved.refundStatus).toBe('DISPUTED');
+    expect(saved.tickets.every((ticket) => ticket.status === 'CANCELLED')).toBe(true);
+    expect(saved.tickets.every((ticket) => ticket.inventoryState === 'SOLD')).toBe(true);
+    expect(stock).toMatchObject({ quantitySold: 2, quantityAvailable: 2, quantityHeld: 0 });
+    const audits = await prisma.ticketInventoryReconciliation.findMany({
+      where: { planFingerprint: { contains: disputeId } },
+    });
+    expect(audits).toHaveLength(1);
+    expect(audits[0].before).toMatchObject({ inventoryReleased: false });
+    expect(audits[0].after).toMatchObject({ inventoryReleased: false });
+    const denied = await scan(saved.tickets[0]);
+    expect(denied.body.data).toMatchObject({
+      valid: false,
+      reason: VOID_DISPUTED_CODE,
+      message: DISPUTE_SCAN_REASON,
+    });
+    expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
   });
 });

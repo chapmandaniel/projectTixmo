@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     Home, Calendar, BarChart3, Bell,
     Users, CheckSquare, Sun, Moon,
-    Settings, LogOut, CheckCircle, User, Image
+    Settings, LogOut, CheckCircle, User, Image, ClipboardList
 } from 'lucide-react';
 
 import api from '../lib/api';
@@ -19,6 +19,7 @@ const navItems = [
     { id: 'approvals', icon: CheckCircle, label: 'Review Portal' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics' },
     { id: 'settings', icon: Settings, label: 'Settings' },
+    { id: 'staff-actions', icon: ClipboardList, label: 'Audit', roles: ['OWNER', 'ADMIN'] },
 ];
 
 const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
@@ -159,7 +160,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                         ref={scrollContainerRef}
                         className="hide-scrollbar flex w-full items-center gap-2 overflow-x-auto px-2 py-2.5 scroll-smooth"
                     >
-                        {navItems.map(item => (
+                        {navItems.filter((item) => !item.roles || item.roles.includes(user?.role)).map(item => (
                             <TopbarItem
                                 key={item.id}
                                 item={item}

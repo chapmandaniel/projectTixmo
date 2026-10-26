@@ -12,6 +12,7 @@ import {
   ticketFailure,
   consumeTicket,
 } from '../../services/ticket-admission.service';
+import { recordStaffAction, StaffAudit } from '../../services/staff-action-audit';
 
 const assertQrAdmission = (ticket: NonNullable<Awaited<ReturnType<typeof lockedTicket>>>): void => {
   if (ticket.order.status === 'REFUNDED') {
@@ -33,6 +34,7 @@ interface ListTicketsParams {
   userId?: string;
   sortBy?: 'createdAt' | 'pricePaid' | 'status';
   sortOrder?: 'asc' | 'desc';
+  includeHolder?: boolean;
 }
 
 interface PaginatedTickets {
@@ -58,6 +60,7 @@ export class TicketService {
       userId,
       sortBy = 'createdAt',
       sortOrder = 'desc',
+      includeHolder = false,
     } = params;
     const skip = (page - 1) * limit;
 
@@ -99,6 +102,9 @@ export class TicketService {
               refundStatus: true,
             },
           },
+          ...(includeHolder
+            ? { user: { select: { firstName: true, lastName: true, email: true } } }
+            : {}),
         },
       }),
       prisma.ticket.count({ where }),
@@ -305,7 +311,7 @@ export class TicketService {
   /**
    * Check in ticket (mark as used)
    */
-  async checkInTicket(barcode: string, checkedInBy?: string): Promise<Ticket> {
+  async checkInTicket(barcode: string, checkedInBy?: string, audit?: StaffAudit): Promise<Ticket> {
     return prisma.$transaction(async (tx) => {
       const reference = await tx.ticket.findUnique({ where: { barcode }, select: { id: true } });
       const ticket = reference ? await lockedTicket(tx, reference.id) : null;
@@ -317,7 +323,20 @@ export class TicketService {
           failure.reason,
           failure.reasonCode ? { reasonCode: failure.reasonCode } : undefined
         );
-      return consumeTicket(tx, ticket.id, checkedInBy);
+      const updated = await consumeTicket(tx, ticket.id, checkedInBy);
+      if (audit) {
+        await recordStaffAction(tx, {
+          action: 'CHECK_IN',
+          subjectType: 'TICKET',
+          subjectId: updated.id,
+          organizationId: ticket.event.organizationId,
+          actorId: audit.actorId,
+          reason: audit.reason ?? 'Attendee check-in',
+          before: { status: ticket.status },
+          after: { status: 'USED' },
+        });
+      }
+      return updated;
     });
   }
 

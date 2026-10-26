@@ -34,12 +34,19 @@ jest.doMock('../../src/middleware/rateLimiter', () => ({
   apiReadRateLimiter: pass,
   apiWriteRateLimiter: pass,
   authRateLimiter: pass,
+  authAccountRateLimiter: pass,
+  checkoutActorRateLimiter: pass,
+  checkoutIpRateLimiter: pass,
+  scannerAdmissionRateLimiter: pass,
 }));
 jest.doMock('../../src/middleware/auth', () => ({
   authenticate: auth,
   optionalAuthenticate: pass,
 }));
-jest.doMock('../../src/middleware/scannerAuth', () => ({ authenticateScanner: auth }));
+jest.doMock('../../src/middleware/scannerAuth', () => ({
+  authenticateScanner: auth,
+  authenticateAdmissionScanner: auth,
+}));
 jest.doMock('../../src/middleware/validate', () => ({
   validate: () => (req: Request, res: Response, next: NextFunction) =>
     req.headers['x-test-invalid'] ? res.status(400).json({ denied: 'validation' }) : next(),
@@ -128,6 +135,7 @@ jest.doMock('../../src/api/venues/routes', () => require('express').Router());
 jest.doMock('../../src/api/ticket-tiers/routes', () => require('express').Router());
 jest.doMock('../../src/api/events/routes', () => require('express').Router());
 jest.doMock('../../src/api/events/public.routes', () => require('express').Router());
+jest.doMock('../../src/api/staff-actions/routes', () => require('express').Router());
 const app = require('../../src/app').default;
 const scanners: [string, string][] = [
   ['post', '/scanners/register'],
