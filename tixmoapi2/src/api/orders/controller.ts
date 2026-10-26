@@ -130,6 +130,11 @@ export const refundOrder = catchAsync(async (req: AuthRequest, res: Response) =>
 });
 
 export const requestRefund = catchAsync(async (req: AuthRequest, res: Response) => {
+  if (!['OWNER', 'ADMIN'].includes(req.user!.role)) {
+    throw new ApiError(403, 'All sales are final. Refunds are issued by Tixmo staff.', {
+      code: 'BUYER_REFUNDS_DISABLED',
+    });
+  }
   const order = await orderService.getOrderById(req.params.id, req.user!.userId);
   if (!order) throw ApiError.notFound('Order not found');
   const result = await orderService.refundOrder(order.id);
