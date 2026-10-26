@@ -769,3 +769,368 @@ it('reconciles only upcoming types, leaves dry-run read-only, and runs with no e
     })
   ).toBe(0);
 }, 60000);
+
+async function unknownType(input: {
+  organizationId: string;
+  buyerId: string;
+  name: string;
+  start: Date;
+  end: Date | null;
+  quantityTotal?: number;
+}) {
+  const event = await prisma.event.create({
+    data: {
+      name: input.name,
+      slug: randomUUID(),
+      organizationId: input.organizationId,
+      status: 'ON_SALE',
+      startDatetime: input.start,
+      endDatetime: input.end,
+    },
+  });
+  const type = await prisma.ticketType.create({
+    data: {
+      eventId: event.id,
+      name: input.name,
+      price: 40,
+      quantityTotal: input.quantityTotal ?? 10,
+      quantityAvailable: 1,
+      quantitySold: 9,
+      quantityHeld: 0,
+      tierInventoryStatus: 'REQUIRES_RECONCILIATION',
+    },
+  });
+  return { event, type };
+}
+
+it('resolves unknown sold and released tickets, lists ambiguous ones, and skips ended events', async () => {
+  const organization = await prisma.organization.create({
+    data: {
+      name: 'Unknown reconcile test',
+      slug: randomUUID(),
+      type: 'PROMOTER',
+      status: 'ACTIVE',
+    },
+  });
+  const buyer = await prisma.user.create({
+    data: {
+      email: 'unknown-buyer-' + randomUUID() + '@test.com',
+      passwordHash: 'unused',
+      firstName: 'Private',
+      lastName: 'Customer',
+      role: 'CUSTOMER',
+    },
+  });
+  await prisma.user.create({
+    data: {
+      email: 'disabled-admin-' + randomUUID() + '@test.com',
+      passwordHash: 'unused',
+      firstName: 'Disabled',
+      lastName: 'Admin',
+      role: 'ADMIN',
+      organizationId: organization.id,
+      disabledAt: new Date('2026-10-01T00:00:00Z'),
+    },
+  });
+  const soon = new Date(Date.now() + 10 * 86400000);
+  const later = new Date(Date.now() + 11 * 86400000);
+  const past = new Date(Date.now() - 10 * 86400000);
+  const earlier = new Date(Date.now() - 11 * 86400000);
+  const tierCreated = new Date('2026-10-20T00:00:00Z');
+  const beforeTier = new Date('2026-10-01T00:00:00Z');
+  const afterTier = new Date('2026-10-21T00:00:00Z');
+  const shared = { organizationId: organization.id, buyerId: buyer.id };
+  const soldCase = await unknownType({
+    ...shared,
+    name: 'Upcoming unknown',
+    start: soon,
+    end: later,
+  });
+  const early = await prisma.ticketTier.create({
+    data: {
+      ticketTypeId: soldCase.type.id,
+      name: 'Early',
+      price: 40,
+      quantityLimit: 10,
+      sortOrder: 0,
+      createdAt: tierCreated,
+    },
+  });
+  await prisma.ticketTier.create({
+    data: {
+      ticketTypeId: soldCase.type.id,
+      name: 'Late',
+      price: 40,
+      quantityLimit: 10,
+      sortOrder: 1,
+      createdAt: tierCreated,
+    },
+  });
+  const samePriceOrder = await prisma.order.create({
+    data: {
+      orderNumber: randomUUID(),
+      userId: buyer.id,
+      eventId: soldCase.event.id,
+      status: 'PAID',
+      paymentStatus: 'SUCCEEDED',
+      refundStatus: 'NONE',
+      totalAmount: 40,
+      currency: 'cad',
+    },
+  });
+  const samePrice = await prisma.ticket.create({
+    data: {
+      userId: buyer.id,
+      orderId: samePriceOrder.id,
+      eventId: soldCase.event.id,
+      ticketTypeId: soldCase.type.id,
+      barcode: 'UNK-' + randomUUID(),
+      pricePaid: 40,
+      inventoryState: 'UNKNOWN',
+      status: 'VALID',
+      createdAt: beforeTier,
+    },
+  });
+  const promoOrder = await prisma.order.create({
+    data: {
+      orderNumber: randomUUID(),
+      userId: buyer.id,
+      eventId: soldCase.event.id,
+      status: 'PARTIALLY_REFUNDED',
+      paymentStatus: 'SUCCEEDED',
+      refundStatus: 'NONE',
+      totalAmount: 15,
+      discountAmount: 25,
+      currency: 'cad',
+    },
+  });
+  const promo = await prisma.ticket.create({
+    data: {
+      userId: buyer.id,
+      orderId: promoOrder.id,
+      eventId: soldCase.event.id,
+      ticketTypeId: soldCase.type.id,
+      barcode: 'UNK-' + randomUUID(),
+      pricePaid: 15,
+      inventoryState: 'UNKNOWN',
+      status: 'USED',
+      createdAt: afterTier,
+    },
+  });
+  const releasedCase = await unknownType({
+    ...shared,
+    name: 'Upcoming refunded',
+    start: soon,
+    end: later,
+  });
+  const refundedOrder = await prisma.order.create({
+    data: {
+      orderNumber: randomUUID(),
+      userId: buyer.id,
+      eventId: releasedCase.event.id,
+      status: 'REFUNDED',
+      paymentStatus: 'SUCCEEDED',
+      refundStatus: 'SUCCEEDED',
+      totalAmount: 40,
+      currency: 'cad',
+    },
+  });
+  const released = await prisma.ticket.create({
+    data: {
+      userId: buyer.id,
+      orderId: refundedOrder.id,
+      eventId: releasedCase.event.id,
+      ticketTypeId: releasedCase.type.id,
+      barcode: 'UNK-' + randomUUID(),
+      pricePaid: 40,
+      inventoryState: 'UNKNOWN',
+      status: 'CANCELLED',
+    },
+  });
+  const ambiguousCase = await unknownType({
+    ...shared,
+    name: 'Upcoming pending',
+    start: soon,
+    end: later,
+  });
+  const pendingOrder = await prisma.order.create({
+    data: {
+      orderNumber: randomUUID(),
+      userId: buyer.id,
+      eventId: ambiguousCase.event.id,
+      status: 'PENDING',
+      paymentStatus: 'PENDING',
+      totalAmount: 40,
+      currency: 'cad',
+    },
+  });
+  const ambiguous = await prisma.ticket.create({
+    data: {
+      userId: buyer.id,
+      orderId: pendingOrder.id,
+      eventId: ambiguousCase.event.id,
+      ticketTypeId: ambiguousCase.type.id,
+      barcode: 'UNK-' + randomUUID(),
+      pricePaid: 40,
+      inventoryState: 'UNKNOWN',
+      status: 'VALID',
+    },
+  });
+  const endedCase = await unknownType({
+    ...shared,
+    name: 'Ended unknown',
+    start: earlier,
+    end: past,
+  });
+  const endedOrder = await prisma.order.create({
+    data: {
+      orderNumber: randomUUID(),
+      userId: buyer.id,
+      eventId: endedCase.event.id,
+      status: 'PAID',
+      paymentStatus: 'SUCCEEDED',
+      refundStatus: 'NONE',
+      totalAmount: 40,
+      currency: 'cad',
+    },
+  });
+  const endedTicket = await prisma.ticket.create({
+    data: {
+      userId: buyer.id,
+      orderId: endedOrder.id,
+      eventId: endedCase.event.id,
+      ticketTypeId: endedCase.type.id,
+      barcode: 'UNK-' + randomUUID(),
+      pricePaid: 40,
+      inventoryState: 'UNKNOWN',
+      status: 'VALID',
+    },
+  });
+
+  const env = {
+    ...process.env,
+    TIXMO_INVENTORY_DATABASE_URL: process.env.DATABASE_URL,
+    TIXMO_ALLOW_INVENTORY_RECONCILIATION: 'true',
+    TIXMO_INVENTORY_WRITERS_QUIESCED: 'true',
+  };
+  const flags = ['--upcoming-only', '--resolve-unknown'];
+  const preview = spawnSync(process.execPath, [script, '--dry-run', ...flags], {
+    env,
+    encoding: 'utf8',
+  });
+  expect(preview.status).toBe(0);
+  const previewBody = JSON.parse(preview.stdout);
+  expect(previewBody.actorId).toBe(SYSTEM_ACTOR);
+  expect(previewBody.writes).toBe(false);
+  expect(previewBody.types.map((row: { ticketTypeId: string }) => row.ticketTypeId)).not.toContain(
+    endedCase.type.id
+  );
+  const soldPlan = previewBody.types.find(
+    (row: { ticketTypeId: string }) => row.ticketTypeId === soldCase.type.id
+  );
+  const releasedPlan = previewBody.types.find(
+    (row: { ticketTypeId: string }) => row.ticketTypeId === releasedCase.type.id
+  );
+  const ambiguousPlan = previewBody.types.find(
+    (row: { ticketTypeId: string }) => row.ticketTypeId === ambiguousCase.type.id
+  );
+  expect(soldPlan.changes.tickets).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        ticketId: samePrice.id,
+        fromState: 'UNKNOWN',
+        toState: 'SOLD',
+        toTierId: early.id,
+        reason: 'paid-valid-or-used',
+      }),
+      expect.objectContaining({
+        ticketId: promo.id,
+        fromState: 'UNKNOWN',
+        toState: 'SOLD',
+        toTierId: early.id,
+        reason: 'paid-valid-or-used',
+      }),
+    ])
+  );
+  expect(releasedPlan.changes.tickets).toEqual([
+    expect.objectContaining({
+      ticketId: released.id,
+      fromState: 'UNKNOWN',
+      toState: 'RELEASED',
+      reason: 'refunded-or-cancelled-order',
+    }),
+  ]);
+  expect(ambiguousPlan.action).toBe('list');
+  expect(ambiguousPlan.changes).toBeNull();
+  expect(ambiguousPlan.unresolved).toEqual([
+    expect.objectContaining({ ticketId: ambiguous.id, reason: 'pending-order' }),
+  ]);
+  expect(await prisma.ticketInventoryReconciliation.count()).toBe(0);
+  expect(
+    (await prisma.ticket.findUniqueOrThrow({ where: { id: samePrice.id } })).inventoryState
+  ).toBe('UNKNOWN');
+
+  expect(
+    await prisma.user.count({ where: { role: { in: ['OWNER', 'ADMIN'] }, disabledAt: null } })
+  ).toBe(0);
+  const applied = spawnSync(process.execPath, [script, '--apply', ...flags], {
+    env,
+    encoding: 'utf8',
+  });
+  expect(applied.status).toBe(0);
+  expect(JSON.parse(applied.stdout).changed).toBe(2);
+  expect(await prisma.ticket.findUniqueOrThrow({ where: { id: samePrice.id } })).toMatchObject({
+    inventoryState: 'SOLD',
+    tierId: early.id,
+  });
+  expect(await prisma.ticket.findUniqueOrThrow({ where: { id: promo.id } })).toMatchObject({
+    inventoryState: 'SOLD',
+    tierId: early.id,
+  });
+  expect(
+    await prisma.ticketType.findUniqueOrThrow({ where: { id: soldCase.type.id } })
+  ).toMatchObject({
+    quantitySold: 2,
+    quantityHeld: 0,
+    quantityAvailable: 8,
+    tierInventoryStatus: 'READY',
+  });
+  expect(await prisma.ticket.findUniqueOrThrow({ where: { id: released.id } })).toMatchObject({
+    inventoryState: 'RELEASED',
+  });
+  expect(
+    await prisma.ticketType.findUniqueOrThrow({ where: { id: releasedCase.type.id } })
+  ).toMatchObject({
+    quantitySold: 0,
+    quantityAvailable: 10,
+    tierInventoryStatus: 'READY',
+  });
+  expect(await prisma.ticket.findUniqueOrThrow({ where: { id: ambiguous.id } })).toMatchObject({
+    inventoryState: 'UNKNOWN',
+  });
+  expect(
+    await prisma.ticketType.findUniqueOrThrow({ where: { id: ambiguousCase.type.id } })
+  ).toMatchObject({ tierInventoryStatus: 'REQUIRES_RECONCILIATION', quantitySold: 9 });
+  expect(await prisma.ticket.findUniqueOrThrow({ where: { id: endedTicket.id } })).toMatchObject({
+    inventoryState: 'UNKNOWN',
+  });
+  expect(
+    await prisma.ticketType.findUniqueOrThrow({ where: { id: endedCase.type.id } })
+  ).toMatchObject({ tierInventoryStatus: 'REQUIRES_RECONCILIATION', quantitySold: 9 });
+  const audits = await prisma.ticketInventoryReconciliation.findMany();
+  expect(audits).toHaveLength(2);
+  expect(audits.every((row) => row.actorId === SYSTEM_ACTOR)).toBe(true);
+  expect(
+    await prisma.ticketInventoryReconciliation.count({
+      where: { ticketTypeId: { in: [ambiguousCase.type.id, endedCase.type.id] } },
+    })
+  ).toBe(0);
+
+  const again = spawnSync(process.execPath, [script, '--apply', ...flags], {
+    env,
+    encoding: 'utf8',
+  });
+  expect(again.status).toBe(0);
+  expect(JSON.parse(again.stdout).changed).toBe(0);
+  expect(await prisma.ticketInventoryReconciliation.count()).toBe(2);
+}, 60000);

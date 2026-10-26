@@ -75,14 +75,54 @@ Do not store backup files in git. Store them in the approved secure location for
 npm --prefix tixmoapi2 run migrate
 ```
 
-4. Restart or redeploy the API only if the deploy platform does not do this automatically.
-5. Run smoke checks:
+4. Dry-run ticket inventory in the API service shell before reopening sales. The shell working directory is `/app`. Migration #27 disables `admin@tixmo.com`, so this uses the system actor `system-inventory-reconcile` and does not need an enabled OWNER or ADMIN. It is a CLI only; there is no HTTP route.
+
+```bash
+TIXMO_INVENTORY_DATABASE_URL="$DATABASE_URL" \
+  npm run inventory:reconcile -- --dry-run --upcoming-only --resolve-unknown
+```
+
+`--upcoming-only` does not touch an event whose end, or start when there is no end, is already past. Each planned write is one object in `changes.tickets` with `ticketId`, `fromState`, `toState`, and `reason`. Ambiguous tickets are listed in `unresolved` and are not writes. Dry-run does not write.
+
+5. Stop ticket writers, then apply that same reconciliation:
+
+```bash
+TIXMO_INVENTORY_DATABASE_URL="$DATABASE_URL" \
+TIXMO_ALLOW_INVENTORY_RECONCILIATION=true \
+TIXMO_INVENTORY_WRITERS_QUIESCED=true \
+  npm run inventory:reconcile -- --apply --upcoming-only --resolve-unknown
+```
+
+A PAID or PARTIALLY_REFUNDED order with a succeeded payment turns UNKNOWN VALID or USED tickets into SOLD, including promo-priced tickets and overlapping same-price tiers. A REFUNDED or CANCELLED order turns UNKNOWN tickets into RELEASED. Ambiguous tickets stay unchanged. The command never releases a VALID or USED seat on a PAID or PARTIALLY_REFUNDED order and never sells past `quantity_total` or a tier `quantity_limit`. A second apply with nothing left to change writes no audit row.
+
+When the operator machine cannot open a service shell, set the API service start command temporarily, deploy, and read the deploy logs. The task process does not start the HTTP server. `DATABASE_URL` is used when `TIXMO_INVENTORY_DATABASE_URL` is unset.
+
+Dry-run start command:
+
+```bash
+npm run task -- inventory-reconcile-dry-run
+```
+
+Apply start command, after `TIXMO_ALLOW_INVENTORY_RECONCILIATION=true` and `TIXMO_INVENTORY_WRITERS_QUIESCED=true` are set on the service:
+
+```bash
+npm run task -- inventory-reconcile-apply
+```
+
+Revert the start command to the normal server before the next deploy, and remove those two variables:
+
+```bash
+/bin/sh scripts/start-api.sh
+```
+
+6. Restart or redeploy the API only if the deploy platform does not do this automatically.
+7. Run smoke checks:
    - Health endpoint.
    - Login.
    - Create/read event.
    - Create paid order in staging or production-like environment.
    - Scanner sync/scan if this migration touches tickets, orders, scanners, or events.
-6. Check Sentry for a clean release and no new migration-related errors.
+8. Check Sentry for a clean release and no new migration-related errors.
 
 ## Rollback Decision Tree
 

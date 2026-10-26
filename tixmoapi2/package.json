@@ -34,7 +34,8 @@
     "test:development": "node --test scripts/development-target.test.cjs",
     "db:seed:approvals": "TS_NODE_TRANSPILE_ONLY=true ts-node prisma/seed-approvals.ts",
     "reminders:reconcile": "node prisma/reconcile-approval-reminders.js",
-    "inventory:reconcile": "node prisma/reconcile-ticket-inventory.js"
+    "inventory:reconcile": "node prisma/reconcile-ticket-inventory.js",
+    "task": "node scripts/run-task.cjs"
   },
   "keywords": [
     "ticketing",
