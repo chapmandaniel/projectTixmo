@@ -137,6 +137,10 @@ export const config = {
   // Email
   postmarkServerToken: process.env.POSTMARK_SERVER_TOKEN || '',
   postmarkMessageStream: process.env.POSTMARK_MESSAGE_STREAM || '',
+  sellerName: process.env.TIXMO_SELLER_NAME || '',
+  supportEmail: process.env.SUPPORT_EMAIL || 'info@tixmo.co',
+  refundPolicyUrl: process.env.REFUND_POLICY_URL || '',
+  termsUrl: process.env.TERMS_URL || '',
   fromEmail: process.env.FROM_EMAIL || 'noreply@tixmo.co',
   fromName: process.env.FROM_NAME || 'Tixmo',
   emailHost: process.env.EMAIL_HOST || 'smtp.gmail.com',

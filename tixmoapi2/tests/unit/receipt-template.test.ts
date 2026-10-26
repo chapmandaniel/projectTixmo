@@ -3,7 +3,13 @@ import { NotificationService } from '../../src/utils/notificationService';
 import { formatHstAmountLine, formatMoney } from '../../src/utils/receipt';
 
 jest.mock('../../src/config/environment', () => ({
-  config: { clientUrl: 'https://configured-dashboard.example.test' },
+  config: {
+    clientUrl: 'https://configured-dashboard.example.test',
+    sellerName: '',
+    supportEmail: 'info@tixmo.co',
+    refundPolicyUrl: '',
+    termsUrl: '',
+  },
 }));
 jest.mock('../../src/config/email', () => ({ transporter: {}, emailFrom: {} }));
 jest.mock('../../src/config/logger', () => ({ logger: {} }));
@@ -77,6 +83,14 @@ describe('receipt wallet retrieval', () => {
     expect(email.text).toContain('ORDER-123');
     expect(email.text).not.toContain('Your tickets will be available in your account shortly.');
     expect(email.html).not.toMatch(/qrCode|resetToken|accessToken|password=/i);
+    expect(email.html).not.toContain('Sold by');
+    expect(email.text).not.toContain('Sold by');
+    expect(email.html).toContain('Questions? <a href="mailto:info@tixmo.co">info@tixmo.co</a>');
+    expect(email.text).toContain('Questions? info@tixmo.co');
+    expect(email.html).toContain(
+      'Please don\'t reply to this email. Contact <a href="mailto:info@tixmo.co">info@tixmo.co</a>.'
+    );
+    expect(email.text).toContain("Please don't reply to this email. Contact info@tixmo.co.");
   });
 
   it('prints the HST registration number when it is configured', () => {
@@ -113,7 +127,9 @@ describe('receipt wallet retrieval', () => {
     'omits the link for invalid or unsafe configured base %j without losing the receipt',
     (base) => {
       const email = renderReceipt(base);
-      expect(email.html).not.toContain('href=');
+      expect(email.html).not.toContain('/wallet');
+      expect(email.html).not.toContain('View your tickets');
+      expect(email.html).toContain('href="mailto:info@tixmo.co"');
       expect(email.text).not.toContain('View your tickets:');
       expect(email.text).toContain('Total paid: CA$25.50 (includes HST and all fees)');
       expect(email.text).toContain('ORDER-123');
@@ -127,4 +143,133 @@ describe('receipt wallet retrieval', () => {
       expect(renderReceipt(base).text).toContain(`${base}/wallet`);
     }
   );
+});
+
+describe('buyer receipt copy', () => {
+  const render = (
+    extra: Partial<Parameters<typeof orderConfirmationEmail>[0]> = {}
+  ): ReturnType<typeof orderConfirmationEmail> =>
+    orderConfirmationEmail({ ...receipt, ...extra }, 'https://dashboard.example.test');
+
+  it('leaves the seller line off when TIXMO_SELLER_NAME is unset and escapes it when set', () => {
+    const unset = render();
+    const blank = render({ sellerName: '   ' });
+    const named = render({ sellerName: 'Acme <script> & "Co"' });
+    for (const email of [unset, blank]) {
+      expect(email.html).not.toContain('Sold by');
+      expect(email.text).not.toContain('Sold by');
+    }
+    expect(named.html).toContain('Sold by Acme &lt;script&gt; &amp; &quot;Co&quot;');
+    expect(named.html).not.toContain('<script>');
+    expect(named.text).toContain('Sold by Acme <script> & "Co"');
+    expect(named.text).toContain('Includes HST (15%): CA$3.33');
+    expect(named.text.indexOf('Includes HST (15%): CA$3.33')).toBeLessThan(
+      named.text.indexOf('Sold by Acme <script> & "Co"')
+    );
+    expect(named.html.indexOf('Includes HST (15%): CA$3.33')).toBeLessThan(
+      named.html.indexOf('Sold by')
+    );
+  });
+
+  it('prints policy links only for valid https URLs', () => {
+    const hidden = render();
+    const rejected = render({
+      refundPolicyUrl: 'http://policies.example.test/refunds',
+      termsUrl: 'https://user:secret@policies.example.test/terms',
+    });
+    const refundOnly = render({ refundPolicyUrl: 'https://policies.example.test/refunds' });
+    const both = render({
+      refundPolicyUrl: '  https://policies.example.test/refunds  ',
+      termsUrl: 'https://policies.example.test/terms',
+    });
+    for (const email of [hidden, rejected]) {
+      expect(email.html).not.toContain('Refund policy');
+      expect(email.html).not.toContain('Terms of Sale');
+      expect(email.text).not.toContain('Refund policy:');
+      expect(email.text).not.toContain('Terms:');
+      expect(email.html).not.toContain('secret');
+      expect(email.text).not.toContain('secret');
+    }
+    expect(refundOnly.html).toContain(
+      '<a href="https://policies.example.test/refunds">Refund policy</a>'
+    );
+    expect(refundOnly.html).not.toContain('Terms of Sale');
+    expect(refundOnly.text).toContain('Refund policy: https://policies.example.test/refunds');
+    expect(refundOnly.text).not.toContain('Terms:');
+    expect(both.html).toContain(
+      '<a href="https://policies.example.test/refunds">Refund policy</a> · <a href="https://policies.example.test/terms">Terms of Sale</a>'
+    );
+    expect(both.text).toContain(
+      'Refund policy: https://policies.example.test/refunds · Terms: https://policies.example.test/terms'
+    );
+    expect(both.html.indexOf('All sales are final')).toBeLessThan(
+      both.html.indexOf('Refund policy')
+    );
+    expect(both.text.indexOf('All sales are final')).toBeLessThan(
+      both.text.indexOf('Refund policy:')
+    );
+  });
+
+  it('falls back to info@tixmo.co when the support email is missing or invalid', () => {
+    for (const supportEmail of [
+      undefined,
+      '',
+      '   ',
+      'not-an-email',
+      'bad yosef.c@example.com',
+      'a@b@c.com',
+    ]) {
+      const email = render({ supportEmail });
+      expect(email.html).toContain('Questions? <a href="mailto:info@tixmo.co">info@tixmo.co</a>');
+      expect(email.text).toContain('Questions? info@tixmo.co');
+      expect(email.text).toContain('Contact info@tixmo.co.');
+      expect(email.html).not.toContain('not-an-email');
+    }
+    const custom = render({ supportEmail: ' ops&crew@tixmo.co ' });
+    expect(custom.html).toContain(
+      'Questions? <a href="mailto:ops&amp;crew@tixmo.co">ops&amp;crew@tixmo.co</a>'
+    );
+    expect(custom.html).not.toContain('mailto:ops&crew@tixmo.co');
+    expect(custom.text).toContain('Questions? ops&crew@tixmo.co');
+    expect(custom.text).toContain('Contact ops&crew@tixmo.co.');
+  });
+
+  it('passes receipt copy from server config into the order confirmation', async () => {
+    const receiptEnv = jest.requireMock<{
+      config: {
+        sellerName: string;
+        supportEmail: string;
+        refundPolicyUrl: string;
+        termsUrl: string;
+      };
+    }>('../../src/config/environment');
+    const service = new NotificationService();
+    const send = jest.spyOn(service, 'sendEmail').mockResolvedValue(true);
+    const original = { ...receiptEnv.config };
+    try {
+      await service.sendOrderConfirmation({ ...receipt, to: 'buyer@example.test' });
+      expect(send.mock.calls[0][0].html).not.toContain('Sold by');
+      expect(send.mock.calls[0][0].text).not.toContain('Sold by');
+
+      receiptEnv.config.sellerName = 'Seller <b>';
+      receiptEnv.config.supportEmail = 'not-an-email';
+      receiptEnv.config.refundPolicyUrl = 'http://policies.example.test/refunds';
+      receiptEnv.config.termsUrl = 'https://policies.example.test/terms';
+      await service.sendOrderConfirmation({ ...receipt, to: 'buyer@example.test' });
+      const sent = send.mock.calls[1][0];
+      expect(sent.html).toContain('Sold by Seller &lt;b&gt;');
+      expect(sent.html).not.toContain('Sold by Seller <b>');
+      expect(sent.text).toContain('Sold by Seller <b>');
+      expect(sent.html).not.toContain('http://policies.example.test/refunds');
+      expect(sent.text).not.toContain('Refund policy:');
+      expect(sent.html).toContain(
+        '<a href="https://policies.example.test/terms">Terms of Sale</a>'
+      );
+      expect(sent.text).toContain('Terms: https://policies.example.test/terms');
+      expect(sent.html).toContain('mailto:info@tixmo.co');
+      expect(sent.text).toContain('Questions? info@tixmo.co');
+    } finally {
+      Object.assign(receiptEnv.config, original);
+    }
+  });
 });

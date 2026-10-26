@@ -94,6 +94,34 @@ describe('environment config', () => {
     );
   });
 
+  it('leaves buyer receipt copy unset except the support email default', () => {
+    delete process.env.TIXMO_SELLER_NAME;
+    delete process.env.SUPPORT_EMAIL;
+    delete process.env.REFUND_POLICY_URL;
+    delete process.env.TERMS_URL;
+
+    const { config } = require('../../src/config/environment');
+
+    expect(config.sellerName).toBe('');
+    expect(config.supportEmail).toBe('info@tixmo.co');
+    expect(config.refundPolicyUrl).toBe('');
+    expect(config.termsUrl).toBe('');
+  });
+
+  it('reads buyer receipt copy from the environment', () => {
+    process.env.TIXMO_SELLER_NAME = 'Example Seller';
+    process.env.SUPPORT_EMAIL = 'desk@tixmo.co';
+    process.env.REFUND_POLICY_URL = 'https://policies.example.test/refunds';
+    process.env.TERMS_URL = 'https://policies.example.test/terms';
+
+    const { config } = require('../../src/config/environment');
+
+    expect(config.sellerName).toBe('Example Seller');
+    expect(config.supportEmail).toBe('desk@tixmo.co');
+    expect(config.refundPolicyUrl).toBe('https://policies.example.test/refunds');
+    expect(config.termsUrl).toBe('https://policies.example.test/terms');
+  });
+
   it('defaults the buyer sender name to Tixmo and hides an unset HST number', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     process.env.FROM_NAME = '';
