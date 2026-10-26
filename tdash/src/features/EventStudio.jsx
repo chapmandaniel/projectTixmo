@@ -202,6 +202,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
             const ticketTypes = tickets.map(t => ({
                 id: persistedId(t.id), name: t.name, price: Number(t.price), quantity: Number(t.quantity),
                 status: t.status || 'ACTIVE', maxPerOrder: t.maxPerOrder,
+                ...(Number.isInteger(t.sortOrder) && t.sortOrder >= 0 ? { sortOrder: t.sortOrder } : {}),
                 // Studio has no ticket-window editor: preserve API instants verbatim, not browser wall time.
                 ...(t.salesStart ? { salesStart: t.salesStart } : {}),
                 ...(t.salesEnd ? { salesEnd: t.salesEnd } : {}),

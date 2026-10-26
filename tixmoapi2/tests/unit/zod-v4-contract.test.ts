@@ -8,6 +8,10 @@ import {
   eventConfigurationSchema,
   salesPauseSchema,
 } from '../../src/api/events/validation';
+import {
+  createTicketTypeSchema,
+  updateTicketTypeSchema,
+} from '../../src/api/ticket-types/validation';
 import { createApprovalBodySchema } from '../../src/api/approvals/validation';
 import { loginSchema } from '../../src/api/auth/validation';
 import { validate } from '../../src/middleware/validate';
@@ -143,8 +147,47 @@ describe('patched Zod 4 and retained HTTP validation contracts', () => {
       status: 'ACTIVE',
       tiers: [],
     });
+    expect(parsed.body.ticketTypes[0]).not.toHaveProperty('sortOrder');
     expect(parsed.body.event.description).toBe('');
     expect(parsed.body.event).not.toHaveProperty('venueId');
+  });
+
+  test('ticket sort order is accepted when present and stays omitted otherwise', () => {
+    const event = {
+      organizationId: looseId,
+      title: 'Synthetic',
+      startDateTime: '2027-01-01T00:00:00Z',
+      endDateTime: '2027-01-02T00:00:00Z',
+    };
+    expect(
+      eventConfigurationSchema.parse({
+        params: {},
+        body: {
+          event,
+          ticketTypes: [{ name: 'Synthetic', price: 1, quantity: 2, sortOrder: 2 }],
+        },
+      }).body.ticketTypes[0].sortOrder
+    ).toBe(2);
+    expect(
+      eventConfigurationSchema.safeParse({
+        params: {},
+        body: { event, ticketTypes: [{ name: 'Synthetic', price: 1, quantity: 2, sortOrder: -1 }] },
+      }).success
+    ).toBe(false);
+    const created = createTicketTypeSchema.parse({
+      body: { eventId: looseId, name: 'Synthetic', price: 1, quantity: 2 },
+    });
+    expect(created.body).not.toHaveProperty('sortOrder');
+    expect(
+      createTicketTypeSchema.parse({
+        body: { eventId: looseId, name: 'Synthetic', price: 1, quantity: 2, sortOrder: 3 },
+      }).body.sortOrder
+    ).toBe(3);
+    expect(updateTicketTypeSchema.parse({ body: { name: 'Synthetic' } }).body).not.toHaveProperty(
+      'sortOrder'
+    );
+    expect(updateTicketTypeSchema.parse({ body: { sortOrder: 1 } }).body.sortOrder).toBe(1);
+    expect(updateTicketTypeSchema.safeParse({ body: { sortOrder: 1.5 } }).success).toBe(false);
   });
 
   test('multipart reviewer preprocessing preserves trims and unknown-key stripping', () => {

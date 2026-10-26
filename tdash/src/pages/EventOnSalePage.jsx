@@ -29,6 +29,7 @@ import {
 import { formatEventDate } from '../lib/eventTime';
 import {
     checkoutSelection,
+    comparePublicTicketTypes,
     eventAddress,
     eventArtwork,
     eventTimeZone,
@@ -60,7 +61,7 @@ export const EventOnSaleView = ({
     const address = eventAddress(event.venue);
     const types = [...(event.ticketTypes || [])]
         .filter((ticket) => !ticket.status || ticket.status !== 'HIDDEN')
-        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        .sort(comparePublicTicketTypes);
     const items = types.map((ticket) => {
         const offer = getPublicTicketOffer(ticket, now);
         return {

@@ -87,6 +87,11 @@ test('actual public query uses server sortOrder/id tie break for price and capac
   const dto = await load();
   expect(dto.ticketTypes[0].tiers.map((row: any) => row.id)).toEqual(['a', 'b']);
   expect(checkoutTicketState(dto, dto.ticketTypes[0], now)).toEqual({ price: 12, max: 1 });
+  expect(query.include.ticketTypes.orderBy).toEqual([
+    { sortOrder: 'asc' },
+    { createdAt: 'asc' },
+    { id: 'asc' },
+  ]);
   expect(query.include.ticketTypes.include.tiers.orderBy).toEqual([
     { sortOrder: 'asc' },
     { id: 'asc' },

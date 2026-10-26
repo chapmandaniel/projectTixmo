@@ -103,6 +103,7 @@ export const eventConfigurationSchema = z.object({
         createTicketTypeSchema.shape.body.omit({ eventId: true }).extend({
           id: z.string().guid('Invalid uuid').optional(),
           status: z.enum(['ACTIVE', 'HIDDEN', 'SOLD_OUT']).default('ACTIVE'),
+          sortOrder: z.number().int().nonnegative().optional(),
           tiers: z
             .array(
               createTierSchema.shape.body.omit({ ticketTypeId: true }).extend({

@@ -6,6 +6,7 @@ import { ActorScope, assertOrganizationAccess } from '../../utils/tenantScope';
 import { lockOrder } from '../../services/order-inventory.service';
 import { orderService } from '../orders/service';
 import { receiptDisclosure } from '../../utils/receipt';
+import { ticketTypeDisplayOrder } from '../ticket-types/service';
 
 interface CreateEventInput {
   title: string;
@@ -675,7 +676,7 @@ export class EventService {
   async cloneEvent(id: string): Promise<Event> {
     const event = await prisma.event.findUnique({
       where: { id },
-      include: { ticketTypes: true },
+      include: { ticketTypes: { orderBy: ticketTypeDisplayOrder } },
     });
 
     if (!event) {
@@ -778,6 +779,7 @@ export class EventService {
           },
           ticketTypes: {
             where: { status: 'ACTIVE' },
+            orderBy: ticketTypeDisplayOrder,
             select: {
               id: true,
               name: true,
@@ -832,6 +834,7 @@ export class EventService {
         },
         ticketTypes: {
           where: { status: 'ACTIVE' },
+          orderBy: ticketTypeDisplayOrder,
           include: {
             _count: { select: { tiers: true } },
             tiers: {

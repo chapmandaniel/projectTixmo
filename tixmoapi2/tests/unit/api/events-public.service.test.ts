@@ -40,6 +40,7 @@ const publicQuery = {
     venue: { select: { id: true, name: true, address: true } },
     ticketTypes: {
       where: { status: 'ACTIVE' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
       include: {
         _count: { select: { tiers: true } },
         tiers: {
