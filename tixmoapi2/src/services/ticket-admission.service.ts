@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { DOORS_BEFORE_START_MS } from '../config/doors';
 import { ApiError } from '../utils/ApiError';
 import { lockOrder } from './order-inventory.service';
 import { DISPUTE_SCAN_REASON, orderDisputed, VOID_DISPUTED_CODE } from './ticket-void.service';
@@ -7,6 +8,8 @@ export type AdmissionDenial = {
   reason: string;
   reasonCode?: string;
 };
+
+export { DOORS_BEFORE_START_MS };
 
 export async function lockedTicket(tx: Prisma.TransactionClient, id: string) {
   const reference = await tx.ticket.findUnique({
@@ -26,9 +29,6 @@ export async function lockedTicket(tx: Prisma.TransactionClient, id: string) {
     },
   });
 }
-
-// Attendees check-in opens at doors, two hours before the event start.
-export const DOORS_BEFORE_START_MS = 2 * 60 * 60 * 1000;
 
 export function ticketFailure(
   ticket: NonNullable<Awaited<ReturnType<typeof lockedTicket>>>,

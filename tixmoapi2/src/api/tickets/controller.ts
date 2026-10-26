@@ -9,16 +9,22 @@ const canManageTickets = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includ
 
 export const listMyTickets = catchAsync(async (req: AuthRequest, res: Response) => {
   res.json(
-    successResponse(await ticketService.listTickets({ ...req.query, userId: req.user!.userId }))
+    successResponse(
+      await ticketService.listTickets({
+        ...req.query,
+        userId: req.user!.userId,
+        includeHolder: false,
+      })
+    )
   );
 });
 
 export const listTickets = catchAsync(async (req: AuthRequest, res: Response) => {
-  const userId = canManageTickets(req.user!.role) ? undefined : req.user!.userId;
-
+  const staff = canManageTickets(req.user!.role);
   const result = await ticketService.listTickets({
     ...req.query,
-    userId,
+    userId: staff ? undefined : req.user!.userId,
+    includeHolder: staff,
   });
 
   res.json(successResponse(result));

@@ -33,6 +33,7 @@ interface ListTicketsParams {
   userId?: string;
   sortBy?: 'createdAt' | 'pricePaid' | 'status';
   sortOrder?: 'asc' | 'desc';
+  includeHolder?: boolean;
 }
 
 interface PaginatedTickets {
@@ -58,6 +59,7 @@ export class TicketService {
       userId,
       sortBy = 'createdAt',
       sortOrder = 'desc',
+      includeHolder = false,
     } = params;
     const skip = (page - 1) * limit;
 
@@ -99,6 +101,9 @@ export class TicketService {
               refundStatus: true,
             },
           },
+          ...(includeHolder
+            ? { user: { select: { firstName: true, lastName: true, email: true } } }
+            : {}),
         },
       }),
       prisma.ticket.count({ where }),

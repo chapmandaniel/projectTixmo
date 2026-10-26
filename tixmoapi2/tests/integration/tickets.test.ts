@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../../src/app';
+import { DOORS_BEFORE_START_MS } from '../../src/config/doors';
 import {
   cleanupTestData,
   confirmOrderForTest,
@@ -179,6 +180,89 @@ describe('Tickets API', () => {
       const res = await request(app).get('/api/v1/tickets');
 
       expect(res.status).toBe(401);
+    });
+
+    it('includes holder name and email for owner, admin, and manager only', async () => {
+      const customer = await request(app)
+        .get(`/api/v1/tickets?eventId=${eventId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(customer.status).toBe(200);
+      expect(customer.body.data.tickets.length).toBeGreaterThan(0);
+      expect(
+        customer.body.data.tickets.every((ticket: { user?: unknown }) => ticket.user === undefined)
+      ).toBe(true);
+
+      const mine = await request(app)
+        .get('/api/v1/tickets/mine')
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(
+        mine.body.data.tickets.every((ticket: { user?: unknown }) => ticket.user === undefined)
+      ).toBe(true);
+
+      const promoter = await request(app)
+        .get(`/api/v1/tickets?eventId=${eventId}&includeHolder=true`)
+        .set('Authorization', `Bearer ${promoterToken}`);
+      expect(promoter.status).toBe(200);
+      expect(
+        promoter.body.data.tickets.every((ticket: { user?: unknown }) => ticket.user === undefined)
+      ).toBe(true);
+
+      const holder = {
+        firstName: 'Tickets',
+        lastName: 'Test',
+        email: 'tickets-test@example.com',
+      };
+      for (const role of ['OWNER', 'ADMIN', 'MANAGER'] as const) {
+        const staff = await registerUser(app, {
+          role,
+          email: `tickets-holder-${role.toLowerCase()}-${Date.now()}@example.com`,
+        });
+        const res = await request(app)
+          .get(`/api/v1/tickets?eventId=${eventId}`)
+          .set('Authorization', `Bearer ${staff.accessToken}`);
+        expect(res.status).toBe(200);
+        const row = res.body.data.tickets.find((ticket: { id: string }) => ticket.id === ticketId);
+        expect(row.user).toEqual(holder);
+        expect(Object.keys(row.user).sort()).toEqual(['email', 'firstName', 'lastName']);
+      }
+    });
+
+    it('checks in from start minus two hours and refuses earlier', async () => {
+      const event = await prisma.event.findUniqueOrThrow({ where: { id: eventId } });
+      const spare = await prisma.ticket.findFirstOrThrow({
+        where: { orderId, status: 'VALID', id: { not: ticketId } },
+      });
+      const originalStart = event.startDatetime;
+      try {
+        await prisma.event.update({
+          where: { id: eventId },
+          data: { startDatetime: new Date(Date.now() + DOORS_BEFORE_START_MS + 60_000) },
+        });
+        const early = await request(app)
+          .post('/api/v1/tickets/check-in')
+          .set('Authorization', `Bearer ${promoterToken}`)
+          .send({ barcode: spare.barcode });
+        expect(early.status).toBe(400);
+        expect(early.body.message).toBe('Event has not started yet');
+
+        await prisma.event.update({
+          where: { id: eventId },
+          data: { startDatetime: new Date(Date.now() + DOORS_BEFORE_START_MS) },
+        });
+        const open = await request(app)
+          .post('/api/v1/tickets/check-in')
+          .set('Authorization', `Bearer ${promoterToken}`)
+          .send({ barcode: spare.barcode });
+        expect(open.status).toBe(200);
+        expect(open.body.data.status).toBe('USED');
+      } finally {
+        if (originalStart) {
+          await prisma.event.update({
+            where: { id: eventId },
+            data: { startDatetime: originalStart },
+          });
+        }
+      }
     });
   });
 
