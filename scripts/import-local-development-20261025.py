@@ -19,7 +19,8 @@ SHA = re.compile(r'[0-9a-f]{40}')
 
 def git(*args, check=True):
     return subprocess.run(['git', '-c', 'core.hooksPath=/dev/null', *args],
-                          check=check, capture_output=True, text=True, timeout=180)
+                          check=check, capture_output=True, text=True, timeout=180,
+                          env={**os.environ, 'GIT_TERMINAL_PROMPT': '0'})
 
 
 def remote_heads(remote):
@@ -98,12 +99,29 @@ def run(remote, apply):
         if git('rev-parse', e['sha'] + '^{commit}').stdout.strip() != e['sha']:
             raise ValueError('Source commit unavailable')
     if pending:
-        # Empty expected values make these create-only leases. Even a concurrent
-        # fast-forwardable ref creation cannot be overwritten. No refspec uses +.
-        leases = ['--force-with-lease=' + e['destination'] + ':' for e in pending]
-        specs = [e['sha'] + ':' + e['destination'] for e in pending]
-        pushed = git('push', '--porcelain', *leases, remote, *specs, check=False)
-        print(json.dumps({'phase': 'push', 'exitCode': pushed.returncode}), flush=True)
+        # Start with one ref, then bounded batches. A 521-ref bulk GitHub push
+        # exceeded 180 seconds before publishing any refs. Each batch has its
+        # own timeout and is checked against the server before moving on.
+        batches = [pending[:1]] + [pending[i:i + 25] for i in range(1, len(pending), 25)]
+        for number, batch in enumerate(batches, 1):
+            # Empty expected values make these create-only leases. Even a
+            # concurrent fast-forwardable ref creation cannot be overwritten.
+            leases = ['--force-with-lease=' + e['destination'] + ':' for e in batch]
+            specs = [e['sha'] + ':' + e['destination'] for e in batch]
+            try:
+                pushed = git('push', '--porcelain', *leases, remote, *specs, check=False)
+                reason = 'accepted' if pushed.returncode == 0 else 'server_refusal'
+                if 'workflows permission' in pushed.stderr.lower():
+                    reason = 'workflow_permission_required'
+            except subprocess.TimeoutExpired:
+                reason = 'push_timeout'
+            observed = remote_heads(remote)
+            matches = sum(observed.get(e['destination']) == e['sha'] for e in batch)
+            print(json.dumps({'phase': 'push-batch', 'batch': number,
+                              'attempted': len(batch), 'verified': matches,
+                              'result': reason}), flush=True)
+            if matches != len(batch):
+                break
     after = remote_heads(remote)
     for ref, sha in before.items():
         if after.get(ref) != sha:
