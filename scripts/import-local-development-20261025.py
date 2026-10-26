@@ -126,7 +126,8 @@ def run(remote, apply):
                 if pushed.returncode:
                     # GitHub masks its job token too; additionally remove URLs,
                     # authorization lines and long credential-shaped strings.
-                    diagnostic = re.sub(r'(?im)^.*authorization.*$', '[authorization redacted]', pushed.stderr)
+                    diagnostic = re.sub(r'(?im)^.*authorization.*$', '[authorization redacted]',
+                                        pushed.stdout + '\n' + pushed.stderr)
                     diagnostic = re.sub(r'https?://\S+', '[url]', diagnostic)
                     diagnostic = re.sub(r'[A-Za-z0-9_/+=.\-]{32,}', '[long identifier]', diagnostic)
                     print(json.dumps({'phase': 'push-diagnostic',
