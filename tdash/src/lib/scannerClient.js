@@ -12,6 +12,24 @@ export function ticketQR(input, ticketId = '', eventId = '') {
     return parts.join(':');
 }
 
+async function scannerFailureMessage(response) {
+    if (response.status === 401 || response.status === 403) {
+        return 'Scanner key rejected or scanner unavailable. Check its assignment and active status.';
+    }
+    if (response.status === 429) {
+        const fallback = 'This scanner is sending scans faster than the gate allows. Wait a moment, then scan the same ticket again.';
+        try {
+            const payload = await response.json();
+            const message = typeof payload?.message === 'string' ? payload.message.trim() : '';
+            if (message.length > 0 && message.length <= 240) return message;
+        } catch {
+            // A non-JSON limiter body still needs a sentence the gate can read.
+        }
+        return fallback;
+    }
+    return 'No confirmed result from the server. Check the ticket before trying again.';
+}
+
 // Deliberately separate from the dashboard JWT client: no storage/interceptors.
 export async function scannerRequest(endpoint, key, body, signal) {
     const response = await fetch(`${getApiBaseUrl()}/scanners/${endpoint}`, {
@@ -20,9 +38,7 @@ export async function scannerRequest(endpoint, key, body, signal) {
         body: JSON.stringify(endpoint === 'auth' ? { apiKey: key } : body),
     });
     if (!response.ok) {
-        const error = new Error(response.status === 401 || response.status === 403
-            ? 'Scanner key rejected or scanner unavailable. Check its assignment and active status.'
-            : 'No confirmed result from the server. Check the ticket before trying again.');
+        const error = new Error(await scannerFailureMessage(response));
         error.status = response.status;
         throw error;
     }

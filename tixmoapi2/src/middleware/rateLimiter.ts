@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import rateLimit, { MemoryStore, type Options as RateLimitOptions } from 'express-rate-limit';
 import { Request } from 'express';
 import RedisStore from 'rate-limit-redis';
@@ -104,13 +105,54 @@ export function resetRedisRateLimitFallbackForTests(): void {
 const SKIPPED_METHODS = new Set(['OPTIONS', 'HEAD']);
 const READ_METHODS = new Set(['GET']);
 const EXCLUDED_PATH_PATTERNS = [/^\/api\/v\d+\/auth(?:\/|$)/, /^\/api\/v\d+\/docs(?:\/|$)/];
+// Scan, offline sync, and validate authenticate with a scanner key and are
+// limited per scanner below. They must not consume the shared per-IP bucket:
+// every phone on venue wifi has the same public address.
+const SCANNER_ADMISSION_PATH = /^\/api\/v\d+\/scanners\/(?:scan|validate|sync)(?:\?|$)/;
+// Hold/create, cancel, the unmounted confirm route, and payment-intent creation.
+// The Stripe webhook is not a buyer write and stays off this bucket.
+const CHECKOUT_ORDER_CREATE = /^\/api\/v\d+\/orders\/?$/;
+const CHECKOUT_ORDER_ACTION = /^\/api\/v\d+\/orders\/[^/]+\/(?:cancel|confirm)\/?$/;
+const CHECKOUT_PAYMENT_INTENT = /^\/api\/v\d+\/payments\/create-intent\/?$/;
+const GUEST_CHECKOUT_COOKIE = 'tixmo_checkout_session';
+const GUEST_SESSION_PATTERN = /^[A-Za-z0-9_-]{16,128}$/;
+
+export const SCANNER_ADMISSION_LIMIT_MESSAGE =
+  'This scanner is sending scans faster than the gate allows. Wait a moment, then scan the same ticket again.';
+
+export const SCANNER_AUTH_FAILURE_LIMIT_MESSAGE =
+  'Too many rejected scanner keys from this network. Wait a minute, then try the scanner key again.';
+
+export const CHECKOUT_ACTOR_LIMIT_MESSAGE =
+  'Too many checkout attempts for this account. Wait a few minutes, then try again.';
+
+export const CHECKOUT_IP_LIMIT_MESSAGE =
+  'Too many checkout attempts from this network. Wait a few minutes, then try again.';
+
+export const AUTH_ACCOUNT_LIMIT_MESSAGE =
+  'Too many attempts for this account, please try again after a minute';
 
 const isStrictRateLimitTest = (req: Request) =>
   config.nodeEnv === 'test' && req.headers['x-test-rate-limit'] === 'strict';
 
+const requestPath = (req: Request) => req.originalUrl.split('?')[0] || '';
+
+const isCheckoutWrite = (req: Request) => {
+  if (req.method !== 'POST') return false;
+  const path = requestPath(req);
+  return (
+    CHECKOUT_ORDER_CREATE.test(path) ||
+    CHECKOUT_ORDER_ACTION.test(path) ||
+    CHECKOUT_PAYMENT_INTENT.test(path)
+  );
+};
+
 const shouldSkipApiLimiter = (req: Request) =>
   SKIPPED_METHODS.has(req.method) ||
-  EXCLUDED_PATH_PATTERNS.some((pattern) => pattern.test(req.originalUrl));
+  EXCLUDED_PATH_PATTERNS.some((pattern) => pattern.test(req.originalUrl)) ||
+  SCANNER_ADMISSION_PATH.test(req.originalUrl);
+
+const shouldSkipWriteLimiter = (req: Request) => shouldSkipApiLimiter(req) || isCheckoutWrite(req);
 
 const getRateLimitKey = (req: Request) => {
   const authReq = req as AuthRequest;
@@ -129,12 +171,14 @@ const createApiRateLimiter = ({
   strictTestMax,
   message,
   methods,
+  skip,
 }: {
   prefix: string;
   max: number;
   strictTestMax: number;
   message: string;
   methods: Set<string>;
+  skip?: (req: Request) => boolean;
 }) =>
   rateLimit({
     windowMs: config.rateLimitWindowMs,
@@ -146,24 +190,39 @@ const createApiRateLimiter = ({
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: getRateLimitKey,
-    skip: (req) => shouldSkipApiLimiter(req) || !methods.has(req.method),
+    skip: (req) => (skip ? skip(req) : shouldSkipApiLimiter(req)) || !methods.has(req.method),
     store: createStore(prefix),
   });
 
+const readBodyString = (req: Request, field: string) => {
+  if (!req.body || typeof req.body !== 'object' || Buffer.isBuffer(req.body)) return undefined;
+  const value = (req.body as Record<string, unknown>)[field];
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
+};
+
+const digest = (value: string) => createHash('sha256').update(value).digest('hex');
+
+const authAccountKey = (req: Request) => {
+  const email = readBodyString(req, 'email');
+  if (email) return `email:${digest(email.toLowerCase())}`;
+  const token = readBodyString(req, 'token');
+  if (token) return `token:${digest(token)}`;
+  const refreshToken = readBodyString(req, 'refreshToken');
+  if (refreshToken) return `refresh:${digest(refreshToken)}`;
+  return undefined;
+};
+
 /**
- * Rate limiter for authentication endpoints (login, register, etc.)
- * Limits to 5 requests per 1 minute window per IP (Harder in production)
- * Much higher limits in development to prevent local blocks.
+ * Per-IP brake for login, registration, refresh, and recovery.
+ * Production default is 20 per minute. The configured-image job admits 20
+ * attempts from one address and rejects the next. The strict test header
+ * still forces 5.
  */
 export const authRateLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: (req) => {
-    if (config.nodeEnv === 'test') {
-      return req.headers['x-test-rate-limit'] === 'strict' ? 5 : 100;
-    }
-
-    return config.nodeEnv === 'development' ? 100 : 20;
-  },
+  windowMs: config.authRateLimitWindowMs,
+  max: (req) => (isStrictRateLimitTest(req) ? 5 : config.authRateLimitMax),
   message: {
     success: false,
     message: 'Too many authentication attempts, please try again after a minute',
@@ -171,6 +230,30 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore('rl:auth:'),
+});
+
+/**
+ * Per-account brake. One email, reset token, or refresh token shares a bucket
+ * across IP addresses. Requests with no account identifier are not collapsed
+ * onto the client IP.
+ */
+export const authAccountRateLimiter = rateLimit({
+  windowMs: config.authAccountRateLimitWindowMs,
+  max: (req) =>
+    config.nodeEnv === 'test' && req.headers['x-test-auth-account-rate-limit'] === 'low'
+      ? 3
+      : config.authAccountRateLimitMax,
+  message: {
+    success: false,
+    message: AUTH_ACCOUNT_LIMIT_MESSAGE,
+  },
+  // Leave RateLimit-* on the per-IP limiter. This bucket must not publish a
+  // second limit, and its Redis prefix must stay outside rl:auth:*.
+  standardHeaders: false,
+  legacyHeaders: false,
+  keyGenerator: (req) => authAccountKey(req) as string,
+  skip: (req) => !authAccountKey(req),
+  store: createStore('rl:account:'),
 });
 
 export const apiReadRateLimiter = createApiRateLimiter({
@@ -187,4 +270,128 @@ export const apiWriteRateLimiter = createApiRateLimiter({
   strictTestMax: 2,
   message: 'Too many changes submitted at once. Please try again shortly.',
   methods: new Set(['POST', 'PUT', 'PATCH', 'DELETE']),
+  skip: shouldSkipWriteLimiter,
+});
+
+const scannerAdmissionMax = (req: Request) => {
+  if (config.nodeEnv === 'test' && req.headers['x-test-scanner-rate-limit'] === 'low') return 3;
+  return config.scannerRateLimitMax;
+};
+
+/**
+ * One bucket per valid scanner API key, after authentication. The key is the
+ * scanner id that key belongs to, so the secret is not stored in Redis.
+ * 2,000 requests per 15 minutes is enough for 1,000 door scans plus retries.
+ * These routes are not on the shared per-IP write limiter.
+ */
+export const scannerAdmissionRateLimiter = rateLimit({
+  windowMs: config.scannerRateLimitWindowMs,
+  max: scannerAdmissionMax,
+  message: {
+    success: false,
+    message: SCANNER_ADMISSION_LIMIT_MESSAGE,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const scannerId = (req as Request & { scannerId?: string }).scannerId;
+    return scannerId ? `scanner:${scannerId}` : `ip:${req.ip}`;
+  },
+  store: createStore('rl:scanner:admission:'),
+});
+
+/**
+ * Counts only requests that already failed scanner authentication. A valid
+ * scanner key never touches this bucket, so a bad-key flood on venue wifi
+ * cannot lock the other phones out of the gate.
+ */
+export const scannerAuthFailureLimiter = rateLimit({
+  windowMs: config.scannerAuthFailureWindowMs,
+  max: config.scannerAuthFailureMax,
+  message: {
+    success: false,
+    message: SCANNER_AUTH_FAILURE_LIMIT_MESSAGE,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `ip:${req.ip ?? 'unknown'}`,
+  store: createStore('rl:scanner:auth-fail:'),
+});
+
+const readCookie = (header: string | undefined, name: string) => {
+  if (!header) return undefined;
+  for (const part of header.split(';')) {
+    const separator = part.indexOf('=');
+    if (separator === -1) continue;
+    if (part.slice(0, separator).trim() !== name) continue;
+    try {
+      return decodeURIComponent(part.slice(separator + 1).trim());
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+};
+
+const guestCheckoutSession = (req: Request) => {
+  const header = req.headers['x-checkout-session'];
+  const raw = Array.isArray(header) ? header[0] : header;
+  const candidates = [raw, readCookie(req.headers.cookie, GUEST_CHECKOUT_COOKIE)];
+  for (const candidate of candidates) {
+    const value = candidate?.trim();
+    if (value && GUEST_SESSION_PATTERN.test(value)) return value;
+  }
+  return undefined;
+};
+
+/**
+ * Buyer identity for checkout writes. Logged-in buyers use their user id.
+ * A guest uses `x-checkout-session` or the `tixmo_checkout_session` cookie.
+ * With neither, the request is left to the per-IP ceiling so a carrier NAT
+ * is not squeezed into the per-actor cap.
+ */
+const checkoutActorKey = (req: Request) => {
+  const userId = (req as AuthRequest).user?.userId;
+  if (userId) return `user:${userId}`;
+  const session = guestCheckoutSession(req);
+  if (session) return `session:${session}`;
+  return undefined;
+};
+
+const checkoutActorMax = (req: Request) => {
+  if (config.nodeEnv === 'test' && req.headers['x-test-checkout-rate-limit'] === 'low') return 3;
+  return config.checkoutRateLimitMax;
+};
+
+const checkoutIpMax = (req: Request) => {
+  if (config.nodeEnv === 'test' && req.headers['x-test-checkout-ip-rate-limit'] === 'low') return 4;
+  return config.checkoutIpRateLimitMax;
+};
+
+export const checkoutActorRateLimiter = rateLimit({
+  windowMs: config.checkoutRateLimitWindowMs,
+  max: checkoutActorMax,
+  message: {
+    success: false,
+    message: CHECKOUT_ACTOR_LIMIT_MESSAGE,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => checkoutActorKey(req) as string,
+  skip: (req) => !isCheckoutWrite(req) || !checkoutActorKey(req),
+  store: createStore('rl:checkout:actor:'),
+});
+
+export const checkoutIpRateLimiter = rateLimit({
+  windowMs: config.checkoutIpRateLimitWindowMs,
+  max: checkoutIpMax,
+  message: {
+    success: false,
+    message: CHECKOUT_IP_LIMIT_MESSAGE,
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `ip:${req.ip ?? 'unknown'}`,
+  skip: (req) => !isCheckoutWrite(req),
+  store: createStore('rl:checkout:ip:'),
 });

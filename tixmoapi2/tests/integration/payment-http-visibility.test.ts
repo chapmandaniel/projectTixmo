@@ -205,7 +205,17 @@ it('twenty owned buyers receive one paid ticket through authentic signed mounted
       waiting = await import('../../src/middleware/waitingRoom');
     for (const [module, names] of [
       [auth, ['authenticate', 'optionalAuthenticate']],
-      [limiter, ['authRateLimiter', 'apiReadRateLimiter', 'apiWriteRateLimiter']],
+      [
+        limiter,
+        [
+          'authRateLimiter',
+          'authAccountRateLimiter',
+          'apiReadRateLimiter',
+          'apiWriteRateLimiter',
+          'checkoutActorRateLimiter',
+          'checkoutIpRateLimiter',
+        ],
+      ],
       [waiting, ['waitingRoom']],
     ] as Array<[any, string[]]>)
       for (const name of names) spies.push(observeFunction(module, name, track));

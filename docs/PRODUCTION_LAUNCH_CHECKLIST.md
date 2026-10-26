@@ -72,6 +72,13 @@ Required:
 - [ ] `RATE_LIMIT_WINDOW_MS`
 - [ ] `RATE_LIMIT_READ_MAX`
 - [ ] `RATE_LIMIT_WRITE_MAX`
+- [ ] `SCANNER_RATE_LIMIT_WINDOW_MS` and `SCANNER_RATE_LIMIT_MAX`
+- [ ] `SCANNER_AUTH_FAILURE_WINDOW_MS` and `SCANNER_AUTH_FAILURE_MAX`
+- [ ] `CHECKOUT_RATE_LIMIT_WINDOW_MS` and `CHECKOUT_RATE_LIMIT_MAX`
+- [ ] `CHECKOUT_IP_RATE_LIMIT_WINDOW_MS` and `CHECKOUT_IP_RATE_LIMIT_MAX`
+- [ ] `AUTH_RATE_LIMIT_WINDOW_MS` and `AUTH_RATE_LIMIT_MAX`
+- [ ] `AUTH_ACCOUNT_RATE_LIMIT_WINDOW_MS` and `AUTH_ACCOUNT_RATE_LIMIT_MAX`
+- [ ] Step 11a has the recommended production value and the unset code default for every limiter. Raising `RATE_LIMIT_WRITE_MAX` does not change scanner admission or checkout buckets.
 - [ ] `ADMIN_EMAIL`
 
 Validation:
@@ -218,3 +225,36 @@ Go only when:
 - [ ] Unfinished modules are out of the launch path.
 - [ ] Support owner has the repair playbooks.
 - [ ] Privacy, terms, refund, organizer, data-retention, onboarding, and release-note docs are approved or explicitly marked internal-only for launch.
+- [ ] Step 11a rate-limit values are set on the API service.
+
+## 11a. Rate limits for the November 9 onsale
+
+Set these on the API service before go/no-go. Recommended production values match the production code defaults, so an unset variable still boots the number in this table. `NODE_ENV=test` is the exception called out below; production does not use that exception.
+
+Authenticated scan, offline sync, and validate are not on the shared 240-write bucket. Each valid scanner API key gets 2,000 requests per 15 minutes, so one door can do 1,000 scans in that window with room for a retry. Invalid and missing keys are limited per IP. A valid key does not use that bucket.
+
+About 1,000 buyers arrive in the first 10 minutes, and up to about 200 of them can share one carrier-grade NAT address. Checkout writes are order create (the hold), `POST /payments/create-intent`, cancel, and `POST /orders/:id/confirm` if that route is mounted. Buyer payment confirmation itself is Stripe.js plus the webhook. The webhook is not on a buyer limiter.
+
+A purchase is a handful of those writes. Forty per buyer covers a hold, a payment intent, a cancel, and several retries. Two hundred buyers at about ten writes each is 2,000 requests from one public address. The per-IP ceiling of 4,000 in that same 10 minutes is about twice that NAT, and about 6.7 requests a second from one address, which still stops a flood. Logged-in buyers are keyed by user id. A guest is keyed by the `x-checkout-session` header or the `tixmo_checkout_session` cookie when that value is 16–128 characters from `[A-Za-z0-9_-]`. A checkout request with neither identity is not forced into the 40-write bucket; the per-IP ceiling is its limit, so unidentified clients on one NAT do not share forty attempts.
+
+Login stays on two brakes. The per-IP cap is 20 per minute. The configured-image job admits 20 logins from one address and rejects the 21st. Two hundred buyers behind one NAT can sign in across the 10-minute onsale window when they do not all arrive in the same minute. A sharper minute waits. The per-account cap is 10 per minute for one email, reset token, or refresh token, including guesses that rotate IP addresses. That bucket is separate from the per-IP Redis keys, so it does not change the 20-per-minute measurement. The per-IP cap still stops one network from trying those 10 passwords against hundreds of accounts.
+
+| Limiter | Env var | Recommended production | Unset code default |
+| --- | --- | --- | --- |
+| General window | `RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | `900000` |
+| General reads | `RATE_LIMIT_READ_MAX` | `600` per user, or per IP when the request has no user | `600` in production. Development `4000`. Test `1000`. |
+| General writes | `RATE_LIMIT_WRITE_MAX` | `240` per user, or per IP when the request has no user, per 15 min | `240` in production. Development `2000`. Test `1000`. |
+| Scanner admission | `SCANNER_RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | `900000` |
+| Scanner admission | `SCANNER_RATE_LIMIT_MAX` | `2000` per scanner API key per 15 min. One door can do 1,000 scans with room for retries. Not the shared 240 write bucket. | `2000` |
+| Rejected scanner keys | `SCANNER_AUTH_FAILURE_WINDOW_MS` | `60000` | `60000` |
+| Rejected scanner keys | `SCANNER_AUTH_FAILURE_MAX` | `30` per IP per minute. Valid scanner keys do not use this bucket. | `30` |
+| Checkout per buyer | `CHECKOUT_RATE_LIMIT_WINDOW_MS` | `600000` (10 min) | `600000` |
+| Checkout per buyer | `CHECKOUT_RATE_LIMIT_MAX` | `40` per user id, or per guest session | `40` |
+| Checkout per IP | `CHECKOUT_IP_RATE_LIMIT_WINDOW_MS` | `600000` (10 min) | `600000` |
+| Checkout per IP | `CHECKOUT_IP_RATE_LIMIT_MAX` | `4000` per public IP | `4000` |
+| Auth per IP | `AUTH_RATE_LIMIT_WINDOW_MS` | `60000` | `60000` |
+| Auth per IP | `AUTH_RATE_LIMIT_MAX` | `20` per IP per minute | `20` in production. Development and test `100`, or `5` in test when the request sends `x-test-rate-limit: strict`. |
+| Auth per account | `AUTH_ACCOUNT_RATE_LIMIT_WINDOW_MS` | `60000` | `60000` |
+| Auth per account | `AUTH_ACCOUNT_RATE_LIMIT_MAX` | `10` per account per minute | `10` in production and development. Test `1000`, or `3` when the request sends `x-test-auth-account-rate-limit: low`. |
+
+`RATE_LIMIT_MAX` and `RATE_LIMIT_MAX_REQUESTS` remain legacy fallbacks for the general read and write caps only, and only when the specific `RATE_LIMIT_READ_MAX` or `RATE_LIMIT_WRITE_MAX` variable is unset. They do not set scanner, checkout, or auth limits. Raising `RATE_LIMIT_WRITE_MAX` does not raise scanner admission or checkout.

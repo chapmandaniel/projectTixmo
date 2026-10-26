@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../utils/ApiError';
 import { scannerService } from '../api/scanners/service';
+import { scannerAuthFailureLimiter } from './rateLimiter';
 
 export interface ScannerRequest extends Request {
   scanner?: {
@@ -51,4 +52,33 @@ export const authenticateScanner = async (
   } catch (error) {
     next(error);
   }
+};
+
+/**
+ * Scanner auth for scan, offline sync, and validate.
+ * A rejected key is counted against the caller's IP. The admission limiter
+ * runs only after this succeeds, keyed by scanner id.
+ */
+export const authenticateAdmissionScanner = (
+  req: ScannerRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  void authenticateScanner(req, res, (error?: unknown) => {
+    if (!error) {
+      next();
+      return;
+    }
+
+    const statusCode = error instanceof ApiError ? error.statusCode : undefined;
+    if (statusCode !== 401 && statusCode !== 403) {
+      next(error);
+      return;
+    }
+
+    scannerAuthFailureLimiter(req, res, (limitError?: unknown) => {
+      if (res.headersSent) return;
+      next(limitError ?? error);
+    });
+  });
 };

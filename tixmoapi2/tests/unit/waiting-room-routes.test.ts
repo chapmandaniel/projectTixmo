@@ -34,12 +34,19 @@ jest.doMock('../../src/middleware/rateLimiter', () => ({
   apiReadRateLimiter: pass,
   apiWriteRateLimiter: pass,
   authRateLimiter: pass,
+  authAccountRateLimiter: pass,
+  checkoutActorRateLimiter: pass,
+  checkoutIpRateLimiter: pass,
+  scannerAdmissionRateLimiter: pass,
 }));
 jest.doMock('../../src/middleware/auth', () => ({
   authenticate: auth,
   optionalAuthenticate: pass,
 }));
-jest.doMock('../../src/middleware/scannerAuth', () => ({ authenticateScanner: auth }));
+jest.doMock('../../src/middleware/scannerAuth', () => ({
+  authenticateScanner: auth,
+  authenticateAdmissionScanner: auth,
+}));
 jest.doMock('../../src/middleware/validate', () => ({
   validate: () => (req: Request, res: Response, next: NextFunction) =>
     req.headers['x-test-invalid'] ? res.status(400).json({ denied: 'validation' }) : next(),

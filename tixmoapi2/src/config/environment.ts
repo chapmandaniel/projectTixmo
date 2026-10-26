@@ -24,6 +24,63 @@ const rateLimitWindowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000',
 const legacyRateLimitMax =
   process.env.RATE_LIMIT_MAX || process.env.RATE_LIMIT_MAX_REQUESTS || undefined;
 
+function readPositiveInteger(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') return fallback;
+  if (!/^[0-9]+$/.test(raw)) {
+    throw new Error(`${name} must be a positive safe integer`);
+  }
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new Error(`${name} must be a positive safe integer`);
+  }
+  return value;
+}
+
+// Venue wifi presents one public IP for every scanner phone. Admission is one
+// bucket per scanner API key (stored as that scanner's id), not per IP.
+// 2,000 scans per 15 minutes lets one door do 1,000 admissions and still have
+// room for a camera double-read. The fixed window can be used as a burst.
+const scannerRateLimitWindowMs = readPositiveInteger('SCANNER_RATE_LIMIT_WINDOW_MS', 900_000);
+const scannerRateLimitMax = readPositiveInteger('SCANNER_RATE_LIMIT_MAX', 2_000);
+const scannerAuthFailureWindowMs = readPositiveInteger('SCANNER_AUTH_FAILURE_WINDOW_MS', 60_000);
+const scannerAuthFailureMax = readPositiveInteger('SCANNER_AUTH_FAILURE_MAX', 30);
+
+// November 9 onsale: about 1,000 buyers in the first 10 minutes, with up to
+// about 200 of them behind one carrier NAT address. A purchase is a handful of
+// writes (hold, payment intent, sometimes cancel and a retry). 40 per actor
+// covers a messy checkout. 4,000 per IP is twice a 200-buyer NAT at 10 writes
+// each, and still far below an open flood. These buckets are not the general
+// 240 write limit.
+const checkoutRateLimitWindowMs = readPositiveInteger('CHECKOUT_RATE_LIMIT_WINDOW_MS', 600_000);
+const checkoutRateLimitMax = readPositiveInteger('CHECKOUT_RATE_LIMIT_MAX', 40);
+const checkoutIpRateLimitWindowMs = readPositiveInteger(
+  'CHECKOUT_IP_RATE_LIMIT_WINDOW_MS',
+  600_000
+);
+const checkoutIpRateLimitMax = readPositiveInteger('CHECKOUT_IP_RATE_LIMIT_MAX', 4_000);
+
+// Login stays per IP and per account. The configured-image job admits 20
+// logins from one address per minute and rejects the 21st, so the unset
+// production IP cap stays 20. Two hundred buyers behind one NAT can sign in
+// across the 10-minute onsale window when arrivals are spread out. A pile-up
+// of more than 20 in one minute waits. 10/minute/account stops a rotated-IP
+// guess of one email. Tests use a higher unset cap (IP 100, account 1000)
+// unless the strict or low header is sent. Development uses 100 per IP.
+const authRateLimitWindowMs = readPositiveInteger('AUTH_RATE_LIMIT_WINDOW_MS', 60_000);
+const authRateLimitMax = readPositiveInteger(
+  'AUTH_RATE_LIMIT_MAX',
+  isTest || isDevelopment ? 100 : 20
+);
+const authAccountRateLimitWindowMs = readPositiveInteger(
+  'AUTH_ACCOUNT_RATE_LIMIT_WINDOW_MS',
+  60_000
+);
+const authAccountRateLimitMax = readPositiveInteger(
+  'AUTH_ACCOUNT_RATE_LIMIT_MAX',
+  isTest ? 1000 : 10
+);
+
 export const normalizeOptionalCredential = (value?: string) => {
   const trimmedValue = value?.trim() || '';
   const lowerValue = trimmedValue.toLowerCase();
@@ -184,6 +241,18 @@ export const config = {
     : isDevelopment
       ? 2000
       : parseInt(process.env.RATE_LIMIT_WRITE_MAX || legacyRateLimitMax || '240', 10),
+  scannerRateLimitWindowMs,
+  scannerRateLimitMax,
+  scannerAuthFailureWindowMs,
+  scannerAuthFailureMax,
+  checkoutRateLimitWindowMs,
+  checkoutRateLimitMax,
+  checkoutIpRateLimitWindowMs,
+  checkoutIpRateLimitMax,
+  authRateLimitWindowMs,
+  authRateLimitMax,
+  authAccountRateLimitWindowMs,
+  authAccountRateLimitMax,
 
   // CORS
   corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'],
