@@ -198,9 +198,21 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
       controller = await import('../../src/api/scanners/controller');
     for (const [target, names] of [
       [auth, ['authenticate', 'optionalAuthenticate']],
-      [scannerAuth, ['authenticateScanner']],
+      [scannerAuth, ['authenticateScanner', 'authenticateAdmissionScanner']],
       [waiting, ['waitingRoom']],
-      [limiter, ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter']],
+      [
+        limiter,
+        [
+          'apiReadRateLimiter',
+          'apiWriteRateLimiter',
+          'authRateLimiter',
+          'authAccountRateLimiter',
+          'checkoutActorRateLimiter',
+          'checkoutIpRateLimiter',
+          'scannerAdmissionRateLimiter',
+          'scannerAuthFailureLimiter',
+        ],
+      ],
       [controller, ['registerScanner', 'authenticateScanner', 'scanTicket', 'deleteScanner']],
     ] as Array<[any, string[]]>)
       for (const name of names) spies.push(observeFunction(target, name, track));
@@ -472,8 +484,9 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
     const allLogs = await db(() =>
       prisma.scanLog.findMany({ where: { scannerId: { in: scanners.map((row) => row.id) } } })
     );
-    expect(allLogs).toHaveLength(3);
+    expect(allLogs).toHaveLength(4);
     expect(allLogs.filter((row) => row.success)).toHaveLength(1);
+    expect(allLogs.filter((row) => row.failureReason === 'REVOKED')).toHaveLength(1);
     const used = await db(() => prisma.ticket.findUniqueOrThrow({ where: { id: ids.tickets[0] } }));
     expect(used).toEqual({
       ...beforeRace,

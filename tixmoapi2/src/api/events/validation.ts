@@ -59,6 +59,7 @@ export const updateEventSchema = z.object({
     category: z.string().max(100).optional(),
     timezone: z.string().max(50).optional(),
     tags: z.array(z.string().max(50)).max(20).optional(),
+    reason: z.string().trim().max(1000).optional(),
   }),
 });
 
@@ -66,6 +67,11 @@ export const publishEventSchema = z.object({
   params: z.object({
     id: z.string().guid('Invalid event ID'),
   }),
+  body: z
+    .object({
+      reason: z.string().trim().max(1000).optional(),
+    })
+    .optional(),
 });
 
 export const listEventsSchema = z.object({
@@ -91,6 +97,7 @@ export const updateEventStatusSchema = z.object({
   }),
   body: z.object({
     status: z.enum(eventStatusValues),
+    reason: z.string().trim().max(1000).optional(),
   }),
 });
 
@@ -98,6 +105,7 @@ export const eventConfigurationSchema = z.object({
   params: z.object({ id: z.string().guid('Invalid uuid').optional() }),
   body: z.object({
     event: createEventSchema.shape.body.omit({ status: true }),
+    reason: z.string().trim().max(1000).optional(),
     ticketTypes: z
       .array(
         createTicketTypeSchema.shape.body.omit({ eventId: true }).extend({

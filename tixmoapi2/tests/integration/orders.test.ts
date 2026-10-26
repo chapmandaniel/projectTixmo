@@ -299,6 +299,11 @@ describe('Orders API', () => {
       expect(res.body.data).toHaveProperty('tickets');
       expect(res.body.data).toHaveProperty('event');
       expect(res.body.data).toHaveProperty('user');
+      // PROMOTER is below MANAGER, so this caller's own order omits the buyer email.
+      // The caller owns the ticket, so the admission barcode stays intact.
+      expect(res.body.data.user).not.toHaveProperty('email');
+      expect(res.body.data.user.firstName).toBe('Orders');
+      expect(res.body.data.tickets[0].barcode).toMatch(/^TIX-/);
     });
 
     it('should fail if order not found', async () => {

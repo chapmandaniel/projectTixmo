@@ -249,7 +249,7 @@ function expectFinalized(current: Awaited<ReturnType<typeof snapshot>>, value: F
   expectOtherBuyersUnchanged(current, value);
   expect(current.target).toMatchObject({
     status: 'REFUNDED',
-    paymentStatus: 'SUCCEEDED',
+    paymentStatus: 'REFUNDED',
     refundStatus: 'SUCCEEDED',
   });
   expect(current.target.tickets).toEqual(

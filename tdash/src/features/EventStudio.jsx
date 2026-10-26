@@ -63,6 +63,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
     const [venues, setVenues] = useState([]);
     const [deletedTierIds, setDeletedTierIds] = useState([]);
     const [notification, setNotification] = useState(null); // { type: 'success'|'error', message: '' }
+    const [changeReason, setChangeReason] = useState('');
 
     // Fetch Venues
     useEffect(() => {
@@ -214,7 +215,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                     sortOrder: tier.sortOrder ?? index, isActive: tier.isActive ?? true,
                 })),
             }));
-            const request = { event: payload, ticketTypes, publish };
+            const request = { event: payload, ticketTypes, publish, ...(changeReason.trim() ? { reason: changeReason.trim() } : {}) };
             const res = persistedEvent?.id ? await api.put(`/events/${persistedEvent.id}/configuration`, request)
                 : await api.post('/events/configuration', request);
             const savedEvent = res.data?.data || res.data;
@@ -293,6 +294,16 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                     </span>
                 </div>
 
+                <label className="flex items-center gap-2 text-sm text-gray-500">
+                    <span className="sr-only">Reason for this change</span>
+                    <input
+                        value={changeReason}
+                        onChange={(event) => setChangeReason(event.target.value)}
+                        placeholder="Reason for this change"
+                        maxLength={1000}
+                        className="w-56 rounded border border-gray-300 bg-transparent px-2 py-1 text-sm"
+                    />
+                </label>
                 <div className="flex items-center space-x-3">
                     <button
                         onClick={() => handleSave(false)}

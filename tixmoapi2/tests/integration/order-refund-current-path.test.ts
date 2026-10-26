@@ -111,6 +111,7 @@ test('matching inert provider success finalizes SOLD inventory once and retry is
   const { order, type } = await fixture();
   await expect(new OrderService().refundOrder(order.id)).resolves.toMatchObject({
     status: 'REFUNDED',
+    paymentStatus: 'REFUNDED',
   });
   const after = await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } });
   expect([after.quantityAvailable, after.quantityHeld, after.quantitySold]).toEqual([10, 0, 0]);
@@ -214,7 +215,7 @@ test('stable FAILED local payment status is not a new categorical refund prohibi
   await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: 'FAILED' } });
   await expect(new OrderService().refundOrder(order.id)).resolves.toMatchObject({
     status: 'REFUNDED',
-    paymentStatus: 'FAILED',
+    paymentStatus: 'REFUNDED',
   });
   expect(provider.refunds.create).toHaveBeenCalledTimes(1);
 });

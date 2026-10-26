@@ -22,6 +22,7 @@ import taskRoutes from './tasks/routes';
 import approvalRoutes from './approvals/routes';
 import reviewRoutes from './review/routes';
 import assetRoutes from './assets/routes';
+import staffActionRoutes from './staff-actions/routes';
 
 const router = Router();
 
@@ -61,6 +62,7 @@ versionRouter.use('/docs', docsRoutes);
 versionRouter.use('/approvals', approvalRoutes);
 versionRouter.use('/assets', assetRoutes);
 versionRouter.use('/review', reviewRoutes);
+versionRouter.use('/staff-actions', staffActionRoutes);
 
 // Mount versioned routes
 router.use(`/${config.apiVersion}`, versionRouter);

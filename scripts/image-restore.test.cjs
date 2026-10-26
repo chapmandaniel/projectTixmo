@@ -80,6 +80,7 @@ test('restore source uses a new empty destination, exact snapshots and post-back
   assert.match(source, /20261022143000_buyer_password_recovery/);
   assert.match(source, /20261026031400_default_event_timezone_america_st_johns/);
   assert.match(source, /20261026120000_order_currency_default_cad/);
+  assert.match(source, /20261026180000_payment_status_refunded/);
   assert.match(source, /--template=template0/);
   assert.match(source, /--exit-on-error/);
   assert.match(source, /--single-transaction/);

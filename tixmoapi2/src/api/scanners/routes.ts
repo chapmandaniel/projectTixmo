@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../../middleware/auth';
-import { authenticateScanner } from '../../middleware/scannerAuth';
+import { authenticateAdmissionScanner } from '../../middleware/scannerAuth';
+import { scannerAdmissionRateLimiter } from '../../middleware/rateLimiter';
 import { authorize } from '../../middleware/authorize';
 import { validate } from '../../middleware/validate';
 import * as controller from './controller';
@@ -117,7 +118,8 @@ router.post(
  */
 router.get(
   '/sync',
-  authenticateScanner,
+  authenticateAdmissionScanner,
+  scannerAdmissionRateLimiter,
   validate(validation.syncTicketsSchema),
   controller.syncTickets
 );
@@ -164,7 +166,8 @@ router.get(
  */
 router.post(
   '/validate',
-  authenticateScanner,
+  authenticateAdmissionScanner,
+  scannerAdmissionRateLimiter,
   validate(validation.offlineScanSchema),
   controller.syncOfflineScans
 );
@@ -255,7 +258,8 @@ router.get(
  */
 router.post(
   '/scan',
-  authenticateScanner,
+  authenticateAdmissionScanner,
+  scannerAdmissionRateLimiter,
   validate(validation.scanTicketSchema),
   controller.scanTicket
 );

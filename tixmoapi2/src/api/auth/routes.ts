@@ -10,24 +10,27 @@ import {
   refreshTokenSchema,
   acceptInvitationSchema,
 } from './validation';
-import { authRateLimiter } from '../../middleware/rateLimiter';
+import { authAccountRateLimiter, authRateLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 router.post(
   '/forgot-password',
   authRateLimiter,
+  authAccountRateLimiter,
   validate(forgotPasswordSchema),
   authController.forgotPassword
 );
 router.post(
   '/reset-password',
   authRateLimiter,
+  authAccountRateLimiter,
   validate(resetPasswordSchema),
   authController.resetPassword
 );
 router.post(
   '/accept-invitation',
   authRateLimiter,
+  authAccountRateLimiter,
   validate(acceptInvitationSchema),
   authController.acceptInvitation
 );
@@ -112,7 +115,13 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/register', authRateLimiter, validate(registerSchema), authController.register);
+router.post(
+  '/register',
+  authRateLimiter,
+  authAccountRateLimiter,
+  validate(registerSchema),
+  authController.register
+);
 
 /**
  * @swagger
@@ -179,7 +188,13 @@ router.post('/register', authRateLimiter, validate(registerSchema), authControll
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/login', authRateLimiter, validate(loginSchema), authController.login);
+router.post(
+  '/login',
+  authRateLimiter,
+  authAccountRateLimiter,
+  validate(loginSchema),
+  authController.login
+);
 
 /**
  * @swagger
@@ -237,7 +252,13 @@ router.post('/login', authRateLimiter, validate(loginSchema), authController.log
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/refresh', authRateLimiter, validate(refreshTokenSchema), authController.refreshToken);
+router.post(
+  '/refresh',
+  authRateLimiter,
+  authAccountRateLimiter,
+  validate(refreshTokenSchema),
+  authController.refreshToken
+);
 
 /**
  * @swagger

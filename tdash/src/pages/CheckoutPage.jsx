@@ -745,7 +745,7 @@ const RecoveryPage = ({ candidate, user, onAuthenticated }) => {
                 const exact = data && Object.keys(data).sort().join(',') === 'id,paymentStatus,status';
                 const known = exact && data.id === candidate
                     && ['PENDING', 'PAID', 'CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED'].includes(data.status)
-                    && ['PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED'].includes(data.paymentStatus);
+                    && ['PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED', 'REFUNDED'].includes(data.paymentStatus);
                 if (active) setResult({ kind: known ? 'loaded' : 'malformed', data: known ? data : null });
             }).catch((error) => {
                 const status = error.response?.status;

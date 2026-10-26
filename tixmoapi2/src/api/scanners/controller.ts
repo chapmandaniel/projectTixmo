@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { scannerService } from './service';
+import { presentScanResult } from './public-scan';
 import { ApiError } from '../../utils/ApiError';
 import { successResponse } from '../../utils/response';
 import { AuthRequest } from '../../middleware/auth';
@@ -150,7 +151,10 @@ export const deleteScanner = async (
     const actor = await getActorScope(req);
     await assertScannerAccess(actor, req.params.id);
 
-    await scannerService.deleteScanner(req.params.id);
+    await scannerService.deleteScanner(req.params.id, {
+      actorId: actor.userId,
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+    });
     res.status(204).send();
   } catch (error) {
     next(error);
@@ -174,7 +178,7 @@ export const scanTicket = async (
     });
     res.json(
       successResponse(
-        result,
+        presentScanResult(result),
         result.success ? 'Ticket scanned successfully' : 'Scan validation failed'
       )
     );

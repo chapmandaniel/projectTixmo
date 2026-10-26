@@ -199,7 +199,17 @@ it('200 owned HTTP actors sustain30 actual minutes with mounted refresh and reta
     for (const [module, names] of [
       [auth, ['authenticate', 'optionalAuthenticate']],
       [waiting, ['waitingRoom']],
-      [limiter, ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter']],
+      [
+        limiter,
+        [
+          'apiReadRateLimiter',
+          'apiWriteRateLimiter',
+          'authRateLimiter',
+          'authAccountRateLimiter',
+          'checkoutActorRateLimiter',
+          'checkoutIpRateLimiter',
+        ],
+      ],
     ] as Array<[any, string[]]>) {
       for (const name of names) {
         spies.push(observeFunction(module, name, track));

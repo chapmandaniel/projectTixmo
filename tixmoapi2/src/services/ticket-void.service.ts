@@ -102,3 +102,81 @@ export async function voidOrderTickets(
   });
   return targets.map((ticket) => ticket.id);
 }
+
+/**
+ * payment_intent.succeeded can commit after charge.dispute.created. The dispute
+ * handler will not void a still-pending order, so the paid transition has to
+ * cancel those tickets itself. A second pass finds the dispute audit and does
+ * not write another row.
+ */
+export async function voidDisputedAdmission(
+  tx: Prisma.TransactionClient,
+  order: { id: string; refundStatus: string | null }
+): Promise<void> {
+  if (!orderDisputed(order.refundStatus)) return;
+  const audits = await tx.ticketInventoryReconciliation.findMany({
+    where: { planFingerprint: { contains: order.id } },
+  });
+  const existing = audits.find(
+    (row) =>
+      row.planFingerprint.startsWith(`${VOID_AUDIT_PREFIX}DISPUTE_CREATED:`) &&
+      row.planFingerprint.endsWith(`:${order.id}`)
+  );
+  const open = await tx.ticket.findMany({
+    where: { orderId: order.id, status: { not: 'CANCELLED' } },
+    orderBy: { id: 'asc' },
+    select: { id: true, inventoryState: true },
+  });
+  if (!open.length) {
+    if (existing) return;
+    await voidOrderTickets(tx, {
+      orderId: order.id,
+      actorId: STRIPE_DISPUTE_ACTOR,
+      reason: 'Payment disputed',
+      action: 'DISPUTE_CREATED',
+      sourceId: order.id,
+      voidTickets: false,
+    });
+    return;
+  }
+  if (!existing) {
+    await voidOrderTickets(tx, {
+      orderId: order.id,
+      actorId: STRIPE_DISPUTE_ACTOR,
+      reason: 'Payment disputed',
+      action: 'DISPUTE_CREATED',
+      sourceId: order.id,
+      voidTickets: true,
+    });
+    return;
+  }
+  const updated = await tx.ticket.updateMany({
+    where: { id: { in: open.map((ticket) => ticket.id) }, status: { not: 'CANCELLED' } },
+    data: { status: 'CANCELLED' },
+  });
+  if (updated.count !== open.length) throw ApiError.conflict('Tickets changed during void');
+  const previous =
+    existing.after && typeof existing.after === 'object' && !Array.isArray(existing.after)
+      ? (existing.after as Record<string, unknown>)
+      : {};
+  const recorded = Array.isArray(previous.tickets)
+    ? (previous.tickets as Array<{ id: string; status: string; inventoryState: string }>)
+    : [];
+  const live = new Map(open.map((ticket) => [ticket.id, ticket.inventoryState]));
+  const seen = new Set<string>();
+  const tickets = recorded.map((ticket) => {
+    seen.add(ticket.id);
+    const inventoryState = live.get(ticket.id);
+    return inventoryState ? { id: ticket.id, status: 'CANCELLED', inventoryState } : ticket;
+  });
+  for (const ticket of open) {
+    if (seen.has(ticket.id)) continue;
+    tickets.push({ id: ticket.id, status: 'CANCELLED', inventoryState: ticket.inventoryState });
+  }
+  await tx.ticketInventoryReconciliation.update({
+    where: { id: existing.id },
+    data: {
+      after: { ...previous, inventoryReleased: false, tickets },
+    },
+  });
+}

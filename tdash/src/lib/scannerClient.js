@@ -166,6 +166,8 @@ function scannerFailure(status, message, flags, body) {
 }
 
 // Dashboard JWT storage stays out of this client. The page stores only the scanner key.
+const SCAN_RATE_LIMIT = 'This scanner is sending scans faster than the gate allows. Wait a moment, then scan the same ticket again.';
+
 export async function scannerRequest(endpoint, key, body, signal) {
     const response = await fetch(`${getApiBaseUrl()}/scanners/${endpoint}`, {
         method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error', signal,
@@ -188,6 +190,11 @@ export async function scannerRequest(endpoint, key, body, signal) {
         if (keyFailure) throw scannerFailure(response.status, keyFailure, { forgetKey: true }, payload);
         if (response.status === 401 || response.status === 403) {
             throw scannerFailure(response.status, SCANNER_UNAVAILABLE, {}, payload);
+        }
+        if (response.status === 429) {
+            const server = textValue(payload?.message);
+            const message = server.length > 0 && server.length <= 240 ? server : SCAN_RATE_LIMIT;
+            throw scannerFailure(response.status, message, {}, payload);
         }
         throw scannerFailure(response.status, 'No confirmed result from the server. Check the ticket before trying again.', {}, payload);
     }

@@ -12,7 +12,12 @@ import { swaggerSpec } from './config/swagger';
 import apiRoutes from './api';
 import { initSentry, Sentry } from './config/sentry';
 import { optionalAuthenticate } from './middleware/auth';
-import { apiReadRateLimiter, apiWriteRateLimiter } from './middleware/rateLimiter';
+import {
+  apiReadRateLimiter,
+  apiWriteRateLimiter,
+  checkoutActorRateLimiter,
+  checkoutIpRateLimiter,
+} from './middleware/rateLimiter';
 import { isTrustedClientOrigin } from './utils/clientOrigin';
 
 const app: Application = express();
@@ -141,7 +146,15 @@ app.use(
 );
 
 // API routes
-app.use('/api', optionalAuthenticate, apiReadRateLimiter, apiWriteRateLimiter, apiRoutes);
+app.use(
+  '/api',
+  optionalAuthenticate,
+  apiReadRateLimiter,
+  apiWriteRateLimiter,
+  checkoutActorRateLimiter,
+  checkoutIpRateLimiter,
+  apiRoutes
+);
 
 // 404 handler
 app.use(notFoundHandler);

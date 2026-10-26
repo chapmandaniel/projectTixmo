@@ -58,8 +58,16 @@ export default function ScannerPage({ isDark = true }) {
                 if (typeof data.name !== 'string' || data.status !== 'ACTIVE') throw Object.assign(new Error(SCANNER_UNAVAILABLE), { forgetKey: true, status: 403 });
                 key.current = value; storeScannerKey(value); setDraftKey(''); setScanner(data);
             } else {
-                if (typeof data.success !== 'boolean') throw new Error('No confirmed admission result. Check the ticket before trying again.');
-                setResult({ accepted: data.success, message: data.success ? 'Admitted' : admissionMessage(data) });
+                const accepted = typeof data.valid === 'boolean' ? data.valid : data.success;
+                if (typeof accepted !== 'boolean') throw new Error('No confirmed admission result. Check the ticket before trying again.');
+                setResult({
+                    accepted,
+                    message: typeof data.valid === 'boolean'
+                        ? (data.valid ? 'Admitted' : (data.message || data.reason || 'Admission denied'))
+                        : (data.success ? 'Admitted' : admissionMessage(data)),
+                    ticketTypeName: typeof data.ticketTypeName === 'string' ? data.ticketTypeName : '',
+                    holderFirstName: typeof data.holderFirstName === 'string' ? data.holderFirstName : '',
+                });
             }
         } catch (error) {
             if (!live.current || generation !== session.current) return;
@@ -156,7 +164,7 @@ export default function ScannerPage({ isDark = true }) {
                 </DashboardSection>
             </>}
             <div role="status" aria-live="polite" className="py-4 text-lg">
-                {busy ? 'Waiting for the server. Do not admit until a result is shown.' : result ? <><strong>{result.accepted ? 'Admitted' : 'Not admitted'}</strong>{!result.accepted && <p>{result.message}</p>}</> : notice}
+                {busy ? 'Waiting for the server. Do not admit until a result is shown.' : result ? <><strong>{result.accepted ? 'Admitted' : 'Not admitted'}</strong>{result.ticketTypeName ? <p>{result.ticketTypeName}</p> : null}{result.holderFirstName ? <p>{result.holderFirstName}</p> : null}{!result.accepted && <p>{result.message}</p>}</> : notice}
             </div>
             <p className="text-sm">No offline admission or queued scans. An uncertain network result is not permission to admit.</p>
         </DashboardPage>
