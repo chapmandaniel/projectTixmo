@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    comparePublicTicketTypes,
     eventAddress,
     eventArtwork,
     getEventSaleState,
@@ -156,6 +157,47 @@ it('blocks a configured filtered-empty tier schedule without changing unconfigur
     expect(getPublicTicketOffer({ ...ticket, hasConfiguredTiers: false, tiers: [] }, now)).toMatchObject({ price: 35, max: 4, label: 'Available' });
     expect(initialTicketQuantities([{ ...ticket, hasConfiguredTiers: true, tiers: [] }], 'ga:2', now)).toEqual({ ga: 0 });
 });
+describe('public ticket type order', () => {
+    const ticket = (id, sortOrder, createdAt) => ({ id, sortOrder, createdAt });
+
+    it('uses sort order, then creation time, then id', () => {
+        const rows = [
+            ticket('id-z', 0, '2026-02-01T00:00:00.000Z'),
+            ticket('id-a', 0, '2026-02-01T00:00:00.000Z'),
+            ticket('id-m', 1, '2026-01-01T00:00:00.000Z'),
+            ticket('id-b', 0, '2026-01-01T00:00:00.000Z'),
+        ];
+        expect(rows.slice().sort(comparePublicTicketTypes).map((row) => row.id)).toEqual([
+            'id-b',
+            'id-a',
+            'id-z',
+            'id-m',
+        ]);
+    });
+
+    it('keeps API order when every ordering key ties', () => {
+        const rows = [
+            { id: 'same', sortOrder: 0, createdAt: '2026-01-01T00:00:00.000Z', label: 'first' },
+            { id: 'same', sortOrder: 0, createdAt: '2026-01-01T00:00:00.000Z', label: 'second' },
+        ];
+        expect(rows.slice().sort(comparePublicTicketTypes).map((row) => row.label)).toEqual([
+            'first',
+            'second',
+        ]);
+    });
+
+    it('does not reshuffle tied sort orders when only one creation time is present', () => {
+        const rows = [
+            { id: 'b', sortOrder: 0, label: 'first' },
+            { id: 'a', sortOrder: 0, createdAt: '2026-01-01T00:00:00.000Z', label: 'second' },
+        ];
+        expect(rows.slice().sort(comparePublicTicketTypes).map((row) => row.label)).toEqual([
+            'first',
+            'second',
+        ]);
+    });
+});
+
 it.each(['PUBLISHED', 'ON_SALE'])('honors incoming sales pause for %s and preserves terminal lifecycle labels', status => {
     expect(getEventSaleState({ ...event, status, salesPaused: true }, now)).toEqual({ label: 'Sales paused', available: false });
     expect(getEventSaleState({ ...event, status: 'SOLD_OUT', salesPaused: true }, now).label).toBe('Sold out');

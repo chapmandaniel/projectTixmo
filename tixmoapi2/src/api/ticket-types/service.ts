@@ -4,6 +4,31 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 import prisma from '../../config/prisma';
 
+export const ticketTypeDisplayOrder: Prisma.TicketTypeOrderByWithRelationInput[] = [
+  { sortOrder: 'asc' },
+  { createdAt: 'asc' },
+  { id: 'asc' },
+];
+
+const ticketTypeListOrder = (
+  sortBy: 'price' | 'status' | 'sold' | 'name' | 'createdAt' | undefined,
+  direction: 'asc' | 'desc'
+): Prisma.TicketTypeOrderByWithRelationInput[] => {
+  if (!sortBy) return ticketTypeDisplayOrder;
+  const primary: Prisma.TicketTypeOrderByWithRelationInput =
+    sortBy === 'sold'
+      ? { quantitySold: direction }
+      : sortBy === 'status'
+        ? { status: direction }
+        : sortBy === 'name'
+          ? { name: direction }
+          : sortBy === 'createdAt'
+            ? { createdAt: direction }
+            : { price: direction };
+  const field = sortBy === 'sold' ? 'quantitySold' : sortBy;
+  return [primary, ...ticketTypeDisplayOrder.filter((rule) => !(field in rule))];
+};
+
 interface CreateTicketTypeInput {
   eventId: string;
   name: string;
@@ -15,6 +40,7 @@ interface CreateTicketTypeInput {
   salesEnd?: string;
   metadata?: Record<string, unknown>;
   status?: 'ACTIVE' | 'HIDDEN' | 'SOLD_OUT';
+  sortOrder?: number;
 }
 
 interface UpdateTicketTypeInput {
@@ -26,6 +52,7 @@ interface UpdateTicketTypeInput {
   salesStart?: string | null;
   salesEnd?: string | null;
   quantity?: number;
+  sortOrder?: number;
 }
 
 export class TicketTypeService {
@@ -53,6 +80,7 @@ export class TicketTypeService {
         salesEnd: data.salesEnd ? new Date(data.salesEnd) : null,
         metadata: (data.metadata as any) ?? null,
         status: data.status ?? 'ACTIVE',
+        ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
       },
     });
   }
@@ -118,6 +146,7 @@ export class TicketTypeService {
     if (data.price !== undefined) updateData.price = new Decimal(data.price);
     if (data.maxPerOrder !== undefined) updateData.maxPerOrder = data.maxPerOrder;
     if (data.metadata !== undefined) updateData.metadata = data.metadata;
+    if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
 
     if (data.salesStart !== undefined) {
       updateData.salesStart = data.salesStart ? new Date(data.salesStart) : null;
@@ -179,20 +208,12 @@ export class TicketTypeService {
    */
   async listTicketTypesByEvent(
     eventId: string,
-    sortBy: 'price' | 'status' | 'sold' | 'name' | 'createdAt' = 'price',
+    sortBy?: 'price' | 'status' | 'sold' | 'name' | 'createdAt',
     sortOrder: 'asc' | 'desc' = 'asc'
   ): Promise<TicketType[]> {
-    const orderBy: Prisma.TicketTypeOrderByWithRelationInput = {};
-
-    if (sortBy === 'sold') {
-      orderBy.quantitySold = sortOrder;
-    } else {
-      orderBy[sortBy] = sortOrder;
-    }
-
     return await prisma.ticketType.findMany({
       where: { eventId },
-      orderBy: orderBy,
+      orderBy: ticketTypeListOrder(sortBy, sortOrder),
     });
   }
 

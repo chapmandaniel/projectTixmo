@@ -28,6 +28,36 @@ export const getEventSaleState = (event, now = Date.now()) => {
     return { label: 'On sale now', available: true };
 };
 
+const createdRank = (ticket) => {
+    const value = ticket?.createdAt;
+    if (value instanceof Date) {
+        const time = value.getTime();
+        return Number.isFinite(time) ? time : null;
+    }
+    const time = Date.parse(value);
+    return Number.isFinite(time) ? time : null;
+};
+
+// Match the public API: sortOrder, then creation time, then id. Equal keys
+// return 0 so a stable sort keeps the order the API already sent.
+export const comparePublicTicketTypes = (left, right) => {
+    const leftOrder = Number(left?.sortOrder);
+    const rightOrder = Number(right?.sortOrder);
+    const sortDelta =
+        (Number.isFinite(leftOrder) ? leftOrder : 0) -
+        (Number.isFinite(rightOrder) ? rightOrder : 0);
+    if (sortDelta) return sortDelta;
+
+    const leftCreated = createdRank(left);
+    const rightCreated = createdRank(right);
+    if (leftCreated !== null && rightCreated !== null && leftCreated !== rightCreated)
+        return leftCreated - rightCreated;
+    if ((leftCreated === null) !== (rightCreated === null)) return 0;
+
+    if (left?.id == null || right?.id == null) return 0;
+    return String(left.id).localeCompare(String(right.id));
+};
+
 // The public payload is advisory. The order API rechecks inventory and pricing
 // under a transaction lock; a selection on this page never reserves tickets.
 export const getPublicTicketOffer = (ticket, now = Date.now()) => {

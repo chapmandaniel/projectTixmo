@@ -55,8 +55,8 @@ export const listTicketTypes = catchAsync(async (req: AuthRequest, res: Response
 
   const ticketTypes = await ticketTypeService.listTicketTypesByEvent(
     eventId as string,
-    sortBy as 'price' | 'status' | 'sold' | 'name' | 'createdAt',
-    sortOrder as 'asc' | 'desc'
+    sortBy as 'price' | 'status' | 'sold' | 'name' | 'createdAt' | undefined,
+    sortOrder === 'desc' ? 'desc' : 'asc'
   );
   res.json(successResponse(ticketTypes));
 });

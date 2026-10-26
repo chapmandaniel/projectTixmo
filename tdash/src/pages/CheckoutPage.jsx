@@ -34,6 +34,7 @@ import { SALES_PAUSED_MESSAGE, isSalesPausedError } from '../lib/salesPause';
 import { cn } from '../lib/utils';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import {
+    comparePublicTicketTypes,
     eventAddress,
     formatEventMoney,
     hstAmountLine,
@@ -395,7 +396,10 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
         } finally { setSubmitting(false); }
     };
 
-    const ticketTypes = event?.ticketTypes || [];
+    const ticketTypes = useMemo(
+        () => [...(event?.ticketTypes || [])].sort(comparePublicTicketTypes),
+        [event],
+    );
     const selectedItems = useMemo(() => (
         ticketTypes
             .map((ticketType) => ({

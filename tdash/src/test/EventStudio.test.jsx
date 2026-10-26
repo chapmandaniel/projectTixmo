@@ -27,6 +27,7 @@ describe('Event Studio persistence', () => {
             publish: false, event: expect.objectContaining({ startDateTime: event.startDatetime, timezone: event.timezone }),
             ticketTypes: [expect.objectContaining({ id: type.id, tiers: [expect.objectContaining({ startsAt: type.tiers[0].startsAt })] })],
         }));
+        expect(mocks.put.mock.calls[0][1].ticketTypes[0]).not.toHaveProperty('sortOrder');
         expect(mocks.post).not.toHaveBeenCalled();
     });
     it.each([
@@ -88,6 +89,15 @@ describe('Event Studio persistence', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }));
         await waitFor(() => expect(mocks.put).toHaveBeenCalledTimes(1));
         expect(mocks.put.mock.calls[0][1].event.timezone).toBe('America/Halifax');
+    });
+    it('sends a loaded ticket sort order back unchanged', async () => {
+        const ordered = { ...type, sortOrder: 4 };
+        mocks.get.mockImplementation(url => Promise.resolve({ data: { data: url.startsWith('/venues') ? { venues: [] } : { ticketTypes: [ordered] } } }));
+        show();
+        await screen.findAllByText('Admission');
+        fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }));
+        await waitFor(() => expect(mocks.put).toHaveBeenCalledTimes(1));
+        expect(mocks.put.mock.calls[0][1].ticketTypes[0].sortOrder).toBe(4);
     });
     it('retains a newly saved draft identity for subsequent saves', async () => {
         show(null);

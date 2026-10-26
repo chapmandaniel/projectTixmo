@@ -11,6 +11,7 @@ export const createTicketTypeSchema = z.object({
     salesStart: z.string().datetime().optional(),
     salesEnd: z.string().datetime().optional(),
     metadata: z.any().optional(),
+    sortOrder: z.number().int().nonnegative().optional(),
   }),
 });
 
@@ -24,6 +25,7 @@ export const updateTicketTypeSchema = z.object({
     salesStart: z.string().datetime().optional(),
     salesEnd: z.string().datetime().optional(),
     metadata: z.any().optional(),
+    sortOrder: z.number().int().nonnegative().optional(),
   }),
 });
 
