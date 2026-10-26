@@ -1,5 +1,18 @@
 import { z } from 'zod';
 
+// z.coerce.boolean treats every non-empty string, including "false", as true.
+const queryBoolean = z.preprocess((value) => {
+  if (typeof value === 'boolean') return value;
+  if (value === 1 || value === '1') return true;
+  if (value === 0 || value === '0') return false;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+  }
+  return value;
+}, z.boolean());
+
 /**
  * Register scanner validation schema
  */
@@ -64,7 +77,7 @@ export const getScanLogsSchema = z.object({
     scannerId: z.string().guid('Invalid uuid').optional(),
     ticketId: z.string().guid('Invalid uuid').optional(),
     eventId: z.string().guid('Invalid uuid').optional(),
-    success: z.coerce.boolean().optional(),
+    success: queryBoolean.optional(),
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().max(100).default(20),
   }),

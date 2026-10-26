@@ -88,9 +88,11 @@ describe('receipt wallet retrieval', () => {
     expect(email.html).toContain('Questions? <a href="mailto:info@tixmo.co">info@tixmo.co</a>');
     expect(email.text).toContain('Questions? info@tixmo.co');
     expect(email.html).toContain(
-      'Please don\'t reply to this email. Contact <a href="mailto:info@tixmo.co">info@tixmo.co</a>.'
+      'Tixmo · Ticketing for live events. Contact <a href="mailto:info@tixmo.co">info@tixmo.co</a>.'
     );
-    expect(email.text).toContain("Please don't reply to this email. Contact info@tixmo.co.");
+    expect(email.html).not.toContain("Please don't reply");
+    expect(email.text).toContain('Tixmo · Ticketing for live events. Contact info@tixmo.co.');
+    expect(email.text).not.toContain("Please don't reply");
   });
 
   it('prints the HST registration number when it is configured', () => {
@@ -186,7 +188,7 @@ describe('buyer receipt copy', () => {
       expect(email.html).not.toContain('Refund policy');
       expect(email.html).not.toContain('Terms of Sale');
       expect(email.text).not.toContain('Refund policy:');
-      expect(email.text).not.toContain('Terms:');
+      expect(email.text).not.toContain('Terms of Sale:');
       expect(email.html).not.toContain('secret');
       expect(email.text).not.toContain('secret');
     }
@@ -195,12 +197,12 @@ describe('buyer receipt copy', () => {
     );
     expect(refundOnly.html).not.toContain('Terms of Sale');
     expect(refundOnly.text).toContain('Refund policy: https://policies.example.test/refunds');
-    expect(refundOnly.text).not.toContain('Terms:');
+    expect(refundOnly.text).not.toContain('Terms of Sale:');
     expect(both.html).toContain(
       '<a href="https://policies.example.test/refunds">Refund policy</a> · <a href="https://policies.example.test/terms">Terms of Sale</a>'
     );
     expect(both.text).toContain(
-      'Refund policy: https://policies.example.test/refunds · Terms: https://policies.example.test/terms'
+      'Refund policy: https://policies.example.test/refunds · Terms of Sale: https://policies.example.test/terms'
     );
     expect(both.html.indexOf('All sales are final')).toBeLessThan(
       both.html.indexOf('Refund policy')
@@ -208,6 +210,8 @@ describe('buyer receipt copy', () => {
     expect(both.text.indexOf('All sales are final')).toBeLessThan(
       both.text.indexOf('Refund policy:')
     );
+    const lines = both.text.split('\n').filter((line) => line.trim().length > 0);
+    expect(lines.every((line) => /^ {6}\S/.test(line))).toBe(true);
   });
 
   it('falls back to info@tixmo.co when the support email is missing or invalid', () => {
@@ -265,7 +269,7 @@ describe('buyer receipt copy', () => {
       expect(sent.html).toContain(
         '<a href="https://policies.example.test/terms">Terms of Sale</a>'
       );
-      expect(sent.text).toContain('Terms: https://policies.example.test/terms');
+      expect(sent.text).toContain('Terms of Sale: https://policies.example.test/terms');
       expect(sent.html).toContain('mailto:info@tixmo.co');
       expect(sent.text).toContain('Questions? info@tixmo.co');
     } finally {

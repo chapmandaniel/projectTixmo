@@ -226,6 +226,12 @@ describe('Tickets API', () => {
           role,
           email: `tickets-holder-${role.toLowerCase()}-${Date.now()}@example.com`,
         });
+        if (role !== 'ADMIN') {
+          await prisma.user.update({
+            where: { id: staff.user.id },
+            data: { organizationId },
+          });
+        }
         const res = await request(app)
           .get(`/api/v1/tickets?eventId=${eventId}`)
           .set('Authorization', `Bearer ${staff.accessToken}`);
@@ -254,6 +260,54 @@ describe('Tickets API', () => {
           where: { action: 'STAFF_PII_VIEW', subjectType: 'ORDER', subjectId: orderId },
         })
       ).toBe(0);
+    });
+
+    it('does not let staff from another organization list tickets by eventId', async () => {
+      const outsider = await registerUser(app, {
+        role: 'OWNER',
+        email: `tickets-other-org-${Date.now()}@example.com`,
+      });
+      await createOrganization(app, outsider.accessToken, {
+        name: 'Other Tickets Org',
+        slug: `other-tickets-org-${Date.now()}`,
+      });
+      const denied = await request(app)
+        .get(`/api/v1/tickets?eventId=${eventId}`)
+        .set('Authorization', `Bearer ${outsider.accessToken}`);
+      expect(denied.status).toBe(403);
+      expect(denied.body.data).toBeUndefined();
+
+      const missing = await request(app)
+        .get(`/api/v1/tickets?eventId=${randomUUID()}`)
+        .set('Authorization', `Bearer ${outsider.accessToken}`);
+      expect(missing.status).toBe(404);
+
+      const unfiltered = await request(app)
+        .get('/api/v1/tickets')
+        .set('Authorization', `Bearer ${outsider.accessToken}`);
+      expect(unfiltered.status).toBe(200);
+      expect(
+        unfiltered.body.data.tickets.every(
+          (ticket: { eventId: string }) => ticket.eventId !== eventId
+        )
+      ).toBe(true);
+
+      const insider = await registerUser(app, {
+        role: 'MANAGER',
+        email: `tickets-same-org-${Date.now()}@example.com`,
+      });
+      await prisma.user.update({
+        where: { id: insider.user.id },
+        data: { organizationId },
+      });
+      const allowed = await request(app)
+        .get(`/api/v1/tickets?eventId=${eventId}`)
+        .set('Authorization', `Bearer ${insider.accessToken}`);
+      expect(allowed.status).toBe(200);
+      expect(allowed.body.data.tickets.length).toBeGreaterThan(0);
+      expect(
+        allowed.body.data.tickets.every((ticket: { eventId: string }) => ticket.eventId === eventId)
+      ).toBe(true);
     });
 
     it('records admitted and denied scan reason codes', async () => {

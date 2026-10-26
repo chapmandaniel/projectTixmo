@@ -16,7 +16,7 @@
   <!-- DRAFT, NOT FOR PUBLICATION UNTIL DANIEL APPROVES. Lawyer review required under PIPEDA (and confirm whether any other regime applies). Built from docs/policies/PRIVACY_POLICY_DRAFT.md, narrowed to what the app actually collects as of Oct 26, 2026. Retention periods are taken from docs/policies/DATA_RETENTION_NOTES.md (proposed, not approved). Prepared Oct 26, 2026 (America/St_Johns). Remove this comment and the robots noindex line only after approval. -->
   <main>
     <h1>Privacy Policy</h1>
-    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br>Organization: [LEGAL_ENTITY_NAME], operating as Mighty Quinton Concerts, [MAILING_ADDRESS] <!-- [tixmo pm, Oct 26]: operator = legal entity operating as Mighty Quinton Concerts (trading name buyers see); Daniel confirms the legal entity --><br>Privacy questions: <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a> <!-- PROPOSED DEFAULT (Daniel to approve): privacy contact = support email --></p>
+    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br><span data-policy-when="sellerName" hidden>Organization: <span data-policy-field="sellerName"></span><span data-policy-when="mailingAddress" hidden>, <span data-policy-field="mailingAddress"></span></span><br></span><span data-policy-when="supportEmail" hidden>Privacy questions: <a data-policy-field="supportEmail" href=""></a></span></p> <!-- Organization line is TIXMO_SELLER_NAME (Tixmo Ltd. as ticketing agent for the organizer). Privacy contact = support email. Both omitted when unset. -->
     <p>This policy explains what personal information Tixmo collects when you buy tickets, use your account or work in the organizer dashboard, why we collect it, who we share it with, and your choices. We follow Canada’s <em>Personal Information Protection and Electronic Documents Act</em> (PIPEDA).</p>
     <h2>1. What we collect</h2>
     <h3>When you create an account</h3>
@@ -67,16 +67,18 @@
     <h2>5. How we protect it</h2>
     <p>We use access controls by role and organization, hashed passwords, signed sign-in tokens, expiring password-reset links and encrypted connections. No system is perfectly secure, so please keep your password and ticket QR codes private.</p>
     <h2>6. Your choices and rights</h2>
-    <p>You can ask to see the personal information we hold about you, ask us to correct it, or withdraw consent and ask us to delete your account (subject to legal and financial record-keeping). Email <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a>, and we’ll verify your identity before acting. If you’re not satisfied with our answer, you can complain to the Office of the Privacy Commissioner of Canada.</p>
+    <p>You can ask to see the personal information we hold about you, ask us to correct it, or withdraw consent and ask us to delete your account (subject to legal and financial record-keeping). <span data-policy-when="supportEmail" hidden>Email <a data-policy-field="supportEmail" href=""></a>, and we’ll verify your identity before acting. </span><span data-policy-when-missing="supportEmail">Email us, and we’ll verify your identity before acting. </span>If you’re not satisfied with our answer, you can complain to the Office of the Privacy Commissioner of Canada.</p>
     <h2>7. Children</h2>
     <p>Tixmo isn’t meant for children under 13, and they shouldn’t create accounts.</p>
     <h2>8. Changes</h2>
     <p>If we make significant changes to this policy, we’ll post them here and tell account holders by email where appropriate.</p>
     <h2>9. Contact</h2>
-    <p>Privacy officer: Daniel Chapman, <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a> <!-- PROPOSED DEFAULT (Daniel to approve): privacy officer = Daniel Chapman; privacy and legal contact = support email --><br>Legal: <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a><br>Mail: [MAILING_ADDRESS]</p>
+    <p>Privacy officer: Daniel Chapman<span data-policy-when="supportEmail" hidden>, <a data-policy-field="supportEmail" href=""></a></span> <!-- PROPOSED DEFAULT (Daniel to approve): privacy officer = Daniel Chapman; privacy and legal contact = support email --><span data-policy-when="supportEmail" hidden><br>Legal: <a data-policy-field="supportEmail" href=""></a></span><span data-policy-when="mailingAddress" hidden><br>Mail: <span data-policy-field="mailingAddress"></span></span></p>
     <hr>
-    <p>Tixmo policies: <a href="terms.html">Terms of Service</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
-    <p>[LEGAL_ENTITY_NAME], operating as Mighty Quinton Concerts · [MAILING_ADDRESS] · <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a></p>
+    <p>Tixmo policies: <a href="terms.html">Terms of Sale</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
+    <p data-policy-footer hidden></p>
   </main>
+  <script src="/runtime-config.js"></script>
+  <script type="module" src="/policy-runtime.js"></script>
 </body>
 </html>

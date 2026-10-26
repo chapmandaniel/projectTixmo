@@ -255,7 +255,7 @@ jobs:
       - name: Checkout exact qualified rollback API source
         uses: actions/checkout@v4
         with:
-          ref: 9a5cff6ff0f590280551359c05a652996bde1637
+          ref: ee2957c08cbb0ea82d70c590ecd72a7897c645de
           path: .rollback-old
           persist-credentials: false
       - name: Verify previous-main rollback pin

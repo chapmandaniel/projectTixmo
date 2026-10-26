@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, User, CheckCircle, XCircle, MoreHorizontal, Download, UserCheck, UserX } from 'lucide-react';
 import api from '../lib/api';
-import { attendeesToCsv, ticketMatches, unwrapTicketPage } from '../lib/attendees';
+import { attendeesToCsv, canCheckIn, orderStateLabel, ticketMatches, ticketStatusLabel, unwrapTicketPage } from '../lib/attendees';
 import { DashboardButton } from '../components/dashboard/DashboardPrimitives';
-import StatusBadge from '../components/StatusBadge';
 
 const AttendeeRow = ({ ticket, isDark, onCheckIn, onRevoke }) => (
     <tr className={`transition-colors text-sm ${isDark ? 'hover:bg-[#232336] border-b border-[#2b2b40]/60' : 'hover:bg-gray-50 border-b border-gray-100'}`}>
@@ -22,24 +21,33 @@ const AttendeeRow = ({ ticket, isDark, onCheckIn, onRevoke }) => (
             {ticket.ticketType?.name || 'Unknown Ticket'}
         </td>
         <td className="px-6 py-4">
-            {ticket.status === 'USED' ? (
-                <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                    <CheckCircle size={12} className="mr-1" /> Checked In
-                </span>
-            ) : ticket.status === 'VALID' ? (
-                <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
-                    Confirmed
-                </span>
-            ) : (
-                <StatusBadge status={ticket.status} isDark={isDark} />
-            )}
+            <div className="flex flex-col items-start gap-1">
+                {ticket.status === 'USED' ? (
+                    <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                        <CheckCircle size={12} className="mr-1" /> Checked In
+                    </span>
+                ) : ticket.status === 'VALID' && canCheckIn(ticket) ? (
+                    <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
+                        Confirmed
+                    </span>
+                ) : (
+                    <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-gray-500/10 text-gray-300 border-gray-500/20' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                        {ticketStatusLabel(ticket.status)}
+                    </span>
+                )}
+                {orderStateLabel(ticket) && (
+                    <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+                        {orderStateLabel(ticket)}
+                    </span>
+                )}
+            </div>
         </td>
         <td className={`px-6 py-4 font-mono font-light tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
             {ticket.order?.orderNumber}
         </td>
         <td className="px-6 py-4 text-right">
             <div className="flex justify-end space-x-2">
-                {ticket.status === 'VALID' && (
+                {canCheckIn(ticket) && (
                     <button
                         onClick={() => onCheckIn(ticket)}
                         className={`p-2 rounded-md transition-colors ${isDark ? 'hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-400' : 'hover:bg-emerald-50 text-gray-500 hover:text-emerald-600'}`}

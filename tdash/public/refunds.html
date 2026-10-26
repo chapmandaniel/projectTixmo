@@ -16,7 +16,7 @@
   <!-- DRAFT, NOT FOR PUBLICATION UNTIL DANIEL APPROVES. Decision 2B. Publish ONLY if the PR disabling buyer self-refund (POST /orders/:id/request-refund and the wallet Refund full order button) is merged and verified by Nov 3, 2026; otherwise publish refunds-fallback-2A.html under this filename. Lawyer review required. Prepared Oct 26, 2026 (America/St_Johns). Remove this comment and the robots noindex line only after approval. -->
   <main>
     <h1>Refund Policy</h1>
-    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br>Sold by: [LEGAL_ENTITY_NAME], operating as Mighty Quinton Concerts, [MAILING_ADDRESS] <!-- [tixmo pm, Oct 26]: operator = legal entity operating as Mighty Quinton Concerts (trading name buyers see); Daniel confirms the legal entity --><br>Questions: <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a></p>
+    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br><span data-policy-when="sellerName" hidden>Sold by: <span data-policy-field="sellerName"></span><span data-policy-when="mailingAddress" hidden>, <span data-policy-field="mailingAddress"></span></span><br></span><span data-policy-when="supportEmail" hidden>Questions: <a data-policy-field="supportEmail" href=""></a></span></p> <!-- Seller line is TIXMO_SELLER_NAME (Tixmo Ltd. as ticketing agent for the organizer). Address and support email are omitted when unset. -->
     <h2>The short version</h2>
     <p>All ticket sales are <strong>final</strong>. We refund tickets only if:</p>
     <ul>
@@ -41,14 +41,16 @@
       <li>You were refused entry, or removed, for breaking venue or event rules.</li>
     </ul>
     <h2>How to ask</h2>
-    <p>Email <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a> with your order number (it starts with <code>ORD-</code>), the email you used to buy, and the reason. Please <strong>never</strong> send card numbers, passwords or pictures of your ticket QR code.</p>
+    <p><span data-policy-when="supportEmail" hidden>Email <a data-policy-field="supportEmail" href=""></a> with your order number (it starts with <code>ORD-</code>), the email you used to buy, and the reason.</span><span data-policy-when-missing="supportEmail">Email us with your order number (it starts with <code>ORD-</code>), the email you used to buy, and the reason.</span> Please <strong>never</strong> send card numbers, passwords or pictures of your ticket QR code.</p>
     <h2>Transferred tickets</h2>
     <p>Refunds always go to the <strong>original purchaser’s payment method</strong> (the card used to buy the order), even if a ticket was transferred to someone else. If you received a ticket by transfer, any refund goes to the person who bought it, so please settle up with the person who sent you the ticket. A refund cancels <strong>every ticket on the order</strong>, including any that were transferred. Orders with transferred tickets may take us a little longer.</p>
     <h2>Chargebacks</h2>
     <p>If you dispute a charge with your bank, we may cancel the tickets on that order while the dispute is reviewed. Please contact us first. It’s usually faster.</p>
     <hr>
-    <p>Tixmo policies: <a href="terms.html">Terms of Service</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
-    <p>[LEGAL_ENTITY_NAME], operating as Mighty Quinton Concerts · [MAILING_ADDRESS] · <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a></p>
+    <p>Tixmo policies: <a href="terms.html">Terms of Sale</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
+    <p data-policy-footer hidden></p>
   </main>
+  <script src="/runtime-config.js"></script>
+  <script type="module" src="/policy-runtime.js"></script>
 </body>
 </html>
