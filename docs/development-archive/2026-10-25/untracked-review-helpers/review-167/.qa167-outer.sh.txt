@@ -1,0 +1,21 @@
+set -euo pipefail
+cp tixmoapi2/src/api/payments/service.ts .qa167-disabled-source
+restore() {
+  rc=$?
+  trap - EXIT
+  cp .qa167-disabled-source tixmoapi2/src/api/payments/service.ts
+  cmp .qa167-disabled-source tixmoapi2/src/api/payments/service.ts || exit 99
+  timeout --signal=TERM --kill-after=5s 40s npm --prefix tixmoapi2 run build > .qa167-disabled-build.log 2>&1 || exit 98
+  echo "SOURCE_RESTORED status=$rc DISABLED_BUILD=0"
+  exit "$rc"
+}
+trap restore EXIT
+python3 - <<'ACTIVATE'
+from pathlib import Path
+p=Path('tixmoapi2/src/api/payments/service.ts');s=p.read_text()
+a='const EXPIRED_WEBHOOK_RECOVERY_ENABLED = false;'
+assert s.count(a)==1
+p.write_text(s.replace(a,'const EXPIRED_WEBHOOK_RECOVERY_ENABLED = true;'))
+ACTIVATE
+export TIXMO_EXPERIMENTAL_RECOVERY=1
+bash .qa167-runtime.sh

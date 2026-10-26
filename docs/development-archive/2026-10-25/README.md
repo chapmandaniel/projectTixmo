@@ -31,3 +31,5 @@ Recovered branch names appear under `local-history/`, preserving current local b
 - This backup does not approve any historical implementation, certify current runtime behavior, or merge/deploy anything.
 
 Two older registered worktrees under the server's agentbox archive also had uncommitted package-script changes. Their original HEADs and exact working-tree patches are preserved under `archived-worktrees/`; these patches are historical source, not changes to current package scripts.
+
+The final worktree audit also found 71 untracked reviewer shell/Python helpers and SQL fixtures. Their unchanged bytes are preserved as inert `.txt` files under `untracked-review-helpers/`, with original worktrees, paths, HEADs, sizes, and SHA-256 values in its manifest. They were not executed during recovery and are not current release qualification.

@@ -1,0 +1,31 @@
+BEGIN;
+CREATE TABLE "payment_webhook_events" (
+    "id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "payment_intent_id" TEXT,
+    "order_id" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'PROCESSING',
+    "error_message" TEXT,
+    "processing_started_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "processed_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "payment_webhook_events_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "payment_webhook_events_payment_intent_id_idx" ON "payment_webhook_events"("payment_intent_id");
+CREATE INDEX "payment_webhook_events_order_id_idx" ON "payment_webhook_events"("order_id");
+INSERT INTO payment_webhook_events(id,type,status,updated_at,processing_started_at,processed_at,error_message) VALUES
+('legacy-processing','test','PROCESSING','2020-01-01','2020-01-02',NULL,NULL),
+('legacy-failed','test','FAILED','2020-01-03','2020-01-04','2020-01-05','failure'),
+('legacy-done','test','PROCESSED','2020-01-06','2020-01-07','2020-01-08',NULL);
+CREATE TEMP TABLE before_rows AS SELECT id,to_jsonb(e) AS data FROM payment_webhook_events e;
+-- Retain legacy rows and timestamps; admission will increment this under CAS.
+ALTER TABLE "payment_webhook_events" ADD COLUMN "attempt_generation" BIGINT NOT NULL DEFAULT 0;
+DO $$ BEGIN
+IF EXISTS (SELECT 1 FROM payment_webhook_events e JOIN before_rows b USING(id) WHERE to_jsonb(e)-'attempt_generation' <> b.data OR e.attempt_generation <> 0) OR (SELECT count(*) FROM payment_webhook_events) <> 3 THEN RAISE EXCEPTION 'preservation failed'; END IF;
+END $$;
+INSERT INTO payment_webhook_events(id,type,updated_at) VALUES ('new','test',now());
+DO $$ BEGIN IF (SELECT attempt_generation FROM payment_webhook_events WHERE id='new') <> 0 THEN RAISE EXCEPTION 'new default failed'; END IF; END $$;
+ROLLBACK;
