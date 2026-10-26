@@ -24,6 +24,7 @@ jest.mock('../../src/config/prisma', () => ({
       updateMany: jest.fn(),
       update: jest.fn(),
     },
+    paymentRefundLine: { upsert: jest.fn().mockResolvedValue({}) },
     event: { findUniqueOrThrow: jest.fn() },
     order: { findUnique: jest.fn(), updateMany: jest.fn() },
   },

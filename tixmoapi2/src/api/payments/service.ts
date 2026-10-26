@@ -646,6 +646,25 @@ export class PaymentService {
         errorMessage: refund.failure_reason || null,
       },
     });
+    await prisma.paymentRefundLine.upsert({
+      where: { stripeRefundId: refund.id },
+      create: {
+        paymentRefundId: id,
+        orderId: record.orderId,
+        paymentIntentId: record.paymentIntentId,
+        stripeRefundId: refund.id,
+        amount: refund.amount,
+        currency: refund.currency,
+        reason: record.reason,
+        status,
+      },
+      update: {
+        paymentRefundId: id,
+        amount: refund.amount,
+        currency: refund.currency,
+        status,
+      },
+    });
     const effectiveStatus = saved.count
       ? status
       : (await prisma.paymentRefund.findUniqueOrThrow({ where: { id } })).status;
@@ -723,8 +742,9 @@ export class PaymentService {
   }
 
   /**
-   * Dashboard and app refunds each get their own row, keyed by Stripe refund id.
-   * A partial is written immediately and the order stays PAID. A sum that matches
+   * Each Stripe refund id is its own payment_refund_lines row, written on the
+   * first partial. payment_refunds stays one row per payment intent, which is
+   * the row the previous image upserts and findUnique's. A sum that matches
    * amount_refunded and covers the order reuses ORDER_REFUND settlement and does
    * not call refunds.create. Attended tickets stay sold.
    */
@@ -753,7 +773,7 @@ export class PaymentService {
       }
       await this.persistStripeRefunds(tx, current, snapshot.refunds);
       if (snapshot.amountRefunded === null) return false;
-      const rows = await tx.paymentRefund.findMany({
+      const rows = await tx.paymentRefundLine.findMany({
         where: {
           orderId: order.id,
           paymentIntentId,
@@ -852,64 +872,74 @@ export class PaymentService {
           : refund.payment_intent?.id;
       if (paymentIntent && paymentIntent !== order.paymentIntentId) continue;
       const status = this.refundRecordStatus(refund.status);
-      const byStripe = await tx.paymentRefund.findUnique({ where: { stripeRefundId: refund.id } });
-      if (byStripe) {
-        if (byStripe.orderId !== order.id || byStripe.paymentIntentId !== order.paymentIntentId) {
-          throw ApiError.conflict('Processor refund does not match the order');
-        }
-        await tx.paymentRefund.update({
-          where: { id: byStripe.id },
-          data: { amount: refund.amount, currency: refund.currency, status, errorMessage: null },
-        });
-        continue;
+      const existingLine = await tx.paymentRefundLine.findUnique({
+        where: { stripeRefundId: refund.id },
+      });
+      if (
+        existingLine &&
+        (existingLine.orderId !== order.id ||
+          existingLine.paymentIntentId !== order.paymentIntentId)
+      ) {
+        throw ApiError.conflict('Processor refund does not match the order');
       }
-      const metadataId = refund.metadata?.refundId;
-      const pending = metadataId
-        ? await tx.paymentRefund.findFirst({
-            where: {
-              id: metadataId,
-              orderId: order.id,
-              paymentIntentId: order.paymentIntentId,
-              stripeRefundId: null,
-              reason: { not: 'LATE_PAYMENT' },
-            },
-          })
-        : await tx.paymentRefund.findFirst({
-            where: {
-              orderId: order.id,
-              paymentIntentId: order.paymentIntentId,
-              stripeRefundId: null,
-              amount: refund.amount,
-              currency: refund.currency,
-              reason: 'ORDER_REFUND',
-              status: { in: ['REQUESTED', 'PROCESSING'] },
-            },
-          });
-      if (pending) {
-        await tx.paymentRefund.update({
-          where: { id: pending.id },
-          data: {
-            stripeRefundId: refund.id,
-            amount: refund.amount,
-            currency: refund.currency,
-            status,
-            errorMessage: null,
-          },
-        });
-        continue;
-      }
-      await tx.paymentRefund.create({
-        data: {
+      await tx.paymentRefundLine.upsert({
+        where: { stripeRefundId: refund.id },
+        create: {
           orderId: order.id,
           paymentIntentId: order.paymentIntentId,
+          stripeRefundId: refund.id,
           amount: refund.amount,
           currency: refund.currency,
           reason: 'ORDER_REFUND',
           status,
-          stripeRefundId: refund.id,
         },
+        update: { amount: refund.amount, currency: refund.currency, status },
       });
     }
+    await this.syncCanonicalRefund(tx, order);
+  }
+
+  // One payment_refunds row per payment intent. Its amount is the cumulative
+  // succeeded total. Individual Stripe ids stay on payment_refund_lines.
+  private async syncCanonicalRefund(
+    tx: Prisma.TransactionClient,
+    order: { id: string; paymentIntentId: string | null; currency: string }
+  ): Promise<void> {
+    if (!order.paymentIntentId) return;
+    const lines = await tx.paymentRefundLine.findMany({
+      where: { orderId: order.id, paymentIntentId: order.paymentIntentId, reason: 'ORDER_REFUND' },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (lines.length === 0) return;
+    const succeeded = lines.filter((line) => line.status === 'SUCCEEDED');
+    const representative = succeeded[0] ?? lines[0];
+    const existing = await tx.paymentRefund.findFirst({
+      where: { paymentIntentId: order.paymentIntentId },
+    });
+    if (existing?.reason === 'LATE_PAYMENT') return;
+    const data = {
+      amount: succeeded.length
+        ? succeeded.reduce((total, line) => total + line.amount, 0)
+        : representative.amount,
+      currency: representative.currency,
+      status: succeeded.length ? 'SUCCEEDED' : representative.status,
+      stripeRefundId: succeeded[0]?.stripeRefundId ?? representative.stripeRefundId,
+      errorMessage: null,
+    };
+    const canonical = existing
+      ? await tx.paymentRefund.update({ where: { id: existing.id }, data })
+      : await tx.paymentRefund.create({
+          data: {
+            orderId: order.id,
+            paymentIntentId: order.paymentIntentId,
+            reason: 'ORDER_REFUND',
+            ...data,
+          },
+        });
+    await tx.paymentRefundLine.updateMany({
+      where: { orderId: order.id, paymentIntentId: order.paymentIntentId, paymentRefundId: null },
+      data: { paymentRefundId: canonical.id },
+    });
   }
 
   private async chargeRefunds(

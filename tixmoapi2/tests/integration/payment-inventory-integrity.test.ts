@@ -907,7 +907,13 @@ describe('Payment, admission and inventory integrity', () => {
       payment_intent: paymentIntentId,
     });
     expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
-    const rows = await prisma.paymentRefund.findMany({
+    expect(await prisma.paymentRefund.count({ where: { orderId: order.id } })).toBe(1);
+    expect(await prisma.paymentRefund.findFirst({ where: { orderId: order.id } })).toMatchObject({
+      amount: amount - 1,
+      status: 'SUCCEEDED',
+      stripeRefundId: 're_partial',
+    });
+    const rows = await prisma.paymentRefundLine.findMany({
       where: { orderId: order.id },
       orderBy: { stripeRefundId: 'asc' },
     });
@@ -968,7 +974,12 @@ describe('Payment, admission and inventory integrity', () => {
     fake.refunds.set(second.id, second);
     await deliverExternal('refund.updated', second, 'evt_part_2');
     expect(fake.stripe.refunds.create).not.toHaveBeenCalled();
-    const rows = await prisma.paymentRefund.findMany({
+    expect(await prisma.paymentRefund.count({ where: { paymentIntentId } })).toBe(1);
+    expect(await prisma.paymentRefund.findFirst({ where: { paymentIntentId } })).toMatchObject({
+      amount,
+      status: 'SUCCEEDED',
+    });
+    const rows = await prisma.paymentRefundLine.findMany({
       where: { paymentIntentId },
       orderBy: { stripeRefundId: 'asc' },
     });
@@ -1054,7 +1065,12 @@ describe('Payment, admission and inventory integrity', () => {
       },
       'evt_charge_two'
     );
-    const rows = await prisma.paymentRefund.findMany({
+    expect(await prisma.paymentRefund.count({ where: { paymentIntentId } })).toBe(1);
+    expect(await prisma.paymentRefund.findFirst({ where: { paymentIntentId } })).toMatchObject({
+      amount: 2000,
+      status: 'SUCCEEDED',
+    });
+    const rows = await prisma.paymentRefundLine.findMany({
       where: { paymentIntentId },
       orderBy: { stripeRefundId: 'asc' },
     });

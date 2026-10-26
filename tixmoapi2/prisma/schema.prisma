@@ -375,7 +375,7 @@ model PaymentRefund {
   id              String   @id @default(uuid())
   orderId         String   @map("order_id")
   order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  paymentIntentId String   @map("payment_intent_id")
+  paymentIntentId String   @unique @map("payment_intent_id")
   amount          Int
   currency        String
   reason          String
@@ -384,9 +384,30 @@ model PaymentRefund {
   errorMessage    String?  @map("error_message") @db.Text
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
-  @@index([paymentIntentId], map: "payment_refunds_payment_intent_id_idx")
+  lines           PaymentRefundLine[]
   @@index([status, updatedAt])
   @@map("payment_refunds")
+}
+
+// One Stripe refund id per line. payment_refunds stays one row per payment
+// intent so the previous image can still upsert and findUnique that row.
+model PaymentRefundLine {
+  id              String   @id @default(uuid())
+  paymentRefundId String?  @map("payment_refund_id")
+  paymentRefund   PaymentRefund? @relation(fields: [paymentRefundId], references: [id], onDelete: SetNull)
+  orderId         String   @map("order_id")
+  paymentIntentId String   @map("payment_intent_id")
+  stripeRefundId  String   @unique @map("stripe_refund_id")
+  amount          Int
+  currency        String
+  reason          String   @default("ORDER_REFUND")
+  status          String
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([paymentIntentId])
+  @@index([orderId])
+  @@map("payment_refund_lines")
 }
 
 enum TicketInventoryState {

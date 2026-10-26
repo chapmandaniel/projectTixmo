@@ -580,19 +580,24 @@ export class OrderService {
       if (order.status === 'REFUNDED') return order;
       if (order.status !== 'PAID') throw ApiError.conflict('Order is not paid');
       if (!order.totalAmount.eq(0)) {
-        const refunds = await tx.paymentRefund.findMany({
+        const lines = await tx.paymentRefundLine.findMany({
           where: { orderId: id, reason: 'ORDER_REFUND', status: 'SUCCEEDED' },
         });
-        const sum = refunds.reduce((total, refund) => total + refund.amount, 0);
+        const recorded = lines.length
+          ? lines
+          : await tx.paymentRefund.findMany({
+              where: { orderId: id, reason: 'ORDER_REFUND', status: 'SUCCEEDED' },
+            });
+        const sum = recorded.reduce((total, refund) => total + refund.amount, 0);
         const orderCents = Math.round(order.totalAmount.toNumber() * 100);
         if (
-          refunds.length === 0 ||
-          refunds.some((refund) => refund.currency !== order.currency) ||
+          recorded.length === 0 ||
+          recorded.some((refund) => refund.currency !== order.currency) ||
           sum !== orderCents
         ) {
-          // A partial sum is already recorded on its own rows. Recovery must not
+          // A partial sum is already recorded on its own lines. Recovery must not
           // fail the webhook or release inventory until the refunds cover the order.
-          if (sum > orderCents || refunds.some((refund) => refund.currency !== order.currency)) {
+          if (sum > orderCents || recorded.some((refund) => refund.currency !== order.currency)) {
             throw ApiError.conflict('Processor refund has not been confirmed');
           }
           return order;
