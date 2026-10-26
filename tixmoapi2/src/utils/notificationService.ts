@@ -84,6 +84,7 @@ export class NotificationService {
         eventName: data.eventName,
         eventDate: data.eventDate,
         ticketSummary: data.ticketSummary,
+        subtotalAmount: data.subtotalAmount,
         totalAmount: data.totalAmount,
         venueName: data.venueName,
         venueAddress: data.venueAddress,

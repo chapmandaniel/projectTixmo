@@ -45,6 +45,7 @@ export interface OrderConfirmationData {
   eventName: string;
   eventDate: string;
   ticketSummary: string;
+  subtotalAmount?: string | null;
   totalAmount: string;
   venueName?: string | null;
   venueAddress?: string | null;
@@ -77,6 +78,11 @@ export function orderConfirmationEmail(
     ? `View your tickets: ${walletUrl}\nSign in with the account used for this order.\n`
     : '';
   const total = escapeReceiptHtml(data.totalAmount);
+  const subtotal = data.subtotalAmount?.trim() ? escapeReceiptHtml(data.subtotalAmount.trim()) : '';
+  const subtotalHtml = subtotal ? `<p><strong>Subtotal:</strong> ${subtotal}</p>` : '';
+  const subtotalText = data.subtotalAmount?.trim()
+    ? `Subtotal: ${data.subtotalAmount.trim()}\n`
+    : '';
   return {
     subject: `Your Tixmo tickets for ${data.eventName}`,
     html: `
@@ -105,6 +111,7 @@ export function orderConfirmationEmail(
                 <p><strong>When:</strong> ${escapeReceiptHtml(data.eventDate)}</p>
                 <p><strong>Where:</strong> ${escapeReceiptHtml(venue)}</p>
                 <p><strong>Tickets:</strong> ${escapeReceiptHtml(data.ticketSummary)}</p>
+                ${subtotalHtml}
                 <p><strong>Total paid:</strong> ${total} (includes HST and all fees)</p>
                 ${hstAmountHtml}
                 ${hstHtml}
@@ -127,7 +134,7 @@ export function orderConfirmationEmail(
       When: ${data.eventDate}
       Where: ${venue}
       Tickets: ${data.ticketSummary}
-      Total paid: ${data.totalAmount} (includes HST and all fees)
+      ${subtotalText}Total paid: ${data.totalAmount} (includes HST and all fees)
       ${hstAmountText}${hstText}${walletText}
       All sales are final unless the event is cancelled or rescheduled.
 

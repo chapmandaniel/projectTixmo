@@ -431,6 +431,10 @@ export class OrderService {
         eventName: order.event.name,
         eventDate: date,
         ticketSummary: summarizeTickets(order.tickets),
+        subtotalAmount: formatMoney(
+          new Decimal(order.totalAmount).plus(order.discountAmount),
+          order.currency
+        ),
         totalAmount: formatMoney(order.totalAmount, order.currency),
         venueName: order.event.venue?.name || null,
         venueAddress: formatVenueAddress(order.event.venue?.address),

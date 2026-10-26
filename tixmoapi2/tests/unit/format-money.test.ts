@@ -15,7 +15,10 @@ describe('Canadian money formatting', () => {
     expect(formatMoney('50.5', 'CAD')).toBe('CA$50.50');
     expect(formatMoney({ toNumber: () => 12 }, 'cad')).toBe('CA$12.00');
     expect(formatMoney(-2, 'cad')).toBe('-CA$2.00');
+    expect(formatMoney(10, 'CAD')).toBe('CA$10.00');
+    expect(formatMoney(10, 'CAD')).not.toBe('$10.00');
     expect(formatMoney(50, 'cad')).not.toMatch(/\$CAD|CAD\s*50/);
+    expect(formatHstAmountLine(1.3, 0.15)).toBe('Includes HST (15%): CA$1.30');
     expect(formatHstAmountLine(6.52, 0.15)).toBe(`Includes HST (15%): ${formatMoney(6.52, 'CAD')}`);
   });
 

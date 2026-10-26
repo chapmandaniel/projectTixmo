@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const { createHash } = require('node:crypto');
 const { PrismaClient, Prisma } = require('@prisma/client');
+const { isUpcoming } = require('./lib/upcoming.cjs');
 
 const MAX_TICKETS = 25000;
 const SYSTEM_ACTOR = 'system-inventory-reconcile';
@@ -509,15 +510,6 @@ async function applyInventory(prisma, input, confirmation, targetFingerprint, en
       maxWait: 10000,
     }
   );
-}
-
-function eventBoundary(event) {
-  return event.endDatetime || event.startDatetime || null;
-}
-
-function isUpcoming(event, now) {
-  const boundary = eventBoundary(event);
-  return Boolean(boundary) && new Date(boundary).getTime() > now.getTime();
 }
 
 function paidLike(status) {

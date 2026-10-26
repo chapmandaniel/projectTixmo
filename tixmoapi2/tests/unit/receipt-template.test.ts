@@ -14,6 +14,7 @@ const receipt = {
   eventName: 'Test & Event',
   eventDate: '2026-11-09',
   ticketSummary: '2 × General Admission',
+  subtotalAmount: formatMoney(25.5, 'CAD'),
   totalAmount: formatMoney(25.5, 'CAD'),
   venueName: 'Signal Hall',
   venueAddress: "1 Harbour Dr, St. John's",
@@ -54,12 +55,17 @@ describe('receipt wallet retrieval', () => {
     expect(email.html).toContain('Sign in with the account used for this order');
     expect(email.text).toContain('Sign in with the account used for this order');
     expect(email.subject).toBe('Your Tixmo tickets for Test & Event');
+    expect(receipt.subtotalAmount).toBe('CA$25.50');
     expect(receipt.totalAmount).toBe('CA$25.50');
     expect(receipt.hstAmountLine).toBe('Includes HST (15%): CA$3.33');
+    expect(email.html).toContain('Subtotal:</strong> CA$25.50');
+    expect(email.text).toContain('Subtotal: CA$25.50');
     expect(email.html).toContain('Total paid:</strong> CA$25.50 (includes HST and all fees)');
     expect(email.text).toContain('Total paid: CA$25.50 (includes HST and all fees)');
     expect(email.html).toContain('Includes HST (15%): CA$3.33');
     expect(email.text).toContain('Includes HST (15%): CA$3.33');
+    expect(email.html).not.toMatch(/(?<!CA)\$\d/);
+    expect(email.text).not.toMatch(/(?<!CA)\$\d/);
     expect(email.html).not.toMatch(/Total paid:<\/strong> \$/);
     expect(email.text).not.toMatch(/Total paid: \$/);
     expect(email.text).not.toContain('$CAD');
