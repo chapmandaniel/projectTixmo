@@ -122,7 +122,17 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
     for (const [module, names] of [
       [auth, ['authenticate', 'optionalAuthenticate']],
       [waiting, ['waitingRoom']],
-      [limiter, ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter']],
+      [
+        limiter,
+        [
+          'apiReadRateLimiter',
+          'apiWriteRateLimiter',
+          'authRateLimiter',
+          'authAccountRateLimiter',
+          'checkoutActorRateLimiter',
+          'checkoutIpRateLimiter',
+        ],
+      ],
     ] as Array<[any, string[]]>) {
       for (const name of names) {
         const original = module[name];

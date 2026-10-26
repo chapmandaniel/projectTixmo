@@ -198,9 +198,21 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
       controller = await import('../../src/api/scanners/controller');
     for (const [target, names] of [
       [auth, ['authenticate', 'optionalAuthenticate']],
-      [scannerAuth, ['authenticateScanner']],
+      [scannerAuth, ['authenticateScanner', 'authenticateAdmissionScanner']],
       [waiting, ['waitingRoom']],
-      [limiter, ['apiReadRateLimiter', 'apiWriteRateLimiter', 'authRateLimiter']],
+      [
+        limiter,
+        [
+          'apiReadRateLimiter',
+          'apiWriteRateLimiter',
+          'authRateLimiter',
+          'authAccountRateLimiter',
+          'checkoutActorRateLimiter',
+          'checkoutIpRateLimiter',
+          'scannerAdmissionRateLimiter',
+          'scannerAuthFailureLimiter',
+        ],
+      ],
       [controller, ['registerScanner', 'authenticateScanner', 'scanTicket', 'deleteScanner']],
     ] as Array<[any, string[]]>)
       for (const name of names) spies.push(observeFunction(target, name, track));

@@ -76,6 +76,14 @@ describe('Online scanner', () => {
         await act(async () => { pending.resolve(reply({ success: true })); });
         expect(await screen.findByText('Admitted')).toBeInTheDocument();
     });
+    it('shows the server reason when the gate rate limit rejects a scan', async () => {
+        render(<ScannerPage />); await connect(); enter();
+        const message = 'This scanner is sending scans faster than the gate allows. Wait a moment, then scan the same ticket again.';
+        fetch.mockResolvedValueOnce({ ok: false, status: 429, json: async () => ({ success: false, message }) });
+        check();
+        expect(await screen.findByText(message)).toBeInTheDocument();
+        expect(screen.queryByText(/No confirmed result/)).not.toBeInTheDocument();
+    });
     it('does not infer admission from missing data or a failed network and permits explicit recovery', async () => {
         render(<ScannerPage />); await connect(); enter();
         fetch.mockRejectedValueOnce(new Error('private request details')); check();
