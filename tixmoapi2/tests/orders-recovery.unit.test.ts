@@ -84,6 +84,7 @@ const storedStates: Array<[OrderStatus, PaymentStatus]> = [
   [OrderStatus.CANCELLED, PaymentStatus.PENDING],
   [OrderStatus.CANCELLED, PaymentStatus.SUCCEEDED],
   [OrderStatus.REFUNDED, PaymentStatus.SUCCEEDED],
+  [OrderStatus.REFUNDED, PaymentStatus.REFUNDED],
   [OrderStatus.PARTIALLY_REFUNDED, PaymentStatus.SUCCEEDED],
   [OrderStatus.PAID, PaymentStatus.FAILED],
 ];
@@ -177,7 +178,7 @@ describe('consumer recovery route/controller/service', () => {
   });
   test.each(['', undefined, null])('service rejects missing owner %s', async (owner) => {
     await expect(
-      orderService.getConsumerOrderRecovery('11111111-1111-4111-8111-111111111111', owner as any)
+      orderService.getConsumerOrderRecovery('11111111-1111-4111-8111-111111111111', owner)
     ).rejects.toMatchObject({ statusCode: 401 });
     expect(db.order.findFirst).not.toHaveBeenCalled();
   });

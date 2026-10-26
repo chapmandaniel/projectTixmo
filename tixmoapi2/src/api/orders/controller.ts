@@ -112,8 +112,8 @@ export const listMyOrders = catchAsync(async (req: AuthRequest, res: Response) =
 export const resendReceipt = catchAsync(async (req: AuthRequest, res: Response) => {
   const order = await orderService.getOrderById(req.params.id, undefined, req.user!.userId);
   if (!order) throw ApiError.notFound('Order not found');
-  if (order.status !== 'PAID')
-    throw ApiError.badRequest('Receipts can only be sent for paid orders');
+  if (order.status !== 'PAID' && order.status !== 'REFUNDED')
+    throw ApiError.badRequest('Receipts can only be sent for paid or refunded orders');
   await orderService.sendOrderConfirmationEmail(order.id, true);
   res.json(successResponse(null, 'Receipt sent to the buyer'));
 });

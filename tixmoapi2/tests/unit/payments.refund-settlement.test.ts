@@ -103,6 +103,7 @@ beforeEach(() => {
   finalizeRefund.mockImplementation(() => {
     order.status = 'REFUNDED';
     order.refundStatus = 'SUCCEEDED';
+    order.paymentStatus = 'REFUNDED';
     return Promise.resolve({ ...order });
   });
   provider = {
@@ -155,6 +156,7 @@ describe.each(['ORDER_REFUND', 'UNEXPECTED_PAYMENT'])('settlement for %s', (reas
         if (reason === 'ORDER_REFUND') {
           expect(order.status).toBe('REFUNDED');
           expect(order.refundStatus).toBe('SUCCEEDED');
+          expect(order.paymentStatus).toBe('REFUNDED');
         } else {
           expect(order.status).toBe('CANCELLED');
           expect(order.paymentStatus).toBe('SUCCEEDED');
@@ -192,6 +194,7 @@ test('the delayed worker can finish an order after successful settlement but fai
     expect(record.status).toBe('SUCCEEDED');
     expect(order.status).toBe('REFUNDED');
     expect(order.refundStatus).toBe('SUCCEEDED');
+    expect(order.paymentStatus).toBe('REFUNDED');
     expect(provider.refunds.create).not.toHaveBeenCalled();
   } finally {
     staleResponse.resolve(response('pending'));
@@ -211,6 +214,20 @@ test.each([
   expect(order.refundStatus).toBe(expected);
   expect(order.status).toBe(expected === 'SUCCEEDED' ? 'REFUNDED' : 'PAID');
   expect(finalizeRefund).toHaveBeenCalledTimes(expected === 'SUCCEEDED' ? 1 : 0);
+});
+
+test('a usd refund row follows the cad PaymentIntent before the provider refund is created', async () => {
+  record.currency = 'usd';
+  record.stripeRefundId = null;
+  await reconcile();
+  expect(provider.paymentIntents.retrieve).toHaveBeenCalledWith(record.paymentIntentId);
+  expect(provider.refunds.create).toHaveBeenCalledWith(
+    expect.objectContaining({ payment_intent: record.paymentIntentId, amount: record.amount }),
+    expect.objectContaining({ idempotencyKey: `refund-${record.id}` })
+  );
+  expect(record.currency).toBe('cad');
+  expect(record.status).toBe('SUCCEEDED');
+  expect(finalizeRefund).toHaveBeenCalledWith(record.orderId);
 });
 
 test.each([{ amount: 1300 }, { currency: 'usd' }, { payment_intent: 'pi_another_order' }])(

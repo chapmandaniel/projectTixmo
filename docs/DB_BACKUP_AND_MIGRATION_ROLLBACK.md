@@ -312,7 +312,7 @@ URL exactly before any client/tool loads; no values are printed. It uses only
 that runtime's explicit `DATABASE_URL`, native PostgreSQL 18 clients
 packaged at image build, and one held REPEATABLE READ READ ONLY source snapshot.
 All public tables receive sorted full-row SHA-256 fingerprints and counts, and all
-33 finished migration checksums must match the packaged migrations. The exported
+37 finished migration checksums must match the packaged migrations. The exported
 snapshot is passed to the full native custom-format `pg_dump` while its transaction
 is still held. Public sequences are unsupported and cause preflight failure; no
 sequence-value snapshot proof is claimed. Limits include 256 MiB source/archive,

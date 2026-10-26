@@ -298,6 +298,7 @@ enum PaymentStatus {
   PROCESSING
   SUCCEEDED
   FAILED
+  REFUNDED
 }
 
 model Order {
