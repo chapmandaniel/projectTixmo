@@ -178,7 +178,7 @@ describe('consumer recovery route/controller/service', () => {
   });
   test.each(['', undefined, null])('service rejects missing owner %s', async (owner) => {
     await expect(
-      orderService.getConsumerOrderRecovery('11111111-1111-4111-8111-111111111111', owner)
+      orderService.getConsumerOrderRecovery('11111111-1111-4111-8111-111111111111', owner as string)
     ).rejects.toMatchObject({ statusCode: 401 });
     expect(db.order.findFirst).not.toHaveBeenCalled();
   });
