@@ -36,7 +36,8 @@ else if (script === 'scripts/runtime-version-probe.cjs' && args.length === 1) {
  phase = 'versions';
  try { require(process.env.VERSION_GUARD).guard([], process.env); } catch { process.exit(96); }
 }
-else if (script === 'dist/index.js' && args.length === 1) phase = 'api';
+else if (['scripts/approved-email-once.cjs', 'scripts/storage-canary.cjs', 'scripts/backup-rehearsal.cjs'].includes(script) && args.length === 1) phase = script.split('/')[1].replace('.cjs', '');
+else if (script === 'dist/index.js' && args.length === 1) { phase = 'api'; require('node:fs').writeFileSync(process.env.PID_FILE, String(process.pid)); }
 else process.exit(95);
 require('node:fs').appendFileSync(process.env.PHASE_FILE, phase + '\\n');
 if (process.env.FAIL_PHASE === phase) process.exit(7);
@@ -46,12 +47,13 @@ if (process.env.FAIL_PHASE === phase) process.exit(7);
     writeFileSync(join(directory, "phases"), "");
     const child = spawn(
       "/bin/sh",
-      ["-c", stage === "predeploy" ? preDeploy[0] : command],
+      ["-c", stage === "predeploy" ? preDeploy[0] : "exec " + command],
       {
         cwd: join(root, "tixmoapi2"),
         env: {
           PATH: directory,
           PHASE_FILE: join(directory, "phases"),
+          PID_FILE: join(directory, "pid"),
           NODE_ENV: "production",
           DATABASE_URL:
             "postgresql://synthetic:synthetic@db.test/owned?schema=public&synthetic=space value",
@@ -99,6 +101,8 @@ if (process.env.FAIL_PHASE === phase) process.exit(7);
     }
     assert.equal(boundedFailure, false);
     assert.equal(stderr, "");
+    if (readFileSync(join(directory, "phases"), "utf8").includes("api\n"))
+      assert.equal(Number(readFileSync(join(directory, "pid"), "utf8")), child.pid);
     return {
       status,
       phases: readFileSync(join(directory, "phases"), "utf8")
@@ -317,4 +321,53 @@ test("version failure stops API and guard remains production-only", async () => 
   });
   assert.notEqual(rejected.status, 0);
   assert.deepEqual(rejected.phases, ["migrate"]);
+});
+
+const allFlags = { ...preserve, ...links,
+  TIXMO_STRIPE_READ_PROBE: 'true', TIXMO_RUNTIME_VERSION_PROBE: 'true',
+  TIXMO_APPROVED_EMAIL_ONCE: 'true', TIXMO_STORAGE_CANARY: 'true', TIXMO_BACKUP_REHEARSAL: 'true',
+  DATABASE_URL: 'postgresql://synthetic:synthetic@db.test/owned?synthetic=space%20value&x=1',
+};
+const allPhases = ['migrate', 'preserve-audit', 'stripe', 'links', 'versions', 'approved-email-once', 'storage-canary', 'backup-rehearsal', 'api'];
+test('shared packaged startup preserves all guards and diagnostic order', async () => {
+  assert.equal(command, '/bin/sh scripts/start-api.sh');
+  const docker = readFileSync(join(root, 'tixmoapi2/Dockerfile'), 'utf8');
+  assert.ok(docker.includes('COPY scripts/start-api.sh ./scripts/start-api.sh'));
+  assert.ok(docker.includes('CMD ["/bin/sh", "scripts/start-api.sh"]'));
+  assert.deepEqual(await run(allFlags), {status: 0, phases: allPhases});
+});
+for (const phase of ['migrate', 'preserve-audit', 'stripe', 'links', 'versions'])
+  test(`all enabled: ${phase} fails closed before soft diagnostics`, async () => {
+    assert.deepEqual(await run({...allFlags, FAIL_PHASE: phase}), {
+      status: 7, phases: allPhases.slice(0, allPhases.indexOf(phase) + 1),
+    });
+  });
+for (const phase of ['approved-email-once', 'storage-canary', 'backup-rehearsal'])
+  test(`${phase} unexpected failure is explicitly tolerated`, async () =>
+    assert.deepEqual(await run({...allFlags, FAIL_PHASE: phase}), {status: 0, phases: allPhases}));
+test('every optional diagnostic requires an exact true flag', async () => {
+  for (const value of ['', 'false', 'TRUE', '1', ' true', 'true ']) {
+    const flags = Object.fromEntries(Object.keys(allFlags).filter(k => k.startsWith('TIXMO_')).map(k => [k, value]));
+    assert.deepEqual(await run(flags), {status: 0, phases: ['migrate', 'api']});
+  }
+});
+
+test('packaged shell exec delivers SIGTERM directly to the server process', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'tixmo-startup-signal-'));
+  try {
+    writeFileSync(join(directory, 'npm'), '#!/bin/sh\nexit 0\n', {mode: 0o700});
+    writeFileSync(join(directory, 'node'), '#!/bin/sh\n[ "$#" = 1 ] && [ "$1" = dist/index.js ] || exit 99\nkill -TERM "$$"\n', {mode: 0o700});
+    const child = spawn('/bin/sh', ['scripts/start-api.sh'], {
+      cwd: join(root, 'tixmoapi2'), env: {PATH: directory}, encoding: 'utf8', timeout: 3000,
+    });
+    let stderr = '';
+    child.stderr.on('data', chunk => { stderr += chunk; });
+    const result = await new Promise((resolve, reject) => {
+      child.once('error', reject);
+      child.once('close', (status, signal) => resolve({status, signal}));
+    });
+    assert.equal(result.status, null);
+    assert.equal(result.signal, 'SIGTERM');
+    assert.equal(stderr, '');
+  } finally { rmSync(directory, {recursive: true, force: true}); }
 });

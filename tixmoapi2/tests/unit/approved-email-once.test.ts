@@ -209,9 +209,11 @@ it('packages a narrowly nonblocking opt-in hook and reuses compiled app email tr
     'utf8'
   );
   const toml = fs.readFileSync(path.join(root, 'tixmoapi2/railway.toml'), 'utf8');
-  expect(toml).toContain('node scripts/approved-email-once.cjs || true; fi');
-  expect(toml).toContain('&& exec node dist/index.js');
-  expect(toml).toContain('$TIXMO_APPROVED_EMAIL_ONCE');
+  expect(toml).toContain('startCommand = "/bin/sh scripts/start-api.sh"');
+  const startup = fs.readFileSync(path.join(root, 'tixmoapi2/scripts/start-api.sh'), 'utf8');
+  expect(startup).toContain('node scripts/approved-email-once.cjs || true; fi');
+  expect(startup).toContain('exec node dist/index.js');
+  expect(startup).toContain('${TIXMO_APPROVED_EMAIL_ONCE:-}');
   expect(fs.readFileSync(path.join(root, 'tixmoapi2/Dockerfile'), 'utf8')).toContain(
     'COPY scripts/approved-email-once.cjs ./scripts/approved-email-once.cjs'
   );
@@ -236,6 +238,7 @@ it('actual repository shell continues API startup after an unexpected email help
     );
     const command = JSON.parse(toml.match(/^startCommand = (".*")$/m)[1]);
     const child = spawn('/bin/sh', ['-c', command], {
+      cwd: path.resolve(__dirname, '../..'),
       env: { PATH: directory, LEDGER: ledger, TIXMO_APPROVED_EMAIL_ONCE: 'true' },
       stdio: 'ignore',
       detached: true,
