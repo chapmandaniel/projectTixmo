@@ -3,6 +3,7 @@ import { Plus, Edit3, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import api from '../lib/api';
 import StatusBadge from '../components/StatusBadge';
 import TicketTypeModal from './TicketTypeModal';
+import { presentTicketType, ticketSoldPercent } from '../lib/ticketTypeInventory';
 import { COLORS, DARK_COLORS } from '../data/mockData';
 
 const ECC_Tickets = ({ event, isDark }) => {
@@ -130,14 +131,16 @@ const ECC_Tickets = ({ event, isDark }) => {
                                     </td>
                                 </tr>
                             ) : (
-                                ticketTypes.map((ticket) => (
+                                ticketTypes.map((ticketType) => {
+                                    const ticket = presentTicketType(ticketType);
+                                    return (
                                     <tr key={ticket.id} className={`transition-colors ${isDark ? 'hover:bg-[#232336]' : 'hover:bg-gray-50'}`}>
                                         <td className={`px-6 py-4 font-light ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>{ticket.name}</td>
                                         <td className="px-6 py-4">${Number(ticket.price).toFixed(2)}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center space-x-2">
                                                 <div className={`w-24 h-1.5 rounded-full border ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-gray-100 border-transparent'}`}>
-                                                    <div className={`h-1.5 rounded-full ${isDark ? 'bg-gradient-to-r from-pink-500 to-orange-400' : 'bg-indigo-600'}`} style={{ width: `${((ticket.sold || 0) / ticket.quantity) * 100}%` }}></div>
+                                                    <div className={`h-1.5 rounded-full ${isDark ? 'bg-gradient-to-r from-pink-500 to-orange-400' : 'bg-indigo-600'}`} style={{ width: `${ticketSoldPercent(ticket)}%` }}></div>
                                                 </div>
                                                 <span className="text-xs font-light tracking-wide text-[#a1a5b7]">{ticket.sold || 0} / {ticket.quantity}</span>
                                             </div>
@@ -164,7 +167,8 @@ const ECC_Tickets = ({ event, isDark }) => {
                                             </div>
                                         </td>
                                     </tr>
-                                ))
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

@@ -22,7 +22,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                 name: initialData.name || '',
                 description: initialData.description || '',
                 price: initialData.price || '',
-                quantity: initialData.quantity || '',
+                quantity: initialData.quantityTotal ?? initialData.quantity ?? '',
                 maxPerOrder: initialData.maxPerOrder || 10,
                 salesStart: initialData.salesStart ? new Date(initialData.salesStart).toISOString().slice(0, 16) : '',
                 salesEnd: initialData.salesEnd ? new Date(initialData.salesEnd).toISOString().slice(0, 16) : '',
@@ -154,7 +154,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                             </div>
                         </div>
                         <div>
-                            <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Quantity Available</label>
+                            <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total quantity</label>
                             <div className="relative">
                                 <Users size={16} className={`absolute left-3 top-2.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                                 <input
