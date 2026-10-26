@@ -1,0 +1,2701 @@
+{
+  "date": "2026-10-25",
+  "main": "822dcf02a80958b65986bd5eb3f4635760ec9275",
+  "bundle_file": "unpublished-development.bundle",
+  "bundle_bytes": 8487262,
+  "bundle_sha256": "dc0a8377db99a1146d05a800fb677166cccd09d5bd876a9e661f0b43423f587b",
+  "bundle_git_blob": "ddaf37ccc14deeeb89b20c429f612b5fc722faf7",
+  "branch_count": 535,
+  "bundle_branch_count": 472,
+  "branches": [
+    {
+      "ref": "refs/heads/agentbox/claude",
+      "sha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/agentbox/codex",
+      "sha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/codex/recover-api-startup-script",
+      "sha": "c6577d8f30924c58e732f3fbd59b2518b2fbe54c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/recover-historical-review-notes",
+      "sha": "e5c9f33925d8459603ba63af933578257b17f260",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/recover-local-review-tests-20261025",
+      "sha": "822dcf02a80958b65986bd5eb3f4635760ec9275",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/codex/recover-qa84-payment-tests",
+      "sha": "e40f66717e6797cd4ff1add055a989499cf07ea7",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/recover-qa87-webhook-tests",
+      "sha": "15705453ae49810c8701db4dc306042bc3eecfe0",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/recover-release-tooling-20261025",
+      "sha": "440a4788bfb6ab6b3fc064bd900356ed01e02662",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/recover-untracked-review-tests",
+      "sha": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-231-asset-share-integration",
+      "sha": "134bd2686639a6e0ec2c0348be856196a336b8d2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-231-controlled-candidate",
+      "sha": "c6da8764f7ec139667542b3372cb4331f02e6525",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-231-followup-integration",
+      "sha": "5a9eff2154e5270f9e3decdb0df6955420e99950",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-243-live-readiness",
+      "sha": "e741b667d18e4bce358391d6a0187d2609bfaf33",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-243-privacy-placeholder",
+      "sha": "c824899a84fa8f41f242944b3aac213c3a832084",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-341-managed-cancellation",
+      "sha": "b8e4e5da3a721cf00e018bcf06893eadba6301ef",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-499-managed-ci",
+      "sha": "4631e7e9f2e0d1f01ee659966925f3f89221152d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-557-prerequisite-checker",
+      "sha": "74f3be6b36b163d8a9cfed68c96b8cafb9bff53c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-561-refund-settlement",
+      "sha": "492a3e4c2b0d5d3db3a3f65964eb385b486a6826",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-565-early-failure",
+      "sha": "eda4ff76ca89726f200cc61bd3f164bdd78437c0",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-566-recovery-integration",
+      "sha": "c1575bf12152306b120b93e2765c6064031449aa",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-569-online-scanner",
+      "sha": "c7ea2e7f0b7652e03fbae50006ebb44bf27d1649",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-570-sales-pause-http",
+      "sha": "8da0450710da3cb9a6a06705bc2922afbee0d1ea",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-573-image-restore",
+      "sha": "16fe5e0a0bc36790f67552cebf78c1829e2f4d70",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-575-support-contracts",
+      "sha": "38d0217aa2361841a4b7060c521bc25dea5916af",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-576-wallet-browser",
+      "sha": "71b1aa7c22503e83ab4f787a3dfc15eff5147492",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-579-external-refunds",
+      "sha": "8f97a847d6202f27dc63de61a93f7b6eed66aa14",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-581-buyer-reset",
+      "sha": "489548ffed4159b69b380c0d0a162e922f5eae19",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-583-target-probe",
+      "sha": "ac1cc4d18d0476b3af96aed0fa6e50f38821e10a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-585-asset-share-key",
+      "sha": "f489abee3c58e0d417ec1f283fe0d79aa9267608",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-587-stripe-read-probe",
+      "sha": "32e2c0b114412f03b588bbd1e768679c0ea470fc",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-589-api-startup-script",
+      "sha": "00f33e36e2364eac9dbc74d96bf5a652b8d09a49",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-589-stripe-guard-reasons",
+      "sha": "5c33963df19c0fa2cb6cac9a217b8ec5d62a92a3",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-590-asset-rekey-diagnostics",
+      "sha": "fc9b1c6ebcd831e4c09f22381454ca7b2cc60360",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-591-stripe-test-key-compat",
+      "sha": "61da995acb49b9135ca8fba3c16b214ab8d9f1d1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-592-hash-only-share-policy",
+      "sha": "d73f3f79fa3504f99c95db0d4bd4017b2444642e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-594-share-link-observer",
+      "sha": "3d7e454e60394b7f9de5733fb324d733fb55363c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-595-observable-share-audit",
+      "sha": "68821f37a6b8ec080ade6982a530c9a7366311d3",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-596-explicit-predeploy-rekey",
+      "sha": "542dcb9a09fe47af7dcbdffbc12e6a5239e14199",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-597-redis-handshake",
+      "sha": "cf14341889f80d1732f330998737756f7bb01ba4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-597-runtime-version-observer",
+      "sha": "075b18f08d5110646d5a842b9704f2e2d3c6c098",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-598-evidence-status-regressions",
+      "sha": "db9978936c5a8d663fc5a36808a5f531ffe4ee13",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-599-browser-endpoint-discovery",
+      "sha": "ccb66c33b51bd339a3590e3a3fbf1d5b49c70c3e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-600-one-approved-email",
+      "sha": "751d844ce6323b6a51a4d99be29f7a17e643539f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-602-guard-diagnostics",
+      "sha": "8bc92f3474ede5e39fce536933dfee6b2594a19f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-602-startup-assertion",
+      "sha": "fab53b3db2bd9ff8fd22f4be7b742194f4f6cc38",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-602-storage-canary",
+      "sha": "739a10c451cc295773296c94660cc74300c42d50",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-603-logical-roundtrip",
+      "sha": "09016d47dbac61ce9856c64b1535afb75f930ca8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-606-application-rollback",
+      "sha": "553514b2afcccf67f452371c8c3a2a223bf57a7b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-606-integration",
+      "sha": "57deea6619838c114240d9b542b2bc3cc9b06613",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-607-parity-upgrade",
+      "sha": "313923d6d10196120cca006a2d8b65ad0177021f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-608-http-pressure",
+      "sha": "e4e501c9ce4986ad3ef40a189c94d330018958e8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-608-integration",
+      "sha": "e6e7c86f9458f7faf0d4f7bddb1ce3457e04361e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-609-http-ramp",
+      "sha": "3bc6076366530eb3fd133334d1e5a2c7ab3e0df9",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-610-http-soak",
+      "sha": "b88a58d3604184effebd5752c6e06eabd92d142b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-610-integration",
+      "sha": "8c1a8ef630a73a6a9c01dedb11f8e833d1490b5b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-611-auth-ip",
+      "sha": "d71427b976119344b3fe6429e61162d6879222bc",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-612-native-recovery",
+      "sha": "9850b40737e2a71f21eaaec5d97fa3e5d1313fb5",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-613-soak-retention",
+      "sha": "b347857587ab6dbbb2b5786625ee859b487bec65",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-615-scanner-browser",
+      "sha": "a82a1f6f24784b554259388e501519412adbd915",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-616-paid-ticket-http",
+      "sha": "33aa2b1b65ed9d11df3182de7547fec54540f208",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-619-zod-security",
+      "sha": "52320a49ad9be6717b1ed48e3c3e0751b42b76c4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/task-621-secure-rollback",
+      "sha": "9680b881531f116eab7e08d2e83437499ef8f9fe",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/tasks-603-605-integration",
+      "sha": "330965bc30ec14eb05eee6124aa4eda9b1b7270d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/tasks-609-611-integration",
+      "sha": "7d6f1cd16dab475ea0a604a28559551de14a8874",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/codex/tasks-615-616-integration",
+      "sha": "60989c7bfccab1bdd38d1d1f154e4336d709bb46",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/main",
+      "sha": "822dcf02a80958b65986bd5eb3f4635760ec9275",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/task-553-independent-wiring-review",
+      "sha": "f78725be265aaa35c0b9312ed3c1e11d82f92120",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/task-553-successor-wiring-review",
+      "sha": "5e60280716d05ac7bc95c3227c23a4f005bc5c29",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/task-556-diagnostic-review",
+      "sha": "cf7735df7810b29f69b6db5a26ad4cc62b719889",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/task-557-release-prerequisite-checker",
+      "sha": "775f43a4a7f0f8fcb079abd8c20972f00b1adf24",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/pr-railway-documentation",
+      "sha": "17ef6ad99f4db5c30351d1f317d9458fa409ca96",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-100",
+      "sha": "8e3bba4bea85a9107d79d30dc64fac351f48d247",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-101-api-evidence",
+      "sha": "5036967dcd3afa1db8192e6ad3ceea2dbad19db8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-101-evidence-r2",
+      "sha": "3dec6338643435e81615c25be1d2e7f671cd329c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-104-api-diagnosis",
+      "sha": "d2b240c02fb55beba6970c8c168182b5e6f9d2b5",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-106",
+      "sha": "d4d8415198a33838576a2f3b91bb32933145479a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-107",
+      "sha": "d4d8415198a33838576a2f3b91bb32933145479a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-108",
+      "sha": "e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-109",
+      "sha": "e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-129",
+      "sha": "3ea87153aa3a7a241100a72eab16569745d0ccff",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-131",
+      "sha": "9122294b71a1ee6ac0a708906c2a1116d86d94d4",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-133",
+      "sha": "35f6f7b3cf53019561152fb79ad23b24fdc68142",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-170-evidence",
+      "sha": "2b1cfb07ea4011d02a941dfaa455c45bd58ea62d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-173",
+      "sha": "c079d79c43be94ddc64c34d2cd9db2d31999d7d7",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-174",
+      "sha": "0e8f598083267ecdd2deff1a1193ac1a1f4f17ab",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-176",
+      "sha": "766380ccd360140d4e2aceb1c58c01dd5b505ead",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-178",
+      "sha": "1efaf58deb0270caf40a0d9315198168566a8c78",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-180",
+      "sha": "b8eb3cbbe3adadae9929f8c70aa3cee1ead7764d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-181",
+      "sha": "8579c36d4eb03ec5d1fb7ac961ccb4b45e2bacbc",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-183",
+      "sha": "ebc5c26b096392215bf8f34009857e6b995d74cf",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-187",
+      "sha": "0a5d9030f2d4539a84b41171e69c4c7964c6266e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-188",
+      "sha": "b66a4079a77e3d76cf842308710df0987200bdb1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-189",
+      "sha": "b891f1a55a7cf75c7052591685ca66f0661f0045",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-190",
+      "sha": "daf829d83da0696828d9dc480f4c1f9b7291ebba",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-191",
+      "sha": "77c429602c7b93af8015dff47548fcd3a9f3fbf4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-193",
+      "sha": "98e2bf5be11671eb9957f5af2d181d1eb2fafdb1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-194",
+      "sha": "f95c810c210faab6de8ed88d1d1a38916de9b3fe",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-197",
+      "sha": "10478a3116fccd32602575f33d16f649c41745c4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-199",
+      "sha": "ef26f077d0860dcd83d154184f49e37cc5820249",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-200",
+      "sha": "e389b6f3f526133607fb349f4b7d2384fb115c71",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-201",
+      "sha": "4f243da798cf834cadd4a099678cb18f68d2db01",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-206",
+      "sha": "d1d1c49d2fb3aa738cdc94af1888985d999c3031",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-208",
+      "sha": "6abdb76ea839e27ec7dbd571f50325ad98a19b3f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-210",
+      "sha": "bd576356375e7ac107a99d4683475426341435e1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-214",
+      "sha": "8d9f7b2ce020289b8f6a314b3e14837a2d7e9c5d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-229",
+      "sha": "5e1e658f14415f63ccb794dfc96bead76ebda7e9",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-290",
+      "sha": "7414d6fac22ae870bd89ad4b388d3a3928a3f805",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-292-browser",
+      "sha": "dbdab76e12805bd956b057ba462022328f172cef",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-292-pg",
+      "sha": "40eca518b894b0f51d481705fbca88d1c60c45c0",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-296",
+      "sha": "91bbfb27f5c1eef527daec11d9848f613e9293ce",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-296-r2",
+      "sha": "a17229c3c4b415cd2cf2a5377cb856b5982da61b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-296-r3",
+      "sha": "74d0cff9c257619f9b75dbb2bd8453c3fde11231",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-296-r4",
+      "sha": "f6a1a8a0e0e6ea67c2ad51c553bbd5927a556fb5",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-300",
+      "sha": "3fd725d9a706475286df4482943ee5bb2c3c01f2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-301",
+      "sha": "05f2f42fc9a3969c7c10e11250d83ce099b500ef",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-304",
+      "sha": "31fa03714a2e3f822d764337cc52314f69e7172e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-317",
+      "sha": "6da0f2962a0a5d8781605244c02e4ca7b4ba208b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-358",
+      "sha": "5281c61fae797521a9d68d7882545cde5f850610",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-394",
+      "sha": "0cf55967f2af0ba0f541fe3373e71762560b628d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-395",
+      "sha": "51c4d32bcfff5764aa2bd575d9c52be7976a9114",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-396",
+      "sha": "4c2bf507c2eb3f6c08e82f6dee26d6aebd281242",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-402-native-http",
+      "sha": "cb1490caca36f4257df1cd633e013fa0d529986f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-403-native-http",
+      "sha": "b0e7c5ab4f407510cb6ef0e6804c55f2be62620b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-405-nullpath-runtime",
+      "sha": "75c441470a6860357515220f8fd2a29e3aea355d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-420",
+      "sha": "24f844e3b4c11ace2058d118f40da740eac15d08",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-47-docker",
+      "sha": "29328f9fc7df650bdaaf555d3c11ca582a0c0134",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-48-docker",
+      "sha": "29328f9fc7df650bdaaf555d3c11ca582a0c0134",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-482",
+      "sha": "9a4b565a3276aeb9f839824ca7c42720ec092799",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-484",
+      "sha": "83d4c34f8a4b56654d066573921a330dbe3e1518",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-503",
+      "sha": "e57c6c4ddf1a80edb1a1dc9547babe9c19f19753",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-505",
+      "sha": "dd43b39b6410d79eeda61543a18b1444a8cc4dbe",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-505-r2",
+      "sha": "7d4766e940559378b8180e66ccbbac4b4bbbf4ab",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review-99",
+      "sha": "8e3bba4bea85a9107d79d30dc64fac351f48d247",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review357",
+      "sha": "2a12fecdfe048b0d01738611652a1fc5f8b29083",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review359",
+      "sha": "fd07445a9e59f5bfe6f2f0834cf705150fa492d3",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/review360",
+      "sha": "9d0cd2fc31fa6904785943d774adb63950efc9b7",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-102-api-diagnosis",
+      "sha": "d2b240c02fb55beba6970c8c168182b5e6f9d2b5",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-103-evidence-correction",
+      "sha": "3dec6338643435e81615c25be1d2e7f671cd329c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-105-test-contracts",
+      "sha": "e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-112-confirm-guard",
+      "sha": "98e89576a7c2ee66bcea72ec535607319376e499",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-115-double-cancel-baseline",
+      "sha": "64a22b5d9514512407bdb0e1bda78c4ea683a83a",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-118-double-cancel-fix",
+      "sha": "9b9623e2daa4002d11a527812122f244cc7bcd98",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-121-double-refund-baseline",
+      "sha": "ba2d92d7c695a9bc4e5df46438a07032148370d1",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-123-double-refund-fix",
+      "sha": "3dc4e3c189c31e04928d57b55061e60eb238e46f",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-126-confirm-cancel",
+      "sha": "4dfb4c962092193450617e6ba1fe7f19d1d988d7",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-128-confirm-expiry",
+      "sha": "3ea87153aa3a7a241100a72eab16569745d0ccff",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-130-webhook-race",
+      "sha": "9122294b71a1ee6ac0a708906c2a1116d86d94d4",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-132-failed-webhook-race",
+      "sha": "35f6f7b3cf53019561152fb79ad23b24fdc68142",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-134-failed-retry-fix",
+      "sha": "3d9d84d2ec1bef44e1bcf5e7518fc7acd141f86a",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-137-old-processing-baseline",
+      "sha": "9ac6db3d6a9080e445af78fda743e26c44fe7092",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-139-fenced-recovery-plan",
+      "sha": "c94eb9f9da3d032ed3b538e3e5faa842cad23143",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-141-paused-owner-baseline",
+      "sha": "e5d2cd57793deb8025a93cef3051c17f182ab6b7",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-143-fenced-processing-recovery",
+      "sha": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-175-reviewed-aggregate",
+      "sha": "03491597452a9871ce13e2747615271740338502",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-177-full-market",
+      "sha": "2890aea6af8f7fc6c693980b6e7a14046f22e45e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-179-webhook-fixture",
+      "sha": "7574eea362ea827c1da85a0bf60002352a355dd1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-182-timing",
+      "sha": "4e3664d719c301159b40a58a2fc684c4d84ab905",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-184-retry-fixtures",
+      "sha": "559b7b74849a082807460d4024a9f7e125766838",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-185-paused-owner-diagnosis",
+      "sha": "e245579998b81309e3b6ebb1efc9633111b0b421",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-186-bigint-diagnostics",
+      "sha": "d3a684cf55836ef70842d3b5d33b8d06da5b9a1b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-192-paused-owner-fixture",
+      "sha": "52e504be4a902eac6c005d728fc75243f26350c1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-195-old-processing-diagnosis",
+      "sha": "8909a2420fb15ff35b2abb86248b4f6bba4af2ae",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-196-focused-sql",
+      "sha": "e37f80635ab693190982c6d0cd39ecc6ae7ac117",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-198-old-processing-fixture",
+      "sha": "195f96d55187d1544f4373599b72652d87b0eb35",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-20-team-bootstrap",
+      "sha": "151a1ab64612572423314a64ad880d119fb5154f",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-202-focused-sql",
+      "sha": "e9dc30fea85c678ab6a7cc4533b9787780e8584e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-203-reviewed-fixture-aggregate",
+      "sha": "e48e4a0069cdb25f8f524e0afdfcbf43b8eb55f7",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-204-independent-qa",
+      "sha": "6a113afb9e1a83380c014e47ae1b5e1bd64a2aa2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-205-independent-qa",
+      "sha": "e2f1e5e8134bba941af1f72b27e4628d332b25ce",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-207-repaired-full-market",
+      "sha": "ad2f736873654f58fd0ef5afa77e990fdc1d762d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-209-api-counts",
+      "sha": "b4bb2753e5e6fe18d968c0b4789fa54e414833a6",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-21-architecture",
+      "sha": "62c04e3fa58870d3c34490270714dbaf98c4e68d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-211-scanner-integration",
+      "sha": "0d193a6e8f8180d509f5cfdbb793203904047237",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-213-scanner-full-market",
+      "sha": "d2dc727b5b34acd8be756be03a3f218afd668c5d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-22-verification",
+      "sha": "2050fac34629772d7756a95f12029c8ae3b6f50d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-225-railway-pipeline",
+      "sha": "63938856008e92c9c9668cbac83fbb84fd4f54a1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-227-build-contract",
+      "sha": "63938856008e92c9c9668cbac83fbb84fd4f54a1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-228-seed-safety",
+      "sha": "5e1e658f14415f63ccb794dfc96bead76ebda7e9",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-23-release-readiness",
+      "sha": "95874d149921d66317c8724dbdcd241d7932abc3",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-230-provenance",
+      "sha": "0d193a6e8f8180d509f5cfdbb793203904047237",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-231-review-clearance",
+      "sha": "775f43a4a7f0f8fcb079abd8c20972f00b1adf24",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-235-release-integration",
+      "sha": "317754edc7b43eb8e27b60c5374679330326c575",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-236-orphan-deliverables",
+      "sha": "152064e17ff1c58b6b15ac938106b017991c04b6",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-238-sale-windows",
+      "sha": "0b4e30dccbc77d1213ca4f14ff34982f17c1d42c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-24-frontend-readiness",
+      "sha": "b03fecebc5fad3372aba74cdf2b1daf50c59ae23",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-240-refund-runbook",
+      "sha": "db95652c7d8a597b610e9b2bc4528b4e9dbce5ec",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-242-buyer-recovery",
+      "sha": "a187c1f6e62c8c0e0533888506f58b7f8589e99e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-243-onsale-packet",
+      "sha": "f82b26c0e741c4ee8e051e4582fb08dbc1cbd324",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-25-backend-readiness",
+      "sha": "8d5b7e71459dff098ed3eb4b1ff20c2699e186cc",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-251-scanner-feasibility",
+      "sha": "d9234abd5ae909a85e2595e4873e48c9866ed184",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-252-packet-review",
+      "sha": "d6531b82dcdd8b735c0b95344e62e66b092b378a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-252-sale-review",
+      "sha": "0b4e30dccbc77d1213ca4f14ff34982f17c1d42c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-253-contract-review",
+      "sha": "0b4e30dccbc77d1213ca4f14ff34982f17c1d42c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-254-packet-review",
+      "sha": "f82b26c0e741c4ee8e051e4582fb08dbc1cbd324",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-255-scanner-qa",
+      "sha": "d9234abd5ae909a85e2595e4873e48c9866ed184",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-256-rereview",
+      "sha": "db95652c7d8a597b610e9b2bc4528b4e9dbce5ec",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-256-review",
+      "sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-257-r2-review",
+      "sha": "db95652c7d8a597b610e9b2bc4528b4e9dbce5ec",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-257-review",
+      "sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-258-refund-review",
+      "sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-259-refund-review",
+      "sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-26-bootstrap-check",
+      "sha": "26831b3270740d5e498938bf0576045bdb5c0e6c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-260-manual-late-paid",
+      "sha": "cc3069ff914fd9ce5786b6a577a81cc72733fccd",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-263-receipt-wallet",
+      "sha": "10aafd401cea151828242d91153a8cf7df2e6ac2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-264-studio-contract",
+      "sha": "825e38d2a4a43f11bc2f8a10e24b9a8f032aadd7",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-267-recovery-fairness",
+      "sha": "afef1d734187dbce260271284a50e719742c48b2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-268-checkout-boundaries",
+      "sha": "eee5fa0dc5d097b65fbd5c48881b9dd97f3e1d58",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-271-webhook-fairness",
+      "sha": "f803f11632cfe16cde4cf9c2bcd0bac699cb978a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-272-local-sale-acceptance",
+      "sha": "03db05ca5976fd92168acd4daae5e33821b2ff50",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-275-local-integration",
+      "sha": "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-276-local-restore",
+      "sha": "cb95d021dd5f08d2fa9b95fc1fee17987f8ee564",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-279-combined-local",
+      "sha": "4c8561342268ffe764a1dd8abd6661488b63e3e5",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-280-browser-delivery",
+      "sha": "6275325aa0df0b92bca4ac33eead10a57dd7c239",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-282-independent-qa",
+      "sha": "30a7feb8edbbcb8546bd16cede5c2361f4f9dcbe",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-282-independent-qa-r2",
+      "sha": "c0ea3cf587ab12630567f74f8563aa0774e34c87",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-283-rootless-chromium",
+      "sha": "68eb4db523c4054001104c27cb2a0725bfc84906",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-284-local-reservation-race",
+      "sha": "5947e4737410c6ed732230eb84581dcb87f8ed83",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-286-independent-qa",
+      "sha": "f2657ede638adba03e45e0464bba086bdf39a99b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-287-local-pressure",
+      "sha": "c0c41a07f6ef72f27e1c4d35551edc147db1bcad",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-288-rootless-fonts",
+      "sha": "ed0b8eba4418579c7c701153ee79f2e4054ef430",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-289-independent-qa",
+      "sha": "0e4879c7f45639c64d2f8f90b98106d32ce6547f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-291-webhook-pg",
+      "sha": "adc81d94f8ec5d9b50ac025cabdf4fb535611da0",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-294-real-auth",
+      "sha": "9f2c6f0121968adc75607982e4f96ddbd2a1e853",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-295-morning-evidence",
+      "sha": "0cac3d60212e621607a22a5947816799d608525b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-298-readiness",
+      "sha": "05f2f42fc9a3969c7c10e11250d83ce099b500ef",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-299-acceptance",
+      "sha": "12faf2f5f9725a2d6cbdcdc3acac31c66eda90ae",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-302-exact-sale-boundaries",
+      "sha": "31fa03714a2e3f822d764337cc52314f69e7172e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-303-independent-qa",
+      "sha": "107e232054afefeb4513dcea88389f60fd49b670",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-305-browser-studio",
+      "sha": "6d0de5f4f998498ec644be4905708b54386fe51f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-306-independent-qa",
+      "sha": "08686f53c1c42d8571e3a4c5cf18caab88c48421",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-307-source-review",
+      "sha": "6d0de5f4f998498ec644be4905708b54386fe51f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-308-refund-pg",
+      "sha": "c8424ca6d1cf53aba9a97c1013da59230b486857",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-309-qa",
+      "sha": "584264e64116a950aafa201ae34dd35971188553",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-31-backend-review",
+      "sha": "8d5b7e71459dff098ed3eb4b1ff20c2699e186cc",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-311-ambiguous-crash",
+      "sha": "feb60b185cf4a311ee4d934fb15a21cd836f7ca5",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-312-independent-qa",
+      "sha": "9226384aa82eda973856a0c7e9da18b7ca3772e9",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-313-source-review",
+      "sha": "feb60b185cf4a311ee4d934fb15a21cd836f7ca5",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-314-recovery",
+      "sha": "6da0f2962a0a5d8781605244c02e4ca7b4ba208b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-315-frontend-regression",
+      "sha": "562a4089c4cbb7129d134b109d43329c47670a0d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-316-independent-qa",
+      "sha": "24f4c820d427a678605a212c027a2ef62f9f59b0",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-318-full-api",
+      "sha": "aa64c2c59bba570ec39958d06e004cfbc7b2ad59",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-319-api-triage",
+      "sha": "8cced1c93fc0abc488ba122803297be667d31b13",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-32-frontend-review",
+      "sha": "b03fecebc5fad3372aba74cdf2b1daf50c59ae23",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-320-api-triage",
+      "sha": "a041c35ceb95d6a41d2cc9c2a68681971e8817b2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-321-public-tests",
+      "sha": "f28a4cc986c917135764d7a73ee4d0f4b424339d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-322-payment-test-contracts",
+      "sha": "1b1a7abea4341510db031063c1a61c8ce75e167f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-323-order-race-contracts",
+      "sha": "232532dcbb143323d42d508a17bfc7ba8965bd23",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-324-concurrency-contracts",
+      "sha": "1eeb38eb87c765f79894cf44223e8d106c30b261",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-325-refund-races",
+      "sha": "7e01d57fa90426ad37fd9837aa0a387f7f39ae1e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-326-smoke-storage-diagnostics",
+      "sha": "8726384e97d5f799ccb4acb76982cb2891a49d42",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-327-independent-qa",
+      "sha": "6f8fdc3f8311462ac27bf287f6aeb083aee1a555",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-328-cancel-stale-guard",
+      "sha": "f8bac3e1f53e64533b65bf6a1c3c7f0aebe2cb3d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-329-review-322",
+      "sha": "255e6cc11e9eea79a34e912ba67a8950cda88d7b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-330-independent-qa",
+      "sha": "c7bdf1514aaacb6c8cf3951ae0d8a88a0a14347c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-331-review-328",
+      "sha": "3576522d973929e2bc0fca11e901492e4e1ef2cc",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-332-independent-qa",
+      "sha": "6434e7910a2b95715e787ae29d558ac1a7bc3b67",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-333-paid-sales-utc",
+      "sha": "b0bc7e833345d847efa84d2a4957e289a1494bfc",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-334-approval-storage-fixture",
+      "sha": "6fafb9f9da99d81584341034d3683daa5876b3ac",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-335-review-333",
+      "sha": "67d25b12ca219c389cde45558f9e025c2d2de25c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-336-independent-qa",
+      "sha": "c92c0b8ef6cf9c4feee536e8ff516ed6f8c69934",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-337-review-334",
+      "sha": "96080909a04d5488599a16cd6631f0aaab21570e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-338-independent-qa",
+      "sha": "4d87136ac6ab783d74867331a3c50c2283321452",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-339-source-review",
+      "sha": "d51f2faa7820e53bbe3ffc10c158f40508d2a844",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-34-verification-safety",
+      "sha": "c5754fa5bc6948d9ae3d7e227019ad3097a58c87",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-340-independent-qa",
+      "sha": "009838a910bfd6dab22084d81e5e4acb49043767",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-341-eventcancel-recovery",
+      "sha": "3b87aa81d9e83933adbc92f298e7bf1a31754b76",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-342-independent-qa",
+      "sha": "0d7e49c43119f6b64accf4b80469c09ba7f624ed",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-343-refund-source-review",
+      "sha": "acb0992bdb9ba3e28e7dba63c0af7e468765c42a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-344-independent-qa",
+      "sha": "ae8482f9cc9bec480bb05241fae2319021a346df",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-345-independent-qa",
+      "sha": "e7f8f1bb2e10a1c5e7cdb8e01815dc4718ad198d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-346-independent-lead",
+      "sha": "12f02d175de0ddf2379ce968ea395facdb57bd8a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-347-independent-lead",
+      "sha": "9fb3aa58daf3273d33a484e3e7256c12e1c163ca",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-348-independent-qa",
+      "sha": "9a496978fb90d4ac25069b6bdd0344eb39b5d5ba",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-349-independent-qa",
+      "sha": "b51849b4a31093f4bec2004bbbd58b6ed2f9ca6c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-35-scanner-pagination",
+      "sha": "1f6b072440961f18b9b5d72b1ce83c2d075dd55c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-350-independent-lead",
+      "sha": "69bf7e349a4071fc36c8cce2e5fc2a08f326d974",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-351-composed-api",
+      "sha": "cdb41d4d3aa4ccc323a2a1cc6b04a490feafe6a6",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-352-independent-lead",
+      "sha": "4e9a3e6fd446d7fa9e6eaa63d99475687c269501",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-353-independent-qa",
+      "sha": "157c8e1e210021289a4fc56cdca213cf9a1b4096",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-354-full-api",
+      "sha": "4665068adeb098d12ba9ae0a4f90e5a5e27b0cb3",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-355-independent-qa",
+      "sha": "a7c6a5cd11e4ebe179fade821764222e40734815",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-356-tenant-observation",
+      "sha": "199cb9afa6ce1785bc956951e6e6590faec32119",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-36-safety-lead",
+      "sha": "3b1b148bd2e1ef7c2972aed637e6a2060a6a20e8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-363-w04-reconciliation",
+      "sha": "a5acec2631a2c9c44bfb2bcb7bf07dac01a53338",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-364-old-window",
+      "sha": "750b59836de3a294fb4bf7068730bb4ef3c5f754",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-365-independent-qa",
+      "sha": "43a6431e24d5ba12f93b5736dbf84686c1a50165",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-366-old-window-source-review",
+      "sha": "f8caffa2635344dc3662fbb5c868931e8b094239",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-367-independent-qa",
+      "sha": "937dcfddca4cdb6d6135aef4070d86ee75a9e744",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-368-independent-review",
+      "sha": "464241e598e6136d203e22c694c7f99badd6a758",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-369-w07-matrix",
+      "sha": "f568f56a67a1d41d06998201fbf766eaff1a7405",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-37-safety-qa",
+      "sha": "3b1b148bd2e1ef7c2972aed637e6a2060a6a20e8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-370-independent-qa",
+      "sha": "4d9dc89cece27a26ecb804d5e2972764e206ba62",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-371-upgrade-preflight",
+      "sha": "95e62218cabe1a9b315459a67f7144682dc4a47d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-372-upgrade-review",
+      "sha": "951e4de3afa00be39539c8983e9a0a17ceeed308",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-373-upgrade-harness",
+      "sha": "f8a407cd789ecdebf11927debc3e3b26c4ea5267",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-374-review",
+      "sha": "db8b70127846f44587e8187fc643085f9c672ded",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-375-review",
+      "sha": "64f9f3cced9369ac756ceea7bfc4227c5f20db64",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-376-capacity-map",
+      "sha": "024e15f107d20af08f9c037bc463b9dd6836ac2b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-377-upgrade-evidence",
+      "sha": "1d9e2f74355bf978f47d32c002b8d4e42d0f1f7b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-378-review",
+      "sha": "673608f17a8907b8b69ee341ec9760cfb9eb6478",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-379-http-pressure",
+      "sha": "929355653b2b37ae50633e704eb2a2628e5e4967",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-380-independent-review",
+      "sha": "bf05ab85154e90983b3ba0850fe933ace74315b8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-381-independent-qa",
+      "sha": "83ae7d54f8ea31fc54c563382179f161e71dc6f2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-382-independent-review",
+      "sha": "586c9aea554e3b9a33406d06e32dd9a96d8df791",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-383-independent-qa",
+      "sha": "8d8d793f7161e9f1691145d8fd40b9ca40cc6337",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-384-evidence-finalization",
+      "sha": "28b403252555ba9917e482cfbcd5d287c57afa47",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-385-http-cleanup",
+      "sha": "b0d749d6962f75d6daee2836a4605e505daf4556",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-386-independent-review",
+      "sha": "a6f8d0743cce3f238eac7ed3aa0c427fef089aae",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-387-independent-qa",
+      "sha": "d0c0a7ffdf818e991fa23395eaf12e4c12e9accc",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-388-independent-review",
+      "sha": "9575c52535ab1aeefd614056ced6bd8a53fa1831",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-389-independent-qa",
+      "sha": "fbaa6d419568e8a1b7bd1f31eb0f536fe155b132",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-39-safety-lead",
+      "sha": "c5754fa5bc6948d9ae3d7e227019ad3097a58c87",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-390-http-runtime",
+      "sha": "a085aa70eae8ae44f59d853e23b055c29dee32f8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-390-nullpath",
+      "sha": "441fad2b1d74b9564490262cdcf20d4836e852bb",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-390-rerun",
+      "sha": "159ca3294ef89c86966b379abf6d16ac4ca37af1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-391-upgrade-runtime",
+      "sha": "aa422d361d13fe4715aec56e2886185200cde8e5",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-392-qa",
+      "sha": "d9d5c8636a26fa21d3474241221b231df115f347",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-393-http-guard",
+      "sha": "8b265cfafda374e676fc74ef96810d0b0171a68c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-397-cleanup-receipts",
+      "sha": "5a64d9739f148d966534ba802ddd162fc17e053d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-398-independent-review",
+      "sha": "7df5bced62d0948d5072e1ec3c6c9f60d651ad87",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-399-independent-qa",
+      "sha": "a3fca22adaf5abd71e7f270d707d2d38dcaa7d85",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-40-safety-qa",
+      "sha": "c5754fa5bc6948d9ae3d7e227019ad3097a58c87",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-400-runtime-review",
+      "sha": "86d4d00ff6c2cbc176321b032c8dd6ee34170536",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-401-native-http",
+      "sha": "971275ba7c87b7d6d3d8831d6334922dcf618a05",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-406-waitingroom-contract",
+      "sha": "0b7279a55481f138dce4ed2b21576f28d98bea31",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-407-parity-tools",
+      "sha": "937889b51f234359ec7927b841b4033ea0ba8ecd",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-408-independent-qa",
+      "sha": "fe7781e8ef25b65bc1b76908f944a4d388d64393",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-408-parity-review",
+      "sha": "937889b51f234359ec7927b841b4033ea0ba8ecd",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-409-prior-dump",
+      "sha": "bb158828a3faaa7b2df7c3a4106fbb18551082d6",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-410-independent-qa",
+      "sha": "d508a5cdd4ed42a12acd359332ae02418de1f367",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-411-independent-lead",
+      "sha": "e08a5478ce2e340058ccdfaec70eac6c42daa2bc",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-412-independent-qa",
+      "sha": "bdb1b71d8095146dd3176705c2b74b0ab873a4ce",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-413-checkout-admission",
+      "sha": "b46fd6490bcb4def2023ee883290c568c74fd134",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-414-checkout-busy",
+      "sha": "4dde80623f21272f011fed3ff05c9ebb86bfb071",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-415-independent-review",
+      "sha": "9e34cc9f02ca9304fbc13776c466155af95fb62d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-416-independent-qa",
+      "sha": "d4c05abf953f0b2f6ad828b28e67d2fedeb3742a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-417-independent-review",
+      "sha": "09e440c9c325b403b5f32b1c299cf1be90391ad8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-418-independent-qa",
+      "sha": "07db2e7c1019b47cc5760e287feebd61bd695fbf",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-419-clear-obsolete-design-debt",
+      "sha": "8aae387bcd4290edd259fd75aa11baaa1f62ca63",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-42-ci-services",
+      "sha": "12795cc6d74fc3d0686f6e10e0dcdc351d88a2f6",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-421-independent-qa",
+      "sha": "1bfc9454d0551cba31f83242ca674d2f417e5d11",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-422-full-dashboard",
+      "sha": "75c2271bdfbec00243ccd3a8a7b0aa1947a64d44",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-423-evidence-qa",
+      "sha": "681aaa43fdc0ca2ca84db063d2104342dcebeede",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-424-full-market",
+      "sha": "21e2c8fec6f6fd7913c1c14e274b79fda964fc46",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-425-independent-qa",
+      "sha": "ddcf885afa880d857b3d1f42e78a07d27a33af7d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-426-abort-cleanup",
+      "sha": "c8672a17ea9be27014cbdcf14e6e472fb2d8b70f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-426-continuations",
+      "sha": "510824df9e9bb7f5e57984862728b52929f7f849",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-426-http-abort",
+      "sha": "e03a454fcb55c2e8a16f64bee82f912e800fecc3",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-426-joined-cleanup",
+      "sha": "701ad1040caad539ff0afb625d6aa6256c026473",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-426-managed-ci",
+      "sha": "b3ed74b3e5f7a87b3e0ef4cdf21240452ab3c260",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-426-spy-layering",
+      "sha": "98adaa1b057f5feddd221d4ac8a39673e494df26",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-427-full-api-contract",
+      "sha": "fcab880ea7caf50493439a21032b7a93effc438f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-428-market-boundary",
+      "sha": "d853dad3800b26e523c4d3f2dac24d25990c443d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-429-review-427",
+      "sha": "37f4bc4d14059aa4d4d172a1e5b24a0a34795a67",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-430-qa-source",
+      "sha": "d218c4895e412034c477e4942bb32c8666bbb1fd",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-431-qa-docs",
+      "sha": "eb9909c6dd5795075662057ea209c903e1d611cd",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-artifact-init-repair",
+      "sha": "1fd0e76eb74e4f78aadb17197f77181bf22a9d97",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-held-lifecycle",
+      "sha": "0d79445dce1b3c4f71db13c3e00838696bc094a4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-held-timeout",
+      "sha": "fc1c24dac2ce2fd5b0eb9a8d3df5f15b9f7486e3",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-lifecycle",
+      "sha": "92225b707a114b49c6c9f2cef361e7c8977c539b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-local-admission",
+      "sha": "54d55c0b75ced9b87871607d00fbd767a4a63962",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-local-lifecycle",
+      "sha": "f9c42c5ddf3b4825c40c6a3d7b8c20f8004c6abd",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-local-mutation-repair",
+      "sha": "d6ad958ce3bda5659ad7c347a014dd78146b9640",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-native-feasibility",
+      "sha": "0081e61462ac7e18b1c82d8c1ac0a538d4df3bcb",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-observer-fix",
+      "sha": "dca0223422ad266a6f4e66836a1910ff445de7e0",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-persistence",
+      "sha": "9704866fd5ce034d2ce31072269c9dbd826af4db",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-persistence-outcome",
+      "sha": "b45649abb438ec791f0c37a57bb42cdcfd928abb",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-preimport",
+      "sha": "d2e0dbdfea93e4f6e4a21fdf4e4c0201611acce7",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-provider-checkpoint",
+      "sha": "d5fec56e99a37218ef06a512e265c99942290340",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-runtime-transport",
+      "sha": "f45349e422beb381ccfac419271c859df2a13e48",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-sandbox-inventory",
+      "sha": "eb7fa665acff31d692683e5517d0992fed7e1d4b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-shell-functions",
+      "sha": "8eaf5cec7fc62bf093bbf4cb401bcc0396a9b161",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-432-two-phase-market",
+      "sha": "0cdb124530272f2c7408acb0374eb4a576a8fdf4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-433-qa-core",
+      "sha": "1869a932c60ad997f4bd11b7bd10227223d447d7",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-433-qa-successor",
+      "sha": "b89e65d65d37cdaf4f10f288ecb8a857821ea3b4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-434-full-api",
+      "sha": "9439ebc46e357c5df4dad592ce45d692c62fdff3",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-435-persistence-review",
+      "sha": "6a539b6baf7a289bea886832cd5328e23fd0acb8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-436-rereview",
+      "sha": "80a533d9193b51beef0379134985f403b5cb0336",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-436-review",
+      "sha": "a08b740157226f45b32e6492d5731dda96065dfa",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-437-review",
+      "sha": "1042194babc325e6a6d1284c2d67798418c03f2f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-438-qa",
+      "sha": "e547cc90c3541a07bf8b92404a35d143b8ac282a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-438-qa-successor",
+      "sha": "5cc2ac14fcddd9cdfc9c245b227b9a15f1a62b3e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-439-review",
+      "sha": "873e4cbb25ca2240d297947b1d14225e3f148cb9",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-44-review",
+      "sha": "12795cc6d74fc3d0686f6e10e0dcdc351d88a2f6",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-440-review",
+      "sha": "5c6bd79556255051793b89a57e09366deb64a750",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-441-independent-qa",
+      "sha": "46334168b9df1c5949d8e94bfa028ffb6bb43d85",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-442-independent-qa",
+      "sha": "b5755df7288708560a8e590c1ba8f9b7c550aa33",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-442-successor-qa",
+      "sha": "80973f9879a92725dfe912f25ccdc643a7a790c6",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-443-independent-lead",
+      "sha": "70f56805520fb0029d4dedba4f52141fc6e1f9eb",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-444-independent-lead",
+      "sha": "afecc89be05f32fa2366d2ad88ae661792f38d8c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-445-independent-qa",
+      "sha": "3ccabe3568199efebdc89852ea053da9debe8473",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-446-independent-qa",
+      "sha": "cafe69864140bfdaf8c28ac7c7c69a59dec83400",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-447-independent-lead",
+      "sha": "330247e9fa8aa0ed473ad62c75a71c274f5d07d2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-448-atomic-finish",
+      "sha": "59d3cd722ea14af778feb8048839ab81b8a95aad",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-448-bounded-callbacks",
+      "sha": "069fae13a0875fbb8f9a5fbc8d08a0c6128c9ac0",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-448-error-receipt",
+      "sha": "c21be3d31d7b491d691dc5e0c9f96ee39b55853d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-448-prejest",
+      "sha": "f28753c035489effa018b41abd346c0ce8a6f84d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-448-rejection-diagnostics",
+      "sha": "4a265fb957cfc760d4c985c55a0190ee4517671b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-448-safe-runner",
+      "sha": "f8f54a476ed171fdc8b9c307aa1316c8113cdc52",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-448-shell-checkpoint",
+      "sha": "b181da31c0a1358d2e43af3bce2e125c21e5a76a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-448-stubborn-direct",
+      "sha": "843f0245eed7567350185190f85a6aefe60ecbef",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-449-independent-lead",
+      "sha": "ec96d05a75a2a8927eb9ed6d1d8bd41134b12024",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-45-qa-review",
+      "sha": "12795cc6d74fc3d0686f6e10e0dcdc351d88a2f6",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-450-independent-qa",
+      "sha": "1e1375ec721a06b34a2d5ae1b5d670fd9295d864",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-451-independent-qa",
+      "sha": "be94cf2fc9548b497068318939fb1685aa7c1e85",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-452-independent-qa",
+      "sha": "f698489731a72d16c4919544a6f92925548d6a71",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-453-independent-qa",
+      "sha": "40afdab4b63336ceccd079b14e4490eed0b0263b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-454-lead-review",
+      "sha": "a59d63803988c95e6b3250e5ac4d879c089df2b2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-455-lead-review",
+      "sha": "9e38b894cf664f4d6d9e8e9dab7c48cfcd7b15f0",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-456-independent-qa",
+      "sha": "b335fd922bad646da474df84652133d26a274453",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-457-lead-review",
+      "sha": "dc9d15c3b340f8ce72c56359d0bf0ae70d78c269",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-458-independent-qa",
+      "sha": "4c671a65553f3a5a59ad02534aab96a007de173d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-459-lead-review",
+      "sha": "acd3fc081e03691a109269d4384e530e3333242e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-46-dashboard-docker",
+      "sha": "29328f9fc7df650bdaaf555d3c11ca582a0c0134",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-460-lead-review",
+      "sha": "4bb765b6e61c27434ade11c204bdc2653ec33756",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-461-independent-qa",
+      "sha": "4330b7ac01c33953694cd0b6d359f1714c4b9ed7",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-462-independent-qa",
+      "sha": "25ea1cbcec93ce3ef84def1c4a9cb5492a68ad14",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-463-lead-review",
+      "sha": "ceccd993253a77e24f23b499e7ceaa1fd15a725f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-464-lead-review",
+      "sha": "fc7ea3fe3552f5accb6bc3630d58036d96f1d946",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-465-qa-lifecycle",
+      "sha": "287445b3e094e9b2c1785acb27f00124fccf6a81",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-466-qa-callbacks",
+      "sha": "25b515ab5955078fe65149d9be14a7da087a1372",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-467-lead-review",
+      "sha": "2909e0b6b999e12879f962a066e1fd3fe064c372",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-468-lead-review",
+      "sha": "edf2d380038b4509b6e7ee5a3880cc3999839aaa",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-469-lead-review",
+      "sha": "add81ff1397cf68a40bcfaf23ffc54aca053844e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-470-qa-review",
+      "sha": "45ff2f40bcc515125dc6aa26878906a1bfaaa4d8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-471-qa-review",
+      "sha": "3b388998fe832fe976b208ba55172d8930c1557e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-472-lead-review",
+      "sha": "581e33675441ecb8319ba135310244bc1ee88baa",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-473-lead-review",
+      "sha": "bc46d6dee26a482fa7d1de3af9e733b8525f016e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-474-qa-review",
+      "sha": "fd0d178691e908ea7441dcdce361060cd17931c4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-475-lead-review",
+      "sha": "554f723c6a8bbb05fc72c08bbb818dc6e952cb67",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-476-qa-review",
+      "sha": "0ebb7be6ea7baf7d55db55a60973e236815a8f31",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-477-lead-review",
+      "sha": "e4a4505ab1d793058950299873a85cb41989a374",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-478-lead-review",
+      "sha": "b2d71a49ea84c6f85bb3dcbcf21fb6548672a437",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-479-independent-qa",
+      "sha": "5141b469c8e9d536167e97265960948c6a364ad3",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-480-independent-qa",
+      "sha": "5de96b32ebd3bb7a89e23d339560f6c443280a29",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-481-sales-pause-handoff",
+      "sha": "56fbad5630df09fc3be304d480b38263f9c7130a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-483-monitoring-docs",
+      "sha": "839ff1934f1eb86b48f1227680deecc6835de388",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-485-sales-pause-contract",
+      "sha": "1b52f0a353ee1fd5330f26830f7464f84501fa2e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-486-sales-pause-qa",
+      "sha": "3b32b28825b34ab94a62305d546e9126b8c930c4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-487-sales-pause",
+      "sha": "434bb2fda62ab0d9645896e2020e8a96202ee612",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-488-independent-review",
+      "sha": "69152df31752af828401c6cf32d51d73e143fb9f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-489-independent-qa",
+      "sha": "492e449ff6238da1011bcbb41fdc65d8b804ab79",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-49-local-candidate",
+      "sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-490-sales-pause-ui",
+      "sha": "6ab827bff6fdf67283b93f16612106f2217d4dc0",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-491-independent-qa",
+      "sha": "4459bcd530878600cc765a7cd178bfae82cfb2f9",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-491-r2-independent-qa",
+      "sha": "cc702a3871f016ab232d87288ded5a7edda5bb60",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-492-independent-lead",
+      "sha": "c0bd2973bbaf9357f2e1d45bee11526c878d2579",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-493-observer-lifetime",
+      "sha": "5526991b45eb8cf93eeda23205f8341b5637ae90",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-493-sales-pause-sql-source",
+      "sha": "9fb2cdf41109676dcc5aa360d99f9d4cf7a3b60b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-494-independent-lead",
+      "sha": "3d7b5cfbc72c2cfb2ac9cb10d960fe041b5a51ff",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-495-independent-qa",
+      "sha": "9f4b68307bec8198ea2730021072290f298735bd",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-496-independent-lead-r2",
+      "sha": "689ed441741cc58f310b5daca3ca61cd142c66d9",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-497-independent-qa-r3",
+      "sha": "c48777b7e2c338d486fe0846bfbed6805e243a9d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-498-independent-lead-r3",
+      "sha": "aa43d1cd7deb9f90f8a3406c44fb71e53b1a83ac",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-499-capture-repair",
+      "sha": "09dfb648a87eb4f006555f88a93147bf5c34d523",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-499-checked-bindings",
+      "sha": "d4fd52c1637c24d9f1bb003685029e915745bf6e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-499-current-candidate-port",
+      "sha": "f9a8c2121dc869653ac1738edeb1aae914ae66d2",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-499-http-last-ten",
+      "sha": "73aa2b2a649dd64bd3d14b048212a84ec1f2d656",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-499-http-source",
+      "sha": "cf08558f3946b308d27a454d8c867075e6197e39",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-499-source-continuation",
+      "sha": "941714e9efa36c8385776acb1ad275c4ae65fcde",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-50-qa-review",
+      "sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-500-independent-source-checkpoint",
+      "sha": "66cdae86a42a4715ff51fc44faea3c11c1df5045",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-501-independent-qa",
+      "sha": "ba661f0aaba7c4870224c670b9e7a5967663bf4d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-502-independent-qa",
+      "sha": "71b8b2d0d28835aa2363c5f282a286953ab3ad5a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-504-main-reconciliation",
+      "sha": "6396245587ac4a1ffb47e1b31bd764492506e90d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-506-sale-window",
+      "sha": "db3e54349b76771e6a9db2e30fc6a2c917c0054f",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-507-independent-qa",
+      "sha": "cf74929db7da60a89dc9f61aebbc51952cc0fe1d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-509-sale-window-ui",
+      "sha": "dfd1612fffae150e790152c09ad0e18f73addcb7",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-51-release-review",
+      "sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-511-payment-recovery",
+      "sha": "b71c0d7da5932922967434f4f50d74f7f07391af",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-513-type-audit",
+      "sha": "f27757b4b8e2a616e8200a890a8f37be12e557ff",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-515-wallet-recovery",
+      "sha": "57634667fd437f348433199ca527c98a5ba9ef6a",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-517-order-observation",
+      "sha": "c97dd39b03f17f10e9119f4557b6a3a1f08ce9d2",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-519-checkout-admission",
+      "sha": "dd15dc14369e54c67bd8f4d6a81e7ae0e7d4fb6c",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-52-qa-full-dashboard",
+      "sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-520-sales-pause",
+      "sha": "a5da21936f4e0c730cab448610d9ecc75d2ef398",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-521-storefront-eligibility",
+      "sha": "c9c9e7f354a72c49f6885e4df31b8713d34065fe",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-523-upgrade-verification",
+      "sha": "8b0b5d62fb1b9307d0ba7b5557636943c89915be",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-529-independent-qa",
+      "sha": "3500f6019b5853faeb212d77b24d1bbd818cda1e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-53-events-clock",
+      "sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-530-independent-lead",
+      "sha": "7ef5c4202c8f4bfc2fc90f4aadd6928068cc095e",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-531-independent-lead",
+      "sha": "58dcbe6e8f7af9b00a8cbcc0f19977f55b244f69",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-532-independent-qa",
+      "sha": "75008af84138d4ae3a20b96af73156997bcd368c",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-533-candidate-interop",
+      "sha": "cde214229938cae06fc5acc324a12efa64f2e520",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-534-source-qa",
+      "sha": "63e6b495a94036f29416d9b624ff02ea51c993ec",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-535-independent-port-review",
+      "sha": "b0b242c55ce50c3b7f8004c75546fb8b643e0670",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-536-independent-source-qa",
+      "sha": "7605248c3a0530706e2c9169e708768d716dd1df",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-537-candidate-packet",
+      "sha": "ba7b65f799f9fecb5bf76a0f5d3bc49dfb03e4da",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-538-independent-packet-qa",
+      "sha": "539e1891e913d6cd08f234a58af0620e071aece4",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-539-independent-packet-lead",
+      "sha": "ecbf25fecc1c853e7620d957f4baccbaae5b2318",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-54-qa-events-clock",
+      "sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-540-precollection",
+      "sha": "61321d4b61a8d3740d79a85e25e8c22e910e36f8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-541-qa",
+      "sha": "ebcdd8a2a78dd3804f984dfa196c77ff268c29ce",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-542-independent-lead",
+      "sha": "8304f94928f0f3361551df4fddb1732dea1a184d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-543-ci-recovery",
+      "sha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-544-independent-ci",
+      "sha": "0bbfabe5d66748a808dc44601d425a80121f9caa",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-545-race-entry-order",
+      "sha": "0dfb0badcd1cd6afc01c8047abc99622941af3d7",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-546-qa-receipt",
+      "sha": "0a06f1a3b99534cb1c5d9ba76cda0d8284ea59d8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-547-release",
+      "sha": "0dfb0badcd1cd6afc01c8047abc99622941af3d7",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-548-independent-ci",
+      "sha": "9845fe695181ed917f1960e0b40807a28efbe68d",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-549-operational-packet",
+      "sha": "2bef1b39041c452fa4e50a752ab865906b298fbb",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-55-lead-events-clock",
+      "sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-550-doc-review",
+      "sha": "ac66e8c7e69f7f6cb0110091016bf8edfff4e286",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-551-historical-review",
+      "sha": "f0db0cabe0180f3fd49dcb9b8e04c37c4a3e164b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-552-acceptance-reconcile",
+      "sha": "60234016d5989adc311c7f10a0b16c83aa23cced",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-554-encrypted-recovery-plan",
+      "sha": "c3bc8b7d2a657ecbe933ac952caa19fa1cc5d7bf",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-555-allocation-receipt",
+      "sha": "9c5470af9c5cc30c0b358b2f27c2fc5e814f8f12",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-56-api-build",
+      "sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-57-owned-runtime",
+      "sha": "0375516e058fd3a1bbc18e1db5f1f44751e96647",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-59-remaining-v1",
+      "sha": "87a24084a161049dbfaf224684a7132fd11f7ee1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-593-asset-log-redaction",
+      "sha": "efc38b70d2eebaa1df511f425ccbdb9828894d6b",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-60-webhook-unknown",
+      "sha": "d6b513a84da5748037c0a528b41b37fd2a90e64e",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-605-storage-diagnostics",
+      "sha": "8f757462d5586ea3cb75829e0e418accbb80c62f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-61-release-evidence",
+      "sha": "f75036662a7b097d20f0d2b920ca590ea5765c5f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-64-qa-webhook",
+      "sha": "d6b513a84da5748037c0a528b41b37fd2a90e64e",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-65-order-tenant",
+      "sha": "906c0335998cfd2a01c77cbe738877160291de5d",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-66-intent-retries",
+      "sha": "d6bb9a8bf2640a52209663fb91da15e8d753e2ba",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-67-webhook-recovery",
+      "sha": "3299e0cb569e7f7b042671370b2fbf4802445828",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-68-baseline",
+      "sha": "f5a61567b8f2d489d82bb70f78df98e26724d8af",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-68-race-plan",
+      "sha": "977848bcd5bbe5ce0377cae4916bf0966e088f59",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-69-config-output",
+      "sha": "6c57442c2a5a83aa999b557dc7e2967d20a43781",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-70-aggregate-limit",
+      "sha": "b6e6fff664076bddc4f824bd10f26498787f068f",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-71-scanner-retry",
+      "sha": "3c4f7d1663e5017da1478eb55c806f6bcd51d3ff",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-72-return-contract",
+      "sha": "af5bb5b17d3a5c1200b9693ede980e7c3a6151a1",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-74-qa-release-handoff",
+      "sha": "f75036662a7b097d20f0d2b920ca590ea5765c5f",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-75-evidence-warning",
+      "sha": "6787e18748149370f4a974718053a93261bc9714",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-93-owner-recovery",
+      "sha": "8a07603ce10a4768b7cffea7027846ca53c2b520",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-94-return-recovery",
+      "sha": "d4d8415198a33838576a2f3b91bb32933145479a",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-96-qa-review",
+      "sha": "8a07603ce10a4768b7cffea7027846ca53c2b520",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-97-final-qa-review",
+      "sha": "a95ad9516c032e07a20f22d90bed3185a2ae5a9e",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-97-qa-review",
+      "sha": "67915f7767dbcf39c06ee733b1b357d049a9de86",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-97-r3-qa-review",
+      "sha": "0375516e058fd3a1bbc18e1db5f1f44751e96647",
+      "preservation": "main-history"
+    },
+    {
+      "ref": "refs/heads/tixmo/task-98-api-gate",
+      "sha": "5036967dcd3afa1db8192e6ad3ceea2dbad19db8",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task361-compose",
+      "sha": "2d878423391e3d34761cbea622c1a7e0b7dfac25",
+      "preservation": "bundle"
+    },
+    {
+      "ref": "refs/heads/tixmo/task362-full-api",
+      "sha": "aeedc5867adb5bd2c7040e24dea8fe732fa3f7d7",
+      "preservation": "bundle"
+    }
+  ],
+  "draft_prs": [
+    112,
+    113,
+    114,
+    115,
+    116,
+    117
+  ],
+  "limits": [
+    "The bundle preserves committed branch history; local runtime caches, installed dependencies, and transient logs are excluded.",
+    "Previously uncommitted development sources and reviewer notes were published separately in draft PRs 112-116.",
+    "Main is unchanged by this backup. Archive branch tips are in the bundle, not duplicated as hundreds of new GitHub branch refs.",
+    "Historical commits and reports do not constitute new test or deployment qualification."
+  ]
+}

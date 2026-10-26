@@ -1,0 +1,34 @@
+[
+  {
+    "path": "AGENTS.md",
+    "sha256": "faadb2308d0fc52e90e33f7f2104e7df86c48f6c395d7d222476d25bd492c8d9"
+  },
+  {
+    "path": "docs/team/OPERATIONS.md",
+    "sha256": "7a9697553410cf991ef902da63c643da99f7fc64bd482a0dec6fd2883046deeb"
+  },
+  {
+    "path": "docs/team/MANAGER_RUNBOOK.md",
+    "sha256": "f9bbd4f1f929ad77a446de5765ec1b44177cbf69fa61daae891cf85a8242959a"
+  },
+  {
+    "path": "docs/team/ROLES.md",
+    "sha256": "57f314fb9b79032ad59adc1ca405021092226278b3fe409d8526901f338d8577"
+  },
+  {
+    "path": "docs/team/TASK_TEMPLATE.md",
+    "sha256": "0b1692b026fa304ba5b0a098e7d2884b3284faccef2e6063dc0de08602bd1646"
+  },
+  {
+    "path": "docs/team/PROJECT_BRIEF.md",
+    "sha256": "ab5307165121425d09d6690d151943530afc6594a38fa737c0931406fa70db57"
+  },
+  {
+    "path": "docs/team/WORKFLOW.md",
+    "sha256": "b9296e1d65250831ada592bd4392972194f835d225ccf550b8fdc063d5728bee"
+  },
+  {
+    "path": "docs/team/README.md",
+    "sha256": "dc1dc0efe6eb254f53ac77338fe3495ea1e27d0d497a1fc73716a874f9fd26f1"
+  }
+]
