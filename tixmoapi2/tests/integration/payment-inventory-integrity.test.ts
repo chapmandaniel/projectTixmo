@@ -465,14 +465,23 @@ describe('Payment, admission and inventory integrity', () => {
     await prisma.scanner.update({ where: { id: scanner.id }, data: { eventId: otherEvent.id } });
     await expect(
       scannerService.scanTicket({ scannerId: scanner.id, qrData: qr, scanType: 'ENTRY' })
-    ).rejects.toThrow('not assigned');
+    ).rejects.toMatchObject({
+      statusCode: 403,
+      message: 'Scanner is not assigned to this event',
+      data: {
+        valid: false,
+        reason: 'WRONG_EVENT',
+        message: 'This ticket is for Integrity.',
+        eventName: 'Integrity',
+      },
+    });
     expect(
       await prisma.scanLog.findFirst({
         where: {
           scannerId: scanner.id,
           ticketId: ticket.id,
           success: false,
-          failureReason: 'Scanner is not assigned to this event',
+          failureReason: 'WRONG_EVENT',
         },
       })
     ).toBeTruthy();

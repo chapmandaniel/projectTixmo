@@ -18,6 +18,8 @@ export const SCAN_REASON = {
   INVALID_QR: 'INVALID_QR',
   NOT_FOUND: 'NOT_FOUND',
   CREDENTIAL_INVALID: 'CREDENTIAL_INVALID',
+  ADMITTED: 'ADMITTED',
+  REVOKED: 'REVOKED',
 } as const;
 
 export const VOID_DISPUTED_MESSAGE = 'VOID: disputed, see gate lead';
@@ -199,4 +201,17 @@ export const presentScanResult = (result: {
     ticketTypeName,
     holderFirstName,
   };
+};
+
+// Persisted on scan_logs.failure_reason. Admitted scans use ADMITTED.
+export const recordedScanReason = (result: {
+  success?: boolean;
+  reason?: string | null;
+  ticket?: unknown;
+}): string => {
+  if (result.success === true) return SCAN_REASON.ADMITTED;
+  return (
+    presentScanResult({ success: false, reason: result.reason, ticket: result.ticket }).reason ||
+    'UNKNOWN'
+  );
 };
