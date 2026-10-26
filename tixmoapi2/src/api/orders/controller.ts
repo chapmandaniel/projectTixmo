@@ -118,6 +118,15 @@ export const resendReceipt = catchAsync(async (req: AuthRequest, res: Response) 
   res.json(successResponse(null, 'Receipt sent to the buyer'));
 });
 
+export const voidOrder = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { reason, ticketId } = req.body as { reason: string; ticketId?: string };
+  const order = await orderService.voidPaidTickets(req.params.id, req.user!.userId, {
+    reason,
+    ticketId,
+  });
+  res.json(successResponse(order, 'Tickets voided'));
+});
+
 export const refundOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 

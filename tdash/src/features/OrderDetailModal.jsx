@@ -2,15 +2,41 @@ import React, { useState } from 'react';
 import { X, Calendar, User, CreditCard, Mail, Phone, ShoppingBag, AlertTriangle, CheckCircle } from 'lucide-react';
 import api from '../lib/api';
 import { orderDisplayCurrency } from '../lib/runtimeConfig';
-import { DashboardButton, DashboardSurface } from '../components/dashboard/DashboardPrimitives';
+import { DashboardButton, DashboardSurface, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
 import { eventAddress, formatEventMoney, hstAmountLine, hstRegistrationLine } from '../lib/publicEvent';
+import { getStoredUser } from '../lib/session';
+import { disputeOutcomeLabel, isDisputedOrder, orderListStatus } from '../lib/orderDispute';
 
 const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
     const [isRefunding, setIsRefunding] = useState(false);
     const [refundError, setRefundError] = useState(null);
     const [showRefundConfirm, setShowRefundConfirm] = useState(false);
     const [receiptStatus, setReceiptStatus] = useState('');
+    const [voidReason, setVoidReason] = useState('');
+    const [voidError, setVoidError] = useState('');
+    const [voiding, setVoiding] = useState(false);
     if (!order) return null;
+    const openTickets = (order?.tickets || []).filter((ticket) => ticket.status !== 'CANCELLED');
+    const canVoid = ['OWNER', 'ADMIN', 'MANAGER'].includes(getStoredUser()?.role)
+        && (order?.status === 'PAID' || order?.status === 'PARTIALLY_REFUNDED')
+        && openTickets.length > 0;
+    const voidTickets = async (ticketId) => {
+        const reason = voidReason.trim();
+        if (!reason) {
+            setVoidError('A reason is required.');
+            return;
+        }
+        setVoiding(true);
+        setVoidError('');
+        try {
+            await api.post(`/orders/${order.id}/void`, ticketId ? { reason, ticketId } : { reason });
+            if (onOrderUpdated) onOrderUpdated();
+            onClose();
+        } catch (error) {
+            setVoidError(error.response?.data?.message || 'Tickets could not be voided');
+            setVoiding(false);
+        }
+    };
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleString();
@@ -62,13 +88,13 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
                 <div className="p-6 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
 
                     {/* Status Banner */}
-                    <div className={`flex items-center justify-between p-4 rounded-lg ${order.status === 'PAID'
+                    <div className={`flex items-center justify-between p-4 rounded-lg ${orderListStatus(order) === 'PAID'
                         ? (isDark ? 'bg-green-500/10 text-green-400' : 'bg-green-50 text-green-700')
                         : (isDark ? 'bg-yellow-500/10 text-yellow-400' : 'bg-yellow-50 text-yellow-700')
                         }`}>
                         <div className="flex items-center space-x-2">
                             <span className="font-medium">Status:</span>
-                            <span className="font-bold">{order.status}</span>
+                            <span className="font-bold">{orderListStatus(order)}</span>
                         </div>
                         <div className="text-sm opacity-80">
                             {order.paymentStatus}
@@ -173,7 +199,20 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
                 </DashboardSurface> : null}
                 {refundError && !showRefundConfirm ? <p role="alert" className="px-6">{refundError}</p> : null}
                 {receiptStatus ? <p role="status" className="px-6">{receiptStatus}</p> : null}
-                {order.refundStatus && order.refundStatus !== 'NONE' ? <p className="px-6">Refund: {order.refundStatus.toLowerCase()}</p> : null}
+                {isDisputedOrder(order) ? <p className="px-6">Dispute: {disputeOutcomeLabel(order)}. A won dispute does not restore these tickets.</p> : order.refundStatus && order.refundStatus !== 'NONE' ? <p className="px-6">Refund: {order.refundStatus.toLowerCase()}</p> : null}
+                {canVoid ? <DashboardSurface isDark={isDark} className="mx-6 mb-4 space-y-3 p-4">
+                    <p>Void tickets without refunding. Money is not returned and inventory stays sold.</p>
+                    <label className="block text-sm">Reason
+                        <DashboardTextInput isDark={isDark} aria-label="Void reason" value={voidReason} maxLength={1000} onChange={(event) => setVoidReason(event.target.value)} />
+                    </label>
+                    {voidError ? <p role="alert">{voidError}</p> : null}
+                    <DashboardButton isDark={isDark} disabled={voiding} onClick={() => voidTickets()}>Void all tickets</DashboardButton>
+                    {openTickets.map((ticket) => (
+                        <DashboardButton key={ticket.id} isDark={isDark} variant="secondary" disabled={voiding} onClick={() => voidTickets(ticket.id)}>
+                            Void {ticket.ticketType?.name || 'ticket'}
+                        </DashboardButton>
+                    ))}
+                </DashboardSurface> : null}
                 {/* Footer Action Bar */}
                 <div className={`p-6 border-t flex justify-end space-x-3 ${isDark ? 'border-[#2a2a2a]' : 'border-gray-100'}`}>
                     <button

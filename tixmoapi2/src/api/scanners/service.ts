@@ -5,10 +5,12 @@ import crypto from 'crypto';
 
 import prisma from '../../config/prisma';
 import {
+  AdmissionDenial,
   lockedTicket,
   ticketFailure,
   consumeTicket,
 } from '../../services/ticket-admission.service';
+import { orderDisputed } from '../../services/ticket-void.service';
 
 interface RegisterScannerData {
   name: string;
@@ -325,6 +327,7 @@ export class ScannerService {
     ticket?: unknown;
     scanLog: ScanLog;
     reason?: string;
+    reasonCode?: string;
   }> {
     const parsed = parseTicketQRData(data.qrData);
     return prisma.$transaction(async (tx) => {
@@ -335,18 +338,18 @@ export class ScannerService {
       const scanner = await tx.scanner.findUnique({ where: { id: data.scannerId } });
       if (!scanner || scanner.status !== 'ACTIVE')
         throw ApiError.forbidden('Scanner is not active');
-      let reason: string | undefined;
-      if (!parsed) reason = 'Invalid QR code format';
-      else if (!ticket) reason = 'Ticket not found';
+      let denial: AdmissionDenial | undefined;
+      if (!parsed) denial = { reason: 'Invalid QR code format' };
+      else if (!ticket) denial = { reason: 'Ticket not found' };
       else if (
         scanner.organizationId !== ticket.event.organizationId ||
         (scanner.eventId && scanner.eventId !== ticket.eventId)
       ) {
         throw ApiError.forbidden('Scanner is not assigned to this event');
       } else if (parsed.eventId !== ticket.eventId || parsed.barcode !== ticket.barcode) {
-        reason = 'Ticket credential is no longer valid';
-      } else reason = ticketFailure(ticket, data.scanType === 'ENTRY', false);
-      if (!reason && ticket && data.scanType === 'ENTRY')
+        denial = { reason: 'Ticket credential is no longer valid' };
+      } else denial = ticketFailure(ticket, data.scanType === 'ENTRY', false);
+      if (!denial && ticket && data.scanType === 'ENTRY')
         await consumeTicket(tx, ticket.id, data.scannerId);
       const scanLog = await tx.scanLog.create({
         data: {
@@ -354,12 +357,18 @@ export class ScannerService {
           ticketId: ticket?.id ?? null,
           eventId: ticket?.eventId ?? null,
           scanType: data.scanType,
-          success: !reason,
-          failureReason: reason,
+          success: !denial,
+          failureReason: denial?.reason,
           metadata: data.metadata as Prisma.InputJsonValue,
         },
       });
-      return { success: !reason, reason, ticket: ticket || undefined, scanLog };
+      return {
+        success: !denial,
+        reason: denial?.reason,
+        reasonCode: denial?.reasonCode,
+        ticket: ticket || undefined,
+        scanLog,
+      };
     });
   }
 
@@ -444,6 +453,8 @@ export class ScannerService {
     order: { status: string; refundStatus: string };
     event: { status: string; deletedAt: Date | null };
   }): string {
+    if (orderDisputed(ticket.order.refundStatus) || ticket.status === 'CANCELLED')
+      return 'CANCELLED';
     return ticket.order.status === 'PAID' &&
       ticket.order.refundStatus !== 'PROCESSING' &&
       !ticket.event.deletedAt &&
@@ -602,6 +613,7 @@ export class ScannerService {
       qrData: string;
       success: boolean;
       reason?: string;
+      reasonCode?: string;
     }>;
   }> {
     const results = [];
@@ -634,6 +646,7 @@ export class ScannerService {
           qrData: scan.qrData,
           success: result.success,
           reason: result.reason,
+          reasonCode: result.reasonCode,
         });
       } catch (error) {
         failedCount++;

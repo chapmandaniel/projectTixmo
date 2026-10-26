@@ -6,6 +6,11 @@ import { ApiError } from '../../utils/ApiError';
 import { orderService } from '../orders/service';
 import { notificationService } from '../../utils/notificationService';
 import { lockOrder } from '../../services/order-inventory.service';
+import {
+  nextDisputeRefundStatus,
+  STRIPE_DISPUTE_ACTOR,
+  voidOrderTickets,
+} from '../../services/ticket-void.service';
 import prisma from '../../config/prisma';
 
 type WebhookClaim = { eventId: string; generation: bigint };
@@ -160,6 +165,11 @@ export class PaymentService {
         // An app-owned row is settled in place and is never sent to Stripe again.
         await this.applyExternalRefund(event);
         await this.recoverRefunds();
+      } else if (
+        event.type === 'charge.dispute.created' ||
+        event.type === 'charge.dispute.closed'
+      ) {
+        await this.applyDispute(event, claim);
       }
       await this.finishWebhookEvent(claim, 'PROCESSED');
     } catch (error) {
@@ -680,7 +690,97 @@ export class PaymentService {
         orderId: object.metadata?.orderId || null,
       };
     }
+    if (event.type === 'charge.dispute.created' || event.type === 'charge.dispute.closed') {
+      return {
+        paymentIntentId: this.disputePaymentIntentId(event.data.object),
+        orderId: null,
+      };
+    }
     return { paymentIntentId: object.id || null, orderId: object.metadata?.orderId || null };
+  }
+
+  private disputePaymentIntentId(object: unknown): string | null {
+    const dispute = object as {
+      payment_intent?: string | { id?: string | null } | null;
+      charge?: string | { payment_intent?: string | { id?: string | null } | null } | null;
+    };
+    const direct = this.referenceId(dispute.payment_intent);
+    if (direct) return direct;
+    if (dispute.charge && typeof dispute.charge === 'object')
+      return this.referenceId(dispute.charge.payment_intent);
+    return null;
+  }
+
+  private referenceId(value: string | { id?: string | null } | null | undefined): string | null {
+    if (typeof value === 'string') return value || null;
+    return value?.id || null;
+  }
+
+  /**
+   * charge.dispute.created voids admission and flags the order. charge.dispute.closed
+   * records won/lost/warning_closed and never restores tickets. Inventory stays sold:
+   * unlike a refund, the charge is still the customer's until staff decide otherwise.
+   * A missing order is acknowledged so Stripe does not retry it forever.
+   */
+  private async applyDispute(event: Stripe.Event, claim: WebhookClaim): Promise<void> {
+    const dispute = event.data.object as {
+      id?: string;
+      status?: string | null;
+      charge?: string | { id?: string } | null;
+    };
+    let paymentIntentId = this.disputePaymentIntentId(dispute);
+    if (!paymentIntentId && typeof dispute.charge === 'string') {
+      const charge = await this.provider().charges.retrieve(dispute.charge);
+      paymentIntentId = this.referenceId(charge.payment_intent);
+    }
+    if (paymentIntentId) {
+      await prisma.paymentWebhookEvent.updateMany({
+        where: { id: claim.eventId, status: 'PROCESSING', attemptGeneration: claim.generation },
+        data: { paymentIntentId },
+      });
+    }
+    if (!paymentIntentId) {
+      logger.warn(`Dispute webhook ${event.id} (${event.type}) has no payment intent`);
+      return;
+    }
+    const orders = await prisma.order.findMany({
+      where: { paymentIntentId },
+      select: { id: true },
+    });
+    if (orders.length === 0) {
+      logger.warn(
+        `Dispute webhook ${event.id} (${event.type}) matched no order for payment intent ${paymentIntentId}`
+      );
+      return;
+    }
+    if (orders.length > 1) throw ApiError.conflict('Payment matches more than one order');
+    const orderId = orders[0].id;
+    const closed = event.type === 'charge.dispute.closed';
+    const disputeId = dispute.id || event.id;
+    await this.orderTransaction(claim, orderId, async (tx) => {
+      const order = await tx.order.findUnique({ where: { id: orderId } });
+      if (!order || order.paymentIntentId !== paymentIntentId) return;
+      const next = nextDisputeRefundStatus(
+        order.refundStatus,
+        closed ? dispute.status || 'unknown' : undefined
+      );
+      if (next) await tx.order.update({ where: { id: orderId }, data: { refundStatus: next } });
+      const payable = order.status === 'PAID' || order.status === 'PARTIALLY_REFUNDED';
+      await voidOrderTickets(tx, {
+        orderId,
+        actorId: STRIPE_DISPUTE_ACTOR,
+        reason: closed
+          ? `Dispute ${disputeId} closed: ${dispute.status || 'unknown'}`
+          : `Payment disputed (${disputeId})`,
+        action: closed ? 'DISPUTE_CLOSED' : 'DISPUTE_CREATED',
+        sourceId: disputeId,
+        voidTickets: !closed && payable,
+      });
+      await tx.paymentWebhookEvent.updateMany({
+        where: { id: claim.eventId, attemptGeneration: claim.generation },
+        data: { orderId, paymentIntentId },
+      });
+    });
   }
 
   private refundPaymentIntentId(event: Stripe.Event): string | null {

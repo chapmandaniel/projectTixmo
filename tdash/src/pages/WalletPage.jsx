@@ -6,6 +6,7 @@ import { BuyerAuthPanel } from './CheckoutPage';
 import { DashboardButton, DashboardChip, DashboardPage, DashboardPageHeader, DashboardSurface, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import { eventAddress, formatEventMoney, hstAmountLine, hstRegistrationLine } from '../lib/publicEvent';
+import { isDisputedOrder } from '../lib/orderDispute';
 
 const payload = (response) => response?.data?.data || response?.data || response;
 const money = (order) => formatEventMoney(order.totalAmount, orderDisplayCurrency(order.currency));
@@ -72,10 +73,11 @@ const WalletPage = ({ user, onAuthenticated }) => {
                     <DashboardSurface isDark className="p-5">
                         <h2 className="mb-4 text-xl">Tickets</h2>
                         {!tickets.length ? <p className="text-dashboard-muted">No tickets yet.</p> : tickets.map(ticket => {
-                            const usable = ticket.status === 'VALID' && ticket.order?.status === 'PAID' && ticket.order?.refundStatus !== 'PROCESSING';
+                            const disputed = isDisputedOrder(ticket.order);
+                            const usable = ticket.status === 'VALID' && ticket.order?.status === 'PAID' && ticket.order?.refundStatus !== 'PROCESSING' && !disputed;
                             return <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-4 border-b border-dashboard-border py-4">
                                 <div><p>{ticket.event?.name}</p><p className="text-sm text-dashboard-muted">{eventWhen(ticket.event)}</p><p className="text-sm text-dashboard-muted">{ticket.ticketType?.name}</p></div>
-                                <DashboardChip isDark>{ticket.order?.refundStatus === 'PROCESSING' ? 'Refund processing' : ticket.order?.status === 'PENDING' ? 'Awaiting payment' : ticket.status}</DashboardChip>
+                                <DashboardChip isDark>{disputed ? 'Payment disputed' : ticket.order?.refundStatus === 'PROCESSING' ? 'Refund processing' : ticket.order?.status === 'PENDING' ? 'Awaiting payment' : ticket.status}</DashboardChip>
                                 {usable ? <div className="flex flex-wrap gap-2">
                                     <DashboardButton isDark disabled={busy} onClick={() => action(async () => {
                                         const result = payload(await api.get(`/tickets/${ticket.id}/qr`));
@@ -100,7 +102,7 @@ const WalletPage = ({ user, onAuthenticated }) => {
                             <p className="text-sm text-dashboard-muted">{venueLine(order)}</p>
                             <p className="text-sm text-dashboard-muted">{hstAmountLine(order.totalAmount, order.receiptDisclosure?.hstRate, order.receiptDisclosure?.hstAmount)}</p>
                             {hstRegistrationLine(order.receiptDisclosure?.hstNumber) ? <p className="text-sm text-dashboard-muted">{hstRegistrationLine(order.receiptDisclosure?.hstNumber)}</p> : null}
-                            <p className="text-sm text-dashboard-muted">{order.status}{order.refundStatus && order.refundStatus !== 'NONE' ? ` · Refund ${order.refundStatus.toLowerCase()}` : ''}</p>
+                            <p className="text-sm text-dashboard-muted">{isDisputedOrder(order) ? 'Payment disputed' : order.status}{!isDisputedOrder(order) && order.refundStatus && order.refundStatus !== 'NONE' ? ` · Refund ${order.refundStatus.toLowerCase()}` : ''}</p>
                             {order.status === 'PAID' ? <DashboardButton isDark variant="secondary" disabled={busy} onClick={() => action(async () => { await api.post(`/orders/${order.id}/receipt`); setNotice('Receipt sent to your email.'); })}>Resend receipt</DashboardButton> : order.status === 'PENDING' ? <DashboardButton isDark variant="secondary" disabled={busy} onClick={() => action(async () => { await api.post(`/orders/${order.id}/cancel`); setNotice('Reservation cancelled.'); })}>Cancel reservation</DashboardButton> : null}
                         </div>)}
                     </DashboardSurface>

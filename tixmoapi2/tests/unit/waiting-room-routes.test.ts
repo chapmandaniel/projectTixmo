@@ -57,6 +57,7 @@ jest.doMock('../../src/api/orders/controller', () => ({
   listOrders: controller,
   refundOrder: controller,
   requestRefund: controller,
+  voidOrder: controller,
   resendReceipt: controller,
 }));
 jest.doMock('../../src/api/payments/controller', () => ({

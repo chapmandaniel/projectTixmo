@@ -262,7 +262,7 @@ POST   /api/v1/promo-codes/validate - Validate code
 ### Payments (3 endpoints) ✅
 ```
 POST   /api/v1/payments/create-intent - Create payment intent
-POST   /api/v1/payments/webhook       - Stripe webhook
+POST   /api/v1/payments/webhook       - Stripe webhook (subscribe charge.dispute.created and charge.dispute.closed)
 GET    /api/v1/payments/status/:id    - Get payment status (planned)
 ```
 
