@@ -53,7 +53,69 @@ function handler(options: { version?: boolean; failure?: string } = {}) {
     return Promise.resolve({ response: { statusCode, headers, body } });
   });
   const destroy = jest.fn();
-  return { …597 tokens truncated…p\/task602-canary\/[a-f0-9-]{36}\.txt$/
+  return { requestHandler: { handle, destroy }, requests, destroy, body: () => stream };
+}
+afterEach(() => {
+  jest.restoreAllMocks();
+  jest.useRealTimers();
+});
+it.each(['', undefined, 'false', 'TRUE'])('nonoptin skips SDK and all work %s', async (flag) => {
+  const h = handler();
+  expect(await observe([], { ...env, TIXMO_STORAGE_CANARY: flag }, h)).toEqual({
+    scope: 'task602-existing-storage-canary',
+    skipped: true,
+  });
+  expect(h.requestHandler.handle).not.toHaveBeenCalled();
+});
+it.each([
+  { NODE_ENV: 'test' },
+  { S3_ENDPOINT: 'https://foreign.invalid' },
+  { S3_BUCKET_NAME: 'foreign-bucket' },
+  { S3_REGION: 'us-east-1' },
+  { S3_ACCESS_KEY_ID: '' },
+  { S3_SECRET_ACCESS_KEY: '' },
+  { S3_SECRET_ACCESS_KEY: 'secret\ncanary' },
+  { S3_URL_STYLE: 'unknown' },
+])('rejects unsafe config without SDK requests %j', async (change) => {
+  const h = handler();
+  expect(await observe([], { ...env, ...change }, h)).toMatchObject({
+    ok: false,
+    phase: 'guard',
+    putAttempted: false,
+  });
+  expect(h.requestHandler.handle).not.toHaveBeenCalled();
+});
+it('rejects arguments; follows exact app style and explicit credential precedence', () => {
+  expect(() => guard(['--bucket=foreign'], env)).toThrow();
+  expect(guard([], env).style).toBe('path');
+  expect(guard([], { ...env, AWS_S3_URL_STYLE: 'virtual' }).style).toBe('virtual');
+  expect(guard([], { ...env, S3_URL_STYLE: 'path', AWS_S3_URL_STYLE: 'virtual' }).style).toBe(
+    'path'
+  );
+});
+it.each(['path', 'virtual'])(
+  'actual SDK signs fixed %s endpoint with explicit credentials and performs exact owned cycle',
+  async (style) => {
+    const h = handler({ version: true });
+    const result = await observe([], { ...env, S3_URL_STYLE: style }, h);
+    expect(result).toMatchObject({
+      ok: true,
+      putConfirmed: true,
+      readbackMatched: true,
+      deleteConfirmed: true,
+      removalVerified: true,
+      possibleOrphan: false,
+      style,
+    });
+    expect(h.requests.map((row) => row.method)).toEqual(['PUT', 'GET', 'DELETE', 'HEAD']);
+    const put = h.requests[0];
+    expect(put.protocol).toBe('https:');
+    expect(put.hostname).toBe(
+      style === 'path' ? 't3.storageapi.dev' : 'mediabucket-ovwubxuyoklp.t3.storageapi.dev'
+    );
+    expect(put.path).toMatch(
+      style === 'path'
+        ? /^\/mediabucket-ovwubxuyoklp\/task602-canary\/[a-f0-9-]{36}\.txt$/
         : /^\/task602-canary\/[a-f0-9-]{36}\.txt$/
     );
     expect(put.headers['if-none-match']).toBe('*');
