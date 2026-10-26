@@ -595,7 +595,7 @@ export class OrderService {
       await transitionInventory(tx, id, 'SOLD', 'RELEASED');
       return tx.order.update({
         where: { id },
-        data: { status: 'REFUNDED', refundStatus: 'SUCCEEDED' },
+        data: { status: 'REFUNDED', refundStatus: 'SUCCEEDED', paymentStatus: 'REFUNDED' },
       });
     });
   }

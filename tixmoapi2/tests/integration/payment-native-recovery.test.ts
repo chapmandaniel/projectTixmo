@@ -398,7 +398,7 @@ it('native scheduled retry drains an owned refund within five minutes after synt
     expect(settled!.order).toMatchObject({
       status: 'REFUNDED',
       refundStatus: 'SUCCEEDED',
-      paymentStatus: 'SUCCEEDED',
+      paymentStatus: 'REFUNDED',
     });
     expect(settled!.order.refunds).toEqual([
       expect.objectContaining({

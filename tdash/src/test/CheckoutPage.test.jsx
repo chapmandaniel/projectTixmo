@@ -216,7 +216,9 @@ describe('CheckoutPage', () => {
         ['PENDING', 'FAILED', "haven't been charged"],
         ['CANCELLED', 'SUCCEEDED', 'closed or refunded'],
         ['REFUNDED', 'SUCCEEDED', 'closed or refunded'],
+        ['REFUNDED', 'REFUNDED', 'closed or refunded'],
         ['PARTIALLY_REFUNDED', 'SUCCEEDED', 'closed or refunded'],
+        ['PAID', 'REFUNDED', 'requires review'],
         ['PAID', 'FAILED', 'requires review'],
         ['PENDING', 'SUCCEEDED', 'requires review'],
     ])('uses authoritative %s/%s despite forged success without event lookup', async (status, paymentStatus, text) => {

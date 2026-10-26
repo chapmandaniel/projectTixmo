@@ -91,7 +91,7 @@ const options: swaggerJsdoc.Options = {
         },
         PaymentStatus: {
           type: 'string',
-          enum: ['PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED'],
+          enum: ['PENDING', 'PROCESSING', 'SUCCEEDED', 'FAILED', 'REFUNDED'],
         },
         TicketStatus: {
           type: 'string',

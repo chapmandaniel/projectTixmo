@@ -767,6 +767,7 @@ describe('Payment, admission and inventory integrity', () => {
     expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
       status: 'REFUNDED',
       refundStatus: 'SUCCEEDED',
+      paymentStatus: 'REFUNDED',
     });
     expect(await stock()).toMatchObject({ quantitySold: 0, quantityAvailable: 20 });
     expect(
@@ -822,6 +823,7 @@ describe('Payment, admission and inventory integrity', () => {
     expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
       status: 'REFUNDED',
       refundStatus: 'SUCCEEDED',
+      paymentStatus: 'REFUNDED',
     });
     expect(await prisma.ticket.findFirstOrThrow({ where: { orderId: order.id } })).toMatchObject({
       status: 'CANCELLED',
@@ -867,9 +869,10 @@ describe('Payment, admission and inventory integrity', () => {
     expect(
       await prisma.paymentRefund.findUniqueOrThrow({ where: { paymentIntentId } })
     ).toMatchObject({ status: 'SUCCEEDED', stripeRefundId: 're_external', reason: 'ORDER_REFUND' });
-    expect((await prisma.order.findUniqueOrThrow({ where: { id: inflight.id } })).status).toBe(
-      'REFUNDED'
-    );
+    expect(await prisma.order.findUniqueOrThrow({ where: { id: inflight.id } })).toMatchObject({
+      status: 'REFUNDED',
+      paymentStatus: 'REFUNDED',
+    });
     expect(await stock()).toMatchObject({ quantitySold: 0, quantityAvailable: 20 });
   });
 
@@ -907,7 +910,11 @@ describe('Payment, admission and inventory integrity', () => {
       where: { id: order.id },
       include: { tickets: true },
     });
-    expect(current).toMatchObject({ status: 'PAID', refundStatus: 'NONE' });
+    expect(current).toMatchObject({
+      status: 'PAID',
+      refundStatus: 'NONE',
+      paymentStatus: 'SUCCEEDED',
+    });
     expect(current.tickets[0]).toMatchObject({ status: 'VALID', inventoryState: 'SOLD' });
     const ticket = current.tickets[0];
     expect(
@@ -950,6 +957,7 @@ describe('Payment, admission and inventory integrity', () => {
     expect(await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).toMatchObject({
       status: 'REFUNDED',
       refundStatus: 'SUCCEEDED',
+      paymentStatus: 'REFUNDED',
     });
     expect(await prisma.ticket.findFirstOrThrow({ where: { orderId: order.id } })).toMatchObject({
       status: 'CANCELLED',

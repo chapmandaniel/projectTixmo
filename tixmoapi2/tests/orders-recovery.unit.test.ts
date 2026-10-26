@@ -84,6 +84,7 @@ const storedStates: Array<[OrderStatus, PaymentStatus]> = [
   [OrderStatus.CANCELLED, PaymentStatus.PENDING],
   [OrderStatus.CANCELLED, PaymentStatus.SUCCEEDED],
   [OrderStatus.REFUNDED, PaymentStatus.SUCCEEDED],
+  [OrderStatus.REFUNDED, PaymentStatus.REFUNDED],
   [OrderStatus.PARTIALLY_REFUNDED, PaymentStatus.SUCCEEDED],
   [OrderStatus.PAID, PaymentStatus.FAILED],
 ];

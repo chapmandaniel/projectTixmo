@@ -57,10 +57,42 @@ const runPrisma = (args) => {
   const existingEvent = await prisma.event.findUniqueOrThrow({
     where: { id: 'upgrade-event' }, select: eventSelection,
   });
+  const refundedMigration = '20261026180000_payment_status_refunded';
+  const refundedSql = fs.readFileSync(path.join(source, refundedMigration, 'migration.sql'), 'utf8');
+  assert.match(refundedSql, /ALTER TYPE "PaymentStatus" ADD VALUE 'REFUNDED';/);
+  assert.doesNotMatch(refundedSql, /\b(INSERT|UPDATE|DELETE)\b/);
   for (const name of fs.readdirSync(source).sort()) {
-    if (name > migration) fs.cpSync(path.join(source, name), path.join(staged, 'migrations', name), { recursive: true });
+    if (name > migration && name !== refundedMigration) fs.cpSync(path.join(source, name), path.join(staged, 'migrations', name), { recursive: true });
   }
   runPrisma(['migrate', 'deploy', '--schema', path.join(staged, 'schema.prisma')]);
+  const labelsBefore = await prisma.$queryRaw`SELECT e.enumlabel AS label FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid WHERE t.typname = 'PaymentStatus'`;
+  assert.deepEqual(labelsBefore.map((row) => row.label).sort(), ['FAILED', 'PENDING', 'PROCESSING', 'SUCCEEDED']);
+  const ledgerBefore = await prisma.$queryRaw`SELECT migration_name FROM _prisma_migrations ORDER BY migration_name`;
+  assert.equal(ledgerBefore.length, 35);
+  assert.equal(ledgerBefore[ledgerBefore.length - 1].migration_name, '20261026120000_order_currency_default_cad');
+  const version = await prisma.$queryRaw`SELECT current_setting('server_version_num') AS version`;
+  assert.ok(Number(version[0].version) >= 120000);
+  let rejectedUncommittedUse = false;
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(`CREATE TYPE "RefundedProbe" AS ENUM ('SUCCEEDED')`);
+      await tx.$executeRawUnsafe(`ALTER TYPE "RefundedProbe" ADD VALUE 'REFUNDED'`);
+      await tx.$queryRawUnsafe(`SELECT 'REFUNDED'::"RefundedProbe" AS label`);
+    });
+  } catch (error) {
+    rejectedUncommittedUse = /unsafe use of new value/.test(String(error && error.message));
+  }
+  assert.equal(rejectedUncommittedUse, true);
+  const probeLeft = await prisma.$queryRaw`SELECT COUNT(*)::int AS count FROM pg_type WHERE typname = 'RefundedProbe'`;
+  assert.equal(probeLeft[0].count, 0);
+  fs.cpSync(path.join(source, refundedMigration), path.join(staged, 'migrations', refundedMigration), { recursive: true });
+  runPrisma(['migrate', 'deploy', '--schema', path.join(staged, 'schema.prisma')]);
+  const labelsAfter = await prisma.$queryRaw`SELECT e.enumlabel AS label FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid WHERE t.typname = 'PaymentStatus'`;
+  assert.deepEqual(labelsAfter.map((row) => row.label).sort(), ['FAILED', 'PENDING', 'PROCESSING', 'REFUNDED', 'SUCCEEDED']);
+  assert.equal((await prisma.$queryRaw`SELECT 'REFUNDED'::"PaymentStatus" AS label`)[0].label, 'REFUNDED');
+  const ledgerAfter = await prisma.$queryRaw`SELECT migration_name FROM _prisma_migrations ORDER BY migration_name`;
+  assert.equal(ledgerAfter.length, 36);
+  assert.equal(ledgerAfter[ledgerAfter.length - 1].migration_name, refundedMigration);
   const upgradedEvent = await prisma.event.findUniqueOrThrow({
     where: { id: 'upgrade-event' }, select: { ...eventSelection, salesPaused: true },
   });
@@ -83,6 +115,28 @@ const runPrisma = (args) => {
   assert.equal(defaults[0].column_default, "'cad'::text");
   await prisma.$executeRaw`INSERT INTO orders (id, order_number, user_id, event_id, total_amount, updated_at) VALUES ('upgrade-default-cad', 'UPGRADE-DEFAULT-CAD', 'upgrade-buyer', 'upgrade-event', 1, CURRENT_TIMESTAMP)`;
   assert.equal((await prisma.order.findUniqueOrThrow({ where: { id: 'upgrade-default-cad' } })).currency, 'cad');
-  process.stdout.write('Populated upgrade passed: transfer revocation, tier limits, ambiguous-history gate, historical currency, receipt safety, legacy webhook generation and additive unpaused event/audit upgrade.\n');
+  const freshName = 'tixmo_disposable_refunded_fresh';
+  assert.match(freshName, /^tixmo_disposable_[a-z0-9_]+$/);
+  const savedUrl = process.env.DATABASE_URL;
+  await prisma.$executeRawUnsafe(`DROP DATABASE IF EXISTS ${freshName} WITH (FORCE)`);
+  await prisma.$executeRawUnsafe(`CREATE DATABASE ${freshName}`);
+  const freshUrl = new URL(savedUrl);
+  freshUrl.pathname = `/${freshName}`;
+  let freshPrisma;
+  process.env.DATABASE_URL = freshUrl.toString();
+  try {
+    runPrisma(['migrate', 'deploy', '--schema', path.join(api, 'prisma/schema.prisma')]);
+    freshPrisma = new PrismaClient({ datasources: { db: { url: freshUrl.toString() } }, log: [] });
+    const names = (await freshPrisma.$queryRaw`SELECT migration_name FROM _prisma_migrations ORDER BY migration_name`).map((row) => row.migration_name);
+    assert.equal(names.length, 36);
+    assert.equal(names[34], '20261026120000_order_currency_default_cad');
+    assert.equal(names[35], refundedMigration);
+    assert.equal((await freshPrisma.$queryRaw`SELECT 'REFUNDED'::"PaymentStatus" AS label`)[0].label, 'REFUNDED');
+  } finally {
+    if (freshPrisma) await freshPrisma.$disconnect();
+    process.env.DATABASE_URL = savedUrl;
+    await prisma.$executeRawUnsafe(`DROP DATABASE IF EXISTS ${freshName} WITH (FORCE)`);
+  }
+  process.stdout.write('Populated upgrade passed: transfer revocation, tier limits, ambiguous-history gate, historical currency, receipt safety, legacy webhook generation, additive unpaused event/audit upgrade, and PaymentStatus REFUNDED on a fresh database and on top of migration 35.\n');
 })().catch(error => { process.stderr.write(error.message + '\n'); process.exitCode = 1; })
   .finally(async () => { if (runtimePrisma) await runtimePrisma.$disconnect(); if (prisma) await prisma.$disconnect(); fs.rmSync(temp, { recursive: true, force: true }); });

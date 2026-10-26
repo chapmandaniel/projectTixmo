@@ -102,6 +102,7 @@ beforeEach(() => {
   finalizeRefund.mockImplementation(() => {
     order.status = 'REFUNDED';
     order.refundStatus = 'SUCCEEDED';
+    order.paymentStatus = 'REFUNDED';
     return Promise.resolve({ ...order });
   });
   provider = {
@@ -154,6 +155,7 @@ describe.each(['ORDER_REFUND', 'UNEXPECTED_PAYMENT'])('settlement for %s', (reas
         if (reason === 'ORDER_REFUND') {
           expect(order.status).toBe('REFUNDED');
           expect(order.refundStatus).toBe('SUCCEEDED');
+          expect(order.paymentStatus).toBe('REFUNDED');
         } else {
           expect(order.status).toBe('CANCELLED');
           expect(order.paymentStatus).toBe('SUCCEEDED');
@@ -191,6 +193,7 @@ test('the delayed worker can finish an order after successful settlement but fai
     expect(record.status).toBe('SUCCEEDED');
     expect(order.status).toBe('REFUNDED');
     expect(order.refundStatus).toBe('SUCCEEDED');
+    expect(order.paymentStatus).toBe('REFUNDED');
     expect(provider.refunds.create).not.toHaveBeenCalled();
   } finally {
     staleResponse.resolve(response('pending'));
