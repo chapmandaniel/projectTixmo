@@ -5,7 +5,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const assert = require('node:assert/strict');
 const { MIGRATION_COUNT } = require('../tixmoapi2/scripts/migration-census.cjs');
-const OLD_COMMIT = 'dd19d3c3cd68923833b5a24c938d8a68db37dc39';
+const OLD_COMMIT = '105601996d17684cff2e6e8de40d29894e2eb370';
 const IMAGES = {
   new: 'tixmo-task603-production:ci',
   old: 'tixmo-task606-old:ci',
