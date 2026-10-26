@@ -1,5 +1,6 @@
 import { EventService } from '../../src/api/events/service';
 import prisma from '../../src/config/prisma';
+import { receiptDisclosure } from '../../src/utils/receipt';
 
 // Mock Redis
 const mockGet = jest.fn();
@@ -97,8 +98,9 @@ describe('Event Public API Detail Freshness Benchmark', () => {
     } else {
       console.log('✅ FRESH DETAIL READ: Similar duration.');
     }
-    expect(first).toEqual(MOCK_EVENT);
-    expect(second).toEqual(MOCK_EVENT);
+    const disclosed = { ...MOCK_EVENT, receiptDisclosure: receiptDisclosure() };
+    expect(first).toEqual(disclosed);
+    expect(second).toEqual(disclosed);
     expect(prisma.event.findFirst).toHaveBeenCalledTimes(2);
     expect(mockGet).not.toHaveBeenCalled();
     expect(mockSet).not.toHaveBeenCalled();

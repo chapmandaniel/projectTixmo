@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { DashboardButton, DashboardEmptyState, DashboardSelect, DashboardStat, DashboardSurface } from '../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../lib/dashboardTheme';
+import { orderDisplayCurrency } from '../lib/runtimeConfig';
+import { formatEventMoney } from '../lib/publicEvent';
 
 const payload = (response) => response.data.data || response.data;
 const ECC_Overview = ({ event, isDark, onViewOrders }) => {
@@ -29,7 +31,7 @@ const ECC_Overview = ({ event, isDark, onViewOrders }) => {
         }).finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
     }, [event.id, days, currency, refresh]);
-    const money = (amount, code = currency) => new Intl.NumberFormat(undefined, { style: 'currency', currency: code.toUpperCase(), currencyDisplay: 'code' }).format(Number(amount));
+    const money = (amount, code = currency) => formatEventMoney(amount, code);
     return <div className={`space-y-6 ${theme.textPrimary}`}>
         <div className="flex flex-wrap items-end gap-3">
             <label className="space-y-2 text-sm">Sales period<DashboardSelect isDark={isDark} aria-label="Sales period" value={days} onChange={(e) => setDays(e.target.value)}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></DashboardSelect></label>
@@ -51,7 +53,7 @@ const ECC_Overview = ({ event, isDark, onViewOrders }) => {
                 </DashboardSurface>
                 <DashboardSurface isDark={isDark} className="space-y-4 p-5">
                     <h3 className="text-xl font-light">Recent paid orders</h3>
-                    {!data.orders.length ? <p className={`text-sm ${theme.textSecondary}`}>No paid orders recorded.</p> : <ul className="space-y-4">{data.orders.map((order) => <li key={order.id} className="text-sm"><p>{order.orderNumber} · {money(order.totalAmount, order.currency || 'usd')}</p><p className={theme.textSecondary}>{new Date(order.createdAt).toLocaleString()}</p></li>)}</ul>}
+                    {!data.orders.length ? <p className={`text-sm ${theme.textSecondary}`}>No paid orders recorded.</p> : <ul className="space-y-4">{data.orders.map((order) => <li key={order.id} className="text-sm"><p>{order.orderNumber} · {money(order.totalAmount, orderDisplayCurrency(order.currency))}</p><p className={theme.textSecondary}>{new Date(order.createdAt).toLocaleString()}</p></li>)}</ul>}
                     {onViewOrders && <DashboardButton isDark={isDark} variant="secondary" onClick={onViewOrders}>View orders</DashboardButton>}
                 </DashboardSurface>
             </div>

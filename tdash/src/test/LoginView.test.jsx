@@ -19,7 +19,7 @@ describe('LoginView', () => {
     it('renders the brand-only login surface without internal workspace data', () => {
         render(<LoginView onLogin={vi.fn()} />);
 
-        expect(screen.getByAltText('TixMo Logo')).toBeInTheDocument();
+        expect(screen.getByAltText('Tixmo Logo')).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'Tixmo Dashboard' })).not.toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
         expect(screen.getByLabelText('Email address')).toBeInTheDocument();

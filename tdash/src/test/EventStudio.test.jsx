@@ -74,6 +74,21 @@ describe('Event Studio persistence', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }));
         expect(mocks.put).not.toHaveBeenCalled(); expect(mocks.post).not.toHaveBeenCalled();
     });
+    it('defaults a blank timezone to America/St_Johns and preserves an explicit timezone', async () => {
+        show(null);
+        const zone = screen.getByLabelText('Event timezone');
+        expect(zone).toHaveValue('America/St_Johns');
+        fireEvent.change(zone, { target: { value: '   ' } });
+        fireEvent.change(screen.getByLabelText('Event Title'), { target: { value: 'Harbour show' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }));
+        await screen.findByText('Draft saved.');
+        expect(mocks.post.mock.calls[0][1].event.timezone).toBe('America/St_Johns');
+
+        fireEvent.change(screen.getByLabelText('Event timezone'), { target: { value: 'America/Halifax' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }));
+        await waitFor(() => expect(mocks.put).toHaveBeenCalledTimes(1));
+        expect(mocks.put.mock.calls[0][1].event.timezone).toBe('America/Halifax');
+    });
     it('retains a newly saved draft identity for subsequent saves', async () => {
         show(null);
         fireEvent.change(screen.getByLabelText('Event Title'), { target: { value: 'Saved event' } });

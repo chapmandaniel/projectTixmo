@@ -276,7 +276,8 @@ test('hosted workflow actually builds old image and invokes current worker on co
   assert.match(worker, /require\(["']\/app\/dist\/app["']\)/);
   assert.doesNotMatch(worker, /dist\/index|startOrderExpiryJob|startPaymentRecoveryJob/);
   assert.match(worker, /assert.deepEqual\(normalized,\s*state.snapshot\)/);
-  assert.match(worker, /rows.length, 33/);
+  assert.match(worker, /\/app\/scripts\/migration-census\.cjs/);
+  assert.match(worker, /rows\.length, MIGRATION_COUNT/);
   assert.match(worker, /providerAttempts,\s*0/);
   assert.match(worker, /fs.unlinkSync\(stateFile\)/);
   assert.ok(workflow.includes('scripts/application-rollback.test.cjs'));

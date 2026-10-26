@@ -24,7 +24,11 @@ const loginMock = vi.fn();
 
 vi.mock('../lib/runtimeConfig', () => ({
     getApiBaseUrl: () => 'https://api.example.com/api/v1',
-    getPaymentCurrency: () => 'usd',
+    getPaymentCurrency: () => 'cad',
+    orderDisplayCurrency: (currency) => {
+        const value = String(currency || '').trim().toLowerCase();
+        return /^[a-z]{3}$/.test(value) ? value : 'cad';
+    },
     getPolicyLinks: () => runtimeMocks.policyLinks,
     getStripePublishableKey: () => runtimeMocks.stripePublishableKey,
 }));
@@ -110,7 +114,7 @@ describe('CheckoutPage', () => {
         apiPost
             .mockResolvedValueOnce({
                 id: 'order-1',
-                status: 'PENDING', eventId: 'event-1', currency: 'usd',
+                status: 'PENDING', eventId: 'event-1', currency: 'cad',
                 totalAmount: '25.00',
             })
             .mockResolvedValueOnce({
@@ -135,11 +139,16 @@ describe('CheckoutPage', () => {
         });
 
         expect(await screen.findByText('Neon Nights')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Terms of Service' })).toHaveAttribute('href', 'https://tixmo.example/terms');
+        expect(screen.getByRole('link', { name: 'Terms of Sale' })).toHaveAttribute('href', 'https://tixmo.example/terms');
+        expect(screen.getByText(/All sales are final/)).toBeInTheDocument();
+        expect(screen.getByText('Includes HST (15%): CA$0.00')).toBeInTheDocument();
+        expect(screen.getAllByText(/Signal Hall/).length).toBeGreaterThan(0);
+        expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Refund Policy' })).toHaveAttribute('href', 'https://tixmo.example/refunds');
         expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', 'https://tixmo.example/privacy');
 
         fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        expect(screen.getByText('Includes HST (15%): CA$3.26')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: /continue to secure payment/i }));
 
         await waitFor(() => {
@@ -150,7 +159,7 @@ describe('CheckoutPage', () => {
         expect(apiPost).toHaveBeenCalledWith('/payments/create-intent', { orderId: 'order-1' });
         expect(await screen.findByText('Card payment details')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: /pay \$25.00/i }));
+        fireEvent.click(screen.getByRole('button', { name: /pay \$25\.00 \(includes HST and all fees\)/i }));
 
         await waitFor(() => {
             expect(stripeMocks.confirmPayment).toHaveBeenCalledWith({
@@ -163,6 +172,34 @@ describe('CheckoutPage', () => {
         });
     });
 
+    it('shows the HST registration number from the public event when it is set', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                success: true,
+                data: {
+                    ...eventPayload,
+                    receiptDisclosure: { hstNumber: '123456789RT0001', hstRate: 0.13 },
+                    venue: {
+                        name: 'Signal Hall',
+                        address: { street: '1 Harbour Dr', city: "St. John's", state: 'NL' },
+                    },
+                },
+            }),
+        });
+        renderCheckout({ user: { id: 'buyer-1', email: 'buyer@example.com' } });
+        expect(await screen.findByText('HST no. 123456789RT0001')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        expect(screen.getByText('Includes HST (13%): CA$2.88')).toBeInTheDocument();
+        expect(screen.getByText(/1 Harbour Dr, St\. John's, NL/)).toBeInTheDocument();
+    });
+
+    it('keeps the registration line hidden when the public event has no HST number', async () => {
+        renderCheckout({ user: { id: 'buyer-1', email: 'buyer@example.com' } });
+        expect(await screen.findByText('Includes HST (15%): CA$0.00')).toBeInTheDocument();
+        expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
+    });
+
     const orderId = '12345678-1234-1234-1234-123456789abc';
     const buyer = { id: 'buyer-1', email: 'buyer@example.com' };
     const returnEntry = `/checkout/neon-nights?orderId=${orderId}&redirect_status=succeeded&payment_intent=forged`;
@@ -173,10 +210,10 @@ describe('CheckoutPage', () => {
     };
 
     it.each([
-        ['PENDING', 'PENDING', 'Awaiting server confirmation'],
-        ['PENDING', 'PROCESSING', 'Awaiting server confirmation'],
+        ['PENDING', 'PENDING', "confirming your payment"],
+        ['PENDING', 'PROCESSING', "confirming your payment"],
         ['PAID', 'SUCCEEDED', 'Order confirmed. Payment succeeded.'],
-        ['PENDING', 'FAILED', 'Payment failed'],
+        ['PENDING', 'FAILED', "haven't been charged"],
         ['CANCELLED', 'SUCCEEDED', 'closed or refunded'],
         ['REFUNDED', 'SUCCEEDED', 'closed or refunded'],
         ['PARTIALLY_REFUNDED', 'SUCCEEDED', 'closed or refunded'],
@@ -229,10 +266,10 @@ describe('CheckoutPage', () => {
         await act(async () => resolveOld({ id: orderId, status: 'PAID', paymentStatus: 'SUCCEEDED' }));
         expect(screen.queryByText(/Order confirmed/)).not.toBeInTheDocument();
         view.rerender(mount({ id: 'buyer-2' }));
-        expect(await screen.findByText(/Awaiting server confirmation/)).toBeInTheDocument();
+        expect(await screen.findByText(/confirming your payment/)).toBeInTheDocument();
         view.unmount();
         render(mount(buyer));
-        expect(await screen.findByText(/Awaiting server confirmation/)).toBeInTheDocument();
+        expect(await screen.findByText(/confirming your payment/)).toBeInTheDocument();
         assertReadOnly();
     });
 
@@ -248,7 +285,7 @@ describe('CheckoutPage', () => {
         render(<MemoryRouter initialEntries={[returnEntry]}><Navigation /><CheckoutPage user={buyer} /></MemoryRouter>);
         await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(1));
         fireEvent.click(screen.getByText('Change return'));
-        expect(await screen.findByText(/Awaiting server confirmation/)).toBeInTheDocument();
+        expect(await screen.findByText(/confirming your payment/)).toBeInTheDocument();
         await act(async () => resolveOld({ id: orderId, status: 'PAID', paymentStatus: 'SUCCEEDED' }));
         expect(screen.queryByText(/Order confirmed/)).not.toBeInTheDocument();
         expect(apiGet).toHaveBeenLastCalledWith(`/orders/${nextId}/recovery`);
@@ -355,7 +392,7 @@ describe('open-page sale boundaries', () => {
     });
     it('does not restart payment or revoke an existing reservation at sale close', async () => {
         vi.setSystemTime(opening);
-        apiPost.mockResolvedValueOnce({ id: 'held-order', status: 'PENDING', totalAmount: '25', currency: 'usd' })
+        apiPost.mockResolvedValueOnce({ id: 'held-order', status: 'PENDING', totalAmount: '25', currency: 'cad' })
             .mockResolvedValueOnce({ clientSecret: 'held-secret' });
         await mount();
         fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
@@ -384,7 +421,7 @@ describe('open-page sale boundaries', () => {
         await mount();
         fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
         await act(async () => fireEvent.click(screen.getByRole('button', { name: /continue to secure payment/i })));
-        expect(screen.getByText('Ticket sales are temporarily paused. Existing orders and tickets remain available.')).toBeInTheDocument();
+        expect(screen.getByText('Ticket sales are paused for a moment. Orders and tickets you already have are safe. Please check back soon.')).toBeInTheDocument();
         expect(apiPost).toHaveBeenCalledTimes(1);
         expect(apiPost.mock.calls[0][0]).toBe('/orders');
         expect(screen.getByRole('button', { name: /continue to secure payment/i })).toBeDisabled();

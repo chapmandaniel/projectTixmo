@@ -26,8 +26,14 @@ import {
 import * as bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
+import { resolvePaymentCurrency } from '../src/config/payment-currency';
 
 dotenv.config();
+
+const paymentCurrency = resolvePaymentCurrency(
+  process.env.PAYMENT_CURRENCY,
+  process.env.NODE_ENV || 'development'
+).toUpperCase();
 
 const prisma = new PrismaClient();
 
@@ -528,6 +534,7 @@ async function createPaidOrder(
         input.paymentStatus || (isPaid ? PaymentStatus.SUCCEEDED : PaymentStatus.PENDING),
       paymentIntentId,
       paymentMethod: isPaid ? 'card' : null,
+      currency: paymentCurrency.toLowerCase(),
       promoCodeId: input.promoCodeId || null,
       ipAddress: `192.0.2.${input.orderIndex}`,
       userAgent: 'Tixmo market demo seed',
@@ -601,7 +608,7 @@ async function seedMarketDemo() {
           type: 'PROMOTER',
           status: 'ACTIVE',
           settings: {
-            currency: 'USD',
+            currency: paymentCurrency,
             timezone: 'America/New_York',
             demoData: true,
             resetCommand: 'npm --prefix tixmoapi2 run demo:market:reseed',

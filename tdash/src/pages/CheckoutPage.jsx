@@ -25,23 +25,21 @@ import { api } from '../lib/api';
 import { auth } from '../lib/auth';
 import {
     getApiBaseUrl,
-    getPaymentCurrency,
     getPolicyLinks,
     getStripePublishableKey,
+    orderDisplayCurrency,
 } from '../lib/runtimeConfig';
 import { checkoutTicketState, checkoutBoundaryDelay } from '../lib/checkoutEligibility';
 import { SALES_PAUSED_MESSAGE, isSalesPausedError } from '../lib/salesPause';
 import { cn } from '../lib/utils';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
-import { initialTicketQuantities } from '../lib/publicEvent';
-
-const formatMoney = (value, currency = 'usd') => {
-    const amount = Number(value) || 0;
-    return new Intl.NumberFormat(undefined, {
-        style: 'currency',
-        currency: String(currency || 'usd').toUpperCase(),
-    }).format(amount);
-};
+import {
+    eventAddress,
+    formatEventMoney,
+    hstAmountLine,
+    hstRegistrationLine,
+    initialTicketQuantities,
+} from '../lib/publicEvent';
 
 const formatDate = (value) => {
     if (!value) return 'Date to be announced';
@@ -67,9 +65,9 @@ const PolicyLinks = ({ links, compact = false }) => (
     )}>
         By placing this order, you agree to the{' '}
         <a className="text-zinc-100 underline decoration-dashboard-accent/70 underline-offset-4" href={links.termsUrl} target="_blank" rel="noreferrer">
-            Terms of Service
+            Terms of Sale
         </a>
-        {' '}and acknowledge the{' '}
+        {' '}and confirm you've read the{' '}
         <a className="text-zinc-100 underline decoration-dashboard-accent/70 underline-offset-4" href={links.refundPolicyUrl} target="_blank" rel="noreferrer">
             Refund Policy
         </a>
@@ -77,7 +75,7 @@ const PolicyLinks = ({ links, compact = false }) => (
         <a className="text-zinc-100 underline decoration-dashboard-accent/70 underline-offset-4" href={links.privacyPolicyUrl} target="_blank" rel="noreferrer">
             Privacy Policy
         </a>
-        .
+        . <strong>All sales are final</strong> unless the event is cancelled or rescheduled.
     </div>
 );
 
@@ -128,7 +126,7 @@ const StripePaymentForm = ({ order, currency, returnUrl, onPaymentComplete }) =>
                     </>
                 ) : (
                     <>
-                        Pay {formatMoney(order?.totalAmount, currency)}
+                        Pay {formatEventMoney(order?.totalAmount, currency)} (includes HST and all fees)
                         <Lock className="h-4 w-4" />
                     </>
                 )}
@@ -296,8 +294,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
 
     const policyLinks = useMemo(() => getPolicyLinks(), []);
     const stripePublishableKey = useMemo(() => getStripePublishableKey(), []);
-    const configuredCurrency = useMemo(() => getPaymentCurrency(), []);
-    const paymentCurrency = order?.currency || configuredCurrency;
+    const paymentCurrency = orderDisplayCurrency(order?.currency);
     const stripePromise = useMemo(
         () => (stripePublishableKey ? loadStripe(stripePublishableKey) : null),
         [stripePublishableKey]
@@ -410,6 +407,14 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     ), [quantities, ticketTypes, event, now]);
     const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const ticketCount = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+    const venueLine = [event?.venue?.name, eventAddress(event?.venue)].filter(Boolean).join(', ') || 'Venue to be announced';
+    const chargedTotal = order?.totalAmount ?? subtotal;
+    const hstLine = hstRegistrationLine(event?.receiptDisclosure?.hstNumber);
+    const hstIncludedLine = hstAmountLine(
+        chargedTotal,
+        event?.receiptDisclosure?.hstRate,
+        order?.receiptDisclosure?.hstAmount
+    );
     const hasPolicyLinks = Boolean(policyLinks.privacyPolicyUrl && policyLinks.termsUrl && policyLinks.refundPolicyUrl);
     const selectionEligible = selectedItems.every(({ ticketType, quantity }) => quantity <= checkoutTicketState(event, ticketType, now).max);
     const canPreparePayment = Boolean(user && (order?.status === 'PENDING' || (selectedItems.length && selectionEligible)) && (!order || order.status === 'PENDING') && hasPolicyLinks && (subtotal === 0 || stripePublishableKey));
@@ -561,7 +566,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                                     </span>
                                                 </div>
                                                 <p className="mt-2 break-words text-sm text-dashboard-muted">{ticketType.description || 'General event admission.'}</p>
-                                                <p className="mt-3 text-xl font-light text-zinc-100">{formatMoney(price, paymentCurrency)}</p>
+                                                <p className="mt-3 text-xl font-light text-zinc-100">{formatEventMoney(price, paymentCurrency)}</p>
                                                 {!maxAllowed ? <p className="mt-2 text-sm text-dashboard-muted">Not currently available for selection.</p> : null}
                                             </div>
                                             <div className="flex h-12 items-center justify-between rounded-md border border-dashboard-border bg-dashboard-panel">
@@ -615,9 +620,9 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                     <div key={item.ticketType.id} className="flex items-start justify-between gap-4 text-sm">
                                         <div>
                                             <p className="text-zinc-100">{item.ticketType.name}</p>
-                                            <p className="mt-1 text-xs text-dashboard-muted">{item.quantity} x {formatMoney(item.price, paymentCurrency)}</p>
+                                            <p className="mt-1 text-xs text-dashboard-muted">{item.quantity} x {formatEventMoney(item.price, paymentCurrency)}</p>
                                         </div>
-                                        <p className="text-zinc-100">{formatMoney(item.price * item.quantity, paymentCurrency)}</p>
+                                        <p className="text-zinc-100">{formatEventMoney(item.price * item.quantity, paymentCurrency)}</p>
                                     </div>
                                 )) : (
                                     <p className="text-sm text-dashboard-muted">Choose at least one ticket.</p>
@@ -626,7 +631,12 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
 
                             <div className="mt-5 flex items-center justify-between text-lg">
                                 <span className="font-light text-dashboard-muted">Total</span>
-                                <span className="font-light text-zinc-100">{formatMoney(subtotal, paymentCurrency)}</span>
+                                <span className="font-light text-zinc-100">{formatEventMoney(subtotal, paymentCurrency)}</span>
+                            </div>
+                            <div className="mt-3 space-y-1 text-sm text-dashboard-muted">
+                                <p>{venueLine}</p>
+                                <p>{hstIncludedLine}</p>
+                                {hstLine ? <p>{hstLine}</p> : null}
                             </div>
 
                             <div className="mt-5 space-y-3">
@@ -691,9 +701,9 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                             ) : null}
                             {paymentComplete ? (
                                 <div className="mt-5 rounded-md border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm leading-6 text-emerald-50">
-                                    {paymentComplete.status === 'free_order'
-                                        ? 'Order confirmed. View your tickets in your wallet.'
-                                        : order?.status === 'PAID' ? 'Order confirmed. Your tickets are ready in your wallet.' : 'Payment submitted. Waiting for order confirmation; your wallet shows the current status.'}
+                                    {paymentComplete.status === 'free_order' || order?.status === 'PAID'
+                                        ? 'Order confirmed! Your tickets are in My tickets.'
+                                        : 'Payment submitted. Waiting for order confirmation; your wallet shows the current status.'}
                                 </div>
                             ) : null}
                         </DashboardSurface>
@@ -738,8 +748,8 @@ const RecoveryPage = ({ candidate, user, onAuthenticated }) => {
     else if (result?.kind === 'loaded') {
         const { status, paymentStatus } = result.data;
         if (status === 'PAID' && paymentStatus === 'SUCCEEDED') message = 'Order confirmed. Payment succeeded.';
-        else if (status === 'PENDING' && ['PENDING', 'PROCESSING'].includes(paymentStatus)) message = 'Awaiting server confirmation. Do not purchase again.';
-        else if (status === 'PENDING' && paymentStatus === 'FAILED') message = 'Payment failed. This order is not confirmed.';
+        else if (status === 'PENDING' && ['PENDING', 'PROCESSING'].includes(paymentStatus)) message = "We're confirming your payment. Please don't buy again. This page will update.";
+        else if (status === 'PENDING' && paymentStatus === 'FAILED') message = "Payment didn't go through, and you haven't been charged for this order. Please try again.";
         else if (['CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED'].includes(status)) message = 'This order is closed or refunded. No ticket entitlement is confirmed here.';
         else message = 'Order status requires review. No payment or ticket entitlement is confirmed here.';
     }

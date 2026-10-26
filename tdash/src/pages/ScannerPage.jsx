@@ -43,7 +43,7 @@ export default function ScannerPage({ isDark = true }) {
 
     async function perform(endpoint, value, body) {
         if (pending.current) return;
-        if (navigator.onLine === false) { setNotice('You are offline. Online admission is unavailable; no scans are queued.'); return; }
+        if (navigator.onLine === false) { setNotice('No connection. Scanning is paused, and nothing is saved offline. Switch to the hotspot or the spare phone.'); return; }
         pending.current = true; setBusy(true); setNotice(''); setResult(null);
         const generation = session.current;
         const controller = new AbortController(); request.current = controller;

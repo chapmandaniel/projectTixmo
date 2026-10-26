@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { X, Calendar, User, CreditCard, Mail, Phone, ShoppingBag, AlertTriangle, CheckCircle } from 'lucide-react';
 import api from '../lib/api';
+import { orderDisplayCurrency } from '../lib/runtimeConfig';
 import { DashboardButton, DashboardSurface } from '../components/dashboard/DashboardPrimitives';
+import { eventAddress, formatEventMoney, hstAmountLine, hstRegistrationLine } from '../lib/publicEvent';
 
 const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
     const [isRefunding, setIsRefunding] = useState(false);
@@ -14,12 +16,10 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
         return new Date(dateString).toLocaleString();
     };
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: (order.currency || 'usd').toUpperCase()
-        }).format(amount);
-    };
+    const formatCurrency = (amount) => formatEventMoney(amount, orderDisplayCurrency(order.currency));
+    const where = [order.event?.venue?.name, eventAddress(order.event?.venue)].filter(Boolean).join(', ') || 'Venue to be announced';
+    const hstLine = hstRegistrationLine(order.receiptDisclosure?.hstNumber);
+    const hstIncludedLine = hstAmountLine(order.totalAmount, order.receiptDisclosure?.hstRate, order.receiptDisclosure?.hstAmount);
 
     const handleRefund = async () => {
         setIsRefunding(true);
@@ -119,7 +119,7 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
                                             {order.event?.name}
                                         </h4>
                                         <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                                            Event ID: {order.eventId?.split('-')[0]}...
+                                            {where}
                                         </p>
                                     </div>
                                 </div>
@@ -154,18 +154,8 @@ const OrderDetailModal = ({ order, onClose, isDark, onOrderUpdated }) => {
                     {/* Financial Summary */}
                     <div className="flex justify-end">
                         <div className={`w-full md:w-1/2 space-y-3 p-4 rounded-xl ${isDark ? 'bg-[#252525]' : 'bg-gray-50'}`}>
-                            <div className="flex justify-between text-sm">
-                                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Subtotal</span>
-                                <span className={isDark ? 'text-gray-200' : 'text-gray-900'}>{formatCurrency(order.totalAmount - (order.feesAmount || 0) - (order.taxAmount || 0))}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Fees</span>
-                                <span className={isDark ? 'text-gray-200' : 'text-gray-900'}>{formatCurrency(order.feesAmount || 0)}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Tax</span>
-                                <span className={isDark ? 'text-gray-200' : 'text-gray-900'}>{formatCurrency(order.taxAmount || 0)}</span>
-                            </div>
+                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{hstIncludedLine}</p>
+                            {hstLine ? <p className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>{hstLine}</p> : null}
                             <div className={`pt-3 border-t flex justify-between font-bold text-lg ${isDark ? 'border-[#333] text-white' : 'border-gray-200 text-gray-900'}`}>
                                 <span>Total</span>
                                 <span>{formatCurrency(order.totalAmount)}</span>

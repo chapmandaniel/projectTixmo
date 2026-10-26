@@ -90,7 +90,7 @@ describe('Online scanner', () => {
     it('does not queue offline scans', async () => {
         render(<ScannerPage />); await connect(); enter();
         Object.defineProperty(navigator, 'onLine', { configurable: true, value: false }); check();
-        expect(await screen.findByText(/You are offline/)).toBeInTheDocument();
+        expect(await screen.findByText(/nothing is saved offline/)).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledTimes(1);
     });
     it('offers manual fallback when camera detection is unsupported', async () => {

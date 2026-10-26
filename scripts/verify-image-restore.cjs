@@ -5,6 +5,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { createHash } = require('node:crypto');
 const { performance } = require('node:perf_hooks');
+const { MIGRATION_COUNT } = require('../tixmoapi2/scripts/migration-census.cjs');
 const SOURCE = 'tixmo_disposable_restore_source';
 const RESTORE = 'tixmo_disposable_restore_destination';
 const PG_IMAGE = 'ghcr.io/railwayapp-templates/postgres-ssl:18';
@@ -71,9 +72,11 @@ function verify(env = process.env, spawn = spawnSync) {
   assert.equal(sql(SOURCE, 'SELECT current_database();'), SOURCE);
   assert.equal(sql(SOURCE, "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';"), '0');
   const migrations = fs.readdirSync(path.join(__dirname, '../tixmoapi2/prisma/migrations')).filter(name => /^\d/.test(name)).sort();
-  assert.equal(migrations.length, 33);
+  assert.equal(migrations.length, MIGRATION_COUNT);
   assert.ok(migrations.includes('20261021120000_event_sales_pause'));
   assert.ok(migrations.includes('20261022143000_buyer_password_recovery'));
+  assert.ok(migrations.includes('20261026031400_default_event_timezone_america_st_johns'));
+  assert.ok(migrations.includes('20261026120000_order_currency_default_cad'));
   run(process.execPath, [path.join(__dirname, '../tixmoapi2/node_modules/prisma/build/index.js'), 'migrate', 'deploy', '--schema', path.join(__dirname, '../tixmoapi2/prisma/schema.prisma')]);
   assert.equal(sql(SOURCE, 'SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;'), String(migrations.length));
   for (const migration of migrations) {

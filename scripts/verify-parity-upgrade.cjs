@@ -7,6 +7,7 @@ const { randomUUID, createHash } = require('node:crypto');
 const { spawn } = require('node:child_process');
 const { guard: imageGuard, PG_IMAGE, REDIS_IMAGE } = require('./verify-image-restore.cjs');
 const { assertDisposableTestTarget } = require('./test-target.cjs');
+const { MIGRATION_COUNT } = require('../tixmoapi2/scripts/migration-census.cjs');
 function guard(env) {
   assert.equal(env.TIXMO_POPULATED_PARITY, 'synthetic-only');
   const source = imageGuard({ ...env, TIXMO_IMAGE_RESTORE: 'synthetic-only' });
@@ -235,14 +236,14 @@ async function verify(env = process.env, dependencies = {}) {
       .readdirSync(path.join(root, 'tixmoapi2/prisma/migrations'))
       .filter((name) => /^\d/.test(name))
       .sort();
-    assert.equal(migrations.length, 33);
-    assert.equal(await sql(database, 'SELECT count(*) FROM _prisma_migrations;'), '33');
+    assert.equal(migrations.length, MIGRATION_COUNT);
+    assert.equal(await sql(database, 'SELECT count(*) FROM _prisma_migrations;'), String(MIGRATION_COUNT));
     assert.equal(
       await sql(
         database,
         'SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL;'
       ),
-      '33'
+      String(MIGRATION_COUNT)
     );
     for (const name of migrations) {
       assert.match(name, /^[a-z0-9_]+$/);
@@ -296,7 +297,7 @@ async function verify(env = process.env, dependencies = {}) {
     scope: 'task607-configured-image-populated-upgrade',
     phase,
     ok: verified && databaseRemoved && stageRemoved,
-    migrations: verified ? 33 : 0,
+    migrations: verified ? MIGRATION_COUNT : 0,
     unchangedHarnessPassed: verified,
     databaseCleanupVerified: databaseRemoved,
     stagingCleanupVerified: stageRemoved,

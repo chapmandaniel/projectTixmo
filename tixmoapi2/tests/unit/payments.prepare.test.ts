@@ -146,6 +146,10 @@ test('sequential retries reuse the durable attempt and same provider intent', as
     paymentIntentId: 'pi-one',
   });
   expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+  expect(stripe.paymentIntents.create).toHaveBeenCalledWith(
+    expect.objectContaining({ amount: 1200, currency: 'cad' }),
+    expect.objectContaining({ idempotencyKey: 'payment-attempt-a' })
+  );
   expect(stripe.paymentIntents.retrieve).toHaveBeenCalledWith('pi-one');
   await expect(service.createPaymentIntent('order-a', 'other-buyer')).rejects.toMatchObject({
     statusCode: 404,

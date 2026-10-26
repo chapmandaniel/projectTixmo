@@ -76,6 +76,13 @@ const runPrisma = (args) => {
   assert.equal(legacy.status, 'FAILED');
   assert.equal((await prisma.paymentWebhookEvent.updateMany({ where: { id: legacy.id, attemptGeneration: 0n, status: 'FAILED' }, data: { attemptGeneration: { increment: 1 }, status: 'PROCESSING' } })).count, 1);
   assert.equal((await prisma.paymentWebhookEvent.findUniqueOrThrow({ where: { id: legacy.id } })).attemptGeneration, 1n);
+  for (const id of ['upgrade-paid', 'upgrade-pending', 'upgrade-unclear']) {
+    assert.equal((await prisma.order.findUniqueOrThrow({ where: { id } })).currency, 'usd');
+  }
+  const defaults = await prisma.$queryRaw`SELECT column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'currency'`;
+  assert.equal(defaults[0].column_default, "'cad'::text");
+  await prisma.$executeRaw`INSERT INTO orders (id, order_number, user_id, event_id, total_amount, updated_at) VALUES ('upgrade-default-cad', 'UPGRADE-DEFAULT-CAD', 'upgrade-buyer', 'upgrade-event', 1, CURRENT_TIMESTAMP)`;
+  assert.equal((await prisma.order.findUniqueOrThrow({ where: { id: 'upgrade-default-cad' } })).currency, 'cad');
   process.stdout.write('Populated upgrade passed: transfer revocation, tier limits, ambiguous-history gate, historical currency, receipt safety, legacy webhook generation and additive unpaused event/audit upgrade.\n');
 })().catch(error => { process.stderr.write(error.message + '\n'); process.exitCode = 1; })
   .finally(async () => { if (runtimePrisma) await runtimePrisma.$disconnect(); if (prisma) await prisma.$disconnect(); fs.rmSync(temp, { recursive: true, force: true }); });

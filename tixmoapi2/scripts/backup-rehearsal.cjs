@@ -139,6 +139,7 @@ async function native(program, args, options) {
     children.delete(child);
   }
 }
+const { MIGRATION_COUNT } = require('./migration-census.cjs');
 const sql = (run, env, text) =>
   run('/usr/bin/psql', ['-X', '-w', '-v', 'ON_ERROR_STOP=1', '-A', '-t'], {
     env,
@@ -155,7 +156,7 @@ function migrations() {
     .readdirSync(base)
     .filter((name) => /^[0-9]/.test(name))
     .sort();
-  if (names.length !== 33) throw new Error('Rejected');
+  if (names.length !== MIGRATION_COUNT) throw new Error('Rejected');
   return names.map((name) => {
     if (!/^[0-9][a-z0-9_]{1,127}$/.test(name)) throw new Error('Rejected');
     return {
@@ -440,7 +441,7 @@ async function observe(args, env, dependencies = {}) {
     snapshotRowsMatch: matched,
     tableCount,
     rowCount,
-    migrations: matched ? 33 : 0,
+    migrations: matched ? MIGRATION_COUNT : 0,
     serverVersionNum,
     databaseCleanupVerified: databaseRemoved,
     archiveCleanupVerified: fileRemoved,

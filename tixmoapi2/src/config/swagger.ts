@@ -4,11 +4,11 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'TixMo API',
+      title: 'Tixmo API',
       version: '0.1.0',
       description: 'Enterprise-grade ticket vendor platform API for event promoters',
       contact: {
-        name: 'TixMo Team',
+        name: 'Tixmo Team',
         email: 'api@tixmo.com',
       },
       license: {

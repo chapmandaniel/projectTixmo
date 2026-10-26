@@ -7,7 +7,10 @@ terms_url="${VITE_TERMS_URL:-}"
 refund_policy_url="${VITE_REFUND_POLICY_URL:-}"
 organizer_terms_url="${VITE_ORGANIZER_TERMS_URL:-}"
 stripe_publishable_key="${VITE_STRIPE_PUBLISHABLE_KEY:-}"
-payment_currency="${VITE_PAYMENT_CURRENCY:-cad}"
+if [ -z "${VITE_PAYMENT_CURRENCY:-}" ]; then
+  printf '%s\n' 'VITE_PAYMENT_CURRENCY is not set; using cad. Refusing the database default of usd.' >&2
+fi
+payment_currency=$(printf '%s' "${VITE_PAYMENT_CURRENCY:-cad}" | tr '[:upper:]' '[:lower:]')
 
 escaped_api_url=$(printf '%s' "$api_url" | sed 's/\\/\\\\/g; s/"/\\"/g')
 escaped_privacy_policy_url=$(printf '%s' "$privacy_policy_url" | sed 's/\\/\\\\/g; s/"/\\"/g')

@@ -22,6 +22,7 @@ import {
 } from '../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../lib/dashboardTheme';
 import { cn } from '../lib/utils';
+import { DEFAULT_EVENT_TIMEZONE, resolveEventTimeZone } from '../lib/eventTime';
 
 const CATEGORY_OPTIONS = ['Music', 'Nightlife', 'Festival', 'Conference', 'Theater', 'Community'];
 
@@ -198,7 +199,7 @@ const EventWizard = ({ onClose, onSuccess, isDark, user }) => {
         description: '',
         startDateTime: '',
         endDateTime: '',
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        timezone: DEFAULT_EVENT_TIMEZONE,
         venueId: '',
         imageUrl: '',
         tags: '',
@@ -346,7 +347,9 @@ const EventWizard = ({ onClose, onSuccess, isDark, user }) => {
                 venueId: formData.venueId || undefined,
                 capacity: derivedCapacity || undefined,
                 category: formData.category,
-                timezone: formData.timezone || selectedVenue?.timezone || 'UTC',
+                timezone: resolveEventTimeZone(
+                    formData.timezone.trim() ? formData.timezone : selectedVenue?.timezone
+                ),
                 status: 'DRAFT',
                 imageUrl: formData.imageUrl.trim() || undefined,
                 tags: tagList.length ? tagList : undefined,

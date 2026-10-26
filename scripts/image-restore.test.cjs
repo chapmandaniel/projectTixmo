@@ -3,6 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { guard, verify, SOURCE, RESTORE, PG_IMAGE, REDIS_IMAGE } = require('./verify-image-restore.cjs');
+const { MIGRATION_COUNT } = require('../tixmoapi2/scripts/migration-census.cjs');
 const valid = {
   GITHUB_ACTIONS: 'true', TIXMO_IMAGE_RESTORE: 'synthetic-only',
   PG_CONTAINER: 'a'.repeat(64), REDIS_CONTAINER: 'b'.repeat(64),
@@ -73,9 +74,12 @@ for (const marker of [PG_IMAGE, REDIS_IMAGE, 'PGDATA: /var/lib/postgresql/data/p
 test('restore source uses a new empty destination, exact snapshots and post-backup writes', () => {
   const source = fs.readFileSync('scripts/verify-image-restore.cjs', 'utf8');
   assert.ok(source.indexOf('guard(env)') < source.indexOf('const url = guard(env)'));
-  assert.match(source, /assert\.equal\(migrations\.length, 33\)/);
+  assert.equal(MIGRATION_COUNT, fs.readdirSync('tixmoapi2/prisma/migrations').filter((name) => /^\d/.test(name)).length);
+  assert.match(source, /assert\.equal\(migrations\.length, MIGRATION_COUNT\)/);
   assert.match(source, /20261021120000_event_sales_pause/);
   assert.match(source, /20261022143000_buyer_password_recovery/);
+  assert.match(source, /20261026031400_default_event_timezone_america_st_johns/);
+  assert.match(source, /20261026120000_order_currency_default_cad/);
   assert.match(source, /--template=template0/);
   assert.match(source, /--exit-on-error/);
   assert.match(source, /--single-transaction/);

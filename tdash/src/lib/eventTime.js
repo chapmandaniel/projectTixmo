@@ -1,5 +1,10 @@
 export const DEFAULT_EVENT_TIMEZONE = 'America/St_Johns';
 
+export const resolveEventTimeZone = (zone) => {
+    const trimmed = typeof zone === 'string' ? zone.trim() : '';
+    return trimmed || DEFAULT_EVENT_TIMEZONE;
+};
+
 export const validTimeZone = (zone) => {
     try { new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(); return Boolean(zone); }
     catch { return false; }

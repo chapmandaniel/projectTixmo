@@ -94,7 +94,7 @@ describe('App checkout return session recovery', () => {
         });
         await signIn();
         expect(mocks.login).toHaveBeenCalledWith('new@example.com', 'password123');
-        expect(await screen.findByText('Awaiting server confirmation. Do not purchase again.')).toBeInTheDocument();
+        expect(await screen.findByText("We're confirming your payment. Please don't buy again. This page will update.")).toBeInTheDocument();
         expect(screen.getByTestId('location')).toHaveTextContent(entry);
         expect(requests.length).toBe(previousRequests + 1);
         expect(requests.every(({ method, url }) => method === 'get' && url === `/orders/${orderId}/recovery`)).toBe(true);

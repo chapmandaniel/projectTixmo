@@ -6,7 +6,7 @@ import {
 import InputField from '../components/InputField';
 import TicketBuilder from '../components/TicketBuilder';
 import api from '../lib/api';
-import { DEFAULT_EVENT_TIMEZONE, fromEventLocalInput, toEventLocalInput } from '../lib/eventTime';
+import { DEFAULT_EVENT_TIMEZONE, fromEventLocalInput, resolveEventTimeZone, toEventLocalInput } from '../lib/eventTime';
 
 const extractCollection = (response, key) => {
     const payload = response?.data?.data || response?.data;
@@ -177,6 +177,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
 
         setLoading(true);
         try {
+            const timezone = resolveEventTimeZone(eventData.timezone);
             // 1. Create/Update Event
             const payload = {
                 title: eventData.title,
@@ -184,9 +185,9 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                 description: eventData.description,
                 organizationId: user.organizationId,
                 venueId: eventData.venueId || undefined,
-                startDateTime: eventData.startDateTime ? fromEventLocalInput(eventData.startDateTime, eventData.timezone, persistedEvent?.startDateTime || persistedEvent?.startDatetime) : undefined,
-                endDateTime: eventData.endDateTime ? fromEventLocalInput(eventData.endDateTime, eventData.timezone, persistedEvent?.endDateTime || persistedEvent?.endDatetime) : undefined,
-                timezone: eventData.timezone,
+                startDateTime: eventData.startDateTime ? fromEventLocalInput(eventData.startDateTime, timezone, persistedEvent?.startDateTime || persistedEvent?.startDatetime) : undefined,
+                endDateTime: eventData.endDateTime ? fromEventLocalInput(eventData.endDateTime, timezone, persistedEvent?.endDateTime || persistedEvent?.endDatetime) : undefined,
+                timezone,
                 capacity: (parseInt(eventData.capacity, 10) > 0) ? parseInt(eventData.capacity, 10) : undefined,
                 imageUrl: eventData.imageUrl || undefined,
                 category: eventData.category,
@@ -207,8 +208,8 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                 tiers: (t.tiers || []).map((tier, index) => ({
                     id: persistedId(tier.id), name: tier.name, price: Number(tier.price),
                     quantityLimit: tier.quantityLimit === '' || tier.quantityLimit == null ? null : Number(tier.quantityLimit),
-                    startsAt: fromEventLocalInput(tier.startsAt, eventData.timezone, tier.originalStartsAt),
-                    endsAt: fromEventLocalInput(tier.endsAt, eventData.timezone, tier.originalEndsAt),
+                    startsAt: fromEventLocalInput(tier.startsAt, timezone, tier.originalStartsAt),
+                    endsAt: fromEventLocalInput(tier.endsAt, timezone, tier.originalEndsAt),
                     sortOrder: tier.sortOrder ?? index, isActive: tier.isActive ?? true,
                 })),
             }));
@@ -217,8 +218,8 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                 : await api.post('/events/configuration', request);
             const savedEvent = res.data?.data || res.data;
             setPersistedEvent(savedEvent);
-            setEventData(previous => ({ ...previous, status: savedEvent.status }));
-            await fetchTickets(savedEvent.id, eventData.timezone);
+            setEventData(previous => ({ ...previous, status: savedEvent.status, timezone }));
+            await fetchTickets(savedEvent.id, timezone);
             setNotification({
                 type: 'success',
                 message: publish ? "Event published." : savedEvent.status === 'DRAFT' ? "Draft saved." : "Changes saved."

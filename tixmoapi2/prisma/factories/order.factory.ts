@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { resolvePaymentCurrency } from '../../src/config/payment-currency';
 
 export interface OrderFactoryOptions {
   userId: string;
@@ -36,6 +37,10 @@ export function createOrderData(options: OrderFactoryOptions) {
     paymentIntentId:
       paymentStatus === PaymentStatus.SUCCEEDED ? `pi_${faker.string.alphanumeric(24)}` : null,
     paymentMethod: paymentStatus === PaymentStatus.SUCCEEDED ? 'card' : null,
+    currency: resolvePaymentCurrency(
+      process.env.PAYMENT_CURRENCY,
+      process.env.NODE_ENV || 'development'
+    ),
     promoCodeId: options.promoCodeId || null,
     ipAddress: faker.internet.ipv4(),
     userAgent: faker.internet.userAgent(),

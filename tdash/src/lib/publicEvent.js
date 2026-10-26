@@ -1,14 +1,16 @@
 import { DEFAULT_EVENT_TIMEZONE, validTimeZone } from './eventTime';
 
+export {
+    HST_INCLUDED_NOTE,
+    PRICE_INCLUDES_NOTE,
+    formatEventMoney,
+    hstAmountLine,
+    hstRegistrationLine,
+    includedHstAmount,
+} from './money';
+
 export const eventTimeZone = (event) =>
     validTimeZone(event?.timezone) ? event.timezone : DEFAULT_EVENT_TIMEZONE;
-
-export const formatEventMoney = (value, currency) =>
-    new Intl.NumberFormat(undefined, {
-        style: 'currency',
-        currency: currency.toUpperCase(),
-        maximumFractionDigits: 2,
-    }).format(Number(value) || 0);
 
 export const getEventSaleState = (event, now = Date.now()) => {
     if (event.status === 'SOLD_OUT')

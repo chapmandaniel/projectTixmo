@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { guard, verify } = require('./verify-parity-upgrade.cjs');
+const { MIGRATION_COUNT } = require('../tixmoapi2/scripts/migration-census.cjs');
 const { assertDisposableTestTarget } = require('./test-target.cjs');
 const valid = {
   GITHUB_ACTIONS: 'true',
@@ -21,7 +22,7 @@ function fixture(failure) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'task607-contract-'));
   const migrations = path.join(root, 'tixmoapi2/prisma/migrations');
   fs.mkdirSync(migrations, { recursive: true });
-  for (let index = 0; index < 33; index++) {
+  for (let index = 0; index < MIGRATION_COUNT; index++) {
     const dir = path.join(migrations, '202610' + String(index).padStart(8, '0') + '_synthetic');
     fs.mkdirSync(dir);
     fs.writeFileSync(path.join(dir, 'migration.sql'), '-- synthetic ' + index);
@@ -83,7 +84,7 @@ function fixture(failure) {
         ? '0'
         : sql.includes('checksum=')
           ? '1'
-          : '33';
+          : String(MIGRATION_COUNT);
     if (sql.includes('pg_stat_activity')) return failure === 'active' ? '1' : '0';
     if (sql.includes('DROP DATABASE')) {
       assert.equal(args.at(-1), 'tixmo_disposable_restore_source');
@@ -155,10 +156,10 @@ test('joined unchanged harness then33checksums then connection-free owned drop/a
   try {
     const result = await verify({ ...valid, STRIPE_SECRET_KEY: 'private-canary' }, f);
     assert.equal(result.ok, true);
-    assert.equal(result.migrations, 33);
+    assert.equal(result.migrations, MIGRATION_COUNT);
     assert.equal(result.databaseCleanupVerified, true);
     assert.equal(result.stagingCleanupVerified, true);
-    assert.equal(f.calls.filter((call) => call.options.input?.includes('checksum=')).length, 33);
+    assert.equal(f.calls.filter((call) => call.options.input?.includes('checksum=')).length, MIGRATION_COUNT);
     const harness = f.calls.findIndex((call) => call.program === process.execPath),
       drop = f.calls.findIndex((call) => call.options.input?.includes('DROP DATABASE'));
     assert.ok(drop > harness);

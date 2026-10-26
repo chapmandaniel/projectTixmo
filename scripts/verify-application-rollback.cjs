@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const assert = require('node:assert/strict');
+const { MIGRATION_COUNT } = require('../tixmoapi2/scripts/migration-census.cjs');
 const OLD_COMMIT = 'dd19d3c3cd68923833b5a24c938d8a68db37dc39';
 const IMAGES = {
   new: 'tixmo-task603-production:ci',
@@ -203,7 +204,7 @@ async function verify(env = process.env, dependencies = {}) {
         oldCommit: OLD_COMMIT,
         applicationContract: contract.mode,
         rollbackPromotionApproved: false,
-        migrations: 33,
+        migrations: MIGRATION_COUNT,
         postUpgradeWriteRetained: true,
         newOldNew: true,
         providerAttempts: 0,
