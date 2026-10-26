@@ -10,6 +10,8 @@ const {
   inspectInventory,
   previewInventory,
   applyInventory,
+  systemDryRun,
+  SYSTEM_ACTOR,
 } = require('../../prisma/reconcile-ticket-inventory.js');
 const authorized = {
   TIXMO_ALLOW_INVENTORY_RECONCILIATION: 'true',
@@ -539,3 +541,231 @@ it('lets only one concurrent application of a reviewed plan commit', async () =>
     (await prisma.ticketTier.findUniqueOrThrow({ where: { id: f.tier.id } })).quantitySold
   ).toBe(1);
 });
+
+async function flaggedCounterMismatch(input: {
+  organizationId: string;
+  buyerId: string;
+  name: string;
+  status: 'ON_SALE' | 'PUBLISHED' | 'COMPLETED';
+  start: Date | null;
+  end: Date | null;
+}) {
+  const event = await prisma.event.create({
+    data: {
+      name: input.name,
+      slug: randomUUID(),
+      organizationId: input.organizationId,
+      status: input.status,
+      startDatetime: input.start,
+      endDatetime: input.end,
+    },
+  });
+  const type = await prisma.ticketType.create({
+    data: {
+      eventId: event.id,
+      name: input.name,
+      price: 20,
+      quantityTotal: 10,
+      quantityAvailable: 1,
+      quantitySold: 9,
+      quantityHeld: 0,
+      tierInventoryStatus: 'REQUIRES_RECONCILIATION',
+    },
+  });
+  const tier = await prisma.ticketTier.create({
+    data: {
+      ticketTypeId: type.id,
+      name: 'Counted',
+      price: 20,
+      quantityLimit: 10,
+      quantitySold: 4,
+      quantityHeld: 1,
+    },
+  });
+  const order = await prisma.order.create({
+    data: {
+      orderNumber: randomUUID(),
+      userId: input.buyerId,
+      eventId: event.id,
+      status: 'PAID',
+      paymentStatus: 'SUCCEEDED',
+      refundStatus: 'NONE',
+      totalAmount: 20,
+      currency: 'cad',
+      paymentIntentId: 'pi_' + randomUUID().replace(/-/g, ''),
+    },
+  });
+  await prisma.ticket.create({
+    data: {
+      userId: input.buyerId,
+      orderId: order.id,
+      eventId: event.id,
+      ticketTypeId: type.id,
+      tierId: tier.id,
+      barcode: 'SYS-' + randomUUID(),
+      pricePaid: 20,
+      inventoryState: 'SOLD',
+      status: 'VALID',
+    },
+  });
+  return { event, type };
+}
+
+it('reconciles only upcoming types, leaves dry-run read-only, and runs with no enabled admin', async () => {
+  const organization = await prisma.organization.create({
+    data: {
+      name: 'System reconcile test',
+      slug: randomUUID(),
+      type: 'PROMOTER',
+      status: 'ACTIVE',
+    },
+  });
+  const buyer = await prisma.user.create({
+    data: {
+      email: 'inventory-buyer-' + randomUUID() + '@test.com',
+      passwordHash: 'unused',
+      firstName: 'Private',
+      lastName: 'Customer',
+      role: 'CUSTOMER',
+    },
+  });
+  await prisma.user.create({
+    data: {
+      email: 'disabled-admin-' + randomUUID() + '@test.com',
+      passwordHash: 'unused',
+      firstName: 'Disabled',
+      lastName: 'Admin',
+      role: 'ADMIN',
+      organizationId: organization.id,
+      disabledAt: new Date('2026-10-01T00:00:00Z'),
+    },
+  });
+  const soon = new Date(Date.now() + 10 * 86400000);
+  const later = new Date(Date.now() + 11 * 86400000);
+  const past = new Date(Date.now() - 10 * 86400000);
+  const earlier = new Date(Date.now() - 11 * 86400000);
+  const shared = { organizationId: organization.id, buyerId: buyer.id };
+  const upcoming = await flaggedCounterMismatch({
+    ...shared,
+    name: 'Upcoming onsale',
+    status: 'ON_SALE',
+    start: soon,
+    end: later,
+  });
+  const ended = await flaggedCounterMismatch({
+    ...shared,
+    name: 'Ended onsale',
+    status: 'ON_SALE',
+    start: earlier,
+    end: past,
+  });
+  const startOnlyFuture = await flaggedCounterMismatch({
+    ...shared,
+    name: 'Future start only',
+    status: 'PUBLISHED',
+    start: soon,
+    end: null,
+  });
+  const startOnlyPast = await flaggedCounterMismatch({
+    ...shared,
+    name: 'Past start only',
+    status: 'PUBLISHED',
+    start: past,
+    end: null,
+  });
+  const selected = [upcoming.type.id, startOnlyFuture.type.id].sort();
+  const dryRun = await systemDryRun(prisma, { upcomingOnly: true });
+  expect(dryRun.writes).toBe(false);
+  expect(dryRun.changed).toBe(2);
+  expect(dryRun.types.map((row: { ticketTypeId: string }) => row.ticketTypeId).sort()).toEqual(
+    selected
+  );
+  expect(dryRun.types).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        ticketTypeId: upcoming.type.id,
+        eventId: upcoming.event.id,
+        eventName: 'Upcoming onsale',
+        eventStatus: 'ON_SALE',
+        quantitySold: 9,
+        quantityTotal: 10,
+        action: 'reconcile',
+        reason: 'counters',
+        changes: {
+          type: {
+            quantityTotal: 10,
+            quantityHeld: 0,
+            quantitySold: 1,
+            quantityAvailable: 9,
+            tierInventoryStatus: 'READY',
+          },
+          tiers: [expect.objectContaining({ quantityHeld: 0, quantitySold: 1 })],
+        },
+      }),
+    ])
+  );
+  expect(await prisma.ticketInventoryReconciliation.count()).toBe(0);
+  expect(
+    (await prisma.ticketType.findUniqueOrThrow({ where: { id: upcoming.type.id } })).quantitySold
+  ).toBe(9);
+
+  const env = {
+    ...process.env,
+    TIXMO_INVENTORY_DATABASE_URL: process.env.DATABASE_URL,
+    TIXMO_ALLOW_INVENTORY_RECONCILIATION: 'true',
+    TIXMO_INVENTORY_WRITERS_QUIESCED: 'true',
+  };
+  const listed = spawnSync(process.execPath, [script, '--dry-run'], { env, encoding: 'utf8' });
+  expect(listed.status).toBe(0);
+  expect(JSON.parse(listed.stdout).types).toHaveLength(4);
+  expect(await prisma.ticketInventoryReconciliation.count()).toBe(0);
+  expect(
+    await prisma.user.count({ where: { role: { in: ['OWNER', 'ADMIN'] }, disabledAt: null } })
+  ).toBe(0);
+
+  const preview = spawnSync(process.execPath, [script, '--dry-run', '--upcoming-only'], {
+    env,
+    encoding: 'utf8',
+  });
+  expect(preview.status).toBe(0);
+  const previewBody = JSON.parse(preview.stdout);
+  expect(previewBody.actorId).toBe(SYSTEM_ACTOR);
+  expect(previewBody.types.map((row: { ticketTypeId: string }) => row.ticketTypeId).sort()).toEqual(
+    selected
+  );
+  expect(preview.stdout + preview.stderr).not.toContain(String(process.env.DATABASE_URL));
+
+  const applied = spawnSync(process.execPath, [script, '--apply', '--upcoming-only'], {
+    env,
+    encoding: 'utf8',
+  });
+  expect(applied.status).toBe(0);
+  const appliedBody = JSON.parse(applied.stdout);
+  expect(appliedBody.changed).toBe(2);
+  expect(appliedBody.actorId).toBe(SYSTEM_ACTOR);
+  const audits = await prisma.ticketInventoryReconciliation.findMany({
+    orderBy: { ticketTypeId: 'asc' },
+  });
+  expect(audits.map((row) => row.ticketTypeId).sort()).toEqual(selected);
+  expect(audits.every((row) => row.actorId === SYSTEM_ACTOR)).toBe(true);
+  expect(audits.every((row) => row.evidence.length >= 10)).toBe(true);
+  for (const id of selected) {
+    expect(await prisma.ticketType.findUniqueOrThrow({ where: { id } })).toMatchObject({
+      quantitySold: 1,
+      quantityHeld: 0,
+      quantityAvailable: 9,
+      tierInventoryStatus: 'READY',
+    });
+  }
+  for (const id of [ended.type.id, startOnlyPast.type.id]) {
+    expect(await prisma.ticketType.findUniqueOrThrow({ where: { id } })).toMatchObject({
+      quantitySold: 9,
+      tierInventoryStatus: 'REQUIRES_RECONCILIATION',
+    });
+  }
+  expect(
+    await prisma.ticketInventoryReconciliation.count({
+      where: { ticketTypeId: { in: [ended.type.id, startOnlyPast.type.id] } },
+    })
+  ).toBe(0);
+}, 60000);
