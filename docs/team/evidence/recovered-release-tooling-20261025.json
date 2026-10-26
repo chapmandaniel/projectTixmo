@@ -1,0 +1,29 @@
+{
+  "scope": "Recovered historical release tooling. Source files are unchanged. The prerequisite reader remains import-only; the older wiring transport uses npx and has not been approved or exercised live. Offline mocked tests do not prove current service wiring, database health, deployment metadata, or release readiness.",
+  "files": [
+    {
+      "path": "scripts/railway-release-prerequisites.py",
+      "source_branch": "codex/task-557-prerequisite-checker",
+      "source_sha": "74f3be6b36b163d8a9cfed68c96b8cafb9bff53c",
+      "source_blob": "80f9b663aee31137abcf8923557944014dcdeece"
+    },
+    {
+      "path": "scripts/railway-release-prerequisites.test.py",
+      "source_branch": "codex/task-557-prerequisite-checker",
+      "source_sha": "74f3be6b36b163d8a9cfed68c96b8cafb9bff53c",
+      "source_blob": "d92f30a5acb6fbe72243e7e2ee4b3010a27eb7eb"
+    },
+    {
+      "path": "scripts/railway-wiring-redacted.py",
+      "source_branch": "tixmo/task-231-review-clearance",
+      "source_sha": "775f43a4a7f0f8fcb079abd8c20972f00b1adf24",
+      "source_blob": "9cf8887a79b4db890207ea997ca0f567d04ce479"
+    },
+    {
+      "path": "scripts/railway-wiring-redacted.test.py",
+      "source_branch": "tixmo/task-231-review-clearance",
+      "source_sha": "775f43a4a7f0f8fcb079abd8c20972f00b1adf24",
+      "source_blob": "86e966a750dd0911ba5eb135ea4529b03097170d"
+    }
+  ]
+}
