@@ -95,7 +95,7 @@ describe('Buyer wallet', () => {
         name: 'Night show',
         venue: { name: 'Signal Hall', address: { street: '1 Harbour Dr', city: "St. John's", state: 'NL' } },
       },
-      receiptDisclosure: { hstNumber: '123456789RT0001' },
+      receiptDisclosure: { hstNumber: '123456789RT0001', hstRate: 0.13, hstAmount: 1.15 },
     };
     calls.get.mockImplementation(async path => path.startsWith('/orders/mine')
       ? { data: { orders: [disclosed], pagination: { pages: 1 } } }
@@ -104,14 +104,14 @@ describe('Buyer wallet', () => {
     mount();
     expect(await screen.findByText(/Signal Hall, 1 Harbour Dr, St\. John's, NL/)).toBeInTheDocument();
     expect(screen.getByText('HST no. 123456789RT0001')).toBeInTheDocument();
-    expect(screen.getByText('Includes HST and all fees')).toBeInTheDocument();
+    expect(screen.getByText('Includes HST (13%): CA$1.15')).toBeInTheDocument();
     expect(screen.getByText('$25.00')).toBeInTheDocument();
   });
 
   it('hides the HST registration line when the number is unset', async () => {
     mount();
     await screen.findByText('ORD-OWNED', { exact: false });
-    expect(screen.getByText('Includes HST and all fees')).toBeInTheDocument();
+    expect(screen.getByText('Includes HST (15%): CA$3.26')).toBeInTheDocument();
     expect(screen.getByText('Venue to be announced')).toBeInTheDocument();
     expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
   });

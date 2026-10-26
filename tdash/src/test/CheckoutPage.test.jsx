@@ -137,13 +137,14 @@ describe('CheckoutPage', () => {
         expect(await screen.findByText('Neon Nights')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Terms of Sale' })).toHaveAttribute('href', 'https://tixmo.example/terms');
         expect(screen.getByText(/All sales are final/)).toBeInTheDocument();
-        expect(screen.getByText('Includes HST and all fees')).toBeInTheDocument();
+        expect(screen.getByText('Includes HST (15%): CA$0.00')).toBeInTheDocument();
         expect(screen.getAllByText(/Signal Hall/).length).toBeGreaterThan(0);
         expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Refund Policy' })).toHaveAttribute('href', 'https://tixmo.example/refunds');
         expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', 'https://tixmo.example/privacy');
 
         fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        expect(screen.getByText('Includes HST (15%): CA$3.26')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: /continue to secure payment/i }));
 
         await waitFor(() => {
@@ -174,7 +175,7 @@ describe('CheckoutPage', () => {
                 success: true,
                 data: {
                     ...eventPayload,
-                    receiptDisclosure: { hstNumber: '123456789RT0001' },
+                    receiptDisclosure: { hstNumber: '123456789RT0001', hstRate: 0.13 },
                     venue: {
                         name: 'Signal Hall',
                         address: { street: '1 Harbour Dr', city: "St. John's", state: 'NL' },
@@ -184,12 +185,14 @@ describe('CheckoutPage', () => {
         });
         renderCheckout({ user: { id: 'buyer-1', email: 'buyer@example.com' } });
         expect(await screen.findByText('HST no. 123456789RT0001')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        expect(screen.getByText('Includes HST (13%): CA$2.88')).toBeInTheDocument();
         expect(screen.getByText(/1 Harbour Dr, St\. John's, NL/)).toBeInTheDocument();
     });
 
     it('keeps the registration line hidden when the public event has no HST number', async () => {
         renderCheckout({ user: { id: 'buyer-1', email: 'buyer@example.com' } });
-        expect(await screen.findByText('Includes HST and all fees')).toBeInTheDocument();
+        expect(await screen.findByText('Includes HST (15%): CA$0.00')).toBeInTheDocument();
         expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
     });
 

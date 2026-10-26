@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { BuyerAuthPanel } from './CheckoutPage';
 import { DashboardButton, DashboardChip, DashboardPage, DashboardPageHeader, DashboardSurface, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
 import { getPolicyLinks } from '../lib/runtimeConfig';
-import { eventAddress, formatEventMoney, hstRegistrationLine, HST_INCLUDED_NOTE } from '../lib/publicEvent';
+import { eventAddress, formatEventMoney, hstAmountLine, hstRegistrationLine } from '../lib/publicEvent';
 
 const payload = (response) => response?.data?.data || response?.data || response;
 const money = (order) => formatEventMoney(order.totalAmount, order.currency || 'cad');
@@ -95,7 +95,7 @@ const WalletPage = ({ user, onAuthenticated }) => {
                         {!orders.length ? <p className="text-dashboard-muted">No orders yet.</p> : orders.map(order => <div key={order.id} className="space-y-3 border-b border-dashboard-border py-4">
                             <div className="flex flex-wrap items-center justify-between gap-3"><p>{order.event?.name} · {order.orderNumber}</p><p>{money(order)}</p></div>
                             <p className="text-sm text-dashboard-muted">{venueLine(order)}</p>
-                            <p className="text-sm text-dashboard-muted">{HST_INCLUDED_NOTE}</p>
+                            <p className="text-sm text-dashboard-muted">{hstAmountLine(order.totalAmount, order.receiptDisclosure?.hstRate, order.receiptDisclosure?.hstAmount)}</p>
                             {hstRegistrationLine(order.receiptDisclosure?.hstNumber) ? <p className="text-sm text-dashboard-muted">{hstRegistrationLine(order.receiptDisclosure?.hstNumber)}</p> : null}
                             <p className="text-sm text-dashboard-muted">{order.status}{order.refundStatus && order.refundStatus !== 'NONE' ? ` · Refund ${order.refundStatus.toLowerCase()}` : ''}</p>
                             {order.status === 'PAID' ? <div className="flex flex-wrap gap-2">

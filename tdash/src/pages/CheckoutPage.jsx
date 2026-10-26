@@ -36,8 +36,8 @@ import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import {
     eventAddress,
     formatEventMoney,
+    hstAmountLine,
     hstRegistrationLine,
-    HST_INCLUDED_NOTE,
     initialTicketQuantities,
 } from '../lib/publicEvent';
 
@@ -409,7 +409,13 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const ticketCount = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
     const venueLine = [event?.venue?.name, eventAddress(event?.venue)].filter(Boolean).join(', ') || 'Venue to be announced';
+    const chargedTotal = order?.totalAmount ?? subtotal;
     const hstLine = hstRegistrationLine(event?.receiptDisclosure?.hstNumber);
+    const hstIncludedLine = hstAmountLine(
+        chargedTotal,
+        event?.receiptDisclosure?.hstRate,
+        order?.receiptDisclosure?.hstAmount
+    );
     const hasPolicyLinks = Boolean(policyLinks.privacyPolicyUrl && policyLinks.termsUrl && policyLinks.refundPolicyUrl);
     const selectionEligible = selectedItems.every(({ ticketType, quantity }) => quantity <= checkoutTicketState(event, ticketType, now).max);
     const canPreparePayment = Boolean(user && (order?.status === 'PENDING' || (selectedItems.length && selectionEligible)) && (!order || order.status === 'PENDING') && hasPolicyLinks && (subtotal === 0 || stripePublishableKey));
@@ -630,7 +636,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                             </div>
                             <div className="mt-3 space-y-1 text-sm text-dashboard-muted">
                                 <p>{venueLine}</p>
-                                <p>{HST_INCLUDED_NOTE}</p>
+                                <p>{hstIncludedLine}</p>
                                 {hstLine ? <p>{hstLine}</p> : null}
                             </div>
 

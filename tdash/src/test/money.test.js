@@ -3,7 +3,9 @@ import {
     HST_INCLUDED_NOTE,
     PRICE_INCLUDES_NOTE,
     formatEventMoney,
+    hstAmountLine,
     hstRegistrationLine,
+    includedHstAmount,
 } from '../lib/money';
 
 describe('Canadian money formatting', () => {
@@ -26,5 +28,23 @@ describe('Canadian money formatting', () => {
         expect(hstRegistrationLine('   ')).toBe('');
         expect(HST_INCLUDED_NOTE).toBe('Includes HST and all fees');
         expect(PRICE_INCLUDES_NOTE).toBe('Price includes HST and all fees.');
+    });
+
+    it('rounds inclusive HST to the cent once, including awkward totals', () => {
+        expect(includedHstAmount(50, 0.15)).toBe(6.52);
+        expect(includedHstAmount(115, 0.15)).toBe(15);
+        expect(includedHstAmount(10.01, 0.15)).toBe(1.31);
+        expect(includedHstAmount(19.99, 0.15)).toBe(2.61);
+        expect(includedHstAmount(33.33, 0.15)).toBe(4.35);
+        expect(includedHstAmount(0.01, 0.15)).toBe(0);
+        expect(hstAmountLine(25, 0.15)).toBe('Includes HST (15%): CA$3.26');
+    });
+
+    it('uses a non-default rate for the amount and the percentage label', () => {
+        expect(includedHstAmount(100, 0.05)).toBe(4.76);
+        expect(includedHstAmount(9.99, 0.13)).toBe(1.15);
+        expect(includedHstAmount(0.03, 0.2)).toBe(0.01);
+        expect(hstAmountLine(25, 0.13)).toBe('Includes HST (13%): CA$2.88');
+        expect(hstAmountLine(25, 0.13, 1.15)).toBe('Includes HST (13%): CA$1.15');
     });
 });

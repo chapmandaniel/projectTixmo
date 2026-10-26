@@ -1,34 +1,65 @@
 import { config } from '../config/environment';
 
-// Live checkout stores the amount charged. Ticket prices are tax-inclusive and
-// feesAmount/taxAmount stay at their defaults, and no tax rate is stored.
-// A dollar HST split would be invented, so receipts disclose inclusion only.
+// Prices are tax-inclusive. The HST portion is derived for display only.
+// Stored taxAmount and the amount charged stay as they are.
 export const HST_INCLUDED_NOTE = 'Includes HST and all fees';
 
 export interface ReceiptDisclosure {
   includesHstAndFees: true;
   hstNumber: string | null;
-  hstAmount: null;
+  hstRate: number;
+  hstAmount: number | null;
 }
-
-export const receiptDisclosure = (): ReceiptDisclosure => ({
-  includesHstAndFees: true,
-  hstNumber: config.hstNumber || null,
-  hstAmount: null,
-});
 
 type MoneyInput = number | string | { toNumber: () => number };
 
-export const formatMoney = (amount: MoneyInput, currency = 'CAD'): string => {
+const asNumber = (amount: MoneyInput): number => {
   const value =
     typeof amount === 'number'
       ? amount
       : typeof amount === 'string'
         ? Number(amount)
         : amount.toNumber();
-  if (!Number.isFinite(value)) {
-    throw new Error('Invalid money amount');
-  }
+  if (!Number.isFinite(value)) throw new Error('Invalid money amount');
+  return value;
+};
+
+const toCents = (amount: number): number => {
+  const cents = Math.round(amount * 100 + Math.sign(amount) * Number.EPSILON);
+  if (!Number.isSafeInteger(cents)) throw new Error('Invalid money amount');
+  return cents;
+};
+
+// Inclusive tax, rounded to the cent once: total * rate / (1 + rate).
+export const includedHstAmount = (total: MoneyInput, rate: number): number => {
+  if (!Number.isFinite(rate) || rate < 0 || rate > 1) throw new Error('Invalid HST rate');
+  const hstCents = Math.round((toCents(asNumber(total)) * rate) / (1 + rate));
+  return hstCents / 100;
+};
+
+export const formatHstPercent = (rate: number): string => {
+  const scaled = Math.round(rate * 10000) / 100;
+  return Number(scaled.toFixed(2)).toString();
+};
+
+export const formatHstAmountLine = (amount: number, rate: number): string =>
+  `Includes HST (${formatHstPercent(rate)}%): CA$${amount.toFixed(2)}`;
+
+const configuredRate = (): number => (typeof config.hstRate === 'number' ? config.hstRate : 0.15);
+
+export const receiptDisclosure = (total?: MoneyInput | null): ReceiptDisclosure => {
+  const rate = configuredRate();
+  const hasTotal = total !== undefined && total !== null && total !== '';
+  return {
+    includesHstAndFees: true,
+    hstNumber: config.hstNumber || null,
+    hstRate: rate,
+    hstAmount: hasTotal ? includedHstAmount(total, rate) : null,
+  };
+};
+
+export const formatMoney = (amount: MoneyInput, currency = 'CAD'): string => {
+  const value = asNumber(amount);
   return new Intl.NumberFormat('en-CA', {
     style: 'currency',
     currency: String(currency || 'CAD')

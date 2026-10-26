@@ -17,6 +17,7 @@ const receipt = {
   venueName: 'Signal Hall',
   venueAddress: "1 Harbour Dr, St. John's",
   hstNumber: null as string | null,
+  hstAmountLine: 'Includes HST (15%): CA$3.33',
 };
 
 const renderReceipt = (base: string): ReturnType<typeof orderConfirmationEmail> =>
@@ -54,6 +55,8 @@ describe('receipt wallet retrieval', () => {
     expect(email.subject).toBe('Your Tixmo tickets for Test & Event');
     expect(email.html).toContain('Total paid:</strong> $25.50 (includes HST and all fees)');
     expect(email.text).toContain('Total paid: $25.50 (includes HST and all fees)');
+    expect(email.html).toContain('Includes HST (15%): CA$3.33');
+    expect(email.text).toContain('Includes HST (15%): CA$3.33');
     expect(email.text).not.toContain('$CAD');
     expect(email.html).not.toContain('$CAD');
     expect(email.text).toContain("Where: Signal Hall, 1 Harbour Dr, St. John's");

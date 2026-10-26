@@ -49,6 +49,7 @@ export interface OrderConfirmationData {
   venueName?: string | null;
   venueAddress?: string | null;
   hstNumber?: string | null;
+  hstAmountLine?: string | null;
 }
 
 const receiptVenue = (data: OrderConfirmationData): string => {
@@ -64,8 +65,11 @@ export function orderConfirmationEmail(
   const walletUrl = receiptWalletUrl(clientUrl);
   const venue = receiptVenue(data);
   const hstNumber = data.hstNumber?.trim() || '';
+  const hstAmountLine = data.hstAmountLine?.trim() || '';
   const hstHtml = hstNumber ? `<p>HST no. ${escapeReceiptHtml(hstNumber)}</p>` : '';
   const hstText = hstNumber ? `HST no. ${hstNumber}\n` : '';
+  const hstAmountHtml = hstAmountLine ? `<p>${escapeReceiptHtml(hstAmountLine)}</p>` : '';
+  const hstAmountText = hstAmountLine ? `${hstAmountLine}\n` : '';
   const walletHtml = walletUrl
     ? `<p><a href="${escapeReceiptHtml(walletUrl)}">View your tickets</a>. Sign in with the account used for this order.</p>`
     : '';
@@ -102,6 +106,7 @@ export function orderConfirmationEmail(
                 <p><strong>Where:</strong> ${escapeReceiptHtml(venue)}</p>
                 <p><strong>Tickets:</strong> ${escapeReceiptHtml(data.ticketSummary)}</p>
                 <p><strong>Total paid:</strong> ${total} (includes HST and all fees)</p>
+                ${hstAmountHtml}
                 ${hstHtml}
               </div>
               ${walletHtml}
@@ -123,7 +128,7 @@ export function orderConfirmationEmail(
       Where: ${venue}
       Tickets: ${data.ticketSummary}
       Total paid: ${data.totalAmount} (includes HST and all fees)
-      ${hstText}${walletText}
+      ${hstAmountText}${hstText}${walletText}
       All sales are final unless the event is cancelled or rescheduled.
 
       Tixmo · Ticketing for live events. Please don't reply to this email.

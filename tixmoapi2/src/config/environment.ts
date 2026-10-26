@@ -43,20 +43,36 @@ export const normalizeOptionalCredential = (value?: string) => {
 // GST/HST program account: 9-digit business number, RT, 4-digit reference.
 const GST_HST_NUMBER = /^[0-9]{9}RT[0-9]{4}$/;
 
-export const readHstRegistrationNumber = (raw: string | undefined, nodeEnv: string): string => {
+// A missing or invalid registration number must not stop boot. Receipts hide the line.
+export const readHstRegistrationNumber = (raw: string | undefined): string => {
   const normalized = normalizeOptionalCredential(raw).replace(/[\s-]/g, '').toUpperCase();
   if (!normalized) {
-    if (nodeEnv === 'production') {
-      throw new Error('Missing required environment variable: TIXMO_HST_NUMBER');
-    }
+    console.error(
+      'TIXMO_HST_NUMBER is missing. Startup will continue, and receipts will hide the HST registration line.'
+    );
     return '';
   }
   if (!GST_HST_NUMBER.test(normalized)) {
-    throw new Error(
-      'TIXMO_HST_NUMBER must be a GST/HST account number: 9 digits, RT, and 4 digits'
+    console.error(
+      'TIXMO_HST_NUMBER is invalid. Startup will continue, and receipts will hide the HST registration line. Expected a GST/HST account number: 9 digits, RT, and 4 digits.'
     );
+    return '';
   }
   return normalized;
+};
+
+// Inclusive rate. 0.15 means 15% of the tax-inclusive total is HST.
+export const readHstRate = (raw: string | undefined): number => {
+  const trimmed = raw?.trim() ?? '';
+  if (!trimmed) return 0.15;
+  if (!/^\d*\.?\d+$/.test(trimmed)) {
+    throw new Error('TIXMO_HST_RATE must be a decimal between 0 and 1');
+  }
+  const value = Number(trimmed);
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error('TIXMO_HST_RATE must be a decimal between 0 and 1');
+  }
+  return value;
 };
 
 // Compatibility default only, not an evidenced launch-capacity budget.
@@ -106,8 +122,9 @@ export const config = {
   stripePublishableKey: normalizeOptionalCredential(process.env.STRIPE_PUBLISHABLE_KEY),
   stripeWebhookSecret: normalizeOptionalCredential(process.env.STRIPE_WEBHOOK_SECRET),
   paymentCurrency: (process.env.PAYMENT_CURRENCY || 'cad').toLowerCase(),
-  // Empty outside production so receipts omit the registration line.
-  hstNumber: readHstRegistrationNumber(process.env.TIXMO_HST_NUMBER, nodeEnv),
+  // Empty when missing or invalid so receipts omit the registration line.
+  hstNumber: readHstRegistrationNumber(process.env.TIXMO_HST_NUMBER),
+  hstRate: readHstRate(process.env.TIXMO_HST_RATE),
 
   // Email
   postmarkServerToken: process.env.POSTMARK_SERVER_TOKEN || '',

@@ -4,7 +4,9 @@ export {
     HST_INCLUDED_NOTE,
     PRICE_INCLUDES_NOTE,
     formatEventMoney,
+    hstAmountLine,
     hstRegistrationLine,
+    includedHstAmount,
 } from './money';
 
 export const eventTimeZone = (event) =>

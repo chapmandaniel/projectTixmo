@@ -211,6 +211,7 @@ describe('consumer recovery route/controller/service', () => {
       receiptDisclosure: {
         includesHstAndFees: true,
         hstNumber: null,
+        hstRate: 0.15,
         hstAmount: null,
       },
     });

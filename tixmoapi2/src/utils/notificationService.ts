@@ -88,6 +88,7 @@ export class NotificationService {
         venueName: data.venueName,
         venueAddress: data.venueAddress,
         hstNumber: data.hstNumber,
+        hstAmountLine: data.hstAmountLine,
       },
       config.clientUrl
     );

@@ -8,8 +8,10 @@ import { getActorScopeById, resolveOrganizationFilter } from '../../utils/tenant
 import prisma from '../../config/prisma';
 import { config } from '../../config/environment';
 import {
+  formatHstAmountLine,
   formatMoney,
   formatVenueAddress,
+  includedHstAmount,
   receiptDisclosure,
   summarizeTickets,
   type ReceiptDisclosure,
@@ -423,6 +425,10 @@ export class OrderService {
         venueName: order.event.venue?.name || null,
         venueAddress: formatVenueAddress(order.event.venue?.address),
         hstNumber: config.hstNumber || null,
+        hstAmountLine: formatHstAmountLine(
+          includedHstAmount(order.totalAmount, config.hstRate),
+          config.hstRate
+        ),
       });
       if (!delivered) throw ApiError.internal('Receipt could not be delivered');
       await prisma.order.updateMany({
@@ -536,7 +542,10 @@ export class OrderService {
     ]);
 
     return {
-      orders: orders.map((order) => ({ ...order, receiptDisclosure: receiptDisclosure() })),
+      orders: orders.map((order) => ({
+        ...order,
+        receiptDisclosure: receiptDisclosure(order.totalAmount),
+      })),
       pagination: {
         page: safePage,
         limit: cappedLimit,

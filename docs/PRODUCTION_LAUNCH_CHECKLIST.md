@@ -30,6 +30,7 @@ Open a launch evidence ticket before running this checklist:
 - [ ] Redis is provisioned.
 - [ ] Object storage/S3-compatible bucket is provisioned.
 - [ ] Stripe account and webhook endpoint are configured.
+- [ ] Stripe public details use the static card statement descriptor `TIXMO TICKETS`. The API (`2025-11-17.clover`) rejects `statement_descriptor` on card PaymentIntents. `statement_descriptor_suffix` is only the dynamic half of `PREFIX* SUFFIX`, so the full descriptor is an account setting, not a PaymentIntent field.
 - [ ] Email provider is configured.
 - [ ] Sentry or equivalent error monitoring is configured.
 - [ ] Domain and TLS certificates are active for dashboard and API.
@@ -55,7 +56,8 @@ Required:
 - [ ] `POSTMARK_SERVER_TOKEN` or SMTP credentials
 - [ ] `FROM_EMAIL`
 - [ ] `FROM_NAME` (`Tixmo` unless a verified sender name is explicitly chosen)
-- [ ] `TIXMO_HST_NUMBER` (GST/HST account: 9 digits, `RT`, 4 digits)
+- [ ] `TIXMO_HST_RATE` (optional decimal from 0 to 1; default `0.15`)
+- [ ] `TIXMO_HST_NUMBER` (GST/HST account: 9 digits, `RT`, 4 digits; missing or invalid hides the line and does not stop boot)
 - [ ] `S3_ENDPOINT` or AWS endpoint settings
 - [ ] `S3_ACCESS_KEY_ID` or `AWS_ACCESS_KEY_ID`
 - [ ] `S3_SECRET_ACCESS_KEY` or `AWS_SECRET_ACCESS_KEY`
@@ -79,7 +81,7 @@ Validation:
 - [ ] `CLIENT_URL` points to the production dashboard origin.
 - [ ] CORS trusted-origin logic allows the dashboard domain and rejects unrelated origins.
 - [ ] `PAYMENT_CURRENCY` matches the intended launch currency.
-- [ ] `TIXMO_HST_NUMBER` is set in production. Buyer receipts print `HST no.` plus that number and state that the price includes HST and all fees. Live checkout stores only the amount charged (`taxAmount` stays 0 and no tax rate is stored), so receipts do not show a computed HST dollar amount. Non-production boots with the variable unset and hides the registration line.
+- [ ] `TIXMO_HST_NUMBER`, when valid, is printed as `HST no.` on buyer receipts. A missing or invalid number is logged at startup, the registration line is hidden, and production still boots. `TIXMO_HST_RATE` defaults to `0.15`. Receipts show `Includes HST (<percent>%): CA$<amount>`, where the amount is `total * rate / (1 + rate)` rounded to the cent once per order. The amount charged and stored `taxAmount` stay unchanged.
 - [ ] `FROM_NAME` presented to buyers is `Tixmo`.
 - [ ] API boot fails if required production env vars are missing.
 

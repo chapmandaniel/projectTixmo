@@ -71,7 +71,7 @@ export const getConsumerOrderRecovery = catchAsync(async (req: AuthRequest, res:
 export const getOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const order = await orderService.getOrderById(req.params.id, undefined, req.user!.userId);
   if (!order) throw ApiError.notFound('Order not found');
-  res.json(successResponse({ ...order, receiptDisclosure: receiptDisclosure() }));
+  res.json(successResponse({ ...order, receiptDisclosure: receiptDisclosure(order.totalAmount) }));
 });
 
 export const confirmOrder = catchAsync(async (req: AuthRequest, res: Response) => {
