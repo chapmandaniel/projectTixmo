@@ -25,7 +25,9 @@ function workflowContract(source) {
 test('existing standard API discovery owns exactly one browser execution and requires installed Chrome', () => workflowContract(workflow));
 for (const marker of ['test -x /usr/bin/google-chrome','TIXMO_BROWSER_PATH: /usr/bin/google-chrome','run: npm run verify:market']) test(`workflow rejects missing ${marker}`, () => assert.throws(() => workflowContract(workflow.replace(marker,'REMOVED'))));
 test('worker guards before Vite/spawn and never fabricates API responses or logs protocol content', () => {
- assert.ok(worker.indexOf('validateWalletBrowser(process.env)') < worker.indexOf('await mkdtemp'));
+  assert.match(worker, /require\("\.\/cdp-deadline\.cjs"\)/);
+  assert.doesNotMatch(worker, /class BrowserDeadline/);
+  assert.ok(worker.indexOf('validateWalletBrowser(process.env)') < worker.indexOf('await mkdtemp'));
  assert.ok(worker.indexOf('validateWalletBrowser(process.env)') < worker.indexOf('await import('));
  assert.doesNotMatch(worker, /Fetch\.fulfillRequest|console\.|HOME: profile|process\.stdout|process\.stderr/);
  assert.match(worker, /url\.origin !== origin/);
@@ -56,6 +58,25 @@ test('current browser lost-password extension uses production CSP and real captu
 });
 
 const { walletBrowserDiagnostic } = require('./wallet-browser-guard.cjs');
+const { deadline, BrowserDeadline } = require('./browser/cdp-deadline.cjs');
+test('deadline keeps a CDP result that arrived while the event loop was stalled', async () => {
+  const { spawn } = require('node:child_process');
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => process.stdout.write("buffered"), 10)']);
+  try {
+    let finish;
+    const command = new Promise((resolve) => { finish = resolve; });
+    child.stdout.on('data', (chunk) => finish(chunk.toString()));
+    const pending = deadline(command, 30);
+    const started = Date.now();
+    while (Date.now() - started < 80) {}
+    assert.equal(await pending, 'buffered');
+  } finally {
+    child.kill();
+  }
+});
+test('deadline still rejects a command that never settles', async () => {
+  await assert.rejects(deadline(new Promise(() => {}), 30), BrowserDeadline);
+});
 test('worker diagnostics project only bounded stages and fixed categories', () => {
   const secret = 'synthetic-token-canary';
   for (const category of ['progress', 'assertion', 'deadline', 'other']) {

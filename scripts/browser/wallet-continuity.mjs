@@ -11,6 +11,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const require = createRequire(import.meta.url);
 const { api, frontendPort, fixture } =
   require("../wallet-browser-guard.cjs").validateWalletBrowser(process.env);
+const { deadline, BrowserDeadline } = require("./cdp-deadline.cjs");
 let stage = 0;
 let startupPhase = 0;
 const phase = (value) => {
@@ -35,16 +36,6 @@ const diagnose = (error) =>
             : "other",
     },
   });
-class BrowserDeadline extends Error {}
-const deadline = (promise, ms) => {
-  let timer;
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new BrowserDeadline()), ms);
-    }),
-  ]).finally(() => clearTimeout(timer));
-};
 const profile = await mkdtemp(resolve(tmpdir(), "tixmo-wallet-browser-"));
 const load = createRequire(resolve(root, "tdash/package.json"));
 let vite, browser, ws, send, debugPort, csp;
