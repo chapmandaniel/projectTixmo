@@ -129,8 +129,8 @@ describe('CheckoutPage', () => {
     it('restores event-page selections using current ticket limits', async () => {
         renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A99%2Cunknown%3A2' });
         await screen.findByText('Neon Nights');
-        expect(screen.getByText('4 x $25.00')).toBeInTheDocument();
-        expect(screen.queryByText('99 x $25.00')).not.toBeInTheDocument();
+        expect(screen.getByText('4 x CA$25.00')).toBeInTheDocument();
+        expect(screen.queryByText('99 x CA$25.00')).not.toBeInTheDocument();
     });
 
     it('shows required checkout policy links before preparing payment', async () => {
@@ -159,7 +159,7 @@ describe('CheckoutPage', () => {
         expect(apiPost).toHaveBeenCalledWith('/payments/create-intent', { orderId: 'order-1' });
         expect(await screen.findByText('Card payment details')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: /pay \$25\.00 \(includes HST and all fees\)/i }));
+        fireEvent.click(screen.getByRole('button', { name: /pay CA\$25\.00 \(includes HST and all fees\)/i }));
 
         await waitFor(() => {
             expect(stripeMocks.confirmPayment).toHaveBeenCalledWith({
@@ -383,11 +383,11 @@ describe('open-page sale boundaries', () => {
             { id: 'late', isActive: true, price: '18', startsAt: new Date(opening + 500).toISOString(), quantityLimit: 2, quantitySold: 0, quantityHeld: 1 },
         ] });
         const increase = screen.getByRole('button', { name: 'Increase General Admission' });
-        expect(screen.getByText('$12.00')).toBeInTheDocument(); fireEvent.click(increase);
+        expect(screen.getByText('CA$12.00')).toBeInTheDocument(); fireEvent.click(increase);
         expect(increase).toBeDisabled();
         await act(async () => vi.advanceTimersByTime(500));
-        expect(screen.queryByText('$12.00')).not.toBeInTheDocument();
-        expect(screen.getAllByText('$18.00').length).toBeGreaterThan(0);
+        expect(screen.queryByText('CA$12.00')).not.toBeInTheDocument();
+        expect(screen.getAllByText('CA$18.00').length).toBeGreaterThan(0);
         expect(increase).toBeDisabled();
     });
     it('does not restart payment or revoke an existing reservation at sale close', async () => {

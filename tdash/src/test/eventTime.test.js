@@ -31,6 +31,9 @@ describe('Event timezone inputs', () => {
     });
     it('formats the actual event zone and rejects invalid timezone names', () => {
         expect(formatEventDate('2026-10-04T21:30:00Z', 'America/Los_Angeles')).toMatch(/2:30|14:30/);
+        expect(formatEventDate('2026-11-09T22:30:00Z', 'America/St_Johns', { weekday: undefined, month: undefined, day: undefined, timeZoneName: 'short' })).toBe('7:00 p.m. NST');
+        expect(formatEventDate('2026-10-31T22:30:00Z', 'America/St_Johns', { weekday: undefined, month: undefined, day: undefined, timeZoneName: 'short' })).toBe('8:00 p.m. NDT');
+        expect(formatEventDate('2026-11-09T22:30:00Z', 'America/St_Johns', { timeZoneName: 'short' })).toBe('Mon, Nov 9, 7:00 p.m. NST');
         expect(() => fromEventLocalInput('2026-02-30T19:00', 'America/St_Johns')).toThrow();
         expect(() => fromEventLocalInput('2026-10-04T19:00', 'invalid-zone')).toThrow('timezone');
     });

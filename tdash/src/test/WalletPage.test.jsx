@@ -5,8 +5,9 @@ import WalletPage from '../pages/WalletPage';
 const calls = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 vi.mock('../lib/api', () => ({ api: calls }));
 vi.mock('../pages/CheckoutPage', () => ({ BuyerAuthPanel: ({ onAuthenticated }) => <><p>Sign in for wallet</p><button onClick={() => onAuthenticated({ id: 'buyer', email: 'buyer@example.com' })}>Restore wallet session</button></> }));
-const order = { id: 'order-owned', orderNumber: 'ORD-OWNED', status: 'PAID', totalAmount: 25, currency: 'cad', event: { name: 'Night show' } };
-const ticket = { id: 'ticket-owned', status: 'VALID', ticketType: { name: 'Admission' }, event: { name: 'Night show' }, order: { status: 'PAID', refundStatus: 'NONE' } };
+const event = { name: 'Night show', startDatetime: '2026-11-09T22:30:00.000Z', timezone: 'America/St_Johns' };
+const order = { id: 'order-owned', orderNumber: 'ORD-OWNED', status: 'PAID', totalAmount: 25, currency: 'cad', event };
+const ticket = { id: 'ticket-owned', status: 'VALID', ticketType: { name: 'Admission' }, event, order: { status: 'PAID', refundStatus: 'NONE' } };
 const mount = (user = { id: 'buyer', email: 'buyer@example.com' }) => render(<MemoryRouter><WalletPage user={user} onAuthenticated={vi.fn()} /></MemoryRouter>);
 describe('Buyer wallet', () => {
   beforeEach(() => {
@@ -105,13 +106,14 @@ describe('Buyer wallet', () => {
     expect(await screen.findByText(/Signal Hall, 1 Harbour Dr, St\. John's, NL/)).toBeInTheDocument();
     expect(screen.getByText('HST no. 123456789RT0001')).toBeInTheDocument();
     expect(screen.getByText('Includes HST (13%): CA$1.15')).toBeInTheDocument();
-    expect(screen.getByText('$25.00')).toBeInTheDocument();
+    expect(screen.getByText('CA$25.00')).toBeInTheDocument();
   });
 
   it('hides the HST registration line when the number is unset', async () => {
     mount();
     await screen.findByText('ORD-OWNED', { exact: false });
     expect(screen.getByText('Includes HST (15%): CA$3.26')).toBeInTheDocument();
+    expect(screen.getAllByText('Mon, Nov 9, 7:00 p.m. NST').length).toBeGreaterThan(0);
     expect(screen.getByText('Venue to be announced')).toBeInTheDocument();
     expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
   });
