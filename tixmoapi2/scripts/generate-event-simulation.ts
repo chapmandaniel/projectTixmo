@@ -14,14 +14,13 @@ import bcrypt from 'bcryptjs';
 import { createDevelopmentClient } from '../prisma/utils/development-client';
 import { resolvePaymentCurrency } from '../src/config/payment-currency';
 
-const paymentCurrency = resolvePaymentCurrency(
-  process.env.PAYMENT_CURRENCY,
-  process.env.NODE_ENV || 'development'
-);
-
 const prisma = createDevelopmentClient();
 
 async function main() {
+  const paymentCurrency = resolvePaymentCurrency(
+    process.env.PAYMENT_CURRENCY,
+    process.env.NODE_ENV || 'development'
+  );
   console.log('🚀 Starting Event Simulation Data Generator...');
 
   // --- Configuration ---
