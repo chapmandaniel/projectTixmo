@@ -2,6 +2,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const {
   guard,
@@ -36,6 +37,20 @@ const receipt = () => ({
   dotenvReadDisabled: true,
   cleanupVerified: true,
   lifetimeCleanupVerified: true,
+});
+test("bind-mounted auth driver loads without the host migration census path", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "task611-driver-"));
+  fs.copyFileSync(
+    path.join(__dirname, "verify-auth-ip.cjs"),
+    path.join(dir, "task611-driver.cjs"),
+  );
+  fs.copyFileSync(
+    path.join(__dirname, "verify-image-restore.cjs"),
+    path.join(dir, "verify-image-restore.cjs"),
+  );
+  const driver = require(path.join(dir, "task611-driver.cjs"));
+  assert.equal(typeof driver.guard, "function");
+  assert.deepEqual(driver.guard(env).pathname, "/tixmo_disposable_restore_source");
 });
 test("fixed synthetic identity and production child environment, no inheritedcredentials", () => {
   assert.doesNotThrow(() => guard(env));

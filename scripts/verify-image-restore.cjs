@@ -5,7 +5,6 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { createHash } = require('node:crypto');
 const { performance } = require('node:perf_hooks');
-const { MIGRATION_COUNT } = require('../tixmoapi2/scripts/migration-census.cjs');
 const SOURCE = 'tixmo_disposable_restore_source';
 const RESTORE = 'tixmo_disposable_restore_destination';
 const PG_IMAGE = 'ghcr.io/railwayapp-templates/postgres-ssl:18';
@@ -72,6 +71,9 @@ function verify(env = process.env, spawn = spawnSync) {
   assert.equal(sql(SOURCE, 'SELECT current_database();'), SOURCE);
   assert.equal(sql(SOURCE, "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';"), '0');
   const migrations = fs.readdirSync(path.join(__dirname, '../tixmoapi2/prisma/migrations')).filter(name => /^\d/.test(name)).sort();
+  // Host-only. This module is bind-mounted at /verify-image-restore.cjs, so a
+  // top-level relative require would crash the auth shared-IP worker.
+  const { MIGRATION_COUNT } = require(path.join(__dirname, '../tixmoapi2/scripts/migration-census.cjs'));
   assert.equal(migrations.length, MIGRATION_COUNT);
   assert.ok(migrations.includes('20261021120000_event_sales_pause'));
   assert.ok(migrations.includes('20261022143000_buyer_password_recovery'));
