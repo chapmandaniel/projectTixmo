@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ScanLine } from 'lucide-react';
 import { DashboardButton, DashboardPage, DashboardPageHeader, DashboardSection, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
-import { scannerRequest, ticketQR } from '../lib/scannerClient';
+import { admissionMessage, forgetScannerKey, readStoredScannerKey, scannerRequest, storeScannerKey, ticketQR } from '../lib/scannerClient';
 import { getDashboardTheme } from '../lib/dashboardTheme';
 
 export default function ScannerPage({ isDark = true }) {
@@ -34,11 +34,14 @@ export default function ScannerPage({ isDark = true }) {
     function endSession() {
         session.current++;
         stopCamera(); request.current?.abort(); key.current = ''; pending.current = false;
-        setDraftKey(''); setScanner(null); setInput(''); setTicketId(''); setEventId(''); setResult(null); setBusy(false); setNotice('Scanner session ended.');
+        forgetScannerKey();
+        setDraftKey(''); setScanner(null); setInput(''); setTicketId(''); setEventId(''); setResult(null); setBusy(false); setNotice('Scanner removed from this device. Enter a key to connect again.');
     }
     useEffect(() => {
         live.current = true;
-        return () => { live.current = false; session.current++; stopCamera(); request.current?.abort(); key.current = ''; };
+        const saved = readStoredScannerKey();
+        if (saved) void perform('auth', saved);
+        return () => { live.current = false; session.current++; pending.current = false; stopCamera(); request.current?.abort(); key.current = ''; };
     }, []);
 
     async function perform(endpoint, value, body) {
@@ -52,14 +55,22 @@ export default function ScannerPage({ isDark = true }) {
             const data = await scannerRequest(endpoint, value, body, controller.signal);
             if (!live.current || generation !== session.current) return;
             if (endpoint === 'auth') {
-                if (typeof data.name !== 'string' || data.status !== 'ACTIVE') throw new Error('Scanner unavailable. Ask an administrator to check its active status.');
-                key.current = value; setDraftKey(''); setScanner(data);
+                if (typeof data.name !== 'string' || data.status !== 'ACTIVE') throw Object.assign(new Error('This scanner key is no longer valid. Enter a new scanner key.'), { forgetKey: true, status: 403 });
+                key.current = value; storeScannerKey(value); setDraftKey(''); setScanner(data);
             } else {
                 if (typeof data.success !== 'boolean') throw new Error('No confirmed admission result. Check the ticket before trying again.');
-                setResult({ accepted: data.success, message: data.success ? 'Admitted' : (data.reason || 'Admission denied') });
+                setResult({ accepted: data.success, message: data.success ? 'Admitted' : admissionMessage(data) });
             }
         } catch (error) {
-            if (live.current && generation === session.current) setNotice(error.status ? error.message : 'No confirmed result. Check the ticket before retrying. Camera and manual entry remain available.');
+            if (!live.current || generation !== session.current) return;
+            if (error.forgetKey) {
+                forgetScannerKey(); key.current = ''; setScanner(null); setDraftKey(''); setResult(null);
+                setNotice('This scanner key is no longer valid. Enter a new scanner key.');
+            } else if (error.wrongEvent || error.voided) {
+                setNotice(''); setResult({ accepted: false, message: error.message });
+            } else if (endpoint === 'auth' && !error.status) {
+                setNotice(readStoredScannerKey() ? 'Saved scanner could not be confirmed. Check the connection, then try again.' : 'No confirmed result. Check the connection before trying again.');
+            } else setNotice(error.status ? error.message : 'No confirmed result. Check the ticket before retrying. Camera and manual entry remain available.');
         } finally {
             clearTimeout(deadline);
             if (live.current && generation === session.current) { pending.current = false; setBusy(false); request.current = null; }
@@ -118,14 +129,14 @@ export default function ScannerPage({ isDark = true }) {
     return <main className={`min-h-screen p-4 sm:p-8 ${theme.shell}`}>
         <DashboardPage>
             <DashboardPageHeader isDark={isDark} icon={ScanLine} title="Ticket scanner" eyebrow="Online admission" description="Scan one ticket at a time. Internet access and an active scanner key are required." />
-            {!scanner ? <DashboardSection isDark={isDark} title="Connect your scanner" description="Your scanner key stays in memory for this session and is cleared when you leave or end the session.">
+            {!scanner ? <DashboardSection isDark={isDark} title="Connect your scanner" description="This scanner key stays on this device until you choose Forget scanner.">
                 <form onSubmit={connect} className="space-y-4">
                     <label htmlFor="scanner-key">Scanner API key</label>
                     <DashboardTextInput isDark={isDark} id="scanner-key" type="password" autoComplete="off" value={draftKey} onChange={event => setDraftKey(event.target.value)} disabled={busy} />
-                    <div className="flex flex-wrap gap-3"><DashboardButton isDark={isDark} type="submit" disabled={busy}>Connect scanner</DashboardButton><DashboardButton isDark={isDark} variant="secondary" onClick={endSession}>Clear scanner key</DashboardButton></div>
+                    <div className="flex flex-wrap gap-3"><DashboardButton isDark={isDark} type="submit" disabled={busy}>Connect scanner</DashboardButton>{readStoredScannerKey() && <DashboardButton isDark={isDark} variant="secondary" type="button" disabled={busy} onClick={() => void perform('auth', readStoredScannerKey())}>Reconnect saved scanner</DashboardButton>}<DashboardButton isDark={isDark} variant="secondary" type="button" onClick={endSession}>Forget scanner</DashboardButton></div>
                 </form>
             </DashboardSection> : <>
-                <DashboardSection isDark={isDark} title={scanner.name} description="Online entry only. A camera scan pauses for its result; restart it for the next ticket." actions={<DashboardButton isDark={isDark} variant="secondary" onClick={endSession}>End scanner session</DashboardButton>}>
+                <DashboardSection isDark={isDark} title={scanner.name} description="Online entry only. A camera scan pauses for its result; restart it for the next ticket." actions={<DashboardButton isDark={isDark} variant="secondary" onClick={endSession}>Forget scanner</DashboardButton>}>
                     <video ref={video} muted playsInline aria-label="Ticket scanner camera" className="w-full max-w-xl rounded-md" />
                     <div className="flex flex-wrap gap-3">
                         <DashboardButton isDark={isDark} onClick={startCamera} disabled={busy || camera}>Start camera</DashboardButton>
