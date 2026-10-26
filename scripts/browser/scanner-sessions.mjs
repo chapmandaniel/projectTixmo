@@ -459,8 +459,10 @@ try {
   await bounded(revocation, 10000);
   await b.fill("#ticket-input", fixture.freshQr);
   await b.click("Check ticket for entry");
+  // Scan auth uses authenticateScanner, so a revoked key is 403 "Scanner is revoked"
+  // and this device drops the saved key before another ticket can be checked.
   await b.wait(
-    `document.querySelector('[role="status"]')?.textContent.includes('Scanner key rejected')`,
+    `document.querySelector('[role="status"]')?.textContent.includes('This scanner was revoked, enter a new key.')`,
   );
   assert.equal(
     await b.evaluate(
@@ -468,23 +470,19 @@ try {
     ),
     false,
   );
+  await keyCleared(b);
   await deviceKey(a, 0);
-  await deviceKey(b, 1);
+  assert.equal(await b.evaluate(`!!document.querySelector('#scanner-key')`), true);
+  assert.equal(await a.evaluate(`!!document.querySelector('#ticket-input')`), true);
   mark(7);
-  // Forget on A cannot end B. B stays connected: a scan-time inactive scanner is
-  // not the auth response "Scanner is revoked", so its saved key remains.
+  // Forget on A cannot restore B or sign A back in.
   await a.click("Forget scanner");
   await a.wait(`!!document.querySelector('#scanner-key')`);
   await keyCleared(a);
-  assert.equal(
-    await b.evaluate(`!!document.querySelector('#ticket-input')`),
-    true,
-  );
+  await keyCleared(b);
+  assert.equal(await b.evaluate(`!!document.querySelector('#scanner-key')`), true);
   await b.send("Page.reload");
   await b.wait(`!!document.querySelector('#scanner-key')`);
-  await b.wait(
-    `document.querySelector('[role="status"]')?.textContent.includes('This scanner was revoked, enter a new key.')`,
-  );
   await keyCleared(a);
   await keyCleared(b);
   assert.equal(
