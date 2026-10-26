@@ -43,18 +43,25 @@ export const normalizeOptionalCredential = (value?: string) => {
 
 // GST/HST program account: 9-digit business number, RT, 4-digit reference.
 const GST_HST_NUMBER = /^[0-9]{9}RT[0-9]{4}$/;
+const loggedHstNumberWarnings = new Set<string>();
+
+const warnHstNumberOnce = (message: string): void => {
+  if (loggedHstNumberWarnings.has(message)) return;
+  loggedHstNumberWarnings.add(message);
+  console.warn(message);
+};
 
 // A missing or invalid registration number must not stop boot. Receipts hide the line.
 export const readHstRegistrationNumber = (raw: string | undefined): string => {
   const normalized = normalizeOptionalCredential(raw).replace(/[\s-]/g, '').toUpperCase();
   if (!normalized) {
-    console.error(
+    warnHstNumberOnce(
       'TIXMO_HST_NUMBER is missing. Startup will continue, and receipts will hide the HST registration line.'
     );
     return '';
   }
   if (!GST_HST_NUMBER.test(normalized)) {
-    console.error(
+    warnHstNumberOnce(
       'TIXMO_HST_NUMBER is invalid. Startup will continue, and receipts will hide the HST registration line. Expected a GST/HST account number: 9 digits, RT, and 4 digits.'
     );
     return '';

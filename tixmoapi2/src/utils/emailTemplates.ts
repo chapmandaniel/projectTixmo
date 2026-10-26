@@ -78,7 +78,7 @@ export function orderConfirmationEmail(
     : '';
   const total = escapeReceiptHtml(data.totalAmount);
   return {
-    subject: `Order Confirmation - ${data.eventName}`,
+    subject: `Your Tixmo tickets for ${data.eventName}`,
     html: `
       <!DOCTYPE html>
       <html>

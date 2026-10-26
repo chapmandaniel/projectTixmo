@@ -200,6 +200,39 @@ describe('CheckoutPage', () => {
         expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
     });
 
+    it('restores the ticket selector from an active reservation after reload', async () => {
+        apiPost.mockReset();
+        apiPost.mockResolvedValueOnce({
+            clientSecret: 'pi_secret_checkout',
+            paymentIntentId: 'pi_checkout',
+        });
+        apiGet.mockResolvedValue({
+            id: 'held-order',
+            orderNumber: 'ORD-HELD',
+            status: 'PENDING',
+            eventId: 'event-1',
+            currency: 'cad',
+            totalAmount: '50.00',
+            tickets: [
+                { id: 'held-1', ticketTypeId: 'ticket-ga', ticketType: { name: 'General Admission' } },
+                { id: 'held-2', ticketTypeId: 'ticket-ga', ticketType: { name: 'General Admission' } },
+            ],
+        });
+
+        renderCheckout({
+            user: { id: 'buyer-1', email: 'buyer@example.com' },
+            entry: '/checkout/neon-nights?reservation=held-order',
+        });
+
+        expect(await screen.findByText('2 tickets selected')).toBeInTheDocument();
+        expect(screen.getByText('2 x CA$25.00')).toBeInTheDocument();
+        expect(screen.getAllByText('CA$50.00').length).toBeGreaterThan(0);
+        expect(screen.queryByText('Choose at least one ticket.')).not.toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /pay CA\$50\.00 \(includes HST and all fees\)/i })).toBeInTheDocument();
+        expect(apiGet).toHaveBeenCalledWith('/orders/held-order');
+        expect(apiPost).toHaveBeenCalledWith('/payments/create-intent', { orderId: 'held-order' });
+    });
+
     const orderId = '12345678-1234-1234-1234-123456789abc';
     const buyer = { id: 'buyer-1', email: 'buyer@example.com' };
     const returnEntry = `/checkout/neon-nights?orderId=${orderId}&redirect_status=succeeded&payment_intent=forged`;

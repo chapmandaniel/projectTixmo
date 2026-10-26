@@ -43,8 +43,8 @@ export const formatHstPercent = (rate: number): string => {
   return Number(scaled.toFixed(2)).toString();
 };
 
-export const formatHstAmountLine = (amount: number, rate: number): string =>
-  `Includes HST (${formatHstPercent(rate)}%): CA$${amount.toFixed(2)}`;
+export const formatHstAmountLine = (amount: number, rate: number, currency = 'CAD'): string =>
+  `Includes HST (${formatHstPercent(rate)}%): ${formatMoney(amount, currency)}`;
 
 export const configuredHstRate = (): number =>
   typeof config.hstRate === 'number' ? config.hstRate : 0.15;
@@ -74,13 +74,22 @@ export const receiptDisclosure = (total?: MoneyInput | null): ReceiptDisclosure 
   };
 };
 
+// CAD is always CA$ so receipt totals and HST lines share one formatter.
 export const formatMoney = (amount: MoneyInput, currency = 'CAD'): string => {
   const value = asNumber(amount);
+  const code = String(currency || 'CAD')
+    .trim()
+    .toUpperCase();
+  if (code === 'CAD') {
+    const formatted = new Intl.NumberFormat('en-CA', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Math.abs(value));
+    return `${value < 0 ? '-' : ''}CA$${formatted}`;
+  }
   return new Intl.NumberFormat('en-CA', {
     style: 'currency',
-    currency: String(currency || 'CAD')
-      .trim()
-      .toUpperCase(),
+    currency: code,
   }).format(value);
 };
 

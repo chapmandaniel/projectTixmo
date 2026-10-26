@@ -236,6 +236,43 @@ describe('Tickets API', () => {
       await request(app)
         .post(`/api/v1/orders/${orderRes.body.data.id}/cancel`)
         .set('Authorization', `Bearer ${authToken}`);
+
+      const cancelled = await request(app)
+        .get(`/api/v1/tickets/${ticket.id}/qr`)
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(cancelled.status).toBe(400);
+      expect(cancelled.body.message).toContain('cancelled');
+      expect(cancelled.body.message).not.toContain('payment is completed');
+    });
+
+    it('should name a refunded ticket instead of an unpaid payment', async () => {
+      const orderRes = await request(app)
+        .post('/api/v1/orders')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          items: [{ ticketTypeId, quantity: 1 }],
+        });
+      await confirmOrderForTest(orderRes.body.data.id);
+      const orderDetails = await request(app)
+        .get(`/api/v1/orders/${orderRes.body.data.id}`)
+        .set('Authorization', `Bearer ${authToken}`);
+      const ticket = orderDetails.body.data.tickets[0];
+      await prisma.order.update({
+        where: { id: orderRes.body.data.id },
+        data: { status: 'REFUNDED', refundStatus: 'SUCCEEDED' },
+      });
+      await prisma.ticket.update({
+        where: { id: ticket.id },
+        data: { status: 'CANCELLED', inventoryState: 'RELEASED' },
+      });
+
+      const res = await request(app)
+        .get(`/api/v1/tickets/${ticket.id}/qr`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('refunded');
+      expect(res.body.message).not.toContain('payment is completed');
     });
 
     it('should reject transfers for unpaid tickets', async () => {

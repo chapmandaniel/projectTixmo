@@ -58,6 +58,16 @@ const formatDate = (value) => {
 
 const unwrapApiPayload = (response) => response?.data?.data || response?.data || response;
 
+const quantitiesFromHeldTickets = (tickets = []) => {
+    const counts = {};
+    for (const ticket of tickets || []) {
+        const id = ticket?.ticketTypeId || ticket?.ticketType?.id;
+        if (!id) continue;
+        counts[id] = (counts[id] || 0) + 1;
+    }
+    return counts;
+};
+
 
 const PolicyLinks = ({ links, compact = false }) => (
     <div className={cn(
@@ -349,6 +359,8 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                 if (restored.eventId !== event.id) throw new Error('This order belongs to another event.');
                 if (cancelled) return;
                 setOrder(restored);
+                const heldQuantities = quantitiesFromHeldTickets(restored.tickets);
+                if (Object.keys(heldQuantities).length) setQuantities(heldQuantities);
                 if (restored.status === 'PENDING') {
                     const session = unwrapApiPayload(await api.post('/payments/create-intent', { orderId: restored.id }));
                     if (!cancelled) setPaymentSession(session);
@@ -413,6 +425,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const ticketCount = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
     const venueLine = [event?.venue?.name, eventAddress(event?.venue)].filter(Boolean).join(', ') || 'Venue to be announced';
     const chargedTotal = order?.totalAmount ?? subtotal;
+    const summaryTotal = chargedTotal;
     const hstLine = hstRegistrationLine(event?.receiptDisclosure?.hstNumber);
     const hstIncludedLine = hstAmountLine(
         chargedTotal,
@@ -635,7 +648,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
 
                             <div className="mt-5 flex items-center justify-between text-lg">
                                 <span className="font-light text-dashboard-muted">Total</span>
-                                <span className="font-light text-zinc-100">{formatEventMoney(subtotal, paymentCurrency)}</span>
+                                <span className="font-light text-zinc-100">{formatEventMoney(summaryTotal, paymentCurrency)}</span>
                             </div>
                             <div className="mt-3 space-y-1 text-sm text-dashboard-muted">
                                 <p>{venueLine}</p>

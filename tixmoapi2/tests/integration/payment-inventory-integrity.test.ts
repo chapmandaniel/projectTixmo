@@ -466,6 +466,16 @@ describe('Payment, admission and inventory integrity', () => {
     await expect(
       scannerService.scanTicket({ scannerId: scanner.id, qrData: qr, scanType: 'ENTRY' })
     ).rejects.toThrow('not assigned');
+    expect(
+      await prisma.scanLog.findFirst({
+        where: {
+          scannerId: scanner.id,
+          ticketId: ticket.id,
+          success: false,
+          failureReason: 'Scanner is not assigned to this event',
+        },
+      })
+    ).toBeTruthy();
     await expect(scannerService.syncTickets(scanner.id, event.id)).rejects.toThrow('not assigned');
     await prisma.scanner.update({ where: { id: scanner.id }, data: { eventId: event.id } });
     const invalid = await scannerService.scanTicket({
@@ -933,15 +943,13 @@ describe('Payment, admission and inventory integrity', () => {
     expect(await stock()).toMatchObject({ quantitySold: 1, quantityAvailable: 19 });
     expect(current.tickets[0]).toMatchObject({ status: 'VALID', inventoryState: 'SOLD' });
     const ticket = current.tickets[0];
-    expect(
-      (
-        await scannerService.scanTicket({
-          scannerId: scanner.id,
-          qrData: generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId),
-          scanType: 'ENTRY',
-        })
-      ).success
-    ).toBe(true);
+    const admitted = await scannerService.scanTicket({
+      scannerId: scanner.id,
+      qrData: generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId),
+      scanType: 'ENTRY',
+    });
+    expect(admitted.success).toBe(true);
+    expect(admitted.ticket).toMatchObject({ status: 'USED' });
   });
 
   it('voids tickets when dashboard partial refunds together cover the full charge', async () => {
