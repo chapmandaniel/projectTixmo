@@ -1,0 +1,4311 @@
+{
+  "remote_heads": 575,
+  "snapshot_refs_verified": 535,
+  "exact_original": 495,
+  "fixture_cleaned_copies": 40,
+  "original_remote_heads_preserved": 46,
+  "branches": [
+    {
+      "original_ref": "refs/heads/agentbox/claude",
+      "original_sha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+      "remote_ref": "refs/heads/agentbox/claude",
+      "remote_sha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/agentbox/codex",
+      "original_sha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+      "remote_ref": "refs/heads/agentbox/codex",
+      "remote_sha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/recover-api-startup-script",
+      "original_sha": "c6577d8f30924c58e732f3fbd59b2518b2fbe54c",
+      "remote_ref": "refs/heads/codex/recover-api-startup-script",
+      "remote_sha": "c6577d8f30924c58e732f3fbd59b2518b2fbe54c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/recover-historical-review-notes",
+      "original_sha": "e5c9f33925d8459603ba63af933578257b17f260",
+      "remote_ref": "refs/heads/codex/recover-historical-review-notes",
+      "remote_sha": "e5c9f33925d8459603ba63af933578257b17f260",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/recover-local-review-tests-20261025",
+      "original_sha": "822dcf02a80958b65986bd5eb3f4635760ec9275",
+      "remote_ref": "refs/heads/codex/recover-local-review-tests-20261025",
+      "remote_sha": "822dcf02a80958b65986bd5eb3f4635760ec9275",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/recover-qa84-payment-tests",
+      "original_sha": "e40f66717e6797cd4ff1add055a989499cf07ea7",
+      "remote_ref": "refs/heads/codex/recover-qa84-payment-tests",
+      "remote_sha": "e40f66717e6797cd4ff1add055a989499cf07ea7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/recover-qa87-webhook-tests",
+      "original_sha": "15705453ae49810c8701db4dc306042bc3eecfe0",
+      "remote_ref": "refs/heads/codex/recover-qa87-webhook-tests",
+      "remote_sha": "15705453ae49810c8701db4dc306042bc3eecfe0",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/recover-release-tooling-20261025",
+      "original_sha": "440a4788bfb6ab6b3fc064bd900356ed01e02662",
+      "remote_ref": "refs/heads/codex/recover-release-tooling-20261025",
+      "remote_sha": "440a4788bfb6ab6b3fc064bd900356ed01e02662",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/recover-untracked-review-tests",
+      "original_sha": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+      "remote_ref": "refs/heads/codex/recover-untracked-review-tests",
+      "remote_sha": "54b9c41fc87ad44823e3266dafdae77998f9659d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-231-asset-share-integration",
+      "original_sha": "134bd2686639a6e0ec2c0348be856196a336b8d2",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-231-asset-share-integration",
+      "remote_sha": "8b56360b00b2a235adc8422e9d603bb900fa0dbc",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-231-controlled-candidate",
+      "original_sha": "c6da8764f7ec139667542b3372cb4331f02e6525",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-231-controlled-candidate",
+      "remote_sha": "c6da8764f7ec139667542b3372cb4331f02e6525",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-231-followup-integration",
+      "original_sha": "5a9eff2154e5270f9e3decdb0df6955420e99950",
+      "remote_ref": "refs/heads/codex/task-231-followup-integration",
+      "remote_sha": "5a9eff2154e5270f9e3decdb0df6955420e99950",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-243-live-readiness",
+      "original_sha": "e741b667d18e4bce358391d6a0187d2609bfaf33",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-243-live-readiness",
+      "remote_sha": "e741b667d18e4bce358391d6a0187d2609bfaf33",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-243-privacy-placeholder",
+      "original_sha": "c824899a84fa8f41f242944b3aac213c3a832084",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-243-privacy-placeholder",
+      "remote_sha": "f7c97e682bf76b884cd237ae8d430af0a7638af8",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-341-managed-cancellation",
+      "original_sha": "b8e4e5da3a721cf00e018bcf06893eadba6301ef",
+      "remote_ref": "refs/heads/codex/task-341-managed-cancellation",
+      "remote_sha": "b8e4e5da3a721cf00e018bcf06893eadba6301ef",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-499-managed-ci",
+      "original_sha": "4631e7e9f2e0d1f01ee659966925f3f89221152d",
+      "remote_ref": "refs/heads/codex/task-499-managed-ci",
+      "remote_sha": "4631e7e9f2e0d1f01ee659966925f3f89221152d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-557-prerequisite-checker",
+      "original_sha": "74f3be6b36b163d8a9cfed68c96b8cafb9bff53c",
+      "remote_ref": "refs/heads/codex/task-557-prerequisite-checker",
+      "remote_sha": "74f3be6b36b163d8a9cfed68c96b8cafb9bff53c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-561-refund-settlement",
+      "original_sha": "492a3e4c2b0d5d3db3a3f65964eb385b486a6826",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-561-refund-settlement",
+      "remote_sha": "492a3e4c2b0d5d3db3a3f65964eb385b486a6826",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-565-early-failure",
+      "original_sha": "eda4ff76ca89726f200cc61bd3f164bdd78437c0",
+      "remote_ref": "refs/heads/codex/task-565-early-failure",
+      "remote_sha": "eda4ff76ca89726f200cc61bd3f164bdd78437c0",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-566-recovery-integration",
+      "original_sha": "c1575bf12152306b120b93e2765c6064031449aa",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-566-recovery-integration",
+      "remote_sha": "c1575bf12152306b120b93e2765c6064031449aa",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-569-online-scanner",
+      "original_sha": "c7ea2e7f0b7652e03fbae50006ebb44bf27d1649",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-569-online-scanner",
+      "remote_sha": "c7ea2e7f0b7652e03fbae50006ebb44bf27d1649",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-570-sales-pause-http",
+      "original_sha": "8da0450710da3cb9a6a06705bc2922afbee0d1ea",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-570-sales-pause-http",
+      "remote_sha": "8da0450710da3cb9a6a06705bc2922afbee0d1ea",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-573-image-restore",
+      "original_sha": "16fe5e0a0bc36790f67552cebf78c1829e2f4d70",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-573-image-restore",
+      "remote_sha": "16fe5e0a0bc36790f67552cebf78c1829e2f4d70",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-575-support-contracts",
+      "original_sha": "38d0217aa2361841a4b7060c521bc25dea5916af",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-575-support-contracts",
+      "remote_sha": "38d0217aa2361841a4b7060c521bc25dea5916af",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-576-wallet-browser",
+      "original_sha": "71b1aa7c22503e83ab4f787a3dfc15eff5147492",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-576-wallet-browser",
+      "remote_sha": "71b1aa7c22503e83ab4f787a3dfc15eff5147492",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-579-external-refunds",
+      "original_sha": "8f97a847d6202f27dc63de61a93f7b6eed66aa14",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-579-external-refunds",
+      "remote_sha": "8f97a847d6202f27dc63de61a93f7b6eed66aa14",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-581-buyer-reset",
+      "original_sha": "489548ffed4159b69b380c0d0a162e922f5eae19",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-581-buyer-reset",
+      "remote_sha": "489548ffed4159b69b380c0d0a162e922f5eae19",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-583-target-probe",
+      "original_sha": "ac1cc4d18d0476b3af96aed0fa6e50f38821e10a",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-583-target-probe",
+      "remote_sha": "ac1cc4d18d0476b3af96aed0fa6e50f38821e10a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-585-asset-share-key",
+      "original_sha": "f489abee3c58e0d417ec1f283fe0d79aa9267608",
+      "remote_ref": "refs/heads/archive/local-20261025/codex/task-585-asset-share-key",
+      "remote_sha": "f489abee3c58e0d417ec1f283fe0d79aa9267608",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-587-stripe-read-probe",
+      "original_sha": "32e2c0b114412f03b588bbd1e768679c0ea470fc",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-587-stripe-read-probe",
+      "remote_sha": "6d658aa989f5933cd6357c8f51d021985dfaef87",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-589-api-startup-script",
+      "original_sha": "00f33e36e2364eac9dbc74d96bf5a652b8d09a49",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-589-api-startup-script",
+      "remote_sha": "eb3856589951cb3222f0f9841e07ec1b96a15211",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-589-stripe-guard-reasons",
+      "original_sha": "5c33963df19c0fa2cb6cac9a217b8ec5d62a92a3",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-589-stripe-guard-reasons",
+      "remote_sha": "94cbd536808bf6749755187211dbb7815079f6cf",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-590-asset-rekey-diagnostics",
+      "original_sha": "fc9b1c6ebcd831e4c09f22381454ca7b2cc60360",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-590-asset-rekey-diagnostics",
+      "remote_sha": "2d51989c1de49931728c651a64c493a46c8e386e",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-591-stripe-test-key-compat",
+      "original_sha": "61da995acb49b9135ca8fba3c16b214ab8d9f1d1",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-591-stripe-test-key-compat",
+      "remote_sha": "f65f33ad3ff91ab1ea9aa49c6ad47cbaf78b2a70",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-592-hash-only-share-policy",
+      "original_sha": "d73f3f79fa3504f99c95db0d4bd4017b2444642e",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-592-hash-only-share-policy",
+      "remote_sha": "d3b37411cd3162a306fa64bcb43a870acd59b987",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-594-share-link-observer",
+      "original_sha": "3d7e454e60394b7f9de5733fb324d733fb55363c",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-594-share-link-observer",
+      "remote_sha": "93222b88d6feddc5041ac231a420afd43c270a5c",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-595-observable-share-audit",
+      "original_sha": "68821f37a6b8ec080ade6982a530c9a7366311d3",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-595-observable-share-audit",
+      "remote_sha": "03122f08d96b5ae7ba76b722db2c1a22c090dd3d",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-596-explicit-predeploy-rekey",
+      "original_sha": "542dcb9a09fe47af7dcbdffbc12e6a5239e14199",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-596-explicit-predeploy-rekey",
+      "remote_sha": "47a6282980ea3eb32c79a37612ee04efb24c1eb3",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-597-redis-handshake",
+      "original_sha": "cf14341889f80d1732f330998737756f7bb01ba4",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-597-redis-handshake",
+      "remote_sha": "ead89f88e22050794320b67d142462050d5666b8",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-597-runtime-version-observer",
+      "original_sha": "075b18f08d5110646d5a842b9704f2e2d3c6c098",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-597-runtime-version-observer",
+      "remote_sha": "a7c2d671cd516f8e4ed47f82c5665479c3645605",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-598-evidence-status-regressions",
+      "original_sha": "db9978936c5a8d663fc5a36808a5f531ffe4ee13",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-598-evidence-status-regressions",
+      "remote_sha": "48935e47ecd0241577ba89e0d34e0f9613d29216",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-599-browser-endpoint-discovery",
+      "original_sha": "ccb66c33b51bd339a3590e3a3fbf1d5b49c70c3e",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-599-browser-endpoint-discovery",
+      "remote_sha": "c41eaa1f9b3e6a5d35c685702d7a26589ada8a97",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-600-one-approved-email",
+      "original_sha": "751d844ce6323b6a51a4d99be29f7a17e643539f",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-600-one-approved-email",
+      "remote_sha": "6199e2a66cdd041e806dae84ff327177305272bb",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-602-guard-diagnostics",
+      "original_sha": "8bc92f3474ede5e39fce536933dfee6b2594a19f",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-602-guard-diagnostics",
+      "remote_sha": "7815da45c9eb4fe4823a08079c04f68305608589",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-602-startup-assertion",
+      "original_sha": "fab53b3db2bd9ff8fd22f4be7b742194f4f6cc38",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-602-startup-assertion",
+      "remote_sha": "3c6653f1bc4964459b504c1f273bb189f6ac284d",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-602-storage-canary",
+      "original_sha": "739a10c451cc295773296c94660cc74300c42d50",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-602-storage-canary",
+      "remote_sha": "afa43e6f822d3e2e9a3bff7c907bc5aab60f8020",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-603-logical-roundtrip",
+      "original_sha": "09016d47dbac61ce9856c64b1535afb75f930ca8",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-603-logical-roundtrip",
+      "remote_sha": "8b6c9cc319a6d3b0afb9d5d05d27b26083fb36d7",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-606-application-rollback",
+      "original_sha": "553514b2afcccf67f452371c8c3a2a223bf57a7b",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-606-application-rollback",
+      "remote_sha": "f99a99816e20659681d9f7a83064df56f501b1b0",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-606-integration",
+      "original_sha": "57deea6619838c114240d9b542b2bc3cc9b06613",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-606-integration",
+      "remote_sha": "b9397adaf32b1beed5b9348f52c556d47e32cec9",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-607-parity-upgrade",
+      "original_sha": "313923d6d10196120cca006a2d8b65ad0177021f",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-607-parity-upgrade",
+      "remote_sha": "cd48b3da999068c8d3947ad3853a462a02708d59",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-608-http-pressure",
+      "original_sha": "e4e501c9ce4986ad3ef40a189c94d330018958e8",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-608-http-pressure",
+      "remote_sha": "d8f87fcda0c3b9738f596a9113edf1378c42c9eb",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-608-integration",
+      "original_sha": "e6e7c86f9458f7faf0d4f7bddb1ce3457e04361e",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-608-integration",
+      "remote_sha": "e1ae1954bde5c11802e5f036637791ba7d48672d",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-609-http-ramp",
+      "original_sha": "3bc6076366530eb3fd133334d1e5a2c7ab3e0df9",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-609-http-ramp",
+      "remote_sha": "b07412e46aa22ee4dc93d68188571d4530f2f2a6",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-610-http-soak",
+      "original_sha": "b88a58d3604184effebd5752c6e06eabd92d142b",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-610-http-soak",
+      "remote_sha": "d4c31be62f968aba831aab9d96c7c288cceb3d3c",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-610-integration",
+      "original_sha": "8c1a8ef630a73a6a9c01dedb11f8e833d1490b5b",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-610-integration",
+      "remote_sha": "b3b7504a45d096f4ddaa174d6adf985df3b12193",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-611-auth-ip",
+      "original_sha": "d71427b976119344b3fe6429e61162d6879222bc",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-611-auth-ip",
+      "remote_sha": "9a312bfdd1e3f0b60870d93639bd6f74892a0fa4",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-612-native-recovery",
+      "original_sha": "9850b40737e2a71f21eaaec5d97fa3e5d1313fb5",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-612-native-recovery",
+      "remote_sha": "b08edf1901c0be60235b3edffc50f368ec1bd16a",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-613-soak-retention",
+      "original_sha": "b347857587ab6dbbb2b5786625ee859b487bec65",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-613-soak-retention",
+      "remote_sha": "9420f2791fa2b917a0369aeab9fa5d9eb6f7690a",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-615-scanner-browser",
+      "original_sha": "a82a1f6f24784b554259388e501519412adbd915",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-615-scanner-browser",
+      "remote_sha": "ee50f94f769a6ca3b0ff22ee3ade33fbaae8dd4d",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-616-paid-ticket-http",
+      "original_sha": "33aa2b1b65ed9d11df3182de7547fec54540f208",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-616-paid-ticket-http",
+      "remote_sha": "5571bbb2fd3084977c4fa9b135afe248681ab9bf",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-619-zod-security",
+      "original_sha": "52320a49ad9be6717b1ed48e3c3e0751b42b76c4",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-619-zod-security",
+      "remote_sha": "51b4932a8324440650778077be4c0b962c01cfa4",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/task-621-secure-rollback",
+      "original_sha": "9680b881531f116eab7e08d2e83437499ef8f9fe",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/task-621-secure-rollback",
+      "remote_sha": "50bbcb8a083cd92b23bcbb2feb43b4f659589422",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/tasks-603-605-integration",
+      "original_sha": "330965bc30ec14eb05eee6124aa4eda9b1b7270d",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/tasks-603-605-integration",
+      "remote_sha": "e120e68d7ebba205d9f22aba4ef21af026ef6076",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/tasks-609-611-integration",
+      "original_sha": "7d6f1cd16dab475ea0a604a28559551de14a8874",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/tasks-609-611-integration",
+      "remote_sha": "ab7b35ec699f4c725106fd9acbde247aa324b5cc",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/codex/tasks-615-616-integration",
+      "original_sha": "60989c7bfccab1bdd38d1d1f154e4336d709bb46",
+      "remote_ref": "refs/heads/sanitized/local-20261025/codex/tasks-615-616-integration",
+      "remote_sha": "84bb9ac2a3b60ed4d4b3e7a39aefe7b6ccaf8212",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/main",
+      "original_sha": "822dcf02a80958b65986bd5eb3f4635760ec9275",
+      "remote_ref": "refs/heads/main",
+      "remote_sha": "822dcf02a80958b65986bd5eb3f4635760ec9275",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/task-553-independent-wiring-review",
+      "original_sha": "f78725be265aaa35c0b9312ed3c1e11d82f92120",
+      "remote_ref": "refs/heads/task-553-independent-wiring-review",
+      "remote_sha": "f78725be265aaa35c0b9312ed3c1e11d82f92120",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/task-553-successor-wiring-review",
+      "original_sha": "5e60280716d05ac7bc95c3227c23a4f005bc5c29",
+      "remote_ref": "refs/heads/task-553-successor-wiring-review",
+      "remote_sha": "5e60280716d05ac7bc95c3227c23a4f005bc5c29",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/task-556-diagnostic-review",
+      "original_sha": "cf7735df7810b29f69b6db5a26ad4cc62b719889",
+      "remote_ref": "refs/heads/task-556-diagnostic-review",
+      "remote_sha": "cf7735df7810b29f69b6db5a26ad4cc62b719889",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/task-557-release-prerequisite-checker",
+      "original_sha": "775f43a4a7f0f8fcb079abd8c20972f00b1adf24",
+      "remote_ref": "refs/heads/task-557-release-prerequisite-checker",
+      "remote_sha": "775f43a4a7f0f8fcb079abd8c20972f00b1adf24",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/pr-railway-documentation",
+      "original_sha": "17ef6ad99f4db5c30351d1f317d9458fa409ca96",
+      "remote_ref": "refs/heads/tixmo/pr-railway-documentation",
+      "remote_sha": "17ef6ad99f4db5c30351d1f317d9458fa409ca96",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-100",
+      "original_sha": "8e3bba4bea85a9107d79d30dc64fac351f48d247",
+      "remote_ref": "refs/heads/tixmo/review-100",
+      "remote_sha": "8e3bba4bea85a9107d79d30dc64fac351f48d247",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-101-api-evidence",
+      "original_sha": "5036967dcd3afa1db8192e6ad3ceea2dbad19db8",
+      "remote_ref": "refs/heads/tixmo/review-101-api-evidence",
+      "remote_sha": "5036967dcd3afa1db8192e6ad3ceea2dbad19db8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-101-evidence-r2",
+      "original_sha": "3dec6338643435e81615c25be1d2e7f671cd329c",
+      "remote_ref": "refs/heads/tixmo/review-101-evidence-r2",
+      "remote_sha": "3dec6338643435e81615c25be1d2e7f671cd329c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-104-api-diagnosis",
+      "original_sha": "d2b240c02fb55beba6970c8c168182b5e6f9d2b5",
+      "remote_ref": "refs/heads/tixmo/review-104-api-diagnosis",
+      "remote_sha": "d2b240c02fb55beba6970c8c168182b5e6f9d2b5",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-106",
+      "original_sha": "d4d8415198a33838576a2f3b91bb32933145479a",
+      "remote_ref": "refs/heads/tixmo/review-106",
+      "remote_sha": "d4d8415198a33838576a2f3b91bb32933145479a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-107",
+      "original_sha": "d4d8415198a33838576a2f3b91bb32933145479a",
+      "remote_ref": "refs/heads/tixmo/review-107",
+      "remote_sha": "d4d8415198a33838576a2f3b91bb32933145479a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-108",
+      "original_sha": "e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe",
+      "remote_ref": "refs/heads/tixmo/review-108",
+      "remote_sha": "e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-109",
+      "original_sha": "e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe",
+      "remote_ref": "refs/heads/tixmo/review-109",
+      "remote_sha": "e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-129",
+      "original_sha": "3ea87153aa3a7a241100a72eab16569745d0ccff",
+      "remote_ref": "refs/heads/tixmo/review-129",
+      "remote_sha": "3ea87153aa3a7a241100a72eab16569745d0ccff",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-131",
+      "original_sha": "9122294b71a1ee6ac0a708906c2a1116d86d94d4",
+      "remote_ref": "refs/heads/tixmo/review-131",
+      "remote_sha": "9122294b71a1ee6ac0a708906c2a1116d86d94d4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-133",
+      "original_sha": "35f6f7b3cf53019561152fb79ad23b24fdc68142",
+      "remote_ref": "refs/heads/tixmo/review-133",
+      "remote_sha": "35f6f7b3cf53019561152fb79ad23b24fdc68142",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-170-evidence",
+      "original_sha": "2b1cfb07ea4011d02a941dfaa455c45bd58ea62d",
+      "remote_ref": "refs/heads/tixmo/review-170-evidence",
+      "remote_sha": "2b1cfb07ea4011d02a941dfaa455c45bd58ea62d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-173",
+      "original_sha": "c079d79c43be94ddc64c34d2cd9db2d31999d7d7",
+      "remote_ref": "refs/heads/tixmo/review-173",
+      "remote_sha": "c079d79c43be94ddc64c34d2cd9db2d31999d7d7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-174",
+      "original_sha": "0e8f598083267ecdd2deff1a1193ac1a1f4f17ab",
+      "remote_ref": "refs/heads/tixmo/review-174",
+      "remote_sha": "0e8f598083267ecdd2deff1a1193ac1a1f4f17ab",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-176",
+      "original_sha": "766380ccd360140d4e2aceb1c58c01dd5b505ead",
+      "remote_ref": "refs/heads/tixmo/review-176",
+      "remote_sha": "766380ccd360140d4e2aceb1c58c01dd5b505ead",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-178",
+      "original_sha": "1efaf58deb0270caf40a0d9315198168566a8c78",
+      "remote_ref": "refs/heads/tixmo/review-178",
+      "remote_sha": "1efaf58deb0270caf40a0d9315198168566a8c78",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-180",
+      "original_sha": "b8eb3cbbe3adadae9929f8c70aa3cee1ead7764d",
+      "remote_ref": "refs/heads/tixmo/review-180",
+      "remote_sha": "b8eb3cbbe3adadae9929f8c70aa3cee1ead7764d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-181",
+      "original_sha": "8579c36d4eb03ec5d1fb7ac961ccb4b45e2bacbc",
+      "remote_ref": "refs/heads/tixmo/review-181",
+      "remote_sha": "8579c36d4eb03ec5d1fb7ac961ccb4b45e2bacbc",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-183",
+      "original_sha": "ebc5c26b096392215bf8f34009857e6b995d74cf",
+      "remote_ref": "refs/heads/tixmo/review-183",
+      "remote_sha": "ebc5c26b096392215bf8f34009857e6b995d74cf",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-187",
+      "original_sha": "0a5d9030f2d4539a84b41171e69c4c7964c6266e",
+      "remote_ref": "refs/heads/tixmo/review-187",
+      "remote_sha": "0a5d9030f2d4539a84b41171e69c4c7964c6266e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-188",
+      "original_sha": "b66a4079a77e3d76cf842308710df0987200bdb1",
+      "remote_ref": "refs/heads/tixmo/review-188",
+      "remote_sha": "b66a4079a77e3d76cf842308710df0987200bdb1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-189",
+      "original_sha": "b891f1a55a7cf75c7052591685ca66f0661f0045",
+      "remote_ref": "refs/heads/tixmo/review-189",
+      "remote_sha": "b891f1a55a7cf75c7052591685ca66f0661f0045",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-190",
+      "original_sha": "daf829d83da0696828d9dc480f4c1f9b7291ebba",
+      "remote_ref": "refs/heads/tixmo/review-190",
+      "remote_sha": "daf829d83da0696828d9dc480f4c1f9b7291ebba",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-191",
+      "original_sha": "77c429602c7b93af8015dff47548fcd3a9f3fbf4",
+      "remote_ref": "refs/heads/tixmo/review-191",
+      "remote_sha": "77c429602c7b93af8015dff47548fcd3a9f3fbf4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-193",
+      "original_sha": "98e2bf5be11671eb9957f5af2d181d1eb2fafdb1",
+      "remote_ref": "refs/heads/tixmo/review-193",
+      "remote_sha": "98e2bf5be11671eb9957f5af2d181d1eb2fafdb1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-194",
+      "original_sha": "f95c810c210faab6de8ed88d1d1a38916de9b3fe",
+      "remote_ref": "refs/heads/tixmo/review-194",
+      "remote_sha": "f95c810c210faab6de8ed88d1d1a38916de9b3fe",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-197",
+      "original_sha": "10478a3116fccd32602575f33d16f649c41745c4",
+      "remote_ref": "refs/heads/tixmo/review-197",
+      "remote_sha": "10478a3116fccd32602575f33d16f649c41745c4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-199",
+      "original_sha": "ef26f077d0860dcd83d154184f49e37cc5820249",
+      "remote_ref": "refs/heads/tixmo/review-199",
+      "remote_sha": "ef26f077d0860dcd83d154184f49e37cc5820249",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-200",
+      "original_sha": "e389b6f3f526133607fb349f4b7d2384fb115c71",
+      "remote_ref": "refs/heads/tixmo/review-200",
+      "remote_sha": "e389b6f3f526133607fb349f4b7d2384fb115c71",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-201",
+      "original_sha": "4f243da798cf834cadd4a099678cb18f68d2db01",
+      "remote_ref": "refs/heads/tixmo/review-201",
+      "remote_sha": "4f243da798cf834cadd4a099678cb18f68d2db01",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-206",
+      "original_sha": "d1d1c49d2fb3aa738cdc94af1888985d999c3031",
+      "remote_ref": "refs/heads/tixmo/review-206",
+      "remote_sha": "d1d1c49d2fb3aa738cdc94af1888985d999c3031",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-208",
+      "original_sha": "6abdb76ea839e27ec7dbd571f50325ad98a19b3f",
+      "remote_ref": "refs/heads/tixmo/review-208",
+      "remote_sha": "6abdb76ea839e27ec7dbd571f50325ad98a19b3f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-210",
+      "original_sha": "bd576356375e7ac107a99d4683475426341435e1",
+      "remote_ref": "refs/heads/tixmo/review-210",
+      "remote_sha": "bd576356375e7ac107a99d4683475426341435e1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-214",
+      "original_sha": "8d9f7b2ce020289b8f6a314b3e14837a2d7e9c5d",
+      "remote_ref": "refs/heads/tixmo/review-214",
+      "remote_sha": "8d9f7b2ce020289b8f6a314b3e14837a2d7e9c5d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-229",
+      "original_sha": "5e1e658f14415f63ccb794dfc96bead76ebda7e9",
+      "remote_ref": "refs/heads/tixmo/review-229",
+      "remote_sha": "5e1e658f14415f63ccb794dfc96bead76ebda7e9",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-290",
+      "original_sha": "7414d6fac22ae870bd89ad4b388d3a3928a3f805",
+      "remote_ref": "refs/heads/tixmo/review-290",
+      "remote_sha": "7414d6fac22ae870bd89ad4b388d3a3928a3f805",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-292-browser",
+      "original_sha": "dbdab76e12805bd956b057ba462022328f172cef",
+      "remote_ref": "refs/heads/tixmo/review-292-browser",
+      "remote_sha": "dbdab76e12805bd956b057ba462022328f172cef",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-292-pg",
+      "original_sha": "40eca518b894b0f51d481705fbca88d1c60c45c0",
+      "remote_ref": "refs/heads/tixmo/review-292-pg",
+      "remote_sha": "40eca518b894b0f51d481705fbca88d1c60c45c0",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-296",
+      "original_sha": "91bbfb27f5c1eef527daec11d9848f613e9293ce",
+      "remote_ref": "refs/heads/tixmo/review-296",
+      "remote_sha": "91bbfb27f5c1eef527daec11d9848f613e9293ce",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-296-r2",
+      "original_sha": "a17229c3c4b415cd2cf2a5377cb856b5982da61b",
+      "remote_ref": "refs/heads/tixmo/review-296-r2",
+      "remote_sha": "a17229c3c4b415cd2cf2a5377cb856b5982da61b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-296-r3",
+      "original_sha": "74d0cff9c257619f9b75dbb2bd8453c3fde11231",
+      "remote_ref": "refs/heads/tixmo/review-296-r3",
+      "remote_sha": "74d0cff9c257619f9b75dbb2bd8453c3fde11231",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-296-r4",
+      "original_sha": "f6a1a8a0e0e6ea67c2ad51c553bbd5927a556fb5",
+      "remote_ref": "refs/heads/tixmo/review-296-r4",
+      "remote_sha": "f6a1a8a0e0e6ea67c2ad51c553bbd5927a556fb5",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-300",
+      "original_sha": "3fd725d9a706475286df4482943ee5bb2c3c01f2",
+      "remote_ref": "refs/heads/tixmo/review-300",
+      "remote_sha": "3fd725d9a706475286df4482943ee5bb2c3c01f2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-301",
+      "original_sha": "05f2f42fc9a3969c7c10e11250d83ce099b500ef",
+      "remote_ref": "refs/heads/tixmo/review-301",
+      "remote_sha": "05f2f42fc9a3969c7c10e11250d83ce099b500ef",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-304",
+      "original_sha": "31fa03714a2e3f822d764337cc52314f69e7172e",
+      "remote_ref": "refs/heads/tixmo/review-304",
+      "remote_sha": "31fa03714a2e3f822d764337cc52314f69e7172e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-317",
+      "original_sha": "6da0f2962a0a5d8781605244c02e4ca7b4ba208b",
+      "remote_ref": "refs/heads/tixmo/review-317",
+      "remote_sha": "6da0f2962a0a5d8781605244c02e4ca7b4ba208b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-358",
+      "original_sha": "5281c61fae797521a9d68d7882545cde5f850610",
+      "remote_ref": "refs/heads/tixmo/review-358",
+      "remote_sha": "5281c61fae797521a9d68d7882545cde5f850610",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-394",
+      "original_sha": "0cf55967f2af0ba0f541fe3373e71762560b628d",
+      "remote_ref": "refs/heads/tixmo/review-394",
+      "remote_sha": "0cf55967f2af0ba0f541fe3373e71762560b628d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-395",
+      "original_sha": "51c4d32bcfff5764aa2bd575d9c52be7976a9114",
+      "remote_ref": "refs/heads/tixmo/review-395",
+      "remote_sha": "51c4d32bcfff5764aa2bd575d9c52be7976a9114",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-396",
+      "original_sha": "4c2bf507c2eb3f6c08e82f6dee26d6aebd281242",
+      "remote_ref": "refs/heads/tixmo/review-396",
+      "remote_sha": "4c2bf507c2eb3f6c08e82f6dee26d6aebd281242",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-402-native-http",
+      "original_sha": "cb1490caca36f4257df1cd633e013fa0d529986f",
+      "remote_ref": "refs/heads/tixmo/review-402-native-http",
+      "remote_sha": "cb1490caca36f4257df1cd633e013fa0d529986f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-403-native-http",
+      "original_sha": "b0e7c5ab4f407510cb6ef0e6804c55f2be62620b",
+      "remote_ref": "refs/heads/tixmo/review-403-native-http",
+      "remote_sha": "b0e7c5ab4f407510cb6ef0e6804c55f2be62620b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-405-nullpath-runtime",
+      "original_sha": "75c441470a6860357515220f8fd2a29e3aea355d",
+      "remote_ref": "refs/heads/tixmo/review-405-nullpath-runtime",
+      "remote_sha": "75c441470a6860357515220f8fd2a29e3aea355d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-420",
+      "original_sha": "24f844e3b4c11ace2058d118f40da740eac15d08",
+      "remote_ref": "refs/heads/tixmo/review-420",
+      "remote_sha": "24f844e3b4c11ace2058d118f40da740eac15d08",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-47-docker",
+      "original_sha": "29328f9fc7df650bdaaf555d3c11ca582a0c0134",
+      "remote_ref": "refs/heads/tixmo/review-47-docker",
+      "remote_sha": "29328f9fc7df650bdaaf555d3c11ca582a0c0134",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-48-docker",
+      "original_sha": "29328f9fc7df650bdaaf555d3c11ca582a0c0134",
+      "remote_ref": "refs/heads/tixmo/review-48-docker",
+      "remote_sha": "29328f9fc7df650bdaaf555d3c11ca582a0c0134",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-482",
+      "original_sha": "9a4b565a3276aeb9f839824ca7c42720ec092799",
+      "remote_ref": "refs/heads/tixmo/review-482",
+      "remote_sha": "9a4b565a3276aeb9f839824ca7c42720ec092799",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-484",
+      "original_sha": "83d4c34f8a4b56654d066573921a330dbe3e1518",
+      "remote_ref": "refs/heads/tixmo/review-484",
+      "remote_sha": "83d4c34f8a4b56654d066573921a330dbe3e1518",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-503",
+      "original_sha": "e57c6c4ddf1a80edb1a1dc9547babe9c19f19753",
+      "remote_ref": "refs/heads/tixmo/review-503",
+      "remote_sha": "e57c6c4ddf1a80edb1a1dc9547babe9c19f19753",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-505",
+      "original_sha": "dd43b39b6410d79eeda61543a18b1444a8cc4dbe",
+      "remote_ref": "refs/heads/tixmo/review-505",
+      "remote_sha": "dd43b39b6410d79eeda61543a18b1444a8cc4dbe",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-505-r2",
+      "original_sha": "7d4766e940559378b8180e66ccbbac4b4bbbf4ab",
+      "remote_ref": "refs/heads/tixmo/review-505-r2",
+      "remote_sha": "7d4766e940559378b8180e66ccbbac4b4bbbf4ab",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review-99",
+      "original_sha": "8e3bba4bea85a9107d79d30dc64fac351f48d247",
+      "remote_ref": "refs/heads/tixmo/review-99",
+      "remote_sha": "8e3bba4bea85a9107d79d30dc64fac351f48d247",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review357",
+      "original_sha": "2a12fecdfe048b0d01738611652a1fc5f8b29083",
+      "remote_ref": "refs/heads/tixmo/review357",
+      "remote_sha": "2a12fecdfe048b0d01738611652a1fc5f8b29083",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review359",
+      "original_sha": "fd07445a9e59f5bfe6f2f0834cf705150fa492d3",
+      "remote_ref": "refs/heads/tixmo/review359",
+      "remote_sha": "fd07445a9e59f5bfe6f2f0834cf705150fa492d3",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/review360",
+      "original_sha": "9d0cd2fc31fa6904785943d774adb63950efc9b7",
+      "remote_ref": "refs/heads/tixmo/review360",
+      "remote_sha": "9d0cd2fc31fa6904785943d774adb63950efc9b7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-102-api-diagnosis",
+      "original_sha": "d2b240c02fb55beba6970c8c168182b5e6f9d2b5",
+      "remote_ref": "refs/heads/tixmo/task-102-api-diagnosis",
+      "remote_sha": "d2b240c02fb55beba6970c8c168182b5e6f9d2b5",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-103-evidence-correction",
+      "original_sha": "3dec6338643435e81615c25be1d2e7f671cd329c",
+      "remote_ref": "refs/heads/tixmo/task-103-evidence-correction",
+      "remote_sha": "3dec6338643435e81615c25be1d2e7f671cd329c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-105-test-contracts",
+      "original_sha": "e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe",
+      "remote_ref": "refs/heads/tixmo/task-105-test-contracts",
+      "remote_sha": "e6a752c0d39ec42ad3ef222011dd6d3c84d0c3fe",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-112-confirm-guard",
+      "original_sha": "98e89576a7c2ee66bcea72ec535607319376e499",
+      "remote_ref": "refs/heads/tixmo/task-112-confirm-guard",
+      "remote_sha": "98e89576a7c2ee66bcea72ec535607319376e499",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-115-double-cancel-baseline",
+      "original_sha": "64a22b5d9514512407bdb0e1bda78c4ea683a83a",
+      "remote_ref": "refs/heads/tixmo/task-115-double-cancel-baseline",
+      "remote_sha": "64a22b5d9514512407bdb0e1bda78c4ea683a83a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-118-double-cancel-fix",
+      "original_sha": "9b9623e2daa4002d11a527812122f244cc7bcd98",
+      "remote_ref": "refs/heads/tixmo/task-118-double-cancel-fix",
+      "remote_sha": "9b9623e2daa4002d11a527812122f244cc7bcd98",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-121-double-refund-baseline",
+      "original_sha": "ba2d92d7c695a9bc4e5df46438a07032148370d1",
+      "remote_ref": "refs/heads/tixmo/task-121-double-refund-baseline",
+      "remote_sha": "ba2d92d7c695a9bc4e5df46438a07032148370d1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-123-double-refund-fix",
+      "original_sha": "3dc4e3c189c31e04928d57b55061e60eb238e46f",
+      "remote_ref": "refs/heads/tixmo/task-123-double-refund-fix",
+      "remote_sha": "3dc4e3c189c31e04928d57b55061e60eb238e46f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-126-confirm-cancel",
+      "original_sha": "4dfb4c962092193450617e6ba1fe7f19d1d988d7",
+      "remote_ref": "refs/heads/tixmo/task-126-confirm-cancel",
+      "remote_sha": "4dfb4c962092193450617e6ba1fe7f19d1d988d7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-128-confirm-expiry",
+      "original_sha": "3ea87153aa3a7a241100a72eab16569745d0ccff",
+      "remote_ref": "refs/heads/tixmo/task-128-confirm-expiry",
+      "remote_sha": "3ea87153aa3a7a241100a72eab16569745d0ccff",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-130-webhook-race",
+      "original_sha": "9122294b71a1ee6ac0a708906c2a1116d86d94d4",
+      "remote_ref": "refs/heads/tixmo/task-130-webhook-race",
+      "remote_sha": "9122294b71a1ee6ac0a708906c2a1116d86d94d4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-132-failed-webhook-race",
+      "original_sha": "35f6f7b3cf53019561152fb79ad23b24fdc68142",
+      "remote_ref": "refs/heads/tixmo/task-132-failed-webhook-race",
+      "remote_sha": "35f6f7b3cf53019561152fb79ad23b24fdc68142",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-134-failed-retry-fix",
+      "original_sha": "3d9d84d2ec1bef44e1bcf5e7518fc7acd141f86a",
+      "remote_ref": "refs/heads/tixmo/task-134-failed-retry-fix",
+      "remote_sha": "3d9d84d2ec1bef44e1bcf5e7518fc7acd141f86a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-137-old-processing-baseline",
+      "original_sha": "9ac6db3d6a9080e445af78fda743e26c44fe7092",
+      "remote_ref": "refs/heads/tixmo/task-137-old-processing-baseline",
+      "remote_sha": "9ac6db3d6a9080e445af78fda743e26c44fe7092",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-139-fenced-recovery-plan",
+      "original_sha": "c94eb9f9da3d032ed3b538e3e5faa842cad23143",
+      "remote_ref": "refs/heads/tixmo/task-139-fenced-recovery-plan",
+      "remote_sha": "c94eb9f9da3d032ed3b538e3e5faa842cad23143",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-141-paused-owner-baseline",
+      "original_sha": "e5d2cd57793deb8025a93cef3051c17f182ab6b7",
+      "remote_ref": "refs/heads/tixmo/task-141-paused-owner-baseline",
+      "remote_sha": "e5d2cd57793deb8025a93cef3051c17f182ab6b7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-143-fenced-processing-recovery",
+      "original_sha": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "remote_ref": "refs/heads/tixmo/task-143-fenced-processing-recovery",
+      "remote_sha": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-175-reviewed-aggregate",
+      "original_sha": "03491597452a9871ce13e2747615271740338502",
+      "remote_ref": "refs/heads/tixmo/task-175-reviewed-aggregate",
+      "remote_sha": "03491597452a9871ce13e2747615271740338502",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-177-full-market",
+      "original_sha": "2890aea6af8f7fc6c693980b6e7a14046f22e45e",
+      "remote_ref": "refs/heads/tixmo/task-177-full-market",
+      "remote_sha": "2890aea6af8f7fc6c693980b6e7a14046f22e45e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-179-webhook-fixture",
+      "original_sha": "7574eea362ea827c1da85a0bf60002352a355dd1",
+      "remote_ref": "refs/heads/tixmo/task-179-webhook-fixture",
+      "remote_sha": "7574eea362ea827c1da85a0bf60002352a355dd1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-182-timing",
+      "original_sha": "4e3664d719c301159b40a58a2fc684c4d84ab905",
+      "remote_ref": "refs/heads/tixmo/task-182-timing",
+      "remote_sha": "4e3664d719c301159b40a58a2fc684c4d84ab905",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-184-retry-fixtures",
+      "original_sha": "559b7b74849a082807460d4024a9f7e125766838",
+      "remote_ref": "refs/heads/tixmo/task-184-retry-fixtures",
+      "remote_sha": "559b7b74849a082807460d4024a9f7e125766838",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-185-paused-owner-diagnosis",
+      "original_sha": "e245579998b81309e3b6ebb1efc9633111b0b421",
+      "remote_ref": "refs/heads/tixmo/task-185-paused-owner-diagnosis",
+      "remote_sha": "e245579998b81309e3b6ebb1efc9633111b0b421",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-186-bigint-diagnostics",
+      "original_sha": "d3a684cf55836ef70842d3b5d33b8d06da5b9a1b",
+      "remote_ref": "refs/heads/tixmo/task-186-bigint-diagnostics",
+      "remote_sha": "d3a684cf55836ef70842d3b5d33b8d06da5b9a1b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-192-paused-owner-fixture",
+      "original_sha": "52e504be4a902eac6c005d728fc75243f26350c1",
+      "remote_ref": "refs/heads/tixmo/task-192-paused-owner-fixture",
+      "remote_sha": "52e504be4a902eac6c005d728fc75243f26350c1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-195-old-processing-diagnosis",
+      "original_sha": "8909a2420fb15ff35b2abb86248b4f6bba4af2ae",
+      "remote_ref": "refs/heads/tixmo/task-195-old-processing-diagnosis",
+      "remote_sha": "8909a2420fb15ff35b2abb86248b4f6bba4af2ae",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-196-focused-sql",
+      "original_sha": "e37f80635ab693190982c6d0cd39ecc6ae7ac117",
+      "remote_ref": "refs/heads/tixmo/task-196-focused-sql",
+      "remote_sha": "e37f80635ab693190982c6d0cd39ecc6ae7ac117",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-198-old-processing-fixture",
+      "original_sha": "195f96d55187d1544f4373599b72652d87b0eb35",
+      "remote_ref": "refs/heads/tixmo/task-198-old-processing-fixture",
+      "remote_sha": "195f96d55187d1544f4373599b72652d87b0eb35",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-20-team-bootstrap",
+      "original_sha": "151a1ab64612572423314a64ad880d119fb5154f",
+      "remote_ref": "refs/heads/tixmo/task-20-team-bootstrap",
+      "remote_sha": "151a1ab64612572423314a64ad880d119fb5154f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-202-focused-sql",
+      "original_sha": "e9dc30fea85c678ab6a7cc4533b9787780e8584e",
+      "remote_ref": "refs/heads/tixmo/task-202-focused-sql",
+      "remote_sha": "e9dc30fea85c678ab6a7cc4533b9787780e8584e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-203-reviewed-fixture-aggregate",
+      "original_sha": "e48e4a0069cdb25f8f524e0afdfcbf43b8eb55f7",
+      "remote_ref": "refs/heads/tixmo/task-203-reviewed-fixture-aggregate",
+      "remote_sha": "e48e4a0069cdb25f8f524e0afdfcbf43b8eb55f7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-204-independent-qa",
+      "original_sha": "6a113afb9e1a83380c014e47ae1b5e1bd64a2aa2",
+      "remote_ref": "refs/heads/tixmo/task-204-independent-qa",
+      "remote_sha": "6a113afb9e1a83380c014e47ae1b5e1bd64a2aa2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-205-independent-qa",
+      "original_sha": "e2f1e5e8134bba941af1f72b27e4628d332b25ce",
+      "remote_ref": "refs/heads/tixmo/task-205-independent-qa",
+      "remote_sha": "e2f1e5e8134bba941af1f72b27e4628d332b25ce",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-207-repaired-full-market",
+      "original_sha": "ad2f736873654f58fd0ef5afa77e990fdc1d762d",
+      "remote_ref": "refs/heads/tixmo/task-207-repaired-full-market",
+      "remote_sha": "ad2f736873654f58fd0ef5afa77e990fdc1d762d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-209-api-counts",
+      "original_sha": "b4bb2753e5e6fe18d968c0b4789fa54e414833a6",
+      "remote_ref": "refs/heads/tixmo/task-209-api-counts",
+      "remote_sha": "b4bb2753e5e6fe18d968c0b4789fa54e414833a6",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-21-architecture",
+      "original_sha": "62c04e3fa58870d3c34490270714dbaf98c4e68d",
+      "remote_ref": "refs/heads/tixmo/task-21-architecture",
+      "remote_sha": "62c04e3fa58870d3c34490270714dbaf98c4e68d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-211-scanner-integration",
+      "original_sha": "0d193a6e8f8180d509f5cfdbb793203904047237",
+      "remote_ref": "refs/heads/tixmo/task-211-scanner-integration",
+      "remote_sha": "0d193a6e8f8180d509f5cfdbb793203904047237",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-213-scanner-full-market",
+      "original_sha": "d2dc727b5b34acd8be756be03a3f218afd668c5d",
+      "remote_ref": "refs/heads/tixmo/task-213-scanner-full-market",
+      "remote_sha": "d2dc727b5b34acd8be756be03a3f218afd668c5d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-22-verification",
+      "original_sha": "2050fac34629772d7756a95f12029c8ae3b6f50d",
+      "remote_ref": "refs/heads/tixmo/task-22-verification",
+      "remote_sha": "2050fac34629772d7756a95f12029c8ae3b6f50d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-225-railway-pipeline",
+      "original_sha": "63938856008e92c9c9668cbac83fbb84fd4f54a1",
+      "remote_ref": "refs/heads/tixmo/task-225-railway-pipeline",
+      "remote_sha": "63938856008e92c9c9668cbac83fbb84fd4f54a1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-227-build-contract",
+      "original_sha": "63938856008e92c9c9668cbac83fbb84fd4f54a1",
+      "remote_ref": "refs/heads/tixmo/task-227-build-contract",
+      "remote_sha": "63938856008e92c9c9668cbac83fbb84fd4f54a1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-228-seed-safety",
+      "original_sha": "5e1e658f14415f63ccb794dfc96bead76ebda7e9",
+      "remote_ref": "refs/heads/tixmo/task-228-seed-safety",
+      "remote_sha": "5e1e658f14415f63ccb794dfc96bead76ebda7e9",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-23-release-readiness",
+      "original_sha": "95874d149921d66317c8724dbdcd241d7932abc3",
+      "remote_ref": "refs/heads/tixmo/task-23-release-readiness",
+      "remote_sha": "95874d149921d66317c8724dbdcd241d7932abc3",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-230-provenance",
+      "original_sha": "0d193a6e8f8180d509f5cfdbb793203904047237",
+      "remote_ref": "refs/heads/tixmo/task-230-provenance",
+      "remote_sha": "0d193a6e8f8180d509f5cfdbb793203904047237",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-231-review-clearance",
+      "original_sha": "775f43a4a7f0f8fcb079abd8c20972f00b1adf24",
+      "remote_ref": "refs/heads/tixmo/task-231-review-clearance",
+      "remote_sha": "775f43a4a7f0f8fcb079abd8c20972f00b1adf24",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-235-release-integration",
+      "original_sha": "317754edc7b43eb8e27b60c5374679330326c575",
+      "remote_ref": "refs/heads/tixmo/task-235-release-integration",
+      "remote_sha": "317754edc7b43eb8e27b60c5374679330326c575",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-236-orphan-deliverables",
+      "original_sha": "152064e17ff1c58b6b15ac938106b017991c04b6",
+      "remote_ref": "refs/heads/tixmo/task-236-orphan-deliverables",
+      "remote_sha": "152064e17ff1c58b6b15ac938106b017991c04b6",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-238-sale-windows",
+      "original_sha": "0b4e30dccbc77d1213ca4f14ff34982f17c1d42c",
+      "remote_ref": "refs/heads/tixmo/task-238-sale-windows",
+      "remote_sha": "0b4e30dccbc77d1213ca4f14ff34982f17c1d42c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-24-frontend-readiness",
+      "original_sha": "b03fecebc5fad3372aba74cdf2b1daf50c59ae23",
+      "remote_ref": "refs/heads/tixmo/task-24-frontend-readiness",
+      "remote_sha": "b03fecebc5fad3372aba74cdf2b1daf50c59ae23",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-240-refund-runbook",
+      "original_sha": "db95652c7d8a597b610e9b2bc4528b4e9dbce5ec",
+      "remote_ref": "refs/heads/tixmo/task-240-refund-runbook",
+      "remote_sha": "db95652c7d8a597b610e9b2bc4528b4e9dbce5ec",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-242-buyer-recovery",
+      "original_sha": "a187c1f6e62c8c0e0533888506f58b7f8589e99e",
+      "remote_ref": "refs/heads/tixmo/task-242-buyer-recovery",
+      "remote_sha": "a187c1f6e62c8c0e0533888506f58b7f8589e99e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-243-onsale-packet",
+      "original_sha": "f82b26c0e741c4ee8e051e4582fb08dbc1cbd324",
+      "remote_ref": "refs/heads/tixmo/task-243-onsale-packet",
+      "remote_sha": "f82b26c0e741c4ee8e051e4582fb08dbc1cbd324",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-25-backend-readiness",
+      "original_sha": "8d5b7e71459dff098ed3eb4b1ff20c2699e186cc",
+      "remote_ref": "refs/heads/tixmo/task-25-backend-readiness",
+      "remote_sha": "8d5b7e71459dff098ed3eb4b1ff20c2699e186cc",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-251-scanner-feasibility",
+      "original_sha": "d9234abd5ae909a85e2595e4873e48c9866ed184",
+      "remote_ref": "refs/heads/tixmo/task-251-scanner-feasibility",
+      "remote_sha": "d9234abd5ae909a85e2595e4873e48c9866ed184",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-252-packet-review",
+      "original_sha": "d6531b82dcdd8b735c0b95344e62e66b092b378a",
+      "remote_ref": "refs/heads/tixmo/task-252-packet-review",
+      "remote_sha": "d6531b82dcdd8b735c0b95344e62e66b092b378a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-252-sale-review",
+      "original_sha": "0b4e30dccbc77d1213ca4f14ff34982f17c1d42c",
+      "remote_ref": "refs/heads/tixmo/task-252-sale-review",
+      "remote_sha": "0b4e30dccbc77d1213ca4f14ff34982f17c1d42c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-253-contract-review",
+      "original_sha": "0b4e30dccbc77d1213ca4f14ff34982f17c1d42c",
+      "remote_ref": "refs/heads/tixmo/task-253-contract-review",
+      "remote_sha": "0b4e30dccbc77d1213ca4f14ff34982f17c1d42c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-254-packet-review",
+      "original_sha": "f82b26c0e741c4ee8e051e4582fb08dbc1cbd324",
+      "remote_ref": "refs/heads/tixmo/task-254-packet-review",
+      "remote_sha": "f82b26c0e741c4ee8e051e4582fb08dbc1cbd324",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-255-scanner-qa",
+      "original_sha": "d9234abd5ae909a85e2595e4873e48c9866ed184",
+      "remote_ref": "refs/heads/tixmo/task-255-scanner-qa",
+      "remote_sha": "d9234abd5ae909a85e2595e4873e48c9866ed184",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-256-rereview",
+      "original_sha": "db95652c7d8a597b610e9b2bc4528b4e9dbce5ec",
+      "remote_ref": "refs/heads/tixmo/task-256-rereview",
+      "remote_sha": "db95652c7d8a597b610e9b2bc4528b4e9dbce5ec",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-256-review",
+      "original_sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "remote_ref": "refs/heads/tixmo/task-256-review",
+      "remote_sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-257-r2-review",
+      "original_sha": "db95652c7d8a597b610e9b2bc4528b4e9dbce5ec",
+      "remote_ref": "refs/heads/tixmo/task-257-r2-review",
+      "remote_sha": "db95652c7d8a597b610e9b2bc4528b4e9dbce5ec",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-257-review",
+      "original_sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "remote_ref": "refs/heads/tixmo/task-257-review",
+      "remote_sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-258-refund-review",
+      "original_sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "remote_ref": "refs/heads/tixmo/task-258-refund-review",
+      "remote_sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-259-refund-review",
+      "original_sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "remote_ref": "refs/heads/tixmo/task-259-refund-review",
+      "remote_sha": "c2cbd40a600c88608cc8c15fa16e6524b4b3bbee",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-26-bootstrap-check",
+      "original_sha": "26831b3270740d5e498938bf0576045bdb5c0e6c",
+      "remote_ref": "refs/heads/tixmo/task-26-bootstrap-check",
+      "remote_sha": "26831b3270740d5e498938bf0576045bdb5c0e6c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-260-manual-late-paid",
+      "original_sha": "cc3069ff914fd9ce5786b6a577a81cc72733fccd",
+      "remote_ref": "refs/heads/tixmo/task-260-manual-late-paid",
+      "remote_sha": "cc3069ff914fd9ce5786b6a577a81cc72733fccd",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-263-receipt-wallet",
+      "original_sha": "10aafd401cea151828242d91153a8cf7df2e6ac2",
+      "remote_ref": "refs/heads/tixmo/task-263-receipt-wallet",
+      "remote_sha": "10aafd401cea151828242d91153a8cf7df2e6ac2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-264-studio-contract",
+      "original_sha": "825e38d2a4a43f11bc2f8a10e24b9a8f032aadd7",
+      "remote_ref": "refs/heads/tixmo/task-264-studio-contract",
+      "remote_sha": "825e38d2a4a43f11bc2f8a10e24b9a8f032aadd7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-267-recovery-fairness",
+      "original_sha": "afef1d734187dbce260271284a50e719742c48b2",
+      "remote_ref": "refs/heads/tixmo/task-267-recovery-fairness",
+      "remote_sha": "afef1d734187dbce260271284a50e719742c48b2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-268-checkout-boundaries",
+      "original_sha": "eee5fa0dc5d097b65fbd5c48881b9dd97f3e1d58",
+      "remote_ref": "refs/heads/tixmo/task-268-checkout-boundaries",
+      "remote_sha": "eee5fa0dc5d097b65fbd5c48881b9dd97f3e1d58",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-271-webhook-fairness",
+      "original_sha": "f803f11632cfe16cde4cf9c2bcd0bac699cb978a",
+      "remote_ref": "refs/heads/tixmo/task-271-webhook-fairness",
+      "remote_sha": "f803f11632cfe16cde4cf9c2bcd0bac699cb978a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-272-local-sale-acceptance",
+      "original_sha": "03db05ca5976fd92168acd4daae5e33821b2ff50",
+      "remote_ref": "refs/heads/tixmo/task-272-local-sale-acceptance",
+      "remote_sha": "03db05ca5976fd92168acd4daae5e33821b2ff50",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-275-local-integration",
+      "original_sha": "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+      "remote_ref": "refs/heads/tixmo/task-275-local-integration",
+      "remote_sha": "4ec8594850eb547dafc145a14bb1b85cdeaa235c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-276-local-restore",
+      "original_sha": "cb95d021dd5f08d2fa9b95fc1fee17987f8ee564",
+      "remote_ref": "refs/heads/tixmo/task-276-local-restore",
+      "remote_sha": "cb95d021dd5f08d2fa9b95fc1fee17987f8ee564",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-279-combined-local",
+      "original_sha": "4c8561342268ffe764a1dd8abd6661488b63e3e5",
+      "remote_ref": "refs/heads/tixmo/task-279-combined-local",
+      "remote_sha": "4c8561342268ffe764a1dd8abd6661488b63e3e5",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-280-browser-delivery",
+      "original_sha": "6275325aa0df0b92bca4ac33eead10a57dd7c239",
+      "remote_ref": "refs/heads/tixmo/task-280-browser-delivery",
+      "remote_sha": "6275325aa0df0b92bca4ac33eead10a57dd7c239",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-282-independent-qa",
+      "original_sha": "30a7feb8edbbcb8546bd16cede5c2361f4f9dcbe",
+      "remote_ref": "refs/heads/tixmo/task-282-independent-qa",
+      "remote_sha": "30a7feb8edbbcb8546bd16cede5c2361f4f9dcbe",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-282-independent-qa-r2",
+      "original_sha": "c0ea3cf587ab12630567f74f8563aa0774e34c87",
+      "remote_ref": "refs/heads/tixmo/task-282-independent-qa-r2",
+      "remote_sha": "c0ea3cf587ab12630567f74f8563aa0774e34c87",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-283-rootless-chromium",
+      "original_sha": "68eb4db523c4054001104c27cb2a0725bfc84906",
+      "remote_ref": "refs/heads/tixmo/task-283-rootless-chromium",
+      "remote_sha": "68eb4db523c4054001104c27cb2a0725bfc84906",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-284-local-reservation-race",
+      "original_sha": "5947e4737410c6ed732230eb84581dcb87f8ed83",
+      "remote_ref": "refs/heads/tixmo/task-284-local-reservation-race",
+      "remote_sha": "5947e4737410c6ed732230eb84581dcb87f8ed83",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-286-independent-qa",
+      "original_sha": "f2657ede638adba03e45e0464bba086bdf39a99b",
+      "remote_ref": "refs/heads/tixmo/task-286-independent-qa",
+      "remote_sha": "f2657ede638adba03e45e0464bba086bdf39a99b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-287-local-pressure",
+      "original_sha": "c0c41a07f6ef72f27e1c4d35551edc147db1bcad",
+      "remote_ref": "refs/heads/tixmo/task-287-local-pressure",
+      "remote_sha": "c0c41a07f6ef72f27e1c4d35551edc147db1bcad",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-288-rootless-fonts",
+      "original_sha": "ed0b8eba4418579c7c701153ee79f2e4054ef430",
+      "remote_ref": "refs/heads/tixmo/task-288-rootless-fonts",
+      "remote_sha": "ed0b8eba4418579c7c701153ee79f2e4054ef430",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-289-independent-qa",
+      "original_sha": "0e4879c7f45639c64d2f8f90b98106d32ce6547f",
+      "remote_ref": "refs/heads/tixmo/task-289-independent-qa",
+      "remote_sha": "0e4879c7f45639c64d2f8f90b98106d32ce6547f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-291-webhook-pg",
+      "original_sha": "adc81d94f8ec5d9b50ac025cabdf4fb535611da0",
+      "remote_ref": "refs/heads/tixmo/task-291-webhook-pg",
+      "remote_sha": "adc81d94f8ec5d9b50ac025cabdf4fb535611da0",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-294-real-auth",
+      "original_sha": "9f2c6f0121968adc75607982e4f96ddbd2a1e853",
+      "remote_ref": "refs/heads/tixmo/task-294-real-auth",
+      "remote_sha": "9f2c6f0121968adc75607982e4f96ddbd2a1e853",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-295-morning-evidence",
+      "original_sha": "0cac3d60212e621607a22a5947816799d608525b",
+      "remote_ref": "refs/heads/tixmo/task-295-morning-evidence",
+      "remote_sha": "0cac3d60212e621607a22a5947816799d608525b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-298-readiness",
+      "original_sha": "05f2f42fc9a3969c7c10e11250d83ce099b500ef",
+      "remote_ref": "refs/heads/tixmo/task-298-readiness",
+      "remote_sha": "05f2f42fc9a3969c7c10e11250d83ce099b500ef",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-299-acceptance",
+      "original_sha": "12faf2f5f9725a2d6cbdcdc3acac31c66eda90ae",
+      "remote_ref": "refs/heads/tixmo/task-299-acceptance",
+      "remote_sha": "12faf2f5f9725a2d6cbdcdc3acac31c66eda90ae",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-302-exact-sale-boundaries",
+      "original_sha": "31fa03714a2e3f822d764337cc52314f69e7172e",
+      "remote_ref": "refs/heads/tixmo/task-302-exact-sale-boundaries",
+      "remote_sha": "31fa03714a2e3f822d764337cc52314f69e7172e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-303-independent-qa",
+      "original_sha": "107e232054afefeb4513dcea88389f60fd49b670",
+      "remote_ref": "refs/heads/tixmo/task-303-independent-qa",
+      "remote_sha": "107e232054afefeb4513dcea88389f60fd49b670",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-305-browser-studio",
+      "original_sha": "6d0de5f4f998498ec644be4905708b54386fe51f",
+      "remote_ref": "refs/heads/tixmo/task-305-browser-studio",
+      "remote_sha": "6d0de5f4f998498ec644be4905708b54386fe51f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-306-independent-qa",
+      "original_sha": "08686f53c1c42d8571e3a4c5cf18caab88c48421",
+      "remote_ref": "refs/heads/tixmo/task-306-independent-qa",
+      "remote_sha": "08686f53c1c42d8571e3a4c5cf18caab88c48421",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-307-source-review",
+      "original_sha": "6d0de5f4f998498ec644be4905708b54386fe51f",
+      "remote_ref": "refs/heads/tixmo/task-307-source-review",
+      "remote_sha": "6d0de5f4f998498ec644be4905708b54386fe51f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-308-refund-pg",
+      "original_sha": "c8424ca6d1cf53aba9a97c1013da59230b486857",
+      "remote_ref": "refs/heads/tixmo/task-308-refund-pg",
+      "remote_sha": "c8424ca6d1cf53aba9a97c1013da59230b486857",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-309-qa",
+      "original_sha": "584264e64116a950aafa201ae34dd35971188553",
+      "remote_ref": "refs/heads/tixmo/task-309-qa",
+      "remote_sha": "584264e64116a950aafa201ae34dd35971188553",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-31-backend-review",
+      "original_sha": "8d5b7e71459dff098ed3eb4b1ff20c2699e186cc",
+      "remote_ref": "refs/heads/tixmo/task-31-backend-review",
+      "remote_sha": "8d5b7e71459dff098ed3eb4b1ff20c2699e186cc",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-311-ambiguous-crash",
+      "original_sha": "feb60b185cf4a311ee4d934fb15a21cd836f7ca5",
+      "remote_ref": "refs/heads/tixmo/task-311-ambiguous-crash",
+      "remote_sha": "feb60b185cf4a311ee4d934fb15a21cd836f7ca5",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-312-independent-qa",
+      "original_sha": "9226384aa82eda973856a0c7e9da18b7ca3772e9",
+      "remote_ref": "refs/heads/tixmo/task-312-independent-qa",
+      "remote_sha": "9226384aa82eda973856a0c7e9da18b7ca3772e9",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-313-source-review",
+      "original_sha": "feb60b185cf4a311ee4d934fb15a21cd836f7ca5",
+      "remote_ref": "refs/heads/tixmo/task-313-source-review",
+      "remote_sha": "feb60b185cf4a311ee4d934fb15a21cd836f7ca5",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-314-recovery",
+      "original_sha": "6da0f2962a0a5d8781605244c02e4ca7b4ba208b",
+      "remote_ref": "refs/heads/tixmo/task-314-recovery",
+      "remote_sha": "6da0f2962a0a5d8781605244c02e4ca7b4ba208b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-315-frontend-regression",
+      "original_sha": "562a4089c4cbb7129d134b109d43329c47670a0d",
+      "remote_ref": "refs/heads/tixmo/task-315-frontend-regression",
+      "remote_sha": "562a4089c4cbb7129d134b109d43329c47670a0d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-316-independent-qa",
+      "original_sha": "24f4c820d427a678605a212c027a2ef62f9f59b0",
+      "remote_ref": "refs/heads/tixmo/task-316-independent-qa",
+      "remote_sha": "24f4c820d427a678605a212c027a2ef62f9f59b0",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-318-full-api",
+      "original_sha": "aa64c2c59bba570ec39958d06e004cfbc7b2ad59",
+      "remote_ref": "refs/heads/tixmo/task-318-full-api",
+      "remote_sha": "aa64c2c59bba570ec39958d06e004cfbc7b2ad59",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-319-api-triage",
+      "original_sha": "8cced1c93fc0abc488ba122803297be667d31b13",
+      "remote_ref": "refs/heads/tixmo/task-319-api-triage",
+      "remote_sha": "8cced1c93fc0abc488ba122803297be667d31b13",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-32-frontend-review",
+      "original_sha": "b03fecebc5fad3372aba74cdf2b1daf50c59ae23",
+      "remote_ref": "refs/heads/tixmo/task-32-frontend-review",
+      "remote_sha": "b03fecebc5fad3372aba74cdf2b1daf50c59ae23",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-320-api-triage",
+      "original_sha": "a041c35ceb95d6a41d2cc9c2a68681971e8817b2",
+      "remote_ref": "refs/heads/tixmo/task-320-api-triage",
+      "remote_sha": "a041c35ceb95d6a41d2cc9c2a68681971e8817b2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-321-public-tests",
+      "original_sha": "f28a4cc986c917135764d7a73ee4d0f4b424339d",
+      "remote_ref": "refs/heads/tixmo/task-321-public-tests",
+      "remote_sha": "f28a4cc986c917135764d7a73ee4d0f4b424339d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-322-payment-test-contracts",
+      "original_sha": "1b1a7abea4341510db031063c1a61c8ce75e167f",
+      "remote_ref": "refs/heads/tixmo/task-322-payment-test-contracts",
+      "remote_sha": "1b1a7abea4341510db031063c1a61c8ce75e167f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-323-order-race-contracts",
+      "original_sha": "232532dcbb143323d42d508a17bfc7ba8965bd23",
+      "remote_ref": "refs/heads/tixmo/task-323-order-race-contracts",
+      "remote_sha": "232532dcbb143323d42d508a17bfc7ba8965bd23",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-324-concurrency-contracts",
+      "original_sha": "1eeb38eb87c765f79894cf44223e8d106c30b261",
+      "remote_ref": "refs/heads/tixmo/task-324-concurrency-contracts",
+      "remote_sha": "1eeb38eb87c765f79894cf44223e8d106c30b261",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-325-refund-races",
+      "original_sha": "7e01d57fa90426ad37fd9837aa0a387f7f39ae1e",
+      "remote_ref": "refs/heads/tixmo/task-325-refund-races",
+      "remote_sha": "7e01d57fa90426ad37fd9837aa0a387f7f39ae1e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-326-smoke-storage-diagnostics",
+      "original_sha": "8726384e97d5f799ccb4acb76982cb2891a49d42",
+      "remote_ref": "refs/heads/tixmo/task-326-smoke-storage-diagnostics",
+      "remote_sha": "8726384e97d5f799ccb4acb76982cb2891a49d42",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-327-independent-qa",
+      "original_sha": "6f8fdc3f8311462ac27bf287f6aeb083aee1a555",
+      "remote_ref": "refs/heads/tixmo/task-327-independent-qa",
+      "remote_sha": "6f8fdc3f8311462ac27bf287f6aeb083aee1a555",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-328-cancel-stale-guard",
+      "original_sha": "f8bac3e1f53e64533b65bf6a1c3c7f0aebe2cb3d",
+      "remote_ref": "refs/heads/tixmo/task-328-cancel-stale-guard",
+      "remote_sha": "f8bac3e1f53e64533b65bf6a1c3c7f0aebe2cb3d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-329-review-322",
+      "original_sha": "255e6cc11e9eea79a34e912ba67a8950cda88d7b",
+      "remote_ref": "refs/heads/tixmo/task-329-review-322",
+      "remote_sha": "255e6cc11e9eea79a34e912ba67a8950cda88d7b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-330-independent-qa",
+      "original_sha": "c7bdf1514aaacb6c8cf3951ae0d8a88a0a14347c",
+      "remote_ref": "refs/heads/tixmo/task-330-independent-qa",
+      "remote_sha": "c7bdf1514aaacb6c8cf3951ae0d8a88a0a14347c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-331-review-328",
+      "original_sha": "3576522d973929e2bc0fca11e901492e4e1ef2cc",
+      "remote_ref": "refs/heads/tixmo/task-331-review-328",
+      "remote_sha": "3576522d973929e2bc0fca11e901492e4e1ef2cc",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-332-independent-qa",
+      "original_sha": "6434e7910a2b95715e787ae29d558ac1a7bc3b67",
+      "remote_ref": "refs/heads/tixmo/task-332-independent-qa",
+      "remote_sha": "6434e7910a2b95715e787ae29d558ac1a7bc3b67",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-333-paid-sales-utc",
+      "original_sha": "b0bc7e833345d847efa84d2a4957e289a1494bfc",
+      "remote_ref": "refs/heads/tixmo/task-333-paid-sales-utc",
+      "remote_sha": "b0bc7e833345d847efa84d2a4957e289a1494bfc",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-334-approval-storage-fixture",
+      "original_sha": "6fafb9f9da99d81584341034d3683daa5876b3ac",
+      "remote_ref": "refs/heads/tixmo/task-334-approval-storage-fixture",
+      "remote_sha": "6fafb9f9da99d81584341034d3683daa5876b3ac",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-335-review-333",
+      "original_sha": "67d25b12ca219c389cde45558f9e025c2d2de25c",
+      "remote_ref": "refs/heads/tixmo/task-335-review-333",
+      "remote_sha": "67d25b12ca219c389cde45558f9e025c2d2de25c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-336-independent-qa",
+      "original_sha": "c92c0b8ef6cf9c4feee536e8ff516ed6f8c69934",
+      "remote_ref": "refs/heads/tixmo/task-336-independent-qa",
+      "remote_sha": "c92c0b8ef6cf9c4feee536e8ff516ed6f8c69934",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-337-review-334",
+      "original_sha": "96080909a04d5488599a16cd6631f0aaab21570e",
+      "remote_ref": "refs/heads/tixmo/task-337-review-334",
+      "remote_sha": "96080909a04d5488599a16cd6631f0aaab21570e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-338-independent-qa",
+      "original_sha": "4d87136ac6ab783d74867331a3c50c2283321452",
+      "remote_ref": "refs/heads/tixmo/task-338-independent-qa",
+      "remote_sha": "4d87136ac6ab783d74867331a3c50c2283321452",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-339-source-review",
+      "original_sha": "d51f2faa7820e53bbe3ffc10c158f40508d2a844",
+      "remote_ref": "refs/heads/tixmo/task-339-source-review",
+      "remote_sha": "d51f2faa7820e53bbe3ffc10c158f40508d2a844",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-34-verification-safety",
+      "original_sha": "c5754fa5bc6948d9ae3d7e227019ad3097a58c87",
+      "remote_ref": "refs/heads/tixmo/task-34-verification-safety",
+      "remote_sha": "c5754fa5bc6948d9ae3d7e227019ad3097a58c87",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-340-independent-qa",
+      "original_sha": "009838a910bfd6dab22084d81e5e4acb49043767",
+      "remote_ref": "refs/heads/tixmo/task-340-independent-qa",
+      "remote_sha": "009838a910bfd6dab22084d81e5e4acb49043767",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-341-eventcancel-recovery",
+      "original_sha": "3b87aa81d9e83933adbc92f298e7bf1a31754b76",
+      "remote_ref": "refs/heads/tixmo/task-341-eventcancel-recovery",
+      "remote_sha": "3b87aa81d9e83933adbc92f298e7bf1a31754b76",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-342-independent-qa",
+      "original_sha": "0d7e49c43119f6b64accf4b80469c09ba7f624ed",
+      "remote_ref": "refs/heads/tixmo/task-342-independent-qa",
+      "remote_sha": "0d7e49c43119f6b64accf4b80469c09ba7f624ed",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-343-refund-source-review",
+      "original_sha": "acb0992bdb9ba3e28e7dba63c0af7e468765c42a",
+      "remote_ref": "refs/heads/tixmo/task-343-refund-source-review",
+      "remote_sha": "acb0992bdb9ba3e28e7dba63c0af7e468765c42a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-344-independent-qa",
+      "original_sha": "ae8482f9cc9bec480bb05241fae2319021a346df",
+      "remote_ref": "refs/heads/tixmo/task-344-independent-qa",
+      "remote_sha": "ae8482f9cc9bec480bb05241fae2319021a346df",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-345-independent-qa",
+      "original_sha": "e7f8f1bb2e10a1c5e7cdb8e01815dc4718ad198d",
+      "remote_ref": "refs/heads/tixmo/task-345-independent-qa",
+      "remote_sha": "e7f8f1bb2e10a1c5e7cdb8e01815dc4718ad198d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-346-independent-lead",
+      "original_sha": "12f02d175de0ddf2379ce968ea395facdb57bd8a",
+      "remote_ref": "refs/heads/tixmo/task-346-independent-lead",
+      "remote_sha": "12f02d175de0ddf2379ce968ea395facdb57bd8a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-347-independent-lead",
+      "original_sha": "9fb3aa58daf3273d33a484e3e7256c12e1c163ca",
+      "remote_ref": "refs/heads/tixmo/task-347-independent-lead",
+      "remote_sha": "9fb3aa58daf3273d33a484e3e7256c12e1c163ca",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-348-independent-qa",
+      "original_sha": "9a496978fb90d4ac25069b6bdd0344eb39b5d5ba",
+      "remote_ref": "refs/heads/tixmo/task-348-independent-qa",
+      "remote_sha": "9a496978fb90d4ac25069b6bdd0344eb39b5d5ba",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-349-independent-qa",
+      "original_sha": "b51849b4a31093f4bec2004bbbd58b6ed2f9ca6c",
+      "remote_ref": "refs/heads/tixmo/task-349-independent-qa",
+      "remote_sha": "b51849b4a31093f4bec2004bbbd58b6ed2f9ca6c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-35-scanner-pagination",
+      "original_sha": "1f6b072440961f18b9b5d72b1ce83c2d075dd55c",
+      "remote_ref": "refs/heads/tixmo/task-35-scanner-pagination",
+      "remote_sha": "1f6b072440961f18b9b5d72b1ce83c2d075dd55c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-350-independent-lead",
+      "original_sha": "69bf7e349a4071fc36c8cce2e5fc2a08f326d974",
+      "remote_ref": "refs/heads/tixmo/task-350-independent-lead",
+      "remote_sha": "69bf7e349a4071fc36c8cce2e5fc2a08f326d974",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-351-composed-api",
+      "original_sha": "cdb41d4d3aa4ccc323a2a1cc6b04a490feafe6a6",
+      "remote_ref": "refs/heads/tixmo/task-351-composed-api",
+      "remote_sha": "cdb41d4d3aa4ccc323a2a1cc6b04a490feafe6a6",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-352-independent-lead",
+      "original_sha": "4e9a3e6fd446d7fa9e6eaa63d99475687c269501",
+      "remote_ref": "refs/heads/tixmo/task-352-independent-lead",
+      "remote_sha": "4e9a3e6fd446d7fa9e6eaa63d99475687c269501",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-353-independent-qa",
+      "original_sha": "157c8e1e210021289a4fc56cdca213cf9a1b4096",
+      "remote_ref": "refs/heads/tixmo/task-353-independent-qa",
+      "remote_sha": "157c8e1e210021289a4fc56cdca213cf9a1b4096",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-354-full-api",
+      "original_sha": "4665068adeb098d12ba9ae0a4f90e5a5e27b0cb3",
+      "remote_ref": "refs/heads/tixmo/task-354-full-api",
+      "remote_sha": "4665068adeb098d12ba9ae0a4f90e5a5e27b0cb3",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-355-independent-qa",
+      "original_sha": "a7c6a5cd11e4ebe179fade821764222e40734815",
+      "remote_ref": "refs/heads/tixmo/task-355-independent-qa",
+      "remote_sha": "a7c6a5cd11e4ebe179fade821764222e40734815",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-356-tenant-observation",
+      "original_sha": "199cb9afa6ce1785bc956951e6e6590faec32119",
+      "remote_ref": "refs/heads/tixmo/task-356-tenant-observation",
+      "remote_sha": "199cb9afa6ce1785bc956951e6e6590faec32119",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-36-safety-lead",
+      "original_sha": "3b1b148bd2e1ef7c2972aed637e6a2060a6a20e8",
+      "remote_ref": "refs/heads/tixmo/task-36-safety-lead",
+      "remote_sha": "3b1b148bd2e1ef7c2972aed637e6a2060a6a20e8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-363-w04-reconciliation",
+      "original_sha": "a5acec2631a2c9c44bfb2bcb7bf07dac01a53338",
+      "remote_ref": "refs/heads/tixmo/task-363-w04-reconciliation",
+      "remote_sha": "a5acec2631a2c9c44bfb2bcb7bf07dac01a53338",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-364-old-window",
+      "original_sha": "750b59836de3a294fb4bf7068730bb4ef3c5f754",
+      "remote_ref": "refs/heads/tixmo/task-364-old-window",
+      "remote_sha": "750b59836de3a294fb4bf7068730bb4ef3c5f754",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-365-independent-qa",
+      "original_sha": "43a6431e24d5ba12f93b5736dbf84686c1a50165",
+      "remote_ref": "refs/heads/tixmo/task-365-independent-qa",
+      "remote_sha": "43a6431e24d5ba12f93b5736dbf84686c1a50165",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-366-old-window-source-review",
+      "original_sha": "f8caffa2635344dc3662fbb5c868931e8b094239",
+      "remote_ref": "refs/heads/tixmo/task-366-old-window-source-review",
+      "remote_sha": "f8caffa2635344dc3662fbb5c868931e8b094239",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-367-independent-qa",
+      "original_sha": "937dcfddca4cdb6d6135aef4070d86ee75a9e744",
+      "remote_ref": "refs/heads/tixmo/task-367-independent-qa",
+      "remote_sha": "937dcfddca4cdb6d6135aef4070d86ee75a9e744",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-368-independent-review",
+      "original_sha": "464241e598e6136d203e22c694c7f99badd6a758",
+      "remote_ref": "refs/heads/tixmo/task-368-independent-review",
+      "remote_sha": "464241e598e6136d203e22c694c7f99badd6a758",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-369-w07-matrix",
+      "original_sha": "f568f56a67a1d41d06998201fbf766eaff1a7405",
+      "remote_ref": "refs/heads/tixmo/task-369-w07-matrix",
+      "remote_sha": "f568f56a67a1d41d06998201fbf766eaff1a7405",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-37-safety-qa",
+      "original_sha": "3b1b148bd2e1ef7c2972aed637e6a2060a6a20e8",
+      "remote_ref": "refs/heads/tixmo/task-37-safety-qa",
+      "remote_sha": "3b1b148bd2e1ef7c2972aed637e6a2060a6a20e8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-370-independent-qa",
+      "original_sha": "4d9dc89cece27a26ecb804d5e2972764e206ba62",
+      "remote_ref": "refs/heads/tixmo/task-370-independent-qa",
+      "remote_sha": "4d9dc89cece27a26ecb804d5e2972764e206ba62",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-371-upgrade-preflight",
+      "original_sha": "95e62218cabe1a9b315459a67f7144682dc4a47d",
+      "remote_ref": "refs/heads/tixmo/task-371-upgrade-preflight",
+      "remote_sha": "95e62218cabe1a9b315459a67f7144682dc4a47d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-372-upgrade-review",
+      "original_sha": "951e4de3afa00be39539c8983e9a0a17ceeed308",
+      "remote_ref": "refs/heads/tixmo/task-372-upgrade-review",
+      "remote_sha": "951e4de3afa00be39539c8983e9a0a17ceeed308",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-373-upgrade-harness",
+      "original_sha": "f8a407cd789ecdebf11927debc3e3b26c4ea5267",
+      "remote_ref": "refs/heads/tixmo/task-373-upgrade-harness",
+      "remote_sha": "f8a407cd789ecdebf11927debc3e3b26c4ea5267",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-374-review",
+      "original_sha": "db8b70127846f44587e8187fc643085f9c672ded",
+      "remote_ref": "refs/heads/tixmo/task-374-review",
+      "remote_sha": "db8b70127846f44587e8187fc643085f9c672ded",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-375-review",
+      "original_sha": "64f9f3cced9369ac756ceea7bfc4227c5f20db64",
+      "remote_ref": "refs/heads/tixmo/task-375-review",
+      "remote_sha": "64f9f3cced9369ac756ceea7bfc4227c5f20db64",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-376-capacity-map",
+      "original_sha": "024e15f107d20af08f9c037bc463b9dd6836ac2b",
+      "remote_ref": "refs/heads/tixmo/task-376-capacity-map",
+      "remote_sha": "024e15f107d20af08f9c037bc463b9dd6836ac2b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-377-upgrade-evidence",
+      "original_sha": "1d9e2f74355bf978f47d32c002b8d4e42d0f1f7b",
+      "remote_ref": "refs/heads/tixmo/task-377-upgrade-evidence",
+      "remote_sha": "1d9e2f74355bf978f47d32c002b8d4e42d0f1f7b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-378-review",
+      "original_sha": "673608f17a8907b8b69ee341ec9760cfb9eb6478",
+      "remote_ref": "refs/heads/tixmo/task-378-review",
+      "remote_sha": "673608f17a8907b8b69ee341ec9760cfb9eb6478",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-379-http-pressure",
+      "original_sha": "929355653b2b37ae50633e704eb2a2628e5e4967",
+      "remote_ref": "refs/heads/tixmo/task-379-http-pressure",
+      "remote_sha": "929355653b2b37ae50633e704eb2a2628e5e4967",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-380-independent-review",
+      "original_sha": "bf05ab85154e90983b3ba0850fe933ace74315b8",
+      "remote_ref": "refs/heads/tixmo/task-380-independent-review",
+      "remote_sha": "bf05ab85154e90983b3ba0850fe933ace74315b8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-381-independent-qa",
+      "original_sha": "83ae7d54f8ea31fc54c563382179f161e71dc6f2",
+      "remote_ref": "refs/heads/tixmo/task-381-independent-qa",
+      "remote_sha": "83ae7d54f8ea31fc54c563382179f161e71dc6f2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-382-independent-review",
+      "original_sha": "586c9aea554e3b9a33406d06e32dd9a96d8df791",
+      "remote_ref": "refs/heads/tixmo/task-382-independent-review",
+      "remote_sha": "586c9aea554e3b9a33406d06e32dd9a96d8df791",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-383-independent-qa",
+      "original_sha": "8d8d793f7161e9f1691145d8fd40b9ca40cc6337",
+      "remote_ref": "refs/heads/tixmo/task-383-independent-qa",
+      "remote_sha": "8d8d793f7161e9f1691145d8fd40b9ca40cc6337",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-384-evidence-finalization",
+      "original_sha": "28b403252555ba9917e482cfbcd5d287c57afa47",
+      "remote_ref": "refs/heads/tixmo/task-384-evidence-finalization",
+      "remote_sha": "28b403252555ba9917e482cfbcd5d287c57afa47",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-385-http-cleanup",
+      "original_sha": "b0d749d6962f75d6daee2836a4605e505daf4556",
+      "remote_ref": "refs/heads/tixmo/task-385-http-cleanup",
+      "remote_sha": "b0d749d6962f75d6daee2836a4605e505daf4556",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-386-independent-review",
+      "original_sha": "a6f8d0743cce3f238eac7ed3aa0c427fef089aae",
+      "remote_ref": "refs/heads/tixmo/task-386-independent-review",
+      "remote_sha": "a6f8d0743cce3f238eac7ed3aa0c427fef089aae",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-387-independent-qa",
+      "original_sha": "d0c0a7ffdf818e991fa23395eaf12e4c12e9accc",
+      "remote_ref": "refs/heads/tixmo/task-387-independent-qa",
+      "remote_sha": "d0c0a7ffdf818e991fa23395eaf12e4c12e9accc",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-388-independent-review",
+      "original_sha": "9575c52535ab1aeefd614056ced6bd8a53fa1831",
+      "remote_ref": "refs/heads/tixmo/task-388-independent-review",
+      "remote_sha": "9575c52535ab1aeefd614056ced6bd8a53fa1831",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-389-independent-qa",
+      "original_sha": "fbaa6d419568e8a1b7bd1f31eb0f536fe155b132",
+      "remote_ref": "refs/heads/tixmo/task-389-independent-qa",
+      "remote_sha": "fbaa6d419568e8a1b7bd1f31eb0f536fe155b132",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-39-safety-lead",
+      "original_sha": "c5754fa5bc6948d9ae3d7e227019ad3097a58c87",
+      "remote_ref": "refs/heads/tixmo/task-39-safety-lead",
+      "remote_sha": "c5754fa5bc6948d9ae3d7e227019ad3097a58c87",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-390-http-runtime",
+      "original_sha": "a085aa70eae8ae44f59d853e23b055c29dee32f8",
+      "remote_ref": "refs/heads/tixmo/task-390-http-runtime",
+      "remote_sha": "a085aa70eae8ae44f59d853e23b055c29dee32f8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-390-nullpath",
+      "original_sha": "441fad2b1d74b9564490262cdcf20d4836e852bb",
+      "remote_ref": "refs/heads/tixmo/task-390-nullpath",
+      "remote_sha": "441fad2b1d74b9564490262cdcf20d4836e852bb",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-390-rerun",
+      "original_sha": "159ca3294ef89c86966b379abf6d16ac4ca37af1",
+      "remote_ref": "refs/heads/tixmo/task-390-rerun",
+      "remote_sha": "159ca3294ef89c86966b379abf6d16ac4ca37af1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-391-upgrade-runtime",
+      "original_sha": "aa422d361d13fe4715aec56e2886185200cde8e5",
+      "remote_ref": "refs/heads/tixmo/task-391-upgrade-runtime",
+      "remote_sha": "aa422d361d13fe4715aec56e2886185200cde8e5",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-392-qa",
+      "original_sha": "d9d5c8636a26fa21d3474241221b231df115f347",
+      "remote_ref": "refs/heads/tixmo/task-392-qa",
+      "remote_sha": "d9d5c8636a26fa21d3474241221b231df115f347",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-393-http-guard",
+      "original_sha": "8b265cfafda374e676fc74ef96810d0b0171a68c",
+      "remote_ref": "refs/heads/tixmo/task-393-http-guard",
+      "remote_sha": "8b265cfafda374e676fc74ef96810d0b0171a68c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-397-cleanup-receipts",
+      "original_sha": "5a64d9739f148d966534ba802ddd162fc17e053d",
+      "remote_ref": "refs/heads/tixmo/task-397-cleanup-receipts",
+      "remote_sha": "5a64d9739f148d966534ba802ddd162fc17e053d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-398-independent-review",
+      "original_sha": "7df5bced62d0948d5072e1ec3c6c9f60d651ad87",
+      "remote_ref": "refs/heads/tixmo/task-398-independent-review",
+      "remote_sha": "7df5bced62d0948d5072e1ec3c6c9f60d651ad87",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-399-independent-qa",
+      "original_sha": "a3fca22adaf5abd71e7f270d707d2d38dcaa7d85",
+      "remote_ref": "refs/heads/tixmo/task-399-independent-qa",
+      "remote_sha": "a3fca22adaf5abd71e7f270d707d2d38dcaa7d85",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-40-safety-qa",
+      "original_sha": "c5754fa5bc6948d9ae3d7e227019ad3097a58c87",
+      "remote_ref": "refs/heads/tixmo/task-40-safety-qa",
+      "remote_sha": "c5754fa5bc6948d9ae3d7e227019ad3097a58c87",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-400-runtime-review",
+      "original_sha": "86d4d00ff6c2cbc176321b032c8dd6ee34170536",
+      "remote_ref": "refs/heads/tixmo/task-400-runtime-review",
+      "remote_sha": "86d4d00ff6c2cbc176321b032c8dd6ee34170536",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-401-native-http",
+      "original_sha": "971275ba7c87b7d6d3d8831d6334922dcf618a05",
+      "remote_ref": "refs/heads/tixmo/task-401-native-http",
+      "remote_sha": "971275ba7c87b7d6d3d8831d6334922dcf618a05",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-406-waitingroom-contract",
+      "original_sha": "0b7279a55481f138dce4ed2b21576f28d98bea31",
+      "remote_ref": "refs/heads/tixmo/task-406-waitingroom-contract",
+      "remote_sha": "0b7279a55481f138dce4ed2b21576f28d98bea31",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-407-parity-tools",
+      "original_sha": "937889b51f234359ec7927b841b4033ea0ba8ecd",
+      "remote_ref": "refs/heads/tixmo/task-407-parity-tools",
+      "remote_sha": "937889b51f234359ec7927b841b4033ea0ba8ecd",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-408-independent-qa",
+      "original_sha": "fe7781e8ef25b65bc1b76908f944a4d388d64393",
+      "remote_ref": "refs/heads/tixmo/task-408-independent-qa",
+      "remote_sha": "fe7781e8ef25b65bc1b76908f944a4d388d64393",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-408-parity-review",
+      "original_sha": "937889b51f234359ec7927b841b4033ea0ba8ecd",
+      "remote_ref": "refs/heads/tixmo/task-408-parity-review",
+      "remote_sha": "937889b51f234359ec7927b841b4033ea0ba8ecd",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-409-prior-dump",
+      "original_sha": "bb158828a3faaa7b2df7c3a4106fbb18551082d6",
+      "remote_ref": "refs/heads/tixmo/task-409-prior-dump",
+      "remote_sha": "bb158828a3faaa7b2df7c3a4106fbb18551082d6",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-410-independent-qa",
+      "original_sha": "d508a5cdd4ed42a12acd359332ae02418de1f367",
+      "remote_ref": "refs/heads/tixmo/task-410-independent-qa",
+      "remote_sha": "d508a5cdd4ed42a12acd359332ae02418de1f367",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-411-independent-lead",
+      "original_sha": "e08a5478ce2e340058ccdfaec70eac6c42daa2bc",
+      "remote_ref": "refs/heads/tixmo/task-411-independent-lead",
+      "remote_sha": "e08a5478ce2e340058ccdfaec70eac6c42daa2bc",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-412-independent-qa",
+      "original_sha": "bdb1b71d8095146dd3176705c2b74b0ab873a4ce",
+      "remote_ref": "refs/heads/tixmo/task-412-independent-qa",
+      "remote_sha": "bdb1b71d8095146dd3176705c2b74b0ab873a4ce",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-413-checkout-admission",
+      "original_sha": "b46fd6490bcb4def2023ee883290c568c74fd134",
+      "remote_ref": "refs/heads/tixmo/task-413-checkout-admission",
+      "remote_sha": "b46fd6490bcb4def2023ee883290c568c74fd134",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-414-checkout-busy",
+      "original_sha": "4dde80623f21272f011fed3ff05c9ebb86bfb071",
+      "remote_ref": "refs/heads/tixmo/task-414-checkout-busy",
+      "remote_sha": "4dde80623f21272f011fed3ff05c9ebb86bfb071",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-415-independent-review",
+      "original_sha": "9e34cc9f02ca9304fbc13776c466155af95fb62d",
+      "remote_ref": "refs/heads/tixmo/task-415-independent-review",
+      "remote_sha": "9e34cc9f02ca9304fbc13776c466155af95fb62d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-416-independent-qa",
+      "original_sha": "d4c05abf953f0b2f6ad828b28e67d2fedeb3742a",
+      "remote_ref": "refs/heads/tixmo/task-416-independent-qa",
+      "remote_sha": "d4c05abf953f0b2f6ad828b28e67d2fedeb3742a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-417-independent-review",
+      "original_sha": "09e440c9c325b403b5f32b1c299cf1be90391ad8",
+      "remote_ref": "refs/heads/tixmo/task-417-independent-review",
+      "remote_sha": "09e440c9c325b403b5f32b1c299cf1be90391ad8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-418-independent-qa",
+      "original_sha": "07db2e7c1019b47cc5760e287feebd61bd695fbf",
+      "remote_ref": "refs/heads/tixmo/task-418-independent-qa",
+      "remote_sha": "07db2e7c1019b47cc5760e287feebd61bd695fbf",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-419-clear-obsolete-design-debt",
+      "original_sha": "8aae387bcd4290edd259fd75aa11baaa1f62ca63",
+      "remote_ref": "refs/heads/tixmo/task-419-clear-obsolete-design-debt",
+      "remote_sha": "8aae387bcd4290edd259fd75aa11baaa1f62ca63",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-42-ci-services",
+      "original_sha": "12795cc6d74fc3d0686f6e10e0dcdc351d88a2f6",
+      "remote_ref": "refs/heads/tixmo/task-42-ci-services",
+      "remote_sha": "12795cc6d74fc3d0686f6e10e0dcdc351d88a2f6",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-421-independent-qa",
+      "original_sha": "1bfc9454d0551cba31f83242ca674d2f417e5d11",
+      "remote_ref": "refs/heads/tixmo/task-421-independent-qa",
+      "remote_sha": "1bfc9454d0551cba31f83242ca674d2f417e5d11",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-422-full-dashboard",
+      "original_sha": "75c2271bdfbec00243ccd3a8a7b0aa1947a64d44",
+      "remote_ref": "refs/heads/tixmo/task-422-full-dashboard",
+      "remote_sha": "75c2271bdfbec00243ccd3a8a7b0aa1947a64d44",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-423-evidence-qa",
+      "original_sha": "681aaa43fdc0ca2ca84db063d2104342dcebeede",
+      "remote_ref": "refs/heads/tixmo/task-423-evidence-qa",
+      "remote_sha": "681aaa43fdc0ca2ca84db063d2104342dcebeede",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-424-full-market",
+      "original_sha": "21e2c8fec6f6fd7913c1c14e274b79fda964fc46",
+      "remote_ref": "refs/heads/tixmo/task-424-full-market",
+      "remote_sha": "21e2c8fec6f6fd7913c1c14e274b79fda964fc46",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-425-independent-qa",
+      "original_sha": "ddcf885afa880d857b3d1f42e78a07d27a33af7d",
+      "remote_ref": "refs/heads/tixmo/task-425-independent-qa",
+      "remote_sha": "ddcf885afa880d857b3d1f42e78a07d27a33af7d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-426-abort-cleanup",
+      "original_sha": "c8672a17ea9be27014cbdcf14e6e472fb2d8b70f",
+      "remote_ref": "refs/heads/tixmo/task-426-abort-cleanup",
+      "remote_sha": "c8672a17ea9be27014cbdcf14e6e472fb2d8b70f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-426-continuations",
+      "original_sha": "510824df9e9bb7f5e57984862728b52929f7f849",
+      "remote_ref": "refs/heads/tixmo/task-426-continuations",
+      "remote_sha": "510824df9e9bb7f5e57984862728b52929f7f849",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-426-http-abort",
+      "original_sha": "e03a454fcb55c2e8a16f64bee82f912e800fecc3",
+      "remote_ref": "refs/heads/tixmo/task-426-http-abort",
+      "remote_sha": "e03a454fcb55c2e8a16f64bee82f912e800fecc3",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-426-joined-cleanup",
+      "original_sha": "701ad1040caad539ff0afb625d6aa6256c026473",
+      "remote_ref": "refs/heads/tixmo/task-426-joined-cleanup",
+      "remote_sha": "701ad1040caad539ff0afb625d6aa6256c026473",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-426-managed-ci",
+      "original_sha": "b3ed74b3e5f7a87b3e0ef4cdf21240452ab3c260",
+      "remote_ref": "refs/heads/tixmo/task-426-managed-ci",
+      "remote_sha": "b3ed74b3e5f7a87b3e0ef4cdf21240452ab3c260",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-426-spy-layering",
+      "original_sha": "98adaa1b057f5feddd221d4ac8a39673e494df26",
+      "remote_ref": "refs/heads/tixmo/task-426-spy-layering",
+      "remote_sha": "98adaa1b057f5feddd221d4ac8a39673e494df26",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-427-full-api-contract",
+      "original_sha": "fcab880ea7caf50493439a21032b7a93effc438f",
+      "remote_ref": "refs/heads/tixmo/task-427-full-api-contract",
+      "remote_sha": "fcab880ea7caf50493439a21032b7a93effc438f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-428-market-boundary",
+      "original_sha": "d853dad3800b26e523c4d3f2dac24d25990c443d",
+      "remote_ref": "refs/heads/tixmo/task-428-market-boundary",
+      "remote_sha": "d853dad3800b26e523c4d3f2dac24d25990c443d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-429-review-427",
+      "original_sha": "37f4bc4d14059aa4d4d172a1e5b24a0a34795a67",
+      "remote_ref": "refs/heads/tixmo/task-429-review-427",
+      "remote_sha": "37f4bc4d14059aa4d4d172a1e5b24a0a34795a67",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-430-qa-source",
+      "original_sha": "d218c4895e412034c477e4942bb32c8666bbb1fd",
+      "remote_ref": "refs/heads/tixmo/task-430-qa-source",
+      "remote_sha": "d218c4895e412034c477e4942bb32c8666bbb1fd",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-431-qa-docs",
+      "original_sha": "eb9909c6dd5795075662057ea209c903e1d611cd",
+      "remote_ref": "refs/heads/tixmo/task-431-qa-docs",
+      "remote_sha": "eb9909c6dd5795075662057ea209c903e1d611cd",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-artifact-init-repair",
+      "original_sha": "1fd0e76eb74e4f78aadb17197f77181bf22a9d97",
+      "remote_ref": "refs/heads/tixmo/task-432-artifact-init-repair",
+      "remote_sha": "1fd0e76eb74e4f78aadb17197f77181bf22a9d97",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-held-lifecycle",
+      "original_sha": "0d79445dce1b3c4f71db13c3e00838696bc094a4",
+      "remote_ref": "refs/heads/tixmo/task-432-held-lifecycle",
+      "remote_sha": "0d79445dce1b3c4f71db13c3e00838696bc094a4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-held-timeout",
+      "original_sha": "fc1c24dac2ce2fd5b0eb9a8d3df5f15b9f7486e3",
+      "remote_ref": "refs/heads/tixmo/task-432-held-timeout",
+      "remote_sha": "fc1c24dac2ce2fd5b0eb9a8d3df5f15b9f7486e3",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-lifecycle",
+      "original_sha": "92225b707a114b49c6c9f2cef361e7c8977c539b",
+      "remote_ref": "refs/heads/tixmo/task-432-lifecycle",
+      "remote_sha": "92225b707a114b49c6c9f2cef361e7c8977c539b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-local-admission",
+      "original_sha": "54d55c0b75ced9b87871607d00fbd767a4a63962",
+      "remote_ref": "refs/heads/tixmo/task-432-local-admission",
+      "remote_sha": "54d55c0b75ced9b87871607d00fbd767a4a63962",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-local-lifecycle",
+      "original_sha": "f9c42c5ddf3b4825c40c6a3d7b8c20f8004c6abd",
+      "remote_ref": "refs/heads/tixmo/task-432-local-lifecycle",
+      "remote_sha": "f9c42c5ddf3b4825c40c6a3d7b8c20f8004c6abd",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-local-mutation-repair",
+      "original_sha": "d6ad958ce3bda5659ad7c347a014dd78146b9640",
+      "remote_ref": "refs/heads/tixmo/task-432-local-mutation-repair",
+      "remote_sha": "d6ad958ce3bda5659ad7c347a014dd78146b9640",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-native-feasibility",
+      "original_sha": "0081e61462ac7e18b1c82d8c1ac0a538d4df3bcb",
+      "remote_ref": "refs/heads/tixmo/task-432-native-feasibility",
+      "remote_sha": "0081e61462ac7e18b1c82d8c1ac0a538d4df3bcb",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-observer-fix",
+      "original_sha": "dca0223422ad266a6f4e66836a1910ff445de7e0",
+      "remote_ref": "refs/heads/tixmo/task-432-observer-fix",
+      "remote_sha": "dca0223422ad266a6f4e66836a1910ff445de7e0",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-persistence",
+      "original_sha": "9704866fd5ce034d2ce31072269c9dbd826af4db",
+      "remote_ref": "refs/heads/tixmo/task-432-persistence",
+      "remote_sha": "9704866fd5ce034d2ce31072269c9dbd826af4db",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-persistence-outcome",
+      "original_sha": "b45649abb438ec791f0c37a57bb42cdcfd928abb",
+      "remote_ref": "refs/heads/tixmo/task-432-persistence-outcome",
+      "remote_sha": "b45649abb438ec791f0c37a57bb42cdcfd928abb",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-preimport",
+      "original_sha": "d2e0dbdfea93e4f6e4a21fdf4e4c0201611acce7",
+      "remote_ref": "refs/heads/tixmo/task-432-preimport",
+      "remote_sha": "d2e0dbdfea93e4f6e4a21fdf4e4c0201611acce7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-provider-checkpoint",
+      "original_sha": "d5fec56e99a37218ef06a512e265c99942290340",
+      "remote_ref": "refs/heads/tixmo/task-432-provider-checkpoint",
+      "remote_sha": "d5fec56e99a37218ef06a512e265c99942290340",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-runtime-transport",
+      "original_sha": "f45349e422beb381ccfac419271c859df2a13e48",
+      "remote_ref": "refs/heads/tixmo/task-432-runtime-transport",
+      "remote_sha": "f45349e422beb381ccfac419271c859df2a13e48",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-sandbox-inventory",
+      "original_sha": "eb7fa665acff31d692683e5517d0992fed7e1d4b",
+      "remote_ref": "refs/heads/tixmo/task-432-sandbox-inventory",
+      "remote_sha": "eb7fa665acff31d692683e5517d0992fed7e1d4b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-shell-functions",
+      "original_sha": "8eaf5cec7fc62bf093bbf4cb401bcc0396a9b161",
+      "remote_ref": "refs/heads/tixmo/task-432-shell-functions",
+      "remote_sha": "8eaf5cec7fc62bf093bbf4cb401bcc0396a9b161",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-432-two-phase-market",
+      "original_sha": "0cdb124530272f2c7408acb0374eb4a576a8fdf4",
+      "remote_ref": "refs/heads/tixmo/task-432-two-phase-market",
+      "remote_sha": "0cdb124530272f2c7408acb0374eb4a576a8fdf4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-433-qa-core",
+      "original_sha": "1869a932c60ad997f4bd11b7bd10227223d447d7",
+      "remote_ref": "refs/heads/tixmo/task-433-qa-core",
+      "remote_sha": "1869a932c60ad997f4bd11b7bd10227223d447d7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-433-qa-successor",
+      "original_sha": "b89e65d65d37cdaf4f10f288ecb8a857821ea3b4",
+      "remote_ref": "refs/heads/tixmo/task-433-qa-successor",
+      "remote_sha": "b89e65d65d37cdaf4f10f288ecb8a857821ea3b4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-434-full-api",
+      "original_sha": "9439ebc46e357c5df4dad592ce45d692c62fdff3",
+      "remote_ref": "refs/heads/tixmo/task-434-full-api",
+      "remote_sha": "9439ebc46e357c5df4dad592ce45d692c62fdff3",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-435-persistence-review",
+      "original_sha": "6a539b6baf7a289bea886832cd5328e23fd0acb8",
+      "remote_ref": "refs/heads/tixmo/task-435-persistence-review",
+      "remote_sha": "6a539b6baf7a289bea886832cd5328e23fd0acb8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-436-rereview",
+      "original_sha": "80a533d9193b51beef0379134985f403b5cb0336",
+      "remote_ref": "refs/heads/tixmo/task-436-rereview",
+      "remote_sha": "80a533d9193b51beef0379134985f403b5cb0336",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-436-review",
+      "original_sha": "a08b740157226f45b32e6492d5731dda96065dfa",
+      "remote_ref": "refs/heads/tixmo/task-436-review",
+      "remote_sha": "a08b740157226f45b32e6492d5731dda96065dfa",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-437-review",
+      "original_sha": "1042194babc325e6a6d1284c2d67798418c03f2f",
+      "remote_ref": "refs/heads/tixmo/task-437-review",
+      "remote_sha": "1042194babc325e6a6d1284c2d67798418c03f2f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-438-qa",
+      "original_sha": "e547cc90c3541a07bf8b92404a35d143b8ac282a",
+      "remote_ref": "refs/heads/tixmo/task-438-qa",
+      "remote_sha": "e547cc90c3541a07bf8b92404a35d143b8ac282a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-438-qa-successor",
+      "original_sha": "5cc2ac14fcddd9cdfc9c245b227b9a15f1a62b3e",
+      "remote_ref": "refs/heads/tixmo/task-438-qa-successor",
+      "remote_sha": "5cc2ac14fcddd9cdfc9c245b227b9a15f1a62b3e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-439-review",
+      "original_sha": "873e4cbb25ca2240d297947b1d14225e3f148cb9",
+      "remote_ref": "refs/heads/tixmo/task-439-review",
+      "remote_sha": "873e4cbb25ca2240d297947b1d14225e3f148cb9",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-44-review",
+      "original_sha": "12795cc6d74fc3d0686f6e10e0dcdc351d88a2f6",
+      "remote_ref": "refs/heads/tixmo/task-44-review",
+      "remote_sha": "12795cc6d74fc3d0686f6e10e0dcdc351d88a2f6",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-440-review",
+      "original_sha": "5c6bd79556255051793b89a57e09366deb64a750",
+      "remote_ref": "refs/heads/tixmo/task-440-review",
+      "remote_sha": "5c6bd79556255051793b89a57e09366deb64a750",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-441-independent-qa",
+      "original_sha": "46334168b9df1c5949d8e94bfa028ffb6bb43d85",
+      "remote_ref": "refs/heads/tixmo/task-441-independent-qa",
+      "remote_sha": "46334168b9df1c5949d8e94bfa028ffb6bb43d85",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-442-independent-qa",
+      "original_sha": "b5755df7288708560a8e590c1ba8f9b7c550aa33",
+      "remote_ref": "refs/heads/tixmo/task-442-independent-qa",
+      "remote_sha": "b5755df7288708560a8e590c1ba8f9b7c550aa33",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-442-successor-qa",
+      "original_sha": "80973f9879a92725dfe912f25ccdc643a7a790c6",
+      "remote_ref": "refs/heads/tixmo/task-442-successor-qa",
+      "remote_sha": "80973f9879a92725dfe912f25ccdc643a7a790c6",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-443-independent-lead",
+      "original_sha": "70f56805520fb0029d4dedba4f52141fc6e1f9eb",
+      "remote_ref": "refs/heads/tixmo/task-443-independent-lead",
+      "remote_sha": "70f56805520fb0029d4dedba4f52141fc6e1f9eb",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-444-independent-lead",
+      "original_sha": "afecc89be05f32fa2366d2ad88ae661792f38d8c",
+      "remote_ref": "refs/heads/tixmo/task-444-independent-lead",
+      "remote_sha": "afecc89be05f32fa2366d2ad88ae661792f38d8c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-445-independent-qa",
+      "original_sha": "3ccabe3568199efebdc89852ea053da9debe8473",
+      "remote_ref": "refs/heads/tixmo/task-445-independent-qa",
+      "remote_sha": "3ccabe3568199efebdc89852ea053da9debe8473",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-446-independent-qa",
+      "original_sha": "cafe69864140bfdaf8c28ac7c7c69a59dec83400",
+      "remote_ref": "refs/heads/tixmo/task-446-independent-qa",
+      "remote_sha": "cafe69864140bfdaf8c28ac7c7c69a59dec83400",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-447-independent-lead",
+      "original_sha": "330247e9fa8aa0ed473ad62c75a71c274f5d07d2",
+      "remote_ref": "refs/heads/tixmo/task-447-independent-lead",
+      "remote_sha": "330247e9fa8aa0ed473ad62c75a71c274f5d07d2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-448-atomic-finish",
+      "original_sha": "59d3cd722ea14af778feb8048839ab81b8a95aad",
+      "remote_ref": "refs/heads/tixmo/task-448-atomic-finish",
+      "remote_sha": "59d3cd722ea14af778feb8048839ab81b8a95aad",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-448-bounded-callbacks",
+      "original_sha": "069fae13a0875fbb8f9a5fbc8d08a0c6128c9ac0",
+      "remote_ref": "refs/heads/tixmo/task-448-bounded-callbacks",
+      "remote_sha": "069fae13a0875fbb8f9a5fbc8d08a0c6128c9ac0",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-448-error-receipt",
+      "original_sha": "c21be3d31d7b491d691dc5e0c9f96ee39b55853d",
+      "remote_ref": "refs/heads/tixmo/task-448-error-receipt",
+      "remote_sha": "c21be3d31d7b491d691dc5e0c9f96ee39b55853d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-448-prejest",
+      "original_sha": "f28753c035489effa018b41abd346c0ce8a6f84d",
+      "remote_ref": "refs/heads/tixmo/task-448-prejest",
+      "remote_sha": "f28753c035489effa018b41abd346c0ce8a6f84d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-448-rejection-diagnostics",
+      "original_sha": "4a265fb957cfc760d4c985c55a0190ee4517671b",
+      "remote_ref": "refs/heads/tixmo/task-448-rejection-diagnostics",
+      "remote_sha": "4a265fb957cfc760d4c985c55a0190ee4517671b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-448-safe-runner",
+      "original_sha": "f8f54a476ed171fdc8b9c307aa1316c8113cdc52",
+      "remote_ref": "refs/heads/tixmo/task-448-safe-runner",
+      "remote_sha": "f8f54a476ed171fdc8b9c307aa1316c8113cdc52",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-448-shell-checkpoint",
+      "original_sha": "b181da31c0a1358d2e43af3bce2e125c21e5a76a",
+      "remote_ref": "refs/heads/tixmo/task-448-shell-checkpoint",
+      "remote_sha": "b181da31c0a1358d2e43af3bce2e125c21e5a76a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-448-stubborn-direct",
+      "original_sha": "843f0245eed7567350185190f85a6aefe60ecbef",
+      "remote_ref": "refs/heads/tixmo/task-448-stubborn-direct",
+      "remote_sha": "843f0245eed7567350185190f85a6aefe60ecbef",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-449-independent-lead",
+      "original_sha": "ec96d05a75a2a8927eb9ed6d1d8bd41134b12024",
+      "remote_ref": "refs/heads/tixmo/task-449-independent-lead",
+      "remote_sha": "ec96d05a75a2a8927eb9ed6d1d8bd41134b12024",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-45-qa-review",
+      "original_sha": "12795cc6d74fc3d0686f6e10e0dcdc351d88a2f6",
+      "remote_ref": "refs/heads/tixmo/task-45-qa-review",
+      "remote_sha": "12795cc6d74fc3d0686f6e10e0dcdc351d88a2f6",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-450-independent-qa",
+      "original_sha": "1e1375ec721a06b34a2d5ae1b5d670fd9295d864",
+      "remote_ref": "refs/heads/tixmo/task-450-independent-qa",
+      "remote_sha": "1e1375ec721a06b34a2d5ae1b5d670fd9295d864",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-451-independent-qa",
+      "original_sha": "be94cf2fc9548b497068318939fb1685aa7c1e85",
+      "remote_ref": "refs/heads/tixmo/task-451-independent-qa",
+      "remote_sha": "be94cf2fc9548b497068318939fb1685aa7c1e85",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-452-independent-qa",
+      "original_sha": "f698489731a72d16c4919544a6f92925548d6a71",
+      "remote_ref": "refs/heads/tixmo/task-452-independent-qa",
+      "remote_sha": "f698489731a72d16c4919544a6f92925548d6a71",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-453-independent-qa",
+      "original_sha": "40afdab4b63336ceccd079b14e4490eed0b0263b",
+      "remote_ref": "refs/heads/tixmo/task-453-independent-qa",
+      "remote_sha": "40afdab4b63336ceccd079b14e4490eed0b0263b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-454-lead-review",
+      "original_sha": "a59d63803988c95e6b3250e5ac4d879c089df2b2",
+      "remote_ref": "refs/heads/tixmo/task-454-lead-review",
+      "remote_sha": "a59d63803988c95e6b3250e5ac4d879c089df2b2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-455-lead-review",
+      "original_sha": "9e38b894cf664f4d6d9e8e9dab7c48cfcd7b15f0",
+      "remote_ref": "refs/heads/tixmo/task-455-lead-review",
+      "remote_sha": "9e38b894cf664f4d6d9e8e9dab7c48cfcd7b15f0",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-456-independent-qa",
+      "original_sha": "b335fd922bad646da474df84652133d26a274453",
+      "remote_ref": "refs/heads/tixmo/task-456-independent-qa",
+      "remote_sha": "b335fd922bad646da474df84652133d26a274453",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-457-lead-review",
+      "original_sha": "dc9d15c3b340f8ce72c56359d0bf0ae70d78c269",
+      "remote_ref": "refs/heads/tixmo/task-457-lead-review",
+      "remote_sha": "dc9d15c3b340f8ce72c56359d0bf0ae70d78c269",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-458-independent-qa",
+      "original_sha": "4c671a65553f3a5a59ad02534aab96a007de173d",
+      "remote_ref": "refs/heads/tixmo/task-458-independent-qa",
+      "remote_sha": "4c671a65553f3a5a59ad02534aab96a007de173d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-459-lead-review",
+      "original_sha": "acd3fc081e03691a109269d4384e530e3333242e",
+      "remote_ref": "refs/heads/tixmo/task-459-lead-review",
+      "remote_sha": "acd3fc081e03691a109269d4384e530e3333242e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-46-dashboard-docker",
+      "original_sha": "29328f9fc7df650bdaaf555d3c11ca582a0c0134",
+      "remote_ref": "refs/heads/tixmo/task-46-dashboard-docker",
+      "remote_sha": "29328f9fc7df650bdaaf555d3c11ca582a0c0134",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-460-lead-review",
+      "original_sha": "4bb765b6e61c27434ade11c204bdc2653ec33756",
+      "remote_ref": "refs/heads/tixmo/task-460-lead-review",
+      "remote_sha": "4bb765b6e61c27434ade11c204bdc2653ec33756",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-461-independent-qa",
+      "original_sha": "4330b7ac01c33953694cd0b6d359f1714c4b9ed7",
+      "remote_ref": "refs/heads/tixmo/task-461-independent-qa",
+      "remote_sha": "4330b7ac01c33953694cd0b6d359f1714c4b9ed7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-462-independent-qa",
+      "original_sha": "25ea1cbcec93ce3ef84def1c4a9cb5492a68ad14",
+      "remote_ref": "refs/heads/tixmo/task-462-independent-qa",
+      "remote_sha": "25ea1cbcec93ce3ef84def1c4a9cb5492a68ad14",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-463-lead-review",
+      "original_sha": "ceccd993253a77e24f23b499e7ceaa1fd15a725f",
+      "remote_ref": "refs/heads/tixmo/task-463-lead-review",
+      "remote_sha": "ceccd993253a77e24f23b499e7ceaa1fd15a725f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-464-lead-review",
+      "original_sha": "fc7ea3fe3552f5accb6bc3630d58036d96f1d946",
+      "remote_ref": "refs/heads/tixmo/task-464-lead-review",
+      "remote_sha": "fc7ea3fe3552f5accb6bc3630d58036d96f1d946",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-465-qa-lifecycle",
+      "original_sha": "287445b3e094e9b2c1785acb27f00124fccf6a81",
+      "remote_ref": "refs/heads/tixmo/task-465-qa-lifecycle",
+      "remote_sha": "287445b3e094e9b2c1785acb27f00124fccf6a81",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-466-qa-callbacks",
+      "original_sha": "25b515ab5955078fe65149d9be14a7da087a1372",
+      "remote_ref": "refs/heads/tixmo/task-466-qa-callbacks",
+      "remote_sha": "25b515ab5955078fe65149d9be14a7da087a1372",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-467-lead-review",
+      "original_sha": "2909e0b6b999e12879f962a066e1fd3fe064c372",
+      "remote_ref": "refs/heads/tixmo/task-467-lead-review",
+      "remote_sha": "2909e0b6b999e12879f962a066e1fd3fe064c372",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-468-lead-review",
+      "original_sha": "edf2d380038b4509b6e7ee5a3880cc3999839aaa",
+      "remote_ref": "refs/heads/tixmo/task-468-lead-review",
+      "remote_sha": "edf2d380038b4509b6e7ee5a3880cc3999839aaa",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-469-lead-review",
+      "original_sha": "add81ff1397cf68a40bcfaf23ffc54aca053844e",
+      "remote_ref": "refs/heads/tixmo/task-469-lead-review",
+      "remote_sha": "add81ff1397cf68a40bcfaf23ffc54aca053844e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-470-qa-review",
+      "original_sha": "45ff2f40bcc515125dc6aa26878906a1bfaaa4d8",
+      "remote_ref": "refs/heads/tixmo/task-470-qa-review",
+      "remote_sha": "45ff2f40bcc515125dc6aa26878906a1bfaaa4d8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-471-qa-review",
+      "original_sha": "3b388998fe832fe976b208ba55172d8930c1557e",
+      "remote_ref": "refs/heads/tixmo/task-471-qa-review",
+      "remote_sha": "3b388998fe832fe976b208ba55172d8930c1557e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-472-lead-review",
+      "original_sha": "581e33675441ecb8319ba135310244bc1ee88baa",
+      "remote_ref": "refs/heads/tixmo/task-472-lead-review",
+      "remote_sha": "581e33675441ecb8319ba135310244bc1ee88baa",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-473-lead-review",
+      "original_sha": "bc46d6dee26a482fa7d1de3af9e733b8525f016e",
+      "remote_ref": "refs/heads/tixmo/task-473-lead-review",
+      "remote_sha": "bc46d6dee26a482fa7d1de3af9e733b8525f016e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-474-qa-review",
+      "original_sha": "fd0d178691e908ea7441dcdce361060cd17931c4",
+      "remote_ref": "refs/heads/tixmo/task-474-qa-review",
+      "remote_sha": "fd0d178691e908ea7441dcdce361060cd17931c4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-475-lead-review",
+      "original_sha": "554f723c6a8bbb05fc72c08bbb818dc6e952cb67",
+      "remote_ref": "refs/heads/tixmo/task-475-lead-review",
+      "remote_sha": "554f723c6a8bbb05fc72c08bbb818dc6e952cb67",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-476-qa-review",
+      "original_sha": "0ebb7be6ea7baf7d55db55a60973e236815a8f31",
+      "remote_ref": "refs/heads/tixmo/task-476-qa-review",
+      "remote_sha": "0ebb7be6ea7baf7d55db55a60973e236815a8f31",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-477-lead-review",
+      "original_sha": "e4a4505ab1d793058950299873a85cb41989a374",
+      "remote_ref": "refs/heads/tixmo/task-477-lead-review",
+      "remote_sha": "e4a4505ab1d793058950299873a85cb41989a374",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-478-lead-review",
+      "original_sha": "b2d71a49ea84c6f85bb3dcbcf21fb6548672a437",
+      "remote_ref": "refs/heads/tixmo/task-478-lead-review",
+      "remote_sha": "b2d71a49ea84c6f85bb3dcbcf21fb6548672a437",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-479-independent-qa",
+      "original_sha": "5141b469c8e9d536167e97265960948c6a364ad3",
+      "remote_ref": "refs/heads/tixmo/task-479-independent-qa",
+      "remote_sha": "5141b469c8e9d536167e97265960948c6a364ad3",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-480-independent-qa",
+      "original_sha": "5de96b32ebd3bb7a89e23d339560f6c443280a29",
+      "remote_ref": "refs/heads/tixmo/task-480-independent-qa",
+      "remote_sha": "5de96b32ebd3bb7a89e23d339560f6c443280a29",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-481-sales-pause-handoff",
+      "original_sha": "56fbad5630df09fc3be304d480b38263f9c7130a",
+      "remote_ref": "refs/heads/tixmo/task-481-sales-pause-handoff",
+      "remote_sha": "56fbad5630df09fc3be304d480b38263f9c7130a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-483-monitoring-docs",
+      "original_sha": "839ff1934f1eb86b48f1227680deecc6835de388",
+      "remote_ref": "refs/heads/tixmo/task-483-monitoring-docs",
+      "remote_sha": "839ff1934f1eb86b48f1227680deecc6835de388",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-485-sales-pause-contract",
+      "original_sha": "1b52f0a353ee1fd5330f26830f7464f84501fa2e",
+      "remote_ref": "refs/heads/tixmo/task-485-sales-pause-contract",
+      "remote_sha": "1b52f0a353ee1fd5330f26830f7464f84501fa2e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-486-sales-pause-qa",
+      "original_sha": "3b32b28825b34ab94a62305d546e9126b8c930c4",
+      "remote_ref": "refs/heads/tixmo/task-486-sales-pause-qa",
+      "remote_sha": "3b32b28825b34ab94a62305d546e9126b8c930c4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-487-sales-pause",
+      "original_sha": "434bb2fda62ab0d9645896e2020e8a96202ee612",
+      "remote_ref": "refs/heads/tixmo/task-487-sales-pause",
+      "remote_sha": "434bb2fda62ab0d9645896e2020e8a96202ee612",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-488-independent-review",
+      "original_sha": "69152df31752af828401c6cf32d51d73e143fb9f",
+      "remote_ref": "refs/heads/tixmo/task-488-independent-review",
+      "remote_sha": "69152df31752af828401c6cf32d51d73e143fb9f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-489-independent-qa",
+      "original_sha": "492e449ff6238da1011bcbb41fdc65d8b804ab79",
+      "remote_ref": "refs/heads/tixmo/task-489-independent-qa",
+      "remote_sha": "492e449ff6238da1011bcbb41fdc65d8b804ab79",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-49-local-candidate",
+      "original_sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "remote_ref": "refs/heads/tixmo/task-49-local-candidate",
+      "remote_sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-490-sales-pause-ui",
+      "original_sha": "6ab827bff6fdf67283b93f16612106f2217d4dc0",
+      "remote_ref": "refs/heads/tixmo/task-490-sales-pause-ui",
+      "remote_sha": "6ab827bff6fdf67283b93f16612106f2217d4dc0",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-491-independent-qa",
+      "original_sha": "4459bcd530878600cc765a7cd178bfae82cfb2f9",
+      "remote_ref": "refs/heads/tixmo/task-491-independent-qa",
+      "remote_sha": "4459bcd530878600cc765a7cd178bfae82cfb2f9",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-491-r2-independent-qa",
+      "original_sha": "cc702a3871f016ab232d87288ded5a7edda5bb60",
+      "remote_ref": "refs/heads/tixmo/task-491-r2-independent-qa",
+      "remote_sha": "cc702a3871f016ab232d87288ded5a7edda5bb60",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-492-independent-lead",
+      "original_sha": "c0bd2973bbaf9357f2e1d45bee11526c878d2579",
+      "remote_ref": "refs/heads/tixmo/task-492-independent-lead",
+      "remote_sha": "c0bd2973bbaf9357f2e1d45bee11526c878d2579",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-493-observer-lifetime",
+      "original_sha": "5526991b45eb8cf93eeda23205f8341b5637ae90",
+      "remote_ref": "refs/heads/tixmo/task-493-observer-lifetime",
+      "remote_sha": "5526991b45eb8cf93eeda23205f8341b5637ae90",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-493-sales-pause-sql-source",
+      "original_sha": "9fb2cdf41109676dcc5aa360d99f9d4cf7a3b60b",
+      "remote_ref": "refs/heads/tixmo/task-493-sales-pause-sql-source",
+      "remote_sha": "9fb2cdf41109676dcc5aa360d99f9d4cf7a3b60b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-494-independent-lead",
+      "original_sha": "3d7b5cfbc72c2cfb2ac9cb10d960fe041b5a51ff",
+      "remote_ref": "refs/heads/tixmo/task-494-independent-lead",
+      "remote_sha": "3d7b5cfbc72c2cfb2ac9cb10d960fe041b5a51ff",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-495-independent-qa",
+      "original_sha": "9f4b68307bec8198ea2730021072290f298735bd",
+      "remote_ref": "refs/heads/tixmo/task-495-independent-qa",
+      "remote_sha": "9f4b68307bec8198ea2730021072290f298735bd",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-496-independent-lead-r2",
+      "original_sha": "689ed441741cc58f310b5daca3ca61cd142c66d9",
+      "remote_ref": "refs/heads/tixmo/task-496-independent-lead-r2",
+      "remote_sha": "689ed441741cc58f310b5daca3ca61cd142c66d9",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-497-independent-qa-r3",
+      "original_sha": "c48777b7e2c338d486fe0846bfbed6805e243a9d",
+      "remote_ref": "refs/heads/tixmo/task-497-independent-qa-r3",
+      "remote_sha": "c48777b7e2c338d486fe0846bfbed6805e243a9d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-498-independent-lead-r3",
+      "original_sha": "aa43d1cd7deb9f90f8a3406c44fb71e53b1a83ac",
+      "remote_ref": "refs/heads/tixmo/task-498-independent-lead-r3",
+      "remote_sha": "aa43d1cd7deb9f90f8a3406c44fb71e53b1a83ac",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-499-capture-repair",
+      "original_sha": "09dfb648a87eb4f006555f88a93147bf5c34d523",
+      "remote_ref": "refs/heads/tixmo/task-499-capture-repair",
+      "remote_sha": "09dfb648a87eb4f006555f88a93147bf5c34d523",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-499-checked-bindings",
+      "original_sha": "d4fd52c1637c24d9f1bb003685029e915745bf6e",
+      "remote_ref": "refs/heads/tixmo/task-499-checked-bindings",
+      "remote_sha": "d4fd52c1637c24d9f1bb003685029e915745bf6e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-499-current-candidate-port",
+      "original_sha": "f9a8c2121dc869653ac1738edeb1aae914ae66d2",
+      "remote_ref": "refs/heads/tixmo/task-499-current-candidate-port",
+      "remote_sha": "f9a8c2121dc869653ac1738edeb1aae914ae66d2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-499-http-last-ten",
+      "original_sha": "73aa2b2a649dd64bd3d14b048212a84ec1f2d656",
+      "remote_ref": "refs/heads/tixmo/task-499-http-last-ten",
+      "remote_sha": "73aa2b2a649dd64bd3d14b048212a84ec1f2d656",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-499-http-source",
+      "original_sha": "cf08558f3946b308d27a454d8c867075e6197e39",
+      "remote_ref": "refs/heads/tixmo/task-499-http-source",
+      "remote_sha": "cf08558f3946b308d27a454d8c867075e6197e39",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-499-source-continuation",
+      "original_sha": "941714e9efa36c8385776acb1ad275c4ae65fcde",
+      "remote_ref": "refs/heads/tixmo/task-499-source-continuation",
+      "remote_sha": "941714e9efa36c8385776acb1ad275c4ae65fcde",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-50-qa-review",
+      "original_sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "remote_ref": "refs/heads/tixmo/task-50-qa-review",
+      "remote_sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-500-independent-source-checkpoint",
+      "original_sha": "66cdae86a42a4715ff51fc44faea3c11c1df5045",
+      "remote_ref": "refs/heads/tixmo/task-500-independent-source-checkpoint",
+      "remote_sha": "66cdae86a42a4715ff51fc44faea3c11c1df5045",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-501-independent-qa",
+      "original_sha": "ba661f0aaba7c4870224c670b9e7a5967663bf4d",
+      "remote_ref": "refs/heads/tixmo/task-501-independent-qa",
+      "remote_sha": "ba661f0aaba7c4870224c670b9e7a5967663bf4d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-502-independent-qa",
+      "original_sha": "71b8b2d0d28835aa2363c5f282a286953ab3ad5a",
+      "remote_ref": "refs/heads/tixmo/task-502-independent-qa",
+      "remote_sha": "71b8b2d0d28835aa2363c5f282a286953ab3ad5a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-504-main-reconciliation",
+      "original_sha": "6396245587ac4a1ffb47e1b31bd764492506e90d",
+      "remote_ref": "refs/heads/tixmo/task-504-main-reconciliation",
+      "remote_sha": "6396245587ac4a1ffb47e1b31bd764492506e90d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-506-sale-window",
+      "original_sha": "db3e54349b76771e6a9db2e30fc6a2c917c0054f",
+      "remote_ref": "refs/heads/tixmo/task-506-sale-window",
+      "remote_sha": "db3e54349b76771e6a9db2e30fc6a2c917c0054f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-507-independent-qa",
+      "original_sha": "cf74929db7da60a89dc9f61aebbc51952cc0fe1d",
+      "remote_ref": "refs/heads/tixmo/task-507-independent-qa",
+      "remote_sha": "cf74929db7da60a89dc9f61aebbc51952cc0fe1d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-509-sale-window-ui",
+      "original_sha": "dfd1612fffae150e790152c09ad0e18f73addcb7",
+      "remote_ref": "refs/heads/tixmo/task-509-sale-window-ui",
+      "remote_sha": "dfd1612fffae150e790152c09ad0e18f73addcb7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-51-release-review",
+      "original_sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "remote_ref": "refs/heads/tixmo/task-51-release-review",
+      "remote_sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-511-payment-recovery",
+      "original_sha": "b71c0d7da5932922967434f4f50d74f7f07391af",
+      "remote_ref": "refs/heads/tixmo/task-511-payment-recovery",
+      "remote_sha": "b71c0d7da5932922967434f4f50d74f7f07391af",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-513-type-audit",
+      "original_sha": "f27757b4b8e2a616e8200a890a8f37be12e557ff",
+      "remote_ref": "refs/heads/tixmo/task-513-type-audit",
+      "remote_sha": "f27757b4b8e2a616e8200a890a8f37be12e557ff",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-515-wallet-recovery",
+      "original_sha": "57634667fd437f348433199ca527c98a5ba9ef6a",
+      "remote_ref": "refs/heads/tixmo/task-515-wallet-recovery",
+      "remote_sha": "57634667fd437f348433199ca527c98a5ba9ef6a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-517-order-observation",
+      "original_sha": "c97dd39b03f17f10e9119f4557b6a3a1f08ce9d2",
+      "remote_ref": "refs/heads/tixmo/task-517-order-observation",
+      "remote_sha": "c97dd39b03f17f10e9119f4557b6a3a1f08ce9d2",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-519-checkout-admission",
+      "original_sha": "dd15dc14369e54c67bd8f4d6a81e7ae0e7d4fb6c",
+      "remote_ref": "refs/heads/archive/local-20261025/tixmo/task-519-checkout-admission",
+      "remote_sha": "dd15dc14369e54c67bd8f4d6a81e7ae0e7d4fb6c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-52-qa-full-dashboard",
+      "original_sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "remote_ref": "refs/heads/tixmo/task-52-qa-full-dashboard",
+      "remote_sha": "b8a87a1e6188d6f045d48682f639100fd0a3384f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-520-sales-pause",
+      "original_sha": "a5da21936f4e0c730cab448610d9ecc75d2ef398",
+      "remote_ref": "refs/heads/tixmo/task-520-sales-pause",
+      "remote_sha": "a5da21936f4e0c730cab448610d9ecc75d2ef398",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-521-storefront-eligibility",
+      "original_sha": "c9c9e7f354a72c49f6885e4df31b8713d34065fe",
+      "remote_ref": "refs/heads/tixmo/task-521-storefront-eligibility",
+      "remote_sha": "c9c9e7f354a72c49f6885e4df31b8713d34065fe",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-523-upgrade-verification",
+      "original_sha": "8b0b5d62fb1b9307d0ba7b5557636943c89915be",
+      "remote_ref": "refs/heads/tixmo/task-523-upgrade-verification",
+      "remote_sha": "8b0b5d62fb1b9307d0ba7b5557636943c89915be",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-529-independent-qa",
+      "original_sha": "3500f6019b5853faeb212d77b24d1bbd818cda1e",
+      "remote_ref": "refs/heads/tixmo/task-529-independent-qa",
+      "remote_sha": "3500f6019b5853faeb212d77b24d1bbd818cda1e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-53-events-clock",
+      "original_sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "remote_ref": "refs/heads/tixmo/task-53-events-clock",
+      "remote_sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-530-independent-lead",
+      "original_sha": "7ef5c4202c8f4bfc2fc90f4aadd6928068cc095e",
+      "remote_ref": "refs/heads/tixmo/task-530-independent-lead",
+      "remote_sha": "7ef5c4202c8f4bfc2fc90f4aadd6928068cc095e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-531-independent-lead",
+      "original_sha": "58dcbe6e8f7af9b00a8cbcc0f19977f55b244f69",
+      "remote_ref": "refs/heads/tixmo/task-531-independent-lead",
+      "remote_sha": "58dcbe6e8f7af9b00a8cbcc0f19977f55b244f69",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-532-independent-qa",
+      "original_sha": "75008af84138d4ae3a20b96af73156997bcd368c",
+      "remote_ref": "refs/heads/tixmo/task-532-independent-qa",
+      "remote_sha": "75008af84138d4ae3a20b96af73156997bcd368c",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-533-candidate-interop",
+      "original_sha": "cde214229938cae06fc5acc324a12efa64f2e520",
+      "remote_ref": "refs/heads/tixmo/task-533-candidate-interop",
+      "remote_sha": "cde214229938cae06fc5acc324a12efa64f2e520",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-534-source-qa",
+      "original_sha": "63e6b495a94036f29416d9b624ff02ea51c993ec",
+      "remote_ref": "refs/heads/tixmo/task-534-source-qa",
+      "remote_sha": "63e6b495a94036f29416d9b624ff02ea51c993ec",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-535-independent-port-review",
+      "original_sha": "b0b242c55ce50c3b7f8004c75546fb8b643e0670",
+      "remote_ref": "refs/heads/tixmo/task-535-independent-port-review",
+      "remote_sha": "b0b242c55ce50c3b7f8004c75546fb8b643e0670",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-536-independent-source-qa",
+      "original_sha": "7605248c3a0530706e2c9169e708768d716dd1df",
+      "remote_ref": "refs/heads/tixmo/task-536-independent-source-qa",
+      "remote_sha": "7605248c3a0530706e2c9169e708768d716dd1df",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-537-candidate-packet",
+      "original_sha": "ba7b65f799f9fecb5bf76a0f5d3bc49dfb03e4da",
+      "remote_ref": "refs/heads/tixmo/task-537-candidate-packet",
+      "remote_sha": "ba7b65f799f9fecb5bf76a0f5d3bc49dfb03e4da",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-538-independent-packet-qa",
+      "original_sha": "539e1891e913d6cd08f234a58af0620e071aece4",
+      "remote_ref": "refs/heads/tixmo/task-538-independent-packet-qa",
+      "remote_sha": "539e1891e913d6cd08f234a58af0620e071aece4",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-539-independent-packet-lead",
+      "original_sha": "ecbf25fecc1c853e7620d957f4baccbaae5b2318",
+      "remote_ref": "refs/heads/tixmo/task-539-independent-packet-lead",
+      "remote_sha": "ecbf25fecc1c853e7620d957f4baccbaae5b2318",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-54-qa-events-clock",
+      "original_sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "remote_ref": "refs/heads/tixmo/task-54-qa-events-clock",
+      "remote_sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-540-precollection",
+      "original_sha": "61321d4b61a8d3740d79a85e25e8c22e910e36f8",
+      "remote_ref": "refs/heads/tixmo/task-540-precollection",
+      "remote_sha": "61321d4b61a8d3740d79a85e25e8c22e910e36f8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-541-qa",
+      "original_sha": "ebcdd8a2a78dd3804f984dfa196c77ff268c29ce",
+      "remote_ref": "refs/heads/tixmo/task-541-qa",
+      "remote_sha": "ebcdd8a2a78dd3804f984dfa196c77ff268c29ce",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-542-independent-lead",
+      "original_sha": "8304f94928f0f3361551df4fddb1732dea1a184d",
+      "remote_ref": "refs/heads/tixmo/task-542-independent-lead",
+      "remote_sha": "8304f94928f0f3361551df4fddb1732dea1a184d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-543-ci-recovery",
+      "original_sha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+      "remote_ref": "refs/heads/tixmo/task-543-ci-recovery",
+      "remote_sha": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-544-independent-ci",
+      "original_sha": "0bbfabe5d66748a808dc44601d425a80121f9caa",
+      "remote_ref": "refs/heads/tixmo/task-544-independent-ci",
+      "remote_sha": "0bbfabe5d66748a808dc44601d425a80121f9caa",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-545-race-entry-order",
+      "original_sha": "0dfb0badcd1cd6afc01c8047abc99622941af3d7",
+      "remote_ref": "refs/heads/tixmo/task-545-race-entry-order",
+      "remote_sha": "0dfb0badcd1cd6afc01c8047abc99622941af3d7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-546-qa-receipt",
+      "original_sha": "0a06f1a3b99534cb1c5d9ba76cda0d8284ea59d8",
+      "remote_ref": "refs/heads/tixmo/task-546-qa-receipt",
+      "remote_sha": "0a06f1a3b99534cb1c5d9ba76cda0d8284ea59d8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-547-release",
+      "original_sha": "0dfb0badcd1cd6afc01c8047abc99622941af3d7",
+      "remote_ref": "refs/heads/tixmo/task-547-release",
+      "remote_sha": "0dfb0badcd1cd6afc01c8047abc99622941af3d7",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-548-independent-ci",
+      "original_sha": "9845fe695181ed917f1960e0b40807a28efbe68d",
+      "remote_ref": "refs/heads/tixmo/task-548-independent-ci",
+      "remote_sha": "9845fe695181ed917f1960e0b40807a28efbe68d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-549-operational-packet",
+      "original_sha": "2bef1b39041c452fa4e50a752ab865906b298fbb",
+      "remote_ref": "refs/heads/tixmo/task-549-operational-packet",
+      "remote_sha": "2bef1b39041c452fa4e50a752ab865906b298fbb",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-55-lead-events-clock",
+      "original_sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "remote_ref": "refs/heads/tixmo/task-55-lead-events-clock",
+      "remote_sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-550-doc-review",
+      "original_sha": "ac66e8c7e69f7f6cb0110091016bf8edfff4e286",
+      "remote_ref": "refs/heads/tixmo/task-550-doc-review",
+      "remote_sha": "ac66e8c7e69f7f6cb0110091016bf8edfff4e286",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-551-historical-review",
+      "original_sha": "f0db0cabe0180f3fd49dcb9b8e04c37c4a3e164b",
+      "remote_ref": "refs/heads/tixmo/task-551-historical-review",
+      "remote_sha": "f0db0cabe0180f3fd49dcb9b8e04c37c4a3e164b",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-552-acceptance-reconcile",
+      "original_sha": "60234016d5989adc311c7f10a0b16c83aa23cced",
+      "remote_ref": "refs/heads/tixmo/task-552-acceptance-reconcile",
+      "remote_sha": "60234016d5989adc311c7f10a0b16c83aa23cced",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-554-encrypted-recovery-plan",
+      "original_sha": "c3bc8b7d2a657ecbe933ac952caa19fa1cc5d7bf",
+      "remote_ref": "refs/heads/tixmo/task-554-encrypted-recovery-plan",
+      "remote_sha": "c3bc8b7d2a657ecbe933ac952caa19fa1cc5d7bf",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-555-allocation-receipt",
+      "original_sha": "9c5470af9c5cc30c0b358b2f27c2fc5e814f8f12",
+      "remote_ref": "refs/heads/tixmo/task-555-allocation-receipt",
+      "remote_sha": "9c5470af9c5cc30c0b358b2f27c2fc5e814f8f12",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-56-api-build",
+      "original_sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "remote_ref": "refs/heads/tixmo/task-56-api-build",
+      "remote_sha": "c35a6f84512b274b2ae9563fda57169770f08c18",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-57-owned-runtime",
+      "original_sha": "0375516e058fd3a1bbc18e1db5f1f44751e96647",
+      "remote_ref": "refs/heads/tixmo/task-57-owned-runtime",
+      "remote_sha": "0375516e058fd3a1bbc18e1db5f1f44751e96647",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-59-remaining-v1",
+      "original_sha": "87a24084a161049dbfaf224684a7132fd11f7ee1",
+      "remote_ref": "refs/heads/tixmo/task-59-remaining-v1",
+      "remote_sha": "87a24084a161049dbfaf224684a7132fd11f7ee1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-593-asset-log-redaction",
+      "original_sha": "efc38b70d2eebaa1df511f425ccbdb9828894d6b",
+      "remote_ref": "refs/heads/sanitized/local-20261025/tixmo/task-593-asset-log-redaction",
+      "remote_sha": "36f6c77e0c7a0b2f34d1f2b5e1403431cf5b4320",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-60-webhook-unknown",
+      "original_sha": "d6b513a84da5748037c0a528b41b37fd2a90e64e",
+      "remote_ref": "refs/heads/tixmo/task-60-webhook-unknown",
+      "remote_sha": "d6b513a84da5748037c0a528b41b37fd2a90e64e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-605-storage-diagnostics",
+      "original_sha": "8f757462d5586ea3cb75829e0e418accbb80c62f",
+      "remote_ref": "refs/heads/sanitized/local-20261025/tixmo/task-605-storage-diagnostics",
+      "remote_sha": "07379772a2e69bab40c47a27cc4e4c1479f88b90",
+      "preservation": "fixture-cleaned-history-copy",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-61-release-evidence",
+      "original_sha": "f75036662a7b097d20f0d2b920ca590ea5765c5f",
+      "remote_ref": "refs/heads/tixmo/task-61-release-evidence",
+      "remote_sha": "f75036662a7b097d20f0d2b920ca590ea5765c5f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-64-qa-webhook",
+      "original_sha": "d6b513a84da5748037c0a528b41b37fd2a90e64e",
+      "remote_ref": "refs/heads/tixmo/task-64-qa-webhook",
+      "remote_sha": "d6b513a84da5748037c0a528b41b37fd2a90e64e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-65-order-tenant",
+      "original_sha": "906c0335998cfd2a01c77cbe738877160291de5d",
+      "remote_ref": "refs/heads/tixmo/task-65-order-tenant",
+      "remote_sha": "906c0335998cfd2a01c77cbe738877160291de5d",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-66-intent-retries",
+      "original_sha": "d6bb9a8bf2640a52209663fb91da15e8d753e2ba",
+      "remote_ref": "refs/heads/tixmo/task-66-intent-retries",
+      "remote_sha": "d6bb9a8bf2640a52209663fb91da15e8d753e2ba",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-67-webhook-recovery",
+      "original_sha": "3299e0cb569e7f7b042671370b2fbf4802445828",
+      "remote_ref": "refs/heads/tixmo/task-67-webhook-recovery",
+      "remote_sha": "3299e0cb569e7f7b042671370b2fbf4802445828",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-68-baseline",
+      "original_sha": "f5a61567b8f2d489d82bb70f78df98e26724d8af",
+      "remote_ref": "refs/heads/tixmo/task-68-baseline",
+      "remote_sha": "f5a61567b8f2d489d82bb70f78df98e26724d8af",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-68-race-plan",
+      "original_sha": "977848bcd5bbe5ce0377cae4916bf0966e088f59",
+      "remote_ref": "refs/heads/tixmo/task-68-race-plan",
+      "remote_sha": "977848bcd5bbe5ce0377cae4916bf0966e088f59",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-69-config-output",
+      "original_sha": "6c57442c2a5a83aa999b557dc7e2967d20a43781",
+      "remote_ref": "refs/heads/tixmo/task-69-config-output",
+      "remote_sha": "6c57442c2a5a83aa999b557dc7e2967d20a43781",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-70-aggregate-limit",
+      "original_sha": "b6e6fff664076bddc4f824bd10f26498787f068f",
+      "remote_ref": "refs/heads/tixmo/task-70-aggregate-limit",
+      "remote_sha": "b6e6fff664076bddc4f824bd10f26498787f068f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-71-scanner-retry",
+      "original_sha": "3c4f7d1663e5017da1478eb55c806f6bcd51d3ff",
+      "remote_ref": "refs/heads/tixmo/task-71-scanner-retry",
+      "remote_sha": "3c4f7d1663e5017da1478eb55c806f6bcd51d3ff",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-72-return-contract",
+      "original_sha": "af5bb5b17d3a5c1200b9693ede980e7c3a6151a1",
+      "remote_ref": "refs/heads/tixmo/task-72-return-contract",
+      "remote_sha": "af5bb5b17d3a5c1200b9693ede980e7c3a6151a1",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-74-qa-release-handoff",
+      "original_sha": "f75036662a7b097d20f0d2b920ca590ea5765c5f",
+      "remote_ref": "refs/heads/tixmo/task-74-qa-release-handoff",
+      "remote_sha": "f75036662a7b097d20f0d2b920ca590ea5765c5f",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-75-evidence-warning",
+      "original_sha": "6787e18748149370f4a974718053a93261bc9714",
+      "remote_ref": "refs/heads/tixmo/task-75-evidence-warning",
+      "remote_sha": "6787e18748149370f4a974718053a93261bc9714",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-93-owner-recovery",
+      "original_sha": "8a07603ce10a4768b7cffea7027846ca53c2b520",
+      "remote_ref": "refs/heads/tixmo/task-93-owner-recovery",
+      "remote_sha": "8a07603ce10a4768b7cffea7027846ca53c2b520",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-94-return-recovery",
+      "original_sha": "d4d8415198a33838576a2f3b91bb32933145479a",
+      "remote_ref": "refs/heads/tixmo/task-94-return-recovery",
+      "remote_sha": "d4d8415198a33838576a2f3b91bb32933145479a",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-96-qa-review",
+      "original_sha": "8a07603ce10a4768b7cffea7027846ca53c2b520",
+      "remote_ref": "refs/heads/tixmo/task-96-qa-review",
+      "remote_sha": "8a07603ce10a4768b7cffea7027846ca53c2b520",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-97-final-qa-review",
+      "original_sha": "a95ad9516c032e07a20f22d90bed3185a2ae5a9e",
+      "remote_ref": "refs/heads/tixmo/task-97-final-qa-review",
+      "remote_sha": "a95ad9516c032e07a20f22d90bed3185a2ae5a9e",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-97-qa-review",
+      "original_sha": "67915f7767dbcf39c06ee733b1b357d049a9de86",
+      "remote_ref": "refs/heads/tixmo/task-97-qa-review",
+      "remote_sha": "67915f7767dbcf39c06ee733b1b357d049a9de86",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-97-r3-qa-review",
+      "original_sha": "0375516e058fd3a1bbc18e1db5f1f44751e96647",
+      "remote_ref": "refs/heads/tixmo/task-97-r3-qa-review",
+      "remote_sha": "0375516e058fd3a1bbc18e1db5f1f44751e96647",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task-98-api-gate",
+      "original_sha": "5036967dcd3afa1db8192e6ad3ceea2dbad19db8",
+      "remote_ref": "refs/heads/tixmo/task-98-api-gate",
+      "remote_sha": "5036967dcd3afa1db8192e6ad3ceea2dbad19db8",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task361-compose",
+      "original_sha": "2d878423391e3d34761cbea622c1a7e0b7dfac25",
+      "remote_ref": "refs/heads/tixmo/task361-compose",
+      "remote_sha": "2d878423391e3d34761cbea622c1a7e0b7dfac25",
+      "preservation": "exact-original-history",
+      "verified": true
+    },
+    {
+      "original_ref": "refs/heads/tixmo/task362-full-api",
+      "original_sha": "aeedc5867adb5bd2c7040e24dea8fe732fa3f7d7",
+      "remote_ref": "refs/heads/tixmo/task362-full-api",
+      "remote_sha": "aeedc5867adb5bd2c7040e24dea8fe732fa3f7d7",
+      "preservation": "exact-original-history",
+      "verified": true
+    }
+  ],
+  "verified_at": "2026-10-26T01:23:01.655735+00:00",
+  "main": "822dcf02a80958b65986bd5eb3f4635760ec9275",
+  "runtime_scope": "Source publication and history preservation only; no default-branch merge or production deployment.",
+  "draft_prs": [
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118
+  ],
+  "historical_aliases": 14,
+  "original_history_bundle_sha256": "dc0a8377db99a1146d05a800fb677166cccd09d5bd876a9e661f0b43423f587b",
+  "fixture_rewrite": {
+    "branch_copies": 40,
+    "rewritten_commits": 81,
+    "final_tip_trees_identical": 39,
+    "fixture_runtime_values_identical": true,
+    "original_local_refs_unchanged": true
+  },
+  "offline_release_helper_tests_passed": 13
+}

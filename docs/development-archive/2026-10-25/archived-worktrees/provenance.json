@@ -1,0 +1,12 @@
+[
+  {
+    "name": "claude",
+    "original_head": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+    "patch_bytes": 687
+  },
+  {
+    "name": "codex",
+    "original_head": "2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e",
+    "patch_bytes": 687
+  }
+]

@@ -1,0 +1,22 @@
+set -euo pipefail
+cp tixmoapi2/src/api/payments/service.ts .qa151-disabled-source
+restore() {
+ status=$?
+ trap - EXIT INT TERM
+ cp .qa151-disabled-source tixmoapi2/src/api/payments/service.ts
+ cmp .qa151-disabled-source tixmoapi2/src/api/payments/service.ts || exit 1
+ git diff --exit-code -- tixmoapi2/src/api/payments/service.ts || exit 1
+ timeout --signal=TERM --kill-after=5s 40s npm --prefix tixmoapi2 run build > .qa151-disabled-final-build.log 2>&1
+ build=$?
+ echo "QA151_OUTER runtime_exit=$status disabled_build_exit=$build restored_cmp=0"
+ test "$build" = 0 || exit "$build"
+ exit "$status"
+}
+trap restore EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+python3 - <<'PY'
+from pathlib import Path
+p=Path('tixmoapi2/src/api/payments/service.ts');s=p.read_text();a='const EXPIRED_WEBHOOK_RECOVERY_ENABLED = false;';assert s.count(a)==1;p.write_text(s.replace(a,'const EXPIRED_WEBHOOK_RECOVERY_ENABLED = true;'))
+PY
+TIXMO_EXPERIMENTAL_RECOVERY=1 bash .qa151-runtime.sh > .qa151-runtime.log 2>&1

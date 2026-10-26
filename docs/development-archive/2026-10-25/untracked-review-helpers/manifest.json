@@ -1,0 +1,573 @@
+{
+  "scope": "Historical untracked reviewer helper sources, preserved unchanged as inert .txt files. They have not been executed or qualified against current main.",
+  "files": [
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-129/.review129-runtime.sh.txt",
+      "original_worktree": "review-129",
+      "original_path": ".review129-runtime.sh",
+      "original_head": "3ea87153aa3a7a241100a72eab16569745d0ccff",
+      "sha256": "fbcb9e1bb31560aed6bf419c2750d4554b8380f123cc01d285ae2863dd992867",
+      "bytes": 6517
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-129/.review129-sensitivity.sh.txt",
+      "original_worktree": "review-129",
+      "original_path": ".review129-sensitivity.sh",
+      "original_head": "3ea87153aa3a7a241100a72eab16569745d0ccff",
+      "sha256": "294c0ced6e893ffb65ced6969cd86f68377383bb6e7bdbb5d51599bcf1ea359c",
+      "bytes": 6523
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-131/.review131-runtime.sh.txt",
+      "original_worktree": "review-131",
+      "original_path": ".review131-runtime.sh",
+      "original_head": "9122294b71a1ee6ac0a708906c2a1116d86d94d4",
+      "sha256": "8058b32601ecbaa72d3d6cef3c7e4f99e42a6611b4d8d3b35d926716a94ed741",
+      "bytes": 6575
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-133/.review133-runtime.sh.txt",
+      "original_worktree": "review-133",
+      "original_path": ".review133-runtime.sh",
+      "original_head": "35f6f7b3cf53019561152fb79ad23b24fdc68142",
+      "sha256": "503865303edf20d8eb3b939a2af65fff3909583daa060a2bd458423fdd09d863",
+      "bytes": 6218
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-135/.review135-runtime.sh.txt",
+      "original_worktree": "review-135",
+      "original_path": ".review135-runtime.sh",
+      "original_head": "3d9d84d2ec1bef44e1bcf5e7518fc7acd141f86a",
+      "sha256": "5fcf8c2922975801758aa410d2d8d8200b3880e8dfe39e5b8dc6f2631e0f3679",
+      "bytes": 7006
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-136/.review136-runtime.sh.txt",
+      "original_worktree": "review-136",
+      "original_path": ".review136-runtime.sh",
+      "original_head": "3d9d84d2ec1bef44e1bcf5e7518fc7acd141f86a",
+      "sha256": "9137491a1884d4c7c9be2f01e18813645fd56c99816e321e2f6a92a08adbde0d",
+      "bytes": 7006
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-138/.review138-runtime.sh.txt",
+      "original_worktree": "review-138",
+      "original_path": ".review138-runtime.sh",
+      "original_head": "9ac6db3d6a9080e445af78fda743e26c44fe7092",
+      "sha256": "37504ed136bb8df5ceed717ed93fef084a5f55bd0d8c17dd9b38f1d9fde98c92",
+      "bytes": 6218
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-142/.task142-runtime.sh.txt",
+      "original_worktree": "review-142",
+      "original_path": ".task142-runtime.sh",
+      "original_head": "e5d2cd57793deb8025a93cef3051c17f182ab6b7",
+      "sha256": "f920a66ac179ec41f7125eba8d8fad331bf7ea7592e70971095981572546749f",
+      "bytes": 6388
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-142/.task142r-runtime.sh.txt",
+      "original_worktree": "review-142",
+      "original_path": ".task142r-runtime.sh",
+      "original_head": "e5d2cd57793deb8025a93cef3051c17f182ab6b7",
+      "sha256": "31f0b8d3b4a40b92e8aca9ce3dd646cbebc6561a02f956d34e1880f068955630",
+      "bytes": 6522
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-144/.review144-preserve.sql.txt",
+      "original_worktree": "review-144",
+      "original_path": ".review144-preserve.sql",
+      "original_head": "c004dd75005ee0656c31d929799ade47805f6349",
+      "sha256": "64b6519e0e665122f6d953ac8b70b25c54d66f6f48315f0484049a563ded75b6",
+      "bytes": 1868
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-144/.review144-runtime.sh.txt",
+      "original_worktree": "review-144",
+      "original_path": ".review144-runtime.sh",
+      "original_head": "c004dd75005ee0656c31d929799ade47805f6349",
+      "sha256": "45e9c9abe4d868f9c69cf2c568a11a7c5595782200797c7517f04735f14a5891",
+      "bytes": 6637
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-145/.review145-preserve.sql.txt",
+      "original_worktree": "review-145",
+      "original_path": ".review145-preserve.sql",
+      "original_head": "c004dd75005ee0656c31d929799ade47805f6349",
+      "sha256": "64b6519e0e665122f6d953ac8b70b25c54d66f6f48315f0484049a563ded75b6",
+      "bytes": 1868
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-145/.review145-runtime.sh.txt",
+      "original_worktree": "review-145",
+      "original_path": ".review145-runtime.sh",
+      "original_head": "c004dd75005ee0656c31d929799ade47805f6349",
+      "sha256": "b16c57a8b3deafe3b9bccba5e3c304b2956229b8be5bdaeb2dc66157f05810ea",
+      "bytes": 6639
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-146/.review146-extra-runtime.sh.txt",
+      "original_worktree": "review-146",
+      "original_path": ".review146-extra-runtime.sh",
+      "original_head": "0ac140c348883a99261ac9cdfd0bf7d7fda59ee1",
+      "sha256": "028959f7d6afdea1d407ade4a6c1a0f105b0acbd854ab8aca2460afdfbd6e955",
+      "bytes": 6176
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-146/.review146-runtime.sh.txt",
+      "original_worktree": "review-146",
+      "original_path": ".review146-runtime.sh",
+      "original_head": "0ac140c348883a99261ac9cdfd0bf7d7fda59ee1",
+      "sha256": "c644a90171e09bc247611bc4dfda1f7efe5f017b10268b7743e64dc1dc377cea",
+      "bytes": 6278
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-147/.review147-runtime.sh.txt",
+      "original_worktree": "review-147",
+      "original_path": ".review147-runtime.sh",
+      "original_head": "0ac140c348883a99261ac9cdfd0bf7d7fda59ee1",
+      "sha256": "40e0873b64908411303f238ff4f96ff64cebfad4cff725c878d57dd6ae1561f6",
+      "bytes": 6560
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-148/.review148-runtime.sh.txt",
+      "original_worktree": "review-148",
+      "original_path": ".review148-runtime.sh",
+      "original_head": "f4889fdfc25df320c53c22e4c96bae9270100762",
+      "sha256": "045b0bba37392db10ff03a18add45d291d41d3471447deef0ba726355dc7288f",
+      "bytes": 6830
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-151/.qa151-outer.sh.txt",
+      "original_worktree": "review-151",
+      "original_path": ".qa151-outer.sh",
+      "original_head": "20ef927fb38e6a424904ecbcd8f44dd2acc8c046",
+      "sha256": "c6905ab0343887829ac2075042936d8aba56edf3d1ea92d5c6abb9b268e9a886",
+      "bytes": 999
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-151/.qa151-runtime.sh.txt",
+      "original_worktree": "review-151",
+      "original_path": ".qa151-runtime.sh",
+      "original_head": "20ef927fb38e6a424904ecbcd8f44dd2acc8c046",
+      "sha256": "898b7c09e973de46fddfd65f702666d5081ff5c165f95f0d748a20ac3c46be1c",
+      "bytes": 7659
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-152/.qa152-terminal-outer.sh.txt",
+      "original_worktree": "review-152",
+      "original_path": ".qa152-terminal-outer.sh",
+      "original_head": "03716d3ee8d9d504df9540fa543750e014ec2ed0",
+      "sha256": "6d4a080030136fe20c86d022ca6d1f2c533f1398ef99429cbd0de3438d9feb21",
+      "bytes": 695
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-152/.qa152-terminal-runtime.sh.txt",
+      "original_worktree": "review-152",
+      "original_path": ".qa152-terminal-runtime.sh",
+      "original_head": "03716d3ee8d9d504df9540fa543750e014ec2ed0",
+      "sha256": "7278c6e444f2ae2472f41fe381c1b650048e46f84a161bbbff566b40ed8ce4d4",
+      "bytes": 7695
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-155/.task155-outer.sh.txt",
+      "original_worktree": "review-155",
+      "original_path": ".task155-outer.sh",
+      "original_head": "0d8e1f5bd86363a476fbd836767e35f225376e97",
+      "sha256": "d94e5fe1f87ee9a8843f8677d64149905711f4d0557e8b2780cd6101cd5b0d7e",
+      "bytes": 667
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-155/.task155-runtime.sh.txt",
+      "original_worktree": "review-155",
+      "original_path": ".task155-runtime.sh",
+      "original_head": "0d8e1f5bd86363a476fbd836767e35f225376e97",
+      "sha256": "c6c3e0ae7d437187e730ec389a891e7a1a5f89c672ba0295945049e35c4e13ef",
+      "bytes": 7038
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-156/.task156-outer.sh.txt",
+      "original_worktree": "review-156",
+      "original_path": ".task156-outer.sh",
+      "original_head": "ad406c83613ff6158a986a10d82ebc1ca3e66054",
+      "sha256": "5edbc5525f12c2eb10c38286d15cb638100f5d9fd452fbe668e862baab7ee0b8",
+      "bytes": 667
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-156/.task156-runtime.sh.txt",
+      "original_worktree": "review-156",
+      "original_path": ".task156-runtime.sh",
+      "original_head": "ad406c83613ff6158a986a10d82ebc1ca3e66054",
+      "sha256": "386e00709cba98a512558739a3db9cba671e94ee75bf71713c70df18beeab247",
+      "bytes": 7089
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-159/.task159-cutoff-outer.sh.txt",
+      "original_worktree": "review-159",
+      "original_path": ".task159-cutoff-outer.sh",
+      "original_head": "d5010c3b2804dbf1f34663311ed44de03f794e38",
+      "sha256": "b38a916eadf7c41cb92bddcbcd06662d0a06323eba566fe2c66339470d14e79e",
+      "bytes": 695
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-159/.task159-cutoff-runtime.sh.txt",
+      "original_worktree": "review-159",
+      "original_path": ".task159-cutoff-runtime.sh",
+      "original_head": "d5010c3b2804dbf1f34663311ed44de03f794e38",
+      "sha256": "5378917ea1daae311ae8cb53c0f383aae9196cdd7810553281138193bd6793f7",
+      "bytes": 7186
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-160/.task160-admissionaba-outer.sh.txt",
+      "original_worktree": "review-160",
+      "original_path": ".task160-admissionaba-outer.sh",
+      "original_head": "8bd93fa4b76f6631c41d0618d5ee9eec50055252",
+      "sha256": "49dd07af2cab0f27722c65a3b89961d2e3b1afcd1c14a0a5f05f78757c0e4864",
+      "bytes": 719
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-160/.task160-admissionaba-runtime.sh.txt",
+      "original_worktree": "review-160",
+      "original_path": ".task160-admissionaba-runtime.sh",
+      "original_head": "8bd93fa4b76f6631c41d0618d5ee9eec50055252",
+      "sha256": "173a4b5b4b2c09c96e6eb261bb9be471c84da74763eefe6fd058dfe1880ae44e",
+      "bytes": 8242
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-163/.task163-prelock-outer.sh.txt",
+      "original_worktree": "review-163",
+      "original_path": ".task163-prelock-outer.sh",
+      "original_head": "51454f00587c43de7c6e9bae546e63452353fd34",
+      "sha256": "c3814cfbf011b5ef9202019f4f79d9c863c99389e21be81ee023712334e8229d",
+      "bytes": 699
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-163/.task163-prelock-runtime.sh.txt",
+      "original_worktree": "review-163",
+      "original_path": ".task163-prelock-runtime.sh",
+      "original_head": "51454f00587c43de7c6e9bae546e63452353fd34",
+      "sha256": "bef2d620abdd8590e56712176be864d106b5ef281f34556844480cc65af4a3da",
+      "bytes": 7553
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-164/.task164-distinctfailure-outer.sh.txt",
+      "original_worktree": "review-164",
+      "original_path": ".task164-distinctfailure-outer.sh",
+      "original_head": "693477c04b545e9565cc058082624b6d1a8aa2e6",
+      "sha256": "3d6a5ea6993dbf01843243f88130b80cc5689656f9dccb3d4118b2aeaa0759a1",
+      "bytes": 731
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-164/.task164-distinctfailure-runtime.sh.txt",
+      "original_worktree": "review-164",
+      "original_path": ".task164-distinctfailure-runtime.sh",
+      "original_head": "693477c04b545e9565cc058082624b6d1a8aa2e6",
+      "sha256": "c52fa00069e4c68c1d56c7dbcb48ec25847d37c3a0648bbcaac6597f064f3fdd",
+      "bytes": 7688
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-167/.qa167-outer.sh.txt",
+      "original_worktree": "review-167",
+      "original_path": ".qa167-outer.sh",
+      "original_head": "bf7770c904b22ccdcb28bd0a5a122588857d9e66",
+      "sha256": "839d5bc20d7c61281859a0fa60886eb8b1b7b5da70525f60c753b0a340216a36",
+      "bytes": 797
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-167/.qa167-runtime.sh.txt",
+      "original_worktree": "review-167",
+      "original_path": ".qa167-runtime.sh",
+      "original_head": "bf7770c904b22ccdcb28bd0a5a122588857d9e66",
+      "sha256": "31a5eb58aaaba08f0249fc787366fdb45f74ab4131becea8d714a8151b3ed95e",
+      "bytes": 8659
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-170/.task170-admission-mutate.py.txt",
+      "original_worktree": "review-170",
+      "original_path": ".task170-admission-mutate.py",
+      "original_head": "2b1cfb07ea4011d02a941dfaa455c45bd58ea62d",
+      "sha256": "b2bc668954d085f3792bd99172f75fa1d4c5664a9b604de7659c177f6d270547",
+      "bytes": 766
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-170/.task170-admission-outer.sh.txt",
+      "original_worktree": "review-170",
+      "original_path": ".task170-admission-outer.sh",
+      "original_head": "2b1cfb07ea4011d02a941dfaa455c45bd58ea62d",
+      "sha256": "7cc5850ec058ff489f06fb506a737dc7470cdec0fc6427d9ad7463ba83624a03",
+      "bytes": 840
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-170/.task170-admission-runtime.sh.txt",
+      "original_worktree": "review-170",
+      "original_path": ".task170-admission-runtime.sh",
+      "original_head": "2b1cfb07ea4011d02a941dfaa455c45bd58ea62d",
+      "sha256": "d00cf1c568c4c7d0112d907d2bc5cbf23e52a0e39edf5022fa85e6984452fb35",
+      "bytes": 9292
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/review-170/.task170-upgrade.sql.txt",
+      "original_worktree": "review-170",
+      "original_path": ".task170-upgrade.sql",
+      "original_head": "2b1cfb07ea4011d02a941dfaa455c45bd58ea62d",
+      "sha256": "1ee71e40b7a473a00716e3a42db164d90eaffb7b07197e2d336bec17b69d8edc",
+      "bytes": 1627
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-130/.task130-runtime.sh.txt",
+      "original_worktree": "task-130",
+      "original_path": ".task130-runtime.sh",
+      "original_head": "9122294b71a1ee6ac0a708906c2a1116d86d94d4",
+      "sha256": "35ea9da3ffe41f3707ae1a8f1aa1a39590e89add5f8016523b8aa2d319b73629",
+      "bytes": 6569
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-132/.task132-runtime.sh.txt",
+      "original_worktree": "task-132",
+      "original_path": ".task132-runtime.sh",
+      "original_head": "35f6f7b3cf53019561152fb79ad23b24fdc68142",
+      "sha256": "1ee537458d4c985add873d5ac454b8d32bce9bd503ed92bac6c50a6c1032f045",
+      "bytes": 6208
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-134/.task134-runtime.sh.txt",
+      "original_worktree": "task-134",
+      "original_path": ".task134-runtime.sh",
+      "original_head": "3d9d84d2ec1bef44e1bcf5e7518fc7acd141f86a",
+      "sha256": "e923b3c7948a5e782ef6e7c4317eb542773851ab171e21345307c3883a0dced0",
+      "bytes": 6868
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-137/.task137-runtime.sh.txt",
+      "original_worktree": "task-137",
+      "original_path": ".task137-runtime.sh",
+      "original_head": "9ac6db3d6a9080e445af78fda743e26c44fe7092",
+      "sha256": "a25fc1319d5d65cfc1fe88f7d146df1a652940145c572f4466bafc50b173c421",
+      "bytes": 6206
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-141/.task141-runtime.sh.txt",
+      "original_worktree": "task-141",
+      "original_path": ".task141-runtime.sh",
+      "original_head": "e5d2cd57793deb8025a93cef3051c17f182ab6b7",
+      "sha256": "a64c01c1cff1e6853c59e5b30545653995f5d950e3e612165234980e3e0ea652",
+      "bytes": 6512
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-admission-e-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-admission-e-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "58cc92ea156911cdcf81de0bf90dc664cce8f0f8cbadbd8792c4d1db032fd062",
+      "bytes": 842
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-admission-e-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-admission-e-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "5834f39b569cbafbfb043ffdb9997e20801121f4e855181a5af7395a6f06d094",
+      "bytes": 7018
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-admission-mutate.py.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-admission-mutate.py",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "b2bc668954d085f3792bd99172f75fa1d4c5664a9b604de7659c177f6d270547",
+      "bytes": 766
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-admission-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-admission-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "b24b351349111cbc8f8a4267e825039a54d5a8fbc7dd1617e8a7ca0f350a34d3",
+      "bytes": 840
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-admission-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-admission-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "cf5a667c620414b19aa3d95a148d34baae79aab87a1377ecf5893556efe4d3e3",
+      "bytes": 8693
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-admissionaba-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-admissionaba-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "05e7e18a29c5c28b17c0bb1bfc97dc67cea47af59d90b4cbc275e252b0da677f",
+      "bytes": 719
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-admissionaba-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-admissionaba-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "b8f23c90aed1b0b44f129593ea2a715cf6beae10b1309c4db4821e4c13e1ea07",
+      "bytes": 8240
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-candidate-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-candidate-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "8dd364e1ed4d3dc90ab258a94204aa0ef66804331730aa39d3324af39f0d3ac5",
+      "bytes": 6369
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-competing-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-competing-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "35beb614863b3246b4826db56f0926e519c5c5e768289cd64ebf2ab88bd2f149",
+      "bytes": 707
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-competing-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-competing-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "66d280cb077b49fcc4a8b5b2b72f943f3353efb22789dce7f3125c63cdc37826",
+      "bytes": 7156
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-cutoff-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-cutoff-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "60fbc58de288516b54ac4c40c29c400ef9885f94bf128aacb337fc17726a39bc",
+      "bytes": 695
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-cutoff-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-cutoff-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "02d254cfd9705ca85b02ec4262e9b5773cfdc05ffc39c48bb3ef0efc100545ef",
+      "bytes": 7184
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-distinctfailure-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-distinctfailure-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "be5effc4744ff3de13804543302207a16d8f3ded13cc19e8bc4204b86f48d65d",
+      "bytes": 731
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-distinctfailure-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-distinctfailure-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "692a58b241f1c2f8e642ccb3707a0a0e5a55bdfcd202b2b3d210816b48df5642",
+      "bytes": 7686
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-failedbc-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-failedbc-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "2afcbeb5a7152de32247ce4283e1816605355a4fd99491732914b804c0d7094c",
+      "bytes": 703
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-failedbc-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-failedbc-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "c0a1abc2331b5b0c7a2f576e89ce312c80b3e40eafcfe4785ffa2c03b1e0e40f",
+      "bytes": 7098
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-mutation-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-mutation-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "1f9799e6a6f2f95d24072336b7a3151d33ae08e903a39d6e97308d18bf696176",
+      "bytes": 7673
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-ownership-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-ownership-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "6ededaed0f4d53ccd3d56cbeda041bd8891d0e8338117c5cd3eaeb7e8136912d",
+      "bytes": 707
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-ownership-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-ownership-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "8fa13fe69364b48db8082dad783051a6336b8ee4037fe738acf3bd2b5409e091",
+      "bytes": 8853
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-prelock-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-prelock-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "a68e1d1fbd3432e21692588b4032a663b2503d5c7f78657c9fa0ecce1df18c75",
+      "bytes": 699
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-prelock-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-prelock-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "f249fc11b4a9ccddcef602d59b950d294ac7aef79ba8289b4666b73fcabfefa3",
+      "bytes": 7551
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-regression-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-regression-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "186e9451d29a4b4327993a1f753cb8f0fbcc3c1e9ee6e8b9a93357e58b0d94d5",
+      "bytes": 6505
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-repair-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-repair-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "5d5578f1f33d9394f3d1d156ab91c8de8b88e0cda5f622346b5171ed4c8046bb",
+      "bytes": 6690
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "e1f779e408942e4a61e77cc59598597b19bb1fb265901e880a736d3c0108130d",
+      "bytes": 6405
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-runtime2.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-runtime2.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "c4a9d1277cd2ee478d0ba6f087d07e2f0ffc083bc8ef650474952e2ec2536bff",
+      "bytes": 6477
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-terminal-outer.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-terminal-outer.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "0ed9d36eac0f5615080c0294d5b337a6fa96f62c79ebc35ae9e72327164b6537",
+      "bytes": 703
+    },
+    {
+      "snapshot_path": "docs/development-archive/2026-10-25/untracked-review-helpers/task-143/.task143-terminal-runtime.sh.txt",
+      "original_worktree": "task-143",
+      "original_path": ".task143-terminal-runtime.sh",
+      "original_head": "4e458a6e9e66f3b183759138ae7246649ac384a8",
+      "sha256": "df6f041a0d7d4ee03f86794b3a5dcb9d1d36d8bb08849d6f4cc498e5e85dca67",
+      "bytes": 7709
+    }
+  ]
+}
