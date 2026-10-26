@@ -10,7 +10,7 @@ import {
   hasValidStaffScope,
   resolveAccountSession,
 } from '../../utils/accountSession';
-import { getRedisClient } from '../../config/redis';
+import { getRedisClient, logRedisFallback } from '../../config/redis';
 
 interface RegisterData {
   email: string;
@@ -183,12 +183,20 @@ export class AuthService {
   }
 
   private async getRefreshRevokedBefore(userId: string): Promise<number | null> {
+    // The revocation timestamp is a cache. Logout and password changes already
+    // bump users.session_version, which resolveAccountSession checks in Postgres.
     try {
       const value = await getRedisClient().get(refreshRevokedBeforeKey(userId));
-      return value ? Number(value) : null;
+      if (!value) return null;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
     } catch (error) {
-      logger.error(`Failed to read refresh token revocation state: ${(error as Error).message}`);
-      throw ApiError.internal('Unable to validate refresh token state');
+      logRedisFallback(
+        'refresh-revocation',
+        error,
+        'Redis refresh-revocation cache unavailable; continuing with the database session version'
+      );
+      return null;
     }
   }
 
