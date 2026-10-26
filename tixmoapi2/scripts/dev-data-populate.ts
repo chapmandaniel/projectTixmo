@@ -1113,7 +1113,7 @@ async function populateFixtures(prisma: PrismaClient) {
           : type === NotificationType.EVENT_REMINDER
             ? 'Event coming up soon!'
             : type === NotificationType.WELCOME
-              ? 'Welcome to TixMo!'
+              ? 'Welcome to Tixmo'
               : type === NotificationType.PROMO
                 ? 'Special offer just for you!'
                 : type === NotificationType.ANNOUNCEMENT

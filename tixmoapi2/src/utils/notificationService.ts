@@ -6,6 +6,7 @@ import {
   ticketTransferEmail,
   eventReminderEmail,
   welcomeEmail,
+  type OrderConfirmationData,
 } from './emailTemplates';
 
 export interface SendEmailOptions {
@@ -71,23 +72,22 @@ export class NotificationService {
   /**
    * Send order confirmation email
    */
-  async sendOrderConfirmation(data: {
-    to: string;
-    customerName: string;
-    orderNumber: string;
-    eventName: string;
-    eventDate: string;
-    ticketCount: number;
-    totalAmount: string;
-  }): Promise<boolean> {
+  async sendOrderConfirmation(
+    data: OrderConfirmationData & {
+      to: string;
+    }
+  ): Promise<boolean> {
     const template = orderConfirmationEmail(
       {
         customerName: data.customerName,
         orderNumber: data.orderNumber,
         eventName: data.eventName,
         eventDate: data.eventDate,
-        ticketCount: data.ticketCount,
+        ticketSummary: data.ticketSummary,
         totalAmount: data.totalAmount,
+        venueName: data.venueName,
+        venueAddress: data.venueAddress,
+        hstNumber: data.hstNumber,
       },
       config.clientUrl
     );

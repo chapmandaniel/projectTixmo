@@ -40,6 +40,25 @@ export const normalizeOptionalCredential = (value?: string) => {
   return trimmedValue;
 };
 
+// GST/HST program account: 9-digit business number, RT, 4-digit reference.
+const GST_HST_NUMBER = /^[0-9]{9}RT[0-9]{4}$/;
+
+export const readHstRegistrationNumber = (raw: string | undefined, nodeEnv: string): string => {
+  const normalized = normalizeOptionalCredential(raw).replace(/[\s-]/g, '').toUpperCase();
+  if (!normalized) {
+    if (nodeEnv === 'production') {
+      throw new Error('Missing required environment variable: TIXMO_HST_NUMBER');
+    }
+    return '';
+  }
+  if (!GST_HST_NUMBER.test(normalized)) {
+    throw new Error(
+      'TIXMO_HST_NUMBER must be a GST/HST account number: 9 digits, RT, and 4 digits'
+    );
+  }
+  return normalized;
+};
+
 // Compatibility default only, not an evidenced launch-capacity budget.
 const waitingRoomLimit = process.env.WAITING_ROOM_MAX_CONCURRENT_REQUESTS;
 const waitingRoomMaxConcurrentRequests =
@@ -87,12 +106,14 @@ export const config = {
   stripePublishableKey: normalizeOptionalCredential(process.env.STRIPE_PUBLISHABLE_KEY),
   stripeWebhookSecret: normalizeOptionalCredential(process.env.STRIPE_WEBHOOK_SECRET),
   paymentCurrency: (process.env.PAYMENT_CURRENCY || 'cad').toLowerCase(),
+  // Empty outside production so receipts omit the registration line.
+  hstNumber: readHstRegistrationNumber(process.env.TIXMO_HST_NUMBER, nodeEnv),
 
   // Email
   postmarkServerToken: process.env.POSTMARK_SERVER_TOKEN || '',
   postmarkMessageStream: process.env.POSTMARK_MESSAGE_STREAM || '',
   fromEmail: process.env.FROM_EMAIL || 'noreply@tixmo.co',
-  fromName: process.env.FROM_NAME || 'TixMo',
+  fromName: process.env.FROM_NAME || 'Tixmo',
   emailHost: process.env.EMAIL_HOST || 'smtp.gmail.com',
   emailPort: parseInt(process.env.EMAIL_PORT || '587', 10),
   emailUser: process.env.EMAIL_USER || '',

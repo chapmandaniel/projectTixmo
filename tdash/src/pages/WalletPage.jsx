@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { BuyerAuthPanel } from './CheckoutPage';
 import { DashboardButton, DashboardChip, DashboardPage, DashboardPageHeader, DashboardSurface, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
+import { getPolicyLinks } from '../lib/runtimeConfig';
+import { eventAddress, formatEventMoney, hstRegistrationLine, HST_INCLUDED_NOTE } from '../lib/publicEvent';
 
 const payload = (response) => response?.data?.data || response?.data || response;
-const money = (order) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: (order.currency || 'usd').toUpperCase() }).format(order.totalAmount);
+const money = (order) => formatEventMoney(order.totalAmount, order.currency || 'cad');
+const venueLine = (order) => [order.event?.venue?.name, eventAddress(order.event?.venue)].filter(Boolean).join(', ') || 'Venue to be announced';
 const WalletPage = ({ user, onAuthenticated }) => {
     const [sessionExpired, setSessionExpired] = useState(false);
     const [orders, setOrders] = useState([]);
@@ -55,7 +58,7 @@ const WalletPage = ({ user, onAuthenticated }) => {
     };
     return <main className="min-h-screen bg-dashboard-shell px-4 py-8 text-zinc-100 sm:px-8">
         <DashboardPage className="mx-auto max-w-5xl">
-            <DashboardPageHeader isDark title="My tickets" description={user ? user.email : 'Sign in to view tickets, payment status, and refunds.'}
+            <DashboardPageHeader isDark title="My tickets" description={user && !sessionExpired ? user.email : 'Sign in to see your tickets and order status.'}
                 actions={user && !sessionExpired ? <DashboardButton isDark variant="secondary" disabled={loading || busy} onClick={() => setRefresh(n => n + 1)}>Refresh</DashboardButton> : null} />
             {!user || sessionExpired ? <>
                 {sessionExpired ? <p role="status">Your session expired. Sign in again to retrieve your tickets. Do not purchase again.</p> : null}
@@ -63,6 +66,7 @@ const WalletPage = ({ user, onAuthenticated }) => {
             </> : <>
                 {error ? <p role="alert">{error}</p> : null}
                 {notice ? <p role="status">{notice}</p> : null}
+                <p className="text-sm text-dashboard-muted">Need a refund because an event was cancelled or rescheduled? We'll handle it. {getPolicyLinks().refundPolicyUrl ? <a className="underline" href={getPolicyLinks().refundPolicyUrl} target="_blank" rel="noreferrer">See the refund policy</a> : 'See the refund policy.'}</p>
                 {loading ? <p role="status">Loading wallet…</p> : <>
                     <DashboardSurface isDark className="p-5">
                         <h2 className="mb-4 text-xl">Tickets</h2>
@@ -90,6 +94,9 @@ const WalletPage = ({ user, onAuthenticated }) => {
                         <h2 className="mb-4 text-xl">Orders</h2>
                         {!orders.length ? <p className="text-dashboard-muted">No orders yet.</p> : orders.map(order => <div key={order.id} className="space-y-3 border-b border-dashboard-border py-4">
                             <div className="flex flex-wrap items-center justify-between gap-3"><p>{order.event?.name} · {order.orderNumber}</p><p>{money(order)}</p></div>
+                            <p className="text-sm text-dashboard-muted">{venueLine(order)}</p>
+                            <p className="text-sm text-dashboard-muted">{HST_INCLUDED_NOTE}</p>
+                            {hstRegistrationLine(order.receiptDisclosure?.hstNumber) ? <p className="text-sm text-dashboard-muted">{hstRegistrationLine(order.receiptDisclosure?.hstNumber)}</p> : null}
                             <p className="text-sm text-dashboard-muted">{order.status}{order.refundStatus && order.refundStatus !== 'NONE' ? ` · Refund ${order.refundStatus.toLowerCase()}` : ''}</p>
                             {order.status === 'PAID' ? <div className="flex flex-wrap gap-2">
                                 <DashboardButton isDark variant="secondary" disabled={busy} onClick={() => action(async () => { await api.post(`/orders/${order.id}/receipt`); setNotice('Receipt sent to your email.'); })}>Resend receipt</DashboardButton>
@@ -116,7 +123,7 @@ const WalletPage = ({ user, onAuthenticated }) => {
                     <p className="text-sm text-dashboard-muted">Tickets must be unused and untransferred, before the event starts. Tickets cannot be used while the processor handles a pending refund.</p>
                     <DashboardButton isDark disabled={busy} onClick={() => action(async () => {
                         const result = payload(await api.post(`/orders/${refund.id}/request-refund`));
-                        setRefund(null); setQr(null); setNotice(result.status === 'REFUNDED' ? 'Refund confirmed.' : result.refundStatus === 'FAILED' ? 'The processor could not complete the refund. Contact the organizer.' : 'Refund processing. Refresh to check its status.');
+                        setRefund(null); setQr(null); setNotice(result.status === 'REFUNDED' ? 'Refund confirmed.' : result.refundStatus === 'FAILED' ? "We couldn't finish your refund yet. We're on it." : 'Refund processing. Refresh to check its status.');
                     })}>Confirm full refund</DashboardButton>
                     <DashboardButton isDark variant="secondary" disabled={busy} onClick={() => setRefund(null)}>Keep order</DashboardButton>
                 </DashboardSurface> : null}

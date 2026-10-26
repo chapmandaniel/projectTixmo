@@ -56,11 +56,11 @@ describe('Recorded event operations', () => {
     it('loads recorded metrics, changes currency, and reports unavailable traffic', async () => {
         mocks.get.mockImplementation((url, options) => Promise.resolve(wrapped(url === '/analytics/sales' ? { totalRevenue: options.params.currency === 'cad' ? 150 : 400, totalOrders: 2, salesByDay: [] } : url.endsWith('/stats') ? { ticketsSold: 4, ticketsUsed: 1 } : { orders: [order()] })));
         render(<ECC_Overview event={event} isDark />);
-        await screen.findByText(/CAD.*150/);
+        await screen.findByText('$150.00');
         expect(screen.getByText(/Page views and conversion rate are unavailable/)).toBeInTheDocument();
         expect(screen.queryByText('Alex M.')).not.toBeInTheDocument();
         fireEvent.change(screen.getByLabelText('Revenue currency'), { target: { value: 'usd' } });
-        await screen.findByText(/USD.*400/);
+        await screen.findByText('US$400.00');
         expect(mocks.get).toHaveBeenCalledWith('/analytics/sales', expect.objectContaining({ params: expect.objectContaining({ eventId: event.id, currency: 'usd' }) }));
     });
     it('preserves failure instead of displaying fabricated zero revenue', async () => {

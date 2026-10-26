@@ -73,7 +73,7 @@ const CreativePreview = ({ result, isGenerating, isDark }) => {
                                 {activeTab === 'twitter' && <Twitter size={16} />}
                                 {activeTab === 'linkedin' && <Linkedin size={16} />}
                             </div>
-                            <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>TixMo Official</span>
+                            <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Tixmo Official</span>
                         </div>
                         <button className={`p-1.5 rounded-lg ${isDark ? 'hover:bg-[#333] text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
                             <Copy size={16} />

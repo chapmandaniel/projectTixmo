@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../lib/api';
 import { DashboardButton, DashboardEmptyState, DashboardSelect, DashboardStat, DashboardSurface } from '../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../lib/dashboardTheme';
+import { formatEventMoney } from '../lib/publicEvent';
 
 const payload = (response) => response.data.data || response.data;
 const ECC_Overview = ({ event, isDark, onViewOrders }) => {
@@ -29,7 +30,7 @@ const ECC_Overview = ({ event, isDark, onViewOrders }) => {
         }).finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
     }, [event.id, days, currency, refresh]);
-    const money = (amount, code = currency) => new Intl.NumberFormat(undefined, { style: 'currency', currency: code.toUpperCase(), currencyDisplay: 'code' }).format(Number(amount));
+    const money = (amount, code = currency) => formatEventMoney(amount, code);
     return <div className={`space-y-6 ${theme.textPrimary}`}>
         <div className="flex flex-wrap items-end gap-3">
             <label className="space-y-2 text-sm">Sales period<DashboardSelect isDark={isDark} aria-label="Sales period" value={days} onChange={(e) => setDays(e.target.value)}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></DashboardSelect></label>

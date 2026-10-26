@@ -43,7 +43,7 @@ const LoginView = ({ onLogin, notice = '' }) => {
                         <a href="https://tixmo.co" className="inline-flex">
                             <img
                                 src="https://tixmo.co/images/tixmo_logo.png"
-                                alt="TixMo Logo"
+                                alt="Tixmo Logo"
                                 className="h-16 w-auto object-contain sm:h-20"
                             />
                         </a>

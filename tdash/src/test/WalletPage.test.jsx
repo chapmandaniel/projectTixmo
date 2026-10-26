@@ -88,6 +88,34 @@ describe('Buyer wallet', () => {
     expect(calls.post).not.toHaveBeenCalled();
   });
 
+  it('shows the venue and HST registration number on the on-screen receipt', async () => {
+    const disclosed = {
+      ...order,
+      event: {
+        name: 'Night show',
+        venue: { name: 'Signal Hall', address: { street: '1 Harbour Dr', city: "St. John's", state: 'NL' } },
+      },
+      receiptDisclosure: { hstNumber: '123456789RT0001' },
+    };
+    calls.get.mockImplementation(async path => path.startsWith('/orders/mine')
+      ? { data: { orders: [disclosed], pagination: { pages: 1 } } }
+      : path.startsWith('/tickets/mine') ? { data: { tickets: [ticket], pagination: { pages: 1 } } }
+      : Promise.reject(new Error(`Unexpected API route: ${path}`)));
+    mount();
+    expect(await screen.findByText(/Signal Hall, 1 Harbour Dr, St\. John's, NL/)).toBeInTheDocument();
+    expect(screen.getByText('HST no. 123456789RT0001')).toBeInTheDocument();
+    expect(screen.getByText('Includes HST and all fees')).toBeInTheDocument();
+    expect(screen.getByText('$25.00')).toBeInTheDocument();
+  });
+
+  it('hides the HST registration line when the number is unset', async () => {
+    mount();
+    await screen.findByText('ORD-OWNED', { exact: false });
+    expect(screen.getByText('Includes HST and all fees')).toBeInTheDocument();
+    expect(screen.getByText('Venue to be announced')).toBeInTheDocument();
+    expect(screen.queryByText(/HST no\./)).not.toBeInTheDocument();
+  });
+
   it('fails closed when the initial owned-record lookup has an expired session', async () => {
     calls.get.mockRejectedValue({ response: { status: 401 } });
     mount();

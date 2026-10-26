@@ -5,6 +5,7 @@ import prisma from '../../config/prisma';
 import { ActorScope, assertOrganizationAccess } from '../../utils/tenantScope';
 import { lockOrder } from '../../services/order-inventory.service';
 import { orderService } from '../orders/service';
+import { receiptDisclosure } from '../../utils/receipt';
 
 interface CreateEventInput {
   title: string;
@@ -836,6 +837,7 @@ export class EventService {
     if (!event) return null;
     return {
       ...event,
+      receiptDisclosure: receiptDisclosure(),
       ticketTypes: event.ticketTypes.map(({ _count, ...ticketType }) => ({
         ...ticketType,
         // Expose schedule presence, never inactive tier rows or raw counts.

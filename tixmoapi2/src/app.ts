@@ -136,7 +136,7 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'TixMo API Documentation',
+    customSiteTitle: 'Tixmo API Documentation',
   })
 );
 

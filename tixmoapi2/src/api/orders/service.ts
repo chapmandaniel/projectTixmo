@@ -8,6 +8,13 @@ import { getActorScopeById, resolveOrganizationFilter } from '../../utils/tenant
 import prisma from '../../config/prisma';
 import { config } from '../../config/environment';
 import {
+  formatMoney,
+  formatVenueAddress,
+  receiptDisclosure,
+  summarizeTickets,
+  type ReceiptDisclosure,
+} from '../../utils/receipt';
+import {
   lockOrder,
   transitionInventory,
   transitionPromo,
@@ -33,7 +40,7 @@ interface ListOrdersParams {
 }
 
 interface PaginatedOrders {
-  orders: Order[];
+  orders: Array<Order & { receiptDisclosure: ReceiptDisclosure }>;
   pagination: {
     page: number;
     limit: number;
@@ -98,7 +105,7 @@ export class OrderService {
         }
         if (event.salesPaused)
           throw ApiError.conflict(
-            'Ticket sales are temporarily paused. Existing orders and tickets remain available.',
+            'Ticket sales are paused for a moment. Orders and tickets you already have are safe. Please check back soon.',
             { code: 'SALES_PAUSED' }
           );
         let subtotal = new Decimal(0);
@@ -361,7 +368,11 @@ export class OrderService {
   async sendOrderConfirmationEmail(orderId: string, resend = false): Promise<void> {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { tickets: true, event: { include: { venue: true } }, user: true },
+      include: {
+        tickets: { include: { ticketType: { select: { name: true } } } },
+        event: { include: { venue: true } },
+        user: true,
+      },
     });
     if (!order) throw ApiError.notFound('Order not found');
     if (
@@ -407,8 +418,11 @@ export class OrderService {
         orderNumber: order.orderNumber,
         eventName: order.event.name,
         eventDate: date,
-        ticketCount: order.tickets.length,
-        totalAmount: `${order.currency.toUpperCase()} ${order.totalAmount.toFixed(2)}`,
+        ticketSummary: summarizeTickets(order.tickets),
+        totalAmount: formatMoney(order.totalAmount, order.currency),
+        venueName: order.event.venue?.name || null,
+        venueAddress: formatVenueAddress(order.event.venue?.address),
+        hstNumber: config.hstNumber || null,
       });
       if (!delivered) throw ApiError.internal('Receipt could not be delivered');
       await prisma.order.updateMany({
@@ -496,6 +510,7 @@ export class OrderService {
             select: {
               name: true,
               startDatetime: true,
+              venue: { select: { name: true, address: true } },
             },
           },
           tickets: {
@@ -521,7 +536,7 @@ export class OrderService {
     ]);
 
     return {
-      orders,
+      orders: orders.map((order) => ({ ...order, receiptDisclosure: receiptDisclosure() })),
       pagination: {
         page: safePage,
         limit: cappedLimit,

@@ -27,7 +27,7 @@ describe('email transport configuration', () => {
         postmarkServerToken: '',
         postmarkMessageStream: '',
         fromEmail: 'info@tixmo.co',
-        fromName: 'TixMo',
+        fromName: 'Tixmo',
         emailHost: 'smtp.gmail.com',
         emailPort: 587,
         emailUser: '',
@@ -58,7 +58,7 @@ describe('email transport configuration', () => {
       'Email transport using Postmark API derived from POSTMARK_SERVER_TOKEN'
     );
     expect(emailModule.emailFrom).toEqual({
-      name: 'TixMo',
+      name: 'Tixmo',
       address: 'info@tixmo.co',
     });
     expect(typeof emailModule.transporter.sendMail).toBe('function');

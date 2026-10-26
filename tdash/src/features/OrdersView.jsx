@@ -3,6 +3,7 @@ import { Search, Filter, ArrowUpDown, RefreshCw, ChevronLeft, ChevronRight, Eye 
 import api from '../lib/api';
 import StatusBadge from '../components/StatusBadge';
 import OrderDetailModal from './OrderDetailModal';
+import { formatEventMoney } from '../lib/publicEvent';
 
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Newest first' },
@@ -271,7 +272,7 @@ const OrdersView = ({
                                         </td>
                                         <td className="p-4">{normalizeEventName(order)}</td>
                                         <td className="p-4">
-                                            {new Intl.NumberFormat('en-CA', { style: 'currency', currency: (order.currency || 'usd').toUpperCase() }).format(order.totalAmount)}
+                                            {formatEventMoney(order.totalAmount, order.currency || 'cad')}
                                         </td>
                                         <td className="p-4 whitespace-nowrap">
                                             {new Date(order.createdAt).toLocaleDateString()}

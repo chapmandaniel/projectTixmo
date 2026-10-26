@@ -54,7 +54,8 @@ Required:
 - [ ] `PAYMENT_CURRENCY`
 - [ ] `POSTMARK_SERVER_TOKEN` or SMTP credentials
 - [ ] `FROM_EMAIL`
-- [ ] `FROM_NAME`
+- [ ] `FROM_NAME` (`Tixmo` unless a verified sender name is explicitly chosen)
+- [ ] `TIXMO_HST_NUMBER` (GST/HST account: 9 digits, `RT`, 4 digits)
 - [ ] `S3_ENDPOINT` or AWS endpoint settings
 - [ ] `S3_ACCESS_KEY_ID` or `AWS_ACCESS_KEY_ID`
 - [ ] `S3_SECRET_ACCESS_KEY` or `AWS_SECRET_ACCESS_KEY`
@@ -78,6 +79,8 @@ Validation:
 - [ ] `CLIENT_URL` points to the production dashboard origin.
 - [ ] CORS trusted-origin logic allows the dashboard domain and rejects unrelated origins.
 - [ ] `PAYMENT_CURRENCY` matches the intended launch currency.
+- [ ] `TIXMO_HST_NUMBER` is set in production. Buyer receipts print `HST no.` plus that number and state that the price includes HST and all fees. Live checkout stores only the amount charged (`taxAmount` stays 0 and no tax rate is stored), so receipts do not show a computed HST dollar amount. Non-production boots with the variable unset and hides the registration line.
+- [ ] `FROM_NAME` presented to buyers is `Tixmo`.
 - [ ] API boot fails if required production env vars are missing.
 
 ## 4. Dashboard Runtime Config

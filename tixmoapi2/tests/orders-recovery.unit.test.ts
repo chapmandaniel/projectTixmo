@@ -206,7 +206,14 @@ describe('consumer recovery route/controller/service', () => {
     const response = await request(app)
       .get('/api/v1/orders/11111111-1111-4111-8111-111111111111?userId=other')
       .set('Authorization', 'Bearer mock');
-    expect(response.body.data).toEqual(detail);
+    expect(response.body.data).toEqual({
+      ...detail,
+      receiptDisclosure: {
+        includesHstAndFees: true,
+        hstNumber: null,
+        hstAmount: null,
+      },
+    });
     expect(read).toHaveBeenCalledWith('11111111-1111-4111-8111-111111111111', undefined, 'buyer');
     expect(db.order.findFirst).not.toHaveBeenCalled();
   });

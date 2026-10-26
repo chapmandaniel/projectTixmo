@@ -151,7 +151,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
             `}</style>
             <header className={`sticky top-0 z-50 flex h-[72px] items-center justify-between px-5 sm:px-6 lg:px-7 transition-colors ${isDark ? 'bg-[#1f1e30]' : 'border-b border-gray-200 bg-white/95 backdrop-blur-xl'}`}>
                 <Link to="/dashboard" className="mr-5 flex shrink-0 cursor-pointer items-center space-x-3 lg:mr-9">
-                    <img src="https://tixmo.co/images/tixmo_logo.png" alt="TixMo Logo" className="h-8 w-auto object-contain" />
+                    <img src="https://tixmo.co/images/tixmo_logo.png" alt="Tixmo Logo" className="h-8 w-auto object-contain" />
                 </Link>
 
                 <div className="relative flex h-full flex-1 items-center overflow-hidden">
