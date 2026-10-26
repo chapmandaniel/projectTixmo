@@ -249,7 +249,7 @@ describe('Online scanner', () => {
         localStorage.setItem(SCANNER_KEY_STORAGE, key);
         fetch.mockResolvedValueOnce(httpError(403, { success: false, message: 'Scanner is revoked' }));
         render(<ScannerPage />);
-        expect(await screen.findByText('This scanner key is no longer valid. Enter a new scanner key.')).toBeInTheDocument();
+        expect(await screen.findByText('Scanner key rejected or scanner unavailable. Check its assignment and active status.')).toBeInTheDocument();
         expect(localStorage.getItem(SCANNER_KEY_STORAGE)).toBeNull();
         expect(screen.getByLabelText('Scanner API key')).toBeInTheDocument();
         expect(screen.queryByText('North gate')).not.toBeInTheDocument();
@@ -306,11 +306,33 @@ describe('Online scanner', () => {
         expect(screen.queryByText(/Scanner key rejected or scanner unavailable/)).not.toBeInTheDocument();
     });
 
+    it('shows Already used for a prior scan and for the 409 race', async () => {
+        render(<ScannerPage />); await connect(); enter();
+        fetch.mockResolvedValueOnce(reply({ success: false, reason: 'Ticket has already been used' }));
+        check();
+        expect(await screen.findByText('Already used')).toBeInTheDocument();
+        expect(screen.queryByText('Ticket has already been used')).not.toBeInTheDocument();
+        fetch.mockResolvedValueOnce(httpError(409, { success: false, message: 'Ticket has already been used' }));
+        check();
+        expect(await screen.findByText('Already used')).toBeInTheDocument();
+        expect(screen.queryByText(/No confirmed result from the server/)).not.toBeInTheDocument();
+        expect(screen.getByText('North gate')).toBeInTheDocument();
+    });
+
+    it('keeps the generic scanner message for an inactive scanner', async () => {
+        render(<ScannerPage />); await connect(); enter();
+        fetch.mockResolvedValueOnce(httpError(403, { success: false, message: 'Scanner is not active' }));
+        check();
+        expect(await screen.findByText('Scanner key rejected or scanner unavailable. Check its assignment and active status.')).toBeInTheDocument();
+        expect(screen.queryByText(/Ticket is for a different event/)).not.toBeInTheDocument();
+        expect(localStorage.getItem(SCANNER_KEY_STORAGE)).toBeNull();
+    });
+
     it('drops the saved key when a later scan says the scanner key is invalid', async () => {
         render(<ScannerPage />); await connect(); enter();
         fetch.mockResolvedValueOnce(httpError(401, { success: false, message: 'Invalid API key' }));
         check();
-        expect(await screen.findByText('This scanner key is no longer valid. Enter a new scanner key.')).toBeInTheDocument();
+        expect(await screen.findByText('Scanner key rejected or scanner unavailable. Check its assignment and active status.')).toBeInTheDocument();
         expect(localStorage.getItem(SCANNER_KEY_STORAGE)).toBeNull();
         expect(screen.queryByText('North gate')).not.toBeInTheDocument();
     });

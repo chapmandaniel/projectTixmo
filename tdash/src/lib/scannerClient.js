@@ -6,12 +6,10 @@ const scannerKeyPattern = /^sk_scanner_[A-Za-z0-9_-]{1,256}$/;
 
 export const SCANNER_KEY_STORAGE = 'tixmo_scanner_api_key';
 
-const WRONG_EVENT_CODES = new Set([
-    'WRONG_EVENT',
-    'DIFFERENT_EVENT',
-    'EVENT_MISMATCH',
-    'NOT_ASSIGNED_TO_EVENT',
-]);
+const ASSIGNMENT_MESSAGE = 'Scanner is not assigned to this event';
+const ALREADY_USED_REASON = 'Ticket has already been used';
+export const SCANNER_UNAVAILABLE = 'Scanner key rejected or scanner unavailable. Check its assignment and active status.';
+const ALREADY_USED = 'Already used';
 
 const DISPUTE_CODES = new Set([
     'DISPUTED',
@@ -102,10 +100,15 @@ export function wrongEventMessage(payload) {
 }
 
 function isWrongEvent(status, payload) {
-    if (status !== 403 && status !== 409) return false;
+    if (status !== 403) return false;
+    if (textValue(payload?.message) === ASSIGNMENT_MESSAGE) return true;
+    return payloadCodes(payload).includes('WRONG_EVENT');
+}
+
+function isAlreadyUsed(status, payload) {
     const message = textValue(payload?.message);
-    if (/not assigned to this event/i.test(message) || /different event/i.test(message)) return true;
-    return payloadCodes(payload).some((code) => WRONG_EVENT_CODES.has(code));
+    const reason = textValue(payload?.reason || payload?.data?.reason);
+    return message === ALREADY_USED_REASON || reason === ALREADY_USED_REASON || (status === 409 && message === ALREADY_USED_REASON);
 }
 
 export function disputeVoidMessage(payload) {
@@ -120,7 +123,11 @@ export function disputeVoidMessage(payload) {
 }
 
 export function admissionMessage(data) {
-    return disputeVoidMessage(data) || textValue(data?.reason) || 'Admission denied';
+    const dispute = disputeVoidMessage(data);
+    if (dispute) return dispute;
+    const reason = textValue(data?.reason);
+    if (reason === ALREADY_USED_REASON) return ALREADY_USED;
+    return reason || 'Admission denied';
 }
 
 function keyRejected(status, payload) {
@@ -130,9 +137,10 @@ function keyRejected(status, payload) {
     return /scanner is (not active|revoked|disabled)/i.test(message) || /invalid (scanner )?api key/i.test(message) || /api key required/i.test(message);
 }
 
-function scannerFailure(status, message, flags) {
+function scannerFailure(status, message, flags, body) {
     const error = new Error(message);
     error.status = status;
+    error.body = body;
     Object.assign(error, flags);
     return error;
 }
@@ -153,14 +161,15 @@ export async function scannerRequest(endpoint, key, body, signal) {
             payload = {};
         }
         const voided = disputeVoidMessage(payload);
-        if (voided) throw scannerFailure(response.status, voided, { voided: true });
-        if (isWrongEvent(response.status, payload)) throw scannerFailure(response.status, wrongEventMessage(payload), { wrongEvent: true });
+        if (voided) throw scannerFailure(response.status, voided, { voided: true }, payload);
+        if (isWrongEvent(response.status, payload)) throw scannerFailure(response.status, wrongEventMessage(payload), { wrongEvent: true }, payload);
+        if (isAlreadyUsed(response.status, payload)) throw scannerFailure(response.status, ALREADY_USED, { alreadyUsed: true }, payload);
         if (response.status === 401 || response.status === 403) {
-            throw scannerFailure(response.status, 'Scanner key rejected or scanner unavailable. Check its assignment and active status.', {
+            throw scannerFailure(response.status, SCANNER_UNAVAILABLE, {
                 forgetKey: keyRejected(response.status, payload),
-            });
+            }, payload);
         }
-        throw scannerFailure(response.status, 'No confirmed result from the server. Check the ticket before trying again.', {});
+        throw scannerFailure(response.status, 'No confirmed result from the server. Check the ticket before trying again.', {}, payload);
     }
     const payload = await response.json();
     if (payload?.success !== true || !payload.data) throw new Error('No confirmed result from the server. Check the ticket before trying again.');

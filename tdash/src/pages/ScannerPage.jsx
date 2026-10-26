@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ScanLine } from 'lucide-react';
 import { DashboardButton, DashboardPage, DashboardPageHeader, DashboardSection, DashboardTextInput } from '../components/dashboard/DashboardPrimitives';
-import { admissionMessage, forgetScannerKey, readStoredScannerKey, scannerRequest, storeScannerKey, ticketQR } from '../lib/scannerClient';
+import { admissionMessage, forgetScannerKey, readStoredScannerKey, SCANNER_UNAVAILABLE, scannerRequest, storeScannerKey, ticketQR } from '../lib/scannerClient';
 import { getDashboardTheme } from '../lib/dashboardTheme';
 
 export default function ScannerPage({ isDark = true }) {
@@ -55,7 +55,7 @@ export default function ScannerPage({ isDark = true }) {
             const data = await scannerRequest(endpoint, value, body, controller.signal);
             if (!live.current || generation !== session.current) return;
             if (endpoint === 'auth') {
-                if (typeof data.name !== 'string' || data.status !== 'ACTIVE') throw Object.assign(new Error('This scanner key is no longer valid. Enter a new scanner key.'), { forgetKey: true, status: 403 });
+                if (typeof data.name !== 'string' || data.status !== 'ACTIVE') throw Object.assign(new Error(SCANNER_UNAVAILABLE), { forgetKey: true, status: 403 });
                 key.current = value; storeScannerKey(value); setDraftKey(''); setScanner(data);
             } else {
                 if (typeof data.success !== 'boolean') throw new Error('No confirmed admission result. Check the ticket before trying again.');
@@ -65,8 +65,8 @@ export default function ScannerPage({ isDark = true }) {
             if (!live.current || generation !== session.current) return;
             if (error.forgetKey) {
                 forgetScannerKey(); key.current = ''; setScanner(null); setDraftKey(''); setResult(null);
-                setNotice('This scanner key is no longer valid. Enter a new scanner key.');
-            } else if (error.wrongEvent || error.voided) {
+                setNotice(error.message);
+            } else if (error.wrongEvent || error.voided || error.alreadyUsed) {
                 setNotice(''); setResult({ accepted: false, message: error.message });
             } else if (endpoint === 'auth' && !error.status) {
                 setNotice(readStoredScannerKey() ? 'Saved scanner could not be confirmed. Check the connection, then try again.' : 'No confirmed result. Check the connection before trying again.');
