@@ -63,13 +63,17 @@ export function canCheckIn(ticket, pageEvent, now = Date.now()) {
 }
 
 export function attendeeStatusBadges(ticket, pageEvent, now = Date.now()) {
-    if (upper(ticket?.order?.refundStatus) === 'FAILED') return ['Refund failed'];
     const admitted = canCheckIn(ticket, pageEvent, now);
     const statusLabel = upper(ticket?.status) === 'USED'
         ? 'Checked In'
         : upper(ticket?.status) === 'VALID' && admitted
             ? 'Confirmed'
             : ticketStatusLabel(ticket?.status);
+    // A failed refund still leaves the ticket's own status. Drop only Confirmed,
+    // which adds nothing once the refund failure is shown.
+    if (upper(ticket?.order?.refundStatus) === 'FAILED') {
+        return [statusLabel !== 'Confirmed' ? statusLabel : '', orderStateLabel(ticket)].filter(Boolean);
+    }
     const orderLabel = orderStateLabel(ticket);
     return orderLabel && orderLabel !== statusLabel ? [statusLabel, orderLabel] : [statusLabel].filter(Boolean);
 }
