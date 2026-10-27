@@ -1,11 +1,11 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "TixMo API",
+    "title": "Tixmo API",
     "version": "0.1.0",
     "description": "Enterprise-grade ticket vendor platform API for event promoters",
     "contact": {
-      "name": "TixMo Team",
+      "name": "Tixmo Team",
       "email": "api@tixmo.co"
     },
     "license": {
@@ -18,8 +18,8 @@
       "description": "Development server"
     },
     {
-      "url": "https://api.tixmo.com/v1",
-      "description": "Production server (future)"
+      "url": "https://api-production-fbaf.up.railway.app/api/v1",
+      "description": "Production server"
     }
   ],
   "components": {
