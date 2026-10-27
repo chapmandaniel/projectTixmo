@@ -194,6 +194,75 @@ describe('checkout transaction busy', () => {
     expect(limits.some((sql) => sql.includes('statement_timeout'))).toBe(true);
   });
 
+  it('claims the next expired order with an advisory lock inside the checkout transaction', async () => {
+    (prisma.$transaction as jest.Mock).mockImplementation(async (work) => work(tx));
+    tx.$queryRaw.mockImplementation((sql: TemplateStringsArray) => {
+      const text = String(sql);
+      if (text.includes('pg_try_advisory_xact_lock')) return [{ locked: true }];
+      if (text.includes('order_number')) return [{ id: 'expired', order_number: 'ORD-LOCK' }];
+      return [];
+    });
+    jest.spyOn(service, 'cancelOrderInTransaction').mockResolvedValue({
+      id: 'expired',
+      status: 'CANCELLED',
+    } as never);
+    await expect(service.claimNextExpiredOrder(['busy-order'])).resolves.toEqual({
+      status: 'cancelled',
+      id: 'expired',
+      orderNumber: 'ORD-LOCK',
+    });
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      maxWait: 2000,
+      timeout: 5000,
+    });
+    const texts = tx.$queryRaw.mock.calls.map((call) => String(call[0]));
+    expect(texts.some((sql) => sql.includes('pg_try_advisory_xact_lock'))).toBe(true);
+    expect(texts.some((sql) => sql.includes('hashtextextended'))).toBe(true);
+    expect(texts.some((sql) => sql.includes('lock_timeout'))).toBe(true);
+    expect(texts.some((sql) => sql.includes('statement_timeout'))).toBe(true);
+    const select = tx.$queryRaw.mock.calls.find((call) => String(call[0]).includes('order_number'));
+    const fragments = (select ?? []).slice(1) as Array<{ strings?: TemplateStringsArray }>;
+    expect(
+      fragments.some((value) => (value.strings ? value.strings.join('') : '').includes('NOT IN'))
+    ).toBe(true);
+    expect(service.cancelOrderInTransaction).toHaveBeenCalledWith(tx, 'expired');
+  });
+
+  it('skips an expired order another replica already claimed', async () => {
+    (prisma.$transaction as jest.Mock).mockImplementation(async (work) => work(tx));
+    tx.$queryRaw.mockImplementation((sql: TemplateStringsArray) => {
+      const text = String(sql);
+      if (text.includes('pg_try_advisory_xact_lock')) return [{ locked: false }];
+      if (text.includes('order_number')) return [{ id: 'expired', order_number: 'ORD-LOCK' }];
+      return [];
+    });
+    const cancel = jest.spyOn(service, 'cancelOrderInTransaction');
+    await expect(service.claimNextExpiredOrder()).resolves.toEqual({
+      status: 'skipped',
+      id: 'expired',
+      orderNumber: 'ORD-LOCK',
+    });
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed expiry claim without treating it as cancelled', async () => {
+    (prisma.$transaction as jest.Mock).mockImplementation(async (work) => work(tx));
+    tx.$queryRaw.mockImplementation((sql: TemplateStringsArray) => {
+      const text = String(sql);
+      if (text.includes('pg_try_advisory_xact_lock')) return [{ locked: true }];
+      if (text.includes('order_number')) return [{ id: 'expired', order_number: 'ORD-LOCK' }];
+      return [];
+    });
+    const error = new Error('commit cannot be executed on an expired transaction');
+    jest.spyOn(service, 'cancelOrderInTransaction').mockRejectedValue(error);
+    await expect(service.claimNextExpiredOrder()).resolves.toEqual({
+      status: 'failed',
+      id: 'expired',
+      orderNumber: 'ORD-LOCK',
+      error,
+    });
+  });
+
   it('does not store a 500 when checkout is busy and the same idempotency key succeeds on retry', async () => {
     const payload = { items: [{ ticketTypeId: 'ga', quantity: 2 }] };
     let attempts = 0;

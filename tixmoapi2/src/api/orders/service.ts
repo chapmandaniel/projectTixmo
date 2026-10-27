@@ -69,6 +69,12 @@ interface PaginatedOrders {
   };
 }
 
+export type ExpiredOrderClaim =
+  | { status: 'empty' }
+  | { status: 'skipped'; id: string; orderNumber: string }
+  | { status: 'cancelled'; id: string; orderNumber: string }
+  | { status: 'failed'; id: string; orderNumber: string; error: unknown };
+
 export class OrderService {
   // Only authenticated HTTP entrypoints pass actorId. Omission is reserved for
   // trusted payment/free-order/expiry jobs; never populate it from query input.
@@ -698,6 +704,56 @@ export class OrderService {
       await applyCheckoutDbLimits(tx);
       return this.cancelOrderInTransaction(tx, id);
     }, checkoutTransactionOptions());
+  }
+
+  /**
+   * Claim one expired PENDING order that no other replica is already cancelling.
+   *
+   * The advisory lock is per order and lasts until this transaction ends, so
+   * another replica's sweep takes the next row. It is not a row lock: a
+   * confirmation holding the order still blocks the cancel's FOR UPDATE, and
+   * that wait is bounded by the checkout lock timeout. Skipping locked rows
+   * would also skip that confirmation and leave the hold pending.
+   *
+   * A cancel that throws rolls back, leaves the order PENDING, and is returned
+   * as failed so this sweep can move on. The next minute retries it.
+   */
+  async claimNextExpiredOrder(excludeIds: readonly string[] = []): Promise<ExpiredOrderClaim> {
+    let claimed: { id: string; orderNumber: string } | undefined;
+    try {
+      const row = await prisma.$transaction(async (tx) => {
+        await applyCheckoutDbLimits(tx);
+        const exclude = excludeIds.length
+          ? Prisma.sql`AND id NOT IN (${Prisma.join([...excludeIds])})`
+          : Prisma.empty;
+        const rows = await tx.$queryRaw<Array<{ id: string; order_number: string }>>`
+          SELECT id, order_number
+          FROM orders
+          WHERE status = 'PENDING'::"OrderStatus"
+            AND expires_at < NOW()
+            ${exclude}
+          ORDER BY expires_at ASC, id ASC
+          LIMIT 1
+        `;
+        const next = rows[0];
+        if (!next) return null;
+        const locks = await tx.$queryRaw<Array<{ locked: boolean }>>`
+          SELECT pg_try_advisory_xact_lock(hashtextextended(${next.id}, 0)) AS locked
+        `;
+        if (locks[0]?.locked !== true) {
+          return { skipped: true as const, id: next.id, orderNumber: next.order_number };
+        }
+        claimed = { id: next.id, orderNumber: next.order_number };
+        await this.cancelOrderInTransaction(tx, next.id);
+        return { skipped: false as const, id: next.id, orderNumber: next.order_number };
+      }, checkoutTransactionOptions());
+      if (!row) return { status: 'empty' };
+      if (row.skipped) return { status: 'skipped', id: row.id, orderNumber: row.orderNumber };
+      return { status: 'cancelled', id: row.id, orderNumber: row.orderNumber };
+    } catch (error) {
+      if (!claimed) throw error;
+      return { status: 'failed', id: claimed.id, orderNumber: claimed.orderNumber, error };
+    }
   }
 
   async cancelOrderInTransaction(
