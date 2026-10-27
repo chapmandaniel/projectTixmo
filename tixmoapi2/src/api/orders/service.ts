@@ -571,6 +571,18 @@ export class OrderService {
     });
   }
 
+  /**
+   * Expiry sweep only. Same lock and statement limits as checkout, so a row
+   * held by a saturated order create fails in about two seconds and the sweep
+   * can move on. The order stays PENDING and the next sweep retries it.
+   */
+  async cancelExpiredOrder(id: string): Promise<Order> {
+    return prisma.$transaction(async (tx) => {
+      await applyCheckoutDbLimits(tx);
+      return this.cancelOrderInTransaction(tx, id);
+    }, checkoutTransactionOptions());
+  }
+
   async cancelOrderInTransaction(
     tx: Prisma.TransactionClient,
     id: string,

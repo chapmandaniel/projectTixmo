@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 
-const load = (statusCode: number, body: string, hold = false) => {
+const load = (statusCode: number, body: string, hold = false, failRequest = false) => {
   jest.resetModules();
   const payloads: string[] = [];
   let timeout: () => void = () => undefined;
@@ -23,6 +23,10 @@ const load = (statusCode: number, body: string, hold = false) => {
       request.write = (value: string) => payloads.push(value);
       request.destroy = (error: Error) => process.nextTick(() => request.emit('error', error));
       request.end = () => {
+        if (failRequest) {
+          process.nextTick(() => request.emit('error', new Error('socket hang up')));
+          return;
+        }
         const startResponse = () => {
           const response = new EventEmitter() as any;
           activeResponse = response;
@@ -143,4 +147,62 @@ it('bounds total time even while response data arrives before the inactivity tim
     await running;
     jest.useRealTimers();
   }
+});
+
+const mail = {
+  to: 'buyer@example.com',
+  subject: 'Your Tixmo tickets',
+  html: '<p>ok</p>',
+  text: 'ok',
+};
+
+function logs() {
+  const { logger } = require('../../src/config/logger');
+  const info = jest.spyOn(logger, 'info').mockImplementation(() => logger);
+  const error = jest.spyOn(logger, 'error').mockImplementation(() => logger);
+  const { notificationService } = require('../../src/utils/notificationService');
+  return { info, error, notificationService };
+}
+
+it('logs MessageID and ErrorCode and only then reports the email as sent', async () => {
+  load(200, JSON.stringify({ ErrorCode: 0, MessageID: 'pm-success-id' }));
+  const { info, error, notificationService } = logs();
+  await expect(notificationService.sendEmail(mail)).resolves.toBe(true);
+  const infoLines = info.mock.calls.map((call) => String(call[0]));
+  expect(infoLines).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining('Postmark send ErrorCode=0 MessageID=pm-success-id'),
+      expect.stringContaining(
+        'Email sent to buyer@example.com: Your Tixmo tickets (MessageID pm-success-id)'
+      ),
+    ])
+  );
+  expect(error.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('Email sent');
+});
+
+it('treats a non-zero Postmark ErrorCode as a failure and does not report the email as sent', async () => {
+  load(200, JSON.stringify({ ErrorCode: 406, Message: 'inactive' }));
+  const { info, error, notificationService } = logs();
+  await expect(notificationService.sendEmail(mail)).resolves.toBe(false);
+  const errorLines = error.mock.calls.map((call) => String(call[0]));
+  expect(errorLines).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining('Postmark send ErrorCode=406 MessageID=missing'),
+    ])
+  );
+  expect(info.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('Email sent');
+  expect(errorLines.join('\n')).not.toContain('Email sent');
+});
+
+it('logs a thrown Postmark error as an unconfirmed send and does not fail the caller', async () => {
+  load(200, '', false, true);
+  const { info, error, notificationService } = logs();
+  await expect(notificationService.sendEmail(mail)).resolves.toBe(false);
+  const errorLines = error.mock.calls.map((call) => String(call[0]));
+  expect(errorLines).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining('Postmark send ErrorCode=missing MessageID=missing'),
+    ])
+  );
+  expect(info.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('Email sent');
 });

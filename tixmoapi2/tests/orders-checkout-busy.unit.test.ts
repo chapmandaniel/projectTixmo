@@ -161,6 +161,25 @@ describe('checkout transaction busy', () => {
     });
   });
 
+  it('cancels an expired hold with the checkout lock and transaction limits', async () => {
+    (prisma.$transaction as jest.Mock).mockImplementation(async (work) => work(tx));
+    jest.spyOn(service, 'cancelOrderInTransaction').mockResolvedValue({
+      id: 'expired',
+      status: 'CANCELLED',
+    } as never);
+    await expect(service.cancelExpiredOrder('expired')).resolves.toMatchObject({
+      id: 'expired',
+      status: 'CANCELLED',
+    });
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      maxWait: 2000,
+      timeout: 5000,
+    });
+    const limits = tx.$queryRaw.mock.calls.map((call) => String(call[0]));
+    expect(limits.some((sql) => sql.includes('lock_timeout'))).toBe(true);
+    expect(limits.some((sql) => sql.includes('statement_timeout'))).toBe(true);
+  });
+
   it('formats CHECKOUT_BUSY as a retryable 503', async () => {
     const app = express();
     app.get('/orders', (_req, _res, next) => next(checkoutBusyError()));

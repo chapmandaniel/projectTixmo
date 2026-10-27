@@ -4,6 +4,9 @@ import { logger } from '../config/logger';
 import { config } from '../config/environment';
 
 const ORDER_EXPIRY_INTERVAL_MS = 60_000; // Run every 60 seconds
+const EXPIRY_BATCH = 10;
+const EXPIRY_MAX_BATCHES = 5;
+let sweeping = false;
 
 /**
  * Background job that cancels expired PENDING orders and releases held inventory.
@@ -11,35 +14,49 @@ const ORDER_EXPIRY_INTERVAL_MS = 60_000; // Run every 60 seconds
  * Orders use the configured cart expiry window at creation time. If the user
  * does not complete payment within that window the order should be cancelled
  * so that held inventory is returned to the available pool.
+ *
+ * Each sweep takes a few small batches. A cancel that loses its transaction
+ * (the load-test "commit cannot be executed on an expired transaction") is
+ * logged and the rest of that batch still runs. Further batches wait for the
+ * next sweep, which sees the same PENDING row and retries it.
  */
-async function processExpiredOrders(): Promise<void> {
+export async function processExpiredOrders(): Promise<void> {
+  if (sweeping) return;
+  sweeping = true;
   try {
-    const expiredOrders = await prisma.order.findMany({
-      where: {
-        status: 'PENDING',
-        expiresAt: {
-          lt: new Date(),
+    let deferRest = false;
+    for (let batch = 0; batch < EXPIRY_MAX_BATCHES && !deferRest; batch += 1) {
+      const expiredOrders = await prisma.order.findMany({
+        where: {
+          status: 'PENDING',
+          expiresAt: {
+            lt: new Date(),
+          },
         },
-      },
-      select: { id: true, orderNumber: true },
-      take: 50, // Process in batches to avoid long-running queries
-    });
+        select: { id: true, orderNumber: true },
+        orderBy: { expiresAt: 'asc' },
+        take: EXPIRY_BATCH,
+      });
 
-    if (expiredOrders.length === 0) return;
+      if (expiredOrders.length === 0) return;
 
-    logger.info(`🕐 Processing ${expiredOrders.length} expired order(s)…`);
+      logger.info(`🕐 Processing ${expiredOrders.length} expired order(s)…`);
 
-    for (const order of expiredOrders) {
-      try {
-        await orderService.cancelOrder(order.id);
-        logger.info(`  ✓ Cancelled expired order ${order.orderNumber}`);
-      } catch (err) {
-        // Log but don't stop processing other orders
-        logger.error(`  ✗ Failed to cancel order ${order.orderNumber}:`, err as Error);
+      for (const order of expiredOrders) {
+        try {
+          await orderService.cancelExpiredOrder(order.id);
+          logger.info(`  ✓ Cancelled expired order ${order.orderNumber}`);
+        } catch (err) {
+          deferRest = true;
+          logger.error(`  ✗ Failed to cancel order ${order.orderNumber}:`, err as Error);
+        }
       }
+      if (expiredOrders.length < EXPIRY_BATCH) return;
     }
   } catch (err) {
     logger.error('Order expiry job failed:', err as Error);
+  } finally {
+    sweeping = false;
   }
 }
 
