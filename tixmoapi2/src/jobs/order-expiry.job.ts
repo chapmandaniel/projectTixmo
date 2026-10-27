@@ -17,7 +17,8 @@ let sweeping = false;
  * Each sweep claims up to five batches of 10. The claim uses the checkout
  * transaction limits and a per-order advisory lock, so other replicas take
  * different rows and only this process logs a cancel it committed. A row
- * another replica already holds is skipped without a log. A cancel that loses
+ * another replica already holds, or one that replica already cancelled, is
+ * skipped without a log and does not use a claim slot. A cancel that loses
  * its transaction is logged, left PENDING, and retried next minute. The rest
  * of that batch still runs. Further batches wait. One process does not start
  * a second sweep while the first is running.

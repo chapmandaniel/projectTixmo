@@ -710,10 +710,10 @@ export class OrderService {
    * Claim one expired PENDING order that no other replica is already cancelling.
    *
    * The advisory lock is per order and lasts until this transaction ends, so
-   * another replica's sweep takes the next row. It is not a row lock: a
-   * confirmation holding the order still blocks the cancel's FOR UPDATE, and
-   * that wait is bounded by the checkout lock timeout. Skipping locked rows
-   * would also skip that confirmation and leave the hold pending.
+   * another replica's sweep takes the next row. It is not a row lock: the
+   * conditional UPDATE still waits on a confirmation that holds the order,
+   * and that wait is bounded by the checkout lock timeout. Skipping locked
+   * rows would also skip that confirmation and leave the hold pending.
    *
    * A cancel that throws rolls back, leaves the order PENDING, and is returned
    * as failed so this sweep can move on. The next minute retries it.
@@ -743,8 +743,14 @@ export class OrderService {
         if (locks[0]?.locked !== true) {
           return { skipped: true as const, id: next.id, orderNumber: next.order_number };
         }
+        // The other replica can commit between this transaction's SELECT and
+        // this lock. READ COMMITTED then sees that commit: the conditional
+        // update matches nothing, and this claim must not count as a cancel.
         claimed = { id: next.id, orderNumber: next.order_number };
-        await this.cancelOrderInTransaction(tx, next.id);
+        const cancelled = await this.cancelExpiredHoldIfPending(tx, next.id);
+        if (!cancelled) {
+          return { skipped: true as const, id: next.id, orderNumber: next.order_number };
+        }
         return { skipped: false as const, id: next.id, orderNumber: next.order_number };
       }, checkoutTransactionOptions());
       if (!row) return { status: 'empty' };
@@ -754,6 +760,23 @@ export class OrderService {
       if (!claimed) throw error;
       return { status: 'failed', id: claimed.id, orderNumber: claimed.orderNumber, error };
     }
+  }
+
+  /**
+   * Cancel one expired hold. The status change matches only a PENDING row, so a
+   * replica that locks after another replica committed does not release
+   * inventory again. Returns false when the order is no longer PENDING.
+   */
+  async cancelExpiredHoldIfPending(tx: Prisma.TransactionClient, id: string): Promise<boolean> {
+    const affected = await tx.$executeRaw`
+      UPDATE orders
+      SET status = 'CANCELLED'::"OrderStatus", updated_at = NOW()
+      WHERE id = ${id} AND status = 'PENDING'::"OrderStatus"
+    `;
+    if (affected !== 1) return false;
+    await transitionInventory(tx, id, 'HELD', 'RELEASED');
+    await transitionPromo(tx, id, 'RELEASED');
+    return true;
   }
 
   async cancelOrderInTransaction(

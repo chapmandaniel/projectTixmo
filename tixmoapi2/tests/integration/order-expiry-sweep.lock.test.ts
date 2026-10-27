@@ -1,6 +1,7 @@
 jest.mock('../../src/utils/notificationService', () => ({ notificationService: {} }));
 
 import { randomUUID } from 'crypto';
+import { Prisma } from '@prisma/client';
 import prisma from '../../src/config/prisma';
 import { logger } from '../../src/config/logger';
 import { orderService } from '../../src/api/orders/service';
@@ -139,6 +140,8 @@ test('two sweeps cancel each expired order once and release its inventory once',
     const cancelledLines = info.mock.calls
       .map((call) => (typeof call[0] === 'string' ? call[0] : ''))
       .filter((line) => line.includes('Cancelled expired order'));
+    expect(new Set(cancelledLines).size).toBe(cancelledLines.length);
+    expect(new Set(swept).size).toBe(swept.length);
     expect(cancelledLines.filter((line) => line.includes(claimed.orderNumber))).toHaveLength(0);
     for (const order of expired.filter((order) => order.id !== claimed.id)) {
       expect(cancelledLines.filter((line) => line.includes(order.orderNumber))).toEqual([
@@ -179,5 +182,117 @@ test('two sweeps cancel each expired order once and release its inventory once',
   const inventory = await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } });
   expect([inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold]).toEqual([
     8, 2, 0,
+  ]);
+});
+
+test('a replica that locks after the other commit skips without a cancel log or a second release', async () => {
+  const { expired, live, type } = await fixture(1);
+  const target = expired[0];
+  const intruders = await prisma.order.findMany({
+    where: {
+      status: 'PENDING',
+      expiresAt: { lt: new Date() },
+      id: { not: target.id },
+    },
+    select: { id: true, expiresAt: true },
+  });
+  if (intruders.length) {
+    await prisma.order.updateMany({
+      where: { id: { in: intruders.map((order) => order.id) } },
+      data: { expiresAt: new Date(Date.now() + 3_600_000) },
+    });
+  }
+
+  let signalAHolding!: () => void;
+  const aHolding = new Promise<void>((resolve) => {
+    signalAHolding = resolve;
+  });
+  let signalBSelected!: () => void;
+  const bSelected = new Promise<void>((resolve) => {
+    signalBSelected = resolve;
+  });
+  let signalACommitted!: () => void;
+  const aCommitted = new Promise<void>((resolve) => {
+    signalACommitted = resolve;
+  });
+  let bPaused = false;
+  const realTransaction = prisma.$transaction.bind(prisma);
+  const transactions = jest
+    .spyOn(prisma, '$transaction')
+    .mockImplementation((callback: unknown, options?: { maxWait?: number; timeout?: number }) => {
+      if (typeof callback !== 'function') return realTransaction(callback as never, options);
+      const work = callback as (tx: Prisma.TransactionClient) => Promise<unknown>;
+      return realTransaction(async (tx) => {
+        const query = tx.$queryRaw.bind(tx);
+        tx.$queryRaw = (async (strings: TemplateStringsArray, ...values: unknown[]) => {
+          const result = await query(strings, ...values);
+          const text = strings.join(' ');
+          if (!bPaused && text.includes('order_number') && text.includes('LIMIT')) {
+            bPaused = true;
+            signalBSelected();
+            await aCommitted;
+          }
+          return result;
+        }) as typeof tx.$queryRaw;
+        return work(tx);
+      }, options);
+    });
+
+  const info = jest.spyOn(logger, 'info').mockImplementation(() => logger);
+  const holder = prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<Array<{ locked: boolean }>>`
+      SELECT pg_try_advisory_xact_lock(hashtextextended(${target.id}, 0)) AS locked
+    `;
+    expect(rows[0]?.locked).toBe(true);
+    signalAHolding();
+    await bSelected;
+    await expect(orderService.cancelExpiredHoldIfPending(tx, target.id)).resolves.toBe(true);
+  });
+  let sweep: Promise<string[]> = Promise.resolve([]);
+  try {
+    await aHolding;
+    sweep = sweepExpiredOrders();
+    await bSelected;
+    await holder;
+    signalACommitted();
+    await expect(sweep).resolves.toEqual([]);
+    const cancelledLines = info.mock.calls
+      .map((call) => (typeof call[0] === 'string' ? call[0] : ''))
+      .filter((line) => line.includes('Cancelled expired order'));
+    expect(cancelledLines).toEqual([]);
+  } finally {
+    signalBSelected();
+    signalACommitted();
+    await holder.catch(() => undefined);
+    await sweep.catch(() => undefined);
+    transactions.mockRestore();
+    info.mockRestore();
+    if (intruders.length) {
+      await prisma.$transaction(
+        intruders.map((order) =>
+          prisma.order.update({ where: { id: order.id }, data: { expiresAt: order.expiresAt } })
+        )
+      );
+    }
+  }
+
+  const stored = await prisma.order.findUniqueOrThrow({
+    where: { id: target.id },
+    include: { tickets: true },
+  });
+  expect(stored.status).toBe('CANCELLED');
+  expect(stored.tickets.map((ticket) => ticket.inventoryState).sort()).toEqual([
+    'RELEASED',
+    'RELEASED',
+  ]);
+  expect(
+    await prisma.order.findUniqueOrThrow({
+      where: { id: live.id },
+      include: { tickets: { orderBy: { id: 'asc' } } },
+    })
+  ).toEqual(live);
+  const inventory = await prisma.ticketType.findUniqueOrThrow({ where: { id: type.id } });
+  expect([inventory.quantityAvailable, inventory.quantityHeld, inventory.quantitySold]).toEqual([
+    2, 2, 0,
   ]);
 });

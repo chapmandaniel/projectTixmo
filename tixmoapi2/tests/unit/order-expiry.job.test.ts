@@ -65,6 +65,25 @@ it('keeps cancelling the rest of a small batch when one expiry transaction expir
   }
 });
 
+it('does not spend a claim slot or log a cancel when the order is already gone', async () => {
+  let n = 0;
+  claim.mockImplementation(() => {
+    n += 1;
+    if (n === 1) return { status: 'skipped', id: 'gone', orderNumber: 'ORD-GONE' };
+    if (n <= 11) return { status: 'cancelled', id: `id-${n}`, orderNumber: `ORD-${n}` };
+    return { status: 'empty' };
+  });
+
+  await processExpiredOrders();
+
+  const cancelled = info.mock.calls
+    .map((call) => String(call[0]))
+    .filter((line) => line.includes('Cancelled expired order'));
+  expect(cancelled).toHaveLength(10);
+  expect(cancelled.some((line) => line.includes('ORD-GONE'))).toBe(false);
+  expect(new Set(cancelled).size).toBe(cancelled.length);
+});
+
 it('retries a failed expiry on the next sweep', async () => {
   claim
     .mockResolvedValueOnce({

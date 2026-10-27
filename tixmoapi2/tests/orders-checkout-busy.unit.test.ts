@@ -202,10 +202,17 @@ describe('checkout transaction busy', () => {
       if (text.includes('order_number')) return [{ id: 'expired', order_number: 'ORD-LOCK' }];
       return [];
     });
-    jest.spyOn(service, 'cancelOrderInTransaction').mockResolvedValue({
-      id: 'expired',
-      status: 'CANCELLED',
-    } as never);
+    const executeRaw = jest.fn().mockResolvedValue(1);
+    Object.assign(tx, { $executeRaw: executeRaw });
+    Object.assign(tx.ticket, {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+    });
+    Object.assign(tx.order, {
+      findUniqueOrThrow: jest
+        .fn()
+        .mockResolvedValue({ promoCodeId: null, promoReservation: 'NONE' }),
+    });
     await expect(service.claimNextExpiredOrder(['busy-order'])).resolves.toEqual({
       status: 'cancelled',
       id: 'expired',
@@ -225,7 +232,30 @@ describe('checkout transaction busy', () => {
     expect(
       fragments.some((value) => (value.strings ? value.strings.join('') : '').includes('NOT IN'))
     ).toBe(true);
-    expect(service.cancelOrderInTransaction).toHaveBeenCalledWith(tx, 'expired');
+    const update = String(executeRaw.mock.calls[0]?.[0] ?? '');
+    expect(update).toContain('UPDATE orders');
+    expect(update).toContain("status = 'PENDING'");
+  });
+
+  it('skips when the advisory lock is acquired after another replica committed the cancel', async () => {
+    (prisma.$transaction as jest.Mock).mockImplementation(async (work) => work(tx));
+    tx.$queryRaw.mockImplementation((sql: TemplateStringsArray) => {
+      const text = String(sql);
+      if (text.includes('pg_try_advisory_xact_lock')) return [{ locked: true }];
+      if (text.includes('order_number')) return [{ id: 'expired', order_number: 'ORD-LOCK' }];
+      return [];
+    });
+    const execute = jest.fn().mockResolvedValue(0);
+    Object.assign(tx, { $executeRaw: execute });
+    const findTickets = jest.fn();
+    Object.assign(tx.ticket, { findMany: findTickets, count: jest.fn() });
+    await expect(service.claimNextExpiredOrder()).resolves.toEqual({
+      status: 'skipped',
+      id: 'expired',
+      orderNumber: 'ORD-LOCK',
+    });
+    expect(String(execute.mock.calls[0]?.[0] ?? '')).toContain('UPDATE orders');
+    expect(findTickets).not.toHaveBeenCalled();
   });
 
   it('skips an expired order another replica already claimed', async () => {
@@ -253,8 +283,9 @@ describe('checkout transaction busy', () => {
       if (text.includes('order_number')) return [{ id: 'expired', order_number: 'ORD-LOCK' }];
       return [];
     });
+    Object.assign(tx, { $executeRaw: jest.fn().mockResolvedValue(1) });
     const error = new Error('commit cannot be executed on an expired transaction');
-    jest.spyOn(service, 'cancelOrderInTransaction').mockRejectedValue(error);
+    jest.spyOn(service, 'cancelExpiredHoldIfPending').mockRejectedValue(error);
     await expect(service.claimNextExpiredOrder()).resolves.toEqual({
       status: 'failed',
       id: 'expired',
