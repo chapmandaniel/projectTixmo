@@ -31,6 +31,7 @@ export function orderStateLabel(ticket) {
     if (refund === 'PROCESSING') return 'Refund in progress';
     if (refund === 'SUCCEEDED' || refund === 'REFUNDED') return 'Refunded';
     if (refund === 'PARTIALLY_REFUNDED') return 'Partially refunded';
+    if (refund === 'FAILED') return 'Refund failed';
     if (refund && refund !== 'NONE') return titleCase(refund);
     if (orderStatus === 'REFUNDED') return 'Refunded';
     if (orderStatus === 'PARTIALLY_REFUNDED') return 'Partially refunded';
@@ -62,6 +63,7 @@ export function canCheckIn(ticket, pageEvent, now = Date.now()) {
 }
 
 export function attendeeStatusBadges(ticket, pageEvent, now = Date.now()) {
+    if (upper(ticket?.order?.refundStatus) === 'FAILED') return ['Refund failed'];
     const admitted = canCheckIn(ticket, pageEvent, now);
     const statusLabel = upper(ticket?.status) === 'USED'
         ? 'Checked In'

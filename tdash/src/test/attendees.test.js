@@ -61,6 +61,10 @@ describe('attendee search and export', () => {
         expect(csv).not.toContain('TIX-1');
         expect(canCheckIn(ticket)).toBe(true);
         expect(canCheckIn({ ...ticket, order: { status: 'PAID', refundStatus: 'NONE' } })).toBe(true);
+        const failedRefund = { ...ticket, status: 'VALID', order: { orderNumber: 'ORD-FAILED', status: 'PAID', refundStatus: 'FAILED' } };
+        expect(orderStateLabel(failedRefund)).toBe('Refund failed');
+        expect(attendeeStatusBadges(failedRefund)).toEqual(['Refund failed']);
+        expect(canCheckIn(failedRefund)).toBe(true);
         expect(canCheckIn({ ...ticket, order: { status: 'PAID', refundStatus: 'FAILED' } })).toBe(true);
         const unpaidCancelled = { ...ticket, status: 'CANCELLED', order: { orderNumber: 'ORD-CANCEL', status: 'CANCELLED', refundStatus: 'NONE' } };
         expect(attendeeStatusBadges(unpaidCancelled)).toEqual(['Cancelled']);

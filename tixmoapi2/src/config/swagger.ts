@@ -9,7 +9,7 @@ const options: swaggerJsdoc.Options = {
       description: 'Enterprise-grade ticket vendor platform API for event promoters',
       contact: {
         name: 'Tixmo Team',
-        email: 'api@tixmo.com',
+        email: 'api@tixmo.co',
       },
       license: {
         name: 'Proprietary',

@@ -68,10 +68,11 @@ describe('policy pages', () => {
         expect(html.toLowerCase()).not.toContain('operating as');
         if (name === 'terms.html') {
             expect(text).toContain('HST registration no.: 123456789RT0001');
-            expect(text).toContain(`Tickets are sold by ${seller} as ticketing agent for the event organizer.`);
+            expect(text).toContain(`Tickets are sold by ${seller}.`);
             expect(text).toContain(
-                'The organizer is responsible for the event itself, including delivery, changes, cancellations, and venue rules.'
+                'Quincy Enterprises Ltd. (Mighty Quinton Concerts), the event organizer, is responsible for providing the event as described, or refunding you under our policies.'
             );
+            expect(text).not.toContain(`${seller} as ticketing agent`);
             expect(doc.querySelector('[data-policy-venue-link]').getAttribute('href')).toBe(
                 'https://venue.example.test/rules'
             );
@@ -93,7 +94,7 @@ describe('policy pages', () => {
         expect(text).not.toContain('Questions:');
         expect(text).not.toContain('HST registration');
         expect(text).not.toContain('ticketing agent');
-        expect(text).not.toContain('responsible for the event itself');
+        expect(text).not.toContain('or refunding you under our policies');
         expect(html).not.toMatch(placeholder);
         expect(text).not.toMatch(placeholder);
         expect(text).not.toContain('[X]');
@@ -106,6 +107,32 @@ describe('policy pages', () => {
             expect(text).toContain('Email us with your order number');
             expect(text).not.toContain('mailto:');
         }
+    });
+
+    it('mentions as ticketing agent at most once in terms section 7', () => {
+        const phrase = 'as ticketing agent';
+        const section7 = (doc) => {
+            const heading = [...doc.querySelectorAll('h2')].find((node) => node.textContent.trim().startsWith('7.'));
+            return (heading?.nextElementSibling?.textContent || '').replace(/\s+/g, ' ').trim();
+        };
+        const count = (text) => text.split(phrase).length - 1;
+        const html = readPage('terms.html').replace(/<script[\s\S]*?<\/script>/gi, '');
+        const noJs = new DOMParser().parseFromString(html, 'text/html');
+        const noJsSection = section7(noJs);
+        expect(count(noJsSection)).toBeLessThanOrEqual(1);
+        expect(noJsSection).not.toContain(phrase);
+
+        const doc = render('terms.html', filled);
+        const section = section7(doc);
+        expect(count(section)).toBe(1);
+        expect(section).toContain(`Tickets are sold by ${seller}.`);
+        expect(section).toContain(
+            'Quincy Enterprises Ltd. (Mighty Quinton Concerts), the event organizer, is responsible for providing the event as described, or refunding you under our policies.'
+        );
+        expect(section).toContain('we aren’t responsible for indirect costs such as travel, accommodation or lost earnings.');
+        expect(section).toContain(
+            'Nothing in these terms limits rights you have under Newfoundland and Labrador or Canadian consumer protection law.'
+        );
     });
 
     it('keeps organizer terms as an unlinked noindex placeholder', () => {

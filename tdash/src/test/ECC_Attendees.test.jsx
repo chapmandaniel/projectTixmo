@@ -122,7 +122,9 @@ describe('Attendees search, export, and check-in', () => {
             pagination: { total: 2, pages: 1 },
         })));
         render(<ECC_Attendees event={event} isDark />);
-        expect(await screen.findByText('Failed')).toBeInTheDocument();
+        expect(await screen.findByText('Refund failed')).toBeInTheDocument();
+        expect(screen.queryByText('Confirmed')).not.toBeInTheDocument();
+        expect(screen.queryByText('Failed')).not.toBeInTheDocument();
         expect(screen.getAllByText('Cancelled')).toHaveLength(1);
         expect(screen.getAllByTitle('Check In')).toHaveLength(1);
     });
