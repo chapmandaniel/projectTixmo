@@ -129,6 +129,9 @@ describe('CheckoutPage', () => {
     it('restores event-page selections using current ticket limits', async () => {
         renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A99%2Cunknown%3A2' });
         await screen.findByText('Neon Nights');
+        expect(screen.getByText('Mon, Jul 20, 8:30 p.m.')).toBeInTheDocument();
+        expect(screen.getByText('NDT')).toBeInTheDocument();
+        expect(screen.queryByText('America/St_Johns')).not.toBeInTheDocument();
         expect(screen.getByText('4 x CA$25.00')).toBeInTheDocument();
         expect(screen.queryByText('99 x CA$25.00')).not.toBeInTheDocument();
     });

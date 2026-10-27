@@ -32,7 +32,7 @@ import {
 import { checkoutTicketState, checkoutBoundaryDelay } from '../lib/checkoutEligibility';
 import { SALES_PAUSED_MESSAGE, isSalesPausedError } from '../lib/salesPause';
 import { cn } from '../lib/utils';
-import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
+import { formatEventDate, eventZoneAbbreviation, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import {
     comparePublicTicketTypes,
     eventAddress,
@@ -41,6 +41,12 @@ import {
     hstRegistrationLine,
     initialTicketQuantities,
 } from '../lib/publicEvent';
+
+const checkoutZoneLabel = (event) => (
+    event?.timezone
+        ? (eventZoneAbbreviation(event.startDatetime, event.timezone) || 'Local venue time')
+        : 'Local venue time'
+);
 
 const formatDate = (value) => {
     if (!value) return 'Date to be announced';
@@ -542,7 +548,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                 <div className="min-w-0 rounded-md border border-dashboard-border bg-dashboard-panelMuted p-4">
                                     <CalendarDays className="h-5 w-5 text-pink-300" />
                                     <p className="mt-3 break-words text-sm text-zinc-100">{formatEventDate(event?.startDatetime, event?.timezone || event?.venue?.timezone || DEFAULT_EVENT_TIMEZONE)}</p>
-                                    <p className="mt-1 break-words text-xs text-dashboard-muted">{event?.timezone || 'Local venue time'}</p>
+                                    <p className="mt-1 break-words text-xs text-dashboard-muted">{checkoutZoneLabel(event)}</p>
                                 </div>
                                 <div className="min-w-0 rounded-md border border-dashboard-border bg-dashboard-panelMuted p-4">
                                     <Ticket className="h-5 w-5 text-orange-300" />
