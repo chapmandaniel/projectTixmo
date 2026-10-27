@@ -14,8 +14,12 @@ const canManageOrders = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].include
 export const createOrder = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.userId;
   const payload = req.body as Parameters<typeof orderService.createOrder>[1];
-  const order = await orderService.createOrder(userId, payload);
-  res.status(201).json(successResponse(order, 'Order created successfully'));
+  const result = await orderService.createOrderHttp(userId, payload, req.get('Idempotency-Key'));
+  if (result.kind === 'idempotent') {
+    res.status(result.statusCode).type('application/json').send(result.body);
+    return;
+  }
+  res.status(201).json(successResponse(result.order, 'Order created successfully'));
 });
 
 /**
@@ -48,17 +52,26 @@ export const createOrder = catchAsync(async (req: AuthRequest, res: Response) =>
  *                     quantity:
  *                       type: integer
  *                       minimum: 1
+ *     parameters:
+ *       - in: header
+ *         name: Idempotency-Key
+ *         required: false
+ *         description: Optional buyer-scoped key. The same key and body replay the original 201 response and do not create another hold. The same key with a different body returns 409. Omitting the header keeps create-every-time behavior.
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 255
  *     responses:
  *       201:
- *         description: Order created successfully
+ *         description: Order created successfully. An identical Idempotency-Key replay returns this same response.
  *       400:
- *         description: Invalid request (e.g., sold out, limit exceeded)
+ *         description: Invalid request (for example, limit exceeded). Insufficient inventory is 409, not 400.
  *       401:
  *         description: Unauthorized
  *       404:
  *         description: Ticket type not found
  *       409:
- *         description: Conflict - System busy (Inventory Locked). Please try again.
+ *         description: Not enough tickets available (errors.code SOLD_OUT), or the idempotency key was reused with a different body (errors.code IDEMPOTENCY_KEY_MISMATCH).
  *       429:
  *         description: Too Many Requests - Rate limit exceeded
  *       503:

@@ -27,6 +27,12 @@ import {
 } from '../../services/order-inventory.service';
 import { voidDisputedAdmission, voidOrderTickets } from '../../services/ticket-void.service';
 import { maskBarcode } from './order-privacy';
+import {
+  hashOrderRequest,
+  isOrderIdempotencyConflict,
+  normalizeOrderIdempotencyKey,
+} from './idempotency';
+import { successResponse } from '../../utils/response';
 
 interface OrderItemInput {
   ticketTypeId: string;
@@ -82,9 +88,10 @@ export class OrderService {
   }
 
   /**
-   * Create a new order
+   * Reject impossible quantities before a transaction so a bad request never
+   * claims an idempotency key or opens a reservation.
    */
-  async createOrder(userId: string, data: CreateOrderInput): Promise<Order> {
+  private orderLines(data: CreateOrderInput): Array<[string, number]> {
     const quantities = new Map<string, number>();
     for (const item of data.items) {
       if (!Number.isSafeInteger(item.quantity) || item.quantity < 1)
@@ -92,165 +99,232 @@ export class OrderService {
       quantities.set(item.ticketTypeId, (quantities.get(item.ticketTypeId) || 0) + item.quantity);
     }
     if (!quantities.size) throw ApiError.badRequest('Order must contain tickets');
-    const items = [...quantities].sort(([a], [b]) => a.localeCompare(b));
-    const order = await prisma.$transaction(
-      async (tx) => {
-        const first = await tx.ticketType.findUnique({
-          where: { id: items[0][0] },
-          select: { eventId: true },
-        });
-        if (!first) throw ApiError.notFound('Ticket type not found');
-        // Event cancellation and checkout share this lock. Orders created before
-        // cancellation remain visible to its subsequent cancellation pass.
-        await tx.$queryRaw`SELECT id FROM events WHERE id = ${first.eventId} FOR UPDATE`;
-        const event = await tx.event.findUniqueOrThrow({ where: { id: first.eventId } });
-        const now = new Date();
-        if (
-          event.deletedAt ||
-          !['PUBLISHED', 'ON_SALE'].includes(event.status) ||
-          (event.salesStart && now < event.salesStart) ||
-          (event.salesEnd && now >= event.salesEnd) ||
-          (event.startDatetime && now >= event.startDatetime)
-        ) {
-          throw ApiError.badRequest('Event is not available for purchase');
-        }
-        if (event.salesPaused)
-          throw ApiError.conflict(
-            'Ticket sales are paused for a moment. Orders and tickets you already have are safe. Please check back soon.',
-            { code: 'SALES_PAUSED' }
-          );
-        let subtotal = new Decimal(0);
-        const allocations: Array<{
-          ticketTypeId: string;
-          quantity: number;
-          price: Decimal;
-          tierId: string | null;
-        }> = [];
-        for (const [ticketTypeId, quantity] of items) {
-          await tx.$queryRaw`SELECT id FROM ticket_types WHERE id = ${ticketTypeId} FOR UPDATE`;
-          const type = await tx.ticketType.findUnique({
-            where: { id: ticketTypeId },
-            include: { tiers: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] } },
-          });
-          if (!type) throw ApiError.notFound('Ticket type not found');
-          if (type.eventId !== event.id)
-            throw ApiError.badRequest('All tickets must be for the same event');
-          if (
-            type.status !== 'ACTIVE' ||
-            (type.salesStart && now < type.salesStart) ||
-            (type.salesEnd && now >= type.salesEnd)
-          )
-            throw ApiError.badRequest('Ticket type is not on sale');
-          if (quantity > type.quantityAvailable)
-            throw ApiError.badRequest('Not enough tickets available');
-          if (quantity > type.maxPerOrder)
-            throw ApiError.badRequest(
-              `Maximum ${type.maxPerOrder} tickets per order for ${type.name}`
-            );
-          if (type.tierInventoryStatus !== 'READY')
-            throw ApiError.conflict('Ticket pricing schedule requires inventory reconciliation');
-          const tier = type.tiers.find(
-            (t) =>
-              t.isActive &&
-              (!t.startsAt || now >= t.startsAt) &&
-              (!t.endsAt || now < t.endsAt) &&
-              (t.quantityLimit === null || t.quantitySold + t.quantityHeld < t.quantityLimit)
-          );
-          // A configured tier schedule must not silently fall back to the base price.
-          if (type.tiers.length && !tier)
-            throw ApiError.badRequest('No ticket pricing tier is currently available');
-          if (
-            tier &&
-            tier.quantityLimit !== null &&
-            tier.quantitySold + tier.quantityHeld + quantity > tier.quantityLimit
-          ) {
-            throw ApiError.badRequest(
-              'Requested quantity exceeds the remaining pricing tier; select fewer tickets'
-            );
-          }
-          const price = tier?.price ?? type.price;
-          subtotal = subtotal.add(price.mul(quantity));
-          allocations.push({ ticketTypeId, quantity, price, tierId: tier?.id ?? null });
-          await tx.ticketType.update({
-            where: { id: ticketTypeId },
-            data: {
-              quantityAvailable: { decrement: quantity },
-              quantityHeld: { increment: quantity },
-            },
-          });
-          if (tier)
-            await tx.ticketTier.update({
-              where: { id: tier.id },
-              data: { quantityHeld: { increment: quantity } },
-            });
-        }
-        let discount = new Decimal(0);
-        let promoId: string | null = null;
-        if (data.promoCode) {
-          const code = data.promoCode.toUpperCase();
-          await tx.$queryRaw`SELECT id FROM promo_codes WHERE code = ${code} FOR UPDATE`;
-          const promo = await tx.promoCode.findUnique({ where: { code } });
-          if (
-            !promo ||
-            promo.organizationId !== event.organizationId ||
-            promo.status !== 'ACTIVE' ||
-            now < promo.validFrom ||
-            now >= promo.validUntil ||
-            (promo.applicableEvents.length && !promo.applicableEvents.includes(event.id)) ||
-            (promo.minOrderValue && subtotal.lessThan(promo.minOrderValue)) ||
-            (promo.maxUses !== null && promo.usesCount + promo.usesHeld >= promo.maxUses)
-          ) {
-            throw ApiError.badRequest('Promo code is unavailable for this order');
-          }
-          discount = Decimal.min(
-            subtotal,
-            promo.discountType === 'PERCENTAGE'
-              ? subtotal.mul(promo.discountValue).div(100).toDecimalPlaces(2)
-              : promo.discountValue
-          );
-          promoId = promo.id;
-          await tx.promoCode.update({
-            where: { id: promo.id },
-            data: { usesHeld: { increment: 1 } },
-          });
-        }
-        const totalAmount = Decimal.max(subtotal.sub(discount), new Decimal(0));
-        const taxAmount = new Decimal(
-          includedHstAmount(totalAmount, configuredHstRate()).toFixed(2)
-        );
-        const created = await tx.order.create({
-          data: {
-            orderNumber: `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,
-            userId,
-            eventId: event.id,
-            totalAmount,
-            taxAmount,
-            discountAmount: discount,
-            currency: config.paymentCurrency,
-            promoCodeId: promoId,
-            promoReservation: promoId ? 'HELD' : 'NONE',
-            expiresAt: new Date(Date.now() + config.cartExpiryMinutes * 60 * 1000),
-          },
-        });
-        const tickets: Prisma.TicketCreateManyInput[] = allocations.flatMap((a) =>
-          Array.from({ length: a.quantity }, () => ({
-            orderId: created.id,
-            userId,
-            eventId: event.id,
-            ticketTypeId: a.ticketTypeId,
-            tierId: a.tierId,
-            pricePaid: a.price,
-            inventoryState: 'HELD' as const,
-            barcode: `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,
-            status: 'VALID' as const,
-          }))
-        );
-        await tx.ticket.createMany({ data: tickets });
-        return created;
-      },
-      { timeout: 15000 }
-    );
+    return [...quantities].sort(([a], [b]) => a.localeCompare(b));
+  }
+
+  /**
+   * Create a new order. Callers that omit an idempotency key keep this path.
+   */
+  async createOrder(userId: string, data: CreateOrderInput): Promise<Order> {
+    this.orderLines(data);
+    const order = await prisma.$transaction((tx) => this.reserveOrder(tx, userId, data), {
+      timeout: 15000,
+    });
     return order.totalAmount.eq(0) ? this.confirmOrder(order.id) : order;
+  }
+
+  /**
+   * HTTP create. The same buyer and Idempotency-Key replays the stored response.
+   * The unique key is inserted before inventory changes, so concurrent duplicates
+   * cannot both hold stock.
+   */
+  async createOrderHttp(
+    userId: string,
+    data: CreateOrderInput,
+    idempotencyHeader?: string
+  ): Promise<
+    { kind: 'created'; order: Order } | { kind: 'idempotent'; statusCode: number; body: string }
+  > {
+    const idempotencyKey = normalizeOrderIdempotencyKey(idempotencyHeader);
+    this.orderLines(data);
+    if (!idempotencyKey) return { kind: 'created', order: await this.createOrder(userId, data) };
+    const requestHash = hashOrderRequest(data);
+    try {
+      const body = await prisma.$transaction(
+        async (tx) => {
+          await tx.orderIdempotencyKey.create({
+            data: { userId, idempotencyKey, requestHash },
+          });
+          let order = await this.reserveOrder(tx, userId, data);
+          if (order.totalAmount.eq(0)) order = await this.confirmOrderInTransaction(tx, order.id);
+          const responseBody = JSON.stringify(successResponse(order, 'Order created successfully'));
+          await tx.orderIdempotencyKey.update({
+            where: { userId_idempotencyKey: { userId, idempotencyKey } },
+            data: { orderId: order.id, responseStatus: 201, responseBody },
+          });
+          return responseBody;
+        },
+        { timeout: 15000 }
+      );
+      return { kind: 'idempotent', statusCode: 201, body };
+    } catch (error) {
+      if (!isOrderIdempotencyConflict(error)) throw error;
+      const existing = await prisma.orderIdempotencyKey.findUnique({
+        where: { userId_idempotencyKey: { userId, idempotencyKey } },
+      });
+      if (!existing) throw error;
+      if (existing.requestHash !== requestHash) {
+        throw ApiError.conflict('Idempotency key was reused with a different request', {
+          code: 'IDEMPOTENCY_KEY_MISMATCH',
+        });
+      }
+      if (existing.responseBody == null || existing.responseStatus == null) {
+        throw ApiError.conflict('Idempotency key is already in progress', {
+          code: 'IDEMPOTENCY_KEY_IN_PROGRESS',
+        });
+      }
+      return {
+        kind: 'idempotent',
+        statusCode: existing.responseStatus,
+        body: existing.responseBody,
+      };
+    }
+  }
+
+  private async reserveOrder(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    data: CreateOrderInput
+  ): Promise<Order> {
+    const items = this.orderLines(data);
+    const first = await tx.ticketType.findUnique({
+      where: { id: items[0][0] },
+      select: { eventId: true },
+    });
+    if (!first) throw ApiError.notFound('Ticket type not found');
+    // Event cancellation and checkout share this lock. Orders created before
+    // cancellation remain visible to its subsequent cancellation pass.
+    await tx.$queryRaw`SELECT id FROM events WHERE id = ${first.eventId} FOR UPDATE`;
+    const event = await tx.event.findUniqueOrThrow({ where: { id: first.eventId } });
+    const now = new Date();
+    if (
+      event.deletedAt ||
+      !['PUBLISHED', 'ON_SALE'].includes(event.status) ||
+      (event.salesStart && now < event.salesStart) ||
+      (event.salesEnd && now >= event.salesEnd) ||
+      (event.startDatetime && now >= event.startDatetime)
+    ) {
+      throw ApiError.badRequest('Event is not available for purchase');
+    }
+    if (event.salesPaused)
+      throw ApiError.conflict(
+        'Ticket sales are paused for a moment. Orders and tickets you already have are safe. Please check back soon.',
+        { code: 'SALES_PAUSED' }
+      );
+    let subtotal = new Decimal(0);
+    const allocations: Array<{
+      ticketTypeId: string;
+      quantity: number;
+      price: Decimal;
+      tierId: string | null;
+    }> = [];
+    for (const [ticketTypeId, quantity] of items) {
+      await tx.$queryRaw`SELECT id FROM ticket_types WHERE id = ${ticketTypeId} FOR UPDATE`;
+      const type = await tx.ticketType.findUnique({
+        where: { id: ticketTypeId },
+        include: { tiers: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] } },
+      });
+      if (!type) throw ApiError.notFound('Ticket type not found');
+      if (type.eventId !== event.id)
+        throw ApiError.badRequest('All tickets must be for the same event');
+      if (
+        type.status !== 'ACTIVE' ||
+        (type.salesStart && now < type.salesStart) ||
+        (type.salesEnd && now >= type.salesEnd)
+      )
+        throw ApiError.badRequest('Ticket type is not on sale');
+      if (quantity > type.quantityAvailable)
+        throw ApiError.conflict('Not enough tickets available', { code: 'SOLD_OUT' });
+      if (quantity > type.maxPerOrder)
+        throw ApiError.badRequest(`Maximum ${type.maxPerOrder} tickets per order for ${type.name}`);
+      if (type.tierInventoryStatus !== 'READY')
+        throw ApiError.conflict('Ticket pricing schedule requires inventory reconciliation');
+      const tier = type.tiers.find(
+        (t) =>
+          t.isActive &&
+          (!t.startsAt || now >= t.startsAt) &&
+          (!t.endsAt || now < t.endsAt) &&
+          (t.quantityLimit === null || t.quantitySold + t.quantityHeld < t.quantityLimit)
+      );
+      // A configured tier schedule must not silently fall back to the base price.
+      if (type.tiers.length && !tier)
+        throw ApiError.badRequest('No ticket pricing tier is currently available');
+      if (
+        tier &&
+        tier.quantityLimit !== null &&
+        tier.quantitySold + tier.quantityHeld + quantity > tier.quantityLimit
+      ) {
+        throw ApiError.badRequest(
+          'Requested quantity exceeds the remaining pricing tier; select fewer tickets'
+        );
+      }
+      const price = tier?.price ?? type.price;
+      subtotal = subtotal.add(price.mul(quantity));
+      allocations.push({ ticketTypeId, quantity, price, tierId: tier?.id ?? null });
+      await tx.ticketType.update({
+        where: { id: ticketTypeId },
+        data: {
+          quantityAvailable: { decrement: quantity },
+          quantityHeld: { increment: quantity },
+        },
+      });
+      if (tier)
+        await tx.ticketTier.update({
+          where: { id: tier.id },
+          data: { quantityHeld: { increment: quantity } },
+        });
+    }
+    let discount = new Decimal(0);
+    let promoId: string | null = null;
+    if (data.promoCode) {
+      const code = data.promoCode.toUpperCase();
+      await tx.$queryRaw`SELECT id FROM promo_codes WHERE code = ${code} FOR UPDATE`;
+      const promo = await tx.promoCode.findUnique({ where: { code } });
+      if (
+        !promo ||
+        promo.organizationId !== event.organizationId ||
+        promo.status !== 'ACTIVE' ||
+        now < promo.validFrom ||
+        now >= promo.validUntil ||
+        (promo.applicableEvents.length && !promo.applicableEvents.includes(event.id)) ||
+        (promo.minOrderValue && subtotal.lessThan(promo.minOrderValue)) ||
+        (promo.maxUses !== null && promo.usesCount + promo.usesHeld >= promo.maxUses)
+      ) {
+        throw ApiError.badRequest('Promo code is unavailable for this order');
+      }
+      discount = Decimal.min(
+        subtotal,
+        promo.discountType === 'PERCENTAGE'
+          ? subtotal.mul(promo.discountValue).div(100).toDecimalPlaces(2)
+          : promo.discountValue
+      );
+      promoId = promo.id;
+      await tx.promoCode.update({
+        where: { id: promo.id },
+        data: { usesHeld: { increment: 1 } },
+      });
+    }
+    const totalAmount = Decimal.max(subtotal.sub(discount), new Decimal(0));
+    const taxAmount = new Decimal(includedHstAmount(totalAmount, configuredHstRate()).toFixed(2));
+    const created = await tx.order.create({
+      data: {
+        orderNumber: `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,
+        userId,
+        eventId: event.id,
+        totalAmount,
+        taxAmount,
+        discountAmount: discount,
+        currency: config.paymentCurrency,
+        promoCodeId: promoId,
+        promoReservation: promoId ? 'HELD' : 'NONE',
+        expiresAt: new Date(Date.now() + config.cartExpiryMinutes * 60 * 1000),
+      },
+    });
+    const tickets: Prisma.TicketCreateManyInput[] = allocations.flatMap((a) =>
+      Array.from({ length: a.quantity }, () => ({
+        orderId: created.id,
+        userId,
+        eventId: event.id,
+        ticketTypeId: a.ticketTypeId,
+        tierId: a.tierId,
+        pricePaid: a.price,
+        inventoryState: 'HELD' as const,
+        barcode: `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,
+        status: 'VALID' as const,
+      }))
+    );
+    await tx.ticket.createMany({ data: tickets });
+    return created;
   }
 
   /**

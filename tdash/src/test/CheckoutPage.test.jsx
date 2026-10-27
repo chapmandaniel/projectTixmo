@@ -154,7 +154,13 @@ describe('CheckoutPage', () => {
         await waitFor(() => {
             expect(apiPost).toHaveBeenCalledWith('/orders', {
                 items: [{ ticketTypeId: 'ticket-ga', quantity: 1 }],
-            });
+            }, expect.objectContaining({
+                headers: {
+                    'Idempotency-Key': expect.stringMatching(
+                        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+                    ),
+                },
+            }));
         });
         expect(apiPost).toHaveBeenCalledWith('/payments/create-intent', { orderId: 'order-1' });
         expect(await screen.findByText('Card payment details')).toBeInTheDocument();
@@ -345,6 +351,78 @@ describe('CheckoutPage', () => {
         expect(screen.getByText(/blocked until approved Terms, Refund Policy, and Privacy Policy URLs are configured/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /continue to secure payment/i })).toBeDisabled();
         expect(apiPost).not.toHaveBeenCalled();
+    });
+
+    it('disables submit while the order request is in flight and posts once', async () => {
+        let release;
+        const pending = new Promise((resolve) => { release = resolve; });
+        apiPost.mockReset();
+        apiPost.mockImplementation((url) => (
+            url === '/orders'
+                ? pending
+                : Promise.resolve({ clientSecret: 'pi_secret_checkout', paymentIntentId: 'pi_checkout' })
+        ));
+        renderCheckout({ user: { id: 'buyer-1', email: 'buyer@example.com' } });
+        expect(await screen.findByText('Neon Nights')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        const submit = screen.getByRole('button', { name: /continue to secure payment/i });
+        fireEvent.click(submit);
+        fireEvent.click(submit);
+        await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+        expect(screen.getByRole('button', { name: /preparing checkout/i })).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Increase General Admission' })).toBeDisabled();
+        await act(async () => {
+            release({
+                id: 'order-1',
+                status: 'PENDING',
+                eventId: 'event-1',
+                currency: 'cad',
+                totalAmount: '25.00',
+            });
+        });
+        expect(await screen.findByText('Card payment details')).toBeInTheDocument();
+        expect(apiPost.mock.calls.filter((call) => call[0] === '/orders')).toHaveLength(1);
+    });
+
+    it('reuses one idempotency key for retries and mints a new key when the selection changes', async () => {
+        apiPost.mockReset();
+        apiPost.mockRejectedValue({ response: { status: 503, data: { message: 'Try again' } } });
+        renderCheckout({ user: { id: 'buyer-1', email: 'buyer@example.com' } });
+        expect(await screen.findByText('Neon Nights')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        const submit = () => screen.getByRole('button', { name: /continue to secure payment/i });
+        await act(async () => fireEvent.click(submit()));
+        expect(screen.getByText('Try again')).toBeInTheDocument();
+        await act(async () => fireEvent.click(submit()));
+        const firstKey = apiPost.mock.calls[0][2].headers['Idempotency-Key'];
+        expect(apiPost.mock.calls[1][2].headers['Idempotency-Key']).toBe(firstKey);
+        expect(apiPost.mock.calls[1][1]).toEqual(apiPost.mock.calls[0][1]);
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        await act(async () => fireEvent.click(submit()));
+        expect(apiPost.mock.calls[2][1].items).toEqual([{ ticketTypeId: 'ticket-ga', quantity: 2 }]);
+        expect(apiPost.mock.calls[2][2].headers['Idempotency-Key']).not.toBe(firstKey);
+    });
+
+    it('shows the sold-out message and keeps the same attempt key', async () => {
+        apiPost.mockReset();
+        apiPost.mockRejectedValue({
+            response: {
+                status: 409,
+                data: { message: 'Not enough tickets available', errors: { code: 'SOLD_OUT' } },
+            },
+        });
+        renderCheckout({ user: { id: 'buyer-1', email: 'buyer@example.com' } });
+        expect(await screen.findByText('Neon Nights')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        const submit = () => screen.getByRole('button', { name: /continue to secure payment/i });
+        await act(async () => fireEvent.click(submit()));
+        expect(screen.getByText('Not enough tickets available')).toBeInTheDocument();
+        expect(screen.getByText('1 x CA$25.00')).toBeInTheDocument();
+        expect(submit()).toBeEnabled();
+        await act(async () => fireEvent.click(submit()));
+        expect(apiPost.mock.calls[1][2].headers['Idempotency-Key']).toBe(
+            apiPost.mock.calls[0][2].headers['Idempotency-Key']
+        );
     });
 
     it('lets a new buyer create an account before checkout', async () => {

@@ -234,7 +234,15 @@ test.each(['lifecycle', 'window', 'stock'] as const)(
         updatedAt: expect.any(Date),
       });
       expect(resumed.stock).toEqual(before.stock);
-      await expect(f.create()).rejects.toMatchObject({ statusCode: 400 });
+      await expect(f.create()).rejects.toMatchObject(
+        condition === 'stock'
+          ? {
+              statusCode: 409,
+              message: 'Not enough tickets available',
+              errors: { code: 'SOLD_OUT' },
+            }
+          : { statusCode: 400 }
+      );
       expect(await f.snapshot()).toEqual(resumed);
     })
 );

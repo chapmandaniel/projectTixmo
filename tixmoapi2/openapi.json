@@ -2260,6 +2260,19 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "description": "Optional buyer-scoped key. The same key and body replay the original 201 response and do not create another hold. The same key with a different body returns 409. Omitting the header keeps create-every-time behavior.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2301,16 +2314,19 @@
         },
         "responses": {
           "201": {
-            "description": "Order created successfully"
+            "description": "Order created successfully. An identical Idempotency-Key replay returns this same response."
           },
           "400": {
-            "description": "Invalid input or tickets not available"
+            "description": "Invalid input. Insufficient inventory is 409, not 400."
           },
           "401": {
             "description": "Unauthorized"
           },
           "404": {
             "description": "Ticket type not found"
+          },
+          "409": {
+            "description": "Not enough tickets available (errors.code SOLD_OUT), or the idempotency key was reused with a different body (errors.code IDEMPOTENCY_KEY_MISMATCH)."
           }
         }
       },
