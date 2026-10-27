@@ -123,7 +123,10 @@ describe('checkout transaction busy', () => {
       status: 'PENDING',
       totalAmount: new Decimal(20),
     });
-    const cancel = jest.spyOn(service, 'cancelOrder').mockResolvedValue({ id: 'ghost' });
+    // ts-jest checks this against the generated Order row. The repo-root lint
+    // project accepts the partial double, so the assertion looks unused there.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    const cancel = jest.spyOn(service, 'cancelOrder').mockResolvedValue({ id: 'ghost' } as never);
     await expect(
       service.createOrder('buyer', { items: [{ ticketTypeId: 'ga', quantity: 2 }] })
     ).rejects.toMatchObject({ statusCode: 503, code: 'CHECKOUT_BUSY' });
@@ -173,10 +176,11 @@ describe('checkout transaction busy', () => {
 
   it('cancels an expired hold with the checkout lock and transaction limits', async () => {
     (prisma.$transaction as jest.Mock).mockImplementation(async (work) => work(tx));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     jest.spyOn(service, 'cancelOrderInTransaction').mockResolvedValue({
       id: 'expired',
       status: 'CANCELLED',
-    });
+    } as never);
     await expect(service.cancelExpiredOrder('expired')).resolves.toMatchObject({
       id: 'expired',
       status: 'CANCELLED',
