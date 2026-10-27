@@ -1,4 +1,4 @@
-import { checkReadiness } from './services/readiness.service';
+import { checkReadiness, readinessHttpStatus } from './services/readiness.service';
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -27,6 +27,30 @@ initSentry();
 
 // Enable trust proxy for Railway load balancers
 app.set('trust proxy', 1);
+
+// Liveness and readiness stay ahead of body parsing, rate limiters and the
+// waiting room. Railway healthcheckPath remains /ready.
+app.get('/health', (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: config.nodeEnv,
+  });
+});
+
+app.get('/ready', async (_req, res) => {
+  const checks = await checkReadiness();
+  const status = readinessHttpStatus(checks);
+  res
+    .set('Cache-Control', 'no-store')
+    .status(status)
+    .json({
+      status: status === 200 ? 'ready' : 'not_ready',
+      checks,
+      timestamp: new Date().toISOString(),
+    });
+});
 
 // Security middleware
 app.use(helmet());
@@ -101,30 +125,6 @@ app.use(requestLogger);
  *                   type: string
  *                   example: development
  */
-// Health check endpoint
-app.get('/health', (_req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: config.nodeEnv,
-  });
-});
-
-// Liveness stays cheap; readiness proves the dependencies needed to serve requests.
-app.get('/ready', async (_req, res) => {
-  const checks = await checkReadiness();
-  const ready = checks.database === true && checks.redis === true;
-  res
-    .set('Cache-Control', 'no-store')
-    .status(ready ? 200 : 503)
-    .json({
-      status: ready ? 'ready' : 'not_ready',
-      checks,
-      timestamp: new Date().toISOString(),
-    });
-});
-
 // Debug route to test Sentry (only enabled when SENTRY_DSN is configured)
 app.get('/api/v1/debug/sentry', (_req, _res, next) => {
   if (config.nodeEnv !== 'development' || !config.sentryDsn) return next();

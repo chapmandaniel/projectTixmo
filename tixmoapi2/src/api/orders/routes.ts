@@ -57,6 +57,8 @@ router.post('/:id/receipt', controller.resendReceipt);
  *         description: Unauthorized
  *       404:
  *         description: Ticket type not found
+ *       503:
+ *         description: Checkout is busy (code CHECKOUT_BUSY). Retry after Retry-After. No order remains held.
  */
 router.post('/', validate(validation.createOrderSchema), waitingRoom, controller.createOrder);
 

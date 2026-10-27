@@ -1,16 +1,28 @@
-import prisma from '../config/prisma';
 import { getRedisClient } from '../config/redis';
+import { queryReadinessDatabase, warmReadinessDatabase } from './readiness-db';
 
 type Checks = { database: boolean | null; redis: boolean | null };
 let active: { checks: Checks; finished: Promise<void> } | undefined;
 let cached: { checks: Checks; at: number } | undefined;
 
-/** Bound the response time and share probes so a stalled dependency cannot accumulate checks. */
+const PROBE_BUDGET_MS = 2000;
+const RESULT_CACHE_MS = 1000;
+
+/** A dead dependency is not ready. A timed-out probe is not ready either. */
+export function readinessHttpStatus(checks: Checks): 200 | 503 {
+  return checks.database === true && checks.redis === true ? 200 : 503;
+}
+
+/**
+ * Bound the response time and share one probe so a stalled dependency cannot
+ * accumulate checks. The database probe uses its own one-connection client,
+ * not the application pool checkout is holding.
+ */
 export async function checkReadiness(): Promise<Checks> {
-  if (cached && Date.now() - cached.at < 1000) return { ...cached.checks };
+  if (cached && Date.now() - cached.at < RESULT_CACHE_MS) return { ...cached.checks };
   if (!active) {
     const checks: Checks = { database: null, redis: null };
-    const database = Promise.resolve().then(() => prisma.$queryRaw`SELECT 1`);
+    const database = Promise.resolve().then(() => queryReadinessDatabase());
     const redis = Promise.resolve().then(async () => {
       const client = getRedisClient();
       // Never enqueue a health command on a disconnected Redis client.
@@ -46,7 +58,7 @@ export async function checkReadiness(): Promise<Checks> {
     await Promise.race([
       probe.finished,
       new Promise<void>((resolve) => {
-        timer = setTimeout(resolve, 2000);
+        timer = setTimeout(resolve, PROBE_BUDGET_MS);
         timer.unref();
       }),
     ]);
@@ -55,3 +67,5 @@ export async function checkReadiness(): Promise<Checks> {
     if (timer) clearTimeout(timer);
   }
 }
+
+warmReadinessDatabase();

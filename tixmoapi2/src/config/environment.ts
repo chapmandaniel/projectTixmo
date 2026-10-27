@@ -37,6 +37,19 @@ function readPositiveInteger(name: string, fallback: number): number {
   return value;
 }
 
+function readNonNegativeInteger(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === '') return fallback;
+  if (!/^[0-9]+$/.test(raw)) {
+    throw new Error(`${name} must be a non-negative safe integer`);
+  }
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new Error(`${name} must be a non-negative safe integer`);
+  }
+  return value;
+}
+
 // Venue wifi presents one public IP for every scanner phone. Admission is one
 // bucket per scanner API key (stored as that scanner's id), not per IP.
 // 2,000 scans per 15 minutes lets one door do 1,000 admissions and still have
@@ -163,6 +176,20 @@ export const config = {
 
   // Database
   databaseUrl: process.env.DATABASE_URL || '',
+
+  // Anonymous public-event reads. 0 disables the in-process cache. Tests default
+  // to 0 so a just-written event is visible immediately. Production default is
+  // a few seconds; quantityAvailable may be that stale until the order path rechecks.
+  publicEventCacheTtlSeconds: readNonNegativeInteger(
+    'PUBLIC_EVENT_CACHE_TTL_SECONDS',
+    isTest ? 0 : 4
+  ),
+
+  // Checkout interactive transactions fail fast instead of sitting on the 15s default.
+  checkoutTxMaxWaitMs: readPositiveInteger('CHECKOUT_TX_MAX_WAIT_MS', 2000),
+  checkoutTxTimeoutMs: readPositiveInteger('CHECKOUT_TX_TIMEOUT_MS', 5000),
+  checkoutLockTimeoutMs: readPositiveInteger('CHECKOUT_LOCK_TIMEOUT_MS', 2000),
+  checkoutStatementTimeoutMs: readPositiveInteger('CHECKOUT_STATEMENT_TIMEOUT_MS', 4000),
 
   // Aggregate active checkout requests across instances; not users or queue positions.
   waitingRoomMaxConcurrentRequests,

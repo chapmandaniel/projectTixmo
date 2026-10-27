@@ -2,6 +2,8 @@ export class ApiError extends Error {
   statusCode: number;
   errors?: unknown;
   data?: unknown;
+  code?: string;
+  retryAfter?: number;
 
   constructor(statusCode: number, message: string, errors?: unknown) {
     super(message);
@@ -37,5 +39,12 @@ export class ApiError extends Error {
 
   static internal(message: string = 'Internal Server Error') {
     return new ApiError(500, message);
+  }
+
+  static busy(message: string, code: string, retryAfter = 2) {
+    const error = new ApiError(503, message, { code });
+    error.code = code;
+    error.retryAfter = retryAfter;
+    return error;
   }
 }

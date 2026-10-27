@@ -12,6 +12,11 @@ import {
   voidOrderTickets,
 } from '../../services/ticket-void.service';
 import prisma from '../../config/prisma';
+import {
+  applyCheckoutDbLimits,
+  checkoutTransactionOptions,
+  rethrowUnlessCheckoutBusy,
+} from '../../services/checkout-transaction';
 
 type WebhookClaim = { eventId: string; generation: bigint };
 class WebhookOwnershipLost extends Error {}
@@ -45,35 +50,41 @@ export class PaymentService {
     const stripe = this.provider();
     // Commit the request identity before any external call. A lost response or
     // concurrent client request repeats precisely the same provider operation.
-    const attempt = await prisma.$transaction(async (tx) => {
-      await lockOrder(tx, orderId);
-      const order = await tx.order.findUnique({ where: { id: orderId }, include: { event: true } });
-      if (!order || order.userId !== userId) throw ApiError.notFound('Order not found');
-      if (
-        order.status !== 'PENDING' ||
-        order.paymentStatus === 'SUCCEEDED' ||
-        (order.expiresAt && order.expiresAt <= new Date()) ||
-        order.event.deletedAt ||
-        !['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(order.event.status)
-      ) {
-        throw ApiError.conflict('Order is no longer pending payment');
-      }
-      const amount = cents(order.totalAmount);
-      if (amount === 0) throw ApiError.badRequest('Free orders do not need payment');
-      const attempt = await tx.paymentAttempt.upsert({
-        where: { orderId },
-        create: {
-          orderId,
-          amount,
-          currency: order.currency,
-          paymentIntentId: order.paymentIntentId,
-        },
-        update: {},
-      });
-      if (attempt.amount !== amount || attempt.currency !== order.currency)
-        throw ApiError.conflict('Payment preparation requires reconciliation');
-      return { ...attempt, observedPaymentStatus: order.paymentStatus };
-    });
+    const attempt = await prisma
+      .$transaction(async (tx) => {
+        await applyCheckoutDbLimits(tx);
+        await lockOrder(tx, orderId);
+        const order = await tx.order.findUnique({
+          where: { id: orderId },
+          include: { event: true },
+        });
+        if (!order || order.userId !== userId) throw ApiError.notFound('Order not found');
+        if (
+          order.status !== 'PENDING' ||
+          order.paymentStatus === 'SUCCEEDED' ||
+          (order.expiresAt && order.expiresAt <= new Date()) ||
+          order.event.deletedAt ||
+          !['PUBLISHED', 'ON_SALE', 'SOLD_OUT'].includes(order.event.status)
+        ) {
+          throw ApiError.conflict('Order is no longer pending payment');
+        }
+        const amount = cents(order.totalAmount);
+        if (amount === 0) throw ApiError.badRequest('Free orders do not need payment');
+        const attempt = await tx.paymentAttempt.upsert({
+          where: { orderId },
+          create: {
+            orderId,
+            amount,
+            currency: order.currency,
+            paymentIntentId: order.paymentIntentId,
+          },
+          update: {},
+        });
+        if (attempt.amount !== amount || attempt.currency !== order.currency)
+          throw ApiError.conflict('Payment preparation requires reconciliation');
+        return { ...attempt, observedPaymentStatus: order.paymentStatus };
+      }, checkoutTransactionOptions())
+      .catch(rethrowUnlessCheckoutBusy);
     if (
       !attempt.paymentIntentId &&
       Date.now() - attempt.createdAt.getTime() >= IDEMPOTENCY_SAFE_MS
@@ -98,33 +109,36 @@ export class PaymentService {
       intent.metadata.userId !== userId
     )
       throw ApiError.conflict('Payment session does not match the order');
-    const pending = await prisma.$transaction(async (tx) => {
-      await lockOrder(tx, orderId);
-      const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
-      if (
-        order.userId !== userId ||
-        cents(order.totalAmount) !== attempt.amount ||
-        order.currency !== attempt.currency ||
-        order.paymentStatus === 'SUCCEEDED' ||
-        (order.status === 'PENDING' &&
-          ![attempt.observedPaymentStatus, 'PROCESSING'].includes(order.paymentStatus))
-      )
-        throw ApiError.conflict('Order changed during payment preparation');
-      if (order.paymentIntentId && order.paymentIntentId !== intent.id)
-        throw ApiError.conflict('Payment session changed');
-      await tx.paymentAttempt.update({
-        where: { id: attempt.id },
-        data: { paymentIntentId: intent.id },
-      });
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          paymentIntentId: intent.id,
-          ...(order.status === 'PENDING' ? { paymentStatus: 'PROCESSING' } : {}),
-        },
-      });
-      return order.status === 'PENDING' && (!order.expiresAt || order.expiresAt > new Date());
-    });
+    const pending = await prisma
+      .$transaction(async (tx) => {
+        await applyCheckoutDbLimits(tx);
+        await lockOrder(tx, orderId);
+        const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
+        if (
+          order.userId !== userId ||
+          cents(order.totalAmount) !== attempt.amount ||
+          order.currency !== attempt.currency ||
+          order.paymentStatus === 'SUCCEEDED' ||
+          (order.status === 'PENDING' &&
+            ![attempt.observedPaymentStatus, 'PROCESSING'].includes(order.paymentStatus))
+        )
+          throw ApiError.conflict('Order changed during payment preparation');
+        if (order.paymentIntentId && order.paymentIntentId !== intent.id)
+          throw ApiError.conflict('Payment session changed');
+        await tx.paymentAttempt.update({
+          where: { id: attempt.id },
+          data: { paymentIntentId: intent.id },
+        });
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            paymentIntentId: intent.id,
+            ...(order.status === 'PENDING' ? { paymentStatus: 'PROCESSING' } : {}),
+          },
+        });
+        return order.status === 'PENDING' && (!order.expiresAt || order.expiresAt > new Date());
+      }, checkoutTransactionOptions())
+      .catch(rethrowUnlessCheckoutBusy);
     if (!pending || intent.status === 'canceled') {
       await this.reconcileIntent(intent);
       throw ApiError.conflict('Order is no longer pending payment');
