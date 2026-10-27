@@ -89,18 +89,19 @@ export function orderConfirmationEmail(
   const hstNumber = data.hstNumber?.trim() || '';
   const hstAmountLine = data.hstAmountLine?.trim() || '';
   const hstHtml = hstNumber ? `<p>HST no. ${escapeReceiptHtml(hstNumber)}</p>` : '';
-  const hstText = hstNumber ? `HST no. ${hstNumber}\n` : '';
+  const receiptLine = (value: string) => `      ${value}\n`;
+  const hstText = hstNumber ? receiptLine(`HST no. ${hstNumber}`) : '';
   const hstAmountHtml = hstAmountLine ? `<p>${escapeReceiptHtml(hstAmountLine)}</p>` : '';
-  const hstAmountText = hstAmountLine ? `${hstAmountLine}\n` : '';
+  const hstAmountText = hstAmountLine ? receiptLine(hstAmountLine) : '';
   const walletHtml = walletUrl
     ? `<p><a href="${escapeReceiptHtml(walletUrl)}">View your tickets</a>. Sign in with the account used for this order.</p>`
     : '';
   const walletText = walletUrl
-    ? `View your tickets: ${walletUrl}\nSign in with the account used for this order.\n`
+    ? `${receiptLine(`View your tickets: ${walletUrl}`)}${receiptLine('Sign in with the account used for this order.')}`
     : '';
   const seller = data.sellerName?.trim() || '';
   const sellerHtml = seller ? `<p>Sold by ${escapeReceiptHtml(seller)}</p>` : '';
-  const sellerText = seller ? `Sold by ${seller}\n` : '';
+  const sellerText = seller ? receiptLine(`Sold by ${seller}`) : '';
   const support = receiptSupportEmail(data.supportEmail);
   const supportHtml = escapeReceiptHtml(support);
   const refundUrl = receiptPolicyUrl(data.refundPolicyUrl);
@@ -112,14 +113,14 @@ export function orderConfirmationEmail(
   const policyHtml = policyLinks.length ? ` ${policyLinks.join(' · ')}` : '';
   const policyTextParts = [
     refundUrl ? `Refund policy: ${refundUrl}` : '',
-    termsUrl ? `Terms: ${termsUrl}` : '',
+    termsUrl ? `Terms of Sale: ${termsUrl}` : '',
   ].filter(Boolean);
-  const policyText = policyTextParts.length ? `${policyTextParts.join(' · ')}\n` : '';
+  const policyText = policyTextParts.length ? receiptLine(policyTextParts.join(' · ')) : '';
   const total = escapeReceiptHtml(data.totalAmount);
   const subtotal = data.subtotalAmount?.trim() ? escapeReceiptHtml(data.subtotalAmount.trim()) : '';
   const subtotalHtml = subtotal ? `<p><strong>Subtotal:</strong> ${subtotal}</p>` : '';
   const subtotalText = data.subtotalAmount?.trim()
-    ? `Subtotal: ${data.subtotalAmount.trim()}\n`
+    ? receiptLine(`Subtotal: ${data.subtotalAmount.trim()}`)
     : '';
   return {
     subject: `Your Tixmo tickets for ${data.eventName}`,
@@ -160,7 +161,7 @@ export function orderConfirmationEmail(
               <p>Questions? <a href="mailto:${supportHtml}">${supportHtml}</a></p>
             </div>
             <div class="footer">
-              <p>Tixmo · Ticketing for live events. Please don't reply to this email. Contact <a href="mailto:${supportHtml}">${supportHtml}</a>.</p>
+              <p>Tixmo · Ticketing for live events. Contact <a href="mailto:${supportHtml}">${supportHtml}</a>.</p>
             </div>
           </div>
         </body>
@@ -174,12 +175,11 @@ export function orderConfirmationEmail(
       When: ${data.eventDate}
       Where: ${venue}
       Tickets: ${data.ticketSummary}
-      ${subtotalText}Total paid: ${data.totalAmount} (includes HST and all fees)
-      ${hstAmountText}${hstText}${sellerText}${walletText}
-      All sales are final unless the event is cancelled or rescheduled.
-      ${policyText}Questions? ${support}
+${subtotalText}      Total paid: ${data.totalAmount} (includes HST and all fees)
+${hstAmountText}${hstText}${sellerText}${walletText}      All sales are final unless the event is cancelled or rescheduled.
+${policyText}      Questions? ${support}
 
-      Tixmo · Ticketing for live events. Please don't reply to this email. Contact ${support}.
+      Tixmo · Ticketing for live events. Contact ${support}.
     `,
   };
 }
@@ -243,7 +243,7 @@ export function ticketTransferEmail(
               <p>Questions? <a href="mailto:${supportHtml}">${supportHtml}</a></p>
             </div>
             <div class="footer">
-              <p>Tixmo · Ticketing for live events. Please don't reply to this email.</p>
+              <p>Tixmo · Ticketing for live events.</p>
             </div>
           </div>
         </body>
@@ -262,7 +262,7 @@ export function ticketTransferEmail(
       Sign in to Tixmo and open My tickets. Show the QR code at the door. Each ticket gets one person in, once.
       Questions? ${support}
       
-      Tixmo · Ticketing for live events. Please don't reply to this email.
+      Tixmo · Ticketing for live events.
     `,
   };
 }

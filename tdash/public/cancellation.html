@@ -16,21 +16,21 @@
   <!-- DRAFT, NOT FOR PUBLICATION UNTIL DANIEL APPROVES. Decision 5A. Refunds are issued by staff, NOT automatically: cancelling an event in Tixmo issues no refunds (cancelEvent). Lawyer review required. Prepared Oct 26, 2026 (America/St_Johns). Remove this comment and the robots noindex line only after approval. -->
   <main>
     <h1>Cancellation and Postponement Policy</h1>
-    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br>Sold by: [LEGAL_ENTITY_NAME], operating as Mighty Quinton Concerts, [MAILING_ADDRESS] <!-- [tixmo pm, Oct 26]: operator = legal entity operating as Mighty Quinton Concerts (trading name buyers see); Daniel confirms the legal entity --><br>Questions: <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a></p>
-    <p>This policy works together with our <a href="refunds.html">Refund Policy</a> and <a href="terms.html">Terms of Service</a>.</p>
+    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br><span data-policy-when="sellerName" hidden>Sold by: <span data-policy-field="sellerName"></span><span data-policy-when="mailingAddress" hidden>, <span data-policy-field="mailingAddress"></span></span><br></span><span data-policy-when="supportEmail" hidden>Questions: <a data-policy-field="supportEmail" href=""></a></span></p> <!-- Seller line is TIXMO_SELLER_NAME (Tixmo Ltd. as ticketing agent for the organizer). Address and support email are omitted when unset. -->
+    <p>This policy works together with our <a href="refunds.html">Refund Policy</a> and <a href="terms.html">Terms of Sale</a>.</p>
     <h2>If an event is cancelled</h2>
     <ul>
-      <li>We’ll email everyone who bought tickets, from <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a>, as soon as the cancellation is confirmed. <!-- Sent by hand by staff (drafts/buyer-cancellation-email.md, runbook §7). Tixmo sends no automatic refund or cancellation email. --></li>
+      <li>We’ll email everyone who bought tickets<span data-policy-when="supportEmail" hidden>, from <a data-policy-field="supportEmail" href=""></a>,</span> as soon as the cancellation is confirmed. <!-- Sent by hand by staff (drafts/buyer-cancellation-email.md, runbook §7). Tixmo sends no automatic refund or cancellation email. --></li>
       <li><strong>Our staff will refund every eligible order in full within 14 days of the cancellation announcement.</strong> You don’t need to do anything.</li>
       <li>The refund goes to the card you paid with and covers the full amount you paid, including HST and all fees.</li>
       <li>Tickets for a cancelled event can no longer be used.</li>
       <li>If a ticket in your order was transferred, the refund still goes to the <strong>original purchaser’s payment method</strong>. If you received a ticket by transfer, please settle up with the person who sent it to you. These orders may take longer, but we still aim for 14 days.</li>
-      <li>Haven’t seen your refund after 14 days? Email <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a> with your order number.</li>
+      <li>Haven’t seen your refund after 14 days? <span data-policy-when="supportEmail" hidden>Email <a data-policy-field="supportEmail" href=""></a> with your order number.</span><span data-policy-when-missing="supportEmail">Email us with your order number.</span></li>
     </ul>
     <h2>If an event is postponed or rescheduled</h2>
     <ul>
       <li>Your tickets <strong>stay valid for the new date</strong>. You don’t need to do anything.</li>
-      <li>If you can’t attend the new date, email <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a> <strong>within 14 days of the announcement</strong> with your order number, and our staff will refund your order in full.</li>
+      <li>If you can’t attend the new date, <span data-policy-when="supportEmail" hidden>email <a data-policy-field="supportEmail" href=""></a></span><span data-policy-when-missing="supportEmail">email us</span> <strong>within 14 days of the announcement</strong> with your order number, and our staff will refund your order in full.</li>
       <li>After those 14 days, the normal <a href="refunds.html">Refund Policy</a> applies again.</li>
     </ul>
     <h2>If the venue changes</h2>
@@ -38,8 +38,10 @@
     <h2>What doesn’t count</h2>
     <p>Small changes, such as start time, set times or a support act, aren’t a cancellation or postponement.</p>
     <hr>
-    <p>Tixmo policies: <a href="terms.html">Terms of Service</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
-    <p>[LEGAL_ENTITY_NAME], operating as Mighty Quinton Concerts · [MAILING_ADDRESS] · <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a></p>
+    <p>Tixmo policies: <a href="terms.html">Terms of Sale</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
+    <p data-policy-footer hidden></p>
   </main>
+  <script src="/runtime-config.js"></script>
+  <script type="module" src="/policy-runtime.js"></script>
 </body>
 </html>

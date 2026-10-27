@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Terms of Service — Tixmo</title>
+  <title>Terms of Sale — Tixmo</title>
   <style>
     body { margin: 0; background: #fafafa; color: #202020; font: 1rem/1.65 system-ui, sans-serif; }
     main { max-width: 44rem; margin: 3rem auto; padding: 0 1.5rem; }
@@ -15,8 +15,8 @@
 <body>
   <!-- DRAFT, NOT FOR PUBLICATION UNTIL DANIEL APPROVES. Lawyer review required (licensed in Newfoundland and Labrador): liability, governing law, consumer protection, resale. Accountant to confirm HST-inclusive wording (decision 4A). Prepared Oct 26, 2026 (America/St_Johns). Remove this comment and the robots noindex line only after approval. -->
   <main>
-    <h1>Terms of Service</h1>
-    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br>Sold by: [LEGAL_ENTITY_NAME], operating as Mighty Quinton Concerts, [MAILING_ADDRESS] <!-- [tixmo pm, Oct 26]: operator = legal entity operating as Mighty Quinton Concerts (trading name buyers see); Daniel confirms the legal entity --><br>Questions: <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a><br>HST registration no.: [HST_REGISTRATION_NUMBER]</p>
+    <h1>Terms of Sale</h1>
+    <p>Effective date: November 6, 2026 <!-- PROPOSED DEFAULT (Daniel to approve): effective date --><br><span data-policy-when="sellerName" hidden>Sold by: <span data-policy-field="sellerName"></span><span data-policy-when="mailingAddress" hidden>, <span data-policy-field="mailingAddress"></span></span><br></span><span data-policy-when="supportEmail" hidden>Questions: <a data-policy-field="supportEmail" href=""></a><br></span><span data-policy-when="hstNumber" hidden>HST registration no.: <span data-policy-field="hstNumber"></span></span></p> <!-- Seller line is TIXMO_SELLER_NAME (Tixmo Ltd. as ticketing agent for the organizer). Mailing address, support email, HST number and venue policy URL are filled from runtime config and omitted when unset. -->
     <p>These terms apply when you create a Tixmo account or buy tickets on Tixmo. By placing an order, you agree to them, to our <a href="refunds.html">Refund Policy</a>, our <a href="cancellation.html">Cancellation and Postponement Policy</a> and our <a href="privacy.html">Privacy Policy</a>.</p>
     <h2>1. Your account</h2>
     <p>You need a Tixmo account to buy and hold tickets. Please give accurate details and keep your password private. We may suspend an account if we see fraud, abuse or a security risk.</p>
@@ -50,18 +50,20 @@
     <h2>6. Entry and conduct</h2>
     <ul>
       <li>Venue and event staff may refuse entry or remove anyone who breaks venue rules, the law or any age or ID requirement, or who puts others at risk. Events are open to all ages unless the event listing says otherwise. <!-- PROPOSED DEFAULT (Daniel to approve): age restriction = none (all ages) unless the event listing says otherwise --> There is no refund in that case.</li>
-      <li>Bags may be searched, and the <a href="[VENUE_POLICY_URL]">venue’s own rules</a> apply. <!-- [VENUE_POLICY_URL] comes from the event data. If there is none, remove the link and keep the words as plain text. --></li>
+      <li>Bags may be searched, and the <a data-policy-venue-link href="" hidden>venue’s own rules</a><span data-policy-venue-plain>venue’s own rules</span> apply. <!-- VENUE_POLICY_URL. With no URL the words stay plain text. --></li>
       <li>Times, lineups and running orders can change. Small changes like these aren’t a cancellation or a rescheduling.</li>
     </ul>
     <h2>7. Liability</h2>
-    <p>[LEGAL_ENTITY_NAME], operating as Mighty Quinton Concerts, is responsible for providing the event as described, or refunding you under our policies. To the extent the law allows, we aren’t responsible for indirect costs such as travel, accommodation or lost earnings. Nothing in these terms limits rights you have under Newfoundland and Labrador or Canadian consumer protection law.</p>
+    <p><span data-policy-sentence="responsible" hidden></span>To the extent the law allows, we aren’t responsible for indirect costs such as travel, accommodation or lost earnings. Nothing in these terms limits rights you have under Newfoundland and Labrador or Canadian consumer protection law.</p>
     <h2>8. Governing law</h2>
     <p>These terms are governed by the laws of Newfoundland and Labrador and the federal laws of Canada that apply there.</p>
     <h2>9. Changes</h2>
     <p>We may update these terms for future orders. The terms in effect when you bought apply to your order.</p>
     <hr>
-    <p>Tixmo policies: <a href="terms.html">Terms of Service</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
-    <p>[LEGAL_ENTITY_NAME], operating as Mighty Quinton Concerts · [MAILING_ADDRESS] · <a href="mailto:[SUPPORT_EMAIL]">[SUPPORT_EMAIL]</a></p>
+    <p>Tixmo policies: <a href="terms.html">Terms of Sale</a> · <a href="refunds.html">Refund Policy</a> · <a href="cancellation.html">Cancellation and Postponement</a> · <a href="privacy.html">Privacy Policy</a></p>
+    <p data-policy-footer hidden></p>
   </main>
+  <script src="/runtime-config.js"></script>
+  <script type="module" src="/policy-runtime.js"></script>
 </body>
 </html>

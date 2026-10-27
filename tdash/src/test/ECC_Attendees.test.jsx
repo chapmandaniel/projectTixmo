@@ -66,6 +66,9 @@ describe('Attendees search, export, and check-in', () => {
         expect(contents).toContain('ORD-ADA');
         expect(contents).toContain('ORD-GRACE');
         expect(contents).toContain('grace@example.com');
+        expect(contents).toContain('Confirmed');
+        expect(contents).not.toContain('Barcode');
+        expect(contents).not.toContain('TIX-');
         mocks.get.mockImplementation((url, config) => {
             if (config?.params?.limit === 100) {
                 return Promise.resolve(wrapped({
@@ -93,6 +96,33 @@ describe('Attendees search, export, and check-in', () => {
         expect(screen.queryByText('Checked In')).not.toBeInTheDocument();
         expect(screen.queryByText(/doors/i)).not.toBeInTheDocument();
         alert.mockRestore();
+    });
+
+    it('shows a dispute or refund label and no check-in for a void ticket', async () => {
+        const disputed = {
+            ...ada,
+            id: 'disputed',
+            status: 'VALID',
+            order: { orderNumber: 'ORD-DISPUTE', status: 'PAID', refundStatus: 'DISPUTED' },
+        };
+        const refunded = {
+            ...grace,
+            id: 'refunded',
+            status: 'CANCELLED',
+            order: { orderNumber: 'ORD-REFUND', status: 'REFUNDED', refundStatus: 'SUCCEEDED' },
+        };
+        mocks.get.mockImplementation(() => Promise.resolve(wrapped({
+            tickets: [disputed, refunded],
+            pagination: { total: 2, pages: 1 },
+        })));
+        render(<ECC_Attendees event={event} isDark />);
+        expect(await screen.findByText('Disputed')).toBeInTheDocument();
+        expect(screen.getByText('Refunded')).toBeInTheDocument();
+        expect(screen.getByText('Cancelled')).toBeInTheDocument();
+        expect(screen.queryByTitle('Check In')).not.toBeInTheDocument();
+        expect(screen.queryByText('DISPUTED')).not.toBeInTheDocument();
+        expect(screen.queryByText('SUCCEEDED')).not.toBeInTheDocument();
+        expect(screen.queryByText('VOID_DISPUTED')).not.toBeInTheDocument();
     });
 
     it('filters the attendee list with the ticket status the API already accepts', async () => {

@@ -30,6 +30,7 @@ interface ListTicketsParams {
   page?: number;
   limit?: number;
   eventId?: string;
+  organizationId?: string;
   status?: TicketStatus;
   userId?: string;
   sortBy?: 'createdAt' | 'pricePaid' | 'status';
@@ -56,6 +57,7 @@ export class TicketService {
       page = 1,
       limit = 20,
       eventId,
+      organizationId,
       status,
       userId,
       sortBy = 'createdAt',
@@ -67,6 +69,7 @@ export class TicketService {
     const where: Prisma.TicketWhereInput = {};
     if (userId) where.userId = userId;
     if (eventId) where.eventId = eventId;
+    if (organizationId) where.event = { organizationId };
     if (status) where.status = status;
 
     const [tickets, total] = await Promise.all([

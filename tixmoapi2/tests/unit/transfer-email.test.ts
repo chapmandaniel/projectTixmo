@@ -44,9 +44,8 @@ describe('ticket transfer email', () => {
     );
     expect(email.html).not.toContain('The tickets are now available in your Tixmo account.');
     expect(email.html).toContain('Questions? <a href="mailto:info@tixmo.co">info@tixmo.co</a>');
-    expect(email.html).toContain(
-      "Tixmo · Ticketing for live events. Please don't reply to this email."
-    );
+    expect(email.html).toContain('Tixmo · Ticketing for live events.');
+    expect(email.html).not.toContain("Please don't reply");
     expect(email.html).not.toContain('Event Ticketing Platform');
     expect(email.text).toContain('Tickets sent to you');
     expect(email.text).toContain('Sam & Co sent you 1 ticket(s) for:');
@@ -55,9 +54,8 @@ describe('ticket transfer email', () => {
       'Sign in to Tixmo and open My tickets. Show the QR code at the door. Each ticket gets one person in, once.'
     );
     expect(email.text).toContain('Questions? info@tixmo.co');
-    expect(email.text).toContain(
-      "Tixmo · Ticketing for live events. Please don't reply to this email."
-    );
+    expect(email.text).toContain('Tixmo · Ticketing for live events.');
+    expect(email.text).not.toContain("Please don't reply");
     expect(email.text).not.toContain('Event Ticketing Platform');
     expect(email.text).toContain('November 9, 2026 at 7:00 p.m. NST');
     expect(email.text).toContain("Venue: Signal Hall, 1 Harbour Dr, St. John's");

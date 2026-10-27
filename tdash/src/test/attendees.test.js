@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { attendeesToCsv, ticketMatches } from '../lib/attendees';
+import { attendeesToCsv, canCheckIn, orderStateLabel, ticketMatches, ticketStatusLabel } from '../lib/attendees';
 
 const ticket = {
     user: { firstName: '=Ada', lastName: 'Lovelace', email: 'ada@example.com' },
@@ -22,9 +22,41 @@ describe('attendee search and export', () => {
 
     it('exports attendee values as text and escapes spreadsheet formulas', () => {
         const csv = attendeesToCsv([ticket]);
+        expect(csv.startsWith('"Guest","Email","Ticket type","Status","Order state","Order"')).toBe(true);
         expect(csv).toContain('"\'=Ada Lovelace"');
         expect(csv).toContain('"ada@example.com"');
+        expect(csv).toContain('"Confirmed"');
         expect(csv).toContain('"ORD-1"');
+        expect(csv).not.toContain('Barcode');
+        expect(csv).not.toContain('TIX-1');
+        expect(csv).not.toContain('VALID');
         expect(csv.split('\r\n')).toHaveLength(2);
+    });
+
+    it('labels dispute and refund state and leaves the barcode out of the export', () => {
+        const disputed = { ...ticket, status: 'VALID', order: { orderNumber: 'ORD-DISPUTE', status: 'PAID', refundStatus: 'DISPUTED' } };
+        const closed = { ...ticket, status: 'CANCELLED', order: { orderNumber: 'ORD-CLOSED', status: 'PAID', refundStatus: 'DISPUTE_LOST' } };
+        const refunded = { ...ticket, status: 'CANCELLED', order: { orderNumber: 'ORD-REFUND', status: 'REFUNDED', refundStatus: 'SUCCEEDED' } };
+        const voided = { ...ticket, status: 'VOID_DISPUTED', order: { orderNumber: 'ORD-VOID', refundStatus: 'NONE' } };
+        const csv = attendeesToCsv([disputed, closed, refunded, voided]);
+        expect(orderStateLabel(disputed)).toBe('Disputed');
+        expect(orderStateLabel(closed)).toBe('Dispute Lost');
+        expect(orderStateLabel(refunded)).toBe('Refunded');
+        expect(ticketStatusLabel('VOID_DISPUTED')).toBe('Void Disputed');
+        expect(csv).toContain('"Disputed"');
+        expect(csv).toContain('"Dispute Lost"');
+        expect(csv).toContain('"Refunded"');
+        expect(csv).toContain('"Void Disputed"');
+        expect(csv).not.toContain('DISPUTED');
+        expect(csv).not.toContain('DISPUTE_LOST');
+        expect(csv).not.toContain('VOID_DISPUTED');
+        expect(csv).not.toContain('SUCCEEDED');
+        expect(csv).not.toContain('Barcode');
+        expect(csv).not.toContain('TIX-1');
+        expect(canCheckIn(ticket)).toBe(true);
+        expect(canCheckIn({ ...ticket, order: { refundStatus: 'NONE' } })).toBe(true);
+        for (const blocked of [disputed, closed, refunded, voided, { ...ticket, status: 'CANCELLED' }, { ...ticket, order: { status: 'REFUNDED', refundStatus: 'NONE' } }]) {
+            expect(canCheckIn(blocked)).toBe(false);
+        }
     });
 });

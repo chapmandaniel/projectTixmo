@@ -5,6 +5,7 @@ import { catchAsync } from '../../utils/catchAsync';
 import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import { writeStaffAction } from '../../services/staff-action-audit';
+import { assertEventAccess, getActorScope, isGlobalAdmin } from '../../utils/tenantScope';
 import { ticketService } from './service';
 
 const canManageTickets = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
@@ -46,13 +47,27 @@ export const listMyTickets = catchAsync(async (req: AuthRequest, res: Response) 
 
 export const listTickets = catchAsync(async (req: AuthRequest, res: Response) => {
   const staff = canManageTickets(req.user!.role);
+  const requestedEventId = typeof req.query.eventId === 'string' ? req.query.eventId : undefined;
+  let organizationId: string | undefined;
+  if (staff) {
+    const actor = await getActorScope(req);
+    if (requestedEventId) {
+      await assertEventAccess(actor, requestedEventId);
+    }
+    if (!isGlobalAdmin(actor)) {
+      if (!actor.organizationId) {
+        throw ApiError.forbidden("You do not have access to this organization's resources");
+      }
+      organizationId = actor.organizationId;
+    }
+  }
   const result = await ticketService.listTickets({
     ...req.query,
     userId: staff ? undefined : req.user!.userId,
     includeHolder: staff,
+    organizationId,
   });
   if (staff) {
-    const requestedEventId = typeof req.query.eventId === 'string' ? req.query.eventId : undefined;
     const eventId = requestedEventId || result.tickets[0]?.eventId;
     if (eventId) {
       await recordTicketPiiView(req.user!.userId, 'Staff ticket list', 'EVENT', eventId, eventId);
