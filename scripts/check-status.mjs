@@ -2,6 +2,12 @@
 
 const timeoutMs = Number(process.env.TIXMO_STATUS_TIMEOUT_MS || 8000);
 const retries = Number(process.env.TIXMO_STATUS_RETRIES || 1);
+// Same-origin path only. An unset or non-path value keeps the /ready readiness check.
+const readyPath = (() => {
+  const raw = String(process.env.TIXMO_STATUS_READY_PATH || '').trim();
+  if (raw.startsWith('/') && !raw.startsWith('//') && !raw.includes('://') && !/[\s?#]/.test(raw)) return raw;
+  return '/ready';
+})();
 
 const usage = `Usage:
   npm run status:check
@@ -10,9 +16,10 @@ const usage = `Usage:
   node ./scripts/check-status.mjs https://api.example.com/health https://app.example.com
 
 Environment:
-  TIXMO_API_BASE_URL       Base API origin. Checks /ready, /health and /api/v1/health.
+  TIXMO_API_BASE_URL       Base API origin. Checks TIXMO_STATUS_READY_PATH (default /ready), /health and /api/v1/health.
   TIXMO_DASHBOARD_URL     Dashboard origin to check.
   TIXMO_STATUS_URLS       Comma-separated explicit URLs.
+  TIXMO_STATUS_READY_PATH Readiness path on the API origin. Default: /ready.
   TIXMO_STATUS_TIMEOUT_MS Request timeout in milliseconds. Default: 8000.
   TIXMO_STATUS_RETRIES    Retries per URL after first failure. Default: 1.
 `;
@@ -45,7 +52,7 @@ const buildTargets = () => {
   const dashboardUrl = process.env.TIXMO_DASHBOARD_URL || process.env.DASHBOARD_URL;
 
   if (apiBaseUrl) {
-    targets.push(new URL('/ready', apiBaseUrl).toString());
+    targets.push(new URL(readyPath, apiBaseUrl).toString());
     targets.push(new URL('/health', apiBaseUrl).toString());
     targets.push(new URL('/api/v1/health', apiBaseUrl).toString());
   }

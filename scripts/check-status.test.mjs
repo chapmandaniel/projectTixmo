@@ -15,7 +15,7 @@ test('the status checker probes readiness and rejects a healthy-looking 200 with
     res.end(JSON.stringify(req.url === '/ready' ? { status: ready ? 'ready' : 'not_ready', checks: { database: true, redis: ready } } : { status: 'ok' }));
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const env = { ...process.env, TIXMO_STATUS_RETRIES: '0', TIXMO_API_BASE_URL: `http://127.0.0.1:${server.address().port}`, TIXMO_DASHBOARD_URL: '', DASHBOARD_URL: '', TIXMO_STATUS_URLS: '' };
+  const env = { ...process.env, TIXMO_STATUS_RETRIES: '0', TIXMO_STATUS_READY_PATH: '', TIXMO_API_BASE_URL: `http://127.0.0.1:${server.address().port}`, TIXMO_DASHBOARD_URL: '', DASHBOARD_URL: '', TIXMO_STATUS_URLS: '' };
   const check = () => runFile(process.execPath, [fileURLToPath(new URL('./check-status.mjs', import.meta.url))], { env });
   try {
     const passed = await check();
@@ -24,4 +24,37 @@ test('the status checker probes readiness and rejects a healthy-looking 200 with
     ready = false;
     await assert.rejects(check, (error) => error.code === 1 && error.stderr.includes('/ready'));
   } finally { await new Promise((resolve) => server.close(resolve)); }
+});
+
+test('TIXMO_STATUS_READY_PATH=/health skips /ready and accepts a plain health response', async () => {
+  const calls = [];
+  const server = http.createServer((req, res) => {
+    calls.push(req.url);
+    if (req.url === '/ready') {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, message: 'Route /ready not found' }));
+      return;
+    }
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ status: 'ok' }));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const env = {
+    ...process.env,
+    TIXMO_STATUS_RETRIES: '0',
+    TIXMO_STATUS_READY_PATH: '/health',
+    TIXMO_API_BASE_URL: `http://127.0.0.1:${server.address().port}`,
+    TIXMO_DASHBOARD_URL: '',
+    DASHBOARD_URL: '',
+    TIXMO_STATUS_URLS: '',
+  };
+  try {
+    const passed = await runFile(process.execPath, [fileURLToPath(new URL('./check-status.mjs', import.meta.url))], { env });
+    assert.deepEqual(calls, ['/health', '/api/v1/health']);
+    assert.match(passed.stdout, /ok .*\/health /);
+    assert.doesNotMatch(passed.stdout, /\/ready/);
+    assert.equal(passed.stderr, '');
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
