@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyPolicyConfig } from '../../public/policy-runtime.js';
@@ -68,7 +68,10 @@ describe('policy pages', () => {
         expect(html.toLowerCase()).not.toContain('operating as');
         if (name === 'terms.html') {
             expect(text).toContain('HST registration no.: 123456789RT0001');
-            expect(text).toContain(`${seller} is responsible for providing the event`);
+            expect(text).toContain(`Tickets are sold by ${seller} as ticketing agent for the event organizer.`);
+            expect(text).toContain(
+                'The organizer is responsible for the event itself, including delivery, changes, cancellations, and venue rules.'
+            );
             expect(doc.querySelector('[data-policy-venue-link]').getAttribute('href')).toBe(
                 'https://venue.example.test/rules'
             );
@@ -89,7 +92,8 @@ describe('policy pages', () => {
         expect(text).not.toContain('Sold by:');
         expect(text).not.toContain('Questions:');
         expect(text).not.toContain('HST registration');
-        expect(text).not.toContain('is responsible for providing the event');
+        expect(text).not.toContain('ticketing agent');
+        expect(text).not.toContain('responsible for the event itself');
         expect(html).not.toMatch(placeholder);
         expect(text).not.toMatch(placeholder);
         expect(text).not.toContain('[X]');
@@ -101,6 +105,24 @@ describe('policy pages', () => {
         if (name === 'refunds.html') {
             expect(text).toContain('Email us with your order number');
             expect(text).not.toContain('mailto:');
+        }
+    });
+
+    it('keeps organizer terms as an unlinked noindex placeholder', () => {
+        const placeholderPage = readPage('organizer-terms.html');
+        expect(placeholderPage).toContain('<meta name="robots" content="noindex, nofollow">');
+        expect(placeholderPage).toContain('Temporary placeholder for testing.');
+        const buyerPages = ['terms.html', 'refunds.html', 'privacy.html', 'cancellation.html'].map(readPage);
+        const emailTemplates = readFileSync(
+            path.join(root, '../tixmoapi2/src/utils/emailTemplates.ts'),
+            'utf8'
+        );
+        const buyerSources = readdirSync(path.join(root, 'src/pages'))
+            .filter((name) => name.endsWith('.jsx'))
+            .map((name) => readFileSync(path.join(root, 'src/pages', name), 'utf8'));
+        for (const source of [...buyerPages, emailTemplates, ...buyerSources]) {
+            expect(source).not.toContain('organizer-terms');
+            expect(source).not.toMatch(/href=\{[^}]*organizerTermsUrl/);
         }
     });
 });

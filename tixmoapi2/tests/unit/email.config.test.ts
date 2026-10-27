@@ -65,6 +65,14 @@ describe('email transport configuration', () => {
     expect(typeof emailModule.transporter.verify).toBe('function');
   });
 
+  it('uses noreply@tixmo.co when no From address is configured', () => {
+    const emailModule = loadEmailModule({ fromEmail: '', emailFrom: '' });
+    expect(emailModule.emailFrom).toEqual({
+      name: 'Tixmo',
+      address: 'noreply@tixmo.co',
+    });
+  });
+
   it('uses explicit SMTP credentials when no Postmark token is configured', () => {
     const smtpVerify = jest.fn().mockResolvedValue(true);
     createTransport.mockReturnValue({ verify: smtpVerify });

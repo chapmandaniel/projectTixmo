@@ -125,6 +125,9 @@ describe('environment config', () => {
   it('defaults the buyer sender name to Tixmo and hides an unset HST number', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     process.env.FROM_NAME = '';
+    delete process.env.FROM_EMAIL;
+    delete process.env.EMAIL_FROM;
+    delete process.env.SUPPORT_EMAIL;
     process.env.TIXMO_HST_NUMBER = '';
 
     const loaded = require('../../src/config/environment');
@@ -132,6 +135,9 @@ describe('environment config', () => {
     loaded.readHstRegistrationNumber('your_hst_number');
 
     expect(loaded.config.fromName).toBe('Tixmo');
+    expect(loaded.config.fromEmail).toBe('noreply@tixmo.co');
+    expect(loaded.config.emailFrom).toBe('noreply@tixmo.co');
+    expect(loaded.config.supportEmail).toBe('info@tixmo.co');
     expect(loaded.config.hstNumber).toBe('');
     expect(loaded.config.hstRate).toBe(0.15);
     expect(warn).toHaveBeenCalledTimes(1);

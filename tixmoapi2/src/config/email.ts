@@ -295,7 +295,7 @@ function createTransport(): MailTransport {
 
 export const emailFrom = {
   name: config.fromName,
-  address: config.fromEmail || config.emailFrom || 'noreply@tixmo.com',
+  address: config.fromEmail || config.emailFrom || 'noreply@tixmo.co',
 };
 
 export const transporter = createTransport();

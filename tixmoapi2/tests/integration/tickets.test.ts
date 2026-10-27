@@ -819,9 +819,8 @@ describe('Tickets API', () => {
           .set('Authorization', `Bearer ${promoterToken}`)
           .send({ barcode: 'INVALID-BARCODE' });
 
-        expect(res.status).toBe(200);
-        expect(res.body.data.valid).toBe(false);
-        expect(res.body.data.reason).toContain('not found');
+        expect(res.status).toBe(404);
+        expect(res.body.message).toContain('not found');
       });
 
       it('should reject unpaid tickets', async () => {

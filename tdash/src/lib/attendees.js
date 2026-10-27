@@ -38,21 +38,38 @@ export function orderStateLabel(ticket) {
     return '';
 }
 
-const voidRefund = (refund) => refund === 'DISPUTED'
-    || refund === 'DISPUTE'
-    || refund.startsWith('DISPUTE_')
-    || refund === 'VOID'
-    || refund.startsWith('VOID_')
-    || ['PROCESSING', 'SUCCEEDED', 'REFUNDED', 'PARTIALLY_REFUNDED', 'FAILED'].includes(refund);
+const DOORS_BEFORE_START_MS = 2 * 60 * 60 * 1000;
+const ADMIT_EVENT_STATUSES = new Set(['PUBLISHED', 'ON_SALE', 'SOLD_OUT']);
+const upper = (value) => String(value ?? '').trim().toUpperCase();
 
-export function canCheckIn(ticket) {
-    const status = String(ticket?.status || '').trim().toUpperCase();
-    if (status !== 'VALID' || status === 'CANCELLED' || status.startsWith('VOID')) return false;
-    const orderStatus = String(ticket?.order?.status || '').trim().toUpperCase();
-    if (['REFUNDED', 'PARTIALLY_REFUNDED', 'CANCELLED'].includes(orderStatus)) return false;
-    const refund = String(ticket?.order?.refundStatus || '').trim().toUpperCase();
-    if (!refund || refund === 'NONE') return true;
-    return !voidRefund(refund);
+// Mirrors ticketFailure(..., entry: true, enforceTime: true) in
+// tixmoapi2/src/services/ticket-admission.service.ts. Check In is shown only
+// when that rule would admit the ticket.
+export function canCheckIn(ticket, pageEvent, now = Date.now()) {
+    const event = { ...(pageEvent || {}), ...(ticket?.event || {}) };
+    const status = upper(ticket?.status);
+    const refund = upper(ticket?.order?.refundStatus);
+    const orderStatus = upper(ticket?.order?.status);
+    if (refund === 'DISPUTED' || refund.startsWith('DISPUTE_') || status === 'VOID') return false;
+    if (status === 'CANCELLED' || status === 'USED' || status !== 'VALID') return false;
+    if (orderStatus !== 'PAID' || refund === 'PROCESSING') return false;
+    if (event.deletedAt || !ADMIT_EVENT_STATUSES.has(upper(event.status))) return false;
+    const start = event.startDatetime ? new Date(event.startDatetime).getTime() : NaN;
+    if (Number.isFinite(start) && now < start - DOORS_BEFORE_START_MS) return false;
+    const end = event.endDatetime ? new Date(event.endDatetime).getTime() : NaN;
+    if (Number.isFinite(end) && now > end) return false;
+    return true;
+}
+
+export function attendeeStatusBadges(ticket, pageEvent, now = Date.now()) {
+    const admitted = canCheckIn(ticket, pageEvent, now);
+    const statusLabel = upper(ticket?.status) === 'USED'
+        ? 'Checked In'
+        : upper(ticket?.status) === 'VALID' && admitted
+            ? 'Confirmed'
+            : ticketStatusLabel(ticket?.status);
+    const orderLabel = orderStateLabel(ticket);
+    return orderLabel && orderLabel !== statusLabel ? [statusLabel, orderLabel] : [statusLabel].filter(Boolean);
 }
 
 export function ticketMatches(ticket, query) {

@@ -22,6 +22,7 @@ interface ListOrganizationsParams {
   limit?: number;
   type?: OrganizationType;
   status?: OrganizationStatus;
+  id?: string;
 }
 
 interface PaginatedOrganizations {
@@ -159,11 +160,12 @@ export class OrganizationService {
    * List organizations with pagination and filters
    */
   async listOrganizations(params: ListOrganizationsParams): Promise<PaginatedOrganizations> {
-    const { page = 1, limit = 20, type: orgType, status: orgStatus } = params;
+    const { page = 1, limit = 20, type: orgType, status: orgStatus, id } = params;
     const skip = (page - 1) * limit;
 
     // Build where clause
     const where: Prisma.OrganizationWhereInput = {};
+    if (id) where.id = id;
     if (orgType) {
       where.type = orgType;
     }
