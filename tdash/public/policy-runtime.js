@@ -58,7 +58,13 @@ export const applyPolicyConfig = (root, config = {}) => {
     if (responsible) {
         if (values.sellerName) {
             responsible.hidden = false;
-            responsible.textContent = `Tickets are sold by ${values.sellerName} as ticketing agent for the event organizer. The organizer is responsible for the event itself, including delivery, changes, cancellations, and venue rules. `;
+            const marker = /as ticketing agent for\s+/i;
+            const match = values.sellerName.match(marker);
+            const organizer = match ? values.sellerName.slice(match.index + match[0].length).trim() : '';
+            const responsibility = organizer
+                ? ` ${organizer}, is responsible for providing the event as described, or refunding you under our policies.`
+                : '';
+            responsible.textContent = `Tickets are sold by ${values.sellerName}.${responsibility} `;
         } else {
             responsible.hidden = true;
             responsible.textContent = '';
