@@ -68,4 +68,7 @@ export async function checkReadiness(): Promise<Checks> {
   }
 }
 
-warmReadinessDatabase();
+// Tests import the app while measuring request latency. Starting a second
+// query engine there competes with checkout. Production warms during boot so
+// the first Railway /ready probe is not also paying for engine startup.
+if (process.env.NODE_ENV !== 'test') warmReadinessDatabase();

@@ -43,8 +43,7 @@ export function checkoutDbLimits(): { lockTimeoutMs: number; statementTimeoutMs:
  */
 export async function applyCheckoutDbLimits(tx: Prisma.TransactionClient): Promise<void> {
   const limits = checkoutDbLimits();
-  await tx.$queryRaw`SELECT set_config('lock_timeout', ${String(limits.lockTimeoutMs)}, true)`;
-  await tx.$queryRaw`SELECT set_config('statement_timeout', ${String(limits.statementTimeoutMs)}, true)`;
+  await tx.$queryRaw`SELECT set_config('lock_timeout', ${String(limits.lockTimeoutMs)}, true), set_config('statement_timeout', ${String(limits.statementTimeoutMs)}, true)`;
 }
 
 export function checkoutBusyError(): ApiError {
