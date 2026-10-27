@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { attendeesToCsv, canCheckIn, orderStateLabel, ticketMatches, ticketStatusLabel } from '../lib/attendees';
+import { attendeesToCsv, attendeeStatusBadges, canCheckIn, orderStateLabel, ticketMatches, ticketStatusLabel } from '../lib/attendees';
 
+const openEvent = {
+    status: 'ON_SALE',
+    startDatetime: '2020-01-01T00:00:00.000Z',
+    endDatetime: '2099-01-01T00:00:00.000Z',
+};
 const ticket = {
     user: { firstName: '=Ada', lastName: 'Lovelace', email: 'ada@example.com' },
     ticketType: { name: 'General' },
-    order: { orderNumber: 'ORD-1' },
+    order: { orderNumber: 'ORD-1', status: 'PAID', refundStatus: 'NONE' },
+    event: openEvent,
     barcode: 'TIX-1',
     status: 'VALID',
 };
@@ -54,8 +60,25 @@ describe('attendee search and export', () => {
         expect(csv).not.toContain('Barcode');
         expect(csv).not.toContain('TIX-1');
         expect(canCheckIn(ticket)).toBe(true);
-        expect(canCheckIn({ ...ticket, order: { refundStatus: 'NONE' } })).toBe(true);
-        for (const blocked of [disputed, closed, refunded, voided, { ...ticket, status: 'CANCELLED' }, { ...ticket, order: { status: 'REFUNDED', refundStatus: 'NONE' } }]) {
+        expect(canCheckIn({ ...ticket, order: { status: 'PAID', refundStatus: 'NONE' } })).toBe(true);
+        expect(canCheckIn({ ...ticket, order: { status: 'PAID', refundStatus: 'FAILED' } })).toBe(true);
+        const unpaidCancelled = { ...ticket, status: 'CANCELLED', order: { orderNumber: 'ORD-CANCEL', status: 'CANCELLED', refundStatus: 'NONE' } };
+        expect(attendeeStatusBadges(unpaidCancelled)).toEqual(['Cancelled']);
+        for (const blocked of [
+            disputed,
+            closed,
+            refunded,
+            voided,
+            unpaidCancelled,
+            { ...ticket, order: { status: 'REFUNDED', refundStatus: 'NONE' } },
+            { ...ticket, order: { status: 'PAID', refundStatus: 'PROCESSING' } },
+            { ...ticket, order: { status: 'PENDING', refundStatus: 'NONE' } },
+            { ...ticket, status: 'USED' },
+            { ...ticket, event: { ...openEvent, status: 'DRAFT' } },
+            { ...ticket, event: { ...openEvent, deletedAt: '2026-01-01T00:00:00.000Z' } },
+            { ...ticket, event: { ...openEvent, startDatetime: '2099-06-01T00:00:00.000Z' } },
+            { ...ticket, event: { ...openEvent, endDatetime: '2020-01-02T00:00:00.000Z' } },
+        ]) {
             expect(canCheckIn(blocked)).toBe(false);
         }
     });

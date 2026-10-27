@@ -10,6 +10,24 @@ import { ticketService } from './service';
 
 const canManageTickets = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
 
+const findTicketScope = (where: { id: string } | { barcode: string }) =>
+  prisma.ticket.findUnique({
+    where,
+    select: { id: true, eventId: true },
+  });
+
+const requireStaffTicketAccess = async (
+  req: AuthRequest,
+  where: { id: string } | { barcode: string }
+) => {
+  const ticket = await findTicketScope(where);
+  if (!ticket) {
+    throw ApiError.notFound('Ticket not found');
+  }
+  await assertEventAccess(await getActorScope(req), ticket.eventId);
+  return ticket;
+};
+
 const recordTicketPiiView = async (
   actorId: string,
   reason: string,
@@ -79,7 +97,9 @@ export const listTickets = catchAsync(async (req: AuthRequest, res: Response) =>
 
 export const getTicket = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = canManageTickets(req.user!.role) ? undefined : req.user!.userId;
+  const staff = canManageTickets(req.user!.role);
+  if (staff) await requireStaffTicketAccess(req, { id });
+  const userId = staff ? undefined : req.user!.userId;
 
   const ticket = await ticketService.getTicketById(id, userId);
 
@@ -133,6 +153,7 @@ export const cancelTicket = catchAsync(async (req: AuthRequest, res: Response) =
 
 export const validateTicket = catchAsync(async (req: AuthRequest, res: Response) => {
   const { barcode } = req.body as { barcode: string };
+  await requireStaffTicketAccess(req, { barcode });
 
   const result = await ticketService.validateTicket(barcode);
   res.json(successResponse(result));
@@ -140,6 +161,7 @@ export const validateTicket = catchAsync(async (req: AuthRequest, res: Response)
 
 export const checkInTicket = catchAsync(async (req: AuthRequest, res: Response) => {
   const { barcode } = req.body as { barcode: string };
+  await requireStaffTicketAccess(req, { barcode });
   const checkedInBy = req.user!.email;
 
   const ticket = await ticketService.checkInTicket(barcode, checkedInBy, {
@@ -151,7 +173,9 @@ export const checkInTicket = catchAsync(async (req: AuthRequest, res: Response) 
 
 export const getTicketQRCode = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = canManageTickets(req.user!.role) ? undefined : req.user!.userId;
+  const staff = canManageTickets(req.user!.role);
+  if (staff) await requireStaffTicketAccess(req, { id });
+  const userId = staff ? undefined : req.user!.userId;
 
   const qrCodeDataUrl = await ticketService.getTicketQRCode(id, userId);
 
@@ -160,7 +184,9 @@ export const getTicketQRCode = catchAsync(async (req: AuthRequest, res: Response
 
 export const regenerateTicketQRCode = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const userId = canManageTickets(req.user!.role) ? undefined : req.user!.userId;
+  const staff = canManageTickets(req.user!.role);
+  if (staff) await requireStaffTicketAccess(req, { id });
+  const userId = staff ? undefined : req.user!.userId;
 
   const qrCodeDataUrl = await ticketService.regenerateTicketQRCode(id, userId);
 

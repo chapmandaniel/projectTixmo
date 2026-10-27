@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, User, CheckCircle, XCircle, MoreHorizontal, Download, UserCheck, UserX } from 'lucide-react';
 import api from '../lib/api';
-import { attendeesToCsv, canCheckIn, orderStateLabel, ticketMatches, ticketStatusLabel, unwrapTicketPage } from '../lib/attendees';
+import { attendeesToCsv, attendeeStatusBadges, canCheckIn, ticketMatches, unwrapTicketPage } from '../lib/attendees';
 import { DashboardButton } from '../components/dashboard/DashboardPrimitives';
 
-const AttendeeRow = ({ ticket, isDark, onCheckIn, onRevoke }) => (
+const AttendeeRow = ({ ticket, event, isDark, onCheckIn, onRevoke }) => {
+    const admitted = canCheckIn(ticket, event);
+    const [statusLabel, orderLabel] = attendeeStatusBadges(ticket, event);
+    return (
     <tr className={`transition-colors text-sm ${isDark ? 'hover:bg-[#232336] border-b border-[#2b2b40]/60' : 'hover:bg-gray-50 border-b border-gray-100'}`}>
         <td className="px-6 py-4">
             <div className="flex items-center">
@@ -24,20 +27,20 @@ const AttendeeRow = ({ ticket, isDark, onCheckIn, onRevoke }) => (
             <div className="flex flex-col items-start gap-1">
                 {ticket.status === 'USED' ? (
                     <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                        <CheckCircle size={12} className="mr-1" /> Checked In
+                        <CheckCircle size={12} className="mr-1" /> {statusLabel}
                     </span>
-                ) : ticket.status === 'VALID' && canCheckIn(ticket) ? (
+                ) : admitted ? (
                     <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
-                        Confirmed
+                        {statusLabel}
                     </span>
                 ) : (
                     <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-gray-500/10 text-gray-300 border-gray-500/20' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                        {ticketStatusLabel(ticket.status)}
+                        {statusLabel}
                     </span>
                 )}
-                {orderStateLabel(ticket) && (
+                {orderLabel && (
                     <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
-                        {orderStateLabel(ticket)}
+                        {orderLabel}
                     </span>
                 )}
             </div>
@@ -47,7 +50,7 @@ const AttendeeRow = ({ ticket, isDark, onCheckIn, onRevoke }) => (
         </td>
         <td className="px-6 py-4 text-right">
             <div className="flex justify-end space-x-2">
-                {canCheckIn(ticket) && (
+                {admitted && (
                     <button
                         onClick={() => onCheckIn(ticket)}
                         className={`p-2 rounded-md transition-colors ${isDark ? 'hover:bg-emerald-500/10 text-gray-400 hover:text-emerald-400' : 'hover:bg-emerald-50 text-gray-500 hover:text-emerald-600'}`}
@@ -70,7 +73,8 @@ const AttendeeRow = ({ ticket, isDark, onCheckIn, onRevoke }) => (
             </div>
         </td>
     </tr>
-);
+    );
+};
 
 const STATUS_FILTERS = [
     { value: '', label: 'Filter' },
@@ -262,6 +266,7 @@ const ECC_Attendees = ({ event, isDark }) => {
                                     <AttendeeRow
                                         key={ticket.id}
                                         ticket={ticket}
+                                        event={event}
                                         isDark={isDark}
                                         onCheckIn={handleCheckIn}
                                     />

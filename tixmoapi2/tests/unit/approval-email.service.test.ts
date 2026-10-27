@@ -20,7 +20,7 @@ jest.mock('../../src/config/email', () => ({
   },
   emailFrom: {
     name: 'Tixmo',
-    address: 'noreply@tixmo.com',
+    address: 'noreply@tixmo.co',
   },
 }));
 

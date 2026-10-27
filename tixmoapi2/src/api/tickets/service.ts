@@ -85,6 +85,7 @@ export class TicketService {
               startDatetime: true,
               endDatetime: true,
               status: true,
+              deletedAt: true,
               venue: {
                 select: {
                   name: true,

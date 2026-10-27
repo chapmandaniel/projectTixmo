@@ -6,14 +6,20 @@ import ECC_Attendees from '../features/ECC_Attendees';
 const mocks = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 vi.mock('../lib/api', () => ({ default: mocks }));
 
-const event = { id: 'event-1', name: 'Harbor Night', startDatetime: '2026-10-26T22:00:00.000Z' };
+const event = {
+    id: 'event-1',
+    name: 'Harbor Night',
+    status: 'ON_SALE',
+    startDatetime: '2026-10-26T22:00:00.000Z',
+    endDatetime: '2099-01-01T00:00:00.000Z',
+};
 const ticket = (id, user, orderNumber = `ORD-${id}`) => ({
     id,
     barcode: `TIX-${id}`,
     status: 'VALID',
     user,
     ticketType: { name: 'General' },
-    order: { orderNumber },
+    order: { orderNumber, status: 'PAID', refundStatus: 'NONE' },
 });
 const ada = ticket('ada', { firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.com' }, 'ORD-ADA');
 const grace = ticket('grace', { firstName: 'Grace', lastName: 'Hopper', email: 'grace@example.com' }, 'ORD-GRACE');
@@ -96,6 +102,56 @@ describe('Attendees search, export, and check-in', () => {
         expect(screen.queryByText('Checked In')).not.toBeInTheDocument();
         expect(screen.queryByText(/doors/i)).not.toBeInTheDocument();
         alert.mockRestore();
+    });
+
+    it('shows Cancelled once and checks in only when the admit rule would', async () => {
+        const cancelled = {
+            ...ada,
+            id: 'cancelled',
+            status: 'CANCELLED',
+            order: { orderNumber: 'ORD-CANCEL', status: 'CANCELLED', refundStatus: 'NONE' },
+        };
+        const failedRefund = {
+            ...grace,
+            id: 'failed',
+            status: 'VALID',
+            order: { orderNumber: 'ORD-FAILED', status: 'PAID', refundStatus: 'FAILED' },
+        };
+        mocks.get.mockImplementation(() => Promise.resolve(wrapped({
+            tickets: [cancelled, failedRefund],
+            pagination: { total: 2, pages: 1 },
+        })));
+        render(<ECC_Attendees event={event} isDark />);
+        expect(await screen.findByText('Failed')).toBeInTheDocument();
+        expect(screen.getAllByText('Cancelled')).toHaveLength(1);
+        expect(screen.getAllByTitle('Check In')).toHaveLength(1);
+    });
+
+    it('hides check-in before doors and for a disputed ticket', async () => {
+        const earlyEvent = {
+            ...event,
+            startDatetime: '2099-01-01T12:00:00.000Z',
+            endDatetime: '2099-01-01T18:00:00.000Z',
+        };
+        const disputed = {
+            ...ada,
+            order: { orderNumber: 'ORD-DISPUTE', status: 'PAID', refundStatus: 'DISPUTED' },
+        };
+        mocks.get.mockImplementation(() => Promise.resolve(wrapped({
+            tickets: [disputed],
+            pagination: { total: 1, pages: 1 },
+        })));
+        const { unmount } = render(<ECC_Attendees event={event} isDark />);
+        expect(await screen.findByText('Disputed')).toBeInTheDocument();
+        expect(screen.queryByTitle('Check In')).not.toBeInTheDocument();
+        unmount();
+        mocks.get.mockImplementation(() => Promise.resolve(wrapped({
+            tickets: [ada],
+            pagination: { total: 1, pages: 1 },
+        })));
+        render(<ECC_Attendees event={earlyEvent} isDark />);
+        expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+        expect(screen.queryByTitle('Check In')).not.toBeInTheDocument();
     });
 
     it('shows a dispute or refund label and no check-in for a void ticket', async () => {

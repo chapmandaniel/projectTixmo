@@ -5,7 +5,7 @@ import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/prisma';
 import { organizationService } from './service';
-import { assertOrganizationAccess, getActorScope } from '../../utils/tenantScope';
+import { assertOrganizationAccess, getActorScope, isGlobalAdmin } from '../../utils/tenantScope';
 
 interface OrganizationWithUsers {
   id: string;
@@ -86,7 +86,15 @@ export const deleteOrganization = catchAsync(async (req: AuthRequest, res: Respo
 });
 
 export const listOrganizations = catchAsync(async (req: AuthRequest, res: Response) => {
-  const result = await organizationService.listOrganizations(req.query);
+  const actor = await getActorScope(req);
+  const requested = req.query as Parameters<typeof organizationService.listOrganizations>[0];
+  if (!isGlobalAdmin(actor) && !actor.organizationId) {
+    throw ApiError.forbidden("You do not have access to this organization's resources");
+  }
+  const result = await organizationService.listOrganizations({
+    ...requested,
+    id: isGlobalAdmin(actor) ? undefined : actor.organizationId || undefined,
+  });
   res.json(successResponse(result));
 });
 
