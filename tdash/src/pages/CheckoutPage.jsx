@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
@@ -31,6 +31,7 @@ import {
 } from '../lib/runtimeConfig';
 import { checkoutTicketState, checkoutBoundaryDelay } from '../lib/checkoutEligibility';
 import { SALES_PAUSED_MESSAGE, isSalesPausedError } from '../lib/salesPause';
+import { isSoldOutError } from '../lib/orderErrors';
 import { cn } from '../lib/utils';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import {
@@ -300,6 +301,8 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [order, setOrder] = useState(null);
+    const orderIdempotencyKey = useRef(null);
+    const orderRequestInFlight = useRef(false);
     const [paymentSession, setPaymentSession] = useState(null);
     const [paymentComplete, setPaymentComplete] = useState(null);
 
@@ -401,6 +404,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
         setSubmitting(true);
         try {
             if (order?.status === 'PENDING') await api.post(`/orders/${order.id}/cancel`);
+            orderIdempotencyKey.current = null;
             setOrder(null); setPaymentSession(null); setPaymentComplete(null); setNow(Date.now());
             setSearchParams({}, { replace: true }); setError('');
         } catch (requestError) {
@@ -437,9 +441,11 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const canPreparePayment = Boolean(user && (order?.status === 'PENDING' || (selectedItems.length && selectionEligible)) && (!order || order.status === 'PENDING') && hasPolicyLinks && (subtotal === 0 || stripePublishableKey));
 
     const setTicketQuantity = (ticketType, nextQuantity) => {
-        if (order) return;
+        if (order || orderRequestInFlight.current) return;
         const maxAllowed = checkoutTicketState(event, ticketType, now).max;
         const quantity = Math.max(0, Math.min(maxAllowed, nextQuantity));
+        if ((quantities[ticketType.id] || 0) === quantity) return;
+        orderIdempotencyKey.current = null;
         setPaymentSession(null);
         setOrder(null);
         setPaymentComplete(null);
@@ -447,18 +453,25 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     };
 
     const handlePreparePayment = async () => {
-        if (!canPreparePayment || submitting || paymentSession) return;
+        if (!canPreparePayment || submitting || paymentSession || orderRequestInFlight.current) return;
+        orderRequestInFlight.current = true;
         setSubmitting(true);
         setError('');
         setPaymentSession(null);
         setPaymentComplete(null);
 
         try {
+            if (order?.status !== 'PENDING' && !orderIdempotencyKey.current) {
+                orderIdempotencyKey.current = crypto.randomUUID();
+            }
+            const idempotencyKey = orderIdempotencyKey.current;
             const orderResponse = order?.status === 'PENDING' ? { data: order } : await api.post('/orders', {
                 items: selectedItems.map((item) => ({
                     ticketTypeId: item.ticketType.id,
                     quantity: item.quantity,
                 })),
+            }, {
+                headers: { 'Idempotency-Key': idempotencyKey },
             });
             const createdOrder = unwrapApiPayload(orderResponse);
             setOrder(createdOrder);
@@ -479,10 +492,13 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                 setError(SALES_PAUSED_MESSAGE);
             } else if (requestError.response?.data?.code === 'CHECKOUT_BUSY') {
                 setError('Checkout is busy. Please try again.');
+            } else if (!order && isSoldOutError(requestError)) {
+                setError(requestError.response?.data?.message || 'Not enough tickets available');
             } else {
                 setError(requestError.response?.data?.message || requestError.message || 'Checkout could not be prepared.');
             }
         } finally {
+            orderRequestInFlight.current = false;
             setSubmitting(false);
         }
     };
@@ -594,7 +610,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                                     aria-label={`Decrease ${ticketType.name}`}
                                                     onClick={() => setTicketQuantity(ticketType, quantity - 1)}
                                                     className="flex h-full w-12 items-center justify-center text-dashboard-muted transition hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
-                                                    disabled={Boolean(order) || quantity <= 0}
+                                                    disabled={Boolean(order) || submitting || quantity <= 0}
                                                 >
                                                     <Minus className="h-4 w-4" />
                                                 </button>
@@ -604,7 +620,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                                     aria-label={`Increase ${ticketType.name}`}
                                                     onClick={() => setTicketQuantity(ticketType, quantity + 1)}
                                                     className="flex h-full w-12 items-center justify-center text-dashboard-muted transition hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
-                                                    disabled={Boolean(order) || quantity >= maxAllowed}
+                                                    disabled={Boolean(order) || submitting || quantity >= maxAllowed}
                                                 >
                                                     <Plus className="h-4 w-4" />
                                                 </button>
@@ -681,6 +697,7 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                                     isDark
                                     type="button"
                                     disabled={!canPreparePayment || submitting || Boolean(paymentSession)}
+                                    aria-busy={submitting}
                                     onClick={handlePreparePayment}
                                     className="h-12 w-full"
                                 >

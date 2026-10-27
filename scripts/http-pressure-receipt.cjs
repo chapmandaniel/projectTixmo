@@ -12,7 +12,7 @@ const numeric = [
   'maxInFlight',
   'remainingActive',
   'http201',
-  'soldOut400',
+  'soldOut409',
   'http429',
   'http503',
   'otherStatus',
