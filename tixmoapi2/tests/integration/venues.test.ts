@@ -94,6 +94,52 @@ describe('Venues API', () => {
       expect(res.body.data.id).toBe(venueId);
     });
 
+    it('stores a policy URL in venue metadata and rejects a bad URL', async () => {
+      mockPrisma.venue.create.mockResolvedValue({ id: venueId });
+      const res = await request(app)
+        .post('/api/v1/venues')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          organizationId: orgId,
+          name: 'Grand Hall',
+          capacity: 500,
+          description: 'A hall',
+          policyUrl: 'https://venue.example.test/rules',
+          address: {
+            street: '123 Main St',
+            city: 'Metropolis',
+            state: 'NY',
+            postalCode: '10001',
+            country: 'Canada',
+          },
+        });
+
+      expect(res.status).toBe(201);
+      expect(mockPrisma.venue.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          metadata: { description: 'A hall', policyUrl: 'https://venue.example.test/rules' },
+        }),
+      });
+
+      const invalid = await request(app)
+        .post('/api/v1/venues')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          organizationId: orgId,
+          name: 'Grand Hall',
+          capacity: 500,
+          policyUrl: 'not a url',
+          address: {
+            street: '123 Main St',
+            city: 'Metropolis',
+            state: 'NY',
+            postalCode: '10001',
+            country: 'Canada',
+          },
+        });
+      expect(invalid.status).toBe(400);
+    });
+
     it('should fail if required fields are missing', async () => {
       const res = await request(app)
         .post('/api/v1/venues')
@@ -178,6 +224,29 @@ describe('Venues API', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data.name).toBe('Grand Hall Updated');
+    });
+
+    it('keeps an existing policy URL when only the description changes', async () => {
+      mockPrisma.venue.findUnique.mockResolvedValue({
+        id: venueId,
+        organizationId: orgId,
+        metadata: { description: 'Old', policyUrl: 'https://venue.example.test/rules' },
+      });
+      mockPrisma.venue.update.mockResolvedValue({ id: venueId });
+
+      const res = await request(app)
+        .put(`/api/v1/venues/${venueId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ description: 'New' });
+
+      expect(res.status).toBe(200);
+      expect(mockPrisma.venue.update).toHaveBeenCalledWith({
+        where: { id: venueId },
+        data: expect.objectContaining({
+          metadata: { description: 'New', policyUrl: 'https://venue.example.test/rules' },
+          updatedAt: expect.any(Date),
+        }),
+      });
     });
   });
 

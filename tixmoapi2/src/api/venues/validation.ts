@@ -13,6 +13,7 @@ export const createVenueSchema = z.object({
     }),
     capacity: z.number().int().positive('Capacity must be a positive number'),
     description: z.string().optional(),
+    policyUrl: z.string().url().max(2048).optional(),
     timezone: z.string().optional(),
   }),
 });
@@ -31,6 +32,7 @@ export const updateVenueSchema = z.object({
       .optional(),
     capacity: z.number().int().positive('Capacity must be a positive number').optional(),
     description: z.string().optional(),
+    policyUrl: z.string().url().max(2048).optional(),
     timezone: z.string().optional(),
     seatingChart: z.any().optional(),
   }),
