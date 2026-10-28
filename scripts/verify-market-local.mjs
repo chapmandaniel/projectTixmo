@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { evaluateDependencyAudit } from './dependency-audit-gate.mjs';
 
 const steps = [
   {
     name: 'API dependency audit',
-    command: 'npm',
-    args: ['--prefix', 'tixmoapi2', 'audit'],
+    auditPrefix: 'tixmoapi2',
   },
   {
     name: 'Dashboard dependency audit',
-    command: 'npm',
-    args: ['--prefix', 'tdash', 'audit'],
+    auditPrefix: 'tdash',
   },
   {
     name: 'API tooling checks',
@@ -26,7 +26,7 @@ const steps = [
   {
     name: 'Root verification safety checks',
     command: 'node',
-    args: ['--test', 'scripts/verification-safety.test.mjs', 'scripts/market-readiness-workflow.test.mjs', 'scripts/test-target.test.cjs', 'scripts/share-startup-safety.test.mjs', 'scripts/evidence-status.test.mjs', 'scripts/wallet-browser.test.cjs'],
+    args: ['--test', 'scripts/verification-safety.test.mjs', 'scripts/market-readiness-workflow.test.mjs', 'scripts/test-target.test.cjs', 'scripts/share-startup-safety.test.mjs', 'scripts/evidence-status.test.mjs', 'scripts/wallet-browser.test.cjs', 'scripts/dependency-audit-gate.test.mjs'],
   },
   {
     name: 'API build',
@@ -76,7 +76,46 @@ const steps = [
   },
 ];
 
-const run = ({ name, command, args, environment = {} }) => {
+const runDependencyAudit = ({ name, auditPrefix }) => {
+  process.stdout.write(`\n[verify:market] ${name}\n`);
+  const result = spawnSync('npm', ['--prefix', auditPrefix, 'audit', '--json'], {
+    cwd: process.cwd(),
+    env: process.env,
+    encoding: 'utf8',
+    shell: false,
+    maxBuffer: 10 * 1024 * 1024,
+  });
+  if (result.error) {
+    process.stderr.write(`[verify:market] ${name} failed to run\n`);
+    process.exit(1);
+  }
+  let report;
+  try {
+    report = JSON.parse(result.stdout || '');
+  } catch {
+    process.stderr.write(result.stderr || '');
+    process.stderr.write(`[verify:market] ${name} did not return JSON\n`);
+    process.exit(result.status || 1);
+  }
+  let lockfile;
+  try {
+    lockfile = JSON.parse(readFileSync(`${auditPrefix}/package-lock.json`, 'utf8'));
+  } catch {
+    process.stderr.write(`[verify:market] ${name} could not read ${auditPrefix}/package-lock.json\n`);
+    process.exit(1);
+  }
+  const decision = evaluateDependencyAudit(report, lockfile);
+  if (!decision.ok) {
+    if (result.stderr) process.stderr.write(result.stderr);
+    process.stderr.write(`[verify:market] ${name} failed: ${decision.reason}\n`);
+    process.exit(1);
+  }
+  if (decision.ignored) process.stdout.write(`[verify:market] ${decision.ignored}\n`);
+};
+
+const run = (step) => {
+  if (step.auditPrefix) return runDependencyAudit(step);
+  const { name, command, args, environment = {} } = step;
   process.stdout.write(`\n[verify:market] ${name}\n`);
   const result = spawnSync(command, args, {
     cwd: process.cwd(),
