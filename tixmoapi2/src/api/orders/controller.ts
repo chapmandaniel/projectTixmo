@@ -8,6 +8,7 @@ import { writeStaffAction } from '../../services/staff-action-audit';
 import { orderService } from './service';
 import { buyerEmailVisible, presentOrderDetail } from './order-privacy';
 import { receiptDisclosure } from '../../utils/receipt';
+import { sendCommittedOrder } from './committed-response';
 
 const canManageOrders = (role?: string) => ['OWNER', 'ADMIN', 'MANAGER'].includes(role || '');
 
@@ -15,7 +16,7 @@ export const createOrder = catchAsync(async (req: AuthRequest, res: Response) =>
   const userId = req.user!.userId;
   const payload = req.body as Parameters<typeof orderService.createOrder>[1];
   const order = await orderService.createOrder(userId, payload);
-  res.status(201).json(successResponse(order, 'Order created successfully'));
+  sendCommittedOrder(res, order);
 });
 
 /**

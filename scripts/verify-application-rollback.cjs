@@ -6,7 +6,7 @@ const { spawn, spawnSync } = require('node:child_process');
 const assert = require('node:assert/strict');
 // Previous main API image. A PR sets this to the main commit it is based on,
 // never to its own commit. parity() rejects that self-pin.
-const OLD_COMMIT = 'e10c26e709253da2b0e3ccce65ab57c8a6e44a95';
+const OLD_COMMIT = 'e244966ea68a8a01db0f2fc6b30da065505a862f';
 const IMAGES = {
   new: 'tixmo-task603-production:ci',
   old: 'tixmo-task606-old:ci',

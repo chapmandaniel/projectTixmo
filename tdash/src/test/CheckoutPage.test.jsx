@@ -133,6 +133,25 @@ describe('CheckoutPage', () => {
         expect(screen.queryByText('99 x CA$25.00')).not.toBeInTheDocument();
     });
 
+    it('shows a busy try-again message when checkout is saturated', async () => {
+        apiPost.mockReset();
+        apiPost.mockRejectedValueOnce({
+            response: {
+                status: 503,
+                data: { code: 'CHECKOUT_BUSY', message: 'Checkout is busy. Please try again.' },
+            },
+        });
+        renderCheckout({ user: { id: 'buyer-1', email: 'buyer@example.com' } });
+        await screen.findByText('Neon Nights');
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /continue to secure payment/i }));
+        });
+        expect(await screen.findByText('Checkout is busy. Please try again.')).toBeInTheDocument();
+        expect(apiPost).toHaveBeenCalledTimes(1);
+        expect(apiPost.mock.calls[0][0]).toBe('/orders');
+    });
+
     it('shows required checkout policy links before preparing payment', async () => {
         renderCheckout({
             user: { id: 'buyer-1', email: 'buyer@example.com' },

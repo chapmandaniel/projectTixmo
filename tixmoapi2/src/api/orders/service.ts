@@ -7,6 +7,12 @@ import { getActorScopeById, resolveOrganizationFilter } from '../../utils/tenant
 
 import prisma from '../../config/prisma';
 import { config } from '../../config/environment';
+import {
+  applyCheckoutDbLimits,
+  checkoutBusyError,
+  checkoutTransactionOptions,
+  isCheckoutBusyError,
+} from '../../services/checkout-transaction';
 import { formatNewfoundlandDateTime } from '../../utils/eventTime';
 import {
   configuredHstRate,
@@ -93,8 +99,13 @@ export class OrderService {
     }
     if (!quantities.size) throw ApiError.badRequest('Order must contain tickets');
     const items = [...quantities].sort(([a], [b]) => a.localeCompare(b));
-    const order = await prisma.$transaction(
-      async (tx) => {
+    // Known before the transaction so a timeout that still commits can be found
+    // and released instead of being returned as a 500 with a live hold.
+    const orderNumber = `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
+    let order: Order;
+    try {
+      order = await prisma.$transaction(async (tx) => {
+        await applyCheckoutDbLimits(tx);
         const first = await tx.ticketType.findUnique({
           where: { id: items[0][0] },
           select: { eventId: true },
@@ -220,7 +231,7 @@ export class OrderService {
         );
         const created = await tx.order.create({
           data: {
-            orderNumber: `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,
+            orderNumber,
             userId,
             eventId: event.id,
             totalAmount,
@@ -247,10 +258,53 @@ export class OrderService {
         );
         await tx.ticket.createMany({ data: tickets });
         return created;
-      },
-      { timeout: 15000 }
-    );
-    return order.totalAmount.eq(0) ? this.confirmOrder(order.id) : order;
+      }, checkoutTransactionOptions());
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      if (!isCheckoutBusyError(error)) throw error;
+      const kept = await this.releaseTimedOutReservation(orderNumber);
+      if (kept) return this.finishCommittedOrder(kept);
+      throw checkoutBusyError();
+    }
+    return this.finishCommittedOrder(order);
+  }
+
+  /** A free-order confirm that fails after the reservation committed still returns that order. */
+  private async finishCommittedOrder(order: Order): Promise<Order> {
+    if (!order.totalAmount.eq(0)) return order;
+    try {
+      return await this.confirmOrder(order.id);
+    } catch (error) {
+      const persisted = await prisma.order.findUnique({ where: { id: order.id } });
+      if (persisted) return persisted;
+      throw error;
+    }
+  }
+
+  /**
+   * Timeout race: Postgres can commit while the Prisma client rejects. Release
+   * that hold. If it cannot be released, return the row so the response is 201.
+   */
+  private async releaseTimedOutReservation(orderNumber: string): Promise<Order | null> {
+    let existing: Order | null = null;
+    try {
+      existing = await prisma.order.findUnique({ where: { orderNumber } });
+    } catch {
+      return null;
+    }
+    if (!existing || existing.status === 'CANCELLED') return null;
+    if (existing.status !== 'PENDING') return existing;
+    try {
+      await this.cancelOrder(existing.id);
+      return null;
+    } catch (error) {
+      if (error instanceof ApiError && error.statusCode === 404) return null;
+      const still = await prisma.order
+        .findUnique({ where: { id: existing.id } })
+        .catch(() => existing);
+      if (!still || still.status === 'CANCELLED') return null;
+      return still;
+    }
   }
 
   /**
@@ -515,6 +569,18 @@ export class OrderService {
         throw ApiError.badRequest('Cannot cancel order that has changed');
       return this.cancelOrderInTransaction(tx, id, scope);
     });
+  }
+
+  /**
+   * Expiry sweep only. Same lock and statement limits as checkout, so a row
+   * held by a saturated order create fails in about two seconds and the sweep
+   * can move on. The order stays PENDING and the next sweep retries it.
+   */
+  async cancelExpiredOrder(id: string): Promise<Order> {
+    return prisma.$transaction(async (tx) => {
+      await applyCheckoutDbLimits(tx);
+      return this.cancelOrderInTransaction(tx, id);
+    }, checkoutTransactionOptions());
   }
 
   async cancelOrderInTransaction(

@@ -20,6 +20,17 @@ SupertestTest.prototype.serverAddress = function (app: Server, route: string) {
   return address?.family === 'IPv6' ? url.replace('://127.0.0.1:', '://[::1]:') : url;
 };
 
+afterAll(async () => {
+  try {
+    const readiness = require('../src/services/readiness-db');
+    if (typeof readiness.disconnectReadinessDatabase === 'function') {
+      await readiness.disconnectReadinessDatabase();
+    }
+  } catch {
+    // A mocked probe module has no client to close.
+  }
+});
+
 jest.mock('../src/config/redis', () => {
   if (process.env.TIXMO_REDIS_OUTAGE_TEST === '1') {
     return jest.requireActual('../src/config/redis');
