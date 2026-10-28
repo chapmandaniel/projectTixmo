@@ -188,8 +188,8 @@ export const api = {
         const response = await axiosInstance.get(url);
         return normalizeResponse(response.data);
     },
-    post: async (url, data) => {
-        const response = await axiosInstance.post(url, data);
+    post: async (url, data, config) => {
+        const response = await axiosInstance.post(url, data, config);
         return normalizeResponse(response.data);
     },
     put: async (url, data) => {
