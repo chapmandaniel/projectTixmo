@@ -149,11 +149,17 @@ export const addMember = catchAsync(async (req: AuthRequest, res: Response) => {
 
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true },
+    select: { role: true, organizationId: true },
   });
 
   if (!targetUser) {
     throw ApiError.notFound('User not found');
+  }
+
+  // Organization admins may attach an unaffiliated account. Moving someone
+  // out of another organization is limited to platform admins.
+  if (!isGlobalAdmin(actor) && targetUser.organizationId != null) {
+    throw ApiError.forbidden('You do not have permission to add members to this organization');
   }
 
   if (!canManageTargetRole(actor.role, targetUser.role)) {

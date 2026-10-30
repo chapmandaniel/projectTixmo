@@ -190,6 +190,77 @@ describe('organization membership authorization', () => {
     expect(await userState(memberBId)).toEqual(before);
   });
 
+  it('rejects an org owner adopting a manager or owner from another organization', async () => {
+    const manager = await registerUser(app, {
+      role: 'MANAGER',
+      email: `${key}-manager-b@test.invalid`,
+    });
+    await prisma.user.update({
+      where: { id: manager.user.id },
+      data: { organizationId: orgBId, role: 'MANAGER', isPlatformAdmin: false },
+    });
+    const ownerB = await registerUser(app, {
+      role: 'OWNER',
+      email: `${key}-owner-b@test.invalid`,
+    });
+    await prisma.user.update({
+      where: { id: ownerB.user.id },
+      data: { organizationId: orgBId, role: 'OWNER', isPlatformAdmin: false },
+    });
+
+    const beforeManager = await userState(manager.user.id);
+    const beforeOwnerB = await userState(ownerB.user.id);
+    const beforeMembers = await prisma.user.findMany({
+      where: { organizationId: orgBId },
+      select: { id: true, organizationId: true, role: true },
+      orderBy: { id: 'asc' },
+    });
+
+    const addManager = await request(app)
+      .post(`/api/v1/organizations/${orgAId}/members`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ userId: manager.user.id });
+    expectForbidden(addManager, 'You do not have permission to add members to this organization');
+
+    const addOwner = await request(app)
+      .post(`/api/v1/organizations/${orgAId}/members`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ userId: ownerB.user.id });
+    expectForbidden(addOwner, 'You do not have permission to add members to this organization');
+
+    expect(await userState(manager.user.id)).toEqual(beforeManager);
+    expect(await userState(ownerB.user.id)).toEqual(beforeOwnerB);
+    expect(beforeManager).toMatchObject({ organizationId: orgBId, role: 'MANAGER' });
+    expect(beforeOwnerB).toMatchObject({ organizationId: orgBId, role: 'OWNER' });
+    expect(
+      await prisma.user.findMany({
+        where: { organizationId: orgBId },
+        select: { id: true, organizationId: true, role: true },
+        orderBy: { id: 'asc' },
+      })
+    ).toEqual(beforeMembers);
+  });
+
+  it('lets an org owner add an unaffiliated user', async () => {
+    const recruit = await registerUser(app, { email: `${key}-unaffiliated@test.invalid` });
+    expect(await userState(recruit.user.id)).toMatchObject({
+      organizationId: null,
+      role: 'CUSTOMER',
+    });
+
+    const added = await request(app)
+      .post(`/api/v1/organizations/${orgAId}/members`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({ userId: recruit.user.id });
+
+    expect(added.status).toBe(200);
+    expect(added.body).toMatchObject({ success: true, message: 'Member added successfully' });
+    expect(await userState(recruit.user.id)).toMatchObject({
+      organizationId: orgAId,
+      role: 'CUSTOMER',
+    });
+  });
+
   it('lets an org owner add and remove members of their own organization', async () => {
     const recruit = await registerUser(app, { email: `${key}-recruit-owner@test.invalid` });
 
