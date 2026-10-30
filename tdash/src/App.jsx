@@ -31,6 +31,7 @@ const TeamView = lazy(() => import('./features/TeamView'));
 const EventManagementDashboard = lazy(() => import('./features/EventManagementDashboard'));
 const AssetLibraryView = lazy(() => import('./features/AssetLibraryView'));
 const SettingsView = lazy(() => import('./features/SettingsView'));
+const IntegrationsView = lazy(() => import('./features/IntegrationsView'));
 const VenuesView = lazy(() => import('./features/VenuesView'));
 const ApprovalsDashboard = lazy(() => import('./features/ApprovalsDashboard'));
 const OrdersView = lazy(() => import('./features/OrdersView'));
@@ -100,6 +101,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         <Route path="/social" element={<DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/orders" element={<OrdersView isDark={isDark} />} />
                         <Route path="/settings" element={<SettingsView isDark={isDark} user={user} />} />
+                        <Route path="/settings/integrations" element={<IntegrationsView isDark={isDark} user={user} />} />
                         <Route path="/creative" element={<DashboardPlaceholderView isDark={isDark} title="ProMo" icon={Wand2} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/assets" element={<AssetLibraryView isDark={isDark} />} />
                         <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />

@@ -23,6 +23,7 @@ import approvalRoutes from './approvals/routes';
 import reviewRoutes from './review/routes';
 import assetRoutes from './assets/routes';
 import staffActionRoutes from './staff-actions/routes';
+import showpassRoutes, { showpassWebhookRouter } from './vendors/routes';
 
 const router = Router();
 
@@ -63,6 +64,8 @@ versionRouter.use('/approvals', approvalRoutes);
 versionRouter.use('/assets', assetRoutes);
 versionRouter.use('/review', reviewRoutes);
 versionRouter.use('/staff-actions', staffActionRoutes);
+versionRouter.use('/organizations/:organizationId/showpass', showpassRoutes);
+versionRouter.use('/vendors/showpass', showpassWebhookRouter);
 
 // Mount versioned routes
 router.use(`/${config.apiVersion}`, versionRouter);

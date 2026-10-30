@@ -2,13 +2,14 @@ import React, { useState, useRef } from 'react';
 import { X, Plus, Paperclip } from 'lucide-react';
 import InputField from '../components/InputField';
 
-const CreateTaskModal = ({ onClose, onCreate, isDark, users = [] }) => {
+const CreateTaskModal = ({ onClose, onCreate, isDark, users = [], events = [] }) => {
     const [formData, setFormData] = useState({
         title: '',
         content: '', // Maps to Description
         priority: 'Medium',
         tag: 'General',
         assignee: '',
+        eventId: '',
         attachments: []
     });
 
@@ -149,6 +150,15 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [] }) => {
                             isDark={isDark}
                         />
                     </div>
+
+                    <InputField
+                        label="Event"
+                        type="select"
+                        value={formData.eventId}
+                        onChange={(e) => setFormData({ ...formData, eventId: e.target.value })}
+                        options={[{ value: '', label: 'No event' }, ...events.map((event) => ({ value: event.id, label: event.name }))]}
+                        isDark={isDark}
+                    />
 
                     <InputField
                         label="Assign To"

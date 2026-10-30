@@ -78,6 +78,7 @@ const SettingsView = ({ isDark, user }) => {
     return (
         <div className={`mx-auto max-w-7xl space-y-6 ${theme.textPrimary}`}>
             <DashboardTitleBar isDark={isDark} title="Settings" description="Restore deleted events for your organization." icon={Settings} />
+            <p className={theme.textSecondary}><a href="/settings/integrations">Vendor integrations</a></p>
             <DashboardSurface isDark={isDark} className="space-y-5 p-5 sm:p-6">
                 <h2 className="text-xl font-light">Recycle bin</h2>
                 {!allowed ? <DashboardEmptyState isDark={isDark} title="Owner or administrator access required" description="Ask your organization owner to restore a deleted event." /> : <>

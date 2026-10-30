@@ -3,6 +3,7 @@ import { logger } from '@config/logger';
 import { connectDatabase } from '@config/database';
 import { connectRedis, getRedisClient } from '@config/redis';
 import { startApprovalReminderJob } from './jobs/approval-reminder.job';
+import { startVendorSyncJob } from './jobs/vendor-sync.job';
 import { startOrderExpiryJob } from './jobs/order-expiry.job';
 import { startPaymentRecoveryJob } from './jobs/payment-recovery.job';
 
@@ -37,6 +38,7 @@ void (async () => {
       startOrderExpiryJob();
       startPaymentRecoveryJob();
       startApprovalReminderJob();
+      startVendorSyncJob();
     });
   } catch (err) {
     logger.error('Failed to start server', err as Error);

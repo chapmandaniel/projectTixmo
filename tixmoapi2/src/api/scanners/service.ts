@@ -4,6 +4,7 @@ import { parseTicketQRData } from '../../utils/qrcode';
 import crypto from 'crypto';
 
 import prisma from '../../config/prisma';
+import { assertTicketingAllows } from '../../services/ticketing-mode';
 import {
   AdmissionDenial,
   lockedTicket,
@@ -102,6 +103,7 @@ export class ScannerService {
       if (event.organizationId !== data.organizationId) {
         throw ApiError.badRequest('Event does not belong to the specified organization');
       }
+      assertTicketingAllows(event, 'scanners');
     }
 
     // Generate API key
@@ -290,6 +292,7 @@ export class ScannerService {
       if (event.organizationId !== scanner.organizationId) {
         throw ApiError.badRequest('Event does not belong to the scanner organization');
       }
+      assertTicketingAllows(event, 'scanners');
     }
 
     return await prisma.scanner.update({
@@ -362,7 +365,12 @@ export class ScannerService {
       let denial: AdmissionDenial | undefined;
       if (!parsed) denial = { reason: 'Invalid QR code format' };
       else if (!ticket) denial = { reason: 'Ticket not found' };
-      else if (
+      else if (ticket.event.ticketingMode === 'EXTERNAL') {
+        throw ApiError.forbidden(
+          'This event is sold by an external ticketing vendor. Tixmo does not offer this action for vendor-sold events.',
+          { code: 'EXTERNAL_TICKETING', capability: 'scan' }
+        );
+      } else if (
         scanner.organizationId !== ticket.event.organizationId ||
         (scanner.eventId && scanner.eventId !== ticket.eventId)
       ) {
@@ -508,6 +516,7 @@ export class ScannerService {
     ) {
       throw ApiError.forbidden('Scanner is not assigned to this event');
     }
+    assertTicketingAllows(event, 'scanners');
     return target;
   }
 

@@ -3,6 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { notificationService } from '../../utils/notificationService';
 
 import prisma from '../../config/prisma';
+import { assertTicketingAllows } from '../../services/ticketing-mode';
 
 export class WaitlistService {
   /**
@@ -17,6 +18,7 @@ export class WaitlistService {
     if (!event) {
       throw ApiError.notFound('Event not found');
     }
+    assertTicketingAllows(event, 'waitlists');
 
     // Check if already on waitlist
     const existing = await prisma.waitlist.findUnique({

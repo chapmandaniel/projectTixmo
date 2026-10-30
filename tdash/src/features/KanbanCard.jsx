@@ -25,6 +25,7 @@ const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact, users = [] })
                 <div className="flex items-center space-x-3 overflow-hidden">
                     <span className={`text-sm font-light truncate ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                         {item.content}
+                        {item.eventName ? <span className="ml-2 text-xs">{item.eventName}</span> : null}
                     </span>
                 </div>
 

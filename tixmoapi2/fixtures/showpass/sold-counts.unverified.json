@@ -1,0 +1,31 @@
+{
+  "_unverified": true,
+  "_source": "UNVERIFIED",
+  "_reason": "No documented Showpass Discovery or private organizer endpoint returns sold totals per ticket type. inventory_left is remaining inventory, not a sold count, and is not used here. This file is a simulated backup-sync payload isolated behind VendorTicketingAdapter.getSoldCounts.",
+  "events": [
+    {
+      "fixtureId": "sp-evt-1563243",
+      "item_id": 1563243,
+      "ticket_types": [
+        { "id": 4581612, "sold_count": 40 },
+        { "id": 4581610, "sold_count": 250 }
+      ]
+    },
+    {
+      "fixtureId": "sp-evt-1545631",
+      "item_id": 1545631,
+      "ticket_types": [
+        { "id": 4488072, "sold_count": 12 },
+        { "id": 4488073, "sold_count": 7 }
+      ]
+    },
+    {
+      "fixtureId": "sp-evt-1543494",
+      "item_id": 1543494,
+      "ticket_types": [
+        { "id": 4477920, "sold_count": 80 },
+        { "id": 4477921, "sold_count": 15 }
+      ]
+    }
+  ]
+}
