@@ -5956,38 +5956,6 @@
       "snippet": "<div className={`flex h-11 w-11 items-center justify-center rounded-md ${isDark ? 'bg-[#151521]' : 'bg-gray-50'}`}>"
     },
     {
-      "fingerprint": "arbitrary-color-utility::src/features/TeamView.jsx::bg-[#232336]::? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')",
-      "ruleId": "arbitrary-color-utility",
-      "file": "src/features/TeamView.jsx",
-      "line": 437,
-      "match": "bg-[#232336]",
-      "snippet": "? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')"
-    },
-    {
-      "fingerprint": "arbitrary-color-utility::src/features/TeamView.jsx::text-[#5e6278]::? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')",
-      "ruleId": "arbitrary-color-utility",
-      "file": "src/features/TeamView.jsx",
-      "line": 437,
-      "match": "text-[#5e6278]",
-      "snippet": "? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')"
-    },
-    {
-      "fingerprint": "dashboard-token-hex::src/features/TeamView.jsx::#232336::? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')",
-      "ruleId": "dashboard-token-hex",
-      "file": "src/features/TeamView.jsx",
-      "line": 437,
-      "match": "#232336",
-      "snippet": "? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')"
-    },
-    {
-      "fingerprint": "dashboard-token-hex::src/features/TeamView.jsx::#5e6278::? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')",
-      "ruleId": "dashboard-token-hex",
-      "file": "src/features/TeamView.jsx",
-      "line": 437,
-      "match": "#5e6278",
-      "snippet": "? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')"
-    },
-    {
       "fingerprint": "arbitrary-color-utility::src/features/TicketTypeModal.jsx::bg-[#1e1e1e]::<div className={`w-full max-w-lg p-6 rounded-xl shadow-2xl scale-100 transition-all ${isDark ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white'}`}>",
       "ruleId": "arbitrary-color-utility",
       "file": "src/features/TicketTypeModal.jsx",
