@@ -55,12 +55,18 @@ app.use(
   })
 );
 
-// Stripe webhooks require the raw request body for signature verification.
+// Stripe and Showpass webhooks require the raw request body for signature verification.
 app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json', limit: '10mb' }));
+app.use(
+  '/api/v1/vendors/showpass/webhook',
+  express.raw({ type: 'application/json', limit: '1mb' })
+);
+
+const rawWebhookPaths = new Set(['/api/v1/payments/webhook', '/api/v1/vendors/showpass/webhook']);
 
 // Body parsing middleware
 app.use((req, res, next) => {
-  if (req.originalUrl === '/api/v1/payments/webhook') {
+  if (rawWebhookPaths.has(req.originalUrl.split('?')[0])) {
     return next();
   }
   return express.json({ limit: '10mb' })(req, res, next);

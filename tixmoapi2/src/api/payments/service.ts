@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { config } from '../../config/environment';
 import { logger } from '../../config/logger';
 import { ApiError } from '../../utils/ApiError';
+import { assertTicketingAllows } from '../../services/ticketing-mode';
 import { orderService } from '../orders/service';
 import { notificationService } from '../../utils/notificationService';
 import { lockOrder } from '../../services/order-inventory.service';
@@ -468,6 +469,7 @@ export class PaymentService {
         include: { tickets: true, event: true },
       });
       if (!current) throw ApiError.notFound('Order not found');
+      assertTicketingAllows(current.event, 'refunds');
       if (current.status !== observed.status || current.paymentStatus !== observed.paymentStatus)
         throw ApiError.badRequest('Order changed during refund request');
       if (current.status === 'REFUNDED') throw ApiError.conflict('Order is already refunded');

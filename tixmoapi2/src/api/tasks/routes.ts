@@ -86,6 +86,7 @@ router.post(
     body('status').optional().isIn(['TO_DO', 'IN_PROGRESS', 'REVIEW', 'DONE']),
     body('priority').optional().isIn(['LOW', 'MEDIUM', 'HIGH']),
     body('tag').optional().isIn(['DESIGN', 'LEGAL', 'GENERAL', 'OPS', 'MARKETING', 'DEV']),
+    body('eventId').optional({ nullable: true }).isUUID(),
     validate,
   ],
   TaskController.create

@@ -1,0 +1,18 @@
+{
+  "defaultRevision": "current",
+  "fixtureVenueId": "fixture",
+  "revisions": {
+    "baseline": [
+      "events/polygon-halloween.json",
+      "events/pumpkins-dublin.json",
+      "events/giants-recurring-parent.json",
+      "events/mardi-gras.json"
+    ],
+    "current": [
+      "events/polygon-halloween.json",
+      "events/pumpkins-dublin.json",
+      "events/giants-recurring-parent.json",
+      "events/mardi-gras.changed.json"
+    ]
+  }
+}

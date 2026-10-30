@@ -16,12 +16,20 @@ import ECC_Tickets from './ECC_Tickets';
 import ECC_Settings from './ECC_Settings';
 import EventStudio from './EventStudio';
 import DashboardPlaceholderView from './DashboardPlaceholderView';
+import { externalPurchaseUrl, vendorEventAllows } from '../lib/ticketingMode';
 
 /**
  * Event Command Center (ECC)
  * The new main dashboard for managing a single event.
  * Features a persistent sidebar and deep-dive sub-views.
  */
+const ExternalSaleNotice = ({ purchaseUrl }) => (
+    <p>
+        This event is sold on Showpass. Orders, tickets, attendees, promo codes, waitlists, and scanners stay with Showpass.
+        {purchaseUrl ? <a href={purchaseUrl}>Buy on Showpass</a> : null}
+    </p>
+);
+
 const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -41,13 +49,15 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
     const canUseCheckoutLink = publicCheckoutStatuses.has(event.status);
 
     // Navigation Items
+    const externalSale = !vendorEventAllows(event, 'orders');
+    const purchaseUrl = externalPurchaseUrl(event);
     const navItems = [
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-        { id: 'orders', label: 'Orders', icon: CreditCard },
-        { id: 'attendees', label: 'Attendees', icon: Users },
-        { id: 'tickets', label: 'Tickets', icon: Ticket },
+        { id: 'orders', label: 'Orders', icon: CreditCard, capability: 'orders' },
+        { id: 'attendees', label: 'Attendees', icon: Users, capability: 'attendees' },
+        { id: 'tickets', label: 'Tickets', icon: Ticket, capability: 'tickets' },
         { id: 'settings', label: 'Settings', icon: Settings },
-    ];
+    ].filter((item) => !item.capability || vendorEventAllows(event, item.capability));
 
     const handleEditSuccess = () => {
         // Trigger a refresh/update if needed
@@ -85,11 +95,11 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
             case 'overview':
                 return <ECC_Overview event={event} isDark={isDark} onViewOrders={() => navigate(`/events/${event.id}/orders`)} />;
             case 'orders':
-                return <ECC_Orders event={event} isDark={isDark} />;
+                return externalSale ? <ExternalSaleNotice purchaseUrl={purchaseUrl} /> : <ECC_Orders event={event} isDark={isDark} />;
             case 'attendees':
-                return <ECC_Attendees event={event} isDark={isDark} />;
+                return externalSale ? <ExternalSaleNotice purchaseUrl={purchaseUrl} /> : <ECC_Attendees event={event} isDark={isDark} />;
             case 'tickets':
-                return <ECC_Tickets event={event} isDark={isDark} />;
+                return externalSale ? <ExternalSaleNotice purchaseUrl={purchaseUrl} /> : <ECC_Tickets event={event} isDark={isDark} />;
             case 'marketing':
                 return (
                     <DashboardPlaceholderView
@@ -163,28 +173,37 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                                 Event page
                                 <ExternalLink size={13} />
                             </DashboardButton>
-                            <DashboardIconButton
-                                isDark={isDark}
-                                aria-label="Copy checkout link"
-                                title={canUseCheckoutLink ? 'Copy checkout link' : 'Checkout link available after publish'}
-                                disabled={!canUseCheckoutLink}
-                                onClick={handleCopyCheckoutLink}
-                                className="disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                <Copy size={17} />
-                            </DashboardIconButton>
-                            <DashboardButton
-                                isDark={isDark}
-                                variant="secondary"
-                                onClick={handleOpenCheckoutLink}
-                                disabled={!canUseCheckoutLink}
-                                className="hidden h-10 px-3 text-xs disabled:cursor-not-allowed disabled:opacity-40 md:inline-flex"
-                                title={canUseCheckoutLink ? checkoutUrl : 'Checkout link available after publish'}
-                            >
-                                <Globe size={14} />
-                                Checkout
-                                <ExternalLink size={13} />
-                            </DashboardButton>
+                            {!externalSale && (
+                                <>
+                                    <DashboardIconButton
+                                        isDark={isDark}
+                                        aria-label="Copy checkout link"
+                                        title={canUseCheckoutLink ? 'Copy checkout link' : 'Checkout link available after publish'}
+                                        disabled={!canUseCheckoutLink}
+                                        onClick={handleCopyCheckoutLink}
+                                        className="disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        <Copy size={17} />
+                                    </DashboardIconButton>
+                                    <DashboardButton
+                                        isDark={isDark}
+                                        variant="secondary"
+                                        onClick={handleOpenCheckoutLink}
+                                        disabled={!canUseCheckoutLink}
+                                        className="hidden h-10 px-3 text-xs disabled:cursor-not-allowed disabled:opacity-40 md:inline-flex"
+                                        title={canUseCheckoutLink ? checkoutUrl : 'Checkout link available after publish'}
+                                    >
+                                        <Globe size={14} />
+                                        Checkout
+                                        <ExternalLink size={13} />
+                                    </DashboardButton>
+                                </>
+                            )}
+                            {externalSale && purchaseUrl && (
+                                <a className="inline-flex h-10 items-center px-3 text-xs" href={purchaseUrl} target="_blank" rel="noopener noreferrer">
+                                    Buy on Showpass
+                                </a>
+                            )}
                         </div>
                         {checkoutCopyStatus ? (
                             <span className={`basis-full text-right text-[11px] font-light ${checkoutCopyStatus === 'Copy failed' ? 'text-rose-300' : 'text-emerald-300'}`}>
@@ -195,7 +214,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                 </div>
             </div>
 
-            <EventSalesControl key={`${event.id}:${user?.id}:${user?.role}`} event={event} user={user} isDark={isDark} onUpdate={onUpdate} />
+            {!externalSale && <EventSalesControl key={`${event.id}:${user?.id}:${user?.role}`} event={event} user={user} isDark={isDark} onUpdate={onUpdate} />}
 
             {/* Split View (Sidebar + Main Content) */}
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-visible lg:flex-row lg:gap-0 lg:overflow-hidden">

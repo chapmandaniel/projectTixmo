@@ -33,6 +33,7 @@ import { checkoutTicketState, checkoutBoundaryDelay } from '../lib/checkoutEligi
 import { SALES_PAUSED_MESSAGE, isSalesPausedError } from '../lib/salesPause';
 import { cn } from '../lib/utils';
 import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
+import { externalPurchaseUrl, isExternalTicketing } from '../lib/ticketingMode';
 import {
     comparePublicTicketTypes,
     eventAddress,
@@ -493,6 +494,23 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                         <Loader className="h-5 w-5 animate-spin" />
                         Loading checkout...
                     </div>
+                </div>
+            </main>
+        );
+    }
+
+    if (event && isExternalTicketing(event)) {
+        const purchaseUrl = externalPurchaseUrl(event);
+        return (
+            <main className="min-h-screen bg-dashboard-shell text-zinc-100">
+                <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-5">
+                    <DashboardSurface isDark accent="brand" className="space-y-4 p-6 text-center">
+                        <h1 className="text-2xl font-light tracking-tight">Tickets are sold on Showpass</h1>
+                        <p className="text-sm leading-6 text-dashboard-muted">Tixmo does not check out, issue tickets, or take payment for this event.</p>
+                        {purchaseUrl ? (
+                            <a href={purchaseUrl} target="_blank" rel="noopener noreferrer">Buy tickets on Showpass</a>
+                        ) : null}
+                    </DashboardSurface>
                 </div>
             </main>
         );

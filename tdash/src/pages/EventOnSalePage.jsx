@@ -57,6 +57,8 @@ export const EventOnSaleView = ({
     const currency = getPaymentCurrency();
     const policies = getPolicyLinks();
     const sale = getEventSaleState(event, now);
+    const externalSale = event.ticketingMode === 'EXTERNAL';
+    const purchaseUrl = typeof event.externalPurchaseUrl === 'string' ? event.externalPurchaseUrl : '';
     const artwork = eventArtwork(event);
     const address = eventAddress(event.venue);
     const types = [...(event.ticketTypes || [])]
@@ -482,7 +484,19 @@ export const EventOnSaleView = ({
                                 </div>
                             )}
                             <div className="sf-ticket-list">
-                                {items.length ? (
+                                {externalSale ? (
+                                    <p>
+                                        Tickets for this event are sold on Showpass.
+                                        {purchaseUrl ? (
+                                            <>
+                                                {' '}
+                                                <a href={purchaseUrl} target="_blank" rel="noopener noreferrer">
+                                                    Buy tickets on Showpass
+                                                </a>
+                                            </>
+                                        ) : null}
+                                    </p>
+                                ) : items.length ? (
                                     items.map((item) => (
                                         <div
                                             className="sf-ticket-row"
@@ -600,6 +614,7 @@ export const EventOnSaleView = ({
                                     ? PRICE_INCLUDES_NOTE
                                     : 'Choose a quantity to continue.'}
                             </p>
+                            {!externalSale && (
                             <StorefrontButton
                                 onClick={continueToCheckout}
                                 disabled={!canSelect || !count}
@@ -609,6 +624,7 @@ export const EventOnSaleView = ({
                                     : 'Continue to checkout'}
                                 <ArrowRight size={18} aria-hidden="true" />
                             </StorefrontButton>
+                            )}
                             {previewMessage && (
                                 <p className="sf-inline-message" role="status">
                                     {previewMessage}
@@ -654,10 +670,16 @@ export const EventOnSaleView = ({
                                       : money(startingPrice)}
                             </strong>
                         </div>
+                        {externalSale && purchaseUrl ? (
+                            <a href={purchaseUrl} target="_blank" rel="noopener noreferrer">
+                                Buy tickets on Showpass
+                            </a>
+                        ) : (
                         <StorefrontButton onClick={focusTickets}>
                             Choose tickets{' '}
                             <ArrowRight size={16} aria-hidden="true" />
                         </StorefrontButton>
+                        )}
                     </div>
                 )}
             </main>

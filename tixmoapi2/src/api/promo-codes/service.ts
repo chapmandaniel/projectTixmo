@@ -3,6 +3,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PromoCode, PromoCodeStatus, DiscountType, Prisma } from '@prisma/client';
 
 import prisma from '../../config/prisma';
+import { assertTicketingAllows } from '../../services/ticketing-mode';
 
 interface CreatePromoCodeInput {
   code: string;
@@ -76,6 +77,7 @@ export class PromoCodeService {
       if (!event) {
         throw ApiError.notFound('Event not found');
       }
+      assertTicketingAllows(event, 'promo_codes');
     }
 
     // Validate discount value for percentage

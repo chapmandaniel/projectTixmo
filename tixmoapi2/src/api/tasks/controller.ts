@@ -7,8 +7,17 @@ import { AuthRequest } from '../../middleware/auth';
 export const TaskController = {
   create: async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const { title, description, priority, tag, assigneeId, attachments, dueDate, status } =
-        req.body;
+      const {
+        title,
+        description,
+        priority,
+        tag,
+        assigneeId,
+        attachments,
+        dueDate,
+        status,
+        eventId,
+      } = req.body;
       const userId = req.user?.userId;
 
       if (!userId) {
@@ -23,6 +32,8 @@ export const TaskController = {
           .json({ message: 'User does not belong to an organization' });
       }
 
+      if (eventId) await TaskService.assertTaskEvent(organizationId, eventId);
+
       const task = await TaskService.createTask(
         {
           title,
@@ -34,12 +45,16 @@ export const TaskController = {
           dueDate: dueDate ? new Date(dueDate) : undefined,
           organization: { connect: { id: organizationId } },
           assignee: assigneeId ? { connect: { id: assigneeId } } : undefined,
+          event: eventId ? { connect: { id: eventId } } : undefined,
         },
         userId
       );
 
       return res.status(StatusCodes.CREATED).json(task);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        return res.status(StatusCodes.NOT_FOUND).json({ message: error.message });
+      }
       return next(error);
     }
   },
@@ -63,6 +78,8 @@ export const TaskController = {
       if (req.query.priority) filters.priority = req.query.priority as any;
       if (req.query.tag) filters.tag = req.query.tag as any;
       if (req.query.assigneeId) filters.assigneeId = req.query.assigneeId as string;
+      if (typeof req.query.eventId === 'string' && req.query.eventId)
+        filters.eventId = req.query.eventId;
 
       const tasks = await TaskService.getTasks(organizationId, filters);
       return res.json(tasks);
@@ -108,8 +125,18 @@ export const TaskController = {
           .status(StatusCodes.FORBIDDEN)
           .json({ message: 'User does not belong to an organization' });
 
-      const { title, description, status, priority, tag, assigneeId, attachments, dueDate } =
-        req.body;
+      const {
+        title,
+        description,
+        status,
+        priority,
+        tag,
+        assigneeId,
+        attachments,
+        dueDate,
+        eventId,
+      } = req.body;
+      if (eventId) await TaskService.assertTaskEvent(organizationId, eventId);
 
       const updateData: Prisma.TaskUpdateInput = {
         title,
@@ -125,6 +152,11 @@ export const TaskController = {
         updateData.assignee = { connect: { id: assigneeId } };
       } else if (assigneeId === null) {
         updateData.assignee = { disconnect: true };
+      }
+      if (eventId) {
+        updateData.event = { connect: { id: eventId } };
+      } else if (eventId === null) {
+        updateData.event = { disconnect: true };
       }
 
       const updatedTask = await TaskService.updateTask(id, organizationId, updateData);
