@@ -112,6 +112,36 @@ describe('customer event on-sale page', () => {
         ).toBeInTheDocument();
     });
 
+    it('hides hidden ticket types and does not sell sold-out types', () => {
+        renderView({
+            ticketTypes: [
+                {
+                    id: 'hidden',
+                    name: 'Staff hold',
+                    status: 'HIDDEN',
+                    price: '10',
+                    quantityAvailable: 5,
+                    maxPerOrder: 4,
+                },
+                {
+                    id: 'sold',
+                    name: 'Balcony',
+                    status: 'SOLD_OUT',
+                    price: '40',
+                    quantityAvailable: 5,
+                    maxPerOrder: 4,
+                },
+                event.ticketTypes[0],
+            ],
+        });
+        expect(screen.queryByText('Staff hold')).not.toBeInTheDocument();
+        expect(screen.getByText('Balcony')).toBeInTheDocument();
+        expect(screen.getByText('Sold out')).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Add one Balcony ticket' }),
+        ).toBeDisabled();
+    });
+
     it.each([
         [{ status: 'SOLD_OUT' }, 'Sold out'],
         [{ salesStart: '2099-11-01T00:00:00Z' }, 'On sale soon'],

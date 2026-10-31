@@ -54,6 +54,7 @@ interface UpdateTicketTypeInput {
   salesEnd?: string | null;
   quantity?: number;
   sortOrder?: number;
+  status?: 'ACTIVE' | 'HIDDEN' | 'SOLD_OUT';
 }
 
 export class TicketTypeService {

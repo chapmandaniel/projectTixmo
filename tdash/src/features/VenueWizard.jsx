@@ -14,9 +14,10 @@ const VenueWizard = ({ onClose, onSuccess, isDark, user }) => {
         city: '',
         state: '',
         postalCode: '',
-        country: 'USA',
-        timezone: 'America/Los_Angeles', // Default
-        description: ''
+        country: 'Canada',
+        timezone: 'America/St_Johns',
+        description: '',
+        policyUrl: ''
     });
 
     const steps = [
@@ -46,7 +47,8 @@ const VenueWizard = ({ onClose, onSuccess, isDark, user }) => {
                     country: formData.country
                 },
                 timezone: formData.timezone,
-                description: formData.description
+                description: formData.description,
+                ...(formData.policyUrl.trim() ? { policyUrl: formData.policyUrl.trim() } : {})
             };
 
             await api.post('/venues', payload);
@@ -211,7 +213,14 @@ const VenueWizard = ({ onClose, onSuccess, isDark, user }) => {
                                 label="Timezone"
                                 value={formData.timezone}
                                 onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                                placeholder="America/New_York"
+                                placeholder="America/St_Johns"
+                                isDark={isDark}
+                            />
+                            <InputField
+                                label="Venue policy URL"
+                                value={formData.policyUrl}
+                                onChange={(e) => setFormData({ ...formData, policyUrl: e.target.value })}
+                                placeholder="https://example.com/venue-policy"
                                 isDark={isDark}
                             />
                         </div>
@@ -235,6 +244,8 @@ const VenueWizard = ({ onClose, onSuccess, isDark, user }) => {
                                         <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                                             {formData.street}, {formData.city}, {formData.state} {formData.postalCode}, {formData.country}
                                         </p>
+                                        <p className={`mt-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{formData.timezone}</p>
+                                        {formData.policyUrl.trim() ? <p className={`mt-1 text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{formData.policyUrl.trim()}</p> : null}
                                     </div>
                                 </div>
                             </div>

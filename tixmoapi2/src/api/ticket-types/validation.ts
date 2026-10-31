@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+// Prisma TicketTypeStatus. "Paused" is not a ticket-type value; event sales pause is separate.
+export const ticketTypeStatusSchema = z.enum(['ACTIVE', 'HIDDEN', 'SOLD_OUT']);
+
 export const createTicketTypeSchema = z.object({
   body: z.object({
     eventId: z.string().guid('Invalid event ID'),
@@ -11,6 +14,7 @@ export const createTicketTypeSchema = z.object({
     salesStart: z.string().datetime().optional(),
     salesEnd: z.string().datetime().optional(),
     metadata: z.any().optional(),
+    status: ticketTypeStatusSchema.optional(),
     sortOrder: z.number().int().nonnegative().optional(),
   }),
 });
@@ -25,6 +29,7 @@ export const updateTicketTypeSchema = z.object({
     salesStart: z.string().datetime().optional(),
     salesEnd: z.string().datetime().optional(),
     metadata: z.any().optional(),
+    status: ticketTypeStatusSchema.optional(),
     sortOrder: z.number().int().nonnegative().optional(),
   }),
 });

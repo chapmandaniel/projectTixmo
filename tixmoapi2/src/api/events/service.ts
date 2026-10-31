@@ -914,7 +914,9 @@ export class EventService {
           select: { id: true, name: true, address: true },
         },
         ticketTypes: {
-          where: { status: 'ACTIVE' },
+          // Hidden types stay off the public event page and checkout.
+          // Sold-out types remain visible; purchase paths accept only ACTIVE.
+          where: { status: { in: ['ACTIVE', 'SOLD_OUT'] } },
           orderBy: ticketTypeDisplayOrder,
           include: {
             _count: { select: { tiers: true } },
