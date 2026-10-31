@@ -6,9 +6,12 @@ import { Request, Response, NextFunction } from 'express';
 export const errorHandler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ApiError) {
     logger.warn('API error', err);
+    if (err.retryAfter) res.set('Retry-After', String(err.retryAfter));
+    if (err.code === 'CHECKOUT_BUSY') res.set('Cache-Control', 'no-store');
     return res.status(err.statusCode).json({
       success: false,
       message: err.message,
+      ...(err.code ? { code: err.code, retryAfter: err.retryAfter } : {}),
       errors: err.errors,
       ...(err.data !== undefined ? { data: err.data } : {}),
     });

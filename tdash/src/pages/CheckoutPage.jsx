@@ -477,6 +477,8 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
             if (!order && isSalesPausedError(requestError)) {
                 setEvent((current) => ({ ...current, salesPaused: true }));
                 setError(SALES_PAUSED_MESSAGE);
+            } else if (requestError.response?.data?.code === 'CHECKOUT_BUSY') {
+                setError('Checkout is busy. Please try again.');
             } else {
                 setError(requestError.response?.data?.message || requestError.message || 'Checkout could not be prepared.');
             }
