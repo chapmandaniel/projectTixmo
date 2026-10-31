@@ -167,7 +167,7 @@ test('fast sold-out outcomes cannot mask the successful reservation tail', () =>
   const outcomes = [
     ...Array.from({ length: 820 }, () => ({ status: 201, latency: 10 })),
     ...Array.from({ length: 80 }, () => ({ status: 201, latency: 3000 })),
-    ...Array.from({ length: 900 }, () => ({ status: 400, latency: 10 })),
+    ...Array.from({ length: 900 }, () => ({ status: 409, latency: 10 })),
   ];
   const value = valid();
   value.allAttemptP95Ms = percentile(

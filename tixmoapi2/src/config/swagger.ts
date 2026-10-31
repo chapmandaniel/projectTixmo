@@ -21,8 +21,8 @@ const options: swaggerJsdoc.Options = {
         description: 'Development server',
       },
       {
-        url: 'https://api.tixmo.com/v1',
-        description: 'Production server (future)',
+        url: 'https://api-production-fbaf.up.railway.app/api/v1',
+        description: 'Production server',
       },
     ],
     components: {

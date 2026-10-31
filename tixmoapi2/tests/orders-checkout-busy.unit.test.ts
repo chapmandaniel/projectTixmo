@@ -1,6 +1,10 @@
 jest.mock('../src/config/prisma', () => ({
   __esModule: true,
-  default: { $transaction: jest.fn(), order: { findUnique: jest.fn() } },
+  default: {
+    $transaction: jest.fn(),
+    order: { findUnique: jest.fn() },
+    orderIdempotencyKey: { findUnique: jest.fn(), update: jest.fn() },
+  },
 }));
 jest.mock('../src/config/environment', () => ({
   config: { paymentCurrency: 'cad', cartExpiryMinutes: 15 },
@@ -14,6 +18,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { OrderService } from '../src/api/orders/service';
 import { committedOrderJson } from '../src/api/orders/committed-response';
 import { errorHandler } from '../src/middleware/errorHandler';
+import { hashOrderRequest } from '../src/api/orders/idempotency';
 import { checkoutBusyError } from '../src/services/checkout-transaction';
 
 const tx = {
@@ -24,6 +29,7 @@ const tx = {
   order: { create: jest.fn() },
   ticket: { createMany: jest.fn() },
   promoCode: { findUnique: jest.fn(), update: jest.fn() },
+  orderIdempotencyKey: { create: jest.fn(), update: jest.fn() },
 };
 
 function saleType() {
@@ -67,7 +73,11 @@ describe('checkout transaction busy', () => {
       ...data,
     }));
     tx.ticket.createMany.mockResolvedValue({ count: 2 });
+    tx.orderIdempotencyKey.create.mockResolvedValue({ id: 'idem' });
+    tx.orderIdempotencyKey.update.mockResolvedValue({ id: 'idem' });
     (prisma.order.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.orderIdempotencyKey.findUnique as jest.Mock).mockResolvedValue(null);
+    (prisma.orderIdempotencyKey.update as jest.Mock).mockResolvedValue({ id: 'idem' });
   });
 
   function timeoutAfterWork() {
@@ -113,6 +123,9 @@ describe('checkout transaction busy', () => {
       status: 'PENDING',
       totalAmount: new Decimal(20),
     });
+    // ts-jest checks this against the generated Order row. The repo-root lint
+    // project accepts the partial double, so the assertion looks unused there.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const cancel = jest.spyOn(service, 'cancelOrder').mockResolvedValue({ id: 'ghost' } as never);
     await expect(
       service.createOrder('buyer', { items: [{ ticketTypeId: 'ga', quantity: 2 }] })
@@ -163,6 +176,7 @@ describe('checkout transaction busy', () => {
 
   it('cancels an expired hold with the checkout lock and transaction limits', async () => {
     (prisma.$transaction as jest.Mock).mockImplementation(async (work) => work(tx));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     jest.spyOn(service, 'cancelOrderInTransaction').mockResolvedValue({
       id: 'expired',
       status: 'CANCELLED',
@@ -178,6 +192,78 @@ describe('checkout transaction busy', () => {
     const limits = tx.$queryRaw.mock.calls.map((call) => String(call[0]));
     expect(limits.some((sql) => sql.includes('lock_timeout'))).toBe(true);
     expect(limits.some((sql) => sql.includes('statement_timeout'))).toBe(true);
+  });
+
+  it('does not store a 500 when checkout is busy and the same idempotency key succeeds on retry', async () => {
+    const payload = { items: [{ ticketTypeId: 'ga', quantity: 2 }] };
+    let attempts = 0;
+    (prisma.$transaction as jest.Mock).mockImplementation(async (work) => {
+      attempts += 1;
+      const before = { ...type };
+      const result = await work(tx);
+      if (attempts === 1) {
+        Object.assign(type, before);
+        throw new Error(
+          'Transaction already closed: Transaction API error: Transaction not found. Transaction already closed'
+        );
+      }
+      return result;
+    });
+
+    await expect(service.createOrderHttp('buyer', payload, 'key-1')).rejects.toMatchObject({
+      statusCode: 503,
+      code: 'CHECKOUT_BUSY',
+      retryAfter: 2,
+    });
+    expect(prisma.orderIdempotencyKey.update).not.toHaveBeenCalled();
+    const storedStatuses = tx.orderIdempotencyKey.update.mock.calls.map(
+      (call) => call[0].data.responseStatus
+    );
+    expect(storedStatuses.every((status) => status === 201)).toBe(true);
+    expect(storedStatuses).not.toContain(500);
+    expect(prisma.orderIdempotencyKey.findUnique).toHaveBeenCalled();
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      maxWait: 2000,
+      timeout: 5000,
+    });
+
+    const retried = await service.createOrderHttp('buyer', payload, 'key-1');
+    expect(retried).toMatchObject({ kind: 'idempotent', statusCode: 201 });
+    if (retried.kind !== 'idempotent') throw new Error('retry did not return the stored response');
+    expect(JSON.parse(retried.body)).toMatchObject({
+      success: true,
+      message: 'Order created successfully',
+      data: { id: 'order', status: 'PENDING' },
+    });
+    expect(retried.body).not.toContain('"statusCode":500');
+    const persisted = tx.orderIdempotencyKey.update.mock.calls.map(
+      (call) => call[0].data.responseStatus
+    );
+    expect(persisted.every((status) => status === 201)).toBe(true);
+    expect(persisted).not.toContain(500);
+  });
+
+  it('replays a stored idempotent response when a later checkout attempt is busy', async () => {
+    const payload = { items: [{ ticketTypeId: 'ga', quantity: 2 }] };
+    const storedBody = JSON.stringify({
+      success: true,
+      message: 'Order created successfully',
+      data: { id: 'stored-order' },
+    });
+    timeoutAfterWork();
+    (prisma.orderIdempotencyKey.findUnique as jest.Mock).mockResolvedValue({
+      requestHash: hashOrderRequest(payload),
+      responseStatus: 201,
+      responseBody: storedBody,
+    });
+
+    await expect(service.createOrderHttp('buyer', payload, 'key-1')).resolves.toEqual({
+      kind: 'idempotent',
+      statusCode: 201,
+      body: storedBody,
+    });
+    expect(prisma.orderIdempotencyKey.update).not.toHaveBeenCalled();
+    expect(prisma.order.findUnique).not.toHaveBeenCalled();
   });
 
   it('formats CHECKOUT_BUSY as a retryable 503', async () => {
