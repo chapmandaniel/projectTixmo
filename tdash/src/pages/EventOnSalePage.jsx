@@ -26,7 +26,7 @@ import {
     getPaymentCurrency,
     getPolicyLinks,
 } from '../lib/runtimeConfig';
-import { formatEventDate } from '../lib/eventTime';
+import { eventZoneAbbreviation, formatEventDate } from '../lib/eventTime';
 import {
     checkoutSelection,
     comparePublicTicketTypes,
@@ -453,7 +453,11 @@ export const EventOnSaleView = ({
                                 <h2 id="tickets-title">Get your tickets</h2>
                                 <Ticket size={24} aria-hidden="true" />
                             </div>
-                            <p className="sf-ticket-date">{eventDate(event)}</p>
+                            <p className="sf-ticket-date">
+                                {event.startDatetime
+                                    ? [eventDate(event), eventZoneAbbreviation(event.startDatetime, eventTimeZone(event))].filter(Boolean).join(' ')
+                                    : eventDate(event)}
+                            </p>
                             {festivalContext && (
                                 <div
                                     className="sf-event-ticket-scope"

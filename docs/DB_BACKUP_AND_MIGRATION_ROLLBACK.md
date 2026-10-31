@@ -75,7 +75,7 @@ Do not store backup files in git. Store them in the approved secure location for
 npm --prefix tixmoapi2 run migrate
 ```
 
-4. Dry-run ticket inventory in the API service shell before reopening sales. The shell working directory is `/app`. Migration #27 disables `admin@tixmo.com`, so this uses the system actor `system-inventory-reconcile` and does not need an enabled OWNER or ADMIN. It is a CLI only; there is no HTTP route.
+4. Dry-run ticket inventory in the API service shell before reopening sales. The shell working directory is `/app`. Migration #27 disables the legacy bootstrap account `admin@tixmo.com`. The configured admin address is `admin@tixmo.co`. This step uses the system actor `system-inventory-reconcile` and does not need an enabled OWNER or ADMIN. It is a CLI only; there is no HTTP route.
 
 ```bash
 TIXMO_INVENTORY_DATABASE_URL="$DATABASE_URL" \

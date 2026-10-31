@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, DollarSign, Users, Calendar, AlertCircle } from 'lucide-react';
 import api from '../lib/api';
+import { resolveEventTimeZone } from '../lib/eventTime';
+import { ticketSalesWindowInput, ticketSalesWindowIso } from '../lib/ticketSalesWindow';
 
-const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialData = null }) => {
+const TICKET_TYPE_STATUSES = ['ACTIVE', 'HIDDEN', 'SOLD_OUT'];
+const ticketStatus = (status) => (TICKET_TYPE_STATUSES.includes(status) ? status : 'ACTIVE');
+
+const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialData = null, timeZone }) => {
+    const zone = resolveEventTimeZone(timeZone);
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -24,9 +30,9 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                 price: initialData.price || '',
                 quantity: initialData.quantityTotal ?? initialData.quantity ?? '',
                 maxPerOrder: initialData.maxPerOrder || 10,
-                salesStart: initialData.salesStart ? new Date(initialData.salesStart).toISOString().slice(0, 16) : '',
-                salesEnd: initialData.salesEnd ? new Date(initialData.salesEnd).toISOString().slice(0, 16) : '',
-                status: initialData.status || 'ACTIVE'
+                salesStart: ticketSalesWindowInput(initialData.salesStart, zone),
+                salesEnd: ticketSalesWindowInput(initialData.salesEnd, zone),
+                status: ticketStatus(initialData.status)
             });
         } else {
             setFormData({
@@ -40,7 +46,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                 status: 'ACTIVE'
             });
         }
-    }, [initialData, isOpen]);
+    }, [initialData, isOpen, zone]);
 
     if (!isOpen) return null;
 
@@ -58,9 +64,9 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                 quantity: parseInt(formData.quantity, 10),
                 maxPerOrder: parseInt(formData.maxPerOrder, 10),
                 status: formData.status,
-                // Only include dates if they are set
-                ...(formData.salesStart ? { salesStart: new Date(formData.salesStart).toISOString() } : {}),
-                ...(formData.salesEnd ? { salesEnd: new Date(formData.salesEnd).toISOString() } : {})
+                // Only include dates if they are set. Parse them in the event timezone.
+                ...(formData.salesStart ? { salesStart: ticketSalesWindowIso(formData.salesStart, zone, initialData?.salesStart) } : {}),
+                ...(formData.salesEnd ? { salesEnd: ticketSalesWindowIso(formData.salesEnd, zone, initialData?.salesEnd) } : {})
             };
 
             if (initialData) {
@@ -133,7 +139,6 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                             <option value="ACTIVE">Active (On Sale)</option>
                             <option value="HIDDEN">Hidden (Not visible)</option>
                             <option value="SOLD_OUT">Sold Out</option>
-                            <option value="PAUSED">Paused</option>
                         </select>
                     </div>
 
@@ -169,6 +174,7 @@ const TicketTypeModal = ({ isOpen, onClose, eventId, isDark, onSuccess, initialD
                         </div>
                     </div>
 
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Sales times use {zone}.</p>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className={`block text-xs font-medium mb-1.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Sales Start (Optional)</label>

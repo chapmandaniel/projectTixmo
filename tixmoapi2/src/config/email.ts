@@ -30,6 +30,56 @@ type PostmarkSendResponse = {
 
 const POSTMARK_API_HOST = 'api.postmarkapp.com';
 
+function postmarkField(response: PostmarkSendResponse | undefined): {
+  errorCode: string;
+  messageId: string;
+} {
+  const errorCode =
+    response && Number.isInteger(response.ErrorCode) ? String(response.ErrorCode) : 'missing';
+  const messageId =
+    typeof response?.MessageID === 'string' && response.MessageID.trim()
+      ? response.MessageID.trim()
+      : 'missing';
+  return { errorCode, messageId };
+}
+
+/** Every Postmark send records both fields. A missing id or a non-zero code is not success. */
+function logPostmarkSend(response: PostmarkSendResponse | undefined, accepted: boolean): void {
+  const { errorCode, messageId } = postmarkField(response);
+  const line = `Postmark send ErrorCode=${errorCode} MessageID=${messageId}`;
+  if (accepted) logger.info(line);
+  else logger.error(line);
+}
+
+function postmarkAcceptance(
+  response: PostmarkSendResponse | undefined
+): { ok: true } | { ok: false; delivery: 'REJECTED' | 'UNCERTAIN'; reason: string } {
+  if (response && Number.isInteger(response.ErrorCode) && (response.ErrorCode || 0) > 0) {
+    return {
+      ok: false,
+      delivery: 'REJECTED',
+      reason: `Postmark explicitly rejected the message (${response.ErrorCode}).`,
+    };
+  }
+  if (
+    !response ||
+    response.ErrorCode !== 0 ||
+    typeof response.MessageID !== 'string' ||
+    !response.MessageID.trim() ||
+    response.MessageID.length > 255 ||
+    [...response.MessageID].some(
+      (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127
+    )
+  ) {
+    return {
+      ok: false,
+      delivery: 'UNCERTAIN',
+      reason: 'Postmark email acceptance was not confirmed by a message ID.',
+    };
+  }
+  return { ok: true };
+}
+
 const formatAddress = (value: EmailAddress) => {
   if (typeof value === 'string') {
     return value;
@@ -117,13 +167,15 @@ const postmarkRequest = <T>(
             return;
           }
 
-          reject(
-            new MailDeliveryError(
-              `Postmark API request failed (${statusCode}).`,
-              statusCode >= 400 && statusCode < 500 ? 'REJECTED' : 'UNCERTAIN',
-              statusCode === 429
-            )
+          const failure = new MailDeliveryError(
+            `Postmark API request failed (${statusCode}).`,
+            statusCode >= 400 && statusCode < 500 ? 'REJECTED' : 'UNCERTAIN',
+            statusCode === 429
           );
+          if (path === '/email' && parsed && typeof parsed === 'object') {
+            Object.assign(failure, { postmark: parsed });
+          }
+          reject(failure);
         });
       }
     );
@@ -211,38 +263,35 @@ function createTransport(): MailTransport {
 
     return {
       async sendMail(options) {
-        const response = await postmarkRequest<PostmarkSendResponse>('POST', '/email', {
-          From: formatAddress(options.from || emailFrom),
-          To: formatRecipients(options.to),
-          Subject: options.subject,
-          HtmlBody: options.html,
-          TextBody: options.text,
-          MessageStream: config.postmarkMessageStream || 'outbound',
-          Headers: Object.entries(options.headers || {}).map(([Name, Value]) => ({ Name, Value })),
-          Metadata: options.metadata,
-          Tag: options.tag,
-        });
-
-        if (response && Number.isInteger(response.ErrorCode) && (response.ErrorCode || 0) > 0) {
-          throw new MailDeliveryError(
-            `Postmark explicitly rejected the message (${response.ErrorCode}).`,
-            'REJECTED'
-          );
+        let response: PostmarkSendResponse | undefined;
+        try {
+          response = await postmarkRequest<PostmarkSendResponse>('POST', '/email', {
+            From: formatAddress(options.from || emailFrom),
+            To: formatRecipients(options.to),
+            Subject: options.subject,
+            HtmlBody: options.html,
+            TextBody: options.text,
+            MessageStream: config.postmarkMessageStream || 'outbound',
+            Headers: Object.entries(options.headers || {}).map(([Name, Value]) => ({
+              Name,
+              Value,
+            })),
+            Metadata: options.metadata,
+            Tag: options.tag,
+          });
+        } catch (error) {
+          const parsed =
+            error && typeof error === 'object' && 'postmark' in error
+              ? (error as { postmark?: PostmarkSendResponse }).postmark
+              : undefined;
+          logPostmarkSend(parsed, false);
+          throw error;
         }
-        if (
-          !response ||
-          response.ErrorCode !== 0 ||
-          typeof response.MessageID !== 'string' ||
-          !response.MessageID.trim() ||
-          response.MessageID.length > 255 ||
-          [...response.MessageID].some(
-            (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127
-          )
-        ) {
-          throw new MailDeliveryError(
-            'Postmark email acceptance was not confirmed by a message ID.',
-            'UNCERTAIN'
-          );
+
+        const accepted = postmarkAcceptance(response);
+        logPostmarkSend(response, accepted.ok);
+        if (!accepted.ok) {
+          throw new MailDeliveryError(accepted.reason, accepted.delivery);
         }
 
         return {

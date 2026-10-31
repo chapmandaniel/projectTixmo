@@ -6,6 +6,7 @@ import { logger } from '../../config/logger';
 import { config } from '../../config/environment';
 import { transporter, emailFrom } from '../../config/email';
 import { userInvitationEmail } from '../../utils/emailTemplates';
+import { staffInvitationExpiresAt } from '../../utils/staffInvitation';
 
 import prisma from '../../config/prisma';
 import { hasValidStaffScope } from '../../utils/accountSession';
@@ -134,7 +135,7 @@ export class UserService {
             issuerId: options.inviterId!,
             tokenHash: crypto.createHash('sha256').update(invitationToken).digest('hex'),
             sessionVersion: 0,
-            expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+            expiresAt: staffInvitationExpiresAt(),
           },
         });
       }
@@ -161,9 +162,9 @@ export class UserService {
       const emailContent = userInvitationEmail({
         name: user.firstName,
         email: user.email,
-        // Passwords are never sent by email; passwordless invites expire after 48 hours.
-        password: undefined,
         loginUrl,
+        // Passwords are never emailed. Only the /invite link asks them to set one.
+        setPassword: Boolean(invitationToken),
       });
 
       await transporter.sendMail({
@@ -212,7 +213,7 @@ export class UserService {
           issuerId: options.inviterId!,
           tokenHash: crypto.createHash('sha256').update(token).digest('hex'),
           sessionVersion: updated.sessionVersion,
-          expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+          expiresAt: staffInvitationExpiresAt(),
         },
       });
       return { email: user.email, firstName: user.firstName };

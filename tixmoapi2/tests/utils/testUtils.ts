@@ -23,6 +23,9 @@ export async function safeCleanupUsers(filter = 'test') {
   };
 
   await deleteIfExists(() => prisma.ticket.deleteMany({ where: { userId: { in: userIds } } }));
+  await deleteIfExists(() =>
+    prisma.orderIdempotencyKey.deleteMany({ where: { userId: { in: userIds } } })
+  );
   await deleteIfExists(() => prisma.order.deleteMany({ where: { userId: { in: userIds } } }));
 
   // Add other dependent deletes here if needed (sessions, refresh tokens, etc.)
@@ -288,6 +291,9 @@ export async function cleanupTestData() {
   } catch (e) {}
   try {
     await prisma.ticket.deleteMany();
+  } catch (e) {}
+  try {
+    await prisma.orderIdempotencyKey.deleteMany();
   } catch (e) {}
   try {
     await prisma.order.deleteMany();

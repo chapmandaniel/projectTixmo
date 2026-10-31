@@ -190,6 +190,28 @@ describe('patched Zod 4 and retained HTTP validation contracts', () => {
     expect(updateTicketTypeSchema.safeParse({ body: { sortOrder: 1.5 } }).success).toBe(false);
   });
 
+  test('ticket type status is kept for the prisma enum and rejected otherwise', () => {
+    for (const status of ['ACTIVE', 'HIDDEN', 'SOLD_OUT'] as const) {
+      expect(
+        createTicketTypeSchema.parse({
+          body: { eventId: looseId, name: 'Synthetic', price: 1, quantity: 2, status },
+        }).body.status
+      ).toBe(status);
+      expect(updateTicketTypeSchema.parse({ body: { status } }).body.status).toBe(status);
+    }
+    expect(
+      createTicketTypeSchema.parse({
+        body: { eventId: looseId, name: 'Synthetic', price: 1, quantity: 2 },
+      }).body
+    ).not.toHaveProperty('status');
+    expect(
+      createTicketTypeSchema.safeParse({
+        body: { eventId: looseId, name: 'Synthetic', price: 1, quantity: 2, status: 'PAUSED' },
+      }).success
+    ).toBe(false);
+    expect(updateTicketTypeSchema.safeParse({ body: { status: 'PAUSED' } }).success).toBe(false);
+  });
+
   test('multipart reviewer preprocessing preserves trims and unknown-key stripping', () => {
     const parsed = createApprovalBodySchema.parse({
       eventId: looseId,

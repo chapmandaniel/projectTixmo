@@ -54,14 +54,21 @@ export class NotificationService {
    */
   async sendEmail(options: SendEmailOptions): Promise<boolean> {
     try {
-      await transporter.sendMail({
+      const delivered = await transporter.sendMail({
         from: `${emailFrom.name} <${emailFrom.address}>`,
         to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text,
       });
-      logger.info(`Email sent to ${options.to}: ${options.subject}`);
+      const messageId = typeof delivered?.messageId === 'string' ? delivered.messageId.trim() : '';
+      if (!messageId) {
+        logger.error(
+          `Email delivery was not confirmed to ${options.to}: ${options.subject} (MessageID missing, ErrorCode missing)`
+        );
+        return false;
+      }
+      logger.info(`Email sent to ${options.to}: ${options.subject} (MessageID ${messageId})`);
       return true;
     } catch (error) {
       logger.error(`Error sending email: ${(error as Error).message}`);

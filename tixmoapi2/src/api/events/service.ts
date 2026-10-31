@@ -8,6 +8,7 @@ import { recordStaffAction, StaffAudit } from '../../services/staff-action-audit
 import { orderService } from '../orders/service';
 import { receiptDisclosure } from '../../utils/receipt';
 import { ticketTypeDisplayOrder } from '../ticket-types/service';
+import { invalidatePublicEvent } from './public-cache';
 
 interface CreateEventInput {
   title: string;
@@ -265,7 +266,7 @@ export class EventService {
     actor: ActorScope
   ) {
     if (!['OWNER', 'ADMIN', 'MANAGER', 'PROMOTER'].includes(actor.role)) throw ApiError.forbidden();
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
       const event = await tx.event.findUnique({ where: { id } });
       if (!event) throw ApiError.notFound('Event not found');
@@ -307,6 +308,8 @@ export class EventService {
         replayed: !!prior,
       };
     });
+    invalidatePublicEvent({ id });
+    return result;
   }
 
   async updateEvent(
@@ -315,8 +318,11 @@ export class EventService {
     db?: Prisma.TransactionClient,
     audit?: StaffAudit
   ): Promise<Event> {
-    if (!db || db === prisma)
-      return prisma.$transaction((tx) => this.updateEvent(id, data, tx, audit));
+    if (!db || db === prisma) {
+      const updated = await prisma.$transaction((tx) => this.updateEvent(id, data, tx, audit));
+      invalidatePublicEvent(updated);
+      return updated;
+    }
     await db.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
     // Check if event exists
     const existingEvent = await db.event.findUnique({
@@ -414,7 +420,7 @@ export class EventService {
    * Delete event
    */
   async deleteEvent(id: string): Promise<void> {
-    await prisma.$transaction(async (tx) => {
+    const removed = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
       const event = await tx.event.findUnique({ where: { id } });
       if (!event) throw ApiError.notFound('Event not found');
@@ -424,18 +430,22 @@ export class EventService {
         );
       }
       await tx.event.update({ where: { id }, data: { deletedAt: new Date(), status: 'DELETED' } });
+      return { id: event.id, slug: event.slug };
     });
+    invalidatePublicEvent(removed);
   }
 
   /** Restore as a draft under the same event lock used by checkout and configuration. */
   async restoreEvent(id: string): Promise<Event> {
-    return prisma.$transaction(async (tx) => {
+    const restored = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
       const event = await tx.event.findUnique({ where: { id } });
       if (!event) throw ApiError.notFound('Event not found');
       if (!event.deletedAt) throw ApiError.badRequest('Event is not deleted');
       return tx.event.update({ where: { id }, data: { deletedAt: null, status: 'DRAFT' } });
     });
+    invalidatePublicEvent(restored);
+    return restored;
   }
 
   /**
@@ -584,7 +594,7 @@ export class EventService {
     if (newStatus === EventStatus.DRAFT)
       throw ApiError.badRequest('Use the dedicated restore action');
 
-    return prisma.$transaction(async (tx) => {
+    const transitioned = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
       const event = await tx.event.findUnique({ where: { id } });
       if (!event) throw ApiError.notFound('Event not found');
@@ -610,6 +620,8 @@ export class EventService {
       }
       return updated;
     });
+    invalidatePublicEvent(transitioned);
+    return transitioned;
   }
 
   /**
@@ -620,7 +632,11 @@ export class EventService {
     db?: Prisma.TransactionClient,
     audit?: StaffAudit
   ): Promise<Event> {
-    if (!db || db === prisma) return prisma.$transaction((tx) => this.publishEvent(id, tx, audit));
+    if (!db || db === prisma) {
+      const updated = await prisma.$transaction((tx) => this.publishEvent(id, tx, audit));
+      invalidatePublicEvent(updated);
+      return updated;
+    }
     await db.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
     const event = await db.event.findUnique({
       where: { id },
@@ -711,6 +727,7 @@ export class EventService {
       }
       return updated;
     });
+    invalidatePublicEvent(cancelled);
     const orders = await prisma.order.findMany({
       where: { eventId: id, status: { in: ['PENDING', 'PAID'] } },
       select: { id: true },
@@ -874,9 +891,7 @@ export class EventService {
   /**
    * Get a single public event by slug (no auth required)
    * Returns full event detail with ticket types and their tiers.
-   * Keep this uncached for V1 checkout: the payload contains ticket type IDs,
-   * active tiers, and live availability that must not survive event resets or
-   * ticket mutations.
+   * Anonymous reads may be a few seconds stale. POST /orders rechecks inventory.
    */
   async getPublicEventBySlug(slug: string) {
     const publicStatuses: EventStatus[] = [
@@ -899,7 +914,9 @@ export class EventService {
           select: { id: true, name: true, address: true },
         },
         ticketTypes: {
-          where: { status: 'ACTIVE' },
+          // Hidden types stay off the public event page and checkout.
+          // Sold-out types remain visible; purchase paths accept only ACTIVE.
+          where: { status: { in: ['ACTIVE', 'SOLD_OUT'] } },
           orderBy: ticketTypeDisplayOrder,
           include: {
             _count: { select: { tiers: true } },
