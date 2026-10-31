@@ -49,6 +49,13 @@ const ROLE_OPTIONS = [
 
 const getRoleLevel = (role) => ROLE_LEVELS[role] || 0;
 
+// Matches the API: platform admins, plus OWNER and ADMIN members.
+const isGlobalAdmin = (user) =>
+    user?.role === 'ADMIN' && user?.isPlatformAdmin === true && !user?.organizationId;
+
+const actorMayRemoveMembers = (user) =>
+    isGlobalAdmin(user) || user?.role === 'OWNER' || user?.role === 'ADMIN';
+
 const TeamView = ({ isDark, user: currentUser }) => {
     const uiTheme = getDashboardTheme(isDark);
     const scopedUser = currentUser || getStoredUser();
@@ -313,7 +320,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                             const Icon = badge.icon;
                             const isCurrentUser = scopedUser?.id === member.id;
                             const canEditMemberRole = canManageMember(member);
-                            const canRemoveMember = canEditMemberRole;
+                            const canRemoveMember = actorMayRemoveMembers(scopedUser) && canManageMember(member);
                             const isEditingRole = editingRoleUserId === member.id;
                             const assignableRoles = getAssignableRoles();
 
@@ -429,18 +436,18 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                         </div>
 
                                         <div className="flex justify-end lg:justify-center">
-                                            <button
-                                                onClick={() => handleDeleteUser(member.id)}
-                                                disabled={!canRemoveMember}
-                                                className={`inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                                                    !canRemoveMember
-                                                        ? (isDark ? 'bg-[#232336] text-[#5e6278] cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')
-                                                        : (isDark ? 'hover:bg-red-900/20 text-gray-500 hover:text-red-400' : 'hover:bg-rose-50 text-gray-500 hover:text-rose-600')
-                                                }`}
-                                                title={canRemoveMember ? 'Remove member' : 'You cannot remove this member'}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            {canRemoveMember && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteUser(member.id)}
+                                                    className={`inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
+                                                        isDark ? 'hover:bg-red-900/20 text-gray-500 hover:text-red-400' : 'hover:bg-rose-50 text-gray-500 hover:text-rose-600'
+                                                    }`}
+                                                    title="Remove member"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </DashboardStripedRow>

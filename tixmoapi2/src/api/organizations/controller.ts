@@ -5,7 +5,12 @@ import { successResponse } from '../../utils/response';
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/prisma';
 import { organizationService } from './service';
-import { assertOrganizationAccess, getActorScope, isGlobalAdmin } from '../../utils/tenantScope';
+import {
+  ActorScope,
+  assertOrganizationAccess,
+  getActorScope,
+  isGlobalAdmin,
+} from '../../utils/tenantScope';
 
 interface OrganizationWithUsers {
   id: string;
@@ -13,8 +18,6 @@ interface OrganizationWithUsers {
 }
 
 const isElevatedAdminRole = (role?: string) => role === 'OWNER' || role === 'ADMIN';
-const isOrganizationManagerRole = (role?: string) =>
-  role === 'OWNER' || role === 'ADMIN' || role === 'MANAGER';
 const roleHierarchy = {
   OWNER: 5,
   ADMIN: 4,
@@ -27,6 +30,38 @@ const roleHierarchy = {
 const getRoleLevel = (role?: string) => roleHierarchy[role as keyof typeof roleHierarchy] ?? 0;
 const canManageTargetRole = (actorRole?: string, targetRole?: string) =>
   actorRole === 'OWNER' || getRoleLevel(targetRole) < getRoleLevel(actorRole);
+
+const memberActionMessage = (action: 'add' | 'remove', kind: 'membership' | 'privileges') => {
+  if (kind === 'privileges') {
+    return action === 'add'
+      ? 'You do not have sufficient privileges to add members'
+      : 'You do not have sufficient privileges to remove members';
+  }
+
+  return action === 'add'
+    ? 'You do not have permission to add members to this organization'
+    : 'You do not have permission to remove members from this organization';
+};
+
+// Platform-wide admins are the only role-only bypass. Everyone else must be an
+// OWNER or ADMIN member of the organization named in the request.
+const assertOrganizationMemberManager = (
+  actor: ActorScope,
+  organizationId: string,
+  action: 'add' | 'remove'
+) => {
+  if (isGlobalAdmin(actor)) {
+    return;
+  }
+
+  if (actor.organizationId !== organizationId) {
+    throw ApiError.forbidden(memberActionMessage(action, 'membership'));
+  }
+
+  if (!isElevatedAdminRole(actor.role)) {
+    throw ApiError.forbidden(memberActionMessage(action, 'privileges'));
+  }
+};
 
 export const createOrganization = catchAsync(async (req: AuthRequest, res: Response) => {
   const payload = req.body as Parameters<typeof organizationService.createOrganization>[0];
@@ -53,18 +88,16 @@ export const updateOrganization = catchAsync(async (req: AuthRequest, res: Respo
   const actor = await getActorScope(req);
   assertOrganizationAccess(actor, id);
 
-  // Check if user is admin or belongs to the organization
   const org = (await organizationService.getOrganizationById(id)) as OrganizationWithUsers | null;
   if (!org) {
     throw ApiError.notFound('Organization not found');
   }
 
-  // Only admins and organization members can update
-  if (!isElevatedAdminRole(req.user!.role)) {
-    // Check if user is a member of the organization
+  // Only a platform admin may update an organization without a member record.
+  if (!isGlobalAdmin(actor)) {
     const usersRaw = (org as unknown as { users?: unknown }).users;
     const users = Array.isArray(usersRaw) ? (usersRaw as Array<{ id: string }>) : [];
-    const isMember = users.some((u) => u.id === req.user!.userId);
+    const isMember = users.some((u) => u.id === actor.userId);
 
     if (!isMember) {
       throw ApiError.forbidden('You do not have permission to update this organization');
@@ -80,6 +113,12 @@ export const updateOrganization = catchAsync(async (req: AuthRequest, res: Respo
 
 export const deleteOrganization = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
+  const actor = await getActorScope(req);
+  const ownerOfTarget = actor.role === 'OWNER' && actor.organizationId === id;
+
+  if (!isGlobalAdmin(actor) && !ownerOfTarget) {
+    throw ApiError.forbidden('You do not have permission to delete this organization');
+  }
 
   await organizationService.deleteOrganization(id);
   res.status(204).send();
@@ -105,33 +144,27 @@ export const addMember = catchAsync(async (req: AuthRequest, res: Response) => {
 
   if (!userId) throw ApiError.badRequest('userId is required');
 
-  if (!isElevatedAdminRole(req.user!.role)) {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user!.userId },
-      select: { organizationId: true, role: true },
-    });
-
-    if (!user || user.organizationId !== id) {
-      throw ApiError.forbidden('You do not have permission to add members to this organization');
-    }
-
-    if (!isOrganizationManagerRole(user.role)) {
-      throw ApiError.forbidden('You do not have sufficient privileges to add members');
-    }
-  }
+  const actor = await getActorScope(req);
+  assertOrganizationMemberManager(actor, id, 'add');
 
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { role: true },
+    select: { role: true, organizationId: true },
   });
 
   if (!targetUser) {
     throw ApiError.notFound('User not found');
   }
 
-  if (!canManageTargetRole(req.user!.role, targetUser.role)) {
+  // Organization admins may attach an unaffiliated account. Moving someone
+  // out of another organization is limited to platform admins.
+  if (!isGlobalAdmin(actor) && targetUser.organizationId != null) {
+    throw ApiError.forbidden('You do not have permission to add members to this organization');
+  }
+
+  if (!canManageTargetRole(actor.role, targetUser.role)) {
     throw ApiError.forbidden(
-      `Your role (${req.user!.role}) cannot add a member with role ${targetUser.role}`
+      `Your role (${actor.role}) cannot add a member with role ${targetUser.role}`
     );
   }
 
@@ -141,23 +174,8 @@ export const addMember = catchAsync(async (req: AuthRequest, res: Response) => {
 
 export const removeMember = catchAsync(async (req: AuthRequest, res: Response) => {
   const { id, userId } = req.params;
-
-  if (!isElevatedAdminRole(req.user!.role)) {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user!.userId },
-      select: { organizationId: true, role: true },
-    });
-
-    if (!user || user.organizationId !== id) {
-      throw ApiError.forbidden(
-        'You do not have permission to remove members from this organization'
-      );
-    }
-
-    if (!isOrganizationManagerRole(user.role)) {
-      throw ApiError.forbidden('You do not have sufficient privileges to remove members');
-    }
-  }
+  const actor = await getActorScope(req);
+  assertOrganizationMemberManager(actor, id, 'remove');
 
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -168,9 +186,9 @@ export const removeMember = catchAsync(async (req: AuthRequest, res: Response) =
     throw ApiError.notFound('User not found');
   }
 
-  if (!canManageTargetRole(req.user!.role, targetUser.role)) {
+  if (!canManageTargetRole(actor.role, targetUser.role)) {
     throw ApiError.forbidden(
-      `Your role (${req.user!.role}) cannot remove a member with role ${targetUser.role}`
+      `Your role (${actor.role}) cannot remove a member with role ${targetUser.role}`
     );
   }
 
