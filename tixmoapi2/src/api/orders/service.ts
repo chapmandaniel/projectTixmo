@@ -7,6 +7,12 @@ import { getActorScopeById, resolveOrganizationFilter } from '../../utils/tenant
 
 import prisma from '../../config/prisma';
 import { config } from '../../config/environment';
+import {
+  applyCheckoutDbLimits,
+  checkoutBusyError,
+  checkoutTransactionOptions,
+  isCheckoutBusyError,
+} from '../../services/checkout-transaction';
 import { formatNewfoundlandDateTime } from '../../utils/eventTime';
 import {
   configuredHstRate,
@@ -27,6 +33,12 @@ import {
 } from '../../services/order-inventory.service';
 import { voidDisputedAdmission, voidOrderTickets } from '../../services/ticket-void.service';
 import { maskBarcode } from './order-privacy';
+import {
+  hashOrderRequest,
+  isOrderIdempotencyConflict,
+  normalizeOrderIdempotencyKey,
+} from './idempotency';
+import { committedOrderJson } from './committed-response';
 
 interface OrderItemInput {
   ticketTypeId: string;
@@ -57,6 +69,12 @@ interface PaginatedOrders {
   };
 }
 
+export type ExpiredOrderClaim =
+  | { status: 'empty' }
+  | { status: 'skipped'; id: string; orderNumber: string }
+  | { status: 'cancelled'; id: string; orderNumber: string }
+  | { status: 'failed'; id: string; orderNumber: string; error: unknown };
+
 export class OrderService {
   // Only authenticated HTTP entrypoints pass actorId. Omission is reserved for
   // trusted payment/free-order/expiry jobs; never populate it from query input.
@@ -82,9 +100,10 @@ export class OrderService {
   }
 
   /**
-   * Create a new order
+   * Reject impossible quantities before a transaction so a bad request never
+   * claims an idempotency key or opens a reservation.
    */
-  async createOrder(userId: string, data: CreateOrderInput): Promise<Order> {
+  private orderLines(data: CreateOrderInput): Array<[string, number]> {
     const quantities = new Map<string, number>();
     for (const item of data.items) {
       if (!Number.isSafeInteger(item.quantity) || item.quantity < 1)
@@ -92,165 +111,323 @@ export class OrderService {
       quantities.set(item.ticketTypeId, (quantities.get(item.ticketTypeId) || 0) + item.quantity);
     }
     if (!quantities.size) throw ApiError.badRequest('Order must contain tickets');
-    const items = [...quantities].sort(([a], [b]) => a.localeCompare(b));
-    const order = await prisma.$transaction(
-      async (tx) => {
-        const first = await tx.ticketType.findUnique({
-          where: { id: items[0][0] },
-          select: { eventId: true },
+    return [...quantities].sort(([a], [b]) => a.localeCompare(b));
+  }
+
+  private nextOrderNumber(): string {
+    return `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
+  }
+
+  /**
+   * Create a new order. Callers that omit an idempotency key keep this path.
+   */
+  async createOrder(userId: string, data: CreateOrderInput): Promise<Order> {
+    this.orderLines(data);
+    const orderNumber = this.nextOrderNumber();
+    let order: Order;
+    try {
+      order = await prisma.$transaction(async (tx) => {
+        await applyCheckoutDbLimits(tx);
+        return this.reserveOrder(tx, userId, data, orderNumber);
+      }, checkoutTransactionOptions());
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      if (!isCheckoutBusyError(error)) throw error;
+      const kept = await this.releaseTimedOutReservation(orderNumber);
+      if (kept) return this.finishCommittedOrder(kept);
+      throw checkoutBusyError();
+    }
+    return this.finishCommittedOrder(order);
+  }
+
+  /**
+   * HTTP create. The same buyer and Idempotency-Key replays the stored response.
+   * The unique key is inserted before inventory changes, so concurrent duplicates
+   * cannot both hold stock. A checkout timeout is never stored as that response.
+   */
+  async createOrderHttp(
+    userId: string,
+    data: CreateOrderInput,
+    idempotencyHeader?: string
+  ): Promise<
+    { kind: 'created'; order: Order } | { kind: 'idempotent'; statusCode: number; body: string }
+  > {
+    const idempotencyKey = normalizeOrderIdempotencyKey(idempotencyHeader);
+    this.orderLines(data);
+    if (!idempotencyKey) return { kind: 'created', order: await this.createOrder(userId, data) };
+    const requestHash = hashOrderRequest(data);
+    const orderNumber = this.nextOrderNumber();
+    try {
+      const body = await prisma.$transaction(async (tx) => {
+        await applyCheckoutDbLimits(tx);
+        await tx.orderIdempotencyKey.create({
+          data: { userId, idempotencyKey, requestHash },
         });
-        if (!first) throw ApiError.notFound('Ticket type not found');
-        // Event cancellation and checkout share this lock. Orders created before
-        // cancellation remain visible to its subsequent cancellation pass.
-        await tx.$queryRaw`SELECT id FROM events WHERE id = ${first.eventId} FOR UPDATE`;
-        const event = await tx.event.findUniqueOrThrow({ where: { id: first.eventId } });
-        const now = new Date();
-        if (
-          event.deletedAt ||
-          !['PUBLISHED', 'ON_SALE'].includes(event.status) ||
-          (event.salesStart && now < event.salesStart) ||
-          (event.salesEnd && now >= event.salesEnd) ||
-          (event.startDatetime && now >= event.startDatetime)
-        ) {
-          throw ApiError.badRequest('Event is not available for purchase');
-        }
-        if (event.salesPaused)
-          throw ApiError.conflict(
-            'Ticket sales are paused for a moment. Orders and tickets you already have are safe. Please check back soon.',
-            { code: 'SALES_PAUSED' }
-          );
-        let subtotal = new Decimal(0);
-        const allocations: Array<{
-          ticketTypeId: string;
-          quantity: number;
-          price: Decimal;
-          tierId: string | null;
-        }> = [];
-        for (const [ticketTypeId, quantity] of items) {
-          await tx.$queryRaw`SELECT id FROM ticket_types WHERE id = ${ticketTypeId} FOR UPDATE`;
-          const type = await tx.ticketType.findUnique({
-            where: { id: ticketTypeId },
-            include: { tiers: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] } },
-          });
-          if (!type) throw ApiError.notFound('Ticket type not found');
-          if (type.eventId !== event.id)
-            throw ApiError.badRequest('All tickets must be for the same event');
-          if (
-            type.status !== 'ACTIVE' ||
-            (type.salesStart && now < type.salesStart) ||
-            (type.salesEnd && now >= type.salesEnd)
-          )
-            throw ApiError.badRequest('Ticket type is not on sale');
-          if (quantity > type.quantityAvailable)
-            throw ApiError.badRequest('Not enough tickets available');
-          if (quantity > type.maxPerOrder)
-            throw ApiError.badRequest(
-              `Maximum ${type.maxPerOrder} tickets per order for ${type.name}`
-            );
-          if (type.tierInventoryStatus !== 'READY')
-            throw ApiError.conflict('Ticket pricing schedule requires inventory reconciliation');
-          const tier = type.tiers.find(
-            (t) =>
-              t.isActive &&
-              (!t.startsAt || now >= t.startsAt) &&
-              (!t.endsAt || now < t.endsAt) &&
-              (t.quantityLimit === null || t.quantitySold + t.quantityHeld < t.quantityLimit)
-          );
-          // A configured tier schedule must not silently fall back to the base price.
-          if (type.tiers.length && !tier)
-            throw ApiError.badRequest('No ticket pricing tier is currently available');
-          if (
-            tier &&
-            tier.quantityLimit !== null &&
-            tier.quantitySold + tier.quantityHeld + quantity > tier.quantityLimit
-          ) {
-            throw ApiError.badRequest(
-              'Requested quantity exceeds the remaining pricing tier; select fewer tickets'
-            );
-          }
-          const price = tier?.price ?? type.price;
-          subtotal = subtotal.add(price.mul(quantity));
-          allocations.push({ ticketTypeId, quantity, price, tierId: tier?.id ?? null });
-          await tx.ticketType.update({
-            where: { id: ticketTypeId },
-            data: {
-              quantityAvailable: { decrement: quantity },
-              quantityHeld: { increment: quantity },
-            },
-          });
-          if (tier)
-            await tx.ticketTier.update({
-              where: { id: tier.id },
-              data: { quantityHeld: { increment: quantity } },
-            });
-        }
-        let discount = new Decimal(0);
-        let promoId: string | null = null;
-        if (data.promoCode) {
-          const code = data.promoCode.toUpperCase();
-          await tx.$queryRaw`SELECT id FROM promo_codes WHERE code = ${code} FOR UPDATE`;
-          const promo = await tx.promoCode.findUnique({ where: { code } });
-          if (
-            !promo ||
-            promo.organizationId !== event.organizationId ||
-            promo.status !== 'ACTIVE' ||
-            now < promo.validFrom ||
-            now >= promo.validUntil ||
-            (promo.applicableEvents.length && !promo.applicableEvents.includes(event.id)) ||
-            (promo.minOrderValue && subtotal.lessThan(promo.minOrderValue)) ||
-            (promo.maxUses !== null && promo.usesCount + promo.usesHeld >= promo.maxUses)
-          ) {
-            throw ApiError.badRequest('Promo code is unavailable for this order');
-          }
-          discount = Decimal.min(
-            subtotal,
-            promo.discountType === 'PERCENTAGE'
-              ? subtotal.mul(promo.discountValue).div(100).toDecimalPlaces(2)
-              : promo.discountValue
-          );
-          promoId = promo.id;
-          await tx.promoCode.update({
-            where: { id: promo.id },
-            data: { usesHeld: { increment: 1 } },
-          });
-        }
-        const totalAmount = Decimal.max(subtotal.sub(discount), new Decimal(0));
-        const taxAmount = new Decimal(
-          includedHstAmount(totalAmount, configuredHstRate()).toFixed(2)
-        );
-        const created = await tx.order.create({
-          data: {
-            orderNumber: `ORD-${crypto.randomBytes(8).toString('hex').toUpperCase()}`,
-            userId,
-            eventId: event.id,
-            totalAmount,
-            taxAmount,
-            discountAmount: discount,
-            currency: config.paymentCurrency,
-            promoCodeId: promoId,
-            promoReservation: promoId ? 'HELD' : 'NONE',
-            expiresAt: new Date(Date.now() + config.cartExpiryMinutes * 60 * 1000),
-          },
+        let order = await this.reserveOrder(tx, userId, data, orderNumber);
+        if (order.totalAmount.eq(0)) order = await this.confirmOrderInTransaction(tx, order.id);
+        const responseBody = committedOrderJson(order);
+        await tx.orderIdempotencyKey.update({
+          where: { userId_idempotencyKey: { userId, idempotencyKey } },
+          data: { orderId: order.id, responseStatus: 201, responseBody },
         });
-        const tickets: Prisma.TicketCreateManyInput[] = allocations.flatMap((a) =>
-          Array.from({ length: a.quantity }, () => ({
-            orderId: created.id,
-            userId,
-            eventId: event.id,
-            ticketTypeId: a.ticketTypeId,
-            tierId: a.tierId,
-            pricePaid: a.price,
-            inventoryState: 'HELD' as const,
-            barcode: `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,
-            status: 'VALID' as const,
-          }))
+        return responseBody;
+      }, checkoutTransactionOptions());
+      return { kind: 'idempotent', statusCode: 201, body };
+    } catch (error) {
+      if (isOrderIdempotencyConflict(error)) {
+        return this.replayIdempotentResponse(userId, idempotencyKey, requestHash, error);
+      }
+      if (error instanceof ApiError) throw error;
+      if (!isCheckoutBusyError(error)) throw error;
+      const existing = await prisma.orderIdempotencyKey.findUnique({
+        where: { userId_idempotencyKey: { userId, idempotencyKey } },
+      });
+      if (existing && existing.requestHash !== requestHash) {
+        throw ApiError.conflict('Idempotency key was reused with a different request', {
+          code: 'IDEMPOTENCY_KEY_MISMATCH',
+        });
+      }
+      if (
+        existing &&
+        existing.responseBody != null &&
+        existing.responseStatus != null &&
+        existing.responseStatus !== 500
+      ) {
+        return {
+          kind: 'idempotent',
+          statusCode: existing.responseStatus,
+          body: existing.responseBody,
+        };
+      }
+      const kept = await this.releaseTimedOutReservation(orderNumber);
+      if (kept) {
+        const order = await this.finishCommittedOrder(kept);
+        return { kind: 'idempotent', statusCode: 201, body: committedOrderJson(order) };
+      }
+      throw checkoutBusyError();
+    }
+  }
+
+  private async replayIdempotentResponse(
+    userId: string,
+    idempotencyKey: string,
+    requestHash: string,
+    error: unknown
+  ): Promise<{ kind: 'idempotent'; statusCode: number; body: string }> {
+    const existing = await prisma.orderIdempotencyKey.findUnique({
+      where: { userId_idempotencyKey: { userId, idempotencyKey } },
+    });
+    if (!existing) throw error;
+    if (existing.requestHash !== requestHash) {
+      throw ApiError.conflict('Idempotency key was reused with a different request', {
+        code: 'IDEMPOTENCY_KEY_MISMATCH',
+      });
+    }
+    if (existing.responseBody == null || existing.responseStatus == null) {
+      throw ApiError.conflict('Idempotency key is already in progress', {
+        code: 'IDEMPOTENCY_KEY_IN_PROGRESS',
+      });
+    }
+    return {
+      kind: 'idempotent',
+      statusCode: existing.responseStatus,
+      body: existing.responseBody,
+    };
+  }
+
+  /** A free-order confirm that fails after the reservation committed still returns that order. */
+  private async finishCommittedOrder(order: Order): Promise<Order> {
+    if (!order.totalAmount.eq(0)) return order;
+    try {
+      return await this.confirmOrder(order.id);
+    } catch (error) {
+      const persisted = await prisma.order.findUnique({ where: { id: order.id } });
+      if (persisted) return persisted;
+      throw error;
+    }
+  }
+
+  /**
+   * Timeout race: Postgres can commit while the Prisma client rejects. Release
+   * that hold. If it cannot be released, return the row so the response is 201.
+   */
+  private async releaseTimedOutReservation(orderNumber: string): Promise<Order | null> {
+    let existing: Order | null = null;
+    try {
+      existing = await prisma.order.findUnique({ where: { orderNumber } });
+    } catch {
+      return null;
+    }
+    if (!existing || existing.status === 'CANCELLED') return null;
+    if (existing.status !== 'PENDING') return existing;
+    try {
+      await this.cancelOrder(existing.id);
+      return null;
+    } catch (error) {
+      if (error instanceof ApiError && error.statusCode === 404) return null;
+      const still = await prisma.order
+        .findUnique({ where: { id: existing.id } })
+        .catch(() => existing);
+      if (!still || still.status === 'CANCELLED') return null;
+      return still;
+    }
+  }
+
+  private async reserveOrder(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    data: CreateOrderInput,
+    orderNumber: string
+  ): Promise<Order> {
+    const items = this.orderLines(data);
+    const first = await tx.ticketType.findUnique({
+      where: { id: items[0][0] },
+      select: { eventId: true },
+    });
+    if (!first) throw ApiError.notFound('Ticket type not found');
+    // Event cancellation and checkout share this lock. Orders created before
+    // cancellation remain visible to its subsequent cancellation pass.
+    await tx.$queryRaw`SELECT id FROM events WHERE id = ${first.eventId} FOR UPDATE`;
+    const event = await tx.event.findUniqueOrThrow({ where: { id: first.eventId } });
+    const now = new Date();
+    if (
+      event.deletedAt ||
+      !['PUBLISHED', 'ON_SALE'].includes(event.status) ||
+      (event.salesStart && now < event.salesStart) ||
+      (event.salesEnd && now >= event.salesEnd) ||
+      (event.startDatetime && now >= event.startDatetime)
+    ) {
+      throw ApiError.badRequest('Event is not available for purchase');
+    }
+    if (event.salesPaused)
+      throw ApiError.conflict(
+        'Ticket sales are paused for a moment. Orders and tickets you already have are safe. Please check back soon.',
+        { code: 'SALES_PAUSED' }
+      );
+    let subtotal = new Decimal(0);
+    const allocations: Array<{
+      ticketTypeId: string;
+      quantity: number;
+      price: Decimal;
+      tierId: string | null;
+    }> = [];
+    for (const [ticketTypeId, quantity] of items) {
+      await tx.$queryRaw`SELECT id FROM ticket_types WHERE id = ${ticketTypeId} FOR UPDATE`;
+      const type = await tx.ticketType.findUnique({
+        where: { id: ticketTypeId },
+        include: { tiers: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] } },
+      });
+      if (!type) throw ApiError.notFound('Ticket type not found');
+      if (type.eventId !== event.id)
+        throw ApiError.badRequest('All tickets must be for the same event');
+      if (
+        type.status !== 'ACTIVE' ||
+        (type.salesStart && now < type.salesStart) ||
+        (type.salesEnd && now >= type.salesEnd)
+      )
+        throw ApiError.badRequest('Ticket type is not on sale');
+      if (quantity > type.quantityAvailable)
+        throw ApiError.conflict('Not enough tickets available', { code: 'SOLD_OUT' });
+      if (quantity > type.maxPerOrder)
+        throw ApiError.badRequest(`Maximum ${type.maxPerOrder} tickets per order for ${type.name}`);
+      if (type.tierInventoryStatus !== 'READY')
+        throw ApiError.conflict('Ticket pricing schedule requires inventory reconciliation');
+      const tier = type.tiers.find(
+        (t) =>
+          t.isActive &&
+          (!t.startsAt || now >= t.startsAt) &&
+          (!t.endsAt || now < t.endsAt) &&
+          (t.quantityLimit === null || t.quantitySold + t.quantityHeld < t.quantityLimit)
+      );
+      // A configured tier schedule must not silently fall back to the base price.
+      if (type.tiers.length && !tier)
+        throw ApiError.badRequest('No ticket pricing tier is currently available');
+      if (
+        tier &&
+        tier.quantityLimit !== null &&
+        tier.quantitySold + tier.quantityHeld + quantity > tier.quantityLimit
+      ) {
+        throw ApiError.badRequest(
+          'Requested quantity exceeds the remaining pricing tier; select fewer tickets'
         );
-        await tx.ticket.createMany({ data: tickets });
-        return created;
+      }
+      const price = tier?.price ?? type.price;
+      subtotal = subtotal.add(price.mul(quantity));
+      allocations.push({ ticketTypeId, quantity, price, tierId: tier?.id ?? null });
+      await tx.ticketType.update({
+        where: { id: ticketTypeId },
+        data: {
+          quantityAvailable: { decrement: quantity },
+          quantityHeld: { increment: quantity },
+        },
+      });
+      if (tier)
+        await tx.ticketTier.update({
+          where: { id: tier.id },
+          data: { quantityHeld: { increment: quantity } },
+        });
+    }
+    let discount = new Decimal(0);
+    let promoId: string | null = null;
+    if (data.promoCode) {
+      const code = data.promoCode.toUpperCase();
+      await tx.$queryRaw`SELECT id FROM promo_codes WHERE code = ${code} FOR UPDATE`;
+      const promo = await tx.promoCode.findUnique({ where: { code } });
+      if (
+        !promo ||
+        promo.organizationId !== event.organizationId ||
+        promo.status !== 'ACTIVE' ||
+        now < promo.validFrom ||
+        now >= promo.validUntil ||
+        (promo.applicableEvents.length && !promo.applicableEvents.includes(event.id)) ||
+        (promo.minOrderValue && subtotal.lessThan(promo.minOrderValue)) ||
+        (promo.maxUses !== null && promo.usesCount + promo.usesHeld >= promo.maxUses)
+      ) {
+        throw ApiError.badRequest('Promo code is unavailable for this order');
+      }
+      discount = Decimal.min(
+        subtotal,
+        promo.discountType === 'PERCENTAGE'
+          ? subtotal.mul(promo.discountValue).div(100).toDecimalPlaces(2)
+          : promo.discountValue
+      );
+      promoId = promo.id;
+      await tx.promoCode.update({
+        where: { id: promo.id },
+        data: { usesHeld: { increment: 1 } },
+      });
+    }
+    const totalAmount = Decimal.max(subtotal.sub(discount), new Decimal(0));
+    const taxAmount = new Decimal(includedHstAmount(totalAmount, configuredHstRate()).toFixed(2));
+    const created = await tx.order.create({
+      data: {
+        orderNumber,
+        userId,
+        eventId: event.id,
+        totalAmount,
+        taxAmount,
+        discountAmount: discount,
+        currency: config.paymentCurrency,
+        promoCodeId: promoId,
+        promoReservation: promoId ? 'HELD' : 'NONE',
+        expiresAt: new Date(Date.now() + config.cartExpiryMinutes * 60 * 1000),
       },
-      { timeout: 15000 }
+    });
+    const tickets: Prisma.TicketCreateManyInput[] = allocations.flatMap((a) =>
+      Array.from({ length: a.quantity }, () => ({
+        orderId: created.id,
+        userId,
+        eventId: event.id,
+        ticketTypeId: a.ticketTypeId,
+        tierId: a.tierId,
+        pricePaid: a.price,
+        inventoryState: 'HELD' as const,
+        barcode: `TIX-${crypto.randomBytes(12).toString('hex').toUpperCase()}`,
+        status: 'VALID' as const,
+      }))
     );
-    return order.totalAmount.eq(0) ? this.confirmOrder(order.id) : order;
+    await tx.ticket.createMany({ data: tickets });
+    return created;
   }
 
   /**
@@ -515,6 +692,91 @@ export class OrderService {
         throw ApiError.badRequest('Cannot cancel order that has changed');
       return this.cancelOrderInTransaction(tx, id, scope);
     });
+  }
+
+  /**
+   * Expiry sweep only. Same lock and statement limits as checkout, so a row
+   * held by a saturated order create fails in about two seconds and the sweep
+   * can move on. The order stays PENDING and the next sweep retries it.
+   */
+  async cancelExpiredOrder(id: string): Promise<Order> {
+    return prisma.$transaction(async (tx) => {
+      await applyCheckoutDbLimits(tx);
+      return this.cancelOrderInTransaction(tx, id);
+    }, checkoutTransactionOptions());
+  }
+
+  /**
+   * Claim one expired PENDING order that no other replica is already cancelling.
+   *
+   * The advisory lock is per order and lasts until this transaction ends, so
+   * another replica's sweep takes the next row. It is not a row lock: the
+   * conditional UPDATE still waits on a confirmation that holds the order,
+   * and that wait is bounded by the checkout lock timeout. Skipping locked
+   * rows would also skip that confirmation and leave the hold pending.
+   *
+   * A cancel that throws rolls back, leaves the order PENDING, and is returned
+   * as failed so this sweep can move on. The next minute retries it.
+   */
+  async claimNextExpiredOrder(excludeIds: readonly string[] = []): Promise<ExpiredOrderClaim> {
+    let claimed: { id: string; orderNumber: string } | undefined;
+    try {
+      const row = await prisma.$transaction(async (tx) => {
+        await applyCheckoutDbLimits(tx);
+        const exclude = excludeIds.length
+          ? Prisma.sql`AND id NOT IN (${Prisma.join([...excludeIds])})`
+          : Prisma.empty;
+        const rows = await tx.$queryRaw<Array<{ id: string; order_number: string }>>`
+          SELECT id, order_number
+          FROM orders
+          WHERE status = 'PENDING'::"OrderStatus"
+            AND expires_at < NOW()
+            ${exclude}
+          ORDER BY expires_at ASC, id ASC
+          LIMIT 1
+        `;
+        const next = rows[0];
+        if (!next) return null;
+        const locks = await tx.$queryRaw<Array<{ locked: boolean }>>`
+          SELECT pg_try_advisory_xact_lock(hashtextextended(${next.id}, 0)) AS locked
+        `;
+        if (locks[0]?.locked !== true) {
+          return { skipped: true as const, id: next.id, orderNumber: next.order_number };
+        }
+        // The other replica can commit between this transaction's SELECT and
+        // this lock. READ COMMITTED then sees that commit: the conditional
+        // update matches nothing, and this claim must not count as a cancel.
+        claimed = { id: next.id, orderNumber: next.order_number };
+        const cancelled = await this.cancelExpiredHoldIfPending(tx, next.id);
+        if (!cancelled) {
+          return { skipped: true as const, id: next.id, orderNumber: next.order_number };
+        }
+        return { skipped: false as const, id: next.id, orderNumber: next.order_number };
+      }, checkoutTransactionOptions());
+      if (!row) return { status: 'empty' };
+      if (row.skipped) return { status: 'skipped', id: row.id, orderNumber: row.orderNumber };
+      return { status: 'cancelled', id: row.id, orderNumber: row.orderNumber };
+    } catch (error) {
+      if (!claimed) throw error;
+      return { status: 'failed', id: claimed.id, orderNumber: claimed.orderNumber, error };
+    }
+  }
+
+  /**
+   * Cancel one expired hold. The status change matches only a PENDING row, so a
+   * replica that locks after another replica committed does not release
+   * inventory again. Returns false when the order is no longer PENDING.
+   */
+  async cancelExpiredHoldIfPending(tx: Prisma.TransactionClient, id: string): Promise<boolean> {
+    const affected = await tx.$executeRaw`
+      UPDATE orders
+      SET status = 'CANCELLED'::"OrderStatus", updated_at = NOW()
+      WHERE id = ${id} AND status = 'PENDING'::"OrderStatus"
+    `;
+    if (affected !== 1) return false;
+    await transitionInventory(tx, id, 'HELD', 'RELEASED');
+    await transitionPromo(tx, id, 'RELEASED');
+    return true;
   }
 
   async cancelOrderInTransaction(

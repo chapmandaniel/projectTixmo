@@ -1,3 +1,5 @@
+import { staffInvitationTtlHours } from './staffInvitation';
+
 // Email template types
 export interface EmailTemplate {
   subject: string;
@@ -377,30 +379,35 @@ export function welcomeEmail(data: { name: string }): EmailTemplate {
     `,
   };
 }
-// User invitation email
+// Staff invitation email. Passwordless invites link to /invite and ask the
+// recipient to set a password. Accounts created with a password link to /login.
 export function userInvitationEmail(data: {
   name: string;
   email: string;
-  password?: string;
   loginUrl: string;
+  setPassword?: boolean;
 }): EmailTemplate {
-  const passwordSection = data.password
-    ? `
-    <div style="background-color: #f3f4f6; padding: 10px; margin: 10px 0; border-radius: 4px;">
-      <p style="margin: 0; font-weight: bold;">Temporary Password:</p>
-      <p style="margin: 5px 0; font-family: monospace; font-size: 16px;">${data.password}</p>
-    </div>
-    <p>Please change your password after logging in.</p>
-    `
+  const name = escapeReceiptHtml(data.name);
+  const email = escapeReceiptHtml(data.email);
+  const loginUrl = escapeReceiptHtml(data.loginUrl);
+  const setPassword = data.setPassword === true;
+  const actionLabel = setPassword ? 'Set your password' : 'Log In to Tixmo';
+  const expiryNote = setPassword
+    ? `This link expires in ${staffInvitationTtlHours()} hours. If it expires, ask your admin for a new invite.`
     : '';
-
-  const passwordText = data.password
-    ? `
-    Temporary Password: ${data.password}
-    
-    Please change your password after logging in.
-    `
-    : '';
+  const textLines = [
+    'Welcome to Tixmo!',
+    '',
+    `Hi ${data.name},`,
+    '',
+    'An account has been created for you on Tixmo.',
+    '',
+    `Username: ${data.email}`,
+    '',
+    setPassword ? `Set your password: ${data.loginUrl}` : `Log in here: ${data.loginUrl}`,
+  ];
+  if (expiryNote) textLines.push('', expiryNote);
+  textLines.push('', 'Tixmo - Event Ticketing Platform');
 
   return {
     subject: 'You have been invited to Tixmo',
@@ -423,13 +430,11 @@ export function userInvitationEmail(data: {
               <h1>Welcome to Tixmo!</h1>
             </div>
             <div class="content">
-              <p>Hi ${data.name},</p>
+              <p>Hi ${name},</p>
               <p>An account has been created for you on Tixmo.</p>
-              
-              <p><strong>Username:</strong> ${data.email}</p>
-              ${passwordSection}
-              
-              <a href="${data.loginUrl}" class="button">Log In to Tixmo</a>
+              <p><strong>Username:</strong> ${email}</p>
+              <a href="${loginUrl}" class="button">${actionLabel}</a>
+              ${expiryNote ? `<p>${escapeReceiptHtml(expiryNote)}</p>` : ''}
             </div>
             <div class="footer">
               <p>Tixmo - Event Ticketing Platform</p>
@@ -438,20 +443,7 @@ export function userInvitationEmail(data: {
         </body>
       </html>
     `,
-    text: `
-      Welcome to Tixmo!
-      
-      Hi ${data.name},
-      
-      An account has been created for you on Tixmo.
-      
-      Username: ${data.email}
-      ${passwordText}
-      
-      Log in here: ${data.loginUrl}
-      
-      Tixmo - Event Ticketing Platform
-    `,
+    text: textLines.join('\n'),
   };
 }
 

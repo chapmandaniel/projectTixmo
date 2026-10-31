@@ -80,6 +80,7 @@ model User {
   // Relations
   buyerPasswordReset BuyerPasswordReset?
   orders            Order[]
+  orderIdempotencyKeys OrderIdempotencyKey[]
   tickets           Ticket[]
   notifications     Notification[]
   notificationPreference NotificationPreference?
@@ -336,8 +337,30 @@ model Order {
   tickets           Ticket[]
   paymentAttempt    PaymentAttempt?
   refunds           PaymentRefund[]
+  orderIdempotencyKey OrderIdempotencyKey?
 
   @@map("orders")
+}
+
+// One successful POST /orders response per buyer and Idempotency-Key.
+// The row is inserted before inventory changes, in the same transaction, so a
+// concurrent duplicate blocks on this unique key instead of taking a second hold.
+// Response text is stored so a replay returns the original status and body.
+// Cancelling an order does not delete it, so the key keeps replaying that response.
+model OrderIdempotencyKey {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idempotencyKey String   @map("idempotency_key") @db.VarChar(255)
+  requestHash    String   @map("request_hash")
+  orderId        String?  @unique @map("order_id")
+  order          Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  responseStatus Int?     @map("response_status")
+  responseBody   String?  @map("response_body") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, idempotencyKey], map: "order_idempotency_user_key")
+  @@map("order_idempotency_keys")
 }
 
 model PaymentWebhookEvent {

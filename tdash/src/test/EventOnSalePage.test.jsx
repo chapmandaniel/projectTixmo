@@ -82,6 +82,9 @@ describe('customer event on-sale page', () => {
         expect(
             screen.getByRole('heading', { name: 'Neon Nights' }),
         ).toBeInTheDocument();
+        expect(screen.getByText('Fri, Nov 20, 8:00 p.m. NST')).toBeInTheDocument();
+        expect(screen.getByText('8:00 p.m. NST')).toBeInTheDocument();
+        expect(screen.queryByText('America/St_Johns')).not.toBeInTheDocument();
         expect(
             screen.getByText('<b>Plain event description</b>'),
         ).toBeInTheDocument();
