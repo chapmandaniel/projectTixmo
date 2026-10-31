@@ -115,21 +115,16 @@ describe('Concurrency Tests', () => {
     const responses = await Promise.all(requests);
 
     const successCount = responses.filter((res) => res.status === 201).length;
-    const failCount = responses.filter((res) => res.status === 400).length;
-    const conflictCount = responses.filter((res) => res.status === 409).length; // System busy
+    const soldOut = responses.filter(
+      (res) =>
+        res.status === 409 &&
+        res.body.message === 'Not enough tickets available' &&
+        res.body.errors?.code === 'SOLD_OUT'
+    );
 
-    console.log(`Success: ${successCount}, Fail: ${failCount}, Conflict: ${conflictCount}`);
-
-    // Check that we didn't oversell
-    expect(successCount).toBeLessThanOrEqual(TOTAL_TICKETS);
-
-    // We expect exactly TOTAL_TICKETS to be sold because we have more requests than tickets
     expect(successCount).toBe(TOTAL_TICKETS);
-
-    // Check that remaining failed with "Not enough tickets" (400) not "System busy" (409)
-    // Since we removed the lock, we expect 0 conflicts.
-    expect(conflictCount).toBe(0);
-    expect(failCount).toBe(REQUEST_COUNT - TOTAL_TICKETS);
+    expect(soldOut).toHaveLength(REQUEST_COUNT - TOTAL_TICKETS);
+    expect(successCount + soldOut.length).toBe(responses.length);
 
     // Verify database state
     const ticketType = await prisma.ticketType.findUnique({

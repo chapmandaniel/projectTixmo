@@ -126,8 +126,9 @@ axiosInstance.interceptors.response.use(
             }
         }
 
-        // Handle Waiting Room (503)
-        if (status === 503 && error.response?.data?.code === 'WAITING_ROOM_ACTIVE') {
+        // Waiting room and a saturated checkout both ask the buyer to retry manually.
+        const busyCode = error.response?.data?.code;
+        if (status === 503 && (busyCode === 'WAITING_ROOM_ACTIVE' || busyCode === 'CHECKOUT_BUSY')) {
             const delay = error.response.data.retryAfter;
             const retryAfter = Number.isSafeInteger(delay) && delay > 0 && delay <= 60 ? delay : 5;
             window.dispatchEvent(new CustomEvent('tixmo:waiting-room', { detail: { retryAfter } }));
@@ -187,8 +188,8 @@ export const api = {
         const response = await axiosInstance.get(url);
         return normalizeResponse(response.data);
     },
-    post: async (url, data) => {
-        const response = await axiosInstance.post(url, data);
+    post: async (url, data, config) => {
+        const response = await axiosInstance.post(url, data, config);
         return normalizeResponse(response.data);
     },
     put: async (url, data) => {

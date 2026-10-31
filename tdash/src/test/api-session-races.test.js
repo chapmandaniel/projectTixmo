@@ -61,6 +61,7 @@ describe('API session replacement races', () => {
     });
     it.each([
         [503, 'WAITING_ROOM_ACTIVE', 7, true, 7],
+        [503, 'CHECKOUT_BUSY', 2, true, 2],
         [503, 'WAITING_ROOM_ACTIVE', '7', true, 5],
         [503, 'WAITING_ROOM_ACTIVE', -1, true, 5],
         [503, 'WAITING_ROOM_ACTIVE', 0, true, 5],
