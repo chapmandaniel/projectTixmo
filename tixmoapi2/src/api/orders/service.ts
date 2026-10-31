@@ -69,6 +69,12 @@ interface PaginatedOrders {
   };
 }
 
+export type ExpiredOrderClaim =
+  | { status: 'empty' }
+  | { status: 'skipped'; id: string; orderNumber: string }
+  | { status: 'cancelled'; id: string; orderNumber: string }
+  | { status: 'failed'; id: string; orderNumber: string; error: unknown };
+
 export class OrderService {
   // Only authenticated HTTP entrypoints pass actorId. Omission is reserved for
   // trusted payment/free-order/expiry jobs; never populate it from query input.
@@ -698,6 +704,79 @@ export class OrderService {
       await applyCheckoutDbLimits(tx);
       return this.cancelOrderInTransaction(tx, id);
     }, checkoutTransactionOptions());
+  }
+
+  /**
+   * Claim one expired PENDING order that no other replica is already cancelling.
+   *
+   * The advisory lock is per order and lasts until this transaction ends, so
+   * another replica's sweep takes the next row. It is not a row lock: the
+   * conditional UPDATE still waits on a confirmation that holds the order,
+   * and that wait is bounded by the checkout lock timeout. Skipping locked
+   * rows would also skip that confirmation and leave the hold pending.
+   *
+   * A cancel that throws rolls back, leaves the order PENDING, and is returned
+   * as failed so this sweep can move on. The next minute retries it.
+   */
+  async claimNextExpiredOrder(excludeIds: readonly string[] = []): Promise<ExpiredOrderClaim> {
+    let claimed: { id: string; orderNumber: string } | undefined;
+    try {
+      const row = await prisma.$transaction(async (tx) => {
+        await applyCheckoutDbLimits(tx);
+        const exclude = excludeIds.length
+          ? Prisma.sql`AND id NOT IN (${Prisma.join([...excludeIds])})`
+          : Prisma.empty;
+        const rows = await tx.$queryRaw<Array<{ id: string; order_number: string }>>`
+          SELECT id, order_number
+          FROM orders
+          WHERE status = 'PENDING'::"OrderStatus"
+            AND expires_at < NOW()
+            ${exclude}
+          ORDER BY expires_at ASC, id ASC
+          LIMIT 1
+        `;
+        const next = rows[0];
+        if (!next) return null;
+        const locks = await tx.$queryRaw<Array<{ locked: boolean }>>`
+          SELECT pg_try_advisory_xact_lock(hashtextextended(${next.id}, 0)) AS locked
+        `;
+        if (locks[0]?.locked !== true) {
+          return { skipped: true as const, id: next.id, orderNumber: next.order_number };
+        }
+        // The other replica can commit between this transaction's SELECT and
+        // this lock. READ COMMITTED then sees that commit: the conditional
+        // update matches nothing, and this claim must not count as a cancel.
+        claimed = { id: next.id, orderNumber: next.order_number };
+        const cancelled = await this.cancelExpiredHoldIfPending(tx, next.id);
+        if (!cancelled) {
+          return { skipped: true as const, id: next.id, orderNumber: next.order_number };
+        }
+        return { skipped: false as const, id: next.id, orderNumber: next.order_number };
+      }, checkoutTransactionOptions());
+      if (!row) return { status: 'empty' };
+      if (row.skipped) return { status: 'skipped', id: row.id, orderNumber: row.orderNumber };
+      return { status: 'cancelled', id: row.id, orderNumber: row.orderNumber };
+    } catch (error) {
+      if (!claimed) throw error;
+      return { status: 'failed', id: claimed.id, orderNumber: claimed.orderNumber, error };
+    }
+  }
+
+  /**
+   * Cancel one expired hold. The status change matches only a PENDING row, so a
+   * replica that locks after another replica committed does not release
+   * inventory again. Returns false when the order is no longer PENDING.
+   */
+  async cancelExpiredHoldIfPending(tx: Prisma.TransactionClient, id: string): Promise<boolean> {
+    const affected = await tx.$executeRaw`
+      UPDATE orders
+      SET status = 'CANCELLED'::"OrderStatus", updated_at = NOW()
+      WHERE id = ${id} AND status = 'PENDING'::"OrderStatus"
+    `;
+    if (affected !== 1) return false;
+    await transitionInventory(tx, id, 'HELD', 'RELEASED');
+    await transitionPromo(tx, id, 'RELEASED');
+    return true;
   }
 
   async cancelOrderInTransaction(
