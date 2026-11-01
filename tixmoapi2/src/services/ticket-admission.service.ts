@@ -33,7 +33,8 @@ export async function lockedTicket(tx: Prisma.TransactionClient, id: string) {
 export function ticketFailure(
   ticket: NonNullable<Awaited<ReturnType<typeof lockedTicket>>>,
   entry: boolean,
-  enforceTime: boolean
+  enforceTime: boolean,
+  at: Date = new Date()
 ): AdmissionDenial | undefined {
   // Disputed admission is void. This sits ahead of the VALID/USED/CANCELLED
   // cases so a still-VALID ticket (closed dispute arrived first) and a future
@@ -56,10 +57,10 @@ export function ticketFailure(
   if (
     enforceTime &&
     ticket.event.startDatetime &&
-    new Date() < new Date(ticket.event.startDatetime.getTime() - DOORS_BEFORE_START_MS)
+    at < new Date(ticket.event.startDatetime.getTime() - DOORS_BEFORE_START_MS)
   )
     return { reason: 'Event has not started yet' };
-  if (enforceTime && ticket.event.endDatetime && new Date() > ticket.event.endDatetime)
+  if (enforceTime && ticket.event.endDatetime && at > ticket.event.endDatetime)
     return { reason: 'Event has already ended' };
   return undefined;
 }
