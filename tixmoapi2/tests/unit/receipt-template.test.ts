@@ -194,6 +194,19 @@ describe('buyer receipt copy', () => {
     );
   });
 
+  it('does not add a second period when the seller name already ends one', () => {
+    const punctuated = render({ sellerName: 'Tixmo Ltd.' });
+    const plain = render({ sellerName: 'Harbour Tickets' });
+    expect(punctuated.html).toContain('<p>Sold by Tixmo Ltd.</p>');
+    expect(punctuated.html).not.toContain('Ltd..</p>');
+    expect(punctuated.text).toContain('Sold by Tixmo Ltd.');
+    expect(punctuated.text).not.toContain('Ltd..');
+    expect(plain.html).toContain('<p>Sold by Harbour Tickets</p>');
+    expect(plain.html).not.toContain('Harbour Tickets.');
+    expect(plain.text).toContain('Sold by Harbour Tickets');
+    expect(plain.text).not.toContain('Sold by Harbour Tickets.');
+  });
+
   it('prints policy links only for valid https URLs', () => {
     const hidden = render();
     const rejected = render({

@@ -811,8 +811,10 @@ export class EventService {
   }
 
   /**
-   * List public events (no auth required)
-   * Only shows PUBLISHED, ON_SALE, and SOLD_OUT events.
+   * List public events (no auth required).
+   * Only shows PUBLISHED, ON_SALE, and SOLD_OUT events whose end time is still
+   * in the future. A null end time is hidden; publishing already requires both dates.
+   * Single-event buyer links stay on getPublicEventBySlug and are not date-filtered.
    */
   async listPublicEvents(params: {
     page?: number;
@@ -834,6 +836,7 @@ export class EventService {
     const where: Prisma.EventWhereInput = {
       deletedAt: null,
       status: { in: publicStatuses },
+      endDatetime: { gt: new Date() },
     };
 
     if (category) {
