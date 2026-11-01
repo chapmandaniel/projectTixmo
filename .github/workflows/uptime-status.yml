@@ -47,8 +47,7 @@ jobs:
             exit 1
           fi
 
-          # TODO: revert to /ready after the Oct 29 production upgrade (runbook post-step)
-          TIXMO_STATUS_READY_PATH=/health \
+          TIXMO_STATUS_READY_PATH=/ready \
           TIXMO_API_BASE_URL="${PRODUCTION_API_BASE_URL:-}" \
           TIXMO_DASHBOARD_URL="${PRODUCTION_DASHBOARD_URL:-}" \
           npm run status:check

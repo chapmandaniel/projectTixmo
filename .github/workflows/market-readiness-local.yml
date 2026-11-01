@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/market-readiness-local.yml'
+      - '.github/workflows/uptime-status.yml'
       - 'package.json'
       - 'scripts/**'
       - 'tdash/**'
@@ -15,6 +16,7 @@ on:
       - master
     paths:
       - '.github/workflows/market-readiness-local.yml'
+      - '.github/workflows/uptime-status.yml'
       - 'package.json'
       - 'scripts/**'
       - 'tdash/**'
