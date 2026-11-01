@@ -98,6 +98,7 @@ export class NotificationService {
         hstNumber: data.hstNumber,
         hstAmountLine: data.hstAmountLine,
         sellerName: config.sellerName,
+        organizationName: data.organizationName,
         supportEmail: config.supportEmail,
         refundPolicyUrl: config.refundPolicyUrl,
         termsUrl: config.termsUrl,

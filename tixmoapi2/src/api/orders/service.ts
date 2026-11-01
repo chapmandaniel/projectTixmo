@@ -598,7 +598,7 @@ export class OrderService {
       where: { id: orderId },
       include: {
         tickets: { include: { ticketType: { select: { name: true } } } },
-        event: { include: { venue: true } },
+        event: { include: { venue: true, organization: { select: { name: true } } } },
         user: true,
       },
     });
@@ -658,6 +658,7 @@ export class OrderService {
           hstRate,
           currency
         ),
+        organizationName: order.event.organization.name,
       });
       if (!delivered) throw ApiError.internal('Receipt could not be delivered');
       await prisma.order.updateMany({

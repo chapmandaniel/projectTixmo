@@ -114,5 +114,33 @@ describe('AnalyticsView', () => {
         expect(screen.getByText('Revenue, orders, tickets, customers, and purchase timing come from Tixmo orders and event records.')).toBeInTheDocument();
         expect(screen.getByText('GA4 web metrics only')).toBeInTheDocument();
         expect(screen.getByText('All Tixmo events')).toBeInTheDocument();
+        expect(screen.getByText('Recorded paid orders by day of week and hour (UTC).')).toBeInTheDocument();
+    });
+
+    it('labels the purchase heatmap with the aggregation timezone from the sales report', async () => {
+        apiGet.mockImplementation((url) => {
+            if (url.startsWith('/analytics/sales')) {
+                return Promise.resolve({
+                    data: {
+                        aggregationTimezone: 'America/St_Johns',
+                        totalRevenue: 0,
+                        totalOrders: 0,
+                        totalTicketsSold: 0,
+                        salesByDay: [],
+                        salesByEvent: [],
+                    },
+                });
+            }
+            if (url.startsWith('/events')) return Promise.resolve({ data: { events: [] } });
+            if (url.startsWith('/analytics/')) return Promise.resolve({ data: {} });
+            if (url === '/organizations/org-1') return Promise.resolve({ data: { id: 'org-1', name: 'Tixmo QA Staging', settings: {} } });
+            return Promise.resolve({ data: {} });
+        });
+        render(
+            <MemoryRouter>
+                <AnalyticsView isDark user={{ organizationId: 'org-1' }} />
+            </MemoryRouter>
+        );
+        expect(await screen.findByText('Recorded paid orders by day of week and hour (America/St_Johns).')).toBeInTheDocument();
     });
 });

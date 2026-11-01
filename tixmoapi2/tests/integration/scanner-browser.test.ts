@@ -269,7 +269,8 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
             slug: event,
             tags: [],
             status: 'PUBLISHED',
-            startDatetime: new Date(Date.now() + 86400000),
+            startDatetime: new Date(Date.now() - 60 * 60 * 1000),
+            endDatetime: new Date(Date.now() + 4 * 60 * 60 * 1000),
           },
         })
       );

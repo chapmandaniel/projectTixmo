@@ -550,6 +550,10 @@ describe('dispute webhooks and staff void', () => {
     });
     expect(denied.body.data.reason).not.toBe('Ticket credential must be reissued');
     expect(audit.createdAt).toBeInstanceOf(Date);
+    await prisma.event.update({
+      where: { id: eventId },
+      data: { startDatetime: new Date(Date.now() - 60 * 60 * 1000) },
+    });
     const admitted = await scan(second);
     expect(admitted.body.data.valid).toBe(true);
     expect(admitted.body.data.reason).toBeNull();

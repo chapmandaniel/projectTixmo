@@ -83,8 +83,10 @@ describe('receipt wallet retrieval', () => {
     expect(email.text).toContain('ORDER-123');
     expect(email.text).not.toContain('Your tickets will be available in your account shortly.');
     expect(email.html).not.toMatch(/qrCode|resetToken|accessToken|password=/i);
-    expect(email.html).not.toContain('Sold by');
-    expect(email.text).not.toContain('Sold by');
+    expect(email.html).toContain('Sold by Tixmo Ltd.');
+    expect(email.text).toContain('Sold by Tixmo Ltd.');
+    expect(email.html).not.toContain('Quincy');
+    expect(email.text).not.toContain('Quincy');
     expect(email.html).toContain('Questions? <a href="mailto:info@tixmo.co">info@tixmo.co</a>');
     expect(email.text).toContain('Questions? info@tixmo.co');
     expect(email.html).toContain(
@@ -153,14 +155,33 @@ describe('buyer receipt copy', () => {
   ): ReturnType<typeof orderConfirmationEmail> =>
     orderConfirmationEmail({ ...receipt, ...extra }, 'https://dashboard.example.test');
 
-  it('leaves the seller line off when TIXMO_SELLER_NAME is unset and escapes it when set', () => {
+  it('defaults the seller line to Tixmo Ltd. and escapes a configured legal name', () => {
     const unset = render();
     const blank = render({ sellerName: '   ' });
     const named = render({ sellerName: 'Acme <script> & "Co"' });
+    const legacy = render({
+      sellerName:
+        'Tixmo Ltd., as ticketing agent for Quincy Enterprises Ltd. (Mighty Quinton Concerts), the event organizer',
+      organizationName: 'Tixmo QA Staging',
+    });
+    const quincyOnly = render({
+      sellerName: 'Quincy Enterprises Ltd. (Mighty Quinton Concerts)',
+      organizationName: 'Tixmo QA Staging',
+    });
     for (const email of [unset, blank]) {
-      expect(email.html).not.toContain('Sold by');
-      expect(email.text).not.toContain('Sold by');
+      expect(email.html).toContain('Sold by Tixmo Ltd.');
+      expect(email.text).toContain('Sold by Tixmo Ltd.');
+      expect(email.html).not.toContain('Quincy');
+      expect(email.text).not.toContain('as ticketing agent for');
     }
+    expect(legacy.html).toContain('Sold by Tixmo Ltd., as ticketing agent for Tixmo QA Staging');
+    expect(legacy.text).toContain('Sold by Tixmo Ltd., as ticketing agent for Tixmo QA Staging');
+    expect(legacy.html).not.toContain('Quincy');
+    expect(legacy.text).not.toContain('Mighty Quinton');
+    expect(quincyOnly.html).toContain(
+      'Sold by Tixmo Ltd., as ticketing agent for Tixmo QA Staging'
+    );
+    expect(quincyOnly.html).not.toContain('Quincy');
     expect(named.html).toContain('Sold by Acme &lt;script&gt; &amp; &quot;Co&quot;');
     expect(named.html).not.toContain('<script>');
     expect(named.text).toContain('Sold by Acme <script> & "Co"');
@@ -252,8 +273,9 @@ describe('buyer receipt copy', () => {
     const original = { ...receiptEnv.config };
     try {
       await service.sendOrderConfirmation({ ...receipt, to: 'buyer@example.test' });
-      expect(send.mock.calls[0][0].html).not.toContain('Sold by');
-      expect(send.mock.calls[0][0].text).not.toContain('Sold by');
+      expect(send.mock.calls[0][0].html).toContain('Sold by Tixmo Ltd.');
+      expect(send.mock.calls[0][0].text).toContain('Sold by Tixmo Ltd.');
+      expect(send.mock.calls[0][0].html).not.toContain('Quincy');
 
       receiptEnv.config.sellerName = 'Seller <b>';
       receiptEnv.config.supportEmail = 'not-an-email';
@@ -272,6 +294,19 @@ describe('buyer receipt copy', () => {
       expect(sent.text).toContain('Terms of Sale: https://policies.example.test/terms');
       expect(sent.html).toContain('mailto:info@tixmo.co');
       expect(sent.text).toContain('Questions? info@tixmo.co');
+
+      receiptEnv.config.sellerName =
+        'Tixmo Ltd., as ticketing agent for Quincy Enterprises Ltd. (Mighty Quinton Concerts), the event organizer';
+      await service.sendOrderConfirmation({
+        ...receipt,
+        to: 'buyer@example.test',
+        organizationName: 'Tixmo QA Staging',
+      });
+      const staged = send.mock.calls[2][0];
+      expect(staged.html).toContain('Sold by Tixmo Ltd., as ticketing agent for Tixmo QA Staging');
+      expect(staged.text).toContain('Sold by Tixmo Ltd., as ticketing agent for Tixmo QA Staging');
+      expect(staged.html).not.toContain('Quincy');
+      expect(staged.text).not.toContain('Mighty Quinton');
     } finally {
       Object.assign(receiptEnv.config, original);
     }

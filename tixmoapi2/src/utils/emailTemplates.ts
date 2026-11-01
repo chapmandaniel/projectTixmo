@@ -1,3 +1,4 @@
+import { receiptSellerName } from './receiptSeller';
 import { staffInvitationTtlHours } from './staffInvitation';
 
 // Email template types
@@ -54,6 +55,7 @@ export interface OrderConfirmationData {
   hstNumber?: string | null;
   hstAmountLine?: string | null;
   sellerName?: string | null;
+  organizationName?: string | null;
   supportEmail?: string | null;
   refundPolicyUrl?: string | null;
   termsUrl?: string | null;
@@ -101,9 +103,12 @@ export function orderConfirmationEmail(
   const walletText = walletUrl
     ? `${receiptLine(`View your tickets: ${walletUrl}`)}${receiptLine('Sign in with the account used for this order.')}`
     : '';
-  const seller = data.sellerName?.trim() || '';
-  const sellerHtml = seller ? `<p>Sold by ${escapeReceiptHtml(seller)}</p>` : '';
-  const sellerText = seller ? receiptLine(`Sold by ${seller}`) : '';
+  const seller = receiptSellerName({
+    configuredSellerName: data.sellerName,
+    organizationName: data.organizationName,
+  });
+  const sellerHtml = `<p>Sold by ${escapeReceiptHtml(seller)}</p>`;
+  const sellerText = receiptLine(`Sold by ${seller}`);
   const support = receiptSupportEmail(data.supportEmail);
   const supportHtml = escapeReceiptHtml(support);
   const refundUrl = receiptPolicyUrl(data.refundPolicyUrl);

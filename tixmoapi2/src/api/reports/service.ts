@@ -3,6 +3,13 @@ import { ApiError } from '../../utils/ApiError';
 
 import prisma from '../../config/prisma';
 import { paidSalesSource } from '../../services/paid-sales-query';
+import {
+  effectiveEventCapacity,
+  firstValidZone,
+  organizationTimeZone,
+  sharedTimeZone,
+  withZoneDesignator,
+} from './time-zone';
 
 interface SalesReportParams {
   organizationId?: string;
@@ -36,6 +43,8 @@ export class ReportService {
       currency = 'cad',
     } = params;
     const selectedCurrency = currency.toLowerCase();
+    const zone = await this.aggregationZone({ organizationId, eventId });
+    const zonedCreatedAt = () => Prisma.sql`((created_at AT TIME ZONE 'UTC') AT TIME ZONE ${zone})`;
     const source = paidSalesSource({
       organizationId,
       eventId,
@@ -50,13 +59,13 @@ export class ReportService {
       ticketsSold: bigint;
       ordersCount: bigint;
     };
-    // Preserve Sunday-start weeks, with all calendar grouping explicitly in UTC.
+    // Sunday-start weeks, grouped in the resolved IANA zone rather than UTC.
     const date =
       groupBy === 'month'
-        ? Prisma.sql`to_char(created_at, 'YYYY-MM')`
+        ? Prisma.sql`to_char(${zonedCreatedAt()}, 'YYYY-MM')`
         : groupBy === 'week'
-          ? Prisma.sql`to_char(date_trunc('week', created_at + interval '1 day') - interval '1 day', 'YYYY-MM-DD')`
-          : Prisma.sql`to_char(created_at, 'YYYY-MM-DD')`;
+          ? Prisma.sql`to_char(date_trunc('week', ${zonedCreatedAt()} + interval '1 day') - interval '1 day', 'YYYY-MM-DD')`
+          : Prisma.sql`to_char(${zonedCreatedAt()}, 'YYYY-MM-DD')`;
     const rows = await prisma.$queryRaw<Row[]>(
       groupBy === 'event'
         ? Prisma.sql`${source} SELECT event_id AS "eventId", event_name AS date,
@@ -72,8 +81,35 @@ export class ReportService {
       ticketsSold: Number(row.ticketsSold),
       ordersCount: Number(row.ordersCount),
       currency: selectedCurrency,
-      aggregationTimezone: 'UTC',
+      aggregationTimezone: zone,
     }));
+  }
+
+  // One event uses that event's timezone. An org-wide or multi-event report
+  // uses the organization timezone, then a single shared venue timezone.
+  private async aggregationZone(params: {
+    organizationId?: string;
+    eventId?: string;
+  }): Promise<string> {
+    if (params.eventId) {
+      const event = await prisma.event.findUnique({
+        where: { id: params.eventId },
+        select: { timezone: true, venue: { select: { timezone: true } } },
+      });
+      return firstValidZone(event?.timezone, event?.venue?.timezone);
+    }
+    if (params.organizationId) {
+      const organization = await prisma.organization.findUnique({
+        where: { id: params.organizationId },
+        select: { settings: true, venues: { select: { timezone: true } } },
+      });
+      return (
+        organizationTimeZone(organization?.settings) ||
+        sharedTimeZone(organization?.venues.map((venue) => venue.timezone) ?? []) ||
+        'UTC'
+      );
+    }
+    return 'UTC';
   }
 
   /**
@@ -84,12 +120,19 @@ export class ReportService {
 
     const event = await prisma.event.findUnique({
       where: { id: eventId },
-      select: { name: true, venueId: true },
+      select: {
+        name: true,
+        capacity: true,
+        timezone: true,
+        venue: { select: { timezone: true } },
+        ticketTypes: { select: { quantityTotal: true } },
+      },
     });
 
     if (!event) {
       throw ApiError.notFound('Event not found');
     }
+    const zone = firstValidZone(event.timezone, event.venue?.timezone);
 
     // Get valid tickets count (sold)
     const ticketsSold = await prisma.ticket.count({
@@ -113,7 +156,8 @@ export class ReportService {
 
     // Get scan logs over time for check-in velocity
     const checkInsByHour = await prisma.$queryRaw<Array<{ time: string; count: bigint }>>`
-      SELECT to_char(s.scanned_at, 'YYYY-MM-DD"T"HH24:00:00.000"Z"') AS time, COUNT(*) AS count
+      SELECT to_char(date_trunc('hour', (s.scanned_at AT TIME ZONE 'UTC') AT TIME ZONE ${zone}), 'YYYY-MM-DD"T"HH24:00:00.000') AS time,
+        COUNT(*) AS count
       FROM scan_logs s JOIN tickets t ON t.id = s.ticket_id JOIN orders o ON o.id = t.order_id
       WHERE s.event_id = ${eventId} AND s.scan_type = 'ENTRY' AND s.success = true
         AND o.status = 'PAID' AND t.inventory_state = 'SOLD'
@@ -121,14 +165,18 @@ export class ReportService {
 
     return {
       eventName: event.name,
-      totalCapacity: event.venueId
-        ? (await prisma.venue.findUnique({ where: { id: event.venueId } }))?.capacity
-        : 0,
+      totalCapacity: effectiveEventCapacity(
+        event.capacity,
+        event.ticketTypes.map((ticketType) => ticketType.quantityTotal)
+      ),
       ticketsSold,
       checkedIn,
       attendanceRate: ticketsSold > 0 ? (checkedIn / ticketsSold) * 100 : 0,
-      aggregationTimezone: 'UTC',
-      checkInsByHour: checkInsByHour.map((row) => ({ time: row.time, count: Number(row.count) })),
+      aggregationTimezone: zone,
+      checkInsByHour: checkInsByHour.map((row) => ({
+        time: withZoneDesignator(row.time, zone),
+        count: Number(row.count),
+      })),
     };
   }
 

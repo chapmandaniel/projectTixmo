@@ -253,7 +253,7 @@ const AnalyticsView = ({ isDark, user }) => {
         const eventSales = salesData.salesByEvent?.find((event) => event.eventId === selectedEventId);
 
         if (!eventSales) {
-            return { totalRevenue: 0, totalOrders: 0, totalTicketsSold: 0, averageOrderValue: 0, salesByDay: [], salesByEvent: [] };
+            return { totalRevenue: 0, totalOrders: 0, totalTicketsSold: 0, averageOrderValue: 0, salesByDay: [], salesByEvent: [], aggregationTimezone: salesData.aggregationTimezone || 'UTC' };
         }
 
         return {
@@ -262,6 +262,7 @@ const AnalyticsView = ({ isDark, user }) => {
             totalTicketsSold: eventSales.ticketsSold,
             averageOrderValue: eventSales.orders > 0 ? eventSales.revenue / eventSales.orders : 0,
             currency: salesData.currency,
+            aggregationTimezone: salesData.aggregationTimezone || 'UTC',
             ordersByHour: salesData.ordersByHour,
             salesByDay: salesData.salesByDay,
             salesByEvent: [eventSales],
@@ -322,6 +323,7 @@ const AnalyticsView = ({ isDark, user }) => {
     const heatmapData = useMemo(() => {
         return buildHeatmapData(filteredSalesData?.ordersByHour);
     }, [filteredSalesData]);
+    const purchaseTimezone = filteredSalesData?.aggregationTimezone || salesData?.aggregationTimezone || 'UTC';
 
     const trafficData = useMemo(() => buildEmptyTrafficAnalytics(), [selectedAnalyticsTagId]);
 
@@ -1128,7 +1130,7 @@ const AnalyticsView = ({ isDark, user }) => {
                         </span>
                     </span>
                 )}
-                description="Recorded paid orders by day of week and hour (UTC)."
+                description={`Recorded paid orders by day of week and hour (${purchaseTimezone}).`}
                 isDark={isDark}
                 accent="amber"
             >
