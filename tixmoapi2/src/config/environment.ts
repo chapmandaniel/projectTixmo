@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { resolveConfiguredCorsOrigins } from './corsOrigins';
 import { resolvePaymentCurrency } from './payment-currency';
 
 // Tests must not inherit application database or provider credentials from .env.
@@ -7,6 +8,11 @@ if (process.env.NODE_ENV !== 'test') dotenv.config();
 const isTest = process.env.NODE_ENV === 'test';
 const isDevelopment = process.env.NODE_ENV === 'development';
 const nodeEnv = process.env.NODE_ENV || 'development';
+const railwayEnvironmentName =
+  process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT || '';
+// Railway injects the environment name even when NODE_ENV was left unset.
+// That unset case still has to keep the current production dashboard.
+const corsProductionDeploy = nodeEnv === 'production' || railwayEnvironmentName === 'production';
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@tixmo.co';
 const serviceName = process.env.SERVICE_NAME || process.env.RAILWAY_SERVICE_NAME || 'tixmo-api';
 const release =
@@ -168,6 +174,7 @@ if (
 export const config = {
   // Application
   nodeEnv,
+  corsProductionDeploy,
   serviceName,
   deploymentEnvironment,
   port: parseInt(process.env.PORT || '3000', 10),
@@ -285,8 +292,10 @@ export const config = {
   authAccountRateLimitWindowMs,
   authAccountRateLimitMax,
 
-  // CORS
-  corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'],
+  // CORS. Exact origins from CORS_ORIGIN. Production with the variable unset
+  // keeps the hardcoded dashboard origin and warns, so boot does not depend on
+  // the variable already being present. See corsOrigins.ts.
+  corsOrigin: resolveConfiguredCorsOrigins(corsProductionDeploy),
 
   // Session
   sessionSecret: process.env.SESSION_SECRET || '',

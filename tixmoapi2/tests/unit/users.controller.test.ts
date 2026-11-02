@@ -199,7 +199,7 @@ describe('Users Controller - createUser', () => {
         role: 'TEAM_MEMBER',
       },
       get: jest.fn((header: string) =>
-        header.toLowerCase() === 'origin' ? 'https://mightyquinton.tixmo.co' : undefined
+        header.toLowerCase() === 'origin' ? 'http://localhost:5173' : undefined
       ),
     } as any;
 
@@ -211,11 +211,15 @@ describe('Users Controller - createUser', () => {
         email: 'member@example.com',
         organizationId: 'org-123',
       }),
-      { clientOrigin: 'https://mightyquinton.tixmo.co', inviterId: 'owner-id' }
+      { clientOrigin: 'http://localhost:5173', inviterId: 'owner-id' }
     );
   });
 
-  it('does not trust Railway request origins for team invitation emails', async () => {
+  it.each([
+    'https://dash-production-589d.up.railway.app',
+    'https://mightyquinton.tixmo.co',
+    'https://labs.tixmo.co',
+  ])('does not trust %s for team invitation emails', async (origin) => {
     mockReq = {
       user: { userId: 'owner-id', role: 'OWNER' },
       body: {
@@ -224,11 +228,7 @@ describe('Users Controller - createUser', () => {
         lastName: 'Member',
         role: 'TEAM_MEMBER',
       },
-      get: jest.fn((header: string) =>
-        header.toLowerCase() === 'origin'
-          ? 'https://dash-production-589d.up.railway.app'
-          : undefined
-      ),
+      get: jest.fn((header: string) => (header.toLowerCase() === 'origin' ? origin : undefined)),
     } as any;
 
     await createUser(mockReq as AuthRequest, mockRes as Response, nextMock);

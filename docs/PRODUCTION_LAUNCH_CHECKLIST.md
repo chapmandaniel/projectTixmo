@@ -86,7 +86,8 @@ Validation:
 - [ ] Secrets are not placeholder values.
 - [ ] JWT, refresh, and session secrets are unique and high entropy.
 - [ ] `CLIENT_URL` points to the production dashboard origin.
-- [ ] CORS trusted-origin logic allows the dashboard domain and rejects unrelated origins.
+- [ ] `CORS_ORIGIN` is an exact comma-separated list of full origins for this environment. No wildcards and no paths. When `NODE_ENV=production`, or Railway's environment name is `production`, an unset variable boots with a warning and allows `https://demo.tixmo.co` so that production deploy still accepts the current dashboard. An explicit value replaces that fallback. Other deployed environments must set their own list. Localhost origins are trusted only outside that production deploy. Labs and sandbox lists do not include production or demo origins.
+- [ ] Auth responses do not set a cookie `Domain` attribute. There is no `.tixmo.co` cookie domain.
 - [ ] `PAYMENT_CURRENCY` matches the intended launch currency.
 - [ ] `TIXMO_HST_NUMBER`, when valid, is printed as `HST no.` on buyer receipts. A missing, placeholder, or invalid number logs one startup warning, the registration line is hidden, and production still boots. `TIXMO_HST_RATE` defaults to `0.15`. Receipts show `Includes HST (<percent>%): CA$<amount>`, where the amount is `total * rate / (1 + rate)` rounded to the cent once per order. The amount charged and stored `taxAmount` stay unchanged.
 - [ ] `FROM_NAME` presented to buyers is `Tixmo`.
@@ -195,6 +196,7 @@ Run this against staging or a production-like environment:
 - [ ] Signed asset URLs are short-lived.
   - Code-path evidence: `tests/unit/asset-library.service.test.ts` verifies expired/revoked share rejection and fresh URL resolution; `tdash/src/test/AssetLibraryView.test.jsx` verifies create/copy/revoke controls. Re-run on the production-like origin before checking this section off.
 - [ ] Rate limits are enabled for auth, reads, and writes.
+- [ ] Browser calls from a disallowed origin receive 403 and no `Access-Control-*` headers. `https://labs.tixmo.co` is allowed only where `CORS_ORIGIN` lists it.
 
 ## 10. Observability And Support
 

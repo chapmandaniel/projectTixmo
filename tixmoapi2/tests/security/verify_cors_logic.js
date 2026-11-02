@@ -1,64 +1,53 @@
+'use strict';
 
-const config = {
-    corsOrigin: ['http://localhost:3001']
-};
+// Standalone check for the exact-origin policy. Jest is the suite that loads
+// the API. This script does not grant https://*.tixmo.co.
+
+const allowed = new Set(['http://localhost:5173', 'https://demo.tixmo.co']);
 
 function isOriginAllowed(origin) {
-    // Logic from app.ts (FIXED Version)
-
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return true;
-
-    // Check if origin is allowed
-    const allowedOrigins = Array.isArray(config.corsOrigin) ? config.corsOrigin : [config.corsOrigin];
-
-    // Check for exact match in allowed origins (e.g. localhost)
-    if (allowedOrigins.indexOf(origin) !== -1) {
-        return true;
-    }
-
-    // Check for .tixmo.co subdomains (Regex)
-    // Allows: https://demo.tixmo.co, https://anything.tixmo.co (if valid chars)
-    // Vulnerability Fix: Use stricter regex and remove railway check
-    const tixmoPattern = /^https:\/\/(?:[a-zA-Z0-9-]+\.)+tixmo\.co$/;
-    if (tixmoPattern.test(origin)) {
-        return true;
-    }
-
-    // REMOVED: Also allow railway apps for dynamic preview branches if needed
-    // if (origin.endsWith('.up.railway.app')) {
-    //   return true;
-    // }
-
+  if (!origin) return true;
+  if (origin.includes('*')) return false;
+  try {
+    const url = new URL(origin);
+    if (url.pathname !== '/' || url.search || url.hash) return false;
+    if (origin !== url.origin) return false;
+  } catch {
     return false;
+  }
+  return allowed.has(origin);
 }
+
+let failed = 0;
 
 function runTest(origin, expectedResult, description) {
-    const result = isOriginAllowed(origin);
-    if (result === expectedResult) {
-        console.log(`PASS: ${description} (Origin: ${origin}) -> Got: ${result}`);
-    } else {
-        console.error(`FAIL: ${description} (Origin: ${origin}) -> Expected: ${expectedResult}, Got: ${result}`);
-        // process.exit(1);
-    }
+  const result = isOriginAllowed(origin);
+  if (result === expectedResult) {
+    console.log(`PASS: ${description} (Origin: ${origin}) -> Got: ${result}`);
+    return;
+  }
+  console.error(
+    `FAIL: ${description} (Origin: ${origin}) -> Expected: ${expectedResult}, Got: ${result}`
+  );
+  failed += 1;
 }
 
-console.log('--- Verify CORS Logic (Fixed Version) ---');
+console.log('--- Verify CORS exact allowlist ---');
 
-// Test Cases
-runTest('http://localhost:3001', true, 'Explicitly allowed origin');
-runTest('https://demo.tixmo.co', true, 'Valid TixMo subdomain');
-runTest('https://sub.demo.tixmo.co', true, 'Nested TixMo subdomain');
-
-// Vulnerability Check: Should be FALSE now
-runTest('https://evil.up.railway.app', false, 'Arbitrary Railway App (SHOULD BE DENIED)');
-
+runTest('http://localhost:5173', true, 'Explicitly allowed dev origin');
+runTest('https://demo.tixmo.co', true, 'Explicitly allowed production dashboard');
+runTest('https://labs.tixmo.co', false, 'Labs host is not implied by the parent domain');
+runTest('https://sub.demo.tixmo.co', false, 'Nested Tixmo subdomain');
+runTest('https://evil.up.railway.app', false, 'Arbitrary Railway app');
 runTest('https://evil.com', false, 'External domain');
-runTest('https://evil-tixmo.co', false, 'Invalid TixMo lookalike');
+runTest('https://evil-tixmo.co', false, 'Lookalike suffix');
+runTest('https://tixmo.co.evil.com', false, 'Lookalike parent');
+runTest('http://demo.tixmo.co', false, 'HTTP form of an allowed HTTPS origin');
+runTest('https://evil.com.tixmo.co', false, 'Unlisted subdomain');
+runTest('https://*.tixmo.co', false, 'Wildcard entry');
 
-// Additional Regex Checks
-runTest('https://evil.com.tixmo.co', true, 'Subdomain containing tixmo.co suffix (Still allowed as valid subdomain)');
-runTest('https://anything.tixmo.co', true, 'Anything valid subdomain');
-runTest('https://bad*char.tixmo.co', false, 'Invalid chars in subdomain');
+if (failed > 0) {
+  process.exitCode = 1;
+}
 
 console.log('--- End of Test ---');
