@@ -6,6 +6,7 @@ import { startApprovalReminderJob } from './jobs/approval-reminder.job';
 import { startVendorSyncJob } from './jobs/vendor-sync.job';
 import { startOrderExpiryJob } from './jobs/order-expiry.job';
 import { startPaymentRecoveryJob } from './jobs/payment-recovery.job';
+import { assertSandboxDatabaseHosts } from './services/sandbox-host-guard';
 
 // app imported dynamically after connection
 
@@ -13,6 +14,7 @@ const port = config.port || 3000;
 
 void (async () => {
   try {
+    assertSandboxDatabaseHosts();
     // Connect to database
     await connectDatabase();
     logger.info('✅ Database connected successfully');

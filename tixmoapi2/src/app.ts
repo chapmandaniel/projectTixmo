@@ -19,6 +19,12 @@ import {
   checkoutIpRateLimiter,
 } from './middleware/rateLimiter';
 import { isTrustedClientOrigin } from './utils/clientOrigin';
+import {
+  ROBOTS_TXT,
+  blocksSearchIndexing,
+  healthBranch,
+  healthRailwayEnvironment,
+} from './services/search-indexing';
 
 const app: Application = express();
 
@@ -30,6 +36,10 @@ app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
+app.use((_req, res, next) => {
+  if (blocksSearchIndexing()) res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
 
 // If Sentry is enabled, use request handler and tracing
 if (config.sentryDsn) {
@@ -71,8 +81,15 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: config.nodeEnv,
+    railwayEnvironment: healthRailwayEnvironment(),
+    branch: healthBranch(),
     release: healthRelease(),
   });
+});
+
+app.get('/robots.txt', (_req, res, next) => {
+  if (!blocksSearchIndexing()) return next();
+  res.type('text/plain').send(ROBOTS_TXT);
 });
 
 app.get('/ready', async (_req, res) => {

@@ -49,3 +49,18 @@ window.__TIXMO_CONFIG__ = Object.assign({}, window.__TIXMO_CONFIG__, {
   labsBranch: "${escaped_labs_branch}"
 });
 EOF
+
+app_env=$(printf '%s' "${VITE_APP_ENV:-}" | tr '[:upper:]' '[:lower:]')
+write_robots=0
+if [ -n "$labs_branch" ]; then
+  write_robots=1
+fi
+if [ -n "$app_env" ] && [ "$app_env" != "production" ]; then
+  write_robots=1
+fi
+if [ "$app_env" = "production" ] && [ -z "$labs_branch" ]; then
+  write_robots=0
+fi
+if [ "$write_robots" = "1" ]; then
+  printf '%s\n' 'User-agent: *' 'Disallow: /' > /usr/share/nginx/html/robots.txt
+fi
