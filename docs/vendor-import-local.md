@@ -31,7 +31,7 @@ Run these in the API container, in this order. `npm run db:seed` is a no-op (`pr
 
 1. `npm run migrate` (`prisma migrate deploy`). The image start script also migrates before listen. Run it yourself before bootstrap so the owner tables exist.
 2. `npm run db:bootstrap` with `BOOTSTRAP_ALLOW_PRODUCTION=true` in production, plus `BOOTSTRAP_OWNER_EMAIL`, `BOOTSTRAP_OWNER_PASSWORD` (12+ characters with upper, lower, digit, and symbol), `BOOTSTRAP_OWNER_FIRST_NAME`, `BOOTSTRAP_OWNER_LAST_NAME`, `BOOTSTRAP_ORGANIZATION_NAME`, `BOOTSTRAP_ORGANIZATION_SLUG`. Bootstrap refuses a second owner. It does not print the password.
-3. `npm run db:seed:showpass` (`node dist/scripts/seed-showpass.js`). Build the image first so `dist/scripts/seed-showpass.js` exists. Requires `VENDOR_CREDENTIAL_KEY` and `SHOWPASS_ADAPTER` not set to `live`. The seed sets `fixture` for its own process.
+3. `npm run db:seed:showpass` (`node dist/scripts/seed-showpass.js`). Build the image first so `dist/scripts/seed-showpass.js` exists. Requires `VENDOR_CREDENTIAL_KEY` and `SHOWPASS_ADAPTER` not set to `live`. The seed sets `fixture` for its own process, calls `connectRedis()` before the sold-count sync, then disconnects Redis and Prisma and exits.
 
 The seed uses the existing owner organization when one exists. It does not create a second owner. With no owner (local only) it creates organization `fixture-festival` and user `organizer@example.test`. The local fixture password is `FixtureOrganizer1!` and is not printed.
 

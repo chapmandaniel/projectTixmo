@@ -7,6 +7,7 @@ import { randomBytes } from 'crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import prisma from '../config/prisma';
+import { connectRedis, disconnectRedis } from '../config/redis';
 import { scannerService } from '../api/scanners/service';
 import { computedFixtureShiftDays, FIXTURE_RUNTIME_ID } from '../services/vendors/fixture-runtime';
 import { vendorImportService } from '../services/vendors/import-service';
@@ -141,6 +142,7 @@ async function main(): Promise<void> {
       webhookSecret,
     });
     await vendorImportService.importEvents(organizationId, VENUE_ID, IMPORT_IDS);
+    await connectRedis();
     await vendorImportService.syncOrganization(organizationId);
     const preview = await vendorImportService.preview(organizationId, VENUE_ID);
     const counts = await vendorImportService.listSoldCounts(organizationId);
@@ -202,13 +204,27 @@ async function main(): Promise<void> {
       })
     );
   } finally {
-    await prisma.$disconnect();
+    try {
+      await disconnectRedis();
+    } catch {
+      process.exitCode = 1;
+    }
+    try {
+      await prisma.$disconnect();
+    } catch {
+      process.exitCode = 1;
+    }
   }
 }
 
-void main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : 'Showpass fixture seed failed';
-  // eslint-disable-next-line no-console
-  console.error(message.replace(/[a-z][a-z0-9+.-]*:\/\/\S+/gi, '<redacted>'));
-  process.exitCode = 1;
-});
+void main()
+  .catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : 'Showpass fixture seed failed';
+    // eslint-disable-next-line no-console
+    console.error(message.replace(/[a-z][a-z0-9+.-]*:\/\/\S+/gi, '<redacted>'));
+    process.exitCode = 1;
+  })
+  .finally(() => {
+    const code = process.exitCode;
+    process.exit(typeof code === 'number' && code !== 0 ? code : 0);
+  });
