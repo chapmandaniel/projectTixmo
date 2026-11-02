@@ -10,10 +10,15 @@ import {
 import { ApiError } from '../../utils/ApiError';
 import { CHECKER_TOKEN_PREFIX, type CheckerScopeName } from './constants';
 
-const requestPath = (req: AuthRequest): string => {
-  const path = req.originalUrl.split('?')[0].replace(/\/+$/, '');
-  return path || '/';
+/** Match Express's case-insensitive routes and collapse the slashes Express leaves in place. */
+const normalizeRequestPath = (raw: string): string => {
+  const withoutQuery = raw.split('?')[0] ?? '';
+  const collapsed = withoutQuery.replace(/\/{2,}/g, '/').toLowerCase();
+  const stripped = collapsed.length > 1 ? collapsed.replace(/\/+$/, '') : collapsed;
+  return stripped || '/';
 };
+
+const requestPath = (req: AuthRequest): string => normalizeRequestPath(req.originalUrl);
 
 let cachedApiVersion = '';
 let ingestPaths = new Set<string>();
@@ -77,8 +82,7 @@ const authenticateCheckerToken = async (req: AuthRequest, _res: Response, next: 
     if (!row) return next();
 
     if (!isGiveawayProtectionEnabled()) {
-      if (isBrandPath(req)) return next(ApiError.notFound('Route not found'));
-      return next(ApiError.forbidden('Checker token cannot access this route'));
+      return next(ApiError.notFound('Route not found'));
     }
     const route = checkerRoute(req);
     if (!route) {
@@ -108,8 +112,7 @@ const countIngestAuthFailure = (
   error: unknown
 ) => {
   if (!isGiveawayProtectionEnabled()) {
-    if (isBrandPath(req)) return next(ApiError.notFound('Route not found'));
-    return next(error);
+    return next(ApiError.notFound('Route not found'));
   }
   giveawayIngestIpRateLimiter(req, res, (limitError?: unknown) => {
     if (res.headersSent) return;
@@ -145,23 +148,24 @@ const authenticateThenCountFailures = (req: AuthRequest, res: Response, next: Ne
  * token consumes the per-IP failure bucket. A valid token skips that limiter
  * and is counted later per token id. An IP already over that cap is rejected
  * before the token table is read. While the feature flag is off, brand routes
- * stay a uniform 404.
+ * and every request carrying a checker token stay a uniform 404.
  */
 export const guardCheckerToken = (req: AuthRequest, res: Response, next: NextFunction) => {
   const route = checkerRoute(req);
   const token = bearerToken(req);
-  // Order and public reads never carry a checker token. Stay synchronous so
-  // this guard does not allocate a promise or touch Redis or Postgres.
-  if (!route && !token) {
-    if (!isGiveawayProtectionEnabled() && isBrandPath(req)) {
+  // Ordinary order and public reads never carry a checker token. This return
+  // stays synchronous: no promise, Redis, or Postgres. A checker token while
+  // the feature flag is off is also a synchronous 404, on every path.
+  if (!isGiveawayProtectionEnabled()) {
+    if (token || isBrandPath(req)) {
       next(ApiError.notFound('Route not found'));
       return;
     }
     next();
     return;
   }
-  if (!isGiveawayProtectionEnabled() && isBrandPath(req)) {
-    next(ApiError.notFound('Route not found'));
+  if (!route && !token) {
+    next();
     return;
   }
   if (!route) {

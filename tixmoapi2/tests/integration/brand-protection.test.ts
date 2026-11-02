@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'crypto';
 import request from 'supertest';
 import app from '../../src/app';
 import { logger } from '../../src/config/logger';
-import { purgeExpiredScamMatches } from '../../src/api/brand-protection/service';
+import { issueCheckerToken, purgeExpiredScamMatches } from '../../src/api/brand-protection/service';
 import { runGiveawayRetention } from '../../src/jobs/giveaway-retention.job';
 import {
   cleanupTestData,
@@ -35,9 +35,11 @@ async function issueToken(label = 'test') {
 describe('Brand protection', () => {
   const previousFlag = process.env.FEATURE_GIVEAWAY_PROTECTION;
   let ownerToken = '';
+  let ownerUserId = '';
   let otherToken = '';
   let adminToken = '';
   let orgAdminToken = '';
+  let orgAdminUserId = '';
   let organizationId = '';
   let otherOrganizationId = '';
   let eventId = '';
@@ -48,6 +50,7 @@ describe('Brand protection', () => {
     await cleanupTestData();
     const owner = await registerUser(app, { email: 'brand-owner-a@example.com', role: 'OWNER' });
     ownerToken = owner.accessToken;
+    ownerUserId = owner.user.id;
     const org = await createOrganization(app, ownerToken, {
       name: 'Harbour Org',
       slug: 'harbour-org',
@@ -79,6 +82,7 @@ describe('Brand protection', () => {
       role: 'ADMIN',
     });
     orgAdminToken = orgAdmin.accessToken;
+    orgAdminUserId = orgAdmin.user.id;
     await prisma.user.update({
       where: { id: orgAdmin.user.id },
       data: { organizationId, isPlatformAdmin: false },
@@ -124,7 +128,7 @@ describe('Brand protection', () => {
       const otherRoute = await request(app).get('/api/v1/events').set(auth(checker.token));
       expect(hidden.status).toBe(404);
       expect(ingestHidden.status).toBe(404);
-      expect(otherRoute.status).toBe(403);
+      expect(otherRoute.status).toBe(404);
       const missingToken = await request(app)
         .post('/api/v1/brand-protection/ingest/matches')
         .send({ matches: [{ organizationId, platform: 'X' }] });
@@ -134,6 +138,64 @@ describe('Brand protection', () => {
         .send({ matches: [{ organizationId, platform: 'X' }] });
       expect(missingToken.status).toBe(404);
       expect(unknownToken.status).toBe(404);
+    } finally {
+      process.env.FEATURE_GIVEAWAY_PROTECTION = 'true';
+    }
+  });
+
+  it('matches checker routes after normalizing case and slashes', async () => {
+    const body = {
+      matches: [
+        {
+          organizationId,
+          platform: 'X',
+          category: 'FAKE_CONTEST',
+          sourceUrl: 'https://x.com/normalized-path/status/1',
+          matchedRule: 'rule',
+          detectedAt: future(0),
+        },
+      ],
+    };
+    const mixed = await request(app)
+      .post('/api/v1/Brand-Protection/ingest/matches')
+      .set(auth(checker.token))
+      .send(body);
+    expect(mixed.status).toBe(200);
+
+    const forwardedFor = '203.0.113.88';
+    const bad = (path: string) =>
+      request(app)
+        .post(path)
+        .set('Authorization', 'Bearer gwc_not-a-real-checker-token')
+        .set('X-Forwarded-For', forwardedFor)
+        .set('x-test-giveaway-auth-rate-limit', 'low')
+        .send(body);
+    const failures = [
+      await bad('/api/v1/Brand-Protection/ingest/matches'),
+      await bad('/api/v1//brand-protection//ingest//matches'),
+      await bad('/api/v1/brand-protection/ingest/matches/'),
+    ];
+    expect(failures.map((res) => res.status)).toEqual([401, 401, 401]);
+    expect((await bad('/api/v1/BRAND-PROTECTION/ingest/matches')).status).toBe(429);
+
+    process.env.FEATURE_GIVEAWAY_PROTECTION = 'false';
+    try {
+      const cased = await request(app)
+        .post('/api/v1/Brand-Protection/ingest/matches')
+        .set(auth(checker.token))
+        .send(body);
+      const doubled = await request(app)
+        .post('/api/v1//brand-protection//ingest//matches')
+        .set('Authorization', 'Bearer gwc_unknown-checker-token')
+        .send(body);
+      const events = await request(app).get('/API/v1/Events').set(auth(checker.token));
+      const hidden = await request(app)
+        .get('/api/v1/Brand-Protection/matches')
+        .set(auth(ownerToken));
+      expect(cased.status).toBe(404);
+      expect(doubled.status).toBe(404);
+      expect(events.status).toBe(404);
+      expect(hidden.status).toBe(404);
     } finally {
       process.env.FEATURE_GIVEAWAY_PROTECTION = 'true';
     }
@@ -808,6 +870,40 @@ describe('Brand protection', () => {
     expect(after.status).toBe(401);
   });
 
+  it('lets only a platform admin grant targets:read and stores nothing otherwise', async () => {
+    const before = await prisma.giveawayCheckerToken.count();
+    const ownerDenied = await request(app)
+      .post('/api/v1/brand-protection/admin/checker-tokens')
+      .set(auth(ownerToken))
+      .send({ label: 'owner-targets', scopes: ['ingest:write', 'targets:read'] });
+    const orgAdminDenied = await request(app)
+      .post('/api/v1/brand-protection/admin/checker-tokens')
+      .set(auth(orgAdminToken))
+      .send({ label: 'org-admin-targets', scopes: ['targets:read'] });
+    expect(ownerDenied.status).toBe(403);
+    expect(orgAdminDenied.status).toBe(403);
+    await expect(
+      issueCheckerToken(ownerUserId, 'owner-service', ['ingest:write', 'targets:read'])
+    ).rejects.toMatchObject({ statusCode: 403 });
+    await expect(
+      issueCheckerToken(orgAdminUserId, 'org-admin-service', ['targets:read'])
+    ).rejects.toMatchObject({ statusCode: 403 });
+    expect(await prisma.giveawayCheckerToken.count()).toBe(before);
+
+    const issued = await request(app)
+      .post('/api/v1/brand-protection/admin/checker-tokens')
+      .set(auth(adminToken))
+      .send({ label: 'platform-targets', scopes: ['ingest:write', 'targets:read'] });
+    expect(issued.status).toBe(201);
+    expect(issued.body.data.scopes).toEqual(['ingest:write', 'targets:read']);
+    const row = await prisma.giveawayCheckerToken.findUniqueOrThrow({
+      where: { id: issued.body.data.id },
+    });
+    expect(row.scopes).toEqual(['ingest:write', 'targets:read']);
+    expect(JSON.stringify(row)).not.toContain(issued.body.data.token);
+    expect(await prisma.giveawayCheckerToken.count()).toBe(before + 1);
+  });
+
   it('limits bad checker tokens by IP without blocking a valid token from that address', async () => {
     const forwardedFor = '203.0.113.50';
     const bad = () =>
@@ -1158,10 +1254,41 @@ describe('Brand protection', () => {
         status: 'REVOKED' as const,
         createdBy: 'test',
       },
+      {
+        organizationId,
+        platform: 'X' as const,
+        platformAccountId: 'unkeyed-target',
+        handle: 'unkeyedfest',
+        profileUrl: 'https://x.com/unkeyedfest',
+        status: 'VERIFIED' as const,
+        verifiedAt: new Date(),
+        createdBy: 'test',
+      },
     ];
     for (const data of rows) {
       await prisma.officialAccount.create({ data });
     }
+    const suspended = await prisma.organization.create({
+      data: {
+        name: 'Suspended Harbour',
+        slug: `suspended-harbour-${Date.now()}`,
+        type: 'PROMOTER',
+        status: 'SUSPENDED',
+      },
+    });
+    await prisma.officialAccount.create({
+      data: {
+        organizationId: suspended.id,
+        platform: 'INSTAGRAM',
+        platformAccountId: 'suspended-target',
+        handle: 'suspendedfest',
+        profileUrl: 'https://instagram.com/suspendedfest',
+        status: 'VERIFIED',
+        verifiedPlatformAccountKey: 'INSTAGRAM:suspended-target',
+        verifiedAt: new Date(),
+        createdBy: 'test',
+      },
+    });
 
     const refused = await request(app)
       .get('/api/v1/brand-protection/ingest/targets')
@@ -1186,6 +1313,8 @@ describe('Brand protection', () => {
     expect(body).not.toContain('pending-target');
     expect(body).not.toContain('disputed-target');
     expect(body).not.toContain('revoked-target');
+    expect(body).not.toContain('unkeyed-target');
+    expect(body).not.toContain('suspended-target');
     expect(body).not.toContain('evidence');
     expect(body).not.toContain('profileUrl');
 
@@ -1197,8 +1326,23 @@ describe('Brand protection', () => {
     );
     expect(ids).toEqual(expect.arrayContaining(['verified-target-1', 'verified-target-2']));
     expect(ids).not.toEqual(
-      expect.arrayContaining(['pending-target', 'disputed-target', 'revoked-target'])
+      expect.arrayContaining([
+        'pending-target',
+        'disputed-target',
+        'revoked-target',
+        'unkeyed-target',
+        'suspended-target',
+      ])
     );
+
+    const tooFar = await request(app)
+      .get('/api/v1/brand-protection/ingest/targets?page=10001')
+      .set(auth(plaintext));
+    expect(tooFar.status).toBe(400);
+    const edge = await request(app)
+      .get('/api/v1/brand-protection/ingest/targets?page=10000&limit=1')
+      .set(auth(plaintext));
+    expect(edge.status).toBe(200);
   });
 
   it('rate limits targets reads separately from ingest', async () => {

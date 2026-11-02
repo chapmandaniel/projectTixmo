@@ -71,7 +71,7 @@ That runs `brand-checker` with `--fixtures`. It does not call X, Reddit, Faceboo
 
 The command prints a JSON summary. `ok` is true, and `matches` is greater than zero. Running it again is safe: the same source URLs update the same rows.
 
-`--fixtures` does not call the targets route. It uses `brand-checker/.local/watchlist.json`. The demo token is issued with `ingest:write` and `targets:read`, but the seeded X account is `PENDING`, so `GET /api/v1/brand-protection/ingest/targets` with that token returns no rows until the account is verified. A token issued without `targets:read` cannot call that route.
+`--fixtures` does not call the targets route. It uses `brand-checker/.local/watchlist.json`. The demo token is issued with `ingest:write` and `targets:read` by the local seed on this disposable database, but the seeded X account is `PENDING`, so `GET /api/v1/brand-protection/ingest/targets` with that token returns no rows until the account is verified. A token issued without `targets:read` cannot call that route. The API returns `403` and stores nothing when an org owner or org admin asks for `targets:read`.
 
 ## 5. What to look at after the checker
 

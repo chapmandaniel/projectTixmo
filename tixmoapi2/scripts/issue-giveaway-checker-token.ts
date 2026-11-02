@@ -9,6 +9,8 @@ const PREFIX = 'gwc_';
  * Do not point this at production. Put the printed token in the checker
  * service's Railway variables. It is not written to the repo.
  * Pass --targets-read to also grant targets:read. The default is ingest:write only.
+ * --targets-read is for the platform operator on this disposable database.
+ * The HTTP API refuses that scope for every role that is not a platform admin.
  */
 function assertDisposableDatabase(raw: string | undefined): void {
   if (process.env.NODE_ENV === 'production') {

@@ -249,8 +249,14 @@ export const resolveDispute = catchAsync(async (req: AuthRequest, res: Response)
 });
 
 export const issueToken = catchAsync(async (req: AuthRequest, res: Response) => {
-  const actor = await requirePlatformAdmin(req);
+  const actor = await getActorScope(req);
   const body = req.body as { label?: string; scopes?: string[] };
+  if (body.scopes?.includes('targets:read') && !isGlobalAdmin(actor)) {
+    throw ApiError.forbidden('Only a platform admin can grant targets:read');
+  }
+  if (!isGlobalAdmin(actor)) {
+    throw ApiError.forbidden('Only a platform admin can perform this action');
+  }
   const issued = await issueCheckerToken(actor.userId, body.label, body.scopes);
   res.status(201).json(successResponse(issued, 'Checker token issued once'));
 });

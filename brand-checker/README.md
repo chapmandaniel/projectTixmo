@@ -32,7 +32,7 @@ If the Tixmo API returns HTTP 429, 401, or 404, the checker writes a failed run 
 
 ## Targets
 
-`GET /api/v1/brand-protection/ingest/targets` returns verified official accounts when the checker token includes `targets:read`. That scope is not on ingest-only tokens. Outside `--fixtures`, a token with the scope loads those accounts from the API. Names and domains still come from the watchlist file when it exists. A `403` means the token lacks the scope, and the checker uses the watchlist file. `--fixtures` always uses the watchlist file and does not call the route. HTTP 401, 404, or 429 from the targets route stops the run the same way an ingest error does.
+`GET /api/v1/brand-protection/ingest/targets` returns verified official accounts for active organizations when the checker token includes `targets:read`. That scope is not on ingest-only tokens, and the API grants it only to a platform admin. Outside `--fixtures`, a token with the scope loads those accounts from the API, at most 20 pages. A full 20th page logs a warning and stops. Names and domains still come from the watchlist file when it exists. A `403` means the token lacks the scope, and the checker uses the watchlist file. `--fixtures` always uses the watchlist file and does not call the route. HTTP 401, 404, or 429 from the targets route stops the run the same way an ingest error does.
 
 `TIXMO_WATCHLIST_PATH` points at a JSON file used for fixtures, for tokens without `targets:read`, and for names and domains:
 

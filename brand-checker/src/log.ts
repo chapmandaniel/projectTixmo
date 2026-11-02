@@ -8,4 +8,7 @@ export const createLogger = (): Logger => ({
   alert(message: string) {
     process.stderr.write(`${redact(message)}\n`);
   },
+  warn(message: string) {
+    process.stderr.write(`${redact(message)}\n`);
+  },
 });

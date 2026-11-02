@@ -2,6 +2,7 @@ import { randomBytes, timingSafeEqual } from 'crypto';
 import { OfficialAccount, Prisma, ScamMatchStatus, SocialPlatform } from '@prisma/client';
 import prisma from '../../config/prisma';
 import { ApiError } from '../../utils/ApiError';
+import { getActorScopeById, isGlobalAdmin } from '../../utils/tenantScope';
 import { recordStaffAction, StaffActionName } from '../../services/staff-action-audit';
 import {
   CHECKER_SCOPES,
@@ -870,7 +871,11 @@ export const resolveCheckerScopes = (scopes?: readonly string[]): CheckerScopeNa
 };
 
 export const listVerifiedTargets = async (page: number, limit: number) => {
-  const where = { status: 'VERIFIED' as const };
+  const where = {
+    status: 'VERIFIED' as const,
+    verifiedPlatformAccountKey: { not: null },
+    organization: { status: 'ACTIVE' as const },
+  };
   const [total, rows] = await Promise.all([
     prisma.officialAccount.count({ where }),
     prisma.officialAccount.findMany({
@@ -899,6 +904,12 @@ export const listVerifiedTargets = async (page: number, limit: number) => {
 
 export const issueCheckerToken = async (actorId: string, label?: string, scopes?: string[]) => {
   const granted = resolveCheckerScopes(scopes);
+  if (granted.includes('targets:read')) {
+    const actor = await getActorScopeById(actorId);
+    if (!isGlobalAdmin(actor)) {
+      throw ApiError.forbidden('Only a platform admin can grant targets:read');
+    }
+  }
   const token = `${CHECKER_TOKEN_PREFIX}${randomBytes(32).toString('base64url')}`;
   const created = await prisma.$transaction(async (tx) => {
     const row = await tx.giveawayCheckerToken.create({

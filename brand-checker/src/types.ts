@@ -82,4 +82,5 @@ export interface HttpClient {
 export type Logger = {
   info(message: string): void;
   alert(message: string): void;
+  warn?(message: string): void;
 };

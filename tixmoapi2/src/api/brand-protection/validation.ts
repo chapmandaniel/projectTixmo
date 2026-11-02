@@ -193,7 +193,7 @@ export const issueTokenSchema = z.object({
 export const listTargetsSchema = z.object({
   query: z
     .object({
-      page: z.coerce.number().int().positive().optional(),
+      page: z.coerce.number().int().positive().max(10_000).optional(),
       limit: z.coerce.number().int().positive().max(100).optional(),
     })
     .strict(),

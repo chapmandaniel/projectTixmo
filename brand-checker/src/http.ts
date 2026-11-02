@@ -1,5 +1,6 @@
 import { lookup as defaultLookup } from 'node:dns/promises';
-import { isIP } from 'node:net';
+import { BlockList, isIP } from 'node:net';
+import { Agent, type Dispatcher } from 'undici';
 import type { HttpClient, HttpRequest, HttpResponse } from './types.js';
 
 export const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
@@ -12,63 +13,117 @@ export class UnsafeUrlError extends Error {
 }
 
 type ResolvedAddress = { address: string; family: number };
+type AddressFamily = 4 | 6;
 
 type LookupFn = (
   hostname: string,
   options: { all: true; verbatim: true }
 ) => Promise<ResolvedAddress[]>;
 
-type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
+type LookupCallback = (
+  err: NodeJS.ErrnoException | null,
+  address: string | { address: string; family: number }[],
+  family?: number
+) => void;
 
-const ipv4Value = (address: string): number | null => {
-  const parts = address.split('.');
-  if (parts.length !== 4) return null;
-  let value = 0;
-  for (const part of parts) {
-    if (!/^\d{1,3}$/.test(part)) return null;
-    const octet = Number(part);
-    if (octet > 255) return null;
-    value = value * 256 + octet;
+type FetchInit = RequestInit & { dispatcher?: Dispatcher };
+type FetchLike = (url: string, init: FetchInit) => Promise<Response>;
+
+type PublicTarget = { url: URL; address: string; family: AddressFamily };
+
+export type PinnedAgent = Agent & {
+  connectLookup: (hostname: string, options: { all?: boolean }, callback: LookupCallback) => void;
+};
+
+const blocked = new BlockList();
+for (const [network, prefix] of [
+  ['0.0.0.0', 8],
+  ['10.0.0.0', 8],
+  ['100.64.0.0', 10],
+  ['127.0.0.0', 8],
+  ['169.254.0.0', 16],
+  ['172.16.0.0', 12],
+  ['192.168.0.0', 16],
+  ['198.18.0.0', 15],
+  ['224.0.0.0', 4],
+  ['240.0.0.0', 4],
+] as const) {
+  blocked.addSubnet(network, prefix, 'ipv4');
+}
+for (const [network, prefix] of [
+  ['::', 96],
+  ['64:ff9b::', 96],
+  ['fc00::', 7],
+  ['fe80::', 10],
+  ['ff00::', 8],
+] as const) {
+  blocked.addSubnet(network, prefix, 'ipv6');
+}
+
+const expandIpv6 = (address: string): number[] | null => {
+  let value = address;
+  if (value.includes('.')) {
+    const lastColon = value.lastIndexOf(':');
+    if (lastColon < 0) return null;
+    const octets = value.slice(lastColon + 1).split('.');
+    if (octets.length !== 4) return null;
+    const bytes: number[] = [];
+    for (const octet of octets) {
+      if (!/^\d{1,3}$/.test(octet)) return null;
+      const parsed = Number(octet);
+      if (parsed > 255) return null;
+      bytes.push(parsed);
+    }
+    const high = ((bytes[0] << 8) | bytes[1]).toString(16);
+    const low = ((bytes[2] << 8) | bytes[3]).toString(16);
+    value = `${value.slice(0, lastColon)}:${high}:${low}`;
   }
-  return value >>> 0;
+  const halves = value.split('::');
+  if (halves.length > 2) return null;
+  const parse = (side: string): number[] | null => {
+    if (side === '') return [];
+    const groups = side.split(':');
+    const parsed: number[] = [];
+    for (const group of groups) {
+      if (!/^[0-9a-f]{1,4}$/.test(group)) return null;
+      parsed.push(Number.parseInt(group, 16));
+    }
+    return parsed;
+  };
+  const left = parse(halves[0] ?? '');
+  if (!left) return null;
+  if (halves.length === 1) return left.length === 8 ? left : null;
+  const right = parse(halves[1] ?? '');
+  if (!right || left.length + right.length > 7) return null;
+  return [...left, ...Array<number>(8 - left.length - right.length).fill(0), ...right];
 };
 
-const ipv4InCidr = (address: string, base: string, bits: number): boolean => {
-  const ip = ipv4Value(address);
-  const network = ipv4Value(base);
-  if (ip === null || network === null) return false;
-  const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
-  return (ip & mask) === (network & mask);
+/** IPv4 embedded in ::ffff:0:0/96, including hex groups such as ::ffff:7f00:1. */
+const unwrapIpv4Mapped = (address: string): string | null => {
+  const groups = expandIpv6(address);
+  if (!groups) return null;
+  const mapped = groups.slice(0, 5).every((group) => group === 0) && groups[5] === 0xffff;
+  if (!mapped) return null;
+  const high = groups[6] ?? 0;
+  const low = groups[7] ?? 0;
+  return `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`;
 };
 
-const ipv4Mapped = (address: string): string | null => {
-  const normalized = address.toLowerCase();
-  const prefix = '::ffff:';
-  if (!normalized.startsWith(prefix)) return null;
-  const rest = normalized.slice(prefix.length);
-  return ipv4Value(rest) === null ? null : rest;
-};
+const normalizeIp = (address: string): string =>
+  address.trim().toLowerCase().replace(/^\[|\]$/g, '').split('%')[0] ?? '';
 
-/** Private, loopback, and link-local addresses, including IPv4-mapped IPv6. */
+/**
+ * Loopback, private, link-local (including 169.254.169.254), CGNAT, benchmarking,
+ * reserved 240/4, multicast, unique-local, and NAT64, including mapped forms.
+ */
 export const isBlockedAddress = (address: string): boolean => {
-  const trimmed = address.trim().toLowerCase().replace(/^\[|\]$/g, '');
-  const mapped = ipv4Mapped(trimmed);
-  const v4 = mapped ?? trimmed;
-  if (ipv4Value(v4) !== null) {
-    return (
-      ipv4InCidr(v4, '0.0.0.0', 8) ||
-      ipv4InCidr(v4, '10.0.0.0', 8) ||
-      ipv4InCidr(v4, '127.0.0.0', 8) ||
-      ipv4InCidr(v4, '169.254.0.0', 16) ||
-      ipv4InCidr(v4, '172.16.0.0', 12) ||
-      ipv4InCidr(v4, '192.168.0.0', 16)
-    );
-  }
-  if (trimmed === '::1' || trimmed === '::') return true;
-  if (trimmed.startsWith('fe8') || trimmed.startsWith('fe9') || trimmed.startsWith('fea') || trimmed.startsWith('feb')) {
-    return true;
-  }
-  return trimmed.startsWith('fc') || trimmed.startsWith('fd');
+  const trimmed = normalizeIp(address);
+  const family = isIP(trimmed);
+  if (family === 4) return blocked.check(trimmed, 'ipv4');
+  if (family !== 6) return false;
+  const embedded = unwrapIpv4Mapped(trimmed);
+  if (embedded && blocked.check(embedded, 'ipv4')) return true;
+  return blocked.check(trimmed, 'ipv6');
 };
 
 const siteHost = (hostname: string): string => hostname.toLowerCase().replace(/^(?:www|m)\./, '');
@@ -76,7 +131,26 @@ const siteHost = (hostname: string): string => hostname.toLowerCase().replace(/^
 export const sameSiteHttps = (current: URL, next: URL): boolean =>
   next.protocol === 'https:' && siteHost(current.hostname) === siteHost(next.hostname);
 
-export const assertPublicHttpsUrl = async (raw: string, resolveHost: LookupFn = defaultLookup): Promise<URL> => {
+const addressFamily = (address: string): AddressFamily => (isIP(address) === 6 ? 6 : 4);
+
+/** Lookup that ignores the hostname and returns only the address already checked. */
+export const pinnedLookup =
+  (address: string, family: AddressFamily) =>
+  (_hostname: string, options: { all?: boolean }, callback: LookupCallback): void => {
+    if (options?.all) {
+      callback(null, [{ address, family }]);
+      return;
+    }
+    callback(null, address, family);
+  };
+
+export const createPinnedAgent = (address: string, family: AddressFamily): PinnedAgent => {
+  const connectLookup = pinnedLookup(address, family);
+  const agent = new Agent({ connect: { lookup: connectLookup } });
+  return Object.assign(agent, { connectLookup });
+};
+
+const resolvePublicTarget = async (raw: string, resolveHost: LookupFn): Promise<PublicTarget> => {
   let url: URL;
   try {
     url = new URL(raw);
@@ -85,13 +159,13 @@ export const assertPublicHttpsUrl = async (raw: string, resolveHost: LookupFn = 
   }
   if (url.protocol !== 'https:') throw new UnsafeUrlError('public fetches require https');
   if (url.username || url.password) throw new UnsafeUrlError('url must not include credentials');
-  const host = url.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  const host = normalizeIp(url.hostname);
   if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local')) {
     throw new UnsafeUrlError('public fetches cannot use a local hostname');
   }
   if (isIP(host)) {
     if (isBlockedAddress(host)) throw new UnsafeUrlError('public fetches cannot use a private address');
-    return url;
+    return { url, address: host, family: addressFamily(host) };
   }
   let records: ResolvedAddress[];
   try {
@@ -105,8 +179,12 @@ export const assertPublicHttpsUrl = async (raw: string, resolveHost: LookupFn = 
       throw new UnsafeUrlError('public hostname resolved to a private address');
     }
   }
-  return url;
+  const first = records[0];
+  return { url, address: first.address, family: addressFamily(first.address) };
 };
+
+export const assertPublicHttpsUrl = async (raw: string, resolveHost: LookupFn = defaultLookup): Promise<URL> =>
+  (await resolvePublicTarget(raw, resolveHost)).url;
 
 const readCapped = async (response: Response): Promise<string> => {
   const declared = Number(response.headers.get('content-length') ?? '');
@@ -147,28 +225,34 @@ export const createFetchClient = (options?: {
   const resolveHost = options?.lookup ?? defaultLookup;
   return {
     async request(url: string, init?: HttpRequest): Promise<HttpResponse> {
-      let current = await assertPublicHttpsUrl(url, resolveHost);
+      let current = await resolvePublicTarget(url, resolveHost);
       for (let hop = 0; hop <= 3; hop += 1) {
-        const response = await fetchImpl(current.toString(), {
-          method: init?.method ?? 'GET',
-          headers: init?.headers,
-          body: init?.body,
-          redirect: 'manual',
-          signal: AbortSignal.timeout(timeoutMs),
-        });
-        if (response.status >= 300 && response.status < 400) {
-          const location = headerGet(response, 'location');
-          if (!location || hop === 3) throw new UnsafeUrlError('redirect was not followed');
-          const next = new URL(location, current);
-          if (!sameSiteHttps(current, next)) throw new UnsafeUrlError('redirect left the https site');
-          current = await assertPublicHttpsUrl(next.toString(), resolveHost);
-          continue;
+        const dispatcher = createPinnedAgent(current.address, current.family);
+        try {
+          const response = await fetchImpl(current.url.toString(), {
+            method: init?.method ?? 'GET',
+            headers: init?.headers,
+            body: init?.body,
+            redirect: 'manual',
+            signal: AbortSignal.timeout(timeoutMs),
+            dispatcher,
+          });
+          if (response.status >= 300 && response.status < 400) {
+            const location = headerGet(response, 'location');
+            if (!location || hop === 3) throw new UnsafeUrlError('redirect was not followed');
+            const next = new URL(location, current.url);
+            if (!sameSiteHttps(current.url, next)) throw new UnsafeUrlError('redirect left the https site');
+            current = await resolvePublicTarget(next.toString(), resolveHost);
+            continue;
+          }
+          return {
+            status: response.status,
+            url: response.url || current.url.toString(),
+            body: await readCapped(response),
+          };
+        } finally {
+          await dispatcher.close();
         }
-        return {
-          status: response.status,
-          url: response.url || current.toString(),
-          body: await readCapped(response),
-        };
       }
       throw new UnsafeUrlError('redirect was not followed');
     },

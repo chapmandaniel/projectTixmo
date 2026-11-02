@@ -133,7 +133,13 @@ export class TixmoClient {
         });
       }
       const total = typeof parsed.meta?.total === 'number' ? parsed.meta.total : targets.length;
-      if (rows.length < limit || targets.length >= total) break;
+      const more = rows.length === limit && targets.length < total;
+      if (!more) break;
+      if (page === 20) {
+        this.options.logger.warn?.(
+          'brand-checker: verified target list stopped at 20 pages; later pages were not loaded'
+        );
+      }
     }
     return targets;
   }

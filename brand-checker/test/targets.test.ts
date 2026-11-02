@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import { loadConfig } from '../src/config.js';
 import { createFixtureClient } from '../src/fixtures.js';
-import { TargetsForbidden } from '../src/ingest.js';
+import { TargetsForbidden, TixmoClient } from '../src/ingest.js';
 import { runChecker } from '../src/run.js';
 import { watchlistFromTargets } from '../src/targets.js';
 import type { HttpClient, Logger } from '../src/types.js';
@@ -169,5 +169,49 @@ describe('verified targets', () => {
     assert.equal(summary.status, 401);
     assert.equal(urls.length, 1);
     assert.match(lines.join('\n'), /returned 401/);
+  });
+
+  it('warns when the verified target list stops at 20 pages', async () => {
+    const warnings: string[] = [];
+    const alerts: string[] = [];
+    const row = {
+      organizationId: orgId,
+      platform: 'X',
+      platformAccountId: '1000000001',
+      handle: 'harbourfest',
+    };
+    const body = JSON.stringify({
+      data: { targets: Array.from({ length: 100 }, () => row) },
+      meta: { total: 2500 },
+    });
+    let pages = 0;
+    const client = new TixmoClient({
+      apiUrl: 'http://127.0.0.1:3000',
+      token,
+      http: {
+        async request(url) {
+          pages += 1;
+          return { status: 200, url, body };
+        },
+      },
+      logger: {
+        info() {},
+        alert(message) {
+          alerts.push(message);
+        },
+        warn(message) {
+          warnings.push(message);
+        },
+      },
+      onFatal() {
+        throw new Error('fatal');
+      },
+    });
+    const targets = await client.listTargets();
+    assert.equal(pages, 20);
+    assert.equal(targets.length, 2000);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0] ?? '', /20 pages/);
+    assert.equal(alerts.length, 0);
   });
 });

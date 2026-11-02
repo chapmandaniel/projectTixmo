@@ -9,6 +9,7 @@ import {
   createApiFetchClient,
   createFetchClient,
   isBlockedAddress,
+  type PinnedAgent,
 } from '../src/http.js';
 import { collectReddit, redditUserAgent } from '../src/sources/reddit.js';
 import { collectX } from '../src/sources/x.js';
@@ -27,16 +28,48 @@ const response = (status: number, body: string, headers: Record<string, string> 
 });
 
 describe('public fetch safety', () => {
-  it('blocks private, loopback, and link-local addresses', () => {
-    assert.equal(isBlockedAddress('127.0.0.1'), true);
-    assert.equal(isBlockedAddress('10.0.0.8'), true);
-    assert.equal(isBlockedAddress('192.168.1.9'), true);
-    assert.equal(isBlockedAddress('172.16.0.1'), true);
-    assert.equal(isBlockedAddress('169.254.169.254'), true);
-    assert.equal(isBlockedAddress('::1'), true);
-    assert.equal(isBlockedAddress('fe80::1'), true);
-    assert.equal(isBlockedAddress('::ffff:127.0.0.1'), true);
+  it('blocks private, loopback, link-local, CGNAT, NAT64, and mapped forms', () => {
+    const blocked = [
+      '127.0.0.1',
+      '10.0.0.8',
+      '192.168.1.9',
+      '172.16.0.1',
+      '169.254.169.254',
+      '0.0.0.1',
+      '100.64.0.1',
+      '100.127.255.255',
+      '198.18.0.1',
+      '198.19.255.255',
+      '224.0.0.1',
+      '240.0.0.1',
+      '255.255.255.255',
+      '::1',
+      '::',
+      'fe80::1',
+      'febf::1',
+      'fc00::1',
+      'fd12::1',
+      'ff02::1',
+      '::ffff:127.0.0.1',
+      '::ffff:7f00:1',
+      '::ffff:7f00:0001',
+      '0:0:0:0:0:ffff:7f00:1',
+      '::ffff:a9fe:a9fe',
+      '::ffff:6440:1',
+      '::7f00:1',
+      '[::1]',
+      '64:ff9b::7f00:1',
+      '64:ff9b::8.8.8.8',
+      '64:ff9b::808:808',
+    ];
+    for (const address of blocked) assert.equal(isBlockedAddress(address), true, address);
     assert.equal(isBlockedAddress('8.8.8.8'), false);
+    assert.equal(isBlockedAddress('1.1.1.1'), false);
+    assert.equal(isBlockedAddress('100.128.0.1'), false);
+    assert.equal(isBlockedAddress('198.20.0.1'), false);
+    assert.equal(isBlockedAddress('::ffff:8.8.8.8'), false);
+    assert.equal(isBlockedAddress('::ffff:808:808'), false);
+    assert.equal(isBlockedAddress('2001:4860:4860::8888'), false);
   });
 
   it('refuses a hostname that resolves to a private address', async () => {
@@ -44,6 +77,65 @@ describe('public fetch safety', () => {
       () => assertPublicHttpsUrl('https://example.test/path', privateLookup),
       /private address/
     );
+  });
+
+  it('pins the checked address for the connection and each redirect hop', async () => {
+    const answers = [
+      [
+        { address: '8.8.8.8', family: 4 },
+        { address: '1.1.1.1', family: 4 },
+      ],
+      [{ address: '9.9.9.9', family: 4 }],
+    ];
+    let lookups = 0;
+    const pinned: string[] = [];
+    let fetches = 0;
+    const client = createFetchClient({
+      lookup: async () => {
+        const answer = answers[lookups];
+        lookups += 1;
+        if (!answer) throw new Error('lookup called again');
+        return answer;
+      },
+      fetchImpl: async (url, init) => {
+        fetches += 1;
+        const dispatcher = init.dispatcher as PinnedAgent;
+        const address = await new Promise<string>((resolve, reject) => {
+          dispatcher.connectLookup('re-resolved.example', { all: true }, (err, found) => {
+            if (err) {
+              reject(err);
+              return;
+            }
+            resolve(Array.isArray(found) ? found[0].address : found);
+          });
+        });
+        pinned.push(address);
+        if (fetches === 1) {
+          return response(302, '', { location: 'https://www.crt.sh/json' }, url) as unknown as Response;
+        }
+        return response(200, 'ok', {}, url) as unknown as Response;
+      },
+    });
+    const result = await client.request('https://crt.sh/start');
+    assert.equal(result.status, 200);
+    assert.equal(lookups, 2);
+    assert.deepEqual(pinned, ['8.8.8.8', '9.9.9.9']);
+  });
+
+  it('does not connect when any resolved address is blocked', async () => {
+    let fetches = 0;
+    const client = createFetchClient({
+      lookup: async () => [
+        { address: '8.8.8.8', family: 4 },
+        { address: '::ffff:7f00:1', family: 6 },
+      ],
+      fetchImpl: async () => {
+        fetches += 1;
+        return response(200, 'ok') as unknown as Response;
+      },
+    });
+    await assert.rejects(() => client.request('https://crt.sh/'), /private address/);
+    assert.equal(fetches, 0);
   });
 
   it('follows only a same-site https redirect', async () => {
