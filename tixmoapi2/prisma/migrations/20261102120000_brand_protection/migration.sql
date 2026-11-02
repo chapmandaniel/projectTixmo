@@ -133,3 +133,22 @@ ALTER TABLE "scam_matches"
 ALTER TABLE "scam_matches"
     ADD CONSTRAINT "scam_matches_imitated_official_account_id_fkey"
     FOREIGN KEY ("imitated_official_account_id") REFERENCES "official_accounts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+CREATE TABLE "official_account_reclaim_blocks" (
+    "id" TEXT NOT NULL,
+    "organization_id" TEXT NOT NULL,
+    "platform" "SocialPlatform" NOT NULL,
+    "platform_account_id" VARCHAR(200) NOT NULL,
+    "reason" VARCHAR(200) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lifted_at" TIMESTAMP(3),
+    "lifted_by" TEXT,
+    CONSTRAINT "official_account_reclaim_blocks_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX "official_account_reclaim_blocks_organization_id_platform_platform_account_id_lifted_at_idx"
+    ON "official_account_reclaim_blocks"("organization_id", "platform", "platform_account_id", "lifted_at");
+
+ALTER TABLE "official_account_reclaim_blocks"
+    ADD CONSTRAINT "official_account_reclaim_blocks_organization_id_fkey"
+    FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;

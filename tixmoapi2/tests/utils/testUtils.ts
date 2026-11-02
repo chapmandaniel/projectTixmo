@@ -225,6 +225,7 @@ export async function cleanupTestData() {
   // Order of deletion matters because of foreign keys
   // 1. Child tables (ScanLog, Scanner, Notification, etc.)
   try {
+    await prisma.officialAccountReclaimBlock.deleteMany();
     await prisma.scamMatch.deleteMany();
   } catch (e) {}
   try {

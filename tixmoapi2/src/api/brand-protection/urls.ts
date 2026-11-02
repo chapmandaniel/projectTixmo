@@ -10,10 +10,25 @@ export const assertNoControlChars = (value: string, field: string): void => {
 };
 
 const PLATFORM_HOSTS: Record<string, readonly string[]> = {
-  X: ['x.com', 'twitter.com'],
-  REDDIT: ['reddit.com'],
-  FACEBOOK: ['facebook.com', 'fb.com', 'm.facebook.com'],
+  X: ['x.com', 'twitter.com', 'mobile.twitter.com', 'mobile.x.com'],
+  REDDIT: ['reddit.com', 'old.reddit.com', 'new.reddit.com'],
+  FACEBOOK: ['facebook.com', 'fb.com', 'm.facebook.com', 'web.facebook.com'],
   INSTAGRAM: ['instagram.com'],
+};
+
+const TRACKING_PARAM =
+  /^(?:utm_[a-z0-9_]+|fbclid|gclid|gclsrc|dclid|msclkid|twclid|igshid|igsh|mc_cid|mc_eid|ref_src|ref_url|si)$/i;
+
+export const canonicalSocialHost = (hostname: string): string => {
+  let host = hostname.toLowerCase().replace(/\.$/, '');
+  if (host.startsWith('www.')) host = host.slice(4);
+  if (host.startsWith('m.')) host = host.slice(2);
+  if (host === 'twitter.com' || host === 'mobile.twitter.com' || host === 'mobile.x.com') {
+    return 'x.com';
+  }
+  if (host === 'old.reddit.com' || host === 'new.reddit.com') return 'reddit.com';
+  if (host === 'web.facebook.com' || host === 'fb.com') return 'facebook.com';
+  return host;
 };
 
 export const hostAllowedForPlatform = (platform: string, hostname: string): boolean => {
@@ -62,7 +77,11 @@ export const normalizeSocialUrl = (raw: string, field: string, platform: string)
     throw ApiError.badRequest(`${field} is not on an allowed host for ${platform}`);
   }
   url.hash = '';
-  url.hostname = url.hostname.toLowerCase();
+  url.hostname = canonicalSocialHost(url.hostname);
+  for (const key of [...url.searchParams.keys()]) {
+    if (TRACKING_PARAM.test(key)) url.searchParams.delete(key);
+  }
+  if (url.pathname.length > 1) url.pathname = url.pathname.replace(/\/+$/, '');
   const normalized = url.toString().replace(/\/$/, '');
   if (normalized.length > 500) throw ApiError.badRequest(`${field} is too long`);
   return normalized;

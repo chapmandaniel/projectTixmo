@@ -121,10 +121,12 @@ const ingestMatchSchema = z
   })
   .strict();
 
+export const parseIngestMatch = (value: unknown) => ingestMatchSchema.safeParse(value);
+
 export const ingestMatchesSchema = z.object({
   body: z
     .object({
-      matches: z.array(ingestMatchSchema).min(1).max(INGEST_BATCH_LIMIT),
+      matches: z.array(z.unknown()).min(1).max(INGEST_BATCH_LIMIT),
     })
     .strict(),
 });

@@ -13,6 +13,7 @@ import {
 import { hashCheckerToken } from './checkerGuard';
 import { presentAccount, presentMatch } from './serialize';
 import { assertNoControlChars, displayHandle, normalizeDomain, normalizeSocialUrl } from './urls';
+import { parseIngestMatch } from './validation';
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -161,6 +162,51 @@ const assertEventInOrg = async (
   }
 };
 
+const RECLAIM_BLOCKED = 'This organization cannot claim that platform account';
+
+const activeReclaimBlock = (
+  db: Tx | typeof prisma,
+  organizationId: string,
+  platform: SocialPlatform,
+  platformAccountId: string
+) =>
+  db.officialAccountReclaimBlock.findFirst({
+    where: { organizationId, platform, platformAccountId, liftedAt: null },
+    select: { id: true },
+  });
+
+const assertReclaimAllowed = async (
+  db: Tx | typeof prisma,
+  organizationId: string,
+  platform: SocialPlatform,
+  platformAccountId: string
+) => {
+  if (await activeReclaimBlock(db, organizationId, platform, platformAccountId)) {
+    throw ApiError.conflict(RECLAIM_BLOCKED);
+  }
+};
+
+const recordReclaimBlock = async (
+  tx: Tx,
+  account: { organizationId: string; platform: SocialPlatform; platformAccountId: string }
+) => {
+  const existing = await activeReclaimBlock(
+    tx,
+    account.organizationId,
+    account.platform,
+    account.platformAccountId
+  );
+  if (existing) return;
+  await tx.officialAccountReclaimBlock.create({
+    data: {
+      organizationId: account.organizationId,
+      platform: account.platform,
+      platformAccountId: account.platformAccountId,
+      reason: 'Dispute resolved against this organization',
+    },
+  });
+};
+
 const assertOrgExists = async (tx: Tx, organizationId: string) => {
   const org = await tx.organization.findUnique({
     where: { id: organizationId },
@@ -182,8 +228,9 @@ export const createOfficialAccount = async (input: AccountInput) => {
     });
     const own = rows.filter((row) => row.organizationId === input.organizationId);
     if (own.some((row) => row.status === 'REVOKED')) {
-      throw ApiError.conflict('This organization cannot claim that platform account');
+      throw ApiError.conflict(RECLAIM_BLOCKED);
     }
+    await assertReclaimAllowed(tx, input.organizationId, input.platform, input.platformAccountId);
     if (own.some((row) => row.status !== 'REVOKED')) {
       throw ApiError.conflict('This organization already claimed that platform account');
     }
@@ -259,6 +306,9 @@ export const deleteOfficialAccount = async (
 ) => {
   const existing = await prisma.officialAccount.findFirst({ where: { id, organizationId } });
   if (!existing) throw ApiError.notFound('Official account not found');
+  if (existing.status === 'REVOKED') {
+    throw ApiError.conflict('A revoked official account cannot be deleted');
+  }
   await prisma.$transaction(async (tx) => {
     await auditAccount(tx, {
       action: 'OFFICIAL_ACCOUNT_REVOKE',
@@ -422,6 +472,12 @@ const confirmOneTimeCode = async (
     ) {
       throw ApiError.badRequest('Verification code expired');
     }
+    await assertReclaimAllowed(
+      tx,
+      matched.organizationId,
+      matched.platform,
+      matched.platformAccountId
+    );
     const contested = rows.some(
       (row) => row.id !== matched.id && (row.status === 'VERIFIED' || row.status === 'DISPUTED')
     );
@@ -487,6 +543,7 @@ export const resolveOfficialAccountDispute = async (actorId: string, winnerAccou
           verifiedAt: null,
         },
       });
+      await recordReclaimBlock(tx, row);
       await auditAccount(tx, {
         action: 'OFFICIAL_ACCOUNT_REVOKE',
         account: row,
@@ -669,12 +726,24 @@ const ingestOne = async (tx: Tx, match: IngestMatchInput, checkerTokenId: string
   return { id: created.id, status: created.status, created: true };
 };
 
-export const ingestMatches = async (matches: IngestMatchInput[], checkerTokenId: string) =>
-  prisma.$transaction(async (tx) => {
-    const results = [];
-    for (const match of matches) results.push(await ingestOne(tx, match, checkerTokenId));
-    return results;
-  });
+export const ingestMatches = async (matches: unknown[], checkerTokenId: string) => {
+  const results = [];
+  for (const raw of matches) {
+    const parsed = parseIngestMatch(raw);
+    if (!parsed.success) {
+      results.push({ error: 'Validation failed' });
+      continue;
+    }
+    try {
+      results.push(await prisma.$transaction((tx) => ingestOne(tx, parsed.data, checkerTokenId)));
+    } catch (error) {
+      results.push({
+        error: error instanceof ApiError ? error.message : 'Match rejected',
+      });
+    }
+  }
+  return results;
+};
 
 export const reportCheckerStatus = async (input: {
   platform: SocialPlatform;
@@ -835,6 +904,15 @@ export const liftReclaimBlock = async (actorId: string, accountId: string) => {
     throw ApiError.badRequest('Only a revoked claim can be lifted');
   }
   await prisma.$transaction(async (tx) => {
+    await tx.officialAccountReclaimBlock.updateMany({
+      where: {
+        organizationId: existing.organizationId,
+        platform: existing.platform,
+        platformAccountId: existing.platformAccountId,
+        liftedAt: null,
+      },
+      data: { liftedAt: new Date(), liftedBy: actorId },
+    });
     await recordStaffAction(tx, {
       action: 'OFFICIAL_ACCOUNT_LIFT',
       subjectType: 'OFFICIAL_ACCOUNT',

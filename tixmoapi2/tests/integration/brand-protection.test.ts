@@ -181,7 +181,8 @@ describe('Brand protection', () => {
           },
         ],
       });
-    expect(missing.status).toBe(400);
+    expect(missing.status).toBe(200);
+    expect(missing.body.data.results[0].error).toBe('Validation failed');
 
     const unknown = await ingest(checker.token, {
       organizationId: '11111111-1111-4111-8111-111111111111',
@@ -191,8 +192,8 @@ describe('Brand protection', () => {
       matchedRule: 'rule',
       detectedAt: future(0),
     });
-    expect(unknown.status).toBe(400);
-    expect(unknown.body.message).toMatch(/organizationId/);
+    expect(unknown.status).toBe(200);
+    expect(unknown.body.data.results[0].error).toMatch(/organizationId/);
   });
 
   it('rejects marketplace platforms and marketplace URLs', async () => {
@@ -211,7 +212,8 @@ describe('Brand protection', () => {
         matchedRule: 'rule',
         detectedAt: future(0),
       });
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(200);
+      expect(res.body.data.results[0].error).toBe('Validation failed');
     }
     const marketplace = await ingest(checker.token, {
       organizationId,
@@ -222,7 +224,8 @@ describe('Brand protection', () => {
       matchedRule: 'rule',
       detectedAt: future(0),
     });
-    expect(marketplace.status).toBe(400);
+    expect(marketplace.status).toBe(200);
+    expect(marketplace.body.data.results[0].error).toMatch(/Marketplace/);
   });
 
   it('stores a lookalike domain without page content and upserts it', async () => {
@@ -235,7 +238,8 @@ describe('Brand protection', () => {
       matchedRule: 'lookalike',
       detectedAt: future(0),
     });
-    expect(rejected.status).toBe(400);
+    expect(rejected.status).toBe(200);
+    expect(rejected.body.data.results[0].error).toMatch(/domain/);
 
     const created = await ingest(checker.token, {
       organizationId,
@@ -555,6 +559,10 @@ describe('Brand protection', () => {
     expect(resolved.body.data).not.toHaveProperty('verificationCode');
     const loser = await prisma.officialAccount.findUnique({ where: { id: second.body.data.id } });
     expect(loser?.status).toBe('REVOKED');
+    const deleted = await request(app)
+      .delete(`/api/v1/brand-protection/accounts/${second.body.data.id}`)
+      .set(auth(otherToken));
+    expect(deleted.status).toBe(409);
     const blocked = await request(app)
       .post('/api/v1/brand-protection/accounts')
       .set(auth(otherToken))
@@ -858,7 +866,8 @@ describe('Brand protection', () => {
       matchedRule: 'rule',
       detectedAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
     });
-    expect(futureMatch.status).toBe(400);
+    expect(futureMatch.status).toBe(200);
+    expect(futureMatch.body.data.results[0].error).toMatch(/future/);
     const foreignHost = await ingest(checker.token, {
       organizationId,
       platform: 'X',
@@ -867,7 +876,8 @@ describe('Brand protection', () => {
       matchedRule: 'rule',
       detectedAt: future(0),
     });
-    expect(foreignHost.status).toBe(400);
+    expect(foreignHost.status).toBe(200);
+    expect(foreignHost.body.data.results[0].error).toMatch(/allowed host/);
     const disguised = await request(app)
       .post('/api/v1/evil/brand-protection/ingest/matches')
       .set(auth(checker.token))
@@ -918,5 +928,136 @@ describe('Brand protection', () => {
       });
     expect(fresh.status).toBe(200);
     expect(fresh.body.data.status).toBe('VERIFIED');
+  });
+
+  it('stores the valid ingest items when another item in the batch is rejected', async () => {
+    const batch = await request(app)
+      .post('/api/v1/brand-protection/ingest/matches')
+      .set(auth(checker.token))
+      .send({
+        matches: [
+          {
+            organizationId,
+            platform: 'REDDIT',
+            category: 'FAKE_CONTEST',
+            sourceUrl: 'https://old.reddit.com/r/example/comments/kept',
+            matchedRule: 'contest',
+            detectedAt: future(0),
+          },
+          {
+            organizationId,
+            platform: 'X',
+            category: 'FAKE_CONTEST',
+            sourceUrl: 'https://evil.example/dropped',
+            matchedRule: 'contest',
+            detectedAt: future(0),
+          },
+        ],
+      });
+    expect(batch.status).toBe(200);
+    expect(batch.body.data.results[0].created).toBe(true);
+    expect(batch.body.data.results[1].error).toMatch(/allowed host/);
+    const stored = await prisma.scamMatch.findFirst({
+      where: { organizationId, sourceUrl: 'https://reddit.com/r/example/comments/kept' },
+    });
+    expect(stored).not.toBeNull();
+    expect(
+      await prisma.scamMatch.findFirst({
+        where: { organizationId, sourceUrl: { contains: 'evil.example' } },
+      })
+    ).toBeNull();
+  });
+
+  it('matches an official post after canonicalizing host, tracking params, and trailing slashes', async () => {
+    const giveaway = await request(app)
+      .post('/api/v1/brand-protection/giveaways')
+      .set(auth(ownerToken))
+      .send({
+        title: 'Canonical post',
+        platform: 'X',
+        officialPostUrl: 'https://www.x.com/harbourfest/status/canon/',
+        accountHandle: 'harbourfest',
+        startsAt: future(1),
+        endsAt: future(8),
+      });
+    expect(giveaway.status).toBe(201);
+    expect(giveaway.body.data.officialPostUrl).toBe('https://x.com/harbourfest/status/canon');
+    const first = await ingest(checker.token, {
+      organizationId,
+      platform: 'X',
+      category: 'FAKE_CONTEST',
+      sourceUrl: 'https://twitter.com/harbourfest/status/canon?utm_source=mail#top',
+      matchedRule: 'contest',
+      detectedAt: future(0),
+    });
+    expect(first.body.data.results[0].status).toBe('OFFICIAL');
+    const second = await ingest(checker.token, {
+      organizationId,
+      platform: 'X',
+      category: 'FAKE_CONTEST',
+      sourceUrl: 'https://mobile.x.com/harbourfest/status/canon/',
+      matchedRule: 'contest',
+      detectedAt: future(0),
+    });
+    expect(second.body.data.results[0]).toMatchObject({
+      id: first.body.data.results[0].id,
+      created: false,
+    });
+    const row = await prisma.scamMatch.findUnique({ where: { id: first.body.data.results[0].id } });
+    expect(row?.sourceUrl).toBe('https://x.com/harbourfest/status/canon');
+  });
+
+  it('keeps a re-claim block after the revoked account row is gone and blocks verification', async () => {
+    const pending = await request(app)
+      .post('/api/v1/brand-protection/accounts')
+      .set(auth(otherToken))
+      .send({
+        platform: 'FACEBOOK',
+        platformAccountId: 'fb-blocked',
+        handle: 'harbourfest',
+        profileUrl: 'https://www.facebook.com/harbourfest',
+      });
+    expect(pending.status).toBe(201);
+    await prisma.officialAccountReclaimBlock.create({
+      data: {
+        organizationId: otherOrganizationId,
+        platform: 'FACEBOOK',
+        platformAccountId: 'fb-blocked',
+        reason: 'Dispute resolved against this organization',
+      },
+    });
+    await prisma.officialAccount.delete({ where: { id: pending.body.data.id } });
+    const again = await request(app)
+      .post('/api/v1/brand-protection/accounts')
+      .set(auth(otherToken))
+      .send({
+        platform: 'FACEBOOK',
+        platformAccountId: 'fb-blocked',
+        handle: 'harbourfest',
+        profileUrl: 'https://web.facebook.com/harbourfest',
+      });
+    expect(again.status).toBe(409);
+    const replacement = await prisma.officialAccount.create({
+      data: {
+        organizationId: otherOrganizationId,
+        platform: 'FACEBOOK',
+        platformAccountId: 'fb-blocked',
+        handle: 'harbourfest',
+        profileUrl: 'https://facebook.com/harbourfest',
+        status: 'PENDING',
+        verificationMethod: 'ONE_TIME_CODE',
+        verificationCode: 'FACE-BOOK',
+        verificationCodeExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        createdBy: 'test',
+      },
+    });
+    const confirmed = await request(app)
+      .post('/api/v1/brand-protection/ingest/verifications')
+      .set(auth(checker.token))
+      .send({ platform: 'FACEBOOK', platformAccountId: 'fb-blocked', code: 'FACE-BOOK' });
+    expect(confirmed.status).toBe(409);
+    expect(
+      (await prisma.officialAccount.findUnique({ where: { id: replacement.id } }))?.status
+    ).toBe('PENDING');
   });
 });

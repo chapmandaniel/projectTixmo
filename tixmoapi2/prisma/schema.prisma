@@ -142,6 +142,7 @@ model Organization {
   officialAccounts     OfficialAccount[]
   officialGiveaways    OfficialGiveaway[]
   scamMatches          ScamMatch[]
+  officialAccountReclaimBlocks OfficialAccountReclaimBlock[]
 
   @@map("organizations")
 }
@@ -1082,6 +1083,22 @@ model OfficialAccount {
   @@index([organizationId, status])
   @@index([platform, platformAccountId])
   @@map("official_accounts")
+}
+
+// Survives deletion of the official-account row. Only an admin lift clears it.
+model OfficialAccountReclaimBlock {
+  id                String         @id @default(uuid())
+  organizationId    String         @map("organization_id")
+  organization      Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platform          SocialPlatform
+  platformAccountId String         @map("platform_account_id") @db.VarChar(200)
+  reason            String         @db.VarChar(200)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  liftedAt          DateTime?      @map("lifted_at")
+  liftedBy          String?        @map("lifted_by")
+
+  @@index([organizationId, platform, platformAccountId, liftedAt])
+  @@map("official_account_reclaim_blocks")
 }
 
 model OfficialGiveaway {

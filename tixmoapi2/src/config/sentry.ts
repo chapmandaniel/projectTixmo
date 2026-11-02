@@ -1,5 +1,6 @@
 import { assetShareLogPath } from '../utils/assetShareLogPath';
 import { buyerRecoveryLogPath } from '../utils/buyerRecoveryLogPath';
+import { redactGiveawayLogText } from '../utils/giveawayLogRedaction';
 import * as Sentry from '@sentry/node';
 import { config } from './environment';
 
@@ -54,6 +55,27 @@ export const scrubBrandProtectionRequest = <T extends { request?: TelemetryReque
   delete request.query_string;
   delete request.cookies;
   stripAuthAndCookies(request.headers);
+  return event;
+};
+
+type BrandProtectionEvent = {
+  message?: unknown;
+  exception?: { values?: Array<{ value?: string }> };
+  request?: TelemetryRequest;
+};
+
+const brandProtectionEvent = (event: BrandProtectionEvent): boolean =>
+  isBrandProtectionRequestUrl(event.request?.url) ||
+  (typeof event.message === 'string' && isBrandProtectionRequestUrl(event.message));
+
+/** Redact checker evidence in exception text for brand-protection events, and scrub the request. */
+export const scrubBrandProtectionEvent = <T extends BrandProtectionEvent>(event: T): T => {
+  if (!brandProtectionEvent(event)) return event;
+  scrubBrandProtectionRequest(event);
+  if (typeof event.message === 'string') event.message = redactGiveawayLogText(event.message);
+  for (const entry of event.exception?.values ?? []) {
+    if (typeof entry.value === 'string') entry.value = redactGiveawayLogText(entry.value);
+  }
   return event;
 };
 
@@ -121,7 +143,7 @@ export function initSentry() {
           delete request.headers;
           delete request.cookies;
         }
-        scrubBrandProtectionRequest(ev);
+        scrubBrandProtectionEvent(ev);
         // Existing general password scrubbing remains in place.
         try {
           if (ev && typeof ev === 'object' && 'request' in ev) {
@@ -146,6 +168,9 @@ export function initSentry() {
       },
       beforeBreadcrumb(breadcrumb: Sentry.Breadcrumb) {
         return scrubBrandProtectionBreadcrumb(breadcrumb);
+      },
+      beforeSendTransaction(event: Sentry.Event) {
+        return scrubBrandProtectionRequest(event);
       },
     });
 

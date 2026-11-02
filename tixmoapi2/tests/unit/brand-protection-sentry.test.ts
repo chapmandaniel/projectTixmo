@@ -19,6 +19,7 @@ import {
   initSentry,
   Sentry,
   scrubBrandProtectionBreadcrumb,
+  scrubBrandProtectionEvent,
   scrubBrandProtectionRequest,
 } from '../../src/config/sentry';
 
@@ -99,4 +100,37 @@ test('Sentry hooks scrub brand protection requests and leave other routes intact
   });
   expect(JSON.stringify(crumb)).not.toContain(secret);
   expect(JSON.stringify(crumb)).not.toContain('captcha');
+
+  const evidence = `{"evidencePhones":["${phone}"],"evidenceEmails":["scam-evidence@example.test"]}`;
+  const scrubbed = options.beforeSend(
+    scrubBrandProtectionEvent({
+      message: `ingest failed ${evidence} ${secret}`,
+      request: { url: 'https://api.example.test/api/v1/brand-protection/ingest/matches' },
+      exception: { values: [{ value: `${evidence} ${secret}` }] },
+    })
+  );
+  expect(JSON.stringify(scrubbed)).not.toContain(phone);
+  expect(JSON.stringify(scrubbed)).not.toContain('scam-evidence@example.test');
+  expect(JSON.stringify(scrubbed)).not.toContain(secret);
+
+  const otherRoute = scrubBrandProtectionEvent({
+    message: evidence,
+    request: { url: 'https://api.example.test/api/v1/events' },
+    exception: { values: [{ value: evidence }] },
+  });
+  expect(otherRoute.exception?.values?.[0].value).toContain(phone);
+
+  const transaction = options.beforeSendTransaction({
+    request: {
+      url: 'https://api.example.test/api/v1/brand-protection/ingest/matches?detail=login%20wall',
+      data: { detail: 'login wall', evidencePhones: [phone] },
+      query_string: 'detail=login wall',
+      headers: { Authorization: secret },
+      cookies: secret,
+    },
+  });
+  expect(transaction.request.url).toBe('/api/v1/brand-protection/ingest/matches');
+  expect(JSON.stringify(transaction)).not.toContain(secret);
+  expect(JSON.stringify(transaction)).not.toContain(phone);
+  expect(JSON.stringify(transaction)).not.toContain('login wall');
 });
