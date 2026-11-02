@@ -91,6 +91,16 @@ class ResilientRateLimitStore {
     await Promise.allSettled([this.redisStore.resetKey(key), this.memory.resetKey(key)]);
   }
 
+  async get(key: string) {
+    if (Date.now() < redisBlockedUntil) return this.memory.get(key);
+    try {
+      return await this.redisStore.get(key);
+    } catch (error) {
+      openRateLimitCircuit(error);
+      return this.memory.get(key);
+    }
+  }
+
   shutdown(): void {
     this.memory.shutdown();
   }
@@ -429,6 +439,10 @@ const giveawayIngestAuthFailureMax = (req: Request) => {
   return config.nodeEnv === 'test' ? 1000 : 120;
 };
 
+const giveawayIngestAuthFailureKey = (req: Request) => `ip:${req.ip ?? 'unknown'}`;
+
+const giveawayIngestAuthFailureStore = new ResilientRateLimitStore('rl:giveaway:ingest-auth-fail:');
+
 export const giveawayIngestIpRateLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
   max: giveawayIngestAuthFailureMax,
@@ -438,9 +452,16 @@ export const giveawayIngestIpRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => `ip:${req.ip ?? 'unknown'}`,
-  store: createStore('rl:giveaway:ingest-auth-fail:'),
+  keyGenerator: giveawayIngestAuthFailureKey,
+  store: giveawayIngestAuthFailureStore,
 });
+
+/** True when this IP is already over the failed-token cap, without counting another hit. */
+export const isGiveawayIngestAuthBlocked = async (req: Request): Promise<boolean> => {
+  const current = await giveawayIngestAuthFailureStore.get(giveawayIngestAuthFailureKey(req));
+  if (!current?.resetTime || current.resetTime.getTime() <= Date.now()) return false;
+  return current.totalHits > giveawayIngestAuthFailureMax(req);
+};
 
 export const giveawayIngestRateLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,

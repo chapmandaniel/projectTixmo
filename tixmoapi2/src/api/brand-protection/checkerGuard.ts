@@ -3,7 +3,10 @@ import { NextFunction, Response } from 'express';
 import prisma from '../../config/prisma';
 import { config, isGiveawayProtectionEnabled } from '../../config/environment';
 import { AuthRequest } from '../../middleware/auth';
-import { giveawayIngestIpRateLimiter } from '../../middleware/rateLimiter';
+import {
+  giveawayIngestIpRateLimiter,
+  isGiveawayIngestAuthBlocked,
+} from '../../middleware/rateLimiter';
 import { ApiError } from '../../utils/ApiError';
 import { CHECKER_TOKEN_PREFIX } from './constants';
 
@@ -77,18 +80,17 @@ const countIngestAuthFailure = (
   next: NextFunction,
   error: unknown
 ) => {
+  if (!isGiveawayProtectionEnabled()) {
+    if (isBrandPath(req)) return next(ApiError.notFound('Route not found'));
+    return next(error);
+  }
   giveawayIngestIpRateLimiter(req, res, (limitError?: unknown) => {
     if (res.headersSent) return;
     next(limitError ?? error);
   });
 };
 
-/**
- * Ingest auth is checked first. Only a missing, unknown, or revoked checker
- * token consumes the per-IP failure bucket. A valid token skips that limiter
- * and is counted later per token id.
- */
-export const guardCheckerToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+const authenticateThenCountFailures = (req: AuthRequest, res: Response, next: NextFunction) => {
   void authenticateCheckerToken(req, res, (error?: unknown) => {
     if (!isAllowedIngest(req)) {
       next(error);
@@ -109,6 +111,37 @@ export const guardCheckerToken = (req: AuthRequest, res: Response, next: NextFun
     }
     next(error);
   });
+};
+
+/**
+ * Ingest auth is checked first. Only a missing, unknown, or revoked checker
+ * token consumes the per-IP failure bucket. A valid token skips that limiter
+ * and is counted later per token id. An IP already over that cap is rejected
+ * before the token table is read. While the feature flag is off, brand routes
+ * stay a uniform 404.
+ */
+export const guardCheckerToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!isGiveawayProtectionEnabled() && isBrandPath(req)) {
+    next(ApiError.notFound('Route not found'));
+    return;
+  }
+  if (!isAllowedIngest(req)) {
+    authenticateThenCountFailures(req, res, next);
+    return;
+  }
+  void isGiveawayIngestAuthBlocked(req)
+    .then((blocked) => {
+      if (!blocked) {
+        authenticateThenCountFailures(req, res, next);
+        return;
+      }
+      giveawayIngestIpRateLimiter(req, res, (limitError?: unknown) => {
+        if (res.headersSent) return;
+        if (limitError) return next(limitError);
+        authenticateThenCountFailures(req, res, next);
+      });
+    })
+    .catch(next);
 };
 
 export const requireCheckerToken = (req: AuthRequest, _res: Response, next: NextFunction) => {

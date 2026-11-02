@@ -26,6 +26,16 @@ test('redacts evidence, verification codes, and checker tokens from log text', (
   expect(redacted).toContain('gwc_[redacted]');
 });
 
+test('redacts unquoted Prisma field names', () => {
+  const raw = `Invalid prisma.scamMatch.create() invocation:\n{\n  data: {\n    evidencePhones: ["${phone}"],\n    evidenceEmails: ["${email}"],\n    verificationCode: "${code}",\n    detail: "login wall"\n  }\n}`;
+  const redacted = redactGiveawayLogText(raw);
+  expect(redacted).not.toContain(phone);
+  expect(redacted).not.toContain(email);
+  expect(redacted).not.toContain(code);
+  expect(redacted).not.toContain('login wall');
+  expect(redacted).toContain('"evidencePhones":"[redacted]"');
+});
+
 test('error logs do not keep evidence fields', () => {
   const body = JSON.stringify({
     evidencePhones: [phone],

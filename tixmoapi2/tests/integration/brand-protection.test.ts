@@ -125,6 +125,15 @@ describe('Brand protection', () => {
       expect(hidden.status).toBe(404);
       expect(ingestHidden.status).toBe(404);
       expect(otherRoute.status).toBe(403);
+      const missingToken = await request(app)
+        .post('/api/v1/brand-protection/ingest/matches')
+        .send({ matches: [{ organizationId, platform: 'X' }] });
+      const unknownToken = await request(app)
+        .post('/api/v1/brand-protection/ingest/matches')
+        .set('Authorization', 'Bearer gwc_unknown-checker-token')
+        .send({ matches: [{ organizationId, platform: 'X' }] });
+      expect(missingToken.status).toBe(404);
+      expect(unknownToken.status).toBe(404);
     } finally {
       process.env.FEATURE_GIVEAWAY_PROTECTION = 'true';
     }
@@ -819,10 +828,6 @@ describe('Brand protection', () => {
             },
           ],
         });
-    const failures = [];
-    for (let attempt = 0; attempt < 3; attempt += 1) failures.push(await bad());
-    expect(failures.map((res) => res.status)).toEqual([401, 401, 401]);
-    expect((await bad()).status).toBe(429);
     const allowed = await request(app)
       .post('/api/v1/brand-protection/ingest/matches')
       .set(auth(checker.token))
@@ -834,13 +839,28 @@ describe('Brand protection', () => {
             organizationId,
             platform: 'X',
             category: 'FAKE_CONTEST',
-            sourceUrl: 'https://x.com/valid-after-flood/status/1',
+            sourceUrl: 'https://x.com/valid-before-flood/status/1',
             matchedRule: 'rule',
             detectedAt: future(0),
           },
         ],
       });
     expect(allowed.status).toBe(200);
+    const failures = [];
+    for (let attempt = 0; attempt < 3; attempt += 1) failures.push(await bad());
+    expect(failures.map((res) => res.status)).toEqual([401, 401, 401]);
+    expect((await bad()).status).toBe(429);
+    const lookups = jest.spyOn(prisma.giveawayCheckerToken, 'findUnique');
+    try {
+      expect((await bad()).status).toBe(429);
+      expect(lookups).not.toHaveBeenCalled();
+      process.env.FEATURE_GIVEAWAY_PROTECTION = 'false';
+      expect((await bad()).status).toBe(404);
+      expect(lookups).not.toHaveBeenCalled();
+    } finally {
+      lookups.mockRestore();
+      process.env.FEATURE_GIVEAWAY_PROTECTION = 'true';
+    }
   });
 
   it('rejects platform OAuth until that extension is built', async () => {

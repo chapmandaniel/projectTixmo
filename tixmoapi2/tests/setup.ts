@@ -123,6 +123,12 @@ jest.mock('rate-limit-redis', () => {
     async resetKey(key: string) {
       this.counts.delete(`${this.prefix}${key}`);
     }
+
+    async get(key: string) {
+      const current = this.counts.get(`${this.prefix}${key}`);
+      if (!current || current.resetTime.getTime() <= Date.now()) return undefined;
+      return current;
+    }
   }
 
   return {
