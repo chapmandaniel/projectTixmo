@@ -57,6 +57,13 @@ router.post(
   controller.revokeToken
 );
 router.post(
+  '/admin/accounts/:id/lift',
+  authenticate,
+  authorize('ADMIN'),
+  validate(validation.accountIdSchema),
+  controller.liftClaimBlock
+);
+router.post(
   '/admin/disputes/resolve',
   authenticate,
   authorize('ADMIN'),
@@ -77,6 +84,13 @@ router.post(
   authorize(...orgRoles),
   validate(validation.createAccountSchema),
   controller.createAccount
+);
+router.post(
+  '/accounts/:id/verification-code',
+  authenticate,
+  authorize(...orgRoles),
+  validate(validation.accountIdSchema),
+  controller.regenerateCode
 );
 router.put(
   '/accounts/:id',

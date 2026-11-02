@@ -9,6 +9,21 @@ export const assertNoControlChars = (value: string, field: string): void => {
   }
 };
 
+const PLATFORM_HOSTS: Record<string, readonly string[]> = {
+  X: ['x.com', 'twitter.com'],
+  REDDIT: ['reddit.com'],
+  FACEBOOK: ['facebook.com', 'fb.com', 'm.facebook.com'],
+  INSTAGRAM: ['instagram.com'],
+};
+
+export const hostAllowedForPlatform = (platform: string, hostname: string): boolean => {
+  const allowed = PLATFORM_HOSTS[platform];
+  if (!allowed) return false;
+  const host = hostname.toLowerCase().replace(/\.$/, '');
+  const withoutWww = host.startsWith('www.') ? host.slice(4) : host;
+  return allowed.includes(host) || allowed.includes(withoutWww);
+};
+
 const marketplaceHost = (url: URL): boolean => {
   const host = url.hostname.toLowerCase();
   if (host === 'kijiji.ca' || host.endsWith('.kijiji.ca')) return true;
@@ -28,8 +43,8 @@ const marketplaceHost = (url: URL): boolean => {
   return false;
 };
 
-/** https URL with a stable host and path. Credentials, fragments, and marketplace URLs are rejected. */
-export const normalizeSocialUrl = (raw: string, field: string): string => {
+/** https URL on that platform's allow-listed hosts. Credentials, fragments, and marketplace URLs are rejected. */
+export const normalizeSocialUrl = (raw: string, field: string, platform: string): string => {
   assertNoControlChars(raw, field);
   let url: URL;
   try {
@@ -42,6 +57,9 @@ export const normalizeSocialUrl = (raw: string, field: string): string => {
     throw ApiError.badRequest(`${field} must not include credentials`);
   if (marketplaceHost(url)) {
     throw ApiError.badRequest('Marketplace listings are not a supported source');
+  }
+  if (!hostAllowedForPlatform(platform, url.hostname)) {
+    throw ApiError.badRequest(`${field} is not on an allowed host for ${platform}`);
   }
   url.hash = '';
   url.hostname = url.hostname.toLowerCase();

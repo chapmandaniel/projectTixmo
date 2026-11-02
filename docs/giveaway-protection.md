@@ -53,7 +53,7 @@ Send the token as `Authorization: Bearer gwc_...`.
 
 `platform` is `X`, `REDDIT`, `FACEBOOK`, or `INSTAGRAM`. `platformAccountId` is the platform's permanent account id. `handle` is display only and may change.
 
-New accounts are `PENDING`. The response includes a one-time `verificationCode` for members of that organization. Post the code in the account bio or a public post. The checker's next pass submits:
+New accounts are `PENDING`. The response includes a one-time `verificationCode` for members of that organization, and that code expires 48 hours after it is issued. `POST /api/v1/brand-protection/accounts/:id/verification-code` replaces it and invalidates the previous code. Post the current code in the account bio or a public post. The checker's next pass submits:
 
 `POST /api/v1/brand-protection/ingest/verifications`
 
@@ -70,7 +70,7 @@ New accounts are `PENDING`. The response includes a one-time `verificationCode` 
 
 Only `VERIFIED` accounts auto-mark matches `OFFICIAL`, and only when the suspect's `platformAccountId` equals that account's id. A matching handle with a different or missing id does not. Renaming the handle does not change the id.
 
-There is one `VERIFIED` row per `(platform, platformAccountId)` across organizations (`verifiedPlatformAccountKey`). A second organization's claim, or a confirmation of a code while another organization is already verified, marks both sides `DISPUTED`. Neither side auto-marks `OFFICIAL` until a platform admin resolves it:
+There is one `VERIFIED` row per `(platform, platformAccountId)` across organizations (`verifiedPlatformAccountKey`). A second organization's claim is still `PENDING` and does not change the verified owner. The response for every new claim has the same shape and `PENDING` status. Both sides become `DISPUTED`, and auto-`OFFICIAL` stops, only after the second organization proves its one-time code. A platform admin resolves it:
 
 `POST /api/v1/brand-protection/admin/disputes/resolve`
 
@@ -78,7 +78,7 @@ There is one `VERIFIED` row per `(platform, platformAccountId)` across organizat
 { "winnerAccountId": "uuid" }
 ```
 
-The winner becomes `VERIFIED`. Other claims on that platform account become `REVOKED`. Verification, dispute, resolve, and revoke changes are written to the staff-action audit without the code or any match evidence.
+The winner becomes `VERIFIED`. Other claims on that platform account become `REVOKED`. A revoked organization cannot claim that platform account id again until a platform admin lifts the block with `POST /api/v1/brand-protection/admin/accounts/:id/lift`. Changing a verified account's handle or profile URL returns it to `PENDING` and requires a new code. Profile and post URLs must use the platform's hosts: `x.com` or `twitter.com`, `reddit.com`, `facebook.com`, `fb.com`, or `m.facebook.com`, and `instagram.com`. Verification, dispute, resolve, and revoke changes are written to the staff-action audit without the code or any match evidence.
 
 ## Official giveaways
 
@@ -153,7 +153,7 @@ Facebook Marketplace URLs (`facebook.com` paths containing `/marketplace`), Kiji
 
 `imitatedPlatformAccountId` is who the post appears to imitate. It is not the suspect id. Auto-`OFFICIAL` compares only the suspect `platformAccountId` (and, separately, an exact official post URL). If `imitatedOfficialAccountId` is sent, it must be an account in the same organization.
 
-The unique key is `(organizationId, sourceUrl)` after normalization. A repeat ingest returns the same id. `detectedAt` stays at the first detection, so retention is not refreshed by a daily repeat. A human review is left as-is. Content and evidence are updated only while the status is still `NEW`. A `NEW` row becomes `OFFICIAL` on a later ingest when a verified account id or official post URL now matches.
+The unique key is `(organizationId, sourceUrl)` after normalization. A repeat ingest returns the same id. `detectedAt` stays at the first detection and cannot be more than five minutes in the future. Retention uses the server `createdAt`, not `detectedAt`. A human review is left as-is. Content and evidence are updated only while the status is still `NEW`. A `NEW` row becomes `OFFICIAL` on a later ingest when a verified account id or official post URL now matches.
 
 The ingest response is an acknowledgement, not a read:
 
@@ -171,7 +171,7 @@ Evidence, post text, and the verification code are not returned to the checker.
 { "platform": "X", "state": "CAPTCHA", "detail": "checkpoint" }
 ```
 
-`state` is `OK`, `BLOCKED`, `LOGIN_PROMPT`, or `CAPTCHA`. One row is kept per platform. Org members see it on the Brand protection page. The checker cannot read it back.
+`state` is `OK`, `BLOCKED`, `LOGIN_PROMPT`, or `CAPTCHA`. One row is kept per platform. Org members see `platform`, `state`, and `reportedAt` only. The free-text `detail` is stored for platform admins and is not returned to organizations. The checker cannot read the status list back.
 
 ## Matches
 
@@ -191,7 +191,7 @@ Evidence, post text, and the verification code are not returned to the checker.
 
 ## Retention
 
-`detectedAt` older than 30 days is deleted, including evidence columns, by `purgeExpiredScamMatches`. The API process runs that on startup and every six hours (`startGiveawayRetentionJob`). A second run deletes nothing new. Deleting a row does not log its contents.
+Rows whose server `createdAt` is older than 30 days are deleted, including evidence columns, by `purgeExpiredScamMatches`. The API process runs that on startup and every six hours (`startGiveawayRetentionJob`). A second run deletes nothing new. Deleting a row does not log its contents.
 
 ## Dashboard
 

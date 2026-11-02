@@ -14,7 +14,10 @@ const accountFields = (account: OfficialAccount, includeCode: boolean) => ({
   status: account.status,
   verificationMethod: account.verificationMethod,
   ...(includeCode && account.status === 'PENDING' && account.verificationCode
-    ? { verificationCode: account.verificationCode }
+    ? {
+        verificationCode: account.verificationCode,
+        verificationCodeExpiresAt: account.verificationCodeExpiresAt,
+      }
     : {}),
   verifiedAt: account.verifiedAt,
   createdBy: account.createdBy,

@@ -42,6 +42,7 @@ jest.doMock('../../src/middleware/rateLimiter', () => ({
   checkoutIpRateLimiter: pass,
   scannerAdmissionRateLimiter: pass,
   giveawayIngestRateLimiter: pass,
+  giveawayIngestIpRateLimiter: pass,
 }));
 jest.doMock('../../src/middleware/auth', () => ({
   authenticate: auth,

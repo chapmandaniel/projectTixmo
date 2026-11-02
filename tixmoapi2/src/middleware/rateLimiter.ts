@@ -419,6 +419,23 @@ export const checkoutIpRateLimiter = (req: Request, res: Response, next: NextFun
  * Checker ingest is a separate bucket from buyer writes. The key is the token
  * row id, so the secret itself is not stored in the rate-limit counter.
  */
+/**
+ * Counts ingest attempts by IP before the checker token is looked up, so a
+ * bad-token flood cannot hammer the token table.
+ */
+export const giveawayIngestIpRateLimiter = rateLimit({
+  windowMs: config.rateLimitWindowMs,
+  max: config.nodeEnv === 'test' ? 1000 : 120,
+  message: {
+    success: false,
+    message: 'Too many checker submissions. Please try again shortly.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `ip:${req.ip ?? 'unknown'}`,
+  store: createStore('rl:giveaway:ingest-ip:'),
+});
+
 export const giveawayIngestRateLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
   max: config.nodeEnv === 'test' ? 1000 : 120,

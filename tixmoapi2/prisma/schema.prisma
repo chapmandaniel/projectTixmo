@@ -1062,7 +1062,7 @@ enum CheckerRunState {
 model OfficialAccount {
   id                          String                      @id @default(uuid())
   organizationId              String                      @map("organization_id")
-  organization                Organization                @relation(fields: [organizationId], references: [id])
+  organization                Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   platform                    SocialPlatform
   platformAccountId           String                      @map("platform_account_id") @db.VarChar(200)
   handle                      String                      @db.VarChar(100)
@@ -1071,6 +1071,7 @@ model OfficialAccount {
   status                      OfficialAccountStatus       @default(PENDING)
   verificationMethod          AccountVerificationMethod   @default(ONE_TIME_CODE) @map("verification_method")
   verificationCode            String?                     @map("verification_code") @db.VarChar(32)
+  verificationCodeExpiresAt  DateTime?                   @map("verification_code_expires_at")
   verifiedPlatformAccountKey  String?                     @unique @map("verified_platform_account_key") @db.VarChar(220)
   verifiedAt                  DateTime?                   @map("verified_at")
   createdBy                   String                      @map("created_by")
@@ -1086,7 +1087,7 @@ model OfficialAccount {
 model OfficialGiveaway {
   id                 String         @id @default(uuid())
   organizationId     String         @map("organization_id")
-  organization       Organization   @relation(fields: [organizationId], references: [id])
+  organization       Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   eventId            String?        @map("event_id")
   event              Event?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
   title              String         @db.VarChar(200)
@@ -1109,7 +1110,7 @@ model OfficialGiveaway {
 model ScamMatch {
   id                         String              @id @default(uuid())
   organizationId             String              @map("organization_id")
-  organization               Organization        @relation(fields: [organizationId], references: [id])
+  organization               Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   eventId                    String?             @map("event_id")
   event                      Event?              @relation(fields: [eventId], references: [id], onDelete: SetNull)
   platform                   SocialPlatform

@@ -414,6 +414,28 @@ describe('Brand protection', () => {
       .set(auth(ownerToken))
       .send({ handle: 'harbourfest-renamed' });
     expect(renamed.status).toBe(200);
+    expect(renamed.body.data.status).toBe('PENDING');
+    expect(renamed.body.data.verificationCode).toEqual(expect.any(String));
+    const demoted = await ingest(checker.token, {
+      organizationId,
+      platform: 'X',
+      category: 'IMPERSONATION_PROFILE',
+      sourceUrl: 'https://x.com/renamed-pending/status/1',
+      platformAccountId: 'pending-account',
+      accountHandle: 'harbourfest-renamed',
+      matchedRule: 'name',
+      detectedAt: future(0),
+    });
+    expect(demoted.body.data.results[0].status).toBe('NEW');
+    const reconfirmed = await request(app)
+      .post('/api/v1/brand-protection/ingest/verifications')
+      .set(auth(checker.token))
+      .send({
+        platform: 'X',
+        platformAccountId: 'pending-account',
+        code: renamed.body.data.verificationCode,
+      });
+    expect(reconfirmed.body.data.status).toBe('VERIFIED');
     const still = await ingest(checker.token, {
       organizationId,
       platform: 'X',
@@ -458,7 +480,35 @@ describe('Brand protection', () => {
         profileUrl: 'https://www.instagram.com/harbourfest',
       });
     expect(second.status).toBe(201);
-    expect(second.body.data.status).toBe('DISPUTED');
+    expect(second.body.data.status).toBe('PENDING');
+    expect(second.body.data.verificationCode).toEqual(expect.any(String));
+    expect(Object.keys(second.body.data).sort()).toEqual(Object.keys(first.body.data).sort());
+    expect(JSON.stringify(second.body)).not.toContain(organizationId);
+    const firstAfterClaim = await prisma.officialAccount.findUnique({
+      where: { id: first.body.data.id },
+    });
+    expect(firstAfterClaim?.status).toBe('VERIFIED');
+    const stillOfficial = await ingest(checker.token, {
+      organizationId,
+      platform: 'INSTAGRAM',
+      category: 'IMPERSONATION_PROFILE',
+      sourceUrl: 'https://www.instagram.com/p/still-official',
+      platformAccountId: 'ig-shared',
+      matchedRule: 'name',
+      detectedAt: future(0),
+    });
+    expect(stillOfficial.body.data.results[0].status).toBe('OFFICIAL');
+
+    const proved = await request(app)
+      .post('/api/v1/brand-protection/ingest/verifications')
+      .set(auth(checker.token))
+      .send({
+        platform: 'INSTAGRAM',
+        platformAccountId: 'ig-shared',
+        code: second.body.data.verificationCode,
+      });
+    expect(proved.status).toBe(200);
+    expect(proved.body.data.status).toBe('DISPUTED');
     const firstAfter = await prisma.officialAccount.findUnique({
       where: { id: first.body.data.id },
     });
@@ -505,6 +555,35 @@ describe('Brand protection', () => {
     expect(resolved.body.data).not.toHaveProperty('verificationCode');
     const loser = await prisma.officialAccount.findUnique({ where: { id: second.body.data.id } });
     expect(loser?.status).toBe('REVOKED');
+    const blocked = await request(app)
+      .post('/api/v1/brand-protection/accounts')
+      .set(auth(otherToken))
+      .send({
+        platform: 'INSTAGRAM',
+        platformAccountId: 'ig-shared',
+        handle: 'harbourfest',
+        profileUrl: 'https://www.instagram.com/harbourfest',
+      });
+    expect(blocked.status).toBe(409);
+    const ownerLift = await request(app)
+      .post(`/api/v1/brand-protection/admin/accounts/${second.body.data.id}/lift`)
+      .set(auth(ownerToken));
+    expect(ownerLift.status).toBe(403);
+    const lifted = await request(app)
+      .post(`/api/v1/brand-protection/admin/accounts/${second.body.data.id}/lift`)
+      .set(auth(adminToken));
+    expect(lifted.status).toBe(200);
+    const reclaimed = await request(app)
+      .post('/api/v1/brand-protection/accounts')
+      .set(auth(otherToken))
+      .send({
+        platform: 'INSTAGRAM',
+        platformAccountId: 'ig-shared',
+        handle: 'harbourfest',
+        profileUrl: 'https://www.instagram.com/harbourfest',
+      });
+    expect(reclaimed.status).toBe(201);
+    expect(reclaimed.body.data.status).toBe('PENDING');
 
     const restored = await ingest(checker.token, {
       organizationId,
@@ -617,6 +696,18 @@ describe('Brand protection', () => {
         expect.objectContaining({ platform: 'REDDIT', state: 'LOGIN_PROMPT' }),
       ])
     );
+    for (const row of visible.body.data.statuses) {
+      expect(row).not.toHaveProperty('detail');
+      expect(row).not.toHaveProperty('organizationId');
+    }
+    expect(JSON.stringify(visible.body)).not.toContain('login wall');
+    const adminStatus = await request(app)
+      .get('/api/v1/brand-protection/checker-status')
+      .set(auth(adminToken));
+    expect(
+      adminStatus.body.data.statuses.find((row: { platform: string }) => row.platform === 'REDDIT')
+        .detail
+    ).toBe('login wall');
   });
 
   it('deletes matches older than 30 days, including evidence, and is idempotent', async () => {
@@ -628,7 +719,8 @@ describe('Brand protection', () => {
           category: 'FAKE_CONTEST',
           sourceUrl: 'https://x.com/old/status/1',
           matchedRule: 'old',
-          detectedAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000),
+          detectedAt: new Date(),
+          createdAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000),
           evidencePhones: [phone],
           evidenceEmails: [email],
         },
@@ -641,7 +733,7 @@ describe('Brand protection', () => {
         category: 'FAKE_CONTEST',
         sourceUrl: 'https://x.com/young/status/1',
         matchedRule: 'young',
-        detectedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        detectedAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000),
         evidencePhones: [phone],
       },
     });
@@ -711,5 +803,76 @@ describe('Brand protection', () => {
       });
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/OAuth/);
+  });
+
+  it('rejects a future detectedAt, a non-allow-listed host, and a lookalike path that is not an exact ingest route', async () => {
+    const futureMatch = await ingest(checker.token, {
+      organizationId,
+      platform: 'X',
+      category: 'FAKE_CONTEST',
+      sourceUrl: 'https://x.com/future/status/1',
+      matchedRule: 'rule',
+      detectedAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    });
+    expect(futureMatch.status).toBe(400);
+    const foreignHost = await ingest(checker.token, {
+      organizationId,
+      platform: 'X',
+      category: 'FAKE_CONTEST',
+      sourceUrl: 'https://evil.example/phish',
+      matchedRule: 'rule',
+      detectedAt: future(0),
+    });
+    expect(foreignHost.status).toBe(400);
+    const disguised = await request(app)
+      .post('/api/v1/evil/brand-protection/ingest/matches')
+      .set(auth(checker.token))
+      .send({ matches: [] });
+    expect(disguised.status).toBe(403);
+  });
+
+  it('expires verification codes after 48 hours and regenerates a replacement', async () => {
+    const created = await request(app)
+      .post('/api/v1/brand-protection/accounts')
+      .set(auth(ownerToken))
+      .send({
+        platform: 'REDDIT',
+        platformAccountId: 'reddit-expiry',
+        handle: 'harbourfest',
+        profileUrl: 'https://www.reddit.com/user/harbourfest',
+      });
+    expect(created.status).toBe(201);
+    const oldCode = created.body.data.verificationCode as string;
+    await prisma.officialAccount.update({
+      where: { id: created.body.data.id },
+      data: { verificationCodeExpiresAt: new Date(Date.now() - 60 * 1000) },
+    });
+    const expired = await request(app)
+      .post('/api/v1/brand-protection/ingest/verifications')
+      .set(auth(checker.token))
+      .send({ platform: 'REDDIT', platformAccountId: 'reddit-expiry', code: oldCode });
+    expect(expired.status).toBe(400);
+    expect(expired.body.message).toMatch(/expired/);
+    const regenerated = await request(app)
+      .post(`/api/v1/brand-protection/accounts/${created.body.data.id}/verification-code`)
+      .set(auth(ownerToken));
+    expect(regenerated.status).toBe(200);
+    expect(regenerated.body.data.verificationCode).toEqual(expect.any(String));
+    expect(regenerated.body.data.verificationCode).not.toBe(oldCode);
+    const stale = await request(app)
+      .post('/api/v1/brand-protection/ingest/verifications')
+      .set(auth(checker.token))
+      .send({ platform: 'REDDIT', platformAccountId: 'reddit-expiry', code: oldCode });
+    expect(stale.status).toBe(404);
+    const fresh = await request(app)
+      .post('/api/v1/brand-protection/ingest/verifications')
+      .set(auth(checker.token))
+      .send({
+        platform: 'REDDIT',
+        platformAccountId: 'reddit-expiry',
+        code: regenerated.body.data.verificationCode,
+      });
+    expect(fresh.status).toBe(200);
+    expect(fresh.body.data.status).toBe('VERIFIED');
   });
 });

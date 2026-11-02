@@ -1,6 +1,6 @@
 const EVIDENCE_KEY =
-  /"(evidencePhones|evidenceEmails|verificationCode)"\s*:\s*("[^"]*"|\[[^\]]*\])/gi;
-const EVIDENCE_QUERY = /([?&](?:evidencePhones|evidenceEmails|verificationCode)=)[^&\s]*/gi;
+  /"(evidencePhones|evidenceEmails|verificationCode|detail)"\s*:\s*("[^"]*"|\[[^\]]*\])/gi;
+const EVIDENCE_QUERY = /([?&](?:evidencePhones|evidenceEmails|verificationCode|detail)=)[^&\s]*/gi;
 const CHECKER_TOKEN = /\bgwc_[A-Za-z0-9_-]{8,}\b/g;
 
 /** Strip checker evidence, verification codes, and checker tokens from log text. */

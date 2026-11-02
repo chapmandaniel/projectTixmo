@@ -13,6 +13,8 @@ export const VERIFICATION_METHODS = ['ONE_TIME_CODE', 'PLATFORM_OAUTH'] as const
 
 export const CHECKER_TOKEN_PREFIX = 'gwc_';
 export const MATCH_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+export const VERIFICATION_CODE_TTL_MS = 48 * 60 * 60 * 1000;
+export const DETECTED_AT_FUTURE_SKEW_MS = 5 * 60 * 1000;
 export const INGEST_BATCH_LIMIT = 50;
 
 export const ORG_ROLES = ['OWNER', 'ADMIN', 'MANAGER'] as const;

@@ -1,16 +1,18 @@
 import { createHash } from 'crypto';
 import { NextFunction, Response } from 'express';
 import prisma from '../../config/prisma';
-import { isGiveawayProtectionEnabled } from '../../config/environment';
+import { config, isGiveawayProtectionEnabled } from '../../config/environment';
 import { AuthRequest } from '../../middleware/auth';
+import { giveawayIngestIpRateLimiter } from '../../middleware/rateLimiter';
 import { ApiError } from '../../utils/ApiError';
 import { CHECKER_TOKEN_PREFIX } from './constants';
 
-const INGEST_PATHS = new Set([
-  '/brand-protection/ingest/matches',
-  '/brand-protection/ingest/status',
-  '/brand-protection/ingest/verifications',
-]);
+const ingestPaths = () =>
+  new Set([
+    `/api/${config.apiVersion}/brand-protection/ingest/matches`,
+    `/api/${config.apiVersion}/brand-protection/ingest/status`,
+    `/api/${config.apiVersion}/brand-protection/ingest/verifications`,
+  ]);
 
 const bearerToken = (req: AuthRequest): string | undefined => {
   const value = req.get('authorization');
@@ -20,18 +22,16 @@ const bearerToken = (req: AuthRequest): string | undefined => {
   return token;
 };
 
-const requestPath = (req: AuthRequest): string => req.originalUrl.split('?')[0].replace(/\/+$/, '');
-
-const isBrandPath = (req: AuthRequest): boolean => requestPath(req).includes('/brand-protection');
-
-const isAllowedIngest = (req: AuthRequest): boolean => {
-  if (req.method !== 'POST') return false;
-  const path = requestPath(req);
-  for (const suffix of INGEST_PATHS) {
-    if (path.endsWith(suffix)) return true;
-  }
-  return false;
+const requestPath = (req: AuthRequest): string => {
+  const path = req.originalUrl.split('?')[0].replace(/\/+$/, '');
+  return path || '/';
 };
+
+const isBrandPath = (req: AuthRequest): boolean =>
+  requestPath(req).includes(`/${config.apiVersion}/brand-protection`);
+
+const isAllowedIngest = (req: AuthRequest): boolean =>
+  req.method === 'POST' && ingestPaths().has(requestPath(req));
 
 export const hashCheckerToken = (token: string): string =>
   createHash('sha256').update(token).digest('hex');
@@ -41,7 +41,7 @@ export const hashCheckerToken = (token: string): string =>
  * except on the ingest writes, and only while the feature flag is on.
  * Unknown bearers fall through to ordinary session auth.
  */
-export const guardCheckerToken = async (req: AuthRequest, _res: Response, next: NextFunction) => {
+const authenticateCheckerToken = async (req: AuthRequest, _res: Response, next: NextFunction) => {
   try {
     const token = bearerToken(req);
     if (!token) return next();
@@ -69,6 +69,18 @@ export const guardCheckerToken = async (req: AuthRequest, _res: Response, next: 
   } catch (error) {
     return next(error);
   }
+};
+
+export const guardCheckerToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const token = bearerToken(req);
+  if (token && isAllowedIngest(req)) {
+    return giveawayIngestIpRateLimiter(req, res, (error?: unknown) => {
+      if (error) return next(error);
+      if (res.headersSent) return;
+      void authenticateCheckerToken(req, res, next);
+    });
+  }
+  return authenticateCheckerToken(req, res, next);
 };
 
 export const requireCheckerToken = (req: AuthRequest, _res: Response, next: NextFunction) => {

@@ -15,6 +15,8 @@ import {
   deleteOfficialGiveaway,
   getScamMatch,
   ingestMatches,
+  liftReclaimBlock,
+  regenerateVerificationCode,
   issueCheckerToken,
   listCheckerStatus,
   listOfficialAccounts,
@@ -174,9 +176,19 @@ export const reviewMatch = catchAsync(async (req: AuthRequest, res: Response) =>
 });
 
 export const checkerStatus = catchAsync(async (req: AuthRequest, res: Response) => {
-  await getActorScope(req);
-  const statuses = await listCheckerStatus();
-  res.json(successResponse({ statuses }));
+  const actor = await getActorScope(req);
+  const includeDetail = isGlobalAdmin(actor);
+  const rows = await listCheckerStatus();
+  res.json(
+    successResponse({
+      statuses: rows.map((row) => ({
+        platform: row.platform,
+        state: row.state,
+        reportedAt: row.reportedAt,
+        ...(includeDetail ? { detail: row.detail } : {}),
+      })),
+    })
+  );
 });
 
 export const ingest = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -188,7 +200,21 @@ export const ingest = catchAsync(async (req: AuthRequest, res: Response) => {
 
 export const ingestStatus = catchAsync(async (req: AuthRequest, res: Response) => {
   const status = await reportCheckerStatus(req.body as Parameters<typeof reportCheckerStatus>[0]);
-  res.json(successResponse(status));
+  res.json(
+    successResponse({
+      platform: status.platform,
+      state: status.state,
+      reportedAt: status.reportedAt,
+    })
+  );
+});
+
+export const regenerateCode = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { actor, includePrivate } = await privateView(req);
+  const account = await regenerateVerificationCode(req.params.id, orgId(actor));
+  res.json(
+    successResponse(presentAccount(account, includePrivate), 'Verification code regenerated')
+  );
 });
 
 export const ingestVerification = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -207,6 +233,12 @@ const requirePlatformAdmin = async (req: AuthRequest) => {
   }
   return actor;
 };
+
+export const liftClaimBlock = catchAsync(async (req: AuthRequest, res: Response) => {
+  const actor = await requirePlatformAdmin(req);
+  await liftReclaimBlock(actor.userId, req.params.id);
+  res.json(successResponse({ id: req.params.id }, 'Re-claim block lifted'));
+});
 
 export const resolveDispute = catchAsync(async (req: AuthRequest, res: Response) => {
   const actor = await requirePlatformAdmin(req);

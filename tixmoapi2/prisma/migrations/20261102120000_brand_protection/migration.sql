@@ -20,6 +20,7 @@ CREATE TABLE "official_accounts" (
     "status" "OfficialAccountStatus" NOT NULL DEFAULT 'PENDING',
     "verification_method" "AccountVerificationMethod" NOT NULL DEFAULT 'ONE_TIME_CODE',
     "verification_code" VARCHAR(32),
+    "verification_code_expires_at" TIMESTAMP(3),
     "verified_platform_account_key" VARCHAR(220),
     "verified_at" TIMESTAMP(3),
     "created_by" TEXT NOT NULL,
@@ -111,18 +112,18 @@ CREATE TABLE "checker_platform_statuses" (
 
 ALTER TABLE "official_accounts"
     ADD CONSTRAINT "official_accounts_organization_id_fkey"
-    FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "official_giveaways"
     ADD CONSTRAINT "official_giveaways_organization_id_fkey"
-    FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "official_giveaways"
     ADD CONSTRAINT "official_giveaways_event_id_fkey"
     FOREIGN KEY ("event_id") REFERENCES "events"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 ALTER TABLE "scam_matches"
     ADD CONSTRAINT "scam_matches_organization_id_fkey"
-    FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "scam_matches"
     ADD CONSTRAINT "scam_matches_event_id_fkey"
     FOREIGN KEY ("event_id") REFERENCES "events"("id") ON DELETE SET NULL ON UPDATE CASCADE;

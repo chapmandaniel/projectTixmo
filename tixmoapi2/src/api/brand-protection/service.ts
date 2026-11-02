@@ -3,7 +3,13 @@ import { OfficialAccount, Prisma, ScamMatchStatus, SocialPlatform } from '@prism
 import prisma from '../../config/prisma';
 import { ApiError } from '../../utils/ApiError';
 import { recordStaffAction, StaffActionName } from '../../services/staff-action-audit';
-import { CHECKER_TOKEN_PREFIX, MATCH_RETENTION_MS, MatchCategoryName } from './constants';
+import {
+  CHECKER_TOKEN_PREFIX,
+  DETECTED_AT_FUTURE_SKEW_MS,
+  MATCH_RETENTION_MS,
+  VERIFICATION_CODE_TTL_MS,
+  MatchCategoryName,
+} from './constants';
 import { hashCheckerToken } from './checkerGuard';
 import { presentAccount, presentMatch } from './serialize';
 import { assertNoControlChars, displayHandle, normalizeDomain, normalizeSocialUrl } from './urls';
@@ -56,6 +62,25 @@ type IngestMatchInput = {
 const verifiedKey = (platform: string, platformAccountId: string) =>
   `${platform}:${platformAccountId}`;
 
+const verificationCodeExpiry = (now = new Date()) =>
+  new Date(now.getTime() + VERIFICATION_CODE_TTL_MS);
+
+const issueVerificationCode = () => ({
+  verificationCode: createVerificationCode(),
+  verificationCodeExpiresAt: verificationCodeExpiry(),
+});
+
+const normalizeDetectedAt = (raw: string, now = new Date()): Date => {
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime()) || parsed.getTime() < Date.UTC(2010, 0, 1)) {
+    throw ApiError.badRequest('detectedAt is not a usable timestamp');
+  }
+  if (parsed.getTime() > now.getTime() + DETECTED_AT_FUTURE_SKEW_MS) {
+    throw ApiError.badRequest('detectedAt is too far in the future');
+  }
+  return parsed.getTime() > now.getTime() ? now : parsed;
+};
+
 const createVerificationCode = (): string => {
   const bytes = randomBytes(8);
   let raw = '';
@@ -107,6 +132,7 @@ const markDisputed = async (tx: Tx, account: OfficialAccount, actorId: string, r
       status: 'DISPUTED',
       verifiedPlatformAccountKey: null,
       verificationCode: null,
+      verificationCodeExpiresAt: null,
       verifiedAt: null,
     },
   });
@@ -145,7 +171,7 @@ const assertOrgExists = async (tx: Tx, organizationId: string) => {
 
 export const createOfficialAccount = async (input: AccountInput) => {
   const handle = displayHandle(input.handle);
-  const profileUrl = normalizeSocialUrl(input.profileUrl, 'profileUrl');
+  const profileUrl = normalizeSocialUrl(input.profileUrl, 'profileUrl', input.platform);
   assertNoControlChars(input.platformAccountId, 'platformAccountId');
   if (input.displayName) assertNoControlChars(input.displayName, 'displayName');
 
@@ -154,14 +180,14 @@ export const createOfficialAccount = async (input: AccountInput) => {
     const rows = await tx.officialAccount.findMany({
       where: { platform: input.platform, platformAccountId: input.platformAccountId },
     });
-    if (
-      rows.some((row) => row.organizationId === input.organizationId && row.status !== 'REVOKED')
-    ) {
+    const own = rows.filter((row) => row.organizationId === input.organizationId);
+    if (own.some((row) => row.status === 'REVOKED')) {
+      throw ApiError.conflict('This organization cannot claim that platform account');
+    }
+    if (own.some((row) => row.status !== 'REVOKED')) {
       throw ApiError.conflict('This organization already claimed that platform account');
     }
-    const verified = rows.find((row) => row.status === 'VERIFIED');
-    const contested = rows.some((row) => row.status === 'VERIFIED' || row.status === 'DISPUTED');
-    const created = await tx.officialAccount.create({
+    return tx.officialAccount.create({
       data: {
         organizationId: input.organizationId,
         platform: input.platform,
@@ -169,33 +195,12 @@ export const createOfficialAccount = async (input: AccountInput) => {
         handle,
         profileUrl,
         displayName: input.displayName ?? null,
-        status: contested ? 'DISPUTED' : 'PENDING',
+        status: 'PENDING',
         verificationMethod: 'ONE_TIME_CODE',
-        verificationCode: contested ? null : createVerificationCode(),
+        ...issueVerificationCode(),
         createdBy: input.createdBy,
       },
     });
-    if (verified) {
-      await markDisputed(
-        tx,
-        verified,
-        input.createdBy,
-        'Another organization claimed this verified platform account'
-      );
-    }
-    if (contested) {
-      await recordStaffAction(tx, {
-        action: 'OFFICIAL_ACCOUNT_DISPUTE',
-        subjectType: 'OFFICIAL_ACCOUNT',
-        subjectId: created.id,
-        organizationId: created.organizationId,
-        actorId: input.createdBy,
-        reason: 'Claim conflicts with an existing platform account',
-        before: { status: 'NONE' },
-        after: { status: 'DISPUTED' },
-      });
-    }
-    return created;
   });
 };
 
@@ -207,14 +212,44 @@ export const updateOfficialAccount = async (
   const existing = await prisma.officialAccount.findFirst({ where: { id, organizationId } });
   if (!existing) throw ApiError.notFound('Official account not found');
   const data: Prisma.OfficialAccountUpdateInput = {};
-  if (input.handle !== undefined) data.handle = displayHandle(input.handle);
-  if (input.profileUrl !== undefined)
-    data.profileUrl = normalizeSocialUrl(input.profileUrl, 'profileUrl');
+  let handleChanged = false;
+  let urlChanged = false;
+  if (input.handle !== undefined) {
+    const handle = displayHandle(input.handle);
+    handleChanged = handle !== existing.handle;
+    data.handle = handle;
+  }
+  if (input.profileUrl !== undefined) {
+    const profileUrl = normalizeSocialUrl(input.profileUrl, 'profileUrl', existing.platform);
+    urlChanged = profileUrl !== existing.profileUrl;
+    data.profileUrl = profileUrl;
+  }
   if (input.displayName !== undefined) {
     if (input.displayName) assertNoControlChars(input.displayName, 'displayName');
     data.displayName = input.displayName;
   }
-  return prisma.officialAccount.update({ where: { id }, data });
+  if (existing.status === 'VERIFIED' && (handleChanged || urlChanged)) {
+    data.status = 'PENDING';
+    data.verifiedAt = null;
+    data.verifiedPlatformAccountKey = null;
+    Object.assign(data, issueVerificationCode());
+  }
+  return prisma.$transaction(async (tx) => {
+    await lockIdentity(tx, existing.platform, existing.platformAccountId);
+    return tx.officialAccount.update({ where: { id }, data });
+  });
+};
+
+export const regenerateVerificationCode = async (id: string, organizationId: string) => {
+  const existing = await prisma.officialAccount.findFirst({ where: { id, organizationId } });
+  if (!existing) throw ApiError.notFound('Official account not found');
+  if (existing.status !== 'PENDING' || existing.verificationMethod !== 'ONE_TIME_CODE') {
+    throw ApiError.badRequest('Only a pending one-time code can be regenerated');
+  }
+  return prisma.officialAccount.update({
+    where: { id },
+    data: issueVerificationCode(),
+  });
 };
 
 export const deleteOfficialAccount = async (
@@ -266,7 +301,11 @@ export const createOfficialGiveaway = async (input: GiveawayInput) => {
         eventId: input.eventId ?? null,
         title: input.title.trim(),
         platform: input.platform,
-        officialPostUrl: normalizeSocialUrl(input.officialPostUrl, 'officialPostUrl'),
+        officialPostUrl: normalizeSocialUrl(
+          input.officialPostUrl,
+          'officialPostUrl',
+          input.platform
+        ),
         accountHandle: displayHandle(input.accountHandle),
         startsAt,
         endsAt,
@@ -298,7 +337,13 @@ export const updateOfficialGiveaway = async (
         ...(input.title !== undefined ? { title: input.title.trim() } : {}),
         ...(input.platform !== undefined ? { platform: input.platform } : {}),
         ...(input.officialPostUrl !== undefined
-          ? { officialPostUrl: normalizeSocialUrl(input.officialPostUrl, 'officialPostUrl') }
+          ? {
+              officialPostUrl: normalizeSocialUrl(
+                input.officialPostUrl,
+                'officialPostUrl',
+                input.platform ?? existing.platform
+              ),
+            }
           : {}),
         ...(input.accountHandle !== undefined
           ? { accountHandle: displayHandle(input.accountHandle) }
@@ -371,6 +416,12 @@ const confirmOneTimeCode = async (
     if (!matched) {
       throw ApiError.notFound('No pending account matched that platform account and code');
     }
+    if (
+      !matched.verificationCodeExpiresAt ||
+      matched.verificationCodeExpiresAt.getTime() <= Date.now()
+    ) {
+      throw ApiError.badRequest('Verification code expired');
+    }
     const contested = rows.some(
       (row) => row.id !== matched.id && (row.status === 'VERIFIED' || row.status === 'DISPUTED')
     );
@@ -398,6 +449,7 @@ const confirmOneTimeCode = async (
         status: 'VERIFIED',
         verifiedAt: new Date(),
         verificationCode: null,
+        verificationCodeExpiresAt: null,
         verifiedPlatformAccountKey: verifiedKey(matched.platform, matched.platformAccountId),
       },
     });
@@ -431,6 +483,7 @@ export const resolveOfficialAccountDispute = async (actorId: string, winnerAccou
           status: 'REVOKED',
           verifiedPlatformAccountKey: null,
           verificationCode: null,
+          verificationCodeExpiresAt: null,
           verifiedAt: null,
         },
       });
@@ -448,6 +501,7 @@ export const resolveOfficialAccountDispute = async (actorId: string, winnerAccou
         status: 'VERIFIED',
         verifiedAt: new Date(),
         verificationCode: null,
+        verificationCodeExpiresAt: null,
         verifiedPlatformAccountKey: verifiedKey(winner.platform, winner.platformAccountId),
       },
     });
@@ -544,7 +598,7 @@ const resolveImitation = async (tx: Tx, match: IngestMatchInput) => {
 const sourceIdentity = (match: IngestMatchInput): string =>
   match.platform === 'LOOKALIKE_DOMAIN'
     ? normalizeDomain(match.sourceUrl)
-    : normalizeSocialUrl(match.sourceUrl, 'sourceUrl');
+    : normalizeSocialUrl(match.sourceUrl, 'sourceUrl', match.platform);
 
 const ingestOne = async (tx: Tx, match: IngestMatchInput, checkerTokenId: string) => {
   assertMatchContent(match);
@@ -601,7 +655,7 @@ const ingestOne = async (tx: Tx, match: IngestMatchInput, checkerTokenId: string
       platformAccountId: match.platformAccountId ?? null,
       matchedText: match.matchedText ?? null,
       matchedRule: match.matchedRule,
-      detectedAt: new Date(match.detectedAt),
+      detectedAt: normalizeDetectedAt(match.detectedAt),
       status: official.status,
       officialGiveawayId: official.officialGiveawayId,
       ...imitation,
@@ -774,9 +828,30 @@ export const revokeCheckerToken = async (actorId: string, id: string) => {
   return { id: updated.id, revokedAt: updated.revokedAt };
 };
 
+export const liftReclaimBlock = async (actorId: string, accountId: string) => {
+  const existing = await prisma.officialAccount.findUnique({ where: { id: accountId } });
+  if (!existing) throw ApiError.notFound('Official account not found');
+  if (existing.status !== 'REVOKED') {
+    throw ApiError.badRequest('Only a revoked claim can be lifted');
+  }
+  await prisma.$transaction(async (tx) => {
+    await recordStaffAction(tx, {
+      action: 'OFFICIAL_ACCOUNT_LIFT',
+      subjectType: 'OFFICIAL_ACCOUNT',
+      subjectId: existing.id,
+      organizationId: existing.organizationId,
+      actorId,
+      reason: 'Platform admin lifted the re-claim block',
+      before: { status: 'REVOKED' },
+      after: { status: 'LIFTED' },
+    });
+    await tx.officialAccount.delete({ where: { id: existing.id } });
+  });
+};
+
 export const purgeExpiredScamMatches = async (now = new Date()): Promise<number> => {
   const cutoff = new Date(now.getTime() - MATCH_RETENTION_MS);
-  const result = await prisma.scamMatch.deleteMany({ where: { detectedAt: { lt: cutoff } } });
+  const result = await prisma.scamMatch.deleteMany({ where: { createdAt: { lt: cutoff } } });
   return result.count;
 };
 

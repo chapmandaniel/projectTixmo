@@ -3,6 +3,76 @@ import { buyerRecoveryLogPath } from '../utils/buyerRecoveryLogPath';
 import * as Sentry from '@sentry/node';
 import { config } from './environment';
 
+type TelemetryRequest = {
+  url?: string;
+  data?: unknown;
+  query_string?: unknown;
+  headers?: Record<string, string>;
+  cookies?: unknown;
+};
+
+type TelemetryBreadcrumb = {
+  data?: Record<string, unknown>;
+};
+
+export const isBrandProtectionRequestUrl = (value: unknown): boolean => {
+  if (typeof value !== 'string' || !value) return false;
+  try {
+    return new URL(value, 'https://redaction.invalid').pathname
+      .toLowerCase()
+      .includes('/brand-protection');
+  } catch {
+    return value.toLowerCase().includes('/brand-protection');
+  }
+};
+
+const pathnameOnly = (value: string): string => {
+  try {
+    return new URL(value, 'https://redaction.invalid').pathname;
+  } catch {
+    return value.split('?')[0];
+  }
+};
+
+const stripAuthAndCookies = (headers: Record<string, string> | undefined) => {
+  if (!headers) return;
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() === 'authorization' || key.toLowerCase() === 'cookie') {
+      delete headers[key];
+    }
+  }
+};
+
+/** Drop checker bodies, queries, authorization, and cookies before they reach Sentry. */
+export const scrubBrandProtectionRequest = <T extends { request?: TelemetryRequest }>(
+  event: T
+): T => {
+  const request = event.request;
+  if (!request || !isBrandProtectionRequestUrl(request.url)) return event;
+  request.url = pathnameOnly(request.url || '');
+  delete request.data;
+  delete request.query_string;
+  delete request.cookies;
+  stripAuthAndCookies(request.headers);
+  return event;
+};
+
+export const scrubBrandProtectionBreadcrumb = <T extends TelemetryBreadcrumb>(breadcrumb: T): T => {
+  const data = breadcrumb.data;
+  if (!data) return breadcrumb;
+  const url = typeof data.url === 'string' ? data.url : '';
+  if (!isBrandProtectionRequestUrl(url)) return breadcrumb;
+  data.url = pathnameOnly(url);
+  delete data.body;
+  delete data.data;
+  delete data.query_string;
+  delete data.cookies;
+  if (data.headers && typeof data.headers === 'object') {
+    stripAuthAndCookies(data.headers as Record<string, string>);
+  }
+  return breadcrumb;
+};
+
 // Initialize Sentry only if DSN is provided
 export function initSentry() {
   if (!config.sentryDsn) return;
@@ -51,6 +121,7 @@ export function initSentry() {
           delete request.headers;
           delete request.cookies;
         }
+        scrubBrandProtectionRequest(ev);
         // Existing general password scrubbing remains in place.
         try {
           if (ev && typeof ev === 'object' && 'request' in ev) {
@@ -72,6 +143,9 @@ export function initSentry() {
           // ignore any errors during scrubbing
         }
         return ev;
+      },
+      beforeBreadcrumb(breadcrumb: Sentry.Breadcrumb) {
+        return scrubBrandProtectionBreadcrumb(breadcrumb);
       },
     });
 
