@@ -1159,10 +1159,12 @@ model ScamMatch {
 }
 
 // Plaintext checker tokens are never stored. Revocation is revokedAt.
+// scopes defaults to ingest writes only. targets:read is granted explicitly.
 model GiveawayCheckerToken {
   id         String    @id @default(uuid())
   tokenHash  String    @unique @map("token_hash")
   label      String    @default("checker") @db.VarChar(80)
+  scopes     String[]  @default(["ingest:write"])
   createdAt  DateTime  @default(now()) @map("created_at")
   lastUsedAt DateTime? @map("last_used_at")
   revokedAt  DateTime? @map("revoked_at")

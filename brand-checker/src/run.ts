@@ -9,7 +9,7 @@ import { collectReddit } from './sources/reddit.js';
 import { collectX } from './sources/x.js';
 import { isRejectedSource } from './text.js';
 import type { Finding, HttpClient, Logger, PlatformName, SourceResult, Verification } from './types.js';
-import { loadWatchlist } from './watchlist.js';
+import { watchlistForRun } from './targets.js';
 
 export type PlatformSummary = {
   platform: PlatformName | 'X' | 'REDDIT' | 'FACEBOOK' | 'INSTAGRAM' | 'LOOKALIKE_DOMAIN';
@@ -63,7 +63,6 @@ export const runChecker = async (deps: RunDeps): Promise<RunSummary> => {
   const now = deps.now ?? new Date();
   const sleep = deps.sleep ?? ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)));
   const userAgent = `TixmoBrandChecker/1.0 (+${config.contactUrl})`;
-  const watchlist = loadWatchlist(config.watchlistPath);
   let fatalStatus: number | undefined;
   const client = new TixmoClient({
     apiUrl: config.apiUrl,
@@ -99,6 +98,13 @@ export const runChecker = async (deps: RunDeps): Promise<RunSummary> => {
   };
 
   try {
+    const resolved = await watchlistForRun({
+      fixtures: config.fixtures,
+      watchlistPath: config.watchlistPath,
+      listTargets: () => client.listTargets(),
+    });
+    const watchlist = resolved.watchlist;
+    logger.info(`brand-checker: targets from ${resolved.source}`);
     const xToken = config.fixtures ? config.xBearerToken || 'fixture-bearer' : config.xBearerToken;
     const redditId = config.fixtures ? config.redditClientId || 'fixture-id' : config.redditClientId;
     const redditSecret = config.fixtures

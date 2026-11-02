@@ -8,7 +8,7 @@ import {
   isGiveawayIngestAuthBlocked,
 } from '../../middleware/rateLimiter';
 import { ApiError } from '../../utils/ApiError';
-import { CHECKER_TOKEN_PREFIX } from './constants';
+import { CHECKER_TOKEN_PREFIX, type CheckerScopeName } from './constants';
 
 const ingestPaths = () =>
   new Set([
@@ -16,6 +16,28 @@ const ingestPaths = () =>
     `/api/${config.apiVersion}/brand-protection/ingest/status`,
     `/api/${config.apiVersion}/brand-protection/ingest/verifications`,
   ]);
+
+const targetsPath = () => `/api/${config.apiVersion}/brand-protection/ingest/targets`;
+
+const requestPath = (req: AuthRequest): string => {
+  const path = req.originalUrl.split('?')[0].replace(/\/+$/, '');
+  return path || '/';
+};
+
+type CheckerRoute = 'ingest' | 'targets';
+
+const checkerRoute = (req: AuthRequest): CheckerRoute | null => {
+  const path = requestPath(req);
+  if (req.method === 'POST' && ingestPaths().has(path)) return 'ingest';
+  if (req.method === 'GET' && path === targetsPath()) return 'targets';
+  return null;
+};
+
+const requiredScope = (route: CheckerRoute): CheckerScopeName =>
+  route === 'targets' ? 'targets:read' : 'ingest:write';
+
+const hasScope = (scopes: string[] | null | undefined, scope: CheckerScopeName): boolean =>
+  Array.isArray(scopes) && scopes.includes(scope);
 
 const bearerToken = (req: AuthRequest): string | undefined => {
   const value = req.get('authorization');
@@ -25,23 +47,15 @@ const bearerToken = (req: AuthRequest): string | undefined => {
   return token;
 };
 
-const requestPath = (req: AuthRequest): string => {
-  const path = req.originalUrl.split('?')[0].replace(/\/+$/, '');
-  return path || '/';
-};
-
 const isBrandPath = (req: AuthRequest): boolean =>
   requestPath(req).includes(`/${config.apiVersion}/brand-protection`);
-
-const isAllowedIngest = (req: AuthRequest): boolean =>
-  req.method === 'POST' && ingestPaths().has(requestPath(req));
 
 export const hashCheckerToken = (token: string): string =>
   createHash('sha256').update(token).digest('hex');
 
 /**
- * Checker tokens are write-only. A recognized token cannot pass this guard
- * except on the ingest writes, and only while the feature flag is on.
+ * A recognized checker token can pass this guard only on the ingest writes it
+ * is scoped for, or on the targets read when that scope was granted explicitly.
  * Unknown bearers fall through to ordinary session auth.
  */
 const authenticateCheckerToken = async (req: AuthRequest, _res: Response, next: NextFunction) => {
@@ -58,16 +72,21 @@ const authenticateCheckerToken = async (req: AuthRequest, _res: Response, next: 
       if (isBrandPath(req)) return next(ApiError.notFound('Route not found'));
       return next(ApiError.forbidden('Checker token cannot access this route'));
     }
-    if (!isAllowedIngest(req)) {
+    const route = checkerRoute(req);
+    if (!route) {
       return next(ApiError.forbidden('Checker token cannot access this route'));
     }
     if (row.revokedAt) return next(ApiError.unauthorized('Checker token revoked'));
+    if (!hasScope(row.scopes, requiredScope(route))) {
+      return next(ApiError.forbidden('Checker token cannot access this route'));
+    }
 
     await prisma.giveawayCheckerToken.update({
       where: { id: row.id },
       data: { lastUsedAt: new Date() },
     });
     req.checkerTokenId = row.id;
+    req.checkerTokenScopes = row.scopes;
     return next();
   } catch (error) {
     return next(error);
@@ -92,7 +111,7 @@ const countIngestAuthFailure = (
 
 const authenticateThenCountFailures = (req: AuthRequest, res: Response, next: NextFunction) => {
   void authenticateCheckerToken(req, res, (error?: unknown) => {
-    if (!isAllowedIngest(req)) {
+    if (!checkerRoute(req)) {
       next(error);
       return;
     }
@@ -125,7 +144,7 @@ export const guardCheckerToken = (req: AuthRequest, res: Response, next: NextFun
     next(ApiError.notFound('Route not found'));
     return;
   }
-  if (!isAllowedIngest(req)) {
+  if (!checkerRoute(req)) {
     authenticateThenCountFailures(req, res, next);
     return;
   }

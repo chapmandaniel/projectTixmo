@@ -19,21 +19,30 @@ The feature is off unless `FEATURE_GIVEAWAY_PROTECTION` is exactly `true`.
 
 Org owners, admins, and managers manage accounts, giveaways, and match reviews for their own organization. A platform admin (`ADMIN` with `isPlatformAdmin`, and no organization) can resolve a disputed account and issue or revoke checker tokens. Platform admins do not receive evidence phone numbers, evidence emails, or pending verification codes.
 
-Checker tokens are write-only. They can call only:
+Checker tokens carry scopes. Existing tokens, and any token issued without an explicit scope list, have `ingest:write` only. `targets:read` is added only when the issuer sets it. It is not granted by default.
+
+`ingest:write` can call only:
 
 - `POST /api/v1/brand-protection/ingest/matches`
 - `POST /api/v1/brand-protection/ingest/status`
 - `POST /api/v1/brand-protection/ingest/verifications`
 
-`GET` on those paths, and every other route, responds `403` for a live token or `401` for a revoked one. User sessions cannot call ingest.
+`targets:read` can call:
+
+- `GET /api/v1/brand-protection/ingest/targets`
+
+That read returns `platform`, `platformAccountId`, `handle`, and `organizationId` for official accounts whose status is `VERIFIED`. Pending, disputed, revoked, and unverified accounts are omitted. The response has no evidence, match text, verification codes, profile URLs, or timestamps. `page` and `limit` (max 100) paginate it. The targets route has its own rate limiter, separate from ingest. A live token without `targets:read` receives `403`. A missing, unknown, or revoked token is handled the same way as on the ingest writes, including the failed-token limit. The feature flag off still responds `404`.
+
+`GET` on the ingest write paths, and every other route, responds `403` for a live token or `401` for a revoked one. User sessions cannot call ingest or targets.
 
 Tokens are stored as sha256 hashes in `giveaway_checker_tokens` (`createdAt`, `lastUsedAt`, `revokedAt`). The plaintext is shown once by:
 
 ```bash
 npm --prefix tixmoapi2 run giveaway:issue-checker-token -- label
+npm --prefix tixmoapi2 run giveaway:issue-checker-token -- label --targets-read
 ```
 
-That script refuses production and any database that is not a loopback database named `tixmo_disposable_*`. A platform admin can also `POST /api/v1/brand-protection/admin/checker-tokens` with `{ "label": "nightly" }`. The response token is not stored and is not recoverable. Revoke with `POST /api/v1/brand-protection/admin/checker-tokens/:id/revoke`. Revocation is read from the row on the next request.
+Without `--targets-read` the token can ingest and cannot read targets. With the flag it receives both `ingest:write` and `targets:read`. That script refuses production and any database that is not a loopback database named `tixmo_disposable_*`. A platform admin can also `POST /api/v1/brand-protection/admin/checker-tokens` with `{ "label": "nightly" }` or `{ "label": "nightly", "scopes": ["ingest:write", "targets:read"] }`. Omitting `scopes` stores `ingest:write` only. The response token is not stored and is not recoverable. Revoke with `POST /api/v1/brand-protection/admin/checker-tokens/:id/revoke`. Revocation is read from the row on the next request.
 
 Send the token as `Authorization: Bearer gwc_...`.
 

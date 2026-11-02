@@ -4,10 +4,13 @@ import prisma from '../../config/prisma';
 import { ApiError } from '../../utils/ApiError';
 import { recordStaffAction, StaffActionName } from '../../services/staff-action-audit';
 import {
+  CHECKER_SCOPES,
   CHECKER_TOKEN_PREFIX,
+  DEFAULT_CHECKER_SCOPES,
   DETECTED_AT_FUTURE_SKEW_MS,
   MATCH_RETENTION_MS,
   VERIFICATION_CODE_TTL_MS,
+  CheckerScopeName,
   MatchCategoryName,
 } from './constants';
 import { hashCheckerToken } from './checkerGuard';
@@ -854,11 +857,52 @@ export const reviewScamMatch = async (
   return presentMatch(updated, includeEvidence);
 };
 
-export const issueCheckerToken = async (actorId: string, label?: string) => {
+export const resolveCheckerScopes = (scopes?: readonly string[]): CheckerScopeName[] => {
+  if (!scopes) return [...DEFAULT_CHECKER_SCOPES];
+  const unique = [...new Set(scopes)];
+  if (
+    !unique.length ||
+    unique.some((scope) => !CHECKER_SCOPES.includes(scope as CheckerScopeName))
+  ) {
+    throw ApiError.badRequest('Unknown checker token scope');
+  }
+  return unique as CheckerScopeName[];
+};
+
+export const listVerifiedTargets = async (page: number, limit: number) => {
+  const where = { status: 'VERIFIED' as const };
+  const [total, rows] = await Promise.all([
+    prisma.officialAccount.count({ where }),
+    prisma.officialAccount.findMany({
+      where,
+      select: {
+        organizationId: true,
+        platform: true,
+        platformAccountId: true,
+        handle: true,
+      },
+      orderBy: [{ organizationId: 'asc' }, { platform: 'asc' }, { platformAccountId: 'asc' }],
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+  ]);
+  return {
+    targets: rows.map((row) => ({
+      organizationId: row.organizationId,
+      platform: row.platform,
+      platformAccountId: row.platformAccountId,
+      handle: row.handle,
+    })),
+    total,
+  };
+};
+
+export const issueCheckerToken = async (actorId: string, label?: string, scopes?: string[]) => {
+  const granted = resolveCheckerScopes(scopes);
   const token = `${CHECKER_TOKEN_PREFIX}${randomBytes(32).toString('base64url')}`;
   const created = await prisma.$transaction(async (tx) => {
     const row = await tx.giveawayCheckerToken.create({
-      data: { tokenHash: hashCheckerToken(token), label: label || 'checker' },
+      data: { tokenHash: hashCheckerToken(token), label: label || 'checker', scopes: granted },
     });
     await recordStaffAction(tx, {
       action: 'CHECKER_TOKEN_ISSUE',
@@ -867,11 +911,11 @@ export const issueCheckerToken = async (actorId: string, label?: string) => {
       organizationId: 'platform',
       actorId,
       reason: 'Issued a giveaway checker token',
-      after: { label: row.label },
+      after: { label: row.label, scopes: granted },
     });
     return row;
   });
-  return { id: created.id, token, createdAt: created.createdAt };
+  return { id: created.id, token, scopes: granted, createdAt: created.createdAt };
 };
 
 export const revokeCheckerToken = async (actorId: string, id: string) => {

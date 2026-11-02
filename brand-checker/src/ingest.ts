@@ -11,6 +11,20 @@ export class FatalApiError extends Error {
   }
 }
 
+export class TargetsForbidden extends Error {
+  constructor() {
+    super('Checker token cannot read targets');
+    this.name = 'TargetsForbidden';
+  }
+}
+
+export type OfficialTarget = {
+  organizationId: string;
+  platform: 'X' | 'REDDIT' | 'FACEBOOK' | 'INSTAGRAM';
+  platformAccountId: string;
+  handle: string;
+};
+
 const payload = (finding: Finding): Record<string, unknown> => {
   const body: Record<string, unknown> = {
     organizationId: finding.organizationId,
@@ -43,17 +57,17 @@ export class TixmoClient {
     }
   ) {}
 
-  private async post(path: string, body: unknown): Promise<void> {
+  private async request(path: string, method: 'GET' | 'POST', body?: unknown): Promise<{ status: number; body: string }> {
     let response;
     try {
       response = await this.options.http.request(`${this.options.apiUrl}${path}`, {
-        method: 'POST',
+        method,
         headers: {
           Authorization: `Bearer ${this.options.token}`,
-          'Content-Type': 'application/json',
           Accept: 'application/json',
+          ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
         },
-        body: JSON.stringify(body),
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
     } catch {
       this.options.logger.alert(
@@ -62,6 +76,11 @@ export class TixmoClient {
       this.options.onFatal(0);
       throw new FatalApiError(0);
     }
+    return response;
+  }
+
+  private async post(path: string, body: unknown): Promise<void> {
+    const response = await this.request(path, 'POST', body);
     if (response.status >= 400) {
       this.options.logger.alert(
         `ALERT brand-checker: Tixmo API returned ${response.status}; recording a failed run and stopping`
@@ -69,6 +88,54 @@ export class TixmoClient {
       this.options.onFatal(response.status);
       throw new FatalApiError(response.status);
     }
+  }
+
+  async listTargets(): Promise<OfficialTarget[]> {
+    const targets: OfficialTarget[] = [];
+    const limit = 100;
+    for (let page = 1; page <= 20; page += 1) {
+      const response = await this.request(
+        `/api/v1/brand-protection/ingest/targets?page=${page}&limit=${limit}`,
+        'GET'
+      );
+      if (response.status === 403) throw new TargetsForbidden();
+      if (response.status >= 400) {
+        this.options.logger.alert(
+          `ALERT brand-checker: Tixmo API returned ${response.status}; recording a failed run and stopping`
+        );
+        this.options.onFatal(response.status);
+        throw new FatalApiError(response.status);
+      }
+      const parsed = JSON.parse(response.body) as {
+        data?: { targets?: unknown };
+        meta?: { total?: unknown };
+      };
+      const rows = Array.isArray(parsed.data?.targets) ? parsed.data.targets : [];
+      for (const row of rows) {
+        if (!row || typeof row !== 'object') continue;
+        const target = row as Record<string, unknown>;
+        const platform = target.platform;
+        if (platform !== 'X' && platform !== 'REDDIT' && platform !== 'FACEBOOK' && platform !== 'INSTAGRAM') {
+          continue;
+        }
+        if (
+          typeof target.organizationId !== 'string' ||
+          typeof target.platformAccountId !== 'string' ||
+          typeof target.handle !== 'string'
+        ) {
+          continue;
+        }
+        targets.push({
+          organizationId: target.organizationId,
+          platform,
+          platformAccountId: target.platformAccountId,
+          handle: target.handle,
+        });
+      }
+      const total = typeof parsed.meta?.total === 'number' ? parsed.meta.total : targets.length;
+      if (rows.length < limit || targets.length >= total) break;
+    }
+    return targets;
   }
 
   async reportStatus(platform: PlatformName, state: CheckerState, detail?: string): Promise<void> {

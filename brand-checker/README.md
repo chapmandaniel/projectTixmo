@@ -32,7 +32,9 @@ If the Tixmo API returns HTTP 429, 401, or 404, the checker writes a failed run 
 
 ## Targets
 
-Checker tokens cannot list organizations or official accounts. `TIXMO_WATCHLIST_PATH` points at a JSON file:
+`GET /api/v1/brand-protection/ingest/targets` returns verified official accounts when the checker token includes `targets:read`. That scope is not on ingest-only tokens. Outside `--fixtures`, a token with the scope loads those accounts from the API. Names and domains still come from the watchlist file when it exists. A `403` means the token lacks the scope, and the checker uses the watchlist file. `--fixtures` always uses the watchlist file and does not call the route. HTTP 401, 404, or 429 from the targets route stops the run the same way an ingest error does.
+
+`TIXMO_WATCHLIST_PATH` points at a JSON file used for fixtures, for tokens without `targets:read`, and for names and domains:
 
 ```json
 {
@@ -108,6 +110,6 @@ Railway start command: `node dist/index.js`
 
 ## Open questions
 
-- The ingest token cannot read official accounts, so the watchlist is a second piece of configuration. A read-only targets route would remove that drift.
+- The targets route does not include display names or domains. The watchlist file still supplies those when it is present.
 - Live Facebook and Instagram pages often answer with a login wall. The checker reports that and stops the platform. It will not try to get past the wall.
 - A verification code that does not match a pending account is an HTTP 404 from the API, which ends the run. The checker only submits a code it saw on the official account's own public text.

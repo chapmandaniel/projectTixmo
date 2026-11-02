@@ -1080,4 +1080,162 @@ describe('Brand protection', () => {
       (await prisma.officialAccount.findUnique({ where: { id: replacement.id } }))?.status
     ).toBe('PENDING');
   });
+
+  it('hides targets when the flag is off', async () => {
+    process.env.FEATURE_GIVEAWAY_PROTECTION = 'false';
+    try {
+      const hidden = await request(app)
+        .get('/api/v1/brand-protection/ingest/targets')
+        .set(auth(checker.token));
+      expect(hidden.status).toBe(404);
+    } finally {
+      process.env.FEATURE_GIVEAWAY_PROTECTION = 'true';
+    }
+  });
+
+  it('returns only verified account ids and refuses a token without targets:read', async () => {
+    const plaintext = `gwc_${randomBytes(32).toString('base64url')}`;
+    await prisma.giveawayCheckerToken.create({
+      data: {
+        tokenHash: createHash('sha256').update(plaintext).digest('hex'),
+        label: 'targets-reader',
+        scopes: ['ingest:write', 'targets:read'],
+      },
+    });
+
+    const secretCode = 'HIDE-CODE';
+    const secretName = 'Hidden Harbour Name';
+    const rows = [
+      {
+        organizationId,
+        platform: 'X' as const,
+        platformAccountId: 'verified-target-1',
+        handle: 'harbourfest',
+        profileUrl: 'https://x.com/harbourfest',
+        displayName: secretName,
+        status: 'VERIFIED' as const,
+        verifiedPlatformAccountKey: 'X:verified-target-1',
+        verifiedAt: new Date(),
+        verificationCode: secretCode,
+        createdBy: 'test',
+      },
+      {
+        organizationId,
+        platform: 'REDDIT' as const,
+        platformAccountId: 'verified-target-2',
+        handle: 'harbourfest_reddit',
+        profileUrl: 'https://reddit.com/user/harbourfest_reddit',
+        status: 'VERIFIED' as const,
+        verifiedPlatformAccountKey: 'REDDIT:verified-target-2',
+        verifiedAt: new Date(),
+        createdBy: 'test',
+      },
+      {
+        organizationId,
+        platform: 'FACEBOOK' as const,
+        platformAccountId: 'pending-target',
+        handle: 'pendingfest',
+        profileUrl: 'https://facebook.com/pendingfest',
+        status: 'PENDING' as const,
+        verificationCode: secretCode,
+        createdBy: 'test',
+      },
+      {
+        organizationId,
+        platform: 'INSTAGRAM' as const,
+        platformAccountId: 'disputed-target',
+        handle: 'disputedfest',
+        profileUrl: 'https://instagram.com/disputedfest',
+        status: 'DISPUTED' as const,
+        createdBy: 'test',
+      },
+      {
+        organizationId,
+        platform: 'X' as const,
+        platformAccountId: 'revoked-target',
+        handle: 'revokedfest',
+        profileUrl: 'https://x.com/revokedfest',
+        status: 'REVOKED' as const,
+        createdBy: 'test',
+      },
+    ];
+    for (const data of rows) {
+      await prisma.officialAccount.create({ data });
+    }
+
+    const refused = await request(app)
+      .get('/api/v1/brand-protection/ingest/targets')
+      .set(auth(checker.token));
+    expect(refused.status).toBe(403);
+
+    const page = await request(app)
+      .get('/api/v1/brand-protection/ingest/targets?page=1&limit=1')
+      .set(auth(plaintext));
+    expect(page.status).toBe(200);
+    expect(page.body.meta.total).toBeGreaterThanOrEqual(2);
+    expect(page.body.data.targets).toHaveLength(1);
+    expect(Object.keys(page.body.data.targets[0]).sort()).toEqual([
+      'handle',
+      'organizationId',
+      'platform',
+      'platformAccountId',
+    ]);
+    const body = JSON.stringify(page.body);
+    expect(body).not.toContain(secretCode);
+    expect(body).not.toContain(secretName);
+    expect(body).not.toContain('pending-target');
+    expect(body).not.toContain('disputed-target');
+    expect(body).not.toContain('revoked-target');
+    expect(body).not.toContain('evidence');
+    expect(body).not.toContain('profileUrl');
+
+    const all = await request(app)
+      .get('/api/v1/brand-protection/ingest/targets?limit=100')
+      .set(auth(plaintext));
+    const ids = all.body.data.targets.map(
+      (row: { platformAccountId: string }) => row.platformAccountId
+    );
+    expect(ids).toEqual(expect.arrayContaining(['verified-target-1', 'verified-target-2']));
+    expect(ids).not.toEqual(
+      expect.arrayContaining(['pending-target', 'disputed-target', 'revoked-target'])
+    );
+  });
+
+  it('rate limits targets reads separately from ingest', async () => {
+    const plaintext = `gwc_${randomBytes(32).toString('base64url')}`;
+    await prisma.giveawayCheckerToken.create({
+      data: {
+        tokenHash: createHash('sha256').update(plaintext).digest('hex'),
+        label: 'targets-limit',
+        scopes: ['ingest:write', 'targets:read'],
+      },
+    });
+    const read = () =>
+      request(app)
+        .get('/api/v1/brand-protection/ingest/targets')
+        .set(auth(plaintext))
+        .set('x-test-giveaway-targets-rate-limit', 'low')
+        .set('x-test-giveaway-ingest-rate-limit', 'low');
+    expect((await read()).status).toBe(200);
+    expect((await read()).status).toBe(200);
+    expect((await read()).status).toBe(429);
+    const ingestStill = await request(app)
+      .post('/api/v1/brand-protection/ingest/matches')
+      .set(auth(plaintext))
+      .set('x-test-giveaway-targets-rate-limit', 'low')
+      .set('x-test-giveaway-ingest-rate-limit', 'low')
+      .send({
+        matches: [
+          {
+            organizationId,
+            platform: 'X',
+            category: 'FAKE_CONTEST',
+            sourceUrl: 'https://x.com/targets-limit/status/1',
+            matchedRule: 'rule',
+            detectedAt: future(0),
+          },
+        ],
+      });
+    expect(ingestStill.status).toBe(200);
+  });
 });

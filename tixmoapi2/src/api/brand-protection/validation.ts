@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  CHECKER_SCOPES,
   CHECKER_STATES,
   INGEST_BATCH_LIMIT,
   MATCH_CATEGORIES,
@@ -184,6 +185,16 @@ export const issueTokenSchema = z.object({
   body: z
     .object({
       label: z.string().trim().min(1).max(80).optional(),
+      scopes: z.array(z.enum(CHECKER_SCOPES)).min(1).max(CHECKER_SCOPES.length).optional(),
+    })
+    .strict(),
+});
+
+export const listTargetsSchema = z.object({
+  query: z
+    .object({
+      page: z.coerce.number().int().positive().optional(),
+      limit: z.coerce.number().int().positive().max(100).optional(),
     })
     .strict(),
 });

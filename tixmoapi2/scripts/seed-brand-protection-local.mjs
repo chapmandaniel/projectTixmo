@@ -131,7 +131,11 @@ async function main() {
     const token = `gwc_${randomBytes(32).toString('base64url')}`;
     const tokenHash = createHash('sha256').update(token).digest('hex');
     await prisma.giveawayCheckerToken.create({
-      data: { tokenHash, label: TOKEN_LABEL },
+      data: {
+        tokenHash,
+        label: TOKEN_LABEL,
+        scopes: ['ingest:write', 'targets:read'],
+      },
     });
     const watchlist = {
       organizations: [
