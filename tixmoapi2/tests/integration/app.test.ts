@@ -52,9 +52,12 @@ describe('Health Check', () => {
     expect(labs.body.railwayEnvironment).toBe('labs');
     expect(labs.body.branch).toBe('labs-manual');
     expect(labs.body).toHaveProperty('release');
-    process.env.RAILWAY_GIT_BRANCH = 'cursor/vendor-import-showpass-5658';
+    process.env.RAILWAY_GIT_BRANCH = 'main';
+    const pinned = await request(app).get('/health');
+    expect(pinned.body.branch).toBe('labs-manual');
+    delete process.env.APP_LABS_BRANCH;
     const git = await request(app).get('/health');
-    expect(git.body.branch).toBe('cursor/vendor-import-showpass-5658');
+    expect(git.body.branch).toBe('main');
     if (previousName === undefined) delete process.env.RAILWAY_ENVIRONMENT_NAME;
     else process.env.RAILWAY_ENVIRONMENT_NAME = previousName;
     if (previousGit === undefined) delete process.env.RAILWAY_GIT_BRANCH;

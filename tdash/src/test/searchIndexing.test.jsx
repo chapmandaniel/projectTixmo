@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
-import { dashShouldNoIndex } from '../lib/searchIndexing';
+import { dashShouldNoIndex, injectNoIndexMeta } from '../lib/searchIndexing';
 import { NoIndexMeta } from '../components/LabsBanner';
 
 describe('dashboard search indexing', () => {
@@ -25,5 +25,11 @@ describe('dashboard search indexing', () => {
         window.__TIXMO_CONFIG__ = { labsBranch: 'cursor/vendor-import-showpass-5658' };
         render(<NoIndexMeta />);
         expect(document.head.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex,nofollow');
+    });
+
+    it('injects the robots meta into head markup without depending on script', () => {
+        const html = injectNoIndexMeta('<head><title>Tixmo</title></head>');
+        expect(html).toContain('<head>\n    <meta name="robots" content="noindex,nofollow" />');
+        expect(injectNoIndexMeta(html)).toBe(html);
     });
 });

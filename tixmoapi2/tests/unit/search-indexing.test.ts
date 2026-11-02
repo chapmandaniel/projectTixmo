@@ -33,7 +33,7 @@ describe('search indexing', () => {
         RAILWAY_GIT_BRANCH: 'from-git',
         APP_LABS_BRANCH: 'from-app',
       })
-    ).toBe('from-git');
+    ).toBe('from-app');
   });
 });
 

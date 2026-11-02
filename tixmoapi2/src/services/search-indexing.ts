@@ -13,7 +13,8 @@ export const healthRailwayEnvironment = (env: NodeJS.ProcessEnv = process.env): 
   env.RAILWAY_ENVIRONMENT_NAME?.trim() || null;
 
 export const healthBranch = (env: NodeJS.ProcessEnv = process.env): string | null => {
-  const gitBranch = env.RAILWAY_GIT_BRANCH?.trim();
-  if (gitBranch) return gitBranch;
-  return env.APP_LABS_BRANCH?.trim() || null;
+  // Railway sets RAILWAY_GIT_BRANCH=main on a pinned commit deploy. The labs branch wins.
+  const labs = env.APP_LABS_BRANCH?.trim();
+  if (labs) return labs;
+  return env.RAILWAY_GIT_BRANCH?.trim() || null;
 };

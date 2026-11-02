@@ -61,6 +61,10 @@ fi
 if [ "$app_env" = "production" ] && [ -z "$labs_branch" ]; then
   write_robots=0
 fi
+header_file=/etc/nginx/labs-robots-header.conf
 if [ "$write_robots" = "1" ]; then
   printf '%s\n' 'User-agent: *' 'Disallow: /' > /usr/share/nginx/html/robots.txt
+  printf '%s\n' 'add_header X-Robots-Tag "noindex, nofollow" always;' > "$header_file"
+else
+  : > "$header_file"
 fi

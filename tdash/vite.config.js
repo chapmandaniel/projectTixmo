@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { ROBOTS_TXT, dashShouldNoIndex } from './src/lib/searchIndexing.js'
+import { ROBOTS_TXT, dashShouldNoIndex, injectNoIndexMeta } from './src/lib/searchIndexing.js'
 
 const blockSearchIndexing = () => dashShouldNoIndex({
     appEnv: process.env.VITE_APP_ENV,
@@ -23,6 +23,10 @@ const robotsPlugin = () => ({
     generateBundle() {
         if (!blockSearchIndexing()) return
         this.emitFile({ type: 'asset', fileName: 'robots.txt', source: ROBOTS_TXT })
+    },
+    transformIndexHtml(html) {
+        if (!blockSearchIndexing()) return html
+        return injectNoIndexMeta(html)
     },
 })
 
