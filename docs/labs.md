@@ -40,13 +40,33 @@ Always pass the labs environmentId. Never use `railway redeploy`, `railway up` o
 - `labs-reset.sh --dry-run` (the default) checks the guards inside labs-api and changes nothing.
 - `labs-reset.sh --execute [--seed]` runs `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`, then `npm run migrate`, then Redis `FLUSHDB`.
   - The seed runs only if `--seed` is passed **and** the deployed image's seed guard allows `labs`.
+  - With `--seed`, the script copies the seed's QA secret files (`/app/tmp/showpass-qa-*`) to the DevOps box secrets folder (mode 600), checks them by sha256, and then deletes them from the container.
+  - With `--seed`, the script then runs the **persistent owner step** (below).
+- `labs-reset.sh --execute --owner-only` runs only the persistent owner step, with no wipe.
+
+### Persistent owner (labs@tixmo.co)
+Daniel's labs login `labs@tixmo.co` keeps the **same password** through every rebuild, reseed and schema reset.
+- **The password:**
+  - It lives only in one box file, `secrets/labs/dan-owner.login` (mode 600). The file holds the email, the password and `url=https://labs.tixmo.co`.
+  - It was generated once, and the script never creates or regenerates it. If the file is missing, the owner step refuses.
+- **What the step does:**
+  - It finds the org by slug `fixture-festival`, because the seed creates a new org id on each reset.
+  - It upserts `labs@tixmo.co` as `OWNER` of that org with `emailVerified=true`.
+- **It is idempotent.** On an existing user, it resets the password hash, role, org and `disabledAt`, and bumps `sessionVersion`, which signs out old sessions.
+- **How the password stays private:**
+  - The script hashes the password on the DevOps box with bcrypt cost 12, the same as `tixmoapi2/prisma/bootstrap-owner.js`. The password reaches the hasher over stdin.
+  - Only the hash goes to the container. `railway ssh` does not forward stdin, so the password never leaves the box.
+  - The password is not in Railway variables, the repo, or any log. The script prints only ids.
+- **Guards:** the same as the reset, applied before anything touches the DB. These are the caller-side env and service ids, plus `RAILWAY_ENVIRONMENT_ID`, `RAILWAY_ENVIRONMENT_NAME=labs` and the internal hosts inside the container. `--self-test` also covers a missing file, a non-600 mode, the wrong email and a weak password.
+- Users and orgs other than this one are not kept across a reset.
 - The guards check:
   - Caller side: the environment is `810da028…` and the service is labs-api.
   - Inside the container: `RAILWAY_ENVIRONMENT_ID` and `RAILWAY_ENVIRONMENT_NAME=labs`, and the DB and Redis hosts are exactly `labs-postgres.railway.internal` and `labs-redis.railway.internal`.
 - The script needs `railway ssh`. CLI 5.x needs a registered SSH key; the v4.40.0 CLI uses the websocket relay (`RAILWAY_BIN=…`).
 
 ## Data and logins
-- After a reset, the database is empty. The Showpass fixture seed (`db:seed:showpass`) can fill it once the seed guard allows `labs` (OC-L3).
+- After a reset, the database is empty. `--seed` runs the Showpass fixture seed (`db:seed:showpass`, fresh-org mode). The seed guard allows `labs` from PR #165 `df3aa0c`.
+- `labs@tixmo.co` (Daniel, OWNER of `fixture-festival`) is recreated after every `--seed` reset, with the same password. Ask DevOps for it; it is never in chat or the repo.
 - Test logins use `@labs.invalid` addresses. Passwords are generated fresh and handed over in Railway or the box secrets folder, never in chat or the repo.
 - The demo vendor key `sp_demo_valid_key` is a fixture value, not a Showpass key.
 
@@ -60,7 +80,7 @@ Always pass the labs environmentId. Never use `railway redeploy`, `railway up` o
 Labs is usage-billed on the existing Pro plan, with no fixed fee. The usual cost is about $6–8 a month, and about $15 at most. Resource caps: api 1 vCPU / 1 GB, dash 0.25 / 0.25 (it sleeps when idle), Postgres 0.5 / 0.5, Redis 0.25 / 0.25. Don't raise them without a reason.
 
 ## Known gaps (SWE)
-- There is no `robots.txt` and no `X-Robots-Tag: noindex` yet. Both need code.
-- The labs banner (`VITE_APP_LABS_BRANCH`) is in PR #165 head `3d4d7b7`, which fails `guard-and-build` (a test mock is missing `getLabsBranch`).
+- Since `df3aa0c`, `robots.txt` (Disallow), the API `X-Robots-Tag: noindex, nofollow` and the labs banner are live. The dash noindex meta is added only by JavaScript, and the dash sends no X-Robots-Tag header.
+- `/health.branch` shows `main` for commit deploys, because `RAILWAY_GIT_BRANCH` wins over `APP_LABS_BRANCH`.
 - `/health` shows `environment: production` because it reads NODE_ENV. Show `RAILWAY_ENVIRONMENT_NAME` instead.
 - The API trusts every `https://*.tixmo.co` origin for credentialed CORS (`tixmoapi2/src/utils/clientOrigin.ts`). Narrow it so labs and prod don't trust each other.
