@@ -21,7 +21,7 @@ const VENUE_ID = 'fixture';
 const COLLIDING_SLUG = 'halloween-at-the-polygon-gallery';
 const LOCAL_EMAIL = 'organizer@example.test';
 const LOCAL_ORG_SLUG = 'fixture-festival';
-const RAILWAY_SANDBOX_NAMES = new Set(['sandbox', 'development', 'dev', 'vendor-sandbox']);
+const RAILWAY_SANDBOX_NAMES = new Set(['sandbox', 'development', 'dev', 'vendor-sandbox', 'labs']);
 const SCANNER_NAME = 'Showpass QA scanner';
 const IMPORT_IDS = ['1545631', '1563243', '1530323'];
 
@@ -72,7 +72,7 @@ const assertSeedAllowed = (): boolean => {
   const railway = process.env.RAILWAY_ENVIRONMENT_NAME?.trim().toLowerCase();
   if (railway && !RAILWAY_SANDBOX_NAMES.has(railway)) {
     console.error(
-      'Showpass fixture seed refuses this Railway environment. Allowed names: sandbox, development, dev, vendor-sandbox'
+      'Showpass fixture seed refuses this Railway environment. Allowed names: sandbox, development, dev, vendor-sandbox, labs'
     );
     return false;
   }

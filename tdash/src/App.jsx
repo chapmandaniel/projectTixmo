@@ -21,6 +21,7 @@ import AcceptInvitationView from './features/AcceptInvitationView';
 import { BrainCircuit, MessageCircle, Wand2 } from 'lucide-react';
 
 import GlobalErrorNotification from './components/GlobalErrorNotification';
+import LabsBanner from './components/LabsBanner';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const DashboardHome = lazy(() => import('./features/DashboardHome'));
@@ -288,6 +289,7 @@ const App = () => {
 
     return (
         <>
+        <LabsBanner />
         {showWaitingRoom ? <WaitingRoomView key={showWaitingRoom.receivedAt} retryAfter={showWaitingRoom.retryAfter} onRetry={() => setShowWaitingRoom(null)} /> : null}
         {matchPath('/checkout/:slug', location.pathname) ? <GlobalErrorNotification error={globalError} onClose={() => setGlobalError(null)} isDark={isDark} /> : null}
         <div inert={showWaitingRoom ? '' : undefined}>

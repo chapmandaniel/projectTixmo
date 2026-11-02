@@ -141,6 +141,17 @@ describe('compiled Showpass fixture seed', () => {
     expect(prefixed.code).not.toBe(0);
     expect(prefixed.stderr).toContain('Railway environment');
 
+    for (const name of ['labs-prod', 'prod-labs', 'production']) {
+      const refused = await runSeed({
+        ...baseEnv(),
+        NODE_ENV: 'development',
+        SHOWPASS_SEED_ALLOW: 'sandbox',
+        RAILWAY_ENVIRONMENT_NAME: name,
+      });
+      expect(refused.code).not.toBe(0);
+      expect(refused.stderr).toContain('Railway environment');
+    }
+
     const appProduction = await runSeed({
       ...baseEnv(),
       NODE_ENV: 'development',
@@ -172,6 +183,34 @@ describe('compiled Showpass fixture seed', () => {
       APP_ENV: 'test',
       SHOWPASS_SEED_ALLOW: 'sandbox',
       RAILWAY_ENVIRONMENT_NAME: 'vendor-sandbox',
+      SHOWPASS_QA_SCANNER_KEY_FILE: path.join(dir, 'scanner.key'),
+      SHOWPASS_QA_WEBHOOK_SECRET_FILE: path.join(dir, 'webhook.secret'),
+      SHOWPASS_QA_PASSWORD_FILE: passwordFile,
+    });
+    expect(result.code).toBe(0);
+    expect(result.stderr).not.toContain('Railway environment');
+    const password = readFileSync(passwordFile, 'utf8').trim();
+    expect(result.stdout).not.toContain(password);
+    const reportLine = result.stdout
+      .trim()
+      .split('\n')
+      .reverse()
+      .find((line) => line.startsWith('{'));
+    const report = JSON.parse(reportLine || '{}') as { mode?: string };
+    expect(report.mode).toBe('fresh-org');
+  }, 40_000);
+
+  it('accepts the labs Railway name with NODE_ENV=development', async () => {
+    const dir = path.join(root, 'tmp/showpass-seed-labs');
+    rmSync(dir, { recursive: true, force: true });
+    mkdirSync(dir, { recursive: true });
+    const passwordFile = path.join(dir, 'organizer.password');
+    const result = await runSeed({
+      ...baseEnv(),
+      NODE_ENV: 'development',
+      APP_ENV: 'test',
+      SHOWPASS_SEED_ALLOW: 'sandbox',
+      RAILWAY_ENVIRONMENT_NAME: 'labs',
       SHOWPASS_QA_SCANNER_KEY_FILE: path.join(dir, 'scanner.key'),
       SHOWPASS_QA_WEBHOOK_SECRET_FILE: path.join(dir, 'webhook.secret'),
       SHOWPASS_QA_PASSWORD_FILE: passwordFile,
