@@ -416,16 +416,22 @@ export const checkoutIpRateLimiter = (req: Request, res: Response, next: NextFun
 };
 
 /**
- * Checker ingest is a separate bucket from buyer writes. The key is the token
- * row id, so the secret itself is not stored in the rate-limit counter.
+ * Counts only ingest requests that already failed checker-token authentication
+ * (missing, unknown, or revoked). A valid token never touches this bucket, so
+ * a noisy neighbour on a shared Railway egress address cannot lock the checker
+ * out. The key is the caller IP. The store is Redis-backed with the same
+ * in-memory fallback as the other limiters.
  */
-/**
- * Counts ingest attempts by IP before the checker token is looked up, so a
- * bad-token flood cannot hammer the token table.
- */
+const giveawayIngestAuthFailureMax = (req: Request) => {
+  if (config.nodeEnv === 'test' && req.headers['x-test-giveaway-auth-rate-limit'] === 'low') {
+    return 3;
+  }
+  return config.nodeEnv === 'test' ? 1000 : 120;
+};
+
 export const giveawayIngestIpRateLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
-  max: config.nodeEnv === 'test' ? 1000 : 120,
+  max: giveawayIngestAuthFailureMax,
   message: {
     success: false,
     message: 'Too many checker submissions. Please try again shortly.',
@@ -433,7 +439,7 @@ export const giveawayIngestIpRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => `ip:${req.ip ?? 'unknown'}`,
-  store: createStore('rl:giveaway:ingest-ip:'),
+  store: createStore('rl:giveaway:ingest-auth-fail:'),
 });
 
 export const giveawayIngestRateLimiter = rateLimit({

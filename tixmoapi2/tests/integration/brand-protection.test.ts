@@ -791,6 +791,50 @@ describe('Brand protection', () => {
     expect(after.status).toBe(401);
   });
 
+  it('limits bad checker tokens by IP without blocking a valid token from that address', async () => {
+    const forwardedFor = '203.0.113.50';
+    const bad = () =>
+      request(app)
+        .post('/api/v1/brand-protection/ingest/matches')
+        .set('Authorization', 'Bearer gwc_not-a-real-checker-token')
+        .set('X-Forwarded-For', forwardedFor)
+        .set('x-test-giveaway-auth-rate-limit', 'low')
+        .send({
+          matches: [
+            {
+              organizationId,
+              platform: 'X',
+              category: 'FAKE_CONTEST',
+              sourceUrl: 'https://x.com/bad-token/status/1',
+              matchedRule: 'rule',
+              detectedAt: future(0),
+            },
+          ],
+        });
+    const failures = [];
+    for (let attempt = 0; attempt < 3; attempt += 1) failures.push(await bad());
+    expect(failures.map((res) => res.status)).toEqual([401, 401, 401]);
+    expect((await bad()).status).toBe(429);
+    const allowed = await request(app)
+      .post('/api/v1/brand-protection/ingest/matches')
+      .set(auth(checker.token))
+      .set('X-Forwarded-For', forwardedFor)
+      .set('x-test-giveaway-auth-rate-limit', 'low')
+      .send({
+        matches: [
+          {
+            organizationId,
+            platform: 'X',
+            category: 'FAKE_CONTEST',
+            sourceUrl: 'https://x.com/valid-after-flood/status/1',
+            matchedRule: 'rule',
+            detectedAt: future(0),
+          },
+        ],
+      });
+    expect(allowed.status).toBe(200);
+  });
+
   it('rejects platform OAuth until that extension is built', async () => {
     const res = await request(app)
       .post('/api/v1/brand-protection/ingest/verifications')

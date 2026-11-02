@@ -71,16 +71,44 @@ const authenticateCheckerToken = async (req: AuthRequest, _res: Response, next: 
   }
 };
 
+const countIngestAuthFailure = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+  error: unknown
+) => {
+  giveawayIngestIpRateLimiter(req, res, (limitError?: unknown) => {
+    if (res.headersSent) return;
+    next(limitError ?? error);
+  });
+};
+
+/**
+ * Ingest auth is checked first. Only a missing, unknown, or revoked checker
+ * token consumes the per-IP failure bucket. A valid token skips that limiter
+ * and is counted later per token id.
+ */
 export const guardCheckerToken = (req: AuthRequest, res: Response, next: NextFunction) => {
-  const token = bearerToken(req);
-  if (token && isAllowedIngest(req)) {
-    return giveawayIngestIpRateLimiter(req, res, (error?: unknown) => {
-      if (error) return next(error);
-      if (res.headersSent) return;
-      void authenticateCheckerToken(req, res, next);
-    });
-  }
-  return authenticateCheckerToken(req, res, next);
+  void authenticateCheckerToken(req, res, (error?: unknown) => {
+    if (!isAllowedIngest(req)) {
+      next(error);
+      return;
+    }
+    if (!error && req.checkerTokenId) {
+      next();
+      return;
+    }
+    if (!error || (error instanceof ApiError && error.statusCode === 401)) {
+      countIngestAuthFailure(
+        req,
+        res,
+        next,
+        error ?? ApiError.unauthorized('Checker token required')
+      );
+      return;
+    }
+    next(error);
+  });
 };
 
 export const requireCheckerToken = (req: AuthRequest, _res: Response, next: NextFunction) => {
