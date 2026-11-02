@@ -362,7 +362,11 @@ describe('Showpass vendor import', () => {
 
     const sign = (invoiceId: string, hookSecret = secret) =>
       createHmac('sha1', hookSecret).update(invoiceId, 'utf8').digest('hex');
-    const postHook = (body: string, hookSecret = secret, path = '/api/v1/vendors/showpass/webhook') => {
+    const postHook = (
+      body: string,
+      hookSecret = secret,
+      path = '/api/v1/vendors/showpass/webhook'
+    ) => {
       const invoiceId = (JSON.parse(body) as { id: string }).id;
       return request(app)
         .post(path)

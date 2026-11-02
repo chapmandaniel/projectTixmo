@@ -234,7 +234,11 @@ describe('showpass adapter selection', () => {
     delete process.env.SHOWPASS_ADAPTER;
     try {
       expect(() =>
-        createVendorAdapter({ provider: 'showpass', apiKey: 'sp_demo_valid_key', venueId: 'fixture' })
+        createVendorAdapter({
+          provider: 'showpass',
+          apiKey: 'sp_demo_valid_key',
+          venueId: 'fixture',
+        })
       ).toThrow('SHOWPASS_ADAPTER must be set to fixture or live');
     } finally {
       if (previous === undefined) delete process.env.SHOWPASS_ADAPTER;

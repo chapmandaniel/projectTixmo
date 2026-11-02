@@ -94,6 +94,7 @@ export const webhook = catchAsync(async (req: AuthRequest, res: Response) => {
   const raw = Buffer.isBuffer(req.body)
     ? req.body
     : Buffer.from(typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {}));
-  const token = typeof req.params.token === 'string' && req.params.token ? req.params.token : undefined;
+  const token =
+    typeof req.params.token === 'string' && req.params.token ? req.params.token : undefined;
   res.json(successResponse(await receiveShowpassWebhook(raw, req.headers, token)));
 });

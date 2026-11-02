@@ -94,10 +94,7 @@ app.use(
   '/api/v1/vendors/showpass/webhook',
   express.raw({ type: 'application/json', limit: '1mb' })
 );
-app.use(
-  '/api/v1/vendors/showpass/hooks',
-  express.raw({ type: 'application/json', limit: '1mb' })
-);
+app.use('/api/v1/vendors/showpass/hooks', express.raw({ type: 'application/json', limit: '1mb' }));
 
 const rawWebhookPaths = new Set(['/api/v1/payments/webhook', '/api/v1/vendors/showpass/webhook']);
 
