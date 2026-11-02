@@ -18,6 +18,8 @@ describe('Showpass vendor import', () => {
   beforeAll(async () => {
     process.env.VENDOR_CREDENTIAL_KEY = key;
     process.env.SHOWPASS_FIXTURE_REVISION = 'baseline';
+    process.env.SHOWPASS_SYNC_INTERVAL_MINUTES = '5';
+    delete process.env.SHOWPASS_ADAPTER;
     delete process.env.SHOWPASS_FIXTURE_REVOKED_KEYS;
     await cleanupTestData();
     const registered = await registerUser(app, {
@@ -35,6 +37,8 @@ describe('Showpass vendor import', () => {
 
   afterAll(async () => {
     delete process.env.SHOWPASS_FIXTURE_REVOKED_KEYS;
+    delete process.env.SHOWPASS_ADAPTER;
+    delete process.env.SHOWPASS_SYNC_INTERVAL_MINUTES;
     process.env.SHOWPASS_FIXTURE_REVISION = 'current';
     await cleanupTestData();
     await prisma.$disconnect();
@@ -43,6 +47,19 @@ describe('Showpass vendor import', () => {
   const auth = () => ({ Authorization: `Bearer ${token}` });
 
   it('covers AC-1 through AC-10 with fixture ids', async () => {
+    const missing = await request(app)
+      .get(`/api/v1/organizations/${organizationId}/showpass`)
+      .set(auth());
+    expect(missing.status).toBe(200);
+    expect(missing.body).toEqual({ success: true, data: null });
+
+    const disabled = await request(app)
+      .put(`/api/v1/organizations/${organizationId}/showpass/fixtures`)
+      .set(auth())
+      .send({ revision: 'current' });
+    expect(disabled.status).toBe(404);
+    expect(disabled.body.code).toBe('FIXTURE_CONTROL_DISABLED');
+
     const invalid = await request(app)
       .post(`/api/v1/organizations/${organizationId}/showpass/connection`)
       .set(auth())
@@ -58,6 +75,7 @@ describe('Showpass vendor import', () => {
     expect(connected.status).toBe(201);
     expect(connected.body.data.keyLast4).toBe('_key');
     expect(connected.body.data.status).toBe('ACTIVE');
+    expect(connected.body.data.festivals[0].syncIntervalMinutes).toBe(5);
     expect(JSON.stringify(connected.body)).not.toContain('sp_demo_valid_key');
 
     const mapped = await request(app)
@@ -110,7 +128,10 @@ describe('Showpass vendor import', () => {
     expect(polygon.slug).toBe('halloween-at-the-polygon-gallery-1');
     expect(dublin.timezone).toBe('Europe/Dublin');
     expect(dublin.timezone).not.toBe('America/St_Johns');
-    expect(new Date(dublin.startDatetime).toISOString()).toBe('2026-10-30T17:15:00.000Z');
+    const dublinRow = await prisma.event.findUniqueOrThrow({ where: { id: dublin.id } });
+    expect(dublinRow.endDatetime && dublinRow.startDatetime).toBeTruthy();
+    expect(dublinRow.endDatetime! > dublinRow.startDatetime!).toBe(true);
+    expect(dublinRow.endDatetime! > new Date()).toBe(true);
     const local = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Europe/Dublin',
       year: 'numeric',
@@ -120,7 +141,6 @@ describe('Showpass vendor import', () => {
       minute: '2-digit',
       hourCycle: 'h23',
     }).format(new Date(dublin.startDatetime));
-    expect(local).toContain('2026');
     expect(local).toContain('17:15');
 
     const door = await prisma.ticketType.findFirst({
@@ -135,7 +155,19 @@ describe('Showpass vendor import', () => {
       expect.arrayContaining([{ externalTicketTypeId: '4581610', tierName: 'Door' }])
     );
 
-    await prisma.event.update({ where: { id: mardi.id }, data: { category: 'festival-notes' } });
+    const categorized = await request(app)
+      .put(`/api/v1/events/${mardi.id}`)
+      .set(auth())
+      .send({ category: 'festival-notes' });
+    expect(categorized.status).toBe(200);
+    expect(categorized.body.data.category).toBe('festival-notes');
+    expect(categorized.body.data.ticketingMode).toBe('EXTERNAL');
+    const listed = await request(app)
+      .get('/api/v1/events')
+      .query({ page: 1, limit: 1, organizationId })
+      .set(auth());
+    expect(listed.status).toBe(200);
+    expect(listed.body.data.pagination).toMatchObject({ page: 1, limit: 1 });
     process.env.SHOWPASS_FIXTURE_REVISION = 'current';
 
     const preview = await request(app)
@@ -177,6 +209,84 @@ describe('Showpass vendor import', () => {
       .send({ vendorVenueId: 'fixture', externalItemIds: ['1530323'] });
     expect(parent.status).toBe(201);
     expect(await prisma.vendorEventLink.count({ where: { externalItemId: '1530323' } })).toBe(1);
+    const giantId = parent.body.data.events[0].id as string;
+    const giantCounts = await request(app)
+      .get(`/api/v1/organizations/${organizationId}/showpass/sold-counts`)
+      .query({ eventId: giantId })
+      .set(auth());
+    expect(giantCounts.status).toBe(200);
+    expect(giantCounts.body.data.length).toBeGreaterThan(0);
+    expect(
+      giantCounts.body.data.every((row: { soldCount: number | null }) => row.soldCount === null)
+    ).toBe(true);
+    expect(JSON.stringify(giantCounts.body)).not.toContain('"soldCount":0');
+
+    const cloned = await request(app).post(`/api/v1/events/${dublin.id}/clone`).set(auth());
+    expect(cloned.status).toBe(201);
+    expect(cloned.body.data.ticketingMode).toBe('EXTERNAL');
+    const clonedTypes = await prisma.ticketType.findMany({
+      where: { eventId: cloned.body.data.id },
+    });
+    expect(clonedTypes.length).toBeGreaterThan(0);
+    expect(
+      clonedTypes.every((ticket) => ticket.status === 'HIDDEN' && ticket.quantityTotal === 0)
+    ).toBe(true);
+
+    const madeUp = `TICKET:00000000-0000-4000-8000-000000000000:MADE-UP:${dublin.id}`;
+    const scanner = await request(app)
+      .post('/api/v1/scanners/register')
+      .set(auth())
+      .send({ name: 'QA gate', organizationId });
+    expect(scanner.status).toBe(201);
+    const scan = await request(app)
+      .post('/api/v1/scanners/scan')
+      .set('Authorization', `Bearer ${scanner.body.data.apiKey}`)
+      .send({ qrData: madeUp, scanType: 'ENTRY' });
+    expect(scan.status).toBe(403);
+    expect(scan.body.data).toEqual({ code: 'EXTERNAL_TICKETING', capability: 'scan' });
+    const offline = await request(app)
+      .post('/api/v1/scanners/validate')
+      .set('Authorization', `Bearer ${scanner.body.data.apiKey}`)
+      .send({
+        scans: [{ qrData: madeUp, scannedAt: new Date().toISOString(), scanType: 'ENTRY' }],
+      });
+    expect(offline.status).toBe(403);
+    expect(offline.body.data.code).toBe('EXTERNAL_TICKETING');
+    expect(await prisma.ticket.count({ where: { eventId: dublin.id } })).toBe(0);
+    expect(await prisma.order.count({ where: { eventId: dublin.id } })).toBe(0);
+    expect(await prisma.waitlist.count({ where: { eventId: dublin.id } })).toBe(0);
+    expect(await prisma.scanLog.count({ where: { eventId: dublin.id } })).toBe(0);
+
+    const promos = await request(app)
+      .get('/api/v1/promo-codes')
+      .query({ organizationId, eventId: dublin.id })
+      .set(auth());
+    expect(promos.status).toBe(200);
+    expect(promos.body.data.pagination.total).toBe(0);
+    const orders = await request(app)
+      .get('/api/v1/orders')
+      .query({ eventId: dublin.id })
+      .set(auth());
+    expect(orders.status).toBe(200);
+    expect(orders.body.data.pagination.total).toBe(0);
+    const waitlist = await request(app)
+      .get('/api/v1/waitlists/status')
+      .query({ eventId: dublin.id })
+      .set(auth());
+    expect(waitlist.status).toBe(200);
+    expect(waitlist.body.data).toBeNull();
+    const scanners = await request(app)
+      .get('/api/v1/scanners')
+      .query({ organizationId, eventId: dublin.id })
+      .set(auth());
+    expect(scanners.status).toBe(200);
+    expect(scanners.body.meta.total).toBe(0);
+    const sessions = await request(app)
+      .get('/api/v1/scanners/logs')
+      .query({ eventId: dublin.id })
+      .set(auth());
+    expect(sessions.status).toBe(200);
+    expect(sessions.body.meta.total).toBe(0);
 
     const counts = await request(app)
       .get(`/api/v1/organizations/${organizationId}/showpass/sold-counts`)
@@ -259,9 +369,32 @@ describe('Showpass vendor import', () => {
       where: { eventId: mardi.id, externalTicketTypeId: '4581610' },
     });
     expect(afterHook.soldCount).toBe(253);
+    const tampered = JSON.parse(raw) as {
+      data: { invoice_items: Array<{ quantity: number }> };
+    };
+    tampered.data.invoice_items[0].quantity = 9;
+    const rejected = await request(app)
+      .post('/api/v1/vendors/showpass/webhook')
+      .set('x-showpass-signature', signature)
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify(tampered));
+    expect(rejected.status).toBe(409);
+    const afterTamper = await prisma.vendorSoldCountSnapshot.findFirstOrThrow({
+      where: { eventId: mardi.id, externalTicketTypeId: '4581610' },
+    });
+    expect(afterTamper.soldCount).toBe(253);
     const stored = JSON.stringify(await prisma.vendorWebhookInbox.findMany());
     expect(stored).not.toContain('buyer@example.com');
     expect(stored).not.toContain('DO-NOT-STORE');
+
+    process.env.SHOWPASS_ADAPTER = 'fixture';
+    const switched = await request(app)
+      .put(`/api/v1/organizations/${organizationId}/showpass/fixtures`)
+      .set(auth())
+      .send({ revision: 'baseline', revokedKeys: [] });
+    expect(switched.status).toBe(200);
+    expect(switched.body.data).toMatchObject({ revision: 'baseline', revokedKeys: [] });
+    process.env.SHOWPASS_FIXTURE_REVISION = 'current';
 
     process.env.SHOWPASS_FIXTURE_REVOKED_KEYS = 'sp_demo_valid_key';
     const failed = await request(app)

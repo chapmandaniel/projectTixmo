@@ -366,6 +366,18 @@ export class ScannerService {
       if (!scanner || scanner.status !== 'ACTIVE') {
         return { kind: 'inactive' as const, revoked: scanner?.status === 'REVOKED' };
       }
+      if (parsed?.eventId) {
+        let mode: { ticketingMode: 'TIXMO' | 'EXTERNAL' } | null = null;
+        try {
+          mode = await tx.event.findUnique({
+            where: { id: parsed.eventId },
+            select: { ticketingMode: true },
+          });
+        } catch {
+          mode = null;
+        }
+        if (mode) assertTicketingAllows(mode, 'scan');
+      }
       let denial: AdmissionDenial | undefined;
       if (!parsed) denial = { reason: 'Invalid QR code format' };
       else if (!ticket) denial = { reason: 'Ticket not found' };
@@ -739,6 +751,14 @@ export class ScannerService {
           reasonCode: result.reasonCode,
         });
       } catch (error) {
+        const code =
+          error instanceof ApiError &&
+          error.data &&
+          typeof error.data === 'object' &&
+          'code' in error.data
+            ? (error.data as { code?: string }).code
+            : undefined;
+        if (code === 'EXTERNAL_TICKETING') throw error;
         failedCount++;
         results.push({
           qrData: scan.qrData,

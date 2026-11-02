@@ -251,7 +251,7 @@ const IntegrationsView = ({ isDark, user }) => {
                                     <ul>
                                         {soldCounts.map((row) => (
                                             <li key={`${row.eventId}-${row.externalTicketTypeId}`}>
-                                                {row.fixtureId} ticket {row.externalTicketTypeId}: {row.soldCount}
+                                                {row.fixtureId} ticket {row.externalTicketTypeId}: {row.soldCount === null || row.soldCount === undefined ? 'no count' : row.soldCount}
                                             </li>
                                         ))}
                                     </ul>

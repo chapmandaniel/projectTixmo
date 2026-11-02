@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { VendorCountDelta } from './types';
 
 const BUYER_KEYS = [
@@ -20,6 +21,25 @@ export type CountedInvoice = {
   invoiceId: string;
   eventType: string;
   deltas: VendorCountDelta[];
+};
+
+/** Identity fields only. Quantities and buyer fields are read after the signature check. */
+export const readSignedIdentity = (
+  payload: unknown
+): { invoiceId: string; eventType: string } | null => {
+  if (!isRecord(payload)) return null;
+  if (typeof payload.id !== 'string' || !payload.id) return null;
+  if (typeof payload.event_type !== 'string' || !payload.event_type) return null;
+  return { invoiceId: payload.id, eventType: payload.event_type };
+};
+
+export const invoiceQuantityFingerprint = (deltas: VendorCountDelta[]): string => {
+  const canonical = [...deltas].sort((left, right) =>
+    `${left.externalItemId}:${left.externalTicketTypeId}`.localeCompare(
+      `${right.externalItemId}:${right.externalTicketTypeId}`
+    )
+  );
+  return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 };
 
 const quantitySign = (eventType: string): number => {

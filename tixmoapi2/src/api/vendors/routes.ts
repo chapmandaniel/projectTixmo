@@ -16,6 +16,7 @@ router.put('/config', validate(validation.saveShowpassConfigSchema), controller.
 router.get('/preview', validate(validation.showpassVenueSchema), controller.preview);
 router.post('/import', validate(validation.importShowpassSchema), controller.importEvents);
 router.post('/sync', validate(validation.syncShowpassSchema), controller.sync);
+router.put('/fixtures', validate(validation.fixtureControlSchema), controller.updateFixtures);
 router.get('/sold-counts', validate(validation.soldCountsSchema), controller.soldCounts);
 
 export default router;

@@ -785,10 +785,13 @@ export class EventService {
           tags: event.tags,
           images: event.images as any,
           metadata: event.metadata as any,
+          ticketingMode: event.ticketingMode,
+          externalPurchaseUrl: event.externalPurchaseUrl,
         },
       });
 
-      // Clone ticket types (reset quantities)
+      const external = event.ticketingMode === 'EXTERNAL';
+      // Clone ticket types. Vendor copies stay unsellable: hidden, quantity 0.
       for (const tt of event.ticketTypes) {
         await tx.ticketType.create({
           data: {
@@ -796,8 +799,9 @@ export class EventService {
             name: tt.name,
             description: tt.description,
             price: tt.price,
-            quantityTotal: tt.quantityTotal,
-            quantityAvailable: tt.quantityTotal,
+            quantityTotal: external ? 0 : tt.quantityTotal,
+            quantityAvailable: external ? 0 : tt.quantityTotal,
+            ...(external ? { quantitySold: 0, status: 'HIDDEN' as const } : {}),
             maxPerOrder: tt.maxPerOrder,
             salesStart: null,
             salesEnd: null,

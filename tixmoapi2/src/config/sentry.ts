@@ -3,6 +3,91 @@ import { buyerRecoveryLogPath } from '../utils/buyerRecoveryLogPath';
 import * as Sentry from '@sentry/node';
 import { config } from './environment';
 
+const SECRET_KEY =
+  /^(api[_-]?key|apikey|secret|webhook[_-]?secret|webhooksecret|token|authorization|password|passwd|credential|credentials|cookie|cookies|set-cookie|x-showpass-signature)$/i;
+const BUYER_KEY =
+  /^(customer_name|customer_email|customer_phone_number|barcode_string|email_on_ticket|first_name_on_ticket|last_name_on_ticket|name_on_ticket|phone_number_on_ticket)$/i;
+
+export const isShowpassRequestUrl = (value: unknown): boolean => {
+  if (typeof value !== 'string' || !value) return false;
+  try {
+    return new URL(value, 'https://redaction.invalid').pathname
+      .toLowerCase()
+      .includes('/showpass/');
+  } catch {
+    return value.toLowerCase().includes('/showpass/');
+  }
+};
+
+const pathnameOnly = (value: string): string => {
+  try {
+    return new URL(value, 'https://redaction.invalid').pathname;
+  } catch {
+    return value.split('?')[0];
+  }
+};
+
+const scrubKeys = (value: unknown, buyer: boolean, seen = new WeakSet<object>()): void => {
+  if (!value || typeof value !== 'object') return;
+  if (seen.has(value)) return;
+  seen.add(value);
+  if (Array.isArray(value)) {
+    for (const item of value) scrubKeys(item, buyer, seen);
+    return;
+  }
+  const record = value as Record<string, unknown>;
+  for (const key of Object.keys(record)) {
+    if (SECRET_KEY.test(key) || (buyer && BUYER_KEY.test(key))) {
+      delete record[key];
+      continue;
+    }
+    scrubKeys(record[key], buyer, seen);
+  }
+};
+
+type TelemetryRequest = {
+  url?: string;
+  data?: unknown;
+  query_string?: unknown;
+  headers?: Record<string, unknown>;
+  cookies?: unknown;
+};
+
+/** Drop Showpass bodies and strip secret-shaped keys before they reach Sentry. */
+export const scrubShowpassEvent = <T extends { request?: TelemetryRequest; message?: unknown }>(
+  event: T
+): T => {
+  const showpass = isShowpassRequestUrl(event.request?.url);
+  const request = event.request;
+  if (request && showpass) {
+    request.url = pathnameOnly(request.url || '');
+    delete request.data;
+    delete request.query_string;
+    delete request.headers;
+    delete request.cookies;
+  }
+  scrubKeys(event, showpass);
+  return event;
+};
+
+export const scrubShowpassBreadcrumb = <T extends { data?: Record<string, unknown> }>(
+  breadcrumb: T
+): T => {
+  const data = breadcrumb.data;
+  if (!data) return breadcrumb;
+  const url = typeof data.url === 'string' ? data.url : '';
+  if (isShowpassRequestUrl(url)) {
+    data.url = pathnameOnly(url);
+    delete data.body;
+    delete data.data;
+    delete data.query_string;
+    delete data.cookies;
+    delete data.headers;
+  }
+  scrubKeys(breadcrumb, isShowpassRequestUrl(url) || isShowpassRequestUrl(data.url));
+  return breadcrumb;
+};
+
 // Initialize Sentry only if DSN is provided
 export function initSentry() {
   if (!config.sentryDsn) return;
@@ -51,6 +136,7 @@ export function initSentry() {
           delete request.headers;
           delete request.cookies;
         }
+        scrubShowpassEvent(ev);
         // Existing general password scrubbing remains in place.
         try {
           if (ev && typeof ev === 'object' && 'request' in ev) {
@@ -72,6 +158,12 @@ export function initSentry() {
           // ignore any errors during scrubbing
         }
         return ev;
+      },
+      beforeBreadcrumb(breadcrumb: Sentry.Breadcrumb) {
+        return scrubShowpassBreadcrumb(breadcrumb);
+      },
+      beforeSendTransaction(event: Sentry.Event) {
+        return scrubShowpassEvent(event);
       },
     });
 

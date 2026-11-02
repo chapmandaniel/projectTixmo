@@ -2,7 +2,9 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { ApiError } from '../../utils/ApiError';
 import { parseDiscoveryEvent } from './discovery';
-import { countInvoice } from './invoice-counts';
+import { shiftIsoPreservingLocalTime } from './fixture-clock';
+import { resolveFixtureControl } from './fixture-runtime';
+import { countInvoice, readSignedIdentity } from './invoice-counts';
 import { showpassSignature, showpassSignaturesMatch } from './showpass-signature';
 import {
   VendorAuthError,
@@ -40,34 +42,39 @@ export class FixtureShowpassAdapter implements VendorTicketingAdapter {
     return readJson('catalog.json') as Catalog;
   }
 
-  private revision(): string {
-    return process.env.SHOWPASS_FIXTURE_REVISION?.trim() || 'current';
+  private shift(event: VendorEventRecord, shiftDays: number): VendorEventRecord {
+    if (!shiftDays) return event;
+    return {
+      ...event,
+      startsOn: shiftIsoPreservingLocalTime(event.startsOn, event.timezone, shiftDays),
+      endsOn: event.endsOn
+        ? shiftIsoPreservingLocalTime(event.endsOn, event.timezone, shiftDays)
+        : null,
+    };
   }
 
-  private events(): VendorEventRecord[] {
+  private async events(): Promise<VendorEventRecord[]> {
     const catalog = this.catalog();
-    const files = catalog.revisions[this.revision()];
-    if (!files) throw new ApiError(500, `Unknown Showpass fixture revision ${this.revision()}`);
+    const control = await resolveFixtureControl();
+    const files = catalog.revisions[control.revision];
+    if (!files) throw new ApiError(500, `Unknown Showpass fixture revision ${control.revision}`);
     const parsed = files
       .map((file) => parseDiscoveryEvent(readJson(file)))
-      .filter((event): event is VendorEventRecord => event !== null);
+      .filter((event): event is VendorEventRecord => event !== null)
+      .map((event) => this.shift(event, control.shiftDays));
     if (this.venueId === catalog.fixtureVenueId) return parsed;
     return parsed.filter((event) => event.venueExternalId === this.venueId);
   }
 
   async verifyCredentials(): Promise<void> {
-    await Promise.resolve();
+    const control = await resolveFixtureControl();
     const auth = readJson('auth.json') as {
       body?: { detail?: string };
       demoKeys?: Record<string, string>;
     };
     const detail = auth.body?.detail || 'Invalid token.';
-    const revoked = (process.env.SHOWPASS_FIXTURE_REVOKED_KEYS || '')
-      .split(',')
-      .map((key) => key.trim())
-      .filter(Boolean);
     const state = auth.demoKeys?.[this.apiKey];
-    if (revoked.includes(this.apiKey) || state === 'revoked' || state !== 'active') {
+    if (control.revokedKeys.includes(this.apiKey) || state === 'revoked' || state !== 'active') {
       throw new VendorAuthError(detail);
     }
   }
@@ -79,7 +86,7 @@ export class FixtureShowpassAdapter implements VendorTicketingAdapter {
 
   async getEvent(externalItemId: string): Promise<VendorEventRecord> {
     await this.verifyCredentials();
-    const event = this.events().find((item) => item.externalItemId === externalItemId);
+    const event = (await this.events()).find((item) => item.externalItemId === externalItemId);
     if (!event) throw new ApiError(404, 'Showpass event was not found in the fixture catalog');
     return event;
   }
@@ -112,13 +119,15 @@ export class FixtureShowpassAdapter implements VendorTicketingAdapter {
     } catch {
       throw new ApiError(400, 'Showpass webhook body is not JSON');
     }
-    const counted = countInvoice(payload);
-    if (!counted) throw new ApiError(400, 'Showpass webhook payload is not a recognized invoice');
+    const identity = readSignedIdentity(payload);
+    if (!identity) throw new ApiError(400, 'Showpass webhook payload is not a recognized invoice');
     const provided = headerValue(input.headers, 'x-showpass-signature');
-    const expected = secret ? showpassSignature(counted.invoiceId, secret) : '';
+    const expected = secret ? showpassSignature(identity.invoiceId, secret) : '';
     if (!secret || !showpassSignaturesMatch(expected, provided)) {
       throw new ApiError(401, 'Invalid webhook signature');
     }
+    const counted = countInvoice(payload);
+    if (!counted) throw new ApiError(400, 'Showpass webhook payload is not a recognized invoice');
     return { webhookId: counted.webhookId, eventType: counted.eventType, deltas: counted.deltas };
   }
 }

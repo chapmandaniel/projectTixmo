@@ -15,6 +15,7 @@ import {
   countedInvoiceHasBuyerData,
   countInvoice,
 } from '../../src/services/vendors/invoice-counts';
+import { shiftIsoPreservingLocalTime } from '../../src/services/vendors/fixture-clock';
 import { FixtureShowpassAdapter } from '../../src/services/vendors/showpass-fixture';
 import { showpassSignature } from '../../src/services/vendors/showpass-signature';
 import { VendorAuthError } from '../../src/services/vendors/types';
@@ -107,6 +108,36 @@ describe('showpass discovery fixtures', () => {
     const revised = changed!.ticketTypes.find((ticket) => ticket.externalId === '4581610');
     expect(revised?.price).toBe('30.00');
   });
+
+  it('changes mardi gras name, start, and price while the timezone id stays the same', () => {
+    const baseline = parseDiscoveryEvent(read('events/mardi-gras.json'));
+    const changed = parseDiscoveryEvent(read('events/mardi-gras.changed.json'));
+    expect(baseline && changed).toBeTruthy();
+    expect(changed!.name).not.toBe(baseline!.name);
+    expect(changed!.startsOn).toBe('2026-10-31T22:30:00Z');
+    expect(baseline!.startsOn).toBe('2026-10-31T21:30:00Z');
+    expect(changed!.timezone).toBe('Canada/Newfoundland');
+    expect(changed!.timezone).toBe(baseline!.timezone);
+    const before = baseline!.ticketTypes.find((ticket) => ticket.externalId === '4581610');
+    const after = changed!.ticketTypes.find((ticket) => ticket.externalId === '4581610');
+    expect(before?.price).toBe('25.00');
+    expect(after?.price).toBe('30.00');
+    expect(after?.name).not.toBe(before?.name);
+  });
+
+  it('keeps Dublin 17:15 local when the fixture dates move forward', () => {
+    const dublin = parseDiscoveryEvent(read('events/pumpkins-dublin.json'));
+    expect(dublin?.startsOn).toBe('2026-10-30T17:15:00Z');
+    const shifted = shiftIsoPreservingLocalTime(dublin!.startsOn, 'Europe/Dublin', 120);
+    const local = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Dublin',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(new Date(shifted));
+    expect(local).toBe('17:15');
+    expect(shifted).not.toBe('2026-10-30T17:15:00.000Z');
+  });
 });
 
 describe('showpass fixture adapter', () => {
@@ -134,6 +165,7 @@ describe('showpass fixture adapter', () => {
       { externalTicketTypeId: '4581612', soldCount: 40 },
       { externalTicketTypeId: '4581610', soldCount: 250 },
     ]);
+    await expect(adapter.getSoldCounts('1530323')).resolves.toEqual([]);
   });
 
   it('verifies the documented signature and drops buyer fields', () => {

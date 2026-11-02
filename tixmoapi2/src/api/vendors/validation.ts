@@ -26,7 +26,7 @@ export const saveShowpassConfigSchema = z.object({
     vendorVenueId: venueId,
     currency: z.string().trim().length(3).optional(),
     timezone: z.string().trim().min(1).max(80).nullable().optional(),
-    syncIntervalMinutes: z.number().int().min(15).max(10080).optional(),
+    syncIntervalMinutes: z.number().int().min(1).max(10080).optional(),
     vendorOwnedFields: z.array(z.string().trim().min(1).max(64)).max(20).optional(),
     ticketTypeMappings: z.array(mapping).max(200).optional(),
     webhookSecret: z.string().trim().min(8).max(200).optional(),
@@ -43,6 +43,18 @@ export const importShowpassSchema = z.object({
 
 export const syncShowpassSchema = z.object({
   params: z.object({ organizationId: z.string().guid('Invalid uuid') }),
+});
+
+export const fixtureControlSchema = z.object({
+  params: z.object({ organizationId: z.string().guid('Invalid uuid') }),
+  body: z
+    .object({
+      revision: z.enum(['baseline', 'current']).optional(),
+      revokedKeys: z.array(z.string().trim().min(1).max(200)).max(50).optional(),
+    })
+    .refine((body) => body.revision !== undefined || body.revokedKeys !== undefined, {
+      message: 'revision or revokedKeys is required',
+    }),
 });
 
 export const soldCountsSchema = z.object({

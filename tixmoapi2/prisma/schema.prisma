@@ -1127,6 +1127,10 @@ model VendorWebhookInbox {
   id                   String              @id
   provider             VendorProvider
   organizationId       String?             @map("organization_id")
+  signedInvoiceId      String?             @map("signed_invoice_id")
+  eventType            String?             @map("event_type")
+  payloadFingerprint   String?             @map("payload_fingerprint")
+  webhookEventUuid     String?             @map("webhook_event_uuid")
   status               VendorWebhookStatus @default(PROCESSING)
   leaseToken           String?             @map("lease_token")
   attempts             Int                 @default(0)
@@ -1136,6 +1140,19 @@ model VendorWebhookInbox {
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
 
+  @@unique([provider, signedInvoiceId, eventType])
   @@index([status, processingStartedAt])
   @@map("vendor_webhook_inbox")
+}
+
+// One row for the fixture adapter. Absent in production unless SHOWPASS_ADAPTER=fixture.
+model VendorFixtureRuntime {
+  id          String   @id
+  revision    String   @default("baseline")
+  revokedKeys String[] @default([]) @map("revoked_keys")
+  shiftDays   Int      @default(0) @map("shift_days")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("vendor_fixture_runtime")
 }

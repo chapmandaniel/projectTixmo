@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import prisma from '../../config/prisma';
 import { ApiError } from '../../utils/ApiError';
 import { decryptVendorSecret } from '../vendor-credential-crypto';
-import { countInvoice } from './invoice-counts';
+import { countInvoice, invoiceQuantityFingerprint, readSignedIdentity } from './invoice-counts';
 import { showpassSignature, showpassSignaturesMatch } from './showpass-signature';
 import { VendorCountDelta } from './types';
 
@@ -13,7 +13,15 @@ const headerValue = (headers: Record<string, string | string[] | undefined>, nam
   return Array.isArray(raw) ? raw[0] : raw;
 };
 
-const claim = async (id: string) => {
+const claim = async (
+  id: string,
+  identity: {
+    signedInvoiceId: string;
+    eventType: string;
+    payloadFingerprint: string;
+    webhookEventUuid: string;
+  }
+) => {
   const leaseToken = randomUUID();
   const now = new Date();
   const stale = new Date(now.getTime() - LEASE_MS);
@@ -26,6 +34,10 @@ const claim = async (id: string) => {
       leaseToken,
       attempts: 0,
       processingStartedAt: now,
+      signedInvoiceId: identity.signedInvoiceId,
+      eventType: identity.eventType,
+      payloadFingerprint: identity.payloadFingerprint,
+      webhookEventUuid: identity.webhookEventUuid,
     },
     update: {},
   });
@@ -94,6 +106,8 @@ const applyDeltas = async (
   }
 };
 
+const inboxId = (invoiceId: string, eventType: string) => `showpass:${invoiceId}:${eventType}`;
+
 export const receiveShowpassWebhook = async (
   rawBody: Buffer,
   headers: Record<string, string | string[] | undefined>
@@ -104,8 +118,8 @@ export const receiveShowpassWebhook = async (
   } catch {
     throw ApiError.badRequest('Showpass webhook body is not JSON');
   }
-  const counted = countInvoice(payload);
-  if (!counted) throw ApiError.badRequest('Showpass webhook payload is not a recognized invoice');
+  const identity = readSignedIdentity(payload);
+  if (!identity) throw ApiError.badRequest('Showpass webhook payload is not a recognized invoice');
   const provided = headerValue(headers, 'x-showpass-signature');
   const connections = await prisma.vendorConnection.findMany({
     where: { provider: 'SHOWPASS', webhookSecretCiphertext: { not: null } },
@@ -120,20 +134,49 @@ export const receiveShowpassWebhook = async (
     } catch {
       continue;
     }
-    if (showpassSignaturesMatch(showpassSignature(counted.invoiceId, secret), provided)) {
+    if (showpassSignaturesMatch(showpassSignature(identity.invoiceId, secret), provided)) {
       matched.push(connection.organizationId);
     }
   }
   if (!matched.length) throw new ApiError(401, 'Invalid webhook signature');
 
-  const leaseToken = await claim(counted.webhookId);
-  if (!leaseToken) return { duplicate: true, webhookId: counted.webhookId };
+  const counted = countInvoice(payload);
+  if (
+    !counted ||
+    counted.invoiceId !== identity.invoiceId ||
+    counted.eventType !== identity.eventType
+  ) {
+    throw ApiError.badRequest('Showpass webhook payload is not a recognized invoice');
+  }
+  const fingerprint = invoiceQuantityFingerprint(counted.deltas);
+  const id = inboxId(identity.invoiceId, identity.eventType);
+  const existing = await prisma.vendorWebhookInbox.findUnique({ where: { id } });
+  if (existing?.status === 'PROCESSED') {
+    if (existing.payloadFingerprint === fingerprint) {
+      return { duplicate: true, webhookId: counted.webhookId };
+    }
+    throw new ApiError(409, 'Showpass webhook quantities do not match the signed invoice');
+  }
+
+  const leaseToken = await claim(id, {
+    signedInvoiceId: identity.invoiceId,
+    eventType: identity.eventType,
+    payloadFingerprint: fingerprint,
+    webhookEventUuid: counted.webhookId,
+  });
+  if (!leaseToken) {
+    const again = await prisma.vendorWebhookInbox.findUnique({ where: { id } });
+    if (again?.status === 'PROCESSED' && again.payloadFingerprint !== fingerprint) {
+      throw new ApiError(409, 'Showpass webhook quantities do not match the signed invoice');
+    }
+    return { duplicate: true, webhookId: counted.webhookId };
+  }
 
   try {
     await prisma.$transaction(async (tx) => {
       await applyDeltas(tx, matched, counted.deltas);
       const finished = await tx.vendorWebhookInbox.updateMany({
-        where: { id: counted.webhookId, leaseToken },
+        where: { id, leaseToken },
         data: {
           status: 'PROCESSED',
           leaseToken: null,
@@ -146,7 +189,7 @@ export const receiveShowpassWebhook = async (
     });
   } catch (error) {
     await prisma.vendorWebhookInbox.updateMany({
-      where: { id: counted.webhookId, leaseToken },
+      where: { id, leaseToken },
       data: {
         status: 'FAILED',
         leaseToken: null,

@@ -225,6 +225,9 @@ export async function cleanupTestData() {
   // Order of deletion matters because of foreign keys
   // 1. Child tables (ScanLog, Scanner, Notification, etc.)
   try {
+    await prisma.vendorFixtureRuntime.deleteMany();
+  } catch (e) {}
+  try {
     await prisma.vendorWebhookInbox.deleteMany();
   } catch (e) {}
   try {

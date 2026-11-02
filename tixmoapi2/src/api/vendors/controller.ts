@@ -4,6 +4,7 @@ import { successResponse } from '../../utils/response';
 import { AuthRequest } from '../../middleware/auth';
 import { getActorScope, requireOrganizationId } from '../../utils/tenantScope';
 import { vendorImportService } from '../../services/vendors/import-service';
+import { updateFixtureRuntime } from '../../services/vendors/fixture-runtime';
 import { receiveShowpassWebhook } from '../../services/vendors/webhook-inbox';
 
 const organizationIdFrom = async (req: AuthRequest) => {
@@ -71,6 +72,12 @@ export const soldCounts = catchAsync(async (req: AuthRequest, res: Response) => 
   const organizationId = await organizationIdFrom(req);
   const eventId = typeof req.query.eventId === 'string' ? req.query.eventId : undefined;
   res.json(successResponse(await vendorImportService.listSoldCounts(organizationId, eventId)));
+});
+
+export const updateFixtures = catchAsync(async (req: AuthRequest, res: Response) => {
+  await organizationIdFrom(req);
+  const body = req.body as { revision?: 'baseline' | 'current'; revokedKeys?: string[] };
+  res.json(successResponse(await updateFixtureRuntime(body)));
 });
 
 export const webhook = catchAsync(async (req: AuthRequest, res: Response) => {

@@ -58,12 +58,20 @@ app.use(
 // Liveness and readiness stay ahead of body parsing, rate limiters and the
 // waiting room, and after CORS so browser checks still receive allow-origin.
 // Railway healthcheckPath remains /ready.
+const healthRelease = (): string | null => {
+  const release = process.env.RELEASE?.trim();
+  if (release) return release;
+  const railway = process.env.RAILWAY_GIT_COMMIT_SHA?.trim();
+  return railway || null;
+};
+
 app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: config.nodeEnv,
+    release: healthRelease(),
   });
 });
 

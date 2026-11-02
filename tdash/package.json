@@ -36,13 +36,14 @@
     "jsdom": "^27.4.0",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
-    "vite": "^6.4.3",
+    "vite": "6.4.5",
     "vitest": "^4.1.12",
     "@tailwindcss/postcss": "^4.3.3"
   },
   "overrides": {
     "source-map-js": "1.2.2",
-    "follow-redirects": "1.16.2"
+    "follow-redirects": "1.16.2",
+    "vite": "6.4.5"
   },
   "engines": {
     "node": ">=24.21.0 <25"

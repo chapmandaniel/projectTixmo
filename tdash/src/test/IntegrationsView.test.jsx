@@ -79,6 +79,24 @@ describe('Showpass integrations', () => {
         ));
     });
 
+    it('shows no count when a fixture has no sold total', async () => {
+        mocks.get.mockImplementation((url) => {
+            if (String(url).includes('sold-counts')) {
+                return Promise.resolve(wrapped([
+                    { eventId: 'evt-giants', fixtureId: 'sp-evt-1530323', externalTicketTypeId: '4464827', soldCount: null },
+                    { eventId: 'evt-mardi', fixtureId: 'sp-evt-1563243', externalTicketTypeId: '4581610', soldCount: 250 },
+                ]));
+            }
+            return Promise.resolve(wrapped({ id: 'conn', status: 'ACTIVE', keyLast4: 'lkey', lastError: null }));
+        });
+        render(<IntegrationsView isDark user={owner} />);
+        await screen.findByText(/Key ending lkey/);
+        fireEvent.click(screen.getByRole('button', { name: 'Sync now' }));
+        expect(await screen.findByText(/sp-evt-1530323 ticket 4464827: no count/)).toBeInTheDocument();
+        expect(screen.getByText(/sp-evt-1563243 ticket 4581610: 250/)).toBeInTheDocument();
+        expect(screen.queryByText(/sp-evt-1530323 ticket 4464827: 0/)).not.toBeInTheDocument();
+    });
+
     it('shows a sync failure alert for a revoked key', async () => {
         mocks.get.mockResolvedValue(wrapped({ id: 'conn', status: 'ACTIVE', keyLast4: 'lkey', lastError: null }));
         mocks.post.mockResolvedValue(wrapped({ status: 'REVOKED', lastError: 'Invalid token.' }));

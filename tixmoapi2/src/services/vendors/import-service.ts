@@ -23,6 +23,14 @@ export const DEFAULT_VENDOR_OWNED_FIELDS = [
 
 const LEASE_MS = 120_000;
 
+export const showpassSyncIntervalMinutes = (): number => {
+  const raw = process.env.SHOWPASS_SYNC_INTERVAL_MINUTES?.trim();
+  if (!raw || !/^\d+$/.test(raw)) return 60;
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value < 1 || value > 10080) return 60;
+  return value;
+};
+
 type Mapping = { externalTicketTypeId: string; tierName: string };
 
 const readMappings = (value: unknown): Mapping[] => {
@@ -399,6 +407,7 @@ export class VendorImportService {
         lastErrorAt: null,
       },
     });
+    const syncIntervalMinutes = showpassSyncIntervalMinutes();
     await prisma.vendorFestivalConfig.upsert({
       where: {
         organizationId_provider_vendorVenueId: {
@@ -415,7 +424,8 @@ export class VendorImportService {
         currency: 'CAD',
         vendorOwnedFields: DEFAULT_VENDOR_OWNED_FIELDS,
         ticketTypeMappings: [],
-        nextSyncAt: new Date(Date.now() + 60 * 60_000),
+        syncIntervalMinutes,
+        nextSyncAt: new Date(Date.now() + syncIntervalMinutes * 60_000),
       },
       update: { connectionId: connection.id },
     });
@@ -615,22 +625,65 @@ export class VendorImportService {
   }
 
   async listSoldCounts(organizationId: string, eventId?: string) {
-    const rows = await prisma.vendorSoldCountSnapshot.findMany({
-      where: { organizationId, ...(eventId ? { eventId } : {}) },
-      orderBy: [{ externalItemId: 'asc' }, { externalTicketTypeId: 'asc' }],
-      include: { event: { select: { id: true, name: true, slug: true } } },
+    const links = await prisma.vendorEventLink.findMany({
+      where: { organizationId, provider: 'SHOWPASS', ...(eventId ? { eventId } : {}) },
+      include: { event: { include: { ticketTypes: true } } },
+      orderBy: { externalItemId: 'asc' },
     });
-    return rows.map((row) => ({
-      eventId: row.eventId,
-      eventName: row.event.name,
-      slug: row.event.slug,
-      fixtureId: `sp-evt-${row.externalItemId}`,
-      externalItemId: row.externalItemId,
-      externalTicketTypeId: row.externalTicketTypeId,
-      soldCount: row.soldCount,
-      source: row.source,
-      capturedAt: row.capturedAt,
-    }));
+    const snapshots = await prisma.vendorSoldCountSnapshot.findMany({
+      where: { organizationId, ...(eventId ? { eventId } : {}) },
+    });
+    const byKey = new Map(
+      snapshots.map((row) => [`${row.eventId}:${row.externalTicketTypeId}`, row])
+    );
+    const rows: Array<{
+      eventId: string;
+      eventName: string;
+      slug: string;
+      fixtureId: string;
+      externalItemId: string;
+      externalTicketTypeId: string;
+      soldCount: number | null;
+      source: string | null;
+      capturedAt: Date | null;
+    }> = [];
+    for (const link of links) {
+      const seen = new Set<string>();
+      for (const ticket of link.event.ticketTypes) {
+        const metadata = ticket.metadata;
+        if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) continue;
+        const externalTicketTypeId = (metadata as Record<string, unknown>).vendorTicketTypeId;
+        if (typeof externalTicketTypeId !== 'string') continue;
+        seen.add(externalTicketTypeId);
+        const snap = byKey.get(`${link.eventId}:${externalTicketTypeId}`);
+        rows.push({
+          eventId: link.eventId,
+          eventName: link.event.name,
+          slug: link.event.slug,
+          fixtureId: `sp-evt-${link.externalItemId}`,
+          externalItemId: link.externalItemId,
+          externalTicketTypeId,
+          soldCount: snap ? snap.soldCount : null,
+          source: snap?.source ?? null,
+          capturedAt: snap?.capturedAt ?? null,
+        });
+      }
+      for (const snap of snapshots.filter((row) => row.eventId === link.eventId)) {
+        if (seen.has(snap.externalTicketTypeId)) continue;
+        rows.push({
+          eventId: link.eventId,
+          eventName: link.event.name,
+          slug: link.event.slug,
+          fixtureId: `sp-evt-${link.externalItemId}`,
+          externalItemId: link.externalItemId,
+          externalTicketTypeId: snap.externalTicketTypeId,
+          soldCount: snap.soldCount,
+          source: snap.source,
+          capturedAt: snap.capturedAt,
+        });
+      }
+    }
+    return rows;
   }
 
   async syncOrganization(organizationId: string) {

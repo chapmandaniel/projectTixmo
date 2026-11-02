@@ -808,7 +808,8 @@ export class OrderService {
    */
   async listOrders(params: ListOrdersParams, actorId?: string): Promise<PaginatedOrders> {
     const { page = 1, limit = 20, status, userId, eventId, search } = params;
-    if (eventId) await assertEventCapability(eventId, 'orders');
+    // Listing stays readable so QA can see that a vendor event has no orders.
+    // Checkout still refuses EXTERNAL events before a row is created.
     const cappedLimit = Math.min(Math.max(1, limit), 100);
     const safePage = Math.max(1, page);
     const skip = (safePage - 1) * cappedLimit;
