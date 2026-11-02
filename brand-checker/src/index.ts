@@ -1,6 +1,6 @@
 import { loadConfig } from './config.js';
 import { createFixtureClient } from './fixtures.js';
-import { createFetchClient } from './http.js';
+import { createApiFetchClient, createFetchClient } from './http.js';
 import { createLogger } from './log.js';
 import { runChecker } from './run.js';
 
@@ -18,7 +18,7 @@ const main = async (): Promise<void> => {
   const summary = await runChecker({
     config,
     sourceHttp: config.fixtures ? createFixtureClient() : createFetchClient(),
-    apiHttp: createFetchClient(),
+    apiHttp: createApiFetchClient(),
     logger,
   });
   process.stdout.write(`${JSON.stringify(summary)}\n`);

@@ -5,4 +5,5 @@ dist
 .local
 .cache
 test
+fixtures
 *.log

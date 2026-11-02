@@ -8,14 +8,20 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
 
 const asString = (value: unknown): string => (typeof value === 'string' ? value : '');
 
-const userAgent = 'TixmoBrandChecker';
+export const redditUserAgent = (contactUrl: string, redditContact?: string): string => {
+  const raw = (redditContact || contactUrl).replace(/[\r\n()]/g, '').trim();
+  if (!raw || raw.includes('://')) return `tixmo:brand-checker:1.0 (+${raw || 'https://example.com/contact'})`;
+  const by = raw.startsWith('/u/') ? raw : `/u/${raw.replace(/^@/, '')}`;
+  return `tixmo:brand-checker:1.0 (by ${by})`;
+};
 
 export const collectReddit = async (
   orgs: OrganizationTarget[],
   http: HttpClient,
   clientId: string | undefined,
   clientSecret: string | undefined,
-  now = new Date()
+  now = new Date(),
+  userAgent = redditUserAgent('https://example.com/contact')
 ): Promise<SourceResult> => {
   if (!clientId || !clientSecret) return { findings: [], verifications: [], skipped: true };
   const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');

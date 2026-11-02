@@ -111,6 +111,13 @@ export const collectLookalikes = async (
       if (!body) {
         const url = `https://crt.sh/?q=${encodeURIComponent(`%${token}%`)}&output=json`;
         const response = await fetchWithBackoff(http, url, { Accept: 'application/json', 'User-Agent': userAgent }, sleep);
+        if (response.status === 429 || response.status === 403) {
+          return {
+            findings,
+            verifications: [],
+            stop: { state: 'BLOCKED', detail: `crt.sh http ${response.status}` },
+          };
+        }
         if (response.status !== 200) {
           crtFailed = true;
           body = cached?.body ?? '';
@@ -149,7 +156,15 @@ export const collectLookalikes = async (
         }
         if (response.status >= 400) continue;
         for (const domain of domainsFromSearch(response.body)) {
-          const host = domain.includes('://') ? new URL(domain).hostname : domain.split('/')[0];
+          let host = domain.split('/')[0] ?? '';
+          if (domain.includes('://')) {
+            try {
+              host = new URL(domain).hostname;
+            } catch {
+              continue;
+            }
+          }
+          if (!host) continue;
           push(consider(org, host, 'lookalike-search-api', now));
         }
       }

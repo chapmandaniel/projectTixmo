@@ -80,6 +80,7 @@ function apiEnv(secrets) {
     JWT_REFRESH_SECRET: secrets.JWT_REFRESH_SECRET,
     SESSION_SECRET: secrets.SESSION_SECRET,
     FEATURE_GIVEAWAY_PROTECTION: 'true',
+    HOST: '127.0.0.1',
     CLIENT_URL: 'http://127.0.0.1:5173',
     CORS_ORIGIN: 'http://127.0.0.1:5173,http://localhost:5173',
     REDIS_URL: 'redis://127.0.0.1:6399',

@@ -5,7 +5,7 @@ import { Pace } from './pace.js';
 import { collectFacebook } from './sources/facebook.js';
 import { collectInstagram } from './sources/instagram.js';
 import { collectLookalikes } from './sources/lookalike.js';
-import { collectReddit } from './sources/reddit.js';
+import { collectReddit, redditUserAgent } from './sources/reddit.js';
 import { collectX } from './sources/x.js';
 import { isRejectedSource } from './text.js';
 import type { Finding, HttpClient, Logger, PlatformName, SourceResult, Verification } from './types.js';
@@ -110,10 +110,17 @@ export const runChecker = async (deps: RunDeps): Promise<RunSummary> => {
     const redditSecret = config.fixtures
       ? config.redditClientSecret || 'fixture-secret'
       : config.redditClientSecret;
-    await finish('X', await collectX(watchlist.organizations, deps.sourceHttp, xToken, now));
+    await finish('X', await collectX(watchlist.organizations, deps.sourceHttp, xToken, now, userAgent));
     await finish(
       'REDDIT',
-      await collectReddit(watchlist.organizations, deps.sourceHttp, redditId, redditSecret, now)
+      await collectReddit(
+        watchlist.organizations,
+        deps.sourceHttp,
+        redditId,
+        redditSecret,
+        now,
+        redditUserAgent(config.contactUrl, config.redditContact)
+      )
     );
     const pace = new Pace(config.publicPageIntervalMs, sleep);
     await finish(

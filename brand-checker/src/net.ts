@@ -44,7 +44,7 @@ export const fetchWithBackoff = async (
   let last: HttpResponse = { status: 599, url, body: '' };
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     last = await http.request(url, { headers });
-    if (last.status !== 429 && last.status < 500) return last;
+    if (last.status === 429 || last.status === 403 || last.status < 500) return last;
     if (attempt === attempts - 1) break;
     await sleep(wait);
     wait *= 2;

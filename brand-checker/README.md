@@ -61,7 +61,9 @@ If the Tixmo API returns HTTP 429, 401, or 404, the checker writes a failed run 
 
 ## Local fixtures
 
-`--fixtures` uses the bundled files in `fixtures/` instead of X, Reddit, Facebook, Instagram, and crt.sh. It still posts to `TIXMO_API_URL`. No platform keys are required. See `docs/brand-protection-local-testing.md`.
+`--fixtures` uses the bundled files in `fixtures/` instead of X, Reddit, Facebook, Instagram, and crt.sh. It still posts to `TIXMO_API_URL`, and that URL must be loopback (`127.0.0.1`, `::1`, or `localhost`). The production image does not contain the sample files, so `--fixtures` fails if they are missing. No platform keys are required. See `docs/brand-protection-local-testing.md`.
+
+Public page and certificate fetches use https, follow only same-site https redirects, and refuse private, loopback, and link-local addresses. The Tixmo API client does not follow redirects. crt.sh HTTP 429 and 403 stop that source without a retry. HTTP 5xx is retried with backoff. X and Reddit send an identifying User-Agent; set `REDDIT_CONTACT` to a Reddit username when you have one.
 
 Do not point a fixtures run at a production API, and do not put a production token in `.env`.
 

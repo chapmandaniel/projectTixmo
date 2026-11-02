@@ -3,7 +3,21 @@ import type { HttpClient, HttpRequest, HttpResponse } from './types.js';
 
 const fixtureDir = new URL('../fixtures/', import.meta.url);
 
-const read = (name: string): string => readFileSync(new URL(name, fixtureDir), 'utf8');
+export const readFixtureSample = (name: string): string => {
+  try {
+    return readFileSync(new URL(name, fixtureDir), 'utf8');
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === 'ENOENT') {
+      throw new Error(
+        `--fixtures sample files are not available (${name}). This build does not include fixtures.`
+      );
+    }
+    throw error;
+  }
+};
+
+const read = (name: string): string => readFixtureSample(name);
 
 const json = (body: string, url: string, status = 200): HttpResponse => ({ status, url, body });
 

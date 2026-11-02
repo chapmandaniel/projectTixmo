@@ -11,6 +11,7 @@ export type CheckerConfig = {
   xBearerToken?: string;
   redditClientId?: string;
   redditClientSecret?: string;
+  redditContact?: string;
   contactUrl: string;
   publicPageIntervalMs: number;
   crtshCachePath: string;
@@ -60,6 +61,12 @@ const optionalHttps = (raw: string | undefined, name: string): string | undefine
 
 export const loadConfig = (argv: string[], env: NodeJS.ProcessEnv): CheckerConfig => {
   const fixtures = argv.includes('--fixtures');
+  const apiUrl = requireOrigin(env.TIXMO_API_URL);
+  if (fixtures && !isLoopbackHost(new URL(apiUrl).hostname)) {
+    throw new Error(
+      '--fixtures refuses a TIXMO_API_URL that is not loopback (127.0.0.1, ::1, or localhost)'
+    );
+  }
   const token = env.TIXMO_CHECKER_TOKEN?.trim() ?? '';
   if (!/^gwc_[A-Za-z0-9_-]{16,}$/.test(token)) {
     throw new Error('TIXMO_CHECKER_TOKEN must be a gwc_ checker token');
@@ -74,13 +81,14 @@ export const loadConfig = (argv: string[], env: NodeJS.ProcessEnv): CheckerConfi
     publicPageIntervalMs = Number(intervalRaw);
   }
   return {
-    apiUrl: requireOrigin(env.TIXMO_API_URL),
+    apiUrl,
     checkerToken: token,
     watchlistPath: env.TIXMO_WATCHLIST_PATH?.trim() || '.local/watchlist.json',
     fixtures,
     xBearerToken: env.X_BEARER_TOKEN?.trim() || undefined,
     redditClientId: env.REDDIT_CLIENT_ID?.trim() || undefined,
     redditClientSecret: env.REDDIT_CLIENT_SECRET?.trim() || undefined,
+    redditContact: env.REDDIT_CONTACT?.trim() || undefined,
     contactUrl,
     publicPageIntervalMs,
     crtshCachePath: env.CRTSH_CACHE_PATH?.trim() || '.cache/crtsh.json',

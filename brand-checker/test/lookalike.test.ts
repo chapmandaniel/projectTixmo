@@ -41,44 +41,76 @@ describe('lookalike domains', () => {
     assert.equal(tracked.urls[0].startsWith('https://crt.sh/'), true);
   });
 
-  it('backs off after HTTP 429 and then uses the cache', async () => {
+  it('stops on crt.sh HTTP 429 or 403 without retrying', async () => {
+    for (const status of [429, 403]) {
+      const dir = mkdtempSync(join(tmpdir(), 'crtsh-'));
+      const delays: number[] = [];
+      const tracked = trackingClient((url) => page(url, status, ''));
+      const result = await collectLookalikes(
+        [demoOrg()],
+        tracked.client,
+        createFileCache(join(dir, 'cache.json'), () => Date.parse('2026-11-02T12:00:00.000Z')),
+        'TixmoBrandChecker/1.0',
+        async (ms) => {
+          delays.push(ms);
+        },
+        undefined,
+        undefined,
+        new Date('2026-11-02T12:00:00.000Z')
+      );
+      assert.equal(result.stop?.state, 'BLOCKED');
+      assert.equal(result.stop?.detail, `crt.sh http ${status}`);
+      assert.equal(tracked.urls.length, 1);
+      assert.deepEqual(delays, []);
+    }
+  });
+
+  it('retries crt.sh only after a 5xx response', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'crtsh-'));
-    const cache = createFileCache(join(dir, 'cache.json'), () => Date.parse('2026-11-02T12:00:00.000Z'));
     const delays: number[] = [];
     let calls = 0;
     const tracked = trackingClient((url) => {
       calls += 1;
-      if (calls === 1) return page(url, 429, '');
+      if (calls === 1) return page(url, 503, '');
       return page(url, 200, crtBody);
     });
-    const now = new Date('2026-11-02T12:00:00.000Z');
-    const first = await collectLookalikes(
+    const result = await collectLookalikes(
       [demoOrg()],
       tracked.client,
-      cache,
+      createFileCache(join(dir, 'cache.json'), () => Date.parse('2026-11-02T12:00:00.000Z')),
       'TixmoBrandChecker/1.0',
       async (ms) => {
         delays.push(ms);
       },
       undefined,
       undefined,
-      now
+      new Date('2026-11-02T12:00:00.000Z')
     );
+    assert.equal(result.stop, undefined);
     assert.deepEqual(delays, [1000]);
-    assert.equal(first.findings[0]?.sourceUrl, 'harbourfest-tickets.example');
-    const callsAfterFirst = calls;
-    const second = await collectLookalikes(
+    assert.equal(result.findings[0]?.sourceUrl, 'harbourfest-tickets.example');
+  });
+
+  it('skips a search-api domain that is not a URL', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'crtsh-'));
+    const tracked = trackingClient((url) => {
+      if (new URL(url).hostname === 'crt.sh') return page(url, 200, '[]');
+      return page(url, 200, JSON.stringify({ domains: ['https://%', 'harbourfest-win.example'] }));
+    });
+    const result = await collectLookalikes(
       [demoOrg()],
       tracked.client,
-      cache,
+      createFileCache(join(dir, 'cache.json'), () => Date.parse('2026-11-02T12:00:00.000Z')),
       'TixmoBrandChecker/1.0',
       async () => undefined,
+      'https://lookalike-api.example.test/domains',
       undefined,
-      undefined,
-      now
+      new Date('2026-11-02T12:00:00.000Z')
     );
-    assert.equal(calls, callsAfterFirst);
-    assert.equal(second.findings[0]?.sourceUrl, 'harbourfest-tickets.example');
+    assert.deepEqual(
+      result.findings.map((finding) => finding.sourceUrl),
+      ['harbourfest-win.example']
+    );
   });
 
   it('refuses search-engine hosts and can read an official search API', async () => {

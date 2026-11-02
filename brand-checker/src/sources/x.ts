@@ -37,10 +37,11 @@ export const collectX = async (
   orgs: OrganizationTarget[],
   http: HttpClient,
   bearerToken: string | undefined,
-  now = new Date()
+  now = new Date(),
+  userAgent = 'TixmoBrandChecker/1.0 (+https://example.com/contact)'
 ): Promise<SourceResult> => {
   if (!bearerToken) return { findings: [], verifications: [], skipped: true };
-  const headers = { Authorization: `Bearer ${bearerToken}`, 'User-Agent': 'TixmoBrandChecker' };
+  const headers = { Authorization: `Bearer ${bearerToken}`, 'User-Agent': userAgent };
   const findings: Finding[] = [];
   const verifications: Verification[] = [];
   const usernames = [...new Set(orgs.flatMap(xUsernames))].slice(0, 20);
