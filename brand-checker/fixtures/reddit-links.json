@@ -1,0 +1,19 @@
+{
+  "data": {
+    "children": [
+      {
+        "kind": "t3",
+        "data": {
+          "id": "assoc1",
+          "title": "We are the official Harbour Fest account",
+          "selftext": "This page speaks for the festival. We are the official Harbour Fest account.",
+          "author": "fest_helper",
+          "author_fullname": "t2_festhelper",
+          "permalink": "/r/stjohns/comments/assoc1/we_are_harbour_fest",
+          "url": "https://www.kijiji.ca/v-community/harbour-fest",
+          "created_utc": 1762000000
+        }
+      }
+    ]
+  }
+}
