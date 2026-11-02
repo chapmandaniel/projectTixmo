@@ -10,26 +10,32 @@ import {
 import { ApiError } from '../../utils/ApiError';
 import { CHECKER_TOKEN_PREFIX, type CheckerScopeName } from './constants';
 
-const ingestPaths = () =>
-  new Set([
-    `/api/${config.apiVersion}/brand-protection/ingest/matches`,
-    `/api/${config.apiVersion}/brand-protection/ingest/status`,
-    `/api/${config.apiVersion}/brand-protection/ingest/verifications`,
-  ]);
-
-const targetsPath = () => `/api/${config.apiVersion}/brand-protection/ingest/targets`;
-
 const requestPath = (req: AuthRequest): string => {
   const path = req.originalUrl.split('?')[0].replace(/\/+$/, '');
   return path || '/';
 };
 
+let cachedApiVersion = '';
+let ingestPaths = new Set<string>();
+let targetsPath = '';
+let brandPathMarker = '';
+
+const refreshRouteCache = () => {
+  if (cachedApiVersion === config.apiVersion) return;
+  cachedApiVersion = config.apiVersion;
+  const prefix = `/api/${config.apiVersion}/brand-protection/ingest/`;
+  ingestPaths = new Set([`${prefix}matches`, `${prefix}status`, `${prefix}verifications`]);
+  targetsPath = `${prefix}targets`;
+  brandPathMarker = `/${config.apiVersion}/brand-protection`;
+};
+
 type CheckerRoute = 'ingest' | 'targets';
 
 const checkerRoute = (req: AuthRequest): CheckerRoute | null => {
+  refreshRouteCache();
   const path = requestPath(req);
-  if (req.method === 'POST' && ingestPaths().has(path)) return 'ingest';
-  if (req.method === 'GET' && path === targetsPath()) return 'targets';
+  if (req.method === 'POST' && ingestPaths.has(path)) return 'ingest';
+  if (req.method === 'GET' && path === targetsPath) return 'targets';
   return null;
 };
 
@@ -47,8 +53,10 @@ const bearerToken = (req: AuthRequest): string | undefined => {
   return token;
 };
 
-const isBrandPath = (req: AuthRequest): boolean =>
-  requestPath(req).includes(`/${config.apiVersion}/brand-protection`);
+const isBrandPath = (req: AuthRequest): boolean => {
+  refreshRouteCache();
+  return requestPath(req).includes(brandPathMarker);
+};
 
 export const hashCheckerToken = (token: string): string =>
   createHash('sha256').update(token).digest('hex');
@@ -140,11 +148,23 @@ const authenticateThenCountFailures = (req: AuthRequest, res: Response, next: Ne
  * stay a uniform 404.
  */
 export const guardCheckerToken = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const route = checkerRoute(req);
+  const token = bearerToken(req);
+  // Order and public reads never carry a checker token. Stay synchronous so
+  // this guard does not allocate a promise or touch Redis or Postgres.
+  if (!route && !token) {
+    if (!isGiveawayProtectionEnabled() && isBrandPath(req)) {
+      next(ApiError.notFound('Route not found'));
+      return;
+    }
+    next();
+    return;
+  }
   if (!isGiveawayProtectionEnabled() && isBrandPath(req)) {
     next(ApiError.notFound('Route not found'));
     return;
   }
-  if (!checkerRoute(req)) {
+  if (!route) {
     authenticateThenCountFailures(req, res, next);
     return;
   }
