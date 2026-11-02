@@ -227,7 +227,7 @@ Go only when:
 - [ ] Privacy, terms, refund, organizer, data-retention, onboarding, and release-note docs are approved or explicitly marked internal-only for launch.
 - [ ] Step 11a rate-limit values are set on the API service.
 
-## 11a. Rate limits for the November 9 onsale
+## 11a. Rate limits at launch
 
 Set these on the API service before go/no-go. Recommended production values match the production code defaults, so an unset variable still boots the number in this table. `NODE_ENV=test` is the exception called out below; production does not use that exception.
 

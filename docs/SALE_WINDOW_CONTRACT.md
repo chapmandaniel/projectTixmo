@@ -23,8 +23,9 @@ is the earliest non-null end **and event startDatetime**. Null endpoints add no
 restriction. All windows are half-open **[opening, closing)**: T−1ms before
 opening rejects, T opens, T+1ms stays open; closing T−1ms permits, T and T+1ms
 reject. Empty or inverted intersections cannot sell. Comparisons use instants,
-not local wall-clock strings; synthetic November 9 10:00 America/St_Johns is
-2026-11-09T13:30:00Z (NST, not today's offset).
+not local wall-clock strings. A winter America/St_Johns wall clock is NST
+(UTC−03:30), not the daylight offset and not today's offset copied into
+configuration. Sale-window tests pin a fixed winter instant for that case.
 
 Only PUBLISHED/ON_SALE events with null deletedAt qualify; DRAFT, SOLD_OUT,
 CANCELLED, COMPLETED, DELETED and soft-deleted published events reject with
