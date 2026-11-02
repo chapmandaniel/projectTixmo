@@ -191,7 +191,36 @@ function receipt(output, mode) {
   ];
   assert.ok(phases.includes(row.phase));
   assert.equal(row.mode, mode);
-  // Fixed projection only. Never echo arbitrary child logs/JSON/assertion actuals.
+  const checks = new Set([
+    'guard',
+    'connect',
+    'ready',
+    'login',
+    'mounted-write',
+    'auth-me',
+    'event-read',
+    'order-read',
+    'ticket-read',
+    'tickets-mine',
+    'foreign-token',
+    'foreign-order',
+    'foreign-ticket',
+    'stock',
+    'order-status',
+    'ticket-hold',
+    'attempts',
+    'refunds',
+    'snapshot',
+    'foreign-snapshot',
+    'provider',
+  ]);
+  const reasons = new Set(['status', 'mismatch', 'assertion', 'throw']);
+  const failed = row.ok !== true;
+  const check = checks.has(row.check) ? row.check : 'unclassified';
+  const reason = reasons.has(row.reason) ? row.reason : 'unclassified';
+  const detail =
+    typeof row.detail === 'string' && /^[A-Za-z0-9_.,]{0,240}$/.test(row.detail) ? row.detail : '';
+  // Fixed projection only. A failed read-smoke names its check, never assertion values or tokens.
   console.log(
     JSON.stringify({
       scope: 'task606-application-rollback',
@@ -200,6 +229,7 @@ function receipt(output, mode) {
       ok: row.ok === true,
       lifetimeCleanupVerified: row.lifetimeCleanupVerified === true,
       providerAttempts: row.providerAttempts === 0 ? 0 : 1,
+      ...(failed ? { check, reason, detail } : {}),
     })
   );
   assert.equal(row.ok, true);
