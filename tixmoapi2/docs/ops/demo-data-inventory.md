@@ -1,6 +1,6 @@
 # Demo and seed inventory (read-only)
 
-Use these statements to list demo and seed rows before the Nov 9 onsale. They are `SELECT` only. Do not add `INSERT`, `UPDATE`, `DELETE`, or a migration. Run them in a read-only session:
+Use these statements to list demo and seed rows before launch. They are `SELECT` only. Do not add `INSERT`, `UPDATE`, `DELETE`, or a migration. Run them in a read-only session:
 
 ```sql
 BEGIN TRANSACTION READ ONLY;

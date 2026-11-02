@@ -1,12 +1,12 @@
-# November 9, 2026 onsale delivery plan
+# Onsale delivery plan
 
-Prepared October 21, 2026. All planning dates use America/St_Johns.
+Prepared October 21, 2026. Event clocks use America/St_Johns.
 Audit baseline: `87bbad00da8ee2e6ddddd2658b743103cf2bc467`.
 Authority: Daniel Chapman. Status: proposed execution plan; not launch approval.
 Detailed findings: [October 21 audit](audits/2026-10-21-onsale-readiness.md).
 
-**Target: a dependable individual-event ticket onsale on November 9. Current status: NO-GO.**
-There are 19 elapsed days / 20 calendar dates including today. Aim to be production-ready November 5, decide go/no-go November 6, and preserve November 7–8 for stability.
+**Target: a dependable individual-event ticket onsale ASAP. Current status: NO-GO.**
+There is no fixed launch calendar. Be production-ready before launch, decide go/no-go before launch, and keep a stability buffer before the onsale.
 
 The fastest route is to close the gaps in the existing purchase path, keep integration serial, and test a frozen configuration. Do not spend this window expanding the product.
 
@@ -17,8 +17,8 @@ Daniel requested synthetic data for now. These are explicit test assumptions, no
 | Item | Synthetic assumption |
 | --- | --- |
 | Deployment | One operator/business, one public event; existing individual-event checkout |
-| Fictional event | “Tixmo Onsale Rehearsal”; December 5, 2026, 20:00 America/St_Johns |
-| Onsale | November 9, 2026, 10:00 America/St_Johns = 13:30 UTC |
+| Fictional event | “Tixmo Onsale Rehearsal”; a later show at 20:00 America/St_Johns, after the onsale |
+| Onsale | At launch, 10:00 America/St_Johns. Record the real opening as that named timezone plus a UTC instant. Do not copy the UTC offset from the day this plan was written. |
 | Inventory | 2,000 tickets: 1,800 GA and 200 VIP; aggregate per-type cap 4 per order |
 | Currency/prices | CAD; GA 50.00 and VIP 90.00 test base prices. Tax/fee treatment remains a business decision. |
 | Demand model | 3,000 visits in first 10 minutes, 500 concurrent sessions at peak; stress tier 1,000 sessions |
@@ -28,9 +28,9 @@ Daniel requested synthetic data for now. These are explicit test assumptions, no
 | Payment mode | Local provider simulation for load/fault injection; separate real Stripe test-mode lifecycle matrix |
 | Admission | Start with proven online entry and a rehearsed outage procedure. No promise of offline cross-device duplicate prevention. |
 
-Rehearsals use a controllable test clock/relative schedule, so opening/closing can be tested before November 9. The final real event/time/stock/demand must replace these assumptions by October 30, with any material increase triggering new capacity acceptance.
+Rehearsals use a controllable test clock/relative schedule, so opening/closing can be tested before launch. The final real event/time/stock/demand must replace these assumptions before launch, with any material increase triggering new capacity acceptance.
 
-Newfoundland changes UTC offset between the audit date and November 9. Store named timezones and UTC instants; do not copy today's UTC offset into the onsale configuration.
+Newfoundland's UTC offset changes across the year. Store named timezones and UTC instants; do not copy today's UTC offset into the onsale configuration.
 
 ## 2. Scope control
 
@@ -38,11 +38,11 @@ Newfoundland changes UTC offset between the audit date and November 9. Store nam
 
 **Keep constrained:** individual-event orders, one currency, general admission/VIP ticket types, one approved refund policy and a small known set of tier configurations. Per-order caps exist; a per-person cumulative cap is a separate policy decision and must not be implied.
 
-**Do not add for this deadline:** festival-pass inventory/entitlements, booking intelligence, Social/ProMo/QuantMo/Marketing Hub, resale, reserved seating, extra payment methods, broad navigation redesign or cosmetic baseline cleanup.
+**Do not add before launch:** festival-pass inventory/entitlements, booking intelligence, Social/ProMo/QuantMo/Marketing Hub, resale, reserved seating, extra payment methods, broad navigation redesign or cosmetic baseline cleanup.
 
-Festival/pass UI is currently a development prototype. If real pass sales become mandatory, replan the deadline and capacity/fulfillment work explicitly; do not route preview passes into the event-order API.
+Festival/pass UI is currently a development prototype. If real pass sales become mandatory, replan before launch and redo capacity/fulfillment work explicitly; do not route preview passes into the event-order API.
 
-Approvals and asset sharing are in the existing V1 checklist. Validate them as internal workflows, or Daniel records an explicit deferral with owner/date. They must not silently disappear from V1 acceptance.
+Approvals and asset sharing are in the existing V1 checklist. Validate them as internal workflows, or Daniel records an explicit deferral with an owner and the point before launch when it must be done. They must not silently disappear from V1 acceptance.
 
 ## 3. First 48 hours
 
@@ -51,7 +51,7 @@ Approvals and asset sharing are in the existing V1 checklist. Validate them as i
 | 1 | PM reconciles this plan against existing board claims; nominate release owner and QA reviewer | One launch parent task/evidence index; no duplicate or forced claims; actual availability recorded |
 | 2 | Lead/backend and frontend take the scheduled-sale contract together | Agreed event/ticket boundary semantics; failing tests for event-window bypass and unchanged timestamp shift |
 | 3 | Release prepares the current candidate/config/upgrade packet | Exact SHA, deployment settings, five-migration inventory, safe test targets, missing provider settings and rollback plan |
-| 4 | Daniel resolves currency and refund policy, names support/release decision owners; gate lead identifies the runnable scanner client/build and devices | No invented fee/tax/payout/refund assumptions; by Oct 22 demonstrate a current paid test QR scanned on the intended client, or escalate admission feasibility before committing the onsale |
+| 4 | Daniel resolves currency and refund policy, names support/release decision owners; gate lead identifies the runnable scanner client/build and devices | No invented fee/tax/payout/refund assumptions; ASAP, demonstrate a current paid test QR scanned on the intended client, or escalate admission feasibility before committing the onsale |
 | 5 | Fix schedule/timezone/count contracts in small reviewed changes | Direct API cannot buy early/late; ticket edit cannot move opening time or reset inventory |
 | 6 | Correct refund and paid-order recovery instructions against current code | No instruction to double-refund or invoke unmounted /orders/:id/confirm; list tested exception procedures |
 
@@ -63,52 +63,54 @@ Estimates are focused engineer/QA workdays, including review, not elapsed durati
 
 | ID / target finish | Proposed owner | Scope and acceptance | Dependency / estimate |
 | --- | --- | --- | --- |
-| W01 · Oct 23 | Lead + backend; independent QA | Enforce authoritative event/ticket windows at order creation; reject deleted/unpublished/closed and direct early purchases; exact opening/closing boundary tests and no browser-only protection | Start now; 1–1.5 days |
-| W02 · Oct 24 | Frontend; lead review | Fix ticket timezone round-trip, preserve schedules in Studio, normalize quantity/sold fields, align checkout/tier eligibility and caps. Test unchanged save in Newfoundland/UTC/another browser zone and open-page boundary changes | W01 contract; 2–3 days |
-| W03 · Oct 26 | Backend + lead; Daniel policy decision; independent QA | Align refund policy, UI, code and support. Reproduce external-refund mismatch; provide bounded full/partial external refund, dispute, failed-refund and cancellation exception handling. No double refund, false success or invalid admission | Policy decision Oct 22; 2–3 days |
-| W04 · Oct 27 | Backend; QA | Recovery fairness/backoff/exception visibility. At least 50 poison rows plus healthy successor, outage/restart and old idempotency-window cases; healthy work progresses once; no money/stock duplication | Can begin after W01; 1–2 days |
-| W05 · Oct 28 | Frontend/backend; QA | Receipt and confirmed-return wallet links; authenticated QR retrieval, resend, session expiry. Secure self-service recovery OR Daniel-approved, identity-checked support-assisted recovery demonstrated within its target | Recovery decision Oct 22; 2–4 days |
-| W06 · Oct 26 | Release; lead review | Deploy reviewed candidate to authorized staging; record SHA/build provenance, runtime mode/currency, approved policy URLs, webhook/email/storage/monitor configuration; verify secrets by presence/mode without disclosure | Reviewed integration + approved environment/provider writes; 1–2 days |
-| W07 · Oct 29 | QA + backend support | Real Stripe test-mode browser matrix and small authorized inbox cohort; order, PaymentIntent, webhook, ticket and receipt IDs correlate. Verify provider and local states, full refund and exceptions | W01–06 as relevant; first happy path Oct 27; 2 days |
-| W08 · Oct 30 | Release + QA | Disposable Postgres 17 / Redis 8.2.10 parity run; populated migration harness; inventory reconciliation and credential/session rotation plan; backup restore and rollback rehearsal with measured timing | W06, schema stable; 1.5–2 days |
-| W09 · Nov 2 | QA/release + backend | Load, sell-out races and failure/recovery exercises using the synthetic profile. Same-IP/proxy/rate-limit behavior; event-lock contention; no oversell or duplicate charge/fulfillment. Remediate measured bottlenecks only | W04, W06–08; 2–3 days |
-| W10 · Nov 3 | QA + gate lead; frontend support | Following the Oct 22 client/device feasibility check, paid QR scanned on two devices; duplicate/wrong-event/refunded/transferred/revoked rejection; outage/reconnect handling. Mobile/keyboard checkout and buyer recovery. Internal reviewer/share/storage acceptance | Actual hardware/client and current candidate; 1.5–2 days |
-| W11 · Nov 4 | Release + on-call owner | Fix readiness/deployment mismatch; delivered alert and recovery notification; payment/receipt/refund backlog monitoring; named support and incident drill; protect main with agreed exact checks after authorization | Current deployed candidate; 1 day |
-| W12 · Nov 5–6 | Release + independent QA/lead; Daniel release authority | Exact-candidate final regression; approved production upgrade/cutover, evidence-linked config/smoke; authorized bounded live payment/refund if agreed; final go/no-go packet and signoff | All mandatory gates; 2 days |
+| W01 · ASAP | Lead + backend; independent QA | Enforce authoritative event/ticket windows at order creation; reject deleted/unpublished/closed and direct early purchases; exact opening/closing boundary tests and no browser-only protection | Start now; 1–1.5 days |
+| W02 · ASAP | Frontend; lead review | Fix ticket timezone round-trip, preserve schedules in Studio, normalize quantity/sold fields, align checkout/tier eligibility and caps. Test unchanged save in Newfoundland/UTC/another browser zone and open-page boundary changes | W01 contract; 2–3 days |
+| W03 · ASAP | Backend + lead; Daniel policy decision; independent QA | Align refund policy, UI, code and support. Reproduce external-refund mismatch; provide bounded full/partial external refund, dispute, failed-refund and cancellation exception handling. No double refund, false success or invalid admission | Policy decision ASAP; 2–3 days |
+| W04 · ASAP | Backend; QA | Recovery fairness/backoff/exception visibility. At least 50 poison rows plus healthy successor, outage/restart and old idempotency-window cases; healthy work progresses once; no money/stock duplication | Can begin after W01; 1–2 days |
+| W05 · ASAP | Frontend/backend; QA | Receipt and confirmed-return wallet links; authenticated QR retrieval, resend, session expiry. Secure self-service recovery OR Daniel-approved, identity-checked support-assisted recovery demonstrated within its target | Recovery decision ASAP; 2–4 days |
+| W06 · ASAP | Release; lead review | Deploy reviewed candidate to authorized staging; record SHA/build provenance, runtime mode/currency, approved policy URLs, webhook/email/storage/monitor configuration; verify secrets by presence/mode without disclosure | Reviewed integration + approved environment/provider writes; 1–2 days |
+| W07 · ASAP | QA + backend support | Real Stripe test-mode browser matrix and small authorized inbox cohort; order, PaymentIntent, webhook, ticket and receipt IDs correlate. Verify provider and local states, full refund and exceptions | W01–06 as relevant; first happy path ASAP; 2 days |
+| W08 · Before launch | Release + QA | Disposable Postgres 17 / Redis 8.2.10 parity run; populated migration harness; inventory reconciliation and credential/session rotation plan; backup restore and rollback rehearsal with measured timing | W06, schema stable; 1.5–2 days |
+| W09 · Before launch | QA/release + backend | Load, sell-out races and failure/recovery exercises using the synthetic profile. Same-IP/proxy/rate-limit behavior; event-lock contention; no oversell or duplicate charge/fulfillment. Remediate measured bottlenecks only | W04, W06–08; 2–3 days |
+| W10 · Before launch | QA + gate lead; frontend support | Following the ASAP client/device feasibility check, paid QR scanned on two devices; duplicate/wrong-event/refunded/transferred/revoked rejection; outage/reconnect handling. Mobile/keyboard checkout and buyer recovery. Internal reviewer/share/storage acceptance | Actual hardware/client and current candidate; 1.5–2 days |
+| W11 · Before launch | Release + on-call owner | Fix readiness/deployment mismatch; delivered alert and recovery notification; payment/receipt/refund backlog monitoring; named support and incident drill; protect main with agreed exact checks after authorization | Current deployed candidate; 1 day |
+| W12 · Before launch | Release + independent QA/lead; Daniel release authority | Exact-candidate final regression; approved production upgrade/cutover, evidence-linked config/smoke; authorized bounded live payment/refund if agreed; final go/no-go packet and signoff | All mandatory gates; 2 days |
 
 Treat estimates as ranges with contingency. Do not stack all roles as simultaneous workers. Backend changes to order/payment/admission contracts integrate serially through the lead. Review payment/auth/migration changes with both lead and QA on the exact commit.
 
 The two working lanes are generally product correctness and release/acceptance. While QA owns disposable services, the other lane can do source edits, documentation and independent static review. CI job-scoped services remain isolated; record which run tested which SHA.
 
-## 5. Calendar
+## 5. Sequence
 
-| Date | Outcome due | Decision or evidence |
+Work the rows in order. ASAP means start now. Before launch means it is still required before go/no-go. At launch means the onsale itself.
+
+| When | Outcome due | Decision or evidence |
 | --- | --- | --- |
-| Oct 21 | Baseline audit and launch scope recorded; identify board owners | This audit, current CI/deployment facts, synthetic assumptions |
-| Oct 22 | Schedule contract and reproduction cases; business/recovery decisions; scanner feasibility | Currency/refund/tax-fee model, support recovery choice, provider access owner; runnable scanner client/build and real hardware demonstrated, or explicit escalation |
-| Oct 23 | Server sale-window change reviewed | Direct-request boundary tests; no early purchase |
-| Oct 24 | Editor/checkout contract fixes reviewed | Timezone/count/cap/tier tests and focused mobile check |
-| Oct 25 | Refund workflow and exception handling in independent review | Policy/code/runbook agreement; failure reproduction and correction |
-| Oct 26 | Refund work integrated; current candidate on authorized staging | Deployed SHA plus runtime/provider/policy configuration |
-| Oct 27 | First complete real test-mode purchase and refund | Browser → Stripe webhook → paid tickets → inbox → wallet |
-| Oct 28 | Recovery fixes and buyer-access flow complete | Poison backlog, lost callback, browser closure and account recovery |
-| Oct 29 | Provider matrix complete; migration rehearsal underway | 3DS/decline/late payment/refund exception evidence |
-| Oct 30 | Restore/upgrade gate and real event specification | Actual event/time/stock/demand/currency; replace synthetic launch inputs |
-| Oct 31 | First production-like capacity run and targeted repairs | Latency, errors, contention, inventory invariant report |
-| Nov 1 | Repeat failed cases; internal V1 flows accepted | Reviewer/share/storage; no unrelated feature work |
-| Nov 2 | Capacity and recovery candidate accepted | Burst/soak/restart results, reconciliation and rate-limit behavior |
-| Nov 3 | Full dress rehearsal on candidate and real devices | Purchase/access/support/admission and pause-sales exercise |
-| Nov 4 | Release candidate freeze and cutover packet | Exact SHA, reviews, policy approvals, backup/rollback, alert routing |
-| Nov 5 | Authorized production cutover and acceptance | SHA/config/smoke, scoped live proof if authorized, staffed ownership |
-| Nov 6 | Firm go/no-go | Daniel signs evidence-linked decision; unresolved money/stock/access blockers mean no-go |
-| Nov 7 | Stability buffer | Only launch-blocking fixes with exact-commit re-review; revalidate affected evidence |
-| Nov 8 | Final configuration lock and operator walkthrough | Sales schedule, stock, price, policy and escalation contacts cross-checked |
-| Nov 9 | Controlled onsale | Run the launch timeline below; no speculative changes |
+| Recorded | Baseline audit and launch scope recorded; identify board owners | This audit, current CI/deployment facts, synthetic assumptions |
+| ASAP | Schedule contract and reproduction cases; business/recovery decisions; scanner feasibility | Currency/refund/tax-fee model, support recovery choice, provider access owner; runnable scanner client/build and real hardware demonstrated, or explicit escalation |
+| ASAP | Server sale-window change reviewed | Direct-request boundary tests; no early purchase |
+| ASAP | Editor/checkout contract fixes reviewed | Timezone/count/cap/tier tests and focused mobile check |
+| ASAP | Refund workflow and exception handling in independent review | Policy/code/runbook agreement; failure reproduction and correction |
+| ASAP | Refund work integrated; current candidate on authorized staging | Deployed SHA plus runtime/provider/policy configuration |
+| ASAP | First complete real test-mode purchase and refund | Browser → Stripe webhook → paid tickets → inbox → wallet |
+| ASAP | Recovery fixes and buyer-access flow complete | Poison backlog, lost callback, browser closure and account recovery |
+| ASAP | Provider matrix complete; migration rehearsal underway | 3DS/decline/late payment/refund exception evidence |
+| Before launch | Restore/upgrade gate and real event specification | Actual event/time/stock/demand/currency; replace synthetic launch inputs |
+| Before launch | First production-like capacity run and targeted repairs | Latency, errors, contention, inventory invariant report |
+| Before launch | Repeat failed cases; internal V1 flows accepted | Reviewer/share/storage; no unrelated feature work |
+| Before launch | Capacity and recovery candidate accepted | Burst/soak/restart results, reconciliation and rate-limit behavior |
+| Before launch | Full dress rehearsal on candidate and real devices | Purchase/access/support/admission and pause-sales exercise |
+| Before launch | Release candidate freeze and cutover packet | Exact SHA, reviews, policy approvals, backup/rollback, alert routing |
+| Before launch | Authorized production cutover and acceptance | SHA/config/smoke, scoped live proof if authorized, staffed ownership |
+| Before launch | Firm go/no-go | Daniel signs evidence-linked decision; unresolved money/stock/access blockers mean no-go |
+| Before launch | Stability buffer | Only launch-blocking fixes with exact-commit re-review; revalidate affected evidence |
+| Before launch | Final configuration lock and operator walkthrough | Sales schedule, stock, price, policy and escalation contacts cross-checked |
+| At launch | Controlled onsale | Run the launch timeline below; no speculative changes |
 
-Miss October 27's purchase proof: stop polish and put both lanes on the failed path.
-Miss November 2's capacity/restore proof: hold production promotion and reassess supported volume/scope.
-Miss November 5's release acceptance: use the buffer only for bounded correction, never to waive core safeguards.
-The date itself is not acceptance.
+Miss the first complete test-mode purchase proof: stop polish and put both lanes on the failed path.
+Miss the capacity/restore proof: hold production promotion and reassess supported volume/scope.
+Miss release acceptance before launch: use the buffer only for bounded correction, never to waive core safeguards.
+Reaching a point on the sequence is not acceptance.
 
 ## 6. Synthetic verification matrix
 
@@ -158,9 +160,9 @@ Each evidence item records: environment, exact Git SHA, deployment ID, timestamp
 | G5 · Capacity | W09 targets passed at agreed real demand or lower supported volume explicitly accepted; no correctness failures |
 | G6 · Operations | Scheduled readiness passes; delivered alert/recovery notification; payment/refund/receipt backlog owner; support and scanner/device procedure rehearsed |
 | G7 · Business/release | Final event/time/stock/prices, refund/cancellation and fee/tax treatment approved; policy publication approved; production action explicitly authorized |
-| G8 · Final acceptance | November 6 signed decision with scope exceptions and remaining nonblocking issues; independent QA/lead evidence on exact candidate |
+| G8 · Final acceptance | Before launch, a signed decision with scope exceptions and remaining nonblocking issues; independent QA/lead evidence on exact candidate |
 
-Keep admission proof before onsale under the current V1 checklist. If the event is much later and Daniel chooses a separate doors-readiness milestone, explicitly record that scope change, gate lead and deadline; API existence alone does not justify selling unsupported admission.
+Keep admission proof before onsale under the current V1 checklist. If the event is much later and Daniel chooses a separate doors-readiness milestone, explicitly record that scope change, gate lead and when it is due before launch; API existence alone does not justify selling unsupported admission.
 
 The current strict evidence command must pass with real, release-specific artifacts, but is not sufficient by itself: it does not enforce freshness or SHA/environment identity and does not cover the full financial/capacity matrix. Never mark a template “pass” simply to clear the checker.
 
@@ -172,9 +174,9 @@ Rehearse a safe **pause new sales** procedure that preserves already-paid ticket
 
 For a bad application release, pause new sales and return only to a schema-compatible known-good build. After customer writes, restore to a separate recovery DB and reconcile post-backup payments/orders; never blindly overwrite production with an older backup. Keep Stripe/order/ticket identifiers and incident timestamps.
 
-## 8. November 9 operating timeline
+## 8. At-launch operating timeline
 
-Relative to the confirmed onsale time; the synthetic example is 10:00 NST.
+Relative to the confirmed onsale time; the synthetic example opens at 10:00 America/St_Johns.
 
 | Time | Action / owner |
 | --- | --- |
@@ -192,19 +194,19 @@ Pause sales immediately for overselling, duplicate financial effects, unauthoriz
 
 During a pause, preserve pending webhook processing, wallet/support access and evidence. Customer messaging, live refunds and infrastructure actions follow Daniel's authorized scope and named incident ownership.
 
-## 9. Decisions and deadlines
+## 9. Decisions
 
-Synthetic data lets engineering proceed now. These are future decision deadlines, not questions blocking this audit.
+Synthetic data lets engineering proceed now. These decisions are ASAP or before launch. They are not questions blocking this audit.
 
-| By | Daniel / operator decision |
+| When | Daniel / operator decision |
 | --- | --- |
-| Oct 22 | Confirm individual-event-only scope; currency; inclusive tax/fee/payout responsibility; immediate eligible full refund vs organizer approval; cancellation exceptions; self-service vs support-assisted account recovery |
-| Oct 22 | Name release decision-maker, support lead, incident commander, gate/device owner and second approver; confirm availability. Identify and demonstrate the runnable scanner client/build with a paid synthetic QR on intended hardware. If unavailable, explicitly choose a separately dated admission milestone with owner/solution, an approved alternative, or replan before committing the onsale. |
-| Oct 24 | Approve final policy text and publication destinations; identify authorized provider/test-inbox access and approve concrete staging/provider setup |
-| Oct 30 | Supply real event(s), timezone/opening instant, total capacity, types/prices/caps and expected burst; revise synthetic targets if needed |
-| Nov 3 | Accept tested capacity/outage/support procedure and any explicit V1 deferrals |
-| Nov 4–5 | Review concrete deployment/migration/backup/rotation packet and authorize scoped production changes; separately approve any live payment/refund proof |
-| Nov 6 | GO / NO-GO for the exact release and scope |
+| ASAP | Confirm individual-event-only scope; currency; inclusive tax/fee/payout responsibility; immediate eligible full refund vs organizer approval; cancellation exceptions; self-service vs support-assisted account recovery |
+| ASAP | Name release decision-maker, support lead, incident commander, gate/device owner and second approver; confirm availability. Identify and demonstrate the runnable scanner client/build with a paid synthetic QR on intended hardware. If unavailable, explicitly choose a separate admission milestone with owner/solution, an approved alternative, or replan before committing the onsale. |
+| ASAP | Approve final policy text and publication destinations; identify authorized provider/test-inbox access and approve concrete staging/provider setup |
+| Before launch | Supply real event(s), timezone/opening instant, total capacity, types/prices/caps and expected burst; revise synthetic targets if needed |
+| Before launch | Accept tested capacity/outage/support procedure and any explicit V1 deferrals |
+| Before launch | Review concrete deployment/migration/backup/rotation packet and authorize scoped production changes; separately approve any live payment/refund proof |
+| Before launch | GO / NO-GO for the exact release and scope |
 
 Under [AGENTS.md](../AGENTS.md), production deployment/migration/data changes, live payments/refunds, public publishing and customer messaging require explicit authorization. Audit, local documentation, isolated fixes, tests and independent review are authorized. CPM means commit, push and merge, but has not been requested here. Since the repository is public, this plan is prepared locally without pushing or opening a public PR.
 
@@ -213,8 +215,8 @@ Under [AGENTS.md](../AGENTS.md), production deployment/migration/data changes, l
 - PM maintains one launch parent with W01–W12 mapped to existing tasks, exact owners, dependencies and next verification. Two execution tasks maximum; one shared DB test owner.
 - Start each work period with failed gates and blockers. Prioritize the next demonstrable purchase/recovery outcome, not the number of tickets closed.
 - Integration passes through the lead; authors do not approve their own changes. Payments/auth/migrations require QA and lead review on the exact commit.
-- End each day with a compact record: shipped-to-branch SHA, reviewed SHA, deployed SHA, passed/failed gates, remaining blocker, owner and next deadline. “Done” never silently means deployed.
-- Freeze feature scope now and candidate behavior November 4. After freeze, only launch-blocking repairs; recheck affected evidence.
+- End each day with a compact record: shipped-to-branch SHA, reviewed SHA, deployed SHA, passed/failed gates, remaining blocker, owner and next sequence point. “Done” never silently means deployed.
+- Freeze feature scope now and candidate behavior before launch. After that code freeze, only launch-blocking repairs; recheck affected evidence.
 - If a required decision is unavailable, block only dependent work and continue safe local tasks. Reuse the existing task/decision rather than creating duplicates.
 - If a gate is missed, narrow the supported configuration or move the sale under Daniel's explicit decision. An alternative provider would be a separate authorized commercial plan, not an automatic integration.
 
