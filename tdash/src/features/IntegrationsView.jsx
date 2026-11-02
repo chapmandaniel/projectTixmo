@@ -54,11 +54,12 @@ const IntegrationsView = ({ isDark, user }) => {
                 apiKey,
                 vendorVenueId,
                 ...(webhookSecret ? { webhookSecret } : {}),
-            });
+            }, { suppressGlobalError: true });
             setConnection(unwrap(response));
             setApiKey('');
             setWebhookSecret('');
             setError('');
+            window.dispatchEvent(new CustomEvent('tixmo:global-error-clear'));
             setNotice('Showpass key saved.');
         } catch (requestError) {
             setError(requestError.response?.data?.message || 'Showpass rejected the API key.');

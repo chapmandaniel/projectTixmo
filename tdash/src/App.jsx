@@ -177,6 +177,8 @@ const App = () => {
             }
         };
         window.addEventListener('tixmo:global-error', handleGlobalError);
+        const clearGlobalError = () => setGlobalError(null);
+        window.addEventListener('tixmo:global-error-clear', clearGlobalError);
 
         const handleAuthExpired = (event) => {
             const reason = event.detail?.reason;
@@ -213,6 +215,7 @@ const App = () => {
         return () => {
             window.removeEventListener('tixmo:waiting-room', handleWaitingRoom);
             window.removeEventListener('tixmo:global-error', handleGlobalError);
+            window.removeEventListener('tixmo:global-error-clear', clearGlobalError);
             window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
             window.removeEventListener('storage', handleStorage);
         };

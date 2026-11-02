@@ -70,15 +70,46 @@ describe('Recorded event operations', () => {
         expect(await screen.findByText('Recorded order dates in America/St_Johns. Refunds are excluded from paid revenue.')).toBeInTheDocument();
         expect(screen.getByRole('columnheader', { name: 'Date (America/St_Johns)' })).toBeInTheDocument();
     });
-    it('skips paid orders on a Showpass event and shows the vendor sale state', async () => {
-        mocks.get.mockImplementation((url) => Promise.resolve(wrapped(url === '/analytics/sales' ? { totalRevenue: 0, totalOrders: 0, salesByDay: [] } : url.endsWith('/stats') ? { ticketsSold: 0, ticketsUsed: 0 } : { orders: [order()] })));
-        const external = { ...event, ticketingMode: 'EXTERNAL', externalPurchaseUrl: 'https://www.showpass.com/pumpkins-after-dark-2026-6/' };
-        render(<ECC_Overview event={external} isDark />);
-        expect(await screen.findByText('Tickets sold on Showpass')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Buy tickets on Showpass' })).toHaveAttribute('href', external.externalPurchaseUrl);
-        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-        expect(screen.queryByText('REC-order-1')).not.toBeInTheDocument();
-        expect(mocks.get.mock.calls.some(([url]) => url === '/orders')).toBe(false);
+    const showpassEvent = {
+        ...event,
+        organizationId: 'org-showpass',
+        ticketingMode: 'EXTERNAL',
+        externalPurchaseUrl: 'https://www.showpass.com/pumpkins-after-dark-2026-6/',
+    };
+    const renderShowpassCounts = async (rows) => {
+        mocks.get.mockImplementation((url) => (
+            String(url).includes('sold-counts')
+                ? Promise.resolve(wrapped(rows))
+                : Promise.reject(new Error(`unexpected ${url}`))
+        ));
+        render(<ECC_Overview event={showpassEvent} isDark />);
+    };
+    it('sums stored Showpass counts and hides Tixmo revenue and orders', async () => {
+        await renderShowpassCounts([
+            { eventId: 'event', externalTicketTypeId: 'a', soldCount: 100 },
+            { eventId: 'event', externalTicketTypeId: 'b', soldCount: 23 },
+        ]);
+        expect(await screen.findByText('Sold on Showpass: 123')).toBeInTheDocument();
+        expect(screen.getByText('Tickets sold on Showpass')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Buy tickets on Showpass' })).toHaveAttribute('href', showpassEvent.externalPurchaseUrl);
+        expect(screen.queryByText('Paid revenue')).not.toBeInTheDocument();
+        expect(screen.queryByText('Paid orders')).not.toBeInTheDocument();
+        expect(screen.queryByText('€0.00')).not.toBeInTheDocument();
+        expect(mocks.get.mock.calls.some(([url]) => url === '/orders' || url === '/analytics/sales')).toBe(false);
+        expect(mocks.get).toHaveBeenCalledWith(
+            '/organizations/org-showpass/showpass/sold-counts',
+            { params: { eventId: 'event' } },
+        );
+    });
+    it('shows no Showpass count when the stored totals are null', async () => {
+        await renderShowpassCounts([
+            { eventId: 'event', externalTicketTypeId: '4464827', soldCount: null },
+            { eventId: 'event', externalTicketTypeId: '4464828', soldCount: null },
+        ]);
+        expect(await screen.findByText('No count from Showpass')).toBeInTheDocument();
+        expect(screen.queryByText('Sold on Showpass: 0')).not.toBeInTheDocument();
+        expect(screen.queryByText('Paid revenue')).not.toBeInTheDocument();
+        expect(screen.queryByText('Paid orders')).not.toBeInTheDocument();
     });
     it('preserves failure instead of displaying fabricated zero revenue', async () => {
         mocks.get.mockRejectedValue(new Error('Offline'));
