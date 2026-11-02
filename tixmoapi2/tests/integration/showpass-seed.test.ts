@@ -73,10 +73,14 @@ describe('compiled Showpass fixture seed', () => {
       .reverse()
       .find((line) => line.startsWith('{'));
     const report = JSON.parse(reportLine || '{}') as {
+      mode?: string;
+      connected?: boolean;
       collider?: { slug?: string };
-      dublin?: { id?: string };
+      dublin?: { id?: string } | null;
     };
+    expect(report.mode).toBe('fresh-org');
+    expect(report.connected).toBe(false);
+    expect(report.dublin).toBeNull();
     expect(report.collider?.slug).toBe('halloween-at-the-polygon-gallery');
-    expect(report.dublin?.id).toEqual(expect.any(String));
   }, 40_000);
 });

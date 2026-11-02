@@ -4,7 +4,7 @@ import { parseTicketQRData } from '../../utils/qrcode';
 import crypto from 'crypto';
 
 import prisma from '../../config/prisma';
-import { assertTicketingAllows } from '../../services/ticketing-mode';
+import { assertEventCapability, assertTicketingAllows } from '../../services/ticketing-mode';
 import {
   AdmissionDenial,
   lockedTicket,
@@ -475,7 +475,10 @@ export class ScannerService {
     const where: Prisma.ScanLogWhereInput = {};
     if (scannerId) where.scannerId = scannerId;
     if (ticketId) where.ticketId = ticketId;
-    if (eventId) where.eventId = eventId;
+    if (eventId) {
+      await assertEventCapability(eventId, 'scan');
+      where.eventId = eventId;
+    }
     if (organizationId) where.scanner = { organizationId };
     if (success !== undefined) where.success = success;
 

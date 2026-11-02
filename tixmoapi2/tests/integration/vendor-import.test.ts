@@ -257,36 +257,16 @@ describe('Showpass vendor import', () => {
     expect(await prisma.waitlist.count({ where: { eventId: dublin.id } })).toBe(0);
     expect(await prisma.scanLog.count({ where: { eventId: dublin.id } })).toBe(0);
 
-    const promos = await request(app)
-      .get('/api/v1/promo-codes')
-      .query({ organizationId, eventId: dublin.id })
-      .set(auth());
-    expect(promos.status).toBe(200);
-    expect(promos.body.data.pagination.total).toBe(0);
-    const orders = await request(app)
-      .get('/api/v1/orders')
-      .query({ eventId: dublin.id })
-      .set(auth());
-    expect(orders.status).toBe(200);
-    expect(orders.body.data.pagination.total).toBe(0);
-    const waitlist = await request(app)
-      .get('/api/v1/waitlists/status')
-      .query({ eventId: dublin.id })
-      .set(auth());
-    expect(waitlist.status).toBe(200);
-    expect(waitlist.body.data).toBeNull();
-    const scanners = await request(app)
-      .get('/api/v1/scanners')
-      .query({ organizationId, eventId: dublin.id })
-      .set(auth());
-    expect(scanners.status).toBe(200);
-    expect(scanners.body.meta.total).toBe(0);
-    const sessions = await request(app)
-      .get('/api/v1/scanners/logs')
-      .query({ eventId: dublin.id })
-      .set(auth());
-    expect(sessions.status).toBe(200);
-    expect(sessions.body.meta.total).toBe(0);
+    const refusedList = async (url: string, query: Record<string, string>, capability: string) => {
+      const response = await request(app).get(url).query(query).set(auth());
+      expect(response.status).toBe(403);
+      expect(response.body.data).toEqual({ code: 'EXTERNAL_TICKETING', capability });
+    };
+    await refusedList('/api/v1/promo-codes', { organizationId, eventId: dublin.id }, 'promo_codes');
+    await refusedList('/api/v1/orders', { eventId: dublin.id }, 'orders');
+    await refusedList('/api/v1/tickets', { eventId: dublin.id }, 'attendees');
+    await refusedList('/api/v1/waitlists/status', { eventId: dublin.id }, 'waitlists');
+    await refusedList('/api/v1/scanners/logs', { eventId: dublin.id }, 'scan');
 
     const counts = await request(app)
       .get(`/api/v1/organizations/${organizationId}/showpass/sold-counts`)

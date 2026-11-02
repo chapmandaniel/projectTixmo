@@ -125,6 +125,34 @@ describe('showpass discovery fixtures', () => {
     expect(after?.name).not.toBe(before?.name);
   });
 
+  it('keeps Mardi Gras local time and lands the shifted current start at 23:30Z', () => {
+    const baseline = parseDiscoveryEvent(read('events/mardi-gras.json'));
+    const changed = parseDiscoveryEvent(read('events/mardi-gras.changed.json'));
+    const dublin = parseDiscoveryEvent(read('events/pumpkins-dublin.json'));
+    const polygon = parseDiscoveryEvent(read('events/polygon-halloween.json'));
+    const giants = parseDiscoveryEvent(read('events/giants-recurring-parent.json'));
+    expect(dublin?.currency).toBe('EUR');
+    expect(baseline?.currency).toBe('CAD');
+    expect(changed?.currency).toBe('CAD');
+    expect(polygon?.currency).toBe('CAD');
+    expect(giants?.currency).toBe('CAD');
+    const baseShift = shiftIsoPreservingLocalTime(baseline!.startsOn, baseline!.timezone, 92);
+    const currentShift = shiftIsoPreservingLocalTime(changed!.startsOn, changed!.timezone, 92);
+    expect(baseShift).toBe('2027-01-31T22:30:00.000Z');
+    expect(currentShift).toBe('2027-01-31T23:30:00.000Z');
+    const wall = (iso: string) =>
+      new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Canada/Newfoundland',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).format(new Date(iso));
+    expect(wall(baseline!.startsOn)).toBe('19:00');
+    expect(wall(changed!.startsOn)).toBe('20:00');
+    expect(wall(baseShift)).toBe('19:00');
+    expect(wall(currentShift)).toBe('20:00');
+  });
+
   it('keeps Dublin 17:15 local when the fixture dates move forward', () => {
     const dublin = parseDiscoveryEvent(read('events/pumpkins-dublin.json'));
     expect(dublin?.startsOn).toBe('2026-10-30T17:15:00Z');

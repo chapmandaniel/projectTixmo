@@ -3,7 +3,7 @@ import { ApiError } from '../../utils/ApiError';
 import { notificationService } from '../../utils/notificationService';
 
 import prisma from '../../config/prisma';
-import { assertTicketingAllows } from '../../services/ticketing-mode';
+import { assertEventCapability, assertTicketingAllows } from '../../services/ticketing-mode';
 
 export class WaitlistService {
   /**
@@ -72,6 +72,7 @@ export class WaitlistService {
    * Get waitlist status for a user and event
    */
   async getWaitlistStatus(userId: string, eventId: string): Promise<Waitlist | null> {
+    await assertEventCapability(eventId, 'waitlists');
     return await prisma.waitlist.findUnique({
       where: {
         eventId_userId: {

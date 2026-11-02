@@ -43,6 +43,20 @@ const readOrCreateSecret = (file: string): string => {
   return created;
 };
 
+type SeedMode = 'fresh-org' | 'connected';
+
+const seedMode = (): SeedMode | null => {
+  const argv = process.argv.slice(2);
+  if (argv.includes('--connected')) return 'connected';
+  if (argv.includes('--fresh-org')) return 'fresh-org';
+  const configured = process.env.SHOWPASS_SEED_MODE?.trim().toLowerCase();
+  if (!configured || configured === 'fresh-org') return 'fresh-org';
+  if (configured === 'connected') return 'connected';
+  // eslint-disable-next-line no-console
+  console.error('SHOWPASS_SEED_MODE must be fresh-org or connected');
+  return null;
+};
+
 const requireEnv = (): boolean => {
   const missing: string[] = REQUIRED.filter((name) => !process.env[name]?.trim());
   const key = process.env.VENDOR_CREDENTIAL_KEY?.trim() || '';
@@ -60,6 +74,11 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
+  const mode = seedMode();
+  if (!mode) {
+    process.exitCode = 1;
+    return;
+  }
   process.env.SHOWPASS_ADAPTER = 'fixture';
   delete process.env.SHOWPASS_FIXTURE_REVISION;
   const webhookSecretFile = secretPath(
@@ -69,51 +88,40 @@ async function main(): Promise<void> {
   const scannerKeyFile = secretPath('SHOWPASS_QA_SCANNER_KEY_FILE', 'showpass-qa-scanner.key');
   const webhookSecret = readOrCreateSecret(webhookSecretFile);
   try {
-    const owner = await prisma.user.findFirst({
-      where: { role: 'OWNER', disabledAt: null },
-      orderBy: { createdAt: 'asc' },
+    const organization = await prisma.organization.upsert({
+      where: { slug: LOCAL_ORG_SLUG },
+      update: { status: 'ACTIVE' },
+      create: {
+        name: 'Fixture Festival',
+        slug: LOCAL_ORG_SLUG,
+        type: 'PROMOTER',
+        status: 'ACTIVE',
+      },
     });
-    let organizationId = owner?.organizationId || '';
-    let userId = owner?.id || '';
-    let email = owner?.email || LOCAL_EMAIL;
-    let organizationSlug = '';
-    if (!owner) {
-      const organization = await prisma.organization.upsert({
-        where: { slug: LOCAL_ORG_SLUG },
-        update: { status: 'ACTIVE' },
-        create: {
-          name: 'Fixture Festival',
-          slug: LOCAL_ORG_SLUG,
-          type: 'PROMOTER',
-          status: 'ACTIVE',
-        },
-      });
-      organizationId = organization.id;
-      organizationSlug = organization.slug;
-      const existingUser = await prisma.user.findUnique({ where: { email: LOCAL_EMAIL } });
-      if (!existingUser) {
-        const created = await prisma.user.create({
+    const organizationId = organization.id;
+    const organizationSlug = organization.slug;
+    const existingUser = await prisma.user.findUnique({ where: { email: LOCAL_EMAIL } });
+    if (existingUser && existingUser.organizationId !== organizationId) {
+      throw new Error('QA login email is already on another organization');
+    }
+    const owner = await prisma.user.findFirst({
+      where: { role: 'OWNER', disabledAt: null, NOT: { email: LOCAL_EMAIL } },
+    });
+    const user = existingUser
+      ? existingUser
+      : await prisma.user.create({
           data: {
             email: LOCAL_EMAIL,
             passwordHash: await hashPassword(LOCAL_PASSWORD),
             firstName: 'Fixture',
             lastName: 'Organizer',
-            role: 'OWNER',
+            role: owner ? 'ADMIN' : 'OWNER',
             organizationId,
             emailVerified: true,
           },
         });
-        userId = created.id;
-      } else {
-        userId = existingUser.id;
-      }
-      email = LOCAL_EMAIL;
-    } else {
-      const organization = await prisma.organization.findUniqueOrThrow({
-        where: { id: organizationId },
-      });
-      organizationSlug = organization.slug;
-    }
+    const userId = user.id;
+    const email = LOCAL_EMAIL;
 
     const collision = await prisma.event.findUnique({ where: { slug: COLLIDING_SLUG } });
     const collider = collision
@@ -136,19 +144,33 @@ async function main(): Promise<void> {
       update: { revision: 'baseline', revokedKeys: [], shiftDays },
     });
 
-    await vendorImportService.connect(organizationId, {
-      apiKey: DEMO_KEY,
-      vendorVenueId: VENUE_ID,
-      webhookSecret,
-    });
-    await vendorImportService.importEvents(organizationId, VENUE_ID, IMPORT_IDS);
-    await connectRedis();
-    await vendorImportService.syncOrganization(organizationId);
-    const preview = await vendorImportService.preview(organizationId, VENUE_ID);
-    const counts = await vendorImportService.listSoldCounts(organizationId);
-    const dublin = await prisma.event.findFirst({
-      where: { organizationId, vendorEventLink: { externalItemId: '1545631' } },
-    });
+    if (mode === 'fresh-org') {
+      await prisma.vendorFestivalConfig.deleteMany({ where: { organizationId } });
+      await prisma.vendorConnection.deleteMany({
+        where: { organizationId, provider: 'SHOWPASS' },
+      });
+    } else {
+      await vendorImportService.connect(organizationId, {
+        apiKey: DEMO_KEY,
+        vendorVenueId: VENUE_ID,
+        webhookSecret,
+      });
+      await vendorImportService.importEvents(organizationId, VENUE_ID, IMPORT_IDS);
+      await connectRedis();
+      await vendorImportService.syncOrganization(organizationId);
+    }
+    const preview =
+      mode === 'connected'
+        ? await vendorImportService.preview(organizationId, VENUE_ID)
+        : { events: [] };
+    const counts =
+      mode === 'connected' ? await vendorImportService.listSoldCounts(organizationId) : [];
+    const dublin =
+      mode === 'connected'
+        ? await prisma.event.findFirst({
+            where: { organizationId, vendorEventLink: { externalItemId: '1545631' } },
+          })
+        : null;
     const existingScanner = await prisma.scanner.findFirst({
       where: { organizationId, name: SCANNER_NAME, eventId: null },
     });
@@ -182,6 +204,8 @@ async function main(): Promise<void> {
         organizationId,
         organizationSlug,
         email,
+        mode,
+        connected: mode === 'connected',
         venueId: VENUE_ID,
         revision: 'baseline',
         shiftDays,

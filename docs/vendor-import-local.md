@@ -1,6 +1,55 @@
 # Showpass fixture import, local and Railway
 
+Branch: `cursor/vendor-import-showpass-5658`.
+
 This is the fixture-only Showpass import. `SHOWPASS_ADAPTER=live` is a stub and throws before any network call. Nothing in the API, tests, seed, or CI fetches `showpass.com`.
+
+## Local run
+
+Node must be `>=24.21.0 <25` (`engines` in `tixmoapi2/package.json` and `tdash/package.json`). npm 11 may warn that install scripts for `prisma`, `@prisma/client`, `@prisma/engines`, `@parcel/watcher`, `unrs-resolver`, and `@scarf/scarf` are not covered by `allowScripts`. `npm run build` still runs `prisma generate`.
+
+Postgres and Redis come from `tixmoapi2/docker-compose.yml`. From the repo root:
+
+```bash
+npm run dev:services
+```
+
+That starts compose services `postgres` (`postgres:14-alpine`, container `tixmo_postgres`, user `tixmo`, password `tixmo_dev_password`, database `tixmoapi`, host port `5432`) and `redis` (`redis:7-alpine`, container `tixmo_redis`, host port `6379`, no password). Those match `tixmoapi2/.env.example`.
+
+```bash
+cp tixmoapi2/.env.example tixmoapi2/.env
+cp tdash/.env.example tdash/.env
+```
+
+In `tixmoapi2/.env`, set `SHOWPASS_ADAPTER=fixture` and `SHOWPASS_SYNC_INTERVAL_MINUTES=5`. Generate secrets and paste them into that file. Do not commit them:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Run that once each for `JWT_SECRET`, `JWT_REFRESH_SECRET`, `SESSION_SECRET`, and `VENDOR_CREDENTIAL_KEY` (the last one must stay 64 hex characters). `DATABASE_URL` and `REDIS_URL` can stay as copied from `.env.example`. `tdash/.env` keeps `VITE_API_URL=/api/v1`.
+
+```bash
+npm ci --prefix tixmoapi2
+npm --prefix tixmoapi2 run build
+npm ci --prefix tdash
+npm --prefix tixmoapi2 run migrate
+npm --prefix tixmoapi2 run db:seed:showpass
+```
+
+The default seed mode is `fresh-org` (QA). It creates organization `fixture-festival` and, when that login does not already exist, user `organizer@example.test` with password `FixtureOrganizer1!`. It does not connect Showpass and does not import events. It does create the Polygon collider, the scanner key file, and the webhook secret file. `GET /api/v1/organizations/{id}/showpass` is `{ "success": true, "data": null }`.
+
+Demo data is a separate mode. It connects `sp_demo_valid_key` and imports Dublin, Mardi Gras, and Giants:
+
+```bash
+SHOWPASS_SEED_MODE=connected npm --prefix tixmoapi2 run db:seed:showpass
+```
+
+`node dist/scripts/seed-showpass.js --connected` is the same mode. `--fresh-org` forces the QA mode.
+
+API: `npm --prefix tixmoapi2 start` listens on port `3000` (`PORT` in `.env.example`). Dashboard: `npm --prefix tdash run dev` at `http://localhost:5173`. Vite proxies `/api` to `http://localhost:3000`. Sign in and open `http://localhost:5173/settings/integrations`.
+
+QA should use `fresh-org`, then connect `sp_demo_valid_key` with venue id `fixture` in the UI. Use `connected` only when you want the imported demo already stored.
 
 ## What you need
 
@@ -31,9 +80,9 @@ Run these in the API container, in this order. `npm run db:seed` is a no-op (`pr
 
 1. `npm run migrate` (`prisma migrate deploy`). The image start script also migrates before listen. Run it yourself before bootstrap so the owner tables exist.
 2. `npm run db:bootstrap` with `BOOTSTRAP_ALLOW_PRODUCTION=true` in production, plus `BOOTSTRAP_OWNER_EMAIL`, `BOOTSTRAP_OWNER_PASSWORD` (12+ characters with upper, lower, digit, and symbol), `BOOTSTRAP_OWNER_FIRST_NAME`, `BOOTSTRAP_OWNER_LAST_NAME`, `BOOTSTRAP_ORGANIZATION_NAME`, `BOOTSTRAP_ORGANIZATION_SLUG`. Bootstrap refuses a second owner. It does not print the password.
-3. `npm run db:seed:showpass` (`node dist/scripts/seed-showpass.js`). Build the image first so `dist/scripts/seed-showpass.js` exists. Requires `VENDOR_CREDENTIAL_KEY` and `SHOWPASS_ADAPTER` not set to `live`. The seed sets `fixture` for its own process, calls `connectRedis()` before the sold-count sync, then disconnects Redis and Prisma and exits.
+3. `npm run db:seed:showpass` (`node dist/scripts/seed-showpass.js`). Build the image first so `dist/scripts/seed-showpass.js` exists. Requires `VENDOR_CREDENTIAL_KEY` and `SHOWPASS_ADAPTER` not set to `live`. The seed sets `fixture` for its own process. `connected` mode calls `connectRedis()` before the sold-count sync. Either mode disconnects Redis and Prisma and exits.
 
-The seed uses the existing owner organization when one exists. It does not create a second owner. With no owner (local only) it creates organization `fixture-festival` and user `organizer@example.test`. The local fixture password is `FixtureOrganizer1!` and is not printed.
+Default mode is `fresh-org`: organization `fixture-festival` is not connected and nothing is imported. `SHOWPASS_SEED_MODE=connected` (or `--connected`) connects and imports on that same QA organization, not on a bootstrapped owner organization. The QA login password `FixtureOrganizer1!` is not printed. A bootstrapped owner stays a separate organization. If an owner already exists, the QA user is `ADMIN` on `fixture-festival`.
 
 It writes two files and prints only their paths:
 
@@ -126,17 +175,21 @@ The seed creates a Tixmo event with slug `halloween-at-the-polygon-gallery` so i
 
 Dublin is fixture `sp-evt-1545631`, file `fixtures/showpass/events/pumpkins-dublin.json`, timezone `Europe/Dublin`, local start **17:15**. The seed JSON prints the shifted `startsOn` and `endsOn` actually stored.
 
-## AC-9 empty lists
+## AC-9 lists on an external event
 
-These reads confirm the Dublin `EXTERNAL` event has no promo, waitlist, order, or scanner session. The seed does not create a ticket, order, attendee, or waitlist row on a vendor event.
+The seed does not create a ticket, order, or waitlist row on a vendor event. Reads scoped to that event are refused with **403** `data.code` `EXTERNAL_TICKETING`:
 
-- `GET /api/v1/promo-codes?organizationId={org}&eventId={dublin}` → 200, `data.pagination.total` `0`
-- `GET /api/v1/waitlists/status?eventId={dublin}` → 200, `data` `null`
-- `GET /api/v1/orders?eventId={dublin}` → 200, `data.orders` `[]`, `data.pagination.total` `0`
-- `GET /api/v1/scanners?organizationId={org}&eventId={dublin}` → 200, `meta.total` `0` (the QA scanner is organization-scoped and has no `eventId`)
-- `GET /api/v1/scanners/logs?eventId={dublin}` → 200, `meta.total` `0`
+- `GET /api/v1/orders?eventId={dublin}` capability `orders`. Commit `33b0760b` removed this guard, so the list returned an empty 200. The guard is restored.
+- `GET /api/v1/tickets?eventId={dublin}` capability `attendees`
+- `GET /api/v1/promo-codes?organizationId={org}&eventId={dublin}` capability `promo_codes`
+- `GET /api/v1/waitlists/status?eventId={dublin}` capability `waitlists`
+- `GET /api/v1/scanners/logs?eventId={dublin}` capability `scan`
 
-`POST /api/v1/orders`, promo create, waitlist join, and registering a scanner bound to the event return **403** `data.code` `EXTERNAL_TICKETING`.
+`POST /api/v1/orders`, promo create, waitlist join, and registering a scanner bound to the event are the same 403.
+
+## Currencies and shifted Mardi Gras starts
+
+Fixture `venue.currency` is `EUR` only on `events/pumpkins-dublin.json`. Polygon, Giants, and both Mardi Gras files are `CAD`. A 92-day shift keeps Newfoundland wall time: baseline `2026-10-31T21:30:00Z` (19:00 NDT, UTC−2:30) becomes `2027-01-31T22:30:00.000Z` (19:00 NST, UTC−3:30). The current revision `2026-10-31T22:30:00Z` (20:00 NDT) becomes `2027-01-31T23:30:00.000Z` (20:00 NST). The preview diff of those shifted instants is `22:30Z` to `23:30Z`. `connected` seed stores one festival `currency` from the first imported catalog event. Catalog order puts Dublin first, so that value is `EUR`. Event rows do not have their own currency column.
 
 ## AC-9-S scan and validate
 
@@ -218,17 +271,5 @@ Public list `GET /api/v1/events/public`:
 Only `PUBLISHED`, `ON_SALE`, and `SOLD_OUT` events whose `endDatetime` is still in the future. A null end is hidden. `GET /api/v1/events/public/{slug}` is not date-filtered.
 
 Deleted list `GET /api/v1/events/deleted`: `organizationId`, `page` default 1, `limit` default 20 maximum 100, `search`.
-
-## Local API and dashboard
-
-From `tixmoapi2` after `npm ci` and `npm run build`:
-
-```bash
-npm run migrate
-npm run db:seed:showpass
-npm start
-```
-
-From `tdash`: `npm run dev`. Open `/settings/integrations`. Key `sp_demo_valid_key`, venue id `fixture`.
 
 Fixture files live in the image at `/app/fixtures/showpass` (`COPY fixtures/showpass` in the final stage). The compiled adapter reads that directory from `dist/services/vendors`.

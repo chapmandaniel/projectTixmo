@@ -3,7 +3,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PromoCode, PromoCodeStatus, DiscountType, Prisma } from '@prisma/client';
 
 import prisma from '../../config/prisma';
-import { assertTicketingAllows } from '../../services/ticketing-mode';
+import { assertEventCapability, assertTicketingAllows } from '../../services/ticketing-mode';
 
 interface CreatePromoCodeInput {
   code: string;
@@ -213,6 +213,7 @@ export class PromoCodeService {
     if (organizationId) where.organizationId = organizationId;
     if (status) where.status = status;
     if (eventId) {
+      await assertEventCapability(eventId, 'promo_codes');
       where.applicableEvents = { has: eventId };
     }
 
