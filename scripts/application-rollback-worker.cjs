@@ -314,7 +314,16 @@ async function main() {
       delete stable.updatedAt;
       return stable;
     }),
-    event: await prisma.event.findUnique({ where: { id: state.event } }),
+    event: await (async () => {
+      // Additive vendor columns are invisible to the pinned previous image.
+      // Compare the event fields both Prisma clients select.
+      const event = await prisma.event.findUnique({ where: { id: state.event } });
+      if (event) {
+        delete event.ticketingMode;
+        delete event.externalPurchaseUrl;
+      }
+      return event;
+    })(),
     stock: await prisma.ticketType.findUnique({ where: { id: state.type } }),
     orders: await prisma.order.findMany({
       where: { eventId: state.event },
