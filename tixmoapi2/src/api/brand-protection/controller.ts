@@ -15,6 +15,7 @@ import {
   deleteOfficialGiveaway,
   getScamMatch,
   ingestMatches,
+  listVerifiedTargets,
   liftReclaimBlock,
   regenerateVerificationCode,
   issueCheckerToken,
@@ -248,10 +249,32 @@ export const resolveDispute = catchAsync(async (req: AuthRequest, res: Response)
 });
 
 export const issueToken = catchAsync(async (req: AuthRequest, res: Response) => {
-  const actor = await requirePlatformAdmin(req);
-  const body = req.body as { label?: string };
-  const issued = await issueCheckerToken(actor.userId, body.label);
+  const actor = await getActorScope(req);
+  const body = req.body as { label?: string; scopes?: string[] };
+  if (body.scopes?.includes('targets:read') && !isGlobalAdmin(actor)) {
+    throw ApiError.forbidden('Only a platform admin can grant targets:read');
+  }
+  if (!isGlobalAdmin(actor)) {
+    throw ApiError.forbidden('Only a platform admin can perform this action');
+  }
+  const issued = await issueCheckerToken(actor.userId, body.label, body.scopes);
   res.status(201).json(successResponse(issued, 'Checker token issued once'));
+});
+
+export const listTargets = catchAsync(async (req: AuthRequest, res: Response) => {
+  if (!req.checkerTokenId) throw ApiError.unauthorized('Checker token required');
+  const page = Number(req.query.page ?? 1);
+  const limit = Number(req.query.limit ?? 100);
+  const result = await listVerifiedTargets(page, limit);
+  const totalPages = result.total === 0 ? 0 : Math.ceil(result.total / limit);
+  res.json(
+    successResponse({ targets: result.targets }, undefined, {
+      page,
+      limit,
+      total: result.total,
+      totalPages,
+    })
+  );
 });
 
 export const revokeToken = catchAsync(async (req: AuthRequest, res: Response) => {

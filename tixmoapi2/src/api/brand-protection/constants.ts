@@ -12,6 +12,9 @@ export const ACCOUNT_STATUSES = ['PENDING', 'VERIFIED', 'REVOKED', 'DISPUTED'] a
 export const VERIFICATION_METHODS = ['ONE_TIME_CODE', 'PLATFORM_OAUTH'] as const;
 
 export const CHECKER_TOKEN_PREFIX = 'gwc_';
+export const CHECKER_SCOPES = ['ingest:write', 'targets:read'] as const;
+export const DEFAULT_CHECKER_SCOPES = ['ingest:write'] as const;
+export type CheckerScopeName = (typeof CHECKER_SCOPES)[number];
 export const MATCH_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 export const VERIFICATION_CODE_TTL_MS = 48 * 60 * 60 * 1000;
 export const DETECTED_AT_FUTURE_SKEW_MS = 5 * 60 * 1000;

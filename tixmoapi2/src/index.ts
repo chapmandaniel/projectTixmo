@@ -28,8 +28,9 @@ void (async () => {
 
     // Start Express server
     const app = (await import('./app')).default;
-    app.listen(port, () => {
-      logger.info(`🚀 Tixmo API Server started on port ${port}`);
+    const onListen = () => {
+      const where = config.host ? `${config.host}:${port}` : String(port);
+      logger.info(`🚀 Tixmo API Server started on ${where}`);
       logger.info(`📝 Environment: ${config.nodeEnv}`);
       logger.info(`🔗 API URL: http://localhost:${port}/api/${config.apiVersion}`);
       logger.info(`❤️  Health Check: http://localhost:${port}/health`);
@@ -39,7 +40,9 @@ void (async () => {
       startPaymentRecoveryJob();
       startApprovalReminderJob();
       startGiveawayRetentionJob();
-    });
+    };
+    if (config.host) app.listen(port, config.host, onListen);
+    else app.listen(port, onListen);
   } catch (err) {
     logger.error('Failed to start server', err as Error);
     process.exit(1);

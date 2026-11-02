@@ -463,9 +463,16 @@ export const isGiveawayIngestAuthBlocked = async (req: Request): Promise<boolean
   return current.totalHits > giveawayIngestAuthFailureMax(req);
 };
 
+const giveawayIngestMax = (req: Request) => {
+  if (config.nodeEnv === 'test' && req.headers['x-test-giveaway-ingest-rate-limit'] === 'low') {
+    return 2;
+  }
+  return config.nodeEnv === 'test' ? 1000 : 120;
+};
+
 export const giveawayIngestRateLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
-  max: config.nodeEnv === 'test' ? 1000 : 120,
+  max: giveawayIngestMax,
   message: {
     success: false,
     message: 'Too many checker submissions. Please try again shortly.',
@@ -477,4 +484,32 @@ export const giveawayIngestRateLimiter = rateLimit({
     return tokenId ? `checker:${tokenId}` : `ip:${req.ip ?? 'unknown'}`;
   },
   store: createStore('rl:giveaway:ingest:'),
+});
+
+/**
+ * Successful targets reads only. This bucket is not the ingest limiter, so a
+ * targets poll does not consume ingest quota. Failed tokens stay on the shared
+ * ingest auth-failure limiter.
+ */
+const giveawayTargetsMax = (req: Request) => {
+  if (config.nodeEnv === 'test' && req.headers['x-test-giveaway-targets-rate-limit'] === 'low') {
+    return 2;
+  }
+  return config.nodeEnv === 'test' ? 1000 : 60;
+};
+
+export const giveawayTargetsRateLimiter = rateLimit({
+  windowMs: config.rateLimitWindowMs,
+  max: giveawayTargetsMax,
+  message: {
+    success: false,
+    message: 'Too many target reads. Please try again shortly.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const tokenId = (req as AuthRequest).checkerTokenId;
+    return tokenId ? `checker:${tokenId}` : `ip:${req.ip ?? 'unknown'}`;
+  },
+  store: createStore('rl:giveaway:targets:'),
 });

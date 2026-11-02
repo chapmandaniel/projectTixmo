@@ -8,6 +8,9 @@ const PREFIX = 'gwc_';
  * sha256 hash. Refuses any database that is not a loopback disposable database.
  * Do not point this at production. Put the printed token in the checker
  * service's Railway variables. It is not written to the repo.
+ * Pass --targets-read to also grant targets:read. The default is ingest:write only.
+ * --targets-read is for the platform operator on this disposable database.
+ * The HTTP API refuses that scope for every role that is not a platform admin.
  */
 function assertDisposableDatabase(raw: string | undefined): void {
   if (process.env.NODE_ENV === 'production') {
@@ -41,13 +44,18 @@ function assertDisposableDatabase(raw: string | undefined): void {
 
 async function main() {
   assertDisposableDatabase(process.env.DATABASE_URL);
-  const label = (process.argv[2] || 'checker').trim().slice(0, 80) || 'checker';
+  const args = process.argv.slice(2);
+  const labelArg = args.find((arg) => !arg.startsWith('--'));
+  const label = (labelArg || 'checker').trim().slice(0, 80) || 'checker';
+  const scopes = args.includes('--targets-read')
+    ? ['ingest:write', 'targets:read']
+    : ['ingest:write'];
   const token = `${PREFIX}${randomBytes(32).toString('base64url')}`;
   const tokenHash = createHash('sha256').update(token).digest('hex');
   const prisma = new PrismaClient();
   try {
     const row = await prisma.giveawayCheckerToken.create({
-      data: { tokenHash, label },
+      data: { tokenHash, label, scopes },
     });
     process.stdout.write(`${token}\n`);
     process.stderr.write(

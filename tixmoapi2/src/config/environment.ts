@@ -165,12 +165,22 @@ if (
   throw new Error('WAITING_ROOM_MAX_CONCURRENT_REQUESTS must be a positive safe integer');
 }
 
+const bindHost = (() => {
+  const raw = process.env.HOST?.trim() ?? '';
+  if (!raw) return '';
+  if (!/^[A-Za-z0-9.:-]+$/.test(raw) || raw.length > 255) {
+    throw new Error('HOST must be a bind address');
+  }
+  return raw;
+})();
+
 export const config = {
   // Application
   nodeEnv,
   serviceName,
   deploymentEnvironment,
   port: parseInt(process.env.PORT || '3000', 10),
+  host: bindHost,
   apiVersion: process.env.API_VERSION || 'v1',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:3001',
 

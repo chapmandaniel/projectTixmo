@@ -20,6 +20,9 @@
     "evidence:manual-template": "node ./scripts/create-manual-evidence-template.mjs",
     "evidence:status": "node ./scripts/evidence-status.mjs",
     "evidence:status:strict": "node ./scripts/evidence-status.mjs --strict",
+    "brand:local": "node ./scripts/brand-protection-local.mjs",
+    "brand:check": "npm --prefix brand-checker run check:fixtures",
+    "brand:local:down": "docker compose -f docker-compose.brand-protection.yml down",
     "demo:market": "npm --prefix tixmoapi2 run demo:market",
     "demo:market:verify": "npm --prefix tixmoapi2 run demo:market:verify",
     "demo:market:reset": "npm --prefix tixmoapi2 run demo:market:reset"

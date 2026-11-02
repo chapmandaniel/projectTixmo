@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "id": "1000000001",
+      "username": "harbourfest",
+      "name": "Harbour Fest",
+      "description": "Official Harbour Fest. Tickets on our site."
+    },
+    {
+      "id": "999000111",
+      "username": "harbourfest_gw",
+      "name": "Harbour Fest",
+      "description": "Harbour Fest"
+    }
+  ]
+}

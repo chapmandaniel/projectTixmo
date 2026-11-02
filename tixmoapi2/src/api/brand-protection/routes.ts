@@ -2,7 +2,10 @@ import { Router } from 'express';
 import { isGiveawayProtectionEnabled } from '../../config/environment';
 import { authenticate } from '../../middleware/auth';
 import { authorize } from '../../middleware/authorize';
-import { giveawayIngestRateLimiter } from '../../middleware/rateLimiter';
+import {
+  giveawayIngestRateLimiter,
+  giveawayTargetsRateLimiter,
+} from '../../middleware/rateLimiter';
 import { validate } from '../../middleware/validate';
 import { ApiError } from '../../utils/ApiError';
 import { requireCheckerToken } from './checkerGuard';
@@ -38,6 +41,13 @@ router.post(
   giveawayIngestRateLimiter,
   validate(validation.ingestVerificationSchema),
   controller.ingestVerification
+);
+router.get(
+  '/ingest/targets',
+  requireCheckerToken,
+  giveawayTargetsRateLimiter,
+  validate(validation.listTargetsSchema),
+  controller.listTargets
 );
 
 router.get('/checker-status', authenticate, authorize(...orgRoles), controller.checkerStatus);

@@ -1,5 +1,13 @@
 .DS_Store
 
+# Local environment files. Commit .env.example only.
+.env
+**/.env
+**/.env.*
+!**/.env.example
+brand-checker/.local/
+brand-checker/.cache/
+
 # One-off local debugging and generated reports
 curl_output.json
 **/test_output.txt

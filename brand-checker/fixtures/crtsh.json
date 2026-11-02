@@ -1,0 +1,8 @@
+[
+  { "name_value": "harbourfest.example" },
+  { "name_value": "www.harbourfest.example" },
+  { "name_value": "*.harbourfest-tickets.example" },
+  { "name_value": "harbourfest-tickets.example" },
+  { "name_value": "harbourfest.kijiji.ca" },
+  { "name_value": "not-a-brand.example" }
+]

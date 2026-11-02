@@ -1,0 +1,29 @@
+{
+  "name": "brand-checker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Signed-out daily checker for Tixmo brand protection. Public pages and official APIs only.",
+  "type": "module",
+  "engines": {
+    "node": ">=24.21.0 <25"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "check:fixtures": "node --env-file=.env --import tsx src/index.ts --fixtures",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "lint": "eslint .",
+    "test": "tsx --test test/**/*.test.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3"
+  },
+  "dependencies": {
+    "undici": "^7.30.1"
+  }
+}

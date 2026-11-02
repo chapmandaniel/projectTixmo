@@ -1,0 +1,17 @@
+{
+  "data": {
+    "children": [
+      {
+        "kind": "t2",
+        "data": {
+          "id": "999",
+          "name": "harbourfest_prizes",
+          "subreddit": {
+            "title": "Harbour Fest",
+            "public_description": "Harbour Fest"
+          }
+        }
+      }
+    ]
+  }
+}
