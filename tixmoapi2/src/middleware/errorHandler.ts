@@ -1,11 +1,14 @@
 import { logger } from '@config/logger';
 import { ApiError } from '@utils/ApiError';
 import { config } from '@config/environment';
+import { redactGiveawayLogText } from '@utils/giveawayLogRedaction';
 import { Request, Response, NextFunction } from 'express';
 
 export const errorHandler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ApiError) {
-    logger.warn('API error', err);
+    logger.warn(
+      redactGiveawayLogText(`API error ${err.message} ${JSON.stringify(err.errors ?? '')}`)
+    );
     if (err.retryAfter) res.set('Retry-After', String(err.retryAfter));
     if (err.code === 'CHECKOUT_BUSY') res.set('Cache-Control', 'no-store');
     return res.status(err.statusCode).json({
@@ -17,7 +20,8 @@ export const errorHandler = (err: unknown, _req: Request, res: Response, _next: 
     });
   }
 
-  logger.error('Unexpected error', err as Error);
+  const unexpected = err as Error;
+  logger.error(redactGiveawayLogText(`Unexpected error ${unexpected.stack || unexpected.message}`));
 
   if (config.nodeEnv === 'development') {
     return res

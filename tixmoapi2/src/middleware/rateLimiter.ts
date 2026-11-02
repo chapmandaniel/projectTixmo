@@ -91,6 +91,16 @@ class ResilientRateLimitStore {
     await Promise.allSettled([this.redisStore.resetKey(key), this.memory.resetKey(key)]);
   }
 
+  async get(key: string) {
+    if (Date.now() < redisBlockedUntil) return this.memory.get(key);
+    try {
+      return await this.redisStore.get(key);
+    } catch (error) {
+      openRateLimitCircuit(error);
+      return this.memory.get(key);
+    }
+  }
+
   shutdown(): void {
     this.memory.shutdown();
   }
@@ -414,3 +424,57 @@ export const checkoutIpRateLimiter = (req: Request, res: Response, next: NextFun
   }
   return checkoutIpLimiter(req, res, next);
 };
+
+/**
+ * Counts only ingest requests that already failed checker-token authentication
+ * (missing, unknown, or revoked). A valid token never touches this bucket, so
+ * a noisy neighbour on a shared Railway egress address cannot lock the checker
+ * out. The key is the caller IP. The store is Redis-backed with the same
+ * in-memory fallback as the other limiters.
+ */
+const giveawayIngestAuthFailureMax = (req: Request) => {
+  if (config.nodeEnv === 'test' && req.headers['x-test-giveaway-auth-rate-limit'] === 'low') {
+    return 3;
+  }
+  return config.nodeEnv === 'test' ? 1000 : 120;
+};
+
+const giveawayIngestAuthFailureKey = (req: Request) => `ip:${req.ip ?? 'unknown'}`;
+
+const giveawayIngestAuthFailureStore = new ResilientRateLimitStore('rl:giveaway:ingest-auth-fail:');
+
+export const giveawayIngestIpRateLimiter = rateLimit({
+  windowMs: config.rateLimitWindowMs,
+  max: giveawayIngestAuthFailureMax,
+  message: {
+    success: false,
+    message: 'Too many checker submissions. Please try again shortly.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: giveawayIngestAuthFailureKey,
+  store: giveawayIngestAuthFailureStore,
+});
+
+/** True when this IP is already over the failed-token cap, without counting another hit. */
+export const isGiveawayIngestAuthBlocked = async (req: Request): Promise<boolean> => {
+  const current = await giveawayIngestAuthFailureStore.get(giveawayIngestAuthFailureKey(req));
+  if (!current?.resetTime || current.resetTime.getTime() <= Date.now()) return false;
+  return current.totalHits > giveawayIngestAuthFailureMax(req);
+};
+
+export const giveawayIngestRateLimiter = rateLimit({
+  windowMs: config.rateLimitWindowMs,
+  max: config.nodeEnv === 'test' ? 1000 : 120,
+  message: {
+    success: false,
+    message: 'Too many checker submissions. Please try again shortly.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const tokenId = (req as AuthRequest).checkerTokenId;
+    return tokenId ? `checker:${tokenId}` : `ip:${req.ip ?? 'unknown'}`;
+  },
+  store: createStore('rl:giveaway:ingest:'),
+});

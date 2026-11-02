@@ -1,5 +1,5 @@
 const keys = new Set(['apiUrl', 'privacyPolicyUrl', 'termsUrl', 'refundPolicyUrl',
-  'organizerTermsUrl', 'stripePublishableKey', 'paymentCurrency']);
+  'organizerTermsUrl', 'stripePublishableKey', 'paymentCurrency', 'giveawayProtection']);
 
 // Parse only the repository's static data wrappers. Fetched JavaScript is never
 // executed, including supposedly isolated VM contexts.

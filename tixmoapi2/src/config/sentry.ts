@@ -1,7 +1,99 @@
 import { assetShareLogPath } from '../utils/assetShareLogPath';
 import { buyerRecoveryLogPath } from '../utils/buyerRecoveryLogPath';
+import { redactGiveawayLogText } from '../utils/giveawayLogRedaction';
 import * as Sentry from '@sentry/node';
 import { config } from './environment';
+
+type TelemetryRequest = {
+  url?: string;
+  data?: unknown;
+  query_string?: unknown;
+  headers?: Record<string, string>;
+  cookies?: unknown;
+};
+
+type TelemetryBreadcrumb = {
+  data?: Record<string, unknown>;
+};
+
+export const isBrandProtectionRequestUrl = (value: unknown): boolean => {
+  if (typeof value !== 'string' || !value) return false;
+  try {
+    return new URL(value, 'https://redaction.invalid').pathname
+      .toLowerCase()
+      .includes('/brand-protection');
+  } catch {
+    return value.toLowerCase().includes('/brand-protection');
+  }
+};
+
+const pathnameOnly = (value: string): string => {
+  try {
+    return new URL(value, 'https://redaction.invalid').pathname;
+  } catch {
+    return value.split('?')[0];
+  }
+};
+
+const stripAuthAndCookies = (headers: Record<string, string> | undefined) => {
+  if (!headers) return;
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() === 'authorization' || key.toLowerCase() === 'cookie') {
+      delete headers[key];
+    }
+  }
+};
+
+/** Drop checker bodies, queries, authorization, and cookies before they reach Sentry. */
+export const scrubBrandProtectionRequest = <T extends { request?: TelemetryRequest }>(
+  event: T
+): T => {
+  const request = event.request;
+  if (!request || !isBrandProtectionRequestUrl(request.url)) return event;
+  request.url = pathnameOnly(request.url || '');
+  delete request.data;
+  delete request.query_string;
+  delete request.cookies;
+  stripAuthAndCookies(request.headers);
+  return event;
+};
+
+type BrandProtectionEvent = {
+  message?: unknown;
+  exception?: { values?: Array<{ value?: string }> };
+  request?: TelemetryRequest;
+};
+
+const brandProtectionEvent = (event: BrandProtectionEvent): boolean =>
+  isBrandProtectionRequestUrl(event.request?.url) ||
+  (typeof event.message === 'string' && isBrandProtectionRequestUrl(event.message));
+
+/** Redact checker evidence in exception text for brand-protection events, and scrub the request. */
+export const scrubBrandProtectionEvent = <T extends BrandProtectionEvent>(event: T): T => {
+  if (!brandProtectionEvent(event)) return event;
+  scrubBrandProtectionRequest(event);
+  if (typeof event.message === 'string') event.message = redactGiveawayLogText(event.message);
+  for (const entry of event.exception?.values ?? []) {
+    if (typeof entry.value === 'string') entry.value = redactGiveawayLogText(entry.value);
+  }
+  return event;
+};
+
+export const scrubBrandProtectionBreadcrumb = <T extends TelemetryBreadcrumb>(breadcrumb: T): T => {
+  const data = breadcrumb.data;
+  if (!data) return breadcrumb;
+  const url = typeof data.url === 'string' ? data.url : '';
+  if (!isBrandProtectionRequestUrl(url)) return breadcrumb;
+  data.url = pathnameOnly(url);
+  delete data.body;
+  delete data.data;
+  delete data.query_string;
+  delete data.cookies;
+  if (data.headers && typeof data.headers === 'object') {
+    stripAuthAndCookies(data.headers as Record<string, string>);
+  }
+  return breadcrumb;
+};
 
 // Initialize Sentry only if DSN is provided
 export function initSentry() {
@@ -51,6 +143,7 @@ export function initSentry() {
           delete request.headers;
           delete request.cookies;
         }
+        scrubBrandProtectionEvent(ev);
         // Existing general password scrubbing remains in place.
         try {
           if (ev && typeof ev === 'object' && 'request' in ev) {
@@ -72,6 +165,12 @@ export function initSentry() {
           // ignore any errors during scrubbing
         }
         return ev;
+      },
+      beforeBreadcrumb(breadcrumb: Sentry.Breadcrumb) {
+        return scrubBrandProtectionBreadcrumb(breadcrumb);
+      },
+      beforeSendTransaction(event: Sentry.Event) {
+        return scrubBrandProtectionRequest(event);
       },
     });
 

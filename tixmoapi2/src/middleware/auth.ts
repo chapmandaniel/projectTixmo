@@ -11,6 +11,8 @@ export interface AuthRequest extends Request {
     emailVerified?: boolean;
     organizationId?: string | null;
   } | null;
+  /** Set only for a live giveaway-checker token on an ingest write. */
+  checkerTokenId?: string;
 }
 
 const getAuthorizationHeader = (req: Request): string | undefined => {

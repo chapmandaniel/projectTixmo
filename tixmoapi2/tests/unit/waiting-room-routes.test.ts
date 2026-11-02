@@ -22,6 +22,7 @@ jest.doMock('../../src/config/redis', () => ({
 jest.doMock('../../src/config/logger', () => ({ logger: { warn: jest.fn(), error: jest.fn() } }));
 jest.doMock('../../src/config/environment', () => ({
   config: { nodeEnv: 'test', apiVersion: 'v1', waitingRoomMaxConcurrentRequests: 17 },
+  isGiveawayProtectionEnabled: () => false,
 }));
 jest.doMock('../../src/services/readiness.service', () => ({
   checkReadiness: async () => ({ database: false, redis: false }),
@@ -40,6 +41,8 @@ jest.doMock('../../src/middleware/rateLimiter', () => ({
   checkoutActorRateLimiter: pass,
   checkoutIpRateLimiter: pass,
   scannerAdmissionRateLimiter: pass,
+  giveawayIngestRateLimiter: pass,
+  giveawayIngestIpRateLimiter: pass,
 }));
 jest.doMock('../../src/middleware/auth', () => ({
   authenticate: auth,
