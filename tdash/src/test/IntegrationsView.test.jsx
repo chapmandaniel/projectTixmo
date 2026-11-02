@@ -36,6 +36,23 @@ describe('Showpass integrations', () => {
         expect(screen.queryByText(/Connected\. Key ending/)).not.toBeInTheDocument();
     });
 
+    it('clears a rejected key error and the webhook secret after a valid key is saved', async () => {
+        mocks.post
+            .mockRejectedValueOnce({ response: { data: { message: 'Invalid token.' } } })
+            .mockResolvedValueOnce(wrapped({ id: 'conn', status: 'ACTIVE', keyLast4: 'lkey', lastError: null }));
+        render(<IntegrationsView isDark user={owner} />);
+        fireEvent.change(screen.getByLabelText('Showpass API key'), { target: { value: 'sp_demo_revoked_key' } });
+        fireEvent.change(screen.getByLabelText('Showpass webhook secret'), { target: { value: 'sp_demo_webhook_secret' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save Showpass key' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent('Invalid token.');
+        fireEvent.change(screen.getByLabelText('Showpass API key'), { target: { value: 'sp_demo_valid_key' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save Showpass key' }));
+        expect(await screen.findByText(/Connected\. Key ending lkey/)).toBeInTheDocument();
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.queryByText('Invalid token.')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Showpass webhook secret')).toHaveValue('');
+    });
+
     it('shows a clear error when the Showpass key is rejected', async () => {
         mocks.post.mockRejectedValue({ response: { data: { message: 'Invalid token.' } } });
         render(<IntegrationsView isDark user={owner} />);

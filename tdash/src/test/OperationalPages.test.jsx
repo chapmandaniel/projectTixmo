@@ -70,6 +70,16 @@ describe('Recorded event operations', () => {
         expect(await screen.findByText('Recorded order dates in America/St_Johns. Refunds are excluded from paid revenue.')).toBeInTheDocument();
         expect(screen.getByRole('columnheader', { name: 'Date (America/St_Johns)' })).toBeInTheDocument();
     });
+    it('skips paid orders on a Showpass event and shows the vendor sale state', async () => {
+        mocks.get.mockImplementation((url) => Promise.resolve(wrapped(url === '/analytics/sales' ? { totalRevenue: 0, totalOrders: 0, salesByDay: [] } : url.endsWith('/stats') ? { ticketsSold: 0, ticketsUsed: 0 } : { orders: [order()] })));
+        const external = { ...event, ticketingMode: 'EXTERNAL', externalPurchaseUrl: 'https://www.showpass.com/pumpkins-after-dark-2026-6/' };
+        render(<ECC_Overview event={external} isDark />);
+        expect(await screen.findByText('Tickets sold on Showpass')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Buy tickets on Showpass' })).toHaveAttribute('href', external.externalPurchaseUrl);
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.queryByText('REC-order-1')).not.toBeInTheDocument();
+        expect(mocks.get.mock.calls.some(([url]) => url === '/orders')).toBe(false);
+    });
     it('preserves failure instead of displaying fabricated zero revenue', async () => {
         mocks.get.mockRejectedValue(new Error('Offline'));
         render(<ECC_Overview event={event} isDark />);

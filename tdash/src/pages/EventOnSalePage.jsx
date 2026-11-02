@@ -462,14 +462,16 @@ export const EventOnSaleView = ({
                             tabIndex={-1}
                             aria-labelledby="tickets-title"
                         >
+                            {!externalSale && (
                             <div
                                 className={`sf-sale-state ${canSelect ? 'sf-sale-open' : ''}`}
                             >
                                 <span />
                                 {saleLabel}
                             </div>
+                            )}
                             <div className="sf-ticket-heading">
-                                <h2 id="tickets-title">Get your tickets</h2>
+                                <h2 id="tickets-title">{externalSale ? 'Tickets on sale at Showpass' : 'Get your tickets'}</h2>
                                 <Ticket size={24} aria-hidden="true" />
                             </div>
                             <p className="sf-ticket-date">
@@ -700,7 +702,9 @@ export const EventOnSaleView = ({
                             <span>
                                 {count
                                     ? `${count} ${count === 1 ? 'ticket' : 'tickets'}`
-                                    : startingPrice === null
+                                    : externalSale
+                                      ? 'Tickets on sale at Showpass'
+                                      : startingPrice === null
                                       ? saleLabel
                                       : 'Tickets from'}
                             </span>

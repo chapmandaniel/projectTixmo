@@ -12,8 +12,8 @@ const event = {
     status: 'PUBLISHED',
     timezone: 'Europe/Dublin',
     currency: 'EUR',
-    startDatetime: '2026-10-30T17:15:00.000Z',
-    endDatetime: '2026-10-30T20:15:00.000Z',
+    startDatetime: '2027-01-30T17:15:00.000Z',
+    endDatetime: '2027-01-30T20:15:00.000Z',
     ticketingMode: 'EXTERNAL',
     externalPurchaseUrl: 'https://www.showpass.com/pumpkins-after-dark-2026-6/',
     ticketTypes: [],
@@ -27,8 +27,12 @@ describe('vendor-sold public event', () => {
                 <EventOnSaleView event={event} />
             </MemoryRouter>
         );
+        expect(screen.getByRole('heading', { name: 'Tickets on sale at Showpass' })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Get your tickets' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Tickets unavailable')).not.toBeInTheDocument();
         const links = screen.getAllByRole('link', { name: 'Buy tickets on Showpass' });
-        expect(links[0]).toHaveAttribute('href', event.externalPurchaseUrl);
+        expect(links.length).toBeGreaterThan(0);
+        expect(links.every((link) => link.getAttribute('href') === event.externalPurchaseUrl)).toBe(true);
         expect(screen.queryByRole('button', { name: /Continue to checkout/ })).not.toBeInTheDocument();
         expect(screen.queryByText('Select your tickets')).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Choose tickets/ })).not.toBeInTheDocument();

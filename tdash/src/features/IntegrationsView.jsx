@@ -57,6 +57,8 @@ const IntegrationsView = ({ isDark, user }) => {
             });
             setConnection(unwrap(response));
             setApiKey('');
+            setWebhookSecret('');
+            setError('');
             setNotice('Showpass key saved.');
         } catch (requestError) {
             setError(requestError.response?.data?.message || 'Showpass rejected the API key.');

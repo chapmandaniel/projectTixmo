@@ -4,6 +4,7 @@ import { DashboardButton, DashboardEmptyState, DashboardSelect, DashboardStat, D
 import { getDashboardTheme } from '../lib/dashboardTheme';
 import { orderDisplayCurrency } from '../lib/runtimeConfig';
 import { formatEventMoney } from '../lib/publicEvent';
+import { externalPurchaseUrl, vendorEventAllows } from '../lib/ticketingMode';
 
 const payload = (response) => response.data.data || response.data;
 const ECC_Overview = ({ event, isDark, onViewOrders }) => {
@@ -21,17 +22,24 @@ const ECC_Overview = ({ event, isDark, onViewOrders }) => {
         setError('');
         setData(null);
         const end = new Date(), start = new Date(end.getTime() - Number(days) * 86400000);
-        Promise.all([
+        const ordersAllowed = vendorEventAllows(event, 'orders');
+        const requests = [
             api.get('/analytics/sales', { params: { eventId: event.id, currency, startDate: start.toISOString(), endDate: end.toISOString() } }),
             api.get(`/events/${event.id}/stats`),
-            api.get('/orders', { params: { eventId: event.id, status: 'PAID', limit: 10, page: 1 } }),
-        ]).then(([sales, stats, orders]) => {
-            if (active) setData({ sales: payload(sales), stats: payload(stats), orders: payload(orders).orders || [] });
+        ];
+        if (ordersAllowed) requests.push(api.get('/orders', { params: { eventId: event.id, status: 'PAID', limit: 10, page: 1 } }));
+        Promise.all(requests).then(([sales, stats, orders]) => {
+            if (active) setData({
+                sales: payload(sales),
+                stats: payload(stats),
+                orders: ordersAllowed ? (payload(orders).orders || []) : [],
+                externalOrders: !ordersAllowed,
+            });
         }).catch((requestError) => {
             if (active) setError(requestError.response?.data?.message || 'Unable to load event overview.');
         }).finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
-    }, [event.id, days, currency, refresh]);
+    }, [event.id, event.ticketingMode, days, currency, refresh]);
     const money = (amount, code = currency) => formatEventMoney(amount, code);
     const salesTimezone = data?.sales?.aggregationTimezone || 'UTC';
     return <div className={`space-y-6 ${theme.textPrimary}`}>
@@ -55,8 +63,8 @@ const ECC_Overview = ({ event, isDark, onViewOrders }) => {
                 </DashboardSurface>
                 <DashboardSurface isDark={isDark} className="space-y-4 p-5">
                     <h3 className="text-xl font-light">Recent paid orders</h3>
-                    {!data.orders.length ? <p className={`text-sm ${theme.textSecondary}`}>No paid orders recorded.</p> : <ul className="space-y-4">{data.orders.map((order) => <li key={order.id} className="text-sm"><p>{order.orderNumber} · {money(order.totalAmount, orderDisplayCurrency(order.currency))}</p><p className={theme.textSecondary}>{new Date(order.createdAt).toLocaleString()}</p></li>)}</ul>}
-                    {onViewOrders && <DashboardButton isDark={isDark} variant="secondary" onClick={onViewOrders}>View orders</DashboardButton>}
+                    {data.externalOrders ? <div className="space-y-3"><p>Tickets sold on Showpass</p>{externalPurchaseUrl(event) ? <a href={externalPurchaseUrl(event)} target="_blank" rel="noopener noreferrer">Buy tickets on Showpass</a> : null}</div> : !data.orders.length ? <p className={`text-sm ${theme.textSecondary}`}>No paid orders recorded.</p> : <ul className="space-y-4">{data.orders.map((order) => <li key={order.id} className="text-sm"><p>{order.orderNumber} · {money(order.totalAmount, orderDisplayCurrency(order.currency))}</p><p className={theme.textSecondary}>{new Date(order.createdAt).toLocaleString()}</p></li>)}</ul>}
+                    {onViewOrders && !data.externalOrders && <DashboardButton isDark={isDark} variant="secondary" onClick={onViewOrders}>View orders</DashboardButton>}
                 </DashboardSurface>
             </div>
             <p className={`text-sm ${theme.textSecondary}`}>Page views and conversion rate are unavailable until traffic reporting is connected.</p>
