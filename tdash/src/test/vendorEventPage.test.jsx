@@ -11,7 +11,9 @@ const event = {
     slug: 'pumpkins-after-dark-2026-6',
     status: 'PUBLISHED',
     timezone: 'Europe/Dublin',
+    currency: 'EUR',
     startDatetime: '2026-10-30T17:15:00.000Z',
+    endDatetime: '2026-10-30T20:15:00.000Z',
     ticketingMode: 'EXTERNAL',
     externalPurchaseUrl: 'https://www.showpass.com/pumpkins-after-dark-2026-6/',
     ticketTypes: [],
@@ -28,6 +30,12 @@ describe('vendor-sold public event', () => {
         const links = screen.getAllByRole('link', { name: 'Buy tickets on Showpass' });
         expect(links[0]).toHaveAttribute('href', event.externalPurchaseUrl);
         expect(screen.queryByRole('button', { name: /Continue to checkout/ })).not.toBeInTheDocument();
+        expect(screen.queryByText('Select your tickets')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Choose tickets/ })).not.toBeInTheDocument();
+        expect(screen.getAllByText(/Europe\/Dublin/).length).toBeGreaterThan(0);
+        expect(screen.queryByText(/\bUTC\b/)).not.toBeInTheDocument();
+        expect(screen.getByText('Prices on Showpass are in EUR.')).toBeInTheDocument();
+        expect(screen.queryByText(/CA\$/)).not.toBeInTheDocument();
     });
 
     it('hides orders, attendees, tickets, and checkout in the event command center', () => {

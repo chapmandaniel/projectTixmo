@@ -9,7 +9,8 @@ const payload = (response) => response.data.data || response.data;
 const ECC_Overview = ({ event, isDark, onViewOrders }) => {
     const theme = getDashboardTheme(isDark);
     const [days, setDays] = useState('7');
-    const [currency, setCurrency] = useState('cad');
+    const eventCurrency = String(event.currency || 'cad').toLowerCase();
+    const [currency, setCurrency] = useState(eventCurrency);
     const [refresh, setRefresh] = useState(0);
     const [data, setData] = useState(null);
     const [error, setError] = useState('');
@@ -36,7 +37,7 @@ const ECC_Overview = ({ event, isDark, onViewOrders }) => {
     return <div className={`space-y-6 ${theme.textPrimary}`}>
         <div className="flex flex-wrap items-end gap-3">
             <label className="space-y-2 text-sm">Sales period<DashboardSelect isDark={isDark} aria-label="Sales period" value={days} onChange={(e) => setDays(e.target.value)}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></DashboardSelect></label>
-            <label className="space-y-2 text-sm">Revenue currency<DashboardSelect isDark={isDark} aria-label="Revenue currency" value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="cad">CAD</option><option value="usd">USD (historical orders)</option></DashboardSelect></label>
+            <label className="space-y-2 text-sm">Revenue currency<DashboardSelect isDark={isDark} aria-label="Revenue currency" value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="cad">CAD</option><option value="usd">USD (historical orders)</option>{eventCurrency !== 'cad' && eventCurrency !== 'usd' ? <option value={eventCurrency}>{eventCurrency.toUpperCase()}</option> : null}</DashboardSelect></label>
             <DashboardButton isDark={isDark} variant="secondary" disabled={loading} onClick={() => setRefresh((value) => value + 1)}>Refresh</DashboardButton>
         </div>
         {loading ? <p role="status">Loading event overview…</p> : error ? <p role="alert">{error}</p> : data && <>

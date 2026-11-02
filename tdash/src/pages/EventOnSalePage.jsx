@@ -42,6 +42,13 @@ import {
 const eventDate = (event, options = {}) =>
     formatEventDate(event.startDatetime, eventTimeZone(event), options);
 
+const zoneLabel = (value, event) => {
+    const zone = eventTimeZone(event);
+    const abbreviation = eventZoneAbbreviation(value, zone);
+    if (!abbreviation || /^(?:GMT|UTC)(?:$|\s|[+-])/i.test(abbreviation)) return zone;
+    return abbreviation;
+};
+
 export const EventOnSaleView = ({
     event,
     preview = false,
@@ -54,7 +61,7 @@ export const EventOnSaleView = ({
     const [imageFailed, setImageFailed] = useState(false);
     const [previewMessage, setPreviewMessage] = useState('');
     const [ticketPanelVisible, setTicketPanelVisible] = useState(false);
-    const currency = getPaymentCurrency();
+    const currency = event.currency || getPaymentCurrency();
     const policies = getPolicyLinks();
     const sale = getEventSaleState(event, now);
     const externalSale = event.ticketingMode === 'EXTERNAL';
@@ -245,6 +252,11 @@ export const EventOnSaleView = ({
                                 {event.venue?.name || 'Venue to be announced'}
                             </span>
                         </div>
+                        {externalSale && purchaseUrl ? (
+                            <a className="sf-button sf-hero-cta" href={purchaseUrl} target="_blank" rel="noopener noreferrer">
+                                Buy tickets on Showpass
+                            </a>
+                        ) : (
                         <StorefrontButton
                             className="sf-hero-cta"
                             onClick={focusTickets}
@@ -252,6 +264,7 @@ export const EventOnSaleView = ({
                             Choose tickets{' '}
                             <ArrowDown size={15} aria-hidden="true" />
                         </StorefrontButton>
+                        )}
                     </div>
                     <span className="sf-photo-caption" aria-hidden="true">
                         {event.category || 'Live events'} / Tixmo
@@ -308,12 +321,16 @@ export const EventOnSaleView = ({
                                 </StorefrontFact>
                                 <StorefrontFact icon={Clock3} label="Starts at">
                                     {event.startDatetime
-                                        ? eventDate(event, {
-                                              weekday: undefined,
-                                              month: undefined,
-                                              day: undefined,
-                                              timeZoneName: 'short',
-                                          })
+                                        ? [
+                                              eventDate(event, {
+                                                  weekday: undefined,
+                                                  month: undefined,
+                                                  day: undefined,
+                                              }),
+                                              zoneLabel(event.startDatetime, event),
+                                          ]
+                                              .filter(Boolean)
+                                              .join(' ')
                                         : 'Time to be announced'}
                                 </StorefrontFact>
                             </div>
@@ -456,9 +473,25 @@ export const EventOnSaleView = ({
                                 <Ticket size={24} aria-hidden="true" />
                             </div>
                             <p className="sf-ticket-date">
-                                {event.startDatetime
-                                    ? [eventDate(event), eventZoneAbbreviation(event.startDatetime, eventTimeZone(event))].filter(Boolean).join(' ')
-                                    : eventDate(event)}
+                                {event.startDatetime ? (
+                                    <time dateTime={event.startDatetime}>
+                                        {[eventDate(event), zoneLabel(event.startDatetime, event)].filter(Boolean).join(' ')}
+                                    </time>
+                                ) : (
+                                    eventDate(event)
+                                )}
+                                {event.endDatetime ? (
+                                    <>
+                                        {' '}
+                                        Ends{' '}
+                                        <time dateTime={event.endDatetime}>
+                                            {[
+                                                formatEventDate(event.endDatetime, eventTimeZone(event)),
+                                                zoneLabel(event.endDatetime, event),
+                                            ].filter(Boolean).join(' ')}
+                                        </time>
+                                    </>
+                                ) : null}
                             </p>
                             {festivalContext && (
                                 <div
@@ -601,6 +634,8 @@ export const EventOnSaleView = ({
                                     </p>
                                 )}
                             </div>
+                            {!externalSale && (
+                            <>
                             <div
                                 className="sf-subtotal"
                                 aria-live="polite"
@@ -618,7 +653,6 @@ export const EventOnSaleView = ({
                                     ? PRICE_INCLUDES_NOTE
                                     : 'Choose a quantity to continue.'}
                             </p>
-                            {!externalSale && (
                             <StorefrontButton
                                 onClick={continueToCheckout}
                                 disabled={!canSelect || !count}
@@ -628,7 +662,6 @@ export const EventOnSaleView = ({
                                     : 'Continue to checkout'}
                                 <ArrowRight size={18} aria-hidden="true" />
                             </StorefrontButton>
-                            )}
                             {previewMessage && (
                                 <p className="sf-inline-message" role="status">
                                     {previewMessage}
@@ -637,6 +670,11 @@ export const EventOnSaleView = ({
                             <p className="sf-reservation-note">
                                 Availability is confirmed during checkout.
                             </p>
+                            </>
+                            )}
+                            {externalSale && (
+                                <p>Prices on Showpass are in {String(event.currency || currency).toUpperCase()}.</p>
+                            )}
                             <div className="sf-ticket-footer">
                                 <StorefrontBrand />
                                 <span>Ticketing for live events</span>

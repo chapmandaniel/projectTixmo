@@ -42,6 +42,20 @@ export const invoiceQuantityFingerprint = (deltas: VendorCountDelta[]): string =
   return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 };
 
+export const MAX_INVOICE_ID_LENGTH = 128;
+
+/** Showpass signs only the invoice id. Event type is not covered by the signature. */
+export const ALLOWED_INVOICE_EVENT_TYPES = [
+  'invoice.purchase',
+  'invoice.refund',
+  'invoice.void',
+] as const;
+
+export const isAllowedInvoiceEventType = (
+  eventType: string
+): eventType is (typeof ALLOWED_INVOICE_EVENT_TYPES)[number] =>
+  (ALLOWED_INVOICE_EVENT_TYPES as readonly string[]).includes(eventType);
+
 const quantitySign = (eventType: string): number => {
   if (eventType === 'invoice.purchase') return 1;
   if (eventType === 'invoice.refund' || eventType === 'invoice.void') return -1;
@@ -56,7 +70,9 @@ export const countInvoice = (payload: unknown): CountedInvoice | null => {
   if (!isRecord(payload)) return null;
   if (typeof payload.id !== 'string' || !payload.id) return null;
   if (typeof payload.webhook_event_uuid !== 'string' || !payload.webhook_event_uuid) return null;
-  if (typeof payload.event_type !== 'string' || !payload.event_type) return null;
+  if (typeof payload.event_type !== 'string' || !isAllowedInvoiceEventType(payload.event_type)) {
+    return null;
+  }
   const sign = quantitySign(payload.event_type);
   const data = isRecord(payload.data) ? payload.data : {};
   const items = Array.isArray(data.invoice_items) ? data.invoice_items : [];

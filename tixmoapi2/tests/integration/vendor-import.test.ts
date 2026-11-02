@@ -59,6 +59,13 @@ describe('Showpass vendor import', () => {
       .send({ revision: 'current' });
     expect(disabled.status).toBe(404);
     expect(disabled.body.code).toBe('FIXTURE_CONTROL_DISABLED');
+    const disabledRead = await request(app)
+      .get(`/api/v1/organizations/${organizationId}/showpass/fixtures`)
+      .set(auth());
+    expect(disabledRead.status).toBe(404);
+    expect(disabledRead.body.code).toBe('FIXTURE_CONTROL_DISABLED');
+
+    process.env.SHOWPASS_ADAPTER = 'fixture';
 
     const invalid = await request(app)
       .post(`/api/v1/organizations/${organizationId}/showpass/connection`)
@@ -75,6 +82,10 @@ describe('Showpass vendor import', () => {
     expect(connected.status).toBe(201);
     expect(connected.body.data.keyLast4).toBe('_key');
     expect(connected.body.data.status).toBe('ACTIVE');
+    expect(connected.body.data.webhookPath).toMatch(
+      /^\/api\/v1\/vendors\/showpass\/hooks\/[0-9a-f-]{36}$/i
+    );
+    const webhookPath = connected.body.data.webhookPath as string;
     expect(connected.body.data.festivals[0].syncIntervalMinutes).toBe(5);
     expect(JSON.stringify(connected.body)).not.toContain('sp_demo_valid_key');
 
@@ -132,6 +143,13 @@ describe('Showpass vendor import', () => {
     expect(dublinRow.endDatetime && dublinRow.startDatetime).toBeTruthy();
     expect(dublinRow.endDatetime! > dublinRow.startDatetime!).toBe(true);
     expect(dublinRow.endDatetime! > new Date()).toBe(true);
+    expect(dublinRow.currency).toBe('EUR');
+    const festivalCurrency = await prisma.vendorFestivalConfig.findFirstOrThrow({
+      where: { organizationId },
+    });
+    expect(festivalCurrency.currency).toBe('CAD');
+    const mardiCurrency = await prisma.event.findUniqueOrThrow({ where: { id: mardi.id } });
+    expect(mardiCurrency.currency).toBe('CAD');
     const local = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Europe/Dublin',
       year: 'numeric',
@@ -186,6 +204,15 @@ describe('Showpass vendor import', () => {
     expect(statuses['sp-evt-1563243']).toBe('changed');
     expect(statuses['sp-evt-1543494']).toBe('existing');
 
+    const remapped = await request(app)
+      .put(`/api/v1/organizations/${organizationId}/showpass/config`)
+      .set(auth())
+      .send({
+        vendorVenueId: 'fixture',
+        ticketTypeMappings: [{ externalTicketTypeId: '4581610', tierName: 'Late Door' }],
+      });
+    expect(remapped.status).toBe(200);
+
     const beforeCount = await prisma.event.count({ where: { organizationId } });
     const synced = await request(app)
       .post(`/api/v1/organizations/${organizationId}/showpass/sync`)
@@ -200,8 +227,11 @@ describe('Showpass vendor import', () => {
     expect(updated.name).toContain('Late Show');
     expect(updated.category).toBe('festival-notes');
     expect(updated.slug).toBe(mardi.slug);
-    expect(updated.ticketTypes.filter((ticket) => ticket.name === 'Door')).toHaveLength(1);
-    expect(Number(updated.ticketTypes.find((ticket) => ticket.name === 'Door')?.price)).toBe(30);
+    expect(updated.ticketTypes.filter((ticket) => ticket.name === 'Late Door')).toHaveLength(1);
+    expect(Number(updated.ticketTypes.find((ticket) => ticket.name === 'Late Door')?.price)).toBe(
+      30
+    );
+    expect(updated.ticketTypes.filter((ticket) => ticket.name === 'Door')).toHaveLength(0);
 
     const parent = await request(app)
       .post(`/api/v1/organizations/${organizationId}/showpass/import`)
@@ -294,6 +324,7 @@ describe('Showpass vendor import', () => {
     expect(publicEvent.body.data.externalPurchaseUrl).toBe(
       'https://www.showpass.com/pumpkins-after-dark-2026-6/'
     );
+    expect(publicEvent.body.data.currency).toBe('EUR');
 
     const task = await request(app)
       .post('/api/v1/tasks')
@@ -329,40 +360,133 @@ describe('Showpass vendor import', () => {
       eventId: dublin.id,
     });
 
+    const sign = (invoiceId: string, hookSecret = secret) =>
+      createHmac('sha1', hookSecret).update(invoiceId, 'utf8').digest('hex');
+    const postHook = (body: string, hookSecret = secret, path = '/api/v1/vendors/showpass/webhook') => {
+      const invoiceId = (JSON.parse(body) as { id: string }).id;
+      return request(app)
+        .post(path)
+        .set('x-showpass-signature', sign(invoiceId, hookSecret))
+        .set('Content-Type', 'application/json')
+        .send(body);
+    };
+    const sold = () =>
+      prisma.vendorSoldCountSnapshot.findFirstOrThrow({
+        where: { eventId: mardi.id, externalTicketTypeId: '4581610' },
+      });
+
     const raw = fixture('webhooks/invoice-purchase.mardi-gras.json').toString('utf8');
-    const payload = JSON.parse(raw);
-    const signature = createHmac('sha1', secret).update(payload.id, 'utf8').digest('hex');
-    const firstHook = await request(app)
-      .post('/api/v1/vendors/showpass/webhook')
-      .set('x-showpass-signature', signature)
-      .set('Content-Type', 'application/json')
-      .send(raw);
+    type InvoiceBody = {
+      id: string;
+      event_type: string;
+      data: { invoice_items: Array<{ quantity: number }> };
+    };
+    const firstHook = await postHook(raw);
     expect(firstHook.status).toBe(200);
     expect(firstHook.body.data.duplicate).toBe(false);
-    const secondHook = await request(app)
-      .post('/api/v1/vendors/showpass/webhook')
-      .set('x-showpass-signature', signature)
-      .set('Content-Type', 'application/json')
-      .send(raw);
+    const secondHook = await postHook(raw);
     expect(secondHook.body.data.duplicate).toBe(true);
-    const afterHook = await prisma.vendorSoldCountSnapshot.findFirstOrThrow({
-      where: { eventId: mardi.id, externalTicketTypeId: '4581610' },
-    });
-    expect(afterHook.soldCount).toBe(253);
+    expect((await sold()).soldCount).toBe(253);
     const tampered = JSON.parse(raw) as {
       data: { invoice_items: Array<{ quantity: number }> };
     };
     tampered.data.invoice_items[0].quantity = 9;
-    const rejected = await request(app)
-      .post('/api/v1/vendors/showpass/webhook')
-      .set('x-showpass-signature', signature)
-      .set('Content-Type', 'application/json')
-      .send(JSON.stringify(tampered));
+    const rejected = await postHook(JSON.stringify(tampered));
     expect(rejected.status).toBe(409);
-    const afterTamper = await prisma.vendorSoldCountSnapshot.findFirstOrThrow({
-      where: { eventId: mardi.id, externalTicketTypeId: '4581610' },
+    expect(rejected.body.message).toBe(
+      'Showpass webhook quantities do not match the recorded invoice'
+    );
+    expect((await sold()).soldCount).toBe(253);
+
+    const secondInvoice = fixture('webhooks/invoice-purchase.mardi-gras-2.json').toString('utf8');
+    const routed = await postHook(secondInvoice, secret, webhookPath);
+    expect(routed.status).toBe(200);
+    expect(routed.body.data.duplicate).toBe(false);
+    expect((await sold()).soldCount).toBe(255);
+    const routedAgain = await postHook(secondInvoice);
+    expect(routedAgain.body.data.duplicate).toBe(true);
+    expect((await sold()).soldCount).toBe(255);
+    const wrongRoute = await postHook(secondInvoice, secret, `${webhookPath}nope`);
+    expect(wrongRoute.status).toBe(401);
+
+    const refund = JSON.parse(raw) as InvoiceBody;
+    refund.event_type = 'invoice.refund';
+    refund.data.invoice_items[0].quantity = 1;
+    const refunded = await postHook(JSON.stringify(refund));
+    expect(refunded.status).toBe(200);
+    expect((await sold()).soldCount).toBe(254);
+    const tooLarge = JSON.parse(JSON.stringify(refund)) as InvoiceBody;
+    tooLarge.data.invoice_items[0].quantity = 100;
+    const oversized = await postHook(JSON.stringify(tooLarge));
+    expect(oversized.status).toBe(409);
+    expect(oversized.body.message).toBe('Refund quantity exceeds the recorded purchase');
+    expect((await sold()).soldCount).toBe(254);
+    const unknownRefund = JSON.parse(JSON.stringify(refund)) as InvoiceBody;
+    unknownRefund.id = 'mg-2026-refund-without-purchase';
+    const missingPurchase = await postHook(JSON.stringify(unknownRefund));
+    expect(missingPurchase.status).toBe(409);
+    expect(missingPurchase.body.message).toBe(
+      'No recorded purchase for this invoice on this connection'
+    );
+    const otherType = JSON.parse(raw) as InvoiceBody;
+    otherType.event_type = 'invoice.transfer';
+    const rejectedType = await postHook(JSON.stringify(otherType));
+    expect(rejectedType.status).toBe(400);
+    expect(rejectedType.body.message).toBe('Showpass webhook event type is not accepted');
+    const longId = JSON.parse(raw) as InvoiceBody;
+    longId.id = 'x'.repeat(129);
+    const tooLong = await postHook(JSON.stringify(longId));
+    expect(tooLong.status).toBe(400);
+    expect(tooLong.body.message).toBe('Showpass invoice id is too long');
+    expect((await sold()).soldCount).toBe(254);
+    const voided = JSON.parse(JSON.stringify(refund)) as InvoiceBody;
+    voided.event_type = 'invoice.void';
+    voided.data.invoice_items[0].quantity = 1;
+    const voidedHook = await postHook(JSON.stringify(voided));
+    expect(voidedHook.status).toBe(200);
+    expect((await sold()).soldCount).toBe(253);
+
+    const other = await registerUser(app, {
+      email: 'vendor-import-other@example.com',
+      role: 'OWNER',
     });
-    expect(afterTamper.soldCount).toBe(253);
+    const otherOrg = await createOrganization(app, other.accessToken, {
+      name: 'Other Festival',
+      slug: 'other-festival',
+    });
+    const otherSecret = 'sp_demo_webhook_secret_b';
+    const otherConnection = await request(app)
+      .post(`/api/v1/organizations/${otherOrg.id}/showpass/connection`)
+      .set({ Authorization: `Bearer ${other.accessToken}` })
+      .send({ apiKey: 'sp_demo_valid_key', vendorVenueId: 'fixture', webhookSecret: otherSecret });
+    expect(otherConnection.status).toBe(201);
+    const crossInvoice = JSON.parse(secondInvoice) as InvoiceBody;
+    crossInvoice.id = 'mg-2026-purchase-cross-org';
+    const crossBody = JSON.stringify(crossInvoice);
+    const otherOnly = await postHook(crossBody, otherSecret);
+    expect(otherOnly.status).toBe(200);
+    expect(otherOnly.body.data.duplicate).toBe(false);
+    expect((await sold()).soldCount).toBe(253);
+    const otherReplay = await postHook(crossBody, otherSecret);
+    expect(otherReplay.body.data.duplicate).toBe(true);
+    const firstOrgCross = await postHook(crossBody, secret);
+    expect(firstOrgCross.status).toBe(200);
+    expect(firstOrgCross.body.data.duplicate).toBe(false);
+    expect((await sold()).soldCount).toBe(255);
+    const otherStillOnce = await prisma.vendorWebhookInbox.findFirst({
+      where: {
+        organizationId: otherOrg.id,
+        signedInvoiceId: 'mg-2026-purchase-cross-org',
+        eventType: 'invoice.purchase',
+        status: 'PROCESSED',
+      },
+    });
+    expect(otherStillOnce).toBeTruthy();
+    expect(
+      await prisma.vendorWebhookInbox.count({
+        where: { signedInvoiceId: 'mg-2026-purchase-cross-org', eventType: 'invoice.purchase' },
+      })
+    ).toBe(2);
     const stored = JSON.stringify(await prisma.vendorWebhookInbox.findMany());
     expect(stored).not.toContain('buyer@example.com');
     expect(stored).not.toContain('DO-NOT-STORE');
@@ -374,7 +498,38 @@ describe('Showpass vendor import', () => {
       .send({ revision: 'baseline', revokedKeys: [] });
     expect(switched.status).toBe(200);
     expect(switched.body.data).toMatchObject({ revision: 'baseline', revokedKeys: [] });
+    delete process.env.SHOWPASS_FIXTURE_REVISION;
+    const fixtureRead = await request(app)
+      .get(`/api/v1/organizations/${organizationId}/showpass/fixtures`)
+      .set(auth());
+    expect(fixtureRead.status).toBe(200);
+    expect(fixtureRead.body.data.revision).toBe('baseline');
+    expect(Array.isArray(fixtureRead.body.data.revokedKeys)).toBe(true);
     process.env.SHOWPASS_FIXTURE_REVISION = 'current';
+
+    const removed = await request(app)
+      .delete(`/api/v1/organizations/${organizationId}/showpass`)
+      .set(auth());
+    expect(removed.status).toBe(200);
+    expect(removed.body.data).toEqual({ disconnected: true });
+    const afterDelete = await request(app)
+      .get(`/api/v1/organizations/${organizationId}/showpass`)
+      .set(auth());
+    expect(afterDelete.body).toEqual({ success: true, data: null });
+    const kept = await prisma.event.findUniqueOrThrow({ where: { id: dublin.id } });
+    expect(kept.ticketingMode).toBe('EXTERNAL');
+    expect(kept.externalPurchaseUrl).toContain('showpass.com');
+    expect(await prisma.vendorWebhookInbox.count({ where: { organizationId } })).toBe(0);
+    expect(await prisma.vendorConnection.count({ where: { organizationId } })).toBe(0);
+    const reconnected = await request(app)
+      .post(`/api/v1/organizations/${organizationId}/showpass/connection`)
+      .set(auth())
+      .send({ apiKey: 'sp_demo_valid_key', vendorVenueId: 'fixture', webhookSecret: secret });
+    expect(reconnected.status).toBe(201);
+    expect(reconnected.body.data.webhookPath).toMatch(
+      /^\/api\/v1\/vendors\/showpass\/hooks\/[0-9a-f-]{36}$/i
+    );
+    expect(reconnected.body.data.webhookPath).not.toBe(webhookPath);
 
     process.env.SHOWPASS_FIXTURE_REVOKED_KEYS = 'sp_demo_valid_key';
     const failed = await request(app)

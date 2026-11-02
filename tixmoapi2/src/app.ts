@@ -94,12 +94,21 @@ app.use(
   '/api/v1/vendors/showpass/webhook',
   express.raw({ type: 'application/json', limit: '1mb' })
 );
+app.use(
+  '/api/v1/vendors/showpass/hooks',
+  express.raw({ type: 'application/json', limit: '1mb' })
+);
 
 const rawWebhookPaths = new Set(['/api/v1/payments/webhook', '/api/v1/vendors/showpass/webhook']);
 
+const keepsRawBody = (url: string) => {
+  const pathOnly = url.split('?')[0];
+  return rawWebhookPaths.has(pathOnly) || pathOnly.startsWith('/api/v1/vendors/showpass/hooks/');
+};
+
 // Body parsing middleware
 app.use((req, res, next) => {
-  if (rawWebhookPaths.has(req.originalUrl.split('?')[0])) {
+  if (keepsRawBody(req.originalUrl)) {
     return next();
   }
   return express.json({ limit: '10mb' })(req, res, next);

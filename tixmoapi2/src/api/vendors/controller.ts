@@ -4,7 +4,7 @@ import { successResponse } from '../../utils/response';
 import { AuthRequest } from '../../middleware/auth';
 import { getActorScope, requireOrganizationId } from '../../utils/tenantScope';
 import { vendorImportService } from '../../services/vendors/import-service';
-import { updateFixtureRuntime } from '../../services/vendors/fixture-runtime';
+import { readFixtureControl, updateFixtureRuntime } from '../../services/vendors/fixture-runtime';
 import { receiveShowpassWebhook } from '../../services/vendors/webhook-inbox';
 
 const organizationIdFrom = async (req: AuthRequest) => {
@@ -74,6 +74,16 @@ export const soldCounts = catchAsync(async (req: AuthRequest, res: Response) => 
   res.json(successResponse(await vendorImportService.listSoldCounts(organizationId, eventId)));
 });
 
+export const disconnect = catchAsync(async (req: AuthRequest, res: Response) => {
+  const organizationId = await organizationIdFrom(req);
+  res.json(successResponse(await vendorImportService.disconnect(organizationId)));
+});
+
+export const showFixtures = catchAsync(async (req: AuthRequest, res: Response) => {
+  await organizationIdFrom(req);
+  res.json(successResponse(await readFixtureControl()));
+});
+
 export const updateFixtures = catchAsync(async (req: AuthRequest, res: Response) => {
   await organizationIdFrom(req);
   const body = req.body as { revision?: 'baseline' | 'current'; revokedKeys?: string[] };
@@ -81,6 +91,9 @@ export const updateFixtures = catchAsync(async (req: AuthRequest, res: Response)
 });
 
 export const webhook = catchAsync(async (req: AuthRequest, res: Response) => {
-  const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body ?? {}));
-  res.json(successResponse(await receiveShowpassWebhook(raw, req.headers)));
+  const raw = Buffer.isBuffer(req.body)
+    ? req.body
+    : Buffer.from(typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {}));
+  const token = typeof req.params.token === 'string' && req.params.token ? req.params.token : undefined;
+  res.json(successResponse(await receiveShowpassWebhook(raw, req.headers, token)));
 });

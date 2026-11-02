@@ -787,6 +787,7 @@ export class EventService {
           metadata: event.metadata as any,
           ticketingMode: event.ticketingMode,
           externalPurchaseUrl: event.externalPurchaseUrl,
+          currency: event.currency,
         },
       });
 

@@ -209,6 +209,7 @@ model Event {
   salesControls EventSalesControl[]
   ticketingMode TicketingMode @default(TIXMO) @map("ticketing_mode")
   externalPurchaseUrl String? @map("external_purchase_url") @db.Text
+  currency String @default("CAD")
 
   // Relations
   ticketTypes      TicketType[]
@@ -1053,6 +1054,7 @@ model VendorConnection {
   keyCiphertext            String                 @map("key_ciphertext") @db.Text
   keyLast4                 String                 @map("key_last4")
   webhookSecretCiphertext  String?                @map("webhook_secret_ciphertext") @db.Text
+  webhookRouteToken        String                 @unique @default(uuid()) @map("webhook_route_token")
   lastSyncAt               DateTime?              @map("last_sync_at")
   lastError                String?                @map("last_error") @db.Text
   lastErrorAt              DateTime?              @map("last_error_at")
@@ -1127,6 +1129,8 @@ model VendorWebhookInbox {
   id                   String              @id
   provider             VendorProvider
   organizationId       String?             @map("organization_id")
+  connectionId         String?             @map("connection_id")
+  countDeltas          Json?               @map("count_deltas")
   signedInvoiceId      String?             @map("signed_invoice_id")
   eventType            String?             @map("event_type")
   payloadFingerprint   String?             @map("payload_fingerprint")
@@ -1140,7 +1144,7 @@ model VendorWebhookInbox {
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
 
-  @@unique([provider, signedInvoiceId, eventType])
+  @@unique([connectionId, signedInvoiceId, eventType])
   @@index([status, processingStartedAt])
   @@map("vendor_webhook_inbox")
 }

@@ -26,7 +26,7 @@ export class LiveShowpassAdapter implements VendorTicketingAdapter {
 
   private disabled(): never {
     throw new Error(
-      'Live Showpass adapter is not enabled. Leave SHOWPASS_ADAPTER unset or set it to fixture.'
+      'Live Showpass adapter is not enabled. Set SHOWPASS_ADAPTER=fixture for the fixture catalog.'
     );
   }
 

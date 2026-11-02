@@ -10,7 +10,11 @@ import {
 } from '../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../lib/dashboardTheme';
 
-const unwrap = (response) => response?.data?.data ?? response?.data;
+const unwrap = (response) => {
+    const body = response?.data;
+    if (body && typeof body === 'object' && 'data' in body) return body.data;
+    return body ?? null;
+};
 
 const IntegrationsView = ({ isDark, user }) => {
     const theme = getDashboardTheme(isDark);
@@ -143,6 +147,24 @@ const IntegrationsView = ({ isDark, user }) => {
         }
     };
 
+    const disconnect = async () => {
+        setBusy(true);
+        setError('');
+        setNotice('');
+        try {
+            await api.delete(`/organizations/${organizationId}/showpass`);
+            setConnection(null);
+            setPreview([]);
+            setSoldCounts([]);
+            setWebhookSecret('');
+            setNotice('Showpass disconnected. Imported events stay on Tixmo.');
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || 'Unable to disconnect Showpass.');
+        } finally {
+            setBusy(false);
+        }
+    };
+
     const failed = connection?.status === 'REVOKED' || connection?.status === 'ERROR';
 
     return (
@@ -167,7 +189,7 @@ const IntegrationsView = ({ isDark, user }) => {
                     {notice && <p role="status">{notice}</p>}
                     <DashboardSurface isDark={isDark} className="space-y-4 p-5 sm:p-6">
                         <h2 className="text-xl font-light">Showpass connection</h2>
-                        {connection ? (
+                        {connection?.id ? (
                             <p>
                                 Connected. Key ending {connection.keyLast4}. Status {connection.status}.
                                 {connection.lastSyncAt ? ` Last sync ${new Date(connection.lastSyncAt).toLocaleString()}.` : ''}
@@ -186,6 +208,9 @@ const IntegrationsView = ({ isDark, user }) => {
                                 <DashboardTextInput isDark={isDark} type="password" autoComplete="off" aria-label="Showpass webhook secret" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} />
                             </label>
                             <DashboardButton isDark={isDark} type="submit" disabled={busy}>Save Showpass key</DashboardButton>
+                            {connection?.id && (
+                                <DashboardButton isDark={isDark} variant="secondary" type="button" disabled={busy} onClick={disconnect}>Disconnect</DashboardButton>
+                            )}
                         </form>
                     </DashboardSurface>
                     {connection && (

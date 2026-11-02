@@ -16,6 +16,7 @@ import {
   countInvoice,
 } from '../../src/services/vendors/invoice-counts';
 import { shiftIsoPreservingLocalTime } from '../../src/services/vendors/fixture-clock';
+import { createVendorAdapter } from '../../src/services/vendors/registry';
 import { FixtureShowpassAdapter } from '../../src/services/vendors/showpass-fixture';
 import { showpassSignature } from '../../src/services/vendors/showpass-signature';
 import { VendorAuthError } from '../../src/services/vendors/types';
@@ -213,6 +214,8 @@ describe('showpass fixture adapter', () => {
     ]);
     const counted = countInvoice(payload);
     expect(counted && countedInvoiceHasBuyerData(counted)).toBe(false);
+    const rejectedType = { ...payload, event_type: 'invoice.transfer' };
+    expect(countInvoice(rejectedType)).toBeNull();
     expect(JSON.stringify(verified)).not.toContain('example@showpass.com');
     expect(JSON.stringify(verified)).not.toContain('5GHOEEHUG');
     expect(() =>
@@ -222,6 +225,21 @@ describe('showpass fixture adapter', () => {
         secret,
       })
     ).toThrow('Invalid webhook signature');
+  });
+});
+
+describe('showpass adapter selection', () => {
+  it('requires SHOWPASS_ADAPTER to be fixture or live', () => {
+    const previous = process.env.SHOWPASS_ADAPTER;
+    delete process.env.SHOWPASS_ADAPTER;
+    try {
+      expect(() =>
+        createVendorAdapter({ provider: 'showpass', apiKey: 'sp_demo_valid_key', venueId: 'fixture' })
+      ).toThrow('SHOWPASS_ADAPTER must be set to fixture or live');
+    } finally {
+      if (previous === undefined) delete process.env.SHOWPASS_ADAPTER;
+      else process.env.SHOWPASS_ADAPTER = previous;
+    }
   });
 });
 

@@ -1,3 +1,4 @@
+import { ApiError } from '../../utils/ApiError';
 import { FixtureShowpassAdapter } from './showpass-fixture';
 import { LiveShowpassAdapter } from './showpass-live';
 import { VendorTicketingAdapter } from './types';
@@ -14,8 +15,12 @@ export const createVendorAdapter = (request: AdapterRequest): VendorTicketingAda
     throw new Error('Tixr adapter is not part of this release');
   }
   const secret = request.webhookSecret || '';
-  if (process.env.SHOWPASS_ADAPTER === 'live') {
+  const adapter = process.env.SHOWPASS_ADAPTER?.trim();
+  if (adapter === 'live') {
     return new LiveShowpassAdapter(request.apiKey, request.venueId, secret);
   }
-  return new FixtureShowpassAdapter(request.apiKey, request.venueId, secret);
+  if (adapter === 'fixture') {
+    return new FixtureShowpassAdapter(request.apiKey, request.venueId, secret);
+  }
+  throw new ApiError(503, 'SHOWPASS_ADAPTER must be set to fixture or live');
 };

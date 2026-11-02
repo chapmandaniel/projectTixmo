@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import IntegrationsView from '../features/IntegrationsView';
 
-const mocks = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn() }));
+const mocks = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() }));
 vi.mock('../lib/api', () => ({ default: mocks }));
 
 const owner = { id: 'owner', role: 'OWNER', organizationId: 'org-1' };
@@ -15,6 +15,25 @@ describe('Showpass integrations', () => {
         mocks.get.mockResolvedValue(wrapped(null));
         mocks.post.mockResolvedValue(wrapped({}));
         mocks.put.mockResolvedValue(wrapped({ ticketTypeMappings: [] }));
+        mocks.delete.mockResolvedValue(wrapped({ disconnected: true }));
+    });
+
+    it('shows the connect form when no Showpass key is stored', async () => {
+        mocks.get.mockResolvedValue({ data: { success: true, data: null } });
+        render(<IntegrationsView isDark user={owner} />);
+        expect(await screen.findByText('No Showpass key saved yet.')).toBeInTheDocument();
+        expect(screen.getByLabelText('Showpass API key')).toBeInTheDocument();
+        expect(screen.queryByText(/Connected\. Key ending/)).not.toBeInTheDocument();
+    });
+
+    it('disconnects and clears the saved connection', async () => {
+        mocks.get.mockResolvedValue(wrapped({ id: 'conn', status: 'ACTIVE', keyLast4: 'lkey', lastError: null }));
+        render(<IntegrationsView isDark user={owner} />);
+        await screen.findByText(/Key ending lkey/);
+        fireEvent.click(screen.getByRole('button', { name: 'Disconnect' }));
+        expect(await screen.findByText('No Showpass key saved yet.')).toBeInTheDocument();
+        expect(mocks.delete).toHaveBeenCalledWith('/organizations/org-1/showpass');
+        expect(screen.queryByText(/Connected\. Key ending/)).not.toBeInTheDocument();
     });
 
     it('shows a clear error when the Showpass key is rejected', async () => {

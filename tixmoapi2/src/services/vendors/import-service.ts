@@ -71,6 +71,7 @@ const publicConnection = (connection: {
   provider: VendorProvider;
   status: string;
   keyLast4: string;
+  webhookRouteToken: string;
   lastSyncAt: Date | null;
   lastError: string | null;
   lastErrorAt: Date | null;
@@ -89,6 +90,7 @@ const publicConnection = (connection: {
   provider: connection.provider,
   status: connection.status,
   keyLast4: connection.keyLast4,
+  webhookPath: `/api/v1/vendors/showpass/hooks/${connection.webhookRouteToken}`,
   lastSyncAt: connection.lastSyncAt,
   lastError: connection.lastError,
   lastErrorAt: connection.lastErrorAt,
@@ -233,6 +235,7 @@ const applyTicketTypes = async (
     await db.ticketType.update({
       where: { id: current.id },
       data: {
+        ...(mapped ? { name: tierName } : {}),
         ...(owned.includes('ticketTypePrice') ? { price: new Decimal(ticket.price) } : {}),
         metadata,
       },
@@ -253,6 +256,7 @@ const vendorFieldData = (event: VendorEventRecord, owned: string[]) => {
     data.images = { main: event.image, banner: event.imageBanner };
   }
   if (owned.includes('externalPurchaseUrl')) data.externalPurchaseUrl = purchaseUrl(event);
+  if (event.currency) data.currency = event.currency.toUpperCase();
   return data;
 };
 
@@ -269,6 +273,7 @@ const createFieldData = (event: VendorEventRecord) => {
       typeof fields.externalPurchaseUrl === 'string'
         ? fields.externalPurchaseUrl
         : purchaseUrl(event),
+    currency: event.currency ? event.currency.toUpperCase() : 'CAD',
   };
 };
 
@@ -603,7 +608,7 @@ export class VendorImportService {
       }
       await tx.vendorFestivalConfig.update({
         where: { id: config.id },
-        data: { ticketTypeMappings: merged, currency: selected[0]?.currency || config.currency },
+        data: { ticketTypeMappings: merged },
       });
       return written;
     });
@@ -684,6 +689,28 @@ export class VendorImportService {
       }
     }
     return rows;
+  }
+
+  async disconnect(organizationId: string) {
+    const connections = await prisma.vendorConnection.findMany({
+      where: { organizationId, provider: 'SHOWPASS' },
+      select: { id: true },
+    });
+    const connectionIds = connections.map((connection) => connection.id);
+    if (connectionIds.length) {
+      await prisma.vendorWebhookInbox.deleteMany({
+        where: { OR: [{ connectionId: { in: connectionIds } }, { organizationId }] },
+      });
+    } else {
+      await prisma.vendorWebhookInbox.deleteMany({ where: { organizationId } });
+    }
+    await prisma.vendorFestivalConfig.deleteMany({
+      where: { organizationId, provider: 'SHOWPASS' },
+    });
+    await prisma.vendorConnection.deleteMany({
+      where: { organizationId, provider: 'SHOWPASS' },
+    });
+    return { disconnected: true };
   }
 
   async syncOrganization(organizationId: string) {

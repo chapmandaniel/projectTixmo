@@ -93,6 +93,15 @@ export const resolveFixtureControl = async (): Promise<FixtureControl> => {
   return { revision, revokedKeys, shiftDays };
 };
 
+export const readFixtureControl = async (): Promise<FixtureControl> => {
+  if (process.env.SHOWPASS_ADAPTER !== 'fixture') {
+    const error = new ApiError(404, 'Showpass fixture control is disabled');
+    error.code = 'FIXTURE_CONTROL_DISABLED';
+    throw error;
+  }
+  return resolveFixtureControl();
+};
+
 export const updateFixtureRuntime = async (input: {
   revision?: string;
   revokedKeys?: string[];
