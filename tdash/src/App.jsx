@@ -2,6 +2,7 @@ import { clearResetIntent } from './lib/buyerRecovery';
 import React, { Suspense, lazy, useState, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate, matchPath } from 'react-router-dom';
 import { auth } from './lib/auth';
+import { isGiveawayProtectionEnabled } from './lib/runtimeConfig';
 import {
     ACCESS_TOKEN_KEY,
     clearStoredSession,
@@ -37,6 +38,7 @@ const OrdersView = lazy(() => import('./features/OrdersView'));
 const DevDashboard = lazy(() => import('./features/DevDashboard'));
 const ScannersView = lazy(() => import('./features/ScannersView'));
 const StaffActionsView = lazy(() => import('./features/StaffActionsView'));
+const BrandProtectionView = lazy(() => import('./features/BrandProtectionView'));
 // Busy feedback must be immediately available without suspending the retained form.
 import WaitingRoomView from './features/WaitingRoomView';
 const ExternalReviewPage = lazy(() => import('./pages/ExternalReviewPage'));
@@ -110,6 +112,9 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         <Route path="/marketing" element={<DashboardPlaceholderView isDark={isDark} title="Marketing Hub" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/scanners" element={<ScannersView isDark={isDark} user={user} />} />
                         <Route path="/staff-actions" element={<StaffActionsView isDark={isDark} user={user} />} />
+                        {isGiveawayProtectionEnabled() ? (
+                            <Route path="/brand-protection" element={<BrandProtectionView isDark={isDark} user={user} />} />
+                        ) : null}
                         <Route path="/promo" element={<Navigate to="/dashboard" replace />} />
 
                         {/* Fallback to dashboard */}

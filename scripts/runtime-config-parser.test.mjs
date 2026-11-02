@@ -11,6 +11,7 @@ import { parseRuntimeConfig } from './runtime-config-parser.mjs';
 test('accepts generated wrappers, static assignments, and escaped string data', () => {
   assert.deepEqual(parseRuntimeConfig('window.__TIXMO_CONFIG__ = window.__TIXMO_CONFIG__ || {};'), {});
   assert.deepEqual(parseRuntimeConfig('window.__TIXMO_CONFIG__ = Object.assign({}, window.__TIXMO_CONFIG__, {apiUrl:"/api/v1",paymentCurrency:"cad"});'), { apiUrl: '/api/v1', paymentCurrency: 'cad' });
+  assert.equal(parseRuntimeConfig('window.__TIXMO_CONFIG__={apiUrl:"/api/v1",giveawayProtection:"false"};').giveawayProtection, 'false');
   assert.deepEqual(parseRuntimeConfig("window.__TIXMO_CONFIG__ = {'apiUrl':'\\u002fapi\\/v1',paymentCurrency:'cad',};"), { apiUrl: '/api/v1', paymentCurrency: 'cad' });
   assert.equal(parseRuntimeConfig('window.__TIXMO_CONFIG__={apiUrl:"window.constructor.constructor(\\\"return process.version\\\")()"};').apiUrl,
     'window.constructor.constructor("return process.version")()');

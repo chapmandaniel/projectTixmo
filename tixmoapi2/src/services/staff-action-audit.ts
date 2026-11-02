@@ -12,9 +12,21 @@ export type StaffActionName =
   | 'EVENT_CANCEL'
   | 'EVENT_STATUS'
   | 'STAFF_PII_VIEW'
-  | 'CHECK_IN';
+  | 'CHECK_IN'
+  | 'OFFICIAL_ACCOUNT_VERIFY'
+  | 'OFFICIAL_ACCOUNT_DISPUTE'
+  | 'OFFICIAL_ACCOUNT_RESOLVE'
+  | 'OFFICIAL_ACCOUNT_REVOKE'
+  | 'CHECKER_TOKEN_ISSUE'
+  | 'CHECKER_TOKEN_REVOKE';
 
-export type StaffSubjectType = 'SCANNER' | 'EVENT' | 'TICKET' | 'ORDER';
+export type StaffSubjectType =
+  | 'SCANNER'
+  | 'EVENT'
+  | 'TICKET'
+  | 'ORDER'
+  | 'OFFICIAL_ACCOUNT'
+  | 'CHECKER_TOKEN';
 
 export const staffReason = (value: unknown): string => {
   const reason = typeof value === 'string' ? value.trim() : '';

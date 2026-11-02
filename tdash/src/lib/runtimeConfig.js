@@ -39,3 +39,10 @@ export const getPaymentCurrency = () => (
 );
 
 export const orderDisplayCurrency = (currency) => normalizeCurrency(currency) || getPaymentCurrency();
+
+// Default off. Runtime config wins over the build-time Vite flag.
+export const isGiveawayProtectionEnabled = () => {
+    const runtime = getRuntimeConfigValue('giveawayProtection');
+    if (runtime) return runtime === 'true';
+    return import.meta.env.VITE_FEATURE_GIVEAWAY_PROTECTION === 'true';
+};

@@ -1,0 +1,77 @@
+import { createHash } from 'crypto';
+import { NextFunction, Response } from 'express';
+import prisma from '../../config/prisma';
+import { isGiveawayProtectionEnabled } from '../../config/environment';
+import { AuthRequest } from '../../middleware/auth';
+import { ApiError } from '../../utils/ApiError';
+import { CHECKER_TOKEN_PREFIX } from './constants';
+
+const INGEST_PATHS = new Set([
+  '/brand-protection/ingest/matches',
+  '/brand-protection/ingest/status',
+  '/brand-protection/ingest/verifications',
+]);
+
+const bearerToken = (req: AuthRequest): string | undefined => {
+  const value = req.get('authorization');
+  if (!value) return undefined;
+  const token = value.startsWith('Bearer ') ? value.slice(7).trim() : value.trim();
+  if (!token.startsWith(CHECKER_TOKEN_PREFIX) || token.length > 200) return undefined;
+  return token;
+};
+
+const requestPath = (req: AuthRequest): string => req.originalUrl.split('?')[0].replace(/\/+$/, '');
+
+const isBrandPath = (req: AuthRequest): boolean => requestPath(req).includes('/brand-protection');
+
+const isAllowedIngest = (req: AuthRequest): boolean => {
+  if (req.method !== 'POST') return false;
+  const path = requestPath(req);
+  for (const suffix of INGEST_PATHS) {
+    if (path.endsWith(suffix)) return true;
+  }
+  return false;
+};
+
+export const hashCheckerToken = (token: string): string =>
+  createHash('sha256').update(token).digest('hex');
+
+/**
+ * Checker tokens are write-only. A recognized token cannot pass this guard
+ * except on the ingest writes, and only while the feature flag is on.
+ * Unknown bearers fall through to ordinary session auth.
+ */
+export const guardCheckerToken = async (req: AuthRequest, _res: Response, next: NextFunction) => {
+  try {
+    const token = bearerToken(req);
+    if (!token) return next();
+
+    const row = await prisma.giveawayCheckerToken.findUnique({
+      where: { tokenHash: hashCheckerToken(token) },
+    });
+    if (!row) return next();
+
+    if (!isGiveawayProtectionEnabled()) {
+      if (isBrandPath(req)) return next(ApiError.notFound('Route not found'));
+      return next(ApiError.forbidden('Checker token cannot access this route'));
+    }
+    if (!isAllowedIngest(req)) {
+      return next(ApiError.forbidden('Checker token cannot access this route'));
+    }
+    if (row.revokedAt) return next(ApiError.unauthorized('Checker token revoked'));
+
+    await prisma.giveawayCheckerToken.update({
+      where: { id: row.id },
+      data: { lastUsedAt: new Date() },
+    });
+    req.checkerTokenId = row.id;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const requireCheckerToken = (req: AuthRequest, _res: Response, next: NextFunction) => {
+  if (!req.checkerTokenId) return next(ApiError.unauthorized('Checker token required'));
+  return next();
+};

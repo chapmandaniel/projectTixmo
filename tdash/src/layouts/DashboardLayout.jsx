@@ -2,15 +2,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     Home, Calendar, BarChart3, Bell,
     Users, CheckSquare, Sun, Moon,
-    Settings, LogOut, CheckCircle, User, Image, ClipboardList
+    Settings, LogOut, CheckCircle, User, Image, ClipboardList, Shield
 } from 'lucide-react';
 
 import api from '../lib/api';
+import { isGiveawayProtectionEnabled } from '../lib/runtimeConfig';
 import { Link } from 'react-router-dom';
 import { DashboardIconButton } from '../components/dashboard/DashboardPrimitives';
 import { cn } from '../lib/utils';
 
-const navItems = [
+const baseNavItems = [
     { id: 'dashboard', icon: Home, label: 'Home' },
     { id: 'events', icon: Calendar, label: 'Events' },
     { id: 'todo', icon: CheckSquare, label: 'Tasks' },
@@ -21,6 +22,14 @@ const navItems = [
     { id: 'settings', icon: Settings, label: 'Settings' },
     { id: 'staff-actions', icon: ClipboardList, label: 'Audit', roles: ['OWNER', 'ADMIN'] },
 ];
+
+const navigationItems = () => {
+    if (!isGiveawayProtectionEnabled()) return baseNavItems;
+    const items = [...baseNavItems];
+    const analyticsIndex = items.findIndex((item) => item.id === 'analytics');
+    items.splice(analyticsIndex, 0, { id: 'brand-protection', icon: Shield, label: 'Brand protection' });
+    return items;
+};
 
 const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
 
@@ -56,6 +65,7 @@ const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
 };
 
 const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme, user, onLogout }) => {
+    const navItems = navigationItems();
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);

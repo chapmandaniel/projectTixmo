@@ -23,11 +23,16 @@ import approvalRoutes from './approvals/routes';
 import reviewRoutes from './review/routes';
 import assetRoutes from './assets/routes';
 import staffActionRoutes from './staff-actions/routes';
+import brandProtectionRoutes from './brand-protection/routes';
+import { guardCheckerToken } from './brand-protection/checkerGuard';
 
 const router = Router();
 
 // Version prefix
 const versionRouter = Router();
+
+// A checker token is rejected here before any other route can treat it as a session.
+versionRouter.use(guardCheckerToken);
 
 // Health check for API
 versionRouter.get('/health', (_req, res) => {
@@ -63,6 +68,7 @@ versionRouter.use('/approvals', approvalRoutes);
 versionRouter.use('/assets', assetRoutes);
 versionRouter.use('/review', reviewRoutes);
 versionRouter.use('/staff-actions', staffActionRoutes);
+versionRouter.use('/brand-protection', brandProtectionRoutes);
 
 // Mount versioned routes
 router.use(`/${config.apiVersion}`, versionRouter);

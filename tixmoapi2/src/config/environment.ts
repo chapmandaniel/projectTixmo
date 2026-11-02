@@ -306,6 +306,11 @@ export const config = {
   adminEmail,
 } as const;
 
+// Read on each request so a default-off flag stays off until the process
+// environment explicitly sets FEATURE_GIVEAWAY_PROTECTION=true.
+export const isGiveawayProtectionEnabled = (): boolean =>
+  process.env.FEATURE_GIVEAWAY_PROTECTION === 'true';
+
 // Validate required environment variables
 const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'SESSION_SECRET'];
 

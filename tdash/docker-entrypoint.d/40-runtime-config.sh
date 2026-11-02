@@ -16,6 +16,10 @@ if [ -z "${VITE_PAYMENT_CURRENCY:-}" ]; then
   printf '%s\n' 'VITE_PAYMENT_CURRENCY is not set; using cad. Refusing the database default of usd.' >&2
 fi
 payment_currency=$(printf '%s' "${VITE_PAYMENT_CURRENCY:-cad}" | tr '[:upper:]' '[:lower:]')
+giveaway_protection=false
+if [ "${VITE_FEATURE_GIVEAWAY_PROTECTION:-}" = "true" ]; then
+  giveaway_protection=true
+fi
 
 escaped_api_url=$(printf '%s' "$api_url" | sed 's/\\/\\\\/g; s/"/\\"/g')
 escaped_privacy_policy_url=$(printf '%s' "$privacy_policy_url" | sed 's/\\/\\\\/g; s/"/\\"/g')
@@ -43,6 +47,7 @@ window.__TIXMO_CONFIG__ = Object.assign({}, window.__TIXMO_CONFIG__, {
   supportEmail: "${escaped_support_email}",
   hstNumber: "${escaped_hst_number}",
   mailingAddress: "${escaped_mailing_address}",
-  venuePolicyUrl: "${escaped_venue_policy_url}"
+  venuePolicyUrl: "${escaped_venue_policy_url}",
+  giveawayProtection: "${giveaway_protection}"
 });
 EOF

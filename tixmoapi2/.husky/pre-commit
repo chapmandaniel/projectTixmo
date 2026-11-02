@@ -1,5 +1,9 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Git runs hooks from the repository root. Lint from the API package so
+# eslint resolves tixmoapi2/tsconfig.eslint.json.
+cd "$(dirname "$0")/.." || exit 1
+
 # Run lint-staged only to keep commits fast. Typecheck + tests run in pre-push and CI.
 npx lint-staged
