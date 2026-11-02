@@ -84,7 +84,13 @@ Run these in the API container, in this order. `npm run db:seed` is a no-op (`pr
 
 1. `npm run migrate` (`prisma migrate deploy`). The image start script also migrates before listen. Run it yourself before bootstrap so the owner tables exist.
 2. `npm run db:bootstrap` with `BOOTSTRAP_ALLOW_PRODUCTION=true` in production, plus `BOOTSTRAP_OWNER_EMAIL`, `BOOTSTRAP_OWNER_PASSWORD` (12+ characters with upper, lower, digit, and symbol), `BOOTSTRAP_OWNER_FIRST_NAME`, `BOOTSTRAP_OWNER_LAST_NAME`, `BOOTSTRAP_ORGANIZATION_NAME`, `BOOTSTRAP_ORGANIZATION_SLUG`. Bootstrap refuses a second owner. It does not print the password.
-3. `npm run db:seed:showpass` (`node dist/scripts/seed-showpass.js`). Build the image first so `dist/scripts/seed-showpass.js` exists. Requires `VENDOR_CREDENTIAL_KEY`, `SHOWPASS_SEED_ALLOW=sandbox`, and `SHOWPASS_ADAPTER` not set to `live`. The seed sets `fixture` for its own process. It refuses `NODE_ENV=production`, `APP_ENV=production`, and a `RAILWAY_ENVIRONMENT_NAME` other than `sandbox`, `development`, or `dev`. An unset Railway name is allowed for a local run. `connected` mode calls `connectRedis()` before the sold-count sync. Either mode disconnects Redis and Prisma and exits.
+3. Seed Showpass only on the Railway environment whose name is exactly `vendor-sandbox`. The production image sets `ENV NODE_ENV=production` in `tixmoapi2/Dockerfile`, so `npm run db:seed:showpass` inside that image inherits production and the seed exits before it connects. Do not change `NODE_ENV` for the API process. Run this one-off command in the API container. It overrides `NODE_ENV` for that process only:
+
+```bash
+NODE_ENV=development SHOWPASS_SEED_ALLOW=sandbox node dist/scripts/seed-showpass.js
+```
+
+`RAILWAY_ENVIRONMENT_NAME` must already be exactly `vendor-sandbox` (also allowed, exact match after trim and lowercasing: `sandbox`, `development`, `dev`). `production` and `vendor-sandbox-prod` are refused. `APP_ENV=production` is refused even when this command sets `NODE_ENV=development`. Leave `APP_ENV` unset for the command, or set it to something other than `production`. The seed still requires `VENDOR_CREDENTIAL_KEY` and `SHOWPASS_ADAPTER` not set to `live`. It sets `fixture` for its own process. Build the image first so `dist/scripts/seed-showpass.js` exists. An unset Railway name is allowed for a local run that is not production. `connected` mode calls `connectRedis()` before the sold-count sync. Either mode disconnects Redis and Prisma and exits.
 
 Default mode is `fresh-org`: organization `fixture-festival` is not connected and nothing is imported. `SHOWPASS_SEED_MODE=connected` (or `--connected`) connects and imports on that same QA organization, not on a bootstrapped owner organization. The QA login password is never printed. A bootstrapped owner stays a separate organization. If an owner already exists, the QA user is `ADMIN` on `fixture-festival`.
 

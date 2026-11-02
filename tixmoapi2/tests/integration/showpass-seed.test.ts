@@ -131,5 +131,61 @@ describe('compiled Showpass fixture seed', () => {
     const railway = await runSeed({ ...baseEnv(), RAILWAY_ENVIRONMENT_NAME: 'production' });
     expect(railway.code).not.toBe(0);
     expect(railway.stderr).toContain('Railway environment');
+
+    const prefixed = await runSeed({
+      ...baseEnv(),
+      NODE_ENV: 'development',
+      SHOWPASS_SEED_ALLOW: 'sandbox',
+      RAILWAY_ENVIRONMENT_NAME: 'vendor-sandbox-prod',
+    });
+    expect(prefixed.code).not.toBe(0);
+    expect(prefixed.stderr).toContain('Railway environment');
+
+    const appProduction = await runSeed({
+      ...baseEnv(),
+      NODE_ENV: 'development',
+      APP_ENV: 'production',
+      SHOWPASS_SEED_ALLOW: 'sandbox',
+      RAILWAY_ENVIRONMENT_NAME: 'vendor-sandbox',
+    });
+    expect(appProduction.code).not.toBe(0);
+    expect(appProduction.stderr).toContain('production');
+
+    const imageNodeEnv = await runSeed({
+      ...baseEnv(),
+      NODE_ENV: 'production',
+      SHOWPASS_SEED_ALLOW: 'sandbox',
+      RAILWAY_ENVIRONMENT_NAME: 'vendor-sandbox',
+    });
+    expect(imageNodeEnv.code).not.toBe(0);
+    expect(imageNodeEnv.stderr).toContain('production');
+  }, 40_000);
+
+  it('accepts the vendor-sandbox Railway name with NODE_ENV=development', async () => {
+    const dir = path.join(root, 'tmp/showpass-seed-vendor-sandbox');
+    rmSync(dir, { recursive: true, force: true });
+    mkdirSync(dir, { recursive: true });
+    const passwordFile = path.join(dir, 'organizer.password');
+    const result = await runSeed({
+      ...baseEnv(),
+      NODE_ENV: 'development',
+      APP_ENV: 'test',
+      SHOWPASS_SEED_ALLOW: 'sandbox',
+      RAILWAY_ENVIRONMENT_NAME: 'vendor-sandbox',
+      SHOWPASS_QA_SCANNER_KEY_FILE: path.join(dir, 'scanner.key'),
+      SHOWPASS_QA_WEBHOOK_SECRET_FILE: path.join(dir, 'webhook.secret'),
+      SHOWPASS_QA_PASSWORD_FILE: passwordFile,
+    });
+    expect(result.code).toBe(0);
+    expect(result.stderr).not.toContain('Railway environment');
+    const password = readFileSync(passwordFile, 'utf8').trim();
+    expect(result.stdout).not.toContain(password);
+    const reportLine = result.stdout
+      .trim()
+      .split('\n')
+      .reverse()
+      .find((line) => line.startsWith('{'));
+    const report = JSON.parse(reportLine || '{}') as { mode?: string };
+    expect(report.mode).toBe('fresh-org');
   }, 40_000);
 });
