@@ -43,6 +43,7 @@ export async function cleanupDatabase(prisma: PrismaClient) {
     prisma.paymentRefund.deleteMany(),
     prisma.paymentWebhookEvent.deleteMany(),
     prisma.ticket.deleteMany(),
+    prisma.orderIdempotencyKey.deleteMany(),
     prisma.order.deleteMany(),
 
     // Promo codes

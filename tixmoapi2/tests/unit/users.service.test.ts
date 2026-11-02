@@ -2,6 +2,7 @@ import { UserService } from '../../src/api/users/service';
 import prisma from '../../src/config/prisma';
 import { transporter } from '../../src/config/email';
 import { userInvitationEmail } from '../../src/utils/emailTemplates';
+import { STAFF_INVITATION_TTL_MS } from '../../src/utils/staffInvitation';
 
 // Mock Prisma
 jest.mock('../../src/config/prisma', () => ({
@@ -103,10 +104,16 @@ describe('UserService Security', () => {
     expect(randomSpy).not.toHaveBeenCalled();
 
     expect(userInvitationEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ password: undefined })
+      expect.objectContaining({ setPassword: true })
     );
     const callArgs = (userInvitationEmail as jest.Mock).mock.calls[0][0];
+    expect(callArgs).not.toHaveProperty('password');
     expect(callArgs.loginUrl).toMatch(/\/invite#[a-f0-9]{64}$/);
+    const expiresAt = (prisma.staffInvitation.create as jest.Mock).mock.calls[0][0].data
+      .expiresAt as Date;
+    expect(Math.abs(expiresAt.getTime() - (Date.now() + STAFF_INVITATION_TTL_MS))).toBeLessThan(
+      5000
+    );
     expect(prisma.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ disabledAt: expect.any(Date) }),
@@ -156,6 +163,7 @@ describe('UserService Security', () => {
 
     expect(userInvitationEmail).toHaveBeenCalledWith(
       expect.objectContaining({
+        setPassword: true,
         loginUrl: expect.stringMatching(
           /^https:\/\/mightyquinton\.tixmo\.co\/invite#[a-f0-9]{64}$/
         ),

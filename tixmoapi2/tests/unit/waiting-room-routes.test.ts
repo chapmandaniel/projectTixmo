@@ -25,6 +25,8 @@ jest.doMock('../../src/config/environment', () => ({
 }));
 jest.doMock('../../src/services/readiness.service', () => ({
   checkReadiness: async () => ({ database: false, redis: false }),
+  readinessHttpStatus: (checks: { database: boolean | null; redis: boolean | null }) =>
+    checks.database === true && checks.redis === true ? 200 : 503,
 }));
 jest.doMock('../../src/config/sentry', () => ({ initSentry: jest.fn(), Sentry: {} }));
 jest.doMock('../../src/config/swagger', () => ({ swaggerSpec: {} }));

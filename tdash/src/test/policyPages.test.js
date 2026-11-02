@@ -109,6 +109,16 @@ describe('policy pages', () => {
         }
     });
 
+    it('closes the seller sentence once', () => {
+        const sentence = (sellerName) =>
+            visibleText(render('terms.html', { sellerName })).match(/Tickets are sold by .*?(?= To the extent)/)?.[0];
+        expect(sentence('Tixmo Ltd.')).toBe('Tickets are sold by Tixmo Ltd.');
+        expect(sentence('Tixmo Ltd!')).toBe('Tickets are sold by Tixmo Ltd!');
+        expect(sentence('Tixmo Ltd?')).toBe('Tickets are sold by Tixmo Ltd?');
+        expect(sentence('Tixmo Ltd')).toBe('Tickets are sold by Tixmo Ltd.');
+        expect(sentence('Harbour Tickets')).toBe('Tickets are sold by Harbour Tickets.');
+    });
+
     it('mentions as ticketing agent at most once in terms section 7', () => {
         const phrase = 'as ticketing agent';
         const section7 = (doc) => {

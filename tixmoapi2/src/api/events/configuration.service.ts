@@ -6,11 +6,12 @@ import { ticketTypeService } from '../ticket-types/service';
 import { ticketTierService } from '../ticket-tiers/service';
 import { eventConfigurationSchema } from './validation';
 import { StaffAudit } from '../../services/staff-action-audit';
+import { invalidatePublicEvent } from './public-cache';
 
 type Configuration = z.infer<typeof eventConfigurationSchema>['body'];
 
 export async function saveEventConfiguration(data: Configuration, id?: string, audit?: StaffAudit) {
-  return prisma.$transaction(
+  const saved = await prisma.$transaction(
     async (tx) => {
       if (id) await tx.$queryRaw`SELECT id FROM events WHERE id = ${id} FOR UPDATE`;
       const current = id ? await tx.event.findUnique({ where: { id } }) : null;
@@ -89,4 +90,6 @@ export async function saveEventConfiguration(data: Configuration, id?: string, a
     },
     { timeout: 15000 }
   );
+  invalidatePublicEvent(saved);
+  return saved;
 }

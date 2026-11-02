@@ -39,7 +39,7 @@ const publicQuery = {
     organization: { select: { id: true, name: true, slug: true } },
     venue: { select: { id: true, name: true, address: true } },
     ticketTypes: {
-      where: { status: 'ACTIVE' },
+      where: { status: { in: ['ACTIVE', 'SOLD_OUT'] } },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
       include: {
         _count: { select: { tiers: true } },

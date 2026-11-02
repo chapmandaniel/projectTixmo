@@ -204,9 +204,10 @@ describe('Orders API', () => {
           ],
         });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(409);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('available');
+      expect(res.body.message).toBe('Not enough tickets available');
+      expect(res.body.errors).toEqual({ code: 'SOLD_OUT' });
     });
 
     it('should fail if quantity exceeds max per order', async () => {

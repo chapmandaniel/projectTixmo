@@ -50,6 +50,11 @@ describe('Redis outage on request paths', () => {
     expect(redis.getRedisClient().isReady).toBe(false);
 
     app = (await import('../../src/app')).default;
+    // Production warms this on import. Tests skip that so a load ramp does not
+    // start a second engine; this probe still has to be warm before the deadline.
+    await import('../../src/services/readiness-db').then((readiness) =>
+      readiness.queryReadinessDatabase()
+    );
     resetFallback = (await import('../../src/middleware/rateLimiter'))
       .resetRedisRateLimitFallbackForTests;
     resetFallback();

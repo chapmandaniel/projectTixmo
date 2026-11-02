@@ -15,6 +15,7 @@ interface CreateVenueInput {
   };
   capacity: number;
   description?: string;
+  policyUrl?: string;
   timezone?: string;
   seatingChart?: Prisma.InputJsonValue | null;
 }
@@ -30,9 +31,23 @@ interface UpdateVenueInput {
   };
   capacity?: number;
   description?: string;
+  policyUrl?: string;
   timezone?: string;
   seatingChart?: Prisma.InputJsonValue | null;
 }
+
+// policyUrl lives in the existing metadata JSON so it needs no new column.
+const venueMetadata = (
+  existing: Prisma.JsonValue | null | undefined,
+  data: { description?: string; policyUrl?: string }
+): Prisma.InputJsonValue | undefined => {
+  if (data.description === undefined && data.policyUrl === undefined) return undefined;
+  const metadata: Prisma.JsonObject =
+    existing && typeof existing === 'object' && !Array.isArray(existing) ? { ...existing } : {};
+  if (data.description !== undefined) metadata.description = data.description;
+  if (data.policyUrl !== undefined) metadata.policyUrl = data.policyUrl;
+  return metadata;
+};
 
 interface ListVenuesParams {
   page?: number;
@@ -65,6 +80,7 @@ export class VenueService {
       throw ApiError.notFound('Organization not found');
     }
 
+    const metadata = venueMetadata(null, data);
     // Create venue
     const createPayload = {
       name: data.name,
@@ -75,9 +91,7 @@ export class VenueService {
       ...(data.seatingChart !== undefined
         ? { seatingChart: data.seatingChart as unknown as Prisma.InputJsonValue }
         : {}),
-      ...(data.description !== undefined
-        ? { metadata: { description: data.description } as unknown as Prisma.InputJsonValue }
-        : {}),
+      ...(metadata !== undefined ? { metadata } : {}),
     } as unknown as Prisma.VenueCreateInput;
 
     const venue = await prisma.venue.create({
@@ -124,15 +138,14 @@ export class VenueService {
       throw ApiError.notFound('Venue not found');
     }
 
+    const metadata = venueMetadata(existingVenue.metadata, data);
     // Build update payload explicitly to satisfy Prisma JSON typings
     const updatePayload = {
       ...(data.name !== undefined ? { name: data.name } : {}),
       ...(data.address !== undefined ? { address: data.address } : {}),
       ...(data.capacity !== undefined ? { capacity: data.capacity } : {}),
       ...(data.timezone !== undefined ? { timezone: data.timezone } : {}),
-      ...(data.description !== undefined
-        ? { metadata: { description: data.description } as unknown as Prisma.InputJsonValue }
-        : {}),
+      ...(metadata !== undefined ? { metadata } : {}),
       ...(data.seatingChart !== undefined
         ? { seatingChart: data.seatingChart as unknown as Prisma.InputJsonValue }
         : {}),

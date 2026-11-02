@@ -13,6 +13,7 @@ import {
 } from '../../services/ticket-admission.service';
 import { orderDisputed } from '../../services/ticket-void.service';
 import { recordStaffAction, StaffAudit } from '../../services/staff-action-audit';
+import { offlineAdmissionTime } from './offline-time';
 import { presentScanResult, recordedScanReason, SCAN_REASON } from './public-scan';
 
 interface RegisterScannerData {
@@ -46,6 +47,9 @@ interface ScanTicketData {
   qrData: string;
   scanType: 'ENTRY' | 'EXIT' | 'VALIDATION';
   metadata?: Record<string, unknown>;
+  // Live scans omit this and are judged at server time. Offline uploads pass
+  // the device time when that stamp is plausible.
+  admittedAt?: Date;
 }
 
 interface ListScanLogsParams {
@@ -377,7 +381,13 @@ export class ScannerService {
         denial = { reason: 'WRONG_EVENT', reasonCode: SCAN_REASON.WRONG_EVENT };
       } else if (parsed.eventId !== ticket.eventId || parsed.barcode !== ticket.barcode) {
         denial = { reason: 'Ticket credential is no longer valid' };
-      } else denial = ticketFailure(ticket, data.scanType === 'ENTRY', false);
+      } else
+        denial = ticketFailure(
+          ticket,
+          data.scanType === 'ENTRY',
+          true,
+          data.admittedAt ?? new Date()
+        );
       let admitted = ticket;
       if (!denial && ticket && data.scanType === 'ENTRY') {
         const consumed = await consumeTicket(tx, ticket.id, data.scannerId);
@@ -696,8 +706,10 @@ export class ScannerService {
       try {
         // The server records when admission is accepted. Client timestamps are
         // claims retained in metadata and must not rewrite committed history.
-        const claimedTime = new Date(scan.scannedAt).getTime();
-        if (!Number.isFinite(claimedTime) || claimedTime > Date.now() + 300_000) {
+        // The doors window uses the device time when it is plausible, and the
+        // server clock when the stamp is in the future or otherwise unusable.
+        const admittedAt = offlineAdmissionTime(scan.scannedAt);
+        if (!admittedAt) {
           throw ApiError.badRequest('Invalid offline scan timestamp');
         }
 
@@ -705,7 +717,13 @@ export class ScannerService {
           scannerId,
           qrData: scan.qrData,
           scanType: scan.scanType,
-          metadata: { ...scan.metadata, offline: true, scannedAt: scan.scannedAt },
+          admittedAt,
+          metadata: {
+            ...scan.metadata,
+            offline: true,
+            scannedAt: scan.scannedAt,
+            admissionJudgedAt: admittedAt.toISOString(),
+          },
         });
 
         if (result.success) {

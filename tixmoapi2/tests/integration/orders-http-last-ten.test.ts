@@ -288,8 +288,9 @@ it('100 authenticated same-IP buyers compete concurrently for the last ten units
     const successes = results.filter((result) => result.response.status === 201);
     const soldOut = results.filter(
       (result) =>
-        result.response.status === 400 &&
-        result.response.body.message === 'Not enough tickets available'
+        result.response.status === 409 &&
+        result.response.body.message === 'Not enough tickets available' &&
+        result.response.body.errors?.code === 'SOLD_OUT'
     );
     expect(successes).toHaveLength(10);
     expect(soldOut).toHaveLength(90);

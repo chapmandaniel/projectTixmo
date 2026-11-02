@@ -3,6 +3,7 @@ import { TicketType, Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 import prisma from '../../config/prisma';
+import { invalidatePublicEvent } from '../events/public-cache';
 
 export const ticketTypeDisplayOrder: Prisma.TicketTypeOrderByWithRelationInput[] = [
   { sortOrder: 'asc' },
@@ -53,6 +54,7 @@ interface UpdateTicketTypeInput {
   salesEnd?: string | null;
   quantity?: number;
   sortOrder?: number;
+  status?: 'ACTIVE' | 'HIDDEN' | 'SOLD_OUT';
 }
 
 export class TicketTypeService {
@@ -67,7 +69,7 @@ export class TicketTypeService {
     const event = await db.event.findUnique({ where: { id: data.eventId } });
     if (!event) throw ApiError.notFound('Event not found');
 
-    return await db.ticketType.create({
+    const created = await db.ticketType.create({
       data: {
         eventId: data.eventId,
         name: data.name,
@@ -83,6 +85,8 @@ export class TicketTypeService {
         ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),
       },
     });
+    if (db === prisma) invalidatePublicEvent({ id: data.eventId });
+    return created;
   }
 
   /**
@@ -109,7 +113,11 @@ export class TicketTypeService {
    * Update ticket type
    */
   async updateTicketType(id: string, data: UpdateTicketTypeInput): Promise<TicketType> {
-    return prisma.$transaction((tx) => this.updateTicketTypeInTransaction(tx, id, data));
+    const updated = await prisma.$transaction((tx) =>
+      this.updateTicketTypeInTransaction(tx, id, data)
+    );
+    invalidatePublicEvent({ id: updated.eventId });
+    return updated;
   }
 
   async updateTicketTypeInTransaction(
@@ -201,6 +209,7 @@ export class TicketTypeService {
     await prisma.ticketType.delete({
       where: { id },
     });
+    invalidatePublicEvent({ id: existingTicketType.eventId });
   }
 
   /**

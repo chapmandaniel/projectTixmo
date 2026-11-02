@@ -5,8 +5,20 @@ import { ApiError } from '../../utils/ApiError';
 import { eventService } from './service';
 import { z } from 'zod';
 import { validate } from '../../middleware/validate';
+import type { AuthRequest } from '../../middleware/auth';
+import {
+  cachedPublicRead,
+  publicCacheControlHeader,
+  publicEventCacheKey,
+  publicEventListCacheKey,
+} from './public-cache';
 
 const router = Router();
+
+function authenticatedPublicRead(req: Request): boolean {
+  const user = (req as AuthRequest).user;
+  return Boolean(user) || Boolean(req.headers.authorization);
+}
 
 // ── Validation ──────────────────────────────────────────────
 
@@ -62,12 +74,22 @@ router.get(
   validate(listPublicEventsSchema),
   catchAsync(async (req: Request, res: Response) => {
     const { page, limit, category, search } = req.query as Record<string, unknown>;
-    const result = await eventService.listPublicEvents({
+    const query = {
       page: page !== undefined ? Number(page) : undefined,
       limit: limit !== undefined ? Number(limit) : undefined,
       category: category as string | undefined,
       search: search as string | undefined,
-    });
+    };
+    if (authenticatedPublicRead(req)) {
+      res.set('Cache-Control', 'private, no-store');
+      res.json(successResponse(await eventService.listPublicEvents(query)));
+      return;
+    }
+    const result = await cachedPublicRead(publicEventListCacheKey(query), () =>
+      eventService.listPublicEvents(query)
+    );
+    res.set('Cache-Control', publicCacheControlHeader());
+    res.set('Vary', 'Authorization');
     res.json(successResponse(result));
   })
 );
@@ -96,10 +118,20 @@ router.get(
   validate(getPublicEventSchema),
   catchAsync(async (req: Request, res: Response) => {
     const { slug } = req.params;
-    const event = await eventService.getPublicEventBySlug(slug);
-    if (!event) {
-      throw ApiError.notFound('Event not found');
+    if (authenticatedPublicRead(req)) {
+      const event = await eventService.getPublicEventBySlug(slug);
+      if (!event) throw ApiError.notFound('Event not found');
+      res.set('Cache-Control', 'private, no-store');
+      res.json(successResponse(event));
+      return;
     }
+    const event = await cachedPublicRead(publicEventCacheKey(slug), async () => {
+      const loaded = await eventService.getPublicEventBySlug(slug);
+      if (!loaded) throw ApiError.notFound('Event not found');
+      return loaded;
+    });
+    res.set('Cache-Control', publicCacheControlHeader());
+    res.set('Vary', 'Authorization');
     res.json(successResponse(event));
   })
 );

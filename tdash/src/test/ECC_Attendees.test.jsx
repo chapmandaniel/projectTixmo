@@ -129,6 +129,40 @@ describe('Attendees search, export, and check-in', () => {
         expect(screen.getAllByTitle('Check In')).toHaveLength(1);
     });
 
+    it('keeps Checked In and Cancelled beside a failed refund and drops only Confirmed', async () => {
+        const used = {
+            ...ada,
+            id: 'used-failed',
+            status: 'USED',
+            user: { firstName: 'Used', lastName: 'Guest', email: 'used@example.com' },
+            order: { orderNumber: 'ORD-USED', status: 'PAID', refundStatus: 'FAILED' },
+        };
+        const cancelled = {
+            ...grace,
+            id: 'cancelled-failed',
+            status: 'CANCELLED',
+            order: { orderNumber: 'ORD-CAN', status: 'CANCELLED', refundStatus: 'FAILED' },
+        };
+        const confirmed = {
+            ...ada,
+            id: 'confirmed-failed',
+            status: 'VALID',
+            user: { firstName: 'Val', lastName: 'Id', email: 'val@example.com' },
+            order: { orderNumber: 'ORD-VAL', status: 'PAID', refundStatus: 'FAILED' },
+        };
+        mocks.get.mockImplementation(() => Promise.resolve(wrapped({
+            tickets: [used, cancelled, confirmed],
+            pagination: { total: 3, pages: 1 },
+        })));
+        render(<ECC_Attendees event={event} isDark />);
+        expect(await screen.findByText('Checked In')).toBeInTheDocument();
+        expect(screen.getByText('Cancelled')).toBeInTheDocument();
+        expect(screen.queryByText('Confirmed')).not.toBeInTheDocument();
+        expect(screen.getAllByText('Refund failed')).toHaveLength(3);
+        expect(screen.getAllByTitle('Check In')).toHaveLength(1);
+        expect(screen.getByTitle('Already Checked In')).toBeInTheDocument();
+    });
+
     it('hides check-in before doors and for a disputed ticket', async () => {
         const earlyEvent = {
             ...event,

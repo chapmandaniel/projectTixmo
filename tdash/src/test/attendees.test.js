@@ -62,9 +62,16 @@ describe('attendee search and export', () => {
         expect(canCheckIn(ticket)).toBe(true);
         expect(canCheckIn({ ...ticket, order: { status: 'PAID', refundStatus: 'NONE' } })).toBe(true);
         const failedRefund = { ...ticket, status: 'VALID', order: { orderNumber: 'ORD-FAILED', status: 'PAID', refundStatus: 'FAILED' } };
+        const usedFailed = { ...failedRefund, status: 'USED' };
+        const cancelledFailed = { ...failedRefund, status: 'CANCELLED', order: { ...failedRefund.order, status: 'CANCELLED' } };
         expect(orderStateLabel(failedRefund)).toBe('Refund failed');
         expect(attendeeStatusBadges(failedRefund)).toEqual(['Refund failed']);
+        expect(attendeeStatusBadges(usedFailed)).toEqual(['Checked In', 'Refund failed']);
+        expect(attendeeStatusBadges(cancelledFailed)).toEqual(['Cancelled', 'Refund failed']);
+        expect(attendeeStatusBadges({ ...failedRefund, event: { ...openEvent, startDatetime: '2099-06-01T00:00:00.000Z' } })).toEqual(['Refund failed']);
         expect(canCheckIn(failedRefund)).toBe(true);
+        expect(canCheckIn(usedFailed)).toBe(false);
+        expect(canCheckIn(cancelledFailed)).toBe(false);
         expect(canCheckIn({ ...ticket, order: { status: 'PAID', refundStatus: 'FAILED' } })).toBe(true);
         const unpaidCancelled = { ...ticket, status: 'CANCELLED', order: { orderNumber: 'ORD-CANCEL', status: 'CANCELLED', refundStatus: 'NONE' } };
         expect(attendeeStatusBadges(unpaidCancelled)).toEqual(['Cancelled']);

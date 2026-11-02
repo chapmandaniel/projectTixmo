@@ -32,6 +32,7 @@ const ECC_Overview = ({ event, isDark, onViewOrders }) => {
         return () => { active = false; };
     }, [event.id, days, currency, refresh]);
     const money = (amount, code = currency) => formatEventMoney(amount, code);
+    const salesTimezone = data?.sales?.aggregationTimezone || 'UTC';
     return <div className={`space-y-6 ${theme.textPrimary}`}>
         <div className="flex flex-wrap items-end gap-3">
             <label className="space-y-2 text-sm">Sales period<DashboardSelect isDark={isDark} aria-label="Sales period" value={days} onChange={(e) => setDays(e.target.value)}><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></DashboardSelect></label>
@@ -48,8 +49,8 @@ const ECC_Overview = ({ event, isDark, onViewOrders }) => {
             <div className="grid gap-6 lg:grid-cols-3">
                 <DashboardSurface isDark={isDark} className="p-5 lg:col-span-2">
                     <h3 className="text-xl font-light">Daily paid sales</h3>
-                    <p className={`mt-2 text-sm ${theme.textSecondary}`}>Recorded order dates in UTC. Refunds are excluded from paid revenue.</p>
-                    {!data.sales.salesByDay?.length ? <DashboardEmptyState isDark={isDark} title="No paid sales in this period" description="Change the period or currency to inspect other orders." className="mt-5" /> : <div className="mt-5 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th className="p-3">Date (UTC)</th><th className="p-3">Orders</th><th className="p-3">Tickets</th><th className="p-3">Revenue</th></tr></thead><tbody>{data.sales.salesByDay.map((day) => <tr key={day.date} className={`border-t ${theme.divider}`}><td className="p-3">{day.date}</td><td className="p-3">{day.orders}</td><td className="p-3">{day.tickets}</td><td className="p-3">{money(day.revenue)}</td></tr>)}</tbody></table></div>}
+                    <p className={`mt-2 text-sm ${theme.textSecondary}`}>Recorded order dates in {salesTimezone}. Refunds are excluded from paid revenue.</p>
+                    {!data.sales.salesByDay?.length ? <DashboardEmptyState isDark={isDark} title="No paid sales in this period" description="Change the period or currency to inspect other orders." className="mt-5" /> : <div className="mt-5 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th className="p-3">Date ({salesTimezone})</th><th className="p-3">Orders</th><th className="p-3">Tickets</th><th className="p-3">Revenue</th></tr></thead><tbody>{data.sales.salesByDay.map((day) => <tr key={day.date} className={`border-t ${theme.divider}`}><td className="p-3">{day.date}</td><td className="p-3">{day.orders}</td><td className="p-3">{day.tickets}</td><td className="p-3">{money(day.revenue)}</td></tr>)}</tbody></table></div>}
                 </DashboardSurface>
                 <DashboardSurface isDark={isDark} className="space-y-4 p-5">
                     <h3 className="text-xl font-light">Recent paid orders</h3>

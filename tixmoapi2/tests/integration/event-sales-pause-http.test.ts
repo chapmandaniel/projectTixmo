@@ -347,6 +347,10 @@ describe('Mounted event sales-pause authorization and paid access', () => {
             qrData: generateTicketQRData(ticket.id, ticket.barcode, ids.event),
             scanType: 'ENTRY',
           });
+      await prisma.event.update({
+        where: { id: ids.event },
+        data: { startDatetime: new Date(Date.now() - 60 * 60 * 1000) },
+      });
       const accepted = await scan(paidTicket);
       expect(accepted.status).toBe(200);
       expect(accepted.body.data.valid).toBe(true);

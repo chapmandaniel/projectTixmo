@@ -29,6 +29,7 @@ describe('Database-aggregated reports', () => {
         name: 'Same event name',
         slug: randomUUID(),
         status: 'ON_SALE',
+        timezone: 'UTC',
         tags: [],
       },
     });
@@ -289,4 +290,337 @@ describe('Database-aggregated reports', () => {
       hydrate.mockRestore();
     }
   }, 15000);
+
+  it('uses the event capacity and buckets a half-hour zone across the UTC day', async () => {
+    const venue = await prisma.venue.create({
+      data: {
+        organizationId: org.id,
+        name: 'Harbour',
+        address: { city: "St. John's" },
+        capacity: 100,
+        timezone: 'America/Halifax',
+      },
+    });
+    const localEvent = await prisma.event.create({
+      data: {
+        organizationId: org.id,
+        venueId: venue.id,
+        name: 'Half hour',
+        slug: randomUUID(),
+        status: 'ON_SALE',
+        timezone: 'America/St_Johns',
+        capacity: 50,
+        tags: [],
+      },
+    });
+    const localType = await prisma.ticketType.create({
+      data: {
+        eventId: localEvent.id,
+        name: 'Door',
+        price: 10,
+        quantityTotal: 80,
+        quantityAvailable: 80,
+      },
+    });
+    const sold = (amount: number, createdAt: string) =>
+      prisma.order.create({
+        data: {
+          orderNumber: `REPORT-${randomUUID()}`,
+          eventId: localEvent.id,
+          userId: owner.id,
+          totalAmount: amount,
+          currency: 'cad',
+          status: 'PAID',
+          createdAt: new Date(createdAt),
+          tickets: {
+            create: {
+              eventId: localEvent.id,
+              ticketTypeId: localType.id,
+              userId: owner.id,
+              pricePaid: amount,
+              barcode: randomUUID(),
+              inventoryState: 'SOLD',
+            },
+          },
+        },
+        include: { tickets: true },
+      });
+    const lateEvening = await sold(15, '2026-10-02T02:00:00.000Z');
+    await sold(5, '2026-10-02T02:45:00.000Z');
+    const scanner = await prisma.scanner.create({
+      data: {
+        name: 'Harbour gate',
+        apiKey: randomUUID(),
+        createdBy: owner.id,
+        organizationId: org.id,
+        eventId: localEvent.id,
+      },
+    });
+    await prisma.scanLog.createMany({
+      data: [
+        {
+          scannerId: scanner.id,
+          eventId: localEvent.id,
+          ticketId: lateEvening.tickets[0].id,
+          scanType: 'ENTRY',
+          success: true,
+          scannedAt: new Date('2026-10-02T02:15:00.000Z'),
+        },
+        {
+          scannerId: scanner.id,
+          eventId: localEvent.id,
+          ticketId: lateEvening.tickets[0].id,
+          scanType: 'ENTRY',
+          success: true,
+          scannedAt: new Date('2026-10-02T02:45:00.000Z'),
+        },
+      ],
+    });
+
+    expect(await reportService.getSalesReport({ eventId: localEvent.id })).toEqual([
+      expect.objectContaining({
+        date: '2026-10-01',
+        revenue: 15,
+        ordersCount: 1,
+        aggregationTimezone: 'America/St_Johns',
+      }),
+      expect.objectContaining({
+        date: '2026-10-02',
+        revenue: 5,
+        ordersCount: 1,
+        aggregationTimezone: 'America/St_Johns',
+      }),
+    ]);
+    expect(await reportService.getAttendanceReport({ eventId: localEvent.id })).toMatchObject({
+      totalCapacity: 50,
+      aggregationTimezone: 'America/St_Johns',
+      checkInsByHour: [
+        { time: '2026-10-01T23:00:00.000-02:30', count: 1 },
+        { time: '2026-10-02T00:00:00.000-02:30', count: 1 },
+      ],
+    });
+  });
+
+  it('falls back to ticket quantities when the event has no capacity of its own', async () => {
+    const venue = await prisma.venue.create({
+      data: {
+        organizationId: org.id,
+        name: 'Open hall',
+        address: { city: 'Test' },
+        capacity: 100,
+        timezone: 'UTC',
+      },
+    });
+    const openEvent = await prisma.event.create({
+      data: {
+        organizationId: org.id,
+        venueId: venue.id,
+        name: 'Open',
+        slug: randomUUID(),
+        status: 'ON_SALE',
+        timezone: 'UTC',
+        tags: [],
+      },
+    });
+    await prisma.ticketType.createMany({
+      data: [
+        {
+          eventId: openEvent.id,
+          name: 'A',
+          price: 1,
+          quantityTotal: 30,
+          quantityAvailable: 30,
+        },
+        {
+          eventId: openEvent.id,
+          name: 'B',
+          price: 1,
+          quantityTotal: 20,
+          quantityAvailable: 20,
+        },
+      ],
+    });
+    expect(await reportService.getAttendanceReport({ eventId: openEvent.id })).toMatchObject({
+      totalCapacity: 50,
+      aggregationTimezone: 'UTC',
+    });
+  });
+
+  it('buckets org-wide sales in the org timezone, a shared venue timezone, or UTC', async () => {
+    const stamp = '2026-10-02T02:00:00.000Z';
+    const londonOrg = await prisma.organization.create({
+      data: {
+        name: 'London books',
+        slug: randomUUID(),
+        type: 'PROMOTER',
+        settings: { timezone: 'Europe/London' },
+      },
+    });
+    await prisma.venue.create({
+      data: {
+        organizationId: londonOrg.id,
+        name: 'Ignored venue zone',
+        address: {},
+        capacity: 100,
+        timezone: 'America/St_Johns',
+      },
+    });
+    const londonEvent = await prisma.event.create({
+      data: {
+        organizationId: londonOrg.id,
+        name: 'London night',
+        slug: randomUUID(),
+        status: 'ON_SALE',
+        timezone: 'UTC',
+        tags: [],
+      },
+    });
+    const londonType = await prisma.ticketType.create({
+      data: {
+        eventId: londonEvent.id,
+        name: 'Seat',
+        price: 10,
+        quantityTotal: 10,
+        quantityAvailable: 10,
+      },
+    });
+    await prisma.order.create({
+      data: {
+        orderNumber: `REPORT-${randomUUID()}`,
+        eventId: londonEvent.id,
+        userId: owner.id,
+        totalAmount: 10,
+        currency: 'cad',
+        status: 'PAID',
+        createdAt: new Date('2026-10-01T23:30:00.000Z'),
+        tickets: {
+          create: {
+            eventId: londonEvent.id,
+            ticketTypeId: londonType.id,
+            userId: owner.id,
+            pricePaid: 10,
+            barcode: randomUUID(),
+            inventoryState: 'SOLD',
+          },
+        },
+      },
+    });
+    expect(await reportService.getSalesReport({ organizationId: londonOrg.id })).toMatchObject([
+      { date: '2026-10-02', aggregationTimezone: 'Europe/London' },
+    ]);
+
+    const venueOrg = await prisma.organization.create({
+      data: { name: 'Venue books', slug: randomUUID(), type: 'PROMOTER' },
+    });
+    await prisma.venue.create({
+      data: {
+        organizationId: venueOrg.id,
+        name: 'One zone',
+        address: {},
+        capacity: 100,
+        timezone: 'America/St_Johns',
+      },
+    });
+    const venueEvent = await prisma.event.create({
+      data: {
+        organizationId: venueOrg.id,
+        name: 'Venue night',
+        slug: randomUUID(),
+        status: 'ON_SALE',
+        timezone: 'UTC',
+        tags: [],
+      },
+    });
+    const venueType = await prisma.ticketType.create({
+      data: {
+        eventId: venueEvent.id,
+        name: 'Seat',
+        price: 8,
+        quantityTotal: 10,
+        quantityAvailable: 10,
+      },
+    });
+    await prisma.order.create({
+      data: {
+        orderNumber: `REPORT-${randomUUID()}`,
+        eventId: venueEvent.id,
+        userId: owner.id,
+        totalAmount: 8,
+        currency: 'cad',
+        status: 'PAID',
+        createdAt: new Date(stamp),
+        tickets: {
+          create: {
+            eventId: venueEvent.id,
+            ticketTypeId: venueType.id,
+            userId: owner.id,
+            pricePaid: 8,
+            barcode: randomUUID(),
+            inventoryState: 'SOLD',
+          },
+        },
+      },
+    });
+    expect(await reportService.getSalesReport({ organizationId: venueOrg.id })).toMatchObject([
+      { date: '2026-10-01', aggregationTimezone: 'America/St_Johns' },
+    ]);
+
+    const mixedOrg = await prisma.organization.create({
+      data: { name: 'Mixed books', slug: randomUUID(), type: 'PROMOTER' },
+    });
+    for (const timezone of ['America/St_Johns', 'Europe/London']) {
+      await prisma.venue.create({
+        data: {
+          organizationId: mixedOrg.id,
+          name: timezone,
+          address: {},
+          capacity: 100,
+          timezone,
+        },
+      });
+    }
+    const mixedEvent = await prisma.event.create({
+      data: {
+        organizationId: mixedOrg.id,
+        name: 'Mixed night',
+        slug: randomUUID(),
+        status: 'ON_SALE',
+        timezone: 'America/St_Johns',
+        tags: [],
+      },
+    });
+    const mixedType = await prisma.ticketType.create({
+      data: {
+        eventId: mixedEvent.id,
+        name: 'Seat',
+        price: 4,
+        quantityTotal: 10,
+        quantityAvailable: 10,
+      },
+    });
+    await prisma.order.create({
+      data: {
+        orderNumber: `REPORT-${randomUUID()}`,
+        eventId: mixedEvent.id,
+        userId: owner.id,
+        totalAmount: 4,
+        currency: 'cad',
+        status: 'PAID',
+        createdAt: new Date(stamp),
+        tickets: {
+          create: {
+            eventId: mixedEvent.id,
+            ticketTypeId: mixedType.id,
+            userId: owner.id,
+            pricePaid: 4,
+            barcode: randomUUID(),
+            inventoryState: 'SOLD',
+          },
+        },
+      },
+    });
+    expect(await reportService.getSalesReport({ organizationId: mixedOrg.id })).toMatchObject([
+      { date: '2026-10-02', aggregationTimezone: 'UTC' },
+    ]);
+  });
 });

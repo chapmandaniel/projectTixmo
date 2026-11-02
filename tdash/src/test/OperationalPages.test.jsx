@@ -57,11 +57,18 @@ describe('Recorded event operations', () => {
         mocks.get.mockImplementation((url, options) => Promise.resolve(wrapped(url === '/analytics/sales' ? { totalRevenue: options.params.currency === 'cad' ? 150 : 400, totalOrders: 2, salesByDay: [] } : url.endsWith('/stats') ? { ticketsSold: 4, ticketsUsed: 1 } : { orders: [order()] })));
         render(<ECC_Overview event={event} isDark />);
         await screen.findByText('CA$150.00');
+        expect(screen.getByText('Recorded order dates in UTC. Refunds are excluded from paid revenue.')).toBeInTheDocument();
         expect(screen.getByText(/Page views and conversion rate are unavailable/)).toBeInTheDocument();
         expect(screen.queryByText('Alex M.')).not.toBeInTheDocument();
         fireEvent.change(screen.getByLabelText('Revenue currency'), { target: { value: 'usd' } });
         await screen.findByText('US$400.00');
         expect(mocks.get).toHaveBeenCalledWith('/analytics/sales', expect.objectContaining({ params: expect.objectContaining({ eventId: event.id, currency: 'usd' }) }));
+    });
+    it('labels paid sales with the timezone the report used', async () => {
+        mocks.get.mockImplementation((url) => Promise.resolve(wrapped(url === '/analytics/sales' ? { totalRevenue: 20, totalOrders: 1, aggregationTimezone: 'America/St_Johns', salesByDay: [{ date: '2026-10-01', orders: 1, tickets: 1, revenue: 20 }] } : url.endsWith('/stats') ? { ticketsSold: 1, ticketsUsed: 0 } : { orders: [] })));
+        render(<ECC_Overview event={event} isDark />);
+        expect(await screen.findByText('Recorded order dates in America/St_Johns. Refunds are excluded from paid revenue.')).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: 'Date (America/St_Johns)' })).toBeInTheDocument();
     });
     it('preserves failure instead of displaying fabricated zero revenue', async () => {
         mocks.get.mockRejectedValue(new Error('Offline'));

@@ -139,7 +139,11 @@ test('a later unavailable type rolls back all holds and creates no order or tick
         { ticketTypeId: 'b', quantity: 1 },
       ],
     })
-  ).rejects.toMatchObject({ statusCode: 400 });
+  ).rejects.toMatchObject({
+    statusCode: 409,
+    message: 'Not enough tickets available',
+    errors: { code: 'SOLD_OUT' },
+  });
   expect(types).toEqual(before);
   expect(tx.order.create).not.toHaveBeenCalled();
   expect(tx.ticket.createMany).not.toHaveBeenCalled();

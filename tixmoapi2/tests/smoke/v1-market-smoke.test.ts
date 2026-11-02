@@ -278,6 +278,13 @@ describe('V1 market readiness smoke', () => {
     expect(syncResponse.body.data.tickets).toHaveLength(2);
 
     const ticketToScan = paidOrder!.tickets[0];
+    await prisma.event.update({
+      where: { id: event.id },
+      data: {
+        startDatetime: new Date(Date.now() - 60 * 60 * 1000),
+        endDatetime: new Date(Date.now() + 4 * 60 * 60 * 1000),
+      },
+    });
     const scanResponse = await request(app)
       .post('/api/v1/scanners/scan')
       .set('Authorization', `Bearer ${scannerApiKey}`)

@@ -93,4 +93,52 @@ describe('TeamView', () => {
         await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Invitation sent.'));
         expect(apiPost).toHaveBeenCalledWith('/users/promoter-1/invitation');
     });
+
+    const rosterFor = (actor) => ({
+        data: {
+            data: {
+                users: [
+                    {
+                        id: actor.id,
+                        firstName: 'Current',
+                        lastName: 'User',
+                        email: 'current@example.com',
+                        role: actor.role,
+                        organizationId: actor.organizationId || null,
+                        emailVerified: true,
+                    },
+                    {
+                        id: 'member-1',
+                        firstName: 'Sam',
+                        lastName: 'Staff',
+                        email: 'sam@example.com',
+                        role: 'TEAM_MEMBER',
+                        organizationId: 'org-1',
+                        emailVerified: true,
+                    },
+                ],
+            },
+        },
+    });
+
+    it.each([
+        ['MANAGER', { id: 'manager-1', role: 'MANAGER', organizationId: 'org-1' }],
+        ['PROMOTER', { id: 'promoter-2', role: 'PROMOTER', organizationId: 'org-1' }],
+    ])('hides Remove member for %s', async (_label, actor) => {
+        apiGet.mockResolvedValue(rosterFor(actor));
+        render(<TeamView isDark user={actor} />);
+        expect(await screen.findByText('Sam Staff')).toBeInTheDocument();
+        expect(screen.queryByTitle('Remove member')).not.toBeInTheDocument();
+    });
+
+    it.each([
+        ['OWNER', { id: 'owner-1', role: 'OWNER', organizationId: 'org-1' }],
+        ['ADMIN', { id: 'admin-2', role: 'ADMIN', organizationId: 'org-1' }],
+        ['platform admin', { id: 'platform-1', role: 'ADMIN', isPlatformAdmin: true }],
+    ])('shows Remove member for %s', async (_label, actor) => {
+        apiGet.mockResolvedValue(rosterFor(actor));
+        render(<TeamView isDark user={actor} />);
+        expect(await screen.findByText('Sam Staff')).toBeInTheDocument();
+        expect(screen.getByTitle('Remove member')).toBeInTheDocument();
+    });
 });

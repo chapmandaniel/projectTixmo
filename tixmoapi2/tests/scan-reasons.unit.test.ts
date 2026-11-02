@@ -107,6 +107,9 @@ describe('recorded scan reason codes', () => {
     expect(
       recordedScanReason({ success: false, reason: 'Event has not started yet', ticket })
     ).toBe(SCAN_REASON.NOT_STARTED);
+    expect(recordedScanReason({ success: false, reason: 'Event has already ended', ticket })).toBe(
+      SCAN_REASON.EVENT_ENDED
+    );
     expect(
       recordedScanReason({
         success: false,
@@ -139,6 +142,21 @@ describe('attendee doors time', () => {
 
     jest.setSystemTime(start.getTime() - 60 * 60 * 1000);
     expect(ticketFailure(ticket, true, true)).toBeUndefined();
+  });
+
+  test('an explicit instant overrides the server clock and a disabled check ignores it', () => {
+    const ticket = admission();
+    const during = new Date(start.getTime() - 30 * 60 * 1000);
+    const beforeDoors = new Date(start.getTime() - DOORS_BEFORE_START_MS - 1000);
+    const afterEnd = new Date('2026-10-27T00:00:00.000Z');
+    jest.useFakeTimers();
+    jest.setSystemTime(afterEnd);
+    expect(ticketFailure(ticket, true, true, during)).toBeUndefined();
+    expect(ticketFailure(ticket, true, true, beforeDoors)).toEqual({
+      reason: 'Event has not started yet',
+    });
+    expect(ticketFailure(ticket, true, true)).toEqual({ reason: 'Event has already ended' });
+    expect(ticketFailure(ticket, true, false, beforeDoors)).toBeUndefined();
   });
 
   test('a disputed order is denied before doors and before a cancelled reading', () => {

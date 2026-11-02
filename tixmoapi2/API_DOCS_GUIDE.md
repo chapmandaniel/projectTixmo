@@ -48,7 +48,7 @@ open http://localhost:3000/api/v1/docs
 - Security: bearerAuth (JWT)
 - Servers:
   - http://localhost:3000/api/v1 (development)
-  - https://api.tixmo.com/v1 (production - planned)
+  - https://api-production-fbaf.up.railway.app/api/v1 (production)
 - Tags: Authentication, Users, Organizations, Venues, Events, Ticket Types, Orders, Tickets, Promo Codes, Scanners, Notifications, Analytics, Health
 - Components.schemas (excerpt):
   - User: id, email, firstName, lastName, phone, role, organizationId, emailVerified, createdAt, updatedAt

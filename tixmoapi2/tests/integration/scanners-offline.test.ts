@@ -89,6 +89,13 @@ describe('Scanner Offline Sync', () => {
     ticket = tickets[0];
     const unpaidTickets = await prisma.ticket.findMany({ where: { orderId: unpaidOrder.id } });
     unpaidTicket = unpaidTickets[0];
+    await prisma.event.update({
+      where: { id: event.id },
+      data: {
+        startDatetime: new Date(Date.now() - 60 * 60 * 1000),
+        endDatetime: new Date(Date.now() + 4 * 60 * 60 * 1000),
+      },
+    });
   });
 
   afterAll(async () => {

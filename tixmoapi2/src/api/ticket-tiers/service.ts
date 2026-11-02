@@ -1,6 +1,15 @@
 import { ApiError } from '@utils/ApiError';
 import { TicketTier, Prisma } from '@prisma/client';
 import prisma from '../../config/prisma';
+import { invalidatePublicEvent } from '../events/public-cache';
+
+async function invalidateTicketTypeEvent(ticketTypeId: string): Promise<void> {
+  const type = await prisma.ticketType.findUnique({
+    where: { id: ticketTypeId },
+    select: { eventId: true },
+  });
+  if (type) invalidatePublicEvent({ id: type.eventId });
+}
 
 interface CreateTierInput {
   ticketTypeId: string;
@@ -41,7 +50,7 @@ class TicketTierService {
       throw ApiError.notFound('Ticket type not found');
     }
 
-    return await db.ticketTier.create({
+    const created = await db.ticketTier.create({
       data: {
         ticketTypeId: data.ticketTypeId,
         name: data.name,
@@ -53,6 +62,8 @@ class TicketTierService {
         isActive: data.isActive ?? true,
       },
     });
+    if (db === prisma) invalidatePublicEvent({ id: ticketType.eventId });
+    return created;
   }
 
   /**
@@ -61,7 +72,9 @@ class TicketTierService {
   async updateTier(id: string, data: UpdateTierInput): Promise<TicketTier> {
     const reference = await prisma.ticketTier.findUnique({ where: { id } });
     if (!reference) throw ApiError.notFound('Ticket tier not found');
-    return prisma.$transaction((tx) => this.updateTierInTransaction(tx, id, data));
+    const updated = await prisma.$transaction((tx) => this.updateTierInTransaction(tx, id, data));
+    await invalidateTicketTypeEvent(updated.ticketTypeId);
+    return updated;
   }
 
   async updateTierInTransaction(
@@ -125,6 +138,7 @@ class TicketTierService {
       }
       await tx.ticketTier.delete({ where: { id } });
     });
+    await invalidateTicketTypeEvent(reference.ticketTypeId);
   }
 
   /**

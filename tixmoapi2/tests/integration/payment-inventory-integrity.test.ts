@@ -956,6 +956,13 @@ describe('Payment, admission and inventory integrity', () => {
     expect(await stock()).toMatchObject({ quantitySold: 1, quantityAvailable: 19 });
     expect(current.tickets[0]).toMatchObject({ status: 'VALID', inventoryState: 'SOLD' });
     const ticket = current.tickets[0];
+    await prisma.event.update({
+      where: { id: event.id },
+      data: {
+        startDatetime: new Date(Date.now() - 60 * 60 * 1000),
+        endDatetime: new Date(Date.now() + 4 * 60 * 60 * 1000),
+      },
+    });
     const admitted = await scannerService.scanTicket({
       scannerId: scanner.id,
       qrData: generateTicketQRData(ticket.id, ticket.barcode, ticket.eventId),
@@ -1252,7 +1259,10 @@ describe('Payment, admission and inventory integrity', () => {
     (notificationService.sendOrderConfirmation as jest.Mock).mockClear();
     await orderService.sendOrderConfirmationEmail(order.id, true);
     expect(notificationService.sendOrderConfirmation).toHaveBeenCalledWith(
-      expect.objectContaining({ totalAmount: formatMoney(order.totalAmount, 'cad') })
+      expect.objectContaining({
+        totalAmount: formatMoney(order.totalAmount, 'cad'),
+        organizationName: 'Integrity',
+      })
     );
     expect(formatMoney(order.totalAmount, 'cad')).not.toBe(formatMoney(order.totalAmount, 'usd'));
   });

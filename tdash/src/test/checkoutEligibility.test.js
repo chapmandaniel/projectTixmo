@@ -18,6 +18,8 @@ describe('checkout advisory eligibility contract', () => {
         expect(state({ startDatetime: at(0) }).max).toBe(0);
         expect(state({ deletedAt: at(-1) }).max).toBe(0);
         expect(state({}, { status: 'INACTIVE' }).max).toBe(0);
+        expect(state({}, { status: 'SOLD_OUT' }).max).toBe(0);
+        expect(state({}, { status: 'HIDDEN' }).max).toBe(0);
         expect(state({}, { tierInventoryStatus: 'PENDING' }).max).toBe(0);
     });
     it('does not let a wider ticket window extend event eligibility', () => {

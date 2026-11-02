@@ -80,6 +80,13 @@ describe('public ticket selection', () => {
         ).toBe(0);
     });
 
+    it('shows sold-out tickets as sold out and not selectable', () => {
+        expect(
+            getPublicTicketOffer({ ...ticket, status: 'SOLD_OUT', quantityAvailable: 4 }, now),
+        ).toMatchObject({ max: 0, label: 'Sold out' });
+        expect(getPublicTicketOffer({ ...ticket, status: 'HIDDEN' }, now).max).toBe(0);
+    });
+
     it('honors event and ticket sale boundaries', () => {
         expect(
             getEventSaleState(

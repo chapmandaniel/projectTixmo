@@ -47,13 +47,21 @@ describe('Organization Controller Authorization', () => {
   });
 
   describe('addMember', () => {
-    it('should allow ADMIN to add member', async () => {
+    it('should allow a global platform admin to add a member', async () => {
       req.user = { userId: 'admin-1', role: 'ADMIN' };
       req.body = { userId: 'new-member-1' };
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
-        id: 'new-member-1',
-        role: 'TEAM_MEMBER',
-      });
+      (prisma.user.findUnique as jest.Mock)
+        .mockResolvedValueOnce({
+          id: 'admin-1',
+          email: 'admin@test.com',
+          role: 'ADMIN',
+          organizationId: null,
+          isPlatformAdmin: true,
+        })
+        .mockResolvedValueOnce({
+          id: 'new-member-1',
+          role: 'TEAM_MEMBER',
+        });
 
       await (addMember as any)(req, res, next);
 
@@ -63,16 +71,17 @@ describe('Organization Controller Authorization', () => {
       expect(res.json).toHaveBeenCalled();
     });
 
-    it('should allow organization manager to add member', async () => {
-      req.user = { userId: 'manager-1', role: 'MANAGER' };
+    it('should allow an organization ADMIN member to add a member', async () => {
+      req.user = { userId: 'admin-1', role: 'ADMIN' };
       req.body = { userId: 'new-member-1' };
 
-      // Mock prisma response saying user is member of org-123
       (prisma.user.findUnique as jest.Mock)
         .mockResolvedValueOnce({
-          id: 'manager-1',
+          id: 'admin-1',
+          email: 'admin@test.com',
           organizationId: 'org-123',
-          role: 'MANAGER',
+          role: 'ADMIN',
+          isPlatformAdmin: false,
         })
         .mockResolvedValueOnce({
           id: 'new-member-1',
@@ -83,11 +92,57 @@ describe('Organization Controller Authorization', () => {
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(prisma.user.findUnique).toHaveBeenNthCalledWith(1, {
-        where: { id: 'manager-1' },
-        select: { organizationId: true, role: true },
+        where: { id: 'admin-1' },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          organizationId: true,
+          isPlatformAdmin: true,
+        },
       });
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(organizationService.addMember).toHaveBeenCalledWith('org-123', 'new-member-1');
+    });
+
+    it('should forbid an ADMIN who is not a member of the target organization', async () => {
+      req.user = { userId: 'admin-1', role: 'ADMIN' };
+      req.body = { userId: 'new-member-1' };
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@test.com',
+        role: 'ADMIN',
+        organizationId: 'org-999',
+        isPlatformAdmin: false,
+      });
+
+      await (addMember as any)(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(ApiError));
+      expect(next.mock.calls[0][0].statusCode).toBe(403);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(organizationService.addMember).not.toHaveBeenCalled();
+    });
+
+    it('should forbid an organization MANAGER from adding a member', async () => {
+      req.user = { userId: 'manager-1', role: 'MANAGER' };
+      req.body = { userId: 'new-member-1' };
+
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'manager-1',
+        email: 'manager@test.com',
+        organizationId: 'org-123',
+        role: 'MANAGER',
+        isPlatformAdmin: false,
+      });
+
+      await (addMember as any)(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(ApiError));
+      expect(next.mock.calls[0][0].statusCode).toBe(403);
+      expect(next.mock.calls[0][0].message).toContain('sufficient privileges');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(organizationService.addMember).not.toHaveBeenCalled();
     });
 
     it('should forbid organization promoter from adding member', async () => {
@@ -140,13 +195,43 @@ describe('Organization Controller Authorization', () => {
   });
 
   describe('removeMember', () => {
-    it('should allow ADMIN to remove member', async () => {
+    it('should allow a global platform admin to remove a member', async () => {
       req.user = { userId: 'admin-1', role: 'ADMIN' };
       req.params = { id: 'org-123', userId: 'member-to-remove' };
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
-        id: 'member-to-remove',
-        role: 'TEAM_MEMBER',
-      });
+      (prisma.user.findUnique as jest.Mock)
+        .mockResolvedValueOnce({
+          id: 'admin-1',
+          email: 'admin@test.com',
+          role: 'ADMIN',
+          organizationId: null,
+          isPlatformAdmin: true,
+        })
+        .mockResolvedValueOnce({
+          id: 'member-to-remove',
+          role: 'TEAM_MEMBER',
+        });
+
+      await (removeMember as any)(req, res, next);
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(organizationService.removeMember).toHaveBeenCalledWith('org-123', 'member-to-remove');
+    });
+
+    it('should allow an organization OWNER member to remove a member', async () => {
+      req.user = { userId: 'owner-1', role: 'OWNER' };
+      req.params = { id: 'org-123', userId: 'member-to-remove' };
+      (prisma.user.findUnique as jest.Mock)
+        .mockResolvedValueOnce({
+          id: 'owner-1',
+          email: 'owner@test.com',
+          role: 'OWNER',
+          organizationId: 'org-123',
+          isPlatformAdmin: false,
+        })
+        .mockResolvedValueOnce({
+          id: 'member-to-remove',
+          role: 'TEAM_MEMBER',
+        });
 
       await (removeMember as any)(req, res, next);
 

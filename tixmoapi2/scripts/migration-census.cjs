@@ -2,8 +2,9 @@
 // Single reviewed migration census for the qualified rollback candidate.
 // The next candidate that adds or removes a migration changes this number
 // only. Callers compare it with the migration directory and the applied ledger.
-// 9fc50a3 has 39 migrations, including
+// ac74faa has 39 migrations, including
 // 20261027001000_backfill_disputed_ticket_voids. This candidate adds
+// 20261027170000_order_idempotency_keys and
 // 20261030120000_vendor_event_import.
-const MIGRATION_COUNT = 40;
+const MIGRATION_COUNT = 41;
 module.exports = { MIGRATION_COUNT };

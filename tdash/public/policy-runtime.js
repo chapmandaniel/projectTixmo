@@ -6,6 +6,9 @@ const clean = (value) => {
     return text;
 };
 
+// A legal name such as "Tixmo Ltd." already closes the sentence.
+const sentenceStop = (value) => (/[.!?]$/.test(value) ? '' : '.');
+
 const httpsUrl = (value) => {
     try {
         const url = new URL(value);
@@ -64,7 +67,7 @@ export const applyPolicyConfig = (root, config = {}) => {
             const responsibility = organizer
                 ? ` ${organizer}, is responsible for providing the event as described, or refunding you under our policies.`
                 : '';
-            responsible.textContent = `Tickets are sold by ${values.sellerName}.${responsibility} `;
+            responsible.textContent = `Tickets are sold by ${values.sellerName}${sentenceStop(values.sellerName)}${responsibility} `;
         } else {
             responsible.hidden = true;
             responsible.textContent = '';

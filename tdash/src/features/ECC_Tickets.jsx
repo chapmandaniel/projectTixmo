@@ -179,6 +179,7 @@ const ECC_Tickets = ({ event, isDark }) => {
                 isOpen={showTicketModal}
                 onClose={() => setShowTicketModal(false)}
                 eventId={event.id}
+                timeZone={event.timezone}
                 isDark={isDark}
                 onSuccess={fetchTicketTypes}
                 initialData={editingTicketType}

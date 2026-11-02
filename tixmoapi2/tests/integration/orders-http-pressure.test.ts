@@ -325,7 +325,10 @@ it('1800 authenticated HTTP attempts scheduled at30 per second for60 seconds con
           .send({ items: [{ ticketTypeId: ids.ticketType, quantity: 2 }] })
           .timeout({ response: 5000, deadline: 8000 });
         status = response.status;
-        soldOut = status === 400 && response.body.message === 'Not enough tickets available';
+        soldOut =
+          status === 409 &&
+          response.body.message === 'Not enough tickets available' &&
+          response.body.errors?.code === 'SOLD_OUT';
         if (status === 201) orderId = response.body.data.id as string;
       } catch {
         /* Network/deadline failures remain explicit failures below, never cancellation proof. */
@@ -391,7 +394,7 @@ it('1800 authenticated HTTP attempts scheduled at30 per second for60 seconds con
       maxInFlight,
       remainingActive: active,
       http201: successes.length,
-      soldOut400: measurements.filter((row) => row.soldOut).length,
+      soldOut409: measurements.filter((row) => row.soldOut).length,
       http429: measurements.filter((row) => row.status === 429).length,
       http503: measurements.filter((row) => row.status === 503).length,
       otherStatus: measurements.filter(
@@ -447,7 +450,7 @@ it('1800 authenticated HTTP attempts scheduled at30 per second for60 seconds con
     expect(metrics.allAttemptP95Ms).toBeLessThanOrEqual(2000);
     expect(metrics.reservationP95Ms).toBeLessThanOrEqual(2000);
     expect(metrics.http201).toBe(900);
-    expect(metrics.soldOut400).toBe(900);
+    expect(metrics.soldOut409).toBe(900);
     expect(metrics.networkErrors + metrics.otherStatus + metrics.http429 + metrics.http503).toBe(0);
     expect(ga).toMatchObject({
       quantityTotal: 1800,

@@ -82,6 +82,9 @@ describe('customer event on-sale page', () => {
         expect(
             screen.getByRole('heading', { name: 'Neon Nights' }),
         ).toBeInTheDocument();
+        expect(screen.getByText('Fri, Nov 20, 8:00 p.m. NST')).toBeInTheDocument();
+        expect(screen.getByText('8:00 p.m. NST')).toBeInTheDocument();
+        expect(screen.queryByText('America/St_Johns')).not.toBeInTheDocument();
         expect(
             screen.getByText('<b>Plain event description</b>'),
         ).toBeInTheDocument();
@@ -107,6 +110,36 @@ describe('customer event on-sale page', () => {
         expect(
             screen.getByText('/checkout/neon-nights?tickets=ga%3A2'),
         ).toBeInTheDocument();
+    });
+
+    it('hides hidden ticket types and does not sell sold-out types', () => {
+        renderView({
+            ticketTypes: [
+                {
+                    id: 'hidden',
+                    name: 'Staff hold',
+                    status: 'HIDDEN',
+                    price: '10',
+                    quantityAvailable: 5,
+                    maxPerOrder: 4,
+                },
+                {
+                    id: 'sold',
+                    name: 'Balcony',
+                    status: 'SOLD_OUT',
+                    price: '40',
+                    quantityAvailable: 5,
+                    maxPerOrder: 4,
+                },
+                event.ticketTypes[0],
+            ],
+        });
+        expect(screen.queryByText('Staff hold')).not.toBeInTheDocument();
+        expect(screen.getByText('Balcony')).toBeInTheDocument();
+        expect(screen.getByText('Sold out')).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Add one Balcony ticket' }),
+        ).toBeDisabled();
     });
 
     it.each([
