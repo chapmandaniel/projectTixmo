@@ -904,6 +904,26 @@ describe('Brand protection', () => {
     expect(await prisma.giveawayCheckerToken.count()).toBe(before + 1);
   });
 
+  it('refuses targets:read for every other non-platform-admin role and stores nothing', async () => {
+    const roles = ['MANAGER', 'PROMOTER', 'CUSTOMER', 'SCANNER', 'TEAM_MEMBER'] as const;
+    for (const role of roles) {
+      const user = await registerUser(app, {
+        email: `brand-role-${role.toLowerCase()}@example.com`,
+        role,
+      });
+      const before = await prisma.giveawayCheckerToken.count();
+      const denied = await request(app)
+        .post('/api/v1/brand-protection/admin/checker-tokens')
+        .set(auth(user.accessToken))
+        .send({ label: `${role.toLowerCase()}-targets`, scopes: ['ingest:write', 'targets:read'] });
+      expect(denied.status).toBe(403);
+      await expect(
+        issueCheckerToken(user.user.id, `${role.toLowerCase()}-service`, ['targets:read'])
+      ).rejects.toMatchObject({ statusCode: 403 });
+      expect(await prisma.giveawayCheckerToken.count()).toBe(before);
+    }
+  });
+
   it('limits bad checker tokens by IP without blocking a valid token from that address', async () => {
     const forwardedFor = '203.0.113.50';
     const bad = () =>

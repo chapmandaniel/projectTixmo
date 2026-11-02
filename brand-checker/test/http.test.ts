@@ -38,6 +38,9 @@ describe('public fetch safety', () => {
       '0.0.0.1',
       '100.64.0.1',
       '100.127.255.255',
+      '192.0.0.1',
+      '192.0.0.255',
+      '::ffff:c000:1',
       '198.18.0.1',
       '198.19.255.255',
       '224.0.0.1',
@@ -61,11 +64,16 @@ describe('public fetch safety', () => {
       '64:ff9b::7f00:1',
       '64:ff9b::8.8.8.8',
       '64:ff9b::808:808',
+      '2002::1',
+      '2002:c000:201::',
+      '2001::1',
+      '2001:0:4136:e378:8000:63bf:3fff:fdd2',
     ];
     for (const address of blocked) assert.equal(isBlockedAddress(address), true, address);
     assert.equal(isBlockedAddress('8.8.8.8'), false);
     assert.equal(isBlockedAddress('1.1.1.1'), false);
     assert.equal(isBlockedAddress('100.128.0.1'), false);
+    assert.equal(isBlockedAddress('192.0.1.1'), false);
     assert.equal(isBlockedAddress('198.20.0.1'), false);
     assert.equal(isBlockedAddress('::ffff:8.8.8.8'), false);
     assert.equal(isBlockedAddress('::ffff:808:808'), false);
@@ -120,6 +128,72 @@ describe('public fetch safety', () => {
     assert.equal(result.status, 200);
     assert.equal(lookups, 2);
     assert.deepEqual(pinned, ['8.8.8.8', '9.9.9.9']);
+  });
+
+  it('cancels a redirect body over 70KB before the next hop', async () => {
+    const size = 70 * 1024 + 1;
+    let cancelled = false;
+    const started = Date.now();
+    const client = createFetchClient({
+      lookup: publicLookup,
+      timeoutMs: 2_000,
+      fetchImpl: async (url) => {
+        if (url.endsWith('/start')) {
+          const stream = new ReadableStream({
+            start(controller) {
+              controller.enqueue(new Uint8Array(size));
+            },
+            pull() {
+              return new Promise(() => {
+                // The remainder never arrives. Cancelling is what lets the hop finish.
+              });
+            },
+            cancel() {
+              cancelled = true;
+            },
+          });
+          return new Response(stream, {
+            status: 302,
+            headers: { location: 'https://www.crt.sh/json' },
+          });
+        }
+        return new Response('ok', { status: 200 });
+      },
+    });
+    const result = await client.request('https://crt.sh/start');
+    assert.equal(result.status, 200);
+    assert.equal(result.body, 'ok');
+    assert.equal(cancelled, true);
+    assert.ok(Date.now() - started < 1_000);
+  });
+
+  it('cancels an unread body when a redirect is refused', async () => {
+    let cancelled = false;
+    const started = Date.now();
+    const client = createFetchClient({
+      lookup: publicLookup,
+      timeoutMs: 2_000,
+      fetchImpl: async () => {
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(new Uint8Array(70 * 1024 + 1));
+          },
+          pull() {
+            return new Promise(() => undefined);
+          },
+          cancel() {
+            cancelled = true;
+          },
+        });
+        return new Response(stream, {
+          status: 302,
+          headers: { location: 'https://evil.test/phish' },
+        });
+      },
+    });
+    await assert.rejects(() => client.request('https://crt.sh/'), /https/);
+    assert.equal(cancelled, true);
+    assert.ok(Date.now() - started < 1_000);
   });
 
   it('does not connect when any resolved address is blocked', async () => {

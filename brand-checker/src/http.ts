@@ -43,6 +43,7 @@ for (const [network, prefix] of [
   ['127.0.0.0', 8],
   ['169.254.0.0', 16],
   ['172.16.0.0', 12],
+  ['192.0.0.0', 24],
   ['192.168.0.0', 16],
   ['198.18.0.0', 15],
   ['224.0.0.0', 4],
@@ -53,6 +54,8 @@ for (const [network, prefix] of [
 for (const [network, prefix] of [
   ['::', 96],
   ['64:ff9b::', 96],
+  ['2001::', 32],
+  ['2002::', 16],
   ['fc00::', 7],
   ['fe80::', 10],
   ['ff00::', 8],
@@ -114,7 +117,8 @@ const normalizeIp = (address: string): string =>
 
 /**
  * Loopback, private, link-local (including 169.254.169.254), CGNAT, benchmarking,
- * reserved 240/4, multicast, unique-local, and NAT64, including mapped forms.
+ * IETF protocol assignments, reserved 240/4, multicast, unique-local, NAT64,
+ * 6to4, and Teredo, including mapped forms.
  */
 export const isBlockedAddress = (address: string): boolean => {
   const trimmed = normalizeIp(address);
@@ -214,6 +218,15 @@ const readCapped = async (response: Response): Promise<string> => {
 
 const headerGet = (response: Response, name: string): string | null => response.headers.get(name);
 
+/** Drop an unread body so the next hop is not stuck until the request timeout. */
+const releaseUnreadBody = async (response: Response): Promise<void> => {
+  try {
+    await response.body?.cancel();
+  } catch {
+    // A body that is already closed is not a failed fetch.
+  }
+};
+
 /** Public-source client. Same-site https redirects only, after address checks. */
 export const createFetchClient = (options?: {
   timeoutMs?: number;
@@ -238,17 +251,28 @@ export const createFetchClient = (options?: {
             dispatcher,
           });
           if (response.status >= 300 && response.status < 400) {
-            const location = headerGet(response, 'location');
-            if (!location || hop === 3) throw new UnsafeUrlError('redirect was not followed');
-            const next = new URL(location, current.url);
-            if (!sameSiteHttps(current.url, next)) throw new UnsafeUrlError('redirect left the https site');
-            current = await resolvePublicTarget(next.toString(), resolveHost);
+            try {
+              const location = headerGet(response, 'location');
+              if (!location || hop === 3) throw new UnsafeUrlError('redirect was not followed');
+              const next = new URL(location, current.url);
+              if (!sameSiteHttps(current.url, next)) throw new UnsafeUrlError('redirect left the https site');
+              current = await resolvePublicTarget(next.toString(), resolveHost);
+            } finally {
+              await releaseUnreadBody(response);
+            }
             continue;
+          }
+          let body: string;
+          try {
+            body = await readCapped(response);
+          } catch (error) {
+            await releaseUnreadBody(response);
+            throw error;
           }
           return {
             status: response.status,
             url: response.url || current.url.toString(),
-            body: await readCapped(response),
+            body,
           };
         } finally {
           await dispatcher.close();
