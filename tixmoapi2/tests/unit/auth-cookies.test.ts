@@ -25,6 +25,7 @@ jest.mock('../../src/api/auth/service', () => ({
 }));
 
 import { login, refreshToken } from '../../src/api/auth/controller';
+import { hostOnlyCookieMiddleware } from '../../src/middleware/hostOnlyCookies';
 
 const cookieDomainAttribute = /(?:^|;\s*)domain\s*=/i;
 
@@ -52,6 +53,28 @@ describe('auth cookies', () => {
     expect(cookieDomainAttribute.test('session=abc; HttpOnly; Secure; SameSite=Lax')).toBe(false);
     expect(cookieDomainAttribute.test('session=abc; Domain=.tixmo.co; HttpOnly')).toBe(true);
     expect(cookieDomainAttribute.test('session=abc; domain=demo.tixmo.co')).toBe(true);
+  });
+
+  it('rejects a Domain attribute on any response that passes through the app hook', async () => {
+    const guarded = express();
+    guarded.use(hostOnlyCookieMiddleware);
+    guarded.get('/host-only', (_req, res) => {
+      res.append('Set-Cookie', 'session=abc; HttpOnly; Secure; SameSite=Lax');
+      res.status(204).end();
+    });
+    guarded.get('/parent-domain', (_req, res) => {
+      res.append('Set-Cookie', 'session=abc; Domain=.tixmo.co; HttpOnly');
+      res.status(204).end();
+    });
+
+    const allowed = await request(guarded).get('/host-only');
+    expect(allowed.status).toBe(204);
+    expectHostOnlyCookies(allowed);
+    expect(allowed.headers['set-cookie']?.[0]).toContain('session=abc');
+
+    const denied = await request(guarded).get('/parent-domain');
+    expect(denied.status).toBe(500);
+    expect(setCookieHeaders(denied.headers)).toEqual([]);
   });
 
   it('keeps login and refresh cookies host-only', async () => {

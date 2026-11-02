@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { resolveConfiguredCorsOrigins } from './corsOrigins';
+import { corsDeploymentMode, resolveClientUrl, resolveConfiguredCorsOrigins } from './corsOrigins';
 import { resolvePaymentCurrency } from './payment-currency';
 
 // Tests must not inherit application database or provider credentials from .env.
@@ -8,11 +8,13 @@ if (process.env.NODE_ENV !== 'test') dotenv.config();
 const isTest = process.env.NODE_ENV === 'test';
 const isDevelopment = process.env.NODE_ENV === 'development';
 const nodeEnv = process.env.NODE_ENV || 'development';
-const railwayEnvironmentName =
-  process.env.RAILWAY_ENVIRONMENT_NAME || process.env.RAILWAY_ENVIRONMENT || '';
-// Railway injects the environment name even when NODE_ENV was left unset.
-// That unset case still has to keep the current production dashboard.
-const corsProductionDeploy = nodeEnv === 'production' || railwayEnvironmentName === 'production';
+// CORS policy follows Railway's environment name only. NODE_ENV=production is
+// set on labs, staging, and sandbox as well, so it must not select the
+// production dashboard fallback.
+const railwayEnvironmentName = (process.env.RAILWAY_ENVIRONMENT_NAME || '').trim();
+const corsMode = corsDeploymentMode(nodeEnv, railwayEnvironmentName);
+const corsRailwayProduction = corsMode.kind === 'railway-production';
+const allowLocalDevOrigins = corsMode.kind === 'local';
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@tixmo.co';
 const serviceName = process.env.SERVICE_NAME || process.env.RAILWAY_SERVICE_NAME || 'tixmo-api';
 const release =
@@ -174,12 +176,14 @@ if (
 export const config = {
   // Application
   nodeEnv,
-  corsProductionDeploy,
+  corsRailwayProduction,
+  allowLocalDevOrigins,
+  trustClientUrlForCors: allowLocalDevOrigins,
   serviceName,
   deploymentEnvironment,
   port: parseInt(process.env.PORT || '3000', 10),
   apiVersion: process.env.API_VERSION || 'v1',
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:3001',
+  clientUrl: resolveClientUrl(corsMode),
 
   // Database
   databaseUrl: process.env.DATABASE_URL || '',
@@ -292,10 +296,9 @@ export const config = {
   authAccountRateLimitWindowMs,
   authAccountRateLimitMax,
 
-  // CORS. Exact origins from CORS_ORIGIN. Production with the variable unset
-  // keeps the hardcoded dashboard origin and warns, so boot does not depend on
-  // the variable already being present. See corsOrigins.ts.
-  corsOrigin: resolveConfiguredCorsOrigins(corsProductionDeploy),
+  // Exact origins from CORS_ORIGIN. The demo fallback runs only when
+  // RAILWAY_ENVIRONMENT_NAME is production. See corsOrigins.ts.
+  corsOrigin: resolveConfiguredCorsOrigins(corsMode),
 
   // Session
   sessionSecret: process.env.SESSION_SECRET || '',

@@ -19,6 +19,7 @@ import {
   checkoutIpRateLimiter,
 } from './middleware/rateLimiter';
 import { isTrustedClientOrigin } from './utils/clientOrigin';
+import { hostOnlyCookieMiddleware } from './middleware/hostOnlyCookies';
 
 const app: Application = express();
 
@@ -30,6 +31,7 @@ app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
+app.use(hostOnlyCookieMiddleware);
 
 // If Sentry is enabled, use request handler and tracing
 if (config.sentryDsn) {

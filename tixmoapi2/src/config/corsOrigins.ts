@@ -1,90 +1,170 @@
-// Exact browser origins only. A path, query, hash, or wildcard is a startup error.
+// Exact browser origins. Entries are canonicalized (lowercase scheme and host,
+// default :80/:443 removed, one trailing slash removed). A path, query,
+// fragment, wildcard, or credential is one startup error and nothing else.
 
-export const PRODUCTION_CORS_ORIGINS = ['https://demo.tixmo.co'] as const;
+export const PRODUCTION_CORS_ORIGINS = [
+  'https://dash-production-7487.up.railway.app',
+  'https://demo.tixmo.co',
+] as const;
+
+// Invite and approval links use this only when Railway itself says production
+// and CLIENT_URL is unset. No other environment may fall back to it.
+export const PRODUCTION_LINK_ORIGIN = 'https://demo.tixmo.co';
+
+export class OriginConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'OriginConfigError';
+    // Boot should print this sentence, not a stack trace.
+    this.stack = message;
+  }
+}
+
+export type CorsDeploymentMode =
+  | { kind: 'local' }
+  | { kind: 'railway-production' }
+  | { kind: 'railway-other'; name: string }
+  | { kind: 'production-without-railway' };
+
+export const corsDeploymentMode = (
+  nodeEnv: string,
+  railwayEnvironmentName: string
+): CorsDeploymentMode => {
+  if (railwayEnvironmentName === 'production') return { kind: 'railway-production' };
+  if (railwayEnvironmentName) return { kind: 'railway-other', name: railwayEnvironmentName };
+  if (nodeEnv === 'production') return { kind: 'production-without-railway' };
+  return { kind: 'local' };
+};
 
 export const productionCorsFallbackWarning = (): string =>
-  `CORS_ORIGIN is unset. Using the hardcoded production allowlist (${PRODUCTION_CORS_ORIGINS.join(', ')}). ` +
-  'Set CORS_ORIGIN to the explicit comma-separated origins for this environment. ' +
-  'The fallback keeps a production deploy that has not received the variable from refusing the current production dashboard. ' +
-  'An explicit CORS_ORIGIN replaces this list entirely.';
+  `CORS_ORIGIN is unset. RAILWAY_ENVIRONMENT_NAME is production, so the hardcoded production allowlist is ${PRODUCTION_CORS_ORIGINS.join(', ')}. ` +
+  'Set CORS_ORIGIN to that same comma-separated list. An explicit CORS_ORIGIN replaces this fallback.';
 
-const originError = (entry: string, reason: string): Error =>
-  new Error(`CORS_ORIGIN entry "${entry}" is invalid: ${reason}`);
+const fail = (message: string): never => {
+  throw new OriginConfigError(message);
+};
 
-export const parseCorsOriginEntry = (entry: string): string => {
+export const isLoopbackHostname = (hostname: string): boolean => {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '0.0.0.0' || host === '::1') {
+    return true;
+  }
+  const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+  if (!match) return false;
+  const octets = match.slice(1).map((part) => Number(part));
+  if (octets.some((octet) => octet > 255)) return false;
+  return octets[0] === 127;
+};
+
+export const canonicalizeConfiguredOrigin = (label: string, entry: string): string => {
   const trimmed = entry.trim();
   if (!trimmed) {
-    throw new Error(
-      'CORS_ORIGIN contains an empty entry. List full origins separated by commas, or unset it.'
-    );
+    fail(`${label} contains an empty entry. List full origins separated by commas.`);
   }
   if (trimmed.includes('*')) {
-    throw originError(
-      trimmed,
-      'wildcards are not allowed. List each full origin (scheme, host, and optional port) exactly.'
-    );
+    fail(`${label} entry "${trimmed}" is invalid: wildcards are not allowed.`);
   }
 
   let url: URL;
   try {
     url = new URL(trimmed);
   } catch {
-    throw originError(
-      trimmed,
-      'it is not a full origin. Use scheme, host, and optional port only, for example https://demo.tixmo.co.'
+    return fail(
+      `${label} entry "${trimmed}" is invalid: it is not a full origin. Use scheme, host, and optional port only.`
     );
   }
 
   if (url.username || url.password) {
-    throw originError(trimmed, 'credentials are not allowed.');
+    fail(`${label} entry "${trimmed}" is invalid: credentials are not allowed.`);
   }
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw originError(trimmed, 'only http and https origins are allowed.');
+    fail(`${label} entry "${trimmed}" is invalid: only http and https origins are allowed.`);
   }
+  // URL pathname is "/" for an origin and for one trailing slash. Anything else is a path.
   if (url.pathname !== '/' || url.search !== '' || url.hash !== '') {
-    throw originError(
-      trimmed,
-      'paths are not allowed. List the origin only, for example https://demo.tixmo.co.'
-    );
-  }
-  if (trimmed !== url.origin) {
-    throw originError(trimmed, `it must exactly equal the origin ${url.origin}.`);
+    fail(`${label} entry "${trimmed}" is invalid: paths, queries, and fragments are not allowed.`);
   }
 
   return url.origin;
 };
 
-// Blank segments from a trailing comma are ignored. A value that is only commas is empty.
-export const parseCorsOriginList = (raw: string): string[] => {
+export const assertDeployedBrowserOrigin = (label: string, origin: string): void => {
+  const url = new URL(origin);
+  if (url.protocol !== 'https:') {
+    fail(`${label} entry "${origin}" is invalid: deployed environments only allow https origins.`);
+  }
+  if (isLoopbackHostname(url.hostname)) {
+    fail(
+      `${label} entry "${origin}" is invalid: loopback and localhost origins are not allowed on a deployed environment.`
+    );
+  }
+};
+
+const parseOriginList = (label: string, raw: string, deployed: boolean): string[] => {
   const origins: string[] = [];
   const seen = new Set<string>();
-
   for (const part of raw.split(',')) {
     if (part.trim() === '') continue;
-    const origin = parseCorsOriginEntry(part);
+    const origin = canonicalizeConfiguredOrigin(label, part);
+    if (deployed) assertDeployedBrowserOrigin(label, origin);
     if (seen.has(origin)) continue;
     seen.add(origin);
     origins.push(origin);
   }
-
+  if (origins.length === 0) {
+    fail(`${label} entry "${raw.trim()}" is invalid: it does not contain an origin.`);
+  }
   return origins;
 };
 
-export const resolveConfiguredCorsOrigins = (productionDeploy: boolean): readonly string[] => {
+export const resolveConfiguredCorsOrigins = (mode: CorsDeploymentMode): readonly string[] => {
   const raw = process.env.CORS_ORIGIN;
-  if (raw === undefined || raw.trim() === '') {
-    if (productionDeploy) {
+  const unset = raw === undefined || raw.trim() === '';
+
+  if (mode.kind === 'railway-other' && unset) {
+    fail(
+      `CORS_ORIGIN is unset. Set CORS_ORIGIN to the comma-separated https origins for Railway environment "${mode.name}" before starting.`
+    );
+  }
+
+  if (mode.kind === 'production-without-railway') {
+    console.error(
+      'RAILWAY_ENVIRONMENT_NAME is unset while NODE_ENV is production. No browser origins are allowed. Set RAILWAY_ENVIRONMENT_NAME and CORS_ORIGIN for a deployed environment.'
+    );
+    if (!unset) parseOriginList('CORS_ORIGIN', raw, false);
+    return [];
+  }
+
+  if (unset) {
+    if (mode.kind === 'railway-production') {
       console.warn(productionCorsFallbackWarning());
       return [...PRODUCTION_CORS_ORIGINS];
     }
     return [];
   }
 
-  const origins = parseCorsOriginList(raw);
-  if (origins.length === 0) {
-    throw new Error(
-      'CORS_ORIGIN is set but does not contain any origins. List full origins separated by commas, or unset it.'
-    );
+  return parseOriginList('CORS_ORIGIN', raw, mode.kind !== 'local');
+};
+
+const LOCAL_CLIENT_URL = 'http://localhost:3001';
+
+export const resolveClientUrl = (mode: CorsDeploymentMode): string => {
+  const raw = process.env.CLIENT_URL;
+  const unset = raw === undefined || raw.trim() === '';
+  if (unset) {
+    if (mode.kind === 'railway-production') {
+      console.warn(
+        `CLIENT_URL is unset. Using ${PRODUCTION_LINK_ORIGIN} for invite and approval links because RAILWAY_ENVIRONMENT_NAME is production.`
+      );
+      return PRODUCTION_LINK_ORIGIN;
+    }
+    // Never substitute the production dashboard outside Railway production.
+    return LOCAL_CLIENT_URL;
   }
-  return origins;
+
+  const origin = canonicalizeConfiguredOrigin('CLIENT_URL', raw);
+  if (mode.kind === 'railway-production' || mode.kind === 'railway-other') {
+    assertDeployedBrowserOrigin('CLIENT_URL', origin);
+  }
+  return origin;
 };

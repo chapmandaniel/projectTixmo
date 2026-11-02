@@ -5,17 +5,23 @@
 
 const allowed = new Set(['http://localhost:5173', 'https://demo.tixmo.co']);
 
+function canonical(origin) {
+  if (origin.includes('*')) return undefined;
+  const url = new URL(origin);
+  if (url.username || url.password || url.pathname !== '/' || url.search || url.hash) return undefined;
+  return url.origin;
+}
+
 function isOriginAllowed(origin) {
   if (!origin) return true;
-  if (origin.includes('*')) return false;
+  let parsed;
   try {
-    const url = new URL(origin);
-    if (url.pathname !== '/' || url.search || url.hash) return false;
-    if (origin !== url.origin) return false;
+    parsed = canonical(origin);
   } catch {
     return false;
   }
-  return allowed.has(origin);
+  if (!parsed) return false;
+  return allowed.has(parsed);
 }
 
 let failed = 0;
@@ -36,6 +42,9 @@ console.log('--- Verify CORS exact allowlist ---');
 
 runTest('http://localhost:5173', true, 'Explicitly allowed dev origin');
 runTest('https://demo.tixmo.co', true, 'Explicitly allowed production dashboard');
+runTest('https://Demo.tixmo.co/', true, 'Canonical trailing slash and case');
+runTest('https://demo.tixmo.co:443', true, 'Canonical default https port');
+runTest('https://demo.tixmo.co/login', false, 'Path is not an origin');
 runTest('https://labs.tixmo.co', false, 'Labs host is not implied by the parent domain');
 runTest('https://sub.demo.tixmo.co', false, 'Nested Tixmo subdomain');
 runTest('https://evil.up.railway.app', false, 'Arbitrary Railway app');

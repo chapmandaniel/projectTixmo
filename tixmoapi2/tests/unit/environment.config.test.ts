@@ -214,20 +214,47 @@ describe('environment config', () => {
     expect(require('../../src/config/environment').config.hstRate).toBe(1);
   });
 
-  it('rejects a wildcard CORS_ORIGIN at startup', () => {
-    process.env.CORS_ORIGIN = 'https://*.tixmo.co';
+  const bootError = (): Error => {
+    try {
+      require('../../src/config/environment');
+    } catch (error) {
+      return error as Error;
+    }
+    throw new Error('boot continued');
+  };
 
-    expect(() => require('../../src/config/environment')).toThrow(
-      'CORS_ORIGIN entry "https://*.tixmo.co" is invalid: wildcards are not allowed'
+  it('rejects a wildcard CORS_ORIGIN at startup with one clear error', () => {
+    process.env.CORS_ORIGIN = 'https://*.tixmo.co';
+    const error = bootError();
+    expect(error.message).toBe(
+      'CORS_ORIGIN entry "https://*.tixmo.co" is invalid: wildcards are not allowed.'
     );
+    expect(error.stack).toBe(error.message);
   });
 
-  it('rejects a CORS_ORIGIN path at startup', () => {
+  it('rejects a CORS_ORIGIN path at startup with one clear error', () => {
     process.env.CORS_ORIGIN = 'https://demo.tixmo.co/login';
-
-    expect(() => require('../../src/config/environment')).toThrow(
-      'CORS_ORIGIN entry "https://demo.tixmo.co/login" is invalid: paths are not allowed'
+    const error = bootError();
+    expect(error.message).toBe(
+      'CORS_ORIGIN entry "https://demo.tixmo.co/login" is invalid: paths, queries, and fragments are not allowed.'
     );
+    expect(error.stack).toBe(error.message);
+  });
+
+  it('rejects a CORS_ORIGIN value that is only commas', () => {
+    process.env.CORS_ORIGIN = ',,,';
+    const error = bootError();
+    expect(error.message).toContain('CORS_ORIGIN');
+    expect(error.message).toContain('does not contain an origin');
+    expect(error.stack).toBe(error.message);
+  });
+
+  it('canonicalizes case, a default port, and one trailing slash', () => {
+    process.env.CORS_ORIGIN = 'https://Demo.tixmo.co/, https://demo.tixmo.co:443';
+
+    const { config } = require('../../src/config/environment');
+
+    expect(config.corsOrigin).toEqual(['https://demo.tixmo.co']);
   });
 
   it('trims CORS_ORIGIN and matches the canonical origin exactly', () => {
@@ -238,53 +265,151 @@ describe('environment config', () => {
     expect(config.corsOrigin).toEqual(['https://demo.tixmo.co', 'https://labs.tixmo.co']);
   });
 
-  it('uses the hardcoded production origins and warns when CORS_ORIGIN is unset', () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  it('allows no browser origins when NODE_ENV is production and Railway name is unset', () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     process.env.NODE_ENV = 'production';
-    delete process.env.CORS_ORIGIN;
+    process.env.CORS_ORIGIN = 'https://demo.tixmo.co';
+    process.env.CLIENT_URL = 'https://demo.tixmo.co';
+    delete process.env.RAILWAY_ENVIRONMENT_NAME;
 
     const { config } = require('../../src/config/environment');
 
-    expect(config.corsOrigin).toEqual(['https://demo.tixmo.co']);
+    expect(config.corsRailwayProduction).toBe(false);
+    expect(config.corsOrigin).toEqual([]);
+    expect(config.clientUrl).toBe('https://demo.tixmo.co');
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('RAILWAY_ENVIRONMENT_NAME is unset')
+    );
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('No browser origins are allowed'));
+    error.mockRestore();
+  });
+
+  it('uses the live production origins only when RAILWAY_ENVIRONMENT_NAME is production', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    process.env.NODE_ENV = 'production';
+    process.env.RAILWAY_ENVIRONMENT_NAME = 'production';
+    process.env.CORS_ORIGIN = '';
+    process.env.CLIENT_URL = '';
+
+    const { config } = require('../../src/config/environment');
+
+    expect(config.corsRailwayProduction).toBe(true);
+    expect(config.corsOrigin).toEqual([
+      'https://dash-production-7487.up.railway.app',
+      'https://demo.tixmo.co',
+    ]);
+    expect(config.clientUrl).toBe('https://demo.tixmo.co');
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('CORS_ORIGIN is unset'));
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining('production deploy that has not received the variable')
+      expect.stringContaining('https://dash-production-7487.up.railway.app')
     );
     warn.mockRestore();
+  });
+
+  it('does not fall back to the production dashboard for links outside Railway production', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RAILWAY_ENVIRONMENT_NAME = 'labs';
+    process.env.CORS_ORIGIN = 'https://labs.tixmo.co,https://labs-dash-labs.up.railway.app';
+    process.env.CLIENT_URL = '';
+
+    const { config } = require('../../src/config/environment');
+
+    expect(config.clientUrl).toBe('http://localhost:3001');
+    expect(config.clientUrl).not.toBe('https://demo.tixmo.co');
+    expect(config.corsOrigin).toEqual([
+      'https://labs.tixmo.co',
+      'https://labs-dash-labs.up.railway.app',
+    ]);
+  });
+
+  it.each(['labs', 'vendor-sandbox', 'staging', 'sandbox'])(
+    'refuses to start when CORS_ORIGIN is unset for Railway environment %s',
+    (name) => {
+      process.env.NODE_ENV = 'production';
+      process.env.RAILWAY_ENVIRONMENT_NAME = name;
+      process.env.CORS_ORIGIN = '';
+      process.env.CLIENT_URL = 'https://labs.tixmo.co';
+      const error = bootError();
+      expect(error.message).toContain('CORS_ORIGIN is unset');
+      expect(error.message).toContain(name);
+      expect(error.stack).toBe(error.message);
+    }
+  );
+
+  it('boots a labs deploy with NODE_ENV=production and trusts only the labs list', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RAILWAY_ENVIRONMENT_NAME = 'labs';
+    process.env.CORS_ORIGIN = 'https://labs.tixmo.co,https://labs-dash-labs.up.railway.app';
+    process.env.CLIENT_URL = 'https://labs.tixmo.co';
+
+    const { config } = require('../../src/config/environment');
+
+    expect(config.corsOrigin).toEqual([
+      'https://labs.tixmo.co',
+      'https://labs-dash-labs.up.railway.app',
+    ]);
+    expect(config.corsOrigin).not.toContain('https://demo.tixmo.co');
+    expect(config.clientUrl).toBe('https://labs.tixmo.co');
+  });
+
+  it('rejects loopback and http origins on a deployed environment', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RAILWAY_ENVIRONMENT_NAME = 'production';
+    process.env.CLIENT_URL = 'https://demo.tixmo.co';
+    process.env.CORS_ORIGIN = 'http://localhost:8080';
+    expect(bootError().message).toContain(
+      'CORS_ORIGIN entry "http://localhost:8080" is invalid: deployed environments only allow https origins.'
+    );
+
+    jest.resetModules();
+    process.env.CORS_ORIGIN = 'https://127.0.0.1:8080';
+    expect(bootError().message).toContain('CORS_ORIGIN');
+    expect(bootError().message).toContain('loopback');
+
+    jest.resetModules();
+    process.env.CORS_ORIGIN = 'https://demo.tixmo.co';
+    process.env.CLIENT_URL = 'http://localhost:8080';
+    expect(bootError().message).toContain('CLIENT_URL entry "http://localhost:8080"');
+
+    jest.resetModules();
+    process.env.CLIENT_URL = 'https://app.localhost';
+    expect(bootError().message).toContain('CLIENT_URL');
+    expect(bootError().message).toContain('loopback');
+
+    jest.resetModules();
+    process.env.CLIENT_URL = 'https://[::1]';
+    expect(bootError().message).toContain('CLIENT_URL');
+
+    jest.resetModules();
+    process.env.CLIENT_URL = 'https://0.0.0.0';
+    expect(bootError().message).toContain('loopback');
   });
 
   it('lets an explicit production CORS_ORIGIN replace the hardcoded fallback', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     process.env.NODE_ENV = 'production';
-    process.env.CORS_ORIGIN = 'https://demo.tixmo.co';
+    process.env.RAILWAY_ENVIRONMENT_NAME = 'production';
+    process.env.CORS_ORIGIN = 'https://demo.tixmo.co,https://dash-production-7487.up.railway.app';
+    process.env.CLIENT_URL = 'https://demo.tixmo.co';
 
     const { config } = require('../../src/config/environment');
 
-    expect(config.corsOrigin).toEqual(['https://demo.tixmo.co']);
+    expect(config.corsOrigin).toEqual([
+      'https://demo.tixmo.co',
+      'https://dash-production-7487.up.railway.app',
+    ]);
     expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('CORS_ORIGIN is unset'));
     warn.mockRestore();
   });
 
-  it('uses the production allowlist when Railway names the environment production', () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
-    process.env.NODE_ENV = 'development';
-    process.env.RAILWAY_ENVIRONMENT_NAME = 'production';
+  it('does not add production origins when CORS_ORIGIN is unset outside a Railway deploy', () => {
     delete process.env.CORS_ORIGIN;
-
-    const { config } = require('../../src/config/environment');
-
-    expect(config.corsProductionDeploy).toBe(true);
-    expect(config.corsOrigin).toEqual(['https://demo.tixmo.co']);
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('CORS_ORIGIN is unset'));
-    warn.mockRestore();
-  });
-
-  it('does not add production origins when CORS_ORIGIN is unset outside production', () => {
-    delete process.env.CORS_ORIGIN;
+    delete process.env.RAILWAY_ENVIRONMENT_NAME;
 
     const { config } = require('../../src/config/environment');
 
     expect(config.corsOrigin).toEqual([]);
+    expect(config.clientUrl).not.toBe('https://demo.tixmo.co');
   });
 
   it('rejects an HST rate outside 0 to 1', () => {

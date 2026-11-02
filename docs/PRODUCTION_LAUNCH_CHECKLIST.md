@@ -86,8 +86,8 @@ Validation:
 - [ ] Secrets are not placeholder values.
 - [ ] JWT, refresh, and session secrets are unique and high entropy.
 - [ ] `CLIENT_URL` points to the production dashboard origin.
-- [ ] `CORS_ORIGIN` is an exact comma-separated list of full origins for this environment. No wildcards and no paths. When `NODE_ENV=production`, or Railway's environment name is `production`, an unset variable boots with a warning and allows `https://demo.tixmo.co` so that production deploy still accepts the current dashboard. An explicit value replaces that fallback. Other deployed environments must set their own list. Localhost origins are trusted only outside that production deploy. Labs and sandbox lists do not include production or demo origins.
-- [ ] Auth responses do not set a cookie `Domain` attribute. There is no `.tixmo.co` cookie domain.
+- [ ] `CORS_ORIGIN` is an exact comma-separated list of full origins for this Railway environment. No wildcards and no paths. The hardcoded fallback (`https://dash-production-7487.up.railway.app` and `https://demo.tixmo.co`, with a warning) runs only when `RAILWAY_ENVIRONMENT_NAME` is `production` and the variable is unset. Every other Railway environment refuses to start until `CORS_ORIGIN` is set. `NODE_ENV=production` without a Railway name allows no browser origins. Deployed `CORS_ORIGIN` and `CLIENT_URL` values must be `https` and must not be loopback or localhost.
+- [ ] Responses do not set a cookie `Domain` attribute. The app rejects `Set-Cookie` headers that include `Domain`. There is no `.tixmo.co` cookie domain.
 - [ ] `PAYMENT_CURRENCY` matches the intended launch currency.
 - [ ] `TIXMO_HST_NUMBER`, when valid, is printed as `HST no.` on buyer receipts. A missing, placeholder, or invalid number logs one startup warning, the registration line is hidden, and production still boots. `TIXMO_HST_RATE` defaults to `0.15`. Receipts show `Includes HST (<percent>%): CA$<amount>`, where the amount is `total * rate / (1 + rate)` rounded to the cent once per order. The amount charged and stored `taxAmount` stay unchanged.
 - [ ] `FROM_NAME` presented to buyers is `Tixmo`.
