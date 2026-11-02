@@ -161,6 +161,16 @@ async function main() {
   const check = () => {
     if (!safe) throw Error('Unjoined work');
   };
+  // The pinned image's Prisma client predates these Event columns, so its
+  // read omits them. Drop the same names before either side stores or compares.
+  const comparableEvent = (row) => {
+    if (!row) return row;
+    const comparable = { ...row };
+    delete comparable.ticketingMode;
+    delete comparable.externalPurchaseUrl;
+    delete comparable.currency;
+    return comparable;
+  };
   const foreignSnapshot = async () => {
     const result = {};
     for (const [model, where] of [
@@ -174,7 +184,7 @@ async function main() {
       check();
       const rows = await prisma[model].findMany({ where, orderBy: { id: 'asc' }, take: 1001 });
       assert.ok(rows.length <= 1000);
-      result[model] = rows;
+      result[model] = model === 'event' ? rows.map(comparableEvent) : rows;
     }
     return JSON.parse(JSON.stringify(result));
   };
@@ -389,7 +399,7 @@ async function main() {
       delete stable.updatedAt;
       return stable;
     }),
-    event: await prisma.event.findUnique({ where: { id: state.event } }),
+    event: comparableEvent(await prisma.event.findUnique({ where: { id: state.event } })),
     stock: await prisma.ticketType.findUnique({ where: { id: state.type } }),
     orders: await prisma.order.findMany({
       where: { eventId: state.event },
