@@ -17,6 +17,7 @@ const {
 const {
   discoverDevTools,
   clearDevToolsActivePort,
+  listDevToolsPages,
 } = require("./devtools-discovery.cjs");
 const { api, frontendPort, fixture } = guard(process.env);
 const load = createRequire(resolve(root, "tdash/package.json"));
@@ -226,9 +227,7 @@ async function open(index) {
   assert.equal(debug.protocol, "ws:");
   assert.equal(debug.hostname, "127.0.0.1");
   record.debugOrigin = "http://" + debug.host;
-  const targets = await fetch(record.debugOrigin + "/json/list", {
-    signal: AbortSignal.timeout(5000),
-  }).then((r) => r.json());
+  const targets = await listDevToolsPages(record.debugOrigin);
   const target = new URL(
     targets.find((row) => row.type === "page").webSocketDebuggerUrl,
   );

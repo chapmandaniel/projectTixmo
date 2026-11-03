@@ -161,6 +161,7 @@ let origin;
 const {
   clearDevToolsActivePort,
   discoverDevTools,
+  listDevToolsPages,
 } = require("./devtools-discovery.cjs");
 async function openBrowser() {
   clearDevToolsActivePort(profile);
@@ -198,9 +199,7 @@ async function openBrowser() {
   assert.equal(debug.hostname, "127.0.0.1");
   debugPort = Number(debug.port);
   phase(3); // target discovery transport and JSON
-  const targets = await fetch(`http://${debug.host}/json/list`, {
-    signal: AbortSignal.timeout(5000),
-  }).then((r) => r.json());
+  const targets = await listDevToolsPages(`http://${debug.host}`);
   phase(4); // page target selection
   const target = new URL(
     targets.find((t) => t.type === "page").webSocketDebuggerUrl,
