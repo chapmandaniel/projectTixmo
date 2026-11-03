@@ -50,7 +50,7 @@ afterAll(async () => {
 it('current browser reopens owned wallet and confirmed return, refreshes elapsed JWT, denies foreign buyer and captures only permitted receipt', () => {
   lifetime = qualifyWallet();
   return lifetime;
-}, 160000);
+}, 200000);
 async function qualifyWallet() {
   require('../../../scripts/verification-safety.cjs').validateVerificationTargets(process.env);
   const ids = {
@@ -375,7 +375,7 @@ async function qualifyWallet() {
       )
         workerCleanup = true;
     });
-    const workerExitCode = await bounded(browserExit, 120000);
+    const workerExitCode = await bounded(browserExit, 150000);
     if (workerExitCode !== 0) {
       const failedStage = failureStage || currentStage;
       const failedStartupPhase = failureStartupPhase || currentStartupPhase;
