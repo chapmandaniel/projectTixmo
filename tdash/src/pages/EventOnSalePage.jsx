@@ -30,10 +30,13 @@ import { eventZoneAbbreviation, formatEventDate } from '../lib/eventTime';
 import {
     checkoutSelection,
     comparePublicTicketTypes,
+    earliestUpcomingTicketOnSale,
     eventAddress,
     eventArtwork,
     eventTimeZone,
     formatEventMoney,
+    formatSaleCountdown,
+    formatUpcomingOnSale,
     PRICE_INCLUDES_NOTE,
     getEventSaleState,
     getPublicTicketOffer,
@@ -89,10 +92,23 @@ export const EventOnSaleView = ({
         ? Math.min(...availablePrices)
         : null;
     const canSelect = sale.available && availablePrices.length > 0;
-    const saleLabel =
-        sale.available && !availablePrices.length
-            ? 'Tickets unavailable'
-            : sale.label;
+    const upcomingOnSaleAt = sale.available
+        ? earliestUpcomingTicketOnSale(types, now)
+        : null;
+    const awaitingTicketOnSale = Boolean(
+        upcomingOnSaleAt != null && !availablePrices.length,
+    );
+    const saleLabel = awaitingTicketOnSale
+        ? 'On sale soon'
+        : sale.available && !availablePrices.length
+          ? 'Tickets unavailable'
+          : sale.label;
+    const onsaleWhen = awaitingTicketOnSale
+        ? formatUpcomingOnSale(upcomingOnSaleAt, event)
+        : '';
+    const countdown = awaitingTicketOnSale
+        ? formatSaleCountdown(upcomingOnSaleAt, now)
+        : '';
     const money = (value) => formatEventMoney(value, currency);
 
     useEffect(() => {
@@ -444,11 +460,36 @@ export const EventOnSaleView = ({
                             aria-labelledby="tickets-title"
                         >
                             <div
-                                className={`sf-sale-state ${canSelect ? 'sf-sale-open' : ''}`}
+                                className={[
+                                    'sf-sale-state',
+                                    canSelect && 'sf-sale-open',
+                                    awaitingTicketOnSale && 'sf-sale-soon',
+                                ]
+                                    .filter(Boolean)
+                                    .join(' ')}
                             >
                                 <span />
                                 {saleLabel}
                             </div>
+                            {awaitingTicketOnSale && (
+                                <>
+                                    <p className="sf-onsale-detail">
+                                        <time
+                                            dateTime={new Date(
+                                                upcomingOnSaleAt,
+                                            ).toISOString()}
+                                        >
+                                            {onsaleWhen}
+                                        </time>
+                                    </p>
+                                    <p
+                                        className="sf-onsale-countdown"
+                                        role="timer"
+                                    >
+                                        {countdown}
+                                    </p>
+                                </>
+                            )}
                             <div className="sf-ticket-heading">
                                 <h2 id="tickets-title">Get your tickets</h2>
                                 <Ticket size={24} aria-hidden="true" />
@@ -599,11 +640,16 @@ export const EventOnSaleView = ({
                                 </span>
                                 <strong>{money(subtotal)}</strong>
                             </div>
-                            <p className="sf-fee-note">
-                                {count
-                                    ? PRICE_INCLUDES_NOTE
-                                    : 'Choose a quantity to continue.'}
-                            </p>
+                            {items.length > 0 && (
+                                <p className="sf-fee-note">
+                                    {PRICE_INCLUDES_NOTE}
+                                </p>
+                            )}
+                            {!count && (
+                                <p className="sf-fee-note">
+                                    Choose a quantity to continue.
+                                </p>
+                            )}
                             <StorefrontButton
                                 onClick={continueToCheckout}
                                 disabled={!canSelect || !count}
