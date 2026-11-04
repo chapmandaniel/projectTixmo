@@ -35,6 +35,7 @@ import { isEventSaleClosedError, isSoldOutError } from '../lib/orderErrors';
 import { cn } from '../lib/utils';
 import { formatEventDate, eventZoneAbbreviation, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import { externalPurchaseUrl, isExternalTicketing } from '../lib/ticketingMode';
+import { ClosedSaleNotice, closedSaleCopy } from '../components/storefront/ClosedSaleNotice';
 import {
     comparePublicTicketTypes,
     eventAddress,
@@ -521,6 +522,20 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                         Loading checkout...
                     </div>
                 </div>
+            </main>
+        );
+    }
+
+    const closedSale = closedSaleCopy(event);
+    if (event && closedSale) {
+        return (
+            <main className="event-storefront sf-closed-checkout">
+                <section className="sf-ticket-panel" aria-label="Event availability">
+                    <ClosedSaleNotice
+                        event={event}
+                        eventHref={`/e/${encodeURIComponent(event.slug || slug)}`}
+                    />
+                </section>
             </main>
         );
     }

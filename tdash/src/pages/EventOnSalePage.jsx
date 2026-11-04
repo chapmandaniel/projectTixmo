@@ -22,6 +22,10 @@ import {
     StorefrontFact,
 } from '../components/storefront/StorefrontPrimitives';
 import {
+    ClosedSaleNotice,
+    closedSaleCopy,
+} from '../components/storefront/ClosedSaleNotice';
+import {
     getApiBaseUrl,
     getPaymentCurrency,
     getPolicyLinks,
@@ -44,22 +48,6 @@ import {
 
 const eventDate = (event, options = {}) =>
     formatEventDate(event.startDatetime, eventTimeZone(event), options);
-
-export const ENDED_EVENT_HEADING = 'This event has ended';
-export const ENDED_EVENT_BODY =
-    'Ticket sales are closed. Tickets you already bought are in My tickets.';
-export const UNDATED_EVENT_HEADING = "This event isn't open for sale yet";
-export const UNDATED_EVENT_BODY =
-    "Tickets aren't on sale until the organizer sets a date.";
-
-// The public event payload decides this. The page does not recompute it
-// from the browser clock. Ended wins over on-sale-soon and Showpass.
-const closedSaleCopy = (event) => {
-    if (event?.ended) return { heading: ENDED_EVENT_HEADING, body: ENDED_EVENT_BODY };
-    if (event?.undated)
-        return { heading: UNDATED_EVENT_HEADING, body: UNDATED_EVENT_BODY };
-    return null;
-};
 
 const zoneLabel = (value, event) => {
     const zone = eventTimeZone(event);
@@ -499,10 +487,7 @@ export const EventOnSaleView = ({
                             aria-labelledby="tickets-title"
                         >
                             {closedSale ? (
-                                <div className="sf-closed-sale">
-                                    <h2 id="tickets-title">{closedSale.heading}</h2>
-                                    <p>{closedSale.body}</p>
-                                </div>
+                                <ClosedSaleNotice event={event} />
                             ) : (
                             <>
                             {!externalSale && (

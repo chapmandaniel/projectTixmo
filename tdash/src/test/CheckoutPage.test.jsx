@@ -126,6 +126,46 @@ describe('CheckoutPage', () => {
         });
     });
 
+    const renderClosed = async (flags) => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ success: true, data: { ...eventPayload, ...flags } }),
+        });
+        renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A1' });
+    };
+
+    it('renders the ended state instead of checkout when the public event has ended', async () => {
+        await renderClosed({ ended: true });
+        expect(await screen.findByRole('heading', { name: 'This event has ended' })).toBeInTheDocument();
+        expect(screen.getByText('Ticket sales are closed. Tickets you already bought are in My tickets.')).toBeInTheDocument();
+        expect(screen.queryByText('Secure checkout')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /continue to secure payment/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Increase General Admission' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Not currently available for selection.')).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Back to the event' })).toHaveAttribute('href', '/e/neon-nights');
+        expect(screen.getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
+        expect(apiPost).not.toHaveBeenCalled();
+    });
+
+    it('renders the undated state instead of checkout when the public event has no date', async () => {
+        await renderClosed({ undated: true, startDatetime: null, endDatetime: null });
+        expect(await screen.findByRole('heading', { name: "This event isn't open for sale yet" })).toBeInTheDocument();
+        expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
+        expect(screen.queryByText('Secure checkout')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /continue to secure payment/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Increase General Admission' })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Back to the event' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'My tickets' })).toBeInTheDocument();
+    });
+
+    it('renders the checkout form for an open event', async () => {
+        renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A1' });
+        expect(await screen.findByText('Secure checkout')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /continue to secure payment/i })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'This event has ended' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: "This event isn't open for sale yet" })).not.toBeInTheDocument();
+    });
+
     it('restores event-page selections using current ticket limits', async () => {
         renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A99%2Cunknown%3A2' });
         await screen.findByText('Neon Nights');
