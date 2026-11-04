@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import swaggerUi from 'swagger-ui-express';
 import { config } from './config/environment';
+import { formatHealthRelease } from './config/healthRelease';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { requestLogger } from './middleware/requestLogger';
@@ -64,6 +65,7 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: config.nodeEnv,
+    release: formatHealthRelease(config.release),
   });
 });
 
@@ -125,6 +127,11 @@ app.use(requestLogger);
  *                 environment:
  *                   type: string
  *                   example: development
+ *                 release:
+ *                   type: string
+ *                   nullable: true
+ *                   description: Deployed release. A git SHA is the first 7 hex characters. Any other label is trimmed and limited to 64 characters. Null when unset.
+ *                   example: a1b2c3d
  */
 // Debug route to test Sentry (only enabled when SENTRY_DSN is configured)
 app.get('/api/v1/debug/sentry', (_req, _res, next) => {
