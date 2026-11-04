@@ -8,6 +8,7 @@ import {
     render,
     screen,
     waitFor,
+    within,
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import EventOnSalePage, { EventOnSaleView } from '../pages/EventOnSalePage';
@@ -368,6 +369,10 @@ describe('customer event on-sale page', () => {
         expect(screen.queryByText('Sales ended')).not.toBeInTheDocument();
         expect(screen.queryByText('On sale soon')).not.toBeInTheDocument();
         expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+        expect(document.title).toBe('Neon Nights · Tixmo');
+        const card = document.querySelector('.sf-closed-sale');
+        expect(within(card).getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
+        expect(within(card).queryByRole('link', { name: 'Back to the event' })).not.toBeInTheDocument();
     });
 
     it('uses the same no-sale treatment for an undated event', () => {
@@ -387,6 +392,8 @@ describe('customer event on-sale page', () => {
         expect(screen.queryByText('On sale soon')).not.toBeInTheDocument();
         expect(screen.queryByRole('timer')).not.toBeInTheDocument();
         expect(screen.queryByText('On sale now')).not.toBeInTheDocument();
+        expect(document.title).toBe('Neon Nights · Tixmo');
+        expect(within(document.querySelector('.sf-closed-sale')).getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
     });
 
     it('provides a retry after a failed event request and renders no sample data', async () => {

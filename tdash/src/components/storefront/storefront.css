@@ -94,6 +94,8 @@
 .sf-closed-sale-links a { min-height: 44px; display: inline-flex; align-items: center; font-size: 15px; text-decoration: underline; text-underline-offset: 3px; }
 .sf-closed-checkout { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
 .sf-closed-checkout .sf-ticket-panel { width: min(560px, 100%); margin: 0; position: static; }
+.sf-closed-checkout-header { margin-bottom: 18px; }
+.sf-closed-checkout-header h1 { margin: 0; font-size: clamp(32px, 8vw, 44px); letter-spacing: -.045em; font-weight: 750; line-height: var(--sf-leading-title); overflow-wrap: anywhere; }
 .sf-ticket-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-right: 4px; }
 .sf-ticket-heading h2 { font-size: 28px; letter-spacing: -.045em; font-weight: 750; line-height: var(--sf-leading-title); }
 .sf-ticket-heading svg { color: var(--sf-muted); transform: rotate(-20deg); }

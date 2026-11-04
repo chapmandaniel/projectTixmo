@@ -314,6 +314,16 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const [paymentSession, setPaymentSession] = useState(null);
     const [paymentComplete, setPaymentComplete] = useState(null);
 
+    const saleClosed = Boolean(event?.ended || event?.undated);
+    useEffect(() => {
+        if (!saleClosed || !event?.name) return undefined;
+        const previousTitle = document.title;
+        document.title = `${event.name} · Tixmo`;
+        return () => {
+            document.title = previousTitle;
+        };
+    }, [saleClosed, event?.name]);
+
     const policyLinks = useMemo(() => getPolicyLinks(), []);
     const stripePublishableKey = useMemo(() => getStripePublishableKey(), []);
     const paymentCurrency = orderDisplayCurrency(order?.currency);
@@ -530,7 +540,10 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     if (event && closedSale) {
         return (
             <main className="event-storefront sf-closed-checkout">
-                <section className="sf-ticket-panel" aria-label="Event availability">
+                <section className="sf-ticket-panel" aria-labelledby="closed-event-name">
+                    <header className="sf-closed-checkout-header">
+                        <h1 id="closed-event-name">{event.name}</h1>
+                    </header>
                     <ClosedSaleNotice
                         event={event}
                         eventHref={`/e/${encodeURIComponent(event.slug || slug)}`}
