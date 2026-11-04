@@ -45,6 +45,13 @@ import {
 const eventDate = (event, options = {}) =>
     formatEventDate(event.startDatetime, eventTimeZone(event), options);
 
+const zoneLabel = (value, event) => {
+    const zone = eventTimeZone(event);
+    const abbreviation = eventZoneAbbreviation(value, zone);
+    if (!abbreviation || /^(?:GMT|UTC)(?:$|\s|[+-])/i.test(abbreviation)) return zone;
+    return abbreviation;
+};
+
 export const EventOnSaleView = ({
     event,
     preview = false,
@@ -57,9 +64,11 @@ export const EventOnSaleView = ({
     const [imageFailed, setImageFailed] = useState(false);
     const [previewMessage, setPreviewMessage] = useState('');
     const [ticketPanelVisible, setTicketPanelVisible] = useState(false);
-    const currency = getPaymentCurrency();
+    const currency = event.currency || getPaymentCurrency();
     const policies = getPolicyLinks();
     const sale = getEventSaleState(event, now);
+    const externalSale = event.ticketingMode === 'EXTERNAL';
+    const purchaseUrl = typeof event.externalPurchaseUrl === 'string' ? event.externalPurchaseUrl : '';
     const artwork = eventArtwork(event);
     const address = eventAddress(event.venue);
     const types = [...(event.ticketTypes || [])]
@@ -259,6 +268,11 @@ export const EventOnSaleView = ({
                                 {event.venue?.name || 'Venue to be announced'}
                             </span>
                         </div>
+                        {externalSale && purchaseUrl ? (
+                            <a className="sf-button sf-hero-cta" href={purchaseUrl} target="_blank" rel="noopener noreferrer">
+                                Buy tickets on Showpass
+                            </a>
+                        ) : (
                         <StorefrontButton
                             className="sf-hero-cta"
                             onClick={focusTickets}
@@ -266,6 +280,7 @@ export const EventOnSaleView = ({
                             Choose tickets{' '}
                             <ArrowDown size={15} aria-hidden="true" />
                         </StorefrontButton>
+                        )}
                     </div>
                     <span className="sf-photo-caption" aria-hidden="true">
                         {event.category || 'Live events'} / Tixmo
@@ -322,12 +337,16 @@ export const EventOnSaleView = ({
                                 </StorefrontFact>
                                 <StorefrontFact icon={Clock3} label="Starts at">
                                     {event.startDatetime
-                                        ? eventDate(event, {
-                                              weekday: undefined,
-                                              month: undefined,
-                                              day: undefined,
-                                              timeZoneName: 'short',
-                                          })
+                                        ? [
+                                              eventDate(event, {
+                                                  weekday: undefined,
+                                                  month: undefined,
+                                                  day: undefined,
+                                              }),
+                                              zoneLabel(event.startDatetime, event),
+                                          ]
+                                              .filter(Boolean)
+                                              .join(' ')
                                         : 'Time to be announced'}
                                 </StorefrontFact>
                             </div>
@@ -459,6 +478,7 @@ export const EventOnSaleView = ({
                             tabIndex={-1}
                             aria-labelledby="tickets-title"
                         >
+                            {!externalSale && (
                             <div
                                 className={[
                                     'sf-sale-state',
@@ -471,7 +491,8 @@ export const EventOnSaleView = ({
                                 <span />
                                 {saleLabel}
                             </div>
-                            {awaitingTicketOnSale && (
+                            )}
+                            {awaitingTicketOnSale && !externalSale && (
                                 <>
                                     <p className="sf-onsale-detail">
                                         <time
@@ -491,13 +512,29 @@ export const EventOnSaleView = ({
                                 </>
                             )}
                             <div className="sf-ticket-heading">
-                                <h2 id="tickets-title">Get your tickets</h2>
+                                <h2 id="tickets-title">{externalSale ? 'Tickets on sale at Showpass' : 'Get your tickets'}</h2>
                                 <Ticket size={24} aria-hidden="true" />
                             </div>
                             <p className="sf-ticket-date">
-                                {event.startDatetime
-                                    ? [eventDate(event), eventZoneAbbreviation(event.startDatetime, eventTimeZone(event))].filter(Boolean).join(' ')
-                                    : eventDate(event)}
+                                {event.startDatetime ? (
+                                    <time dateTime={event.startDatetime}>
+                                        {[eventDate(event), zoneLabel(event.startDatetime, event)].filter(Boolean).join(' ')}
+                                    </time>
+                                ) : (
+                                    eventDate(event)
+                                )}
+                                {event.endDatetime ? (
+                                    <>
+                                        {' '}
+                                        Ends{' '}
+                                        <time dateTime={event.endDatetime}>
+                                            {[
+                                                formatEventDate(event.endDatetime, eventTimeZone(event)),
+                                                zoneLabel(event.endDatetime, event),
+                                            ].filter(Boolean).join(' ')}
+                                        </time>
+                                    </>
+                                ) : null}
                             </p>
                             {festivalContext && (
                                 <div
@@ -527,7 +564,19 @@ export const EventOnSaleView = ({
                                 </div>
                             )}
                             <div className="sf-ticket-list">
-                                {items.length ? (
+                                {externalSale ? (
+                                    <p>
+                                        Tickets for this event are sold on Showpass.
+                                        {purchaseUrl ? (
+                                            <>
+                                                {' '}
+                                                <a href={purchaseUrl} target="_blank" rel="noopener noreferrer">
+                                                    Buy tickets on Showpass
+                                                </a>
+                                            </>
+                                        ) : null}
+                                    </p>
+                                ) : items.length ? (
                                     items.map((item) => (
                                         <div
                                             className="sf-ticket-row"
@@ -628,6 +677,8 @@ export const EventOnSaleView = ({
                                     </p>
                                 )}
                             </div>
+                            {!externalSale && (
+                            <>
                             <div
                                 className="sf-subtotal"
                                 aria-live="polite"
@@ -667,6 +718,11 @@ export const EventOnSaleView = ({
                             <p className="sf-reservation-note">
                                 Availability is confirmed during checkout.
                             </p>
+                            </>
+                            )}
+                            {externalSale && (
+                                <p>Prices on Showpass are in {String(event.currency || currency).toUpperCase()}.</p>
+                            )}
                             <div className="sf-ticket-footer">
                                 <StorefrontBrand />
                                 <span>Ticketing for live events</span>
@@ -692,7 +748,9 @@ export const EventOnSaleView = ({
                             <span>
                                 {count
                                     ? `${count} ${count === 1 ? 'ticket' : 'tickets'}`
-                                    : startingPrice === null
+                                    : externalSale
+                                      ? 'Tickets on sale at Showpass'
+                                      : startingPrice === null
                                       ? saleLabel
                                       : 'Tickets from'}
                             </span>
@@ -704,10 +762,16 @@ export const EventOnSaleView = ({
                                       : money(startingPrice)}
                             </strong>
                         </div>
+                        {externalSale && purchaseUrl ? (
+                            <a href={purchaseUrl} target="_blank" rel="noopener noreferrer">
+                                Buy tickets on Showpass
+                            </a>
+                        ) : (
                         <StorefrontButton onClick={focusTickets}>
                             Choose tickets{' '}
                             <ArrowRight size={16} aria-hidden="true" />
                         </StorefrontButton>
+                        )}
                     </div>
                 )}
             </main>

@@ -1,0 +1,70 @@
+{
+  "uuid": "6a4b3660-f346-4e1e-9060-8fb2c76287b0",
+  "item_id": 1563243,
+  "type": "event",
+  "venue": {
+    "id": 6086,
+    "name": "George Street Association",
+    "slug": "george-street-festival",
+    "currency": "CAD",
+    "all_in_pricing_is_enabled": false
+  },
+  "venue_id": 6086,
+  "name": "George Street Association Presents: MARDI GRAS 2026 \u2014 Late Show",
+  "description_without_html": "George Street Mardi Gras 2026\n\u00a0\nNL\u2019s biggest costume party is BACK \u2014\u00a0Saturday, October 31st\u00a0on George Street!\u00a0\n\u00a0\nLive Music Lineup\n\u00a0\n\n8:30\u201310:00 \u2192 DJ Cuz\n10:30\u201311:30 \u2192 DJ PR3M\n11:30\u00a0\u2192 Bud Light Costume Competition with over $10,000 in prizes!\u00a0\u00a0 \u00a0 \u00a0\n\nCostume Contest Details\n\u00a0\n\n8:30\u00a0\u2192 Bud Light Costume Contest Sign up Opens!\n11:15\u00a0\u2192 Judging ends\n11:30 \u2192 Bud Light Costume Contest finalists presented ",
+  "starts_on": "2026-10-31T22:30:00Z",
+  "ends_on": "2026-11-01T06:30:00Z",
+  "date_time_to_be_determined": null,
+  "timezone": "Canada/Newfoundland",
+  "is_recurring": null,
+  "is_recurring_parent": false,
+  "child_count": 0,
+  "external_link": null,
+  "frontend_details_url": "https://www.showpass.com/george-street-association-presents-mardi-gras-2026/",
+  "image": "https://doavub8d2uzrx.cloudfront.net/media/images/events/george-street-festival/images/1ee4c673-068.png",
+  "image_banner": "https://doavub8d2uzrx.cloudfront.net/media/images/events/george-street-festival/img-banner/d46072bc-9fe.png",
+  "thumbnail": "https://dcm1eeuyachdi.cloudfront.net/fit-in/300x300/filters:format(jpeg)/media/https://doavub8d2uzrx.cloudfront.net/media/images/events/george-street-festival/images/1ee4c673-068.png",
+  "inventory": 10000,
+  "inventory_sold_out": false,
+  "public_inventory_sold_out": false,
+  "sold_out": false,
+  "slug": "george-street-association-presents-mardi-gras-2026",
+  "status": "sp_event_active",
+  "categories": [
+    "fairs_and_festivals",
+    "music",
+    "seasonal_and_holiday"
+  ],
+  "tags": [
+    "halloween",
+    "contest",
+    "dance party",
+    "costumes",
+    "george street",
+    "george street association"
+  ],
+  "sub_items": [
+    {
+      "id": 4581612,
+      "name": "VIP Admission 19+",
+      "price": "60.00",
+      "inventory_left": 0,
+      "low_ticket_inventory": 0
+    },
+    {
+      "id": 4581610,
+      "name": "General Admission - 19+ (Revised)",
+      "price": "30.00",
+      "inventory_left": 1618,
+      "low_ticket_inventory": 0
+    }
+  ],
+  "location": {
+    "name": "George Street",
+    "city": "St. John's",
+    "province": "Newfoundland and Labrador",
+    "country": "Canada",
+    "street_name": "George St",
+    "postal_code": "A1C"
+  }
+}

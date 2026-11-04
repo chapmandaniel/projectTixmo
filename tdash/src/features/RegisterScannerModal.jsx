@@ -34,7 +34,7 @@ const RegisterScannerModal = ({ onClose, onSuccess, isDark, scanner = null }) =>
                     page += 1;
                 } while (page <= pages && page <= 20);
                 if (!active) return;
-                const known = collected.filter((event) => event?.id);
+                const known = collected.filter((event) => event?.id && event.ticketingMode !== 'EXTERNAL');
                 if (scanner?.eventId && !known.some((event) => event.id === scanner.eventId)) {
                     known.unshift({ id: scanner.eventId, name: scanner.event?.name || 'Current event' });
                 }

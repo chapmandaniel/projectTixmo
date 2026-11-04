@@ -1,0 +1,79 @@
+{
+  "capturedAt": "2026-10-30",
+  "discoveryDocs": "https://github.com/showpass/api-docs-guide/blob/master/skills/build-showpass-widgets/references/public-api-to-widget.md",
+  "discoveryListDocs": "https://github.com/showpass/api-docs-guide/blob/master/src/docs-app/data/api/02-public-api-event-list-by-organization.md",
+  "liveDiscoveryUrl": "https://www.showpass.com/api/public/discovery/?page_size=20",
+  "events": [
+    {
+      "file": "events/polygon-halloween.json",
+      "fixtureId": "sp-evt-1543494",
+      "source": "live-discovery",
+      "item_id": 1543494,
+      "timezone": "America/Vancouver",
+      "notes": "Trimmed live Discovery result. Used as a new import and as the slug-collision fixture (slug halloween-at-the-polygon-gallery)."
+    },
+    {
+      "file": "events/pumpkins-dublin.json",
+      "fixtureId": "sp-evt-1545631",
+      "source": "live-discovery",
+      "item_id": 1545631,
+      "timezone": "Europe/Dublin",
+      "notes": "Trimmed live Discovery result. Non-Newfoundland timezone for AC-8."
+    },
+    {
+      "file": "events/giants-recurring-parent.json",
+      "fixtureId": "sp-evt-1530323",
+      "source": "live-discovery",
+      "item_id": 1530323,
+      "timezone": "America/Vancouver",
+      "notes": "Trimmed live Discovery result with is_recurring_parent true. Imported as one event; child instances are not expanded."
+    },
+    {
+      "file": "events/mardi-gras.json",
+      "fixtureId": "sp-evt-1563243",
+      "source": "live-discovery",
+      "item_id": 1563243,
+      "timezone": "Canada/Newfoundland",
+      "notes": "Trimmed live Discovery result. Baseline revision for the unchanged-to-changed re-sync."
+    },
+    {
+      "file": "events/mardi-gras.changed.json",
+      "fixtureId": "sp-evt-1563243",
+      "source": "simulated-revision-of-live-discovery",
+      "item_id": 1563243,
+      "notes": "Same live event with a simulated later revision: name, starts_on, and General Admission (4581610) name and price changed. Shape remains the documented Discovery event. Not a second live capture."
+    }
+  ],
+  "auth": {
+    "file": "auth.json",
+    "errorBodySource": "live-private-api",
+    "capturedFrom": "GET https://www.showpass.com/api/venue/6086/tickets/items/scan/?code=NOT-A-REAL-CODE with Authorization: Token invalid-demo-token",
+    "capturedStatus": 401,
+    "capturedBody": { "detail": "Invalid token." },
+    "demoKeys": "simulated",
+    "notes": "The 401 body is the live response. Demo key names are local fixtures. Revoking a previously accepted demo key is simulated with SHOWPASS_FIXTURE_REVOKED_KEYS. No ticket or buyer payload was stored."
+  },
+  "soldCounts": {
+    "file": "sold-counts.unverified.json",
+    "source": "UNVERIFIED",
+    "notes": "Public Discovery exposes inventory_left and sold-out flags, not sold totals. Documented private organizer endpoints cover scan, discounts, passwords, and tracking links, not per-type sold totals. Webhooks deliver per-invoice quantities plus buyer fields. The backup sync file is a simulated absolute total and stays behind getSoldCounts."
+  },
+  "webhooks": [
+    {
+      "file": "webhooks/invoice-purchase.documented.json",
+      "source": "docs",
+      "docs": "https://github.com/showpass/api-docs-guide/blob/master/src/docs-app/data/webhooks/05-webhooks-payload-invoice-object.md",
+      "notes": "Verbatim documented invoice.purchase sample, including buyer fields. The adapter must drop those fields before anything is stored."
+    },
+    {
+      "file": "webhooks/invoice-purchase.mardi-gras.json",
+      "source": "docs-shape-retargeted",
+      "notes": "Documented invoice.purchase shape with event_id and ticket_type_id retargeted to fixture sp-evt-1563243 / ticket type 4581610. Buyer fields are still present so tests can prove they are discarded. Signature algorithm is the documented HMAC-SHA1 of the payload id."
+    }
+  ],
+  "fixtureVenueId": {
+    "id": "fixture",
+    "source": "simulated",
+    "notes": "Connecting with vendorVenueId fixture returns the curated multi-event catalog. A numeric Showpass venue id filters to events whose venue.id matches, which is how a later live adapter will scope one organizer."
+  }
+}

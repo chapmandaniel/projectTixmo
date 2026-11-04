@@ -1,0 +1,67 @@
+{
+  "uuid": "63b7ff5b-dd65-4559-b220-1c703973e606",
+  "item_id": 1545631,
+  "type": "event",
+  "venue": {
+    "id": 16557,
+    "name": "Lantern Events Dublin",
+    "slug": "lantern-events-dublin",
+    "currency": "EUR",
+    "all_in_pricing_is_enabled": true
+  },
+  "venue_id": 16557,
+  "name": "Pumpkins After Dark 2026",
+  "description_without_html": "",
+  "starts_on": "2026-10-30T17:15:00Z",
+  "ends_on": "2026-10-31T22:00:00Z",
+  "date_time_to_be_determined": null,
+  "timezone": "Europe/Dublin",
+  "is_recurring": null,
+  "is_recurring_parent": false,
+  "child_count": 0,
+  "external_link": null,
+  "frontend_details_url": "https://www.showpass.com/pumpkins-after-dark-2026-6/",
+  "image": "https://doavub8d2uzrx.cloudfront.net/media/images/events/lantern-events-dublin/images/ac01552b-e51.png",
+  "image_banner": "https://doavub8d2uzrx.cloudfront.net/media/images/events/lantern-events-dublin/img-banner/f2d1897f-fe5.png",
+  "thumbnail": "https://dcm1eeuyachdi.cloudfront.net/fit-in/300x300/filters:format(jpeg)/media/https://doavub8d2uzrx.cloudfront.net/media/images/events/lantern-events-dublin/images/ac01552b-e51.png",
+  "inventory": null,
+  "inventory_sold_out": false,
+  "public_inventory_sold_out": false,
+  "sold_out": false,
+  "slug": "pumpkins-after-dark-2026-6",
+  "status": "sp_event_active",
+  "categories": [
+    "fairs_and_festivals"
+  ],
+  "tags": [
+    "dublin",
+    "halloween",
+    "pumpkin",
+    "pumpkins",
+    "things to do dublin"
+  ],
+  "sub_items": [
+    {
+      "id": 4488072,
+      "name": "GA",
+      "price": "21.95",
+      "inventory_left": null,
+      "low_ticket_inventory": 0
+    },
+    {
+      "id": 4488073,
+      "name": "GA",
+      "price": "45.00",
+      "inventory_left": null,
+      "low_ticket_inventory": 0
+    }
+  ],
+  "location": {
+    "name": "Newbridge House & Farm",
+    "city": "Donabate",
+    "province": "County Dublin",
+    "country": "IE",
+    "street_name": "Hearse Rd",
+    "postal_code": "K36 VR90"
+  }
+}

@@ -7,6 +7,66 @@ const { guard } = require('/task606-driver.cjs');
 let phase = 'guard';
 let providerAttempts = 0;
 let server, prisma, redis;
+let smoke = 'guard';
+let smokeReason = 'assertion';
+let smokeDetail = '';
+const SMOKE_CHECKS = new Set([
+  'guard',
+  'connect',
+  'ready',
+  'login',
+  'mounted-write',
+  'auth-me',
+  'event-read',
+  'order-read',
+  'ticket-read',
+  'tickets-mine',
+  'foreign-token',
+  'foreign-order',
+  'foreign-ticket',
+  'stock',
+  'order-status',
+  'ticket-hold',
+  'attempts',
+  'refunds',
+  'snapshot',
+  'foreign-snapshot',
+  'provider',
+]);
+function diffPaths(actual, expected, prefix = '', out = []) {
+  if (out.length >= 8) return out;
+  const pathOk = (value) => /^[A-Za-z0-9_.]+$/.test(value) && value.length <= 80;
+  if (Array.isArray(actual) || Array.isArray(expected)) {
+    if (!Array.isArray(actual) || !Array.isArray(expected) || actual.length !== expected.length) {
+      if (pathOk(prefix)) out.push(prefix);
+      return out;
+    }
+    for (let index = 0; index < actual.length && out.length < 8; index += 1) {
+      diffPaths(actual[index], expected[index], prefix ? `${prefix}.${index}` : String(index), out);
+    }
+    return out;
+  }
+  if (actual && expected && typeof actual === 'object' && typeof expected === 'object') {
+    const keys = [...new Set([...Object.keys(actual), ...Object.keys(expected)])].sort();
+    for (const key of keys) {
+      if (out.length >= 8 || !/^[A-Za-z0-9_]+$/.test(key)) continue;
+      const next = prefix ? `${prefix}.${key}` : key;
+      const left = Object.prototype.hasOwnProperty.call(actual, key);
+      const right = Object.prototype.hasOwnProperty.call(expected, key);
+      if (!left || !right) {
+        if (pathOk(next)) out.push(next);
+        continue;
+      }
+      if (JSON.stringify(actual[key]) === JSON.stringify(expected[key])) continue;
+      if (actual[key] && expected[key] && typeof actual[key] === 'object')
+        diffPaths(actual[key], expected[key], next, out);
+      else if (pathOk(next)) out.push(next);
+    }
+    return out;
+  }
+  if (JSON.stringify(actual) !== JSON.stringify(expected) && pathOk(prefix)) out.push(prefix);
+  return out;
+}
 let safe = true;
 const stateFile = '/task606-state/owned.json';
 const save = (value) => fs.writeFileSync(stateFile, JSON.stringify(value), { mode: 0o600 });
@@ -55,6 +115,7 @@ async function main() {
   prisma = require('/app/dist/config/prisma').default;
   redis = require('/app/dist/config/redis');
   phase = 'connect';
+  smoke = 'connect';
   await bounded(prisma.$connect());
   await prisma.$executeRawUnsafe("SET statement_timeout='5000'");
   await prisma.$executeRawUnsafe("SET lock_timeout='2000'");
@@ -100,6 +161,16 @@ async function main() {
   const check = () => {
     if (!safe) throw Error('Unjoined work');
   };
+  // The pinned image's Prisma client predates these Event columns, so its
+  // read omits them. Drop the same names before either side stores or compares.
+  const comparableEvent = (row) => {
+    if (!row) return row;
+    const comparable = { ...row };
+    delete comparable.ticketingMode;
+    delete comparable.externalPurchaseUrl;
+    delete comparable.currency;
+    return comparable;
+  };
   const foreignSnapshot = async () => {
     const result = {};
     for (const [model, where] of [
@@ -113,7 +184,7 @@ async function main() {
       check();
       const rows = await prisma[model].findMany({ where, orderBy: { id: 'asc' }, take: 1001 });
       assert.ok(rows.length <= 1000);
-      result[model] = rows;
+      result[model] = model === 'event' ? rows.map(comparableEvent) : rows;
     }
     return JSON.parse(JSON.stringify(result));
   };
@@ -195,11 +266,16 @@ async function main() {
       },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
-    assert.equal(response.status, status);
+    if (response.status !== status) {
+      smokeReason = 'status';
+      smokeDetail = String(response.status);
+      assert.equal(response.status, status);
+    }
     const data = await response.json();
     if (status < 400 && route !== '/ready') assert.equal(data.success, true);
     return data;
   }
+  smoke = 'ready';
   await http('GET', '/ready');
   // All fixture writes happen AFTER the first new application has started on migrated33.
   if (mode === 'new') {
@@ -256,6 +332,7 @@ async function main() {
       },
     });
   }
+  smoke = 'login';
   const login = await http('POST', '/api/v1/auth/login', null, {
     email: state.buyer + '@example.test',
     password: 'Synthetic606Password!',
@@ -281,15 +358,21 @@ async function main() {
     save(state);
   }
   phase = 'read-smokes';
+  smoke = 'auth-me';
   assert.equal((await http('GET', '/api/v1/auth/me', token)).data.id, state.buyer);
+  smoke = 'event-read';
   assert.equal((await http('GET', '/api/v1/events/' + state.event, token)).data.id, state.event);
+  smoke = 'order-read';
   assert.equal((await http('GET', '/api/v1/orders/' + state.order, token)).data.id, state.order);
+  smoke = 'ticket-read';
   assert.equal((await http('GET', '/api/v1/tickets/' + state.ticket, token)).data.id, state.ticket);
+  smoke = 'tickets-mine';
   assert.ok(
     (await http('GET', '/api/v1/tickets/mine', token)).data.tickets.some(
       (ticket) => ticket.id === state.ticket
     )
   );
+  smoke = 'foreign-token';
   const foreign = require('/app/dist/utils/jwt').generateAccessToken({
     userId: state.foreignBuyer,
     email: state.foreignBuyer + '@example.test',
@@ -298,7 +381,9 @@ async function main() {
     sessionVersion: 0,
     emailVerified: true,
   });
+  smoke = 'foreign-order';
   await http('GET', '/api/v1/orders/' + state.order, foreign, undefined, 404);
+  smoke = 'foreign-ticket';
   await http('GET', '/api/v1/tickets/' + state.ticket, foreign, undefined, 404);
   // Login legitimately changes lastLogin/updatedAt only; financial/event/ticket rows remain complete.
   const snapshot = {
@@ -314,7 +399,7 @@ async function main() {
       delete stable.updatedAt;
       return stable;
     }),
-    event: await prisma.event.findUnique({ where: { id: state.event } }),
+    event: comparableEvent(await prisma.event.findUnique({ where: { id: state.event } })),
     stock: await prisma.ticketType.findUnique({ where: { id: state.type } }),
     orders: await prisma.order.findMany({
       where: { eventId: state.event },
@@ -332,20 +417,42 @@ async function main() {
     }),
     ledger: await ledger(),
   };
+  smoke = 'stock';
   assert.equal(snapshot.stock.quantityAvailable, 4);
   assert.equal(snapshot.stock.quantityHeld, 1);
   assert.equal(snapshot.stock.quantitySold, 0);
+  smoke = 'order-status';
   assert.equal(snapshot.orders[0].status, 'PENDING');
   assert.equal(snapshot.orders[0].paymentIntentId, null);
+  smoke = 'ticket-hold';
   assert.equal(snapshot.tickets[0].inventoryState, 'HELD');
+  smoke = 'attempts';
   assert.equal(snapshot.attempts.length, 0);
+  smoke = 'refunds';
   assert.equal(snapshot.refunds.length, 0);
   const normalized = JSON.parse(JSON.stringify(snapshot));
   if (mode === 'new') {
     state.snapshot = normalized;
     save(state);
-  } else assert.deepEqual(normalized, state.snapshot);
-  assert.deepEqual(await foreignSnapshot(), state.foreign);
+  } else {
+    smoke = 'snapshot';
+    try {
+      assert.deepEqual(normalized, state.snapshot);
+    } catch (error) {
+      smokeReason = 'mismatch';
+      smokeDetail = diffPaths(normalized, state.snapshot).join(',');
+      throw error;
+    }
+  }
+  smoke = 'foreign-snapshot';
+  try {
+    assert.deepEqual(await foreignSnapshot(), state.foreign);
+  } catch (error) {
+    smokeReason = 'mismatch';
+    smokeDetail = diffPaths(await foreignSnapshot(), state.foreign).join(',');
+    throw error;
+  }
+  smoke = 'provider';
   assert.equal(providerAttempts, 0);
 }
 if (require.main === module) {
@@ -357,7 +464,10 @@ if (require.main === module) {
       await main();
       ok = true;
     } catch {
-      /* Never print assertions, tokens, URLs or provider errors. */
+      /* Names of the failed read-smoke only. Never print assertion values, tokens, or URLs. */
+      if (!SMOKE_CHECKS.has(smoke)) smoke = 'guard';
+      if (!['status', 'mismatch', 'assertion', 'throw'].includes(smokeReason)) smokeReason = 'assertion';
+      if (!/^[A-Za-z0-9_.,]{0,240}$/.test(smokeDetail)) smokeDetail = '';
     }
     try {
       if (server)
@@ -383,6 +493,13 @@ if (require.main === module) {
         ok: ok && safe && providerAttempts === 0,
         providerAttempts,
         lifetimeCleanupVerified,
+        ...(ok
+          ? {}
+          : {
+              check: smoke,
+              reason: smokeReason,
+              detail: smokeDetail,
+            }),
       }) + '\n',
       () => process.exit(ok && safe && providerAttempts === 0 ? 0 : 1)
     );

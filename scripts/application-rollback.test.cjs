@@ -242,6 +242,9 @@ test('hosted workflow actually builds old image and invokes current worker on co
   assert.match(worker, /require\(["']\/app\/dist\/app["']\)/);
   assert.doesNotMatch(worker, /dist\/index|startOrderExpiryJob|startPaymentRecoveryJob/);
   assert.match(worker, /assert.deepEqual\(normalized,\s*state.snapshot\)/);
+  assert.match(worker, /delete comparable\.ticketingMode/);
+  assert.match(worker, /delete comparable\.externalPurchaseUrl/);
+  assert.match(worker, /delete comparable\.currency/);
   assert.match(worker, /\/app\/scripts\/migration-census\.cjs/);
   assert.match(worker, /rows\.length, MIGRATION_COUNT/);
   assert.match(worker, /providerAttempts,\s*0/);

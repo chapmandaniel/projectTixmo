@@ -2,4 +2,6 @@
 . "$(dirname "$0")/_/husky.sh"
 
 # Run lint-staged only to keep commits fast. Typecheck + tests run in pre-push and CI.
+# Git invokes hooks from the work tree root; the ESLint project lives in this package.
+cd "$(dirname "$0")/.." || exit 1
 npx lint-staged
