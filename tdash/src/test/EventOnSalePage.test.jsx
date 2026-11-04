@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     act,
@@ -75,6 +77,23 @@ describe('customer event on-sale page', () => {
         cleanup();
         vi.useRealTimers();
         vi.unstubAllGlobals();
+    });
+
+    it('keeps the skip link out of the way until keyboard focus', () => {
+        const css = readFileSync(
+            path.join(process.cwd(), 'src/components/storefront/storefront.css'),
+            'utf8',
+        );
+        expect(css).toMatch(/\.sf-skip \{[^}]*clip:\s*rect\(0,\s*0,\s*0,\s*0\)/);
+        expect(css).toMatch(/\.sf-skip:focus-visible \{[^}]*position:\s*fixed/);
+        expect(css).not.toMatch(/translateY\(-200%\)/);
+        expect(css).not.toMatch(/\.sf-skip:focus \{/);
+        renderView();
+        const skip = screen.getByRole('link', { name: 'Skip to event details' });
+        expect(skip).toHaveAttribute('href', '#event-details');
+        expect(skip).not.toHaveFocus();
+        fireEvent.click(screen.getByRole('button', { name: 'Add one General admission ticket' }));
+        expect(skip).not.toHaveFocus();
     });
 
     it('supports unauthenticated ticket selection and hands the selection to checkout', () => {
