@@ -85,6 +85,9 @@
 .sf-sale-state { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--sf-muted); margin-bottom: 16px; }
 .sf-sale-state > span { width: 5px; height: 5px; background: currentColor; border-radius: 50%; }
 .sf-sale-open { color: var(--sf-soft); }
+.sf-sale-soon { margin-bottom: 4px; }
+.sf-onsale-detail { color: var(--sf-muted); font-size: 13px; line-height: 1.4; margin: 0 !important; }
+.sf-onsale-countdown { color: var(--sf-text); font-size: 13px; line-height: 1.4; font-variant-numeric: tabular-nums; margin: 2px 0 16px !important; }
 .sf-ticket-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-right: 4px; }
 .sf-ticket-heading h2 { font-size: 28px; letter-spacing: -.045em; font-weight: 750; line-height: var(--sf-leading-title); }
 .sf-ticket-heading svg { color: var(--sf-muted); transform: rotate(-20deg); }

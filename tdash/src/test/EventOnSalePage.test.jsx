@@ -238,6 +238,99 @@ describe('customer event on-sale page', () => {
         ).toHaveTextContent('0');
     });
 
+    it('shows the included-fees line before a quantity is chosen and keeps one copy after', () => {
+        renderView();
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        expect(screen.getByText('Choose a quantity to continue.')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Add one General admission ticket' }));
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        expect(screen.queryByText('Choose a quantity to continue.')).not.toBeInTheDocument();
+    });
+
+    it('shows the earliest per-ticket onsale, ticks the countdown, then opens sales', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-11-09T21:30:00.000Z'));
+        renderView({
+            timezone: 'America/St_Johns',
+            startDatetime: '2026-11-20T23:30:00.000Z',
+            ticketTypes: [
+                {
+                    id: 'hidden',
+                    name: 'Staff hold',
+                    status: 'HIDDEN',
+                    price: '10',
+                    quantityAvailable: 5,
+                    maxPerOrder: 4,
+                    salesStart: '2026-11-09T22:00:00.000Z',
+                },
+                {
+                    ...event.ticketTypes[0],
+                    salesStart: '2026-11-09T22:30:00.000Z',
+                },
+                {
+                    id: 'vip',
+                    name: 'Balcony',
+                    price: '55',
+                    quantityAvailable: 4,
+                    maxPerOrder: 4,
+                    salesStart: '2026-11-10T22:30:00.000Z',
+                },
+            ],
+        });
+        expect(document.querySelector('.sf-sale-state')).toHaveTextContent('On sale soon');
+        expect(screen.queryByText('Tickets unavailable')).not.toBeInTheDocument();
+        expect(screen.getByText('On sale Mon, Nov 9, 7:00 p.m. NST')).toBeInTheDocument();
+        expect(screen.queryByText('On sale Tue, Nov 10, 7:00 p.m. NST')).not.toBeInTheDocument();
+        expect(screen.getByRole('timer')).toHaveTextContent('in 1 hour');
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        expect(screen.getByRole('button', { name: 'Add one General admission ticket' })).toBeDisabled();
+
+        act(() => vi.advanceTimersByTime(1000));
+        expect(screen.getByRole('timer')).toHaveTextContent('in 59 minutes 59 seconds');
+
+        act(() => {
+            vi.setSystemTime(new Date('2026-11-09T22:30:00.000Z'));
+            vi.advanceTimersByTime(1000);
+        });
+        expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+        expect(screen.queryByText('On sale Mon, Nov 9, 7:00 p.m. NST')).not.toBeInTheDocument();
+        expect(document.querySelector('.sf-sale-state')).toHaveTextContent('On sale now');
+        const add = screen.getByRole('button', { name: 'Add one General admission ticket' });
+        expect(add).toBeEnabled();
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        fireEvent.click(add);
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        expect(screen.getByRole('button', { name: 'Continue to checkout' })).toBeEnabled();
+    });
+
+    it('formats a summer per-ticket onsale as Newfoundland daylight time', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-10-31T21:30:00.000Z'));
+        renderView({
+            timezone: 'America/St_Johns',
+            ticketTypes: [{ ...event.ticketTypes[0], salesStart: '2026-10-31T22:30:00.000Z' }],
+        });
+        expect(screen.getByText('On sale Sat, Oct 31, 8:00 p.m. NDT')).toBeInTheDocument();
+        expect(screen.getByRole('timer')).toHaveTextContent('in 1 hour');
+        expect(screen.queryByText('Tickets unavailable')).not.toBeInTheDocument();
+    });
+
+    it.each([
+        [{ ticketTypes: [] }, 'Tickets unavailable', false],
+        [{ ticketTypes: [{ ...event.ticketTypes[0], status: 'SOLD_OUT', quantityAvailable: 0 }] }, 'Tickets unavailable', true],
+        [{ ticketTypes: [{ ...event.ticketTypes[0], status: 'SOLD_OUT', quantityAvailable: 0, salesStart: '2099-11-01T00:00:00Z' }] }, 'Tickets unavailable', true],
+        [{ status: 'SOLD_OUT', ticketTypes: [{ ...event.ticketTypes[0], salesStart: '2099-11-01T00:00:00Z' }] }, 'Sold out', true],
+        [{ salesEnd: '2020-01-01T00:00:00Z', ticketTypes: [{ ...event.ticketTypes[0], salesStart: '2099-11-01T00:00:00Z' }] }, 'Sales ended', true],
+        [{ startDatetime: '2020-01-01T00:00:00Z', ticketTypes: [{ ...event.ticketTypes[0], salesStart: '2099-11-01T00:00:00Z' }] }, 'Sales ended', true],
+    ])('keeps a genuinely unavailable event on %j', (overrides, label, showsFees) => {
+        renderView(overrides);
+        expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+        expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+        expect(screen.queryByText(/^On sale /)).not.toBeInTheDocument();
+        if (showsFees) expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        else expect(screen.queryByText('Price includes HST and all fees.')).not.toBeInTheDocument();
+    });
+
     it('provides a retry after a failed event request and renders no sample data', async () => {
         fetch
             .mockResolvedValueOnce({
