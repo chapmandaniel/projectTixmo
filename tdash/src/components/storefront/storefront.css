@@ -88,6 +88,8 @@
 .sf-sale-soon { margin-bottom: 4px; }
 .sf-onsale-detail { color: var(--sf-muted); font-size: 13px; line-height: 1.4; margin: 0 !important; }
 .sf-onsale-countdown { color: var(--sf-text); font-size: 13px; line-height: 1.4; font-variant-numeric: tabular-nums; margin: 2px 0 16px !important; }
+.sf-closed-sale h2 { font-size: 28px; letter-spacing: -.045em; font-weight: 750; line-height: var(--sf-leading-title); overflow-wrap: anywhere; }
+.sf-closed-sale p { color: var(--sf-muted); font-size: 15px; line-height: 1.5; margin-top: 12px !important; overflow-wrap: anywhere; }
 .sf-ticket-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-right: 4px; }
 .sf-ticket-heading h2 { font-size: 28px; letter-spacing: -.045em; font-weight: 750; line-height: var(--sf-leading-title); }
 .sf-ticket-heading svg { color: var(--sf-muted); transform: rotate(-20deg); }
@@ -189,7 +191,11 @@
   .sf-share-message { bottom: 100px; }
   .sf-ticket-panel { scroll-margin-bottom: 110px; }
 }
-@media (max-width: 370px) { .sf-preview { flex-direction: column; align-items: center; gap: 0; } .sf-hero-meta { flex-direction: column; } .sf-mobile-bar { padding-inline: 14px; gap: 8px; } .sf-mobile-bar strong { font-size: 16px; } .sf-facts { grid-template-columns: 1fr; } }
+@media (max-width: 800px) {
+  .event-storefront.sf-event-closed .sf-footer { padding-bottom: 32px; }
+  .sf-closed-sale h2 { font-size: 26px; }
+}
+@media (max-width: 370px) { .sf-preview { flex-direction: column; align-items: center; gap: 0; } .sf-hero-meta { flex-direction: column; } .sf-mobile-bar { padding-inline: 14px; gap: 8px; } .sf-mobile-bar strong { font-size: 16px; } .sf-facts { grid-template-columns: 1fr; } .sf-closed-sale h2 { font-size: 24px; } }
 .sf-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .sf-parent-festival { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding-block: 20px; border-bottom: 1px solid var(--sf-border); }
 .sf-parent-festival-link { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 650; letter-spacing: -.025em; line-height: 1.3; }

@@ -75,11 +75,13 @@ describe('public event listing dates', () => {
     ]);
     expect(listed.body.data.pagination.total).toBe(2);
 
-    for (const item of cases.filter((entry) => !entry.listed)) {
+    for (const item of cases) {
       const detail = await request(app).get(`/api/v1/events/public/${prefix}-${item.key}`);
       expect(detail.status).toBe(200);
       expect(detail.body.data.slug).toBe(`${prefix}-${item.key}`);
       expect(detail.body.data.status).toBe('ON_SALE');
+      expect(detail.body.data.ended).toBe(item.key === 'ended');
+      expect(detail.body.data.undated).toBe(item.key === 'no-dates');
     }
   });
 });

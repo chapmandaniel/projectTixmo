@@ -45,6 +45,22 @@ import {
 const eventDate = (event, options = {}) =>
     formatEventDate(event.startDatetime, eventTimeZone(event), options);
 
+export const ENDED_EVENT_HEADING = 'This event has ended';
+export const ENDED_EVENT_BODY =
+    'Ticket sales are closed. Tickets you already bought are in My tickets.';
+export const UNDATED_EVENT_HEADING = "This event isn't open for sale yet";
+export const UNDATED_EVENT_BODY =
+    "Tickets aren't on sale until the organizer sets a date.";
+
+// The public event payload decides this. The page does not recompute it
+// from the browser clock. Ended wins when an end instant has also passed.
+const closedSaleCopy = (event) => {
+    if (event?.ended) return { heading: ENDED_EVENT_HEADING, body: ENDED_EVENT_BODY };
+    if (event?.undated)
+        return { heading: UNDATED_EVENT_HEADING, body: UNDATED_EVENT_BODY };
+    return null;
+};
+
 export const EventOnSaleView = ({
     event,
     preview = false,
@@ -60,6 +76,7 @@ export const EventOnSaleView = ({
     const currency = getPaymentCurrency();
     const policies = getPolicyLinks();
     const sale = getEventSaleState(event, now);
+    const closedSale = closedSaleCopy(event);
     const artwork = eventArtwork(event);
     const address = eventAddress(event.venue);
     const types = [...(event.ticketTypes || [])]
@@ -193,7 +210,10 @@ export const EventOnSaleView = ({
     };
 
     return (
-        <div className="event-storefront" id="event-top">
+        <div
+            className={`event-storefront${closedSale ? ' sf-event-closed' : ''}`}
+            id="event-top"
+        >
             <a className="sf-skip" href="#event-details">
                 Skip to event details
             </a>
@@ -259,13 +279,15 @@ export const EventOnSaleView = ({
                                 {event.venue?.name || 'Venue to be announced'}
                             </span>
                         </div>
-                        <StorefrontButton
-                            className="sf-hero-cta"
-                            onClick={focusTickets}
-                        >
-                            Choose tickets{' '}
-                            <ArrowDown size={15} aria-hidden="true" />
-                        </StorefrontButton>
+                        {!closedSale && (
+                            <StorefrontButton
+                                className="sf-hero-cta"
+                                onClick={focusTickets}
+                            >
+                                Choose tickets{' '}
+                                <ArrowDown size={15} aria-hidden="true" />
+                            </StorefrontButton>
+                        )}
                     </div>
                     <span className="sf-photo-caption" aria-hidden="true">
                         {event.category || 'Live events'} / Tixmo
@@ -451,7 +473,7 @@ export const EventOnSaleView = ({
 
                     <aside
                         className="sf-ticket-column"
-                        aria-label="Ticket selection"
+                        aria-label={closedSale ? 'Event availability' : 'Ticket selection'}
                     >
                         <section
                             className="sf-ticket-panel"
@@ -459,6 +481,13 @@ export const EventOnSaleView = ({
                             tabIndex={-1}
                             aria-labelledby="tickets-title"
                         >
+                            {closedSale ? (
+                                <div className="sf-closed-sale">
+                                    <h2 id="tickets-title">{closedSale.heading}</h2>
+                                    <p>{closedSale.body}</p>
+                                </div>
+                            ) : (
+                            <>
                             <div
                                 className={[
                                     'sf-sale-state',
@@ -667,6 +696,8 @@ export const EventOnSaleView = ({
                             <p className="sf-reservation-note">
                                 Availability is confirmed during checkout.
                             </p>
+                            </>
+                            )}
                             <div className="sf-ticket-footer">
                                 <StorefrontBrand />
                                 <span>Ticketing for live events</span>
@@ -686,7 +717,7 @@ export const EventOnSaleView = ({
                         </button>
                     </aside>
                 </div>
-                {!ticketPanelVisible && (
+                {!closedSale && !ticketPanelVisible && (
                     <div className="sf-mobile-bar">
                         <div>
                             <span>

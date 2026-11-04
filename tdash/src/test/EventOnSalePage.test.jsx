@@ -147,6 +147,7 @@ describe('customer event on-sale page', () => {
         [{ salesStart: '2099-11-01T00:00:00Z' }, 'On sale soon'],
         [{ salesEnd: '2020-01-01T00:00:00Z' }, 'Sales ended'],
         [{ startDatetime: '2020-01-01T00:00:00Z' }, 'Sales ended'],
+        [{ startDatetime: '2020-01-01T00:00:00Z', endDatetime: '2099-01-01T00:00:00Z', ended: false }, 'Sales ended'],
     ])('disables sales for unavailable events: %s', (overrides, label) => {
         renderView(overrides);
         expect(screen.getAllByText(label).length).toBeGreaterThan(0);
@@ -329,6 +330,44 @@ describe('customer event on-sale page', () => {
         expect(screen.queryByText(/^On sale /)).not.toBeInTheDocument();
         if (showsFees) expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
         else expect(screen.queryByText('Price includes HST and all fees.')).not.toBeInTheDocument();
+    });
+
+    it('shows an ended event with no purchase controls', () => {
+        renderView({
+            ended: true,
+            startDatetime: '2020-01-01T00:00:00Z',
+            endDatetime: '2020-01-01T03:00:00Z',
+        });
+        expect(screen.getByRole('heading', { name: 'Neon Nights' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'This event has ended' })).toBeInTheDocument();
+        expect(screen.getByText('Ticket sales are closed. Tickets you already bought are in My tickets.')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Add one General admission ticket' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Continue to checkout' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Choose tickets' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: 'General admission quantity' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Price includes HST and all fees.')).not.toBeInTheDocument();
+        expect(screen.queryByText('Sales ended')).not.toBeInTheDocument();
+        expect(screen.queryByText('On sale soon')).not.toBeInTheDocument();
+        expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+    });
+
+    it('uses the same no-sale treatment for an undated event', () => {
+        renderView({
+            undated: true,
+            ended: false,
+            startDatetime: null,
+            endDatetime: null,
+            salesStart: '2099-11-01T00:00:00Z',
+        });
+        expect(screen.getByRole('heading', { name: "This event isn't open for sale yet" })).toBeInTheDocument();
+        expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Add one General admission ticket' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Continue to checkout' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Choose tickets' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Price includes HST and all fees.')).not.toBeInTheDocument();
+        expect(screen.queryByText('On sale soon')).not.toBeInTheDocument();
+        expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+        expect(screen.queryByText('On sale now')).not.toBeInTheDocument();
     });
 
     it('provides a retry after a failed event request and renders no sample data', async () => {

@@ -39,6 +39,8 @@ describe('Order Confirmation Retry Logic', () => {
         name: 'Retry Event',
         slug: 'retry-event',
         status: 'PUBLISHED',
+        startDatetime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        endDatetime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3_600_000),
         ticketTypes: {
           create: {
             name: 'Standard',
