@@ -24,12 +24,10 @@ export function ClosedSaleNotice({ event, eventHref = '' }) {
         <div className="sf-closed-sale">
             <h2 id="tickets-title">{copy.heading}</h2>
             <p>{copy.body}</p>
-            {eventHref ? (
-                <p className="sf-closed-sale-links">
-                    <Link to={eventHref}>Back to the event</Link>
-                    <Link to="/wallet">My tickets</Link>
-                </p>
-            ) : null}
+            <p className="sf-closed-sale-links">
+                {eventHref ? <Link to={eventHref}>Back to the event</Link> : null}
+                <Link to="/wallet">My tickets</Link>
+            </p>
         </div>
     );
 }
