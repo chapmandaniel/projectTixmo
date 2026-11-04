@@ -539,6 +539,26 @@ describe('open-page sale boundaries', () => {
         expect(stripeMocks.confirmPayment).not.toHaveBeenCalled();
         expect(screen.queryByText(/Order confirmed/)).not.toBeInTheDocument();
     });
+    it('shows the API message when checkout returns 409 EVENT_ENDED', async () => {
+        vi.setSystemTime(opening);
+        await mount();
+        apiPost.mockRejectedValue({
+            response: {
+                status: 409,
+                data: {
+                    success: false,
+                    message: 'This event has ended.',
+                    errors: { code: 'EVENT_ENDED' },
+                },
+            },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: /continue to secure payment/i })));
+        expect(screen.getByText('This event has ended.')).toBeInTheDocument();
+        expect(screen.queryByText('Checkout could not be prepared.')).not.toBeInTheDocument();
+        expect(apiPost).toHaveBeenCalledTimes(1);
+        expect(apiPost.mock.calls[0][0]).toBe('/orders');
+    });
     it('does not turn a skewed browser selection into entitlement when the API rejects', async () => {
         vi.setSystemTime(opening);
         await mount();

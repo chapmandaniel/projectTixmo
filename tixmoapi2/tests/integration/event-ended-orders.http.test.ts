@@ -171,4 +171,50 @@ describe('POST /orders refuses ended and undated events', () => {
     expect(await prisma.order.count({ where: { eventId: ids.ended.event } })).toBe(0);
     expect(await prisma.order.count({ where: { eventId: ids.undated.event } })).toBe(0);
   }, 30000);
+
+  it('POST /api/v1/orders on a PUBLISHED event with no start date returns 409 EVENT_UNDATED and holds no inventory', async () => {
+    const eventId = randomUUID();
+    const typeId = randomUUID();
+    await prisma.event.create({
+      data: {
+        id: eventId,
+        organizationId: orgId,
+        name: 'published-undated',
+        slug: eventId,
+        status: 'PUBLISHED',
+        tags: [],
+        startDatetime: null,
+        endDatetime: null,
+      },
+    });
+    await prisma.ticketType.create({
+      data: {
+        id: typeId,
+        eventId,
+        name: 'General admission',
+        price: 25,
+        quantityTotal: 8,
+        quantityAvailable: 8,
+        maxPerOrder: 4,
+      },
+    });
+    try {
+      const response = await buy(typeId);
+      expect(response.status).toBe(409);
+      expect(response.body).toMatchObject({
+        success: false,
+        message: "This event isn't open for sale yet.",
+        errors: { code: 'EVENT_UNDATED' },
+      });
+      expect(response.body.code).toBeUndefined();
+      const stock = await prisma.ticketType.findUniqueOrThrow({ where: { id: typeId } });
+      expect(stock).toMatchObject({ quantityAvailable: 8, quantityHeld: 0 });
+      expect(await prisma.order.count({ where: { eventId } })).toBe(0);
+    } finally {
+      await prisma.ticket.deleteMany({ where: { eventId } });
+      await prisma.order.deleteMany({ where: { eventId } });
+      await prisma.ticketType.deleteMany({ where: { eventId } });
+      await prisma.event.deleteMany({ where: { id: eventId } });
+    }
+  }, 30000);
 });

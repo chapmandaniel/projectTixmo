@@ -31,7 +31,7 @@ import {
 } from '../lib/runtimeConfig';
 import { checkoutTicketState, checkoutBoundaryDelay } from '../lib/checkoutEligibility';
 import { SALES_PAUSED_MESSAGE, isSalesPausedError } from '../lib/salesPause';
-import { isSoldOutError } from '../lib/orderErrors';
+import { isEventSaleClosedError, isSoldOutError } from '../lib/orderErrors';
 import { cn } from '../lib/utils';
 import { formatEventDate, eventZoneAbbreviation, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import { externalPurchaseUrl, isExternalTicketing } from '../lib/ticketingMode';
@@ -499,6 +499,8 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                 setError(SALES_PAUSED_MESSAGE);
             } else if (requestError.response?.data?.code === 'CHECKOUT_BUSY') {
                 setError('Checkout is busy. Please try again.');
+            } else if (!order && isEventSaleClosedError(requestError)) {
+                setError(requestError.response?.data?.message || 'Checkout could not be prepared.');
             } else if (!order && isSoldOutError(requestError)) {
                 setError(requestError.response?.data?.message || 'Not enough tickets available');
             } else {
