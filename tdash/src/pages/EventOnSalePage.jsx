@@ -22,6 +22,10 @@ import {
     StorefrontFact,
 } from '../components/storefront/StorefrontPrimitives';
 import {
+    ClosedSaleNotice,
+    closedSaleCopy,
+} from '../components/storefront/ClosedSaleNotice';
+import {
     getApiBaseUrl,
     getPaymentCurrency,
     getPolicyLinks,
@@ -67,6 +71,7 @@ export const EventOnSaleView = ({
     const currency = event.currency || getPaymentCurrency();
     const policies = getPolicyLinks();
     const sale = getEventSaleState(event, now);
+    const closedSale = closedSaleCopy(event);
     const externalSale = event.ticketingMode === 'EXTERNAL';
     const purchaseUrl = typeof event.externalPurchaseUrl === 'string' ? event.externalPurchaseUrl : '';
     const artwork = eventArtwork(event);
@@ -202,7 +207,10 @@ export const EventOnSaleView = ({
     };
 
     return (
-        <div className="event-storefront" id="event-top">
+        <div
+            className={`event-storefront${closedSale ? ' sf-event-closed' : ''}`}
+            id="event-top"
+        >
             <a className="sf-skip" href="#event-details">
                 Skip to event details
             </a>
@@ -268,18 +276,18 @@ export const EventOnSaleView = ({
                                 {event.venue?.name || 'Venue to be announced'}
                             </span>
                         </div>
-                        {externalSale && purchaseUrl ? (
+                        {closedSale ? null : externalSale && purchaseUrl ? (
                             <a className="sf-button sf-hero-cta" href={purchaseUrl} target="_blank" rel="noopener noreferrer">
                                 Buy tickets on Showpass
                             </a>
                         ) : (
-                        <StorefrontButton
-                            className="sf-hero-cta"
-                            onClick={focusTickets}
-                        >
-                            Choose tickets{' '}
-                            <ArrowDown size={15} aria-hidden="true" />
-                        </StorefrontButton>
+                            <StorefrontButton
+                                className="sf-hero-cta"
+                                onClick={focusTickets}
+                            >
+                                Choose tickets{' '}
+                                <ArrowDown size={15} aria-hidden="true" />
+                            </StorefrontButton>
                         )}
                     </div>
                     <span className="sf-photo-caption" aria-hidden="true">
@@ -470,7 +478,7 @@ export const EventOnSaleView = ({
 
                     <aside
                         className="sf-ticket-column"
-                        aria-label="Ticket selection"
+                        aria-label={closedSale ? 'Event availability' : 'Ticket selection'}
                     >
                         <section
                             className="sf-ticket-panel"
@@ -478,6 +486,10 @@ export const EventOnSaleView = ({
                             tabIndex={-1}
                             aria-labelledby="tickets-title"
                         >
+                            {closedSale ? (
+                                <ClosedSaleNotice event={event} />
+                            ) : (
+                            <>
                             {!externalSale && (
                             <div
                                 className={[
@@ -723,6 +735,8 @@ export const EventOnSaleView = ({
                             {externalSale && (
                                 <p>Prices on Showpass are in {String(event.currency || currency).toUpperCase()}.</p>
                             )}
+                            </>
+                            )}
                             <div className="sf-ticket-footer">
                                 <StorefrontBrand />
                                 <span>Ticketing for live events</span>
@@ -742,7 +756,7 @@ export const EventOnSaleView = ({
                         </button>
                     </aside>
                 </div>
-                {!ticketPanelVisible && (
+                {!closedSale && !ticketPanelVisible && (
                     <div className="sf-mobile-bar">
                         <div>
                             <span>

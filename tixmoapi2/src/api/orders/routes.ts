@@ -67,7 +67,7 @@ router.post('/:id/receipt', controller.resendReceipt);
  *       404:
  *         description: Ticket type not found
  *       409:
- *         description: Not enough tickets available (errors.code SOLD_OUT), or the idempotency key was reused with a different body (errors.code IDEMPOTENCY_KEY_MISMATCH).
+ *         description: Not enough tickets available (errors.code SOLD_OUT), the event has ended (errors.code EVENT_ENDED), the event has no start date (errors.code EVENT_UNDATED), or the idempotency key was reused with a different body (errors.code IDEMPOTENCY_KEY_MISMATCH).
  *       503:
  *         description: Checkout is busy (code CHECKOUT_BUSY). Retry after Retry-After. No order remains held.
  */

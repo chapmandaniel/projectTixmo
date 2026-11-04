@@ -116,9 +116,50 @@ test('soft-deleted published event cannot sell', async () => {
 });
 test.each([-1, 0, 1])('event start cutoff at T%+i ms', async (delta) => {
   event.startDatetime = new Date(opening);
+  event.endDatetime = new Date(opening + 3600000);
   event.salesStart = null;
   jest.setSystemTime(opening + delta);
   await expectPurchase(delta < 0);
+});
+test('no end time and a passed start is EVENT_ENDED before inventory moves', async () => {
+  event.startDatetime = new Date(opening);
+  event.endDatetime = null;
+  event.salesStart = null;
+  event.salesEnd = null;
+  jest.setSystemTime(opening);
+  await expect(buy()).rejects.toMatchObject({
+    statusCode: 409,
+    message: 'This event has ended.',
+    errors: { code: 'EVENT_ENDED' },
+  });
+  expect(tx.ticketType.update).not.toHaveBeenCalled();
+  expect(tx.order.create).not.toHaveBeenCalled();
+});
+test('an ended external event keeps the vendor refusal before inventory moves', async () => {
+  event.ticketingMode = 'EXTERNAL';
+  event.startDatetime = new Date(opening - 7200000);
+  event.endDatetime = new Date(opening - 1000);
+  event.salesStart = null;
+  event.salesEnd = null;
+  await expect(buy()).rejects.toMatchObject({
+    statusCode: 403,
+    data: { code: 'EXTERNAL_TICKETING', capability: 'checkout' },
+  });
+  expect(tx.ticketType.update).not.toHaveBeenCalled();
+  expect(tx.order.create).not.toHaveBeenCalled();
+});
+test('an undated event is EVENT_UNDATED before inventory moves', async () => {
+  event.startDatetime = null;
+  event.endDatetime = null;
+  event.salesStart = null;
+  event.salesEnd = null;
+  await expect(buy()).rejects.toMatchObject({
+    statusCode: 409,
+    message: "This event isn't open for sale yet.",
+    errors: { code: 'EVENT_UNDATED' },
+  });
+  expect(tx.ticketType.update).not.toHaveBeenCalled();
+  expect(tx.order.create).not.toHaveBeenCalled();
 });
 test('null event endpoints do not add a window restriction', async () => {
   event.salesStart = null;

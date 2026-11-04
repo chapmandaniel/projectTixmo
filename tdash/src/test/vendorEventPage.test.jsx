@@ -42,6 +42,39 @@ describe('vendor-sold public event', () => {
         expect(screen.queryByText(/CA\$/)).not.toBeInTheDocument();
     });
 
+    it('shows an ended Showpass event as ended instead of the external sale', () => {
+        render(
+            <MemoryRouter>
+                <EventOnSaleView
+                    event={{
+                        ...event,
+                        ended: true,
+                        startDatetime: '2020-01-30T17:15:00.000Z',
+                        endDatetime: '2020-01-30T20:15:00.000Z',
+                        ticketTypes: [{
+                            id: 'ga',
+                            name: 'General admission',
+                            price: '35',
+                            quantityAvailable: 4,
+                            maxPerOrder: 4,
+                            salesStart: '2099-11-01T00:00:00Z',
+                        }],
+                    }}
+                />
+            </MemoryRouter>
+        );
+        expect(screen.getByRole('heading', { name: 'This event has ended' })).toBeInTheDocument();
+        expect(screen.getByText('Ticket sales are closed. Tickets you already bought are in My tickets.')).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Tickets on sale at Showpass' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Buy tickets on Showpass' })).not.toBeInTheDocument();
+        expect(screen.queryByText('On sale soon')).not.toBeInTheDocument();
+        expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Continue to checkout' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Choose tickets' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Price includes HST and all fees.')).not.toBeInTheDocument();
+        expect(screen.queryByText('Prices on Showpass are in EUR.')).not.toBeInTheDocument();
+    });
+
     it('hides orders, attendees, tickets, and checkout in the event command center', () => {
         render(
             <MemoryRouter initialEntries={['/events/event-1/overview']}>

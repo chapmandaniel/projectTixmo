@@ -14,6 +14,11 @@ describe('checkout advisory eligibility contract', () => {
     it.each(['DRAFT', 'SOLD_OUT', 'CANCELLED', 'COMPLETED', 'DELETED'])('rejects lifecycle %s', (status) => {
         expect(state({ status }).max).toBe(0);
     });
+    it('refuses events the public payload marks ended or undated', () => {
+        expect(state({ ended: true }).max).toBe(0);
+        expect(state({ undated: true, startDatetime: null }).max).toBe(0);
+        expect(state({ ended: false, undated: false }).max).toBe(4);
+    });
     it('preserves event-start cutoff, deletion, ticket status and inventory readiness', () => {
         expect(state({ startDatetime: at(0) }).max).toBe(0);
         expect(state({ deletedAt: at(-1) }).max).toBe(0);

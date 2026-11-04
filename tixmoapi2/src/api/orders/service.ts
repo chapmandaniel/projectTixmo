@@ -16,6 +16,13 @@ import {
 } from '../../services/checkout-transaction';
 import { formatNewfoundlandDateTime } from '../../utils/eventTime';
 import {
+  EVENT_ENDED_CODE,
+  EVENT_ENDED_MESSAGE,
+  EVENT_UNDATED_CODE,
+  EVENT_UNDATED_MESSAGE,
+  eventSaleTiming,
+} from '../events/event-sale-window';
+import {
   configuredHstRate,
   formatHstAmountLine,
   formatMoney,
@@ -290,11 +297,20 @@ export class OrderService {
     // cancellation remain visible to its subsequent cancellation pass.
     await tx.$queryRaw`SELECT id FROM events WHERE id = ${first.eventId} FOR UPDATE`;
     const event = await tx.event.findUniqueOrThrow({ where: { id: first.eventId } });
+    // Vendor-sold events keep the external refusal and never reach a hold.
     assertTicketingAllows(event, 'checkout');
     const now = new Date();
+    if (event.deletedAt || !['PUBLISHED', 'ON_SALE'].includes(event.status)) {
+      throw ApiError.badRequest('Event is not available for purchase');
+    }
+    const timing = eventSaleTiming(event, now);
+    if (timing.ended) {
+      throw ApiError.conflict(EVENT_ENDED_MESSAGE, { code: EVENT_ENDED_CODE });
+    }
+    if (timing.undated) {
+      throw ApiError.conflict(EVENT_UNDATED_MESSAGE, { code: EVENT_UNDATED_CODE });
+    }
     if (
-      event.deletedAt ||
-      !['PUBLISHED', 'ON_SALE'].includes(event.status) ||
       (event.salesStart && now < event.salesStart) ||
       (event.salesEnd && now >= event.salesEnd) ||
       (event.startDatetime && now >= event.startDatetime)
