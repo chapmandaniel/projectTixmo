@@ -135,6 +135,19 @@ test('no end time and a passed start is EVENT_ENDED before inventory moves', asy
   expect(tx.ticketType.update).not.toHaveBeenCalled();
   expect(tx.order.create).not.toHaveBeenCalled();
 });
+test('an ended external event keeps the vendor refusal before inventory moves', async () => {
+  event.ticketingMode = 'EXTERNAL';
+  event.startDatetime = new Date(opening - 7200000);
+  event.endDatetime = new Date(opening - 1000);
+  event.salesStart = null;
+  event.salesEnd = null;
+  await expect(buy()).rejects.toMatchObject({
+    statusCode: 403,
+    data: { code: 'EXTERNAL_TICKETING', capability: 'checkout' },
+  });
+  expect(tx.ticketType.update).not.toHaveBeenCalled();
+  expect(tx.order.create).not.toHaveBeenCalled();
+});
 test('an undated event is EVENT_UNDATED before inventory moves', async () => {
   event.startDatetime = null;
   event.endDatetime = null;

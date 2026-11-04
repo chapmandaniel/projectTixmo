@@ -20,6 +20,12 @@ import {
   checkoutIpRateLimiter,
 } from './middleware/rateLimiter';
 import { isTrustedClientOrigin } from './utils/clientOrigin';
+import {
+  ROBOTS_TXT,
+  blocksSearchIndexing,
+  healthBranch,
+  healthRailwayEnvironment,
+} from './services/search-indexing';
 
 const app: Application = express();
 
@@ -31,6 +37,10 @@ app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
+app.use((_req, res, next) => {
+  if (blocksSearchIndexing()) res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
 
 // If Sentry is enabled, use request handler and tracing
 if (config.sentryDsn) {
@@ -59,14 +69,31 @@ app.use(
 // Liveness and readiness stay ahead of body parsing, rate limiters and the
 // waiting room, and after CORS so browser checks still receive allow-origin.
 // Railway healthcheckPath remains /ready.
+// Read at request time so tests can swap RELEASE after import, then shorten a
+// git SHA the same way /api/v1/health does.
+const currentHealthRelease = (): string | null =>
+  formatHealthRelease(
+    process.env.SENTRY_RELEASE ||
+      process.env.RELEASE ||
+      process.env.RAILWAY_GIT_COMMIT_SHA ||
+      config.release
+  );
+
 app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: config.nodeEnv,
-    release: formatHealthRelease(config.release),
+    railwayEnvironment: healthRailwayEnvironment(),
+    branch: healthBranch(),
+    release: currentHealthRelease(),
   });
+});
+
+app.get('/robots.txt', (_req, res, next) => {
+  if (!blocksSearchIndexing()) return next();
+  res.type('text/plain').send(ROBOTS_TXT);
 });
 
 app.get('/ready', async (_req, res) => {
@@ -82,12 +109,24 @@ app.get('/ready', async (_req, res) => {
     });
 });
 
-// Stripe webhooks require the raw request body for signature verification.
+// Stripe and Showpass webhooks require the raw request body for signature verification.
 app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json', limit: '10mb' }));
+app.use(
+  '/api/v1/vendors/showpass/webhook',
+  express.raw({ type: 'application/json', limit: '1mb' })
+);
+app.use('/api/v1/vendors/showpass/hooks', express.raw({ type: 'application/json', limit: '1mb' }));
+
+const rawWebhookPaths = new Set(['/api/v1/payments/webhook', '/api/v1/vendors/showpass/webhook']);
+
+const keepsRawBody = (url: string) => {
+  const pathOnly = url.split('?')[0];
+  return rawWebhookPaths.has(pathOnly) || pathOnly.startsWith('/api/v1/vendors/showpass/hooks/');
+};
 
 // Body parsing middleware
 app.use((req, res, next) => {
-  if (req.originalUrl === '/api/v1/payments/webhook') {
+  if (keepsRawBody(req.originalUrl)) {
     return next();
   }
   return express.json({ limit: '10mb' })(req, res, next);

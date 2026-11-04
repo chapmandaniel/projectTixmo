@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     Home, Calendar, BarChart3, Bell,
     Users, CheckSquare, Sun, Moon,
-    Settings, LogOut, CheckCircle, User, Image, ClipboardList
+    Settings, LogOut, CheckCircle, User, Image, ClipboardList,
+    Menu, X
 } from 'lucide-react';
 
 import api from '../lib/api';
@@ -23,6 +24,36 @@ const navItems = [
 ];
 
 const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
+
+const MobileNavLink = ({ item, activeView, isDark, pendingApprovalsCount, onNavigate }) => {
+    const active = activeView === item.id;
+    const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;
+
+    return (
+        <Link
+            to={`/${item.id}`}
+            onClick={onNavigate}
+            className={cn(
+                'flex min-h-11 shrink-0 items-center gap-3 rounded-[10px] px-3.5 text-sm font-light',
+                active
+                    ? (isDark ? 'bg-[#2a2b40] text-white' : 'bg-slate-900 text-white shadow-sm')
+                    : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
+            )}
+            aria-current={active ? 'page' : undefined}
+        >
+            <item.icon size={18} className="shrink-0" />
+            <span className="leading-none">{item.label}</span>
+            {badge ? (
+                <span className={cn(
+                    'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-medium text-white',
+                    isDark ? 'bg-[#ff3366]' : 'bg-rose-500'
+                )}>
+                    {badge > 9 ? '9+' : badge}
+                </span>
+            ) : null}
+        </Link>
+    );
+};
 
 const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
     const active = activeView === item.id;
@@ -57,6 +88,9 @@ const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
 
 const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme, user, onLogout }) => {
     const [showNotifications, setShowNotifications] = useState(false);
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
+    const [mobileNavMaxHeight, setMobileNavMaxHeight] = useState(null);
+    const headerRef = useRef(null);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
@@ -126,7 +160,58 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
     const toggleNotifications = () => {
         if (!showNotifications) fetchDashboardData({ force: true });
         setShowNotifications(!showNotifications);
+        setMobileNavOpen(false);
     };
+
+    const closeMobileNav = () => setMobileNavOpen(false);
+
+    const visibleNavItems = navItems.filter((item) => !item.roles || item.roles.includes(user?.role));
+
+    useEffect(() => {
+        setMobileNavOpen(false);
+    }, [activeView]);
+
+    useEffect(() => {
+        if (!mobileNavOpen) {
+            return undefined;
+        }
+
+        const updateMaxHeight = () => {
+            const bottom = headerRef.current?.getBoundingClientRect().bottom ?? 0;
+            setMobileNavMaxHeight(Math.max(window.innerHeight - bottom, 0));
+        };
+        updateMaxHeight();
+
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setMobileNavOpen(false);
+            }
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        window.addEventListener('resize', updateMaxHeight);
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        const desktopQuery = typeof window.matchMedia === 'function'
+            ? window.matchMedia('(min-width: 768px)')
+            : null;
+        const closeOnDesktop = () => {
+            if (desktopQuery?.matches) {
+                setMobileNavOpen(false);
+            }
+        };
+        closeOnDesktop();
+        desktopQuery?.addEventListener('change', closeOnDesktop);
+
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener('resize', updateMaxHeight);
+            document.body.style.overflow = previousOverflow;
+            desktopQuery?.removeEventListener('change', closeOnDesktop);
+        };
+    }, [mobileNavOpen]);
 
     const handleMarkRead = async (id) => {
         try {
@@ -150,17 +235,26 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                 .hide-scrollbar::-webkit-scrollbar { display: none; }
                 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
             `}</style>
-            <header className={`sticky top-0 z-50 flex h-[72px] items-center justify-between px-5 sm:px-6 lg:px-7 transition-colors ${isDark ? 'bg-[#1f1e30]' : 'border-b border-gray-200 bg-white/95 backdrop-blur-xl'}`}>
+            {mobileNavOpen ? (
+                <button
+                    type="button"
+                    aria-label="Dismiss navigation"
+                    className="fixed inset-0 z-40 bg-black/40 md:hidden"
+                    onClick={closeMobileNav}
+                />
+            ) : null}
+            <header ref={headerRef} className={`sticky top-0 z-50 flex h-[72px] items-center justify-between px-5 sm:px-6 lg:px-7 transition-colors ${isDark ? 'bg-[#1f1e30]' : 'border-b border-gray-200 bg-white/95 backdrop-blur-xl'}`}>
                 <Link to="/dashboard" className="mr-5 flex shrink-0 cursor-pointer items-center space-x-3 lg:mr-9">
                     <img src="https://tixmo.co/images/tixmo_logo.png" alt="Tixmo Logo" className="h-8 w-auto object-contain" />
                 </Link>
 
-                <div className="relative flex h-full flex-1 items-center overflow-hidden">
+                <div className="relative hidden h-full min-w-0 flex-1 items-center overflow-hidden md:flex">
                     <nav
                         ref={scrollContainerRef}
+                        aria-label="Primary"
                         className="hide-scrollbar flex w-full items-center gap-2 overflow-x-auto px-2 py-2.5 scroll-smooth"
                     >
-                        {navItems.filter((item) => !item.roles || item.roles.includes(user?.role)).map(item => (
+                        {visibleNavItems.map(item => (
                             <TopbarItem
                                 key={item.id}
                                 item={item}
@@ -172,7 +266,24 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                     </nav>
                 </div>
 
-                <div className={cn('ml-5 flex shrink-0 items-center gap-2 border-l pl-5 sm:gap-3', isDark ? 'border-[#2b2b40]/60' : 'border-slate-200/80')}>
+                <div className="ml-auto flex shrink-0 items-center md:ml-0">
+                <div className="md:hidden">
+                    <DashboardIconButton
+                        isDark={isDark}
+                        onClick={() => {
+                            setShowNotifications(false);
+                            setMobileNavOpen((open) => !open);
+                        }}
+                        aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
+                        aria-expanded={mobileNavOpen}
+                        aria-controls="dashboard-mobile-nav"
+                        className="h-9 w-9 rounded-md"
+                    >
+                        {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+                    </DashboardIconButton>
+                </div>
+
+                <div className={cn('ml-1 flex shrink-0 items-center gap-1 border-l pl-1 sm:ml-5 sm:gap-3 sm:pl-5', isDark ? 'border-[#2b2b40]/60' : 'border-slate-200/80')}>
                     <DashboardIconButton isDark={isDark} onClick={toggleTheme} aria-label="Toggle theme" className="h-9 w-9 rounded-md">
                         {isDark ? <Sun size={18} /> : <Moon size={18} />}
                     </DashboardIconButton>
@@ -267,6 +378,31 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                         </button>
                     </div>
                 </div>
+                </div>
+                {mobileNavOpen ? (
+                    <nav
+                        id="dashboard-mobile-nav"
+                        aria-label="Dashboard"
+                        style={mobileNavMaxHeight == null ? undefined : { maxHeight: `${mobileNavMaxHeight}px` }}
+                        className={cn(
+                            'absolute inset-x-0 top-full z-50 overflow-y-auto overscroll-contain border-b px-3 py-3 md:hidden',
+                            isDark ? 'border-[#2b2b40]/60 bg-[#1f1e30]' : 'border-gray-200 bg-white'
+                        )}
+                    >
+                        <div className="flex flex-col gap-1">
+                            {visibleNavItems.map((item) => (
+                                <MobileNavLink
+                                    key={item.id}
+                                    item={item}
+                                    activeView={activeView}
+                                    isDark={isDark}
+                                    pendingApprovalsCount={pendingApprovalsCount}
+                                    onNavigate={closeMobileNav}
+                                />
+                            ))}
+                        </div>
+                    </nav>
+                ) : null}
             </header>
             <main className="custom-scrollbar flex-1 overflow-y-auto px-6 pb-8 pt-10 sm:px-8">
                 <div className="mx-auto h-full w-full max-w-[1680px]">

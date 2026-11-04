@@ -5,7 +5,7 @@ import TaskDetailsModal from './TaskDetailsModal';
 import KanbanCard from './KanbanCard';
 import api from '../lib/api';
 import { auth } from '../lib/auth';
-import { DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
+import { DashboardSelect, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
 
 const STATUS_MAP = {
     'TO_DO': 'todo',
@@ -33,16 +33,19 @@ const TodoView = ({ isDark, user }) => {
     const [expandedTask, setExpandedTask] = useState(null);
     const [expandedColId, setExpandedColId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [events, setEvents] = useState([]);
+    const [eventFilter, setEventFilter] = useState('');
 
     useEffect(() => {
         fetchTasks();
         fetchUsers();
-    }, []);
+        fetchEvents();
+    }, [eventFilter]);
 
     const fetchTasks = async () => {
         setIsLoading(true);
         try {
-            const response = await api.get('/tasks');
+            const response = await api.get('/tasks', { params: eventFilter ? { eventId: eventFilter } : {} });
             const tasks = response.data;
             // ... (rest of the logic remains similar but simplified if needed)
             const newColumns = {
@@ -61,6 +64,8 @@ const TodoView = ({ isDark, user }) => {
                     newColumns[colKey].items.push({
                         ...task,
                         content: task.title,
+                        eventId: task.eventId || task.event?.id || '',
+                        eventName: task.event?.name || '',
                         assignee: task.assignee?.id,
                         assigneeDetails: task.assignee,
                         assigneeName: task.assignee ? `${task.assignee.firstName} ${task.assignee.lastName}` : null,
@@ -80,6 +85,16 @@ const TodoView = ({ isDark, user }) => {
             console.error('Failed to fetch tasks', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchEvents = async () => {
+        try {
+            const response = await api.get('/events', { params: { page: 1, limit: 100 } });
+            const body = response.data?.data?.events ? response.data.data : (response.data || {});
+            setEvents(body.events || []);
+        } catch (error) {
+            console.error('Failed to fetch events', error);
         }
     };
 
@@ -166,6 +181,7 @@ const TodoView = ({ isDark, user }) => {
                 priority: newTaskData.priority.toUpperCase(),
                 tag: newTaskData.tag.toUpperCase(),
                 assigneeId: newTaskData.assignee || undefined,
+                eventId: newTaskData.eventId || undefined,
             };
 
             await api.post('/tasks', payload);
@@ -216,6 +232,7 @@ const TodoView = ({ isDark, user }) => {
                     onClose={() => setIsCreateModalOpen(false)}
                     onCreate={handleCreateTask}
                     users={users}
+                    events={events}
                     isDark={isDark}
                 />
             )}
@@ -247,6 +264,10 @@ const TodoView = ({ isDark, user }) => {
                             <Plus size={16} />
                             <span>Create Task</span>
                         </button>
+                        <DashboardSelect isDark={isDark} aria-label="Filter tasks by event" value={eventFilter} onChange={(e) => setEventFilter(e.target.value)} className="h-10 w-auto">
+                            <option value="">All events</option>
+                            {events.map((event) => <option key={event.id} value={event.id}>{event.name}</option>)}
+                        </DashboardSelect>
                         <button className={`flex items-center space-x-2 px-3 py-2 text-sm font-light rounded-md border transition-colors ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 text-[#a1a5b7] hover:text-gray-200 hover:bg-[#232336]' : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50'}`}>
                             <Filter size={14} />
                             <span>Filter</span>

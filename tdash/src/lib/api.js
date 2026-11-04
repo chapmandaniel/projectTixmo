@@ -134,8 +134,8 @@ axiosInstance.interceptors.response.use(
             window.dispatchEvent(new CustomEvent('tixmo:waiting-room', { detail: { retryAfter } }));
         }
 
-        // Dispatch global error for other failure codes (e.g. 500, 404, network error)
-        else {
+        // Callers set suppressGlobalError when they show the failure themselves.
+        else if (!originalRequest?.suppressGlobalError) {
             window.dispatchEvent(new CustomEvent('tixmo:global-error', {
                 detail: {
                     status: status || 'NETWORK_ERR',

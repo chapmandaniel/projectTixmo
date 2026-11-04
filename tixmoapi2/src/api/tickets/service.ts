@@ -6,6 +6,7 @@ import { formatNewfoundlandDateTime } from '../../utils/eventTime';
 import { formatVenueAddress } from '../../utils/receipt';
 
 import prisma from '../../config/prisma';
+import { assertEventCapability, assertTicketingAllows } from '../../services/ticketing-mode';
 import crypto from 'crypto';
 import {
   lockedTicket,
@@ -68,8 +69,14 @@ export class TicketService {
 
     const where: Prisma.TicketWhereInput = {};
     if (userId) where.userId = userId;
-    if (eventId) where.eventId = eventId;
-    if (organizationId) where.event = { organizationId };
+    if (eventId) {
+      await assertEventCapability(eventId, 'attendees');
+      where.eventId = eventId;
+    }
+    const eventWhere: Prisma.EventWhereInput = {};
+    if (organizationId) eventWhere.organizationId = organizationId;
+    if (userId && !eventId) eventWhere.ticketingMode = 'TIXMO';
+    if (Object.keys(eventWhere).length) where.event = eventWhere;
     if (status) where.status = status;
 
     const [tickets, total] = await Promise.all([
@@ -129,7 +136,13 @@ export class TicketService {
    * Get ticket by ID
    */
   async getTicketById(id: string, userId?: string): Promise<Ticket | null> {
+    const scope = await prisma.ticket.findUnique({
+      where: { id },
+      select: { eventId: true, userId: true },
+    });
+    if (scope) await assertEventCapability(scope.eventId, 'tickets');
     if (userId) {
+      if (scope && scope.userId !== userId) return null;
       return await prisma.ticket.findFirst({
         where: { id, userId },
         include: {
@@ -213,6 +226,7 @@ export class TicketService {
           failure.reason,
           failure.reasonCode ? { reasonCode: failure.reasonCode } : undefined
         );
+      assertTicketingAllows(ticket.event, 'transfers');
       if (ticket.event.startDatetime && new Date() >= ticket.event.startDatetime)
         throw ApiError.badRequest('Cannot transfer tickets for events that have already started');
       return tx.ticket.update({
@@ -321,6 +335,7 @@ export class TicketService {
       const ticket = reference ? await lockedTicket(tx, reference.id) : null;
       if (!ticket || ticket.barcode !== barcode)
         throw ApiError.badRequest('Ticket credential is no longer valid');
+      assertTicketingAllows(ticket.event, 'scan');
       const failure = ticketFailure(ticket, true, true);
       if (failure)
         throw ApiError.badRequest(
