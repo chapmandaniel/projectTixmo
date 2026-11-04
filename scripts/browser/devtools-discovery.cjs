@@ -79,6 +79,53 @@ function parseAnnouncement(value) {
   if (result !== value) throw new Error("Browser discovery rejected");
   return result;
 }
+function loopbackHttpOrigin(origin) {
+  const match = /^http:\/\/127\.0\.0\.1:([1-9][0-9]{3,4})$/.exec(origin);
+  if (!match) return false;
+  const port = Number(match[1]);
+  return port >= 1024 && port <= 65535;
+}
+
+// Chrome can announce the browser socket before /json/list accepts connections.
+// Retry only that loopback list; do not follow redirects or widen the host.
+async function listDevToolsPages(origin, options = {}) {
+  if (!loopbackHttpOrigin(origin)) throw new Error("Browser discovery rejected");
+  const fetchImpl = options.fetchImpl || fetch;
+  const sleep = options.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+  const budgetMs = options.timeoutMs ?? 15000;
+  const started = Date.now();
+  let last = new Error("Browser discovery rejected");
+  while (Date.now() - started <= budgetMs) {
+    const remaining = budgetMs - (Date.now() - started);
+    try {
+      const response = await fetchImpl(origin + "/json/list", {
+        redirect: "error",
+        signal: AbortSignal.timeout(Math.min(2000, Math.max(1, remaining))),
+      });
+      if (!response || response.ok !== true || typeof response.json !== "function")
+        throw new Error("Browser discovery rejected");
+      const targets = await response.json();
+      if (
+        Array.isArray(targets) &&
+        targets.some(
+          (row) =>
+            row &&
+            row.type === "page" &&
+            typeof row.webSocketDebuggerUrl === "string" &&
+            row.webSocketDebuggerUrl.startsWith("ws://127.0.0.1:"),
+        )
+      )
+        return targets;
+      last = new Error("Browser discovery rejected");
+    } catch (error) {
+      last = error instanceof Error ? error : new Error("Browser discovery rejected");
+    }
+    if (Date.now() - started >= budgetMs) break;
+    await sleep(Math.min(200, Math.max(0, budgetMs - (Date.now() - started))));
+  }
+  throw last;
+}
+
 function discoverDevTools(browser, profile, timeoutError, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     let timer;
@@ -139,4 +186,5 @@ module.exports = {
   parseActivePort,
   readActivePort,
   discoverDevTools,
+  listDevToolsPages,
 };

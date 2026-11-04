@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
     comparePublicTicketTypes,
+    earliestUpcomingTicketOnSale,
     eventAddress,
     eventArtwork,
+    formatSaleCountdown,
+    formatUpcomingOnSale,
     getEventSaleState,
     getPublicTicketOffer,
     initialTicketQuantities,
@@ -202,6 +205,47 @@ describe('public ticket type order', () => {
             'first',
             'second',
         ]);
+    });
+});
+
+describe('per-ticket onsale countdown', () => {
+    const zone = { timezone: 'America/St_Johns' };
+
+    it('uses the earliest future onsale and skips hidden, sold-out, and open tickets', () => {
+        expect(
+            earliestUpcomingTicketOnSale(
+                [
+                    { ...ticket, id: 'open', salesStart: '2026-10-01T00:00:00Z' },
+                    { ...ticket, id: 'hidden', status: 'HIDDEN', salesStart: '2026-10-21T00:00:00Z' },
+                    { ...ticket, id: 'sold', status: 'SOLD_OUT', quantityAvailable: 0, salesStart: '2026-10-21T00:00:00Z' },
+                    { ...ticket, id: 'later', salesStart: '2026-11-05T22:30:00Z' },
+                    { ...ticket, id: 'earliest', quantityAvailable: 0, salesStart: '2026-11-01T04:30:00Z' },
+                ],
+                now,
+            ),
+        ).toBe(Date.parse('2026-11-01T04:30:00Z'));
+        expect(earliestUpcomingTicketOnSale([{ ...ticket, status: 'SOLD_OUT', salesStart: '2026-12-01T00:00:00Z' }], now)).toBeNull();
+        expect(earliestUpcomingTicketOnSale([], now)).toBeNull();
+    });
+
+    it('formats Newfoundland onsale instants with the date-specific offset', () => {
+        expect(formatUpcomingOnSale('2026-11-09T22:30:00Z', zone)).toBe('On sale Mon, Nov 9, 7:00 p.m. NST');
+        expect(formatUpcomingOnSale('2026-10-31T22:30:00Z', zone)).toBe('On sale Sat, Oct 31, 8:00 p.m. NDT');
+        // The repeated 1:00 a.m. hour: 04:00Z is still NDT, 04:30Z is the first NST instant.
+        expect(formatUpcomingOnSale('2026-11-01T04:00:00.000Z', zone)).toBe('On sale Sun, Nov 1, 1:30 a.m. NDT');
+        expect(formatUpcomingOnSale('2026-11-01T04:30:00.000Z', zone)).toBe('On sale Sun, Nov 1, 1:00 a.m. NST');
+        expect(formatUpcomingOnSale('2026-03-08T05:29:00.000Z', zone)).toBe('On sale Sun, Mar 8, 1:59 a.m. NST');
+        expect(formatUpcomingOnSale('2026-03-08T05:30:00.000Z', zone)).toBe('On sale Sun, Mar 8, 3:00 a.m. NDT');
+    });
+
+    it('counts real elapsed time across the Newfoundland fallback, not wall-clock labels', () => {
+        const start = Date.parse('2026-11-01T03:00:00.000Z');
+        const target = Date.parse('2026-11-01T05:30:00.000Z');
+        expect(formatSaleCountdown(target, start)).toBe('in 2 hours 30 minutes');
+        expect(formatSaleCountdown(start + 3_600_000, start)).toBe('in 1 hour');
+        expect(formatSaleCountdown(start + 3_599_000, start)).toBe('in 59 minutes 59 seconds');
+        expect(formatSaleCountdown(start + 86_400_000 * 2 + 3_600_000 + 60_000, start)).toBe('in 2 days 1 hour 1 minute');
+        expect(formatSaleCountdown(start, start)).toBe('in 0 seconds');
     });
 });
 

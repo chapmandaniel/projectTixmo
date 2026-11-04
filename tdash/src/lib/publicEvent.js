@@ -1,4 +1,8 @@
-import { DEFAULT_EVENT_TIMEZONE, validTimeZone } from './eventTime';
+import {
+    DEFAULT_EVENT_TIMEZONE,
+    formatEventDate,
+    validTimeZone,
+} from './eventTime';
 
 export {
     HST_INCLUDED_NOTE,
@@ -124,6 +128,46 @@ export const getPublicTicketOffer = (ticket, now = Date.now()) => {
         tier,
     };
 };
+
+// Earliest future per-ticket onsale that is the reason that ticket is not
+// selectable yet. Sold-out, hidden, ended, and already-open tickets are skipped.
+export const earliestUpcomingTicketOnSale = (tickets = [], now = Date.now()) => {
+    let earliest = null;
+    for (const ticket of tickets || []) {
+        if (!ticket || ticket.status === 'HIDDEN') continue;
+        if (getPublicTicketOffer(ticket, now).label !== 'On sale soon') continue;
+        const start = Date.parse(ticket.salesStart);
+        if (!Number.isFinite(start) || start <= now) continue;
+        if (earliest == null || start < earliest) earliest = start;
+    }
+    return earliest;
+};
+
+const countdownUnit = (count, singular) =>
+    `${count} ${singular}${count === 1 ? '' : 's'}`;
+
+// Remaining time is the real elapsed duration, so a daylight-saving fallback
+// does not shrink or stretch the countdown.
+export const formatSaleCountdown = (target, now = Date.now()) => {
+    const remaining = Math.max(0, Number(target) - Number(now));
+    const days = Math.floor(remaining / 86_400_000);
+    const hours = Math.floor((remaining % 86_400_000) / 3_600_000);
+    const minutes = Math.floor((remaining % 3_600_000) / 60_000);
+    const seconds = Math.floor((remaining % 60_000) / 1000);
+    const parts = [];
+    if (days) parts.push(countdownUnit(days, 'day'));
+    if (hours) parts.push(countdownUnit(hours, 'hour'));
+    if (minutes) parts.push(countdownUnit(minutes, 'minute'));
+    // Seconds keep a sub-hour countdown moving between minute boundaries.
+    if (!days && !hours) parts.push(countdownUnit(seconds, 'second'));
+    if (!parts.length) parts.push(countdownUnit(0, 'second'));
+    return `in ${parts.join(' ')}`;
+};
+
+export const formatUpcomingOnSale = (instant, event) =>
+    `On sale ${formatEventDate(instant, eventTimeZone(event), {
+        timeZoneName: 'short',
+    })}`;
 
 export const initialTicketQuantities = (
     tickets = [],

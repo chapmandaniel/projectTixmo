@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { config } from '../config/environment';
+import { formatHealthRelease } from '../config/healthRelease';
 import authRoutes from './auth/routes';
 import userRoutes from './users/routes';
 import organizationRoutes from './organizations/routes';
@@ -37,6 +38,7 @@ versionRouter.get('/health', (_req, res) => {
     message: 'Tixmo API is running',
     version: config.apiVersion,
     timestamp: new Date().toISOString(),
+    release: formatHealthRelease(config.release),
   });
 });
 

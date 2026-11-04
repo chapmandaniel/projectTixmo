@@ -131,7 +131,8 @@ const evaluate = async (expression) => {
   return value.result.value;
 };
 async function wait(expression) {
-  for (let i = 0; i < 100; i++) {
+  // CI runners stall Chrome and the API after the form is already visible.
+  for (let i = 0; i < 250; i++) {
     if (await evaluate(expression)) return;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -161,6 +162,7 @@ let origin;
 const {
   clearDevToolsActivePort,
   discoverDevTools,
+  listDevToolsPages,
 } = require("./devtools-discovery.cjs");
 async function openBrowser() {
   clearDevToolsActivePort(profile);
@@ -198,9 +200,7 @@ async function openBrowser() {
   assert.equal(debug.hostname, "127.0.0.1");
   debugPort = Number(debug.port);
   phase(3); // target discovery transport and JSON
-  const targets = await fetch(`http://${debug.host}/json/list`, {
-    signal: AbortSignal.timeout(5000),
-  }).then((r) => r.json());
+  const targets = await listDevToolsPages(`http://${debug.host}`);
   phase(4); // page target selection
   const target = new URL(
     targets.find((t) => t.type === "page").webSocketDebuggerUrl,
@@ -213,7 +213,7 @@ async function openBrowser() {
       ws.addEventListener("open", resolve, { once: true });
       ws.addEventListener("error", reject, { once: true });
     }),
-    5000,
+    15000,
   );
   let seq = 0;
   const pending = new Map();
@@ -230,7 +230,7 @@ async function openBrowser() {
         pending.set(id, { resolve, reject });
         ws.send(JSON.stringify({ id, method, params }));
       }),
-      5000,
+      15000,
     ).finally(() => pending.delete(id));
   };
   ws.addEventListener("message", (event) => {

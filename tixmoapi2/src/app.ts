@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import swaggerUi from 'swagger-ui-express';
 import { config } from './config/environment';
+import { formatHealthRelease } from './config/healthRelease';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { requestLogger } from './middleware/requestLogger';
@@ -68,12 +69,15 @@ app.use(
 // Liveness and readiness stay ahead of body parsing, rate limiters and the
 // waiting room, and after CORS so browser checks still receive allow-origin.
 // Railway healthcheckPath remains /ready.
-const healthRelease = (): string | null => {
-  const release = process.env.RELEASE?.trim();
-  if (release) return release;
-  const railway = process.env.RAILWAY_GIT_COMMIT_SHA?.trim();
-  return railway || null;
-};
+// Read at request time so tests can swap RELEASE after import, then shorten a
+// git SHA the same way /api/v1/health does.
+const currentHealthRelease = (): string | null =>
+  formatHealthRelease(
+    process.env.SENTRY_RELEASE ||
+      process.env.RELEASE ||
+      process.env.RAILWAY_GIT_COMMIT_SHA ||
+      config.release
+  );
 
 app.get('/health', (_req, res) => {
   res.status(200).json({
@@ -83,7 +87,7 @@ app.get('/health', (_req, res) => {
     environment: config.nodeEnv,
     railwayEnvironment: healthRailwayEnvironment(),
     branch: healthBranch(),
-    release: healthRelease(),
+    release: currentHealthRelease(),
   });
 });
 
@@ -162,6 +166,11 @@ app.use(requestLogger);
  *                 environment:
  *                   type: string
  *                   example: development
+ *                 release:
+ *                   type: string
+ *                   nullable: true
+ *                   description: Deployed release. A git SHA is the first 7 hex characters. Any other label is trimmed and limited to 64 characters. Null when unset.
+ *                   example: a1b2c3d
  */
 // Debug route to test Sentry (only enabled when SENTRY_DSN is configured)
 app.get('/api/v1/debug/sentry', (_req, _res, next) => {
