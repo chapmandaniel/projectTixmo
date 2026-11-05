@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     X, Save, Loader, Layout, Calendar, MapPin, Image as ImageIcon, Ticket,
     CheckCircle2, Globe, Smartphone, Monitor, AlertCircle
@@ -63,6 +63,23 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
     const [venues, setVenues] = useState([]);
     const [deletedTierIds, setDeletedTierIds] = useState([]);
     const [notification, setNotification] = useState(null); // { type: 'success'|'error', message: '' }
+    const notificationTimer = useRef(null);
+    const clearNotificationTimer = () => {
+        if (notificationTimer.current == null) return;
+        clearTimeout(notificationTimer.current);
+        notificationTimer.current = null;
+    };
+    const showNotification = (next, clearAfterMs, afterClear) => {
+        clearNotificationTimer();
+        setNotification(next);
+        if (clearAfterMs == null) return;
+        notificationTimer.current = setTimeout(() => {
+            notificationTimer.current = null;
+            setNotification(null);
+            afterClear?.();
+        }, clearAfterMs);
+    };
+    useEffect(() => clearNotificationTimer, []);
     const [changeReason, setChangeReason] = useState('');
 
     // Fetch Venues
@@ -135,7 +152,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
             setConfigurationLoaded(true);
             setDeletedTierIds([]);
         } catch (err) {
-            setNotification({ type: 'error', message: 'Ticket configuration could not be loaded. Reopen the event before saving.' });
+            showNotification({ type: 'error', message: 'Ticket configuration could not be loaded. Reopen the event before saving.' });
             setConfigurationLoaded(false);
             throw err;
         }
@@ -156,7 +173,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
     }, [tickets]);
 
     const handleSave = async (publish = false) => {
-        if (!configurationLoaded) { setNotification({ type: 'error', message: 'Wait for the complete ticket configuration before saving.' }); return; }
+        if (!configurationLoaded) { showNotification({ type: 'error', message: 'Wait for the complete ticket configuration before saving.' }); return; }
         // Validation for Publish
         if (publish) {
             const missing = [];
@@ -167,11 +184,10 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
             if (!tickets.length || eventData.capacity <= 0) missing.push('Tickets/Capacity');
 
             if (missing.length > 0) {
-                setNotification({
+                showNotification({
                     type: 'error',
                     message: `Cannot Publish. Missing: ${missing.join(', ')}`
-                });
-                setTimeout(() => setNotification(null), 5000);
+                }, 5000);
                 return;
             }
         }
@@ -222,25 +238,22 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
             setPersistedEvent(savedEvent);
             setEventData(previous => ({ ...previous, status: savedEvent.status, timezone }));
             await fetchTickets(savedEvent.id, timezone);
-            setNotification({
+            showNotification({
                 type: 'success',
                 message: publish ? "Event published." : savedEvent.status === 'DRAFT' ? "Draft saved." : "Changes saved."
-            });
-            setDeletedTierIds([]);
-            setTimeout(() => {
-                setNotification(null);
+            }, 1500, () => {
                 if (onSuccess) onSuccess(savedEvent);
                 if (!embedded && onClose) onClose();
-            }, 1500);
+            });
+            setDeletedTierIds([]);
 
         } catch (err) {
             console.error("Save failed", err);
             const msg = err.response?.data?.message || err.message || "Unknown error";
-            setNotification({
+            showNotification({
                 type: 'error',
                 message: `Save Failed: ${msg}`
-            });
-            setTimeout(() => setNotification(null), 5000);
+            }, 5000);
         } finally {
             setLoading(false);
         }
