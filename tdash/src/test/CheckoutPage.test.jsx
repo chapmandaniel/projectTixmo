@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe } from '@stripe/stripe-js/pure';
 import CheckoutPage from '../pages/CheckoutPage';
 
 const runtimeMocks = vi.hoisted(() => ({
@@ -48,7 +48,7 @@ vi.mock('../lib/auth', () => ({
     },
 }));
 
-vi.mock('@stripe/stripe-js', () => ({
+vi.mock('@stripe/stripe-js/pure', () => ({
     loadStripe: vi.fn(() => Promise.resolve({ id: 'stripe-instance' })),
 }));
 
