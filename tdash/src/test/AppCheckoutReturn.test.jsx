@@ -24,7 +24,7 @@ vi.mock('@stripe/react-stripe-js', () => ({
     useStripe: () => ({ confirmPayment: mocks.confirm }),
     useElements: () => ({}),
 }));
-vi.mock('@stripe/stripe-js', () => ({ loadStripe: (...args) => mocks.loadStripe(...args) }));
+vi.mock('@stripe/stripe-js/pure', () => ({ loadStripe: (...args) => mocks.loadStripe(...args) }));
 
 const orderId = '12345678-1234-1234-1234-123456789abc';
 const entry = `/checkout/neon-nights?orderId=${orderId}&redirect_status=succeeded&payment_intent=untrusted&payment_intent_client_secret=untrusted`;
