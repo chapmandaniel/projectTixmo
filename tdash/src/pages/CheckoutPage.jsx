@@ -327,9 +327,12 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const policyLinks = useMemo(() => getPolicyLinks(), []);
     const stripePublishableKey = useMemo(() => getStripePublishableKey(), []);
     const paymentCurrency = orderDisplayCurrency(order?.currency);
+    // Wait until the public payload says the sale is open. Closed and undated
+    // checkout render ClosedSaleNotice and must not load Stripe.js.
+    const stripeReady = Boolean(event) && !saleClosed && Boolean(stripePublishableKey);
     const stripePromise = useMemo(
-        () => (stripePublishableKey ? loadStripe(stripePublishableKey) : null),
-        [stripePublishableKey]
+        () => (stripeReady ? loadStripe(stripePublishableKey) : null),
+        [stripeReady, stripePublishableKey]
     );
 
     useEffect(() => {

@@ -396,6 +396,47 @@ describe('customer event on-sale page', () => {
         expect(within(document.querySelector('.sf-closed-sale')).getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
     });
 
+    it('shows the not-yet-on-sale notice when the public API returns a draft', async () => {
+        fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({
+                data: {
+                    ...event,
+                    status: 'DRAFT',
+                    ended: false,
+                    undated: true,
+                    startDatetime: '2020-01-01T00:00:00.000Z',
+                    endDatetime: '2020-01-01T03:00:00.000Z',
+                },
+            }),
+        });
+        render(
+            <MemoryRouter initialEntries={['/e/neon-nights']}>
+                <Routes>
+                    <Route path="/e/:slug" element={<EventOnSalePage />} />
+                </Routes>
+            </MemoryRouter>,
+        );
+        expect(
+            await screen.findByRole('heading', { name: "This event isn't open for sale yet" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("Tickets aren't on sale until the organizer sets a date."),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Neon Nights' })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Event unavailable' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'This event has ended' })).not.toBeInTheDocument();
+        expect(screen.queryByText('This event is not available.')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Continue to checkout' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Choose tickets' })).not.toBeInTheDocument();
+        expect(
+            within(document.querySelector('.sf-closed-sale')).getByRole('link', { name: 'My tickets' }),
+        ).toHaveAttribute('href', '/wallet');
+        expect(
+            within(document.querySelector('.sf-closed-sale')).queryByRole('link', { name: 'Back to the event' }),
+        ).not.toBeInTheDocument();
+    });
+
     it('provides a retry after a failed event request and renders no sample data', async () => {
         fetch
             .mockResolvedValueOnce({

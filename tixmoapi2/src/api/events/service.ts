@@ -897,12 +897,15 @@ export class EventService {
   }
 
   /**
-   * Get a single public event by slug (no auth required)
-   * Returns full event detail with ticket types and their tiers.
-   * Anonymous reads may be a few seconds stale. POST /orders rechecks inventory.
+   * Buyer detail for one slug (no auth required).
+   * Drafts are direct-link only. The browse list still hides them. The public
+   * route marks every draft undated so the storefront can show the not-yet-on-sale
+   * notice instead of a missing event. Anonymous reads may be a few seconds stale.
+   * POST /orders rechecks status and inventory and still refuses a draft.
    */
   async getPublicEventBySlug(slug: string) {
-    const publicStatuses: EventStatus[] = [
+    const directLinkStatuses: EventStatus[] = [
+      EventStatus.DRAFT,
       EventStatus.PUBLISHED,
       EventStatus.ON_SALE,
       EventStatus.SOLD_OUT,
@@ -912,7 +915,7 @@ export class EventService {
       where: {
         slug,
         deletedAt: null,
-        status: { in: publicStatuses },
+        status: { in: directLinkStatuses },
       },
       include: {
         organization: {
