@@ -559,7 +559,8 @@ test("actual stop protocol requests graceful Chrome exit before socket close or 
     source.indexOf("async function stopped(record)"),
     source.indexOf("async function keyAbsent(profile)"),
   );
-  for (const outcome of ["ack", "owned-close", "rejected"]) {
+  class CloseDeadline extends Error {}
+  for (const outcome of ["ack", "owned-close", "rejected", "close-deadline"]) {
     const trace = [];
     let alive = true,
       resolve;
@@ -580,6 +581,7 @@ test("actual stop protocol requests graceful Chrome exit before socket close or 
     record.send = async (method) => {
       assert.equal(method, "Browser.close");
       trace.push(method);
+      if (outcome === "close-deadline") return;
       if (outcome === "rejected") throw failure;
       alive = false;
       record.child.exitCode = 0;
@@ -590,7 +592,16 @@ test("actual stop protocol requests graceful Chrome exit before socket close or 
       drainHandlers: async () => {
         trace.push("drain");
       },
-      bounded: async (promise) => promise,
+      bounded: async (promise) => {
+        if (
+          outcome === "close-deadline" &&
+          promise === record.closed &&
+          record.child.signalCode === null
+        )
+          throw new CloseDeadline();
+        return promise;
+      },
+      Deadline: CloseDeadline,
       requestBrowserClose,
       WebSocket: { OPEN: 1 },
       process: {
@@ -619,6 +630,9 @@ test("actual stop protocol requests graceful Chrome exit before socket close or 
     assert.equal(alive, false);
     assert.ok(trace.indexOf("drain") < trace.indexOf("Browser.close"));
     assert.ok(trace.indexOf("Browser.close") < trace.indexOf("socket-close"));
-    assert.equal(trace.includes("forced"), outcome === "rejected");
+    assert.equal(
+      trace.includes("forced"),
+      outcome === "rejected" || outcome === "close-deadline",
+    );
   }
 });
