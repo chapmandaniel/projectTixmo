@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import CheckoutPage from '../pages/CheckoutPage';
 
@@ -134,21 +134,38 @@ describe('CheckoutPage', () => {
         return renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A1' });
     };
 
+    const expectClosedCheckoutChrome = () => {
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        expect(screen.getByRole('heading', { level: 1, name: 'Neon Nights' })).toBeInTheDocument();
+        const banner = document.querySelector('.sf-closed-checkout > header.sf-header');
+        expect(banner).toBeInTheDocument();
+        expect(document.querySelector('.sf-ticket-panel')).not.toContainElement(banner);
+        const logo = within(banner).getByRole('img', { name: 'Tixmo' });
+        expect(logo).toHaveAttribute('src', '/images/tixmo_logo.png');
+        expect(logo).toHaveClass('sf-logo');
+        expect(within(banner).getByRole('link', { name: 'Tixmo' })).toHaveAttribute('href', '#event-top');
+        expect(within(banner).getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
+        const notice = document.querySelector('.sf-closed-sale');
+        expect(within(notice).getByRole('link', { name: 'Back to the event' })).toHaveAttribute('href', '/e/neon-nights');
+        expect(within(notice).getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
+        expect(screen.queryByText('Secure checkout')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /continue to secure payment/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Increase General Admission' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Pay / })).not.toBeInTheDocument();
+        expect(screen.queryByText('Card payment details')).not.toBeInTheDocument();
+        expect(screen.queryByText('Choose tickets')).not.toBeInTheDocument();
+        expect(apiPost).not.toHaveBeenCalled();
+    };
+
     it('renders the ended state instead of checkout when the public event has ended', async () => {
         document.title = 'Tixmo Dashboard';
         const view = renderClosed({ ended: true });
         expect(await screen.findByRole('heading', { level: 1, name: 'Neon Nights' })).toBeInTheDocument();
-        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
         expect(screen.getByRole('heading', { level: 2, name: 'This event has ended' })).toBeInTheDocument();
         expect(document.title).toBe('Neon Nights · Tixmo');
         expect(screen.getByText('Ticket sales are closed. Tickets you already bought are in My tickets.')).toBeInTheDocument();
-        expect(screen.queryByText('Secure checkout')).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: /continue to secure payment/i })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'Increase General Admission' })).not.toBeInTheDocument();
         expect(screen.queryByText('Not currently available for selection.')).not.toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Back to the event' })).toHaveAttribute('href', '/e/neon-nights');
-        expect(screen.getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
-        expect(apiPost).not.toHaveBeenCalled();
+        expectClosedCheckoutChrome();
         view.unmount();
         expect(document.title).toBe('Tixmo Dashboard');
     });
@@ -157,15 +174,29 @@ describe('CheckoutPage', () => {
         document.title = 'Tixmo Dashboard';
         const view = renderClosed({ undated: true, startDatetime: null, endDatetime: null });
         expect(await screen.findByRole('heading', { level: 1, name: 'Neon Nights' })).toBeInTheDocument();
-        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
         expect(screen.getByRole('heading', { level: 2, name: "This event isn't open for sale yet" })).toBeInTheDocument();
         expect(document.title).toBe('Neon Nights · Tixmo');
         expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
-        expect(screen.queryByText('Secure checkout')).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: /continue to secure payment/i })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'Increase General Admission' })).not.toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Back to the event' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'My tickets' })).toBeInTheDocument();
+        expectClosedCheckoutChrome();
+        view.unmount();
+        expect(document.title).toBe('Tixmo Dashboard');
+    });
+
+    it('renders the undated notice when a draft payload is marked undated, even if its dates have passed', async () => {
+        document.title = 'Tixmo Dashboard';
+        const view = renderClosed({
+            status: 'DRAFT',
+            ended: false,
+            undated: true,
+            startDatetime: '2020-01-01T00:00:00.000Z',
+            endDatetime: '2020-01-01T03:00:00.000Z',
+        });
+        expect(await screen.findByRole('heading', { level: 2, name: "This event isn't open for sale yet" })).toBeInTheDocument();
+        expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'This event has ended' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Checkout unavailable' })).not.toBeInTheDocument();
+        expect(document.title).toBe('Neon Nights · Tixmo');
+        expectClosedCheckoutChrome();
         view.unmount();
         expect(document.title).toBe('Tixmo Dashboard');
     });
@@ -178,6 +209,8 @@ describe('CheckoutPage', () => {
         expect(screen.getByRole('button', { name: /continue to secure payment/i })).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'This event has ended' })).not.toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: "This event isn't open for sale yet" })).not.toBeInTheDocument();
+        expect(screen.queryByRole('banner')).not.toBeInTheDocument();
+        expect(screen.queryByRole('img', { name: 'Tixmo' })).not.toBeInTheDocument();
         expect(document.title).toBe('Tixmo Dashboard');
         view.unmount();
         expect(document.title).toBe('Tixmo Dashboard');
