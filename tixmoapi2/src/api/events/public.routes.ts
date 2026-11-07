@@ -90,7 +90,8 @@ router.get(
       eventService.listPublicEvents(query)
     );
     res.set('Cache-Control', publicCacheControlHeader());
-    res.set('Vary', 'Authorization');
+    // Append. res.set('Vary') would replace the Origin token cors already added.
+    res.vary('Authorization');
     res.json(successResponse(result));
   })
 );
@@ -134,7 +135,8 @@ router.get(
       return loaded;
     });
     res.set('Cache-Control', publicCacheControlHeader());
-    res.set('Vary', 'Authorization');
+    // Append. res.set('Vary') would replace the Origin token cors already added.
+    res.vary('Authorization');
     res.json(successResponse(withEventSaleTiming(event)));
   })
 );
