@@ -110,7 +110,7 @@ router.get(
  *           type: string
  *     responses:
  *       200:
- *         description: Event details retrieved successfully. ended and undated are computed from the server clock at response time.
+ *         description: Event details retrieved successfully. ended and undated are computed from the server clock at response time. A draft is returned with undated set so the buyer sees that sale has not opened.
  *       404:
  *         description: Event not found
  */

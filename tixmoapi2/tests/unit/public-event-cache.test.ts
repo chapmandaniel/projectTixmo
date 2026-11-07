@@ -121,6 +121,37 @@ describe('public event cache', () => {
     expect(eventService.getPublicEventBySlug).toHaveBeenCalledTimes(2);
   });
 
+  it('returns a draft as not open for sale on anonymous and authorized reads', async () => {
+    const draft = {
+      id: 'draft-1',
+      slug: 'draft-night',
+      name: 'Draft Night',
+      status: 'DRAFT',
+      startDatetime: '2020-01-01T00:00:00.000Z',
+      endDatetime: '2020-01-01T03:00:00.000Z',
+      ticketTypes: [{ id: 'ga', name: 'General admission', quantityAvailable: 8 }],
+    };
+    jest.mocked(eventService.getPublicEventBySlug).mockResolvedValue(draft as never);
+
+    const anon = await request(app).get('/events/public/draft-night');
+    const authed = await request(app)
+      .get('/events/public/draft-night')
+      .set('Authorization', 'Bearer staff');
+
+    expect(anon.status).toBe(200);
+    expect(anon.body.data).toMatchObject({
+      name: 'Draft Night',
+      status: 'DRAFT',
+      ended: false,
+      undated: true,
+    });
+    expect(anon.body.data.ticketTypes).toEqual(draft.ticketTypes);
+    expect(authed.status).toBe(200);
+    expect(authed.body.data).toMatchObject({ ended: false, undated: true });
+    expect(authed.headers['cache-control']).toBe('private, no-store');
+    expect(eventService.getPublicEventBySlug).toHaveBeenCalledTimes(2);
+  });
+
   it('drops a cached event after a staff invalidation and caches the public list', async () => {
     await cachedPublicRead(publicEventCacheKey('onsale'), async () => event);
     invalidatePublicEvent({ id: 'event-1' });

@@ -1,4 +1,4 @@
-import { eventSaleTiming } from '../../src/api/events/event-sale-window';
+import { eventSaleTiming, withEventSaleTiming } from '../../src/api/events/event-sale-window';
 
 // Same boundary as prisma/lib/upcoming.cjs: COALESCE(end, start) <= now.
 const { isUpcoming } = require('../../prisma/lib/upcoming.cjs');
@@ -132,6 +132,34 @@ describe('event sale timing', () => {
       expect(timing.ended).toBe(boundary !== null && !isUpcoming(sample, now));
       expect(timing.undated).toBe(sample.startDatetime === null);
     }
+  });
+
+  test('a draft is not on sale yet, even when its dates have passed', () => {
+    const past = {
+      status: 'DRAFT' as const,
+      startDatetime: at('2020-01-01T00:00:00.000Z'),
+      endDatetime: at('2020-01-01T03:00:00.000Z'),
+    };
+    expect(withEventSaleTiming(past, now)).toMatchObject({ ended: false, undated: true });
+    expect(
+      withEventSaleTiming({ ...past, startDatetime: null, endDatetime: null }, now)
+    ).toMatchObject({
+      ended: false,
+      undated: true,
+    });
+    expect(
+      withEventSaleTiming(
+        {
+          status: 'ON_SALE',
+          startDatetime: past.startDatetime,
+          endDatetime: past.endDatetime,
+        },
+        now
+      )
+    ).toMatchObject({ ended: true, undated: false });
+    expect(
+      withEventSaleTiming({ status: 'PUBLISHED', startDatetime: null, endDatetime: null }, now)
+    ).toMatchObject({ ended: false, undated: true });
   });
 
   test('accepts ISO strings and ignores an unusable start', () => {
