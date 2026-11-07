@@ -31,9 +31,11 @@ import {
 } from '../lib/runtimeConfig';
 import { checkoutTicketState, checkoutBoundaryDelay } from '../lib/checkoutEligibility';
 import { SALES_PAUSED_MESSAGE, isSalesPausedError } from '../lib/salesPause';
-import { isSoldOutError } from '../lib/orderErrors';
+import { isEventSaleClosedError, isSoldOutError } from '../lib/orderErrors';
 import { cn } from '../lib/utils';
 import { formatEventDate, eventZoneAbbreviation, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
+import { externalPurchaseUrl, isExternalTicketing } from '../lib/ticketingMode';
+import { ClosedSaleNotice, closedSaleCopy } from '../components/storefront/ClosedSaleNotice';
 import {
     comparePublicTicketTypes,
     eventAddress,
@@ -312,6 +314,16 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const [paymentSession, setPaymentSession] = useState(null);
     const [paymentComplete, setPaymentComplete] = useState(null);
 
+    const saleClosed = Boolean(event?.ended || event?.undated);
+    useEffect(() => {
+        if (!saleClosed || !event?.name) return undefined;
+        const previousTitle = document.title;
+        document.title = `${event.name} · Tixmo`;
+        return () => {
+            document.title = previousTitle;
+        };
+    }, [saleClosed, event?.name]);
+
     const policyLinks = useMemo(() => getPolicyLinks(), []);
     const stripePublishableKey = useMemo(() => getStripePublishableKey(), []);
     const paymentCurrency = orderDisplayCurrency(order?.currency);
@@ -498,6 +510,8 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                 setError(SALES_PAUSED_MESSAGE);
             } else if (requestError.response?.data?.code === 'CHECKOUT_BUSY') {
                 setError('Checkout is busy. Please try again.');
+            } else if (!order && isEventSaleClosedError(requestError)) {
+                setError(requestError.response?.data?.message || 'Checkout could not be prepared.');
             } else if (!order && isSoldOutError(requestError)) {
                 setError(requestError.response?.data?.message || 'Not enough tickets available');
             } else {
@@ -517,6 +531,40 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
                         <Loader className="h-5 w-5 animate-spin" />
                         Loading checkout...
                     </div>
+                </div>
+            </main>
+        );
+    }
+
+    const closedSale = closedSaleCopy(event);
+    if (event && closedSale) {
+        return (
+            <main className="event-storefront sf-closed-checkout">
+                <section className="sf-ticket-panel" aria-labelledby="closed-event-name">
+                    <header className="sf-closed-checkout-header">
+                        <h1 id="closed-event-name">{event.name}</h1>
+                    </header>
+                    <ClosedSaleNotice
+                        event={event}
+                        eventHref={`/e/${encodeURIComponent(event.slug || slug)}`}
+                    />
+                </section>
+            </main>
+        );
+    }
+
+    if (event && isExternalTicketing(event)) {
+        const purchaseUrl = externalPurchaseUrl(event);
+        return (
+            <main className="min-h-screen bg-dashboard-shell text-zinc-100">
+                <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-5">
+                    <DashboardSurface isDark accent="brand" className="space-y-4 p-6 text-center">
+                        <h1 className="text-2xl font-light tracking-tight">Tickets are sold on Showpass</h1>
+                        <p className="text-sm leading-6 text-dashboard-muted">Tixmo does not check out, issue tickets, or take payment for this event.</p>
+                        {purchaseUrl ? (
+                            <a href={purchaseUrl} target="_blank" rel="noopener noreferrer">Buy tickets on Showpass</a>
+                        ) : null}
+                    </DashboardSurface>
                 </div>
             </main>
         );

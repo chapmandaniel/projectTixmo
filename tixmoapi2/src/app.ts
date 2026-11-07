@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import swaggerUi from 'swagger-ui-express';
 import { config } from './config/environment';
+import { formatHealthRelease } from './config/healthRelease';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { requestLogger } from './middleware/requestLogger';
@@ -20,6 +21,12 @@ import {
 } from './middleware/rateLimiter';
 import { isTrustedClientOrigin } from './utils/clientOrigin';
 import { hostOnlyCookieMiddleware } from './middleware/hostOnlyCookies';
+import {
+  ROBOTS_TXT,
+  blocksSearchIndexing,
+  healthBranch,
+  healthRailwayEnvironment,
+} from './services/search-indexing';
 
 const app: Application = express();
 
@@ -32,6 +39,10 @@ app.set('trust proxy', 1);
 // Security middleware
 app.use(helmet());
 app.use(hostOnlyCookieMiddleware);
+app.use((_req, res, next) => {
+  if (blocksSearchIndexing()) res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
 
 // If Sentry is enabled, use request handler and tracing
 if (config.sentryDsn) {
@@ -44,9 +55,13 @@ const corsDeniedMessage =
 
 // Reject before the cors package. Passing its callback an Error becomes a 500,
 // and callback(null, false) would continue the request without a 403.
+// A missing Origin header is not a browser origin: server-to-server calls and
+// health probes omit it and stay allowed. That does not grant CORS. The
+// literal value "null", an empty Origin, and any other unlisted value do not
+// count as missing.
 app.use((req, res, next) => {
   const origin = req.get('origin');
-  if (!origin || isTrustedClientOrigin(origin)) {
+  if (origin === undefined || isTrustedClientOrigin(origin)) {
     next();
     return;
   }
@@ -55,11 +70,12 @@ app.use((req, res, next) => {
 });
 
 // CORS configuration. Methods and allowed headers stay on the package defaults.
-// Requests with no Origin (mobile apps, curl, server-to-server) stay allowed.
+// With credentials, an allowed browser Origin is echoed. It is never "*".
+// No Access-Control-Allow-Origin is set when the request has no Origin header.
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || isTrustedClientOrigin(origin)) {
+      if (origin === undefined || isTrustedClientOrigin(origin)) {
         callback(null, true);
         return;
       }
@@ -73,13 +89,31 @@ app.use(
 // Liveness and readiness stay ahead of body parsing, rate limiters and the
 // waiting room, and after CORS so browser checks still receive allow-origin.
 // Railway healthcheckPath remains /ready.
+// Read at request time so tests can swap RELEASE after import, then shorten a
+// git SHA the same way /api/v1/health does.
+const currentHealthRelease = (): string | null =>
+  formatHealthRelease(
+    process.env.SENTRY_RELEASE ||
+      process.env.RELEASE ||
+      process.env.RAILWAY_GIT_COMMIT_SHA ||
+      config.release
+  );
+
 app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: config.nodeEnv,
+    railwayEnvironment: healthRailwayEnvironment(),
+    branch: healthBranch(),
+    release: currentHealthRelease(),
   });
+});
+
+app.get('/robots.txt', (_req, res, next) => {
+  if (!blocksSearchIndexing()) return next();
+  res.type('text/plain').send(ROBOTS_TXT);
 });
 
 app.get('/ready', async (_req, res) => {
@@ -95,12 +129,24 @@ app.get('/ready', async (_req, res) => {
     });
 });
 
-// Stripe webhooks require the raw request body for signature verification.
+// Stripe and Showpass webhooks require the raw request body for signature verification.
 app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json', limit: '10mb' }));
+app.use(
+  '/api/v1/vendors/showpass/webhook',
+  express.raw({ type: 'application/json', limit: '1mb' })
+);
+app.use('/api/v1/vendors/showpass/hooks', express.raw({ type: 'application/json', limit: '1mb' }));
+
+const rawWebhookPaths = new Set(['/api/v1/payments/webhook', '/api/v1/vendors/showpass/webhook']);
+
+const keepsRawBody = (url: string) => {
+  const pathOnly = url.split('?')[0];
+  return rawWebhookPaths.has(pathOnly) || pathOnly.startsWith('/api/v1/vendors/showpass/hooks/');
+};
 
 // Body parsing middleware
 app.use((req, res, next) => {
-  if (req.originalUrl === '/api/v1/payments/webhook') {
+  if (keepsRawBody(req.originalUrl)) {
     return next();
   }
   return express.json({ limit: '10mb' })(req, res, next);
@@ -140,6 +186,11 @@ app.use(requestLogger);
  *                 environment:
  *                   type: string
  *                   example: development
+ *                 release:
+ *                   type: string
+ *                   nullable: true
+ *                   description: Deployed release. A git SHA is the first 7 hex characters. Any other label is trimmed and limited to 64 characters. Null when unset.
+ *                   example: a1b2c3d
  */
 // Debug route to test Sentry (only enabled when SENTRY_DSN is configured)
 app.get('/api/v1/debug/sentry', (_req, _res, next) => {

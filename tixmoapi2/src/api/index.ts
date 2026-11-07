@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { config } from '../config/environment';
+import { formatHealthRelease } from '../config/healthRelease';
 import authRoutes from './auth/routes';
 import userRoutes from './users/routes';
 import organizationRoutes from './organizations/routes';
@@ -23,6 +24,7 @@ import approvalRoutes from './approvals/routes';
 import reviewRoutes from './review/routes';
 import assetRoutes from './assets/routes';
 import staffActionRoutes from './staff-actions/routes';
+import showpassRoutes, { showpassWebhookRouter } from './vendors/routes';
 
 const router = Router();
 
@@ -36,6 +38,7 @@ versionRouter.get('/health', (_req, res) => {
     message: 'Tixmo API is running',
     version: config.apiVersion,
     timestamp: new Date().toISOString(),
+    release: formatHealthRelease(config.release),
   });
 });
 
@@ -63,6 +66,8 @@ versionRouter.use('/approvals', approvalRoutes);
 versionRouter.use('/assets', assetRoutes);
 versionRouter.use('/review', reviewRoutes);
 versionRouter.use('/staff-actions', staffActionRoutes);
+versionRouter.use('/organizations/:organizationId/showpass', showpassRoutes);
+versionRouter.use('/vendors/showpass', showpassWebhookRouter);
 
 // Mount versioned routes
 router.use(`/${config.apiVersion}`, versionRouter);

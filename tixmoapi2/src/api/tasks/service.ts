@@ -4,7 +4,17 @@ import { notificationApiService } from '../notifications/service';
 
 import prisma from '../../config/prisma';
 
+const taskEventSelect = { id: true, name: true, slug: true, ticketingMode: true };
+
 export const TaskService = {
+  async assertTaskEvent(organizationId: string, eventId: string) {
+    const event = await prisma.event.findFirst({
+      where: { id: eventId, organizationId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!event) throw new Error('Event not found or access denied');
+  },
+
   /**
    * Create a new task
    */
@@ -27,6 +37,7 @@ export const TaskService = {
           },
         },
         comments: true,
+        event: { select: taskEventSelect },
       },
     });
 
@@ -77,6 +88,7 @@ export const TaskService = {
             createdAt: 'desc',
           },
         },
+        event: { select: taskEventSelect },
       },
       orderBy: {
         updatedAt: 'desc',
@@ -116,6 +128,7 @@ export const TaskService = {
             createdAt: 'desc',
           },
         },
+        event: { select: taskEventSelect },
       },
     });
   },
@@ -149,6 +162,7 @@ export const TaskService = {
           },
         },
         comments: true,
+        event: { select: taskEventSelect },
       },
     });
   },

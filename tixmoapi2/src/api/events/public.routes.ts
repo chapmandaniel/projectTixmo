@@ -12,6 +12,7 @@ import {
   publicEventCacheKey,
   publicEventListCacheKey,
 } from './public-cache';
+import { withEventSaleTiming } from './event-sale-window';
 
 const router = Router();
 
@@ -109,7 +110,7 @@ router.get(
  *           type: string
  *     responses:
  *       200:
- *         description: Event details retrieved successfully
+ *         description: Event details retrieved successfully. ended and undated are computed from the server clock at response time.
  *       404:
  *         description: Event not found
  */
@@ -122,7 +123,9 @@ router.get(
       const event = await eventService.getPublicEventBySlug(slug);
       if (!event) throw ApiError.notFound('Event not found');
       res.set('Cache-Control', 'private, no-store');
-      res.json(successResponse(event));
+      // Timed at response, not at cache fill, so a few-second public cache
+      // cannot keep a just-ended event looking open.
+      res.json(successResponse(withEventSaleTiming(event)));
       return;
     }
     const event = await cachedPublicRead(publicEventCacheKey(slug), async () => {
@@ -132,7 +135,7 @@ router.get(
     });
     res.set('Cache-Control', publicCacheControlHeader());
     res.set('Vary', 'Authorization');
-    res.json(successResponse(event));
+    res.json(successResponse(withEventSaleTiming(event)));
   })
 );
 

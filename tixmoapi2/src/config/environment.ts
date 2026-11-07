@@ -296,8 +296,8 @@ export const config = {
   authAccountRateLimitWindowMs,
   authAccountRateLimitMax,
 
-  // Exact origins from CORS_ORIGIN. The demo fallback runs only when
-  // RAILWAY_ENVIRONMENT_NAME is production. See corsOrigins.ts.
+  // Exact origins from CORS_ORIGIN. Unset CORS_ORIGIN falls back only for
+  // Railway production, staging-audit-20261005, and labs. See corsOrigins.ts.
   corsOrigin: resolveConfiguredCorsOrigins(corsMode),
 
   // Session

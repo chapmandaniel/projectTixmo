@@ -24,19 +24,32 @@ const isLoopbackHostname = (hostname: string): boolean => {
   return octets[0] === 127;
 };
 
-// Request and Referer values. A path is stripped so a referer can still name
-// its origin. Configured entries are rejected at startup when they have a path.
-const normalizeOrigin = (value: string) => {
+const parseHttpUrl = (value: string): URL | undefined => {
   try {
     const url = new URL(value);
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-      return undefined;
-    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
     if (url.username || url.password) return undefined;
-    return url.origin;
+    return url;
   } catch (_error) {
     return undefined;
   }
+};
+
+// Origin header. Scheme, host, and a non-default port only. Case and the
+// default :80/:443 are canonicalized by URL. A path, query, fragment,
+// userinfo, wildcard, or the literal "null" is not an origin.
+const strictRequestOrigin = (value: string): string | undefined => {
+  const url = parseHttpUrl(value);
+  if (!url) return undefined;
+  if (url.pathname !== '/' || url.search !== '' || url.hash !== '') return undefined;
+  return url.origin;
+};
+
+// Referer and other page URLs. The path is removed, then the origin is checked.
+const originOfUrl = (value: string): string | undefined => {
+  const url = parseHttpUrl(value);
+  if (!url) return undefined;
+  return url.origin;
 };
 
 const insecureBrowserOriginsBlocked = () =>
@@ -46,7 +59,7 @@ const configuredOrigins = (() => {
   const origins = new Set<string>();
 
   for (const candidate of config.corsOrigin) {
-    const origin = normalizeOrigin(candidate.trim());
+    const origin = strictRequestOrigin(candidate.trim());
     if (origin) origins.add(origin);
   }
 
@@ -55,7 +68,7 @@ const configuredOrigins = (() => {
   const includeClientUrl =
     config.trustClientUrlForCors !== false && config.nodeEnv !== 'production';
   if (includeClientUrl) {
-    const clientOrigin = normalizeOrigin(config.clientUrl.trim());
+    const clientOrigin = strictRequestOrigin(config.clientUrl.trim());
     if (clientOrigin) origins.add(clientOrigin);
   }
 
@@ -63,7 +76,7 @@ const configuredOrigins = (() => {
 })();
 
 export const isTrustedClientOrigin = (value: string) => {
-  const origin = normalizeOrigin(value);
+  const origin = strictRequestOrigin(value);
   if (!origin) return false;
 
   if (insecureBrowserOriginsBlocked()) {
@@ -88,7 +101,7 @@ export const isTrustedClientOrigin = (value: string) => {
 export const resolveTrustedClientOrigin = (...candidates: Array<string | null | undefined>) => {
   for (const candidate of candidates) {
     if (!candidate) continue;
-    const origin = normalizeOrigin(candidate.trim());
+    const origin = originOfUrl(candidate.trim());
     if (origin && isTrustedClientOrigin(origin)) return origin;
   }
   return undefined;

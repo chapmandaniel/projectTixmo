@@ -21,6 +21,7 @@ import AcceptInvitationView from './features/AcceptInvitationView';
 import { BrainCircuit, MessageCircle, Wand2 } from 'lucide-react';
 
 import GlobalErrorNotification from './components/GlobalErrorNotification';
+import LabsBanner, { NoIndexMeta } from './components/LabsBanner';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const DashboardHome = lazy(() => import('./features/DashboardHome'));
@@ -31,6 +32,7 @@ const TeamView = lazy(() => import('./features/TeamView'));
 const EventManagementDashboard = lazy(() => import('./features/EventManagementDashboard'));
 const AssetLibraryView = lazy(() => import('./features/AssetLibraryView'));
 const SettingsView = lazy(() => import('./features/SettingsView'));
+const IntegrationsView = lazy(() => import('./features/IntegrationsView'));
 const VenuesView = lazy(() => import('./features/VenuesView'));
 const ApprovalsDashboard = lazy(() => import('./features/ApprovalsDashboard'));
 const OrdersView = lazy(() => import('./features/OrdersView'));
@@ -100,6 +102,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         <Route path="/social" element={<DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/orders" element={<OrdersView isDark={isDark} />} />
                         <Route path="/settings" element={<SettingsView isDark={isDark} user={user} />} />
+                        <Route path="/settings/integrations" element={<IntegrationsView isDark={isDark} user={user} />} />
                         <Route path="/creative" element={<DashboardPlaceholderView isDark={isDark} title="ProMo" icon={Wand2} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/assets" element={<AssetLibraryView isDark={isDark} />} />
                         <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />
@@ -174,6 +177,8 @@ const App = () => {
             }
         };
         window.addEventListener('tixmo:global-error', handleGlobalError);
+        const clearGlobalError = () => setGlobalError(null);
+        window.addEventListener('tixmo:global-error-clear', clearGlobalError);
 
         const handleAuthExpired = (event) => {
             const reason = event.detail?.reason;
@@ -210,6 +215,7 @@ const App = () => {
         return () => {
             window.removeEventListener('tixmo:waiting-room', handleWaitingRoom);
             window.removeEventListener('tixmo:global-error', handleGlobalError);
+            window.removeEventListener('tixmo:global-error-clear', clearGlobalError);
             window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
             window.removeEventListener('storage', handleStorage);
         };
@@ -286,6 +292,8 @@ const App = () => {
 
     return (
         <>
+        <LabsBanner />
+        <NoIndexMeta />
         {showWaitingRoom ? <WaitingRoomView key={showWaitingRoom.receivedAt} retryAfter={showWaitingRoom.retryAfter} onRetry={() => setShowWaitingRoom(null)} /> : null}
         {matchPath('/checkout/:slug', location.pathname) ? <GlobalErrorNotification error={globalError} onClose={() => setGlobalError(null)} isDark={isDark} /> : null}
         <div inert={showWaitingRoom ? '' : undefined}>

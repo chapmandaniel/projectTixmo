@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     act,
@@ -6,6 +8,7 @@ import {
     render,
     screen,
     waitFor,
+    within,
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import EventOnSalePage, { EventOnSaleView } from '../pages/EventOnSalePage';
@@ -75,6 +78,23 @@ describe('customer event on-sale page', () => {
         cleanup();
         vi.useRealTimers();
         vi.unstubAllGlobals();
+    });
+
+    it('keeps the skip link out of the way until keyboard focus', () => {
+        const css = readFileSync(
+            path.join(process.cwd(), 'src/components/storefront/storefront.css'),
+            'utf8',
+        );
+        expect(css).toMatch(/\.sf-skip \{[^}]*clip:\s*rect\(0,\s*0,\s*0,\s*0\)/);
+        expect(css).toMatch(/\.sf-skip:focus-visible \{[^}]*position:\s*fixed/);
+        expect(css).not.toMatch(/translateY\(-200%\)/);
+        expect(css).not.toMatch(/\.sf-skip:focus \{/);
+        renderView();
+        const skip = screen.getByRole('link', { name: 'Skip to event details' });
+        expect(skip).toHaveAttribute('href', '#event-details');
+        expect(skip).not.toHaveFocus();
+        fireEvent.click(screen.getByRole('button', { name: 'Add one General admission ticket' }));
+        expect(skip).not.toHaveFocus();
     });
 
     it('supports unauthenticated ticket selection and hands the selection to checkout', () => {
@@ -147,6 +167,7 @@ describe('customer event on-sale page', () => {
         [{ salesStart: '2099-11-01T00:00:00Z' }, 'On sale soon'],
         [{ salesEnd: '2020-01-01T00:00:00Z' }, 'Sales ended'],
         [{ startDatetime: '2020-01-01T00:00:00Z' }, 'Sales ended'],
+        [{ startDatetime: '2020-01-01T00:00:00Z', endDatetime: '2099-01-01T00:00:00Z', ended: false }, 'Sales ended'],
     ])('disables sales for unavailable events: %s', (overrides, label) => {
         renderView(overrides);
         expect(screen.getAllByText(label).length).toBeGreaterThan(0);
@@ -236,6 +257,143 @@ describe('customer event on-sale page', () => {
         expect(
             screen.getByLabelText('General admission tickets selected'),
         ).toHaveTextContent('0');
+    });
+
+    it('shows the included-fees line before a quantity is chosen and keeps one copy after', () => {
+        renderView();
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        expect(screen.getByText('Choose a quantity to continue.')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Add one General admission ticket' }));
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        expect(screen.queryByText('Choose a quantity to continue.')).not.toBeInTheDocument();
+    });
+
+    it('shows the earliest per-ticket onsale, ticks the countdown, then opens sales', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-11-09T21:30:00.000Z'));
+        renderView({
+            timezone: 'America/St_Johns',
+            startDatetime: '2026-11-20T23:30:00.000Z',
+            ticketTypes: [
+                {
+                    id: 'hidden',
+                    name: 'Staff hold',
+                    status: 'HIDDEN',
+                    price: '10',
+                    quantityAvailable: 5,
+                    maxPerOrder: 4,
+                    salesStart: '2026-11-09T22:00:00.000Z',
+                },
+                {
+                    ...event.ticketTypes[0],
+                    salesStart: '2026-11-09T22:30:00.000Z',
+                },
+                {
+                    id: 'vip',
+                    name: 'Balcony',
+                    price: '55',
+                    quantityAvailable: 4,
+                    maxPerOrder: 4,
+                    salesStart: '2026-11-10T22:30:00.000Z',
+                },
+            ],
+        });
+        expect(document.querySelector('.sf-sale-state')).toHaveTextContent('On sale soon');
+        expect(screen.queryByText('Tickets unavailable')).not.toBeInTheDocument();
+        expect(screen.getByText('On sale Mon, Nov 9, 7:00 p.m. NST')).toBeInTheDocument();
+        expect(screen.queryByText('On sale Tue, Nov 10, 7:00 p.m. NST')).not.toBeInTheDocument();
+        expect(screen.getByRole('timer')).toHaveTextContent('in 1 hour');
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        expect(screen.getByRole('button', { name: 'Add one General admission ticket' })).toBeDisabled();
+
+        act(() => vi.advanceTimersByTime(1000));
+        expect(screen.getByRole('timer')).toHaveTextContent('in 59 minutes 59 seconds');
+
+        act(() => {
+            vi.setSystemTime(new Date('2026-11-09T22:30:00.000Z'));
+            vi.advanceTimersByTime(1000);
+        });
+        expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+        expect(screen.queryByText('On sale Mon, Nov 9, 7:00 p.m. NST')).not.toBeInTheDocument();
+        expect(document.querySelector('.sf-sale-state')).toHaveTextContent('On sale now');
+        const add = screen.getByRole('button', { name: 'Add one General admission ticket' });
+        expect(add).toBeEnabled();
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        fireEvent.click(add);
+        expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        expect(screen.getByRole('button', { name: 'Continue to checkout' })).toBeEnabled();
+    });
+
+    it('formats a summer per-ticket onsale as Newfoundland daylight time', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-10-31T21:30:00.000Z'));
+        renderView({
+            timezone: 'America/St_Johns',
+            ticketTypes: [{ ...event.ticketTypes[0], salesStart: '2026-10-31T22:30:00.000Z' }],
+        });
+        expect(screen.getByText('On sale Sat, Oct 31, 8:00 p.m. NDT')).toBeInTheDocument();
+        expect(screen.getByRole('timer')).toHaveTextContent('in 1 hour');
+        expect(screen.queryByText('Tickets unavailable')).not.toBeInTheDocument();
+    });
+
+    it.each([
+        [{ ticketTypes: [] }, 'Tickets unavailable', false],
+        [{ ticketTypes: [{ ...event.ticketTypes[0], status: 'SOLD_OUT', quantityAvailable: 0 }] }, 'Tickets unavailable', true],
+        [{ ticketTypes: [{ ...event.ticketTypes[0], status: 'SOLD_OUT', quantityAvailable: 0, salesStart: '2099-11-01T00:00:00Z' }] }, 'Tickets unavailable', true],
+        [{ status: 'SOLD_OUT', ticketTypes: [{ ...event.ticketTypes[0], salesStart: '2099-11-01T00:00:00Z' }] }, 'Sold out', true],
+        [{ salesEnd: '2020-01-01T00:00:00Z', ticketTypes: [{ ...event.ticketTypes[0], salesStart: '2099-11-01T00:00:00Z' }] }, 'Sales ended', true],
+        [{ startDatetime: '2020-01-01T00:00:00Z', ticketTypes: [{ ...event.ticketTypes[0], salesStart: '2099-11-01T00:00:00Z' }] }, 'Sales ended', true],
+    ])('keeps a genuinely unavailable event on %j', (overrides, label, showsFees) => {
+        renderView(overrides);
+        expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+        expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+        expect(screen.queryByText(/^On sale /)).not.toBeInTheDocument();
+        if (showsFees) expect(screen.getAllByText('Price includes HST and all fees.')).toHaveLength(1);
+        else expect(screen.queryByText('Price includes HST and all fees.')).not.toBeInTheDocument();
+    });
+
+    it('shows an ended event with no purchase controls', () => {
+        renderView({
+            ended: true,
+            startDatetime: '2020-01-01T00:00:00Z',
+            endDatetime: '2020-01-01T03:00:00Z',
+        });
+        expect(screen.getByRole('heading', { name: 'Neon Nights' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'This event has ended' })).toBeInTheDocument();
+        expect(screen.getByText('Ticket sales are closed. Tickets you already bought are in My tickets.')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Add one General admission ticket' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Continue to checkout' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Choose tickets' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: 'General admission quantity' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Price includes HST and all fees.')).not.toBeInTheDocument();
+        expect(screen.queryByText('Sales ended')).not.toBeInTheDocument();
+        expect(screen.queryByText('On sale soon')).not.toBeInTheDocument();
+        expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+        expect(document.title).toBe('Neon Nights · Tixmo');
+        const card = document.querySelector('.sf-closed-sale');
+        expect(within(card).getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
+        expect(within(card).queryByRole('link', { name: 'Back to the event' })).not.toBeInTheDocument();
+    });
+
+    it('uses the same no-sale treatment for an undated event', () => {
+        renderView({
+            undated: true,
+            ended: false,
+            startDatetime: null,
+            endDatetime: null,
+            salesStart: '2099-11-01T00:00:00Z',
+        });
+        expect(screen.getByRole('heading', { name: "This event isn't open for sale yet" })).toBeInTheDocument();
+        expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Add one General admission ticket' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Continue to checkout' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Choose tickets' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Price includes HST and all fees.')).not.toBeInTheDocument();
+        expect(screen.queryByText('On sale soon')).not.toBeInTheDocument();
+        expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+        expect(screen.queryByText('On sale now')).not.toBeInTheDocument();
+        expect(document.title).toBe('Neon Nights · Tixmo');
+        expect(within(document.querySelector('.sf-closed-sale')).getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
     });
 
     it('provides a retry after a failed event request and renders no sample data', async () => {

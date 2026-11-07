@@ -37,7 +37,19 @@ jest.mock('../../src/api', () => {
 
 const PROD_DASH_ORIGIN = 'https://demo.tixmo.co';
 const PROD_RAILWAY_ORIGIN = 'https://dash-production-7487.up.railway.app';
-const LABS_ORIGINS = 'https://labs.tixmo.co,https://labs-dash-labs.up.railway.app';
+const STAGING_DASH_ORIGIN =
+  'https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app';
+const LABS_DASH_ORIGIN = 'https://labs.tixmo.co';
+const LABS_RAILWAY_ORIGIN = 'https://labs-dash-labs.up.railway.app';
+const LABS_ORIGINS = `${LABS_DASH_ORIGIN},${LABS_RAILWAY_ORIGIN}`;
+const LOCAL_DEV_ORIGINS = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
 
 const accessControlHeaders = (headers: request.Response['headers']) =>
   Object.keys(headers).filter((name) => name.startsWith('access-control-'));
@@ -57,6 +69,17 @@ const expectDenied = (response: request.Response) => {
     success: false,
     message: 'The CORS policy for this site does not allow access from the specified Origin.',
   });
+};
+
+// No Origin header is not browser permission. The handler still runs, and the
+// response has no Access-Control-Allow-Origin. The cors package still sets
+// Allow-Credentials because credentials mode is on. Browsers ignore that
+// header unless Allow-Origin is present, so this is not credentialed CORS.
+const expectNoBrowserCors = (response: request.Response) => {
+  expect(response.status).not.toBe(403);
+  expect(response.status).not.toBe(500);
+  expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  expect(response.headers['access-control-allow-credentials']).toBe('true');
 };
 
 const loadApp = (env: NodeJS.ProcessEnv) => {
@@ -117,15 +140,58 @@ describe('CORS allowlist', () => {
       CLIENT_URL: 'http://localhost:5173',
     });
 
-    it('allows a dev origin with credentials', async () => {
-      const response = await request(app).get('/health').set('Origin', 'http://localhost:5173');
+    it('allows each supported local origin with credentials', async () => {
+      for (const origin of LOCAL_DEV_ORIGINS) {
+        const response = await request(app).get('/health').set('Origin', origin);
+        expect(response.status).toBe(200);
+        expectAllowed(response, origin);
+      }
+    });
 
-      expect(response.status).toBe(200);
-      expectAllowed(response, 'http://localhost:5173');
+    it('serves a local login preflight with credentials for the Vite origin', async () => {
+      const preflight = await request(app)
+        .options('/api/v1/auth/login')
+        .set('Origin', 'http://localhost:5173')
+        .set('Access-Control-Request-Method', 'POST')
+        .set('Access-Control-Request-Headers', 'content-type');
+
+      expect(preflight.status).toBe(204);
+      expectAllowed(preflight, 'http://localhost:5173');
+      expect(preflight.headers['access-control-allow-methods']).toBe(
+        'GET,HEAD,PUT,PATCH,POST,DELETE'
+      );
+    });
+
+    it('keeps a health probe with no Origin out of browser CORS', async () => {
+      const health = await request(app).get('/health');
+      expect(health.status).toBe(200);
+      expectNoBrowserCors(health);
+
+      const login = await request(app)
+        .post('/api/v1/auth/login')
+        .set('Content-Type', 'application/json')
+        .send({ email: 'operator@example.com', password: 'not-a-real-password' });
+      expect(login.status).toBe(200);
+      expectNoBrowserCors(login);
+    });
+
+    it.each([
+      'http://localhost:5174',
+      'https://localhost:5173',
+      'http://localhost:5173.evil.test',
+      'http://evil.localhost:5173',
+      'http://127.0.0.1:8080',
+      'http://[::1]:5173',
+      'null',
+      'https://',
+      '*',
+      'https://demo.tixmo.co/login',
+    ])('denies local lookalike or malformed origin %s', async (origin) => {
+      expectDenied(await request(app).get('/health').set('Origin', origin));
     });
 
     it('denies labs when it is not in the list', async () => {
-      const response = await request(app).get('/health').set('Origin', 'https://labs.tixmo.co');
+      const response = await request(app).get('/health').set('Origin', LABS_DASH_ORIGIN);
 
       expectDenied(response);
     });
@@ -203,17 +269,58 @@ describe('CORS allowlist', () => {
       expectAllowed(login, PROD_DASH_ORIGIN);
     });
 
+    it('does not treat a missing Origin as credentialed browser access', async () => {
+      const health = await request(app).get('/health');
+      expect(health.status).toBe(200);
+      expect(health.body.status).toBe('ok');
+      expectNoBrowserCors(health);
+
+      const login = await request(app)
+        .post('/api/v1/auth/login')
+        .set('Content-Type', 'application/json')
+        .send({ email: 'operator@example.com', password: 'not-a-real-password' });
+      expect(login.status).toBe(200);
+      expectNoBrowserCors(login);
+    });
+
+    it('accepts the canonical default https port and rejects another port', async () => {
+      const canonical = await request(app)
+        .get('/health')
+        .set('Origin', 'https://demo.tixmo.co:443');
+      expect(canonical.status).toBe(200);
+      expectAllowed(canonical, 'https://demo.tixmo.co:443');
+
+      expectDenied(await request(app).get('/health').set('Origin', 'https://demo.tixmo.co:444'));
+      expectDenied(await request(app).get('/health').set('Origin', 'https://demo.tixmo.co:8443'));
+    });
+
     it.each([
       'https://labs.tixmo.co',
+      'https://labs-dash-labs.up.railway.app',
+      STAGING_DASH_ORIGIN,
+      'https://api-production-fbaf.up.railway.app',
+      'https://tixmo-api-candidate-staging-audit-20261005.up.railway.app',
+      'https://labs-api.tixmo.co',
+      'https://labs-api-labs.up.railway.app',
       'https://evil-tixmo.co',
       'https://tixmo.co.evil.com',
+      'https://notdemo.tixmo.co',
+      'https://evildemo.tixmo.co',
       'http://demo.tixmo.co',
       'https://sub.demo.tixmo.co',
+      'https://www.demo.tixmo.co',
       'https://demo.tixmo.co.evil.com',
       'https://frontend-dash-production.up.railway.app',
       'http://localhost:5173',
       'http://localhost:3001',
       'http://localhost:8080',
+      'null',
+      'NULL',
+      '',
+      '*',
+      'https://',
+      'https://demo.tixmo.co/login',
+      'https://user:pass@demo.tixmo.co',
     ])('denies %s with 403 and no CORS headers', async (origin) => {
       const response = await request(app).get('/health').set('Origin', origin);
       expectDenied(response);
@@ -235,15 +342,88 @@ describe('CORS allowlist', () => {
         CLIENT_URL: 'https://labs.tixmo.co',
       });
 
-      for (const origin of ['https://labs.tixmo.co', 'https://labs-dash-labs.up.railway.app']) {
+      for (const origin of [LABS_DASH_ORIGIN, LABS_RAILWAY_ORIGIN]) {
         const response = await request(app).get('/health').set('Origin', origin);
         expect(response.status).toBe(200);
         expectAllowed(response, origin);
       }
 
-      for (const origin of [PROD_DASH_ORIGIN, PROD_RAILWAY_ORIGIN, 'http://localhost:8080']) {
+      for (const origin of [
+        PROD_DASH_ORIGIN,
+        PROD_RAILWAY_ORIGIN,
+        STAGING_DASH_ORIGIN,
+        'https://labs-api.tixmo.co',
+        'http://localhost:8080',
+        'null',
+      ]) {
         expectDenied(await request(app).get('/health').set('Origin', origin));
       }
+    });
+
+    it('falls back to the verified labs dashboards when CORS_ORIGIN is unset', async () => {
+      const { app, warnings } = loadApp({
+        ...deployedSecrets,
+        RAILWAY_ENVIRONMENT_NAME: 'labs',
+        CORS_ORIGIN: '',
+        CLIENT_URL: LABS_DASH_ORIGIN,
+      });
+
+      expect(warnings.some((warning) => warning.includes('CORS_ORIGIN is unset'))).toBe(true);
+      for (const origin of [LABS_DASH_ORIGIN, LABS_RAILWAY_ORIGIN]) {
+        const response = await request(app).get('/health').set('Origin', origin);
+        expect(response.status).toBe(200);
+        expectAllowed(response, origin);
+      }
+      expectDenied(await request(app).get('/health').set('Origin', PROD_DASH_ORIGIN));
+      expectDenied(await request(app).get('/health').set('Origin', 'https://labs-api.tixmo.co'));
+      expectDenied(await request(app).get('/health').set('Origin', 'https://notlabs.tixmo.co'));
+
+      const preflight = await request(app)
+        .options('/api/v1/auth/login')
+        .set('Origin', LABS_DASH_ORIGIN)
+        .set('Access-Control-Request-Method', 'POST')
+        .set('Access-Control-Request-Headers', 'content-type');
+      expect(preflight.status).toBe(204);
+      expectAllowed(preflight, LABS_DASH_ORIGIN);
+    });
+
+    it('falls back to the verified staging dashboard and not its API host', async () => {
+      const { app, warnings } = loadApp({
+        ...deployedSecrets,
+        RAILWAY_ENVIRONMENT_NAME: 'staging-audit-20261005',
+        CORS_ORIGIN: '',
+        CLIENT_URL: STAGING_DASH_ORIGIN,
+      });
+
+      expect(warnings.some((warning) => warning.includes(STAGING_DASH_ORIGIN))).toBe(true);
+      const allowed = await request(app).get('/health').set('Origin', STAGING_DASH_ORIGIN);
+      expect(allowed.status).toBe(200);
+      expectAllowed(allowed, STAGING_DASH_ORIGIN);
+
+      for (const origin of [
+        PROD_DASH_ORIGIN,
+        LABS_DASH_ORIGIN,
+        'https://tixmo-api-candidate-staging-audit-20261005.up.railway.app',
+        'https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app.evil.test',
+        'http://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app',
+        `${STAGING_DASH_ORIGIN}:444`,
+        'null',
+      ]) {
+        expectDenied(await request(app).get('/health').set('Origin', origin));
+      }
+
+      const replaced = loadApp({
+        ...deployedSecrets,
+        RAILWAY_ENVIRONMENT_NAME: 'staging-audit-20261005',
+        CORS_ORIGIN: 'https://staging-override.example',
+        CLIENT_URL: 'https://staging-override.example',
+      }).app;
+      expectDenied(await request(replaced).get('/health').set('Origin', STAGING_DASH_ORIGIN));
+      const override = await request(replaced)
+        .get('/health')
+        .set('Origin', 'https://staging-override.example');
+      expect(override.status).toBe(200);
+      expectAllowed(override, 'https://staging-override.example');
     });
 
     it('allows no browser origins when NODE_ENV is production and Railway name is unset', async () => {

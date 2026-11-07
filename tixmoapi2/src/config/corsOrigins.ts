@@ -2,6 +2,11 @@
 // default :80/:443 removed, one trailing slash removed). A path, query,
 // fragment, wildcard, or credential is one startup error and nothing else.
 
+// Verified production dashboard origins. demo.tixmo.co is the custom domain.
+// dash-production-7487 is the production dashboard service domain (target port 80).
+// frontend-dash-production.up.railway.app is not included: the 2026-10-21
+// snapshot had no target port and the 2026-10-04 probe was HTTP 502.
+// api-production-fbaf.up.railway.app is the API, not a browser origin.
 export const PRODUCTION_CORS_ORIGINS = [
   'https://dash-production-7487.up.railway.app',
   'https://demo.tixmo.co',
@@ -10,6 +15,23 @@ export const PRODUCTION_CORS_ORIGINS = [
 // Invite and approval links use this only when Railway itself says production
 // and CLIENT_URL is unset. No other environment may fall back to it.
 export const PRODUCTION_LINK_ORIGIN = 'https://demo.tixmo.co';
+
+// Railway environment name from the staging API /health railwayEnvironment
+// field and docs/team/RAILWAY_PIPELINE_REVIEW_225.md. The only verified
+// staging frontend origin is the dashboard service domain. Its customDomains
+// list was empty. The staging API hostname is not a browser origin.
+export const STAGING_AUDIT_ENVIRONMENT_NAME = 'staging-audit-20261005';
+export const STAGING_CORS_ORIGINS = [
+  'https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app',
+] as const;
+
+// docs/labs.md. The API hosts labs-api.tixmo.co and labs-api-labs.up.railway.app
+// are not browser origins.
+export const LABS_ENVIRONMENT_NAME = 'labs';
+export const LABS_CORS_ORIGINS = [
+  'https://labs.tixmo.co',
+  'https://labs-dash-labs.up.railway.app',
+] as const;
 
 export class OriginConfigError extends Error {
   constructor(message: string) {
@@ -39,6 +61,34 @@ export const corsDeploymentMode = (
 export const productionCorsFallbackWarning = (): string =>
   `CORS_ORIGIN is unset. RAILWAY_ENVIRONMENT_NAME is production, so the hardcoded production allowlist is ${PRODUCTION_CORS_ORIGINS.join(', ')}. ` +
   'Set CORS_ORIGIN to that same comma-separated list. An explicit CORS_ORIGIN replaces this fallback.';
+
+export const namedCorsFallbackWarning = (name: string, origins: readonly string[]): string =>
+  `CORS_ORIGIN is unset. RAILWAY_ENVIRONMENT_NAME is ${name}, so the hardcoded allowlist is ${origins.join(', ')}. ` +
+  'Set CORS_ORIGIN to that same comma-separated list. An explicit CORS_ORIGIN replaces this fallback.';
+
+const fallbackFor = (
+  mode: CorsDeploymentMode
+): { origins: readonly string[]; warning: string } | undefined => {
+  if (mode.kind === 'railway-production') {
+    return {
+      origins: PRODUCTION_CORS_ORIGINS,
+      warning: productionCorsFallbackWarning(),
+    };
+  }
+  if (mode.kind === 'railway-other' && mode.name === STAGING_AUDIT_ENVIRONMENT_NAME) {
+    return {
+      origins: STAGING_CORS_ORIGINS,
+      warning: namedCorsFallbackWarning(mode.name, STAGING_CORS_ORIGINS),
+    };
+  }
+  if (mode.kind === 'railway-other' && mode.name === LABS_ENVIRONMENT_NAME) {
+    return {
+      origins: LABS_CORS_ORIGINS,
+      warning: namedCorsFallbackWarning(mode.name, LABS_CORS_ORIGINS),
+    };
+  }
+  return undefined;
+};
 
 const fail = (message: string): never => {
   throw new OriginConfigError(message);
@@ -121,7 +171,7 @@ export const resolveConfiguredCorsOrigins = (mode: CorsDeploymentMode): readonly
   const raw = process.env.CORS_ORIGIN;
   const unset = raw === undefined || raw.trim() === '';
 
-  if (mode.kind === 'railway-other' && unset) {
+  if (mode.kind === 'railway-other' && unset && !fallbackFor(mode)) {
     fail(
       `CORS_ORIGIN is unset. Set CORS_ORIGIN to the comma-separated https origins for Railway environment "${mode.name}" before starting.`
     );
@@ -136,9 +186,10 @@ export const resolveConfiguredCorsOrigins = (mode: CorsDeploymentMode): readonly
   }
 
   if (unset) {
-    if (mode.kind === 'railway-production') {
-      console.warn(productionCorsFallbackWarning());
-      return [...PRODUCTION_CORS_ORIGINS];
+    const fallback = fallbackFor(mode);
+    if (fallback) {
+      console.warn(fallback.warning);
+      return [...fallback.origins];
     }
     return [];
   }
@@ -157,6 +208,11 @@ export const resolveClientUrl = (mode: CorsDeploymentMode): string => {
         `CLIENT_URL is unset. Using ${PRODUCTION_LINK_ORIGIN} for invite and approval links because RAILWAY_ENVIRONMENT_NAME is production.`
       );
       return PRODUCTION_LINK_ORIGIN;
+    }
+    if (mode.kind === 'railway-other') {
+      console.warn(
+        `CLIENT_URL is unset on Railway environment "${mode.name}". Invite and approval links use ${LOCAL_CLIENT_URL}. Set CLIENT_URL to that environment's frontend origin. This does not add ${LOCAL_CLIENT_URL} to CORS.`
+      );
     }
     // Never substitute the production dashboard outside Railway production.
     return LOCAL_CLIENT_URL;

@@ -1,12 +1,12 @@
-# November 9 audit and plan integration handoff
+# Onsale audit and plan integration handoff
 
 Date: October 21, 2026. Owner: this local Codex chat; product/release authority: Daniel Chapman.
 
 ## Scope and ownership
 
-Requested work: audit readiness and produce a comprehensive accelerated plan for a November 9 onsale, using synthetic data for now.
+Requested work: audit readiness and produce a comprehensive plan for an ASAP onsale, using synthetic data for now.
 
-Owned files: `docs/NOVEMBER_9_ONSALE_PLAN.md`, `docs/audits/2026-10-21-onsale-readiness.md`, `docs/audits/2026-10-21-onsale-evidence/`, and this handoff. No application, dependency-lock, workflow or environment configuration changes.
+Owned files: `docs/ONSALE_PLAN.md`, `docs/audits/2026-10-21-onsale-readiness.md`, `docs/audits/2026-10-21-onsale-evidence/`, and this handoff. No application, dependency-lock, workflow or environment configuration changes.
 
 Application baseline: `87bbad00da8ee2e6ddddd2658b743103cf2bc467`, verified against remote main again after drafting.
 Branch: `codex/nov9-onsale-audit-plan-2026-10-21`.
@@ -48,6 +48,6 @@ Current verdict remains NO-GO. The plan is conditional on actual staffing (inclu
 
 No production data was read through SQL, mutated or restored. No login/payment/refund/scan, deployment, secret-value retrieval, public push/PR, merge, scheduler change or external customer message occurred.
 
-Next local implementation priority: W01 server sale-window enforcement and W02 timezone/editor/checkout contracts, with explicit shared contract and independent exact-commit review. Coordinate existing board claims first. In parallel with authorized local work, prepare W06's concrete staging/release/configuration packet and resolve the October 22 scanner/business/recovery decisions.
+Next local implementation priority: W01 server sale-window enforcement and W02 timezone/editor/checkout contracts, with explicit shared contract and independent exact-commit review. Coordinate existing board claims first. In parallel with authorized local work, prepare W06's concrete staging/release/configuration packet and resolve the scanner/business/recovery decisions ASAP.
 
 Before public integration, review these operational findings and evidence for publication, obtain the required authorization, then carry this scope, exact reviewed SHA, review outcome and limitations into the actual integration PR. No merge or production action is implied by this documentation task.

@@ -139,7 +139,7 @@ test('startup diagnostics project only bounded numeric phases without payload co
   assert.ok(worker.includes('startupPhase = 0;'));
 });
 
-const { clearDevToolsActivePort, parseActivePort, readActivePort, discoverDevTools } = require('./browser/devtools-discovery.cjs');
+const { clearDevToolsActivePort, parseActivePort, readActivePort, discoverDevTools, listDevToolsPages } = require('./browser/devtools-discovery.cjs');
 const path = require('node:path');
 const os = require('node:os');
 const { EventEmitter } = require('node:events');
@@ -208,6 +208,34 @@ test('discovery preserves deadline classification and stops polling after timeou
  assert.ok(fs.readFileSync('scripts/browser/devtools-discovery.cjs','utf8').includes('timeoutMs = 15000'));
  const collection=fs.readFileSync('scripts/verify-market-local.mjs','utf8').match(/name: 'Root verification safety checks',[\s\S]*?args: \[([^\]]+)\]/)?.[1];
  assert.ok(collection?.includes("'scripts/wallet-browser.test.cjs'"));
+});
+
+test('page-target list retries a slow loopback endpoint and refuses any other origin', async () => {
+  const page = { type: 'page', webSocketDebuggerUrl: 'ws://127.0.0.1:49152/devtools/page/11111111-1111-4111-8111-111111111111' };
+  let calls = 0;
+  const targets = await listDevToolsPages('http://127.0.0.1:49152', {
+    timeoutMs: 1000,
+    sleep: () => Promise.resolve(),
+    fetchImpl: async (url, init) => {
+      calls += 1;
+      assert.equal(url, 'http://127.0.0.1:49152/json/list');
+      assert.equal(init.redirect, 'error');
+      if (calls < 3) throw new Error('connect');
+      return { ok: true, json: async () => [page] };
+    },
+  });
+  assert.equal(calls, 3);
+  assert.deepEqual(targets, [page]);
+  let fetched = false;
+  await assert.rejects(listDevToolsPages('http://remote.invalid:49152', {
+    fetchImpl: async () => { fetched = true; return { ok: true, json: async () => [page] }; },
+  }));
+  assert.equal(fetched, false);
+  await assert.rejects(listDevToolsPages('http://127.0.0.1:49152', {
+    timeoutMs: 0,
+    sleep: () => Promise.resolve(),
+    fetchImpl: async () => ({ ok: true, json: async () => [{ type: 'browser' }] }),
+  }));
 });
 
 test('already exited browser never admits even a syntactically valid endpoint file', async t => {

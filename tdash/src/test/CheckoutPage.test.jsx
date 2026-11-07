@@ -126,6 +126,63 @@ describe('CheckoutPage', () => {
         });
     });
 
+    const renderClosed = (flags) => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ success: true, data: { ...eventPayload, ...flags } }),
+        });
+        return renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A1' });
+    };
+
+    it('renders the ended state instead of checkout when the public event has ended', async () => {
+        document.title = 'Tixmo Dashboard';
+        const view = renderClosed({ ended: true });
+        expect(await screen.findByRole('heading', { level: 1, name: 'Neon Nights' })).toBeInTheDocument();
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        expect(screen.getByRole('heading', { level: 2, name: 'This event has ended' })).toBeInTheDocument();
+        expect(document.title).toBe('Neon Nights · Tixmo');
+        expect(screen.getByText('Ticket sales are closed. Tickets you already bought are in My tickets.')).toBeInTheDocument();
+        expect(screen.queryByText('Secure checkout')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /continue to secure payment/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Increase General Admission' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Not currently available for selection.')).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Back to the event' })).toHaveAttribute('href', '/e/neon-nights');
+        expect(screen.getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
+        expect(apiPost).not.toHaveBeenCalled();
+        view.unmount();
+        expect(document.title).toBe('Tixmo Dashboard');
+    });
+
+    it('renders the undated state instead of checkout when the public event has no date', async () => {
+        document.title = 'Tixmo Dashboard';
+        const view = renderClosed({ undated: true, startDatetime: null, endDatetime: null });
+        expect(await screen.findByRole('heading', { level: 1, name: 'Neon Nights' })).toBeInTheDocument();
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        expect(screen.getByRole('heading', { level: 2, name: "This event isn't open for sale yet" })).toBeInTheDocument();
+        expect(document.title).toBe('Neon Nights · Tixmo');
+        expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
+        expect(screen.queryByText('Secure checkout')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /continue to secure payment/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Increase General Admission' })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Back to the event' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'My tickets' })).toBeInTheDocument();
+        view.unmount();
+        expect(document.title).toBe('Tixmo Dashboard');
+    });
+
+    it('renders the checkout form for an open event', async () => {
+        document.title = 'Tixmo Dashboard';
+        const view = renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A1' });
+        expect(await screen.findByText('Secure checkout')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1, name: 'Neon Nights' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /continue to secure payment/i })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'This event has ended' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: "This event isn't open for sale yet" })).not.toBeInTheDocument();
+        expect(document.title).toBe('Tixmo Dashboard');
+        view.unmount();
+        expect(document.title).toBe('Tixmo Dashboard');
+    });
+
     it('restores event-page selections using current ticket limits', async () => {
         renderCheckout({ entry: '/checkout/neon-nights?tickets=ticket-ga%3A99%2Cunknown%3A2' });
         await screen.findByText('Neon Nights');
@@ -538,6 +595,26 @@ describe('open-page sale boundaries', () => {
         expect(apiPost).toHaveBeenCalledTimes(2);
         expect(stripeMocks.confirmPayment).not.toHaveBeenCalled();
         expect(screen.queryByText(/Order confirmed/)).not.toBeInTheDocument();
+    });
+    it('shows the API message when checkout returns 409 EVENT_ENDED', async () => {
+        vi.setSystemTime(opening);
+        await mount();
+        apiPost.mockRejectedValue({
+            response: {
+                status: 409,
+                data: {
+                    success: false,
+                    message: 'This event has ended.',
+                    errors: { code: 'EVENT_ENDED' },
+                },
+            },
+        });
+        fireEvent.click(screen.getByRole('button', { name: 'Increase General Admission' }));
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: /continue to secure payment/i })));
+        expect(screen.getByText('This event has ended.')).toBeInTheDocument();
+        expect(screen.queryByText('Checkout could not be prepared.')).not.toBeInTheDocument();
+        expect(apiPost).toHaveBeenCalledTimes(1);
+        expect(apiPost.mock.calls[0][0]).toBe('/orders');
     });
     it('does not turn a skewed browser selection into entitlement when the API rejects', async () => {
         vi.setSystemTime(opening);

@@ -347,7 +347,7 @@ export const FestivalPageView = ({
                                                     event.id,
                                                 )}
                                                 href={hrefForEvent(event)}
-                                                currency={currency}
+                                                currency={event.currency || currency}
                                                 now={now}
                                             />
                                         ))}

@@ -1,12 +1,12 @@
-# November 9 onsale readiness audit
+# Onsale readiness audit
 
 Assessed October 21, 2026, America/St_Johns. Source baseline: `87bbad00da8ee2e6ddddd2658b743103cf2bc467`.
-Target: November 9, 2026. There are 19 elapsed days, or 20 calendar dates including October 21.
+Target: onsale ASAP. This assessment does not set a calendar deadline.
 Owner: Daniel Chapman. Audit owner: this local Codex chat. Single business per deployment.
 
-**Verdict: NO-GO today. A tightly scoped individual-event onsale on November 9 is a credible conditional target, not an established capability or delivery promise.** Current source has substantial payment, inventory, admission and recovery safeguards. The highest risks are the gap between tested source and deployed applications, missing checkout configuration, scheduled-sale correctness, refund exceptions, and absent end-to-end operational evidence.
+**Verdict: NO-GO today. A tightly scoped individual-event onsale ASAP is a credible conditional target, not an established capability or delivery promise.** Current source has substantial payment, inventory, admission and recovery safeguards. The highest risks are the gap between tested source and deployed applications, missing checkout configuration, scheduled-sale correctness, refund exceptions, and absent end-to-end operational evidence.
 
-The executable delivery proposal is [the November 9 plan](../NOVEMBER_9_ONSALE_PLAN.md). Synthetic volumes and prices are planning assumptions, not sales forecasts or approved commercial policy.
+The executable delivery proposal is [the onsale plan](../ONSALE_PLAN.md). Synthetic volumes and prices are planning assumptions, not sales forecasts or approved commercial policy.
 
 ## What was actually examined
 
@@ -140,7 +140,7 @@ Relevant source: `orders/service.ts:69-223,328-416,530-555`; `payments/service.t
 | Security operations | Credential/session/token rotation evidence, reviewed operator roster, customer/staff boundaries on deployed SHA, protected integration and secret-safe logs. Current dependency result does not replace these. |
 | Monitoring | Current production readiness mismatch; no delivered incident/recovery notification proof or measured payment/receipt backlog alerts. |
 | Admission | API exists; this checkout does not establish a camera scanner client/device deployment. Identify the actual client and demonstrate real-device ticket use. Offline duplicate admission across two devices is an acknowledged limitation. |
-| Storage/reviewer/share | No fresh target upload/download, expiry/revocation and logged-out reviewer/share acceptance attached. Existing V1 requires these unless Daniel explicitly defers scope with owner/date. |
+| Storage/reviewer/share | No fresh target upload/download, expiry/revocation and logged-out reviewer/share acceptance attached. Existing V1 requires these unless Daniel explicitly defers scope with an owner and the point before launch when it must be done. |
 | Policy/support | Published policy approval, refund/cancellation rules, currency/fees/taxes, support contact and staffed launch/incident ownership. |
 
 The strict evidence script reports eight missing categories: target smoke, target checkout config, target public screenshots, scanner/device, backup/rollback, reviewer/share, policy, and uptime. This is not the total number of launch risks. The script accepts result fields and selects files lexically; it does not prove freshness, tested SHA equals deployed SHA, every environment, full payment/load coverage, or the contents of manual attestations. Keep a release-specific evidence index and human go/no-go review.
@@ -149,6 +149,6 @@ The strict evidence script reports eight missing categories: target smoke, targe
 
 Launch the existing individual-event path: published event → scheduled ticket selection → account/checkout → payment → durable tickets/receipt → wallet/support → admission. Keep the exact supported configuration small and tested.
 
-Festival pages/passes are development previews, not a production festival model or pass fulfillment system. Booking intelligence, AI/marketing modules, resale, seat-map expansion, new payment methods and broad redesign are outside this deadline plan. Existing approvals/assets stay internal and require their existing V1 acceptance or an explicit recorded deferral.
+Festival pages/passes are development previews, not a production festival model or pass fulfillment system. Booking intelligence, AI/marketing modules, resale, seat-map expansion, new payment methods and broad redesign are outside this launch plan. Existing approvals/assets stay internal and require their existing V1 acceptance or an explicit recorded deferral.
 
-Reach a demonstrated test-mode purchase by October 27, a capacity/restore-tested candidate by November 2, and production readiness by November 5. November 6 is the firm go/no-go; November 7–8 are a stability buffer. If those gates slip, reduce scope or arrange an explicitly approved alternative sales path rather than sell against unproved money/inventory behavior.
+Reach a demonstrated test-mode purchase ASAP, a capacity/restore-tested candidate before launch, and production readiness before launch. Go/no-go is before launch, with a stability buffer before the onsale. If those gates slip, reduce scope or arrange an explicitly approved alternative sales path rather than sell against unproved money/inventory behavior.

@@ -1,0 +1,90 @@
+{
+  "uuid": "384af73b-2b3a-4bc0-815f-059e15702b16",
+  "item_id": 1543494,
+  "type": "event",
+  "venue": {
+    "id": 18654,
+    "name": "The Polygon Gallery",
+    "slug": "the-polygon-gallery",
+    "currency": "CAD",
+    "all_in_pricing_is_enabled": true
+  },
+  "venue_id": 18654,
+  "name": "Halloween at The Polygon Gallery",
+  "description_without_html": "Come sweat with us at the biggest Halloween event in Vancouver.\r\nHappening on Saturday, October 31 from 8:00pm - 1:00am at The Polygon Gallery.\r\nExpect a high-octane eighties party filled with neon leotards, big hair, and surprises, as the city's top live acts and DJs spread throughout the building help you feel the burn.\r\nEmceed by Genesis (winner of Vancouver's Next Drag Superstar), the main sta",
+  "starts_on": "2026-11-01T03:00:00Z",
+  "ends_on": "2026-11-01T08:00:00Z",
+  "date_time_to_be_determined": null,
+  "timezone": "America/Vancouver",
+  "is_recurring": null,
+  "is_recurring_parent": false,
+  "child_count": 0,
+  "external_link": null,
+  "frontend_details_url": "https://www.showpass.com/halloween-at-the-polygon-gallery/",
+  "image": "https://doavub8d2uzrx.cloudfront.net/media/images/events/the-polygon-gallery/images/c966ba18-2e1.png",
+  "image_banner": "https://doavub8d2uzrx.cloudfront.net/media/images/events/the-polygon-gallery/img-banner/46cc4913-d07.png",
+  "thumbnail": "https://dcm1eeuyachdi.cloudfront.net/fit-in/300x300/filters:format(jpeg)/media/https://doavub8d2uzrx.cloudfront.net/media/images/events/the-polygon-gallery/images/c966ba18-2e1.png",
+  "inventory": null,
+  "inventory_sold_out": false,
+  "public_inventory_sold_out": false,
+  "sold_out": false,
+  "slug": "halloween-at-the-polygon-gallery",
+  "status": "sp_event_active",
+  "categories": [
+    "arts_and_theatres",
+    "community_and_culture"
+  ],
+  "tags": null,
+  "sub_items": [
+    {
+      "id": 4477920,
+      "name": "General Admission - Early Bird",
+      "price": "50.00",
+      "inventory_left": 0,
+      "low_ticket_inventory": 3
+    },
+    {
+      "id": 4483693,
+      "name": "VIP - Tier 1",
+      "price": "125.00",
+      "inventory_left": 2,
+      "low_ticket_inventory": 3
+    },
+    {
+      "id": 4577920,
+      "name": "VIP - Tier 2",
+      "price": "150.00",
+      "inventory_left": 22,
+      "low_ticket_inventory": 0
+    },
+    {
+      "id": 4477922,
+      "name": "General Admission - Tier 2",
+      "price": "70.00",
+      "inventory_left": 56,
+      "low_ticket_inventory": 0
+    },
+    {
+      "id": 4477921,
+      "name": "General Admission - Tier 1",
+      "price": "60.00",
+      "inventory_left": 2,
+      "low_ticket_inventory": 3
+    },
+    {
+      "id": 4477923,
+      "name": "VIP - Early Bird",
+      "price": "100.00",
+      "inventory_left": 0,
+      "low_ticket_inventory": 3
+    }
+  ],
+  "location": {
+    "name": "The Polygon Gallery",
+    "city": "North Vancouver",
+    "province": "British Columbia",
+    "country": "CA",
+    "street_name": "101 Carrie Cates Ct",
+    "postal_code": "V7M3J4"
+  }
+}

@@ -46,6 +46,18 @@ describe('client origin helpers', () => {
     expect(isTrustedClientOrigin('https://demo.tixmo.co:443')).toBe(true);
   });
 
+  it('rejects a path, the literal null origin, and a non-default port', () => {
+    expect(isTrustedClientOrigin('https://demo.tixmo.co/login')).toBe(false);
+    expect(isTrustedClientOrigin('null')).toBe(false);
+    expect(isTrustedClientOrigin('')).toBe(false);
+    expect(isTrustedClientOrigin('https://demo.tixmo.co:444')).toBe(false);
+    expect(isTrustedClientOrigin('https://user:pass@demo.tixmo.co')).toBe(false);
+    expect(resolveTrustedClientOrigin('https://dash.example.com/approvals/abc?tab=reviewers')).toBe(
+      'https://dash.example.com'
+    );
+    expect(resolveTrustedClientOrigin('null')).toBeUndefined();
+  });
+
   it('rejects tixmo hosts that are not on the exact allowlist', () => {
     expect(isTrustedClientOrigin('https://mightyquinton.tixmo.co')).toBe(false);
     expect(isTrustedClientOrigin('https://labs.tixmo.co')).toBe(false);

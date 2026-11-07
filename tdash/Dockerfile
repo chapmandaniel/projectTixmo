@@ -13,7 +13,11 @@ CMD ["npm", "run", "dev", "--", "--host"]
 FROM base AS builder
 COPY . .
 ARG VITE_API_URL
+ARG VITE_APP_ENV
+ARG VITE_APP_LABS_BRANCH
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_APP_ENV=$VITE_APP_ENV
+ENV VITE_APP_LABS_BRANCH=$VITE_APP_LABS_BRANCH
 RUN npm run build
 
 # Stage 4: Serve with Nginx
@@ -23,6 +27,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx.site.conf /etc/nginx/conf.d/default.conf
 COPY nginx.security-headers.conf /etc/nginx/security-headers.conf
 COPY docker-entrypoint.d/40-runtime-config.sh /docker-entrypoint.d/40-runtime-config.sh
-RUN chmod +x /docker-entrypoint.d/40-runtime-config.sh
+RUN chmod +x /docker-entrypoint.d/40-runtime-config.sh \
+    && touch /etc/nginx/labs-robots-header.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

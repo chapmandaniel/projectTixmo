@@ -1,0 +1,45 @@
+{
+  "id": "mg-2026-purchase-4581610",
+  "data": {
+    "currency": "CAD",
+    "discounts": "0.00",
+    "net_sales": "75.00",
+    "total_tax": "0.00",
+    "invoice_type": "sale",
+    "payment_type": "credit",
+    "service_fees": "0.00",
+    "ticket_items": [
+      {
+        "id": 90001,
+        "event_id": "1563243",
+        "event_name": "George Street Association Presents: MARDI GRAS 2026",
+        "ticket_status": "issued",
+        "barcode_string": "DO-NOT-STORE",
+        "ticket_type_id": "4581610",
+        "email_on_ticket": "buyer@example.com",
+        "ticket_item_type": "ticket",
+        "ticket_type_name": "General Admission - 19+",
+        "first_name_on_ticket": "Do",
+        "last_name_on_ticket": "Notstore"
+      }
+    ],
+    "customer_name": "Do Notstore",
+    "customer_email": "buyer@example.com",
+    "customer_phone_number": "555-0100",
+    "invoice_items": [
+      {
+        "id": 90002,
+        "event_id": "1563243",
+        "quantity": 3,
+        "event_name": "George Street Association Presents: MARDI GRAS 2026",
+        "ticket_type_id": "4581610",
+        "ticket_type_name": "General Admission - 19+",
+        "invoice_item_type": "ticket"
+      }
+    ],
+    "transaction_id": "mg-2026-purchase-4581610",
+    "showpass_organization_id": "6086"
+  },
+  "event_type": "invoice.purchase",
+  "webhook_event_uuid": "b7e1c2a0-4f3d-4a1e-9c77-0a6b5d4e3f21"
+}

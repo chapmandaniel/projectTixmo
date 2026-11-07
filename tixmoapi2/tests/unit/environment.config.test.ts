@@ -298,6 +298,12 @@ describe('environment config', () => {
       'https://dash-production-7487.up.railway.app',
       'https://demo.tixmo.co',
     ]);
+    expect(config.corsOrigin).not.toContain(
+      'https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app'
+    );
+    expect(config.corsOrigin).not.toContain('https://labs.tixmo.co');
+    expect(config.corsOrigin).not.toContain('https://frontend-dash-production.up.railway.app');
+    expect(config.corsOrigin).not.toContain('https://api-production-fbaf.up.railway.app');
     expect(config.clientUrl).toBe('https://demo.tixmo.co');
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('CORS_ORIGIN is unset'));
     expect(warn).toHaveBeenCalledWith(
@@ -307,6 +313,7 @@ describe('environment config', () => {
   });
 
   it('does not fall back to the production dashboard for links outside Railway production', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     process.env.NODE_ENV = 'production';
     process.env.RAILWAY_ENVIRONMENT_NAME = 'labs';
     process.env.CORS_ORIGIN = 'https://labs.tixmo.co,https://labs-dash-labs.up.railway.app';
@@ -320,21 +327,77 @@ describe('environment config', () => {
       'https://labs.tixmo.co',
       'https://labs-dash-labs.up.railway.app',
     ]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('CLIENT_URL is unset'));
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('CORS_ORIGIN is unset'));
+    warn.mockRestore();
   });
 
-  it.each(['labs', 'vendor-sandbox', 'staging', 'sandbox'])(
-    'refuses to start when CORS_ORIGIN is unset for Railway environment %s',
-    (name) => {
-      process.env.NODE_ENV = 'production';
-      process.env.RAILWAY_ENVIRONMENT_NAME = name;
-      process.env.CORS_ORIGIN = '';
-      process.env.CLIENT_URL = 'https://labs.tixmo.co';
-      const error = bootError();
-      expect(error.message).toContain('CORS_ORIGIN is unset');
-      expect(error.message).toContain(name);
-      expect(error.stack).toBe(error.message);
-    }
-  );
+  it('uses only the verified staging dashboard when that Railway environment leaves CORS_ORIGIN unset', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    process.env.NODE_ENV = 'production';
+    process.env.RAILWAY_ENVIRONMENT_NAME = 'staging-audit-20261005';
+    process.env.CORS_ORIGIN = '';
+    process.env.CLIENT_URL = '';
+
+    const { config } = require('../../src/config/environment');
+
+    expect(config.corsOrigin).toEqual([
+      'https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app',
+    ]);
+    expect(config.corsOrigin).not.toContain('https://demo.tixmo.co');
+    expect(config.corsOrigin).not.toContain('https://labs.tixmo.co');
+    expect(config.corsOrigin).not.toContain(
+      'https://tixmo-api-candidate-staging-audit-20261005.up.railway.app'
+    );
+    expect(config.clientUrl).toBe('http://localhost:3001');
+    expect(config.clientUrl).not.toBe('https://demo.tixmo.co');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('CORS_ORIGIN is unset'));
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app'
+      )
+    );
+    warn.mockRestore();
+  });
+
+  it('uses only the verified labs dashboards when labs leaves CORS_ORIGIN unset', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    process.env.NODE_ENV = 'production';
+    process.env.RAILWAY_ENVIRONMENT_NAME = 'labs';
+    process.env.CORS_ORIGIN = '';
+    process.env.CLIENT_URL = '';
+
+    const { config } = require('../../src/config/environment');
+
+    expect(config.corsOrigin).toEqual([
+      'https://labs.tixmo.co',
+      'https://labs-dash-labs.up.railway.app',
+    ]);
+    expect(config.corsOrigin).not.toContain('https://demo.tixmo.co');
+    expect(config.corsOrigin).not.toContain('https://labs-api.tixmo.co');
+    expect(config.corsOrigin).not.toContain('https://labs-api-labs.up.railway.app');
+    expect(config.clientUrl).toBe('http://localhost:3001');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('https://labs.tixmo.co'));
+    warn.mockRestore();
+  });
+
+  it.each([
+    'vendor-sandbox',
+    'staging',
+    'sandbox',
+    'Production',
+    'staging-audit-20261006',
+    'labs-prod',
+  ])('refuses to start when CORS_ORIGIN is unset for Railway environment %s', (name) => {
+    process.env.NODE_ENV = 'production';
+    process.env.RAILWAY_ENVIRONMENT_NAME = name;
+    process.env.CORS_ORIGIN = '';
+    process.env.CLIENT_URL = 'https://labs.tixmo.co';
+    const error = bootError();
+    expect(error.message).toContain('CORS_ORIGIN is unset');
+    expect(error.message).toContain(name);
+    expect(error.stack).toBe(error.message);
+  });
 
   it('boots a labs deploy with NODE_ENV=production and trusts only the labs list', () => {
     process.env.NODE_ENV = 'production';
@@ -383,6 +446,21 @@ describe('environment config', () => {
     jest.resetModules();
     process.env.CLIENT_URL = 'https://0.0.0.0';
     expect(bootError().message).toContain('loopback');
+  });
+
+  it('lets an explicit labs CORS_ORIGIN replace the labs fallback', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    process.env.NODE_ENV = 'production';
+    process.env.RAILWAY_ENVIRONMENT_NAME = 'labs';
+    process.env.CORS_ORIGIN = 'https://labs.tixmo.co';
+    process.env.CLIENT_URL = 'https://labs.tixmo.co';
+
+    const { config } = require('../../src/config/environment');
+
+    expect(config.corsOrigin).toEqual(['https://labs.tixmo.co']);
+    expect(config.corsOrigin).not.toContain('https://labs-dash-labs.up.railway.app');
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('CORS_ORIGIN is unset'));
+    warn.mockRestore();
   });
 
   it('lets an explicit production CORS_ORIGIN replace the hardcoded fallback', () => {

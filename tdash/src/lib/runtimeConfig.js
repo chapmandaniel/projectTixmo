@@ -10,6 +10,12 @@ const getConfiguredUrl = (runtimeKey, envKey) => {
     return value ? stripTrailingSlash(value) : '';
 };
 
+export const getLabsBranch = () => {
+    const runtime = String(getRuntimeConfigValue('labsBranch') || '').trim();
+    const built = String(import.meta.env.VITE_APP_LABS_BRANCH || '').trim();
+    return runtime || built;
+};
+
 export const getApiBaseUrl = () => {
     const runtimeValue = getRuntimeConfigValue('apiUrl');
     const configuredValue = runtimeValue || import.meta.env.VITE_API_URL || '/api/v1';

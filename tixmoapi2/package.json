@@ -19,6 +19,7 @@
     "migrate:dev": "prisma migrate dev",
     "migrate:create": "prisma migrate dev --create-only",
     "db:seed": "node prisma/seed-minimal.js",
+    "db:seed:showpass": "node dist/scripts/seed-showpass.js",
     "db:reset": "TS_NODE_TRANSPILE_ONLY=true ts-node -r tsconfig-paths/register scripts/dev-data.ts reset",
     "db:populate": "TS_NODE_TRANSPILE_ONLY=true ts-node -r tsconfig-paths/register scripts/dev-data.ts populate",
     "demo:market": "TS_NODE_TRANSPILE_ONLY=true ts-node -r tsconfig-paths/register scripts/market-demo-data.ts seed --reset",

@@ -4,6 +4,7 @@ jest.mock('../src/config/prisma', () => ({
   default: {
     user: { findUnique: jest.fn() },
     order: { findFirst: jest.fn(), findUnique: jest.fn(), findMany: jest.fn(), count: jest.fn() },
+    event: { findUnique: jest.fn().mockResolvedValue({ ticketingMode: 'TIXMO' }) },
     $transaction: jest.fn(),
   },
 }));

@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { getActorScopeById, resolveOrganizationFilter } from '../../utils/tenantScope';
 
 import prisma from '../../config/prisma';
+import { assertEventCapability, assertTicketingAllows } from '../../services/ticketing-mode';
 import { config } from '../../config/environment';
 import {
   applyCheckoutDbLimits,
@@ -14,6 +15,13 @@ import {
   isCheckoutBusyError,
 } from '../../services/checkout-transaction';
 import { formatNewfoundlandDateTime } from '../../utils/eventTime';
+import {
+  EVENT_ENDED_CODE,
+  EVENT_ENDED_MESSAGE,
+  EVENT_UNDATED_CODE,
+  EVENT_UNDATED_MESSAGE,
+  eventSaleTiming,
+} from '../events/event-sale-window';
 import {
   configuredHstRate,
   formatHstAmountLine,
@@ -289,10 +297,20 @@ export class OrderService {
     // cancellation remain visible to its subsequent cancellation pass.
     await tx.$queryRaw`SELECT id FROM events WHERE id = ${first.eventId} FOR UPDATE`;
     const event = await tx.event.findUniqueOrThrow({ where: { id: first.eventId } });
+    // Vendor-sold events keep the external refusal and never reach a hold.
+    assertTicketingAllows(event, 'checkout');
     const now = new Date();
+    if (event.deletedAt || !['PUBLISHED', 'ON_SALE'].includes(event.status)) {
+      throw ApiError.badRequest('Event is not available for purchase');
+    }
+    const timing = eventSaleTiming(event, now);
+    if (timing.ended) {
+      throw ApiError.conflict(EVENT_ENDED_MESSAGE, { code: EVENT_ENDED_CODE });
+    }
+    if (timing.undated) {
+      throw ApiError.conflict(EVENT_UNDATED_MESSAGE, { code: EVENT_UNDATED_CODE });
+    }
     if (
-      event.deletedAt ||
-      !['PUBLISHED', 'ON_SALE'].includes(event.status) ||
       (event.salesStart && now < event.salesStart) ||
       (event.salesEnd && now >= event.salesEnd) ||
       (event.startDatetime && now >= event.startDatetime)
@@ -603,6 +621,7 @@ export class OrderService {
       },
     });
     if (!order) throw ApiError.notFound('Order not found');
+    assertTicketingAllows(order.event, 'buyer_emails');
     if (order.status !== 'PAID' && order.status !== 'REFUNDED') return;
     if (
       !resend &&
@@ -805,6 +824,7 @@ export class OrderService {
    */
   async listOrders(params: ListOrdersParams, actorId?: string): Promise<PaginatedOrders> {
     const { page = 1, limit = 20, status, userId, eventId, search } = params;
+    if (eventId) await assertEventCapability(eventId, 'orders');
     const cappedLimit = Math.min(Math.max(1, limit), 100);
     const safePage = Math.max(1, page);
     const skip = (safePage - 1) * cappedLimit;
@@ -918,6 +938,7 @@ export class OrderService {
     const scope = actorId ? await this.actorOrderScope(actorId, 'refund') : {};
     const observed = await prisma.order.findFirst({ where: { id, ...scope } });
     if (!observed) throw ApiError.notFound('Order not found');
+    await assertEventCapability(observed.eventId, 'refunds');
     const { paymentService } = await import('../payments/service');
     return paymentService.refundOrder(id, observed);
   }
