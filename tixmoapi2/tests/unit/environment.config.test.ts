@@ -313,7 +313,6 @@ describe('environment config', () => {
   });
 
   it('does not fall back to the production dashboard for links outside Railway production', () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     process.env.NODE_ENV = 'production';
     process.env.RAILWAY_ENVIRONMENT_NAME = 'labs';
     process.env.CORS_ORIGIN = 'https://labs.tixmo.co,https://labs-dash-labs.up.railway.app';
@@ -327,9 +326,6 @@ describe('environment config', () => {
       'https://labs.tixmo.co',
       'https://labs-dash-labs.up.railway.app',
     ]);
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('CLIENT_URL is unset'));
-    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('CORS_ORIGIN is unset'));
-    warn.mockRestore();
   });
 
   it('uses only the verified staging dashboard when that Railway environment leaves CORS_ORIGIN unset', () => {

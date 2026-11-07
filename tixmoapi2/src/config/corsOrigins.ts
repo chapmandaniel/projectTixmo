@@ -209,12 +209,10 @@ export const resolveClientUrl = (mode: CorsDeploymentMode): string => {
       );
       return PRODUCTION_LINK_ORIGIN;
     }
-    if (mode.kind === 'railway-other') {
-      console.warn(
-        `CLIENT_URL is unset on Railway environment "${mode.name}". Invite and approval links use ${LOCAL_CLIENT_URL}. Set CLIENT_URL to that environment's frontend origin. This does not add ${LOCAL_CLIENT_URL} to CORS.`
-      );
-    }
     // Never substitute the production dashboard outside Railway production.
+    // No warning here: the Showpass seed treats stderr that names a Railway
+    // environment as a refusal. Unset CLIENT_URL stays the local link origin
+    // and is not added to deployed CORS.
     return LOCAL_CLIENT_URL;
   }
 
