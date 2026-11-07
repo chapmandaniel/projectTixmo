@@ -33,7 +33,7 @@ const publicQuery = {
   where: {
     slug: 'fresh-checkout-event',
     deletedAt: null,
-    status: { in: ['PUBLISHED', 'ON_SALE', 'SOLD_OUT'] },
+    status: { in: ['DRAFT', 'PUBLISHED', 'ON_SALE', 'SOLD_OUT'] },
   },
   include: {
     organization: { select: { id: true, name: true, slug: true } },

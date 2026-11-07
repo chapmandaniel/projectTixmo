@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+// The default @stripe/stripe-js entry injects https://js.stripe.com/dahlia/stripe.js
+// as soon as the module evaluates. The pure entry loads that script only when
+// loadStripe runs, which closed checkout never does.
+import { loadStripe } from '@stripe/stripe-js/pure';
 import {
     AlertTriangle,
     CalendarDays,
@@ -36,6 +39,7 @@ import { cn } from '../lib/utils';
 import { formatEventDate, eventZoneAbbreviation, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import { externalPurchaseUrl, isExternalTicketing } from '../lib/ticketingMode';
 import { ClosedSaleNotice, closedSaleCopy } from '../components/storefront/ClosedSaleNotice';
+import { StorefrontBrand } from '../components/storefront/StorefrontPrimitives';
 import {
     comparePublicTicketTypes,
     eventAddress,
@@ -327,9 +331,12 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const policyLinks = useMemo(() => getPolicyLinks(), []);
     const stripePublishableKey = useMemo(() => getStripePublishableKey(), []);
     const paymentCurrency = orderDisplayCurrency(order?.currency);
+    // Wait until the public payload says the sale is open. Closed and undated
+    // checkout render ClosedSaleNotice and must not load Stripe.js.
+    const stripeReady = Boolean(event) && !saleClosed && Boolean(stripePublishableKey);
     const stripePromise = useMemo(
-        () => (stripePublishableKey ? loadStripe(stripePublishableKey) : null),
-        [stripePublishableKey]
+        () => (stripeReady ? loadStripe(stripePublishableKey) : null),
+        [stripeReady, stripePublishableKey]
     );
 
     useEffect(() => {
@@ -539,17 +546,27 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const closedSale = closedSaleCopy(event);
     if (event && closedSale) {
         return (
-            <main className="event-storefront sf-closed-checkout">
-                <section className="sf-ticket-panel" aria-labelledby="closed-event-name">
-                    <header className="sf-closed-checkout-header">
-                        <h1 id="closed-event-name">{event.name}</h1>
-                    </header>
-                    <ClosedSaleNotice
-                        event={event}
-                        eventHref={`/e/${encodeURIComponent(event.slug || slug)}`}
-                    />
-                </section>
-            </main>
+            <div className="event-storefront sf-closed-checkout" id="event-top">
+                <header className="sf-header sf-container">
+                    <StorefrontBrand />
+                    <nav aria-label="Customer navigation">
+                        <Link to="/wallet">
+                            <Ticket size={17} aria-hidden="true" /> My tickets
+                        </Link>
+                    </nav>
+                </header>
+                <main>
+                    <section className="sf-ticket-panel" aria-labelledby="closed-event-name">
+                        <header className="sf-closed-checkout-header">
+                            <h1 id="closed-event-name">{event.name}</h1>
+                        </header>
+                        <ClosedSaleNotice
+                            event={event}
+                            eventHref={`/e/${encodeURIComponent(event.slug || slug)}`}
+                        />
+                    </section>
+                </main>
+            </div>
         );
     }
 
