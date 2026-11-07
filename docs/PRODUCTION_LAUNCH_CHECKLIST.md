@@ -86,7 +86,8 @@ Validation:
 - [ ] Secrets are not placeholder values.
 - [ ] JWT, refresh, and session secrets are unique and high entropy.
 - [ ] `CLIENT_URL` points to the production dashboard origin.
-- [ ] CORS trusted-origin logic allows the dashboard domain and rejects unrelated origins.
+- [ ] `CORS_ORIGIN` is an exact comma-separated list of full origins for this Railway environment. No wildcards and no paths. When it is unset, the fallback is exact and warns: `production` allows `https://dash-production-7487.up.railway.app` and `https://demo.tixmo.co`; `staging-audit-20261005` allows `https://tixmo-dashboard-candidate-staging-audit-20261005.up.railway.app`; `labs` allows `https://labs.tixmo.co` and `https://labs-dash-labs.up.railway.app`. An explicit list replaces that fallback. Any other Railway name refuses to start. `NODE_ENV=production` without a Railway name allows no browser origins. API hostnames are not fallback origins. Deployed `CORS_ORIGIN` and `CLIENT_URL` values must be `https` and must not be loopback or localhost. Requests with no `Origin` header still run and do not receive `Access-Control-Allow-Origin`. The literal origin `null` is denied.
+- [ ] Responses do not set a cookie `Domain` attribute. The app rejects `Set-Cookie` headers that include `Domain`. There is no `.tixmo.co` cookie domain.
 - [ ] `PAYMENT_CURRENCY` matches the intended launch currency.
 - [ ] `TIXMO_HST_NUMBER`, when valid, is printed as `HST no.` on buyer receipts. A missing, placeholder, or invalid number logs one startup warning, the registration line is hidden, and production still boots. `TIXMO_HST_RATE` defaults to `0.15`. Receipts show `Includes HST (<percent>%): CA$<amount>`, where the amount is `total * rate / (1 + rate)` rounded to the cent once per order. The amount charged and stored `taxAmount` stay unchanged.
 - [ ] `FROM_NAME` presented to buyers is `Tixmo`.
@@ -195,6 +196,7 @@ Run this against staging or a production-like environment:
 - [ ] Signed asset URLs are short-lived.
   - Code-path evidence: `tests/unit/asset-library.service.test.ts` verifies expired/revoked share rejection and fresh URL resolution; `tdash/src/test/AssetLibraryView.test.jsx` verifies create/copy/revoke controls. Re-run on the production-like origin before checking this section off.
 - [ ] Rate limits are enabled for auth, reads, and writes.
+- [ ] Browser calls from a disallowed origin receive 403 and no `Access-Control-*` headers. A credentialed preflight echoes only the exact allowed origin, never `*`. `https://labs.tixmo.co` is not allowed on production. Local development, and only local development, also allows `http://localhost` and `http://127.0.0.1` on ports 5173, 3001, and 3000.
 
 ## 10. Observability And Support
 

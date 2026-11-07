@@ -83,4 +83,4 @@ Labs is usage-billed on the existing Pro plan, with no fixed fee. The usual cost
 - Since `df3aa0c`, `robots.txt` (Disallow), the API `X-Robots-Tag: noindex, nofollow` and the labs banner are live. The dash noindex meta is added only by JavaScript, and the dash sends no X-Robots-Tag header.
 - `/health.branch` shows `main` for commit deploys, because `RAILWAY_GIT_BRANCH` wins over `APP_LABS_BRANCH`.
 - `/health` shows `environment: production` because it reads NODE_ENV. Show `RAILWAY_ENVIRONMENT_NAME` instead.
-- The API trusts every `https://*.tixmo.co` origin for credentialed CORS (`tixmoapi2/src/utils/clientOrigin.ts`). Narrow it so labs and prod don't trust each other.
+- Credentialed browser CORS is an exact list (`tixmoapi2/src/config/corsOrigins.ts`). The labs fallback is `https://labs.tixmo.co` and `https://labs-dash-labs.up.railway.app`. It does not include production, staging, or `https://*.tixmo.co`.
