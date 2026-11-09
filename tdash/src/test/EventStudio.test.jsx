@@ -108,4 +108,28 @@ describe('Event Studio persistence', () => {
         await waitFor(() => expect(mocks.put).toHaveBeenCalledTimes(1));
         expect(mocks.post).toHaveBeenCalledTimes(1);
     });
+    it('cancels the save notification timer when the studio unmounts', async () => {
+        const scheduled = [];
+        const originalSet = globalThis.setTimeout;
+        const originalClear = globalThis.clearTimeout;
+        const setSpy = vi.spyOn(globalThis, 'setTimeout').mockImplementation((fn, ms, ...args) => {
+            const id = originalSet(fn, ms, ...args);
+            if (ms === 1500) scheduled.push(id);
+            return id;
+        });
+        const clearSpy = vi.spyOn(globalThis, 'clearTimeout').mockImplementation(id => originalClear(id));
+        try {
+            const view = show();
+            await screen.findAllByText('Admission');
+            fireEvent.click(screen.getByRole('button', { name: 'Save Draft' }));
+            await screen.findByText('Draft saved.');
+            expect(scheduled).toHaveLength(1);
+            view.unmount();
+            expect(clearSpy.mock.calls.some(([id]) => id === scheduled[0])).toBe(true);
+        } finally {
+            scheduled.forEach(id => originalClear(id));
+            setSpy.mockRestore();
+            clearSpy.mockRestore();
+        }
+    });
 });

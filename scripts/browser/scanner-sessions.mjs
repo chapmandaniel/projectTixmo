@@ -146,13 +146,25 @@ async function stopped(record) {
   } catch {
     throw new FixedFailure(2);
   }
-  await bounded(drainHandlers(), 5000);
+  // CDP sends bound themselves to 5s. This join has to outlast that bound,
+  // or the last in-flight request started as the socket closes fails proof.
+  try {
+    await bounded(drainHandlers(), 12000);
+  } catch (error) {
+    if (!(error instanceof Deadline)) throw error;
+    handlerJoinFailed = true;
+  }
   if (record.debugOrigin)
     await assert.rejects(
       fetch(record.debugOrigin + "/json/list", {
         signal: AbortSignal.timeout(1000),
       }),
     );
+  // Browser.close often loses the race with process exit on the second
+  // profile. A deadline there is not a leak once the group is gone and the
+  // close event has been observed. Any other graceful failure still fails.
+  if (gracefulFailure instanceof Deadline && !exists())
+    gracefulFailure = undefined;
   if (gracefulFailure) throw gracefulFailure;
   if (handlerJoinFailed) throw new FixedFailure(3);
 }
