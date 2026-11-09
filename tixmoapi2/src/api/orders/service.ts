@@ -34,6 +34,10 @@ import {
   type ReceiptDisclosure,
 } from '../../utils/receipt';
 import {
+  classifyRefundFinalizeError,
+  logRefundFinalize,
+} from '../payments/refund-finalization-log';
+import {
   lockOrder,
   markAttendedTickets,
   transitionInventory,
@@ -945,43 +949,75 @@ export class OrderService {
 
   // Only the processor reconciliation path may finalize a monetary refund.
   async finalizeRefund(id: string): Promise<Order> {
-    return prisma.$transaction(async (tx) => {
-      await lockOrder(tx, id);
-      const order = await tx.order.findUnique({ where: { id } });
-      if (!order) throw ApiError.notFound('Order not found');
-      if (order.status === 'REFUNDED') return order;
-      if (order.status !== 'PAID') throw ApiError.conflict('Order is not paid');
-      if (!order.totalAmount.eq(0)) {
-        const lines = await tx.paymentRefundLine.findMany({
-          where: { orderId: id, reason: 'ORDER_REFUND', status: 'SUCCEEDED' },
-        });
-        const recorded = lines.length
-          ? lines
-          : await tx.paymentRefund.findMany({
-              where: { orderId: id, reason: 'ORDER_REFUND', status: 'SUCCEEDED' },
-            });
-        const sum = recorded.reduce((total, refund) => total + refund.amount, 0);
-        const orderCents = Math.round(order.totalAmount.toNumber() * 100);
-        // Amount must match the order. Currency is the processor currency on the
-        // refund lines, not the historical order.currency label.
-        const currencies = new Set(recorded.map((refund) => refund.currency).filter(Boolean));
-        const currencyMismatch = recorded.some((refund) => !refund.currency) || currencies.size > 1;
-        if (recorded.length === 0 || currencyMismatch || sum !== orderCents) {
-          // A partial sum is already recorded on its own lines. Recovery must not
-          // fail the webhook or release inventory until the refunds cover the order.
-          if (sum > orderCents || currencyMismatch) {
-            throw ApiError.conflict('Processor refund has not been confirmed');
-          }
-          return order;
+    const startedAt = new Date();
+    try {
+      const settled = await prisma.$transaction(async (tx) => {
+        await lockOrder(tx, id);
+        const order = await tx.order.findUnique({ where: { id } });
+        if (!order) throw ApiError.notFound('Order not found');
+        if (order.status === 'REFUNDED') {
+          return { order, outcome: 'noop_already_refunded' as const, reason: null };
         }
-      }
-      await markAttendedTickets(tx, id);
-      await transitionInventory(tx, id, 'SOLD', 'RELEASED');
-      return tx.order.update({
-        where: { id },
-        data: { status: 'REFUNDED', refundStatus: 'SUCCEEDED', paymentStatus: 'REFUNDED' },
+        if (order.status !== 'PAID') throw ApiError.conflict('Order is not paid');
+        if (!order.totalAmount.eq(0)) {
+          const lines = await tx.paymentRefundLine.findMany({
+            where: { orderId: id, reason: 'ORDER_REFUND', status: 'SUCCEEDED' },
+          });
+          const recorded = lines.length
+            ? lines
+            : await tx.paymentRefund.findMany({
+                where: { orderId: id, reason: 'ORDER_REFUND', status: 'SUCCEEDED' },
+              });
+          const sum = recorded.reduce((total, refund) => total + refund.amount, 0);
+          const orderCents = Math.round(order.totalAmount.toNumber() * 100);
+          // Amount must match the order. Currency is the processor currency on the
+          // refund lines, not the historical order.currency label.
+          const currencies = new Set(recorded.map((refund) => refund.currency).filter(Boolean));
+          const currencyMismatch =
+            recorded.some((refund) => !refund.currency) || currencies.size > 1;
+          if (recorded.length === 0 || currencyMismatch || sum !== orderCents) {
+            // A partial sum is already recorded on its own lines. Recovery must not
+            // fail the webhook or release inventory until the refunds cover the order.
+            if (sum > orderCents || currencyMismatch) {
+              throw ApiError.conflict('Processor refund has not been confirmed');
+            }
+            return { order, outcome: 'refused' as const, reason: 'refund_not_covering' as const };
+          }
+        }
+        await markAttendedTickets(tx, id);
+        await transitionInventory(tx, id, 'SOLD', 'RELEASED');
+        const updated = await tx.order.update({
+          where: { id },
+          data: { status: 'REFUNDED', refundStatus: 'SUCCEEDED', paymentStatus: 'REFUNDED' },
+        });
+        return { order: updated, outcome: 'committed' as const, reason: null };
       });
-    });
+      // The transaction promise resolves only after commit. A rollback never gets here.
+      try {
+        logRefundFinalize({
+          orderId: id,
+          outcome: settled.outcome,
+          reason: settled.reason,
+          startedAt,
+        });
+      } catch {
+        // A log failure must not turn a committed refund into a thrown error.
+      }
+      return settled.order;
+    } catch (error) {
+      try {
+        const classified = classifyRefundFinalizeError(error);
+        logRefundFinalize({
+          orderId: id,
+          outcome: classified.outcome,
+          reason: classified.reason,
+          startedAt,
+        });
+      } catch {
+        // Keep the original finalizer error.
+      }
+      throw error;
+    }
   }
 }
 

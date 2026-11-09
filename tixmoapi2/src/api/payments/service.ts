@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { Prisma } from '@prisma/client';
+import { Prisma, type Order } from '@prisma/client';
 import { config } from '../../config/environment';
 import { logger } from '../../config/logger';
 import { ApiError } from '../../utils/ApiError';
@@ -18,6 +18,15 @@ import {
   checkoutTransactionOptions,
   rethrowUnlessCheckoutBusy,
 } from '../../services/checkout-transaction';
+import {
+  getRefundActor,
+  noteSchedulerRefundCandidates,
+  runWithRefundActor,
+  schedulerWebhookReplayStore,
+  setRefundSubject,
+  staffRefundStore,
+  webhookRefundStore,
+} from './refund-actor';
 
 type WebhookClaim = { eventId: string; generation: bigint };
 class WebhookOwnershipLost extends Error {}
@@ -34,6 +43,8 @@ const cents = (value: { toString(): string }) => {
   if (!Number.isSafeInteger(amount) || amount < 0) throw ApiError.conflict('Invalid order amount');
   return amount;
 };
+const uncoveredExternalRefund = () =>
+  ({ covered: false, refundId: null, providerRefundId: null }) as const;
 
 export class PaymentService {
   private stripe: Stripe | null = config.stripeSecretKey
@@ -168,6 +179,16 @@ export class PaymentService {
   }
 
   private async processEvent(event: Stripe.Event): Promise<void> {
+    const parent = getRefundActor();
+    const replaying = parent?.actor === 'scheduler' && parent.subpath === 'webhook_replay';
+    const delivered = parent?.actor === 'webhook';
+    if (!replaying && !delivered) {
+      const store =
+        parent?.actor === 'scheduler'
+          ? schedulerWebhookReplayStore(parent)
+          : webhookRefundStore(event.id);
+      return runWithRefundActor(store, () => this.processEvent(event));
+    }
     const claim = await this.beginWebhookEvent(event);
     if (!claim) return;
     try {
@@ -471,7 +492,13 @@ export class PaymentService {
   async refundOrder(
     orderId: string,
     requestObservation?: { status: string; paymentStatus: string }
-  ) {
+  ): Promise<Order> {
+    if (getRefundActor()?.actor !== 'staff') {
+      return runWithRefundActor(
+        staffRefundStore(),
+        (): Promise<Order> => this.refundOrder(orderId, requestObservation)
+      );
+    }
     // Observation equality, not a categorical payment-status eligibility rule.
     const observed =
       requestObservation ?? (await prisma.order.findUnique({ where: { id: orderId } }));
@@ -524,7 +551,7 @@ export class PaymentService {
       return tx.order.update({ where: { id: orderId }, data: { refundStatus: 'PROCESSING' } });
     });
     if (order.status === 'REFUNDED') return order;
-    if (order.totalAmount.eq(0)) return orderService.finalizeRefund(orderId);
+    if (order.totalAmount.eq(0)) return this.finalizeCoveredRefund(orderId, null, null);
     const intent = await this.provider().paymentIntents.retrieve(order.paymentIntentId!);
     if (intent.status !== 'succeeded' || intent.amount_received !== cents(order.totalAmount))
       throw ApiError.conflict('Processor payment needs reconciliation');
@@ -607,14 +634,24 @@ export class PaymentService {
     await this.reconcileRefund(refund.id);
   }
 
+  private finalizeCoveredRefund(
+    orderId: string,
+    refundId: string | null,
+    providerRefundId: string | null
+  ) {
+    setRefundSubject(refundId, providerRefundId);
+    return orderService.finalizeRefund(orderId);
+  }
+
   private async reconcileRefund(id: string): Promise<void> {
     const record = await prisma.paymentRefund.findUniqueOrThrow({ where: { id } });
     // Also block legacy rows and stale background selections before provider access.
     if (record.reason === 'LATE_PAYMENT') return;
     const stripe = this.provider();
     if (record.status === 'SUCCEEDED') {
-      if (record.reason === 'ORDER_REFUND') await orderService.finalizeRefund(record.orderId);
-      else
+      if (record.reason === 'ORDER_REFUND') {
+        await this.finalizeCoveredRefund(record.orderId, record.id, record.stripeRefundId);
+      } else {
         await prisma.order.updateMany({
           where: {
             id: record.orderId,
@@ -623,6 +660,7 @@ export class PaymentService {
           },
           data: { paymentClosedAt: new Date(), paymentStatus: 'SUCCEEDED' },
         });
+      }
       return;
     }
     const intent = await stripe.paymentIntents.retrieve(record.paymentIntentId);
@@ -721,12 +759,14 @@ export class PaymentService {
       });
     }
     if (record.reason === 'ORDER_REFUND') {
-      if (effectiveStatus === 'SUCCEEDED') await orderService.finalizeRefund(record.orderId);
-      else
+      if (effectiveStatus === 'SUCCEEDED') {
+        await this.finalizeCoveredRefund(record.orderId, record.id, refund.id);
+      } else {
         await prisma.order.updateMany({
           where: { id: record.orderId, status: 'PAID' },
           data: { refundStatus: effectiveStatus },
         });
+      }
     }
   }
 
@@ -902,7 +942,7 @@ export class PaymentService {
     if (!currency) return;
     const snapshot = await this.refundSnapshots(event, paymentIntentId, orderCents, currency);
     if (!snapshot) return;
-    const covered = await this.withWebhookFence(claim, order.id, async (tx) => {
+    const settlement = await this.withWebhookFence(claim, order.id, async (tx) => {
       const current = await tx.order.findUnique({ where: { id: order.id } });
       if (
         !current ||
@@ -911,10 +951,10 @@ export class PaymentService {
         current.currency !== order.currency ||
         cents(current.totalAmount) !== orderCents
       ) {
-        return false;
+        return uncoveredExternalRefund();
       }
-      await this.persistStripeRefunds(tx, current, snapshot.refunds);
-      if (snapshot.amountRefunded === null) return false;
+      const linked = await this.persistStripeRefunds(tx, current, snapshot.refunds);
+      if (snapshot.amountRefunded === null) return uncoveredExternalRefund();
       const rows = await tx.paymentRefundLine.findMany({
         where: {
           orderId: order.id,
@@ -925,19 +965,25 @@ export class PaymentService {
       });
       const sum = rows.reduce((total, row) => total + row.amount, 0);
       if (sum !== snapshot.amountRefunded || rows.some((row) => row.currency !== currency)) {
-        return false;
+        return uncoveredExternalRefund();
       }
-      if (sum <= 0 || sum > orderCents) return false;
+      if (sum <= 0 || sum > orderCents) return uncoveredExternalRefund();
       if (sum < orderCents) {
         await tx.order.update({
           where: { id: order.id },
           data: { refundStatus: 'PARTIALLY_REFUNDED' },
         });
-        return false;
+        return uncoveredExternalRefund();
       }
-      return true;
+      return {
+        covered: true as const,
+        refundId: linked.refundId,
+        providerRefundId: linked.providerRefundId,
+      };
     });
-    if (covered) await orderService.finalizeRefund(order.id);
+    if (settlement.covered) {
+      await this.finalizeCoveredRefund(order.id, settlement.refundId, settlement.providerRefundId);
+    }
   }
 
   private refundEventCurrency(event: Stripe.Event): string | null {
@@ -1011,8 +1057,8 @@ export class PaymentService {
     tx: Prisma.TransactionClient,
     order: { id: string; paymentIntentId: string | null; currency: string },
     refunds: Stripe.Refund[]
-  ): Promise<void> {
-    if (!order.paymentIntentId) return;
+  ): Promise<{ refundId: string | null; providerRefundId: string | null }> {
+    if (!order.paymentIntentId) return { refundId: null, providerRefundId: null };
     for (const refund of refunds) {
       if (!refund.id || !Number.isInteger(refund.amount) || refund.amount < 0) continue;
       const paymentIntent =
@@ -1045,7 +1091,7 @@ export class PaymentService {
         update: { amount: refund.amount, currency: refund.currency, status },
       });
     }
-    await this.syncCanonicalRefund(tx, order);
+    return this.syncCanonicalRefund(tx, order);
   }
 
   // One payment_refunds row per payment intent. Its amount is the cumulative
@@ -1053,19 +1099,20 @@ export class PaymentService {
   private async syncCanonicalRefund(
     tx: Prisma.TransactionClient,
     order: { id: string; paymentIntentId: string | null; currency: string }
-  ): Promise<void> {
-    if (!order.paymentIntentId) return;
+  ): Promise<{ refundId: string | null; providerRefundId: string | null }> {
+    const none = { refundId: null, providerRefundId: null };
+    if (!order.paymentIntentId) return none;
     const lines = await tx.paymentRefundLine.findMany({
       where: { orderId: order.id, paymentIntentId: order.paymentIntentId, reason: 'ORDER_REFUND' },
       orderBy: { createdAt: 'asc' },
     });
-    if (lines.length === 0) return;
+    if (lines.length === 0) return none;
     const succeeded = lines.filter((line) => line.status === 'SUCCEEDED');
     const representative = succeeded[0] ?? lines[0];
     const existing = await tx.paymentRefund.findFirst({
       where: { paymentIntentId: order.paymentIntentId },
     });
-    if (existing?.reason === 'LATE_PAYMENT') return;
+    if (existing?.reason === 'LATE_PAYMENT') return none;
     const data = {
       amount: succeeded.length
         ? succeeded.reduce((total, line) => total + line.amount, 0)
@@ -1089,6 +1136,10 @@ export class PaymentService {
       where: { orderId: order.id, paymentIntentId: order.paymentIntentId, paymentRefundId: null },
       data: { paymentRefundId: canonical.id },
     });
+    return {
+      refundId: canonical.id,
+      providerRefundId: canonical.stripeRefundId ?? null,
+    };
   }
 
   private async chargeRefunds(
@@ -1128,6 +1179,7 @@ export class PaymentService {
       orderBy: { updatedAt: 'asc' },
       take: 50,
     });
+    noteSchedulerRefundCandidates(records.length);
     for (const record of records) {
       try {
         await this.reconcileRefund(record.id);
