@@ -36,6 +36,7 @@ import { cn } from '../lib/utils';
 import { formatEventDate, eventZoneAbbreviation, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import { externalPurchaseUrl, isExternalTicketing } from '../lib/ticketingMode';
 import { ClosedSaleNotice, closedSaleCopy } from '../components/storefront/ClosedSaleNotice';
+import { StorefrontBrand } from '../components/storefront/StorefrontPrimitives';
 import {
     comparePublicTicketTypes,
     eventAddress,
@@ -539,17 +540,27 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const closedSale = closedSaleCopy(event);
     if (event && closedSale) {
         return (
-            <main className="event-storefront sf-closed-checkout">
-                <section className="sf-ticket-panel" aria-labelledby="closed-event-name">
-                    <header className="sf-closed-checkout-header">
-                        <h1 id="closed-event-name">{event.name}</h1>
-                    </header>
-                    <ClosedSaleNotice
-                        event={event}
-                        eventHref={`/e/${encodeURIComponent(event.slug || slug)}`}
-                    />
-                </section>
-            </main>
+            <div className="event-storefront sf-closed-checkout" id="event-top">
+                <header className="sf-header sf-container">
+                    <StorefrontBrand />
+                    <nav aria-label="Customer navigation">
+                        <Link to="/wallet">
+                            <Ticket size={17} aria-hidden="true" /> My tickets
+                        </Link>
+                    </nav>
+                </header>
+                <main>
+                    <section className="sf-ticket-panel" aria-labelledby="closed-event-name">
+                        <header className="sf-closed-checkout-header">
+                            <h1 id="closed-event-name">{event.name}</h1>
+                        </header>
+                        <ClosedSaleNotice
+                            event={event}
+                            eventHref={`/e/${encodeURIComponent(event.slug || slug)}`}
+                        />
+                    </section>
+                </main>
+            </div>
         );
     }
 
