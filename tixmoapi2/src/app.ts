@@ -20,6 +20,7 @@ import {
   checkoutIpRateLimiter,
 } from './middleware/rateLimiter';
 import { isTrustedClientOrigin } from './utils/clientOrigin';
+import { hostOnlyCookieMiddleware } from './middleware/hostOnlyCookies';
 import {
   ROBOTS_TXT,
   blocksSearchIndexing,
@@ -37,6 +38,7 @@ app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
+app.use(hostOnlyCookieMiddleware);
 app.use((_req, res, next) => {
   if (blocksSearchIndexing()) res.set('X-Robots-Tag', 'noindex, nofollow');
   next();
@@ -48,19 +50,37 @@ if (config.sentryDsn) {
   app.use(Sentry.Handlers.tracingHandler());
 }
 
-// CORS configuration
+const corsDeniedMessage =
+  'The CORS policy for this site does not allow access from the specified Origin.';
+
+// Reject before the cors package. Passing its callback an Error becomes a 500,
+// and callback(null, false) would continue the request without a 403.
+// A missing Origin header is not a browser origin: server-to-server calls and
+// health probes omit it and stay allowed. That does not grant CORS. The
+// literal value "null", an empty Origin, and any other unlisted value do not
+// count as missing.
+app.use((req, res, next) => {
+  const origin = req.get('origin');
+  if (origin === undefined || isTrustedClientOrigin(origin)) {
+    next();
+    return;
+  }
+
+  res.status(403).json({ success: false, message: corsDeniedMessage });
+});
+
+// CORS configuration. Methods and allowed headers stay on the package defaults.
+// With credentials, an allowed browser Origin is echoed. It is never "*".
+// No Access-Control-Allow-Origin is set when the request has no Origin header.
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-
-      if (isTrustedClientOrigin(origin)) {
-        return callback(null, true);
+      if (origin === undefined || isTrustedClientOrigin(origin)) {
+        callback(null, true);
+        return;
       }
 
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+      callback(null, false);
     },
     credentials: true,
   })
