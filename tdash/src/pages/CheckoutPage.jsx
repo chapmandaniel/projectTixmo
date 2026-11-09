@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+// The default @stripe/stripe-js entry injects https://js.stripe.com/dahlia/stripe.js
+// as soon as the module evaluates. The pure entry loads that script only when
+// loadStripe runs, which closed checkout never does.
+import { loadStripe } from '@stripe/stripe-js/pure';
 import {
     AlertTriangle,
     CalendarDays,
@@ -328,9 +331,12 @@ const FreshCheckoutPage = ({ user, onAuthenticated }) => {
     const policyLinks = useMemo(() => getPolicyLinks(), []);
     const stripePublishableKey = useMemo(() => getStripePublishableKey(), []);
     const paymentCurrency = orderDisplayCurrency(order?.currency);
+    // Wait until the public payload says the sale is open. Closed and undated
+    // checkout render ClosedSaleNotice and must not load Stripe.js.
+    const stripeReady = Boolean(event) && !saleClosed && Boolean(stripePublishableKey);
     const stripePromise = useMemo(
-        () => (stripePublishableKey ? loadStripe(stripePublishableKey) : null),
-        [stripePublishableKey]
+        () => (stripeReady ? loadStripe(stripePublishableKey) : null),
+        [stripeReady, stripePublishableKey]
     );
 
     useEffect(() => {

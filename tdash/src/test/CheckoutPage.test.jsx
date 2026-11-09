@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js/pure';
 import CheckoutPage from '../pages/CheckoutPage';
 
 const runtimeMocks = vi.hoisted(() => ({
@@ -47,7 +48,7 @@ vi.mock('../lib/auth', () => ({
     },
 }));
 
-vi.mock('@stripe/stripe-js', () => ({
+vi.mock('@stripe/stripe-js/pure', () => ({
     loadStripe: vi.fn(() => Promise.resolve({ id: 'stripe-instance' })),
 }));
 
@@ -166,6 +167,7 @@ describe('CheckoutPage', () => {
         expect(screen.getByText('Ticket sales are closed. Tickets you already bought are in My tickets.')).toBeInTheDocument();
         expect(screen.queryByText('Not currently available for selection.')).not.toBeInTheDocument();
         expectClosedCheckoutChrome();
+        expect(loadStripe).not.toHaveBeenCalled();
         view.unmount();
         expect(document.title).toBe('Tixmo Dashboard');
     });
@@ -178,6 +180,7 @@ describe('CheckoutPage', () => {
         expect(document.title).toBe('Neon Nights · Tixmo');
         expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
         expectClosedCheckoutChrome();
+        expect(loadStripe).not.toHaveBeenCalled();
         view.unmount();
         expect(document.title).toBe('Tixmo Dashboard');
     });
@@ -197,8 +200,22 @@ describe('CheckoutPage', () => {
         expect(screen.queryByRole('heading', { name: 'Checkout unavailable' })).not.toBeInTheDocument();
         expect(document.title).toBe('Neon Nights · Tixmo');
         expectClosedCheckoutChrome();
+        expect(loadStripe).not.toHaveBeenCalled();
         view.unmount();
         expect(document.title).toBe('Tixmo Dashboard');
+    });
+
+    it('keeps a missing event on the checkout unavailable card without loading Stripe.js', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: false,
+            status: 404,
+            json: async () => ({ message: 'Event not found' }),
+        });
+        renderCheckout();
+        expect(await screen.findByRole('heading', { name: 'Checkout unavailable' })).toBeInTheDocument();
+        expect(screen.getByText('Event not found')).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: "This event isn't open for sale yet" })).not.toBeInTheDocument();
+        expect(loadStripe).not.toHaveBeenCalled();
     });
 
     it('renders the checkout form for an open event', async () => {
@@ -209,6 +226,7 @@ describe('CheckoutPage', () => {
         expect(screen.getByRole('button', { name: /continue to secure payment/i })).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'This event has ended' })).not.toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: "This event isn't open for sale yet" })).not.toBeInTheDocument();
+        expect(loadStripe).toHaveBeenCalledWith('pk_test_checkout');
         expect(screen.queryByRole('banner')).not.toBeInTheDocument();
         expect(screen.queryByRole('img', { name: 'Tixmo' })).not.toBeInTheDocument();
         expect(document.title).toBe('Tixmo Dashboard');

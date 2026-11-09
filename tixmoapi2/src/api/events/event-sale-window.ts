@@ -42,10 +42,16 @@ export const eventSaleTiming = (
   return { ended, undated };
 };
 
-export const withEventSaleTiming = <T extends EventSaleTimingInput>(
+/**
+ * Buyer-facing flags for a public event payload.
+ * A draft is not on sale yet, including when dates are filled in or already
+ * past. Those links use the undated notice instead of an ended event or a 404.
+ * Published, on-sale, and sold-out events keep the clock comparison above.
+ */
+export const withEventSaleTiming = <T extends EventSaleTimingInput & { status?: string | null }>(
   event: T,
   now: Date = new Date()
 ): T & EventSaleTiming => ({
   ...event,
-  ...eventSaleTiming(event, now),
+  ...(event.status === 'DRAFT' ? { ended: false, undated: true } : eventSaleTiming(event, now)),
 });
