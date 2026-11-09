@@ -1,4 +1,5 @@
 import winston from 'winston';
+import { formatLogLine } from '../api/payments/refund-log-format';
 import { config } from './environment';
 
 const levels = {
@@ -28,9 +29,7 @@ winston.addColors(colors);
 const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
   winston.format.colorize({ all: true }),
-  winston.format.printf(
-    (info) => `${String(info.timestamp)} ${String(info.level)}: ${String(info.message)}`
-  )
+  winston.format.printf((info) => formatLogLine(info))
 );
 
 const transports: winston.transport[] = [new winston.transports.Console()];

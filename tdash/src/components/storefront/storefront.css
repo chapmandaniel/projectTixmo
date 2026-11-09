@@ -92,7 +92,8 @@
 .sf-closed-sale p { color: var(--sf-muted); font-size: 15px; line-height: 1.5; margin-top: 12px !important; overflow-wrap: anywhere; }
 .sf-closed-sale-links { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 20px !important; }
 .sf-closed-sale-links a { min-height: 44px; display: inline-flex; align-items: center; font-size: 15px; text-decoration: underline; text-underline-offset: 3px; }
-.sf-closed-checkout { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.sf-closed-checkout { min-height: 100vh; display: flex; flex-direction: column; }
+.sf-closed-checkout > main { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; padding: 24px 16px; }
 .sf-closed-checkout .sf-ticket-panel { width: min(560px, 100%); margin: 0; position: static; }
 .sf-closed-checkout-header { margin-bottom: 18px; }
 .sf-closed-checkout-header h1 { margin: 0; font-size: clamp(32px, 8vw, 44px); letter-spacing: -.045em; font-weight: 750; line-height: var(--sf-leading-title); overflow-wrap: anywhere; }
