@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js/pure';
 import CheckoutPage from '../pages/CheckoutPage';
 
 const runtimeMocks = vi.hoisted(() => ({
@@ -47,7 +48,7 @@ vi.mock('../lib/auth', () => ({
     },
 }));
 
-vi.mock('@stripe/stripe-js', () => ({
+vi.mock('@stripe/stripe-js/pure', () => ({
     loadStripe: vi.fn(() => Promise.resolve({ id: 'stripe-instance' })),
 }));
 
@@ -149,6 +150,7 @@ describe('CheckoutPage', () => {
         expect(screen.getByRole('link', { name: 'Back to the event' })).toHaveAttribute('href', '/e/neon-nights');
         expect(screen.getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
         expect(apiPost).not.toHaveBeenCalled();
+        expect(loadStripe).not.toHaveBeenCalled();
         view.unmount();
         expect(document.title).toBe('Tixmo Dashboard');
     });
@@ -166,8 +168,42 @@ describe('CheckoutPage', () => {
         expect(screen.queryByRole('button', { name: 'Increase General Admission' })).not.toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Back to the event' })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'My tickets' })).toBeInTheDocument();
+        expect(loadStripe).not.toHaveBeenCalled();
         view.unmount();
         expect(document.title).toBe('Tixmo Dashboard');
+    });
+
+    it('renders the undated notice for a draft, including one whose dates have passed', async () => {
+        const view = renderClosed({
+            status: 'DRAFT',
+            ended: false,
+            undated: true,
+            startDatetime: '2020-01-01T00:00:00.000Z',
+            endDatetime: '2020-01-01T03:00:00.000Z',
+        });
+        expect(await screen.findByRole('heading', { level: 2, name: "This event isn't open for sale yet" })).toBeInTheDocument();
+        expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Checkout unavailable' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'This event has ended' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Secure checkout')).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Back to the event' })).toHaveAttribute('href', '/e/neon-nights');
+        expect(screen.getByRole('link', { name: 'My tickets' })).toHaveAttribute('href', '/wallet');
+        expect(loadStripe).not.toHaveBeenCalled();
+        expect(apiPost).not.toHaveBeenCalled();
+        view.unmount();
+    });
+
+    it('keeps a missing event on the checkout unavailable card without loading Stripe.js', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: false,
+            status: 404,
+            json: async () => ({ message: 'Event not found' }),
+        });
+        renderCheckout();
+        expect(await screen.findByRole('heading', { name: 'Checkout unavailable' })).toBeInTheDocument();
+        expect(screen.getByText('Event not found')).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: "This event isn't open for sale yet" })).not.toBeInTheDocument();
+        expect(loadStripe).not.toHaveBeenCalled();
     });
 
     it('renders the checkout form for an open event', async () => {
@@ -178,6 +214,7 @@ describe('CheckoutPage', () => {
         expect(screen.getByRole('button', { name: /continue to secure payment/i })).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'This event has ended' })).not.toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: "This event isn't open for sale yet" })).not.toBeInTheDocument();
+        expect(loadStripe).toHaveBeenCalledWith('pk_test_checkout');
         expect(document.title).toBe('Tixmo Dashboard');
         view.unmount();
         expect(document.title).toBe('Tixmo Dashboard');
