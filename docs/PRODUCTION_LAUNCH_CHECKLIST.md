@@ -130,9 +130,9 @@ Local or CI:
 Notes:
 
 - `npm run verify:market` is the one-command local market gate documented in `docs/LOCAL_MARKET_READINESS_GATES.md`.
-- `npm run verify:api` starts/checks Postgres and Redis, applies Prisma schema for test verification, and runs the API suite.
+- `npm run verify:api` does not start Postgres or Redis. Point it at an already running disposable database, then it pushes the Prisma schema and runs the API suite. See `docs/LOCAL_MARKET_READINESS_GATES.md`.
 - `npm run smoke:checkout:local` is the local checkout rehearsal documented in `docs/LOCAL_CHECKOUT_SMOKE.md`.
-- If Docker uses Colima and verification fails before tests, repair Colima/Docker before treating API verification as complete.
+- `npm run dev:services` is the shared Compose stack. A failure there is separate from `verify:api`.
 
 ## 7. V1 Smoke Test
 

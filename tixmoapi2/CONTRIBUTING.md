@@ -6,8 +6,8 @@
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/tixmoapi2.git`
-3. Install dependencies: `npm install`
+2. Clone `chapmandaniel/projectTixmo` and work in `tixmoapi2/`. This API is a package in that repo, not a separate git repository.
+3. Install dependencies from `tixmoapi2/`: `npm ci`
 4. Create a new branch: `git checkout -b feature/your-feature-name`
 
 ## Development Workflow

@@ -1,6 +1,6 @@
 # Showpass fixture import, local and Railway
 
-Branch: `cursor/vendor-import-showpass-5658`.
+These steps match `main`. They were first written on `cursor/vendor-import-showpass-5658`.
 
 This is the fixture-only Showpass import. `SHOWPASS_ADAPTER=live` is a stub and throws before any network call. Nothing in the API, tests, seed, or CI fetches `showpass.com`.
 
