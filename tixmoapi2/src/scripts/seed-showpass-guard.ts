@@ -23,4 +23,11 @@ if (railway && !RAILWAY_SANDBOX_NAMES.has(railway)) {
   );
 }
 
+// This process is not the HTTP server. Config still parses CORS at import.
+// An unset CORS_ORIGIN refuses vendor-sandbox, and an unset CLIENT_URL on labs
+// would log a deploy warning. Pin one non-routable origin for the seed process
+// only. It is not added to the API allowlist.
+if (!process.env.CORS_ORIGIN?.trim()) process.env.CORS_ORIGIN = 'https://seed.invalid';
+if (!process.env.CLIENT_URL?.trim()) process.env.CLIENT_URL = 'https://seed.invalid';
+
 export {};
