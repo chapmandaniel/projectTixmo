@@ -11,7 +11,7 @@ Installs were `npm ci --prefix tixmoapi2` and `npm ci --prefix tdash`.
 - Dashboard: 65 files, 493 tests, 0 skipped, exit 0 in 25.31s. Design guard exit 0 (920 existing baseline violations, no new ones). Build exit 0. There is no lint or typecheck script, and no `tsconfig` or ESLint config.
 - Docs that tell someone `verify:api` creates Docker containers, or that Node 18 is enough, were wrong. Those operational lines are corrected on this branch. December 2025 status counts in `tixmoapi2/README.md` and `tixmoapi2/PROGRESS.md` are still historical and were not rewritten.
 - Dead config removed here: unused `@models/*` path, `ENABLE_SMS_NOTIFICATIONS` and `ENABLE_PUSH_NOTIFICATIONS` (nothing reads them), and gitignore for generated `runtime/` receipts. Unused npm packages were not removed.
-- Needs a human: cart hold default 10 vs 15 minutes, whether to delete the nested API workflow GitHub never runs, and whether to drop unused Twilio, Elasticsearch, AI, Sentry tracing, Gemini, chalk, and recharts packages. Do not merge this draft.
+- The cart-hold mismatch, the nested workflow, the unused packages, and the missing labs reset script were applied in [Decisions applied (T81)](#decisions-applied-t81). Twilio, Elasticsearch, and the AI config fields stay because the code still reads them. Do not merge this draft.
 
 ## Commands
 
@@ -71,8 +71,8 @@ Two earlier API attempts were discarded before the clean run. They are harness m
 | Demo plan lists `db:seed:minimal`, `db:drop`, `db:migrate`, `db:backup`, and other scripts that are not in `package.json` | `tixmoapi2/docs/DEMO_DATA_PLAN.md:654` | med | Keep it as a plan. Current commands are `npm run demo:market` in `docs/MARKET_DEMO_DATA.md` | not fixed |
 | Reconciliation record still names Vite 6.4.4 and `follow-redirects` 1.16.1. `tdash/package.json` now pins Vite `6.4.5` and `follow-redirects` `1.16.2` | `docs/LOCAL_DEVELOPMENT_RECONCILIATION.md:26` | low | Leave the point-in-time record | not fixed |
 | Health example omits `railwayEnvironment`, `branch`, and `release`, which `src/app.ts` returns | `tixmoapi2/README.md:153`, `tixmoapi2/src/app.ts:102` | low | Extend the example or point at `/health` | not fixed |
-| `docs/labs.md` documents `ops/labs-reset.sh`, and says the script is "once added". No `labs-reset.sh` exists | `docs/labs.md:38` | low | Add the script in a separate change, or say it is still absent | not fixed |
-| `CART_EXPIRY_MINUTES=10` in the example, code default `15` when unset | `tixmoapi2/.env.example:177`, `tixmoapi2/src/config/environment.ts:316` | med | Human picks one hold duration. Copying the example changes checkout expiry from the code default | not fixed |
+| `docs/labs.md` documents `ops/labs-reset.sh`, and says the script is "once added". No `labs-reset.sh` exists | `docs/labs.md:38` | low | Add the script in a separate change, or say it is still absent | applied in T81: marked not available |
+| `CART_EXPIRY_MINUTES=10` in the example, code default `15` when unset | `tixmoapi2/.env.example:177`, `tixmoapi2/src/config/environment.ts:316` | med | Human picks one hold duration. Copying the example changes checkout expiry from the code default | applied in T81: example is 15 |
 | `LOG_LEVEL=debug` in the example, code default `info` | `tixmoapi2/.env.example:173`, `tixmoapi2/src/config/environment.ts:312` | low | Example is an explicit override, not a stale command | not fixed |
 
 ## Dead config
@@ -82,10 +82,10 @@ Two earlier API attempts were discarded before the clean run. They are harness m
 | `ENABLE_SMS_NOTIFICATIONS` and `ENABLE_PUSH_NOTIFICATIONS` are set in the example and never read | `tixmoapi2/.env.example` (removed) | med | Delete them | fixed |
 | `@models/*` mapped to `src/models/`, which does not exist, and nothing imports `@models` | `tixmoapi2/tsconfig.json`, `tixmoapi2/jest.config.js` | low | Remove the alias | fixed |
 | Jest and verifier receipts land in `/runtime` and were untracked, so they can be committed by accident | `.gitignore` | med | Ignore `/runtime/` | fixed |
-| `tixmoapi2/.github/workflows/ci.yml` is not a GitHub Actions workflow. Only `.github/workflows/` at the repo root runs. The nested file would typecheck, run `test:coverage` with a 70% threshold, and lint | `tixmoapi2/.github/workflows/ci.yml:1` | high | Decide whether to move coverage into a root workflow or delete the nested file. Not deleted here | not fixed |
-| Twilio, Elasticsearch, Gemini, OpenAI, and `ENABLE_AI_GENERATION` are copied onto `config` and have no other readers. `@google/generative-ai` has no import | `tixmoapi2/src/config/environment.ts:248`, `:253`, `:264`, `:308`; `tixmoapi2/package.json:57` | med | Remove the unused wiring in a product change. Env examples for Twilio and Elasticsearch stay because `environment.ts` still reads them | not fixed |
-| `@sentry/tracing` and devDependency `chalk` have no imports under `tixmoapi2` outside the lockfile | `tixmoapi2/package.json:60`, `tixmoapi2/package.json:102` | low | Confirm Sentry v7 tracing is intentionally unused, then drop the packages | not fixed |
-| `recharts` has no import. `@nivo/core` and `@nivo/tooltip` have no direct import; `@nivo/line` already depends on them. Analytics uses `@nivo/line`, `pie`, `bar`, and `heatmap` | `tdash/package.json:16`, `:20`, `:30` | low | Drop `recharts` after a lockfile review. Leave `@nivo/*` that charts import | not fixed |
+| `tixmoapi2/.github/workflows/ci.yml` is not a GitHub Actions workflow. Only `.github/workflows/` at the repo root runs. The nested file would typecheck, run `test:coverage` with a 70% threshold, and lint | `tixmoapi2/.github/workflows/ci.yml:1` | high | Decide whether to move coverage into a root workflow or delete the nested file. Not deleted here | applied in T81: file deleted |
+| Twilio, Elasticsearch, Gemini, OpenAI, and `ENABLE_AI_GENERATION` are copied onto `config` and have no other readers. `@google/generative-ai` has no import | `tixmoapi2/src/config/environment.ts:248`, `:253`, `:264`, `:308`; `tixmoapi2/package.json:57` | med | Remove the unused wiring in a product change. Env examples for Twilio and Elasticsearch stay because `environment.ts` still reads them | package removed in T81; config fields left |
+| `@sentry/tracing` and devDependency `chalk` have no imports under `tixmoapi2` outside the lockfile | `tixmoapi2/package.json:60`, `tixmoapi2/package.json:102` | low | Confirm Sentry v7 tracing is intentionally unused, then drop the packages | applied in T81: both removed |
+| `recharts` has no import. `@nivo/core` and `@nivo/tooltip` have no direct import; `@nivo/line` already depends on them. Analytics uses `@nivo/line`, `pie`, `bar`, and `heatmap` | `tdash/package.json:16`, `:20`, `:30` | low | Drop `recharts` after a lockfile review. Leave `@nivo/*` that charts import | `recharts` removed in T81; `@nivo/*` left |
 | `npm run typecheck` excludes tests | `tixmoapi2/tsconfig.json:41` | low | ESLint type-aware lint still includes tests via `tsconfig.eslint.json`. Extending `tsc` to tests may surface new errors | not fixed |
 | API lint is green with a warning backlog: 96 `require-await`, 82 `no-unsafe-assignment`, 68 `no-console`, 65 `no-unsafe-member-access`, 31 `no-unsafe-argument`, 17 `no-explicit-any`, plus smaller unsafe-call, template, return, and floating-promise counts | `npm run lint` on this commit | low | Do not `--fix` these. `require-await` and the unsafe-* rules change signatures or types. Prettier reported 0 errors, so there was no formatting-only fix | not fixed |
 | Design-system guard carries 920 baseline violations | `tdash` `design:guard` output | low | Burn down in a design change. Do not refresh the baseline to make the guard pass | not fixed |
@@ -102,3 +102,35 @@ Depcheck and knip were not installed. Unused packages above are from an import s
 - `evidence/t79/main-health.md`.
 
 No test expectations, Stripe, auth, migrations, or CORS behavior were changed. No failing test was skipped or deleted.
+
+## Decisions applied (T81)
+
+Applied on this same branch after the audit above. Local checks used Node `v24.21.0`.
+
+### Cart expiry
+
+`tixmoapi2/.env.example` now sets `CART_EXPIRY_MINUTES=15`, matching `tixmoapi2/src/config/environment.ts` (`parseInt(process.env.CART_EXPIRY_MINUTES || '15', 10)`). A repo search for `CART_EXPIRY_MINUTES` found no other assignment of `10`. Other "10 minutes" lines are rate-limit and onsale notes, not the hold window, so they were left alone. Tests already stub `cartExpiryMinutes: 15`.
+
+### Nested API workflow
+
+Deleted `tixmoapi2/.github/workflows/ci.yml`. A search of workflows, scripts, `package.json`, and docs found no runner that invokes it. Live instructions that named it were updated: `tixmoapi2/README.md` and `tixmoapi2/MASTER_DOCUMENTATION.md` now point at the root `.github/workflows/` market-readiness gate. Dated audit inventories still name the old path as a file that existed when they were written (`docs/audits/2026-10-04-security-manifest.json`, `docs/audits/2026-10-04-security-coverage.json`, `docs/audits/2026-10-04-security-report.md`, `docs/audits/2026-10-04-full-project-audit.md`, `docs/audits/2026-10-20-local-development-reconciliation.json`). Those records were not rewritten.
+
+### Unused packages
+
+Nothing under `src`, `tests`, `scripts`, or config imports or requires `@google/generative-ai`, `@sentry/tracing`, `chalk`, or `recharts`. `npm uninstall` removed them and updated the lockfiles. The lock diffs only drop those packages and `recharts` dependents (`recharts-scale` and its chart helpers). `@sentry/node` stays: `tixmoapi2/src/config/sentry.ts` imports it, and tracing comes from `@sentry/node`'s dependency `@sentry-internal/tracing`, not from `@sentry/tracing`. Jest still depends on its own nested `chalk` 4. `@nivo/line`, `pie`, `bar`, and `heatmap` stay because Analytics imports them. Twilio, Elasticsearch, `GEMINI_API_KEY`, `OPENAI_API_KEY`, and `ENABLE_AI_GENERATION` stay on `config` because `environment.ts` still reads them; this change did not delete that wiring.
+
+Local results after the removal:
+
+| Check | Exit | Duration | Result |
+| --- | --- | --- | --- |
+| `npm --prefix tixmoapi2 run typecheck` | 0 | 8.22s | `tsc --noEmit` |
+| `npm --prefix tixmoapi2 run lint` | 0 | 24.55s | 0 errors, 383 warnings |
+| `npm --prefix tixmoapi2 run build` | 0 | 8.07s | Prisma generate and `scripts/build.cjs` |
+| `npm --prefix tixmoapi2 test` | 0 | 520.59s | 179 suites passed, 1676 tests passed |
+| `npm --prefix tdash run design:guard` | 0 | 0.19s | passed, no new baseline violations |
+| `npm --prefix tdash test -- --run` | 0 | 29.2s | 65 files passed, 493 tests passed |
+| `npm --prefix tdash run build` | 0 | 12.82s | Vite production build |
+
+### Labs reset
+
+`docs/labs.md` no longer tells anyone to run `ops/labs-reset.sh`. A search found no `labs-reset.sh` and no other labs database reset script. The reset section now says a scripted reset is not available, and that deleting the labs volume is not a substitute. The Showpass seed command is named as a seed, not a reset. No new script was added.

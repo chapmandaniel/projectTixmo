@@ -53,14 +53,16 @@ The phase table, endpoint totals, test badge, and coverage badge in this section
 
 ## Continuous Integration
 
-This repository includes a GitHub Actions workflow at `.github/workflows/ci.yml` that runs TypeScript typechecking and the full test suite on pushes and pull requests to `main`.
+GitHub runs the workflows in the repository root `.github/workflows/`. It does not run a workflow nested under `tixmoapi2/`. Pull requests that touch this package run `Tixmo Market Readiness Local Gates` (`npm run verify:market` from the repo root), which typechecks nothing by itself: it builds the API, runs `npm test`, lints, and runs the dashboard guard, tests, and build.
 
-If you'd like to run CI locally, the two main commands executed by CI are:
+From this directory:
 
 ```bash
 npm run typecheck
-npm test -- --runInBand
+npm test
 ```
+
+`npm test` already passes `--runInBand`. The market gate runs `npm test` and `npm run lint`. It does not run `npm run typecheck`.
 
 ## Test utilities
 

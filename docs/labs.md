@@ -32,46 +32,22 @@ Always pass the labs environmentId. Never use `railway redeploy`, `railway up` o
 2. Set `RELEASE` on labs-api to the full SHA, with skipDeploys (`variableCollectionUpsert`, environmentId `810da028…`). `/health` reports `RELEASE`.
 3. Deploy labs-api, then labs-dash, with a fresh `serviceInstanceDeployV2(serviceId, environmentId: "810da028-c2b7-4874-a0d4-e95242dc2cb1", commitSha: "<full SHA>")` through `railway api`. `start-api.sh` runs `prisma migrate deploy` on the labs DB.
 4. Check: `/health` shows the SHA, `/ready` is 200, the dashboard loads. Post the SHA and URL back to the requester.
-5. **Going back to an older SHA:** some migrations can't be undone (for example `20261102183000` drops a unique index). Reset the database before deploying an older branch.
+5. **Going back to an older SHA:** some migrations can't be undone (for example `20261102183000` drops a unique index). A database reset is not available from this repo, so do not deploy an older SHA that needs one until Daniel approves a database change.
 
 ## Reset (DevOps)
-`labs-reset.sh` (in `ops/` once added) resets the labs **database**. It never deletes the volume, because deleting the volume also deletes its backups.
-- `labs-reset.sh --self-test` proves the guards refuse prod, staging, vendor-sandbox and any non-labs host.
-- `labs-reset.sh --dry-run` (the default) checks the guards inside labs-api and changes nothing.
-- `labs-reset.sh --execute [--seed]` runs `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`, then `npm run migrate`, then Redis `FLUSHDB`.
-  - The seed runs only if `--seed` is passed **and** the deployed image's seed guard allows `labs`.
-  - With `--seed`, the script copies the seed's QA secret files (`/app/tmp/showpass-qa-*`) to the DevOps box secrets folder (mode 600), checks them by sha256, and then deletes them from the container.
-  - With `--seed`, the script then runs the **persistent owner step** (below).
-- `labs-reset.sh --execute --owner-only` runs only the persistent owner step, with no wipe.
 
-### Persistent owner (labs@tixmo.co)
-Daniel's labs login `labs@tixmo.co` keeps the **same password** through every rebuild, reseed and schema reset.
-- **The password:**
-  - It lives only in one box file, `secrets/labs/dan-owner.login` (mode 600). The file holds the email, the password and `url=https://labs.tixmo.co`.
-  - It was generated once, and the script never creates or regenerates it. If the file is missing, the owner step refuses.
-- **What the step does:**
-  - It finds the org by slug `fixture-festival`, because the seed creates a new org id on each reset.
-  - It upserts `labs@tixmo.co` as `OWNER` of that org with `emailVerified=true`.
-- **It is idempotent.** On an existing user, it resets the password hash, role, org and `disabledAt`, and bumps `sessionVersion`, which signs out old sessions.
-- **How the password stays private:**
-  - The script hashes the password on the DevOps box with bcrypt cost 12, the same as `tixmoapi2/prisma/bootstrap-owner.js`. The password reaches the hasher over stdin.
-  - Only the hash goes to the container. `railway ssh` does not forward stdin, so the password never leaves the box.
-  - The password is not in Railway variables, the repo, or any log. The script prints only ids.
-- **Guards:** the same as the reset, applied before anything touches the DB. These are the caller-side env and service ids, plus `RAILWAY_ENVIRONMENT_ID`, `RAILWAY_ENVIRONMENT_NAME=labs` and the internal hosts inside the container. `--self-test` also covers a missing file, a non-600 mode, the wrong email and a weak password.
-- Users and orgs other than this one are not kept across a reset.
-- The guards check:
-  - Caller side: the environment is `810da028…` and the service is labs-api.
-  - Inside the container: `RAILWAY_ENVIRONMENT_ID` and `RAILWAY_ENVIRONMENT_NAME=labs`, and the DB and Redis hosts are exactly `labs-postgres.railway.internal` and `labs-redis.railway.internal`.
-- The script needs `railway ssh`. CLI 5.x needs a registered SSH key; the v4.40.0 CLI uses the websocket relay (`RAILWAY_BIN=…`).
+A scripted labs reset is not available. This repository has no `ops/` directory and no `labs-reset.sh`. No other script resets the labs database.
+
+Do not delete the labs Postgres volume to clear data. Deleting the volume also deletes its backups. Wiping `labs-postgres`, flushing labs Redis, or recreating `labs@tixmo.co` is not a command in this repo and needs Daniel's approval.
 
 ## Data and logins
-- After a reset, the database is empty. `--seed` runs the Showpass fixture seed (`db:seed:showpass`, fresh-org mode). The seed guard allows `labs` from PR #165 `df3aa0c`.
-- `labs@tixmo.co` (Daniel, OWNER of `fixture-festival`) is recreated after every `--seed` reset, with the same password. Ask DevOps for it; it is never in chat or the repo.
+- The Showpass fixture seed is a separate command, not a labs reset: `SHOWPASS_SEED_ALLOW=sandbox npm --prefix tixmoapi2 run db:seed:showpass`. The seed guard allows a Railway environment named `labs`. See `docs/vendor-import-local.md`.
+- `labs@tixmo.co` is not created by anything in this repository. Ask DevOps. The password is never in chat or the repo.
 - Test logins use `@labs.invalid` addresses. Passwords are generated fresh and handed over in Railway or the box secrets folder, never in chat or the repo.
 - The demo vendor key `sp_demo_valid_key` is a fixture value, not a Showpass key.
 
 ## Teardown
-- **A tenant (one branch or test org) lasts 7 days.** After that, DevOps resets the DB or reseeds it unless the requester asks for more time and the PM agrees.
+- **A tenant (one branch or test org) lasts 7 days.** After that, DevOps asks Daniel before wiping or reseeding labs. There is no reset script in this repo.
 - **Labs idle for 14 days** (no deploy and no logins): DevOps proposes teardown to Daniel.
 - **Deleting anything needs Daniel's approval.** That covers the services, the volumes, the environment or the custom domains. The order is: remove the custom domains → delete the 4 services in labs → delete the 2 labs volumes (pass the labs environmentId) → delete the `labs` environment → Daniel removes the 4 DNS records at Spaceship.
 - Every delete passes environmentId `810da028-c2b7-4874-a0d4-e95242dc2cb1`. A volume or service command without an environmentId can apply to every environment.

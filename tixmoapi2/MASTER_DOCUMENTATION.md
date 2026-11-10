@@ -261,8 +261,8 @@ npm run typecheck
 
 ## CI & Automation
 
-- CI workflow: `.github/workflows/ci.yml` — runs TypeScript typecheck and the full test suite (`npm run typecheck` + `npm test -- --runInBand`) on pushes and PRs to `main`.
-- Local CI commands: use `npm run typecheck` and `npm test -- --runInBand` to mirror CI behavior.
+- CI lives in the repository root `.github/workflows/`. GitHub does not run a workflow nested under `tixmoapi2/`. `Tixmo Market Readiness Local Gates` runs `npm run verify:market` from the repo root on pulls that touch this package.
+- Local API checks: `npm run typecheck` and `npm test` (the test script already passes `--runInBand`).
 - Consider adding coverage gating and test artifact uploads in CI if required.
 
 ### ESLint Configuration & Lint Errors (Fixed Nov 6, 2025)
