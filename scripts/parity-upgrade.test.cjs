@@ -102,6 +102,7 @@ function fixture(failure) {
     command,
     uuid: () => uuid,
     silent: true,
+    drainMs: 0,
     close: () => fs.rmSync(root, { recursive: true, force: true }),
   };
 }
@@ -163,7 +164,22 @@ test('joined unchanged harness then33checksums then connection-free owned drop/a
     const harness = f.calls.findIndex((call) => call.program === process.execPath),
       drop = f.calls.findIndex((call) => call.options.input?.includes('DROP DATABASE'));
     assert.ok(drop > harness);
-    assert.ok(f.calls[drop - 1].options.input.includes('pg_stat_activity'));
+    assert.equal(
+      f.calls[drop - 1].options.input,
+      `SELECT count(*) FROM pg_stat_activity WHERE datname='${database}' AND pid<>pg_backend_pid() AND backend_type IS DISTINCT FROM 'autovacuum worker';`
+    );
+    assert.equal(
+      f.calls[drop - 2].options.input,
+      `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${database}' AND backend_type='autovacuum worker' AND pid<>pg_backend_pid();`
+    );
+    assert.equal(f.calls[drop - 2].args.at(-1), 'tixmo_disposable_restore_source');
+    assert.equal(f.calls[drop].options.input, `DROP DATABASE "${database}";`);
+    assert.ok(
+      f.calls[drop].args.includes('PGOPTIONS=-c statement_timeout=15000 -c lock_timeout=10000')
+    );
+    assert.ok(
+      f.calls[drop - 1].args.includes('PGOPTIONS=-c statement_timeout=5000 -c lock_timeout=2000')
+    );
     assert.doesNotMatch(JSON.stringify(result), /private|11111111|disposable|password|sha256/);
     assert.deepEqual(fs.readdirSync(path.join(f.root, 'runtime')), []);
   } finally {
@@ -188,6 +204,16 @@ for (const failure of [
       assert.doesNotMatch(JSON.stringify(result), /private|11111111|password/);
       const dropped = f.calls.some((call) => call.options.input?.includes('DROP DATABASE'));
       assert.equal(dropped, ['harness', 'checksum', 'drop'].includes(failure));
+      const signals = f.calls.filter((call) => call.options.input?.includes('pg_terminate_backend'));
+      assert.equal(signals.length > 0, ['harness', 'checksum', 'active', 'drop'].includes(failure));
+      for (const signal of signals) {
+        assert.equal(
+          signal.options.input,
+          `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${database}' AND backend_type='autovacuum worker' AND pid<>pg_backend_pid();`
+        );
+        assert.equal(signal.args.at(-1), 'tixmo_disposable_restore_source');
+      }
+      if (failure === 'active') assert.equal(signals.length, 1);
       if (['create', 'active', 'drop'].includes(failure))
         assert.equal(result.possibleDatabaseOrphan, true);
     } finally {
@@ -207,8 +233,53 @@ test('configured hosted lane explicitly collects tests and executes new guarded 
   assert.match(lane, /REDIS_CONTAINER: \$\{\{ job.services.redis.id \}\}/);
   assert.match(lane, /redis:\/\/127.0.0.1:\$\{\{ job.services.redis.ports\[6379\] \}\}\/7/);
   const source = fs.readFileSync(path.join(__dirname, 'verify-parity-upgrade.cjs'), 'utf8');
-  assert.doesNotMatch(source, /DROP SCHEMA|--force|--clean|migrate.*reset|db.*push/);
+  assert.doesNotMatch(source, /DROP SCHEMA|--force|--clean|migrate.*reset|db.*push|WITH \(FORCE\)/);
+  assert.match(source, /backend_type='autovacuum worker'/);
+  assert.match(source, /backend_type IS DISTINCT FROM 'autovacuum worker'/);
   assert.match(source, /child.once\('close'/);
+});
+test('draining owned client is awaited and a session that stays blocks the drop', async () => {
+  const f = fixture();
+  let blockers = 1;
+  let slept = 0;
+  const original = f.command;
+  f.drainMs = 5000;
+  f.sleep = async () => {
+    slept += 1;
+    blockers = 0;
+  };
+  f.command = async (program, args, options) => {
+    const sql = options.input || '';
+    const result = await original(program, args, options);
+    if (sql.includes("IS DISTINCT FROM 'autovacuum worker'")) return String(blockers);
+    return result;
+  };
+  const stuck = fixture('active');
+  try {
+    const result = await verify(valid, f);
+    assert.equal(result.ok, true);
+    assert.equal(result.databaseCleanupVerified, true);
+    assert.equal(slept, 1);
+    const drop = f.calls.findIndex((call) => call.options.input?.includes('DROP DATABASE'));
+    assert.match(f.calls[drop - 1].options.input, /IS DISTINCT FROM 'autovacuum worker'/);
+    assert.equal(blockers, 0);
+    for (const call of f.calls) {
+      if (!call.options.input?.includes('pg_terminate_backend')) continue;
+      assert.match(call.options.input, /backend_type='autovacuum worker'/);
+      assert.match(call.options.input, new RegExp(`datname='${database}'`));
+    }
+    const refused = await verify(valid, stuck);
+    assert.equal(refused.ok, false);
+    assert.equal(refused.databaseCleanupVerified, false);
+    assert.equal(refused.possibleDatabaseOrphan, true);
+    assert.equal(
+      stuck.calls.some((call) => call.options.input?.includes('DROP DATABASE')),
+      false
+    );
+  } finally {
+    f.close();
+    stuck.close();
+  }
 });
 test('pending upgrade child is joined before any owned database drop', async () => {
   const f = fixture();
