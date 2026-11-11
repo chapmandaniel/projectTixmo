@@ -163,7 +163,7 @@ describe('CheckoutPage', () => {
         const view = renderClosed({ ended: true });
         expect(await screen.findByRole('heading', { level: 1, name: 'Neon Nights' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { level: 2, name: 'This event has ended' })).toBeInTheDocument();
-        expect(document.title).toBe('Neon Nights · Tixmo');
+        await waitFor(() => expect(document.title).toBe('Neon Nights · Tixmo'));
         expect(screen.getByText('Ticket sales are closed. Tickets you already bought are in My tickets.')).toBeInTheDocument();
         expect(screen.queryByText('Not currently available for selection.')).not.toBeInTheDocument();
         expectClosedCheckoutChrome();
@@ -177,7 +177,7 @@ describe('CheckoutPage', () => {
         const view = renderClosed({ undated: true, startDatetime: null, endDatetime: null });
         expect(await screen.findByRole('heading', { level: 1, name: 'Neon Nights' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { level: 2, name: "This event isn't open for sale yet" })).toBeInTheDocument();
-        expect(document.title).toBe('Neon Nights · Tixmo');
+        await waitFor(() => expect(document.title).toBe('Neon Nights · Tixmo'));
         expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
         expectClosedCheckoutChrome();
         expect(loadStripe).not.toHaveBeenCalled();
@@ -198,7 +198,7 @@ describe('CheckoutPage', () => {
         expect(screen.getByText("Tickets aren't on sale until the organizer sets a date.")).toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'This event has ended' })).not.toBeInTheDocument();
         expect(screen.queryByRole('heading', { name: 'Checkout unavailable' })).not.toBeInTheDocument();
-        expect(document.title).toBe('Neon Nights · Tixmo');
+        await waitFor(() => expect(document.title).toBe('Neon Nights · Tixmo'));
         expectClosedCheckoutChrome();
         expect(loadStripe).not.toHaveBeenCalled();
         view.unmount();
