@@ -107,3 +107,12 @@ The first `npm --prefix tixmoapi2 test` (`jest --runInBand`) reported 2 failed, 
 After `npm ci --prefix tdash` (282 packages, 0 vulnerabilities), the same two files were rerun: 2 passed, 2 suites, 37.258s, exit 0. Together with the first run, all 179 suites and 1676 tests passed. No product assertion failed.
 
 `npm run verify:market` was not executed as a whole. This environment has no Docker, and that command also runs the dashboard gates. The API audit step, API build, API lint, and API tests above are the checks this change can affect locally.
+
+## CI
+
+Draft PR #185, first head `be768d17b364fc133a7d07a8de41d016a373bff8`, run [42959194634](https://github.com/chapmandaniel/projectTixmo/actions/runs/42959194634):
+
+- `configured-image-restore` succeeded.
+- `local-gates` got past the API audit (`ignored GHSA-gcqx-w48m-w2h4` only) and then failed dashboard tests: `CheckoutPage` "renders the ended state instead of checkout when the public event has ended" expected `document.title` `Neon Nights · Tixmo` and received `Tixmo Dashboard`. 1 failed, 492 passed, 493 tests.
+
+The title is set in a `useEffect` after the closed-sale heading commits. `findByRole` can return on that commit before the effect runs. `tdash/src/test/EventOnSalePage.test.jsx` already waits for the same title. The three closed-checkout title checks in `CheckoutPage.test.jsx` now use `waitFor` the same way. Local `npm --prefix tdash test -- --run` then passed: 65 files, 493 tests, exit 0, 23.56s. The checkout file also passed on three separate runs (49 tests each).
