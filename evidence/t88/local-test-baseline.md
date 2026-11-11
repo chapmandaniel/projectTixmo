@@ -106,6 +106,13 @@ Local check with those workflow values (Chrome path on this machine: `/usr/local
 
 Jest totals are not printed. Executed test count implied by the passing verifier and the unchanged 1676-test suite: **1676 ran, 0 skipped**.
 
-### After CI (this branch)
+### After CI (this branch, `fc619f13c89da62c46bfed831f2c7d0e1d476c70`)
 
-Filled in after the draft PR's checks finish. Expected: the same three workflow results, and the same 1676 tests executed because the workflow env still satisfies the skip helper.
+- [Tixmo Market Readiness Local Gates](https://github.com/chapmandaniel/projectTixmo/actions/runs/43089660733) — success, 16m38s.
+  - [local-gates](https://github.com/chapmandaniel/projectTixmo/actions/runs/43089660733/job/130763058190) pass, 16m35s.
+  - [configured-image-restore](https://github.com/chapmandaniel/projectTixmo/actions/runs/43089660733/job/130763058526) pass, 2m53s.
+  - `[verify:api] API verification` started `19:43:47Z` and logged `[verify:api] API verification passed.` at `19:56:55Z` (13m8s). The before run's same step was `04:58:35Z` to `05:08:48Z` (10m13s). The step got slower by about the extra `pretest` build. It did not get faster, which is what skipping the 28 webhook races would have done.
+- [HTTP soak](https://github.com/chapmandaniel/projectTixmo/actions/runs/43089660771) — skipped.
+- `guard-and-build` did not run. `.github/workflows/tdash-design-system.yml` triggers only on `tdash/**` and that workflow file. This branch does not change them. Last green run of that job, on PR #185 at `d7c771d`: [Tdash Design System](https://github.com/chapmandaniel/projectTixmo/actions/runs/42962543119).
+
+Neither log prints a Jest total (`verify-api.mjs` uses `stdio: 'ignore'`). Both API verification steps passed. The suite is still 1676 tests. The workflow env still supplies the Stripe key, webhook secret, and Chrome path that the skip helper requires, so the 29 local skips are not skips in CI. Executed count before and after: **1676 ran, 0 skipped**.
