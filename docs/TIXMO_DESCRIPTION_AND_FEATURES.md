@@ -348,7 +348,7 @@ The V1 launch path is intentionally focused on the core operator workflow:
 
 The following are treated as post-V1, hidden, or outside the launch message unless explicitly re-scoped:
 
-- Social hub.
+- Social hub. The sandbox-only Social Command Center v1 design is `docs/social/v1-data-design.md`. That note follows the approved cut and the binding security review. `tixmoapi2/docs/META_SOCIAL_INTEGRATION_GUIDE.md` is not the source for this work.
 - ProMo and broad creative automation claims.
 - QuantMo.
 - Marketing Hub.

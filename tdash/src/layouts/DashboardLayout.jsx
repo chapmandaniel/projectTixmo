@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Home, Calendar, BarChart3, Bell,
+    Home, Calendar, BarChart3, Bell, MessageCircle,
     Users, CheckSquare, Sun, Moon,
     Settings, LogOut, CheckCircle, User, Image, ClipboardList,
     Menu, X
@@ -19,15 +19,22 @@ const navItems = [
     { id: 'assets', icon: Image, label: 'Assets' },
     { id: 'approvals', icon: CheckCircle, label: 'Review Portal' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics' },
+    { id: 'social', icon: MessageCircle, label: 'Social' },
     { id: 'settings', icon: Settings, label: 'Settings' },
     { id: 'staff-actions', icon: ClipboardList, label: 'Audit', roles: ['OWNER', 'ADMIN'] },
 ];
 
 const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
 
-const MobileNavLink = ({ item, activeView, isDark, pendingApprovalsCount, onNavigate }) => {
+const navBadge = (item, pendingApprovalsCount, socialNeedsAction) => {
+    if (item.id === 'approvals' && pendingApprovalsCount > 0) return pendingApprovalsCount;
+    if (item.id === 'social' && socialNeedsAction > 0) return socialNeedsAction;
+    return null;
+};
+
+const MobileNavLink = ({ item, activeView, isDark, pendingApprovalsCount, socialNeedsAction, onNavigate }) => {
     const active = activeView === item.id;
-    const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;
+    const badge = navBadge(item, pendingApprovalsCount, socialNeedsAction);
 
     return (
         <Link
@@ -55,9 +62,9 @@ const MobileNavLink = ({ item, activeView, isDark, pendingApprovalsCount, onNavi
     );
 };
 
-const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
+const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount, socialNeedsAction }) => {
     const active = activeView === item.id;
-    const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;
+    const badge = navBadge(item, pendingApprovalsCount, socialNeedsAction);
 
     return (
         <Link
@@ -94,6 +101,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+    const [socialNeedsAction, setSocialNeedsAction] = useState(0);
     const isFetchingDashboardDataRef = useRef(false);
     // Fetch notifications and stats
     const fetchDashboardData = async ({ force = false } = {}) => {
@@ -136,6 +144,12 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
             isFetchingDashboardDataRef.current = false;
         }
     };
+
+    useEffect(() => {
+        const onSocialCount = (event) => setSocialNeedsAction(Number(event.detail?.count) || 0);
+        window.addEventListener('tixmo:social-needs-action', onSocialCount);
+        return () => window.removeEventListener('tixmo:social-needs-action', onSocialCount);
+    }, []);
 
     useEffect(() => {
         const handleVisibilityChange = () => {
@@ -261,6 +275,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                                 activeView={activeView}
                                 isDark={isDark}
                                 pendingApprovalsCount={pendingApprovalsCount}
+                                socialNeedsAction={socialNeedsAction}
                             />
                         ))}
                     </nav>
@@ -397,6 +412,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                                     activeView={activeView}
                                     isDark={isDark}
                                     pendingApprovalsCount={pendingApprovalsCount}
+                                    socialNeedsAction={socialNeedsAction}
                                     onNavigate={closeMobileNav}
                                 />
                             ))}
