@@ -21,11 +21,14 @@ In order:
 7. Dashboard tests, design guard and production build.
 8. Root verification and evidence helper syntax checks.
 
-By default `verify:api` creates uniquely named, loopback-only Postgres and Redis
-containers, applies migrations, runs the tests and removes only its own containers.
-It does not load application `.env` files. Docker Desktop or the project Colima
-profile must be running. An explicitly supplied test target must satisfy both the
-local ownership/reset guard and the disposable service guard.
+`verify:api` does not start containers, apply `prisma migrate`, or load application
+`.env` files. Postgres and Redis must already be listening. The command requires
+`TIXMO_ALLOW_DESTRUCTIVE_TESTS=1`, a loopback `DATABASE_URL` whose database name
+matches `tixmo_disposable_<name>`, and a loopback `REDIS_URL` on database `/1`
+through `/15` (`scripts/verification-safety.cjs`). It then runs `prisma db push`
+and the API Jest suite. `npm run dev:services` starts the shared Compose stack in
+`tixmoapi2/docker-compose.yml` and is not a disposable test target. CI provisions
+its own job-scoped Postgres and Redis instead.
 
 CI provisions disposable job services and uses the explicit guarded verifier path.
 Recovery fencing tests run in the ordinary suite because recovery is enabled;

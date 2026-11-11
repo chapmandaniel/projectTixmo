@@ -75,7 +75,7 @@ This file serves as the **single source of truth** for all TixMo API documentati
 ## 🏗️ Architecture Overview
 
 ### Technology Stack
-- **Runtime**: Node.js 18+, TypeScript 5
+- **Runtime**: Node.js >= 24.21.0 and < 25, TypeScript 5.9
 - **Framework**: Express.js
 - **Database**: PostgreSQL 14
 - **Cache**: Redis 7
@@ -261,8 +261,8 @@ npm run typecheck
 
 ## CI & Automation
 
-- CI workflow: `.github/workflows/ci.yml` — runs TypeScript typecheck and the full test suite (`npm run typecheck` + `npm test -- --runInBand`) on pushes and PRs to `main`.
-- Local CI commands: use `npm run typecheck` and `npm test -- --runInBand` to mirror CI behavior.
+- CI lives in the repository root `.github/workflows/`. GitHub does not run a workflow nested under `tixmoapi2/`. `Tixmo Market Readiness Local Gates` runs `npm run verify:market` from the repo root on pulls that touch this package.
+- Local API checks: `npm run typecheck` and `npm test` (the test script already passes `--runInBand`).
 - Consider adding coverage gating and test artifact uploads in CI if required.
 
 ### ESLint Configuration & Lint Errors (Fixed Nov 6, 2025)
@@ -281,7 +281,7 @@ npm run typecheck
 - `@typescript-eslint/no-var-requires`
 - `no-empty`
 
-**Current Status**: All lint checks pass with 0 errors/warnings. Production code maintains strict type safety.
+**Current Status**: `npm run lint` is the lint check. A December 2025 note that it reported 0 warnings is historical; warnings do not fail the command. `npm run typecheck` is `tsc --noEmit` and covers `src/` only (`tsconfig.json` excludes `tests`).
 
 **Commands**:
 ```bash
@@ -314,21 +314,21 @@ Update these docs if you change helper signatures.
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- Docker Desktop or Colima
+- Node.js >= 24.21.0 and < 25 (`engines` in `package.json`; CI uses 24.21.0)
+- Docker with the Compose plugin, or another local PostgreSQL 14 and Redis 7
 - PostgreSQL 14
 - Redis 7
 
 ### Quick Start
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (same lockfile install CI uses)
+npm ci
 
 # Setup environment
 cp .env.example .env
 
-# Start database & cache
-docker-compose up -d
+# Start database & cache (Compose file in this directory)
+docker compose up -d
 
 # Run migrations
 npx prisma migrate dev
@@ -347,7 +347,7 @@ open http://localhost:3000/api/v1/docs
 ```env
 NODE_ENV=development
 PORT=3000
-DATABASE_URL=postgresql://user:password@localhost:5432/tixmo
+DATABASE_URL=postgresql://tixmo:tixmo_dev_password@localhost:5432/tixmoapi?schema=public
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-secret-key
 JWT_REFRESH_SECRET=your-refresh-secret
@@ -498,11 +498,11 @@ See API_DOCS_GUIDE.md for full instructions, schemas overview, and troubleshooti
 
 ### Commands
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (same lockfile install CI uses)
+npm ci
 
-# Run tests sequentially (DB-backed)
-npm test -- --runInBand
+# Run tests sequentially (DB-backed). The test script already passes --runInBand.
+npm test
 ```
 
 ---

@@ -7,8 +7,8 @@
 
 [![Status](https://img.shields.io/badge/status-phase%203%20complete-success)](https://github.com)
 [![CI](https://img.shields.io/badge/ci-configured-blue)](https://github.com)
-[![TypeScript](https://img.shields.io/badge/typescript-5.2-blue)](https://www.typescriptlang.org/)
-[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-green)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/typescript-5.9-blue)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/node-%3E%3D24.21.0%20%3C25-green)](https://nodejs.org/)
 [![Tests](https://img.shields.io/badge/tests-143%2F143%20passing-success)](https://github.com)
 [![Coverage](https://img.shields.io/badge/coverage-86%25-success)](https://github.com)
 
@@ -17,6 +17,8 @@
 ---
 
 ## 📊 Project Status (December 13, 2025)
+
+The phase table, endpoint totals, test badge, and coverage badge in this section are a historical snapshot. Current checks are `npm run typecheck`, `npm test`, and `npm run lint`. Required Node is `>=24.21.0 <25` (`engines` in `package.json`).
 
 **Current Phase**: Phase 4 Complete - 52 Endpoints Built! 🎉  
 **Progress**: 48% complete (way ahead of schedule!)  
@@ -51,14 +53,16 @@
 
 ## Continuous Integration
 
-This repository includes a GitHub Actions workflow at `.github/workflows/ci.yml` that runs TypeScript typechecking and the full test suite on pushes and pull requests to `main`.
+GitHub runs the workflows in the repository root `.github/workflows/`. It does not run a workflow nested under `tixmoapi2/`. Pull requests that touch this package run `Tixmo Market Readiness Local Gates` (`npm run verify:market` from the repo root), which typechecks nothing by itself: it builds the API, runs `npm test`, lints, and runs the dashboard guard, tests, and build.
 
-If you'd like to run CI locally, the two main commands executed by CI are:
+From this directory:
 
 ```bash
 npm run typecheck
-npm test -- --runInBand
+npm test
 ```
+
+`npm test` already passes `--runInBand`. The market gate runs `npm test` and `npm run lint`. It does not run `npm run typecheck`.
 
 ## Test utilities
 
@@ -101,7 +105,7 @@ the owned CI services. This is not browser, deployed-limit, region-latency,
 
 ### Prerequisites
 
-- **Node.js** >= 18.0.0
+- **Node.js** >= 24.21.0 and < 25 (`engines` in `package.json`; CI uses 24.21.0)
 - **npm** >= 9.0.0
 - **PostgreSQL** 14+
 - **Redis** 7+
@@ -114,8 +118,8 @@ the owned CI services. This is not browser, deployed-limit, region-latency,
 git clone <repository-url>
 cd tixmoapi2
 
-# 2. Install dependencies
-npm install
+# 2. Install dependencies (same lockfile install CI uses)
+npm ci
 
 # 3. Set up environment variables
 cp .env.example .env
@@ -125,11 +129,9 @@ cp .env.example .env
 # - JWT_SECRET
 # - JWT_REFRESH_SECRET
 
-# 4. Start database services
-docker-compose up -d
-# OR with Colima:
-# colima start
-# docker-compose up -d
+# 4. Start database services (Compose file in this directory)
+docker compose up -d
+# From the repo root the same stack is `npm run dev:services`.
 
 # 5. Run database migrations
 npx prisma migrate dev
@@ -297,11 +299,11 @@ GET    /api/v1/users            - List users (admin)
 
 ### Core
 
-- **Runtime**: Node.js 18+
-- **Language**: TypeScript 5.2
-- **Framework**: Express.js 4.18
+- **Runtime**: Node.js >= 24.21.0 and < 25
+- **Language**: TypeScript 5.9
+- **Framework**: Express.js 4.22
 - **Database**: PostgreSQL 14
-- **ORM**: Prisma 5.5
+- **ORM**: Prisma 5.22
 - **Cache**: Redis 7
 
 ### Security

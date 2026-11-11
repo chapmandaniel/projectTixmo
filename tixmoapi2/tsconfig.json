@@ -31,7 +31,6 @@
       "@/*": ["*"],
       "@api/*": ["api/*"],
       "@services/*": ["services/*"],
-      "@models/*": ["models/*"],
       "@middleware/*": ["middleware/*"],
       "@utils/*": ["utils/*"],
       "@config/*": ["config/*"],

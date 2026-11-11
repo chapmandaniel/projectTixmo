@@ -7,6 +7,9 @@ curl_output.json
 **/lint_report.txt
 **/eslint-output.json
 
+# Jest and verifier receipts (task608, task615, and similar). Recreated by tests.
+/runtime/
+
 # Private operational backups and local execution evidence
 /backups/
 **/backups/
