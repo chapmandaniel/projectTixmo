@@ -127,20 +127,91 @@ export const bulkIssues = async (body) => {
     return dataOf(response);
 };
 
+const isDisplayThresholds = (value) =>
+    Boolean(value?.NORMAL?.multiplier || value?.NORMAL?.minimum || value?.NORMAL?.unanswered);
+
+const isPhraseTable = (value) =>
+    Boolean(value?.Ticketing || value?.Refunds || value?.Safety || value?.Lineup);
+
+const parseMultiplier = (value) => {
+    if (typeof value === 'number') return value;
+    const match = String(value || '').match(/([0-9]+(?:\.[0-9]+)?)/);
+    return match ? Number(match[1]) : NaN;
+};
+
+const parseMinimum = (value) => {
+    if (typeof value === 'number') return value;
+    const match = String(value || '').match(/([0-9]+)/);
+    return match ? Number(match[1]) : NaN;
+};
+
+const parseUnansweredMinutes = (value) => {
+    if (typeof value === 'number') return value;
+    const text = String(value || '');
+    const minutes = text.match(/([0-9]+)\s*min/i);
+    if (minutes) return Number(minutes[1]);
+    const hours = text.match(/([0-9]+)\s*h/i);
+    if (hours) return Number(hours[1]) * 60;
+    return NaN;
+};
+
+const displayThresholdsToValues = (table) => {
+    const modes = ['NORMAL', 'ON_SALE_DAY', 'EVENT_DAY'];
+    const next = {};
+    for (const mode of modes) {
+        const row = table?.[mode] || {};
+        const multiplier = parseMultiplier(row.multiplier);
+        const minimum = parseMinimum(row.minimum);
+        const unansweredMinutes = parseUnansweredMinutes(row.unanswered);
+        if (![multiplier, minimum, unansweredMinutes].every(Number.isFinite)) return null;
+        next[mode] = { multiplier, minimum, unansweredMinutes };
+    }
+    return next;
+};
+
+/** Adapt dashboard tables to the API body (`{ thresholds }` / `{ reset }` / `{ keywords }`). */
+const thresholdsPayload = (body) => {
+    if (!body || typeof body !== 'object') return body;
+    if (body.reset === true || body.thresholds) return body;
+    if (!isDisplayThresholds(body)) return body;
+    if (JSON.stringify(body) === JSON.stringify(cloneDefaultThresholds())) return { reset: true };
+    if (typeof body.NORMAL?.multiplier === 'number') return { thresholds: body };
+    const parsed = displayThresholdsToValues(body);
+    return parsed ? { thresholds: parsed } : { reset: true };
+};
+
+const keywordsPayload = (body) => {
+    if (!body || typeof body !== 'object') return body;
+    if (body.reset === true || body.keywords) return body;
+    if (!isPhraseTable(body)) return body;
+    const defaults = cloneDefaultPhrases();
+    if (JSON.stringify(body) === JSON.stringify(defaults)) return { reset: true };
+    return { keywords: body };
+};
+
+const holdPayload = (body) => {
+    if (!body || typeof body !== 'object') return body;
+    if (body.clear === true) return body;
+    if (!body.mode) return { clear: true, eventId: body.eventId, until: body.until };
+    return body;
+};
+
 export const saveThresholds = async (body) => {
-    const response = await axios.patch('/social/settings/thresholds', body, {
+    const response = await axios.patch('/social/settings/thresholds', thresholdsPayload(body), {
         suppressGlobalError: true,
     });
     return dataOf(response);
 };
 
 export const setHold = async (body) => {
-    const response = await axios.post('/social/settings/hold', body, { suppressGlobalError: true });
+    const response = await axios.post('/social/settings/hold', holdPayload(body), {
+        suppressGlobalError: true,
+    });
     return dataOf(response);
 };
 
 export const saveKeywords = async (body) => {
-    const response = await axios.post('/social/settings/keywords', body, {
+    const response = await axios.post('/social/settings/keywords', keywordsPayload(body), {
         suppressGlobalError: true,
     });
     return dataOf(response);
