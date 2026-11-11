@@ -6,6 +6,19 @@ jest.mock('stripe', () =>
     refunds: { list: jest.fn(), create: jest.fn(), retrieve: jest.fn() },
   }))
 );
+import { isUsableTestCredential } from '../helpers/missing-env';
+
+// The suite already mocks Stripe. A missing key leaves paymentService.stripe null,
+// so the mock is never constructed. Use a synthetic key only in that case.
+const savedStripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const originalStripeSecretKey =
+  process.env.TIXMO_TEST_ENV_CAPTURED === '1'
+    ? process.env.TIXMO_CAPTURED_STRIPE_SECRET_KEY
+    : savedStripeSecretKey;
+if (!isUsableTestCredential(originalStripeSecretKey)) {
+  process.env.STRIPE_SECRET_KEY = 'sk_test_order_refund_current_path';
+}
+
 import prisma from '../../src/config/prisma';
 import { paymentService } from '../../src/api/payments/service';
 import { OrderService } from '../../src/api/orders/service';
@@ -87,7 +100,13 @@ async function fixture(status: 'VALID' | 'USED' | 'TRANSFERRED' = 'VALID') {
   return { order, type };
 }
 beforeEach(() => jest.clearAllMocks());
-afterAll(async () => prisma.$disconnect());
+afterAll(async () => {
+  if (!isUsableTestCredential(savedStripeSecretKey)) {
+    if (savedStripeSecretKey === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = savedStripeSecretKey;
+  }
+  await prisma.$disconnect();
+});
 test.each(['USED', 'TRANSFERRED'] as const)(
   'denied %s remains unchanged before provider operations',
   async (status) => {

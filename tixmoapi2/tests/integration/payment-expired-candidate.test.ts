@@ -6,12 +6,18 @@ import Stripe from 'stripe';
 import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
 import { config } from '../../src/config/environment';
+import { stripeWebhookTestNeeds, testOrSkipMissingEnv } from '../helpers/missing-env';
+
+const testStripe = testOrSkipMissingEnv(
+  'payment-expired-candidate.test.ts',
+  stripeWebhookTestNeeds
+);
 
 afterAll(async () => {
   await prisma.$disconnect();
 });
 // Ancient fixture time establishes a crashed owner, not a product lease duration.
-test.each([false, true])(
+testStripe.each([false, true])(
   'PROCESSING duplicate (crashed ancient owner=%s)',
   async (ancient) => {
     const started = ancient ? new Date('2000-01-01T00:00:00.000Z') : new Date();

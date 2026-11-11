@@ -10,12 +10,15 @@ import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
 import { notificationService } from '../../src/utils/notificationService';
 import { config } from '../../src/config/environment';
+import { stripeWebhookTestNeeds, testOrSkipMissingEnv } from '../helpers/missing-env';
+
+const testStripe = testOrSkipMissingEnv('payment-cutoff-overflow.test.ts', stripeWebhookTestNeeds);
 
 afterAll(async () => {
   await prisma.$disconnect();
 });
 // Ancient fixture time establishes a crashed owner, not a product lease duration.
-test.each(['FAILED', 'PROCESSING'])(
+testStripe.each(['FAILED', 'PROCESSING'])(
   'maxBigInt signed public %s admission leaves full business snapshot unchanged',
   async (status) => {
     const ancient = true;
