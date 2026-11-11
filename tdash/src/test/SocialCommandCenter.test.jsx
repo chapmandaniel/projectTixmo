@@ -60,38 +60,53 @@ describe('Social Command Center', () => {
     });
 
     it('keeps event, date range, and account in the URL across tabs', async () => {
-        renderSocial('/social?tab=overview&event=harbourfest-2027&range=7d&account=instagram&from=2027-07-01&to=2027-07-10');
+        renderSocial('/social?tab=overview&event=harbourfest-2027&range=30d&account=instagram&from=2027-07-01&to=2027-07-10');
         const page = await screen.findByTestId('social-command-center');
         expect(page).toHaveAttribute('data-query', expect.stringContaining('event=harbourfest-2027'));
-        expect(page).toHaveAttribute('data-query', expect.stringContaining('range=7d'));
+        expect(page).toHaveAttribute('data-query', expect.stringContaining('range=30d'));
         expect(page).toHaveAttribute('data-query', expect.stringContaining('account=instagram'));
         fireEvent.click(screen.getByRole('link', { name: 'Issues' }));
         expect(page).toHaveAttribute('data-query', expect.stringContaining('tab=issues'));
         expect(page).toHaveAttribute('data-query', expect.stringContaining('event=harbourfest-2027'));
-        expect(page).toHaveAttribute('data-query', expect.stringContaining('range=7d'));
+        expect(page).toHaveAttribute('data-query', expect.stringContaining('range=30d'));
         expect(page).toHaveAttribute('data-query', expect.stringContaining('account=instagram'));
         fireEvent.change(screen.getByLabelText('Event'), { target: { value: 'quiet-hall' } });
         expect(page).toHaveAttribute('data-query', expect.stringContaining('event=quiet-hall'));
-        expect(screen.getByLabelText('Date range')).toHaveValue('7d');
+        expect(screen.getByLabelText('Date range')).toHaveValue('30d');
         expect(screen.getByLabelText('Account')).toHaveValue('instagram');
     });
 
     it('shows empty and error states as text, with reply links that only leave the dashboard', async () => {
         let view = renderSocial('/social?scene=no-accounts');
-        expect(await screen.findByText('No accounts connected')).toBeInTheDocument();
+        expect(await screen.findByText('No sandbox Page connected')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Connect sandbox Page' })).toBeInTheDocument();
+        expect(screen.getAllByText('SANDBOX · test data').length).toBeGreaterThan(0);
         view.unmount();
 
         view = renderSocial('/social?scene=token-expired');
-        expect(await screen.findByText('Sandbox token expired.')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Reconnect' })).toBeInTheDocument();
+        expect(await screen.findByText(/sandbox token expired/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Reconnect sandbox Page' })).toBeInTheDocument();
         view.unmount();
 
         view = renderSocial('/social?scene=missing-permission');
-        expect(await screen.findByText(/insights permission/)).toBeInTheDocument();
+        expect(await screen.findByText(/no insights access/)).toBeInTheDocument();
         view.unmount();
 
         view = renderSocial('/social?scene=rate-limited');
-        expect(await screen.findByText(/Retry at 16:05 NDT/)).toBeInTheDocument();
+        expect(await screen.findByText(/Retrying at 4:30 PM NDT/)).toBeInTheDocument();
+        view.unmount();
+
+        view = renderSocial('/social?graphError=4');
+        expect(await screen.findByText(/Graph code 4/)).toBeInTheDocument();
+        expect(screen.getByTestId('social-command-center')).toHaveAttribute('data-graph-error', '4');
+        view.unmount();
+
+        view = renderSocial('/social?graphError=17');
+        expect(await screen.findByText(/Graph code 17/)).toBeInTheDocument();
+        view.unmount();
+
+        view = renderSocial('/social?graphError=32');
+        expect(await screen.findByText(/Graph code 32/)).toBeInTheDocument();
         view.unmount();
 
         view = renderSocial('/social?scene=insights-pending');
@@ -102,6 +117,9 @@ describe('Social Command Center', () => {
         view = renderSocial('/social?scene=syncing');
         expect(await screen.findAllByText('—')).not.toHaveLength(0);
         expect(screen.getAllByText('Syncing').length).toBeGreaterThan(0);
+        expect(screen.getByTestId('sync-progress')).toHaveTextContent(/Posts ✓/);
+        expect(screen.queryByText(/Ticketing spike/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/need action/)).not.toBeInTheDocument();
         view.unmount();
 
         view = renderSocial('/social?scene=no-data&tab=posts');
@@ -109,12 +127,13 @@ describe('Social Command Center', () => {
         view.unmount();
 
         view = renderSocial('/social?scene=no-issues&tab=issues');
-        expect(await screen.findByText('No issues')).toBeInTheDocument();
+        expect(await screen.findByText('Nothing needs action')).toBeInTheDocument();
         view.unmount();
 
         view = renderSocial('/social?scene=no-schedule&tab=settings');
         expect((await screen.findAllByText(/No schedule dates/)).length).toBeGreaterThan(0);
         expect(screen.getByText(/ON-SALE DAY does not trigger/)).toBeInTheDocument();
+        expect(screen.queryByText(/Harbourfest 2027: EVENT DAY/)).not.toBeInTheDocument();
         view.unmount();
 
         renderSocial('/social/posts/post-fb-1?tab=posts');
@@ -135,8 +154,25 @@ describe('Social Command Center', () => {
         const stamps = plan.getAttribute('data-polls').split(',');
         expect(Date.parse(stamps[1]) - Date.parse(stamps[0])).toBe(60 * 1000);
         expect(screen.getByText(/Phase 1 does not poll/)).toBeInTheDocument();
-        expect(screen.getByRole('option', { name: 'Hold EVENT DAY' })).toBeInTheDocument();
-        expect(screen.queryByRole('option', { name: /TIGHT/ })).not.toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: 'Hold EVENT DAY' })).toBeInTheDocument();
+        expect(screen.queryByRole('radio', { name: /TIGHT/ })).not.toBeInTheDocument();
+        expect(screen.getAllByText(/SANDBOX · test data/).length).toBeGreaterThan(0);
+        expect(screen.getByTestId('thresholds')).toHaveTextContent('3.0×');
+        expect(screen.getByRole('button', { name: 'Edit thresholds' })).toBeInTheDocument();
+    });
+
+    it('shows the overview strip, issue workflow, and sandbox connect steps', async () => {
+        const view = renderSocial('/social?tab=overview&event=harbourfest-2027');
+        expect(await screen.findByTestId('alert-strip')).toHaveTextContent(/Ticketing wave/);
+        expect(screen.getByTestId('top-posts')).toHaveTextContent('Lineup drop');
+        expect(screen.getByTestId('mode-line')).toHaveTextContent(/auto from event dates/);
+        expect(screen.getByRole('link', { name: 'Change' })).toBeInTheDocument();
+        view.unmount();
+
+        renderSocial('/social?tab=issues&view=handled&account=all');
+        expect(await screen.findByText('[HANDLED]')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'All' })).toBeInTheDocument();
+        expect(screen.getByLabelText('Status')).toBeInTheDocument();
     });
 
     it('keeps commenter copy off the page and the social module off the network', async () => {
