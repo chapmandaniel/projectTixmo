@@ -1,0 +1,40 @@
+# Dependabot version-update config, and (once enabled in repo settings)
+# security-update grouping. This file does not enable Dependabot alerts or
+# Dependabot security updates; those are toggles Daniel has to turn on.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /tixmoapi2
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    groups:
+      tixmoapi2-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      tixmoapi2-patches:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directory: /tdash
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    groups:
+      tdash-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      tdash-patches:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+        patterns:
+          - "*"

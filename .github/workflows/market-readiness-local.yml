@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - '.github/dependabot.yml'
+      - '.github/workflows/dependency-audit-scheduled.yml'
       - '.github/workflows/market-readiness-local.yml'
       - '.github/workflows/uptime-status.yml'
       - 'package.json'
