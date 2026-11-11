@@ -18,7 +18,17 @@ import { getDashboardTheme } from '../../lib/dashboardTheme';
 import { cn } from '../../lib/utils';
 import { readSocialFilters, writeSocialSearch } from './filters';
 import { cloneDefaultPhrases, cloneDefaultThresholds } from './mockWorkspace';
-import { loadSocialConfig, pollPlanForWorkspace, workspaceForScene } from './socialClient';
+import {
+    loadSocialConfig,
+    loadWorkspace,
+    phrasesForWorkspace,
+    pollPlanForWorkspace,
+    shouldUseLiveWorkspace,
+    teamForWorkspace,
+    thresholdsForWorkspace,
+    workspaceForScene,
+} from './socialClient';
+import * as socialApi from './socialClient';
 import { successivePolls } from './pollSchedule';
 
 const DISMISS_REASONS = ['Not an issue', 'Duplicate', 'Spam/irrelevant', 'Handled elsewhere'];
@@ -140,6 +150,10 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
     const [flagTopic, setFlagTopic] = useState('Lineup');
     const [flagSeverity, setFlagSeverity] = useState('LOW');
     const [flaggedIds, setFlaggedIds] = useState({});
+    const [live, setLive] = useState({ status: 'idle', workspace: null, source: 'mock' });
+    const [reloadTick, setReloadTick] = useState(0);
+    const [actionError, setActionError] = useState('');
+    const [sandboxToken, setSandboxToken] = useState('');
 
     useEffect(() => {
         if (preview) return undefined;
@@ -152,21 +166,57 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
         };
     }, [preview]);
 
-    const workspace = useMemo(
+    const mockWorkspace = useMemo(
         () => workspaceForScene(filters.scene, filters.graphError),
         [filters.scene, filters.graphError],
     );
+    const liveEligible = !preview && shouldUseLiveWorkspace(config, filters);
+    const liveKey = liveEligible ? [filters.event, filters.range, filters.from, filters.to, filters.account].join('|') : '';
+
+    useEffect(() => {
+        if (!liveEligible) {
+            setLive({ status: 'idle', workspace: null, source: 'mock' });
+            return undefined;
+        }
+        let cancelled = false;
+        setLive((current) => (current.workspace ? current : { ...current, status: 'loading' }));
+        loadWorkspace(config, {
+            event: filters.event,
+            range: filters.range,
+            from: filters.from,
+            to: filters.to,
+            account: filters.account,
+            scene: filters.scene,
+            sceneRequested: filters.sceneRequested,
+            graphError: filters.graphError,
+        }).then(({ workspace: next, source }) => {
+            if (!cancelled) setLive({ status: 'ready', workspace: next, source });
+        }).catch(() => {
+            if (!cancelled) setLive((current) => ({ ...current, status: current.workspace ? 'ready' : 'error' }));
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [liveEligible, liveKey, reloadTick, config]);
+
+    const workspace = liveEligible && live.workspace ? live.workspace : mockWorkspace;
+    const isLive = liveEligible && live.source === 'live' && workspace === live.workspace;
+    const awaitingLive = liveEligible && !live.workspace && live.status !== 'error';
     const query = params.toString();
     useEffect(() => {
         setIssues(workspace.issues);
-        setPhrases(cloneDefaultPhrases());
-        setThresholds(cloneDefaultThresholds());
+        setPhrases(phrasesForWorkspace(workspace));
+        setThresholds(thresholdsForWorkspace(workspace));
         setHold(workspace.hold?.mode || '');
         setHoldUntil(workspace.hold?.until || '2027-07-11');
         setRemoved([]);
-        setBulkResult('');
         setFlaggedIds({});
     }, [workspace]);
+
+    useEffect(() => {
+        setBulkResult('');
+        setActionError('');
+    }, [mockWorkspace, liveKey]);
     useEffect(() => {
         const next = new URLSearchParams(query);
         setSelected((next.get('selected') || '').split(',').filter(Boolean));
@@ -190,6 +240,21 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
 
     if (!config) {
         return <DashboardPage><p className={theme.textSecondary}>Loading Social.</p></DashboardPage>;
+    }
+    if (config.enabled === true && awaitingLive) {
+        return <DashboardPage><p className={theme.textSecondary}>Loading Social.</p></DashboardPage>;
+    }
+    if (config.enabled === true && liveEligible && live.status === 'error' && !live.workspace) {
+        return (
+            <DashboardPage>
+                <DashboardEmptyState
+                    isDark={isDark}
+                    title="Social data could not be loaded"
+                    description="The Social workspace did not respond. Try again in a moment."
+                    action={<DashboardButton isDark={isDark} variant="secondary" onClick={() => setReloadTick((tick) => tick + 1)}>Try again</DashboardButton>}
+                />
+            </DashboardPage>
+        );
     }
     if (config.enabled !== true) {
         return (
@@ -215,6 +280,10 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
     const role = preview && params.get('role') === 'member' ? 'TEAM_MEMBER' : user?.role;
     const admin = role === 'OWNER' || role === 'ADMIN';
     const actor = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Team';
+    const team = teamForWorkspace(workspace, TEAM);
+    const teamNames = team.map((member) => member.name);
+    const teamIdFor = (name) => (name ? team.find((member) => member.name === name)?.id || name : null);
+    const bulkAssignee = team.find((member) => member.name === 'Sam R.') || team[0] || { id: 'Sam R.', name: 'Sam R.' };
     const accounts = workspace.accounts.filter((account) => !removed.includes(account.id));
     const postById = Object.fromEntries(workspace.posts.map((post) => [post.id, post]));
     const commentById = Object.fromEntries(workspace.comments.map((comment) => [comment.id, comment]));
@@ -226,8 +295,31 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
     const pollStamps = poll ? successivePolls(new Date(workspace.now), poll.intervalMs, 2).join(',') : '';
     const openWave = issues.find((issue) => issue.kind === 'WAVE' && issue.severity === 'HIGH' && (issue.state === 'NEW' || issue.state === 'IN_PROGRESS'));
 
+    const reloadLive = () => setReloadTick((tick) => tick + 1);
+    const runLive = async (task) => {
+        setActionError('');
+        try {
+            await task();
+            return true;
+        } catch (error) {
+            const status = error?.response?.status;
+            setActionError(status === 403 ? 'Only org admins can make that change.' : 'That change could not be saved. Nothing was changed.');
+            return false;
+        }
+    };
+
     const patchIssue = (id, changer) => {
         setIssues((current) => current.map((issue) => (issue.id === id ? changer(issue) : issue)));
+    };
+    const changeIssue = async (id, body, changer) => {
+        if (!isLive) {
+            patchIssue(id, changer);
+            return;
+        }
+        if (await runLive(() => socialApi.patchIssue(id, body))) {
+            patchIssue(id, changer);
+            reloadLive();
+        }
     };
     const log = (issue, text) => ({
         ...issue,
@@ -256,19 +348,29 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
         .filter((row) => row.comment)
         .sort((left, right) => Date.parse(left.comment.at) - Date.parse(right.comment.at));
 
-    const assignIssue = (issue, name) => patchIssue(issue.id, (current) => log({
+    const assignIssue = (issue, name) => changeIssue(issue.id, { assigneeId: teamIdFor(name) }, (current) => log({
         ...current,
         assignee: name,
         state: name ? (current.state === 'NEW' ? 'IN_PROGRESS' : current.state) : current.state,
     }, name ? `Assigned to ${name} by ${actor}.` : `Unassigned by ${actor}. State stays In progress.`));
 
-    const applyBulk = (action) => {
+    const applyBulk = async (action) => {
         const count = selected.length;
+        if (isLive) {
+            const ok = await runLive(() => socialApi.bulkIssues({
+                issueIds: selected,
+                action,
+                assigneeId: action === 'assign' ? bulkAssignee.id : undefined,
+                dismissReason: action === 'dismiss' ? dismissReason : undefined,
+            }));
+            if (!ok) return;
+            reloadLive();
+        }
         setIssues((current) => current.map((issue) => {
             if (!selected.includes(issue.id)) return issue;
             if (action === 'handled') return log({ ...issue, state: 'HANDLED' }, `Marked handled by ${actor}.`);
             if (action === 'dismiss') return log({ ...issue, state: 'DISMISSED' }, `Dismissed: ${dismissReason}. By ${actor}.`);
-            return log({ ...issue, assignee: 'Sam R.', state: issue.state === 'NEW' ? 'IN_PROGRESS' : issue.state }, `Assigned to Sam R. by ${actor}.`);
+            return log({ ...issue, assignee: bulkAssignee.name, state: issue.state === 'NEW' ? 'IN_PROGRESS' : issue.state }, `Assigned to ${bulkAssignee.name} by ${actor}.`);
         }));
         setSelected([]);
         setBulkPrompt('');
@@ -276,7 +378,7 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
             ? `Marked ${count} issues handled.`
             : action === 'dismiss'
                 ? `Dismissed ${count} issues: ${dismissReason}.`
-                : `Assigned ${count} issues to Sam R.`);
+                : `Assigned ${count} issues to ${bulkAssignee.name}.`);
     };
 
     const saveFlag = (comment) => {
@@ -472,8 +574,8 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                 <div id="issue-assignee" data-testid="issue-assignee" className="scroll-mt-24">
                     <h3 className="mb-3 text-sm font-light">Decision</h3>
                     <div className="flex flex-wrap gap-2">
-                        <DashboardButton isDark={isDark} variant="secondary" onClick={() => patchIssue(activeIssue.id, (issue) => log({ ...issue, state: 'HANDLED' }, `Marked handled by ${actor}.`))}>Mark handled</DashboardButton>
-                        <DashboardButton isDark={isDark} variant="secondary" onClick={() => patchIssue(activeIssue.id, (issue) => log({ ...issue, state: 'IN_PROGRESS' }, `Reopened by ${actor}.`))}>Reopen</DashboardButton>
+                        <DashboardButton isDark={isDark} variant="secondary" onClick={() => changeIssue(activeIssue.id, { status: 'HANDLED' }, (issue) => log({ ...issue, state: 'HANDLED' }, `Marked handled by ${actor}.`))}>Mark handled</DashboardButton>
+                        <DashboardButton isDark={isDark} variant="secondary" onClick={() => changeIssue(activeIssue.id, { status: 'IN_PROGRESS' }, (issue) => log({ ...issue, state: 'IN_PROGRESS' }, `Reopened by ${actor}.`))}>Reopen</DashboardButton>
                     </div>
                     <div className="mt-4 flex flex-wrap items-end gap-2">
                         <label className="text-sm font-light">
@@ -482,19 +584,19 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                                 {DISMISS_REASONS.map((reason) => <option key={reason}>{reason}</option>)}
                             </DashboardSelect>
                         </label>
-                        <DashboardButton isDark={isDark} variant="danger" onClick={() => patchIssue(activeIssue.id, (issue) => log({ ...issue, state: 'DISMISSED' }, `Dismissed: ${dismissReason}. By ${actor}.`))}>Dismiss</DashboardButton>
+                        <DashboardButton isDark={isDark} variant="danger" onClick={() => changeIssue(activeIssue.id, { status: 'DISMISSED', dismissReason }, (issue) => log({ ...issue, state: 'DISMISSED' }, `Dismissed: ${dismissReason}. By ${actor}.`))}>Dismiss</DashboardButton>
                     </div>
                     <label className="mt-4 block text-sm font-light">
                         Assignee
                         <DashboardSelect isDark={isDark} className="mt-1" aria-label="Assignee" value={activeIssue.assignee} onChange={(event) => assignIssue(activeIssue, event.target.value)}>
                             <option value="">Unassigned</option>
-                            {TEAM.map((name) => <option key={name} value={name}>{name}</option>)}
+                            {teamNames.map((name) => <option key={name} value={name}>{name}</option>)}
                         </DashboardSelect>
                     </label>
                     <DashboardButton isDark={isDark} className="mt-2" variant="secondary" aria-expanded={assignOpen} onClick={() => setAssignOpen((open) => !open)}>Assign</DashboardButton>
                     {assignOpen ? (
                         <ul aria-label="Team members" className="mt-2 space-y-1">
-                            {TEAM.map((name) => (
+                            {teamNames.map((name) => (
                                 <li key={name}>
                                     <DashboardButton isDark={isDark} variant="subtle" onClick={() => { assignIssue(activeIssue, name); setAssignOpen(false); }}>{name}</DashboardButton>
                                 </li>
@@ -503,13 +605,13 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                     ) : null}
                     <label className="mt-4 block text-sm font-light">
                         Severity
-                        <DashboardSelect isDark={isDark} className="mt-1" aria-label="Severity" value={activeIssue.severity} onChange={(event) => patchIssue(activeIssue.id, (issue) => log({ ...issue, severity: event.target.value }, `Severity changed from ${issue.severity} to ${event.target.value}.`))}>
+                        <DashboardSelect isDark={isDark} className="mt-1" aria-label="Severity" value={activeIssue.severity} onChange={(event) => changeIssue(activeIssue.id, { severity: event.target.value }, (issue) => log({ ...issue, severity: event.target.value }, `Severity changed from ${issue.severity} to ${event.target.value}.`))}>
                             {SEVERITIES.map((severity) => <option key={severity}>{severity}</option>)}
                         </DashboardSelect>
                     </label>
                     <label className="mt-4 block text-sm font-light">
                         Topic
-                        <DashboardSelect isDark={isDark} className="mt-1" aria-label="Topic" value={activeIssue.topic} onChange={(event) => patchIssue(activeIssue.id, (issue) => log({ ...issue, topic: event.target.value }, `Topic changed from ${issue.topic} to ${event.target.value}.`))}>
+                        <DashboardSelect isDark={isDark} className="mt-1" aria-label="Topic" value={activeIssue.topic} onChange={(event) => changeIssue(activeIssue.id, { topic: event.target.value }, (issue) => log({ ...issue, topic: event.target.value }, `Topic changed from ${issue.topic} to ${event.target.value}.`))}>
                             {TOPICS.map((topic) => <option key={topic}>{topic}</option>)}
                         </DashboardSelect>
                     </label>
@@ -532,6 +634,7 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                     emptyTitle="No notes yet"
                     emptyHint="Notes stay in Tixmo and are not posted."
                     onAddComment={async ({ content }) => {
+                        if (isLive && !(await runLive(() => socialApi.patchIssue(activeIssue.id, { note: content })))) return;
                         setNotes((current) => ({
                             ...current,
                             [activeIssue.id]: [...(current[activeIssue.id] || []), { id: `${activeIssue.id}-${(current[activeIssue.id] || []).length + 1}`, content, author: user?.firstName || 'Team' }],
@@ -602,7 +705,7 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                     <DashboardSelect isDark={isDark} className="mt-1" aria-label="Assignee filter" value={filters.assignee} onChange={(event) => update({ assignee: event.target.value })}>
                         <option value="all">Anyone</option>
                         <option value="unassigned">Unassigned</option>
-                        {TEAM.map((name) => <option key={name}>{name}</option>)}
+                        {teamNames.map((name) => <option key={name}>{name}</option>)}
                     </DashboardSelect>
                 </label>
             </div>
@@ -660,7 +763,7 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                             <p>
                                 {bulkPrompt === 'handled' && `Mark ${selected.length} selected issues handled?`}
                                 {bulkPrompt === 'dismiss' && `Dismiss ${selected.length} selected issues as ${dismissReason}?`}
-                                {bulkPrompt === 'assign' && `Assign ${selected.length} selected issues to Sam R.?`}
+                                {bulkPrompt === 'assign' && `Assign ${selected.length} selected issues to ${bulkAssignee.name}?`}
                             </p>
                             <div className="mt-2 flex gap-2">
                                 <DashboardButton isDark={isDark} onClick={() => applyBulk(bulkPrompt)}>Confirm</DashboardButton>
@@ -834,6 +937,11 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                             <span>Platform: {page.platformLabel} &quot;{page.name}&quot;. Linked: {page.linked}.</span>
                         </label>
                     ))}
+                    {isLive ? (
+                        <label className="block">Sandbox access token
+                            <DashboardTextInput isDark={isDark} className="mt-1" type="password" autoComplete="off" aria-label="Sandbox access token" value={sandboxToken} onChange={(event) => setSandboxToken(event.target.value)} />
+                        </label>
+                    ) : null}
                     <p>Access used (read-only): posts, comments, insights.</p>
                 </fieldset>
             ) : null}
@@ -859,7 +967,7 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
             ) : null}
             <div className="mt-4 flex flex-wrap gap-2">
                 {connectStep === '2' || connectStep === '3' ? <DashboardButton isDark={isDark} variant="secondary" onClick={() => update({ connect: String(Math.max(1, Number(connectStep) - 1)) })}>{connectStep === '2' ? 'Cancel' : 'Back'}</DashboardButton> : null}
-                <DashboardButton isDark={isDark} onClick={() => update(connectStep === '4' ? { connect: '', tab: 'overview' } : { connect: String(Math.min(4, Number(connectStep || 1) + 1)), tab: 'settings' })}>
+                <DashboardButton isDark={isDark} onClick={() => (isLive && connectStep === '3' ? finishConnect() : update(connectStep === '4' ? { connect: '', tab: 'overview' } : { connect: String(Math.min(4, Number(connectStep || 1) + 1)), tab: 'settings' }))}>
                     {connectStep === '3' ? 'Connect & sync' : connectStep === '4' ? 'Go to Overview' : connectStep === '2' ? 'Next' : 'Connect sandbox Page'}
                 </DashboardButton>
             </div>
@@ -867,6 +975,44 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
     );
 
     const disconnectAccount = accounts.find((account) => account.id === disconnectId);
+    const confirmDisconnect = async (account) => {
+        if (isLive && !(await runLive(() => socialApi.disconnectAccount(account.id)))) return;
+        setRemoved((current) => [...current, account.id]);
+        setDisconnectId('');
+        if (isLive) reloadLive();
+    };
+    const syncAccounts = async () => {
+        if (await runLive(() => socialApi.syncNow())) reloadLive();
+    };
+    const finishConnect = async () => {
+        const eventIds = [...new Set(editions)];
+        const ok = await runLive(() => socialApi.connectAccount({
+            accessToken: sandboxToken.trim() || chosenPage?.accessToken,
+            pageId: chosenPage?.id,
+            eventIds,
+        }));
+        setSandboxToken('');
+        if (!ok) return;
+        reloadLive();
+        update({ connect: '4', tab: 'settings' });
+    };
+    const changeHold = async (mode, until) => {
+        if (isLive && !(await runLive(() => socialApi.setHold({ mode, until })))) return;
+        setHold(mode);
+        if (isLive) reloadLive();
+    };
+    const persistThresholds = async (next) => {
+        if (isLive && !(await runLive(() => socialApi.saveThresholds(next)))) return false;
+        setEditingThresholds(false);
+        if (isLive) reloadLive();
+        return true;
+    };
+    const resetKeywords = async () => {
+        const defaults = cloneDefaultPhrases();
+        if (isLive && !(await runLive(() => socialApi.saveKeywords(defaults)))) return;
+        setPhrases(defaults);
+        if (isLive) reloadLive();
+    };
     const settingsPanel = (
         <div className="space-y-4">
             {workspace.scene === 'no-accounts' ? (
@@ -911,12 +1057,17 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                     <div data-testid="disconnect-confirm" className={cn('mt-3 rounded-md border p-3 text-sm font-light', theme.panel)}>
                         <p>Disconnect sandbox Page &apos;{disconnectAccount.name}&apos;? Polling stops and its stored access is deleted.</p>
                         <div className="mt-2 flex gap-2">
-                            <DashboardButton isDark={isDark} variant="danger" onClick={() => { setRemoved((current) => [...current, disconnectAccount.id]); setDisconnectId(''); }}>Confirm disconnect</DashboardButton>
+                            <DashboardButton isDark={isDark} variant="danger" onClick={() => confirmDisconnect(disconnectAccount)}>Confirm disconnect</DashboardButton>
                             <DashboardButton isDark={isDark} variant="secondary" onClick={() => setDisconnectId('')}>Cancel</DashboardButton>
                         </div>
                     </div>
                 ) : null}
-                {admin ? <DashboardButton isDark={isDark} className="mt-3" variant="secondary" onClick={() => update({ connect: '1' })}>Connect sandbox Page</DashboardButton> : <p className="mt-3 text-sm font-light">An org admin connects accounts.</p>}
+                {admin ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        <DashboardButton isDark={isDark} variant="secondary" onClick={() => update({ connect: '1' })}>Connect sandbox Page</DashboardButton>
+                        {isLive ? <DashboardButton isDark={isDark} variant="secondary" onClick={syncAccounts}>Sync now</DashboardButton> : null}
+                    </div>
+                ) : <p className="mt-3 text-sm font-light">An org admin connects accounts.</p>}
             </DashboardSection>
             <DashboardSection isDark={isDark} title="Alert rules and threshold mode" description="Named modes only. With All events, Overview uses the tightest mode and names that event.">
                 <p className="text-sm font-light">Current mode: {shownMode}{shownMode === 'NORMAL' ? '' : ' (tighter)'}</p>
@@ -933,13 +1084,13 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                         <legend>Mode</legend>
                         {HOLDS.map((option) => (
                             <label key={option.label} className="flex items-center gap-2">
-                                <input type="radio" name="threshold-hold" value={option.value} checked={hold === option.value} onChange={() => setHold(option.value)} />
+                                <input type="radio" name="threshold-hold" value={option.value} checked={hold === option.value} onChange={() => changeHold(option.value, holdUntil)} />
                                 {option.label}
                             </label>
                         ))}
                         {hold ? (
                             <label className="block">Until
-                                <DashboardTextInput isDark={isDark} className="mt-1" type="date" aria-label="Hold until" value={holdUntil} onChange={(event) => setHoldUntil(event.target.value)} />
+                                <DashboardTextInput isDark={isDark} className="mt-1" type="date" aria-label="Hold until" value={holdUntil} onChange={(event) => setHoldUntil(event.target.value)} onBlur={() => { if (isLive && hold && holdUntil !== workspace.hold?.until) changeHold(hold, holdUntil); }} />
                             </label>
                         ) : null}
                         <p>Each hold runs until the date. Precedence is EVENT DAY, then ON-SALE DAY, then NORMAL.</p>
@@ -974,7 +1125,8 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                     {admin ? (
                         <div className="mt-3 flex flex-wrap gap-2">
                             <DashboardButton isDark={isDark} variant="secondary" onClick={() => setEditingThresholds(true)}>Edit thresholds</DashboardButton>
-                            <DashboardButton isDark={isDark} variant="secondary" onClick={() => { setThresholds(cloneDefaultThresholds()); setEditingThresholds(false); }}>Reset to defaults</DashboardButton>
+                            {isLive && editingThresholds ? <DashboardButton isDark={isDark} onClick={() => persistThresholds(thresholds)}>Save thresholds</DashboardButton> : null}
+                            <DashboardButton isDark={isDark} variant="secondary" onClick={async () => { const defaults = cloneDefaultThresholds(); if (await persistThresholds(defaults)) setThresholds(defaults); }}>Reset to defaults</DashboardButton>
                         </div>
                     ) : null}
                 </div>
@@ -985,7 +1137,7 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                     ))}
                     <p className="text-sm font-light">Other: question marks with no topic, and manual flags.</p>
                     <p className="text-sm font-light">Sentiment sorts within a severity only. It never opens an issue by itself.</p>
-                    {admin ? <DashboardButton isDark={isDark} variant="secondary" onClick={() => setPhrases(cloneDefaultPhrases())}>Reset keywords</DashboardButton> : null}
+                    {admin ? <DashboardButton isDark={isDark} variant="secondary" onClick={resetKeywords}>Reset keywords</DashboardButton> : null}
                 </div>
             </DashboardSection>
             <DashboardSection isDark={isDark} title="Notifications" description="In-app badge and the Overview alert strip stay on. HIGH email is on by default.">
@@ -1034,6 +1186,7 @@ const SocialCommandCenter = ({ isDark, user, preview = false }) => {
                         </>
                     )}
                 />
+                {actionError ? <p role="alert" className="text-sm font-light">{actionError}</p> : null}
                 {tab !== 'overview' ? modeLine : null}
                 <label hidden>
                     Label

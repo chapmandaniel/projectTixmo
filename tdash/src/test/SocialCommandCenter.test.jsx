@@ -3,12 +3,15 @@ import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { buildWorkspace } from '../features/social/mockWorkspace';
 import SocialCommandCenter from '../features/social/SocialCommandCenter';
 import api from '../lib/api';
 
 vi.mock('../lib/api', () => ({
     default: {
         get: vi.fn(),
+        post: vi.fn(),
+        patch: vi.fn(),
     },
 }));
 
@@ -16,7 +19,8 @@ const enabledConfig = {
     success: true,
     data: {
         enabled: true,
-        ready: true,
+        // Default screenshot/unit path uses mocks until ready is true.
+        ready: false,
         phase: 'mock',
         environment: 'sandbox',
         sandboxOnly: true,
@@ -183,5 +187,35 @@ describe('Social Command Center', () => {
         const root = path.resolve(__dirname, '../features/social');
         const source = walk(root).filter((file) => file.endsWith('.js') || file.endsWith('.jsx')).map((file) => readFileSync(file, 'utf8')).join('\n');
         expect(source).not.toMatch(/setInterval|openrouter|fetch\(|customer|buyer|ticket holder/i);
+    });
+
+    it('loads the live workspace when no scene is requested and writes issue edits to the API', async () => {
+        const live = { ...buildWorkspace('ready'), workspaceMarker: 'live' };
+        live.events = [{ id: 'live-event', name: 'Live Event', mode: 'NORMAL', modeLabel: 'NORMAL', onSale: true, scheduled: true }];
+        const readyConfig = {
+            success: true,
+            data: { ...enabledConfig.data, ready: true, phase: 'data' },
+        };
+        api.get.mockImplementation((url) => Promise.resolve({
+            data: url === '/social/workspace' ? { success: true, data: live } : readyConfig,
+        }));
+        api.patch.mockResolvedValue({ data: { success: true, data: {} } });
+        window.HTMLElement.prototype.scrollIntoView = vi.fn();
+        renderSocial('/social?tab=issues&event=live-event&view=all');
+        expect(await screen.findByRole('option', { name: 'Live Event' })).toBeInTheDocument();
+        expect(api.get).toHaveBeenCalledWith('/social/workspace', expect.objectContaining({
+            suppressGlobalError: true,
+            params: expect.objectContaining({ event: 'live-event', range: '7d' }),
+        }));
+        fireEvent.click(screen.getAllByRole('link', { name: /Ticketing/ })[0]);
+        fireEvent.click(await screen.findByRole('button', { name: 'Mark handled' }));
+        await screen.findByText(/Marked handled by Avery Stone/);
+        expect(api.patch).toHaveBeenCalledWith(expect.stringMatching(/^\/social\/issues\//), { status: 'HANDLED' }, { suppressGlobalError: true });
+    });
+
+    it('keeps scene mocks off the live endpoint', async () => {
+        renderSocial('/social?scene=no-data&tab=posts');
+        await screen.findByText('No data in this range');
+        expect(api.get).not.toHaveBeenCalledWith('/social/workspace', expect.anything());
     });
 });

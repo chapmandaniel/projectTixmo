@@ -101,10 +101,10 @@ describe('classifier egress', () => {
     const root = path.resolve(__dirname, '../../src/social');
     const api = path.resolve(__dirname, '../../src/api/social');
     const files = [...walk(root), ...walk(api)].filter((file) => file.endsWith('.ts'));
-    const banned = [
+    // Sandbox Graph outbound is allowed only in graph-client.ts (injectable fetcher).
+    const bannedEverywhere = [
       'openrouter',
       'OPENROUTER',
-      'fetch(',
       'axios',
       'node:http',
       'node:https',
@@ -120,8 +120,12 @@ describe('classifier egress', () => {
     ];
     for (const file of files) {
       const source = readFileSync(file, 'utf8');
-      for (const term of banned) {
+      const base = path.basename(file);
+      for (const term of bannedEverywhere) {
         expect(source.includes(term)).toBe(false);
+      }
+      if (base !== 'graph-client.ts') {
+        expect(source.includes('fetch(')).toBe(false);
       }
       expect(source).not.toMatch(/\bcustomer\b/i);
       expect(source).not.toMatch(/\bbuyer\b/i);

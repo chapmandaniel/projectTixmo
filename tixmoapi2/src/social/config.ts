@@ -8,12 +8,13 @@ export interface SocialModuleConfig {
   ready: boolean;
   readyReason: string | null;
   sandboxOnly: true;
-  phase: 'mock';
+  phase: 'mock' | 'data';
   environment: 'sandbox';
   sandboxBaseUrl: string | null;
   alertFrom: string;
   emailCapture: boolean;
   poll: PollConfig;
+  pollEnabled: boolean;
   retentionDays: number;
   teamAccessKeyPresent: boolean;
 }
@@ -59,12 +60,13 @@ export const readSocialConfig = (env: NodeJS.ProcessEnv = process.env): SocialMo
     ready,
     readyReason: ready ? null : readyReason,
     sandboxOnly: true,
-    phase: 'mock',
+    phase: ready ? 'data' : 'mock',
     environment: 'sandbox',
     sandboxBaseUrl,
     alertFrom: env.SOCIAL_ALERT_EMAIL_FROM?.trim() || env.EMAIL_FROM?.trim() || '',
     emailCapture: env.SOCIAL_EMAIL_CAPTURE === 'true' || isLabsEnvironment(env),
     poll: readPollConfig(env),
+    pollEnabled: env.SOCIAL_POLL_ENABLED === 'true',
     retentionDays: retentionDays(env.SOCIAL_COMMENT_RETENTION_DAYS),
     teamAccessKeyPresent: Boolean(env.SOCIAL_SANDBOX_TEAM_ACCESS_KEY?.trim()),
   };
@@ -79,6 +81,7 @@ export const toPublicSocialConfig = (config: SocialModuleConfig) => ({
   phase: config.phase,
   environment: config.environment,
   poll: config.poll,
+  pollEnabled: config.pollEnabled,
   retentionDays: config.retentionDays,
   emailCapture: config.emailCapture,
 });

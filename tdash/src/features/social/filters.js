@@ -16,6 +16,7 @@ export const readSocialFilters = (params) => ({
     to: params.get('to') || '',
     account: oneOf(params.get('account'), SOCIAL_ACCOUNTS, 'all'),
     scene: params.get('scene') || 'ready',
+    sceneRequested: Boolean(params.get('scene') || params.get('graphError')),
     graphError: params.get('graphError') || '',
     connect: params.get('connect') || '',
     view: oneOf(params.get('view'), ISSUE_VIEWS, 'needs-action'),
