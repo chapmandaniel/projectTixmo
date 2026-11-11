@@ -9,6 +9,9 @@ import Stripe from 'stripe';
 import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
 import { config } from '../../src/config/environment';
+import { stripeWebhookTestNeeds, testOrSkipMissingEnv } from '../helpers/missing-env';
+
+const test = testOrSkipMissingEnv('payment-fenced-checkpoint.test.ts', stripeWebhookTestNeeds);
 afterAll(async () => {
   await prisma.$disconnect();
 });

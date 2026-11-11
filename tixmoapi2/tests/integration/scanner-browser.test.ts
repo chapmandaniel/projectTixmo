@@ -6,6 +6,7 @@ import { createServer } from 'net';
 import fs from 'fs';
 import path from 'path';
 import request from 'supertest';
+import { testOrSkipMissingEnv } from '../helpers/missing-env';
 
 let mockProviderAttempts = 0;
 const mockRefuse = () => {
@@ -36,6 +37,13 @@ const gate = () => {
   });
   return { promise, resolve };
 };
+const it = testOrSkipMissingEnv('scanner-browser.test.ts', [
+  {
+    name: 'TIXMO_BROWSER_PATH',
+    kind: 'value',
+    why: 'this test launches the Chrome binary at this path. CI sets TIXMO_BROWSER_PATH=/usr/bin/google-chrome, so the path assertion still runs there.',
+  },
+]);
 it('two independent emulated scanner browsers race one paid QR and reject duplicate and revoked use', async () => {
   require('../../../scripts/verification-safety.cjs').validateVerificationTargets(process.env);
   const { observeFunction } = require('../../../scripts/soak-lifetime.cjs') as {

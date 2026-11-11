@@ -10,6 +10,12 @@ import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
 import { notificationService } from '../../src/utils/notificationService';
 import { config } from '../../src/config/environment';
+import { stripeWebhookTestNeeds, testOrSkipMissingEnv } from '../helpers/missing-env';
+
+const testStripe = testOrSkipMissingEnv(
+  'payment-prelock-missing-intent.test.ts',
+  stripeWebhookTestNeeds
+);
 
 function deferred() {
   let resolve!: () => void;
@@ -34,7 +40,7 @@ async function bounded<T>(promise: Promise<T>, timeoutMs = 5000): Promise<T> {
 afterAll(async () => {
   await prisma.$disconnect();
 });
-test.each(['success', 'failure'])(
+testStripe.each(['success', 'failure'])(
   'pre-lock missing-intent ownership revalidation phase=%s',
   async (phase) => {
     const staleFailure = phase.startsWith('failure');
