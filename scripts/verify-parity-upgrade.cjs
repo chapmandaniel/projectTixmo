@@ -129,14 +129,16 @@ async function verify(env = process.env, dependencies = {}) {
   let directory, ownership, database, source, safeEnv;
   const root = dependencies.root || path.resolve(__dirname, '..');
   const run = dependencies.command || command;
-  const sql = async (db, input) =>
+  const sql = async (db, input, mode = 'query') =>
     run(
       'docker',
       [
         'exec',
         '-i',
         '-e',
-        'PGOPTIONS=-c statement_timeout=5000 -c lock_timeout=2000',
+        mode === 'drop'
+          ? 'PGOPTIONS=-c statement_timeout=15000 -c lock_timeout=10000'
+          : 'PGOPTIONS=-c statement_timeout=5000 -c lock_timeout=2000',
         env.PG_CONTAINER,
         'psql',
         '-X',
@@ -150,7 +152,7 @@ async function verify(env = process.env, dependencies = {}) {
         '-d',
         db,
       ],
-      { env: safeEnv, input, timeout: 15000 }
+      { env: safeEnv, input, timeout: mode === 'drop' ? 25000 : 15000 }
     );
   try {
     source = guard(env);
@@ -266,15 +268,32 @@ async function verify(env = process.env, dependencies = {}) {
   } finally {
     if (owned) {
       try {
-        // No FORCE/termination: refuse cleanup until no child connection remains.
-        assert.equal(
+        // The upgrade child is already joined and both of its Prisma clients are
+        // disconnected. What still races this drop is an autovacuum worker on
+        // this owned database: the launcher only sometimes has one running, and
+        // that worker holds AccessShareLock. DROP DATABASE cannot signal the
+        // worker until it takes AccessExclusiveLock, and lock_timeout=2000
+        // cancels that wait. Signal only autovacuum workers on this database.
+        // Every other backend must drain first. No FORCE, and no other database.
+        const drainMs = Number.isFinite(dependencies.drainMs) ? dependencies.drainMs : 8000;
+        const sleep =
+          dependencies.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+        const deadline = Date.now() + drainMs;
+        const admin = source.pathname.slice(1);
+        for (;;) {
           await sql(
-            source.pathname.slice(1),
-            `SELECT count(*) FROM pg_stat_activity WHERE datname='${database}';`
-          ),
-          '0'
-        );
-        await sql(source.pathname.slice(1), `DROP DATABASE "${database}";`);
+            admin,
+            `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${database}' AND backend_type='autovacuum worker' AND pid<>pg_backend_pid();`
+          );
+          const blockers = await sql(
+            admin,
+            `SELECT count(*) FROM pg_stat_activity WHERE datname='${database}' AND pid<>pg_backend_pid() AND backend_type IS DISTINCT FROM 'autovacuum worker';`
+          );
+          if (blockers === '0') break;
+          if (Date.now() >= deadline) throw Error('Owned database still has a client session');
+          await sleep(200);
+        }
+        await sql(admin, `DROP DATABASE "${database}";`, 'drop');
         databaseRemoved =
           (await sql(
             source.pathname.slice(1),
