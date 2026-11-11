@@ -1,0 +1,106 @@
+name: Dependency advisory early warning
+
+on:
+  schedule:
+    # 11:30 UTC = 08:00 NST (America/St_Johns standard time); 09:00 NDT in summer.
+    - cron: '30 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-advisory-early-warning-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  advisory-audit:
+    name: Audit ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - tixmoapi2
+          - tdash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --prefix ${{ matrix.package }}
+
+      - name: Run the same audit gate as local-gates
+        env:
+          AUDIT_PREFIX: ${{ matrix.package }}
+        run: |
+          node --input-type=module <<'EOF'
+          import { spawnSync } from 'node:child_process';
+          import { appendFileSync, readFileSync } from 'node:fs';
+          import { evaluateDependencyAudit } from './scripts/dependency-audit-gate.mjs';
+
+          const auditPrefix = process.env.AUDIT_PREFIX;
+          const summary = process.env.GITHUB_STEP_SUMMARY;
+          const writeSummary = (text) => {
+            if (summary) appendFileSync(summary, text);
+          };
+
+          const result = spawnSync('npm', ['--prefix', auditPrefix, 'audit', '--json'], {
+            cwd: process.cwd(),
+            env: process.env,
+            encoding: 'utf8',
+            shell: false,
+            maxBuffer: 10 * 1024 * 1024,
+          });
+
+          if (result.error) {
+            writeSummary(`## ${auditPrefix}\n\nFailed to run npm audit: ${result.error.message}\n`);
+            console.error(result.error);
+            process.exit(1);
+          }
+
+          let report;
+          try {
+            report = JSON.parse(result.stdout || '');
+          } catch {
+            if (result.stderr) process.stderr.write(result.stderr);
+            writeSummary(`## ${auditPrefix}\n\nnpm audit --json did not return JSON.\n`);
+            process.exit(result.status || 1);
+          }
+
+          let lockfile;
+          try {
+            lockfile = JSON.parse(readFileSync(`${auditPrefix}/package-lock.json`, 'utf8'));
+          } catch {
+            writeSummary(`## ${auditPrefix}\n\nCould not read ${auditPrefix}/package-lock.json\n`);
+            process.exit(1);
+          }
+
+          const decision = evaluateDependencyAudit(report, lockfile);
+          const counts = report.metadata?.vulnerabilities || {};
+          writeSummary(
+            `## ${auditPrefix}\n\n` +
+            `- command: npm --prefix ${auditPrefix} audit --json (same as local-gates; includes devDependencies)\n` +
+            `- counts: info=${counts.info || 0}, low=${counts.low || 0}, moderate=${counts.moderate || 0}, high=${counts.high || 0}, critical=${counts.critical || 0}, total=${counts.total || 0}\n` +
+            `- result: ${decision.ok ? 'pass' : 'fail'}\n` +
+            (decision.ignored ? `- ignored (existing CI exemptions): ${decision.ignored}\n` : '') +
+            (decision.ok ? '' : `- reason: ${decision.reason}\n`)
+          );
+
+          if (!decision.ok) {
+            if (result.stderr) process.stderr.write(result.stderr);
+            console.error(`[advisory-early-warning] ${auditPrefix} failed: ${decision.reason}`);
+            process.exit(1);
+          }
+          if (decision.ignored) {
+            console.log(`[advisory-early-warning] ${decision.ignored}`);
+          }
+          console.log(`[advisory-early-warning] ${auditPrefix} passed`);
+          EOF
