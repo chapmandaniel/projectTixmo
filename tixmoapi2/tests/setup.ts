@@ -1,5 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-undef */
+// Snapshot once, before a test file can publish a synthetic Stripe key or browser path.
+if (process.env.TIXMO_TEST_ENV_CAPTURED !== '1') {
+  process.env.TIXMO_TEST_ENV_CAPTURED = '1';
+  process.env.TIXMO_CAPTURED_STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? '';
+  process.env.TIXMO_CAPTURED_STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? '';
+  process.env.TIXMO_CAPTURED_BROWSER_PATH = process.env.TIXMO_BROWSER_PATH ?? '';
+}
+
 import { execSync } from 'child_process';
 import path from 'path';
 import { AddressInfo, Server } from 'net';

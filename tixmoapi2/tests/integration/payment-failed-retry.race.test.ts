@@ -7,6 +7,12 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
 import { config } from '../../src/config/environment';
+import { stripeWebhookTestNeeds, testOrSkipMissingEnv } from '../helpers/missing-env';
+
+const testStripe = testOrSkipMissingEnv(
+  'payment-failed-retry.race.test.ts',
+  stripeWebhookTestNeeds
+);
 
 function deferred() {
   let resolve!: () => void;
@@ -32,7 +38,7 @@ async function bounded(promise: Promise<unknown>) {
 afterAll(async () => {
   await prisma.$disconnect();
 });
-test.each([false, true])(
+testStripe.each([false, true])(
   'FAILED same-ID retry has one claimant (second delivery claims first=%s)',
   async (secondFirst) => {
     const key = `race132-${Date.now()}`;

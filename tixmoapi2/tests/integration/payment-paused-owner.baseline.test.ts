@@ -6,6 +6,12 @@ import Stripe from 'stripe';
 import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
 import { config } from '../../src/config/environment';
+import { stripeWebhookTestNeeds, testOrSkipMissingEnv } from '../helpers/missing-env';
+
+const testStripe = testOrSkipMissingEnv(
+  'payment-paused-owner.baseline.test.ts',
+  stripeWebhookTestNeeds
+);
 
 function deferred() {
   let resolve!: () => void;
@@ -30,7 +36,7 @@ async function bounded<T>(promise: Promise<T>, timeoutMs = 5000): Promise<T> {
 afterAll(async () => {
   await prisma.$disconnect();
 });
-test.each(['fresh', 'before-handler', 'before-finish'])(
+testStripe.each(['fresh', 'before-handler', 'before-finish'])(
   'paused owner phase=%s',
   async (phase) => {
     const key = `paused141-${Date.now()}`;

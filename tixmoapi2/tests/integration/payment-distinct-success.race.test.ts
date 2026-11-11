@@ -7,6 +7,12 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
 import { config } from '../../src/config/environment';
+import { stripeWebhookTestNeeds, testOrSkipMissingEnv } from '../helpers/missing-env';
+
+const testStripe = testOrSkipMissingEnv(
+  'payment-distinct-success.race.test.ts',
+  stripeWebhookTestNeeds
+);
 
 function deferred() {
   let resolve!: () => void;
@@ -32,7 +38,7 @@ async function bounded(promise: Promise<unknown>) {
 afterAll(async () => {
   await prisma.$disconnect();
 });
-test.each([
+testStripe.each([
   [0, false],
   [0, true],
   [1, false],

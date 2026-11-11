@@ -6,6 +6,9 @@ import Stripe from 'stripe';
 import { PaymentService } from '../../src/api/payments/service';
 import { orderService } from '../../src/api/orders/service';
 import { config } from '../../src/config/environment';
+import { stripeWebhookTestNeeds, testOrSkipMissingEnv } from '../helpers/missing-env';
+
+const testStripe = testOrSkipMissingEnv('payment-failed-successor.test.ts', stripeWebhookTestNeeds);
 
 function deferred() {
   let resolve!: () => void;
@@ -30,7 +33,7 @@ async function bounded<T>(promise: Promise<T>, timeoutMs = 5000): Promise<T> {
 afterAll(async () => {
   await prisma.$disconnect();
 });
-test.each([false, true])(
+testStripe.each([false, true])(
   'failed B real C retry stale A failure=%s',
   async (staleFailure) => {
     const key = `failedbc143-${Date.now()}`;
