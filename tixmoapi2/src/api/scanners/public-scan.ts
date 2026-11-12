@@ -1,3 +1,5 @@
+import { ApiError } from '../../utils/ApiError';
+
 // Gate devices only need an admit/deny decision, why, the ticket type, and a
 // first name. The raw barcode and the buyer's email stay on the server.
 // `reason` is a stable code. `message` is the text to show. `eventName` is set
@@ -202,6 +204,37 @@ export const presentScanResult = (result: {
     holderFirstName,
   };
 };
+
+const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
+
+const asNonEmptyString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value ? value : undefined;
+
+/**
+ * Map a thrown scanTicket error onto one offline validate row.
+ * WRONG_EVENT is a ticket mismatch (scan log already recorded); copy its
+ * reasonCode and the presented human message. EXTERNAL_TICKETING stays fatal.
+ * A bare "Scanner is not assigned to this event" (authorizeSync) has no
+ * reasonCode and must not be rewritten as WRONG_EVENT here.
+ */
+export function deniedOfflineScanRow(error: unknown): {
+  rethrow: boolean;
+  reason: string;
+  reasonCode?: string;
+} {
+  const data = error instanceof ApiError ? asRecord(error.data) : undefined;
+  if (asNonEmptyString(data?.code) === 'EXTERNAL_TICKETING') {
+    return { rethrow: true, reason: '' };
+  }
+  const reasonCode = asNonEmptyString(data?.reasonCode);
+  return {
+    rethrow: false,
+    reason:
+      asNonEmptyString(data?.message) || (error instanceof Error ? error.message : 'Unknown error'),
+    ...(reasonCode ? { reasonCode } : {}),
+  };
+}
 
 // Persisted on scan_logs.failure_reason. Admitted scans use ADMITTED.
 // NOT_STARTED is the doors denial. REFUNDED is the refunded-order denial.
