@@ -97,7 +97,7 @@ describe('checkout Stripe.js requests', () => {
         expect(await screen.findByText('Secure checkout')).toBeInTheDocument();
         await settleStripeImport();
         expect(stripeScripts().map((node) => node.src)).toEqual([
-            'https://js.stripe.com/dahlia/stripe.js',
+            'https://js.stripe.com/endive/stripe.js',
         ]);
     });
 });
