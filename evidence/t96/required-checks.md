@@ -59,7 +59,13 @@ Full suite, because the PR vs `main` changes the workflows and `scripts/`.
 | `local-gates` | success | 14m38s | [43282857138](https://github.com/chapmandaniel/projectTixmo/actions/runs/43282857138) | [131408447056](https://github.com/chapmandaniel/projectTixmo/actions/runs/43282857138/job/131408447056) |
 | `configured-image-restore` | success | 3m18s | [43282857138](https://github.com/chapmandaniel/projectTixmo/actions/runs/43282857138) | [131408447629](https://github.com/chapmandaniel/projectTixmo/actions/runs/43282857138/job/131408447629) |
 
-The evidence commit that adds this file retriggers the same required names on the new head; record that second pass below after it finishes.
+Evidence commit `651045d61d0ba6d0c9c61bed86b095b5a8147a4e` retriggered the full suite because the PR vs `main` still contains the workflow and `scripts/` changes. All three required checks stayed green:
+
+| Check | Conclusion | Duration | Run | Job |
+| --- | --- | --- | --- | --- |
+| `guard-and-build` | success | 1m20s | [43286008502](https://github.com/chapmandaniel/projectTixmo/actions/runs/43286008502) | [131419459978](https://github.com/chapmandaniel/projectTixmo/actions/runs/43286008502/job/131419459978) |
+| `local-gates` | success | 14m55s | [43286008279](https://github.com/chapmandaniel/projectTixmo/actions/runs/43286008279) | [131419458670](https://github.com/chapmandaniel/projectTixmo/actions/runs/43286008279/job/131419458670) |
+| `configured-image-restore` | success | 2m43s | [43286008279](https://github.com/chapmandaniel/projectTixmo/actions/runs/43286008279) | [131419459253](https://github.com/chapmandaniel/projectTixmo/actions/runs/43286008279/job/131419459253) |
 
 ## Dependabot #190–#192 onto `aee5459`
 
