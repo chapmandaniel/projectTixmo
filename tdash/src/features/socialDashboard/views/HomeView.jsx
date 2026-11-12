@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ResponsiveLine } from '@nivo/line';
 import {
@@ -7,8 +7,11 @@ import {
 } from '../../../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../../../lib/dashboardTheme';
 import { cn } from '../../../lib/utils';
+import { FAN_MENTIONS } from '../mockData';
 import { buildHomeStory } from '../homeStory';
+import { mentionSourcePlatform, parsePlatformFilter } from '../platforms';
 import { PostCard } from '../components/PostCard';
+import { AttentionGrid } from '../components/AttentionGrid';
 import { NOT_AVAILABLE } from '../plainCopy';
 import { formatNumber, formatSignedPercent, percentChange } from '../formatters';
 import { CHART_COLORS, getChartTheme } from '../chartTheme';
@@ -20,6 +23,25 @@ const TILES = [
     { id: 'linkClicks', label: 'Link clicks' },
 ];
 
+const ChartBox = ({ children }) => {
+    const ref = useRef(null);
+    const [ready, setReady] = useState(false);
+    useEffect(() => {
+        const node = ref.current;
+        if (!node) return undefined;
+        const update = () => setReady(node.clientWidth > 8 && node.clientHeight > 8);
+        update();
+        const observer = new ResizeObserver(update);
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, []);
+    return (
+        <div ref={ref} className="h-[280px] w-full">
+            {ready ? children : null}
+        </div>
+    );
+};
+
 const changeLine = (change, days) => {
     if (change === null) return `vs previous ${days} days`;
     const direction = change >= 0 ? 'up' : 'down';
@@ -30,7 +52,14 @@ export const HomeView = ({ isDark, dashboard, href }) => {
     const theme = getDashboardTheme(isDark);
     const days = dashboard.rangeDays || 28;
     const storyPosts = dashboard.publishedInPeriod?.length ? dashboard.publishedInPeriod : dashboard.posts;
-    const { topPosts, whatHappened, attention, bestTimeToPost } = buildHomeStory(storyPosts, days);
+    const selectedPlatforms = dashboard.accounts.map((account) => account.platform);
+    const lookingAtAll = parsePlatformFilter(dashboard.filters?.platform).length === 0;
+    const mentions = FAN_MENTIONS.filter((mention) => {
+        const platform = mentionSourcePlatform(mention.source);
+        if (!platform) return lookingAtAll;
+        return selectedPlatforms.includes(platform);
+    });
+    const { topPosts, whatHappened, attention, bestTimeToPost } = buildHomeStory(storyPosts, days, mentions);
 
     const lineData = [
         { id: 'This period', color: CHART_COLORS.current, data: dashboard.currentSeries.map((point) => ({ x: point.date, y: point.impressions })) },
@@ -47,23 +76,7 @@ export const HomeView = ({ isDark, dashboard, href }) => {
 
     return (
         <div className="space-y-6">
-            {attention.length ? (
-                <DashboardSection isDark={isDark} accent="brand" title="Needs your attention">
-                    <ul className="space-y-3">
-                        {attention.map((item) => (
-                            <li key={item.id} className={cn('flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between', isDark ? 'border-dashboard-border bg-dashboard-panelMuted' : 'border-slate-200 bg-slate-50')}>
-                                <div>
-                                    <p className={theme.textPrimary}>{item.title}</p>
-                                    <p className={cn('mt-1 text-sm font-light', theme.textSecondary)}>{item.reason}</p>
-                                </div>
-                                <Link to={href(item.to)} className="inline-flex items-center justify-center rounded-md border border-dashboard-accent bg-dashboard-accent px-4 py-2.5 text-sm font-light text-white">
-                                    Open
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </DashboardSection>
-            ) : null}
+            <AttentionGrid isDark={isDark} cards={attention} href={href} />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {TILES.map((tile) => {
@@ -85,27 +98,35 @@ export const HomeView = ({ isDark, dashboard, href }) => {
             </div>
 
             <DashboardSection isDark={isDark} accent="violet" title="What happened">
-                <ul className="space-y-3">
-                    {whatHappened.map((item) => (
-                        <li key={item.id}>
-                            <Link to={href(item.to)} className={cn('block rounded-md border p-4', isDark ? 'border-dashboard-border hover:bg-dashboard-panelAlt' : 'border-slate-200 hover:bg-slate-50')}>
-                                <p className={cn('text-sm font-light leading-6', theme.textPrimary)}>{item.text}</p>
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
+                {whatHappened.length ? (
+                    <ul className="space-y-3">
+                        {whatHappened.map((item) => (
+                            <li key={item.id}>
+                                <Link to={href(item.to)} className={cn('block rounded-md border p-4', isDark ? 'border-dashboard-border hover:bg-dashboard-panelAlt' : 'border-slate-200 hover:bg-slate-50')}>
+                                    <p className={cn('text-sm font-light leading-6', theme.textPrimary)}>{item.text}</p>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className={cn('text-sm font-light', theme.textSecondary)}>Nothing notable for this filter yet.</p>
+                )}
             </DashboardSection>
 
             <DashboardSection isDark={isDark} accent="brand" title="Top posts">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    {topPosts.map((post) => (
-                        <PostCard key={post.id} post={post} isDark={isDark} compact to={href(`posts/${post.id}`)} />
-                    ))}
-                </div>
+                {topPosts.length ? (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        {topPosts.map((post) => (
+                            <PostCard key={post.id} post={post} isDark={isDark} compact to={href(`posts/${post.id}`)} />
+                        ))}
+                    </div>
+                ) : (
+                    <p className={cn('text-sm font-light', theme.textSecondary)}>No posts in this filter yet.</p>
+                )}
             </DashboardSection>
 
             <DashboardSection isDark={isDark} accent="slate" title="People reached" description="This period vs last. Dots mark days you posted.">
-                <div className="h-[280px]">
+                <ChartBox>
                     <ResponsiveLine
                         data={lineData}
                         theme={getChartTheme(isDark)}
@@ -128,7 +149,7 @@ export const HomeView = ({ isDark, dashboard, href }) => {
                         axisLeft={{ tickSize: 0, tickPadding: 8, format: (value) => formatNumber(value) }}
                         legends={[{ anchor: 'top-right', direction: 'row', translateY: -8, itemWidth: 110, itemHeight: 16, symbolSize: 8 }]}
                     />
-                </div>
+                </ChartBox>
             </DashboardSection>
 
             <DashboardSection isDark={isDark} accent="amber" title="Best time to post">

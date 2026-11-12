@@ -1,3 +1,5 @@
+import { parsePlatformFilter } from './platforms';
+
 /**
  * Typed mock-data module for the Social Dashboard prototype.
  * All accounts, posts, comments and peers are fictional demo records.
@@ -152,9 +154,9 @@ const addDaysIso = (iso, days) => {
 
 export const RANGE_END = '2026-11-10';
 export const DATE_RANGE_OPTIONS = [
-    { id: '7', days: 7, label: 'Last 7 days' },
-    { id: '28', days: 28, label: 'Last 28 days' },
-    { id: '90', days: 90, label: 'Last 90 days' },
+    { id: '7', days: 7, label: 'Last 7 days', short: '7d' },
+    { id: '28', days: 28, label: 'Last 28 days', short: '28d' },
+    { id: '90', days: 90, label: 'Last 90 days', short: '90d' },
 ];
 
 const FULL_DATES = dateRange(addDaysIso(RANGE_END, -179), RANGE_END);
@@ -862,7 +864,7 @@ const inCurrentWindow = (iso) => {
  */
 export const selectDashboard = (filters = {}) => {
     const accountId = filters.accountId && filters.accountId !== 'all' ? filters.accountId : null;
-    const platform = filters.platform && filters.platform !== 'all' ? filters.platform : null;
+    const platformIds = parsePlatformFilter(filters.platform);
     const distribution = filters.distribution && filters.distribution !== 'all' ? filters.distribution : null;
     const format = filters.format && filters.format !== 'all' ? filters.format : null;
     const theme = filters.theme || null;
@@ -871,7 +873,7 @@ export const selectDashboard = (filters = {}) => {
 
     const accounts = ACCOUNTS.filter((account) => (
         (!accountId || account.id === accountId)
-        && (!platform || account.platform === platform)
+        && (!platformIds.length || platformIds.includes(account.platform))
     ));
     const accountIds = new Set(accounts.map((account) => account.id));
 
@@ -974,7 +976,7 @@ export const selectDashboard = (filters = {}) => {
         kpis,
         scorecard,
         insights: INSIGHTS,
-        filters: { accountId: accountId || 'all', platform: platform || 'all', distribution: distribution || 'all', format: format || 'all', theme },
+        filters: { accountId: accountId || 'all', platform: platformIds.join(',') || 'all', distribution: distribution || 'all', format: format || 'all', theme },
     };
 };
 

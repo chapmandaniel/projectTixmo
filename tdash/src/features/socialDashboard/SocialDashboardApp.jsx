@@ -79,6 +79,7 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
         updateParams({
             account: nextFilters.accountId,
             range: String(nextFilters.range || '28') === '28' ? '' : String(nextFilters.range),
+            platform: !nextFilters.platform || nextFilters.platform === 'all' ? '' : nextFilters.platform,
         });
     };
 
@@ -165,7 +166,7 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
                     )}
                 />
                 <Route path="posts/:postId" element={<PostDetailRoute isDark={isDark} href={href} />} />
-                <Route path="fans" element={<FansView isDark={isDark} href={href} />} />
+                <Route path="fans" element={<FansView isDark={isDark} dashboard={dashboard} href={href} />} />
                 <Route path="accounts" element={<AccountsView isDark={isDark} dashboard={dashboard} />} />
                 {analystViews ? (
                     <>

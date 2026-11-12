@@ -26,12 +26,16 @@ describe('Social dashboard prototype', () => {
         expect(screen.getByRole('heading', { name: 'Needs your attention' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'What happened' })).toBeInTheDocument();
         expect(screen.getAllByText('People reached').length).toBeGreaterThan(0);
-        expect(screen.getByText(/Last 28 days/)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '28d' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Instagram' })).toBeInTheDocument();
         expect(screen.getByRole('navigation', { name: 'Social dashboard' })).toHaveTextContent('Home');
         expect(screen.getByRole('navigation', { name: 'Social dashboard' })).toHaveTextContent('Fans');
         expect(screen.queryByRole('link', { name: 'Listening' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'X' })).not.toBeInTheDocument();
         expect(screen.queryByText(/percentile/i)).not.toBeInTheDocument();
         expect(screen.queryByText(/share of voice/i)).not.toBeInTheDocument();
+        expect(screen.getByText('Unanswered questions')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Reply' })).toBeInTheDocument();
 
         const topCard = screen.getAllByTestId(/post-card-/)[0];
         expect(topCard).toHaveAttribute('data-testid', 'post-card-ig-reel-aurora');
@@ -45,6 +49,21 @@ describe('Social dashboard prototype', () => {
         expect(screen.getByRole('heading', { name: 'What fans complained about' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Questions fans asked' })).toBeInTheDocument();
         expect(screen.getAllByText('Mira Chen (demo)').length).toBeGreaterThan(0);
+    });
+
+    it('filters Home by platform chip and keeps the query in the URL', () => {
+        mount('/social');
+        fireEvent.click(screen.getByRole('button', { name: 'Instagram' }));
+        expect(screen.getByTestId('social-dashboard-url')).toHaveTextContent('platform=instagram');
+        expect(screen.getByText(/Your Aurora After Dark Reel was your best post/)).toBeInTheDocument();
+        expect(screen.queryByText(/Fog City strobe brought in more likes, comments and shares/)).not.toBeInTheDocument();
+        expect(screen.getAllByTestId(/post-card-/)[0]).toHaveAttribute('data-testid', 'post-card-ig-reel-aurora');
+    });
+
+    it('shows all-clear attention when a quiet platform is selected', () => {
+        mount('/social?platform=linkedin');
+        expect(screen.getByText('All clear, nothing needs you right now.')).toBeInTheDocument();
+        expect(screen.queryByText('Unanswered questions')).not.toBeInTheDocument();
     });
 
     it('renders Fans and Accounts', () => {

@@ -1,4 +1,5 @@
 import { likesCommentsShares, peopleReachedValue } from './plainCopy';
+import { mentionSourcePlatform } from './platforms';
 
 const REPORT_TIMEZONE = 'America/St_Johns';
 
@@ -54,51 +55,116 @@ const questionSnippet = (comment) => {
     return phrase && phrase !== 'unclassified' ? phrase : null;
 };
 
-export const buildAttentionItems = (posts) => {
-    const items = [];
-    const rankedUnanswered = [...posts]
-        .map((post) => ({ post, unanswered: unansweredOn(post) }))
-        .filter((row) => row.unanswered.length)
-        .sort((a, b) => b.unanswered.length - a.unanswered.length);
-    if (rankedUnanswered[0]) {
-        const { post, unanswered } = rankedUnanswered[0];
-        items.push({
+const SNAPSHOT_NOW = '2026-11-11T08:14:22-03:30';
+const YESTERDAY = '2026-11-10';
+
+const hoursAgo = (iso) => Math.max(1, Math.round((new Date(SNAPSHOT_NOW).getTime() - new Date(iso).getTime()) / (1000 * 60 * 60)));
+
+const waitingLabel = (hours) => (hours < 24 ? `${hours}h` : `${Math.round(hours / 24)}d`);
+
+const trendSinceYesterday = (items, dateKey = 'createdAt') => {
+    const n = items.filter((item) => String(item[dateKey] || '').slice(0, 10) === YESTERDAY).length;
+    return n > 0 ? `+${n} since yesterday` : 'no new ones yesterday';
+};
+
+const uniquePlatforms = (posts) => [...new Set(posts.map((post) => post.platform).filter(Boolean))];
+
+export const buildAttentionCards = (posts, mentions = []) => {
+    const cards = [];
+
+    const unansweredRows = posts.flatMap((post) => unansweredOn(post).map((comment) => ({ post, comment })));
+    if (unansweredRows.length) {
+        const oldest = [...unansweredRows].sort((a, b) => a.comment.createdAt.localeCompare(b.comment.createdAt))[0];
+        const hours = hoursAgo(oldest.comment.createdAt);
+        cards.push({
             id: 'unanswered',
-            title: 'Unanswered questions',
-            reason: `${unanswered.length} fan${unanswered.length === 1 ? '' : 's'} asked a question on ${post.thumbnailLabel} and ${unanswered.length === 1 ? 'is' : 'are'} still waiting.`,
+            count: unansweredRows.length,
+            label: 'Unanswered questions',
+            severity: hours >= 12 || unansweredRows.length >= 3 ? 'urgent' : 'watch',
+            platforms: uniquePlatforms(unansweredRows.map((row) => row.post)),
+            context: `Oldest waiting ${waitingLabel(hours)}, on ${oldest.post.thumbnailLabel}`,
+            trend: trendSinceYesterday(unansweredRows.map((row) => row.comment)),
+            actionLabel: 'Reply',
             to: 'fans?tab=needs-reply',
         });
     }
 
-    const merchComplaints = posts.flatMap((post) => post.comments
-        .filter((comment) => (
-            (comment.sentiment === 'negative' || comment.sentiment === 'mixed')
-            && /merch|stock|sold out|restock|jacket|tee/i.test(`${comment.theme} ${comment.text}`)
-        ))
+    const complaintRows = posts.flatMap((post) => post.comments
+        .filter((comment) => comment.sentiment === 'negative' || comment.sentiment === 'mixed')
         .map((comment) => ({ post, comment })));
-    if (merchComplaints.length) {
-        const post = merchComplaints[0].post;
-        items.push({
+    if (complaintRows.length) {
+        const topPost = [...posts].sort((a, b) => (
+            complaintRows.filter((row) => row.post.id === b.id).length - complaintRows.filter((row) => row.post.id === a.id).length
+        ))[0];
+        cards.push({
             id: 'complaints',
-            title: 'Complaints picking up',
-            reason: `Merch sold-out comments jumped after ${post.thumbnailLabel}.`,
+            count: complaintRows.length,
+            label: 'Complaints picking up',
+            severity: complaintRows.length >= 4 ? 'urgent' : 'watch',
+            platforms: uniquePlatforms(complaintRows.map((row) => row.post)),
+            context: `Mostly on ${topPost?.thumbnailLabel || 'recent posts'}`,
+            trend: trendSinceYesterday(complaintRows.map((row) => row.comment)),
+            actionLabel: 'Review',
             to: 'fans?tab=complaints',
         });
     }
 
-    const captionHit = posts.flatMap((post) => post.comments
-        .filter((comment) => comment.sentiment === 'negative' && /caption|which night|wrong night/i.test(comment.text))
-        .map((comment) => ({ post, comment })))[0];
-    if (captionHit) {
-        items.push({
+    const negativePost = [...posts]
+        .map((post) => {
+            const samples = post.comments.filter((comment) => comment.sentiment === 'negative');
+            return {
+                post,
+                samples,
+                count: samples.length ? (post.negativeComments || samples.length) : 0,
+            };
+        })
+        .filter((row) => row.count > 0)
+        .sort((a, b) => b.count - a.count)[0];
+    if (negativePost) {
+        const sample = negativePost.samples[0];
+        cards.push({
             id: 'negative-post',
-            title: 'A post is getting negative comments',
-            reason: `${captionHit.post.thumbnailLabel} is being called out for the wrong night in the caption.`,
-            to: `posts/${captionHit.post.id}`,
+            count: negativePost.count,
+            label: 'Negative comments on a post',
+            severity: 'urgent',
+            platforms: [negativePost.post.platform],
+            context: sample && /caption|which night|wrong night/i.test(sample.text)
+                ? `${negativePost.post.thumbnailLabel} is being called out for the wrong night in the caption.`
+                : `On ${negativePost.post.thumbnailLabel}`,
+            trend: trendSinceYesterday(negativePost.samples),
+            actionLabel: 'Open post',
+            to: `posts/${negativePost.post.id}`,
         });
     }
 
-    return items;
+    if (mentions.length) {
+        const byDay = new Map();
+        mentions.forEach((mention) => {
+            byDay.set(mention.date, (byDay.get(mention.date) || 0) + 1);
+        });
+        const days = [...byDay.entries()].sort((a, b) => b[1] - a[1] || b[0].localeCompare(a[0]));
+        const [spikeDate, spikeCount] = days[0] || [];
+        const otherCounts = days.slice(1).map((entry) => entry[1]);
+        const usual = otherCounts.length ? otherCounts.reduce((sum, value) => sum + value, 0) / otherCounts.length : 0;
+        if (spikeDate && spikeCount >= 3 && spikeCount >= Math.max(usual * 2, usual + 1)) {
+            const spikeMentions = mentions.filter((mention) => mention.date === spikeDate);
+            const logos = [...new Set(spikeMentions.map((mention) => mentionSourcePlatform(mention.source)).filter(Boolean))];
+            cards.push({
+                id: 'mention-spike',
+                count: spikeCount,
+                label: 'Unusual mention spike',
+                severity: 'watch',
+                platforms: logos,
+                context: `${spikeCount} mentions on ${new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric', timeZone: 'America/St_Johns' }).format(new Date(`${spikeDate}T12:00:00-03:30`))}`,
+                trend: `+${Math.round(spikeCount - usual)} vs a usual day`,
+                actionLabel: 'Review',
+                to: 'fans?tab=mentions',
+            });
+        }
+    }
+
+    const rank = { urgent: 0, watch: 1 };
+    return cards.sort((a, b) => (rank[a.severity] - rank[b.severity]) || a.label.localeCompare(b.label));
 };
 
 export const buildWhatHappened = (posts, rangeDays = 28) => {
@@ -180,12 +246,12 @@ export const bestTimeToPostSentence = (post) => {
     return `Your posts do best ${weekday}s ${window}`;
 };
 
-export const buildHomeStory = (posts, rangeDays = 28) => {
+export const buildHomeStory = (posts, rangeDays = 28, mentions = []) => {
     const topPosts = rankPostsByReach(posts).slice(0, 3);
     return {
         topPosts,
         whatHappened: buildWhatHappened(posts, rangeDays),
-        attention: buildAttentionItems(posts),
+        attention: buildAttentionCards(posts, mentions),
         bestTimeToPost: bestTimeToPostSentence(topPosts[0]),
     };
 };

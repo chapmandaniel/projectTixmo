@@ -3,7 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { DashboardButton, DashboardSection } from '../../../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../../../lib/dashboardTheme';
 import { cn } from '../../../lib/utils';
-import { COMMUNITY, FAN_MENTIONS, POSTS, getPostById } from '../mockData';
+import { COMMUNITY, FAN_MENTIONS, getPostById } from '../mockData';
+import { mentionSourcePlatform, parsePlatformFilter } from '../platforms';
 import { commentAge } from '../plainCopy';
 
 const TABS = [
@@ -14,19 +15,25 @@ const TABS = [
     { id: 'mentions', label: 'Mentions' },
 ];
 
-const allComments = POSTS.flatMap((post) => post.comments.map((comment) => ({ ...comment, postTitle: post.thumbnailLabel })));
-
-export const FansView = ({ isDark, href }) => {
+export const FansView = ({ isDark, dashboard, href }) => {
     const theme = getDashboardTheme(isDark);
     const [params, setParams] = useSearchParams();
     const tab = TABS.some((item) => item.id === params.get('tab')) ? params.get('tab') : 'needs-reply';
     const [handled, setHandled] = useState(() => new Set());
-
-    const unanswered = allComments.filter((comment) => comment.isQuestion && !comment.teamReplied).length;
+    const posts = dashboard?.posts || [];
+    const selectedPlatforms = (dashboard?.accounts || []).map((account) => account.platform);
+    const lookingAtAll = parsePlatformFilter(dashboard?.filters?.platform).length === 0;
+    const comments = posts.flatMap((post) => post.comments.map((comment) => ({ ...comment, postTitle: post.thumbnailLabel, platform: post.platform })));
+    const unanswered = comments.filter((comment) => comment.isQuestion && !comment.teamReplied).length;
+    const mentions = FAN_MENTIONS.filter((mention) => {
+        const platform = mentionSourcePlatform(mention.source);
+        if (!platform) return lookingAtAll;
+        return selectedPlatforms.includes(platform);
+    });
 
     const rows = useMemo(() => {
         if (tab === 'mentions') {
-            return FAN_MENTIONS.map((mention) => ({
+            return mentions.map((mention) => ({
                 id: mention.id,
                 text: mention.text,
                 author: mention.author,
@@ -35,7 +42,7 @@ export const FansView = ({ isDark, href }) => {
                 postId: mention.postId,
             }));
         }
-        return allComments.filter((comment) => {
+        return comments.filter((comment) => {
             if (handled.has(comment.id)) return false;
             if (tab === 'needs-reply') return (comment.isQuestion || comment.sentiment === 'negative') && !comment.teamReplied;
             if (tab === 'complaints') return comment.sentiment === 'negative' || comment.sentiment === 'mixed';
@@ -43,7 +50,7 @@ export const FansView = ({ isDark, href }) => {
             if (tab === 'praise') return comment.sentiment === 'positive';
             return true;
         });
-    }, [tab, handled]);
+    }, [tab, handled, comments, mentions]);
 
     return (
         <div className="space-y-6">
