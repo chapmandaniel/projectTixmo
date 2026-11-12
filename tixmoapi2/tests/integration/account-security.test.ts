@@ -348,8 +348,17 @@ describe('Account revocation and invitation boundaries', () => {
       const invitation = await invite();
       if (change === 'delete') await userService.deleteUser(invitation.id);
       if (change === 'demote') await userService.updateUser(invitation.id, { role: 'CUSTOMER' });
-      if (change === 'issuer-offboard')
+      if (change === 'issuer-offboard') {
+        const successor = await registerUser(app, {
+          email: 'test-security-successor@example.com',
+          role: 'OWNER',
+        });
+        await prisma.user.update({
+          where: { id: successor.user.id },
+          data: { organizationId, role: 'OWNER', isPlatformAdmin: false },
+        });
         await userService.updateUser(owner.user.id, { organizationId: null });
+      }
       const result = await request(app)
         .post('/api/v1/auth/accept-invitation')
         .send({ token: invitation.token, password });

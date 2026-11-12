@@ -10,6 +10,7 @@ import { staffInvitationExpiresAt } from '../../utils/staffInvitation';
 
 import prisma from '../../config/prisma';
 import { hasValidStaffScope } from '../../utils/accountSession';
+import { assertCanRelinquishOrganizationOwnership } from '../../utils/organizationOwnership';
 
 type SafeUser = Omit<
   User,
@@ -339,54 +340,67 @@ export class UserService {
    * Update user profile
    */
   async updateUser(id: string, data: UpdateUserInput): Promise<SafeUser> {
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id },
-    });
+    return prisma.$transaction(async (tx) => {
+      const existingUser = await tx.user.findUnique({
+        where: { id },
+      });
 
-    if (!existingUser) {
-      throw ApiError.notFound('User not found');
-    }
+      if (!existingUser) {
+        throw ApiError.notFound('User not found');
+      }
 
-    const authorityChanged =
-      (data.role !== undefined && data.role !== existingUser.role) ||
-      (data.organizationId !== undefined && data.organizationId !== existingUser.organizationId) ||
-      data.permissions !== undefined;
-    // Losing organization membership must never manufacture global staff authority.
-    const role =
-      data.organizationId === null && existingUser.organizationId
-        ? ('CUSTOMER' as const)
-        : data.role;
+      const authorityChanged =
+        (data.role !== undefined && data.role !== existingUser.role) ||
+        (data.organizationId !== undefined &&
+          data.organizationId !== existingUser.organizationId) ||
+        data.permissions !== undefined;
+      // Losing organization membership must never manufacture global staff authority.
+      const role =
+        data.organizationId === null && existingUser.organizationId
+          ? ('CUSTOMER' as const)
+          : data.role;
+      const nextRole = role ?? existingUser.role;
+      const nextOrganizationId =
+        nextRole === 'CUSTOMER'
+          ? null
+          : data.organizationId === undefined
+            ? existingUser.organizationId
+            : data.organizationId;
 
-    // Update user
-    return await prisma.user.update({
-      where: { id },
-      data: {
-        ...data,
-        ...(role ? { role } : {}),
-        ...(authorityChanged ? { sessionVersion: { increment: 1 }, isPlatformAdmin: false } : {}),
-        permissions: data.permissions as Prisma.InputJsonValue | undefined,
-        ...(role === 'CUSTOMER' ? { organizationId: null, permissions: Prisma.JsonNull } : {}),
-        updatedAt: new Date(),
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        title: true,
-        permissions: true,
-        phone: true,
-        role: true,
-        organizationId: true,
-        emailVerified: true,
-        twoFactorEnabled: true,
-        lastLogin: true,
-        createdAt: true,
-        updatedAt: true,
-        passwordHash: false,
-        twoFactorSecret: false,
-      },
+      await assertCanRelinquishOrganizationOwnership(tx, existingUser, {
+        role: nextRole,
+        organizationId: nextOrganizationId,
+      });
+
+      return tx.user.update({
+        where: { id },
+        data: {
+          ...data,
+          ...(role ? { role } : {}),
+          ...(authorityChanged ? { sessionVersion: { increment: 1 }, isPlatformAdmin: false } : {}),
+          permissions: data.permissions as Prisma.InputJsonValue | undefined,
+          ...(role === 'CUSTOMER' ? { organizationId: null, permissions: Prisma.JsonNull } : {}),
+          updatedAt: new Date(),
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          title: true,
+          permissions: true,
+          phone: true,
+          role: true,
+          organizationId: true,
+          emailVerified: true,
+          twoFactorEnabled: true,
+          lastLogin: true,
+          createdAt: true,
+          updatedAt: true,
+          passwordHash: false,
+          twoFactorSecret: false,
+        },
+      });
     });
   }
 
@@ -394,36 +408,42 @@ export class UserService {
    * Soft delete user (anonymize email)
    */
   async deleteUser(id: string): Promise<void> {
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id },
-    });
+    const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+    await prisma.$transaction(async (tx) => {
+      const existingUser = await tx.user.findUnique({
+        where: { id },
+      });
 
-    if (!existingUser) {
-      throw ApiError.notFound('User not found');
-    }
+      if (!existingUser) {
+        throw ApiError.notFound('User not found');
+      }
 
-    // Soft delete by anonymizing email
-    await prisma.user.update({
-      where: { id },
-      data: {
-        email: `deleted_${id}@deleted.com`,
-        firstName: 'Deleted',
-        lastName: 'User',
-        phone: null,
-        title: null,
+      await assertCanRelinquishOrganizationOwnership(tx, existingUser, {
         role: 'CUSTOMER',
-        isPlatformAdmin: false,
         organizationId: null,
-        permissions: Prisma.JsonNull,
-        disabledAt: new Date(),
-        passwordHash: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
-        sessionVersion: { increment: 1 },
-        emailVerified: false,
-        twoFactorEnabled: false,
-        twoFactorSecret: null,
-        updatedAt: new Date(),
-      },
+      });
+
+      await tx.user.update({
+        where: { id },
+        data: {
+          email: `deleted_${id}@deleted.com`,
+          firstName: 'Deleted',
+          lastName: 'User',
+          phone: null,
+          title: null,
+          role: 'CUSTOMER',
+          isPlatformAdmin: false,
+          organizationId: null,
+          permissions: Prisma.JsonNull,
+          disabledAt: new Date(),
+          passwordHash,
+          sessionVersion: { increment: 1 },
+          emailVerified: false,
+          twoFactorEnabled: false,
+          twoFactorSecret: null,
+          updatedAt: new Date(),
+        },
+      });
     });
   }
 
