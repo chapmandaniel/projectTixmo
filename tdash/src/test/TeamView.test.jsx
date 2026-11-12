@@ -141,4 +141,64 @@ describe('TeamView', () => {
         expect(await screen.findByText('Sam Staff')).toBeInTheDocument();
         expect(screen.getByTitle('Remove member')).toBeInTheDocument();
     });
+
+    it('locks the signed-in admin from changing their own role', async () => {
+        render(<TeamView isDark user={adminUser} />);
+        await waitFor(() => expect(screen.getByText('Ava Admin')).toBeInTheDocument());
+        expect(screen.getByTitle('Role locked')).toBeDisabled();
+        fireEvent.click(screen.getByTitle('Role locked'));
+        expect(screen.queryByLabelText('Role for Ava Admin')).not.toBeInTheDocument();
+        expect(apiPut).not.toHaveBeenCalled();
+    });
+
+    it('limits the admin role dropdown to roles below ADMIN', async () => {
+        render(<TeamView isDark user={adminUser} />);
+        await waitFor(() => expect(screen.getByText('Pat Promoter')).toBeInTheDocument());
+        fireEvent.click(screen.getByTitle('Change role'));
+        const options = Array.from(screen.getByLabelText('Role for Pat Promoter').querySelectorAll('option')).map(
+            (option) => option.value
+        );
+        expect(options).toEqual(['MANAGER', 'PROMOTER', 'TEAM_MEMBER', 'SCANNER']);
+        expect(options).not.toContain('OWNER');
+        expect(options).not.toContain('ADMIN');
+    });
+
+    it('hides role and remove controls for a TEAM_MEMBER', async () => {
+        const actor = { id: 'member-actor', role: 'TEAM_MEMBER', organizationId: 'org-1' };
+        apiGet.mockResolvedValue(rosterFor(actor));
+        render(<TeamView isDark user={actor} />);
+        expect(await screen.findByText('Sam Staff')).toBeInTheDocument();
+        expect(screen.queryByTitle('Remove member')).not.toBeInTheDocument();
+        expect(screen.queryByTitle('Change role')).not.toBeInTheDocument();
+        expect(screen.getAllByTitle('Role locked').length).toBeGreaterThan(0);
+    });
+
+    it('opens the invite wizard and posts a new member', async () => {
+        apiPost.mockResolvedValue({
+            data: { data: { id: 'invited-1', invitationDelivered: true } },
+        });
+        render(<TeamView isDark user={adminUser} />);
+        await waitFor(() => expect(screen.getByText('Pat Promoter')).toBeInTheDocument());
+        fireEvent.click(screen.getByText('Add member'));
+        fireEvent.change(screen.getByLabelText(/First Name/), { target: { value: 'Jane' } });
+        fireEvent.change(screen.getByLabelText(/Last Name/), { target: { value: 'Doe' } });
+        fireEvent.change(screen.getByLabelText(/Email Address/), { target: { value: 'jane@example.com' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Send Invite' }));
+        await waitFor(() => {
+            expect(apiPost).toHaveBeenCalledWith(
+                '/users',
+                expect.objectContaining({
+                    firstName: 'Jane',
+                    lastName: 'Doe',
+                    email: 'jane@example.com',
+                    role: 'TEAM_MEMBER',
+                    organizationId: 'org-1',
+                })
+            );
+        });
+        expect(await screen.findByRole('status')).toHaveTextContent('Invitation sent.');
+    });
 });
+
