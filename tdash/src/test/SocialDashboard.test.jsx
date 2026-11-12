@@ -33,7 +33,12 @@ describe('Social dashboard prototype', () => {
         expect(screen.queryByText(/percentile/i)).not.toBeInTheDocument();
         expect(screen.queryByText(/share of voice/i)).not.toBeInTheDocument();
 
-        fireEvent.click(screen.getByText(/Your Aurora After Dark Reel was your best post this month/));
+        const topCard = screen.getAllByTestId(/post-card-/)[0];
+        expect(topCard).toHaveAttribute('data-testid', 'post-card-ig-reel-aurora');
+        expect(topCard).toHaveTextContent('Aurora After Dark Reel');
+        expect(screen.getByText(/Your Aurora After Dark Reel was your best post/)).toBeInTheDocument();
+        expect(screen.getByText(/The Fog City strobe brought in more likes, comments and shares than any other post/)).toBeInTheDocument();
+        fireEvent.click(topCard);
 
         expect(await screen.findByText('Better than 8 of your last 10 Reels')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'What fans loved' })).toBeInTheDocument();

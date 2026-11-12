@@ -7,7 +7,7 @@ import {
 } from '../../../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../../../lib/dashboardTheme';
 import { cn } from '../../../lib/utils';
-import { ATTENTION_ITEMS, BEST_TIME_TO_POST, WHAT_HAPPENED } from '../mockData';
+import { buildHomeStory } from '../homeStory';
 import { PostCard } from '../components/PostCard';
 import { NOT_AVAILABLE } from '../plainCopy';
 import { formatNumber, formatSignedPercent, percentChange } from '../formatters';
@@ -29,9 +29,8 @@ const changeLine = (change, days) => {
 export const HomeView = ({ isDark, dashboard, href }) => {
     const theme = getDashboardTheme(isDark);
     const days = dashboard.rangeDays || 28;
-    const topPosts = [...dashboard.posts]
-        .sort((a, b) => (b.reach.value || 0) - (a.reach.value || 0))
-        .slice(0, 3);
+    const storyPosts = dashboard.publishedInPeriod?.length ? dashboard.publishedInPeriod : dashboard.posts;
+    const { topPosts, whatHappened, attention, bestTimeToPost } = buildHomeStory(storyPosts, days);
 
     const lineData = [
         { id: 'This period', color: CHART_COLORS.current, data: dashboard.currentSeries.map((point) => ({ x: point.date, y: point.impressions })) },
@@ -48,10 +47,10 @@ export const HomeView = ({ isDark, dashboard, href }) => {
 
     return (
         <div className="space-y-6">
-            {ATTENTION_ITEMS.length ? (
+            {attention.length ? (
                 <DashboardSection isDark={isDark} accent="brand" title="Needs your attention">
                     <ul className="space-y-3">
-                        {ATTENTION_ITEMS.map((item) => (
+                        {attention.map((item) => (
                             <li key={item.id} className={cn('flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between', isDark ? 'border-dashboard-border bg-dashboard-panelMuted' : 'border-slate-200 bg-slate-50')}>
                                 <div>
                                     <p className={theme.textPrimary}>{item.title}</p>
@@ -87,7 +86,7 @@ export const HomeView = ({ isDark, dashboard, href }) => {
 
             <DashboardSection isDark={isDark} accent="violet" title="What happened">
                 <ul className="space-y-3">
-                    {WHAT_HAPPENED.map((item) => (
+                    {whatHappened.map((item) => (
                         <li key={item.id}>
                             <Link to={href(item.to)} className={cn('block rounded-md border p-4', isDark ? 'border-dashboard-border hover:bg-dashboard-panelAlt' : 'border-slate-200 hover:bg-slate-50')}>
                                 <p className={cn('text-sm font-light leading-6', theme.textPrimary)}>{item.text}</p>
@@ -133,7 +132,7 @@ export const HomeView = ({ isDark, dashboard, href }) => {
             </DashboardSection>
 
             <DashboardSection isDark={isDark} accent="amber" title="Best time to post">
-                <p className={cn('text-lg font-light', theme.textPrimary)}>{BEST_TIME_TO_POST}</p>
+                <p className={cn('text-lg font-light', theme.textPrimary)}>{bestTimeToPost}</p>
             </DashboardSection>
         </div>
     );

@@ -254,9 +254,9 @@ export const POSTS = [
         themes: ['lineup', 'merch', 'aurora-after-dark'],
         campaign: 'Aurora After Dark',
         mockPermalink: 'https://instagram.example/p/demo-aurora-after-dark',
-        reach: cell(28400),
-        impressions: cell(31220),
-        views: cell(30110),
+        reach: cell(168400),
+        impressions: cell(184900),
+        views: cell(176200),
         likes: 900,
         commentsCount: 140,
         shares: 120,
@@ -269,12 +269,12 @@ export const POSTS = [
         neutralComments: 27,
         negativeComments: 18,
         mixedComments: 4,
-        percentile: 82,
+        percentile: 94,
         cohortSize: 28,
         cohortMedianRate: 2.9,
         snapshotAge: '24h',
         buildingBaseline: false,
-        growthSincePublish: growthCurve(2400, 28400),
+        growthSincePublish: growthCurve(14200, 168400),
         videoRetention: retentionCurve(12),
         comments: AURORA_COMMENTS,
     },
@@ -805,47 +805,6 @@ export const CONTENT_THEMES = [
     { id: 'merch', label: 'Merch', posts: 3, interactions: 2100, typicalRate: 3.4, networks: ['instagram'] },
     { id: 'behind-the-scenes', label: 'Behind the scenes', posts: 3, interactions: 1800, typicalRate: 2.6, networks: ['youtube', 'instagram'] },
     { id: 'logistics', label: 'Logistics', posts: 2, interactions: 4100, typicalRate: 5.1, networks: ['tiktok'] },
-];
-
-export const BEST_TIME_TO_POST = 'Your posts do best Thursdays 7–9 PM';
-
-export const ATTENTION_ITEMS = [
-    {
-        id: 'unanswered',
-        title: 'Unanswered questions',
-        reason: '3 fans asked about tickets and doors on Aurora After Dark and are still waiting.',
-        to: 'fans?tab=needs-reply',
-    },
-    {
-        id: 'complaints',
-        title: 'Complaints picking up',
-        reason: 'Merch sold-out comments jumped after the Aurora Reel.',
-        to: 'fans?tab=complaints',
-    },
-    {
-        id: 'negative-post',
-        title: 'A post is getting negative comments',
-        reason: 'The Fog City clip is being called out for the wrong night in the caption.',
-        to: 'posts/tt-fog-drop',
-    },
-];
-
-export const WHAT_HAPPENED = [
-    {
-        id: 'aurora',
-        text: 'Your Aurora After Dark Reel was your best post this month — 2x your usual reach.',
-        to: 'posts/ig-reel-aurora',
-    },
-    {
-        id: 'fog',
-        text: 'The Fog City strobe clip brought in more likes, comments and shares than any other post.',
-        to: 'posts/tt-fog-drop',
-    },
-    {
-        id: 'questions',
-        text: 'Fans keep asking about merch sizes and whether the shuttle runs after 1am.',
-        to: 'fans?tab=questions',
-    },
 ];
 
 export const FAN_MENTIONS = LISTENING_MENTIONS.map((mention) => ({
