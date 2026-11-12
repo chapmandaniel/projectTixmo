@@ -19,6 +19,7 @@ import DashboardPlaceholderView from './features/DashboardPlaceholderView';
 import LoginView from './features/LoginView';
 import AcceptInvitationView from './features/AcceptInvitationView';
 import { BrainCircuit, MessageCircle, Wand2 } from 'lucide-react';
+import { isSocialDashboardEnabled } from './features/socialDashboard/flag';
 
 import GlobalErrorNotification from './components/GlobalErrorNotification';
 import LabsBanner, { NoIndexMeta } from './components/LabsBanner';
@@ -51,6 +52,8 @@ const EventOnSalePage = lazy(() => import('./pages/EventOnSalePage'));
 const EventOnSalePreview = import.meta.env.DEV ? lazy(() => import('./pages/EventOnSalePreview')) : null;
 const FestivalPreview = import.meta.env.DEV ? lazy(() => import('./pages/FestivalPage')) : null;
 const FestivalEventPreview = import.meta.env.DEV ? lazy(() => import('./pages/FestivalPage').then(module => ({ default: module.FestivalEventPreview }))) : null;
+const SocialDashboardApp = lazy(() => import('./features/socialDashboard/SocialDashboardApp'));
+const socialDashboardEnabled = isSocialDashboardEnabled();
 
 const RouteFallback = ({ isDark = true }) => (
     <div className={`flex min-h-[280px] items-center justify-center rounded-md border text-sm font-light ${isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-dashboard-muted' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
@@ -99,7 +102,12 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         <Route path="/todo" element={<TodoView isDark={isDark} user={user} />} />
                         <Route path="/personal-todo" element={<Navigate to="/dashboard" replace />} />
                         <Route path="/team" element={<TeamView isDark={isDark} />} />
-                        <Route path="/social" element={<DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
+                        <Route
+                            path="/social/*"
+                            element={socialDashboardEnabled
+                                ? <SocialDashboardApp isDark={isDark} basePath="/social" />
+                                : <DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />}
+                        />
                         <Route path="/orders" element={<OrdersView isDark={isDark} />} />
                         <Route path="/settings" element={<SettingsView isDark={isDark} user={user} />} />
                         <Route path="/settings/integrations" element={<IntegrationsView isDark={isDark} user={user} />} />
@@ -305,6 +313,18 @@ const App = () => {
                 {EventOnSalePreview && <Route path="/preview/event-onsale" element={<EventOnSalePreview />} />}
                 {FestivalPreview && <Route path="/preview/festival" element={<FestivalPreview />} />}
                 {FestivalEventPreview && <Route path="/preview/festival/events/:slug" element={<FestivalEventPreview />} />}
+                {import.meta.env.DEV && socialDashboardEnabled ? (
+                    <Route
+                        path="/preview/social/*"
+                        element={(
+                            <div className={isDark ? 'min-h-screen bg-dashboard-shell px-6 py-8 text-zinc-100' : 'min-h-screen bg-slate-50 px-6 py-8 text-slate-900'}>
+                                <div className="mx-auto max-w-[1680px]">
+                                    <SocialDashboardApp isDark={isDark} basePath="/preview/social" />
+                                </div>
+                            </div>
+                        )}
+                    />
+                ) : null}
                 <Route path="/review/*" element={<ExternalReviewPage />} />
                 <Route path="/invite" element={<AcceptInvitationView onAccepted={(nextUser) => { handleLogin(nextUser); navigate('/dashboard', { replace: true }); }} />} />
                 <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />
