@@ -19,30 +19,38 @@ const mount = (entry = '/social') => render(
 );
 
 describe('Social dashboard prototype', () => {
-    it('walks Overview to a post and its comments on mock data', async () => {
+    it('walks Home to a post and what fans said', async () => {
         mount('/social');
 
-        expect(screen.getByRole('heading', { name: 'Social dashboard' })).toBeInTheDocument();
-        expect(screen.getByText(/Mock data/)).toBeInTheDocument();
-        expect(screen.getByText(/Last 28 complete days/)).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Insights' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Social' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Needs your attention' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'What happened' })).toBeInTheDocument();
+        expect(screen.getAllByText('People reached').length).toBeGreaterThan(0);
+        expect(screen.getByText(/Last 28 days/)).toBeInTheDocument();
+        expect(screen.getByRole('navigation', { name: 'Social dashboard' })).toHaveTextContent('Home');
+        expect(screen.getByRole('navigation', { name: 'Social dashboard' })).toHaveTextContent('Fans');
+        expect(screen.queryByRole('link', { name: 'Listening' })).not.toBeInTheDocument();
+        expect(screen.queryByText(/percentile/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/share of voice/i)).not.toBeInTheDocument();
 
-        fireEvent.click(screen.getAllByTestId('post-card-ig-reel-aurora')[0]);
+        fireEvent.click(screen.getByText(/Your Aurora After Dark Reel was your best post this month/));
 
-        expect(await screen.findByRole('heading', { name: 'Aurora After Dark Reel' })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Comment breakdown' })).toBeInTheDocument();
+        expect(await screen.findByText('Better than 8 of your last 10 Reels')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'What fans loved' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'What fans complained about' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Questions fans asked' })).toBeInTheDocument();
         expect(screen.getAllByText('Mira Chen (demo)').length).toBeGreaterThan(0);
-        expect(screen.getAllByText(/Complaints about limited stock/).length).toBeGreaterThan(0);
-        expect(screen.getByRole('heading', { name: 'Comments' })).toBeInTheDocument();
     });
 
-    it('renders community and listening mock reports', () => {
-        mount('/social/community');
-        expect(screen.getByRole('heading', { name: 'Conversation volume' })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Audience feedback' })).toBeInTheDocument();
+    it('renders Fans and Accounts', () => {
+        mount('/social/fans');
+        expect(screen.getByRole('heading', { name: 'Fans' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Needs reply' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Mentions' })).toBeInTheDocument();
 
-        mount('/social/listening');
-        expect(screen.getByRole('heading', { name: 'Social listening and brand health' })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Spike drill-down' })).toBeInTheDocument();
+        mount('/social/accounts');
+        expect(screen.getByRole('heading', { name: 'Accounts' })).toBeInTheDocument();
+        expect(screen.getAllByText('@northlight.live.demo').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Not available for this account yet').length).toBeGreaterThan(0);
     });
 });

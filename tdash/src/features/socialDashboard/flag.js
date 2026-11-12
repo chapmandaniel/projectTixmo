@@ -6,6 +6,7 @@ const truthy = (value) => {
 const readLabsBranch = () => String(import.meta.env.VITE_APP_LABS_BRANCH || '').trim();
 
 export const SOCIAL_DASHBOARD_FLAG = 'VITE_SOCIAL_COMMAND_CENTER_ENABLED';
+export const SOCIAL_DASHBOARD_ANALYST_VIEWS_FLAG = 'VITE_SOCIAL_DASHBOARD_ANALYST_VIEWS';
 
 /** Prototype is on in local Vite, Labs, or when the explicit flag is set. */
 export const isSocialDashboardEnabled = () => (
@@ -21,4 +22,9 @@ export const isSocialDashboardEnabled = () => (
 export const isSocialDashboardNavVisible = () => (
     truthy(import.meta.env.VITE_SOCIAL_COMMAND_CENTER_ENABLED)
     || Boolean(readLabsBranch())
+);
+
+/** Rev-1 analyst views stay in the tree but off the promoter nav unless this is on. */
+export const isSocialDashboardAnalystViewsEnabled = () => (
+    truthy(import.meta.env.VITE_SOCIAL_DASHBOARD_ANALYST_VIEWS)
 );

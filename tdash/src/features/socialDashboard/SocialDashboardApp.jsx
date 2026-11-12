@@ -8,11 +8,15 @@ import {
 } from '../../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../../lib/dashboardTheme';
 import { cn } from '../../lib/utils';
+import { isSocialDashboardAnalystViewsEnabled } from './flag';
 import { FilterBar } from './components/FilterBar';
 import { MOCK_BRAND, selectDashboard } from './mockData';
-import { OverviewView } from './views/OverviewView';
+import { HomeView } from './views/HomeView';
 import { PostsView } from './views/PostsView';
 import { PostDetailView } from './views/PostDetailView';
+import { FansView } from './views/FansView';
+import { AccountsView } from './views/AccountsView';
+import { OverviewView } from './views/OverviewView';
 import { ContentView } from './views/ContentView';
 import { AudienceView } from './views/AudienceView';
 import { CommunityView } from './views/CommunityView';
@@ -22,8 +26,14 @@ import { PaidView } from './views/PaidView';
 import { ReportsView } from './views/ReportsView';
 
 const NAV = [
-    { to: '', label: 'Overview' },
+    { to: '', label: 'Home' },
     { to: 'posts', label: 'Posts' },
+    { to: 'fans', label: 'Fans' },
+    { to: 'accounts', label: 'Accounts' },
+];
+
+const ANALYST_NAV = [
+    { to: 'overview', label: 'Overview (hidden)' },
     { to: 'content', label: 'Content' },
     { to: 'audience', label: 'Audience' },
     { to: 'community', label: 'Community' },
@@ -38,9 +48,11 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
     const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${location.pathname}${location.search}`;
+    const analystViews = isSocialDashboardAnalystViewsEnabled();
 
     const filters = {
         accountId: searchParams.get('account') || 'all',
+        range: searchParams.get('range') || '28',
         platform: searchParams.get('platform') || 'all',
         distribution: searchParams.get('distribution') || 'all',
         format: searchParams.get('format') || 'all',
@@ -49,7 +61,10 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
 
     const compareIds = (searchParams.get('compare') || '').split(',').filter(Boolean);
 
-    const dashboard = useMemo(() => selectDashboard(filters), [filters.accountId, filters.platform, filters.distribution, filters.format, filters.theme]);
+    const dashboard = useMemo(
+        () => selectDashboard(filters),
+        [filters.accountId, filters.range, filters.platform, filters.distribution, filters.format, filters.theme],
+    );
 
     const updateParams = useCallback((patch) => {
         const next = new URLSearchParams(searchParams);
@@ -63,15 +78,14 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
     const onFiltersChange = (nextFilters) => {
         updateParams({
             account: nextFilters.accountId,
-            platform: nextFilters.platform,
-            distribution: nextFilters.distribution,
+            range: String(nextFilters.range || '28') === '28' ? '' : String(nextFilters.range),
         });
     };
 
     const onToggleCompare = (postId) => {
         const selected = new Set(compareIds);
         if (selected.has(postId)) selected.delete(postId);
-        else if (selected.size < 3) selected.add(postId);
+        else if (selected.size < 2) selected.add(postId);
         updateParams({ compare: [...selected].join(',') });
     };
 
@@ -93,6 +107,8 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
             : theme.navItem
     );
 
+    const visibleNav = analystViews ? [...NAV, ...ANALYST_NAV] : NAV;
+
     return (
         <DashboardPage className="space-y-6">
             <div
@@ -107,14 +123,13 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
             <DashboardPageHeader
                 isDark={isDark}
                 eyebrow="Labs prototype"
-                title="Social dashboard"
-                description={`${MOCK_BRAND}. Mock accounts, posts and comments only. No live tokens, no customer data, no API calls.`}
+                title="Social"
+                description={`${MOCK_BRAND}. Demo numbers only.`}
                 icon={Share2}
                 iconClassName="text-fuchsia-300"
                 badges={(
                     <>
                         <DashboardChip isDark={isDark}>Mock data</DashboardChip>
-                        <DashboardChip isDark={isDark}>Not connected</DashboardChip>
                         <DashboardChip isDark={isDark} className="max-w-full break-all">{publicUrl}</DashboardChip>
                     </>
                 )}
@@ -123,7 +138,7 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
             <FilterBar isDark={isDark} filters={filters} onChange={onFiltersChange} />
 
             <nav aria-label="Social dashboard" className="flex flex-wrap gap-1">
-                {NAV.map((item) => (
+                {visibleNav.map((item) => (
                     <NavLink
                         key={item.label}
                         to={href(item.to)}
@@ -136,7 +151,7 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
             </nav>
 
             <Routes>
-                <Route index element={<OverviewView isDark={isDark} dashboard={dashboard} href={href} />} />
+                <Route index element={<HomeView isDark={isDark} dashboard={dashboard} href={href} />} />
                 <Route
                     path="posts"
                     element={(
@@ -149,31 +164,27 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
                         />
                     )}
                 />
-                <Route
-                    path="posts/:postId"
-                    element={<PostDetailRoute isDark={isDark} href={href} searchParams={searchParams} updateParams={updateParams} />}
-                />
-                <Route path="content" element={<ContentView isDark={isDark} dashboard={dashboard} href={href} />} />
-                <Route path="audience" element={<AudienceView isDark={isDark} dashboard={dashboard} />} />
-                <Route path="community" element={<CommunityView isDark={isDark} href={href} />} />
-                <Route path="listening" element={<ListeningView isDark={isDark} dashboard={dashboard} />} />
-                <Route path="competitors" element={<CompetitorsView isDark={isDark} dashboard={dashboard} />} />
-                <Route path="paid" element={<PaidView isDark={isDark} />} />
-                <Route path="reports" element={<ReportsView isDark={isDark} dashboard={dashboard} href={href} />} />
+                <Route path="posts/:postId" element={<PostDetailRoute isDark={isDark} href={href} />} />
+                <Route path="fans" element={<FansView isDark={isDark} href={href} />} />
+                <Route path="accounts" element={<AccountsView isDark={isDark} dashboard={dashboard} />} />
+                {analystViews ? (
+                    <>
+                        <Route path="overview" element={<OverviewView isDark={isDark} dashboard={dashboard} href={href} />} />
+                        <Route path="content" element={<ContentView isDark={isDark} dashboard={dashboard} href={href} />} />
+                        <Route path="audience" element={<AudienceView isDark={isDark} dashboard={dashboard} />} />
+                        <Route path="community" element={<CommunityView isDark={isDark} href={href} />} />
+                        <Route path="listening" element={<ListeningView isDark={isDark} dashboard={dashboard} />} />
+                        <Route path="competitors" element={<CompetitorsView isDark={isDark} dashboard={dashboard} />} />
+                        <Route path="paid" element={<PaidView isDark={isDark} />} />
+                        <Route path="reports" element={<ReportsView isDark={isDark} dashboard={dashboard} href={href} />} />
+                    </>
+                ) : null}
             </Routes>
         </DashboardPage>
     );
 }
 
-const PostDetailRoute = ({ isDark, href, searchParams, updateParams }) => {
+const PostDetailRoute = ({ isDark, href }) => {
     const { postId } = useParams();
-    return (
-        <PostDetailView
-            isDark={isDark}
-            postId={postId}
-            href={href}
-            themeFilter={searchParams.get('theme') || ''}
-            onThemeFilter={(theme) => updateParams({ theme })}
-        />
-    );
+    return <PostDetailView isDark={isDark} postId={postId} href={href} />;
 };

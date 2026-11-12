@@ -144,6 +144,20 @@ const mulberry32 = (seed) => () => {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
 
+const addDaysIso = (iso, days) => {
+    const cursor = new Date(`${iso}T12:00:00Z`);
+    cursor.setUTCDate(cursor.getUTCDate() + days);
+    return cursor.toISOString().slice(0, 10);
+};
+
+export const RANGE_END = '2026-11-10';
+export const DATE_RANGE_OPTIONS = [
+    { id: '7', days: 7, label: 'Last 7 days' },
+    { id: '28', days: 28, label: 'Last 28 days' },
+    { id: '90', days: 90, label: 'Last 90 days' },
+];
+
+const FULL_DATES = dateRange(addDaysIso(RANGE_END, -179), RANGE_END);
 const CURRENT_DATES = dateRange(CURRENT_RANGE.start, CURRENT_RANGE.end);
 const PRIOR_DATES = dateRange(PRIOR_RANGE.start, PRIOR_RANGE.end);
 
@@ -174,15 +188,16 @@ const buildSeries = (dates, spec, bumpDay) => {
     });
 };
 
-/** @type {Record<string, {current: DailyPoint[], prior: DailyPoint[]}>} */
+/** @type {Record<string, {full: DailyPoint[], current: DailyPoint[], prior: DailyPoint[]}>} */
 export const ACCOUNT_SERIES = Object.fromEntries(
-    ACCOUNTS.map((account) => [
-        account.id,
-        {
-            current: buildSeries(CURRENT_DATES, ACCOUNT_SERIES_SEEDS[account.id], '2026-10-28'),
-            prior: buildSeries(PRIOR_DATES, { ...ACCOUNT_SERIES_SEEDS[account.id], seed: ACCOUNT_SERIES_SEEDS[account.id].seed + 9 }, null),
-        },
-    ]),
+    ACCOUNTS.map((account) => {
+        const full = buildSeries(FULL_DATES, ACCOUNT_SERIES_SEEDS[account.id], '2026-10-28');
+        return [account.id, {
+            full,
+            current: full.slice(-28),
+            prior: full.slice(-56, -28),
+        }];
+    }),
 );
 
 const cell = (value, state = 'ok', note) => ({ value, state, note });
@@ -792,6 +807,53 @@ export const CONTENT_THEMES = [
     { id: 'logistics', label: 'Logistics', posts: 2, interactions: 4100, typicalRate: 5.1, networks: ['tiktok'] },
 ];
 
+export const BEST_TIME_TO_POST = 'Your posts do best Thursdays 7–9 PM';
+
+export const ATTENTION_ITEMS = [
+    {
+        id: 'unanswered',
+        title: 'Unanswered questions',
+        reason: '3 fans asked about tickets and doors on Aurora After Dark and are still waiting.',
+        to: 'fans?tab=needs-reply',
+    },
+    {
+        id: 'complaints',
+        title: 'Complaints picking up',
+        reason: 'Merch sold-out comments jumped after the Aurora Reel.',
+        to: 'fans?tab=complaints',
+    },
+    {
+        id: 'negative-post',
+        title: 'A post is getting negative comments',
+        reason: 'The Fog City clip is being called out for the wrong night in the caption.',
+        to: 'posts/tt-fog-drop',
+    },
+];
+
+export const WHAT_HAPPENED = [
+    {
+        id: 'aurora',
+        text: 'Your Aurora After Dark Reel was your best post this month — 2x your usual reach.',
+        to: 'posts/ig-reel-aurora',
+    },
+    {
+        id: 'fog',
+        text: 'The Fog City strobe clip brought in more likes, comments and shares than any other post.',
+        to: 'posts/tt-fog-drop',
+    },
+    {
+        id: 'questions',
+        text: 'Fans keep asking about merch sizes and whether the shuttle runs after 1am.',
+        to: 'fans?tab=questions',
+    },
+];
+
+export const FAN_MENTIONS = LISTENING_MENTIONS.map((mention) => ({
+    ...mention,
+    postTitle: mention.topic === 'transit' ? 'Transit guide' : mention.topic === 'merch' ? 'Aurora After Dark Reel' : 'Fog City strobe',
+    postId: mention.topic === 'transit' ? 'tt-questions' : mention.topic === 'merch' ? 'ig-reel-aurora' : 'tt-fog-drop',
+}));
+
 export const INSIGHTS = [
     {
         id: 'reels-shares',
@@ -837,7 +899,7 @@ const inCurrentWindow = (iso) => {
 };
 
 /**
- * @param {{accountId?:string, platform?:string, distribution?:string, format?:string, theme?:string}} filters
+ * @param {{accountId?:string, platform?:string, distribution?:string, format?:string, theme?:string, range?:string|number}} filters
  */
 export const selectDashboard = (filters = {}) => {
     const accountId = filters.accountId && filters.accountId !== 'all' ? filters.accountId : null;
@@ -845,6 +907,8 @@ export const selectDashboard = (filters = {}) => {
     const distribution = filters.distribution && filters.distribution !== 'all' ? filters.distribution : null;
     const format = filters.format && filters.format !== 'all' ? filters.format : null;
     const theme = filters.theme || null;
+    const rangeDays = [7, 28, 90].includes(Number(filters.range)) ? Number(filters.range) : 28;
+    const rangeStart = addDaysIso(RANGE_END, -(rangeDays - 1));
 
     const accounts = ACCOUNTS.filter((account) => (
         (!accountId || account.id === accountId)
@@ -859,12 +923,15 @@ export const selectDashboard = (filters = {}) => {
         && (!theme || post.themes.includes(theme) || post.comments.some((comment) => comment.theme === theme))
     ));
 
-    const publishedInPeriod = posts.filter((post) => inCurrentWindow(post.publishedAt));
+    const publishedInPeriod = posts.filter((post) => {
+        const day = post.publishedAt.slice(0, 10);
+        return day >= rangeStart && day <= RANGE_END;
+    });
 
-    const sumSeries = (period) => {
+    const sumFull = () => {
         const byDate = new Map();
         accounts.forEach((account) => {
-            ACCOUNT_SERIES[account.id][period].forEach((point) => {
+            ACCOUNT_SERIES[account.id].full.forEach((point) => {
                 const current = byDate.get(point.date) || {
                     date: point.date,
                     impressions: 0,
@@ -886,9 +953,11 @@ export const selectDashboard = (filters = {}) => {
         return [...byDate.values()];
     };
 
-    const currentSeries = sumSeries('current');
-    const priorSeries = sumSeries('prior');
+    const fullSeries = sumFull();
+    const currentSeries = fullSeries.slice(-rangeDays);
+    const priorSeries = fullSeries.slice(-rangeDays * 2, -rangeDays);
     const sumField = (series, field) => series.reduce((total, point) => total + point[field], 0);
+    const gained = (series) => series.reduce((total, point) => total + Math.max(point.netFollowers, 0), 0);
 
     const impressions = sumField(currentSeries, 'impressions');
     const impressionsPrior = sumField(priorSeries, 'impressions');
@@ -896,10 +965,13 @@ export const selectDashboard = (filters = {}) => {
     const engagementsPrior = sumField(priorSeries, 'engagements');
     const clicks = sumField(currentSeries, 'clicks');
     const clicksPrior = sumField(priorSeries, 'clicks');
+    const newFollowers = gained(currentSeries);
+    const newFollowersPrior = gained(priorSeries);
     const netFollowers = accounts.reduce((total, account) => total + (account.followersClose - account.followersOpen), 0);
     const netFollowersPrior = Math.round(netFollowers * 0.66);
     const reachForRate = posts.reduce((total, post) => total + (post.reach.state === 'ok' ? post.reach.value : 0), 0);
     const engagementsForRate = posts.reduce((total, post) => total + engagementTotal(post), 0);
+    const peopleReachedAvailable = accounts.some((account) => account.reachState === 'ok');
 
     const kpis = {
         impressions: { current: impressions, prior: impressionsPrior, sparkline: currentSeries.map((point) => point.impressions) },
@@ -908,21 +980,25 @@ export const selectDashboard = (filters = {}) => {
             current: reachForRate ? (engagementsForRate / reachForRate) * 100 : null,
             prior: 3.74,
             denominator: 'reach',
-            sparkline: currentSeries.map((point, index) => (point.impressions ? (point.engagements / point.impressions) * 100 : 0)),
+            sparkline: currentSeries.map((point) => (point.impressions ? (point.engagements / point.impressions) * 100 : 0)),
         },
         netFollowers: { current: netFollowers, prior: netFollowersPrior, sparkline: currentSeries.map((point) => point.netFollowers) },
         clicks: { current: clicks, prior: clicksPrior, sparkline: currentSeries.map((point) => point.clicks) },
         postsPublished: { current: publishedInPeriod.length, prior: Math.max(publishedInPeriod.length - 3, 0), sparkline: currentSeries.map((point) => point.postsPublished) },
+        peopleReached: { current: impressions, prior: impressionsPrior, available: peopleReachedAvailable },
+        likesCommentsShares: { current: engagements, prior: engagementsPrior },
+        newFollowers: { current: newFollowers, prior: newFollowersPrior },
+        linkClicks: { current: clicks, prior: clicksPrior },
     };
 
     const scorecard = accounts.map((account) => {
         const accountPosts = posts.filter((post) => post.accountId === account.id);
-        const series = ACCOUNT_SERIES[account.id].current;
+        const series = ACCOUNT_SERIES[account.id].full.slice(-rangeDays);
         const reachState = account.reachState;
         return {
             ...account,
-            audienceChange: account.followersClose - account.followersOpen,
-            output: accountPosts.filter((post) => inCurrentWindow(post.publishedAt)).length,
+            audienceChange: gained(series),
+            output: accountPosts.filter((post) => post.publishedAt.slice(0, 10) >= rangeStart).length,
             exposure: reachState === 'unavailable' ? cell(null, 'unavailable') : cell(sumField(series, 'impressions'), reachState),
             interaction: cell(sumField(series, 'engagements')),
             clicks: cell(sumField(series, 'clicks')),
@@ -935,6 +1011,7 @@ export const selectDashboard = (filters = {}) => {
         publishedInPeriod,
         currentSeries,
         priorSeries,
+        rangeDays,
         kpis,
         scorecard,
         insights: INSIGHTS,
