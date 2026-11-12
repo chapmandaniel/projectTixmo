@@ -1,7 +1,8 @@
 # T99: wrong-event validate `reasonCode`
 
-Head: branch `fix/t99-wrong-event-reason-code`, based on `origin/main` `aee54592`.
-Draft PR: (filled after open). Do not merge. No settings, deploy, staging, or admin bypass.
+Head under test: branch `fix/t99-wrong-event-reason-code`, fix commit `a0af3073`, based on `origin/main` `aee54592`.
+Draft PR: https://github.com/chapmandaniel/projectTixmo/pull/202
+Do not merge. No settings, deploy, staging, or admin bypass.
 
 ## Cause
 
@@ -30,8 +31,8 @@ the dashboard classifier is unchanged; `data.reasonCode` is now present there to
 
 ## Tests
 
-Ported un-skipped from draft PR #200 (`cursor/t98-offline-door-scanning-0a66`,
-file `tixmoapi2/tests/integration/scanner-offline-field-contract.test.ts`,
+Ported un-skipped from draft PR #200 (`cursor/t98-offline-door-scanning-0a66` /
+`99cf4e6a`, file `tixmoapi2/tests/integration/scanner-offline-field-contract.test.ts`,
 `it.skip('keeps a wrong-event denial on the validate row as WRONG_EVENT rather than a throw-only 403')`).
 That file is new on #200, so this branch uses the same path with the QA case
 plus a live-scan/sync companion. After this merges, #200 should merge main,
@@ -55,10 +56,19 @@ Counts vs `origin/main` `aee54592` (182 suites / 1711 tests / 0 skipped, per T98
 
 ## CI
 
-Filled after required checks finish.
+Required checks on fix commit `a0af3073cd8a4926c371c047b4bd5722280b822a` (draft PR #202).
+All finished with no failures. `wallet-browser-recovery` did not flake in CI
+`local-gates` (it failed only on this cloud VM's pre-push, no frontend harness).
 
-| Check | Conclusion | Link |
-| --- | --- | --- |
-| local-gates (required) | pending | |
-| configured-image-restore (required) | pending | |
-| guard-and-build | expected skipped: this PR does not touch `tdash/**`; workflow path filter on main (pre-#198) |
+| Check | Conclusion | Duration | Link |
+| --- | --- | --- | --- |
+| local-gates (required) | success | 12m48s | https://github.com/chapmandaniel/projectTixmo/actions/runs/43301167820/job/131472427111 |
+| configured-image-restore (required) | success | 2m19s | https://github.com/chapmandaniel/projectTixmo/actions/runs/43301167820/job/131472428001 |
+| guard-and-build | did not run | — | Tdash Design System path filter: this PR does not touch `tdash/**`; main is still pre-#198. Not dispatched. |
+| http-soak | skipped | — | https://github.com/chapmandaniel/projectTixmo/actions/runs/43301167812/job/131472429193 |
+
+Workflow runs:
+
+- [Tixmo Market Readiness Local Gates](https://github.com/chapmandaniel/projectTixmo/actions/runs/43301167820) — success. Job `Run market readiness gates` 11m46s (`20:32:35Z`–`20:44:21Z`).
+- [HTTP soak](https://github.com/chapmandaniel/projectTixmo/actions/runs/43301167812) — skipped, as on a normal pull request.
+- Tdash Design System / `guard-and-build` — no workflow run for this SHA.
