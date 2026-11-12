@@ -1,7 +1,8 @@
 # T98: offline door scanning test gap
 
-Head under test: branch `cursor/t98-offline-door-scanning-0a66`, based on `origin/main` `aee54592`.
+Head under test: branch `cursor/t98-offline-door-scanning-0a66`, tests commit `306fc037908d4e7c210320c1b2417dcdccf9ca5d`, based on `origin/main` `aee54592`.
 Tests only. No app, product, lockfile, or guard-baseline changes. No staging, production, Stripe, or other external calls.
+Draft PR: https://github.com/chapmandaniel/projectTixmo/pull/200
 
 ## Coverage map check
 
@@ -35,11 +36,26 @@ Local Node `v24.21.0`, disposable Postgres `tixmo_disposable_t98` on `127.0.0.1:
 
 API before = after minus the two new cases (one passing, one skipped). Dashboard before = after minus the one new ScannerPage case. Existing scanner suites `scanners-offline.test.ts` and `scanner-doors.test.ts` still pass (11 passed + 1 skipped across those three files together).
 
-`wallet-browser-recovery` did not run in this Jest suite and did not flake here. `node scripts/wallet-browser.test.cjs` passed 50/50.
+`wallet-browser-recovery` is part of the API Jest suite (`tixmoapi2/tests/integration/wallet-browser-recovery.test.ts`). It passed in the local `npm test` run (1712 passed, no failures) and in CI `local-gates`; it did not flake, so it was not re-run. `node scripts/wallet-browser.test.cjs` passed 50/50 locally.
 
 ## CI
 
-Filled after the draft PR’s required checks finish. See the follow-up section at the bottom of this file once the run URLs exist.
+Required checks on tests commit `306fc037908d4e7c210320c1b2417dcdccf9ca5d` (draft PR #200). All finished with no failures.
+
+| Check | Conclusion | Duration | Link |
+| --- | --- | --- | --- |
+| local-gates (required) | success | 16m23s | https://github.com/chapmandaniel/projectTixmo/actions/runs/43286807213/job/131422248122 |
+| configured-image-restore (required) | success | 2m43s | https://github.com/chapmandaniel/projectTixmo/actions/runs/43286807213/job/131422248922 |
+| guard-and-build | success | 1m19s | https://github.com/chapmandaniel/projectTixmo/actions/runs/43286807229/job/131422248848 |
+| http-soak | skipped | — | https://github.com/chapmandaniel/projectTixmo/actions/runs/43286807533/job/131422252077 |
+
+Workflow runs:
+
+- [Tixmo Market Readiness Local Gates](https://github.com/chapmandaniel/projectTixmo/actions/runs/43286807213) — success. Job `Run market readiness gates` 15m17s (`19:07:59Z`–`19:23:16Z`).
+- [Tdash Design System](https://github.com/chapmandaniel/projectTixmo/actions/runs/43286807229) — success. Dashboard tests step 38s (`19:07:10Z`–`19:07:48Z`).
+- [HTTP soak](https://github.com/chapmandaniel/projectTixmo/actions/runs/43286807533) — skipped, as on a normal pull request.
+
+`verify:api` inside `local-gates` does not print a Jest total (`stdio: 'ignore'`). Local suite on this branch is 1713 tests (1712 passed, 1 skipped). Dashboard CI ran the 501 Vitest cases. `wallet-browser-recovery` did not flake.
 
 ## Bugs found (not fixed)
 
