@@ -1,5 +1,6 @@
 import { Organization, OrganizationType, OrganizationStatus, Prisma } from '@prisma/client';
 import { ApiError } from '@utils/ApiError';
+import { assertCanRelinquishOrganizationOwnership } from '@utils/organizationOwnership';
 
 import prisma from '../../config/prisma';
 
@@ -245,38 +246,44 @@ export class OrganizationService {
    * Remove member from organization
    */
   async removeMember(orgId: string, userId: string): Promise<void> {
-    // Check if organization exists
-    const org = await prisma.organization.findUnique({
-      where: { id: orgId },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${orgId} FOR UPDATE`;
 
-    if (!org) {
-      throw ApiError.notFound('Organization not found');
-    }
+      const org = await tx.organization.findUnique({
+        where: { id: orgId },
+      });
 
-    // Check if user exists and is a member
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+      if (!org) {
+        throw ApiError.notFound('Organization not found');
+      }
 
-    if (!user) {
-      throw ApiError.notFound('User not found');
-    }
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+      });
 
-    if (user.organizationId !== orgId) {
-      throw ApiError.badRequest('User is not a member of this organization');
-    }
+      if (!user) {
+        throw ApiError.notFound('User not found');
+      }
 
-    // Remove user from organization
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        organizationId: null,
+      if (user.organizationId !== orgId) {
+        throw ApiError.badRequest('User is not a member of this organization');
+      }
+
+      await assertCanRelinquishOrganizationOwnership(tx, user, {
         role: 'CUSTOMER',
-        permissions: Prisma.JsonNull,
-        sessionVersion: { increment: 1 },
-        isPlatformAdmin: false,
-      },
+        organizationId: null,
+      });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          organizationId: null,
+          role: 'CUSTOMER',
+          permissions: Prisma.JsonNull,
+          sessionVersion: { increment: 1 },
+          isPlatformAdmin: false,
+        },
+      });
     });
   }
 }
