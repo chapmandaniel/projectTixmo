@@ -35,4 +35,14 @@ describe('Social dashboard prototype', () => {
         expect(screen.getAllByText(/Complaints about limited stock/).length).toBeGreaterThan(0);
         expect(screen.getByRole('heading', { name: 'Comments' })).toBeInTheDocument();
     });
+
+    it('renders community and listening mock reports', () => {
+        mount('/social/community');
+        expect(screen.getByRole('heading', { name: 'Conversation volume' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Audience feedback' })).toBeInTheDocument();
+
+        mount('/social/listening');
+        expect(screen.getByRole('heading', { name: 'Social listening and brand health' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Spike drill-down' })).toBeInTheDocument();
+    });
 });

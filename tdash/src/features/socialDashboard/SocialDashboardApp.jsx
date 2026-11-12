@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { NavLink, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
+import { NavLink, Route, Routes, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { Share2 } from 'lucide-react';
 import {
     DashboardChip,
@@ -13,7 +13,13 @@ import { MOCK_BRAND, selectDashboard } from './mockData';
 import { OverviewView } from './views/OverviewView';
 import { PostsView } from './views/PostsView';
 import { PostDetailView } from './views/PostDetailView';
-import { PrototypeStubView } from './views/StubViews';
+import { ContentView } from './views/ContentView';
+import { AudienceView } from './views/AudienceView';
+import { CommunityView } from './views/CommunityView';
+import { ListeningView } from './views/ListeningView';
+import { CompetitorsView } from './views/CompetitorsView';
+import { PaidView } from './views/PaidView';
+import { ReportsView } from './views/ReportsView';
 
 const NAV = [
     { to: '', label: 'Overview' },
@@ -29,7 +35,9 @@ const NAV = [
 
 export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
     const theme = getDashboardTheme(isDark);
+    const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
+    const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${location.pathname}${location.search}`;
 
     const filters = {
         accountId: searchParams.get('account') || 'all',
@@ -87,6 +95,15 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
 
     return (
         <DashboardPage className="space-y-6">
+            <div
+                data-testid="social-dashboard-url"
+                className={cn(
+                    'rounded-md border px-3 py-2 font-mono text-xs',
+                    isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-zinc-300' : 'border-slate-200 bg-white text-slate-700'
+                )}
+            >
+                {publicUrl}
+            </div>
             <DashboardPageHeader
                 isDark={isDark}
                 eyebrow="Labs prototype"
@@ -98,6 +115,7 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
                     <>
                         <DashboardChip isDark={isDark}>Mock data</DashboardChip>
                         <DashboardChip isDark={isDark}>Not connected</DashboardChip>
+                        <DashboardChip isDark={isDark} className="max-w-full break-all">{publicUrl}</DashboardChip>
                     </>
                 )}
             />
@@ -135,13 +153,13 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
                     path="posts/:postId"
                     element={<PostDetailRoute isDark={isDark} href={href} searchParams={searchParams} updateParams={updateParams} />}
                 />
-                <Route path="content" element={<PrototypeStubView isDark={isDark} title="Content, campaigns, and creative" description="Formats, themes, timing heatmap and video land in the next pass." />} />
-                <Route path="audience" element={<PrototypeStubView isDark={isDark} title="Audience and growth" description="Follower line, net-change bars and labelled demographics land in the next pass." />} />
-                <Route path="community" element={<PrototypeStubView isDark={isDark} title="Community and audience response" description="Volume, sentiment coverage, responsiveness and resolution land in the next pass." />} />
-                <Route path="listening" element={<PrototypeStubView isDark={isDark} title="Social listening and brand health" description="Mentions timeline, topics, spike drill-down and share of voice land in the next pass." />} />
-                <Route path="competitors" element={<PrototypeStubView isDark={isDark} title="Competitors and benchmarks" description="Mock peer table lands in the next pass." />} />
-                <Route path="paid" element={<PrototypeStubView isDark={isDark} title="Paid vs organic" description="Spend, CPM, CPC and CTR in CAD land in the next pass." />} />
-                <Route path="reports" element={<PrototypeStubView isDark={isDark} title="Sharing and recurring reports" description="Saved-view stub, weekly summary preview and CSV export land in the next pass." />} />
+                <Route path="content" element={<ContentView isDark={isDark} dashboard={dashboard} href={href} />} />
+                <Route path="audience" element={<AudienceView isDark={isDark} dashboard={dashboard} />} />
+                <Route path="community" element={<CommunityView isDark={isDark} href={href} />} />
+                <Route path="listening" element={<ListeningView isDark={isDark} dashboard={dashboard} />} />
+                <Route path="competitors" element={<CompetitorsView isDark={isDark} dashboard={dashboard} />} />
+                <Route path="paid" element={<PaidView isDark={isDark} />} />
+                <Route path="reports" element={<ReportsView isDark={isDark} dashboard={dashboard} href={href} />} />
             </Routes>
         </DashboardPage>
     );
