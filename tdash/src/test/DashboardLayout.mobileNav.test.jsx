@@ -18,7 +18,7 @@ vi.mock('../lib/api', () => ({
 const owner = { firstName: 'Avery', lastName: 'Stone', role: 'OWNER', email: 'demo.admin@tixmo.test' };
 const member = { firstName: 'Parker', lastName: 'Reed', role: 'TEAM_MEMBER', email: 'demo.ops@tixmo.test' };
 
-const destinations = ['Home', 'Events', 'Tasks', 'Team', 'Assets', 'Review Portal', 'Analytics', 'Settings', 'Audit'];
+const destinations = ['Home', 'Events', 'Tasks', 'Team', 'Assets', 'Review Portal', 'Analytics', 'Social', 'Settings', 'Audit'];
 
 const renderLayout = (user = owner) => render(
     <MemoryRouter>

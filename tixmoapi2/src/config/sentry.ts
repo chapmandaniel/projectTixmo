@@ -1,10 +1,11 @@
 import { assetShareLogPath } from '../utils/assetShareLogPath';
+import { scrubSocialTelemetry } from '../social/redaction';
 import { buyerRecoveryLogPath } from '../utils/buyerRecoveryLogPath';
 import * as Sentry from '@sentry/node';
 import { config } from './environment';
 
 const SECRET_KEY =
-  /^(api[_-]?key|apikey|secret|webhook[_-]?secret|webhooksecret|token|authorization|password|passwd|credential|credentials|cookie|cookies|set-cookie|x-showpass-signature)$/i;
+  /^(api[_-]?key|apikey|secret|webhook[_-]?secret|webhooksecret|token|access[_-]?token|authorization|x-team-access-key|password|passwd|credential|credentials|cookie|cookies|set-cookie|x-showpass-signature|tokenciphertext|refreshciphertext|ciphertext|lookuphmac)$/i;
 const BUYER_KEY =
   /^(customer_name|customer_email|customer_phone_number|barcode_string|email_on_ticket|first_name_on_ticket|last_name_on_ticket|name_on_ticket|phone_number_on_ticket)$/i;
 
@@ -137,6 +138,7 @@ export function initSentry() {
           delete request.cookies;
         }
         scrubShowpassEvent(ev);
+        scrubSocialTelemetry(ev);
         // Existing general password scrubbing remains in place.
         try {
           if (ev && typeof ev === 'object' && 'request' in ev) {
@@ -163,7 +165,7 @@ export function initSentry() {
         return scrubShowpassBreadcrumb(breadcrumb);
       },
       beforeSendTransaction(event: Sentry.Event) {
-        return scrubShowpassEvent(event);
+        return scrubSocialTelemetry(scrubShowpassEvent(event));
       },
     });
 
