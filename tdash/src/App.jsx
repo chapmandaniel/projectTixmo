@@ -27,6 +27,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 const DashboardHome = lazy(() => import('./features/DashboardHome'));
 const EventsView = lazy(() => import('./features/EventsView'));
 const AnalyticsView = lazy(() => import('./features/AnalyticsView'));
+const AnalyticsDashboardApp = lazy(() => import('./features/analyticsDashboard/AnalyticsDashboardApp'));
 const TodoView = lazy(() => import('./features/TodoView'));
 const TeamView = lazy(() => import('./features/TeamView'));
 const EventManagementDashboard = lazy(() => import('./features/EventManagementDashboard'));
@@ -94,7 +95,8 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         <Route path="/dashboard" element={<DashboardHome user={user} onNavigate={handleNavigationEvent} isDark={isDark} />} />
                         <Route path="/events" element={<EventsView user={user} isDark={isDark} />} />
                         <Route path="/events/:eventId/*" element={<EventManagementDashboard user={user} isDark={isDark} />} />
-                        <Route path="/analytics" element={<AnalyticsView isDark={isDark} user={user} />} />
+                        <Route path="/analytics/classic" element={<AnalyticsView isDark={isDark} user={user} />} />
+                        <Route path="/analytics/*" element={<AnalyticsDashboardApp isDark={isDark} basePath="/analytics" />} />
                         <Route path="/quantmo" element={<DashboardPlaceholderView isDark={isDark} title="QuantMo" icon={BrainCircuit} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/todo" element={<TodoView isDark={isDark} user={user} />} />
                         <Route path="/personal-todo" element={<Navigate to="/dashboard" replace />} />
@@ -305,6 +307,18 @@ const App = () => {
                 {EventOnSalePreview && <Route path="/preview/event-onsale" element={<EventOnSalePreview />} />}
                 {FestivalPreview && <Route path="/preview/festival" element={<FestivalPreview />} />}
                 {FestivalEventPreview && <Route path="/preview/festival/events/:slug" element={<FestivalEventPreview />} />}
+                {import.meta.env.DEV ? (
+                    <Route
+                        path="/preview/analytics/*"
+                        element={(
+                            <div className={isDark ? 'min-h-screen bg-dashboard-shell px-6 py-8 text-zinc-100' : 'min-h-screen bg-slate-50 px-6 py-8 text-slate-900'}>
+                                <div className="mx-auto max-w-[1680px]">
+                                    <AnalyticsDashboardApp isDark={isDark} basePath="/preview/analytics" />
+                                </div>
+                            </div>
+                        )}
+                    />
+                ) : null}
                 <Route path="/review/*" element={<ExternalReviewPage />} />
                 <Route path="/invite" element={<AcceptInvitationView onAccepted={(nextUser) => { handleLogin(nextUser); navigate('/dashboard', { replace: true }); }} />} />
                 <Route path="/assets/shared/:token" element={<SharedAssetFolderPage />} />
