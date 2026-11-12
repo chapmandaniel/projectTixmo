@@ -1,11 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { NavLink, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
-import { BarChart3 } from 'lucide-react';
 import {
     DashboardChip,
     DashboardEmptyState,
     DashboardPage,
-    DashboardPageHeader,
 } from '../../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../../lib/dashboardTheme';
 import { cn } from '../../lib/utils';
@@ -57,37 +55,46 @@ export default function AnalyticsDashboardApp({ isDark, basePath = '/analytics' 
     };
 
     const navClass = ({ isActive }) => cn(
-        'rounded-md px-3 py-2 text-sm font-light',
+        'rounded-md px-3 py-1.5 text-sm font-light',
         isActive
             ? (isDark ? 'bg-dashboard-control text-white' : 'bg-slate-900 text-white')
             : theme.navItem
     );
 
     return (
-        <DashboardPage className="space-y-6" data-testid="analytics-dashboard">
+        <DashboardPage className="space-y-4">
             <div
                 data-testid="analytics-dashboard-url"
                 className={cn(
-                    'rounded-md border px-3 py-2 font-mono text-xs',
+                    'rounded-md border px-3 py-1.5 font-mono text-[11px]',
                     isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-zinc-300' : 'border-slate-200 bg-white text-slate-700'
                 )}
             >
                 {publicUrl}
             </div>
-            <DashboardPageHeader
-                isDark={isDark}
-                eyebrow="Labs prototype"
-                title="Analytics"
-                description={`${MOCK_PROMOTER}. Demo numbers only.`}
-                icon={BarChart3}
-                iconClassName="text-fuchsia-300"
-                badges={(
-                    <>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h1 className={cn('text-3xl font-light tracking-tight', theme.textPrimary)}>Analytics</h1>
                         <DashboardChip isDark={isDark}>Mock data</DashboardChip>
-                        <DashboardChip isDark={isDark} className="max-w-full break-all">{publicUrl}</DashboardChip>
-                    </>
-                )}
-            />
+                    </div>
+                    <p className={cn('mt-1 text-sm font-light', theme.textSecondary)}>
+                        {MOCK_PROMOTER}. Demo numbers only.
+                    </p>
+                </div>
+                <nav aria-label="Analytics dashboard" className="flex flex-wrap gap-1">
+                    {NAV.map((item) => (
+                        <NavLink
+                            key={item.label}
+                            to={href(item.to)}
+                            end={item.to === ''}
+                            className={navClass}
+                        >
+                            {item.label}
+                        </NavLink>
+                    ))}
+                </nav>
+            </div>
 
             <FilterBar
                 isDark={isDark}
@@ -95,27 +102,14 @@ export default function AnalyticsDashboardApp({ isDark, basePath = '/analytics' 
                 range={dashboard.range}
                 events={dashboard.events}
                 onChange={onFiltersChange}
+                liveNow={dashboard.liveNow}
             />
-
-            <nav aria-label="Analytics dashboard" className="flex flex-wrap gap-1">
-                {NAV.map((item) => (
-                    <NavLink
-                        key={item.label}
-                        to={href(item.to)}
-                        end={item.to === ''}
-                        className={navClass}
-                    >
-                        {item.label}
-                    </NavLink>
-                ))}
-            </nav>
 
             {dashboard.empty ? (
                 <DashboardEmptyState
                     isDark={isDark}
                     title={dashboard.emptyMessage}
                     description="Pick another event, or check back after the first paid tickets."
-                    data-testid="analytics-empty"
                 />
             ) : (
                 <Routes>

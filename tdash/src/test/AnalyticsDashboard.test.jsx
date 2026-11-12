@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import AnalyticsDashboardApp from '../features/analyticsDashboard/AnalyticsDashboardApp';
 import { EMPTY_STATE_MESSAGE } from '../features/analyticsDashboard/mockAnalytics';
+import { formatChartHover } from '../features/analyticsDashboard/formatters';
 
 global.ResizeObserver = class ResizeObserver {
     observe() {}
@@ -43,11 +44,14 @@ describe('Analytics dashboard prototype', () => {
         expect(screen.getByText('Updated 5 min ago')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Last 28 days' })).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByTestId('analytics-event-select')).toHaveValue('evt-aurora');
-        expect(screen.getByText('Tickets sold')).toBeInTheDocument();
+        expect(screen.getByTestId('analytics-home-hero')).toBeInTheDocument();
+        expect(screen.getByTestId('analytics-hero-chart')).toHaveClass('order-2', 'lg:order-1');
+        expect(screen.getByTestId('analytics-hero-stats')).toHaveClass('order-1', 'lg:order-2');
+        expect(within(screen.getByTestId('analytics-kpi-tickets')).getByText('Tickets sold')).toBeInTheDocument();
         expect(within(screen.getByTestId('analytics-kpi-tickets')).getByText('412')).toBeInTheDocument();
         expect(within(screen.getByTestId('analytics-kpi-revenue')).getByText('CA$18,540')).toBeInTheDocument();
-        expect(screen.getByText('Event page visitors')).toBeInTheDocument();
-        expect(screen.getByText('23 people on your event page right now')).toBeInTheDocument();
+        expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('Event page visitors')).toBeInTheDocument();
+        expect(screen.getByTestId('analytics-live-now')).toHaveTextContent('23 people on your event page right now');
         expect(screen.getByRole('heading', { name: 'What happened' })).toBeInTheDocument();
         expect(screen.getByText('Sales jumped Tuesday: most buyers came from Instagram after your lineup post.')).toBeInTheDocument();
         expect(screen.getByText('On pace to sell about 750 of 800 by show day.')).toBeInTheDocument();
@@ -126,5 +130,14 @@ describe('Analytics dashboard prototype', () => {
         BANNED.forEach((pattern) => {
             expect(screen.queryByText(pattern)).not.toBeInTheDocument();
         });
+    });
+
+    it('writes a plain-language hover line for a day on the chart', () => {
+        expect(formatChartHover({ date: '2026-11-04', tickets: 86, visitors: 1240 })).toBe(
+            'Wed Nov 4: 86 tickets sold, 1,240 people visited'
+        );
+        expect(formatChartHover({ date: '2026-11-18', forecast: 14 })).toBe(
+            'Wed Nov 18: on pace for about 14 tickets'
+        );
     });
 });
