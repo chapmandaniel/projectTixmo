@@ -1,6 +1,6 @@
 export const formatNumber = (value) => {
     if (value === null || value === undefined) return '—';
-    return new Intl.NumberFormat('en-CA').format(value);
+    return new Intl.NumberFormat('en-CA').format(Math.round(value));
 };
 
 export const formatCurrencyCad = (value) => {
@@ -13,6 +13,13 @@ export const formatCurrencyCad = (value) => {
         maximumFractionDigits: digits,
     }).format(Math.abs(safe));
     return `${safe < 0 ? '-' : ''}CA$${formatted}`;
+};
+
+export const formatDuration = (seconds) => {
+    const total = Math.max(0, Math.round(Number(seconds) || 0));
+    const minutes = Math.floor(total / 60);
+    const rest = total % 60;
+    return `${minutes}m ${rest}s`;
 };
 
 export const percentChange = (current, prior) => {
@@ -34,19 +41,16 @@ export const formatChartDay = (iso) => {
     return `${weekday} ${month} ${day}`;
 };
 
-export const formatChartHover = ({ date, tickets, visitors, forecast }) => {
+export const formatChartHover = ({ date, visitors, previous, forecast }) => {
     const day = formatChartDay(date);
-    if (tickets != null && visitors != null) {
-        return `${day}: ${formatNumber(tickets)} tickets sold, ${formatNumber(visitors)} people visited`;
+    if (visitors != null && previous != null) {
+        return `${day}: ${formatNumber(visitors)} visitors (last period ${formatNumber(previous)})`;
     }
     if (forecast != null) {
-        return `${day}: on pace for about ${formatNumber(forecast)} tickets`;
-    }
-    if (tickets != null) {
-        return `${day}: ${formatNumber(tickets)} tickets sold`;
+        return `${day}: on pace for about ${formatNumber(forecast)} visitors`;
     }
     if (visitors != null) {
-        return `${day}: ${formatNumber(visitors)} people visited`;
+        return `${day}: ${formatNumber(visitors)} visitors`;
     }
     return day;
 };

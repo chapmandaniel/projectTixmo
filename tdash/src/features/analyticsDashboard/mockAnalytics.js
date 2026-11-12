@@ -1,55 +1,26 @@
 /**
- * Prototype-only analytics mocks.
+ * Prototype-only GA4 mocks. Responses match Data API runReport / runRealtimeReport.
+ * The adapter in ga4Adapter.js turns those rows into view models.
  *
- * Traffic rows follow the GA4 Data API RunReport shape so a later wiring pass
- * can swap the source without changing the page. Sales rows follow Tixmo
- * GET /reports/sales. Pre-written copy is plain strings keyed by event + period.
- *
- * @typedef {Object} Ga4DimensionHeader
- * @property {string} name
- *
- * @typedef {Object} Ga4MetricHeader
- * @property {string} name
- *
- * @typedef {Object} Ga4DimensionValue
- * @property {string} value
- *
- * @typedef {Object} Ga4MetricValue
- * @property {string} value
- *
- * @typedef {Object} Ga4Row
- * @property {Ga4DimensionValue[]} dimensionValues
- * @property {Ga4MetricValue[]} metricValues
- *
- * @typedef {Object} Ga4RunReportResponse
- * @property {Ga4DimensionHeader[]} dimensionHeaders
- * @property {Ga4MetricHeader[]} metricHeaders
- * @property {Ga4Row[]} rows
- *
- * @typedef {Object} SalesReportRow
- * @property {string} date
- * @property {number} revenue
- * @property {number} ticketsSold
- * @property {number} ordersCount
- * @property {string} currency
- * @property {string} aggregationTimezone
- * @property {string} [eventId]
- *
- * @typedef {Object} AnalyticsEvent
- * @property {string} id
- * @property {string} name
- * @property {boolean} festival
- * @property {boolean} empty
- * @property {string} showDate
- * @property {number} capacity
- * @property {number} liveNow
- * @property {string} city
+ * @typedef {import('./ga4Adapter.js').Ga4RunReportResponse} Ga4RunReportResponse
  */
+
+import {
+    adaptGa4Report,
+    emptyGa4Report,
+    ga4DateToIso,
+    isoToGa4Date,
+    makeGa4Report,
+    sumMetric,
+    weightedAverage,
+} from './ga4Adapter';
+import { percentChange } from './formatters';
 
 export const MOCK_AS_OF = '2026-11-12';
 export const MOCK_PROMOTER = 'Northlight Live (demo)';
-export const DEFAULT_EVENT_ID = 'evt-aurora';
+export const DEFAULT_PAGE_ID = 'aurora-after-dark';
 export const DEFAULT_RANGE = '28';
+export const EMPTY_STATE_MESSAGE = 'Not enough traffic yet to show trends.';
 
 export const DATE_RANGE_OPTIONS = [
     { id: '7', short: '7 days', label: 'Last 7 days', days: 7 },
@@ -57,101 +28,95 @@ export const DATE_RANGE_OPTIONS = [
     { id: '90', short: '90 days', label: 'Last 90 days', days: 90 },
 ];
 
-/** @type {AnalyticsEvent[]} */
-export const ANALYTICS_EVENTS = [
+export const ANALYTICS_PAGES = [
+    { id: 'all', name: 'All pages', path: null, empty: false, liveNow: 92 },
     {
-        id: 'evt-aurora',
+        id: 'aurora-after-dark',
         name: 'Aurora After Dark',
-        festival: false,
+        path: '/events/aurora-after-dark',
         empty: false,
-        showDate: '2026-12-05',
-        capacity: 800,
         liveNow: 23,
-        city: 'St. John\'s',
+        festival: false,
     },
     {
-        id: 'evt-harbour',
+        id: 'harbour-lights-festival',
         name: 'Harbour Lights Festival',
-        festival: true,
+        path: '/events/harbour-lights-festival',
         empty: false,
-        showDate: '2026-12-20',
-        capacity: 2500,
         liveNow: 61,
-        city: 'St. John\'s',
+        festival: true,
     },
     {
-        id: 'evt-fog',
+        id: 'fog-city-strobe',
         name: 'Fog City Strobe',
-        festival: false,
+        path: '/events/fog-city-strobe',
         empty: false,
-        showDate: '2026-11-28',
-        capacity: 600,
         liveNow: 8,
-        city: 'Mount Pearl',
+        festival: false,
     },
     {
-        id: 'evt-quiet',
+        id: 'quiet-harbour-acoustic',
         name: 'Quiet Harbour Acoustic',
-        festival: false,
+        path: '/events/quiet-harbour-acoustic',
         empty: true,
-        showDate: '2027-01-16',
-        capacity: 180,
         liveNow: 0,
-        city: 'Harbour Grace',
+        festival: false,
     },
 ];
 
 export const CHANNELS = [
-    { id: 'instagram', label: 'Instagram', ga4: 'Organic Social' },
-    { id: 'facebook', label: 'Facebook', ga4: 'Paid Social' },
-    { id: 'google', label: 'Google', ga4: 'Organic Search' },
-    { id: 'email', label: 'Email', ga4: 'Email' },
-    { id: 'direct', label: 'Direct', ga4: 'Direct' },
-    { id: 'other', label: 'Other', ga4: 'Referral' },
+    { id: 'organic-search', label: 'Organic Search' },
+    { id: 'direct', label: 'Direct' },
+    { id: 'paid-social', label: 'Paid Social' },
+    { id: 'organic-social', label: 'Organic Social' },
+    { id: 'email', label: 'Email' },
+    { id: 'referral', label: 'Referral' },
 ];
 
-export const GA4_DIMENSIONS = ['date', 'sessionDefaultChannelGroup'];
-export const GA4_METRICS = [
-    'activeUsers',
-    'screenPageViews',
-    'itemViewEvents',
-    'addToCarts',
-    'checkouts',
-    'ecommercePurchases',
+export const DEVICE_CATEGORIES = ['desktop', 'mobile', 'tablet'];
+
+export const FUNNEL_EVENTS = [
+    { id: 'view_item', label: 'Viewed item' },
+    { id: 'add_to_cart', label: 'Added to cart' },
+    { id: 'begin_checkout', label: 'Started checkout' },
+    { id: 'purchase', label: 'Purchased' },
 ];
 
-export const EMPTY_STATE_MESSAGE = 'Not enough sales yet to show trends.';
+const DAILY_DIMS = ['date', 'pagePath'];
+const DAILY_METRICS = ['activeUsers', 'screenPageViews', 'averageSessionDuration', 'ecommercePurchases', 'purchaseRevenue'];
+const CHANNEL_DIMS = ['date', 'pagePath', 'sessionDefaultChannelGroup'];
+const CHANNEL_METRICS = ['activeUsers', 'ecommercePurchases'];
+const PAGE_DIMS = ['date', 'pagePath', 'pageTitle'];
+const PAGE_METRICS = ['screenPageViews'];
+const EVENT_DIMS = ['date', 'pagePath', 'eventName'];
+const EVENT_METRICS = ['eventCount', 'purchaseRevenue'];
+const DEVICE_DIMS = ['date', 'pagePath', 'deviceCategory'];
+const DEVICE_METRICS = ['activeUsers'];
+const CITY_DIMS = ['date', 'pagePath', 'city'];
+const CITY_METRICS = ['activeUsers'];
+const REALTIME_DIMS = ['unifiedScreenName'];
+const REALTIME_METRICS = ['activeUsers'];
 
 const pad = (value) => String(value).padStart(2, '0');
-
 const toIso = (date) => `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
-
 const parseIso = (iso) => {
     const [year, month, day] = iso.split('-').map(Number);
     return new Date(Date.UTC(year, month - 1, day));
 };
-
 const addDays = (iso, amount) => {
     const date = parseIso(iso);
     date.setUTCDate(date.getUTCDate() + amount);
     return toIso(date);
 };
-
-const toGa4Date = (iso) => iso.replaceAll('-', '');
-
-const isoFromGa4 = (value) => `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
-
 const dateWindow = (endIso, days) => {
     const dates = [];
-    for (let offset = days - 1; offset >= 0; offset -= 1) {
-        dates.push(addDays(endIso, -offset));
-    }
+    for (let offset = days - 1; offset >= 0; offset -= 1) dates.push(addDays(endIso, -offset));
     return dates;
 };
 
 const roundPreserveSum = (values, total) => {
     const floored = values.map((value) => Math.floor(value));
-    let remainder = total - floored.reduce((sum, value) => sum + value, 0);
+    let remainder = Math.round(total) - floored.reduce((sum, value) => sum + value, 0);
     const ranked = values
         .map((value, index) => ({ index, frac: value - Math.floor(value) }))
         .sort((left, right) => right.frac - left.frac);
@@ -167,7 +132,7 @@ const spreadAcrossDays = (total, dates, spikeDate, spikeFactor = 1) => {
     if (!dates.length) return [];
     const weights = dates.map((iso) => {
         const weekday = parseIso(iso).getUTCDay();
-        const weekend = weekday === 5 || weekday === 6 ? 1.35 : 1;
+        const weekend = weekday === 5 || weekday === 6 ? 1.3 : 1;
         const spike = iso === spikeDate ? spikeFactor : 1;
         return Math.max(0.35, weekend * spike);
     });
@@ -175,67 +140,111 @@ const spreadAcrossDays = (total, dates, spikeDate, spikeFactor = 1) => {
     return roundPreserveSum(weights.map((weight) => (weight / weightSum) * total), total);
 };
 
-const splitChannels = (total, mix) => {
-    const values = CHANNELS.map((channel) => total * mix[channel.id]);
-    return roundPreserveSum(values, total);
-};
+const splitByShare = (total, shares) => roundPreserveSum(shares.map((share) => total * share), total);
 
-/**
- * Exact period totals so event/range switches change the on-screen numbers.
- * Nested bands (7 inside 28 inside 90) are used to build one daily series.
- */
-const EVENT_PERIODS = {
-    'evt-aurora': {
-        mix: { instagram: 0.38, facebook: 0.16, google: 0.12, email: 0.18, direct: 0.1, other: 0.06 },
-        avgTicket: 45,
+const PAGE_PERIODS = {
+    'aurora-after-dark': {
         spikeDate: '2026-11-10',
-        spikeFactor: 2.4,
+        spikeFactor: 2.2,
+        durationSeconds: 102,
+        priorDurationSeconds: 90,
+        mix: { 'organic-social': 0.34, 'paid-social': 0.16, 'organic-search': 0.18, email: 0.14, direct: 0.12, referral: 0.06 },
+        devices: { desktop: 0.52, mobile: 0.41, tablet: 0.07 },
+        cities: { "St. John's": 0.48, 'Mount Pearl': 0.18, Halifax: 0.14, Toronto: 0.12, 'Corner Brook': 0.08 },
         current: {
-            7: { tickets: 98, visitors: 640, pageViews: 920, itemViews: 780, carts: 210, checkouts: 140, purchases: 76 },
-            28: { tickets: 412, visitors: 980, pageViews: 1480, itemViews: 1210, carts: 340, checkouts: 198, purchases: 118 },
-            90: { tickets: 640, visitors: 1680, pageViews: 2540, itemViews: 1980, carts: 520, checkouts: 310, purchases: 188 },
+            7: { visitors: 410, views: 860, purchases: 28, viewItem: 320, carts: 96, checkouts: 54, revenue: 1260 },
+            28: { visitors: 1180, views: 2460, purchases: 118, viewItem: 1210, carts: 340, checkouts: 198, revenue: 5310 },
+            90: { visitors: 2740, views: 5680, purchases: 248, viewItem: 2680, carts: 720, checkouts: 410, revenue: 11160 },
         },
         prior: {
-            7: { tickets: 126, visitors: 710, pageViews: 1010, itemViews: 840, carts: 248, checkouts: 168, purchases: 96 },
-            28: { tickets: 301, visitors: 860, pageViews: 1290, itemViews: 1040, carts: 280, checkouts: 170, purchases: 92 },
-            90: { tickets: 448, visitors: 1420, pageViews: 2100, itemViews: 1680, carts: 410, checkouts: 250, purchases: 140 },
+            7: { visitors: 380, views: 790, purchases: 24, viewItem: 290, carts: 84, checkouts: 48, revenue: 1080 },
+            28: { visitors: 1000, views: 2100, purchases: 92, viewItem: 1040, carts: 280, checkouts: 170, revenue: 4140 },
+            90: { visitors: 2320, views: 4860, purchases: 196, viewItem: 2240, carts: 610, checkouts: 350, revenue: 8820 },
+        },
+        extraPages: [
+            { path: '/events/aurora-after-dark', title: 'Aurora After Dark', share: 0.52, trend: 'up' },
+            { path: '/events/aurora-after-dark/tickets', title: 'Aurora After Dark tickets', share: 0.22, trend: 'up' },
+            { path: '/checkout/aurora-after-dark', title: 'Checkout', share: 0.16, trend: 'down' },
+            { path: '/events/aurora-after-dark/lineup', title: 'Lineup', share: 0.1, trend: 'flat' },
+        ],
+        tips: {
+            'organic-social': 'Lineup posts on Organic Social still open the door.',
+            'paid-social': 'Paid Social is catching up this month.',
+            'organic-search': 'Search visitors stay late on the lineup page.',
+            email: 'Email visitors purchase more often than the rest.',
+            direct: 'People who type the address still know the night.',
+            referral: 'Referral traffic is small but steady.',
         },
     },
-    'evt-harbour': {
-        mix: { instagram: 0.32, facebook: 0.22, google: 0.16, email: 0.14, direct: 0.1, other: 0.06 },
-        avgTicket: 69,
+    'harbour-lights-festival': {
         spikeDate: '2026-11-08',
-        spikeFactor: 1.9,
+        spikeFactor: 1.8,
+        durationSeconds: 135,
+        priorDurationSeconds: 118,
+        mix: { 'organic-social': 0.22, 'paid-social': 0.28, 'organic-search': 0.2, email: 0.12, direct: 0.12, referral: 0.06 },
+        devices: { desktop: 0.44, mobile: 0.5, tablet: 0.06 },
+        cities: { "St. John's": 0.42, Halifax: 0.22, Toronto: 0.16, 'Mount Pearl': 0.12, Montreal: 0.08 },
         current: {
-            7: { tickets: 286, visitors: 1920, pageViews: 2680, itemViews: 2140, carts: 610, checkouts: 390, purchases: 164 },
-            28: { tickets: 1246, visitors: 6840, pageViews: 9120, itemViews: 7480, carts: 1980, checkouts: 1280, purchases: 540 },
-            90: { tickets: 1688, visitors: 9420, pageViews: 12640, itemViews: 10210, carts: 2680, checkouts: 1720, purchases: 730 },
+            7: { visitors: 1920, views: 3840, purchases: 164, viewItem: 2140, carts: 610, checkouts: 390, revenue: 11316 },
+            28: { visitors: 6840, views: 12100, purchases: 540, viewItem: 7480, carts: 1980, checkouts: 1280, revenue: 37260 },
+            90: { visitors: 9420, views: 16840, purchases: 730, viewItem: 10210, carts: 2680, checkouts: 1720, revenue: 50370 },
         },
         prior: {
-            7: { tickets: 214, visitors: 1610, pageViews: 2210, itemViews: 1780, carts: 490, checkouts: 310, purchases: 122 },
-            28: { tickets: 860, visitors: 5120, pageViews: 6840, itemViews: 5610, carts: 1480, checkouts: 940, purchases: 380 },
-            90: { tickets: 1104, visitors: 7210, pageViews: 9640, itemViews: 7820, carts: 2010, checkouts: 1280, purchases: 490 },
+            7: { visitors: 1610, views: 3180, purchases: 122, viewItem: 1780, carts: 490, checkouts: 310, revenue: 8418 },
+            28: { visitors: 5120, views: 9640, purchases: 380, viewItem: 5610, carts: 1480, checkouts: 940, revenue: 26220 },
+            90: { visitors: 7210, views: 13200, purchases: 490, viewItem: 7820, carts: 2010, checkouts: 1280, revenue: 33810 },
+        },
+        extraPages: [
+            { path: '/events/harbour-lights-festival', title: 'Harbour Lights Festival', share: 0.48, trend: 'up' },
+            { path: '/events/harbour-lights-festival/passes', title: 'Weekend passes', share: 0.24, trend: 'up' },
+            { path: '/checkout/harbour-lights-festival', title: 'Checkout', share: 0.18, trend: 'flat' },
+            { path: '/events/harbour-lights-festival/lineup', title: 'Saturday lineup', share: 0.1, trend: 'up' },
+        ],
+        tips: {
+            'organic-social': 'Organic Social still introduces the festival.',
+            'paid-social': 'Paid Social is the fastest-growing door in.',
+            'organic-search': 'Search is finding the Saturday lineup.',
+            email: 'The early-bird note still pays off.',
+            direct: 'Direct visits pick up on lineup days.',
+            referral: 'Partner sites send a little traffic each week.',
         },
     },
-    'evt-fog': {
-        mix: { instagram: 0.18, facebook: 0.12, google: 0.1, email: 0.08, direct: 0.42, other: 0.1 },
-        avgTicket: 40,
+    'fog-city-strobe': {
         spikeDate: '2026-11-07',
-        spikeFactor: 1.6,
+        spikeFactor: 1.5,
+        durationSeconds: 78,
+        priorDurationSeconds: 90,
+        mix: { 'organic-social': 0.14, 'paid-social': 0.1, 'organic-search': 0.12, email: 0.08, direct: 0.46, referral: 0.1 },
+        devices: { desktop: 0.38, mobile: 0.54, tablet: 0.08 },
+        cities: { 'Mount Pearl': 0.36, "St. John's": 0.32, Halifax: 0.14, Toronto: 0.1, Gander: 0.08 },
         current: {
-            7: { tickets: 41, visitors: 520, pageViews: 740, itemViews: 610, carts: 120, checkouts: 72, purchases: 28 },
-            28: { tickets: 187, visitors: 2100, pageViews: 2860, itemViews: 2340, carts: 410, checkouts: 248, purchases: 96 },
-            90: { tickets: 274, visitors: 3180, pageViews: 4320, itemViews: 3510, carts: 620, checkouts: 360, purchases: 142 },
+            7: { visitors: 220, views: 410, purchases: 12, viewItem: 180, carts: 48, checkouts: 28, revenue: 480 },
+            28: { visitors: 980, views: 1860, purchases: 40, viewItem: 820, carts: 210, checkouts: 118, revenue: 1600 },
+            90: { visitors: 1680, views: 3120, purchases: 74, viewItem: 1420, carts: 360, checkouts: 198, revenue: 2960 },
         },
         prior: {
-            7: { tickets: 58, visitors: 610, pageViews: 860, itemViews: 700, carts: 150, checkouts: 94, purchases: 40 },
-            28: { tickets: 220, visitors: 1980, pageViews: 2640, itemViews: 2160, carts: 460, checkouts: 280, purchases: 118 },
-            90: { tickets: 310, visitors: 2860, pageViews: 3840, itemViews: 3120, carts: 690, checkouts: 410, purchases: 164 },
+            7: { visitors: 260, views: 470, purchases: 16, viewItem: 210, carts: 58, checkouts: 34, revenue: 640 },
+            28: { visitors: 1100, views: 2040, purchases: 52, viewItem: 910, carts: 248, checkouts: 140, revenue: 2080 },
+            90: { visitors: 1840, views: 3380, purchases: 88, viewItem: 1560, carts: 410, checkouts: 230, revenue: 3520 },
+        },
+        extraPages: [
+            { path: '/events/fog-city-strobe', title: 'Fog City Strobe', share: 0.58, trend: 'down' },
+            { path: '/events/fog-city-strobe/tickets', title: 'Fog City tickets', share: 0.2, trend: 'down' },
+            { path: '/checkout/fog-city-strobe', title: 'Checkout', share: 0.14, trend: 'down' },
+            { path: '/events/fog-city-strobe/info', title: 'Door info', share: 0.08, trend: 'flat' },
+        ],
+        tips: {
+            'organic-social': 'Social looks are not turning into purchases yet.',
+            'paid-social': 'Paid Social is quiet for this night.',
+            'organic-search': 'Search is a small, steady trickle.',
+            email: 'A reminder note could still help.',
+            direct: 'Most people already know the address.',
+            referral: 'Friends of friends arrive from other sites.',
         },
     },
 };
 
-const METRIC_KEYS = ['visitors', 'pageViews', 'itemViews', 'carts', 'checkouts', 'purchases', 'tickets'];
+const KEYS = ['visitors', 'views', 'purchases', 'viewItem', 'carts', 'checkouts', 'revenue'];
 
 const bandedDaily = (current, prior, spikeDate, spikeFactor) => {
     const current90 = dateWindow(MOCK_AS_OF, 90);
@@ -247,9 +256,9 @@ const bandedDaily = (current, prior, spikeDate, spikeFactor) => {
         /** @type {Record<string, Record<string, number>>} */
         const byDate = {};
         windowDates.forEach((iso) => {
-            byDate[iso] = Object.fromEntries(METRIC_KEYS.map((key) => [key, 0]));
+            byDate[iso] = Object.fromEntries(KEYS.map((key) => [key, 0]));
         });
-        METRIC_KEYS.forEach((key) => {
+        KEYS.forEach((key) => {
             const late = spreadAcrossDays(totals[7][key], last7, spikeDate, spikeFactor);
             const mid = spreadAcrossDays(totals[28][key] - totals[7][key], mid21, spikeDate, spikeFactor);
             const old = spreadAcrossDays(totals[90][key] - totals[28][key], early, spikeDate, 1);
@@ -259,476 +268,290 @@ const bandedDaily = (current, prior, spikeDate, spikeFactor) => {
         });
         return byDate;
     };
-    return {
-        current: build(current90, current),
-        prior: build(prior90, prior),
-        current90,
-        prior90,
-    };
+    return { current: build(current90, current), prior: build(prior90, prior) };
 };
 
-const buildGa4Report = (byDate, mix) => {
-    /** @type {Ga4Row[]} */
-    const rows = [];
+const buildPageSource = (page, config) => {
+    const series = bandedDaily(config.current, config.prior, config.spikeDate, config.spikeFactor);
+    const byDate = { ...series.prior, ...series.current };
+    const current90 = dateWindow(MOCK_AS_OF, 90);
+    const dailyRecords = [];
+    const channelRecords = [];
+    const pageRecords = [];
+    const eventRecords = [];
+    const deviceRecords = [];
+    const cityRecords = [];
+
     Object.entries(byDate).forEach(([iso, metrics]) => {
-        const visitors = splitChannels(metrics.visitors, mix);
-        const pageViews = splitChannels(metrics.pageViews, mix);
-        const itemViews = splitChannels(metrics.itemViews, mix);
-        const carts = splitChannels(metrics.carts, mix);
-        const checkouts = splitChannels(metrics.checkouts, mix);
-        const purchases = splitChannels(metrics.purchases, mix);
+        const ga4Date = isoToGa4Date(iso);
+        const duration = current90.includes(iso) ? config.durationSeconds : config.priorDurationSeconds;
+        dailyRecords.push({
+            date: ga4Date,
+            pagePath: page.path,
+            activeUsers: metrics.visitors,
+            screenPageViews: metrics.views,
+            averageSessionDuration: duration,
+            ecommercePurchases: metrics.purchases,
+            purchaseRevenue: metrics.revenue,
+        });
+        const channelVisitors = splitByShare(metrics.visitors, CHANNELS.map((channel) => config.mix[channel.id]));
+        const channelPurchases = splitByShare(metrics.purchases, CHANNELS.map((channel) => config.mix[channel.id]));
         CHANNELS.forEach((channel, index) => {
-            rows.push({
-                dimensionValues: [
-                    { value: toGa4Date(iso) },
-                    { value: channel.ga4 },
-                ],
-                metricValues: [
-                    { value: String(visitors[index]) },
-                    { value: String(pageViews[index]) },
-                    { value: String(itemViews[index]) },
-                    { value: String(carts[index]) },
-                    { value: String(checkouts[index]) },
-                    { value: String(purchases[index]) },
-                ],
+            channelRecords.push({
+                date: ga4Date,
+                pagePath: page.path,
+                sessionDefaultChannelGroup: channel.label,
+                activeUsers: channelVisitors[index],
+                ecommercePurchases: channelPurchases[index],
+            });
+        });
+        const pageViews = splitByShare(metrics.views, config.extraPages.map((item) => item.share));
+        config.extraPages.forEach((item, index) => {
+            pageRecords.push({
+                date: ga4Date,
+                pagePath: item.path,
+                pageTitle: item.title,
+                screenPageViews: pageViews[index],
+            });
+        });
+        const eventCounts = [metrics.viewItem, metrics.carts, metrics.checkouts, metrics.purchases];
+        FUNNEL_EVENTS.forEach((event, index) => {
+            eventRecords.push({
+                date: ga4Date,
+                pagePath: page.path,
+                eventName: event.id,
+                eventCount: eventCounts[index],
+                purchaseRevenue: event.id === 'purchase' ? metrics.revenue : 0,
+            });
+        });
+        const deviceUsers = splitByShare(metrics.visitors, DEVICE_CATEGORIES.map((id) => config.devices[id]));
+        DEVICE_CATEGORIES.forEach((device, index) => {
+            deviceRecords.push({
+                date: ga4Date,
+                pagePath: page.path,
+                deviceCategory: device,
+                activeUsers: deviceUsers[index],
+            });
+        });
+        const cityNames = Object.keys(config.cities);
+        const cityUsers = splitByShare(metrics.visitors, cityNames.map((name) => config.cities[name]));
+        cityNames.forEach((city, index) => {
+            cityRecords.push({
+                date: ga4Date,
+                pagePath: page.path,
+                city,
+                activeUsers: cityUsers[index],
             });
         });
     });
+
     return {
-        dimensionHeaders: GA4_DIMENSIONS.map((name) => ({ name })),
-        metricHeaders: GA4_METRICS.map((name) => ({ name })),
-        rows,
+        daily: makeGa4Report(DAILY_DIMS, DAILY_METRICS, dailyRecords),
+        channels: makeGa4Report(CHANNEL_DIMS, CHANNEL_METRICS, channelRecords),
+        pages: makeGa4Report(PAGE_DIMS, PAGE_METRICS, pageRecords),
+        events: makeGa4Report(EVENT_DIMS, EVENT_METRICS, eventRecords),
+        devices: makeGa4Report(DEVICE_DIMS, DEVICE_METRICS, deviceRecords),
+        cities: makeGa4Report(CITY_DIMS, CITY_METRICS, cityRecords),
+        realtime: makeGa4Report(REALTIME_DIMS, REALTIME_METRICS, [
+            { unifiedScreenName: page.path, activeUsers: page.liveNow },
+        ]),
+        extraPages: config.extraPages,
+        tips: config.tips,
     };
 };
 
-const buildSalesRows = (eventId, byDate, avgTicket) => (
-    Object.entries(byDate).map(([iso, metrics]) => ({
-        date: iso,
-        eventId,
-        revenue: metrics.tickets * avgTicket,
-        ticketsSold: metrics.tickets,
-        ordersCount: metrics.purchases,
-        currency: 'cad',
-        aggregationTimezone: 'America/St_Johns',
-    }))
-);
+const emptySource = (page) => ({
+    daily: emptyGa4Report(DAILY_DIMS, DAILY_METRICS),
+    channels: emptyGa4Report(CHANNEL_DIMS, CHANNEL_METRICS),
+    pages: emptyGa4Report(PAGE_DIMS, PAGE_METRICS),
+    events: emptyGa4Report(EVENT_DIMS, EVENT_METRICS),
+    devices: emptyGa4Report(DEVICE_DIMS, DEVICE_METRICS),
+    cities: emptyGa4Report(CITY_DIMS, CITY_METRICS),
+    realtime: emptyGa4Report(REALTIME_DIMS, REALTIME_METRICS),
+    extraPages: [{ path: page.path, title: page.name, share: 1, trend: 'flat' }],
+    tips: {},
+});
 
-/** @type {Record<string, { ga4: Ga4RunReportResponse, sales: SalesReportRow[] }>} */
-const EVENT_SOURCE = Object.fromEntries(
-    Object.entries(EVENT_PERIODS).map(([eventId, config]) => {
-        const series = bandedDaily(config.current, config.prior, config.spikeDate, config.spikeFactor);
-        const byDate = { ...series.prior, ...series.current };
-        return [eventId, {
-            ga4: buildGa4Report(byDate, config.mix),
-            sales: buildSalesRows(eventId, byDate, config.avgTicket),
-        }];
-    })
+/** @type {Record<string, ReturnType<typeof buildPageSource>>} */
+export const GA4_SOURCES = Object.fromEntries(
+    ANALYTICS_PAGES.filter((page) => page.id !== 'all').map((page) => [
+        page.id,
+        page.empty ? emptySource(page) : buildPageSource(page, PAGE_PERIODS[page.id]),
+    ])
 );
-
-EVENT_SOURCE['evt-quiet'] = {
-    ga4: {
-        dimensionHeaders: GA4_DIMENSIONS.map((name) => ({ name })),
-        metricHeaders: GA4_METRICS.map((name) => ({ name })),
-        rows: [],
-    },
-    sales: [],
-};
 
 const AI_COPY = {
-    'evt-aurora': {
+    'aurora-after-dark': {
         7: {
             whatHappened: [
-                'This week is quieter than last week after Tuesday’s Instagram rush.',
-                'Most of the tickets this week still came from that lineup post, not from new ads.',
-                'Checkout is the sticky step: people pick tickets, then leave before they pay.',
+                'This week is quieter than last week after Tuesday’s Organic Social rush.',
+                'Paid Social is still a small slice of visitors.',
+                'Checkout is the sticky step: people add to cart, then leave.',
             ],
             headsUp: [
-                {
-                    id: 'stall',
-                    title: 'Sales have stalled for 3 days',
-                    reason: 'No paid tickets since Monday after a busy weekend.',
-                    to: 'ticket-path',
-                },
-            ],
-            pace: 'On pace to sell about 720 of 800 by show day.',
-            channelTip: 'Instagram brought this week’s buyers. One more lineup clip could keep it going.',
-            ticketPath: [
-                'About 4 in 10 people who view the page never pick a ticket.',
-                'A third of the people who pick tickets never start checkout.',
-                '4 in 10 people who start checkout don\'t finish.',
-                'Everyone who finished checkout has a ticket.',
+                { id: 'drop', title: 'Traffic dipped after Tuesday', reason: 'Visitors fell once the lineup post aged off.', to: '#where-visitors' },
+                { id: 'checkout', title: 'Checkout drop-off is up', reason: 'More people leave after they start checkout.', to: '#ticket-path' },
             ],
         },
         28: {
             whatHappened: [
-                'Sales jumped Tuesday: most buyers came from Instagram after your lineup post.',
-                'Saturday browsing was busy, then ticket sales followed Sunday morning.',
-                'Email still brings fewer visitors than Instagram, but those buyers spend more.',
+                'Visitors jumped Tuesday after the lineup went up on Organic Social.',
+                'Paid Social is bringing more people this month than last.',
+                'Direct traffic stays steady, and those visitors still purchase more often.',
             ],
             headsUp: [
-                {
-                    id: 'stall',
-                    title: 'Sales have stalled for 3 days',
-                    reason: 'Ticket sales were busy last weekend, then quiet since Monday.',
-                    to: 'ticket-path',
-                },
-                {
-                    id: 'checkout',
-                    title: 'More people are leaving at checkout today',
-                    reason: '4 in 10 people who start checkout don\'t finish.',
-                    to: 'ticket-path',
-                },
-            ],
-            pace: 'On pace to sell about 750 of 800 by show day.',
-            channelTip: 'Email buyers spend the most. One more email this week could help.',
-            ticketPath: [
-                'About 3 in 10 people who view the page never pick a ticket.',
-                '4 in 10 people who pick tickets never start checkout.',
-                '4 in 10 people who start checkout don\'t finish.',
-                'Bought tickets are running ahead of this time last month.',
+                { id: 'spike', title: 'Traffic spiked on Tuesday', reason: 'Organic Social jumped after the lineup post.', to: '#where-visitors' },
+                { id: 'source', title: 'Paid Social is growing fast', reason: 'Paid Social visitors are ahead of last period.', to: '#where-visitors' },
+                { id: 'checkout', title: 'Checkout drop-off is high', reason: 'About 40% leave after they start checkout.', to: '#ticket-path' },
             ],
         },
         90: {
             whatHappened: [
-                'The last three months are still led by Instagram, with a clear jump after the lineup post.',
-                'Email has been the quiet workhorse: fewer visitors, more tickets each time you send.',
-                'Page visits grew faster than tickets in October, then sales caught up in November.',
+                'Organic Social has led visitors for three months.',
+                'Search grew slowly, then purchases followed in November.',
+                'Email is a smaller door in, with a longer time on site.',
             ],
             headsUp: [
-                {
-                    id: 'checkout',
-                    title: 'More people are leaving at checkout today',
-                    reason: 'Checkout drop-off is higher than earlier this fall.',
-                    to: 'ticket-path',
-                },
-            ],
-            pace: 'On pace to sell about 780 of 800 by show day.',
-            channelTip: 'Google search is small but steady. Keep the event page clear so those visitors can buy.',
-            ticketPath: [
-                'About 3 in 10 people who view the page never pick a ticket.',
-                'A third of the people who pick tickets never start checkout.',
-                '4 in 10 people who start checkout don\'t finish.',
-                'Bought tickets picked up after the November lineup post.',
+                { id: 'checkout', title: 'Checkout drop-off is high', reason: 'Checkout has been the sticky step all fall.', to: '#ticket-path' },
             ],
         },
     },
-    'evt-harbour': {
+    'harbour-lights-festival': {
         7: {
             whatHappened: [
-                'Weekend-pass sales led this week after you posted the Saturday lineup.',
-                'Facebook brought in more buyers than last week, mostly Friday night.',
-                'People are looking at Sunday, then buying Saturday instead.',
+                'Paid Social led this week after the Saturday lineup ad.',
+                'Mobile visitors outpaced desktop every day.',
+                'Search traffic followed the ad, then purchases came later that night.',
             ],
             headsUp: [
-                {
-                    id: 'saturday',
-                    title: 'Saturday passes are selling faster than Sunday',
-                    reason: 'Saturday is close to halfway sold; Sunday is still open.',
-                    to: 'where-buyers-came-from',
-                },
-            ],
-            pace: 'On pace to sell about 1,720 of 2,500 by show day.',
-            channelTip: 'Facebook is catching up this week. A Friday reminder could fill more Saturday passes.',
-            ticketPath: [
-                'About 3 in 10 people who view the page never pick a ticket.',
-                'A third of the people who pick tickets never start checkout.',
-                '3 in 10 people who start checkout don\'t finish.',
-                'Weekend-pass buyers are finishing checkout more often than single-day buyers.',
+                { id: 'source', title: 'Paid Social is growing fast', reason: 'Paid Social is the biggest door in this week.', to: '#where-visitors' },
             ],
         },
         28: {
             whatHappened: [
-                'Weekend pass sales led the week after you posted the Saturday lineup.',
-                'Instagram still brings the most tickets, with Facebook close behind for the festival.',
-                'Sales moved on lineup day: people opened the page from Instagram, then bought that night.',
+                'Festival visitors rose after the Saturday lineup went public.',
+                'Paid Social now brings in more people than Organic Social.',
+                'Search still finds the lineup page, then people move to checkout.',
             ],
             headsUp: [
-                {
-                    id: 'saturday',
-                    title: 'Saturday passes are selling faster than Sunday',
-                    reason: 'Saturday is filling first after the lineup post.',
-                    to: 'where-buyers-came-from',
-                },
-                {
-                    id: 'email',
-                    title: 'Email has gone quiet for a week',
-                    reason: 'No festival email has gone out since the early-bird note.',
-                    to: 'where-buyers-came-from',
-                },
-            ],
-            pace: 'On pace to sell about 1,800 of 2,500 by show day.',
-            channelTip: 'Email buyers spend the most. One more email this week could help.',
-            ticketPath: [
-                'About 2 in 10 people who view the page never pick a ticket.',
-                'A third of the people who pick tickets never start checkout.',
-                '3 in 10 people who start checkout don\'t finish.',
-                'Festival buyers who start checkout usually finish the same night.',
+                { id: 'spike', title: 'Traffic spiked on lineup day', reason: 'Visitors jumped when the Saturday lineup posted.', to: '#where-visitors' },
+                { id: 'source', title: 'Paid Social is growing fast', reason: 'Paid Social overtook Organic Social this period.', to: '#where-visitors' },
+                { id: 'checkout', title: 'Checkout drop-off is up', reason: 'Weekend-pass checkout loses people late at night.', to: '#ticket-path' },
             ],
         },
         90: {
             whatHappened: [
-                'Festival sales built slowly in September, then jumped when the full lineup went up.',
-                'Instagram has been the main door in for three months.',
-                'Early-bird email buyers still spend more per order than social buyers.',
+                'The festival built slowly, then jumped when the full lineup went up.',
+                'Paid Social has been the main new door in since October.',
+                'Email from the early-bird note still brings purchases.',
             ],
             headsUp: [
-                {
-                    id: 'sunday',
-                    title: 'Sunday is behind Saturday',
-                    reason: 'Sunday passes need a push if you want both days even.',
-                    to: 'where-buyers-came-from',
-                },
-            ],
-            pace: 'On pace to sell about 1,860 of 2,500 by show day.',
-            channelTip: 'Early-bird email still pays off. A “last chance to save” note could lift Sunday.',
-            ticketPath: [
-                'About 2 in 10 people who view the page never pick a ticket.',
-                'A third of the people who pick tickets never start checkout.',
-                '3 in 10 people who start checkout don\'t finish.',
-                'Bought tickets rose after each lineup update.',
+                { id: 'source', title: 'Paid Social is growing fast', reason: 'Paid Social has led new visitors since October.', to: '#where-visitors' },
             ],
         },
     },
-    'evt-fog': {
+    'fog-city-strobe': {
         7: {
             whatHappened: [
-                'This week’s tickets mostly came from people who already knew the night.',
-                'Sales are down from last week; the door list is still doing the work.',
+                'Direct visits still lead, but this week is softer than last.',
+                'Social looks are not turning into purchases.',
                 'Checkout drop-off ticked up on Thursday.',
             ],
             headsUp: [
-                {
-                    id: 'checkout',
-                    title: 'More people are leaving at checkout today',
-                    reason: 'People pick tickets, then leave before they pay.',
-                    to: 'ticket-path',
-                },
-            ],
-            pace: 'On pace to sell about 420 of 600 by show day.',
-            channelTip: 'Most buyers typed your page directly. A reminder post could still reach friends of friends.',
-            ticketPath: [
-                'About 5 in 10 people who view the page never pick a ticket.',
-                '4 in 10 people who pick tickets never start checkout.',
-                '4 in 10 people who start checkout don\'t finish.',
-                'Bought tickets this week are behind last week.',
+                { id: 'drop', title: 'Traffic is down this week', reason: 'Fewer people opened the page than last week.', to: '#where-visitors' },
+                { id: 'checkout', title: 'Checkout drop-off is up', reason: 'People add to cart, then leave before they pay.', to: '#ticket-path' },
             ],
         },
         28: {
             whatHappened: [
-                'Most tickets this period came from people who already knew the night.',
-                'Direct visits outsold Instagram and Facebook combined.',
-                'Sales cooled after the first announcement week, then held steady.',
+                'Most visitors typed the page directly.',
+                'Social and search together still trail Direct.',
+                'Traffic cooled after the first announcement week.',
             ],
             headsUp: [
-                {
-                    id: 'checkout',
-                    title: 'More people are leaving at checkout today',
-                    reason: '4 in 10 people who start checkout don\'t finish.',
-                    to: 'ticket-path',
-                },
-            ],
-            pace: 'On pace to sell about 410 of 600 by show day.',
-            channelTip: 'Most tickets came from people who typed your page directly. A reminder post could still help.',
-            ticketPath: [
-                'About 5 in 10 people who view the page never pick a ticket.',
-                '4 in 10 people who pick tickets never start checkout.',
-                '4 in 10 people who start checkout don\'t finish.',
-                'Bought tickets are a little behind the last stretch.',
+                { id: 'drop', title: 'Traffic is down vs last period', reason: 'Fewer people visited than the previous 28 days.', to: '#where-visitors' },
+                { id: 'checkout', title: 'Checkout drop-off is high', reason: 'A large share leave after they start checkout.', to: '#ticket-path' },
             ],
         },
         90: {
             whatHappened: [
-                'Fog City has been a word-of-mouth night: direct visits lead every month.',
-                'The first announcement week was the high point, then sales settled.',
-                'Social posts bring looks, but they rarely finish as tickets.',
+                'Fog City stays a Direct-visit page.',
+                'The first announcement week was the high point.',
+                'Social brings looks, but they rarely purchase.',
             ],
-            headsUp: [],
-            pace: 'On pace to sell about 430 of 600 by show day.',
-            channelTip: 'Friends-of-friends are missing. One shareable clip could open a new door.',
-            ticketPath: [
-                'About 5 in 10 people who view the page never pick a ticket.',
-                '4 in 10 people who pick tickets never start checkout.',
-                '4 in 10 people who start checkout don\'t finish.',
-                'Bought tickets never matched the first announcement week.',
+            headsUp: [
+                { id: 'drop', title: 'Traffic never matched the first week', reason: 'Visits settled after the announcement burst.', to: '#where-visitors' },
             ],
         },
     },
     all: {
         7: {
             whatHappened: [
-                'Across your nights, this week is softer than last week.',
-                'Harbour Lights still accounts for most of the tickets.',
-                'Checkout is the common sticky step on every event.',
+                'Across all pages, this week is a little softer than last week.',
+                'Harbour Lights still accounts for most visitors.',
+                'Checkout is the common sticky step.',
             ],
             headsUp: [
-                {
-                    id: 'stall',
-                    title: 'Sales have stalled for 3 days',
-                    reason: 'Aurora After Dark has had no paid tickets since Monday.',
-                    to: 'ticket-path',
-                },
-            ],
-            pace: 'On pace to sell about 2,850 of 3,900 by show day, across these events.',
-            channelTip: 'Instagram still leads. One post that names both Aurora and Harbour Lights could lift both.',
-            ticketPath: [
-                'About 3 in 10 people who view a page never pick a ticket.',
-                'A third of the people who pick tickets never start checkout.',
-                '4 in 10 people who start checkout don\'t finish.',
-                'Harbour Lights is carrying most of this week\'s bought tickets.',
+                { id: 'drop', title: 'Aurora traffic dipped', reason: 'Aurora After Dark cooled after Tuesday.', to: '#where-visitors' },
             ],
         },
         28: {
             whatHappened: [
-                'Harbour Lights Festival is carrying most of the tickets this month.',
-                'Sales jumped Tuesday on Aurora After Dark after the Instagram lineup post.',
-                'Email buyers spend the most across every event.',
+                'Harbour Lights Festival is carrying most of the visitors this month.',
+                'Aurora After Dark jumped Tuesday on Organic Social.',
+                'Paid Social is the fastest-growing door in across the site.',
             ],
             headsUp: [
-                {
-                    id: 'stall',
-                    title: 'Sales have stalled for 3 days',
-                    reason: 'Aurora After Dark went quiet after last weekend.',
-                    to: 'ticket-path',
-                },
-                {
-                    id: 'checkout',
-                    title: 'More people are leaving at checkout today',
-                    reason: 'Checkout drop-off is up on Aurora and Fog City.',
-                    to: 'ticket-path',
-                },
-                {
-                    id: 'email',
-                    title: 'Email has gone quiet for a week',
-                    reason: 'No festival email has gone out since the early-bird note.',
-                    to: 'where-buyers-came-from',
-                },
-            ],
-            pace: 'On pace to sell about 2,960 of 3,900 by show day, across these events.',
-            channelTip: 'Email buyers spend the most. One more email this week could help.',
-            ticketPath: [
-                'About 3 in 10 people who view a page never pick a ticket.',
-                'A third of the people who pick tickets never start checkout.',
-                '4 in 10 people who start checkout don\'t finish.',
-                'Bought tickets are up from the previous 28 days, led by the festival.',
+                { id: 'spike', title: 'Traffic spiked on Tuesday', reason: 'Aurora After Dark jumped after the lineup post.', to: '#where-visitors' },
+                { id: 'source', title: 'Paid Social is growing fast', reason: 'Paid Social is up on the festival pages.', to: '#where-visitors' },
+                { id: 'checkout', title: 'Checkout drop-off is high', reason: 'Checkout loses people on Aurora and Fog City.', to: '#ticket-path' },
             ],
         },
         90: {
             whatHappened: [
-                'The festival is the long story: sales built for months, then jumped with the lineup.',
-                'Aurora After Dark had a shorter, sharper Instagram burst in November.',
-                'Fog City stayed a direct-visit night the whole time.',
+                'The festival is the long story: visits built for months, then jumped with the lineup.',
+                'Aurora After Dark had a shorter Organic Social burst in November.',
+                'Fog City stayed a Direct-visit page the whole time.',
             ],
             headsUp: [
-                {
-                    id: 'sunday',
-                    title: 'Sunday is behind Saturday',
-                    reason: 'Harbour Lights Sunday passes still need a push.',
-                    to: 'where-buyers-came-from',
-                },
-            ],
-            pace: 'On pace to sell about 3,070 of 3,900 by show day, across these events.',
-            channelTip: 'Three different doors in: Instagram for Aurora, Facebook for the festival, direct for Fog City.',
-            ticketPath: [
-                'About 3 in 10 people who view a page never pick a ticket.',
-                'A third of the people who pick tickets never start checkout.',
-                '3 in 10 people who start checkout don\'t finish.',
-                'Bought tickets rose after each public lineup update.',
+                { id: 'source', title: 'Paid Social is growing fast', reason: 'Festival Paid Social has led new visitors since October.', to: '#where-visitors' },
             ],
         },
     },
 };
 
-const metricIndex = (name) => GA4_METRICS.indexOf(name);
-
-const rowMetric = (row, name) => Number(row.metricValues[metricIndex(name)]?.value || 0);
-
-const rowDate = (row) => isoFromGa4(row.dimensionValues[0]?.value || '');
-
-const rowChannel = (row) => row.dimensionValues[1]?.value || '';
-
 const inWindow = (iso, dates) => dates[0] <= iso && iso <= dates[dates.length - 1];
 
-const channelByGa4 = Object.fromEntries(CHANNELS.map((channel) => [channel.ga4, channel]));
+const rowsInWindow = (report, dates) => adaptGa4Report(report).filter((row) => inWindow(ga4DateToIso(row.dimensions.date), dates));
 
-const sumGa4 = (report, dates) => {
-    const totals = {
-        activeUsers: 0,
-        screenPageViews: 0,
-        itemViewEvents: 0,
-        addToCarts: 0,
-        checkouts: 0,
-        ecommercePurchases: 0,
-        byDay: {},
-        byChannel: Object.fromEntries(CHANNELS.map((channel) => [channel.id, {
-            visitors: 0,
-            tickets: 0,
-            purchases: 0,
-        }])),
-    };
-    dates.forEach((iso) => {
-        totals.byDay[iso] = { visitors: 0, tickets: 0, pageViews: 0 };
-    });
-    report.rows.forEach((row) => {
-        const iso = rowDate(row);
-        if (!inWindow(iso, dates)) return;
-        const channel = channelByGa4[rowChannel(row)];
-        const visitors = rowMetric(row, 'activeUsers');
-        const pageViews = rowMetric(row, 'screenPageViews');
-        const purchases = rowMetric(row, 'ecommercePurchases');
-        totals.activeUsers += visitors;
-        totals.screenPageViews += pageViews;
-        totals.itemViewEvents += rowMetric(row, 'itemViewEvents');
-        totals.addToCarts += rowMetric(row, 'addToCarts');
-        totals.checkouts += rowMetric(row, 'checkouts');
-        totals.ecommercePurchases += purchases;
-        if (totals.byDay[iso]) {
-            totals.byDay[iso].visitors += visitors;
-            totals.byDay[iso].pageViews += pageViews;
-        }
-        if (channel) {
-            totals.byChannel[channel.id].visitors += visitors;
-            totals.byChannel[channel.id].purchases += purchases;
-        }
-    });
-    return totals;
+const mergeReports = (reports, dimensionNames, metricNames) => makeGa4Report(
+    dimensionNames,
+    metricNames,
+    reports.flatMap((report) => adaptGa4Report(report).map((row) => ({ ...row.dimensions, ...row.metrics })))
+);
+
+const selectedPages = (pageId) => {
+    if (pageId === 'all') return ANALYTICS_PAGES.filter((page) => page.id !== 'all' && !page.empty);
+    return ANALYTICS_PAGES.filter((page) => page.id === pageId);
 };
 
-const sumSales = (rows, dates) => {
-    const totals = { tickets: 0, revenue: 0, orders: 0, byDay: {} };
-    dates.forEach((iso) => {
-        totals.byDay[iso] = { tickets: 0, revenue: 0 };
-    });
-    rows.forEach((row) => {
-        if (!inWindow(row.date, dates)) return;
-        totals.tickets += row.ticketsSold;
-        totals.revenue += row.revenue;
-        totals.orders += row.ordersCount;
-        if (totals.byDay[row.date]) {
-            totals.byDay[row.date].tickets += row.ticketsSold;
-            totals.byDay[row.date].revenue += row.revenue;
-        }
-    });
-    return totals;
-};
-
-const mergeGa4 = (reports) => ({
-    dimensionHeaders: GA4_DIMENSIONS.map((name) => ({ name })),
-    metricHeaders: GA4_METRICS.map((name) => ({ name })),
-    rows: reports.flatMap((report) => report.rows),
-});
-
-const copyFor = (eventId, range) => {
-    const bucket = AI_COPY[eventId] || AI_COPY.all;
+const copyFor = (pageId, range) => {
+    const bucket = AI_COPY[pageId] || AI_COPY.all;
     return bucket[range] || bucket[28];
 };
 
-const boughtPer100 = (purchases, visitors) => {
-    if (!visitors) return 0;
-    return Math.round((purchases / visitors) * 100);
+const dropOffPercent = (from, to) => {
+    if (!from) return 0;
+    return Math.round((1 - (to / from)) * 100);
 };
 
-const forecastPoints = (dates, dailyTickets, extraDays = 8) => {
-    const values = dates.map((iso) => dailyTickets[iso]?.tickets || 0);
+const trendFromChange = (change) => {
+    if (change == null || Math.abs(change) < 2) return 'flat';
+    return change > 0 ? 'up' : 'down';
+};
+
+const forecastPoints = (dates, dailyVisitors, extraDays = 7) => {
+    const values = dates.map((iso) => dailyVisitors[iso] || 0);
     const recent = values.slice(-7);
     const mean = recent.reduce((sum, value) => sum + value, 0) / Math.max(recent.length, 1);
     const lastDate = dates[dates.length - 1];
@@ -743,134 +566,214 @@ const forecastPoints = (dates, dailyTickets, extraDays = 8) => {
     return points;
 };
 
-const eventChoices = () => [
-    { id: 'all', name: 'All events' },
-    ...ANALYTICS_EVENTS.map((event) => ({ id: event.id, name: event.name })),
-];
+const pageChoices = () => ANALYTICS_PAGES.map((page) => ({
+    id: page.id,
+    name: page.id === 'all' ? 'All pages' : page.name,
+    path: page.path,
+}));
 
 /**
- * @param {{ eventId?: string, range?: string, href?: (path: string) => string }} filters
+ * @param {{ pageId?: string, range?: string }} [filters]
  */
-export const selectAnalyticsDashboard = ({ eventId = DEFAULT_EVENT_ID, range = DEFAULT_RANGE, href = (path) => path } = {}) => {
+export const selectAnalyticsDashboard = ({ pageId = DEFAULT_PAGE_ID, range = DEFAULT_RANGE } = {}) => {
     const rangeOption = DATE_RANGE_OPTIONS.find((option) => option.id === String(range)) || DATE_RANGE_OPTIONS[1];
     const days = rangeOption.days;
-    const selectedEvent = ANALYTICS_EVENTS.find((event) => event.id === eventId) || null;
-    const lookingAtAll = eventId === 'all' || !eventId;
-    const empty = Boolean(selectedEvent?.empty);
+    const page = ANALYTICS_PAGES.find((item) => item.id === pageId) || ANALYTICS_PAGES[1];
+    const lookingAtAll = page.id === 'all';
+    const empty = Boolean(page.empty);
 
     if (empty) {
         return {
             empty: true,
             emptyMessage: EMPTY_STATE_MESSAGE,
-            eventId: selectedEvent.id,
-            eventName: selectedEvent.name,
+            pageId: page.id,
+            pageName: page.name,
+            pagePath: page.path,
             range: rangeOption.id,
             rangeDays: days,
-            events: eventChoices(),
+            pages: pageChoices(),
             liveNow: null,
-            headsUp: [],
-            whatHappened: [],
             kpis: null,
             chart: null,
             pace: '',
-            ticketPath: [],
+            headsUp: [],
+            whatHappened: [],
             channels: [],
-            channelTip: '',
+            topPages: [],
+            ticketPath: [],
+            devices: [],
+            cities: [],
         };
     }
 
-    const sourceEvents = lookingAtAll
-        ? ANALYTICS_EVENTS.filter((event) => !event.empty)
-        : ANALYTICS_EVENTS.filter((event) => event.id === eventId);
-
-    const ga4 = mergeGa4(sourceEvents.map((event) => EVENT_SOURCE[event.id].ga4));
-    const sales = sourceEvents.flatMap((event) => EVENT_SOURCE[event.id].sales);
+    const pages = selectedPages(page.id);
+    const sources = pages.map((item) => GA4_SOURCES[item.id]);
     const currentDates = dateWindow(MOCK_AS_OF, days);
-    const priorDates = dateWindow(addDays(currentDates[0], -1), days);
-    const currentTraffic = sumGa4(ga4, currentDates);
-    const priorTraffic = sumGa4(ga4, priorDates);
-    const currentSales = sumSales(sales, currentDates);
-    const priorSales = sumSales(sales, priorDates);
-    const copyKey = lookingAtAll ? 'all' : eventId;
-    const copy = copyFor(copyKey, rangeOption.id);
-    const livePeople = lookingAtAll
-        ? ANALYTICS_EVENTS.filter((event) => !event.empty).reduce((sum, event) => sum + event.liveNow, 0)
-        : selectedEvent.liveNow;
-    const currentBought = boughtPer100(currentTraffic.ecommercePurchases, currentTraffic.activeUsers);
-    const priorBought = boughtPer100(priorTraffic.ecommercePurchases, priorTraffic.activeUsers);
+    const current90 = dateWindow(MOCK_AS_OF, 90);
+    const priorDates = dateWindow(addDays(current90[0], -1), days);
 
-    sourceEvents.forEach((event) => {
-        const eventSales = sumSales(EVENT_SOURCE[event.id].sales, currentDates);
-        const eventTraffic = sumGa4(EVENT_SOURCE[event.id].ga4, currentDates);
-        CHANNELS.forEach((channel) => {
-            const share = eventTraffic.ecommercePurchases
-                ? (eventTraffic.byChannel[channel.id].purchases / eventTraffic.ecommercePurchases)
-                : 0;
-            currentTraffic.byChannel[channel.id].tickets += Math.round(eventSales.tickets * share);
-            currentTraffic.byChannel[channel.id].revenue = (currentTraffic.byChannel[channel.id].revenue || 0)
-                + Math.round(eventSales.revenue * share);
+    const daily = mergeReports(sources.map((source) => source.daily), DAILY_DIMS, DAILY_METRICS);
+    const channels = mergeReports(sources.map((source) => source.channels), CHANNEL_DIMS, CHANNEL_METRICS);
+    const pageRows = mergeReports(sources.map((source) => source.pages), PAGE_DIMS, PAGE_METRICS);
+    const events = mergeReports(sources.map((source) => source.events), EVENT_DIMS, EVENT_METRICS);
+    const devices = mergeReports(sources.map((source) => source.devices), DEVICE_DIMS, DEVICE_METRICS);
+    const cities = mergeReports(sources.map((source) => source.cities), CITY_DIMS, CITY_METRICS);
+    const realtime = mergeReports(sources.map((source) => source.realtime), REALTIME_DIMS, REALTIME_METRICS);
+
+    const currentDaily = rowsInWindow(daily, currentDates);
+    const priorDaily = rowsInWindow(daily, priorDates);
+    const currentVisitors = sumMetric(currentDaily, 'activeUsers');
+    const priorVisitors = sumMetric(priorDaily, 'activeUsers');
+    const currentViews = sumMetric(currentDaily, 'screenPageViews');
+    const priorViews = sumMetric(priorDaily, 'screenPageViews');
+    const currentPurchases = sumMetric(currentDaily, 'ecommercePurchases');
+    const priorPurchases = sumMetric(priorDaily, 'ecommercePurchases');
+    const currentDuration = weightedAverage(currentDaily, 'averageSessionDuration', 'activeUsers');
+    const priorDuration = weightedAverage(priorDaily, 'averageSessionDuration', 'activeUsers');
+
+    const visitorsByCurrentDate = {};
+    const visitorsByPriorAligned = {};
+    currentDates.forEach((iso, index) => {
+        visitorsByCurrentDate[iso] = 0;
+        visitorsByPriorAligned[iso] = 0;
+        const priorIso = priorDates[index];
+        currentDaily.forEach((row) => {
+            if (ga4DateToIso(row.dimensions.date) === iso) visitorsByCurrentDate[iso] += row.metrics.activeUsers || 0;
+        });
+        priorDaily.forEach((row) => {
+            if (ga4DateToIso(row.dimensions.date) === priorIso) visitorsByPriorAligned[iso] += row.metrics.activeUsers || 0;
         });
     });
 
-    const channels = CHANNELS
-        .map((channel) => ({
+    const livePeople = sumMetric(adaptGa4Report(realtime), 'activeUsers');
+    const visitorChange = percentChange(currentVisitors, priorVisitors);
+    const pace = visitorChange == null
+        ? 'Visitor numbers are even with last period.'
+        : visitorChange >= 0
+            ? `Visitors are running ${Math.round(visitorChange)}% ahead of last period.`
+            : `Visitors are running ${Math.round(Math.abs(visitorChange))}% behind last period.`;
+
+    const copy = copyFor(lookingAtAll ? 'all' : page.id, rangeOption.id);
+    const channelTips = lookingAtAll
+        ? PAGE_PERIODS['harbour-lights-festival'].tips
+        : (GA4_SOURCES[page.id]?.tips || {});
+
+    const currentChannels = rowsInWindow(channels, currentDates);
+    const channelCards = CHANNELS.map((channel) => {
+        const rows = currentChannels.filter((row) => row.dimensions.sessionDefaultChannelGroup === channel.label);
+        return {
             id: channel.id,
             label: channel.label,
-            visitors: currentTraffic.byChannel[channel.id].visitors,
-            tickets: currentTraffic.byChannel[channel.id].tickets,
-            revenue: currentTraffic.byChannel[channel.id].revenue || 0,
-        }))
-        .sort((left, right) => right.tickets - left.tickets || right.revenue - left.revenue);
+            visitors: sumMetric(rows, 'activeUsers'),
+            purchases: sumMetric(rows, 'ecommercePurchases'),
+            tip: channelTips[channel.id] || '',
+        };
+    }).sort((left, right) => right.visitors - left.visitors || right.purchases - left.purchases);
 
-    const pathSteps = [
-        { id: 'viewed', label: 'Viewed event page', count: currentTraffic.screenPageViews },
-        { id: 'picked', label: 'Picked tickets', count: currentTraffic.addToCarts },
-        { id: 'checkout', label: 'Started checkout', count: currentTraffic.checkouts },
-        { id: 'bought', label: 'Bought', count: currentTraffic.ecommercePurchases },
-    ].map((step, index) => ({
-        ...step,
-        dropOff: copy.ticketPath[index],
-    }));
+    const currentPageRows = rowsInWindow(pageRows, currentDates);
+    const priorPageRows = rowsInWindow(pageRows, priorDates);
+    const pageMap = {};
+    currentPageRows.forEach((row) => {
+        const path = row.dimensions.pagePath;
+        if (!pageMap[path]) pageMap[path] = { path, title: row.dimensions.pageTitle, current: 0, prior: 0 };
+        pageMap[path].current += row.metrics.screenPageViews || 0;
+        pageMap[path].title = row.dimensions.pageTitle || pageMap[path].title;
+    });
+    priorPageRows.forEach((row) => {
+        const path = row.dimensions.pagePath;
+        if (!pageMap[path]) pageMap[path] = { path, title: row.dimensions.pageTitle, current: 0, prior: 0 };
+        pageMap[path].prior += row.metrics.screenPageViews || 0;
+    });
+    const topPages = Object.values(pageMap)
+        .sort((left, right) => right.current - left.current)
+        .slice(0, 6)
+        .map((item) => ({
+            ...item,
+            trend: trendFromChange(percentChange(item.current, item.prior)),
+        }));
+
+    const currentEvents = rowsInWindow(events, currentDates);
+    const pathSteps = FUNNEL_EVENTS.map((event, index, list) => {
+        const count = sumMetric(currentEvents.filter((row) => row.dimensions.eventName === event.id), 'eventCount');
+        const next = list[index + 1]
+            ? sumMetric(currentEvents.filter((row) => row.dimensions.eventName === list[index + 1].id), 'eventCount')
+            : null;
+        const revenue = event.id === 'purchase'
+            ? sumMetric(currentEvents.filter((row) => row.dimensions.eventName === 'purchase'), 'purchaseRevenue')
+            : null;
+        const drop = next == null ? 0 : dropOffPercent(count, next);
+        return {
+            id: event.id,
+            label: event.label,
+            count,
+            dropOffPercent: drop,
+            dropOff: next == null
+                ? null
+                : `${drop}% drop-off to ${list[index + 1].label}`,
+            revenue,
+        };
+    });
+
+    const currentDevices = rowsInWindow(devices, currentDates);
+    const deviceTotal = sumMetric(currentDevices, 'activeUsers') || 1;
+    const deviceCards = DEVICE_CATEGORIES.map((device) => {
+        const visitors = sumMetric(currentDevices.filter((row) => row.dimensions.deviceCategory === device), 'activeUsers');
+        return {
+            id: device,
+            label: device[0].toUpperCase() + device.slice(1),
+            visitors,
+            share: Math.round((visitors / deviceTotal) * 100),
+        };
+    });
+
+    const currentCities = rowsInWindow(cities, currentDates);
+    const cityMap = {};
+    currentCities.forEach((row) => {
+        const city = row.dimensions.city;
+        cityMap[city] = (cityMap[city] || 0) + (row.metrics.activeUsers || 0);
+    });
+    const cityCards = Object.entries(cityMap)
+        .map(([label, visitors]) => ({ id: label, label, visitors }))
+        .sort((left, right) => right.visitors - left.visitors)
+        .slice(0, 5);
 
     return {
         empty: false,
         emptyMessage: EMPTY_STATE_MESSAGE,
-        eventId: lookingAtAll ? 'all' : selectedEvent.id,
-        eventName: lookingAtAll ? 'All events' : selectedEvent.name,
+        pageId: page.id,
+        pageName: lookingAtAll ? 'All pages' : page.name,
+        pagePath: page.path,
         range: rangeOption.id,
         rangeDays: days,
-        events: eventChoices(),
+        pages: pageChoices(),
         liveNow: livePeople
-            ? {
-                people: livePeople,
-                label: `${livePeople} people on your event page right now`,
-            }
+            ? { people: livePeople, label: `${livePeople} people on your site right now` }
             : null,
-        headsUp: copy.headsUp.map((card) => ({
-            ...card,
-            to: href(card.to),
-        })),
+        kpis: {
+            visitors: { current: currentVisitors, prior: priorVisitors },
+            pageViews: { current: currentViews, prior: priorViews },
+            avgTime: { current: currentDuration, prior: priorDuration },
+            purchases: { current: currentPurchases, prior: priorPurchases },
+        },
+        chart: {
+            current: currentDates.map((iso) => ({ x: iso, y: visitorsByCurrentDate[iso] || 0 })),
+            previous: currentDates.map((iso) => ({ x: iso, y: visitorsByPriorAligned[iso] || 0 })),
+            forecast: forecastPoints(currentDates, visitorsByCurrentDate),
+        },
+        pace,
+        headsUp: copy.headsUp,
         whatHappened: copy.whatHappened.map((text, index) => ({
             id: `happened-${index}`,
             text,
-            to: href(index === 2 ? 'where-buyers-came-from' : 'ticket-path'),
+            to: index === 2 ? '#ticket-path' : '#where-visitors',
         })),
-        kpis: {
-            ticketsSold: { current: currentSales.tickets, prior: priorSales.tickets },
-            revenue: { current: currentSales.revenue, prior: priorSales.revenue },
-            visitors: { current: currentTraffic.activeUsers, prior: priorTraffic.activeUsers },
-            boughtPer100: { current: currentBought, prior: priorBought },
-        },
-        chart: {
-            tickets: currentDates.map((iso) => ({ x: iso, y: currentSales.byDay[iso]?.tickets || 0 })),
-            visitors: currentDates.map((iso) => ({ x: iso, y: currentTraffic.byDay[iso]?.visitors || 0 })),
-            forecast: forecastPoints(currentDates, currentSales.byDay),
-        },
-        pace: copy.pace,
+        channels: channelCards,
+        topPages,
         ticketPath: pathSteps,
-        channels,
-        channelTip: copy.channelTip,
+        devices: deviceCards,
+        cities: cityCards,
+        reports: { daily, channels, pages: pageRows, events, devices, cities, realtime },
     };
 };
 
-export const listAnalyticsEvents = () => eventChoices();
+export const listAnalyticsPages = () => pageChoices();

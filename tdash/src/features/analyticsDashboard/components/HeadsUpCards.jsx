@@ -20,7 +20,14 @@ export const HeadsUpCards = ({ isDark, cards }) => {
                     >
                         <p className={cn('text-lg font-light leading-6', theme.textPrimary)}>{card.title}</p>
                         <p className={cn('mt-2 text-sm font-light leading-6', theme.textSecondary)}>{card.reason}</p>
-                        {card.to ? (
+                        {card.to?.startsWith('#') ? (
+                            <a
+                                href={card.to}
+                                className="mt-4 inline-flex items-center text-sm font-light text-pink-400 hover:text-pink-300"
+                            >
+                                See why
+                            </a>
+                        ) : card.to ? (
                             <Link
                                 to={card.to}
                                 className="mt-4 inline-flex items-center text-sm font-light text-pink-400 hover:text-pink-300"

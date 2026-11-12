@@ -311,7 +311,7 @@ const App = () => {
                     <Route
                         path="/preview/analytics/*"
                         element={(
-                            <div className={isDark ? 'min-h-screen bg-dashboard-shell px-6 py-8 text-zinc-100' : 'min-h-screen bg-slate-50 px-6 py-8 text-slate-900'}>
+                            <div className={isDark ? 'min-h-screen bg-dashboard-shell px-6 py-4 text-zinc-100' : 'min-h-screen bg-slate-50 px-6 py-4 text-slate-900'}>
                                 <div className="mx-auto max-w-[1680px]">
                                     <AnalyticsDashboardApp isDark={isDark} basePath="/preview/analytics" />
                                 </div>

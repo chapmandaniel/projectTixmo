@@ -4,7 +4,7 @@ import { getDashboardTheme } from '../../../lib/dashboardTheme';
 import { cn } from '../../../lib/utils';
 import { DATE_RANGE_OPTIONS } from '../mockAnalytics';
 
-export const FilterBar = ({ isDark, eventId, range, events, onChange, liveNow }) => {
+export const FilterBar = ({ isDark, pageId, range, pages, onChange, liveNow }) => {
     const theme = getDashboardTheme(isDark);
 
     const chipClass = (active) => cn(
@@ -15,24 +15,26 @@ export const FilterBar = ({ isDark, eventId, range, events, onChange, liveNow })
     );
 
     return (
-        <DashboardSurface isDark={isDark} accent="violet" className="px-4 py-3 sm:px-5">
+        <DashboardSurface isDark={isDark} accent="violet" className="px-4 py-2.5 sm:px-5">
             <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-1">
                     <label className="block sm:max-w-xs sm:flex-1">
-                        <span className="sr-only">Event</span>
+                        <span className={cn('mb-1 block text-[10px] uppercase tracking-[0.16em]', theme.textTertiary)}>
+                            Site / event page
+                        </span>
                         <DashboardSelect
                             isDark={isDark}
-                            value={eventId}
-                            onChange={(event) => onChange({ eventId: event.target.value, range })}
-                            aria-label="Event"
-                            data-testid="analytics-event-select"
+                            value={pageId}
+                            onChange={(event) => onChange({ pageId: event.target.value, range })}
+                            aria-label="Site / event page"
+                            data-testid="analytics-page-select"
                         >
-                            {events.map((item) => (
+                            {pages.map((item) => (
                                 <option key={item.id} value={item.id}>{item.name}</option>
                             ))}
                         </DashboardSelect>
                     </label>
-                    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Date range">
+                    <div className="flex flex-wrap items-center gap-2 sm:pt-5" role="group" aria-label="Date range">
                         {DATE_RANGE_OPTIONS.map((option) => {
                             const active = String(range) === option.id;
                             return (
@@ -43,7 +45,7 @@ export const FilterBar = ({ isDark, eventId, range, events, onChange, liveNow })
                                     aria-pressed={active}
                                     aria-label={option.label}
                                     data-testid={`analytics-range-${option.id}`}
-                                    onClick={() => onChange({ eventId, range: option.id })}
+                                    onClick={() => onChange({ pageId, range: option.id })}
                                 >
                                     {option.short}
                                 </button>

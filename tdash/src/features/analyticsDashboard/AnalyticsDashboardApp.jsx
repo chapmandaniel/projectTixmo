@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
-import { NavLink, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import {
     DashboardChip,
     DashboardEmptyState,
@@ -9,98 +9,64 @@ import { getDashboardTheme } from '../../lib/dashboardTheme';
 import { cn } from '../../lib/utils';
 import { FilterBar } from './components/FilterBar';
 import {
-    DEFAULT_EVENT_ID,
+    DEFAULT_PAGE_ID,
     DEFAULT_RANGE,
     MOCK_PROMOTER,
     selectAnalyticsDashboard,
 } from './mockAnalytics';
 import { HomeView } from './views/HomeView';
-import { TicketPathView } from './views/TicketPathView';
-import { ChannelsView } from './views/ChannelsView';
 
-const NAV = [
-    { to: '', label: 'Home' },
-    { to: 'ticket-path', label: 'Ticket path' },
-    { to: 'where-buyers-came-from', label: 'Where buyers came from' },
-];
-
-export default function AnalyticsDashboardApp({ isDark, basePath = '/analytics' }) {
+export default function AnalyticsDashboardApp({ isDark }) {
     const theme = getDashboardTheme(isDark);
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
     const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${location.pathname}${location.search}`;
 
-    const eventId = searchParams.get('event') || DEFAULT_EVENT_ID;
+    const pageId = searchParams.get('page') || DEFAULT_PAGE_ID;
     const range = searchParams.get('range') || DEFAULT_RANGE;
 
-    const href = useCallback((path) => {
-        const next = new URLSearchParams(searchParams);
-        const suffix = path ? `/${path}` : '';
-        const query = next.toString();
-        return `${basePath}${suffix}${query ? `?${query}` : ''}`;
-    }, [basePath, searchParams]);
-
     const dashboard = useMemo(
-        () => selectAnalyticsDashboard({ eventId, range, href }),
-        [eventId, range, href]
+        () => selectAnalyticsDashboard({ pageId, range }),
+        [pageId, range]
     );
 
-    const onFiltersChange = ({ eventId: nextEventId, range: nextRange }) => {
+    const onFiltersChange = ({ pageId: nextPageId, range: nextRange }) => {
         const next = new URLSearchParams(searchParams);
-        if (!nextEventId || nextEventId === DEFAULT_EVENT_ID) next.delete('event');
-        else next.set('event', nextEventId);
+        if (!nextPageId || nextPageId === DEFAULT_PAGE_ID) next.delete('page');
+        else next.set('page', nextPageId);
         if (!nextRange || nextRange === DEFAULT_RANGE) next.delete('range');
         else next.set('range', nextRange);
         setSearchParams(next, { replace: true });
     };
 
-    const navClass = ({ isActive }) => cn(
-        'rounded-md px-3 py-1.5 text-sm font-light',
-        isActive
-            ? (isDark ? 'bg-dashboard-control text-white' : 'bg-slate-900 text-white')
-            : theme.navItem
-    );
-
     return (
-        <DashboardPage className="space-y-4">
-            <div
-                data-testid="analytics-dashboard-url"
-                className={cn(
-                    'rounded-md border px-3 py-1.5 font-mono text-[11px]',
-                    isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-zinc-300' : 'border-slate-200 bg-white text-slate-700'
-                )}
-            >
-                {publicUrl}
-            </div>
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <DashboardPage className="space-y-3">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <div className="flex flex-wrap items-center gap-2">
-                        <h1 className={cn('text-3xl font-light tracking-tight', theme.textPrimary)}>Analytics</h1>
+                        <h1 className={cn('text-2xl font-light tracking-tight sm:text-3xl', theme.textPrimary)}>Analytics</h1>
                         <DashboardChip isDark={isDark}>Mock data</DashboardChip>
                     </div>
                     <p className={cn('mt-1 text-sm font-light', theme.textSecondary)}>
                         {MOCK_PROMOTER}. Demo numbers only.
                     </p>
                 </div>
-                <nav aria-label="Analytics dashboard" className="flex flex-wrap gap-1">
-                    {NAV.map((item) => (
-                        <NavLink
-                            key={item.label}
-                            to={href(item.to)}
-                            end={item.to === ''}
-                            className={navClass}
-                        >
-                            {item.label}
-                        </NavLink>
-                    ))}
-                </nav>
+                <div
+                    data-testid="analytics-dashboard-url"
+                    className={cn(
+                        'max-w-full truncate rounded-md border px-3 py-1 font-mono text-[11px]',
+                        isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-zinc-300' : 'border-slate-200 bg-white text-slate-700'
+                    )}
+                >
+                    {publicUrl}
+                </div>
             </div>
 
             <FilterBar
                 isDark={isDark}
-                eventId={dashboard.eventId}
+                pageId={dashboard.pageId}
                 range={dashboard.range}
-                events={dashboard.events}
+                pages={dashboard.pages}
                 onChange={onFiltersChange}
                 liveNow={dashboard.liveNow}
             />
@@ -109,14 +75,10 @@ export default function AnalyticsDashboardApp({ isDark, basePath = '/analytics' 
                 <DashboardEmptyState
                     isDark={isDark}
                     title={dashboard.emptyMessage}
-                    description="Pick another event, or check back after the first paid tickets."
+                    description="Pick another page, or check back after people start visiting."
                 />
             ) : (
-                <Routes>
-                    <Route index element={<HomeView isDark={isDark} dashboard={dashboard} />} />
-                    <Route path="ticket-path" element={<TicketPathView isDark={isDark} dashboard={dashboard} />} />
-                    <Route path="where-buyers-came-from" element={<ChannelsView isDark={isDark} dashboard={dashboard} />} />
-                </Routes>
+                <HomeView isDark={isDark} dashboard={dashboard} />
             )}
         </DashboardPage>
     );

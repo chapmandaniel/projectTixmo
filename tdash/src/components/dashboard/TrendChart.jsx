@@ -24,17 +24,19 @@ const ChartBox = ({ children, heightClassName = 'h-[340px]' }) => {
     );
 };
 
-const ticketsAreaLayer = ({ series, areaGenerator }) => {
-    const tickets = series.find((item) => item.id === 'Tickets sold');
-    if (!tickets || !areaGenerator) return null;
-    const points = tickets.data.map((point) => ({
+const AREA_SERIES_ID = 'This period';
+
+const visitorsAreaLayer = ({ series, areaGenerator }) => {
+    const current = series.find((item) => item.id === AREA_SERIES_ID);
+    if (!current || !areaGenerator) return null;
+    const points = current.data.map((point) => ({
         x: point.position.x,
         y: point.position.y,
     }));
     return (
         <path
             d={areaGenerator(points)}
-            fill="url(#ticketsFill)"
+            fill="url(#visitorsFill)"
             style={{ pointerEvents: 'none' }}
         />
     );
@@ -48,14 +50,14 @@ const dashedLinesLayer = ({ series, lineGenerator, xScale, yScale }) => (
                 y: yScale(point.data.y),
             })));
             const dashed = item.id === 'Forecast';
-            const tickets = item.id === 'Tickets sold';
+            const current = item.id === AREA_SERIES_ID;
             return (
                 <path
                     key={item.id}
                     d={path}
                     fill="none"
                     stroke={item.color}
-                    strokeWidth={tickets ? 3 : 2}
+                    strokeWidth={current ? 3 : 2}
                     strokeDasharray={dashed ? '6 4' : undefined}
                 />
             );
@@ -87,14 +89,14 @@ export const TrendChart = ({
             useMesh
             enableSlices="x"
             defs={[{
-                id: 'ticketsFill',
+                id: 'visitorsFill',
                 type: 'linearGradient',
                 colors: [
                     { offset: 0, color: CHART_COLORS.current, opacity: 0.34 },
                     { offset: 100, color: CHART_COLORS.current, opacity: 0.02 },
                 ],
             }]}
-            layers={['grid', 'markers', 'axes', ticketsAreaLayer, 'crosshair', dashedLinesLayer, 'points', 'slices', 'mesh']}
+            layers={['grid', 'markers', 'axes', visitorsAreaLayer, 'crosshair', dashedLinesLayer, 'points', 'slices', 'mesh']}
             axisBottom={{
                 tickSize: 0,
                 tickPadding: 10,

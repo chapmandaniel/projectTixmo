@@ -2,7 +2,7 @@ import React from 'react';
 import { DashboardSection, DashboardSurface } from '../../../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../../../lib/dashboardTheme';
 import { cn } from '../../../lib/utils';
-import { formatNumber } from '../formatters';
+import { formatCurrencyCad, formatNumber } from '../formatters';
 
 export const TicketPathView = ({ isDark, dashboard }) => {
     const theme = getDashboardTheme(isDark);
@@ -14,9 +14,10 @@ export const TicketPathView = ({ isDark, dashboard }) => {
             isDark={isDark}
             accent="violet"
             title="Ticket path"
-            description="How people move from the event page to a bought ticket."
+            description="How people move from a viewed item to a purchase."
+            className="scroll-mt-24"
         >
-            <div className="space-y-4">
+            <div id="ticket-path" className="space-y-4">
                 {steps.map((step) => {
                     const width = `${Math.max(8, Math.round((step.count / max) * 100))}%`;
                     return (
@@ -30,7 +31,14 @@ export const TicketPathView = ({ isDark, dashboard }) => {
                             <div className={cn('mt-4 h-3 overflow-hidden rounded-full', isDark ? 'bg-dashboard-panelMuted' : 'bg-slate-100')}>
                                 <div className="h-full rounded-full bg-pink-500" style={{ width }} />
                             </div>
-                            <p className={cn('mt-3 text-sm font-light leading-6', theme.textPrimary)}>{step.dropOff}</p>
+                            {step.dropOff ? (
+                                <p className={cn('mt-3 text-sm font-light leading-6', theme.textPrimary)}>{step.dropOff}</p>
+                            ) : null}
+                            {step.revenue != null ? (
+                                <p className={cn('mt-1 text-sm font-light', theme.textSecondary)} data-testid="analytics-path-revenue">
+                                    Purchase revenue {formatCurrencyCad(step.revenue)}
+                                </p>
+                            ) : null}
                         </DashboardSurface>
                     );
                 })}

@@ -15,16 +15,18 @@ export const WhatHappenedList = ({ isDark, items, emptyText = 'Nothing notable f
                         const body = (
                             <p className={cn('text-sm font-light leading-6', theme.textPrimary)}>{item.text}</p>
                         );
+                        const wrapClass = cn(
+                            'block rounded-md border p-4',
+                            isDark ? 'border-dashboard-border hover:bg-dashboard-panelAlt' : 'border-slate-200 hover:bg-slate-50'
+                        );
                         return (
                             <li key={item.id}>
-                                {item.to ? (
-                                    <Link
-                                        to={item.to}
-                                        className={cn(
-                                            'block rounded-md border p-4',
-                                            isDark ? 'border-dashboard-border hover:bg-dashboard-panelAlt' : 'border-slate-200 hover:bg-slate-50'
-                                        )}
-                                    >
+                                {item.to?.startsWith('#') ? (
+                                    <a href={item.to} className={wrapClass}>
+                                        {body}
+                                    </a>
+                                ) : item.to ? (
+                                    <Link to={item.to} className={wrapClass}>
                                         {body}
                                     </Link>
                                 ) : (
