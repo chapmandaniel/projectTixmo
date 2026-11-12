@@ -3,8 +3,9 @@ import {
     Home, Calendar, BarChart3, Bell,
     Users, CheckSquare, Sun, Moon,
     Settings, LogOut, CheckCircle, User, Image, ClipboardList,
-    Menu, X
+    Menu, X, Share2
 } from 'lucide-react';
+import { isSocialDashboardNavVisible } from '../features/socialDashboard/flag';
 
 import api from '../lib/api';
 import { Link } from 'react-router-dom';
@@ -165,7 +166,10 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
 
     const closeMobileNav = () => setMobileNavOpen(false);
 
-    const visibleNavItems = navItems.filter((item) => !item.roles || item.roles.includes(user?.role));
+    const visibleNavItems = [
+        ...navItems.filter((item) => !item.roles || item.roles.includes(user?.role)),
+        ...(isSocialDashboardNavVisible() ? [{ id: 'social', icon: Share2, label: 'Social' }] : []),
+    ];
 
     useEffect(() => {
         setMobileNavOpen(false);
