@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import request from 'supertest';
 import { testOrSkipMissingEnv } from '../helpers/missing-env';
+import { clearStaleLocalReceipt } from '../helpers/clear-stale-local-receipt';
 
 let mockProviderAttempts = 0;
 const mockRefuse = () => {
@@ -163,6 +164,7 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
     scanType: string;
   }> = [];
   const body = async () => {
+    clearStaleLocalReceipt(receiptPath, 'TIXMO_SCANNER_RUN_ID');
     expect(fs.existsSync(receiptPath)).toBe(false);
     mockProviderAttempts = 0;
     receipt = {

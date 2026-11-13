@@ -52,6 +52,7 @@ it('current browser reopens owned wallet and confirmed return, refreshes elapsed
   return lifetime;
 }, 200000);
 async function qualifyWallet() {
+  jest.useRealTimers();
   require('../../../scripts/verification-safety.cjs').validateVerificationTargets(process.env);
   const ids = {
     a: randomUUID(),

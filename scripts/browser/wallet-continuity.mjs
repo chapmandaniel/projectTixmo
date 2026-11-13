@@ -393,6 +393,15 @@ try {
   await send("Page.navigate", { url: origin + "/wallet" });
   await wait(text(fixture.orderNumber));
   mark(8);
+  // Reopen/confirmed-return already proved session continuity. Mint a fresh 10s
+  // access token so native expiry is measured from this point, not from login
+  // several Chrome lifetimes earlier (that gap exceeds 10s under suite load).
+  assert.equal(
+    await evaluate(
+      `fetch('/api/v1/auth/refresh',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({refreshToken:localStorage.getItem('refresh_token')})}).then(async r=>{if(!r.ok)throw Error('refresh');const d=await r.json();localStorage.setItem('access_token',d.data.accessToken);if(d.data.refreshToken)localStorage.setItem('refresh_token',d.data.refreshToken);return true})`,
+    ),
+    true,
+  );
   const issued = await decode(),
     wallStart = Date.now(),
     monotonicStart = performance.now();

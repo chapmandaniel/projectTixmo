@@ -19,6 +19,7 @@ describe('Scanner Offline Sync', () => {
   let eventId: string;
   let ticket: any;
   let unpaidTicket: any;
+  let scanTicket: any;
 
   beforeAll(async () => {
     await cleanupTestData();
@@ -89,6 +90,13 @@ describe('Scanner Offline Sync', () => {
     ticket = tickets[0];
     const unpaidTickets = await prisma.ticket.findMany({ where: { orderId: unpaidOrder.id } });
     unpaidTicket = unpaidTickets[0];
+
+    const scanOrder = await createOrder(app, userData.accessToken, {
+      items: [{ ticketTypeId: ticketType.id, quantity: 1 }],
+    });
+    await confirmOrderForTest(scanOrder.id);
+    scanTicket = (await prisma.ticket.findMany({ where: { orderId: scanOrder.id } }))[0];
+
     await prisma.event.update({
       where: { id: event.id },
       data: {
@@ -112,9 +120,14 @@ describe('Scanner Offline Sync', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       const active = res.body.data.tickets.filter((t: any) => t.status === 'VALID');
-      expect(active).toHaveLength(1);
-      expect(active[0].barcode).toBe(ticket.barcode);
-      expect(active[0].hash).toBeDefined();
+      expect(active.map((t: { barcode: string }) => t.barcode)).toEqual(
+        expect.arrayContaining([ticket.barcode])
+      );
+      expect(active.every((t: { barcode: string }) => t.barcode !== unpaidTicket.barcode)).toBe(
+        true
+      );
+      const downloaded = active.find((t: { barcode: string }) => t.barcode === ticket.barcode);
+      expect(downloaded.hash).toBeDefined();
       expect(
         res.body.data.tickets
           .filter((t: any) => t.status === 'CANCELLED')
@@ -163,7 +176,7 @@ describe('Scanner Offline Sync', () => {
     it('should process offline scans', async () => {
       const scans = [
         {
-          qrData: `TICKET:${ticket.id}:${ticket.barcode}:${eventId}`,
+          qrData: `TICKET:${scanTicket.id}:${scanTicket.barcode}:${eventId}`,
           scannedAt: new Date().toISOString(),
           scanType: 'ENTRY',
         },
@@ -180,7 +193,7 @@ describe('Scanner Offline Sync', () => {
       expect(res.body.data.success).toBe(1);
 
       // Verify ticket status updated
-      const updatedTicket = await prisma.ticket.findUnique({ where: { id: ticket.id } });
+      const updatedTicket = await prisma.ticket.findUnique({ where: { id: scanTicket.id } });
       expect(updatedTicket?.status).toBe('USED');
       expect(updatedTicket?.checkedInAt).toBeDefined();
     });

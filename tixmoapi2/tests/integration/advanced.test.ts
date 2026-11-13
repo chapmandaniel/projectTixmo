@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import request from 'supertest';
 import app from '../../src/app';
 import {
@@ -62,11 +63,24 @@ describe('Advanced Features API', () => {
   });
 
   describe('Waitlists', () => {
-    it('should allow user to join waitlist', async () => {
-      const res = await request(app)
+    const joinWaitlist = () =>
+      request(app)
         .post('/api/v1/waitlists/join')
         .set('Authorization', `Bearer ${userToken}`)
         .send({ eventId });
+
+    const leaveWaitlist = () =>
+      request(app)
+        .post('/api/v1/waitlists/leave')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ eventId });
+
+    beforeEach(async () => {
+      await prisma.waitlist.deleteMany({ where: { userId, eventId } });
+    });
+
+    it('should allow user to join waitlist', async () => {
+      const res = await joinWaitlist();
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
@@ -76,15 +90,14 @@ describe('Advanced Features API', () => {
     });
 
     it('should prevent duplicate join', async () => {
-      const res = await request(app)
-        .post('/api/v1/waitlists/join')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({ eventId });
+      expect((await joinWaitlist()).status).toBe(201);
+      const res = await joinWaitlist();
 
       expect(res.status).toBe(409);
     });
 
     it('should get waitlist status', async () => {
+      expect((await joinWaitlist()).status).toBe(201);
       const res = await request(app)
         .get('/api/v1/waitlists/status')
         .set('Authorization', `Bearer ${userToken}`)
@@ -97,16 +110,16 @@ describe('Advanced Features API', () => {
     });
 
     it('should allow user to leave waitlist', async () => {
-      const res = await request(app)
-        .post('/api/v1/waitlists/leave')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({ eventId });
+      expect((await joinWaitlist()).status).toBe(201);
+      const res = await leaveWaitlist();
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
     });
 
     it('should return null status after leaving', async () => {
+      expect((await joinWaitlist()).status).toBe(201);
+      expect((await leaveWaitlist()).status).toBe(200);
       const res = await request(app)
         .get('/api/v1/waitlists/status')
         .set('Authorization', `Bearer ${userToken}`)
@@ -118,9 +131,8 @@ describe('Advanced Features API', () => {
   });
 
   describe('Promo Codes', () => {
-    const code = 'TESTPROMO2025';
-
     it('should create a promo code', async () => {
+      const code = `TESTPROMO${randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`;
       const res = await request(app)
         .post('/api/v1/promo-codes')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -139,6 +151,20 @@ describe('Advanced Features API', () => {
     });
 
     it('should validate a valid promo code', async () => {
+      const code = `TESTPROMO${randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+      const created = await request(app)
+        .post('/api/v1/promo-codes')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          code,
+          discountType: 'PERCENTAGE',
+          discountValue: 10,
+          organizationId: orgId,
+          eventId,
+          maxUses: 100,
+        });
+      expect(created.status).toBe(201);
+
       const res = await request(app)
         .post('/api/v1/promo-codes/validate')
         .set('Authorization', `Bearer ${userToken}`)
