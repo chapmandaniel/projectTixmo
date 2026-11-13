@@ -103,7 +103,19 @@ Workflow: [Tixmo Market Readiness Local Gates run 43494101111](https://github.co
 | configured-image-restore | [43494101111](https://github.com/chapmandaniel/projectTixmo/actions/runs/43494101111) | [132122554126](https://github.com/chapmandaniel/projectTixmo/actions/runs/43494101111/job/132122554126) | **success** (completed 2026-11-13T19:41:19Z) |
 | guard-and-build | not triggered | — | n/a |
 
-This follow-up retriggers required checks after that flake.
+This follow-up retriggered required checks after that flake.
+
+### Retrigger commit `20500f60e50fee4c304aa0c95abf1c16506113f7`
+
+Workflow: [Tixmo Market Readiness Local Gates run 43498170110](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170110).
+
+| Check | Run | Job | Conclusion |
+| --- | --- | --- | --- |
+| local-gates | [43498170110](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170110) | [132136657995](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170110/job/132136657995) | **failure** — `wallet-browser-recovery.test.ts#1` (`failureCategory` deadline at tests/integration/wallet-browser-recovery.test.ts:404, stage 16 at :422). Known CI flake named in T106; not Event Command Center tests; not changed. |
+| configured-image-restore | [43498170110](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170110) | [132136657649](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170110/job/132136657649) | **success** (completed 2026-11-13T20:07:57Z) |
+| guard-and-build | not triggered | — | n/a |
+
+Soak run [43498170038](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170038) skipped (not required). This follow-up retriggers required checks after that known flake.
 
 ## Final head SHA
 
