@@ -1,6 +1,6 @@
 # T101 — buyer wallet self-service coverage (gap #4)
 
-Head under test: `d2fea085e522916ff1fdd4684d2377d3cfa84ebf` (tests). This evidence update is a follow-up commit on the same draft PR.
+Head under test: `d2fea085e522916ff1fdd4684d2377d3cfa84ebf` (T101 tests, required checks green). Evidence follow-up `8480537f306521eb2215b8c4203b2921f9cb2519` retriggered local-gates; that run is recorded below.
 
 Local Node `v24.21.0`, npm `11.19.0`. Disposable Postgres `tixmo_disposable_t101` on `127.0.0.1:5432` and Redis `/1`. Synthetic JWT/session and Stripe keys matching `.github/workflows/market-readiness-local.yml`. `TIXMO_BROWSER_PATH=/usr/bin/google-chrome`. No Stripe network traffic, no checkout or refund work.
 
@@ -63,13 +63,25 @@ An intermediate API run without clearing receipts failed 7 tests in `orders-http
 
 ## CI run ids
 
-Required checks on `d2fea085e522916ff1fdd4684d2377d3cfa84ebf` (draft PR #203). `http-soak` skipped (opt-in workflow).
+Draft PR #203. `http-soak` skipped (opt-in workflow). T101 tests did not change between these heads.
+
+### `d2fea085e522916ff1fdd4684d2377d3cfa84ebf` (T101 tests)
 
 | Check | Workflow run | Job | Status |
 | --- | --- | --- | --- |
 | local-gates | [43433377628](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377628) | [131912199115](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377628/job/131912199115) | pass, 13m3s |
 | configured-image-restore | [43433377628](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377628) | [131912199529](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377628/job/131912199529) | pass, 3m16s |
 | guard-and-build | [43433377745](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377745) | [131912199435](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377745/job/131912199435) | pass, 1m17s |
+
+### `8480537f306521eb2215b8c4203b2921f9cb2519` (evidence-only follow-up)
+
+| Check | Workflow run | Job | Status |
+| --- | --- | --- | --- |
+| local-gates | [43436903707](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903707) | [131924256883](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903707/job/131924256883) | fail, 15m11s — `orders-http-ramp.test.ts` case 3, `reservationP95Ms` at line 629 (`<= 2000`). Not a T101 test. Same tree as `d2fea085` except this markdown file. Not weakened. |
+| configured-image-restore | [43436903707](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903707) | [131924256444](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903707/job/131924256444) | pass, 3m20s |
+| guard-and-build | [43436903692](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903692) | [131924256717](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903692/job/131924256717) | pass, 1m15s |
+
+`wallet-browser-recovery` did not fail on either head. This commit retriggers required checks after the ramp P95 flake.
 
 ## Bugs found
 
