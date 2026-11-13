@@ -1,6 +1,6 @@
 # Checkout Policy Links
 
-Status: runtime configuration support and the buyer checkout route are ready. Final launch evidence remains open until approved public URLs and Stripe credentials are configured on a production-like domain.
+Status: runtime configuration support and the buyer checkout route are ready. Final launch evidence remains open until approved public URLs and Stripe credentials are configured on a production-like domain. Ticket-sales go-live is backlogged (Daniel, Nov 9). This is a gate for whenever sales resume, not an open launch in progress.
 
 ## Decision
 

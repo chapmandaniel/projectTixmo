@@ -1,5 +1,7 @@
 # Onsale audit and plan integration handoff
 
+> **HISTORICAL / BACKLOGGED (Daniel, Nov 9):** ticket-sales and onsale readiness work is paused until further notice. This Oct 21 handoff is historical. Branch names such as "nov9-onsale" later in this file are historical path references, not a current date.
+
 Date: October 21, 2026. Owner: this local Codex chat; product/release authority: Daniel Chapman.
 
 ## Scope and ownership
