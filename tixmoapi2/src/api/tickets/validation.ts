@@ -11,6 +11,9 @@ export const listTicketsSchema = z.object({
 
 export const transferTicketSchema = z.object({
   body: z.object({
-    recipientEmail: z.string().email('Invalid email address'),
+    recipientEmail: z.preprocess(
+      (value) => (typeof value === 'string' ? value.trim().toLowerCase() : value),
+      z.string().email('Invalid email address')
+    ),
   }),
 });
