@@ -115,8 +115,20 @@ Workflow: [Tixmo Market Readiness Local Gates run 43498170110](https://github.co
 | configured-image-restore | [43498170110](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170110) | [132136657649](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170110/job/132136657649) | **success** (completed 2026-11-13T20:07:57Z) |
 | guard-and-build | not triggered | — | n/a |
 
-Soak run [43498170038](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170038) skipped (not required). This follow-up retriggers required checks after that known flake.
+Soak run [43498170038](https://github.com/chapmandaniel/projectTixmo/actions/runs/43498170038) skipped (not required). Retriggered after that known flake.
+
+### Green retrigger `dce1defc6211671dedd546222a5dacaeb37362cb`
+
+Workflow: [Tixmo Market Readiness Local Gates run 43502327423](https://github.com/chapmandaniel/projectTixmo/actions/runs/43502327423).
+
+| Check | Run | Job | Conclusion |
+| --- | --- | --- | --- |
+| local-gates | [43502327423](https://github.com/chapmandaniel/projectTixmo/actions/runs/43502327423) | [132151032887](https://github.com/chapmandaniel/projectTixmo/actions/runs/43502327423/job/132151032887) | **success** (completed 2026-11-13T20:44:41Z) |
+| configured-image-restore | [43502327423](https://github.com/chapmandaniel/projectTixmo/actions/runs/43502327423) | [132151032514](https://github.com/chapmandaniel/projectTixmo/actions/runs/43502327423/job/132151032514) | **success** (completed 2026-11-13T20:33:55Z) |
+| guard-and-build | not triggered (no `tdash/**` change) | — | n/a |
+
+Soak run [43502327534](https://github.com/chapmandaniel/projectTixmo/actions/runs/43502327534) skipped (not required).
 
 ## Final head SHA
 
-Tests with required CI green: `3e37fa57bfba6ad9fe5903d67a954922c9f21ed5`. Evidence/retrigger tip is this branch head after this commit.
+`dce1defc6211671dedd546222a5dacaeb37362cb` — required checks `local-gates` and `configured-image-restore` finished **success**. Tests commit `3e37fa57bfba6ad9fe5903d67a954922c9f21ed5` also finished **success** (run 43489550265). This file records those run ids.
