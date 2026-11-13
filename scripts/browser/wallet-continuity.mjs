@@ -44,9 +44,14 @@ let receiveResetLink;
 const resetLink = new Promise((resolve) => {
   receiveResetLink = resolve;
 });
+let receivePortReleased;
+const portReleased = new Promise((resolve) => {
+  receivePortReleased = resolve;
+});
 process.on("message", (message) => {
   if (typeof message?.resetLink === "string" && message.resetLink.length < 4096)
     receiveResetLink(message.resetLink);
+  if (message?.portReleased === true) receivePortReleased();
 });
 const pids = [],
   audit = [],
@@ -186,6 +191,7 @@ async function openBrowser() {
       "--headless",
       "--no-sandbox",
       "--disable-gpu",
+      "--disable-dev-shm-usage",
       "--disable-background-networking",
       "--disable-component-update",
       "--disable-breakpad",
@@ -359,6 +365,15 @@ try {
   mark(2);
   await build(buildConfig);
   mark(3);
+  await deadline(
+    new Promise((resolve, reject) =>
+      process.send({ releasePort: true }, (error) =>
+        error ? reject(error) : resolve(),
+      ),
+    ),
+    5000,
+  );
+  await deadline(portReleased, 10000);
   vite = await preview({
     ...buildConfig,
     preview: {
@@ -370,6 +385,24 @@ try {
     },
   });
   origin = `http://127.0.0.1:${frontendPort}`;
+  await deadline(
+    (async () => {
+      for (let i = 0; i < 50; i++) {
+        try {
+          const response = await fetch(origin + "/wallet", {
+            redirect: "manual",
+            signal: AbortSignal.timeout(500),
+          });
+          if (response.status >= 200 && response.status < 500) return;
+        } catch {
+          /* preview has not accepted yet */
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      throw new BrowserDeadline();
+    })(),
+    8000,
+  );
   mark(4);
   await openBrowser();
   phase(8); // first navigation

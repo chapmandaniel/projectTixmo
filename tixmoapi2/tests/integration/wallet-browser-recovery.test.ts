@@ -182,12 +182,6 @@ async function qualifyWallet() {
     probe = createServer();
     await track(new Promise<void>((resolve) => probe!.listen(0, '127.0.0.1', resolve)));
     const frontendPort = (probe.address() as any).port;
-    await track(
-      new Promise<void>((resolve, reject) =>
-        probe!.close((error) => (error ? reject(error) : resolve()))
-      )
-    );
-    probe = undefined;
     const clientUrl = `http://127.0.0.1:${frontendPort}`;
     const replacement = jest.replaceProperty(config, 'clientUrl', clientUrl);
     spies.push({ mockRestore: () => replacement.restore() });
@@ -366,6 +360,22 @@ async function qualifyWallet() {
           failureStartupPhase = currentStartupPhase;
           failureCategory = ['assertion', 'deadline', 'other'].indexOf(diagnostic.category) + 1;
         }
+      }
+      if (message.releasePort === true) {
+        void track(
+          (async () => {
+            if (probe?.listening)
+              await new Promise<void>((resolve, reject) =>
+                probe!.close((error) => (error ? reject(error) : resolve()))
+              );
+            probe = undefined;
+            await new Promise<void>((resolve, reject) =>
+              browser!.send({ portReleased: true }, (error) =>
+                error ? reject(new Error('Owned port-release IPC failed')) : resolve()
+              )
+            );
+          })()
+        );
       }
       if (message.ok === true) result = message;
       if (

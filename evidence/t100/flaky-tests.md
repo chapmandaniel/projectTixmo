@@ -154,6 +154,27 @@ at the replica test’s `$queryRaw` wrapper, invoked from the two-sweeps holder.
 
 **Proof:** Eight `--randomize` runs of the file (all 2/2) then full reverse+randomize seed `1787340611` 1711/1711.
 
+### 13. `tixmoapi2/tests/integration/scanner-browser.test.ts` (CI, after isolation was already green locally)
+**Test:** `two independent emulated scanner browsers race one paid QR and reject duplicate and revoked use`.
+
+**How it failed:** GitHub Actions `local-gates` run `43457777113` (job `131996366648`, 2026-11-13T16:10:16Z):
+```
+Failed tests: 1; suites: scanner-browser.test.ts; assertions: scanner-browser.test.ts#1@480,101,551.
+```
+Receipt `runtime/task615-scanner-browser.json`: `passed:false`, `diagnosticStage:2`, `diagnosticDetail:0`, `diagnosticReason:0`, all counters 0, `cleanupVerified`/`lifetimeCleanupVerified` true. Report step then failed with “Scanner browser evidence missing or invalid”. Same test passed in the previous CI run (`43453050490`) and in every local full suite.
+
+**Root cause:** Stage 2 is after the Vite production build and before both Chromes have connected. Two independent races:
+1. The parent `listen(0)` probe closed the frontend port minutes before `vite preview({ strictPort: true })` bound it (API fixture setup + tdash build). On Linux that port sits in TIME_WAIT for ~60s, then is fully free. Binding immediately after close is reliable; binding after a long build is not (EADDRINUSE, or Chrome hitting the origin before preview accepts).
+2. GitHub-hosted runners give Chrome 64 MiB `/dev/shm`. Two headless Chromes plus the Vite preview can crash at spawn/DevTools discovery (`--disable-dev-shm-usage` is already used by `scripts/capture-public-route-evidence.mjs`). `listDevToolsPages` fetch timeouts were classified as generic `other` rather than `deadline`.
+
+**Fix:**
+- Keep the probe listening until the worker sends `releasePort`, then close and preview immediately (`scanner-browser.test.ts`, `wallet-browser-recovery.test.ts`, `scripts/browser/scanner-sessions.mjs`, `scripts/browser/wallet-continuity.mjs`).
+- Wait until `GET /scan` (scanner) or `GET /wallet` (wallet) returns before spawning Chrome.
+- Spawn Chrome with `--disable-dev-shm-usage`. Treat `AbortError`/`TimeoutError` from `/json/list` as `Deadline`.
+- Contract tests lock the shm flag and `releasePort` handshake.
+
+**Proof:** `node --test scripts/scanner-browser.test.cjs scripts/wallet-browser.test.cjs` 91/91. Focused Jest 2026-11-13T16:18:37Z scanner-browser 1/1 in 13.96s; 16:19:05Z wallet-browser-recovery 1/1 in 26.707s. Full-suite 3× totals below were already green before this CI-only flake; the handshake is what CI was missing.
+
 ## tdash
 
 No tdash flakes. `npm --prefix tdash test -- --run` 500/500 ×3. Shuffle seed `1794582992172` 500/500.

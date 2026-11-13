@@ -180,14 +180,6 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
     probe = createServer();
     await bounded(track(new Promise<void>((resolve) => probe!.listen(0, '127.0.0.1', resolve))));
     const frontendPort = (probe.address() as { port: number }).port;
-    await bounded(
-      track(
-        new Promise<void>((resolve, reject) =>
-          probe!.close((error) => (error ? reject(error) : resolve()))
-        )
-      )
-    );
-    probe = undefined;
     const clientOrigin = `http://127.0.0.1:${frontendPort}`;
     const clientUrl = jest.replaceProperty(config, 'clientUrl', clientOrigin);
     spies.push({ mockRestore: () => clientUrl.restore() });
@@ -455,6 +447,26 @@ it('two independent emulated scanner browsers race one paid QR and reject duplic
           receipt.diagnosticEntryType = diagnostic.entryType;
           receipt.unexpectedBrowserRequests = diagnostic.rejected;
         }
+      }
+      if (value?.releasePort === true) {
+        const work = (async () => {
+          if (probe?.listening)
+            await bounded(
+              track(
+                new Promise<void>((resolve, reject) =>
+                  probe!.close((error) => (error ? reject(error) : resolve()))
+                )
+              )
+            );
+          probe = undefined;
+          await new Promise<void>((resolve, reject) =>
+            worker!.send({ portReleased: true }, (error) =>
+              error ? reject(Error('Scanner IPC failed')) : resolve()
+            )
+          );
+        })();
+        void track(work);
+        void work.catch((error) => errors.push(error));
       }
       if (value?.revoke === true) {
         const work = (async () => {

@@ -220,6 +220,8 @@ test("collected mounted test and worker keep real transport, barrier, isolation 
   assert.match(testSource, /await financial\(\)/);
   assert.match(testSource, /beforeFresh/);
   assert.match(worker, /--user-data-dir=/);
+  assert.match(worker, /--disable-dev-shm-usage/);
+  assert.match(worker, /releasePort: true/);
   assert.match(worker, /Promise.all\(\[\s*a.click/);
   assert.match(worker, /Fetch.continueRequest/);
   assert.doesNotMatch(
