@@ -79,7 +79,11 @@ No other product bugs found. Org-scoped cross-org reads return **403**, not 404.
 
 ## CI run ids
 
-Required checks on tests commit `3e37fa57bfba6ad9fe5903d67a954922c9f21ed5`. Workflow: [Tixmo Market Readiness Local Gates run 43489550265](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550265). `guard-and-build` (tdash-design-system) is path-filtered and does not run unless `tdash/**` changes.
+`guard-and-build` (tdash-design-system) is path-filtered and does not run unless `tdash/**` changes.
+
+### Tests commit `3e37fa57bfba6ad9fe5903d67a954922c9f21ed5`
+
+Workflow: [Tixmo Market Readiness Local Gates run 43489550265](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550265).
 
 | Check | Run | Job | Conclusion |
 | --- | --- | --- | --- |
@@ -87,10 +91,20 @@ Required checks on tests commit `3e37fa57bfba6ad9fe5903d67a954922c9f21ed5`. Work
 | configured-image-restore | [43489550265](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550265) | [132106780300](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550265/job/132106780300) | **success** (completed 2026-11-13T19:12:37Z) |
 | guard-and-build | not triggered (no `tdash/**` change) | — | n/a |
 
-Opt-in soak workflow run [43489550306](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550306) skipped (not required).
+Soak run [43489550306](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550306) skipped (not required).
 
-This evidence-only follow-up is `17840f8b039a7e5c506dcdd53a3d93a40183567a` on top of `3e37fa57`. After it is pushed, the same required checks re-run on that tip.
+### Evidence commit `b00d4ddcff8c4befa5378ce1b066cb6e7880acd9`
+
+Workflow: [Tixmo Market Readiness Local Gates run 43494101111](https://github.com/chapmandaniel/projectTixmo/actions/runs/43494101111).
+
+| Check | Run | Job | Conclusion |
+| --- | --- | --- | --- |
+| local-gates | [43494101111](https://github.com/chapmandaniel/projectTixmo/actions/runs/43494101111) | [132122553680](https://github.com/chapmandaniel/projectTixmo/actions/runs/43494101111/job/132122553680) | **failure** — `scanner-browser.test.ts#1` (`Scanner lifetime deadline` at tests/integration/scanner-browser.test.ts:100, outer catch at :549). Existing browser flake, not T106 Event Command Center tests. Same family as `wallet-browser-recovery`. Not changed. |
+| configured-image-restore | [43494101111](https://github.com/chapmandaniel/projectTixmo/actions/runs/43494101111) | [132122554126](https://github.com/chapmandaniel/projectTixmo/actions/runs/43494101111/job/132122554126) | **success** (completed 2026-11-13T19:41:19Z) |
+| guard-and-build | not triggered | — | n/a |
+
+This follow-up retriggers required checks after that flake.
 
 ## Final head SHA
 
-`17840f8b039a7e5c506dcdd53a3d93a40183567a`
+Tests with required CI green: `3e37fa57bfba6ad9fe5903d67a954922c9f21ed5`. Evidence/retrigger tip is this branch head after this commit.
