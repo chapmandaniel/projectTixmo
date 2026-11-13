@@ -1,6 +1,6 @@
 # T101 — buyer wallet self-service coverage (gap #4)
 
-Head under test: `d2fea085e522916ff1fdd4684d2377d3cfa84ebf` (T101 tests, required checks green). Evidence follow-up `8480537f306521eb2215b8c4203b2921f9cb2519` retriggered local-gates; that run is recorded below.
+Head under test: `ec07bfcaf36c398e23e0a9864f20cb4c75905566` (T101 tests plus evidence). Tests themselves landed at `d2fea085e522916ff1fdd4684d2377d3cfa84ebf`.
 
 Local Node `v24.21.0`, npm `11.19.0`. Disposable Postgres `tixmo_disposable_t101` on `127.0.0.1:5432` and Redis `/1`. Synthetic JWT/session and Stripe keys matching `.github/workflows/market-readiness-local.yml`. `TIXMO_BROWSER_PATH=/usr/bin/google-chrome`. No Stripe network traffic, no checkout or refund work.
 
@@ -81,7 +81,15 @@ Draft PR #203. `http-soak` skipped (opt-in workflow). T101 tests did not change 
 | configured-image-restore | [43436903707](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903707) | [131924256444](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903707/job/131924256444) | pass, 3m20s |
 | guard-and-build | [43436903692](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903692) | [131924256717](https://github.com/chapmandaniel/projectTixmo/actions/runs/43436903692/job/131924256717) | pass, 1m15s |
 
-`wallet-browser-recovery` did not fail on either head. This commit retriggers required checks after the ramp P95 flake.
+`wallet-browser-recovery` did not fail on either head.
+
+### `ec07bfcaf36c398e23e0a9864f20cb4c75905566` (evidence retrigger after ramp flake)
+
+| Check | Workflow run | Job | Status |
+| --- | --- | --- | --- |
+| local-gates | [43440852074](https://github.com/chapmandaniel/projectTixmo/actions/runs/43440852074) | [131937754836](https://github.com/chapmandaniel/projectTixmo/actions/runs/43440852074/job/131937754836) | pass, 14m34s |
+| configured-image-restore | [43440852074](https://github.com/chapmandaniel/projectTixmo/actions/runs/43440852074) | [131937755114](https://github.com/chapmandaniel/projectTixmo/actions/runs/43440852074/job/131937755114) | pass, 2m38s |
+| guard-and-build | [43440852042](https://github.com/chapmandaniel/projectTixmo/actions/runs/43440852042) | [131937754293](https://github.com/chapmandaniel/projectTixmo/actions/runs/43440852042/job/131937754293) | pass, 1m19s |
 
 ## Bugs found
 
