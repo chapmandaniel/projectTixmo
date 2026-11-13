@@ -1,6 +1,6 @@
 # T101 — buyer wallet self-service coverage (gap #4)
 
-Head under test: recorded at PR creation; updated with the final SHA and CI run ids before close.
+Head under test: `d2fea085e522916ff1fdd4684d2377d3cfa84ebf` (tests). This evidence update is a follow-up commit on the same draft PR.
 
 Local Node `v24.21.0`, npm `11.19.0`. Disposable Postgres `tixmo_disposable_t101` on `127.0.0.1:5432` and Redis `/1`. Synthetic JWT/session and Stripe keys matching `.github/workflows/market-readiness-local.yml`. `TIXMO_BROWSER_PATH=/usr/bin/google-chrome`. No Stripe network traffic, no checkout or refund work.
 
@@ -63,13 +63,13 @@ An intermediate API run without clearing receipts failed 7 tests in `orders-http
 
 ## CI run ids
 
-Filled after the draft PR’s required checks finish on the final head.
+Required checks on `d2fea085e522916ff1fdd4684d2377d3cfa84ebf` (draft PR #203). `http-soak` skipped (opt-in workflow).
 
-| Check | Run id | Status |
-| --- | --- | --- |
-| local-gates | pending | pending |
-| configured-image-restore | pending | pending |
-| guard-and-build | pending | pending |
+| Check | Workflow run | Job | Status |
+| --- | --- | --- | --- |
+| local-gates | [43433377628](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377628) | [131912199115](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377628/job/131912199115) | pass, 13m3s |
+| configured-image-restore | [43433377628](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377628) | [131912199529](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377628/job/131912199529) | pass, 3m16s |
+| guard-and-build | [43433377745](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377745) | [131912199435](https://github.com/chapmandaniel/projectTixmo/actions/runs/43433377745/job/131912199435) | pass, 1m17s |
 
 ## Bugs found
 
