@@ -63,11 +63,19 @@ async function stopped(child) {
     try {
       await deadline(closed, 3000);
     } catch {
-      child.kill("SIGTERM");
+      try {
+        child.kill("SIGTERM");
+      } catch (error) {
+        if (error.code !== "ESRCH") throw error;
+      }
       try {
         await deadline(closed, 2000);
       } catch {
-        process.kill(-child.pid, "SIGKILL");
+        try {
+          process.kill(-child.pid, "SIGKILL");
+        } catch (error) {
+          if (error.code !== "ESRCH") throw error;
+        }
         await deadline(closed, 3000);
       }
     }
@@ -84,7 +92,12 @@ async function stopped(child) {
   // Chrome owns a fresh detached process group; reap descendants even if its leader exited.
   for (const signal of ["SIGTERM", "SIGKILL"]) {
     if (!groupExists()) break;
-    process.kill(-child.pid, signal);
+    try {
+      process.kill(-child.pid, signal);
+    } catch (error) {
+      if (error.code !== "ESRCH") throw error;
+      break;
+    }
     for (let poll = 0; poll < 30 && groupExists(); poll++)
       await new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -111,7 +124,7 @@ async function closeBrowser() {
   browser = undefined;
   ws = undefined;
   send = undefined;
-  await deadline(Promise.all([...requestHandlers]), 5000);
+  await deadline(Promise.allSettled([...requestHandlers]), 5000);
   if (debugPort) {
     await assert.rejects(
       fetch(`http://127.0.0.1:${debugPort}/json/list`, {
@@ -528,6 +541,12 @@ try {
   await login("a", fixture.newPassword);
   await wait(text(fixture.orderNumber));
   assert.equal((await decode()).userId, owner);
+  assert.equal(
+    await evaluate(
+      `fetch('/api/v1/auth/refresh',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({refreshToken:localStorage.getItem('refresh_token')})}).then(async r=>{if(!r.ok)throw Error('refresh');const d=await r.json();localStorage.setItem('access_token',d.data.accessToken);if(d.data.refreshToken)localStorage.setItem('refresh_token',d.data.refreshToken);return true})`,
+    ),
+    true,
+  );
   await click("Show ticket");
   await wait(`!!document.querySelector('img[alt="Ticket admission QR code"]')`);
   assert.match(

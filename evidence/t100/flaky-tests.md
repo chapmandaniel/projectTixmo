@@ -23,7 +23,7 @@ do not print a skipped line when the count is zero).
 - `tixmoapi2/tests/integration/tickets.test.ts`: Jest fake **Date only** (`doNotFake` I/O timers); nested `afterAll` restores real timers and **does not** call `cleanupTestData()`.
 - `tixmoapi2/tests/helpers/restore-process-env.ts` + cors/environment/s3 unit tests: copy-restore env keys.
 - `tixmoapi2/tests/integration/wallet-browser-recovery.test.ts`: `jest.useRealTimers()` at start of `qualifyWallet`.
-- `scripts/browser/wallet-continuity.mjs`: `POST /auth/refresh` after mark 7 so the 10s JWT is fresh before the expiry wait.
+- `scripts/browser/wallet-continuity.mjs`: `POST /auth/refresh` after mark 7 so the 10s JWT is fresh before the expiry wait; refresh again after recovered-password login before Show ticket. Chrome close ignores ESRCH races and drains in-flight CDP commands with `allSettled` (CI failed at stage 16, category `other`, run `43453050490`).
 
 **Proof:** Present in all three consecutive full `npm --prefix tixmoapi2 test -- --runInBand` runs (1711/1711) and in reverse+`--randomize` (seed `1787340611`, 1711/1711).
 
