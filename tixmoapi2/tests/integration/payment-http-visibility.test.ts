@@ -5,6 +5,7 @@ import { AddressInfo } from 'net';
 import fs from 'fs';
 import path from 'path';
 import request from 'supertest';
+import { clearStaleLocalReceipt } from '../helpers/clear-stale-local-receipt';
 
 const mockIntents = new Map<string, any>();
 const mockOrders = new Map<string, { buyer: string; amount: number }>();
@@ -184,6 +185,7 @@ it('twenty owned buyers receive one paid ticket through authentic signed mounted
     }
   };
   const body = async () => {
+    clearStaleLocalReceipt(receiptPath, 'TIXMO_PAID_RUN_ID');
     expect(fs.existsSync(receiptPath)).toBe(false);
     mockIntents.clear();
     mockOrders.clear();

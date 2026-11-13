@@ -134,7 +134,9 @@ describe('Tickets API', () => {
   });
 
   afterAll(async () => {
-    // Disconnect Prisma client used by tests
+    try {
+      await cleanupTestData();
+    } catch (e) {}
     await prisma.$disconnect();
   });
 
@@ -202,6 +204,9 @@ describe('Tickets API', () => {
         mine.body.data.tickets.every((ticket: { user?: unknown }) => ticket.user === undefined)
       ).toBe(true);
 
+      const eventPiiBefore = await prisma.staffActionAudit.count({
+        where: { action: 'STAFF_PII_VIEW', subjectId: eventId },
+      });
       const promoter = await request(app)
         .get(`/api/v1/tickets?eventId=${eventId}&includeHolder=true`)
         .set('Authorization', `Bearer ${promoterToken}`);
@@ -214,7 +219,7 @@ describe('Tickets API', () => {
         await prisma.staffActionAudit.count({
           where: { action: 'STAFF_PII_VIEW', subjectId: eventId },
         })
-      ).toBe(0);
+      ).toBe(eventPiiBefore);
 
       const holder = {
         firstName: 'Tickets',
@@ -251,6 +256,9 @@ describe('Tickets API', () => {
         expect(listAudit?.createdAt).toEqual(expect.any(Date));
       }
 
+      const orderPiiBefore = await prisma.staffActionAudit.count({
+        where: { action: 'STAFF_PII_VIEW', subjectType: 'ORDER', subjectId: orderId },
+      });
       const customerOrder = await request(app)
         .get(`/api/v1/orders/${orderId}`)
         .set('Authorization', `Bearer ${authToken}`);
@@ -259,7 +267,7 @@ describe('Tickets API', () => {
         await prisma.staffActionAudit.count({
           where: { action: 'STAFF_PII_VIEW', subjectType: 'ORDER', subjectId: orderId },
         })
-      ).toBe(0);
+      ).toBe(orderPiiBefore);
     });
 
     it('does not let staff from another organization list tickets by eventId', async () => {
@@ -697,17 +705,31 @@ describe('Tickets API', () => {
 
   // Time-sensitive ticket validation & check-in tests
   describe('Time-sensitive ticket validation & check-in', () => {
-    // use fake timers to control server time (server runs in same process)
-    const FakeTimers = require('@sinonjs/fake-timers');
-    let clock: any;
+    // Fake Date only. Real timers keep HTTP/IO moving; Jest restores the clock
+    // between files so later suites (wallet JWT expiry) cannot inherit this.
     let event2Id: string;
     let ticketType2Id: string;
     let validateBarcode: string;
     let checkInBarcode: string;
+    let alreadyUsedBarcode: string;
     let unpaidBarcode: string;
 
     beforeAll(async () => {
-      clock = FakeTimers.install({ now: Date.now(), toFake: ['Date'] });
+      jest.useFakeTimers({
+        now: Date.now(),
+        doNotFake: [
+          'setImmediate',
+          'clearImmediate',
+          'setTimeout',
+          'clearTimeout',
+          'setInterval',
+          'clearInterval',
+          'nextTick',
+          'queueMicrotask',
+          'hrtime',
+          'performance',
+        ],
+      });
 
       const venue = await createVenue(app, authToken, {
         organizationId,
@@ -775,6 +797,19 @@ describe('Tickets API', () => {
 
       checkInBarcode = orderCheckDetails.body.data.tickets[0].barcode;
 
+      const orderUsedRes = await request(app)
+        .post('/api/v1/orders')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ items: [{ ticketTypeId: ticketType2Id, quantity: 1 }] });
+
+      await confirmOrderForTest(orderUsedRes.body.data.id);
+
+      const orderUsedDetails = await request(app)
+        .get(`/api/v1/orders/${orderUsedRes.body.data.id}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      alreadyUsedBarcode = orderUsedDetails.body.data.tickets[0].barcode;
+
       const unpaidOrderRes = await request(app)
         .post('/api/v1/orders')
         .set('Authorization', `Bearer ${authToken}`)
@@ -787,17 +822,13 @@ describe('Tickets API', () => {
       unpaidBarcode = unpaidOrderDetails.body.data.tickets[0].barcode;
 
       // advance clock to after event start (3 minutes)
-      clock.tick(3 * 60 * 1000);
+      jest.advanceTimersByTime(3 * 60 * 1000);
     });
 
     afterAll(async () => {
-      // restore real timers
-      if (clock) clock.uninstall();
-
-      // cleanup test data created during these tests
-      try {
-        await cleanupTestData();
-      } catch (e) {}
+      // Restore real timers only. Do not call cleanupTestData here: this nested
+      // afterAll can finish before sibling GET tests when Jest shuffles order.
+      jest.useRealTimers();
     });
 
     describe('POST /api/v1/tickets/validate', () => {
@@ -860,12 +891,12 @@ describe('Tickets API', () => {
         await request(app)
           .post('/api/v1/tickets/check-in')
           .set('Authorization', `Bearer ${promoterToken}`)
-          .send({ barcode: checkInBarcode });
+          .send({ barcode: alreadyUsedBarcode });
 
         const res = await request(app)
           .post('/api/v1/tickets/check-in')
           .set('Authorization', `Bearer ${promoterToken}`)
-          .send({ barcode: checkInBarcode });
+          .send({ barcode: alreadyUsedBarcode });
 
         expect(res.status).toBe(400);
         expect(res.body.message).toContain('already been used');

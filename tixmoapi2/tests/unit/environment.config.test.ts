@@ -1,10 +1,12 @@
+import { restoreProcessEnv, snapshotProcessEnv } from '../helpers/restore-process-env';
+
 describe('environment config', () => {
-  const originalEnv = process.env;
+  const originalEnv = snapshotProcessEnv();
 
   beforeEach(() => {
     jest.resetModules();
-    process.env = {
-      ...originalEnv,
+    restoreProcessEnv(originalEnv);
+    Object.assign(process.env, {
       NODE_ENV: 'development',
       DATABASE_URL: originalEnv.DATABASE_URL || 'postgresql://127.0.0.1:5432/tixmo_disposable_unit',
       JWT_SECRET: originalEnv.JWT_SECRET || 'unit-test-jwt-secret-value',
@@ -13,14 +15,14 @@ describe('environment config', () => {
       PAYMENT_CURRENCY: originalEnv.PAYMENT_CURRENCY || 'cad',
       TIXMO_HST_NUMBER: '123456789RT0001',
       TIXMO_HST_RATE: '',
-    };
+    });
     delete process.env.CORS_ORIGIN;
     delete process.env.RAILWAY_ENVIRONMENT_NAME;
     delete process.env.RAILWAY_ENVIRONMENT;
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    restoreProcessEnv(originalEnv);
     jest.resetModules();
   });
 

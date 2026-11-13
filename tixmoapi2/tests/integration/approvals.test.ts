@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import request from 'supertest';
 import app from '../../src/app';
 import {
@@ -48,6 +49,45 @@ describe('Creative approvals API', () => {
   afterAll(async () => {
     await cleanupTestData();
   });
+
+  const createApprovalFixture = async (
+    options: {
+      title?: string;
+      reviewers?: Array<{ email: string; association?: string }>;
+    } = {}
+  ) => {
+    const response = await request(app)
+      .post('/api/v1/approvals')
+      .set('Authorization', `Bearer ${authToken}`)
+      .field('eventId', eventId)
+      .field('title', options.title ?? `Approval ${randomUUID()}`)
+      .field('deadline', new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString())
+      .field(
+        'reviewers',
+        JSON.stringify(
+          options.reviewers ?? [
+            { email: `manager-${randomUUID()}@example.com`, association: 'MANAGEMENT' },
+          ]
+        )
+      )
+      .attach('files', tinyPng, {
+        filename: 'artwork.png',
+        contentType: 'image/png',
+      });
+    expect(response.status).toBe(201);
+    return response.body as {
+      id: string;
+      status: string;
+      reviewers: Array<{
+        id: string;
+        email: string;
+        token?: string;
+        association: string;
+        reviewUrl: string;
+      }>;
+      latestRevision: { id: string };
+    };
+  };
 
   it('creates a creative approval with initial revision assets and reviewers', async () => {
     const response = await request(app)
@@ -151,6 +191,7 @@ describe('Creative approvals API', () => {
   });
 
   it('lists approval requests with creative workflow fields', async () => {
+    await createApprovalFixture({ title: `List ${randomUUID()}` });
     const response = await request(app)
       .get('/api/v1/approvals?status=PENDING_REVIEW')
       .set('Authorization', `Bearer ${authToken}`);
@@ -162,9 +203,7 @@ describe('Creative approvals API', () => {
   });
 
   it('adds a reviewer to an existing approval request', async () => {
-    const approval = await prisma.approvalRequest.findFirstOrThrow({
-      where: { title: 'Main stage LED artwork' },
-    });
+    const approval = await createApprovalFixture();
 
     const response = await request(app)
       .post(`/api/v1/approvals/${approval.id}/reviewers`)
@@ -187,14 +226,20 @@ describe('Creative approvals API', () => {
   });
 
   it('resends an invite for an existing reviewer with a fresh secure token', async () => {
-    const approval = await prisma.approvalRequest.findFirstOrThrow({
-      where: { title: 'Main stage LED artwork' },
+    const created = await createApprovalFixture();
+    const added = await request(app)
+      .post(`/api/v1/approvals/${created.id}/reviewers`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        reviewers: [{ email: `second-reviewer-${randomUUID()}@example.com`, association: 'AGENT' }],
+      });
+    expect(added.status).toBe(201);
+    const approval = await prisma.approvalRequest.findUniqueOrThrow({
+      where: { id: created.id },
       include: { reviewers: true },
     });
 
-    const reviewer = approval.reviewers.find(
-      (item) => item.email === 'second-reviewer@example.com'
-    );
+    const reviewer = approval.reviewers.find((item) => item.email !== created.reviewers[0].email);
     expect(reviewer).toBeDefined();
 
     const previousToken = reviewer?.token;
@@ -214,14 +259,21 @@ describe('Creative approvals API', () => {
   });
 
   it('removes a pending reviewer who has not interacted yet', async () => {
-    const approval = await prisma.approvalRequest.findFirstOrThrow({
-      where: { title: 'Main stage LED artwork' },
+    const created = await createApprovalFixture();
+    const extraEmail = `second-reviewer-${randomUUID()}@example.com`;
+    const added = await request(app)
+      .post(`/api/v1/approvals/${created.id}/reviewers`)
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        reviewers: [{ email: extraEmail, association: 'AGENT' }],
+      });
+    expect(added.status).toBe(201);
+    const approval = await prisma.approvalRequest.findUniqueOrThrow({
+      where: { id: created.id },
       include: { reviewers: true },
     });
 
-    const reviewer = approval.reviewers.find(
-      (item) => item.email === 'second-reviewer@example.com'
-    );
+    const reviewer = approval.reviewers.find((item) => item.email === extraEmail);
     expect(reviewer).toBeDefined();
 
     const response = await request(app)
@@ -231,13 +283,16 @@ describe('Creative approvals API', () => {
     expect(response.status).toBe(200);
     expect(response.body.reviewers).toHaveLength(1);
     expect(response.body.reviewers.map((item: { email: string }) => item.email)).not.toContain(
-      'second-reviewer@example.com'
+      extraEmail
     );
   });
 
   it('supports external review comments and decisions via secure token', async () => {
-    const approval = await prisma.approvalRequest.findFirstOrThrow({
-      where: { title: 'Main stage LED artwork' },
+    const created = await createApprovalFixture({
+      reviewers: [{ email: `manager-${randomUUID()}@example.com`, association: 'MANAGEMENT' }],
+    });
+    const approval = await prisma.approvalRequest.findUniqueOrThrow({
+      where: { id: created.id },
       include: { reviewers: true },
     });
 
@@ -272,14 +327,16 @@ describe('Creative approvals API', () => {
   });
 
   it('allows invited reviewers to add another reviewer from the secure portal', async () => {
-    const approval = await prisma.approvalRequest.findFirstOrThrow({
-      where: { title: 'Main stage LED artwork' },
+    const managerEmail = `manager-${randomUUID()}@example.com`;
+    const created = await createApprovalFixture({
+      reviewers: [{ email: managerEmail, association: 'MANAGEMENT' }],
+    });
+    const approval = await prisma.approvalRequest.findUniqueOrThrow({
+      where: { id: created.id },
       include: { reviewers: true },
     });
 
-    const invitingReviewer = approval.reviewers.find(
-      (reviewer) => reviewer.email === 'manager@example.com'
-    );
+    const invitingReviewer = approval.reviewers.find((reviewer) => reviewer.email === managerEmail);
     expect(invitingReviewer).toBeDefined();
 
     const response = await request(app)
@@ -301,14 +358,16 @@ describe('Creative approvals API', () => {
   });
 
   it('prevents invited reviewers from adding reviewers after approval is complete', async () => {
-    const approval = await prisma.approvalRequest.findFirstOrThrow({
-      where: { title: 'Main stage LED artwork' },
+    const managerEmail = `manager-${randomUUID()}@example.com`;
+    const created = await createApprovalFixture({
+      reviewers: [{ email: managerEmail, association: 'MANAGEMENT' }],
+    });
+    const approval = await prisma.approvalRequest.findUniqueOrThrow({
+      where: { id: created.id },
       include: { reviewers: true },
     });
 
-    const invitingReviewer = approval.reviewers.find(
-      (reviewer) => reviewer.email === 'manager@example.com'
-    );
+    const invitingReviewer = approval.reviewers.find((reviewer) => reviewer.email === managerEmail);
     expect(invitingReviewer).toBeDefined();
 
     await prisma.approvalRequest.update({
@@ -332,8 +391,12 @@ describe('Creative approvals API', () => {
   });
 
   it('keeps internal comments private while allowing authors to delete their own messages', async () => {
-    const approval = await prisma.approvalRequest.findFirstOrThrow({
-      where: { title: 'Main stage LED artwork' },
+    const managerEmail = `manager-${randomUUID()}@example.com`;
+    const created = await createApprovalFixture({
+      reviewers: [{ email: managerEmail, association: 'MANAGEMENT' }],
+    });
+    const approval = await prisma.approvalRequest.findUniqueOrThrow({
+      where: { id: created.id },
       include: {
         reviewers: true,
         revisions: {
@@ -344,9 +407,7 @@ describe('Creative approvals API', () => {
     });
 
     const latestRevisionId = approval.revisions[0].id;
-    const managerReviewer = approval.reviewers.find(
-      (reviewer) => reviewer.email === 'manager@example.com'
-    );
+    const managerReviewer = approval.reviewers.find((reviewer) => reviewer.email === managerEmail);
     expect(managerReviewer).toBeDefined();
     const reviewerToken = managerReviewer?.token;
 
@@ -428,9 +489,7 @@ describe('Creative approvals API', () => {
   });
 
   it('creates a new revision and updates the dashboard status', async () => {
-    const approval = await prisma.approvalRequest.findFirstOrThrow({
-      where: { title: 'Main stage LED artwork' },
-    });
+    const approval = await createApprovalFixture();
 
     const response = await request(app)
       .post(`/api/v1/approvals/${approval.id}/revisions`)
