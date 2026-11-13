@@ -79,14 +79,18 @@ No other product bugs found. Org-scoped cross-org reads return **403**, not 404.
 
 ## CI run ids
 
-Filled after GitHub Actions on this branch. Required checks: `local-gates`, `configured-image-restore`. `guard-and-build` (tdash-design-system) is path-filtered and does not run unless `tdash/**` changes.
+Required checks on tests commit `3e37fa57bfba6ad9fe5903d67a954922c9f21ed5`. Workflow: [Tixmo Market Readiness Local Gates run 43489550265](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550265). `guard-and-build` (tdash-design-system) is path-filtered and does not run unless `tdash/**` changes.
 
-| Check | Run | Conclusion |
-| --- | --- | --- |
-| local-gates | *pending* | |
-| configured-image-restore | *pending* | |
-| guard-and-build | not triggered (no `tdash/**` change) | n/a |
+| Check | Run | Job | Conclusion |
+| --- | --- | --- | --- |
+| local-gates | [43489550265](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550265) | [132106779956](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550265/job/132106779956) | **success** (completed 2026-11-13T19:25:46Z) |
+| configured-image-restore | [43489550265](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550265) | [132106780300](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550265/job/132106780300) | **success** (completed 2026-11-13T19:12:37Z) |
+| guard-and-build | not triggered (no `tdash/**` change) | — | n/a |
+
+Opt-in soak workflow run [43489550306](https://github.com/chapmandaniel/projectTixmo/actions/runs/43489550306) skipped (not required).
+
+This evidence-only follow-up is `17840f8b039a7e5c506dcdd53a3d93a40183567a` on top of `3e37fa57`. After it is pushed, the same required checks re-run on that tip.
 
 ## Final head SHA
 
-*pending push*
+`17840f8b039a7e5c506dcdd53a3d93a40183567a`
