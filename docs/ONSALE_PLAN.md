@@ -1,5 +1,7 @@
 # Onsale delivery plan
 
+> **SUPERSEDED / BACKLOGGED (Daniel, Nov 9):** ticket-sales and onsale readiness work is paused until further notice. This Oct 21 plan is historical. Do not treat "ASAP onsale" as a current delivery target.
+
 Prepared October 21, 2026. Event clocks use America/St_Johns.
 Audit baseline: `87bbad00da8ee2e6ddddd2658b743103cf2bc467`.
 Authority: Daniel Chapman. Status: proposed execution plan; not launch approval.

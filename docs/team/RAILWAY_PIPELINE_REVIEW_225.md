@@ -1,5 +1,7 @@
 # Railway deployment pipeline review (#225)
 
+> **HISTORICAL snapshot, observed 2026-10-20.** This is not the current deploy model. Production autodeploy is OFF; production deploys are manual full-SHA GraphQL. Live production is `82905ae` (deployed Nov 5). A GitHub source attached to `main` does not auto-deploy.
+
 Observed 2026-10-20 through the authenticated Railway connector, read-only.
 Repository review baseline: `0d193a6e8f8180d509f5cfdbb793203904047237`
 (the product candidate recorded on #61, not a deployed-release claim).
@@ -40,8 +42,8 @@ verified; separate named resources alone do not prove database isolation.
 
 | Service | Source/config | Build | Startup / health |
 | --- | --- | --- | --- |
-| Production frontend dash | GitHub repo above, main, root /tdash; checkSuites=false | DOCKERFILE, configured path /tdash/Dockerfile | Docker image CMD; no explicit healthcheckPath returned |
-| Production backend api | GitHub repo above, main, root /tixmoapi2; checkSuites=false | RAILPACK | `npx prisma migrate deploy && npm run db:seed && npm start`; no explicit healthcheckPath returned |
+| Production frontend dash | GitHub source may still be attached to `main`, but that does not auto-deploy; deploys are manual full-SHA GraphQL. checkSuites=false was the Oct 20 observation. | DOCKERFILE, configured path /tdash/Dockerfile | Docker image CMD; no explicit healthcheckPath returned |
+| Production backend api | GitHub source may still be attached to `main`, but that does not auto-deploy; deploys are manual full-SHA GraphQL. checkSuites=false was the Oct 20 observation. Start command and region/replica figures in this table are stale vs today's production API (us-west2 ×3, start script path). | RAILPACK | `npx prisma migrate deploy && npm run db:seed && npm start` (Oct 20 observation; stale vs current start script); no explicit healthcheckPath returned |
 | Staging Tixmo Dashboard Candidate | root /tdash; no repo/branch returned | DOCKERFILE, path Dockerfile | healthcheck /, timeout 300 seconds |
 | Staging Tixmo API Candidate | root /tixmoapi2; no repo/branch returned | DOCKERFILE, path Dockerfile | `/bin/sh -c 'npm run migrate && exec node dist/index.js'`; healthcheck /ready, timeout 300 seconds |
 
@@ -49,9 +51,9 @@ Production apps have one replica in us-east4-eqdc4a. Staging apps have one
 replica in us-west2. Staging restartPolicyMaxRetries is 5. Tracing and automatic
 instrumentation are off for all four app services at observation time.
 
-Production GitHub source attachment is verified, but exact auto-deploy trigger,
-watch paths, GitHub branch protection and external required checks were not
-established. checkSuites=false means the returned Railway source config is not
+Autodeploy is OFF and there are no deployment triggers. Branch protection and
+required checks exist on `main`. The Oct 20 uncertainty about auto-deploy
+triggers, watch paths, and branch protection is no longer current. checkSuites=false means the returned Railway source config is not
 set to wait for check suites; it does not prove GitHub has no checks or protections.
 Staging has a deployed build, but its original upload/source procedure is not
 established by these connector responses. Do not invent a GitHub staging branch.
@@ -63,10 +65,12 @@ prisma migrate deploy, and db:seed to prisma/seed-minimal.js.
 
 ## Observed deployment mapping
 
+The table below is the latest mapping **as of 2026-10-20**. Live production since Nov 5 is `82905ae` (dashboard deploy `eef1b05e`, API deploy `7dd43be5`).
+
 | Service | Latest deployment | Created (UTC) | Returned Git mapping |
 | --- | --- | --- | --- |
-| Production dashboard | 0910a6b7-ce64-40e3-98c6-b8665d2c375a | 2026-07-26T16:29:26.508Z | main, 2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e |
-| Production API | 86b22bcd-2ca8-4754-8c23-8b4054af3c2d | 2026-06-16T23:57:52.309Z | main, 2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e |
+| Production dashboard (latest as of 2026-10-20) | 0910a6b7-ce64-40e3-98c6-b8665d2c375a | 2026-07-26T16:29:26.508Z | main, 2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e. Live production since Nov 5 is `82905ae` (dashboard deploy `eef1b05e`). |
+| Production API (latest as of 2026-10-20) | 86b22bcd-2ca8-4754-8c23-8b4054af3c2d | 2026-06-16T23:57:52.309Z | main, 2f3a05540b6db6f6bd8c026156e74afcc7b1bf9e. Live production since Nov 5 is `82905ae` (API deploy `7dd43be5`). |
 | Staging dashboard | 068df481-3cba-47f9-a735-eb7f3fb7d78d | 2026-10-07T04:00:57.412Z | no commitHash/branch returned |
 | Staging API | c8436e3e-07c3-4551-adfb-88a5344aa4fd | 2026-10-07T04:00:56.378Z | no commitHash/branch returned |
 
