@@ -424,9 +424,14 @@ describe('offline door scanning field contract', () => {
       (await prisma.ticket.findUniqueOrThrow({ where: { id: tickets.refunded.id } })).status
     ).toBe('CANCELLED');
 
+    // After T99 (#202), the validate row carries WRONG_EVENT + the presented
+    // human message, not the live-path 403 assignment string T98 still asserts.
     const wrong = byQr(results, qr(tickets.wrongEvent));
-    expect(wrong).toMatchObject({ success: false });
-    expect(wrong?.reason).toBe('Scanner is not assigned to this event');
+    expect(wrong).toMatchObject({
+      success: false,
+      reason: 'This ticket is for T98 Other Hall.',
+      reasonCode: SCAN_REASON.WRONG_EVENT,
+    });
     expect(
       (await prisma.ticket.findUniqueOrThrow({ where: { id: tickets.wrongEvent.id } })).status
     ).toBe('VALID');
@@ -468,12 +473,9 @@ describe('offline door scanning field contract', () => {
     expect(later[tickets.unpaid.id]).toMatchObject({ status: 'CANCELLED', barcode: '' });
   });
 
-  // Bug: scanTicket throws ApiError.forbidden for WRONG_EVENT after committing
-  // the scan log, and processOfflineScans' catch only copies error.message.
-  // File: tixmoapi2/src/api/scanners/service.ts (throw at 451-457, catch at 756-770).
-  // Expected: results[].reasonCode === WRONG_EVENT. Actual: reasonCode omitted,
-  // reason is "Scanner is not assigned to this event". Not fixed in T98.
-  it.skip('keeps a wrong-event denial on the validate row as WRONG_EVENT rather than a throw-only 403', async () => {
+  // T99 (#202) un-skipped this T98 assertion and added the presented message
+  // plus the scan-log check. Keep both PRs' coverage; drop T98's it.skip.
+  it('keeps a wrong-event denial on the validate row as WRONG_EVENT rather than a throw-only 403', async () => {
     const other = await issuePaid(otherEventId, otherTicketTypeId, 'wrong-row');
     const scannedAt = new Date().toISOString();
     const upload = await request(app)
@@ -484,5 +486,46 @@ describe('offline door scanning field contract', () => {
     const row = upload.body.data.results[0] as ValidateRow;
     expect(row.success).toBe(false);
     expect(row.reasonCode).toBe(SCAN_REASON.WRONG_EVENT);
+    expect(row.reason).toBe('This ticket is for T98 Other Hall.');
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id: other.id } })).status).toBe(
+      'VALID'
+    );
+    expect(
+      await prisma.scanLog.findFirst({
+        where: { scannerId: offlineScannerId, ticketId: other.id },
+      })
+    ).toMatchObject({
+      success: false,
+      failureReason: SCAN_REASON.WRONG_EVENT,
+    });
+  });
+
+  it('still returns 403 WRONG_EVENT on the live scan path and leaves sync assignment 403 without a scan code', async () => {
+    const other = await issuePaid(otherEventId, otherTicketTypeId, 'wrong-live');
+    const live = await request(app)
+      .post('/api/v1/scanners/scan')
+      .set(scannerAuth(offlineKey, offlineIp))
+      .send({ qrData: qr(other), scanType: 'ENTRY' });
+    expect(live.status).toBe(403);
+    expect(live.body.message).toBe('Scanner is not assigned to this event');
+    expect(live.body.data).toMatchObject({
+      valid: false,
+      reason: SCAN_REASON.WRONG_EVENT,
+      reasonCode: SCAN_REASON.WRONG_EVENT,
+      message: 'This ticket is for T98 Other Hall.',
+      eventName: 'T98 Other Hall',
+    });
+    expect((await prisma.ticket.findUniqueOrThrow({ where: { id: other.id } })).status).toBe(
+      'VALID'
+    );
+
+    const sync = await request(app)
+      .get('/api/v1/scanners/sync')
+      .set(scannerAuth(offlineKey, offlineIp))
+      .query({ eventId: otherEventId });
+    expect(sync.status).toBe(403);
+    expect(sync.body.message).toBe('Scanner is not assigned to this event');
+    expect(sync.body.data).toBeUndefined();
+    expect(sync.body.data?.reasonCode).toBeUndefined();
   });
 });
