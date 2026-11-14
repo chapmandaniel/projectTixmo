@@ -7,6 +7,18 @@ import { logger } from '../../src/config/logger';
 import { orderService } from '../../src/api/orders/service';
 import { sweepExpiredOrders } from '../../src/jobs/order-expiry.job';
 
+const prismaTransaction = Object.getPrototypeOf(prisma).$transaction as typeof prisma.$transaction;
+const originalTransaction = (
+  callback: Parameters<typeof prisma.$transaction>[0],
+  options?: Parameters<typeof prisma.$transaction>[1]
+) => prismaTransaction.call(prisma, callback, options);
+
+afterEach(() => {
+  jest.useRealTimers();
+  jest.restoreAllMocks();
+  prisma.$transaction = prismaTransaction.bind(prisma);
+});
+
 afterAll(async () => {
   await prisma.$disconnect();
 });
@@ -76,6 +88,8 @@ async function fixture(expiredCount: number) {
 }
 
 test('two sweeps cancel each expired order once and release its inventory once', async () => {
+  jest.useRealTimers();
+  prisma.$transaction = prismaTransaction.bind(prisma);
   const { expired, live, type } = await fixture(4);
   const ours = new Set(expired.map((order) => order.id));
   const intruders = await prisma.order.findMany({
@@ -102,18 +116,31 @@ test('two sweeps cancel each expired order once and release its inventory once',
     locked = resolve;
   });
   const oldest = expired[0];
-  const holder = prisma.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw<Array<{ locked: boolean }>>`
+  const holder = originalTransaction(
+    async (tx) => {
+      const rows = await tx.$queryRaw<Array<{ locked: boolean }>>`
       SELECT pg_try_advisory_xact_lock(hashtextextended(${oldest.id}, 0)) AS locked
     `;
-    expect(rows[0]?.locked).toBe(true);
-    locked();
-    await releaseLock;
-  });
+      expect(rows[0]?.locked).toBe(true);
+      locked();
+      await releaseLock;
+    },
+    { maxWait: 10000, timeout: 20000 }
+  );
 
   const info = jest.spyOn(logger, 'info').mockImplementation(() => logger);
   try {
-    await lockHeld;
+    await Promise.race([
+      lockHeld,
+      holder.then(
+        () => {
+          throw new Error('advisory lock holder finished before signalling');
+        },
+        (error) => {
+          throw error instanceof Error ? error : new Error(String(error));
+        }
+      ),
+    ]);
     const skipped = await orderService.claimNextExpiredOrder();
     expect(skipped).toMatchObject({ status: 'skipped', id: oldest.id });
     const claimed = await orderService.claimNextExpiredOrder([oldest.id]);
@@ -186,6 +213,8 @@ test('two sweeps cancel each expired order once and release its inventory once',
 });
 
 test('a replica that locks after the other commit skips without a cancel log or a second release', async () => {
+  jest.useRealTimers();
+  prisma.$transaction = prismaTransaction.bind(prisma);
   const { expired, live, type } = await fixture(1);
   const target = expired[0];
   const intruders = await prisma.order.findMany({
@@ -216,41 +245,65 @@ test('a replica that locks after the other commit skips without a cancel log or 
     signalACommitted = resolve;
   });
   let bPaused = false;
-  const realTransaction = prisma.$transaction.bind(prisma);
-  const transactions = jest
-    .spyOn(prisma, '$transaction')
-    .mockImplementation((callback: unknown, options?: { maxWait?: number; timeout?: number }) => {
-      if (typeof callback !== 'function') return realTransaction(callback as never, options);
-      const work = callback as (tx: Prisma.TransactionClient) => Promise<unknown>;
-      return realTransaction(async (tx) => {
-        const query = tx.$queryRaw.bind(tx);
-        tx.$queryRaw = (async (strings: TemplateStringsArray, ...values: unknown[]) => {
-          const result = await query(strings, ...values);
-          const text = strings.join(' ');
-          if (!bPaused && text.includes('order_number') && text.includes('LIMIT')) {
-            bPaused = true;
-            signalBSelected();
-            await aCommitted;
-          }
-          return result;
-        }) as typeof tx.$queryRaw;
-        return work(tx);
-      }, options);
-    });
+  prisma.$transaction = ((callback: unknown, options?: { maxWait?: number; timeout?: number }) => {
+    if (typeof callback !== 'function') return originalTransaction(callback as never, options);
+    const work = callback as (tx: Prisma.TransactionClient) => Promise<unknown>;
+    return originalTransaction(
+      async (tx) => {
+        const wrappedTx = new Proxy(tx, {
+          get(target, property, receiver) {
+            if (property === '$queryRaw') {
+              return async (strings: TemplateStringsArray, ...values: unknown[]) => {
+                const result = await target.$queryRaw(strings, ...values);
+                const text = strings.join(' ');
+                if (!bPaused && text.includes('order_number') && text.includes('LIMIT')) {
+                  bPaused = true;
+                  signalBSelected();
+                  await aCommitted;
+                }
+                return result;
+              };
+            }
+            const value = Reflect.get(target, property, receiver);
+            return typeof value === 'function' ? value.bind(target) : value;
+          },
+        });
+        return work(wrappedTx);
+      },
+      {
+        ...options,
+        maxWait: Math.max(options?.maxWait ?? 2000, 10000),
+        timeout: Math.max(options?.timeout ?? 5000, 20000),
+      }
+    );
+  }) as typeof prisma.$transaction;
 
   const info = jest.spyOn(logger, 'info').mockImplementation(() => logger);
-  const holder = prisma.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw<Array<{ locked: boolean }>>`
+  const holder = originalTransaction(
+    async (tx) => {
+      const rows = await tx.$queryRaw<Array<{ locked: boolean }>>`
       SELECT pg_try_advisory_xact_lock(hashtextextended(${target.id}, 0)) AS locked
     `;
-    expect(rows[0]?.locked).toBe(true);
-    signalAHolding();
-    await bSelected;
-    await expect(orderService.cancelExpiredHoldIfPending(tx, target.id)).resolves.toBe(true);
-  });
+      expect(rows[0]?.locked).toBe(true);
+      signalAHolding();
+      await bSelected;
+      await expect(orderService.cancelExpiredHoldIfPending(tx, target.id)).resolves.toBe(true);
+    },
+    { maxWait: 10000, timeout: 20000 }
+  );
   let sweep: Promise<string[]> = Promise.resolve([]);
   try {
-    await aHolding;
+    await Promise.race([
+      aHolding,
+      holder.then(
+        () => {
+          throw new Error('replica lock holder finished before signalling');
+        },
+        (error) => {
+          throw error instanceof Error ? error : new Error(String(error));
+        }
+      ),
+    ]);
     sweep = sweepExpiredOrders();
     await bSelected;
     await holder;
@@ -265,7 +318,7 @@ test('a replica that locks after the other commit skips without a cancel log or 
     signalACommitted();
     await holder.catch(() => undefined);
     await sweep.catch(() => undefined);
-    transactions.mockRestore();
+    prisma.$transaction = prismaTransaction.bind(prisma);
     info.mockRestore();
     if (intruders.length) {
       await prisma.$transaction(

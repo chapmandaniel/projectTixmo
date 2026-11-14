@@ -30,6 +30,8 @@ test('worker guards before Vite/spawn and never fabricates API responses or logs
   assert.ok(worker.indexOf('validateWalletBrowser(process.env)') < worker.indexOf('await mkdtemp'));
  assert.ok(worker.indexOf('validateWalletBrowser(process.env)') < worker.indexOf('await import('));
  assert.doesNotMatch(worker, /Fetch\.fulfillRequest|console\.|HOME: profile|process\.stdout|process\.stderr/);
+ assert.match(worker, /--disable-dev-shm-usage/);
+ assert.match(worker, /releasePort: true/);
  assert.match(worker, /url\.origin !== origin/);
  assert.match(worker, /Fetch\.failRequest/);
  assert.match(worker, /Fetch\.continueRequest/);
