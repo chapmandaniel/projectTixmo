@@ -252,6 +252,25 @@ describe('Buyer wallet self-service HTTP', () => {
         .set('Authorization', `Bearer ${token}`);
     }
 
+    it("resolves padded mixed-case ' Bob@X.com' to the stored recipient", async () => {
+      const bob = await registerUser(app, {
+        email: 'bob@x.com',
+        password: 'Test123!',
+        firstName: 'Bob',
+        lastName: 'Ex',
+      });
+      expect(bob.user.email).toBe('bob@x.com');
+      const ticket = await freshTicket();
+      const res = await request(app)
+        .post(`/api/v1/tickets/${ticket.id}/transfer`)
+        .set('Authorization', `Bearer ${buyerToken}`)
+        .send({ recipientEmail: ' Bob@X.com' });
+      expect(res.status).toBe(200);
+      expect(res.body.data.userId).toBe(bob.user.id);
+      const after = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } });
+      expect(after.userId).toBe(bob.user.id);
+    });
+
     it('moves ownership, invalidates the sender QR, and issues a new credential', async () => {
       const ticket = await freshTicket();
       const before = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } });

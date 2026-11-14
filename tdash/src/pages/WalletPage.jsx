@@ -126,7 +126,7 @@ const WalletPage = ({ user, onAuthenticated }) => {
                 </>}
                 {transfer ? <DashboardSurface isDark role="dialog" aria-label="Transfer ticket" className="p-5 space-y-4">
                     <h2 className="text-xl">Transfer ticket</h2><p className="text-sm text-dashboard-muted">The recipient needs a Tixmo account. Your current QR code will stop working.</p>
-                    <form onSubmit={e => { e.preventDefault(); void action(async () => { await api.post(`/tickets/${transfer.id}/transfer`, { recipientEmail: recipient }); setTransfer(null); setQr(null); setNotice('Ticket transferred.'); }); }} className="space-y-3">
+                    <form onSubmit={e => { e.preventDefault(); void action(async () => { await api.post(`/tickets/${transfer.id}/transfer`, { recipientEmail: recipient.trim().toLowerCase() }); setTransfer(null); setQr(null); setNotice('Ticket transferred.'); }); }} className="space-y-3">
                         <DashboardTextInput isDark type="email" aria-label="Recipient email" value={recipient} onChange={e => setRecipient(e.target.value)} required />
                         <DashboardButton isDark type="submit" disabled={busy}>Confirm transfer</DashboardButton>
                         <DashboardButton isDark variant="secondary" disabled={busy} onClick={() => setTransfer(null)}>Cancel</DashboardButton>
