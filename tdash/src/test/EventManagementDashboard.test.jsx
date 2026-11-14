@@ -180,13 +180,28 @@ describe('EventManagementDashboard', () => {
         expect(apiGet).toHaveBeenCalledWith(`/events/${EVENT_ID}`);
     });
 
-    it('sends the operator back to /events when the event fetch fails', async () => {
+    it('lets the operator retry after a fetch error', async () => {
         apiGet.mockRejectedValue({ response: { status: 500, data: { message: 'Unavailable' } } });
 
         renderDashboard(`/events/${eventSlug}`);
 
-        expect(await screen.findByText('Events list')).toBeInTheDocument();
-        expect(screen.queryByText(fakeEvent.name)).not.toBeInTheDocument();
+        expect(await screen.findByRole('alert')).toHaveTextContent(/unavailable/i);
+        expect(screen.queryByText('Events list')).not.toBeInTheDocument();
+
+        mockEventFetch();
+        fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+        expect(await screen.findByText(fakeEvent.name)).toBeInTheDocument();
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('returns to /events from the fetch-error back control', async () => {
+        apiGet.mockRejectedValue({ response: { status: 500, data: { message: 'Unavailable' } } });
+
+        renderDashboard(`/events/${eventSlug}`);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent(/unavailable/i);
+        fireEvent.click(screen.getByRole('button', { name: 'Back to events' }));
+        expect(screen.getByText('Events list')).toBeInTheDocument();
     });
 
     it('sends the operator back to /events when the payload has no event id', async () => {
@@ -198,14 +213,13 @@ describe('EventManagementDashboard', () => {
         expect(screen.queryByText('Broken payload')).not.toBeInTheDocument();
     });
 
-    it.skip('shows a fetch error instead of silently leaving the event dashboard', async () => {
-        // EventManagementDashboard.jsx:34-36 — catch navigates to /events and never renders an error.
-        // Repro: open /events/:eventId without location.state while GET /events/:id rejects.
-        // Severity: medium — a 403/404/500 looks like an empty events list with no explanation.
+    it('shows a fetch error instead of silently leaving the event dashboard', async () => {
         apiGet.mockRejectedValue({ response: { status: 500, data: { message: 'Unavailable' } } });
         renderDashboard(`/events/${eventSlug}`);
         expect(await screen.findByRole('alert')).toHaveTextContent(/unavailable/i);
         expect(screen.queryByText('Events list')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Back to events' })).toBeInTheDocument();
     });
 
     it('navigates between command-center tabs', async () => {
@@ -267,10 +281,7 @@ describe('EventManagementDashboard', () => {
         expect(screen.getByText('Orders panel')).toBeInTheDocument();
     });
 
-    it.skip('keeps the friendly slug when the event only has a title', async () => {
-        // EventCommandCenter.jsx:232 — generateEventSlug(event.name, event.id) ignores event.title.
-        // Repro: open an event from EventsView (router state uses title, not name) and click Orders.
-        // Severity: low — the tab still changes via the raw id, but the URL drops the readable slug.
+    it('keeps the friendly slug when the event only has a title', async () => {
         const titled = {
             id: EVENT_ID,
             title: 'Harbour Lights Festival',
