@@ -2,10 +2,6 @@ name: Tdash Design System
 
 on:
   pull_request:
-    paths:
-      - 'tdash/**'
-      - '.github/workflows/tdash-design-system.yml'
-      - '.github/workflows/uptime-status.yml'
   push:
     branches:
       - main
@@ -14,6 +10,9 @@ on:
       - 'tdash/**'
       - '.github/workflows/tdash-design-system.yml'
       - '.github/workflows/uptime-status.yml'
+
+permissions:
+  contents: read
 
 jobs:
   guard-and-build:
@@ -25,20 +24,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect relevant changes
+        id: changes
+        working-directory: .
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          bash scripts/ci-relevant-changes.sh \
+            'tdash' \
+            '.github/workflows/tdash-design-system.yml' \
+            '.github/workflows/uptime-status.yml'
+
+      - name: Skip (no relevant changes)
+        if: steps.changes.outputs.relevant != 'true'
+        working-directory: .
+        run: 'echo "skipped: no relevant changes"'
+
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.relevant == 'true'
         with:
           node-version: '24.21.0'
           cache: npm
           cache-dependency-path: tdash/package-lock.json
 
       - name: Install
+        if: steps.changes.outputs.relevant == 'true'
         run: npm ci
 
       - name: Design Guard
+        if: steps.changes.outputs.relevant == 'true'
         run: npm run design:guard
 
       - name: Dashboard tests
+        if: steps.changes.outputs.relevant == 'true'
         run: npm test -- --run
 
       - name: Build
+        if: steps.changes.outputs.relevant == 'true'
         run: npm run build
