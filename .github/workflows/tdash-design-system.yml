@@ -1,6 +1,7 @@
 name: Tdash Design System
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
