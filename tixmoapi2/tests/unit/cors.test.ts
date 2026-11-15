@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express, { Application, Request, Response, NextFunction } from 'express';
+import { restoreProcessEnv, snapshotProcessEnv } from '../helpers/restore-process-env';
 
 jest.mock('../../src/services/readiness-db', () => ({
   queryReadinessDatabase: jest.fn().mockResolvedValue(1),
@@ -83,7 +84,7 @@ const expectNoBrowserCors = (response: request.Response) => {
 };
 
 const loadApp = (env: NodeJS.ProcessEnv) => {
-  const previous = process.env;
+  const previous = snapshotProcessEnv();
   const warnings: string[] = [];
   const errors: string[] = [];
   const warn = jest.spyOn(console, 'warn').mockImplementation((message?: unknown) => {
@@ -92,12 +93,12 @@ const loadApp = (env: NodeJS.ProcessEnv) => {
   const errorSpy = jest.spyOn(console, 'error').mockImplementation((message?: unknown) => {
     errors.push(String(message));
   });
-  process.env = {
-    ...previous,
+  restoreProcessEnv(previous);
+  Object.assign(process.env, {
     RAILWAY_ENVIRONMENT: '',
     RAILWAY_ENVIRONMENT_NAME: '',
     ...env,
-  };
+  });
   try {
     let loaded: Application | undefined;
     jest.isolateModules(() => {
@@ -111,7 +112,7 @@ const loadApp = (env: NodeJS.ProcessEnv) => {
   } finally {
     warn.mockRestore();
     errorSpy.mockRestore();
-    process.env = previous;
+    restoreProcessEnv(previous);
   }
 };
 

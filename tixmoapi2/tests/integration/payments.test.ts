@@ -128,7 +128,8 @@ describe('Payment Routes', () => {
       expect(res.body.data.paymentIntentId).toBeDefined();
 
       const updatedOrder = await prisma.order.findUnique({ where: { id: order.id } });
-      expect(updatedOrder?.paymentIntentId).toBe('pi_mock_123456');
+      expect(updatedOrder?.paymentIntentId).toBe(res.body.data.paymentIntentId);
+      expect(res.body.data.paymentIntentId).toMatch(/^pi_/);
       expect(updatedOrder?.paymentStatus).toBe('PROCESSING');
     });
 
@@ -144,22 +145,30 @@ describe('Payment Routes', () => {
 
   describe('POST /payments/webhook', () => {
     it('should handle payment_intent.succeeded event', async () => {
-      // Mock the constructEvent on the service instance
       const { paymentService } = require('../../src/api/payments/service');
       const stripeMock = paymentService.stripe;
+      const ticketType = await prisma.ticketType.findFirstOrThrow();
+      const paidOrder = await createOrder(app, token, {
+        items: [{ ticketTypeId: ticketType.id, quantity: 1 }],
+      });
+      const intentRes = await request(app)
+        .post('/api/v1/payments/create-intent')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ orderId: paidOrder.id });
+      expect(intentRes.status).toBe(200);
 
       stripeMock.webhooks.constructEvent.mockReturnValue({
         id: 'evt_mock_success_once',
         type: 'payment_intent.succeeded',
         data: {
           object: {
-            id: 'pi_mock_123456',
+            id: intentRes.body.data.paymentIntentId,
             status: 'succeeded',
             amount: 1000,
             amount_received: 1000,
             currency: 'cad',
             metadata: {
-              orderId: order.id,
+              orderId: paidOrder.id,
             },
           },
         },
@@ -174,7 +183,7 @@ describe('Payment Routes', () => {
       expect(res.body.received).toBe(true);
 
       // Verify order status updated
-      const updatedOrder = await prisma.order.findUnique({ where: { id: order.id } });
+      const updatedOrder = await prisma.order.findUnique({ where: { id: paidOrder.id } });
       expect(updatedOrder?.status).toBe('PAID');
 
       const webhookEvent = await prisma.paymentWebhookEvent.findUnique({
@@ -190,19 +199,28 @@ describe('Payment Routes', () => {
         require('../../src/api/orders/service').orderService,
         'confirmOrder'
       );
+      const ticketType = await prisma.ticketType.findFirstOrThrow();
+      const duplicateOrder = await createOrder(app, token, {
+        items: [{ ticketTypeId: ticketType.id, quantity: 1 }],
+      });
+      const intentRes = await request(app)
+        .post('/api/v1/payments/create-intent')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ orderId: duplicateOrder.id });
+      expect(intentRes.status).toBe(200);
 
       stripeMock.webhooks.constructEvent.mockReturnValue({
         id: 'evt_mock_duplicate_success',
         type: 'payment_intent.succeeded',
         data: {
           object: {
-            id: 'pi_mock_123456',
+            id: intentRes.body.data.paymentIntentId,
             status: 'succeeded',
             amount: 1000,
             amount_received: 1000,
             currency: 'cad',
             metadata: {
-              orderId: order.id,
+              orderId: duplicateOrder.id,
             },
           },
         },
@@ -212,6 +230,7 @@ describe('Payment Routes', () => {
         .post('/api/v1/payments/webhook')
         .set('stripe-signature', 'mock_signature')
         .send({ type: 'payment_intent.succeeded' });
+      confirmOrderSpy.mockClear();
 
       const secondRes = await request(app)
         .post('/api/v1/payments/webhook')
