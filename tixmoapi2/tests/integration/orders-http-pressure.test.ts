@@ -8,6 +8,7 @@ import { AddressInfo } from 'net';
 import fs from 'fs';
 import path from 'path';
 import request from 'supertest';
+import { clearStaleLocalReceipt } from '../helpers/clear-stale-local-receipt';
 
 let mockTransportCalls = 0;
 jest.unmock('../../src/config/redis');
@@ -106,6 +107,7 @@ it('1800 authenticated HTTP attempts scheduled at30 per second for60 seconds con
   let metricsRecord: Record<string, string | number | boolean> | undefined;
   const receiptPath = path.resolve(__dirname, '../../../runtime/task608-http-pressure.json');
   const body = async () => {
+    clearStaleLocalReceipt(receiptPath, 'TIXMO_PRESSURE_RUN_ID');
     expect(fs.existsSync(receiptPath)).toBe(false);
     // Setup.ts has already admitted/bootstraped the disposable database.
     // Capture real Redis before app/limiter modules initialize their stores.
