@@ -1,9 +1,11 @@
 import {
+  deniedOfflineScanRow,
   presentScanResult,
   recordedScanReason,
   SCAN_REASON,
   VOID_DISPUTED_MESSAGE,
 } from '../src/api/scanners/public-scan';
+import { ApiError } from '../src/utils/ApiError';
 import { DOORS_BEFORE_START_MS, ticketFailure } from '../src/services/ticket-admission.service';
 
 const secretBarcode = 'TIX-SECRET-SHOULD-NOT-RENDER';
@@ -121,6 +123,42 @@ describe('recorded scan reason codes', () => {
       SCAN_REASON.WRONG_EVENT
     );
     expect(recordedScanReason({ success: false, reason: 'REVOKED' })).toBe(SCAN_REASON.REVOKED);
+  });
+});
+
+describe('offline validate catch of a thrown scan denial', () => {
+  test('WRONG_EVENT copies reasonCode and the presented human message', () => {
+    const presented = presentScanResult({
+      success: false,
+      reason: 'WRONG_EVENT',
+      ticket: gateTicket(),
+    });
+    const error = ApiError.forbidden('Scanner is not assigned to this event', {
+      ...presented,
+      reasonCode: SCAN_REASON.WRONG_EVENT,
+    });
+    expect(deniedOfflineScanRow(error)).toEqual({
+      rethrow: false,
+      reason: 'This ticket is for Harbour Night.',
+      reasonCode: SCAN_REASON.WRONG_EVENT,
+    });
+  });
+
+  test('a bare assignment 403 does not invent WRONG_EVENT', () => {
+    expect(
+      deniedOfflineScanRow(ApiError.forbidden('Scanner is not assigned to this event'))
+    ).toEqual({
+      rethrow: false,
+      reason: 'Scanner is not assigned to this event',
+    });
+  });
+
+  test('EXTERNAL_TICKETING stays fatal instead of becoming a validate row', () => {
+    const error = ApiError.forbidden(
+      'This event is sold by an external ticketing vendor. Tixmo does not offer this action for vendor-sold events.',
+      { code: 'EXTERNAL_TICKETING', capability: 'scan' }
+    );
+    expect(deniedOfflineScanRow(error)).toEqual({ rethrow: true, reason: '' });
   });
 });
 

@@ -14,7 +14,12 @@ import {
 import { orderDisputed } from '../../services/ticket-void.service';
 import { recordStaffAction, StaffAudit } from '../../services/staff-action-audit';
 import { offlineAdmissionTime } from './offline-time';
-import { presentScanResult, recordedScanReason, SCAN_REASON } from './public-scan';
+import {
+  deniedOfflineScanRow,
+  presentScanResult,
+  recordedScanReason,
+  SCAN_REASON,
+} from './public-scan';
 
 interface RegisterScannerData {
   name: string;
@@ -454,7 +459,14 @@ export class ScannerService {
         reason: 'WRONG_EVENT',
         ticket: outcome.ticket,
       });
-      throw ApiError.forbidden('Scanner is not assigned to this event', denial);
+      // Live POST /scanners/scan still 403s with the assignment message so the
+      // dashboard can keep classifying it. reasonCode matches the scan log.
+      // authorizeSync uses the same message without WRONG_EVENT (unassigned
+      // scanner asking for another event's snapshot, not a ticket mismatch).
+      throw ApiError.forbidden('Scanner is not assigned to this event', {
+        ...denial,
+        reasonCode: SCAN_REASON.WRONG_EVENT,
+      });
     }
     return {
       success: outcome.success,
@@ -754,19 +766,14 @@ export class ScannerService {
           reasonCode: result.reasonCode,
         });
       } catch (error) {
-        const code =
-          error instanceof ApiError &&
-          error.data &&
-          typeof error.data === 'object' &&
-          'code' in error.data
-            ? (error.data as { code?: string }).code
-            : undefined;
-        if (code === 'EXTERNAL_TICKETING') throw error;
+        const denied = deniedOfflineScanRow(error);
+        if (denied.rethrow) throw error;
         failedCount++;
         results.push({
           qrData: scan.qrData,
           success: false,
-          reason: error instanceof Error ? error.message : 'Unknown error',
+          reason: denied.reason,
+          ...(denied.reasonCode ? { reasonCode: denied.reasonCode } : {}),
         });
       }
     }
