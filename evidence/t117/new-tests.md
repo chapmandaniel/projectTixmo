@@ -6,7 +6,7 @@ Tests only. QA, T90 follow-up. No app-code, lockfile, workflow, or guard-baselin
 | --- | --- |
 | Base | `origin/main` `aee54592` (merge of PR #195) |
 | Branch | `cursor/t117-tasks-notifications-tests-f332` |
-| Head | `bfcf4d7417c4932ad8f81101da576baac8a1feeb` |
+| Head | `2c93dccb99dac9ddf30ea8b11384d98e751b3ee4` (tests + evidence; CI below is this SHA) |
 | API command | `npx jest --runInBand` in `tixmoapi2/` against disposable `tixmo_disposable_t117` + Redis `/1` |
 | Dashboard command | `npx vitest --run` in `tdash/` |
 | Coverage | API Jest `--collectCoverageFrom` for `src/api/tasks/**` and `src/api/notifications/**`; dashboard `@vitest/coverage-v8@4.1.12` `--no-save --no-package-lock` with `--coverage.include` limited to the four UI files |
@@ -193,7 +193,14 @@ App code was not changed. Each bug is an `it.skip` with file:line in the test na
 
 ## CI
 
-Filled after the final head’s required checks complete.
+All checks on `2c93dccb99dac9ddf30ea8b11384d98e751b3ee4` finished with no failures. `scanner-browser` and `wallet-browser-recovery` did not flake (they passed inside `local-gates`). Draft PR: https://github.com/chapmandaniel/projectTixmo/pull/213
+
+| Check | Conclusion | Link |
+| --- | --- | --- |
+| local-gates (required) | success, 13m50s | https://github.com/chapmandaniel/projectTixmo/actions/runs/43718018762/job/132823659020 |
+| configured-image-restore (required) | success, 3m19s | https://github.com/chapmandaniel/projectTixmo/actions/runs/43718018762/job/132823659255 |
+| guard-and-build | success, 1m13s | https://github.com/chapmandaniel/projectTixmo/actions/runs/43718018793/job/132823659159 |
+| http-soak | skipped | https://github.com/chapmandaniel/projectTixmo/actions/runs/43718019030/job/132823661265 |
 
 ## What was not done
 
