@@ -3,16 +3,27 @@ import { Users, Check, X, Edit3, Download, Plus, Paperclip, Send } from 'lucide-
 
 import api from '../lib/api';
 
+const PRIORITY_OPTIONS = [
+    { value: 'HIGH', label: 'High' },
+    { value: 'MEDIUM', label: 'Medium' },
+    { value: 'LOW', label: 'Low' },
+];
+
+const toPriorityEnum = (value) => String(value || '').toUpperCase();
+
 const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
     const [message, setMessage] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState(task.content);
     const [editDescription, setEditDescription] = useState(task.description || '');
     const [editTag, setEditTag] = useState(task.tag);
-    const [editPriority, setEditPriority] = useState(task.priority);
+    const [editPriority, setEditPriority] = useState(toPriorityEnum(task.priority));
     const messagesEndRef = useRef(null);
 
     const priorityColors = {
+        HIGH: isDark ? 'text-rose-400 bg-rose-400/10' : 'text-rose-600 bg-rose-50',
+        MEDIUM: isDark ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50',
+        LOW: isDark ? 'text-emerald-400 bg-emerald-400/10' : 'text-emerald-600 bg-emerald-50',
         High: isDark ? 'text-rose-400 bg-rose-400/10' : 'text-rose-600 bg-rose-50',
         Medium: isDark ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50',
         Low: isDark ? 'text-emerald-400 bg-emerald-400/10' : 'text-emerald-600 bg-emerald-50',
@@ -32,7 +43,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
             content: editTitle,
             description: editDescription,
             tag: editTag,
-            priority: editPriority
+            priority: toPriorityEnum(editPriority)
         });
         setIsEditing(false);
     };
@@ -121,12 +132,14 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                                     />
                                     <select
                                         value={editPriority}
-                                        onChange={(e) => setEditPriority(e.target.value)}
+                                        onChange={(e) => setEditPriority(toPriorityEnum(e.target.value))}
                                         className={`text-xs px-2 py-0.5 rounded font-medium outline-hidden border ${isDark ? 'bg-[#252525] border-[#333] text-gray-300' : 'bg-white border-gray-200 text-gray-700'}`}
                                     >
-                                        <option value="High">High</option>
-                                        <option value="Medium">Medium</option>
-                                        <option value="Low">Low</option>
+                                        {PRIORITY_OPTIONS.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
                                     </select>
                                 </>
                             ) : (

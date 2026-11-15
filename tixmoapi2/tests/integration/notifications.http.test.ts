@@ -249,10 +249,7 @@ describe('Notifications HTTP', () => {
     expect(unread.status).toBe(400);
   });
 
-  // Bug: PUT /notifications/:id/read has no UUID param validation (routes.ts:60).
-  // prisma.notification.findUnique (service.ts:47-48) then throws on a non-UUID,
-  // and errorHandler.ts:20-28 turns that into 500. Expected: 400 Validation failed.
-  it.skip('rejects a non-UUID notification id on mark-read (notifications/routes.ts:60)', async () => {
+  it('rejects a non-UUID notification id on mark-read (notifications/routes.ts:60)', async () => {
     const response = await request(app)
       .put('/api/v1/notifications/not-a-uuid/read')
       .set(auth(userA.accessToken));

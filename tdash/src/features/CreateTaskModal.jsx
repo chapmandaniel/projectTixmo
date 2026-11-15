@@ -2,6 +2,15 @@ import React, { useState, useRef } from 'react';
 import { X, Plus, Paperclip } from 'lucide-react';
 import InputField from '../components/InputField';
 
+const userDisplayName = (user) => [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim();
+
+const nameMatchesQuery = (user, query) => {
+    const needle = String(query || '').toLowerCase();
+    return [user?.firstName, user?.lastName].some((part) =>
+        String(part || '').toLowerCase().includes(needle)
+    );
+};
+
 const CreateTaskModal = ({ onClose, onCreate, isDark, users = [], events = [] }) => {
     const [formData, setFormData] = useState({
         title: '',
@@ -52,17 +61,14 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [], events = [] })
     const handleMentionUser = (user) => {
         const words = formData.content.split(/[\s\n]/);
         words.pop(); // Remove the partial mention
-        const mention = user.lastName ? `@${user.firstName} ${user.lastName}` : `@${user.firstName}`;
+        const mention = `@${userDisplayName(user) || 'user'}`;
         const newContent = [...words, `${mention} `].join(' '); // Add space after
         setFormData({ ...formData, content: newContent });
         setShowMentions(false);
         descriptionRef.current?.focus();
     };
 
-    const filteredUsers = users.filter(u =>
-        u.firstName.toLowerCase().includes(mentionQuery) ||
-        u.lastName.toLowerCase().includes(mentionQuery)
-    );
+    const filteredUsers = users.filter((u) => nameMatchesQuery(u, mentionQuery));
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
@@ -112,9 +118,9 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [], events = [] })
                                         className={`w-full text-left px-3 py-2 flex items-center space-x-2 hover:bg-indigo-500/10 transition-colors ${isDark ? 'text-gray-200' : 'text-gray-700'}`}
                                     >
                                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${isDark ? 'bg-[#333]' : 'bg-gray-200'}`}>
-                                            {u.firstName[0]}
+                                            {u.firstName?.[0] || u.lastName?.[0] || '?'}
                                         </div>
-                                        <span className="text-sm">{u.firstName} {u.lastName}</span>
+                                        <span className="text-sm">{userDisplayName(u)}</span>
                                     </button>
                                 ))}
                             </div>
@@ -165,7 +171,7 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [], events = [] })
                         type="select"
                         value={formData.assignee}
                         onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                        options={users.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}` }))}
+                        options={users.map(u => ({ value: u.id, label: userDisplayName(u) || u.id }))}
                         isDark={isDark}
                     />
 

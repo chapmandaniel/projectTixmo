@@ -67,9 +67,7 @@ describe('CreateTaskModal', () => {
         });
     });
 
-    // Bug: CreateTaskModal.jsx:64 calls u.lastName.toLowerCase() with no null guard.
-    // Repro: type @Ri while a teammate has lastName: null. Expected: skip or match on firstName.
-    it.skip('does not crash mention suggestions when a user has no last name (CreateTaskModal.jsx:64)', () => {
+    it('does not crash mention suggestions when a user has no last name (CreateTaskModal.jsx:64)', () => {
         render(
             <CreateTaskModal
                 onClose={vi.fn()}
@@ -84,6 +82,6 @@ describe('CreateTaskModal', () => {
                 target: { value: '@Ri' },
             });
         }).not.toThrow();
-        expect(screen.getByText('Riley')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Riley/ })).toBeInTheDocument();
     });
 });
