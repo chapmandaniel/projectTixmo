@@ -139,10 +139,7 @@ describe('TaskDetailsModal', () => {
         expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ assignee: 'user-2' }));
     });
 
-    // Bug: TaskDetailsModal.jsx:123-130 edit <select> values are High/Medium/Low, while
-    // TodoView.jsx:207 PATCHes updatedTask.priority unchanged. API create validation
-    // (tasks/routes.ts:87) only accepts LOW|MEDIUM|HIGH. Changing the dropdown sends 'High'.
-    it.skip('sends API enum priority values when the operator edits priority (TaskDetailsModal.jsx:123)', () => {
+    it('sends API enum priority values when the operator edits priority (TaskDetailsModal.jsx:123)', () => {
         const onUpdate = vi.fn();
         render(
             <TaskDetailsModal
@@ -154,7 +151,7 @@ describe('TaskDetailsModal', () => {
             />
         );
         fireEvent.click(screen.getByTitle('Edit Task'));
-        fireEvent.change(screen.getByDisplayValue('HIGH'), { target: { value: 'Low' } });
+        fireEvent.change(screen.getByDisplayValue('High'), { target: { value: 'LOW' } });
         fireEvent.click(screen.getByTitle('Save'));
         expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ priority: 'LOW' }));
     });
