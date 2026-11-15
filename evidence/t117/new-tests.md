@@ -6,7 +6,7 @@ Tests only. QA, T90 follow-up. No app-code, lockfile, workflow, or guard-baselin
 | --- | --- |
 | Base | `origin/main` `aee54592` (merge of PR #195) |
 | Branch | `cursor/t117-tasks-notifications-tests-f332` |
-| Head | recorded after commit |
+| Head | `bfcf4d7417c4932ad8f81101da576baac8a1feeb` |
 | API command | `npx jest --runInBand` in `tixmoapi2/` against disposable `tixmo_disposable_t117` + Redis `/1` |
 | Dashboard command | `npx vitest --run` in `tdash/` |
 | Coverage | API Jest `--collectCoverageFrom` for `src/api/tasks/**` and `src/api/notifications/**`; dashboard `@vitest/coverage-v8@4.1.12` `--no-save --no-package-lock` with `--coverage.include` limited to the four UI files |
