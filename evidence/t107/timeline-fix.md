@@ -52,9 +52,49 @@ Workflow: [Tixmo Market Readiness Local Gates run 43513772218](https://github.co
 
 Soak run [43513772208](https://github.com/chapmandaniel/projectTixmo/actions/runs/43513772208) skipped (not required). No job re-runs.
 
+### Evidence commit `71b8feb300c01217fa73f6066ff84a3c31ef0af1`
+
+Workflow: [Tixmo Market Readiness Local Gates run 43518823747](https://github.com/chapmandaniel/projectTixmo/actions/runs/43518823747).
+
+| Check | Run | Job | Conclusion |
+| --- | --- | --- | --- |
+| local-gates | [43518823747](https://github.com/chapmandaniel/projectTixmo/actions/runs/43518823747) | [132207587309](https://github.com/chapmandaniel/projectTixmo/actions/runs/43518823747/job/132207587309) | **success** (completed 2026-11-13T22:39:54Z) |
+| configured-image-restore | [43518823747](https://github.com/chapmandaniel/projectTixmo/actions/runs/43518823747) | [132207587084](https://github.com/chapmandaniel/projectTixmo/actions/runs/43518823747/job/132207587084) | **success** (completed 2026-11-13T22:25:51Z) |
+| guard-and-build | not triggered (no `tdash/**` change) | — | n/a |
+
+### Later T122 commits on this branch
+
+T122 stacked timezone-independent hour-bucket test fixtures onto this PR (`edf4b048`, `8ddc008f`, `b4ebe54b`, evidence `8c251046`). Those commits do not change `stats.service.ts`. T107's product fix remains `ad0cf029`.
+
+### T122 evidence commit `8c251046012f03a29ddbf7e28d690ae82d720a53`
+
+Workflow: [Tixmo Market Readiness Local Gates run 43760653559](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653559).
+
+| Check | Run | Job | Conclusion |
+| --- | --- | --- | --- |
+| local-gates | [43760653559](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653559) | [132954479337](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653559/job/132954479337) | **failure** — `users_create.test.ts` all 19 cases at `beforeAll` `cleanupTestData()` (`tests/integration/users_create.test.ts:18`). Not T107 timeline tests. Not `scanner-browser` / `wallet-browser-recovery`. T107 and T122 did not edit this file. |
+| configured-image-restore | [43760653559](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653559) | [132954479588](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653559/job/132954479588) | **success** (completed 2026-11-15T20:57:28Z) |
+| guard-and-build | not triggered | — | n/a |
+
+Soak run [43760653470](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653470) skipped (not required).
+
+GitHub Actions job re-run via API returned **403** (`Resource not accessible by integration`). No `workflow_dispatch`. T122 retriggered the same flake with evidence commit `5131a677` (not a T107 job re-run). `scanner-browser` / `wallet-browser-recovery` were **not** re-run; they did not fail.
+
+### T122 retrigger `5131a6779d66580ee990392f094abe963434ccba`
+
+Workflow: [Tixmo Market Readiness Local Gates run 43762151641](https://github.com/chapmandaniel/projectTixmo/actions/runs/43762151641).
+
+| Check | Run | Job | Conclusion |
+| --- | --- | --- | --- |
+| local-gates | [43762151641](https://github.com/chapmandaniel/projectTixmo/actions/runs/43762151641) | [132959124097](https://github.com/chapmandaniel/projectTixmo/actions/runs/43762151641/job/132959124097) | **success** (completed 2026-11-15T21:23:44Z) |
+| configured-image-restore | [43762151641](https://github.com/chapmandaniel/projectTixmo/actions/runs/43762151641) | [132959124373](https://github.com/chapmandaniel/projectTixmo/actions/runs/43762151641/job/132959124373) | **success** (completed 2026-11-15T21:13:36Z) |
+| guard-and-build | not triggered (no `tdash/**` change) | — | n/a |
+
+Soak run [43762151636](https://github.com/chapmandaniel/projectTixmo/actions/runs/43762151636) skipped (not required).
+
 ## Conclusions
 
-- `local-gates`: success on the fix commit.
-- `configured-image-restore`: success on the fix commit.
-- `scanner-browser` / `wallet-browser-recovery` flakes named in T106 did not hit this run.
+- `local-gates`: **success** on T107 fix `ad0cf029`, T107 evidence `71b8feb3`, and T122 retrigger `5131a677`. **failure** then recovered on T122 evidence `8c251046` (`users_create.test.ts` beforeAll), unrelated to the timeline fix.
+- `configured-image-restore`: **success** on `ad0cf029`, `71b8feb3`, `8c251046`, and `5131a677`.
+- Named T106 browser flakes did not hit these runs. No GitHub job re-runs (API 403). T122 retriggered via `5131a677`; that run was green.
 - Draft PR only. Do not merge until #208 is merged or this PR is merged with it.
