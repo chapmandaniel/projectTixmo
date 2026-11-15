@@ -1,6 +1,11 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Receipt suites refuse leftover runtime/task6NN-*.json from a previous
+# verify:api in this clone (task608, task609, task612, task615, task616, …).
+# Scoped glob only; rm -f is safe if none exist.
+rm -f runtime/task6[0-9][0-9]-*.json
+
 # Run tests through the runner that owns and validates disposable databases.
 npm --prefix tixmoapi2 run typecheck || exit 1
 npm run verify:api || exit 1
