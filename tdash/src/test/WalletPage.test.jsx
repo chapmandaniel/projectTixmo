@@ -185,12 +185,7 @@ describe('Buyer wallet', () => {
     expect(screen.queryByRole('dialog', { name: 'Transfer ticket' })).not.toBeInTheDocument();
   });
 
-  // WalletPage.jsx:129 posts { recipientEmail: recipient } with no trim/lowercase.
-  // Auth stores emails through normalizeEmail (tixmoapi2/src/api/auth/service.ts:29).
-  // transferTicketSchema (tixmoapi2/src/api/tickets/validation.ts:14) has no preprocess.
-  // Repro: type "  Recipient@Example.com  " and confirm; the POST body is the raw
-  // string, so the API lookup misses the stored lowercase account.
-  it.skip('normalises the transfer recipient email (trim/lowercase) before POST', async () => {
+  it('normalises the transfer recipient email (trim/lowercase) before POST', async () => {
     mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Transfer' }));
     fireEvent.change(screen.getByLabelText('Recipient email'), { target: { value: '  Recipient@Example.com  ' } });
