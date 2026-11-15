@@ -35,6 +35,13 @@ const mockPrisma = prisma as unknown as {
   };
 };
 
+/** Same local-hour floor as `getEntryTimeline` (`setMinutes(0, 0, 0)` then ISO key). */
+function localHourTimestamp(scannedAt: Date): Date {
+  const hour = new Date(scannedAt);
+  hour.setMinutes(0, 0, 0);
+  return new Date(hour.toISOString());
+}
+
 describe('EventStatsService', () => {
   const mockEventId = 'event-123';
 
@@ -184,14 +191,21 @@ describe('EventStatsService', () => {
     it('groups successful scans by hour with cumulative occupancy', async () => {
       mockPrisma.event.findUnique.mockResolvedValue({ id: mockEventId });
 
-      const hourA = new Date('2026-11-13T18:00:00.000Z');
-      const hourB = new Date('2026-11-13T19:00:00.000Z');
+      // Cluster times away from :00/:30 so one UTC hour stays one local hour
+      // in half-hour offsets (America/St_Johns, Asia/Kolkata).
+      const hourAEntry = new Date('2026-11-13T18:10:00.000Z');
+      const hourAEntry2 = new Date('2026-11-13T18:20:00.000Z');
+      const hourAExit = new Date('2026-11-13T18:25:00.000Z');
+      const hourBEntry = new Date('2026-11-13T19:10:00.000Z');
+      const hourBValidation = new Date('2026-11-13T19:20:00.000Z');
+      const hourA = localHourTimestamp(hourAEntry);
+      const hourB = localHourTimestamp(hourBEntry);
       mockPrisma.scanLog.findMany.mockResolvedValue([
-        { scannedAt: new Date('2026-11-13T18:10:00.000Z'), scanType: 'ENTRY' },
-        { scannedAt: new Date('2026-11-13T18:40:00.000Z'), scanType: 'ENTRY' },
-        { scannedAt: new Date('2026-11-13T18:50:00.000Z'), scanType: 'EXIT' },
-        { scannedAt: new Date('2026-11-13T19:05:00.000Z'), scanType: 'ENTRY' },
-        { scannedAt: new Date('2026-11-13T19:20:00.000Z'), scanType: 'VALIDATION' },
+        { scannedAt: hourAEntry, scanType: 'ENTRY' },
+        { scannedAt: hourAEntry2, scanType: 'ENTRY' },
+        { scannedAt: hourAExit, scanType: 'EXIT' },
+        { scannedAt: hourBEntry, scanType: 'ENTRY' },
+        { scannedAt: hourBValidation, scanType: 'VALIDATION' },
       ]);
 
       const timeline = await eventStatsService.getEntryTimeline(mockEventId, 6);
