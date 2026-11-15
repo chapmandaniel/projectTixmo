@@ -132,12 +132,32 @@ Soak [43757814800](https://github.com/chapmandaniel/projectTixmo/actions/runs/43
 
 Soak [43757815398](https://github.com/chapmandaniel/projectTixmo/actions/runs/43757815398) skipped. No job re-runs.
 
-This docs commit retriggers #209 CI; report the new run ids with the T122 closeout. #217 CI is on `487027e7` (hook-only).
+### #209 @ `8c251046` (this evidence file)
+
+| Check | Run | Job | Conclusion |
+| --- | --- | --- | --- |
+| local-gates | [43760653559](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653559) | [132954479337](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653559/job/132954479337) | **failure** (completed 2026-11-15T21:08:07Z) |
+| configured-image-restore | [43760653559](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653559) | [132954479588](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653559/job/132954479588) | **success** (completed 2026-11-15T20:57:28Z) |
+| guard-and-build | not triggered (no `tdash/**` change) | — | n/a (path-skipped) |
+
+Soak [43760653470](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760653470) skipped. No `workflow_dispatch`, no job re-run.
+
+`verify:api` reported 19 failed tests, all `users_create.test.ts` at `beforeAll` line 18 (`await cleanupTestData()`). Child Jest output is suppressed. Not an hour-bucket / TZ assertion. The same suite is **19 passed / 19** locally on this branch (`npx jest --runInBand tests/integration/users_create.test.ts`). The TZ-fix head `b4ebe54b` had green `local-gates`. This addendum records that flake; it is not a skip or a weakened assertion.
+
+### #217 @ `487027e7`
+
+| Check | Run | Job | Conclusion |
+| --- | --- | --- | --- |
+| local-gates | [43760564664](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760564664) | [132954198972](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760564664/job/132954198972) | **success** (completed 2026-11-15T21:07:56Z) |
+| configured-image-restore | [43760564664](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760564664) | [132954199180](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760564664/job/132954199180) | **success** (completed 2026-11-15T20:56:21Z) |
+| guard-and-build | not triggered (no `tdash/**` change) | — | n/a (path-skipped) |
+
+Soak [43760564681](https://github.com/chapmandaniel/projectTixmo/actions/runs/43760564681) skipped.
 
 ## Conclusions
 
 - Failures were test fixtures, not `getEntryTimeline` timezone bugs.
 - #208 owns the grouping test; #209 owns the mixed-hour test. Fixes landed on those branches; #209 was `git merge`d forward from #208.
-- Affected unit suite passes under `America/St_Johns`, `UTC`, and `Asia/Kolkata`. Full Jest 183/1743 pass on #209.
-- Pre-push leftover receipts: draft #217; two consecutive hook runs in one clone both exited 0.
-- Draft PRs only. Do not merge.
+- Affected unit suite passes under `America/St_Johns`, `UTC`, and `Asia/Kolkata`. Full Jest 183/1743 pass on #209 @ `b4ebe54b`.
+- Pre-push leftover receipts: draft #217; two consecutive hook runs in one clone both exited 0. Required checks green on `487027e7`.
+- #209 evidence commit `8c251046` hit an unrelated `users_create` `beforeAll` flake on `local-gates`; TZ-fix CI on `b4ebe54b` was already green. Draft PRs only. Do not merge.
