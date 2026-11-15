@@ -173,6 +173,16 @@ describe('TeamView', () => {
         expect(screen.getAllByTitle('Role locked').length).toBeGreaterThan(0);
     });
 
+    it('renders TeamMemberWizard from the Add member action', async () => {
+        render(<TeamView isDark user={adminUser} />);
+        await waitFor(() => expect(screen.getByText('Pat Promoter')).toBeInTheDocument());
+        fireEvent.click(screen.getByText('Add member'));
+        expect(screen.getByRole('heading', { name: 'Add Team Member' })).toBeInTheDocument();
+        expect(screen.getByLabelText(/First Name/)).toBeInTheDocument();
+        expect(screen.getByText('Basic Info')).toBeInTheDocument();
+        expect(apiPost).not.toHaveBeenCalled();
+    });
+
     it('opens the invite wizard and posts a new member', async () => {
         apiPost.mockResolvedValue({
             data: { data: { id: 'invited-1', invitationDelivered: true } },
