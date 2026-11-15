@@ -115,11 +115,7 @@ describe('Notification bell', () => {
         errorSpy.mockRestore();
     });
 
-    // Bug: DashboardLayout.jsx:342-346 VIEW ALL has no onClick. Product docs
-    // (docs/TIXMO_DESCRIPTION_AND_FEATURES.md §13) require mark-as-read and
-    // read-all. Expected: a control that PUT /notifications/read-all and
-    // clears unread badges for the listed items.
-    it.skip('marks every notification as read from the bell (DashboardLayout.jsx:342-346)', async () => {
+    it('marks every notification as read from the bell (DashboardLayout.jsx:342-346)', async () => {
         renderLayout();
         fireEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
         fireEvent.click(await screen.findByRole('button', { name: 'VIEW ALL' }));

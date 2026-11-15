@@ -223,6 +223,17 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
         }
     };
 
+    const handleMarkAllRead = async () => {
+        try {
+            await api.put('/notifications/read-all');
+            const readAt = new Date().toISOString();
+            setNotifications(prev => prev.map(n => (n.readAt ? n : { ...n, readAt })));
+            setUnreadCount(0);
+        } catch (error) {
+            console.error('Failed to mark all read', error);
+        }
+    };
+
     // Horizontal Scrolling
     const scrollContainerRef = React.useRef(null);
 
@@ -340,7 +351,11 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                                     )}
                                 </div>
                                 <div className={cn('p-3 text-center border-t', isDark ? 'border-[#2b2b40]/60 bg-[#151521]' : 'border-gray-100 bg-gray-50')}>
-                                    <button className={cn('text-sm font-light tracking-wide', isDark ? 'text-[#8e8fa6]' : 'text-slate-600')}>
+                                    <button
+                                        type="button"
+                                        onClick={handleMarkAllRead}
+                                        className={cn('text-sm font-light tracking-wide', isDark ? 'text-[#8e8fa6]' : 'text-slate-600')}
+                                    >
                                         VIEW ALL
                                     </button>
                                 </div>
