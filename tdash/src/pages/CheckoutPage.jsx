@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-// The default @stripe/stripe-js entry injects https://js.stripe.com/dahlia/stripe.js
+// The default @stripe/stripe-js entry injects https://js.stripe.com/endive/stripe.js
 // as soon as the module evaluates. The pure entry loads that script only when
 // loadStripe runs, which closed checkout never does.
 import { loadStripe } from '@stripe/stripe-js/pure';
