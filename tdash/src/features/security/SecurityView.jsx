@@ -161,7 +161,7 @@ const SecurityView = ({ isDark = true, now: fixedNow }) => {
                 title="Recent activity"
                 description="What the log analysis noticed most recently. Blocked items were handled automatically."
             >
-                <ol className={cn('divide-y', theme.divider)} data-testid="security-feed">
+                <ol className={cn('divide-y', isDark ? 'divide-white/5' : 'divide-slate-200')} data-testid="security-feed">
                     {report.feed.map((item) => (
                         <li key={item.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:gap-4">
                             <span className={cn('inline-flex w-fit shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-light', toneStyles(item.tone, isDark))}>
