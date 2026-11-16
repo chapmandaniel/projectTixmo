@@ -1,5 +1,6 @@
 import { likesCommentsShares, peopleReachedValue } from './plainCopy';
 import { mentionSourcePlatform } from './platforms';
+import { SNAPSHOT_NOW, YESTERDAY } from './demoClock';
 
 const REPORT_TIMEZONE = 'America/St_Johns';
 
@@ -54,9 +55,6 @@ const questionSnippet = (comment) => {
     const phrase = themePhrase(comment.theme);
     return phrase && phrase !== 'unclassified' ? phrase : null;
 };
-
-const SNAPSHOT_NOW = '2026-11-11T08:14:22-03:30';
-const YESTERDAY = '2026-11-10';
 
 const hoursAgo = (iso) => Math.max(1, Math.round((new Date(SNAPSHOT_NOW).getTime() - new Date(iso).getTime()) / (1000 * 60 * 60)));
 

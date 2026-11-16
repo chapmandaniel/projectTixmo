@@ -73,16 +73,16 @@ const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
             {/* Demo build: icons only from 1400px so every tab fits on a 1280-1440px presentation screen. */}
             <div className="relative hidden items-center justify-center min-[1400px]:flex">
                 <item.icon size={18} className={cn('shrink-0', active ? 'drop-shadow-sm' : '')} />
-                {badge && (
-                    <span className={cn(
-                        'absolute -right-3 -top-2 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[9px] font-medium text-white shadow-sm',
-                        isDark ? 'bg-[#ff3366] border-[#1f1e30]' : 'bg-rose-500 border-white'
-                    )}>
-                        {badge > 9 ? '9+' : badge}
-                    </span>
-                )}
             </div>
             <span className="whitespace-nowrap leading-none">{item.label}</span>
+            {badge ? (
+                <span className={cn(
+                    'flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-medium text-white',
+                    isDark ? 'bg-[#ff3366]' : 'bg-rose-500'
+                )}>
+                    {badge > 9 ? '9+' : badge}
+                </span>
+            ) : null}
         </Link>
     );
 };
@@ -344,9 +344,13 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                                     )}
                                 </div>
                                 <div className={cn('p-3 text-center border-t', isDark ? 'border-[#2b2b40]/60 bg-[#151521]' : 'border-gray-100 bg-gray-50')}>
-                                    <button className={cn('text-sm font-light tracking-wide', isDark ? 'text-[#8e8fa6]' : 'text-slate-600')}>
+                                    <Link
+                                        to="/notifications"
+                                        onClick={() => setShowNotifications(false)}
+                                        className={cn('text-sm font-light tracking-wide', isDark ? 'text-[#8e8fa6] hover:text-zinc-100' : 'text-slate-600 hover:text-slate-900')}
+                                    >
                                         VIEW ALL
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                         )}

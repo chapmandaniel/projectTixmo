@@ -1,5 +1,5 @@
 import React from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import SocialDashboardApp from '../features/socialDashboard/SocialDashboardApp';
@@ -10,10 +10,16 @@ global.ResizeObserver = class ResizeObserver {
     disconnect() {}
 };
 
+
+const LocationSearch = () => {
+    const location = useLocation();
+    return <span data-testid="social-dashboard-url">{`${location.pathname}${location.search}`}</span>;
+};
+
 const mount = (entry = '/social') => render(
     <MemoryRouter initialEntries={[entry]}>
         <Routes>
-            <Route path="/social/*" element={<SocialDashboardApp isDark basePath="/social" />} />
+            <Route path="/social/*" element={<><LocationSearch /><SocialDashboardApp isDark basePath="/social" /></>} />
         </Routes>
     </MemoryRouter>
 );

@@ -16,20 +16,35 @@ import {
 } from './ga4Adapter';
 import { percentChange } from './formatters';
 
-// Labs demo: the mock window rolls forward in whole weeks so the chart stays current while the
-// weekday-based copy ("Traffic spiked on Tuesday") stays true.
+// Labs demo: the mock window ends today in America/St_Johns. Spike dates shift
+// by the same number of days so the series stays current; copy uses the spike's weekday.
 const MOCK_BASE_AS_OF = '2026-11-12';
-const rollWeeks = (() => {
+const isoDateInStJohns = (date = new Date()) => {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/St_Johns',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(date);
+    const value = (type) => parts.find((part) => part.type === type)?.value;
+    return `${value('year')}-${value('month')}-${value('day')}`;
+};
+export const MOCK_AS_OF = isoDateInStJohns();
+const rollDays = (() => {
     const base = Date.UTC(2026, 10, 12);
-    const today = Date.now() - 3.5 * 3600000; // St. John's date
-    return Math.max(0, Math.floor((today - base) / (7 * 86400000))) * 7;
+    const [year, month, day] = MOCK_AS_OF.split('-').map(Number);
+    const today = Date.UTC(year, month - 1, day);
+    return Math.round((today - base) / 86400000);
 })();
 const rolled = (iso) => {
     const [y, m, d] = iso.split('-').map(Number);
-    const date = new Date(Date.UTC(y, m - 1, d + rollWeeks));
+    const date = new Date(Date.UTC(y, m - 1, d + rollDays));
     return date.toISOString().slice(0, 10);
 };
-export const MOCK_AS_OF = rolled(MOCK_BASE_AS_OF);
+export const weekdayLong = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-US', {
+    weekday: 'long',
+    timeZone: 'UTC',
+});
 export const MOCK_PROMOTER = 'Northlight Live (demo)';
 export const DEFAULT_PAGE_ID = 'aurora-after-dark';
 export const DEFAULT_RANGE = '28';
@@ -39,6 +54,27 @@ export const DATE_RANGE_OPTIONS = [
     { id: '7', short: '7 days', label: 'Last 7 days', days: 7 },
     { id: '28', short: '28 days', label: 'Last 28 days', days: 28 },
     { id: '90', short: '90 days', label: 'Last 90 days', days: 90 },
+];
+
+
+// Remaining Northlight Live seeded events (Labs demo). Purchases roughly follow
+// the seed's order counts and sale windows; revenue is fictional test-mode CAD.
+const EXTRA_ANALYTICS_PAGES = [
+    { id: 'kitchen-party-social', name: 'Kitchen Party Social', path: '/events/kitchen-party-social', empty: false, liveNow: 47, festival: false },
+    { id: 'late-show-comedy-club', name: 'Late Show Comedy Club', path: '/events/late-show-comedy-club', empty: false, liveNow: 11, festival: false },
+    { id: 'saltwater-sessions-mara-vale', name: 'Saltwater Sessions: Mara Vale', path: '/events/saltwater-sessions-mara-vale', empty: false, liveNow: 8, festival: false },
+    { id: 'iceberg-alley-jazz-brunch', name: 'Iceberg Alley Jazz Brunch', path: '/events/iceberg-alley-jazz-brunch', empty: false, liveNow: 5, festival: false },
+    { id: 'new-years-eve-at-harbourfront', name: "New Year's Eve at Harbourfront", path: '/events/new-years-eve-at-harbourfront', empty: false, liveNow: 16, festival: false },
+    { id: 'battery-road-blues-night', name: 'Battery Road Blues Night', path: '/events/battery-road-blues-night', empty: false, liveNow: 4, festival: false },
+    { id: 'northern-static-live', name: 'Northern Static Live', path: '/events/northern-static-live', empty: false, liveNow: 1, festival: false },
+    { id: 'signal-hill-sunset-sessions', name: 'Signal Hill Sunset Sessions', path: '/events/signal-hill-sunset-sessions', empty: false, liveNow: 0, festival: true },
+    { id: 'halloween-masquerade', name: 'Halloween Masquerade', path: '/events/halloween-masquerade', empty: false, liveNow: 2, festival: false },
+    { id: 'duckworth-indie-weekender', name: 'Duckworth Indie Weekender', path: '/events/duckworth-indie-weekender', empty: false, liveNow: 0, festival: true },
+    { id: 'ember-choir-winter-songs', name: 'Ember Choir: Winter Songs', path: '/events/ember-choir-winter-songs', empty: false, liveNow: 3, festival: false },
+    { id: 'winter-lanterns-gala', name: 'Winter Lanterns Gala', path: '/events/winter-lanterns-gala', empty: false, liveNow: 6, festival: false },
+    { id: 'tidewater-film-score-live', name: 'Tidewater Film Score Live', path: '/events/tidewater-film-score-live', empty: false, liveNow: 4, festival: false },
+    { id: 'spring-tide-sessions', name: 'Spring Tide Sessions', path: '/events/spring-tide-sessions', empty: false, liveNow: 1, festival: false },
+    { id: 'solstice-block-party', name: 'Solstice Block Party', path: '/events/solstice-block-party', empty: false, liveNow: 1, festival: true },
 ];
 
 export const ANALYTICS_PAGES = [
@@ -75,7 +111,9 @@ export const ANALYTICS_PAGES = [
         liveNow: 2,
         festival: false,
     },
+    ...EXTRA_ANALYTICS_PAGES,
 ];
+ANALYTICS_PAGES[0].liveNow = ANALYTICS_PAGES.filter((page) => page.id !== 'all').reduce((sum, page) => sum + (page.liveNow || 0), 0);
 
 export const CHANNELS = [
     { id: 'organic-search', label: 'Organic Search' },
@@ -290,6 +328,179 @@ const PAGE_PERIODS = {
         },
     },
 };
+
+const eventPages = (id, name, extras = {}) => ([
+    { path: `/events/${id}`, title: name, share: 0.54, trend: extras.trend || 'up' },
+    { path: `/events/${id}/tickets`, title: `${name} tickets`, share: 0.22, trend: extras.ticketTrend || 'flat' },
+    { path: `/checkout/${id}`, title: 'Checkout', share: 0.16, trend: extras.checkoutTrend || 'flat' },
+    { path: extras.infoPath || `/events/${id}/info`, title: extras.infoTitle || 'Event info', share: 0.08, trend: 'flat' },
+]);
+
+const defaultTips = (note) => ({
+    'organic-social': note || 'Organic Social is the usual first look.',
+    'paid-social': 'Paid Social is a smaller door in for this page.',
+    'organic-search': 'Search is a steady trickle.',
+    email: 'The mailing list still converts better than the rest.',
+    direct: 'Regulars type the address.',
+    referral: 'Partner sites send a little traffic.',
+});
+
+const bands = (c7, c28, c90, p7, p28, p90, avgPrice) => {
+    const row = (purchases, visitors, views, viewItem, carts, checkouts, revenue) => ({
+        visitors, views, purchases, viewItem, carts, checkouts, revenue,
+    });
+    const shape = (purchases, scale) => {
+        const visitors = Math.round(purchases * scale.v);
+        const views = Math.round(visitors * scale.views);
+        const viewItem = Math.round(Math.max(purchases * 3.2, visitors * 0.7));
+        const carts = Math.round(purchases * 2.6);
+        const checkouts = Math.round(purchases * 1.6);
+        const revenue = Math.round(purchases * avgPrice);
+        return row(purchases, visitors, views, viewItem, carts, checkouts, revenue);
+    };
+    const hot = { v: 8.4, views: 2.05 };
+    const cool = { v: 14, views: 1.9 };
+    const zero = (visitors) => row(0, visitors, Math.round(visitors * 1.7), Math.round(visitors * 0.4), 0, 0, 0);
+    const neverSold = c90 === 0 && p90 === 0;
+    const scaleFor = (purchases, window) => {
+        if (window.startsWith('prior')) return cool;
+        return hot;
+    };
+    return {
+        current: {
+            7: c7 === 0 ? zero(neverSold ? 48 : Math.max(16, Math.round((c28 || c90) * 0.05) || 16)) : shape(c7, scaleFor(c7, 'current7')),
+            28: c28 === 0 ? zero(neverSold ? 160 : Math.max(40, Math.round((c90) * 0.08) || 40)) : shape(c28, scaleFor(c28, 'current28')),
+            90: c90 === 0 ? zero(neverSold ? 240 : 80) : shape(c90, scaleFor(c90, 'current90')),
+        },
+        prior: {
+            7: p7 === 0 ? zero(neverSold ? 12 : Math.max(10, Math.round((p28 || p90) * 0.04) || 10)) : shape(p7, scaleFor(p7, 'prior7')),
+            28: p28 === 0 ? zero(neverSold ? 30 : Math.max(20, Math.round((p90) * 0.06) || 20)) : shape(p28, scaleFor(p28, 'prior28')),
+            90: p90 === 0 ? zero(neverSold ? 60 : 40) : shape(p90, scaleFor(p90, 'prior90')),
+        },
+    };
+};
+
+const extraPeriod = (id, name, spike, factor, duration, priorDuration, mix, devices, cities, purchaseBands, avgPrice, tips, pageExtras) => {
+    const built = bands(...purchaseBands, avgPrice);
+    return {
+        spikeDate: rolled(spike),
+        spikeFactor: factor,
+        durationSeconds: duration,
+        priorDurationSeconds: priorDuration,
+        mix,
+        devices,
+        cities,
+        current: built.current,
+        prior: built.prior,
+        extraPages: eventPages(id, name, pageExtras),
+        tips: tips || defaultTips(),
+    };
+};
+
+const MIX_SOCIAL = { 'organic-social': 0.32, 'paid-social': 0.14, 'organic-search': 0.16, email: 0.16, direct: 0.16, referral: 0.06 };
+const MIX_PAID = { 'organic-social': 0.18, 'paid-social': 0.3, 'organic-search': 0.16, email: 0.12, direct: 0.16, referral: 0.08 };
+const MIX_EMAIL = { 'organic-social': 0.16, 'paid-social': 0.06, 'organic-search': 0.14, email: 0.36, direct: 0.22, referral: 0.06 };
+const MIX_DIRECT = { 'organic-social': 0.12, 'paid-social': 0.08, 'organic-search': 0.12, email: 0.1, direct: 0.48, referral: 0.1 };
+const DEV_EVEN = { desktop: 0.46, mobile: 0.48, tablet: 0.06 };
+const DEV_MOBILE = { desktop: 0.36, mobile: 0.58, tablet: 0.06 };
+const CITY_LOCAL = { "St. John's": 0.54, 'Mount Pearl': 0.18, Paradise: 0.1, Halifax: 0.1, 'Corner Brook': 0.08 };
+const CITY_WIDE = { "St. John's": 0.4, Halifax: 0.2, Toronto: 0.16, 'Mount Pearl': 0.14, Montreal: 0.1 };
+
+Object.assign(PAGE_PERIODS, {
+    'kitchen-party-social': extraPeriod(
+        'kitchen-party-social', 'Kitchen Party Social', '2026-11-12', 2.6, 96, 80, MIX_SOCIAL, DEV_MOBILE, CITY_LOCAL,
+        [80, 175, 175, 20, 40, 40], 38,
+        {
+            'organic-social': 'Tonight’s kitchen party is all over Organic Social.',
+            'paid-social': 'A small boost is still running for walk-up tickets.',
+            'organic-search': 'People are searching for doors and the set list.',
+            email: 'The reminder note went out this afternoon.',
+            direct: 'Locals already know the Battery Club address.',
+            referral: 'The venue page is sending last-minute visitors.',
+        },
+        { trend: 'up', ticketTrend: 'up', infoTitle: 'Doors and set' }
+    ),
+    'late-show-comedy-club': extraPeriod(
+        'late-show-comedy-club', 'Late Show Comedy Club', '2026-11-09', 1.7, 88, 84, MIX_PAID, DEV_EVEN, CITY_LOCAL,
+        [22, 280, 400, 40, 120, 120], 42, defaultTips('The sold-out late show still gets a few waitlist visits.'),
+        { ticketTrend: 'down', infoTitle: 'Waitlist' }
+    ),
+    'saltwater-sessions-mara-vale': extraPeriod(
+        'saltwater-sessions-mara-vale', 'Saltwater Sessions: Mara Vale', '2026-11-12', 1.6, 110, 96, MIX_EMAIL, DEV_EVEN, CITY_LOCAL,
+        [25, 105, 105, 8, 18, 18], 52, defaultTips('The seated session is selling quietly through the list.'),
+        { infoTitle: 'Set and Q&A' }
+    ),
+    'iceberg-alley-jazz-brunch': extraPeriod(
+        'iceberg-alley-jazz-brunch', 'Iceberg Alley Jazz Brunch', '2026-11-08', 1.5, 92, 86, MIX_SOCIAL, DEV_MOBILE, CITY_LOCAL,
+        [22, 70, 70, 10, 16, 16], 58, defaultTips('Brunch seat posts are doing the work.'),
+        { infoTitle: 'Menu and trio' }
+    ),
+    'new-years-eve-at-harbourfront': extraPeriod(
+        'new-years-eve-at-harbourfront', "New Year's Eve at Harbourfront", '2026-11-05', 1.9, 124, 108, MIX_PAID, DEV_MOBILE, CITY_WIDE,
+        [40, 180, 520, 60, 200, 280], 98, defaultTips('The NYE countdown campaign is the long lead.'),
+        { infoTitle: 'Rooms and fireworks', festival: true }
+    ),
+    'battery-road-blues-night': extraPeriod(
+        'battery-road-blues-night', 'Battery Road Blues Night', '2026-11-11', 1.4, 80, 74, MIX_DIRECT, DEV_EVEN, CITY_LOCAL,
+        [18, 48, 48, 4, 8, 8], 32, defaultTips('Regulars already know the night.'),
+        { infoTitle: 'Doors at 8' }
+    ),
+    'northern-static-live': extraPeriod(
+        'northern-static-live', 'Northern Static Live', '2026-10-16', 2.0, 90, 100, MIX_SOCIAL, DEV_MOBILE, CITY_WIDE,
+        [0, 0, 400, 0, 80, 760], 52,
+        defaultTips('People come back for photos of the homecoming show.'),
+        { trend: 'down', ticketTrend: 'down', infoTitle: 'Show photos' }
+    ),
+    'signal-hill-sunset-sessions': extraPeriod(
+        'signal-hill-sunset-sessions', 'Signal Hill Sunset Sessions', '2026-09-15', 1.8, 100, 110, MIX_SOCIAL, DEV_MOBILE, CITY_WIDE,
+        [0, 0, 200, 0, 0, 700], 48,
+        defaultTips('The hill show is now a recap page.'),
+        { trend: 'down', infoTitle: 'Photos' }
+    ),
+    'halloween-masquerade': extraPeriod(
+        'halloween-masquerade', 'Halloween Masquerade', '2026-10-31', 2.3, 95, 88, MIX_PAID, DEV_MOBILE, CITY_WIDE,
+        [0, 400, 640, 0, 80, 80], 55,
+        defaultTips('Costume photos still pull a few visits after the night.'),
+        { trend: 'down', infoTitle: 'Costume gallery' }
+    ),
+    'duckworth-indie-weekender': extraPeriod(
+        'duckworth-indie-weekender', 'Duckworth Indie Weekender', '2026-08-20', 1.6, 118, 120, MIX_SOCIAL, DEV_MOBILE, CITY_WIDE,
+        [0, 0, 80, 0, 0, 700], 92,
+        defaultTips('The weekender page is mostly an archive now.'),
+        { trend: 'flat', infoTitle: 'Lineup archive' }
+    ),
+    'ember-choir-winter-songs': extraPeriod(
+        'ember-choir-winter-songs', 'Ember Choir: Winter Songs', '2026-11-09', 2.1, 86, 70, MIX_EMAIL, DEV_EVEN, CITY_LOCAL,
+        [40, 240, 240, 0, 10, 10], 48,
+        defaultTips('The candlelit choir night just wrapped.'),
+        { trend: 'down', infoTitle: 'Program' }
+    ),
+    'winter-lanterns-gala': extraPeriod(
+        'winter-lanterns-gala', 'Winter Lanterns Gala', '2026-11-11', 1.3, 104, 70, MIX_EMAIL, DEV_EVEN, CITY_WIDE,
+        [0, 0, 0, 0, 0, 0], 180,
+        defaultTips('The gala page is up; tickets go on sale in a few days.'),
+        { infoTitle: 'Patron tables' }
+    ),
+    'tidewater-film-score-live': extraPeriod(
+        'tidewater-film-score-live', 'Tidewater Film Score Live', '2026-11-07', 1.2, 112, 80, MIX_SOCIAL, DEV_EVEN, CITY_WIDE,
+        [0, 0, 0, 0, 0, 0], 72,
+        defaultTips('The announcement is circulating; tickets are not on sale yet.'),
+        { infoTitle: 'Orchestra seating' }
+    ),
+    'spring-tide-sessions': extraPeriod(
+        'spring-tide-sessions', 'Spring Tide Sessions', '2026-11-04', 1.1, 70, 60, MIX_DIRECT, DEV_EVEN, CITY_LOCAL,
+        [0, 0, 0, 0, 0, 0], 28,
+        defaultTips('A quiet draft page for the spring series.'),
+        { trend: 'flat', infoTitle: 'Series notes' }
+    ),
+    'solstice-block-party': extraPeriod(
+        'solstice-block-party', 'Solstice Block Party', '2026-11-02', 1.1, 80, 60, MIX_SOCIAL, DEV_MOBILE, CITY_WIDE,
+        [0, 0, 0, 0, 0, 0], 45,
+        defaultTips('Early interest in the longest-day block party.'),
+        { trend: 'flat', infoTitle: 'Street plan' }
+    ),
+});
+
 
 const KEYS = ['visitors', 'views', 'purchases', 'viewItem', 'carts', 'checkouts', 'revenue'];
 
@@ -563,11 +774,44 @@ const AI_COPY = {
             ],
         },
     },
+
+    'kitchen-party-social': {
+        7: {
+            whatHappened: [
+                'Kitchen Party Social is live tonight at the Battery Club.',
+                'Walk-up ticket searches jumped this afternoon.',
+                'Most visitors are on mobile, coming from Organic Social and direct.',
+            ],
+            headsUp: [
+                { id: 'spike', title: 'Doors are open tonight', reason: 'Live now: walk-up visitors are still arriving.', to: '#where-visitors' },
+            ],
+        },
+        28: {
+            whatHappened: [
+                'The kitchen party built steadily on the mailing list and Organic Social.',
+                'Today is show day, and walk-up traffic is still coming in.',
+                'Mobile visitors outnumber desktop almost two to one.',
+            ],
+            headsUp: [
+                { id: 'spike', title: 'Show day traffic is up', reason: 'Kitchen Party Social is live at the Battery Club.', to: '#where-visitors' },
+            ],
+        },
+        90: {
+            whatHappened: [
+                'This is a short-lead room: almost every visit and purchase is in the last month.',
+                'Locals already know the address, so Direct stays strong.',
+                'Email reminders still close the last seats.',
+            ],
+            headsUp: [
+                { id: 'source', title: 'Direct and email lead the room', reason: 'Regulars and the list are carrying this night.', to: '#where-visitors' },
+            ],
+        },
+    },
     all: {
         7: {
             whatHappened: [
-                'Across all pages, this week is a little softer than last week.',
-                'Harbour Lights still accounts for most visitors.',
+                'Kitchen Party Social is live tonight and is pulling last-minute visits.',
+                'Harbour Lights still accounts for most visitors across the month.',
                 'Checkout is the common sticky step.',
             ],
             headsUp: [
@@ -598,6 +842,22 @@ const AI_COPY = {
         },
     },
 };
+
+
+const auroraSpikeDay = () => weekdayLong(PAGE_PERIODS['aurora-after-dark'].spikeDate);
+const replaceTuesday = (value) => {
+    const day = auroraSpikeDay();
+    if (typeof value === 'string') return value.replaceAll('Tuesday', day);
+    if (Array.isArray(value)) return value.map(replaceTuesday);
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, replaceTuesday(inner)]));
+    }
+    return value;
+};
+AI_COPY['aurora-after-dark'] = replaceTuesday(AI_COPY['aurora-after-dark']);
+AI_COPY.all = replaceTuesday(AI_COPY.all);
+
+export const spikeWeekdayName = (pageId) => weekdayLong((PAGE_PERIODS[pageId] || PAGE_PERIODS['aurora-after-dark']).spikeDate);
 
 const inWindow = (iso, dates) => dates[0] <= iso && iso <= dates[dates.length - 1];
 

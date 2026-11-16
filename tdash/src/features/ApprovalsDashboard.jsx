@@ -783,7 +783,7 @@ const ScopedApprovalsDashboard = ({ user, isDark = true }) => {
                                         <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${meta.accent}`} />
                                         <div className={`aspect-[1.2/1] ${isDark ? 'bg-[linear-gradient(135deg,_rgba(56,189,248,0.14),_rgba(30,30,45,0.8))]' : 'bg-[linear-gradient(135deg,_rgba(14,165,233,0.08),_rgba(255,255,255,0.9))]'}`}>
                                             {previewAsset?.mimeType?.startsWith('image/') ? (
-                                                <img src={previewAsset.s3Url} alt={approval.title} loading="lazy" className="h-full w-full object-cover" />
+                                                <img src={previewAsset.s3Url} alt={approval.title} loading="lazy" className="h-full w-full object-contain" />
                                             ) : (
                                                 <div className={`flex h-full items-center justify-center text-sm font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
                                                     Latest version preview unavailable

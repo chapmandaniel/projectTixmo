@@ -256,15 +256,15 @@ const TodoView = ({ isDark, user }) => {
                 className="shrink-0"
                 bodyClassName="sm:flex-row sm:items-center sm:justify-between"
                 actions={(
-                    <div className="flex space-x-3">
+                    <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className={`flex items-center space-x-2 px-4 py-2 text-sm font-normal rounded-md transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
+                            className={`flex items-center justify-center space-x-2 px-4 py-2 text-sm font-normal rounded-md transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
                         >
                             <Plus size={16} />
                             <span>Create Task</span>
                         </button>
-                        <DashboardSelect isDark={isDark} aria-label="Filter tasks by event" value={eventFilter} onChange={(e) => setEventFilter(e.target.value)} className="h-10 w-auto">
+                        <DashboardSelect isDark={isDark} aria-label="Filter tasks by event" value={eventFilter} onChange={(e) => setEventFilter(e.target.value)} className="h-10 w-full min-w-0 max-w-full sm:w-56">
                             <option value="">All events</option>
                             {events.map((event) => <option key={event.id} value={event.id}>{event.name}</option>)}
                         </DashboardSelect>
