@@ -2,6 +2,7 @@
 import { randomUUID } from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { clearStaleLocalReceipt } from '../helpers/clear-stale-local-receipt';
 
 let mockHealthy = false;
 let mockIntent = '';
@@ -180,6 +181,7 @@ it('native scheduled retry drains an owned refund within five minutes after synt
   };
   let redis: Awaited<ReturnType<typeof redisModule.connectRedis>> | undefined;
   const body = async () => {
+    clearStaleLocalReceipt(receiptPath, 'TIXMO_RECOVERY_RUN_ID');
     expect(fs.existsSync(receiptPath)).toBe(false);
     mockHealthy = false;
     mockUnexpected = 0;
