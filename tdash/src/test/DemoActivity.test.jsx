@@ -77,6 +77,19 @@ describe('HomePulse', () => {
         expect(summarizePulse({ events: { bad: true }, tasks: 'nope', now: NOW }).openTasks).toBe(0);
     });
 
+    it('keeps the Today bar equal to tickets sold today after the UTC date rolls over', () => {
+        const late = new Date(2026, 10, 15, 23, 30).getTime();
+        const prev = new Date(2026, 10, 14, 12).getTime();
+        const key = (ms) => { const d = new Date(ms); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+        const s = summarizePulse({
+            today: { totalTicketsSold: 297, totalRevenue: 24605 },
+            trend: { salesByDay: [{ date: '2026-11-16', tickets: 12, revenue: 900 }, { date: key(prev), tickets: 310, revenue: 25000 }] },
+            now: late,
+        });
+        expect(s.days[13]).toMatchObject({ date: key(late), tickets: 297 });
+        expect(s.days[12]).toMatchObject({ date: key(prev), tickets: 310 });
+    });
+
     beforeEach(() => {
         apiGet.mockReset();
         apiGet.mockImplementation((url) => {

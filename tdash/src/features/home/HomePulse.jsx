@@ -24,6 +24,11 @@ export const ago = (iso, now = Date.now()) => {
 // Pure summary so the numbers are testable without the network.
 const asList = (value) => (Array.isArray(value) ? value : []);
 
+const localDateKey = (ms) => {
+    const d = new Date(ms);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export const summarizePulse = ({ today, month, trend, events: rawEvents, tasks: rawTasks, now = Date.now() }) => {
     const events = asList(rawEvents);
     const tasks = asList(rawTasks);
@@ -35,10 +40,14 @@ export const summarizePulse = ({ today, month, trend, events: rawEvents, tasks: 
     const dueSoon = open.filter((t) => t.dueDate && new Date(t.dueDate).getTime() <= endOfToday.getTime()).length;
     const days = [];
     const byDate = new Map(asList(trend?.salesByDay).map((d) => [d.date, d]));
-    for (let i = 13; i >= 0; i -= 1) {
-        const iso = new Date(now - i * DAY).toISOString().slice(0, 10);
-        days.push({ date: iso, tickets: byDate.get(iso)?.tickets || 0, revenue: byDate.get(iso)?.revenue || 0 });
+    // Bars are the viewer's local days. The API buckets by UTC date, which overlaps
+    // each local day for most of its hours; the last bar uses the local-midnight
+    // totals so "Today" always matches the "Tickets sold today" tile.
+    for (let i = 13; i >= 1; i -= 1) {
+        const key = localDateKey(now - i * DAY);
+        days.push({ date: key, tickets: byDate.get(key)?.tickets || 0, revenue: byDate.get(key)?.revenue || 0 });
     }
+    days.push({ date: localDateKey(now), tickets: today?.totalTicketsSold || 0, revenue: today?.totalRevenue || 0 });
     return {
         ticketsToday: today?.totalTicketsSold || 0,
         ordersToday: today?.totalOrders || 0,
