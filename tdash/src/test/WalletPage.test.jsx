@@ -168,4 +168,108 @@ describe('Buyer wallet', () => {
     expect(calls.post).not.toHaveBeenCalled();
   });
 
+  it('opens the transfer dialog on a VALID paid ticket, requires a recipient, and posts one transfer', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Show ticket' }));
+    await screen.findByAltText('Ticket admission QR code');
+    fireEvent.click(screen.getByRole('button', { name: 'Transfer' }));
+    expect(screen.getByRole('dialog', { name: 'Transfer ticket' })).toBeInTheDocument();
+    const recipient = screen.getByLabelText('Recipient email');
+    expect(recipient).toBeRequired();
+    expect(recipient).toHaveAttribute('type', 'email');
+    fireEvent.change(recipient, { target: { value: 'recipient@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm transfer' }));
+    expect(await screen.findByText('Ticket transferred.')).toBeInTheDocument();
+    expect(calls.post.mock.calls).toEqual([['/tickets/ticket-owned/transfer', { recipientEmail: 'recipient@example.com' }]]);
+    expect(screen.queryByAltText('Ticket admission QR code')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Transfer ticket' })).not.toBeInTheDocument();
+  });
+
+  it('normalises the transfer recipient email (trim/lowercase) before POST', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Transfer' }));
+    fireEvent.change(screen.getByLabelText('Recipient email'), { target: { value: '  Recipient@Example.com  ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm transfer' }));
+    await waitFor(() => expect(calls.post).toHaveBeenCalled());
+    expect(calls.post).toHaveBeenCalledWith('/tickets/ticket-owned/transfer', { recipientEmail: 'recipient@example.com' });
+  });
+
+  it('shows the API 4xx message on a refused transfer and keeps the ticket usable', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'Show ticket' }));
+    await screen.findByAltText('Ticket admission QR code');
+    fireEvent.click(screen.getByRole('button', { name: 'Transfer' }));
+    calls.post.mockRejectedValueOnce({ response: { status: 400, data: { message: 'Cannot transfer ticket to yourself' } } });
+    fireEvent.change(screen.getByLabelText('Recipient email'), { target: { value: 'buyer@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm transfer' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Cannot transfer ticket to yourself');
+    expect(screen.getByRole('button', { name: 'Show ticket' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Transfer' })).toBeInTheDocument();
+    expect(screen.queryByText('Ticket transferred.')).not.toBeInTheDocument();
+    expect(calls.post.mock.calls).toEqual([['/tickets/ticket-owned/transfer', { recipientEmail: 'buyer@example.com' }]]);
+  });
+
+  it('cancels a PENDING reservation with one POST and a notice', async () => {
+    const pending = { ...order, id: 'order-pending', orderNumber: 'ORD-PENDING', status: 'PENDING' };
+    calls.get.mockImplementation(async path => path.startsWith('/orders/mine')
+      ? { data: { orders: [pending], pagination: { pages: 1 } } }
+      : path.startsWith('/tickets/mine') ? { data: { tickets: [], pagination: { pages: 1 } } }
+      : Promise.reject(new Error(`Unexpected API route: ${path}`)));
+    mount();
+    await screen.findByText('ORD-PENDING', { exact: false });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel reservation' }));
+    expect(await screen.findByText('Reservation cancelled.')).toBeInTheDocument();
+    expect(calls.post.mock.calls).toEqual([['/orders/order-pending/cancel']]);
+  });
+
+  it('hides transfer and cancel for a PAID order without a ticket and for PROCESSING refunds', async () => {
+    calls.get.mockImplementation(async path => path.startsWith('/orders/mine')
+      ? { data: { orders: [order], pagination: { pages: 1 } } }
+      : path.startsWith('/tickets/mine') ? { data: { tickets: [], pagination: { pages: 1 } } }
+      : Promise.reject(new Error(`Unexpected API route: ${path}`)));
+    const first = mount();
+    await screen.findByText('ORD-OWNED', { exact: false });
+    expect(screen.getByRole('button', { name: 'Resend receipt' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Transfer' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cancel reservation' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show ticket' })).not.toBeInTheDocument();
+    first.unmount();
+
+    const processingTicket = { ...ticket, order: { status: 'PAID', refundStatus: 'PROCESSING' } };
+    const processingOrder = { ...order, refundStatus: 'PROCESSING' };
+    calls.get.mockImplementation(async path => path.startsWith('/orders/mine')
+      ? { data: { orders: [processingOrder], pagination: { pages: 1 } } }
+      : path.startsWith('/tickets/mine') ? { data: { tickets: [processingTicket], pagination: { pages: 1 } } }
+      : Promise.reject(new Error(`Unexpected API route: ${path}`)));
+    mount();
+    await screen.findByText('ORD-OWNED', { exact: false });
+    expect(screen.getByText('Refund processing')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Transfer' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cancel reservation' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show ticket' })).not.toBeInTheDocument();
+  });
+
+  it('loads the next wallet page past page 1', async () => {
+    calls.get.mockImplementation(async path => {
+      const page = /page=(\d+)/.exec(path)?.[1] || '1';
+      if (path.startsWith('/orders/mine')) {
+        return { data: { orders: [{ ...order, id: `order-p${page}`, orderNumber: `ORD-PAGE-${page}` }], pagination: { pages: 2 } } };
+      }
+      if (path.startsWith('/tickets/mine')) {
+        return { data: { tickets: [{ ...ticket, id: `ticket-p${page}` }], pagination: { pages: 2 } } };
+      }
+      return Promise.reject(new Error(`Unexpected API route: ${path}`));
+    });
+    mount();
+    await screen.findByText('ORD-PAGE-1', { exact: false });
+    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+    expect(calls.get).toHaveBeenCalledWith('/orders/mine?page=1&limit=20');
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByText('ORD-PAGE-2', { exact: false });
+    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+    expect(calls.get).toHaveBeenCalledWith('/orders/mine?page=2&limit=20');
+    expect(calls.get).toHaveBeenCalledWith('/tickets/mine?page=2&limit=20');
+    expect(screen.queryByText('ORD-PAGE-1', { exact: false })).not.toBeInTheDocument();
+  });
+
 });

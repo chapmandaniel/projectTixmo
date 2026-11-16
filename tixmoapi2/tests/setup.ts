@@ -28,7 +28,26 @@ SupertestTest.prototype.serverAddress = function (app: Server, route: string) {
   return address?.family === 'IPv6' ? url.replace('://127.0.0.1:', '://[::1]:') : url;
 };
 
+beforeAll(async () => {
+  jest.useRealTimers();
+  if (process.env.TIXMO_REDIS_OUTAGE_TEST === '1') return;
+  const { createClient } = require('redis');
+  const client = createClient({
+    url: process.env.REDIS_URL,
+    socket: { connectTimeout: 500, reconnectStrategy: false },
+  });
+  try {
+    await client.connect();
+    await client.flushDb();
+  } catch {
+    // Unit files mock Redis. Integration files that need it still fail on connectRedis.
+  } finally {
+    if (client.isOpen) await client.quit().catch(() => undefined);
+  }
+});
+
 afterAll(async () => {
+  jest.useRealTimers();
   try {
     const readiness = require('../src/services/readiness-db');
     if (typeof readiness.disconnectReadinessDatabase === 'function') {
