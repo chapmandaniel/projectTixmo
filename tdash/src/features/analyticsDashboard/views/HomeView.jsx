@@ -43,7 +43,7 @@ export const HomeView = ({ isDark, dashboard }) => {
         <div className="space-y-6">
             <div
                 data-testid="analytics-home-hero"
-                className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-stretch lg:min-h-[420px]"
+                className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:h-[460px] lg:items-stretch"
             >
                 <div data-testid="analytics-hero-chart" className="min-h-[320px]">
                     <DashboardSurface isDark={isDark} accent="brand" className="flex h-full flex-col p-4">

@@ -74,7 +74,7 @@ export const MooseChat = ({ isDark, dashboard, typingDelay }) => {
         <DashboardSurface
             isDark={isDark}
             accent="brand"
-            className="flex h-full min-h-[360px] flex-col p-4 lg:min-h-0"
+            className="flex h-[400px] flex-col overflow-hidden p-4 lg:h-full lg:min-h-0"
             data-testid="moose-chat"
         >
             <div className="flex items-start justify-between gap-3">
@@ -110,7 +110,7 @@ export const MooseChat = ({ isDark, dashboard, typingDelay }) => {
                 ))}
                 {pending ? (
                     <p className={cn('text-xs font-light', theme.textMuted)} data-testid="moose-typing">
-                        Moose is looking at the numbers…
+                        Moose is looking at the numbers...
                     </p>
                 ) : null}
             </div>
