@@ -1,6 +1,11 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Receipt suites refuse leftover runtime/task6NN-*.json from a previous
+# verify:api in this clone (task608, task609, task612, task615, task616, …).
+# Scoped glob only; rm -f is safe if none exist.
+rm -f runtime/task6[0-9][0-9]-*.json
+
 # The API suite runs in a single Jest process (--runInBand, required by the
 # shared disposable database), and its heap peaks near Node's default V8 limit
 # on <=8 GB machines (~2 GB). Raise only that ceiling so the hook does not OOM.
