@@ -1,11 +1,36 @@
 import React from 'react';
-import { Trash2, MessageSquare, Paperclip, Maximize2 } from 'lucide-react';
+import { Trash2, MessageSquare, Paperclip, Maximize2, CalendarClock } from 'lucide-react';
+import MemberAvatar from '../components/dashboard/MemberAvatar';
+
+const DAY = 86400000;
+const dueInfo = (dueDate, status, now = Date.now()) => {
+    if (!dueDate) return null;
+    const due = new Date(dueDate);
+    if (Number.isNaN(due.getTime())) return null;
+    const startOf = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const days = Math.round((startOf(due) - startOf(new Date(now))) / DAY);
+    const label = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : due.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const tone = status === 'DONE' ? 'done' : days < 0 ? 'overdue' : days <= 1 ? 'soon' : 'later';
+    return { label: tone === 'overdue' ? `Overdue · ${label}` : label, tone };
+};
 
 const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact, users = [] }) => {
     const priorityColors = {
         High: isDark ? 'text-rose-400 bg-rose-400/10' : 'text-rose-600 bg-rose-50',
         Medium: isDark ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50',
         Low: isDark ? 'text-emerald-400 bg-emerald-400/10' : 'text-emerald-600 bg-emerald-50',
+    };
+    priorityColors.HIGH = priorityColors.High;
+    priorityColors.MEDIUM = priorityColors.Medium;
+    priorityColors.LOW = priorityColors.Low;
+    const priorityLabel = item.priority ? `${String(item.priority)[0]}${String(item.priority).slice(1).toLowerCase()}` : '';
+
+    const due = dueInfo(item.dueDate, item.status);
+    const dueTone = {
+        overdue: isDark ? 'bg-rose-500/10 text-rose-300' : 'bg-rose-50 text-rose-700',
+        soon: isDark ? 'bg-amber-500/10 text-amber-300' : 'bg-amber-50 text-amber-700',
+        later: isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-600',
+        done: isDark ? 'bg-emerald-500/10 text-emerald-300' : 'bg-emerald-50 text-emerald-700',
     };
 
     // Find assignee user object
@@ -64,20 +89,41 @@ const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact, users = [] })
 
             <p className={`text-sm mb-4 font-light leading-relaxed ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{item.content}</p>
 
+            {(item.eventName || due) && (
+                <div className="-mt-2 mb-3 flex flex-wrap items-center gap-1.5 text-[11px] font-light" data-testid="kanban-card-meta">
+                    {item.eventName && (
+                        <span className={`max-w-full truncate rounded px-1.5 py-0.5 ${isDark ? 'bg-pink-500/10 text-pink-300' : 'bg-pink-50 text-pink-700'}`}>{item.eventName}</span>
+                    )}
+                    {due && (
+                        <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${dueTone[due.tone]}`}>
+                            <CalendarClock size={11} />
+                            {due.label}
+                        </span>
+                    )}
+                </div>
+            )}
+
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                     <div className={`flex items-center space-x-1.5 text-xs px-2 py-1 rounded border ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60' : 'bg-gray-50 border-gray-200/60'} ${priorityColors[item.priority] || 'text-gray-500'}`}>
                         <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                        <span className="font-light">{item.priority}</span>
+                        <span className="font-light">{priorityLabel}</span>
                     </div>
                     {assignee && (
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium border ${isDark ? 'bg-dashboard-panelAlt text-gray-300 border-dashboard-border' : 'bg-gray-100 text-gray-600 border-gray-200'}`} title={`Assigned to ${[assignee.firstName, assignee.lastName].filter(Boolean).join(' ') || assignee.email}`}>
-                            {assignee.firstName?.[0] || '?'}{assignee.lastName?.[0] || ''}
-                        </div>
+                        <MemberAvatar
+                            size="xs"
+                            firstName={assignee.firstName}
+                            lastName={assignee.lastName}
+                            email={assignee.email}
+                            title={`Assigned to ${[assignee.firstName, assignee.lastName].filter(Boolean).join(' ') || assignee.email}`}
+                        />
                     )}
                 </div>
 
                 <div className="flex items-center space-x-3">
+                    {item.messages?.length > 0 && (
+                        <span className={`text-xs font-light ${isDark ? 'text-gray-400' : 'text-gray-500'}`} data-testid="kanban-comment-count">{item.messages.length}</span>
+                    )}
                     {(item.messages?.length > 0 || item.attachments?.length > 0) && (
                         <div className={`flex items-center space-x-1.5 text-xs font-light ${isDark ? 'text-[#a1a5b7]' : 'text-gray-400'}`}>
                             {item.messages?.length > 0 && <MessageSquare size={14} />}

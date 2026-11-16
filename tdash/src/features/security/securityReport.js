@@ -134,19 +134,28 @@ export const buildSecurityReport = (now = Date.now()) => {
     }), { events: 0, blocked: 0 });
 
     const scanAt = lastScanAt(now);
+    // Names, devices and order numbers match the Labs demo seed (Northlight Live).
     const feed = [
         { minutes: 2, source: 'infra', tone: 'ok', text: 'Scheduled log scan finished: 6 of 6 sources healthy' },
+        { minutes: 4, source: 'door', tone: 'ok', text: 'Battery Club Door 1 and Door 2 online for Kitchen Party Social' },
         { minutes: 7, source: 'auth', tone: 'blocked', text: 'Blocked 3 failed sign-ins from an unrecognized IP (rate limit)' },
-        { minutes: 11, source: 'payments', tone: 'ok', text: 'Payment webhook signature verified for order NL-002291' },
-        { minutes: 18, source: 'door', tone: 'blocked', text: 'Duplicate ticket scan stopped at Main Gate A' },
+        { minutes: 9, source: 'door', tone: 'blocked', text: 'Duplicate ticket scan stopped at Battery Club Door 2' },
+        { minutes: 11, source: 'payments', tone: 'ok', text: 'Payment webhook signature verified for Kitchen Party order NL-003893' },
+        { minutes: 15, source: 'auth', tone: 'ok', text: 'Hana Sato signed in from a known device' },
+        { minutes: 19, source: 'api', tone: 'ok', text: 'Kitchen Party walk-up sales synced from Box Office Tablet 1' },
         { minutes: 26, source: 'api', tone: 'blocked', text: 'Rejected 14 malformed requests to the public events API' },
-        { minutes: 34, source: 'admin', tone: 'ok', text: 'Priya Raman changed Marcus Bell to Team Member (authorized)' },
+        { minutes: 34, source: 'admin', tone: 'ok', text: 'Nathan Pike exported the box office report (authorized)' },
+        { minutes: 41, source: 'door', tone: 'blocked', text: 'Ticket for another event refused at Battery Club Door 1' },
         { minutes: 52, source: 'auth', tone: 'ok', text: 'New device sign-in confirmed for Jordan Okafor' },
+        { minutes: 63, source: 'payments', tone: 'ok', text: 'Refund for order NL-004944 matched its payment' },
         { minutes: 71, source: 'infra', tone: 'ok', text: 'TLS certificates valid for all domains (renews in 76 days)' },
-        { minutes: 95, source: 'payments', tone: 'ok', text: 'Refund for order NL-001874 matched its payment' },
-        { minutes: 128, source: 'door', tone: 'ok', text: 'Scanner "VIP Lane" checked in and synced' },
+        { minutes: 88, source: 'admin', tone: 'ok', text: 'Avery Quinlan approved a role change for Owen Murphy' },
+        { minutes: 104, source: 'api', tone: 'ok', text: 'Harbour Lights on-sale traffic handled with no errors' },
+        { minutes: 128, source: 'door', tone: 'ok', text: 'Scanner "Old iPad (lost)" stays revoked; 0 attempts today' },
+        { minutes: 150, source: 'admin', tone: 'ok', text: 'Tomas Reyes re-sent an invitation to Ethan Clarke' },
         { minutes: 186, source: 'infra', tone: 'ok', text: 'Nightly database backup verified and restorable' },
-        { minutes: 244, source: 'api', tone: 'ok', text: 'Traffic spike from Harbour Lights on-sale handled with no errors' },
+        { minutes: 214, source: 'auth', tone: 'blocked', text: 'Password reset throttled after 5 attempts on one account' },
+        { minutes: 244, source: 'payments', tone: 'ok', text: 'Daily payout reconciliation matched every paid order' },
     ].map((item, index) => ({
         id: `feed-${index}`,
         ...item,

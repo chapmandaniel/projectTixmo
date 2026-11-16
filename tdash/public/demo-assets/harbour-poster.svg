@@ -1,10 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3366"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient>
-<radialGradient id="r" cx=".7" cy=".25" r=".7"><stop offset="0" stop-color="#ff3366" stop-opacity=".9"/><stop offset="1" stop-color="#2b1055" stop-opacity="0"/></radialGradient></defs>
-<rect width="900" height="1200" fill="#2b1055"/><rect width="900" height="1200" fill="url(#r)"/>
-<circle cx="648" cy="336" r="198" fill="url(#g)" opacity=".85"/>
-<circle cx="648" cy="336" r="270" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>
-<path d="M0 936 Q 225 864 450 936 T 900 936 V 1200 H 0 Z" fill="url(#g)" opacity=".35"/>
-<g font-family="Inter, Helvetica, Arial, sans-serif"><text x="72" y="624" font-size="94" font-weight="800" fill="#fff" letter-spacing="2">HARBOUR</text><text x="72" y="723" font-size="94" font-weight="800" fill="#fff" letter-spacing="2">LIGHTS</text><text x="72" y="821" font-size="94" font-weight="800" fill="#fff" letter-spacing="2">FESTIVAL</text>
-<text x="72" y="1080" font-size="31" fill="#fff" letter-spacing="4">HARBOURFRONT COMMONS</text>
-<text x="72" y="1140" font-size="22" fill="#fff" opacity=".7" letter-spacing="3">TWO STAGES · TWELVE ACTS · LANTERN WALK · NORTHLIGHT LIVE</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3366"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#ff3366" stop-opacity=".45"/><stop offset="1" stop-color="#2b1055" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1055"/><stop offset="1" stop-color="#2b1055"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="900" height="1200" fill="#2b1055"/>
+<rect width="900" height="1200" fill="url(#r)"/>
+<circle cx="612" cy="360" r="216" fill="url(#g)"/>
+<rect x="396" y="317" width="432" height="4" fill="#000" opacity=".28"/>
+<rect x="396" y="356" width="432" height="6" fill="#000" opacity=".28"/>
+<rect x="396" y="395" width="432" height="8" fill="#000" opacity=".28"/>
+<rect x="396" y="433" width="432" height="10" fill="#000" opacity=".28"/>
+<rect x="396" y="472" width="432" height="12" fill="#000" opacity=".28"/>
+<rect x="396" y="511" width="432" height="14" fill="#000" opacity=".28"/>
+<rect x="396" y="550" width="432" height="16" fill="#000" opacity=".28"/>
+<path d="M0 888 Q 225 848 450 888 T 900 888 V 1200 H 0 Z" fill="#ff3366" opacity="0.18"/>
+<path d="M0 960 Q 225 920 450 960 T 900 960 V 1200 H 0 Z" fill="#ff3366" opacity="0.30"/>
+<path d="M0 1032 Q 225 992 450 1032 T 900 1032 V 1200 H 0 Z" fill="#ff3366" opacity="0.42"/>
+<path d="M0 1104 Q 225 1064 450 1104 T 900 1104 V 1200 H 0 Z" fill="#ff3366" opacity="0.54"/>
+<rect width="900" height="1200" fill="url(#shade)"/>
+<text x="72" y="672" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">HARBOUR</text>
+<text x="72" y="794" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">LIGHTS</text>
+<text x="72" y="917" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">FESTIVAL</text>
+<rect x="72" y="1081" width="108" height="6" fill="#ffd166"/>
+<text x="72" y="1144" font-size="30" fill="#fff" letter-spacing="4">HARBOURFRONT COMMONS</text>
+<text x="72" y="1189" font-size="23" fill="#fff" opacity=".75" letter-spacing="3">TWO STAGES · TWELVE ACTS · LANTERN WALK</text>
+<text x="828" y="65" text-anchor="end" font-size="19" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

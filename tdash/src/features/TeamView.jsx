@@ -12,6 +12,7 @@ import {
     X,
 } from 'lucide-react';
 import TeamMemberWizard from './TeamMemberWizard';
+import MemberAvatar, { relativeActive } from '../components/dashboard/MemberAvatar';
 import api from '../lib/api';
 import { getStoredUser } from '../lib/session';
 import {
@@ -73,10 +74,14 @@ const TeamView = ({ isDark, user: currentUser }) => {
         setLoading(true);
         try {
             const query = scopedUser?.organizationId
-                ? `/users?organizationId=${encodeURIComponent(scopedUser.organizationId)}`
-                : '/users';
+                ? `/users?organizationId=${encodeURIComponent(scopedUser.organizationId)}&limit=100`
+                : '/users?limit=100';
             const res = await api.get(query);
-            setUsers(res.data.data.users || []);
+            const list = res.data.data.users || [];
+            // Roster reads top-down: leadership first, pending invites last.
+            setUsers([...list].sort((a, b) => (Number(!a.emailVerified) - Number(!b.emailVerified))
+                || (getRoleLevel(b.role) - getRoleLevel(a.role))
+                || String(a.firstName || '').localeCompare(String(b.firstName || ''))));
             setError('');
         } catch (err) {
             console.error(err);
@@ -333,9 +338,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                 >
                                     <div className="grid gap-4 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_44px] lg:items-center">
                                         <div className="flex min-w-0 items-center gap-4">
-                                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-light ${isDark ? 'bg-dashboard-panelAlt text-gray-200' : 'bg-white text-gray-700 shadow-sm'}`}>
-                                                {member.firstName?.[0]}{member.lastName?.[0]}
-                                            </div>
+                                            <MemberAvatar firstName={member.firstName} lastName={member.lastName} email={member.email} size="lg" muted={!member.emailVerified} />
                                             <div className="min-w-0">
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     <p className={cn('truncate text-base font-light', uiTheme.textPrimary)}>
@@ -426,6 +429,11 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                                         : (isDark ? 'bg-amber-500/12 text-amber-300' : 'bg-amber-50 text-amber-700')
                                                 }`}>
                                                 {member.emailVerified ? 'Active' : 'Pending'}
+                                            </div>
+                                            <div className={cn('mt-1 text-xs font-light', uiTheme.textTertiary)} data-testid="member-last-active">
+                                                {member.emailVerified
+                                                    ? (relativeActive(member.lastLogin) || 'Not signed in yet')
+                                                    : 'Invite sent'}
                                             </div>
                                             {member.invitationPending && canEditMemberRole && (
                                                 <DashboardButton isDark={isDark} variant="secondary" className="mt-2" disabled={resendingId === member.id}

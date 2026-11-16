@@ -1,6 +1,12 @@
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
+
+// The demo mock window rolls forward weekly; pin the clock so the fixture dates stay fixed.
+vi.hoisted(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-13T15:00:00Z'));
+});
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import AnalyticsDashboardApp from '../features/analyticsDashboard/AnalyticsDashboardApp';
 import {
@@ -195,25 +201,24 @@ describe('Analytics dashboard prototype', () => {
         });
 
         expect(screen.getByTestId('analytics-page-select')).toHaveValue('all');
-        expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('9,000')).toBeInTheDocument();
-        expect(screen.getByText('92 people on your site right now')).toBeInTheDocument();
+        expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('9,640')).toBeInTheDocument();
+        expect(screen.getByText('94 people on your site right now')).toBeInTheDocument();
         expect(screen.getByText('Harbour Lights Festival is carrying most of the visitors this month.')).toBeInTheDocument();
         expect(screen.getByText('/events/harbour-lights-festival')).toBeInTheDocument();
     });
 
-    it('shows the empty state for a page with no traffic', () => {
+    it('shows post-show traffic for the completed show instead of an empty page', () => {
         mount('/analytics');
 
         fireEvent.change(screen.getByTestId('analytics-page-select'), {
             target: { value: 'quiet-harbour-acoustic' },
         });
 
-        expect(screen.getByText(EMPTY_STATE_MESSAGE)).toBeInTheDocument();
-        expect(screen.queryByText('Visitors')).not.toBeInTheDocument();
-        expect(screen.queryByText('23 people on your site right now')).not.toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'What happened' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Heads up' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Ticket path' })).not.toBeInTheDocument();
+        expect(screen.queryByText(EMPTY_STATE_MESSAGE)).not.toBeInTheDocument();
+        expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('640')).toBeInTheDocument();
+        expect(within(screen.getByTestId('analytics-kpi-purchases')).getByText('46')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'What happened' })).toBeInTheDocument();
+        expect(screen.getByText('Visits peaked on show day, then turned into photo views.')).toBeInTheDocument();
     });
 
     it('sorts channel cards by visitors and keeps checkout drop-off on the ticket path', () => {

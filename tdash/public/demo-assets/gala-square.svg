@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2e8f0"/><stop offset="1" stop-color="#fbbf24"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#e2e8f0" stop-opacity=".45"/><stop offset="1" stop-color="#0b1120" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1120"/><stop offset="1" stop-color="#0b1120"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1080" fill="#0b1120"/>
+<rect width="1080" height="1080" fill="url(#r)"/>
+<path d="M0 86 Q 540 216 1080 86" fill="none" stroke="#e2e8f0" stroke-width="2" opacity=".6"/>
+<line x1="77" y1="121" x2="77" y2="186" stroke="#e2e8f0" stroke-width="2" opacity=".6"/>
+<circle cx="77" cy="229" r="108" fill="#fbbf24" opacity=".12"/>
+<rect x="39" y="186" width="76" height="97" rx="32" fill="url(#g)"/>
+<line x1="231" y1="174" x2="231" y2="292" stroke="#e2e8f0" stroke-width="2" opacity=".6"/>
+<circle cx="231" cy="336" r="108" fill="#fbbf24" opacity=".12"/>
+<rect x="194" y="292" width="76" height="97" rx="32" fill="url(#g)"/>
+<line x1="386" y1="205" x2="386" y2="378" stroke="#e2e8f0" stroke-width="2" opacity=".6"/>
+<circle cx="386" cy="421" r="108" fill="#fbbf24" opacity=".12"/>
+<rect x="348" y="378" width="76" height="97" rx="32" fill="url(#g)"/>
+<line x1="540" y1="216" x2="540" y2="281" stroke="#e2e8f0" stroke-width="2" opacity=".6"/>
+<circle cx="540" cy="324" r="108" fill="#fbbf24" opacity=".12"/>
+<rect x="502" y="281" width="76" height="97" rx="32" fill="url(#g)"/>
+<line x1="694" y1="205" x2="694" y2="324" stroke="#e2e8f0" stroke-width="2" opacity=".6"/>
+<circle cx="694" cy="367" r="108" fill="#fbbf24" opacity=".12"/>
+<rect x="656" y="324" width="76" height="97" rx="32" fill="url(#g)"/>
+<line x1="849" y1="174" x2="849" y2="346" stroke="#e2e8f0" stroke-width="2" opacity=".6"/>
+<circle cx="849" cy="390" r="108" fill="#fbbf24" opacity=".12"/>
+<rect x="811" y="346" width="76" height="97" rx="32" fill="url(#g)"/>
+<line x1="1003" y1="121" x2="1003" y2="186" stroke="#e2e8f0" stroke-width="2" opacity=".6"/>
+<circle cx="1003" cy="229" r="108" fill="#fbbf24" opacity=".12"/>
+<rect x="965" y="186" width="76" height="97" rx="32" fill="url(#g)"/>
+<rect width="1080" height="1080" fill="url(#shade)"/>
+<text x="86" y="540" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">WINTER</text>
+<text x="86" y="662" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">LANTERNS</text>
+<text x="86" y="785" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">GALA</text>
+<rect x="86" y="949" width="130" height="6" fill="#ffffff"/>
+<text x="86" y="1025" font-size="36" fill="#fff" letter-spacing="4">HARBOURFRONT COMMONS</text>
+<text x="86" y="1079" font-size="23" fill="#fff" opacity=".75" letter-spacing="3">BLACK TIE · IN SUPPORT OF THE HARBOURFRONT ARTS TRUST</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

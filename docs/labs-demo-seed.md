@@ -1,4 +1,4 @@
-# Labs presentation demo data (T123)
+# Labs presentation demo data (T123, expanded in T124)
 
 DEMO ONLY. Labs (`labs.tixmo.co`) only. Fake people, fake org, test orders, no Stripe, no real money.
 
@@ -16,4 +16,17 @@ BCRYPTJS=/path/to/node_modules/bcryptjs \      # bcryptjs@2.4.3
 tixmoapi2/scripts/run-seed-labs-demo.sh
 ```
 
-Poster/brand images for the seeded assets are served by labs-dash from `tdash/public/demo-assets/`.
+Poster/brand images for the seeded assets are served by labs-dash from `tdash/public/demo-assets/`. They are original,
+code-drawn SVGs: regenerate them with `python3 tdash/scripts/generate-demo-assets.py` (deterministic).
+
+What the seed creates (T124): 22 staff (3 pending invites), 1,400 fake customers, 7 venues, 19 events (past, live tonight,
+on sale, sold out, announced, draft), about 6.5k test orders and 13k tickets spread over six months with orders today,
+door scans for past events and tonight's live show, 14 scanners/devices, 8 promo codes, 58 library assets in 17 folders,
+15 review requests (pending, changes requested, updated, approved, declined) with comment threads, 54 tasks across all four
+board columns, and a recent notification feed.
+
+**Re-run the seed shortly before a presentation.** Dates are relative to the moment it runs (for example "Kitchen Party Social"
+starts 70 minutes before the seed runs, so it shows as live with door scans in progress). The Analytics page's GA4 mock
+uses the same purchase counts per 7/28/90-day window and the revenue the seed produces for Aurora After Dark, Harbour Lights,
+Fog City Strobe and Quiet Harbour Acoustic; if you change those events' orders, update `mockAnalytics.js` from the seed's
+`ga bands` output line.

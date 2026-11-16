@@ -100,7 +100,7 @@ const TodoView = ({ isDark, user }) => {
 
     const fetchUsers = async () => {
         try {
-            const response = await api.get('/users');
+            const response = await api.get('/users', { params: { limit: 100 } });
             if (response.data.data && response.data.data.users) {
                 setUsers(response.data.data.users);
             }

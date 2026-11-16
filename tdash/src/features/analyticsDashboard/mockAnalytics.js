@@ -16,7 +16,20 @@ import {
 } from './ga4Adapter';
 import { percentChange } from './formatters';
 
-export const MOCK_AS_OF = '2026-11-12';
+// Labs demo: the mock window rolls forward in whole weeks so the chart stays current while the
+// weekday-based copy ("Traffic spiked on Tuesday") stays true.
+const MOCK_BASE_AS_OF = '2026-11-12';
+const rollWeeks = (() => {
+    const base = Date.UTC(2026, 10, 12);
+    const today = Date.now() - 3.5 * 3600000; // St. John's date
+    return Math.max(0, Math.floor((today - base) / (7 * 86400000))) * 7;
+})();
+const rolled = (iso) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    const date = new Date(Date.UTC(y, m - 1, d + rollWeeks));
+    return date.toISOString().slice(0, 10);
+};
+export const MOCK_AS_OF = rolled(MOCK_BASE_AS_OF);
 export const MOCK_PROMOTER = 'Northlight Live (demo)';
 export const DEFAULT_PAGE_ID = 'aurora-after-dark';
 export const DEFAULT_RANGE = '28';
@@ -29,7 +42,7 @@ export const DATE_RANGE_OPTIONS = [
 ];
 
 export const ANALYTICS_PAGES = [
-    { id: 'all', name: 'All pages', path: null, empty: false, liveNow: 92 },
+    { id: 'all', name: 'All pages', path: null, empty: false, liveNow: 94 },
     {
         id: 'aurora-after-dark',
         name: 'Aurora After Dark',
@@ -58,8 +71,8 @@ export const ANALYTICS_PAGES = [
         id: 'quiet-harbour-acoustic',
         name: 'Quiet Harbour Acoustic',
         path: '/events/quiet-harbour-acoustic',
-        empty: true,
-        liveNow: 0,
+        empty: false,
+        liveNow: 2,
         festival: false,
     },
 ];
@@ -144,7 +157,7 @@ const splitByShare = (total, shares) => roundPreserveSum(shares.map((share) => t
 
 const PAGE_PERIODS = {
     'aurora-after-dark': {
-        spikeDate: '2026-11-10',
+        spikeDate: rolled('2026-11-10'),
         spikeFactor: 2.2,
         durationSeconds: 102,
         priorDurationSeconds: 90,
@@ -152,14 +165,14 @@ const PAGE_PERIODS = {
         devices: { desktop: 0.52, mobile: 0.41, tablet: 0.07 },
         cities: { "St. John's": 0.48, 'Mount Pearl': 0.18, Halifax: 0.14, Toronto: 0.12, 'Corner Brook': 0.08 },
         current: {
-            7: { visitors: 410, views: 860, purchases: 28, viewItem: 320, carts: 96, checkouts: 54, revenue: 1260 },
-            28: { visitors: 1180, views: 2460, purchases: 118, viewItem: 1210, carts: 340, checkouts: 198, revenue: 5310 },
-            90: { visitors: 2740, views: 5680, purchases: 248, viewItem: 2680, carts: 720, checkouts: 410, revenue: 11160 },
+            7: { visitors: 410, views: 860, purchases: 28, viewItem: 320, carts: 96, checkouts: 54, revenue: 2402 },
+            28: { visitors: 1180, views: 2460, purchases: 118, viewItem: 1210, carts: 340, checkouts: 198, revenue: 10437 },
+            90: { visitors: 2740, views: 5680, purchases: 248, viewItem: 2680, carts: 720, checkouts: 410, revenue: 22965 },
         },
         prior: {
-            7: { visitors: 380, views: 790, purchases: 24, viewItem: 290, carts: 84, checkouts: 48, revenue: 1080 },
-            28: { visitors: 1000, views: 2100, purchases: 92, viewItem: 1040, carts: 280, checkouts: 170, revenue: 4140 },
-            90: { visitors: 2320, views: 4860, purchases: 196, viewItem: 2240, carts: 610, checkouts: 350, revenue: 8820 },
+            7: { visitors: 380, views: 790, purchases: 24, viewItem: 290, carts: 84, checkouts: 48, revenue: 2695 },
+            28: { visitors: 1000, views: 2100, purchases: 92, viewItem: 1040, carts: 280, checkouts: 170, revenue: 10051 },
+            90: { visitors: 2320, views: 4860, purchases: 196, viewItem: 2240, carts: 610, checkouts: 350, revenue: 23033 },
         },
         extraPages: [
             { path: '/events/aurora-after-dark', title: 'Aurora After Dark', share: 0.52, trend: 'up' },
@@ -177,7 +190,7 @@ const PAGE_PERIODS = {
         },
     },
     'harbour-lights-festival': {
-        spikeDate: '2026-11-08',
+        spikeDate: rolled('2026-11-08'),
         spikeFactor: 1.8,
         durationSeconds: 135,
         priorDurationSeconds: 118,
@@ -185,14 +198,14 @@ const PAGE_PERIODS = {
         devices: { desktop: 0.44, mobile: 0.5, tablet: 0.06 },
         cities: { "St. John's": 0.42, Halifax: 0.22, Toronto: 0.16, 'Mount Pearl': 0.12, Montreal: 0.08 },
         current: {
-            7: { visitors: 1920, views: 3840, purchases: 164, viewItem: 2140, carts: 610, checkouts: 390, revenue: 11316 },
-            28: { visitors: 6840, views: 12100, purchases: 540, viewItem: 7480, carts: 1980, checkouts: 1280, revenue: 37260 },
-            90: { visitors: 9420, views: 16840, purchases: 730, viewItem: 10210, carts: 2680, checkouts: 1720, revenue: 50370 },
+            7: { visitors: 1920, views: 3840, purchases: 164, viewItem: 2140, carts: 610, checkouts: 390, revenue: 27206 },
+            28: { visitors: 6840, views: 12100, purchases: 540, viewItem: 7480, carts: 1980, checkouts: 1280, revenue: 112851 },
+            90: { visitors: 9420, views: 16840, purchases: 730, viewItem: 10210, carts: 2680, checkouts: 1720, revenue: 158671 },
         },
         prior: {
-            7: { visitors: 1610, views: 3180, purchases: 122, viewItem: 1780, carts: 490, checkouts: 310, revenue: 8418 },
-            28: { visitors: 5120, views: 9640, purchases: 380, viewItem: 5610, carts: 1480, checkouts: 940, revenue: 26220 },
-            90: { visitors: 7210, views: 13200, purchases: 490, viewItem: 7820, carts: 2010, checkouts: 1280, revenue: 33810 },
+            7: { visitors: 1610, views: 3180, purchases: 122, viewItem: 1780, carts: 490, checkouts: 310, revenue: 36279 },
+            28: { visitors: 5120, views: 9640, purchases: 380, viewItem: 5610, carts: 1480, checkouts: 940, revenue: 115273 },
+            90: { visitors: 7210, views: 13200, purchases: 490, viewItem: 7820, carts: 2010, checkouts: 1280, revenue: 141518 },
         },
         extraPages: [
             { path: '/events/harbour-lights-festival', title: 'Harbour Lights Festival', share: 0.48, trend: 'up' },
@@ -210,7 +223,7 @@ const PAGE_PERIODS = {
         },
     },
     'fog-city-strobe': {
-        spikeDate: '2026-11-07',
+        spikeDate: rolled('2026-11-07'),
         spikeFactor: 1.5,
         durationSeconds: 78,
         priorDurationSeconds: 90,
@@ -218,14 +231,14 @@ const PAGE_PERIODS = {
         devices: { desktop: 0.38, mobile: 0.54, tablet: 0.08 },
         cities: { 'Mount Pearl': 0.36, "St. John's": 0.32, Halifax: 0.14, Toronto: 0.1, Gander: 0.08 },
         current: {
-            7: { visitors: 220, views: 410, purchases: 12, viewItem: 180, carts: 48, checkouts: 28, revenue: 480 },
-            28: { visitors: 980, views: 1860, purchases: 40, viewItem: 820, carts: 210, checkouts: 118, revenue: 1600 },
-            90: { visitors: 1680, views: 3120, purchases: 74, viewItem: 1420, carts: 360, checkouts: 198, revenue: 2960 },
+            7: { visitors: 220, views: 410, purchases: 12, viewItem: 180, carts: 48, checkouts: 28, revenue: 2159 },
+            28: { visitors: 980, views: 1860, purchases: 40, viewItem: 820, carts: 210, checkouts: 118, revenue: 6944 },
+            90: { visitors: 1680, views: 3120, purchases: 74, viewItem: 1420, carts: 360, checkouts: 198, revenue: 12683 },
         },
         prior: {
-            7: { visitors: 260, views: 470, purchases: 16, viewItem: 210, carts: 58, checkouts: 34, revenue: 640 },
-            28: { visitors: 1100, views: 2040, purchases: 52, viewItem: 910, carts: 248, checkouts: 140, revenue: 2080 },
-            90: { visitors: 1840, views: 3380, purchases: 88, viewItem: 1560, carts: 410, checkouts: 230, revenue: 3520 },
+            7: { visitors: 260, views: 470, purchases: 16, viewItem: 210, carts: 58, checkouts: 34, revenue: 2720 },
+            28: { visitors: 1100, views: 2040, purchases: 52, viewItem: 910, carts: 248, checkouts: 140, revenue: 8784 },
+            90: { visitors: 1840, views: 3380, purchases: 88, viewItem: 1560, carts: 410, checkouts: 230, revenue: 13395 },
         },
         extraPages: [
             { path: '/events/fog-city-strobe', title: 'Fog City Strobe', share: 0.58, trend: 'down' },
@@ -240,6 +253,40 @@ const PAGE_PERIODS = {
             email: 'A reminder note could still help.',
             direct: 'Most people already know the address.',
             referral: 'Friends of friends arrive from other sites.',
+        },
+    },
+    // Labs demo: purchases and revenue match the seeded test orders for this completed show.
+    'quiet-harbour-acoustic': {
+        spikeDate: rolled('2026-11-06'),
+        spikeFactor: 2.4,
+        durationSeconds: 84,
+        priorDurationSeconds: 60,
+        mix: { 'organic-social': 0.2, 'paid-social': 0.04, 'organic-search': 0.16, email: 0.32, direct: 0.22, referral: 0.06 },
+        devices: { desktop: 0.48, mobile: 0.46, tablet: 0.06 },
+        cities: { "St. John's": 0.62, 'Mount Pearl': 0.16, Paradise: 0.1, 'Corner Brook': 0.07, Halifax: 0.05 },
+        current: {
+            7: { visitors: 140, views: 230, purchases: 0, viewItem: 40, carts: 0, checkouts: 0, revenue: 0 },
+            28: { visitors: 640, views: 1210, purchases: 46, viewItem: 420, carts: 120, checkouts: 70, revenue: 4717 },
+            90: { visitors: 1520, views: 2860, purchases: 128, viewItem: 1010, carts: 310, checkouts: 190, revenue: 14564 },
+        },
+        prior: {
+            7: { visitors: 20, views: 30, purchases: 0, viewItem: 4, carts: 0, checkouts: 0, revenue: 0 },
+            28: { visitors: 60, views: 90, purchases: 0, viewItem: 12, carts: 0, checkouts: 0, revenue: 0 },
+            90: { visitors: 120, views: 180, purchases: 0, viewItem: 24, carts: 0, checkouts: 0, revenue: 0 },
+        },
+        extraPages: [
+            { path: '/events/quiet-harbour-acoustic', title: 'Quiet Harbour Acoustic', share: 0.5, trend: 'down' },
+            { path: '/events/quiet-harbour-acoustic/photos', title: 'Show photos', share: 0.24, trend: 'up' },
+            { path: '/checkout/quiet-harbour-acoustic', title: 'Checkout', share: 0.16, trend: 'down' },
+            { path: '/events/quiet-harbour-acoustic/setlist', title: 'Setlist', share: 0.1, trend: 'up' },
+        ],
+        tips: {
+            'organic-social': 'Show photos brought people back after the night.',
+            'paid-social': 'No paid push for this seated show.',
+            'organic-search': 'Search finds the setlist page.',
+            email: 'The mailing list sold most of the seats.',
+            direct: 'Regulars come straight to the page.',
+            referral: 'The venue site sends a few visitors.',
         },
     },
 };
@@ -481,6 +528,38 @@ const AI_COPY = {
             ],
             headsUp: [
                 { id: 'drop', title: 'Traffic never matched the first week', reason: 'Visits settled after the announcement burst.', to: '#where-visitors' },
+            ],
+        },
+    },
+    'quiet-harbour-acoustic': {
+        7: {
+            whatHappened: [
+                'The show is over, so this week is people looking back at photos and the setlist.',
+                'No purchases this week, as expected after the night.',
+                'Email readers were the most likely to open the recap.',
+            ],
+            headsUp: [
+                { id: 'drop', title: 'Sales closed after the show', reason: 'Visitors now come for photos, not tickets.', to: '#where-visitors' },
+            ],
+        },
+        28: {
+            whatHappened: [
+                'Visits peaked on show day, then turned into photo views.',
+                'Email sold most of the seats in the last three weeks.',
+                'Checkout drop-off stayed low for this small seated room.',
+            ],
+            headsUp: [
+                { id: 'spike', title: 'Traffic spiked on show day', reason: 'Door-time questions and last-minute seats.', to: '#where-visitors' },
+            ],
+        },
+        90: {
+            whatHappened: [
+                'A steady mailing-list sell for a 300-seat room.',
+                'Most buyers were local to St. John\'s.',
+                'Search found the setlist after the show.',
+            ],
+            headsUp: [
+                { id: 'source', title: 'Email led sales', reason: 'The mailing list was the biggest door in.', to: '#where-visitors' },
             ],
         },
     },

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#facc15"/><stop offset="1" stop-color="#fb7185"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#facc15" stop-opacity=".45"/><stop offset="1" stop-color="#1c1917" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1917"/><stop offset="1" stop-color="#1c1917"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1920" fill="#1c1917"/>
+<rect width="1080" height="1920" fill="url(#r)"/>
+<path d="M540 0 L 162 1306 L 918 1306 Z" fill="#facc15" opacity=".25"/>
+<ellipse cx="540" cy="1306" rx="378" ry="77" fill="#facc15" opacity=".5"/>
+<rect x="529" y="730" width="22" height="576" fill="#ffffff"/>
+<rect x="508" y="634" width="65" height="115" rx="32" fill="#fb7185"/>
+<rect width="1080" height="1920" fill="url(#shade)"/>
+<text x="86" y="1152" font-size="111" font-weight="800" fill="#fff" letter-spacing="2">LATE SHOW</text>
+<text x="86" y="1265" font-size="111" font-weight="800" fill="#fff" letter-spacing="2">COMEDY CLUB</text>
+<rect x="86" y="1417" width="130" height="6" fill="#ffffff"/>
+<text x="86" y="1493" font-size="36" fill="#fff" letter-spacing="4">GOWER STREET THEATRE</text>
+<text x="86" y="1547" font-size="28" fill="#fff" opacity=".75" letter-spacing="3">FIVE COMICS · ONE MIC · NO HECKLERS</text>
+<rect x="86" y="1661" width="907" height="130" rx="65" fill="#fff"/>
+<text x="540" y="1747" text-anchor="middle" font-size="48" font-weight="700" fill="#1c1917" letter-spacing="3">GET TICKETS</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

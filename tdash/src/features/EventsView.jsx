@@ -96,6 +96,18 @@ const readDevSettings = () => {
 
 const extractEvents = (response) => response?.data?.data?.events || response?.data?.events || [];
 const extractOrders = (response) => response?.data?.data?.orders || [];
+const totalOf = (response, list) => Number(response?.data?.data?.pagination?.total) || list.length;
+// Paid sales per event (all time) so the library cards show real sell-through and revenue.
+const withSales = (events, salesResponse) => {
+    const rows = salesResponse?.data?.data?.salesByEvent;
+    if (!Array.isArray(rows)) return events;
+    const byId = new Map(rows.map((row) => [row.eventId, row]));
+    return events.map((event) => {
+        const row = byId.get(event.id);
+        if (!row) return event;
+        return { ...event, sold: event.sold ?? row.ticketsSold, revenue: event.revenue ?? row.revenue };
+    });
+};
 const extractVenues = (response) => response?.data?.data?.venues || response?.data?.data || [];
 const extractScanners = (response) => {
     const payload = response?.data?.data;
@@ -104,6 +116,18 @@ const extractScanners = (response) => {
 };
 
 const getEventName = (event) => event.title || event.name || 'Untitled Event';
+
+// Poster artwork for the event cards; only web URLs or same-origin paths are rendered.
+const getEventPoster = (event) => {
+    const candidate = event?.images?.poster || event?.images?.main;
+    if (typeof candidate !== 'string' || !candidate) return '';
+    if (candidate.startsWith('/') && !candidate.startsWith('//')) return candidate;
+    try {
+        return ['https:', 'http:'].includes(new URL(candidate).protocol) ? candidate : '';
+    } catch {
+        return '';
+    }
+};
 const getEventStart = (event) => event.startDateTime || event.startDatetime || null;
 
 const formatEventDate = (value) => {
@@ -181,7 +205,10 @@ const ActiveEventCard = ({ event, isDark, onOpen }) => {
             className="group p-5 text-left"
         >
             <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+                {getEventPoster(event) ? (
+                    <img src={getEventPoster(event)} alt="" loading="lazy" className="h-14 w-11 shrink-0 rounded object-cover shadow-sm" data-testid="event-poster-thumb" />
+                ) : null}
+                <div className="min-w-0 flex-1">
                     <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-pink-300' : 'text-pink-600')}>
                         {event.category || 'Active event'}
                     </p>
@@ -343,6 +370,11 @@ const EventLibrary = ({
                                 onClick={() => onNavigate(`/events/${generateEventSlug(getEventName(event), event.id)}`, { state: { event } })}
                                 className="p-5 text-left"
                             >
+                                <div className="flex gap-5">
+                                {getEventPoster(event) ? (
+                                    <img src={getEventPoster(event)} alt={`${getEventName(event)} poster`} loading="lazy" className="hidden h-44 w-32 shrink-0 rounded-md object-cover shadow-md sm:block" data-testid="event-poster" />
+                                ) : null}
+                                <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
                                         <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-pink-300' : 'text-pink-600')}>{event.category || 'Event'}</p>
@@ -384,6 +416,8 @@ const EventLibrary = ({
                                         </span>
                                     </div>
                                 </div>
+                                </div>
+                                </div>
                             </DashboardSurface>
                         );
                     })}
@@ -410,18 +444,20 @@ const EventsView = ({ isDark, user }) => {
     const fetchDashboardData = async () => {
         try {
             setIsLoading(true);
-            const [eventsResponse, ordersResponse, venuesResponse, scannersResponse] = await Promise.all([
+            const [eventsResponse, ordersResponse, venuesResponse, scannersResponse, salesResponse] = await Promise.all([
                 api.get('/events?limit=100'),
                 api.get('/orders?page=1&limit=100').catch(() => null),
                 api.get('/venues?limit=100').catch(() => null),
                 api.get('/scanners?page=1&limit=100').catch(() => null),
+                api.get('/analytics/sales').catch(() => null),
             ]);
 
-            const nextEvents = extractEvents(eventsResponse);
+            const nextEvents = withSales(extractEvents(eventsResponse), salesResponse);
             setEvents(nextEvents);
-            setOrdersCount(extractOrders(ordersResponse).length);
-            setVenuesCount(extractVenues(venuesResponse).length);
-            setScannersCount(extractScanners(scannersResponse).length);
+            setOrdersCount(totalOf(ordersResponse, extractOrders(ordersResponse)));
+            const venueList = extractVenues(venuesResponse);
+            setVenuesCount(totalOf(venuesResponse, Array.isArray(venueList) ? venueList : []));
+            setScannersCount(totalOf(scannersResponse, extractScanners(scannersResponse)));
         } catch (error) {
             console.error('Failed to load Event Manager data', error);
             setEvents([]);

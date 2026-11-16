@@ -12,6 +12,7 @@ import {
     DASHBOARD_HOME_TRUTH_VERSION,
 } from '../lib/dashboardTruth';
 import { DashboardModuleTile, DashboardPage, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
+import HomePulse from './home/HomePulse';
 
 const gridItems = [
     { id: 'events', icon: Calendar, label: 'Event Manager', description: 'Create events and manage sales, scanners, and venues from one dashboard.', accent: 'from-pink-500 to-orange-400', iconClassName: 'text-pink-500' },
@@ -125,10 +126,11 @@ const DashboardHome = ({ isDark, user }) => {
             <DashboardTitleBar
                 isDark={isDark}
                 title={`Welcome back, ${user?.firstName || 'User'}`}
-                description="Access all your modules and tools from your control center."
+                description="Here is what is happening across your events today."
                 glowTopClassName="bg-fuchsia-500/10"
                 glowBottomClassName="bg-cyan-400/10"
             />
+            {user ? <HomePulse isDark={isDark} pendingApprovals={pendingApprovalsCount} /> : null}
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 xl:grid-cols-4">
                 {sortedItems.map((item) => {
                     const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;

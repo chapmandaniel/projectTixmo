@@ -1,10 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ef4444"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
-<radialGradient id="r" cx=".7" cy=".25" r=".7"><stop offset="0" stop-color="#ef4444" stop-opacity=".9"/><stop offset="1" stop-color="#18181b" stop-opacity="0"/></radialGradient></defs>
-<rect width="900" height="1200" fill="#18181b"/><rect width="900" height="1200" fill="url(#r)"/>
-<circle cx="648" cy="336" r="198" fill="url(#g)" opacity=".85"/>
-<circle cx="648" cy="336" r="270" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>
-<path d="M0 936 Q 225 864 450 936 T 900 936 V 1200 H 0 Z" fill="url(#g)" opacity=".35"/>
-<g font-family="Inter, Helvetica, Arial, sans-serif"><text x="72" y="624" font-size="94" font-weight="800" fill="#fff" letter-spacing="2">NORTHERN</text><text x="72" y="723" font-size="94" font-weight="800" fill="#fff" letter-spacing="2">STATIC</text><text x="72" y="821" font-size="94" font-weight="800" fill="#fff" letter-spacing="2">LIVE</text>
-<text x="72" y="1080" font-size="31" fill="#fff" letter-spacing="4">FOUNDRY HALL</text>
-<text x="72" y="1140" font-size="22" fill="#fff" opacity=".7" letter-spacing="3">HOMECOMING SHOW · NORTHLIGHT LIVE</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ef4444"/><stop offset="1" stop-color="#f97316"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#ef4444" stop-opacity=".45"/><stop offset="1" stop-color="#1a0b0b" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0b0b"/><stop offset="1" stop-color="#1a0b0b"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="900" height="1200" fill="#1a0b0b"/>
+<rect width="900" height="1200" fill="url(#r)"/>
+<line x1="450" y1="600" x2="-846" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="-738" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="-630" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="-522" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="-414" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="-306" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="-198" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="-90" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="18" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="126" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="234" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="342" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="450" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="558" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="666" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="774" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="882" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="990" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="1098" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="1206" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="1314" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="1422" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="1530" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="1638" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="450" y1="600" x2="1746" y2="1200" stroke="#ef4444" stroke-width="2" opacity=".5"/>
+<line x1="0" y1="607" x2="900" y2="607" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="624" x2="900" y2="624" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="649" x2="900" y2="649" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="683" x2="900" y2="683" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="724" x2="900" y2="724" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="772" x2="900" y2="772" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="827" x2="900" y2="827" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="889" x2="900" y2="889" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="957" x2="900" y2="957" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1032" x2="900" y2="1032" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1113" x2="900" y2="1113" stroke="#ef4444" stroke-width="2" opacity=".45"/>
+<circle cx="450" cy="600" r="198" fill="url(#g)"/>
+<rect x="0" y="600" width="900" height="600" fill="#000" opacity=".35"/>
+<rect width="900" height="1200" fill="url(#shade)"/>
+<text x="72" y="672" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">NORTHERN</text>
+<text x="72" y="794" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">STATIC</text>
+<text x="72" y="917" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">LIVE</text>
+<rect x="72" y="1081" width="108" height="6" fill="#fde047"/>
+<text x="72" y="1144" font-size="30" fill="#fff" letter-spacing="4">FOUNDRY HALL</text>
+<text x="72" y="1189" font-size="23" fill="#fff" opacity=".75" letter-spacing="3">THE HOMECOMING SHOW · ALL AGES</text>
+<text x="828" y="65" text-anchor="end" font-size="19" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

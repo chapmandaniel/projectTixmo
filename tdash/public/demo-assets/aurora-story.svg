@@ -1,10 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
-<radialGradient id="r" cx=".7" cy=".25" r=".7"><stop offset="0" stop-color="#22d3ee" stop-opacity=".9"/><stop offset="1" stop-color="#0b1026" stop-opacity="0"/></radialGradient></defs>
-<rect width="1080" height="1920" fill="#0b1026"/><rect width="1080" height="1920" fill="url(#r)"/>
-<circle cx="778" cy="538" r="238" fill="url(#g)" opacity=".85"/>
-<circle cx="778" cy="538" r="324" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>
-<path d="M0 1498 Q 270 1382 540 1498 T 1080 1498 V 1920 H 0 Z" fill="url(#g)" opacity=".35"/>
-<g font-family="Inter, Helvetica, Arial, sans-serif"><text x="86" y="998" font-size="113" font-weight="800" fill="#fff" letter-spacing="2">AURORA</text><text x="86" y="1117" font-size="113" font-weight="800" fill="#fff" letter-spacing="2">AFTER DARK</text>
-<text x="86" y="1728" font-size="37" fill="#fff" letter-spacing="4">THE LANTERN ROOM</text>
-<text x="86" y="1824" font-size="27" fill="#fff" opacity=".7" letter-spacing="3">ELECTRONIC · LIGHT INSTALLATION · 19+ · NORTHLIGHT LIVE</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a855f7"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#22d3ee" stop-opacity=".45"/><stop offset="1" stop-color="#061a2b" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#061a2b"/><stop offset="1" stop-color="#061a2b"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1920" fill="#061a2b"/>
+<rect width="1080" height="1920" fill="url(#r)"/>
+<path d="M-50 350 C 324 150, 648 490, 1130 230" fill="none" stroke="#22d3ee" stroke-width="60" stroke-linecap="round" opacity="0.55" filter="url(#b)"/>
+<path d="M-50 485 C 324 285, 648 625, 1130 365" fill="none" stroke="#a855f7" stroke-width="52" stroke-linecap="round" opacity="0.48" filter="url(#b)"/>
+<path d="M-50 619 C 324 419, 648 759, 1130 499" fill="none" stroke="#4ade80" stroke-width="44" stroke-linecap="round" opacity="0.41" filter="url(#b)"/>
+<path d="M-50 754 C 324 554, 648 894, 1130 634" fill="none" stroke="#22d3ee" stroke-width="36" stroke-linecap="round" opacity="0.34" filter="url(#b)"/>
+<path d="M-50 888 C 324 688, 648 1028, 1130 768" fill="none" stroke="#a855f7" stroke-width="28" stroke-linecap="round" opacity="0.27" filter="url(#b)"/>
+<circle cx="81" cy="498" r="2.0" fill="#fff" opacity="0.77"/>
+<circle cx="259" cy="154" r="0.5" fill="#fff" opacity="0.87"/>
+<circle cx="242" cy="43" r="2.5" fill="#fff" opacity="0.45"/>
+<circle cx="853" cy="551" r="1.5" fill="#fff" opacity="0.60"/>
+<circle cx="53" cy="504" r="2.2" fill="#fff" opacity="0.69"/>
+<circle cx="683" cy="250" r="1.9" fill="#fff" opacity="0.33"/>
+<circle cx="545" cy="17" r="1.0" fill="#fff" opacity="0.39"/>
+<circle cx="1011" cy="265" r="0.6" fill="#fff" opacity="0.46"/>
+<circle cx="850" cy="381" r="0.9" fill="#fff" opacity="0.25"/>
+<circle cx="875" cy="147" r="1.9" fill="#fff" opacity="0.65"/>
+<circle cx="729" cy="833" r="1.2" fill="#fff" opacity="0.48"/>
+<circle cx="206" cy="737" r="1.6" fill="#fff" opacity="0.68"/>
+<circle cx="295" cy="191" r="1.8" fill="#fff" opacity="0.31"/>
+<circle cx="895" cy="368" r="1.3" fill="#fff" opacity="0.20"/>
+<circle cx="800" cy="698" r="0.7" fill="#fff" opacity="0.32"/>
+<circle cx="1072" cy="437" r="1.0" fill="#fff" opacity="0.24"/>
+<circle cx="541" cy="564" r="2.4" fill="#fff" opacity="0.42"/>
+<circle cx="1021" cy="193" r="1.8" fill="#fff" opacity="0.41"/>
+<circle cx="257" cy="445" r="1.4" fill="#fff" opacity="0.80"/>
+<circle cx="673" cy="111" r="2.3" fill="#fff" opacity="0.89"/>
+<circle cx="106" cy="291" r="1.0" fill="#fff" opacity="0.88"/>
+<circle cx="649" cy="175" r="2.0" fill="#fff" opacity="0.76"/>
+<circle cx="189" cy="198" r="2.0" fill="#fff" opacity="0.88"/>
+<circle cx="639" cy="882" r="2.4" fill="#fff" opacity="0.38"/>
+<circle cx="594" cy="265" r="0.6" fill="#fff" opacity="0.81"/>
+<circle cx="680" cy="893" r="2.4" fill="#fff" opacity="0.44"/>
+<circle cx="635" cy="331" r="1.8" fill="#fff" opacity="0.57"/>
+<circle cx="616" cy="1" r="1.2" fill="#fff" opacity="0.72"/>
+<circle cx="723" cy="101" r="2.1" fill="#fff" opacity="0.84"/>
+<circle cx="432" cy="704" r="1.8" fill="#fff" opacity="0.21"/>
+<circle cx="859" cy="398" r="1.3" fill="#fff" opacity="0.70"/>
+<circle cx="47" cy="225" r="1.2" fill="#fff" opacity="0.45"/>
+<circle cx="511" cy="502" r="2.1" fill="#fff" opacity="0.78"/>
+<circle cx="172" cy="256" r="1.2" fill="#fff" opacity="0.48"/>
+<circle cx="188" cy="67" r="1.0" fill="#fff" opacity="0.47"/>
+<circle cx="633" cy="728" r="2.3" fill="#fff" opacity="0.69"/>
+<circle cx="614" cy="771" r="0.7" fill="#fff" opacity="0.36"/>
+<circle cx="667" cy="577" r="1.0" fill="#fff" opacity="0.64"/>
+<circle cx="857" cy="413" r="2.4" fill="#fff" opacity="0.84"/>
+<circle cx="238" cy="265" r="1.9" fill="#fff" opacity="0.57"/>
+<circle cx="344" cy="719" r="2.0" fill="#fff" opacity="0.49"/>
+<circle cx="1064" cy="822" r="1.0" fill="#fff" opacity="0.89"/>
+<circle cx="162" cy="585" r="1.8" fill="#fff" opacity="0.87"/>
+<circle cx="919" cy="202" r="2.3" fill="#fff" opacity="0.75"/>
+<circle cx="574" cy="93" r="1.5" fill="#fff" opacity="0.73"/>
+<circle cx="464" cy="161" r="1.9" fill="#fff" opacity="0.35"/>
+<circle cx="790" cy="295" r="1.0" fill="#fff" opacity="0.64"/>
+<circle cx="285" cy="245" r="1.7" fill="#fff" opacity="0.63"/>
+<circle cx="1002" cy="257" r="2.2" fill="#fff" opacity="0.20"/>
+<circle cx="82" cy="66" r="1.1" fill="#fff" opacity="0.44"/>
+<circle cx="587" cy="745" r="2.5" fill="#fff" opacity="0.40"/>
+<circle cx="371" cy="803" r="1.9" fill="#fff" opacity="0.40"/>
+<circle cx="360" cy="279" r="1.8" fill="#fff" opacity="0.50"/>
+<circle cx="238" cy="829" r="0.6" fill="#fff" opacity="0.38"/>
+<circle cx="667" cy="637" r="1.6" fill="#fff" opacity="0.28"/>
+<circle cx="125" cy="220" r="1.1" fill="#fff" opacity="0.53"/>
+<circle cx="1057" cy="457" r="0.8" fill="#fff" opacity="0.76"/>
+<circle cx="390" cy="198" r="0.8" fill="#fff" opacity="0.70"/>
+<circle cx="838" cy="346" r="2.3" fill="#fff" opacity="0.83"/>
+<circle cx="806" cy="50" r="2.4" fill="#fff" opacity="0.68"/>
+<circle cx="25" cy="65" r="1.8" fill="#fff" opacity="0.42"/>
+<circle cx="751" cy="192" r="1.9" fill="#fff" opacity="0.52"/>
+<circle cx="803" cy="924" r="1.9" fill="#fff" opacity="0.79"/>
+<circle cx="862" cy="163" r="0.6" fill="#fff" opacity="0.42"/>
+<circle cx="104" cy="721" r="1.3" fill="#fff" opacity="0.89"/>
+<circle cx="958" cy="380" r="0.9" fill="#fff" opacity="0.69"/>
+<circle cx="359" cy="670" r="1.2" fill="#fff" opacity="0.39"/>
+<circle cx="593" cy="167" r="2.1" fill="#fff" opacity="0.55"/>
+<circle cx="218" cy="465" r="0.8" fill="#fff" opacity="0.63"/>
+<circle cx="939" cy="400" r="1.4" fill="#fff" opacity="0.80"/>
+<path d="M0 1382 L 194 1229 L 367 1344 L 594 1152 L 842 1325 L 1080 1190 V 1920 H 0 Z" fill="#000" opacity=".55"/>
+<rect width="1080" height="1920" fill="url(#shade)"/>
+<text x="86" y="1152" font-size="122" font-weight="800" fill="#fff" letter-spacing="2">AURORA</text>
+<text x="86" y="1276" font-size="122" font-weight="800" fill="#fff" letter-spacing="2">AFTER DARK</text>
+<rect x="86" y="1444" width="130" height="6" fill="#4ade80"/>
+<text x="86" y="1519" font-size="36" fill="#fff" letter-spacing="4">THE LANTERN ROOM</text>
+<text x="86" y="1573" font-size="25" fill="#fff" opacity=".75" letter-spacing="3">LATE-NIGHT ELECTRONIC · LIGHT INSTALLATION · 19+</text>
+<rect x="86" y="1661" width="907" height="130" rx="65" fill="#fff"/>
+<text x="540" y="1747" text-anchor="middle" font-size="48" font-weight="700" fill="#061a2b" letter-spacing="3">GET TICKETS</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

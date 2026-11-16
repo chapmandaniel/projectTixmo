@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#60a5fa"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#3b82f6" stop-opacity=".45"/><stop offset="1" stop-color="#0b1437" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1437"/><stop offset="1" stop-color="#0b1437"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1080" fill="#0b1437"/>
+<rect width="1080" height="1080" fill="url(#r)"/>
+<circle cx="670" cy="346" r="54" fill="none" stroke="#3b82f6" stroke-width="3" opacity="0.90"/>
+<circle cx="670" cy="346" r="92" fill="none" stroke="#60a5fa" stroke-width="6" opacity="0.83"/>
+<circle cx="670" cy="346" r="130" fill="none" stroke="#fde68a" stroke-width="9" opacity="0.76"/>
+<circle cx="670" cy="346" r="167" fill="none" stroke="#3b82f6" stroke-width="3" opacity="0.69"/>
+<circle cx="670" cy="346" r="205" fill="none" stroke="#60a5fa" stroke-width="6" opacity="0.62"/>
+<circle cx="670" cy="346" r="243" fill="none" stroke="#fde68a" stroke-width="9" opacity="0.55"/>
+<circle cx="670" cy="346" r="281" fill="none" stroke="#3b82f6" stroke-width="3" opacity="0.48"/>
+<circle cx="670" cy="346" r="319" fill="none" stroke="#60a5fa" stroke-width="6" opacity="0.41"/>
+<circle cx="670" cy="346" r="356" fill="none" stroke="#fde68a" stroke-width="9" opacity="0.34"/>
+<circle cx="670" cy="346" r="394" fill="none" stroke="#3b82f6" stroke-width="3" opacity="0.27"/>
+<rect width="1080" height="1080" fill="url(#shade)"/>
+<text x="86" y="540" font-size="102" font-weight="800" fill="#fff" letter-spacing="2">BATTERY ROAD</text>
+<text x="86" y="644" font-size="102" font-weight="800" fill="#fff" letter-spacing="2">BLUES NIGHT</text>
+<rect x="86" y="784" width="130" height="6" fill="#fde68a"/>
+<text x="86" y="859" font-size="36" fill="#fff" letter-spacing="4">THE BATTERY CLUB</text>
+<text x="86" y="913" font-size="28" fill="#fff" opacity=".75" letter-spacing="3">HOUSE BAND + GUESTS · DOORS 8PM</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>
