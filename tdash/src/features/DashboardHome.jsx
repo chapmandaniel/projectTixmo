@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Calendar, BarChart3,
     Users, CheckSquare,
-    Settings, CheckCircle, Image
+    ShieldCheck, CheckCircle, Image
 } from 'lucide-react';
 import api from '../lib/api';
 import {
@@ -20,7 +20,7 @@ const gridItems = [
     { id: 'assets', icon: Image, label: 'Asset Library', description: 'Browse uploaded creative, preview versions, and copy share links for internal or external handoff.', accent: 'from-sky-500 to-cyan-400', iconClassName: 'text-sky-400' },
     { id: 'approvals', icon: CheckCircle, label: 'Review Portal', description: 'Review pending requests.', accent: 'from-lime-400 to-emerald-500', iconClassName: 'text-lime-400' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics', description: 'Deep dive into your metrics.', accent: 'from-blue-400 to-indigo-600', iconClassName: 'text-blue-400' },
-    { id: 'settings', icon: Settings, label: 'Settings', description: 'Configure application preferences.', accent: 'from-gray-700 to-gray-800', iconClassName: 'text-gray-500' },
+    { id: 'security', icon: ShieldCheck, label: 'Security', description: 'Log analysis and activity report across every surface.', accent: 'from-emerald-400 to-teal-500', iconClassName: 'text-emerald-400' },
 ];
 
 const DashboardHome = ({ isDark, user }) => {

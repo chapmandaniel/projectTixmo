@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff3366"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient>
+<radialGradient id="r" cx=".7" cy=".25" r=".7"><stop offset="0" stop-color="#ff3366" stop-opacity=".9"/><stop offset="1" stop-color="#2b1055" stop-opacity="0"/></radialGradient></defs>
+<rect width="1080" height="1080" fill="#2b1055"/><rect width="1080" height="1080" fill="url(#r)"/>
+<circle cx="778" cy="302" r="238" fill="url(#g)" opacity=".85"/>
+<circle cx="778" cy="302" r="324" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>
+<path d="M0 842 Q 270 778 540 842 T 1080 842 V 1080 H 0 Z" fill="url(#g)" opacity=".35"/>
+<g font-family="Inter, Helvetica, Arial, sans-serif"><text x="86" y="130" font-size="64" font-weight="800" fill="#fff">LINEUP</text><text x="86" y="216" font-size="48" fill="#fff" opacity=".9">LANTERN STATIC</text><text x="86" y="275" font-size="48" fill="#fff" opacity=".9">THE GREY SOUNDS</text><text x="86" y="335" font-size="48" fill="#fff" opacity=".9">MARA VALE</text><text x="86" y="394" font-size="48" fill="#fff" opacity=".9">PORTSIDE</text><text x="86" y="454" font-size="48" fill="#fff" opacity=".9">NORTH SHORE YOUTH CHOIR</text><text x="86" y="513" font-size="48" fill="#fff" opacity=".9">KELP &amp; COMPANY</text>
+<text x="86" y="972" font-size="37" fill="#fff" letter-spacing="4">HARBOURFRONT COMMONS</text>
+<text x="86" y="1026" font-size="27" fill="#fff" opacity=".7" letter-spacing="3">TWO STAGES · TWELVE ACTS · LANTERN WALK · NORTHLIGHT LIVE</text></g></svg>

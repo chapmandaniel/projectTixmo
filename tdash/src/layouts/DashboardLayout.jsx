@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     Home, Calendar, BarChart3, Bell,
     Users, CheckSquare, Sun, Moon,
-    Settings, LogOut, CheckCircle, User, Image, ClipboardList,
-    Menu, X, Share2
+    LogOut, CheckCircle, User, Image,
+    Menu, X, Share2, ShieldCheck
 } from 'lucide-react';
 import { isSocialDashboardNavVisible } from '../features/socialDashboard/flag';
 
@@ -20,8 +20,7 @@ const navItems = [
     { id: 'assets', icon: Image, label: 'Assets' },
     { id: 'approvals', icon: CheckCircle, label: 'Review Portal' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics' },
-    { id: 'settings', icon: Settings, label: 'Settings' },
-    { id: 'staff-actions', icon: ClipboardList, label: 'Audit', roles: ['OWNER', 'ADMIN'] },
+    { id: 'security', icon: ShieldCheck, label: 'Security' },
 ];
 
 const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
@@ -352,15 +351,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                         )}
                     </div>
 
-                    {(user?.role === 'OWNER' || user?.role === 'ADMIN') && (
-                        <Link
-                            to="/dev"
-                            className={`inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-light transition-colors ${isDark ? 'text-indigo-400 hover:bg-[#232336] hover:text-indigo-300' : 'text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
-                            title="Developer Terminal"
-                        >
-                            &gt;_
-                        </Link>
-                    )}
+                    {/* Demo build: developer terminal shortcut hidden from the header (route /dev still exists). */}
 
                     <div className="flex items-center gap-2">
                         <div className={cn(

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="600" viewBox="0 0 1600 600">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f472b6"/><stop offset="1" stop-color="#60a5fa"/></linearGradient>
+<radialGradient id="r" cx=".7" cy=".25" r=".7"><stop offset="0" stop-color="#f472b6" stop-opacity=".9"/><stop offset="1" stop-color="#111827" stop-opacity="0"/></radialGradient></defs>
+<rect width="1600" height="600" fill="#111827"/><rect width="1600" height="600" fill="url(#r)"/>
+<circle cx="1152" cy="168" r="132" fill="url(#g)" opacity=".85"/>
+<circle cx="1152" cy="168" r="180" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>
+<path d="M0 468 Q 400 432 800 468 T 1600 468 V 600 H 0 Z" fill="url(#g)" opacity=".35"/>
+<g font-family="Inter, Helvetica, Arial, sans-serif"><text x="128" y="270" font-size="96" font-weight="800" fill="#fff" letter-spacing="2">FOG CITY</text><text x="128" y="371" font-size="96" font-weight="800" fill="#fff" letter-spacing="2">STROBE</text>
+<text x="128" y="540" font-size="32" fill="#fff" letter-spacing="4">FOUNDRY HALL</text>
+<text x="128" y="570" font-size="24" fill="#fff" opacity=".7" letter-spacing="3">INDIE DANCE DOUBLE BILL · NORTHLIGHT LIVE</text></g></svg>

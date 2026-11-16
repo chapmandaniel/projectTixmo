@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
+<radialGradient id="r" cx=".7" cy=".25" r=".7"><stop offset="0" stop-color="#22d3ee" stop-opacity=".9"/><stop offset="1" stop-color="#0b1026" stop-opacity="0"/></radialGradient></defs>
+<rect width="1080" height="1920" fill="#0b1026"/><rect width="1080" height="1920" fill="url(#r)"/>
+<circle cx="778" cy="538" r="238" fill="url(#g)" opacity=".85"/>
+<circle cx="778" cy="538" r="324" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>
+<path d="M0 1498 Q 270 1382 540 1498 T 1080 1498 V 1920 H 0 Z" fill="url(#g)" opacity=".35"/>
+<g font-family="Inter, Helvetica, Arial, sans-serif"><text x="86" y="998" font-size="113" font-weight="800" fill="#fff" letter-spacing="2">AURORA</text><text x="86" y="1117" font-size="113" font-weight="800" fill="#fff" letter-spacing="2">AFTER DARK</text>
+<text x="86" y="1728" font-size="37" fill="#fff" letter-spacing="4">THE LANTERN ROOM</text>
+<text x="86" y="1824" font-size="27" fill="#fff" opacity=".7" letter-spacing="3">ELECTRONIC · LIGHT INSTALLATION · 19+ · NORTHLIGHT LIVE</text></g></svg>
