@@ -27,6 +27,15 @@ describe('SecurityView', () => {
         expect(screen.getByText('Event pages online').parentElement.parentElement).toHaveTextContent('19 / 19');
         expect(within(screen.getByTestId('security-feed')).getAllByRole('listitem').length).toBeGreaterThanOrEqual(10);
         expect(screen.getAllByTestId(/security-device-/)).toHaveLength(14);
+        expect(screen.getByTestId('security-home-hero')).toHaveClass('lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]');
+        expect(screen.getByTestId('security-hero-summary')).toBeInTheDocument();
+        expect(screen.getByTestId('moose-chat')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Moose' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Is my account safe right now?' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'What attacks did we stop this week?' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Who on my team needs to fix their password or 2FA?' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'What protects my event pages?' })).toBeInTheDocument();
+        expect(screen.getByLabelText('Ask Moose about these numbers')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Protection Layers' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Suspected Attacks' })).toBeInTheDocument();
         const website = within(sources).getByTestId('security-source-website');
@@ -121,7 +130,17 @@ describe('SecurityView', () => {
         expect(JSON.stringify(team)).not.toMatch(/passwordHash|\$2[aby]\$|hunter2|password123/i);
     });
 
+    it('answers a suggested Moose question from the security report on the page', () => {
+        render(<SecurityView isDark now={NOW} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Who on my team needs to fix their password or 2FA?' }));
+        const replies = screen.getAllByTestId('moose-message-moose');
+        expect(replies.at(-1)).toHaveTextContent('Liam Byrne and Sean Power');
+        expect(replies.at(-1)).toHaveTextContent('Chloe Dubois, Ethan Clarke, and Ben Abbott');
+        expect(replies.at(-1)).toHaveTextContent('Marcus Bell');
+    });
+
     it('shows protection layers as active and a reassuring suspected-attacks timeline with documentation IP ranges only', () => {
+
         render(<SecurityView isDark now={NOW} />);
 
         const layers = screen.getByTestId('protection-layers');

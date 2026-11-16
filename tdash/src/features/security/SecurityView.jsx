@@ -10,7 +10,9 @@ import {
 } from '../../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../../lib/dashboardTheme';
 import { cn } from '../../lib/utils';
+import { MooseChat } from '../../components/dashboard/MooseChat';
 import { buildSecurityReport, relativeTime } from './securityReport';
+import { answerMooseQuestion, SUGGESTED_QUESTIONS as MOOSE_QUESTIONS } from './securityMooseAnswers';
 
 const formatCount = (value) => new Intl.NumberFormat('en-CA').format(value);
 
@@ -132,42 +134,56 @@ const SecurityView = ({ isDark = true, now: fixedNow }) => {
                 )}
             />
 
-            <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-                <KpiTile
+            <div
+                data-testid="security-home-hero"
+                className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:h-[460px] lg:items-stretch"
+            >
+                <div data-testid="security-hero-summary" className="flex min-h-0 flex-col gap-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <KpiTile
+                            isDark={isDark}
+                            icon={Globe}
+                            label="Event pages online"
+                            value={`${report.totals.pagesOnline} / ${report.totals.pagesTotal}`}
+                            detail="HTTPS valid on every page"
+                        />
+                        <KpiTile
+                            isDark={isDark}
+                            icon={KeyRound}
+                            label="Two-factor on your team"
+                            value={`${report.totals.twoFactorOn} / ${report.totals.activeMembers}`}
+                            detail={`${report.totals.pendingInvites} invites still pending — 2FA starts when they join`}
+                            testId="kpi-two-factor"
+                        />
+                        <KpiTile
+                            isDark={isDark}
+                            icon={CreditCard}
+                            label="Checkout screening"
+                            value="All clear"
+                            detail={`${report.totals.chargebackFlags} chargeback-risk flags`}
+                        />
+                        <KpiTile
+                            isDark={isDark}
+                            icon={ScanLine}
+                            label="Door devices"
+                            value="All in order"
+                            detail={`${report.totals.devicesOnline} online · ${report.totals.devicesPaused} paused · ${report.totals.devicesRevoked} revoked`}
+                        />
+                    </div>
+                    <DashboardSurface isDark={isDark} accent="green" className="flex flex-1 flex-col p-5 sm:p-6">
+                        <h2 className={cn('text-[1.15rem] font-light tracking-tight', theme.textPrimary)}>What this means for you</h2>
+                        <p className={cn('mt-2 text-sm font-light leading-6', theme.textSecondary)}>{report.meaning}</p>
+                    </DashboardSurface>
+                </div>
+                <MooseChat
                     isDark={isDark}
-                    icon={Globe}
-                    label="Event pages online"
-                    value={`${report.totals.pagesOnline} / ${report.totals.pagesTotal}`}
-                    detail="HTTPS valid on every page"
-                />
-                <KpiTile
-                    isDark={isDark}
-                    icon={KeyRound}
-                    label="Two-factor on your team"
-                    value={`${report.totals.twoFactorOn} / ${report.totals.activeMembers}`}
-                    detail={`${report.totals.pendingInvites} invites still pending — 2FA starts when they join`}
-                    testId="kpi-two-factor"
-                />
-                <KpiTile
-                    isDark={isDark}
-                    icon={CreditCard}
-                    label="Checkout screening"
-                    value="All clear"
-                    detail={`${report.totals.chargebackFlags} chargeback-risk flags`}
-                />
-                <KpiTile
-                    isDark={isDark}
-                    icon={ScanLine}
-                    label="Door devices"
-                    value="All in order"
-                    detail={`${report.totals.devicesOnline} online · ${report.totals.devicesPaused} paused · ${report.totals.devicesRevoked} revoked`}
+                    data={report}
+                    askQuestion={answerMooseQuestion}
+                    suggestions={MOOSE_QUESTIONS}
+                    welcomeText="Hi, I'm Moose, Tixmo's AI assistant. Ask me about how your platforms are doing."
+                    resetKey="security"
                 />
             </div>
-
-            <DashboardSurface isDark={isDark} accent="green" className="p-5 sm:p-6">
-                <h2 className={cn('text-[1.15rem] font-light tracking-tight', theme.textPrimary)}>What this means for you</h2>
-                <p className={cn('mt-2 max-w-3xl text-sm font-light leading-6', theme.textSecondary)}>{report.meaning}</p>
-            </DashboardSurface>
 
             <DashboardSection
                 isDark={isDark}
