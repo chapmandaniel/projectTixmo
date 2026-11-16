@@ -7,6 +7,7 @@ import { CHART_COLORS } from '../../../components/dashboard/chartTheme';
 import { getDashboardTheme } from '../../../lib/dashboardTheme';
 import { cn } from '../../../lib/utils';
 import { HeadsUpCards } from '../components/HeadsUpCards';
+import { MooseChat } from '../components/MooseChat';
 import { formatChartHover, formatDuration, formatNumber, percentChange } from '../formatters';
 import { ChannelsView } from './ChannelsView';
 import { TicketPathView } from './TicketPathView';
@@ -42,9 +43,9 @@ export const HomeView = ({ isDark, dashboard }) => {
         <div className="space-y-6">
             <div
                 data-testid="analytics-home-hero"
-                className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-stretch"
+                className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-stretch lg:min-h-[420px]"
             >
-                <div className="order-2 lg:order-1" data-testid="analytics-hero-chart">
+                <div data-testid="analytics-hero-chart" className="min-h-[320px]">
                     <DashboardSurface isDark={isDark} accent="brand" className="flex h-full flex-col p-4">
                         <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-light">
                             <span className={cn('inline-flex items-center gap-2', theme.textSecondary)}>
@@ -66,14 +67,17 @@ export const HomeView = ({ isDark, dashboard }) => {
                             colors={[CHART_COLORS.current, CHART_COLORS.prior, CHART_COLORS.forecast]}
                             formatY={(value) => formatNumber(value)}
                             formatSlice={formatSlice}
-                            heightClassName="h-[240px] lg:h-[280px]"
+                            heightClassName="h-[260px] lg:h-[360px]"
                         />
                         <p className={cn('mt-2 text-sm font-light leading-6', theme.textPrimary)} data-testid="analytics-pace">
                             {dashboard.pace}
                         </p>
                     </DashboardSurface>
                 </div>
-                <div className="order-1 grid grid-cols-2 grid-rows-2 gap-3 lg:order-2" data-testid="analytics-hero-stats">
+                <MooseChat isDark={isDark} dashboard={dashboard} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="analytics-hero-stats">
                     <div data-testid="analytics-kpi-visitors">
                         <BigStatTile
                             isDark={isDark}
@@ -118,7 +122,6 @@ export const HomeView = ({ isDark, dashboard }) => {
                             valueClassName="text-[1.85rem] sm:text-4xl lg:text-[2.35rem] xl:text-[2.35rem]"
                         />
                     </div>
-                </div>
             </div>
 
             <HeadsUpCards isDark={isDark} cards={dashboard.headsUp} />

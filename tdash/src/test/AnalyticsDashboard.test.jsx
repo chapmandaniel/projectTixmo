@@ -116,8 +116,18 @@ describe('Analytics dashboard prototype', () => {
         expect(screen.getByLabelText('Site / event page')).toHaveValue('aurora-after-dark');
         expect(screen.getByRole('button', { name: 'Last 28 days' })).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByTestId('analytics-home-hero')).toBeInTheDocument();
-        expect(screen.getByTestId('analytics-hero-chart')).toHaveClass('order-2', 'lg:order-1');
-        expect(screen.getByTestId('analytics-hero-stats')).toHaveClass('order-1', 'lg:order-2');
+        expect(screen.getByTestId('analytics-hero-chart')).toBeInTheDocument();
+        expect(screen.getByTestId('moose-chat')).toBeInTheDocument();
+        expect(screen.getByTestId('analytics-home-hero')).toHaveClass('lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]');
+        expect(screen.getByTestId('analytics-hero-stats')).toHaveClass('lg:grid-cols-4');
+        expect(screen.getByTestId('analytics-hero-stats')).not.toHaveClass('lg:order-2');
+        expect(screen.getByRole('heading', { name: 'Moose' })).toBeInTheDocument();
+        expect(screen.getByText("Tixmo's AI assistant")).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Which event is selling fastest?' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'How did last weekend compare?' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Where are my buyers coming from?' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'What should I promote next?' })).toBeInTheDocument();
+        expect(screen.getByLabelText('Ask Moose about these numbers')).toBeInTheDocument();
 
         expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('Visitors')).toBeInTheDocument();
         expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('1,180')).toBeInTheDocument();
@@ -161,7 +171,17 @@ describe('Analytics dashboard prototype', () => {
         expect(screen.queryByText(EMPTY_STATE_MESSAGE)).not.toBeInTheDocument();
     });
 
+    it('answers a suggested Moose question from the numbers on the page', () => {
+        mount('/analytics');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Which event is selling fastest?' }));
+        const replies = screen.getAllByTestId('moose-message-moose');
+        expect(replies.at(-1)).toHaveTextContent('Harbour Lights Festival is selling fastest over last 28 days');
+        expect(replies.at(-1)).toHaveTextContent('You\'re looking at Aurora After Dark right now, which has 118 purchases');
+    });
+
     it('changes the numbers and every section when the site / event page changes', () => {
+
         mount('/analytics');
 
         fireEvent.change(screen.getByTestId('analytics-page-select'), {
