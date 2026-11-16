@@ -229,7 +229,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                             return (
                                 <button
                                     key={item.id}
-                                    onClick={() => navigate(`/events/${generateEventSlug(event.name, event.id)}/${item.id}`, { replace: true, state: location.state })}
+                                    onClick={() => navigate(`/events/${generateEventSlug(event.name || event.title, event.id)}/${item.id}`, { replace: true, state: location.state })}
                                     className={`group relative flex min-w-max items-center rounded-md px-4 py-2.5 transition-colors lg:w-full lg:rounded-r-md
                                         ${isActive
                                             ? (isDark ? 'bg-[#2b2b40] text-gray-100 shadow-sm' : 'bg-indigo-50 text-indigo-600')
