@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import SecurityView from '../features/security/SecurityView';
-import { buildSecurityReport, buildTeamHealth, lastScanAt, relativeTime, TEAM_ROSTER } from '../features/security/securityReport';
+import { buildSecurityReport, buildTeamHealth, DOC_IP_RANGES, lastScanAt, relativeTime, TEAM_ROSTER } from '../features/security/securityReport';
 
 const NOW = new Date('2026-11-16T14:47:00Z').getTime();
 
@@ -13,7 +13,7 @@ describe('SecurityView', () => {
 
         expect(screen.getByRole('heading', { name: /Security/ })).toBeInTheDocument();
         expect(screen.getByText('Your platforms look safe')).toBeInTheDocument();
-        expect(screen.getByText(/Last checked \d+ min ago|Last checked just now/)).toBeInTheDocument();
+        expect(screen.getAllByText(/Last checked \d+ min ago|Last checked just now/).length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText(/Northlight Live's own event pages/)).toBeInTheDocument();
         expect(screen.getAllByText('What this means for you').length).toBeGreaterThanOrEqual(5);
 
@@ -27,6 +27,11 @@ describe('SecurityView', () => {
         expect(screen.getByText('Event pages online').parentElement.parentElement).toHaveTextContent('19 / 19');
         expect(within(screen.getByTestId('security-feed')).getAllByRole('listitem').length).toBeGreaterThanOrEqual(10);
         expect(screen.getAllByTestId(/security-device-/)).toHaveLength(14);
+        expect(screen.getByRole('heading', { name: 'Protection Layers' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Suspected Attacks' })).toBeInTheDocument();
+        const website = within(sources).getByTestId('security-source-website');
+        expect(website).not.toHaveTextContent('Bot and scalper-like traffic filtered before it reaches buyers');
+        expect(website).toHaveTextContent('see Suspected Attacks and Protection Layers');
 
         const copy = reportText(container);
         expect(copy).not.toMatch(/across Tixmo/i);
@@ -114,5 +119,55 @@ describe('SecurityView', () => {
         expect(lastScanAt(NOW).getTime()).toBeLessThanOrEqual(NOW);
         expect(relativeTime(NOW - 3 * 60 * 1000, NOW)).toBe('3 min ago');
         expect(JSON.stringify(team)).not.toMatch(/passwordHash|\$2[aby]\$|hunter2|password123/i);
+    });
+
+    it('shows protection layers as active and a reassuring suspected-attacks timeline with documentation IP ranges only', () => {
+        render(<SecurityView isDark now={NOW} />);
+
+        const layers = screen.getByTestId('protection-layers');
+        const layerIds = ['waf', 'ddos', 'bots', 'rate', 'tls', 'fraud', 'login', 'breach', 'backups'];
+        expect(layerIds).toHaveLength(9);
+        for (const id of layerIds) {
+            const card = within(layers).getByTestId(`protection-layer-${id}`);
+            expect(within(card).getByText('Active / Healthy')).toBeInTheDocument();
+            expect(within(card).getByText(/Last checked \d+ min ago|Last checked just now/)).toBeInTheDocument();
+        }
+
+        const attacks = screen.getByTestId('suspected-attacks');
+        const summary = within(attacks).getByTestId('suspected-attacks-summary');
+        expect(summary).toHaveTextContent('14');
+        expect(summary).toHaveTextContent('61');
+        expect(summary).toHaveTextContent('214');
+        expect(summary).toHaveTextContent('0 breached');
+        expect(attacks).toHaveTextContent('Nothing was breached');
+
+        const list = within(attacks).getByTestId('suspected-attacks-list');
+        const rows = within(list).getAllByRole('listitem');
+        expect(rows.length).toBeGreaterThanOrEqual(5);
+        const kinds = rows.map((row) => row.textContent);
+        expect(kinds.some((text) => /Credential stuffing/i.test(text))).toBe(true);
+        expect(kinds.some((text) => /Scalper bot burst/i.test(text))).toBe(true);
+        expect(kinds.some((text) => /Card-testing/i.test(text))).toBe(true);
+        expect(kinds.some((text) => /Request flood/i.test(text))).toBe(true);
+        expect(kinds.some((text) => /SQL or script injection probe/i.test(text))).toBe(true);
+
+        const report = buildSecurityReport(NOW);
+        expect(report.protection.layers).toHaveLength(9);
+        expect(report.protection.allActive).toBe(true);
+        expect(report.attacks.totals).toEqual({ last24h: 14, last7d: 61, last30d: 214, visible24h: report.attacks.totals.visible24h, breached: 0, reached: 0 });
+        expect(report.attacks.totals.last24h).toBeLessThan(report.attacks.totals.last7d);
+        expect(report.attacks.totals.last7d).toBeLessThan(report.attacks.totals.last30d);
+        for (const item of report.attacks.items) {
+            expect(DOC_IP_RANGES).toContain(item.range);
+            expect(['Blocked', 'Mitigated']).toContain(item.status);
+            expect(item.country).toBeTruthy();
+            expect(item.target).toBeTruthy();
+        }
+        const blob = JSON.stringify(report.attacks);
+        const ips = blob.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g) || [];
+        for (const ip of ips) {
+            expect(['192.0.2', '198.51.100', '203.0.113']).toContain(ip.split('.').slice(0, 3).join('.'));
+        }
+        expect(blob).not.toMatch(/\b(?!192\.0\.2|198\.51\.100|203\.0\.113)(?:\d{1,3}\.){3}\d{1,3}\b/);
     });
 });

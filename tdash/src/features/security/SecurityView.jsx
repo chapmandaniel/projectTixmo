@@ -227,6 +227,90 @@ const SecurityView = ({ isDark = true, now: fixedNow }) => {
                 </div>
             </DashboardSection>
 
+
+            <DashboardSection
+                isDark={isDark}
+                accent="green"
+                title="Protection Layers"
+                description="The safeguards around your event pages, dashboard and checkout. Each layer is on and healthy. Last-checked times are from the latest review cycle."
+            >
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="protection-layers">
+                    {report.protection.layers.map((layer) => (
+                        <div
+                            key={layer.id}
+                            data-testid={`protection-layer-${layer.id}`}
+                            className={cn('flex flex-col gap-3 rounded-md border p-4', theme.panelMuted)}
+                        >
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <span className={cn('flex h-9 w-9 items-center justify-center rounded-md', isDark ? 'bg-emerald-400/10' : 'bg-emerald-50')}>
+                                        <layer.icon size={18} className="text-emerald-400" />
+                                    </span>
+                                    <h3 className={cn('text-sm font-light', theme.textPrimary)}>{layer.name}</h3>
+                                </div>
+                                <HealthyPill isDark={isDark} label={layer.status} />
+                            </div>
+                            <p className={cn('text-xs font-light leading-5', theme.textSecondary)}>{layer.note}</p>
+                            <p className={cn('text-xs font-light', theme.textMuted)}>
+                                Last checked {relativeTime(layer.checkedAt.getTime(), now)}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </DashboardSection>
+
+            <DashboardSection
+                isDark={isDark}
+                accent="green"
+                title="Suspected Attacks"
+                description="Attempts aimed at your event pages, dashboard or checkout. Every one was stopped automatically. Nothing was breached."
+            >
+                <div data-testid="suspected-attacks">
+                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="suspected-attacks-summary">
+                        <div className={cn('rounded-md border p-4', theme.panelMuted)}>
+                            <p className={cn('text-[10px] uppercase tracking-[0.16em]', theme.textTertiary)}>Last 24 hours</p>
+                            <p className={cn('mt-2 text-2xl font-light', theme.textPrimary)}>{formatCount(report.attacks.totals.last24h)}</p>
+                            <p className={cn('mt-1 text-xs font-light', theme.textMuted)}>Stopped automatically</p>
+                        </div>
+                        <div className={cn('rounded-md border p-4', theme.panelMuted)}>
+                            <p className={cn('text-[10px] uppercase tracking-[0.16em]', theme.textTertiary)}>Last 7 days</p>
+                            <p className={cn('mt-2 text-2xl font-light', theme.textPrimary)}>{formatCount(report.attacks.totals.last7d)}</p>
+                            <p className={cn('mt-1 text-xs font-light', theme.textMuted)}>Stopped automatically</p>
+                        </div>
+                        <div className={cn('rounded-md border p-4', theme.panelMuted)}>
+                            <p className={cn('text-[10px] uppercase tracking-[0.16em]', theme.textTertiary)}>Last 30 days</p>
+                            <p className={cn('mt-2 text-2xl font-light', theme.textPrimary)}>{formatCount(report.attacks.totals.last30d)}</p>
+                            <p className={cn('mt-1 text-xs font-light', theme.textMuted)}>Stopped automatically</p>
+                        </div>
+                        <div className={cn('rounded-md border p-4', theme.panelMuted)}>
+                            <p className={cn('text-[10px] uppercase tracking-[0.16em]', theme.textTertiary)}>Reached your platforms</p>
+                            <p className={cn('mt-2 text-2xl font-light', theme.textPrimary)}>{report.attacks.totals.reached}</p>
+                            <p className={cn('mt-1 text-xs font-light', theme.textMuted)}>{report.attacks.totals.breached} breached · nothing got through</p>
+                        </div>
+                    </div>
+                    <p className={cn('mt-4 text-sm font-light leading-6', theme.textSecondary)}>{report.attacks.summary}</p>
+                    <ol className={cn('mt-4 divide-y', isDark ? 'divide-white/5' : 'divide-slate-200')} data-testid="suspected-attacks-list">
+                        {report.attacks.items.map((item) => (
+                            <li key={item.id} data-testid={item.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:gap-4">
+                                <span className={cn('inline-flex w-fit shrink-0 items-center rounded-full px-2.5 py-0.5 text-[11px] font-light', toneStyles('protected', isDark))}>
+                                    {item.status}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <p className={cn('text-sm font-light', theme.textPrimary)}>{item.kind}</p>
+                                    <p className={cn('mt-1 text-xs font-light leading-5', theme.textSecondary)}>
+                                        {item.target} · {item.country} · {item.range}
+                                    </p>
+                                    <p className={cn('mt-1 text-xs font-light leading-5', theme.textMuted)}>{item.note}</p>
+                                </div>
+                                <span className={cn('shrink-0 text-xs font-light', theme.textMuted)}>
+                                    {relativeTime(item.at.getTime(), now)}
+                                </span>
+                            </li>
+                        ))}
+                    </ol>
+                </div>
+            </DashboardSection>
+
             <DashboardSection
                 isDark={isDark}
                 accent="green"
