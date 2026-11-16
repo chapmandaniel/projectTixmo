@@ -35,7 +35,7 @@ The tab is about Northlight Live's own platforms, not Tixmo vendor/infrastructur
 ## CI
 
 - guard-and-build pass, configured-image-restore pass, Railway labs-dash pass (deploy 94c93b99). http-soak skipped by design.
-- local-gates on `12b4d8a1` (run 43889826552) was still running at first write; see STATE if later updated.
+- local-gates on `12b4d8a1` pass (run 43889826552). All required PR checks green.
 
 ## Deferred
 

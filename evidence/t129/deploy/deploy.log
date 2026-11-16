@@ -1,0 +1,30 @@
+2026-11-16 11:28:00 NST scope ok project=8c5a1df6-dc6b-46ca-a516-dc1c25750921 env=labs/810da028-c2b7-4874-a0d4-e95242dc2cb1 dash=7be6efd7-f821-49a3-a102-d8d19b03e23d api=c2ae5f88-7b52-4199-928a-c5d9ee8cc15d
+2026-11-16 11:28:01 NST pre dash latest=94c93b99-a81a-43c0-a50e-568b9ba1c18d status=SUCCESS sha=12b4d8a106cf9cdb5f0954020fe83dee258bfdb2
+2026-11-16 11:28:01 NST pre api latest=d3a657fe-4abf-4a56-9429-766f32ccda25 status=SUCCESS sha=9f2c523bb3c37f852123668a007b34fa88e7d8f9
+2026-11-16 11:28:02 NST pre dash var count=19 has_flag=True flag=true VITE_APP_LABS_BRANCH=demo/labs-presentation ANALYST_VIEWS_UNSET=True
+2026-11-16 11:28:03 NST vars upserted skipDeploys: VITE_APP_LABS_BRANCH=demo/labs-presentation (flag left true, ANALYST_VIEWS left unset)
+2026-11-16 11:28:07 NST post-upsert dash flag=true VITE_APP_LABS_BRANCH=demo/labs-presentation ANALYST_VIEWS_UNSET=True
+2026-11-16 11:28:08 NST deploy dash 8e57f31c-bd04-4e6c-abb9-fc83ef6a4396 sha=dc5f2b54a9141cc8a40ad6aa757ec45595b1a2a1
+2026-11-16 11:28:09 NST dash INITIALIZING events=0 last_step=None
+2026-11-16 11:28:19 NST dash BUILDING events=2 last_step=BUILD_IMAGE
+2026-11-16 11:29:12 NST dash DEPLOYING events=6 last_step=CONFIGURE_NETWORK
+2026-11-16 11:29:22 NST dash SUCCESS events=7 last_step=DRAIN_INSTANCES
+2026-11-16 11:29:22 NST dash LIVE SUCCESS
+2026-11-16 11:29:23 NST post api latest=d3a657fe-4abf-4a56-9429-766f32ccda25 status=SUCCESS sha=9f2c523bb3c37f852123668a007b34fa88e7d8f9 (expected unchanged 9f2c523 / d3a657fe-4abf-4a56-9429-766f32ccda25)
+2026-11-16 11:29:24 NST post dash flag=true VITE_APP_LABS_BRANCH=demo/labs-presentation ANALYST_VIEWS_UNSET=True
+2026-11-16 11:29:24 NST DEPLOY SUCCESS dash=8e57f31c-bd04-4e6c-abb9-fc83ef6a4396
+2026-11-16 11:34:19 NST scope ok project=8c5a1df6-dc6b-46ca-a516-dc1c25750921 env=labs/810da028-c2b7-4874-a0d4-e95242dc2cb1 dash=7be6efd7-f821-49a3-a102-d8d19b03e23d api=c2ae5f88-7b52-4199-928a-c5d9ee8cc15d
+2026-11-16 11:34:20 NST pre dash latest=8e57f31c-bd04-4e6c-abb9-fc83ef6a4396 status=SUCCESS sha=dc5f2b54a9141cc8a40ad6aa757ec45595b1a2a1
+2026-11-16 11:34:20 NST pre api latest=d3a657fe-4abf-4a56-9429-766f32ccda25 status=SUCCESS sha=9f2c523bb3c37f852123668a007b34fa88e7d8f9
+2026-11-16 11:34:20 NST pre dash var count=19 has_flag=True flag=true VITE_APP_LABS_BRANCH=demo/labs-presentation ANALYST_VIEWS_UNSET=True
+2026-11-16 11:34:22 NST vars upserted skipDeploys: VITE_APP_LABS_BRANCH=demo/labs-presentation (flag left true, ANALYST_VIEWS left unset)
+2026-11-16 11:34:26 NST post-upsert dash flag=true VITE_APP_LABS_BRANCH=demo/labs-presentation ANALYST_VIEWS_UNSET=True
+2026-11-16 11:34:27 NST deploy dash fcb2408e-3cac-4e23-a2fa-9418c4113697 sha=a6bb6b591e683384e943e71da971eaa121fa772f
+2026-11-16 11:34:28 NST dash INITIALIZING events=0 last_step=None
+2026-11-16 11:34:38 NST dash BUILDING events=2 last_step=BUILD_IMAGE
+2026-11-16 11:35:31 NST dash DEPLOYING events=6 last_step=CONFIGURE_NETWORK
+2026-11-16 11:35:42 NST dash SUCCESS events=7 last_step=DRAIN_INSTANCES
+2026-11-16 11:35:42 NST dash LIVE SUCCESS
+2026-11-16 11:35:42 NST post api latest=d3a657fe-4abf-4a56-9429-766f32ccda25 status=SUCCESS sha=9f2c523bb3c37f852123668a007b34fa88e7d8f9 (expected unchanged 9f2c523 / d3a657fe-4abf-4a56-9429-766f32ccda25)
+2026-11-16 11:35:43 NST post dash flag=true VITE_APP_LABS_BRANCH=demo/labs-presentation ANALYST_VIEWS_UNSET=True
+2026-11-16 11:35:43 NST DEPLOY SUCCESS dash=fcb2408e-3cac-4e23-a2fa-9418c4113697
