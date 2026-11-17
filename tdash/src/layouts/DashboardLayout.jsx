@@ -47,10 +47,10 @@ const MobileNavLink = ({ item, activeView, isDark, pendingApprovalsCount, onNavi
             {active ? <span aria-hidden="true" data-testid="nav-active-indicator" className={cn('absolute inset-y-2 left-0 w-[3px] rounded-full', accentClasses.bar)} /> : null}
             <item.icon size={18} className={cn('shrink-0', accentClasses.text, active ? '' : 'opacity-80')} />
             <span className="leading-none">{item.label}</span>
-            <span aria-hidden="true" data-testid="nav-accent-dot" className={cn('h-1.5 w-1.5 shrink-0 rounded-full', accentClasses.bar, badge ? '' : 'ml-auto')} />
+            <span aria-hidden="true" data-testid="nav-accent-dot" className={cn('ml-auto h-1.5 w-1.5 shrink-0 rounded-full', accentClasses.bar)} />
             {badge ? (
                 <span className={cn(
-                    'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-medium text-white',
+                    'flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-medium text-white',
                     isDark ? 'bg-[#ff3366]' : 'bg-rose-500'
                 )}>
                     {badge > 9 ? '9+' : badge}

@@ -57,7 +57,7 @@ const TOOL_DEFINITIONS = [
         description: 'List transactions with event-aware filters and sorting for finance and box office review.',
         icon: CreditCard,
         accent: 'blue',
-        iconClassName: 'text-cyan-400',
+        iconClassName: 'text-[var(--section-accent)]',
     },
     {
         id: 'scanners',
@@ -65,7 +65,7 @@ const TOOL_DEFINITIONS = [
         description: 'Manage scanner devices, access, and entry logs from one operations panel.',
         icon: ScanLine,
         accent: 'amber',
-        iconClassName: 'text-amber-400',
+        iconClassName: 'text-[var(--section-accent)]',
     },
     {
         id: 'venues',
@@ -73,7 +73,7 @@ const TOOL_DEFINITIONS = [
         description: 'Maintain venue details, capacity, and location records that power event creation.',
         icon: MapPin,
         accent: 'green',
-        iconClassName: 'text-emerald-400',
+        iconClassName: 'text-[var(--section-accent)]',
     },
 ];
 
