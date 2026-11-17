@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import request from 'supertest';
 import app from '../../src/app';
 import {
@@ -107,11 +108,23 @@ describe('Promo Codes API', () => {
     });
 
     it('should fail with duplicate code', async () => {
+      const code = `DUP${randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`;
+      const created = await request(app)
+        .post('/api/v1/promo-codes')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          code,
+          discountType: 'PERCENTAGE',
+          discountValue: 20,
+          organizationId,
+        });
+      expect(created.status).toBe(201);
+
       const res = await request(app)
         .post('/api/v1/promo-codes')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          code: 'SUMMER20',
+          code,
           discountType: 'PERCENTAGE',
           discountValue: 20,
           organizationId,
@@ -164,13 +177,25 @@ describe('Promo Codes API', () => {
 
   describe('GET /api/v1/promo-codes/:id', () => {
     it('should get promo code by ID', async () => {
+      const created = await request(app)
+        .post('/api/v1/promo-codes')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          code: `GET${randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()}`,
+          discountType: 'PERCENTAGE',
+          discountValue: 20,
+          organizationId,
+        });
+      expect(created.status).toBe(201);
+      const id = created.body.data.id;
+
       const res = await request(app)
-        .get(`/api/v1/promo-codes/${promoCodeId}`)
+        .get(`/api/v1/promo-codes/${id}`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.id).toBe(promoCodeId);
+      expect(res.body.data.id).toBe(id);
       expect(res.body.data).toHaveProperty('organization');
     });
 
@@ -183,7 +208,9 @@ describe('Promo Codes API', () => {
     });
 
     it('should fail without authentication', async () => {
-      const res = await request(app).get(`/api/v1/promo-codes/${promoCodeId}`);
+      const res = await request(app).get(
+        `/api/v1/promo-codes/${promoCodeId || '00000000-0000-0000-0000-000000000000'}`
+      );
 
       expect(res.status).toBe(401);
     });
