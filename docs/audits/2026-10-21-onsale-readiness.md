@@ -1,5 +1,7 @@
 # Onsale readiness audit
 
+> **HISTORICAL / BACKLOGGED (Daniel, Nov 9):** ticket-sales and onsale readiness work is paused until further notice. The Oct 21 findings below are a dated audit, not a current go-live plan.
+
 Assessed October 21, 2026, America/St_Johns. Source baseline: `87bbad00da8ee2e6ddddd2658b743103cf2bc467`.
 Target: onsale ASAP. This assessment does not set a calendar deadline.
 Owner: Daniel Chapman. Audit owner: this local Codex chat. Single business per deployment.

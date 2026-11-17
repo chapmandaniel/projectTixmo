@@ -108,6 +108,14 @@ const snapshot = () =>
 const withoutCipher = (rows: Awaited<ReturnType<typeof snapshot>>) =>
   rows.map(({ tokenCiphertext: _cipher, ...row }) => row);
 async function resetOwned() {
+  safe();
+  await prisma.assetLibraryFolderShareFolder.deleteMany({
+    where: { shareId: { in: [...hashOnlyShares, ...diagnosticShares] } },
+  });
+  safe();
+  await prisma.assetLibraryFolderShare.deleteMany({
+    where: { id: { in: [...hashOnlyShares, ...diagnosticShares] } },
+  });
   for (let i = 0; i < shares.length; i++) {
     safe();
     await prisma.assetLibraryFolderShare.update({
@@ -235,6 +243,7 @@ afterAll(async () => {
 owned(
   'audit is read-only; mixed-version apply preserves every metadata field, scope and actual staff/public URL',
   async () => {
+    await resetOwned();
     const before = await snapshot();
     const links = await assetLibraryService.listFolderShares(
       ids.user,
