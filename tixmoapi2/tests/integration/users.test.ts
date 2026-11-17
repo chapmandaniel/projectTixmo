@@ -188,14 +188,19 @@ describe('Users Routes', () => {
     });
 
     it('should allow admin to delete user', async () => {
+      const deletable = await registerUser(app, {
+        email: `users-delete-${Date.now()}@test.com`,
+        firstName: 'Deletable',
+        lastName: 'User',
+      });
       const res = await request(app)
-        .delete(`/api/v1/users/${otherUser.id}`)
+        .delete(`/api/v1/users/${deletable.user.id}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(res.status).toBe(204);
 
       // Verify soft deletion
-      const check = await prisma.user.findUnique({ where: { id: otherUser.id } });
+      const check = await prisma.user.findUnique({ where: { id: deletable.user.id } });
       expect(check).not.toBeNull();
       expect(check?.email).toContain('deleted_');
       expect(check?.firstName).toBe('Deleted');

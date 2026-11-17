@@ -44,9 +44,14 @@ let receiveResetLink;
 const resetLink = new Promise((resolve) => {
   receiveResetLink = resolve;
 });
+let receivePortReleased;
+const portReleased = new Promise((resolve) => {
+  receivePortReleased = resolve;
+});
 process.on("message", (message) => {
   if (typeof message?.resetLink === "string" && message.resetLink.length < 4096)
     receiveResetLink(message.resetLink);
+  if (message?.portReleased === true) receivePortReleased();
 });
 const pids = [],
   audit = [],
@@ -63,11 +68,19 @@ async function stopped(child) {
     try {
       await deadline(closed, 3000);
     } catch {
-      child.kill("SIGTERM");
+      try {
+        child.kill("SIGTERM");
+      } catch (error) {
+        if (error.code !== "ESRCH") throw error;
+      }
       try {
         await deadline(closed, 2000);
       } catch {
-        process.kill(-child.pid, "SIGKILL");
+        try {
+          process.kill(-child.pid, "SIGKILL");
+        } catch (error) {
+          if (error.code !== "ESRCH") throw error;
+        }
         await deadline(closed, 3000);
       }
     }
@@ -84,7 +97,12 @@ async function stopped(child) {
   // Chrome owns a fresh detached process group; reap descendants even if its leader exited.
   for (const signal of ["SIGTERM", "SIGKILL"]) {
     if (!groupExists()) break;
-    process.kill(-child.pid, signal);
+    try {
+      process.kill(-child.pid, signal);
+    } catch (error) {
+      if (error.code !== "ESRCH") throw error;
+      break;
+    }
     for (let poll = 0; poll < 30 && groupExists(); poll++)
       await new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -111,7 +129,7 @@ async function closeBrowser() {
   browser = undefined;
   ws = undefined;
   send = undefined;
-  await deadline(Promise.all([...requestHandlers]), 5000);
+  await deadline(Promise.allSettled([...requestHandlers]), 5000);
   if (debugPort) {
     await assert.rejects(
       fetch(`http://127.0.0.1:${debugPort}/json/list`, {
@@ -173,6 +191,7 @@ async function openBrowser() {
       "--headless",
       "--no-sandbox",
       "--disable-gpu",
+      "--disable-dev-shm-usage",
       "--disable-background-networking",
       "--disable-component-update",
       "--disable-breakpad",
@@ -346,6 +365,15 @@ try {
   mark(2);
   await build(buildConfig);
   mark(3);
+  await deadline(
+    new Promise((resolve, reject) =>
+      process.send({ releasePort: true }, (error) =>
+        error ? reject(error) : resolve(),
+      ),
+    ),
+    5000,
+  );
+  await deadline(portReleased, 10000);
   vite = await preview({
     ...buildConfig,
     preview: {
@@ -357,6 +385,24 @@ try {
     },
   });
   origin = `http://127.0.0.1:${frontendPort}`;
+  await deadline(
+    (async () => {
+      for (let i = 0; i < 50; i++) {
+        try {
+          const response = await fetch(origin + "/wallet", {
+            redirect: "manual",
+            signal: AbortSignal.timeout(500),
+          });
+          if (response.status >= 200 && response.status < 500) return;
+        } catch {
+          /* preview has not accepted yet */
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      throw new BrowserDeadline();
+    })(),
+    8000,
+  );
   mark(4);
   await openBrowser();
   phase(8); // first navigation
@@ -393,6 +439,15 @@ try {
   await send("Page.navigate", { url: origin + "/wallet" });
   await wait(text(fixture.orderNumber));
   mark(8);
+  // Reopen/confirmed-return already proved session continuity. Mint a fresh 10s
+  // access token so native expiry is measured from this point, not from login
+  // several Chrome lifetimes earlier (that gap exceeds 10s under suite load).
+  assert.equal(
+    await evaluate(
+      `fetch('/api/v1/auth/refresh',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({refreshToken:localStorage.getItem('refresh_token')})}).then(async r=>{if(!r.ok)throw Error('refresh');const d=await r.json();localStorage.setItem('access_token',d.data.accessToken);if(d.data.refreshToken)localStorage.setItem('refresh_token',d.data.refreshToken);return true})`,
+    ),
+    true,
+  );
   const issued = await decode(),
     wallStart = Date.now(),
     monotonicStart = performance.now();
@@ -519,6 +574,12 @@ try {
   await login("a", fixture.newPassword);
   await wait(text(fixture.orderNumber));
   assert.equal((await decode()).userId, owner);
+  assert.equal(
+    await evaluate(
+      `fetch('/api/v1/auth/refresh',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({refreshToken:localStorage.getItem('refresh_token')})}).then(async r=>{if(!r.ok)throw Error('refresh');const d=await r.json();localStorage.setItem('access_token',d.data.accessToken);if(d.data.refreshToken)localStorage.setItem('refresh_token',d.data.refreshToken);return true})`,
+    ),
+    true,
+  );
   await click("Show ticket");
   await wait(`!!document.querySelector('img[alt="Ticket admission QR code"]')`);
   assert.match(

@@ -68,20 +68,21 @@ describe('Notification preferences', () => {
   };
 
   it('creates and returns default preferences for a new user on first view', async () => {
+    const firstViewUser = await registerUser(app, { email: `${key}-first-view@test.invalid` });
     const before = await prisma.notificationPreference.findUnique({
-      where: { userId: userA.user.id },
+      where: { userId: firstViewUser.user.id },
     });
     expect(before).toBeNull();
 
-    const response = await getPrefs(userA.accessToken);
+    const response = await getPrefs(firstViewUser.accessToken);
 
     expect(response.status).toBe(200);
-    expectPreferenceShape(response.body, DEFAULT_PREFERENCES, userA.user.id);
+    expectPreferenceShape(response.body, DEFAULT_PREFERENCES, firstViewUser.user.id);
 
     const stored = await prisma.notificationPreference.findUniqueOrThrow({
-      where: { userId: userA.user.id },
+      where: { userId: firstViewUser.user.id },
     });
-    expect(stored).toMatchObject({ userId: userA.user.id, ...DEFAULT_PREFERENCES });
+    expect(stored).toMatchObject({ userId: firstViewUser.user.id, ...DEFAULT_PREFERENCES });
   });
 
   it.each(PREFERENCE_FIELDS)(
@@ -120,14 +121,15 @@ describe('Notification preferences', () => {
   });
 
   it('creates defaults for a second new user without inheriting another user’s saved prefs', async () => {
+    const secondUser = await registerUser(app, { email: `${key}-second-view@test.invalid` });
     const before = await prisma.notificationPreference.findUnique({
-      where: { userId: userB.user.id },
+      where: { userId: secondUser.user.id },
     });
     expect(before).toBeNull();
 
-    const viewed = await getPrefs(userB.accessToken);
+    const viewed = await getPrefs(secondUser.accessToken);
     expect(viewed.status).toBe(200);
-    expectPreferenceShape(viewed.body, DEFAULT_PREFERENCES, userB.user.id);
+    expectPreferenceShape(viewed.body, DEFAULT_PREFERENCES, secondUser.user.id);
     expect(viewed.body.data.userId).not.toBe(userA.user.id);
   });
 
@@ -189,6 +191,8 @@ describe('Notification preferences', () => {
   });
 
   it('rejects a non-boolean preference value', async () => {
+    const seeded = await getPrefs(userA.accessToken);
+    expect(seeded.status).toBe(200);
     const before = await prisma.notificationPreference.findUniqueOrThrow({
       where: { userId: userA.user.id },
     });

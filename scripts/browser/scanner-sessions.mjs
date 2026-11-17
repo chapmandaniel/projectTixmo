@@ -71,8 +71,13 @@ let revoked;
 const revocation = new Promise((resolve) => {
   revoked = resolve;
 });
+let portReleased;
+const portReleasedGate = new Promise((resolve) => {
+  portReleased = resolve;
+});
 process.on("message", (message) => {
   if (message?.revoked === true) revoked();
+  if (message?.portReleased === true) portReleased();
 });
 async function sendIpc(value) {
   await bounded(
@@ -208,6 +213,7 @@ async function open(index) {
       "--headless",
       "--no-sandbox",
       "--disable-gpu",
+      "--disable-dev-shm-usage",
       "--disable-background-networking",
       "--disable-component-update",
       "--disable-breakpad",
@@ -239,7 +245,15 @@ async function open(index) {
   assert.equal(debug.protocol, "ws:");
   assert.equal(debug.hostname, "127.0.0.1");
   record.debugOrigin = "http://" + debug.host;
-  const targets = await listDevToolsPages(record.debugOrigin);
+  let targets;
+  try {
+    targets = await listDevToolsPages(record.debugOrigin);
+  } catch (error) {
+    if (error instanceof Deadline) throw error;
+    if (error && (error.name === "TimeoutError" || error.name === "AbortError"))
+      throw new Deadline();
+    throw error;
+  }
   const target = new URL(
     targets.find((row) => row.type === "page").webSocketDebuggerUrl,
   );
@@ -396,6 +410,10 @@ try {
   };
   await build(config);
   mark(2);
+  // Parent held this port during the production build so listen(0) could not
+  // steal it. Release immediately before preview so TIME_WAIT is not minutes old.
+  await sendIpc({ releasePort: true });
+  await bounded(portReleasedGate, 10000);
   vite = await preview({
     ...config,
     preview: {
@@ -406,6 +424,24 @@ try {
       proxy: { "/api": { target: api.origin, changeOrigin: true } },
     },
   });
+  await bounded(
+    (async () => {
+      for (let i = 0; i < 50; i++) {
+        try {
+          const response = await fetch(origin + "/scan", {
+            redirect: "manual",
+            signal: AbortSignal.timeout(500),
+          });
+          if (response.status >= 200 && response.status < 500) return;
+        } catch {
+          /* preview has not accepted yet */
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      throw new Deadline();
+    })(),
+    8000,
+  );
   const a = await open(0),
     b = await open(1);
   mark(3);
