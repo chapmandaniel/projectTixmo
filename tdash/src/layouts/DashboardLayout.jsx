@@ -11,6 +11,7 @@ import api from '../lib/api';
 import { Link } from 'react-router-dom';
 import { DashboardIconButton } from '../components/dashboard/DashboardPrimitives';
 import { cn } from '../lib/utils';
+import { accentClasses } from '../lib/brandAccent';
 
 const navItems = [
     { id: 'dashboard', icon: Home, label: 'Home' },
@@ -37,12 +38,12 @@ const MobileNavLink = ({ item, activeView, isDark, pendingApprovalsCount, onNavi
             className={cn(
                 'flex min-h-11 shrink-0 items-center gap-3 rounded-[10px] px-3.5 text-sm font-light',
                 active
-                    ? (isDark ? 'bg-[#2a2b40] text-white' : 'bg-slate-900 text-white shadow-sm')
+                    ? (isDark ? cn(accentClasses.tintStrong, 'text-white') : cn(accentClasses.bar, 'text-white shadow-sm'))
                     : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
             )}
             aria-current={active ? 'page' : undefined}
         >
-            <item.icon size={18} className="shrink-0" />
+            <item.icon size={18} className={cn('shrink-0', active && isDark && accentClasses.text)} />
             <span className="leading-none">{item.label}</span>
             {badge ? (
                 <span className={cn(
@@ -66,14 +67,14 @@ const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
             className={cn(
                 'group relative flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-2 text-sm font-light transition-all duration-200 min-[1600px]:gap-2 min-[1600px]:px-2.5',
                 active
-                    ? (isDark ? 'bg-[#2a2b40] text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-slate-900 text-white shadow-sm')
+                    ? (isDark ? cn(accentClasses.tintStrong, 'text-white') : cn(accentClasses.bar, 'text-white shadow-sm'))
                     : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
             )}
             aria-current={active ? 'page' : undefined}
         >
             {/* Demo build: icons only from 1440px (tighter padding below 1600px) so every tab, including ScamSwarm, fits on a 1280-1440px presentation screen. */}
             <div className="relative hidden items-center justify-center min-[1440px]:flex">
-                <item.icon size={18} className={cn('shrink-0', active ? 'drop-shadow-sm' : '')} />
+                <item.icon size={18} className={cn('shrink-0', active ? cn('drop-shadow-sm', isDark && accentClasses.text) : '')} />
             </div>
             <span className="whitespace-nowrap leading-none">{item.label}</span>
             {badge ? (
@@ -243,7 +244,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
     const scrollContainerRef = React.useRef(null);
 
     return (
-        <div className={cn('min-h-screen flex flex-col transition-colors duration-300', isDark ? 'bg-[#151521] text-zinc-100 selection:bg-[#ff3366]/30' : 'bg-[#f5f6fa] text-slate-900 selection:bg-slate-200')}>
+        <div className={cn('min-h-screen flex flex-col transition-colors duration-300', isDark ? 'bg-[#151521] text-zinc-100 selection:bg-[rgb(var(--brand-accent-rgb)/0.3)]' : 'bg-[#f5f6fa] text-slate-900 selection:bg-slate-200')}>
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -344,8 +345,8 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                                                 )}
                                             >
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <span className={`text-sm font-light ${isDark ? 'text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-orange-400' : 'text-indigo-600'}`}>{n.subject}</span>
-                                                    {!n.readAt && <span className="w-2 h-2 rounded-full bg-fuchsia-500 mt-1 shadow-sm shadow-fuchsia-500/50"></span>}
+                                                    <span className={`text-sm font-light ${isDark ? 'text-[var(--brand-accent-soft)]' : 'text-indigo-600'}`}>{n.subject}</span>
+                                                    {!n.readAt && <span className="w-2 h-2 rounded-full bg-[var(--brand-accent)] mt-1 shadow-sm shadow-black/30"></span>}
                                                 </div>
                                                 <p className={cn('text-xs mb-2 leading-relaxed font-light', isDark ? 'text-[#a1a5b7]' : 'text-slate-600')}>{n.message}</p>
                                                 <span className={cn('text-[10px] uppercase tracking-wider font-light', isDark ? 'text-[#5e6278]' : 'text-slate-400')}>

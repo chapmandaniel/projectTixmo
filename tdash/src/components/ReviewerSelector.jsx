@@ -70,7 +70,7 @@ const ReviewerSelector = ({
         const styles = {
             APPROVED: 'bg-green-500/20 text-green-400',
             REJECTED: 'bg-red-500/20 text-red-400',
-            CHANGES_REQUESTED: 'bg-orange-500/20 text-orange-400',
+            CHANGES_REQUESTED: 'bg-[rgb(var(--brand-accent-rgb)/0.2)] text-[var(--brand-accent-soft)]',
         };
         const labels = {
             APPROVED: 'Approved',
@@ -151,7 +151,7 @@ const ReviewerSelector = ({
                                     className={`w-full pl-10 pr-4 py-2.5 rounded-lg border ${isDark
                                             ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-600'
                                             : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
-                                        } focus:outline-hidden focus:ring-2 focus:ring-indigo-500`}
+                                        } focus:outline-hidden focus:ring-2 focus:ring-[rgb(var(--brand-accent-rgb)/1)]`}
                                 />
                             </div>
                         </div>
@@ -168,7 +168,7 @@ const ReviewerSelector = ({
                                     className={`w-full pl-10 pr-4 py-2.5 rounded-lg border ${isDark
                                             ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-600'
                                             : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
-                                        } focus:outline-hidden focus:ring-2 focus:ring-indigo-500`}
+                                        } focus:outline-hidden focus:ring-2 focus:ring-[rgb(var(--brand-accent-rgb)/1)]`}
                                 />
                             </div>
                         </div>

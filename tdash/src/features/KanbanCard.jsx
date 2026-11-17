@@ -75,7 +75,7 @@ const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact, users = [] })
             className={`group relative p-4 rounded-md mb-3 cursor-grab active:cursor-grabbing transition-all border ${isDark ? 'bg-[#151521] border-[#2b2b40]/60 hover:border-[#3a3a5a] hover:bg-[#232336] shadow-sm' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
         >
             <div className="flex justify-between items-start mb-3">
-                <span className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-widest font-medium ${isDark ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded uppercase tracking-widest font-medium ${isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.1)] text-[var(--brand-accent-soft)] border border-[rgb(var(--brand-accent-rgb)/0.2)]' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'}`}>
                     {item.tag}
                 </span>
                 <button
@@ -92,7 +92,7 @@ const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact, users = [] })
             {(item.eventName || due) && (
                 <div className="-mt-2 mb-3 flex flex-wrap items-center gap-1.5 text-[11px] font-light" data-testid="kanban-card-meta">
                     {item.eventName && (
-                        <span className={`max-w-full truncate rounded px-1.5 py-0.5 ${isDark ? 'bg-pink-500/10 text-pink-300' : 'bg-pink-50 text-pink-700'}`}>{item.eventName}</span>
+                        <span className={`max-w-full truncate rounded px-1.5 py-0.5 ${isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.14)] text-[var(--brand-accent-soft)]' : 'bg-pink-50 text-pink-700'}`}>{item.eventName}</span>
                     )}
                     {due && (
                         <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${dueTone[due.tone]}`}>

@@ -36,12 +36,12 @@ const ConfirmationModal = ({
         warning: {
             icon: <AlertTriangle className="w-6 h-6 text-orange-500" />,
             buttonConfirm: 'bg-orange-600 hover:bg-orange-700 text-white',
-            bgIcon: 'bg-orange-500/10'
+            bgIcon: 'bg-[rgb(var(--brand-accent-rgb)/0.1)]'
         },
         info: {
             icon: <Info className="w-6 h-6 text-blue-500" />,
             buttonConfirm: 'bg-blue-600 hover:bg-blue-700 text-white',
-            bgIcon: 'bg-blue-500/10'
+            bgIcon: 'bg-[rgb(var(--brand-accent-rgb)/0.1)]'
         },
         success: {
             icon: <CheckCircle className="w-6 h-6 text-green-500" />,

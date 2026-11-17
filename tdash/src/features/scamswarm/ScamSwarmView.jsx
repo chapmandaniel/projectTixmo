@@ -15,6 +15,7 @@ import {
 import { MooseChat } from '../../components/dashboard/MooseChat';
 import { getDashboardTheme } from '../../lib/dashboardTheme';
 import { cn } from '../../lib/utils';
+import { accentClasses } from '../../lib/brandAccent';
 import {
     ASSIGNEES,
     OFFICIAL,
@@ -63,11 +64,8 @@ const verdictBar = (verdict) => {
     return 'bg-emerald-400';
 };
 
-const mediaTone = (verdict) => {
-    if (verdict === 'scam') return 'from-rose-500/40 via-fuchsia-500/30 to-orange-400/30';
-    if (verdict === 'attention') return 'from-amber-400/40 via-orange-500/25 to-pink-500/25';
-    return 'from-sky-500/35 via-cyan-500/25 to-emerald-500/30';
-};
+// T143: captures share one purple-led look; the verdict pill carries the meaning.
+const mediaTone = () => 'from-purple-600/45 via-violet-700/30 to-zinc-900/40';
 
 export const VerdictPill = ({ verdict, isDark, className }) => (
     <span
@@ -165,8 +163,8 @@ export const PreviewCard = ({ finding, isDark, compact = false }) => {
 
 const KpiTile = ({ isDark, label, value, detail, tone, icon: Icon, testId, onClick, active }) => {
     const theme = getDashboardTheme(isDark);
-    const accent = tone === 'scam' ? 'brand' : tone === 'attention' ? 'amber' : tone === 'safe' ? 'green' : 'blue';
-    const iconTone = tone === 'scam' ? 'text-rose-400' : tone === 'attention' ? 'text-amber-300' : tone === 'safe' ? 'text-emerald-400' : 'text-sky-300';
+    const accent = 'brand';
+    const iconTone = tone === 'scam' ? 'text-rose-400' : tone === 'attention' ? 'text-amber-300' : tone === 'safe' ? 'text-emerald-400' : accentClasses.text;
     return (
         <DashboardSurface
             as="button"
@@ -225,7 +223,7 @@ const DraftBox = ({ isDark, label, text, testId }) => {
 };
 
 const DemoNote = ({ isDark, children }) => (
-    <p className={cn('rounded-md border px-3 py-2 text-[11px] font-light', isDark ? 'border-sky-400/20 bg-sky-400/10 text-sky-200' : 'border-sky-200 bg-sky-50 text-sky-800')}>
+    <p className={cn('rounded-md border px-3 py-2 text-[11px] font-light', isDark ? cn(accentClasses.border, accentClasses.tint, 'text-zinc-200') : 'border-purple-200 bg-purple-50 text-purple-800')}>
         {children}
     </p>
 );
@@ -474,10 +472,8 @@ const ScamSwarmView = ({ isDark = true }) => {
                 isDark={isDark}
                 title="ScamSwarm"
                 icon={Radar}
-                iconClassName="text-rose-400"
+                iconClassName={accentClasses.text}
                 description="Watches the internet outside Tixmo for fake giveaways, impersonator profiles, resale scams, look-alike pages and counterfeit listings that use Northlight Live's events, then scores each one so you know what to act on."
-                glowTopClassName="bg-rose-500/10"
-                glowBottomClassName="bg-amber-400/10"
                 badges={(
                     <>
                         <DashboardChip isDark={isDark}>Mock data</DashboardChip>

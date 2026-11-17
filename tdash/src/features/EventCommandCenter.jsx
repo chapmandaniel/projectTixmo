@@ -134,7 +134,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                         </button>
 
                         <div className="flex min-w-0 flex-col overflow-hidden">
-                            <h2 className={`text-xl sm:text-2xl tracking-tight truncate font-normal ${isDark ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-orange-400' : 'text-indigo-600'}`}>
+                            <h2 className={`text-xl sm:text-2xl tracking-tight truncate font-normal ${isDark ? 'text-[var(--brand-accent-soft)]' : 'text-indigo-600'}`}>
                                 {eventName}
                             </h2>
                             <div className={`mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-wide sm:text-xs ${isDark ? 'text-dashboard-muted' : 'text-gray-500'}`}>
@@ -238,10 +238,10 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
                                     `}
                                     title={!isSidebarOpen ? item.label : ''}
                                 >
-                                    <Icon size={18} className={`${isSidebarOpen ? 'mr-3' : 'lg:mx-auto'} ${isActive && isDark ? 'text-pink-500' : ''}`} />
+                                    <Icon size={18} className={`${isSidebarOpen ? 'mr-3' : 'lg:mx-auto'} ${isActive && isDark ? 'text-[var(--brand-accent-soft)]' : ''}`} />
                                     <span className={`${isSidebarOpen ? 'inline' : 'lg:hidden'} text-sm font-light tracking-wide`}>{item.label}</span>
                                     {isActive && (
-                                        <div className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-md bg-gradient-to-r from-pink-500 to-orange-400 lg:inset-x-auto lg:bottom-0 lg:left-0 lg:top-0 lg:h-auto lg:w-[4px] lg:rounded-r-md lg:bg-gradient-to-b"></div>
+                                        <div className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-md bg-[var(--brand-accent)] lg:inset-x-auto lg:bottom-0 lg:left-0 lg:top-0 lg:h-auto lg:w-[4px] lg:rounded-r-md lg:bg-gradient-to-b"></div>
                                     )}
                                 </button>
                             );

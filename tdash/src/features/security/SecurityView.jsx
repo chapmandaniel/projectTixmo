@@ -13,6 +13,7 @@ import { cn } from '../../lib/utils';
 import { MooseChat } from '../../components/dashboard/MooseChat';
 import { buildSecurityReport, relativeTime } from './securityReport';
 import { answerMooseQuestion, SUGGESTED_QUESTIONS as MOOSE_QUESTIONS } from './securityMooseAnswers';
+import { accentClasses } from '../../lib/brandAccent';
 
 const formatCount = (value) => new Intl.NumberFormat('en-CA').format(value);
 
@@ -35,7 +36,7 @@ const HealthyPill = ({ isDark, label = 'Healthy', className }) => (
 const SoftPill = ({ isDark, tone = 'ok', children, className }) => {
     const tones = {
         ok: isDark ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700',
-        info: isDark ? 'border-sky-400/30 bg-sky-400/10 text-sky-300' : 'border-sky-200 bg-sky-50 text-sky-700',
+        info: isDark ? 'border-[rgb(var(--brand-accent-rgb)/0.3)] bg-[rgb(var(--brand-accent-rgb)/0.1)] text-[var(--brand-accent-soft)]' : 'border-sky-200 bg-sky-50 text-sky-700',
         recommended: isDark ? 'border-amber-400/30 bg-amber-400/10 text-amber-200' : 'border-amber-200 bg-amber-50 text-amber-800',
         muted: isDark ? 'border-white/10 bg-white/5 text-zinc-300' : 'border-slate-200 bg-slate-100 text-slate-600',
     };
@@ -76,8 +77,8 @@ const KpiTile = ({ isDark, icon: Icon, label, value, detail, testId }) => {
 };
 
 const toneStyles = (tone, isDark) => {
-    if (tone === 'protected') return isDark ? 'bg-sky-400/10 text-sky-300' : 'bg-sky-50 text-sky-700';
-    if (tone === 'reviewed') return isDark ? 'bg-sky-400/10 text-sky-300' : 'bg-sky-50 text-sky-700';
+    if (tone === 'protected') return isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.1)] text-[var(--brand-accent-soft)]' : 'bg-sky-50 text-sky-700';
+    if (tone === 'reviewed') return isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.1)] text-[var(--brand-accent-soft)]' : 'bg-sky-50 text-sky-700';
     return isDark ? 'bg-emerald-400/10 text-emerald-300' : 'bg-emerald-50 text-emerald-700';
 };
 
@@ -118,10 +119,8 @@ const SecurityView = ({ isDark = true, now: fixedNow }) => {
                 isDark={isDark}
                 title="Security"
                 icon={ShieldCheck}
-                iconClassName="text-emerald-400"
+                iconClassName={accentClasses.text}
                 description="A plain-language look at Northlight Live's own event pages, team dashboard, checkout and door devices — so you can see that your platforms are safe."
-                glowTopClassName="bg-emerald-500/10"
-                glowBottomClassName="bg-cyan-400/10"
                 badges={(
                     <>
                         <HealthyPill isDark={isDark} label="Your platforms look safe" className="px-3 text-xs" />

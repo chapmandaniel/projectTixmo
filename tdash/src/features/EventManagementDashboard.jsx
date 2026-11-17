@@ -50,7 +50,7 @@ const EventManagementDashboard = ({ isDark, user }) => {
     if (isLoading) {
         return (
             <div className="flex justify-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--brand-accent)]"></div>
             </div>
         );
     }

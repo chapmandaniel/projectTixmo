@@ -99,7 +99,7 @@ export const ContentView = ({ isDark, dashboard, href }) => {
                             <p className={theme.textPrimary}>{item.label}</p>
                             <p className={cn('mt-1 text-xs', theme.textMuted)}>{item.posts} posts · {item.networks.join(', ')}</p>
                             <p className={cn('mt-3 text-sm', theme.textSecondary)}>{formatNumber(item.interactions)} interactions · typical {formatPercent(item.typicalRate)}</p>
-                            <Link to={href(`posts?theme=${encodeURIComponent(item.id)}`)} className="mt-2 inline-block text-sm text-pink-400">Open posts</Link>
+                            <Link to={href(`posts?theme=${encodeURIComponent(item.id)}`)} className="mt-2 inline-block text-sm text-[var(--brand-accent-soft)]">Open posts</Link>
                         </div>
                     ))}
                 </div>

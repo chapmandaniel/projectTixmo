@@ -6,6 +6,7 @@ import KanbanCard from './KanbanCard';
 import api from '../lib/api';
 import { auth } from '../lib/auth';
 import { DashboardSelect, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
+import { accentClasses } from '../lib/brandAccent';
 
 const STATUS_MAP = {
     'TO_DO': 'todo',
@@ -216,11 +217,12 @@ const TodoView = ({ isDark, user }) => {
         }
     };
 
-    const COLUMN_GRADIENTS = {
-        todo: 'from-pink-500 to-orange-400',
-        inProgress: 'from-cyan-400 to-blue-500',
-        review: 'from-fuchsia-500 to-purple-600',
-        done: 'from-emerald-400 to-teal-500'
+    // T135: columns share the Tasks accent; Done keeps semantic green.
+    const COLUMN_ACCENTS = {
+        todo: accentClasses.bar,
+        inProgress: accentClasses.bar,
+        review: accentClasses.bar,
+        done: 'bg-emerald-400'
     };
 
     return (
@@ -252,14 +254,14 @@ const TodoView = ({ isDark, user }) => {
                 isDark={isDark}
                 title="Task Manager"
                 icon={ListTodo}
-                iconClassName={isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}
+                iconClassName={isDark ? 'text-[var(--brand-accent-soft)]' : 'text-fuchsia-700'}
                 className="shrink-0"
                 bodyClassName="sm:flex-row sm:items-center sm:justify-between"
                 actions={(
                     <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className={`flex items-center justify-center space-x-2 px-4 py-2 text-sm font-normal rounded-md transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
+                            className={`flex items-center justify-center space-x-2 px-4 py-2 text-sm font-normal rounded-md transition-all shadow-lg ${isDark ? 'bg-[var(--brand-accent)] text-white hover:brightness-110 shadow-black/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
                         >
                             <Plus size={16} />
                             <span>Create Task</span>
@@ -284,7 +286,7 @@ const TodoView = ({ isDark, user }) => {
                         onDrop={(e) => handleDrop(e, colId)}
                         className={`relative h-full flex-shrink-0 w-72 lg:flex-1 min-w-[280px] rounded-md p-4 flex flex-col transition-all border overflow-hidden ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 shadow-lg shadow-black/20' : 'bg-gray-50 border-gray-200/60'}`}
                     >
-                        <div className={`absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r ${COLUMN_GRADIENTS[colId]} opacity-70`}></div>
+                        <div className={`absolute top-0 left-0 w-full h-[3px] ${COLUMN_ACCENTS[colId]} opacity-80`}></div>
 
                         <div className="flex justify-between items-center mb-4 z-10 pt-1">
                             <div className="flex items-center space-x-2">

@@ -193,13 +193,13 @@ const TeamMemberWizard = ({ onClose, onSuccess, isDark, currentUser }) => {
                             return (
                                 <div key={s.number} className="flex flex-col items-center bg-inherit px-2 z-10 space-y-2">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${isActive
-                                            ? (isDark ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50' : 'bg-indigo-600 text-white shadow-lg shadow-indigo-200')
+                                            ? (isDark ? 'bg-indigo-600 text-white shadow-lg shadow-black/20' : 'bg-indigo-600 text-white shadow-lg shadow-black/20')
                                             : (isDark ? 'bg-[#333] text-gray-500' : 'bg-white border-2 border-gray-200 text-gray-400')
                                         }`}>
                                         <Icon size={18} />
                                     </div>
                                     <span className={`text-xs font-medium transition-colors ${isCurrent
-                                            ? (isDark ? 'text-indigo-400' : 'text-indigo-600')
+                                            ? (isDark ? 'text-[var(--brand-accent-soft)]' : 'text-indigo-600')
                                             : (isActive ? (isDark ? 'text-gray-300' : 'text-gray-600') : (isDark ? 'text-gray-600' : 'text-gray-400'))
                                         }`}>{s.title}</span>
                                 </div>
@@ -268,12 +268,12 @@ const TeamMemberWizard = ({ onClose, onSuccess, isDark, currentUser }) => {
                                         key={role.id}
                                         onClick={() => setFormData(prev => ({ ...prev, role: role.id }))}
                                         className={`cursor-pointer p-4 rounded-xl border-2 transition-all ${formData.role === role.id
-                                                ? (isDark ? 'border-indigo-500 bg-indigo-500/10' : 'border-indigo-600 bg-indigo-50')
+                                                ? (isDark ? 'border-[var(--brand-accent)] bg-[rgb(var(--brand-accent-rgb)/0.1)]' : 'border-indigo-600 bg-indigo-50')
                                                 : (isDark ? 'border-[#333] hover:border-gray-600' : 'border-gray-200 hover:border-gray-300')
                                             }`}
                                     >
                                         <div className={`mb-3 w-8 h-8 rounded-lg flex items-center justify-center ${formData.role === role.id
-                                                ? (isDark ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white')
+                                                ? (isDark ? 'bg-[var(--brand-accent)] text-white' : 'bg-indigo-600 text-white')
                                                 : (isDark ? 'bg-[#333] text-gray-400' : 'bg-gray-100 text-gray-500')
                                             }`}>
                                             <role.icon size={16} />
@@ -316,13 +316,13 @@ const TeamMemberWizard = ({ onClose, onSuccess, isDark, currentUser }) => {
 
                     {step === 3 && (
                         <div className="space-y-6 animate-fade-in-up">
-                            <div className={`p-6 rounded-xl flex items-center space-x-4 ${isDark ? 'bg-indigo-500/10 border border-indigo-500/20' : 'bg-indigo-50 border border-indigo-100'}`}>
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white'}`}>
+                            <div className={`p-6 rounded-xl flex items-center space-x-4 ${isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.1)] border border-[rgb(var(--brand-accent-rgb)/0.2)]' : 'bg-indigo-50 border border-indigo-100'}`}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[var(--brand-accent)] text-white' : 'bg-indigo-600 text-white'}`}>
                                     <User size={24} />
                                 </div>
                                 <div>
                                     <h3 className={`text-lg font-medium ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>{formData.firstName} {formData.lastName}</h3>
-                                    <p className={`text-sm ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>{formData.title || formData.role.replace('_', ' ')} • {formData.email}</p>
+                                    <p className={`text-sm ${isDark ? 'text-[var(--brand-accent-soft)]' : 'text-indigo-600'}`}>{formData.title || formData.role.replace('_', ' ')} • {formData.email}</p>
                                 </div>
                             </div>
 
@@ -376,8 +376,8 @@ const TeamMemberWizard = ({ onClose, onSuccess, isDark, currentUser }) => {
                         onClick={step === 3 ? handleSubmit : nextStep}
                         disabled={loading}
                         className={`px-8 py-2.5 rounded-xl text-sm font-medium flex items-center shadow-lg transition-all ${isDark
-                                ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20'
-                                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'
+                                ? 'bg-indigo-600 hover:bg-[var(--brand-accent)] text-white shadow-black/20'
+                                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-black/20'
                             }`}
                     >
                         {loading ? (

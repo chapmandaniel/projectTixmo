@@ -114,7 +114,7 @@ const TicketBuilder = ({ tickets, onChange, isDark, onTierDelete }) => {
                                     <div className="flex items-center space-x-2">
                                         <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{ticket.name}</p>
                                         {(ticket.tiers && ticket.tiers.length > 0) && (
-                                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-500/10 text-indigo-500 font-medium">
+                                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-[rgb(var(--brand-accent-rgb)/0.1)] text-indigo-500 font-medium">
                                                 {ticket.tiers.length} Tiers
                                             </span>
                                         )}
@@ -158,7 +158,7 @@ const TicketBuilder = ({ tickets, onChange, isDark, onTierDelete }) => {
                                                     aria-label={`${tier.name || 'Tier'} name`}
                                                     value={tier.name || ''}
                                                     onChange={e => handleUpdateTier(ticket.id, tier.id, { name: e.target.value })}
-                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 focus:border-indigo-500'}`}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-[var(--brand-accent)]' : 'border-gray-300 bg-white text-gray-900 focus:border-[var(--brand-accent)]'}`}
                                                 />
                                                 <input
                                                     type="number"
@@ -167,7 +167,7 @@ const TicketBuilder = ({ tickets, onChange, isDark, onTierDelete }) => {
                                                     aria-label={`${tier.name || 'Tier'} price`}
                                                     value={tier.price || ''}
                                                     onChange={e => handleUpdateTier(ticket.id, tier.id, { price: e.target.value })}
-                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 focus:border-indigo-500'}`}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-[var(--brand-accent)]' : 'border-gray-300 bg-white text-gray-900 focus:border-[var(--brand-accent)]'}`}
                                                 />
                                                 <input
                                                     type="number"
@@ -176,7 +176,7 @@ const TicketBuilder = ({ tickets, onChange, isDark, onTierDelete }) => {
                                                     placeholder="No limit"
                                                     value={tier.quantityLimit || ''}
                                                     onChange={e => handleUpdateTier(ticket.id, tier.id, { quantityLimit: e.target.value })}
-                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 placeholder:text-dashboard-muted focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-indigo-500'}`}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 placeholder:text-dashboard-muted focus:border-[var(--brand-accent)]' : 'border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-[var(--brand-accent)]'}`}
                                                 />
                                                 <button
                                                     type="button"
@@ -193,14 +193,14 @@ const TicketBuilder = ({ tickets, onChange, isDark, onTierDelete }) => {
                                                     aria-label={`${tier.name || 'Tier'} starts at`}
                                                     value={tier.startsAt || ''}
                                                     onChange={e => handleUpdateTier(ticket.id, tier.id, { startsAt: e.target.value })}
-                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 focus:border-indigo-500'}`}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-[var(--brand-accent)]' : 'border-gray-300 bg-white text-gray-900 focus:border-[var(--brand-accent)]'}`}
                                                 />
                                                 <input
                                                     type="datetime-local"
                                                     aria-label={`${tier.name || 'Tier'} ends at`}
                                                     value={tier.endsAt || ''}
                                                     onChange={e => handleUpdateTier(ticket.id, tier.id, { endsAt: e.target.value })}
-                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-pink-400' : 'border-gray-300 bg-white text-gray-900 focus:border-indigo-500'}`}
+                                                    className={`w-full rounded border px-2 py-1.5 text-xs outline-hidden transition ${isDark ? 'border-dashboard-borderStrong bg-dashboard-panel text-zinc-100 focus:border-[var(--brand-accent)]' : 'border-gray-300 bg-white text-gray-900 focus:border-[var(--brand-accent)]'}`}
                                                 />
                                             </div>
                                         </div>
@@ -265,7 +265,7 @@ const TicketBuilder = ({ tickets, onChange, isDark, onTierDelete }) => {
                                 ) : (
                                     <button
                                         onClick={() => setIsAddingTier(ticket.id)}
-                                        className={`text-xs flex items-center font-medium ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}
+                                        className={`text-xs flex items-center font-medium ${isDark ? 'text-[var(--brand-accent-soft)] hover:text-[var(--brand-accent-soft)]' : 'text-indigo-600 hover:text-indigo-700'}`}
                                     >
                                         <Plus size={12} className="mr-1" /> Add Pricing Tier
                                     </button>

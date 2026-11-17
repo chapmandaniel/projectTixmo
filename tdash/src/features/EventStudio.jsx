@@ -332,8 +332,8 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                         onClick={() => handleSave(true)}
                         disabled={loading}
                         className={`px-6 py-2 text-sm font-medium rounded-lg text-white shadow-lg transition-all flex items-center ${isDark
-                            ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20'
-                            : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'
+                            ? 'bg-indigo-600 hover:bg-[var(--brand-accent)] shadow-black/20'
+                            : 'bg-indigo-600 hover:bg-indigo-700 shadow-black/20'
                             }`}
                     >
                         {loading ? <Loader size={16} className="animate-spin mr-2" /> : <Globe size={16} className="mr-2" />}
@@ -443,7 +443,7 @@ const EventStudio = ({ onClose, onSuccess, isDark, user, initialData = null, emb
                                     onChange={(e) => setEventData({ ...eventData, venueId: e.target.value })}
                                     className={`w-full px-4 py-3 rounded-xl outline-hidden border transition-all ${isDark
                                         ? 'bg-[#1e1e1e] border-[#333] text-white focus:border-indigo-500'
-                                        : 'bg-white border-gray-200 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'
+                                        : 'bg-white border-gray-200 text-gray-900 focus:border-[var(--brand-accent)] focus:ring-2 focus:ring-[rgb(var(--brand-accent-rgb)/0.2)]'
                                         }`}
                                 >
                                     <option value="">Select a Venue</option>

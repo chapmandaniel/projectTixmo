@@ -157,7 +157,7 @@ const AssetUploader = ({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${isDragging
-                    ? 'border-indigo-500 bg-indigo-500/10'
+                    ? 'border-[var(--brand-accent)] bg-[rgb(var(--brand-accent-rgb)/0.1)]'
                     : isDark
                         ? 'border-gray-700 hover:border-gray-600 bg-gray-800/30'
                         : 'border-gray-300 hover:border-gray-400 bg-gray-50'

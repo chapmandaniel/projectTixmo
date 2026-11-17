@@ -15,7 +15,7 @@ export const DataStateBadge = ({ state, className }) => {
         ? 'border-rose-400/30 text-rose-300'
         : state === 'awaiting'
             ? 'border-amber-400/30 text-amber-200'
-            : 'border-sky-400/30 text-sky-200';
+            : 'border-[rgb(var(--brand-accent-rgb)/0.3)] text-[var(--brand-accent-soft)]';
 
     return (
         <span className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em]', tone, className)}>

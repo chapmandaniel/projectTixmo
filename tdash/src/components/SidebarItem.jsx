@@ -14,7 +14,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick, isDark, badge }) => (
         </div>
         <div className="flex items-center gap-2">
             {badge && (
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-600'
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.2)] text-[var(--brand-accent-soft)]' : 'bg-indigo-100 text-indigo-600'
                     }`}>
                     {badge}
                 </span>

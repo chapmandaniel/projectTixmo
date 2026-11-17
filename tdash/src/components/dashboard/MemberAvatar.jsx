@@ -3,14 +3,14 @@ import React from 'react';
 // Generated avatar: initials on a gradient picked from the person's name, so every member
 // has a stable, distinct avatar without uploading a photo.
 const GRADIENTS = [
-    'from-pink-500 to-orange-400',
-    'from-violet-500 to-fuchsia-400',
-    'from-sky-500 to-cyan-400',
-    'from-emerald-500 to-lime-400',
-    'from-amber-500 to-rose-400',
-    'from-indigo-500 to-sky-400',
-    'from-teal-500 to-emerald-400',
-    'from-rose-500 to-purple-400',
+    'from-purple-500 to-violet-400',
+    'from-violet-600 to-purple-400',
+    'from-fuchsia-600 to-purple-500',
+    'from-purple-700 to-purple-400',
+    'from-violet-500 to-indigo-400',
+    'from-purple-600 to-fuchsia-400',
+    'from-indigo-600 to-violet-400',
+    'from-purple-500 to-purple-300',
 ];
 
 const SIZES = {

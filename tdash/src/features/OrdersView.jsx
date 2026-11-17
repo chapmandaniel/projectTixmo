@@ -187,7 +187,7 @@ const OrdersView = ({
                             placeholder="Search by order, customer, or event..."
                             value={searchTerm}
                             onChange={(event) => setSearchTerm(event.target.value)}
-                            className={`w-full pl-10 pr-4 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-light ${isDark
+                            className={`w-full pl-10 pr-4 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-[var(--brand-accent)] font-light ${isDark
                                 ? 'bg-[#151521] border-[#2b2b40] text-gray-200 placeholder-gray-500'
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                             }`}
@@ -202,7 +202,7 @@ const OrdersView = ({
                                     setPage(1);
                                     setEventFilter(event.target.value);
                                 }}
-                                className={`min-w-[220px] pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 appearance-none font-light ${isDark
+                                className={`min-w-[220px] pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-[var(--brand-accent)] appearance-none font-light ${isDark
                                     ? 'bg-[#151521] border-[#2b2b40] text-gray-200'
                                     : 'bg-white border-gray-300 text-gray-900'
                                 }`}
@@ -223,7 +223,7 @@ const OrdersView = ({
                                     setPage(1);
                                     setStatusFilter(event.target.value);
                                 }}
-                                className={`min-w-[190px] pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 appearance-none font-light ${isDark
+                                className={`min-w-[190px] pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-[var(--brand-accent)] appearance-none font-light ${isDark
                                     ? 'bg-[#151521] border-[#2b2b40] text-gray-200'
                                     : 'bg-white border-gray-300 text-gray-900'
                                 }`}
@@ -240,7 +240,7 @@ const OrdersView = ({
                             <select
                                 value={sortBy}
                                 onChange={(event) => setSortBy(event.target.value)}
-                                className={`min-w-[190px] pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 appearance-none font-light ${isDark
+                                className={`min-w-[190px] pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-[var(--brand-accent)] appearance-none font-light ${isDark
                                     ? 'bg-[#151521] border-[#2b2b40] text-gray-200'
                                     : 'bg-white border-gray-300 text-gray-900'
                                 }`}
@@ -268,7 +268,7 @@ const OrdersView = ({
             <div className={`overflow-hidden rounded-md border ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
                 {isLoading ? (
                     <div className="p-20 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--brand-accent)] mx-auto"></div>
                         <p className={`mt-4 text-sm font-light ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Loading sales transactions...</p>
                     </div>
                 ) : filteredOrders.length === 0 ? (
@@ -316,7 +316,7 @@ const OrdersView = ({
                                                 aria-label={`View order ${order.orderNumber}`}
                                                 onClick={() => openOrder(order)}
                                                 className={`p-2 rounded-md transition-all opacity-0 group-hover:opacity-100 ${isDark
-                                                    ? 'hover:bg-pink-500/20 text-pink-400'
+                                                    ? 'hover:bg-[rgb(var(--brand-accent-rgb)/0.22)] text-[var(--brand-accent-soft)]'
                                                     : 'hover:bg-pink-50 text-pink-600'
                                                 }`}
                                             >

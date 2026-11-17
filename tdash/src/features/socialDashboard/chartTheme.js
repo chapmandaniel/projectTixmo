@@ -1,3 +1,4 @@
+import { BRAND_ACCENT } from '../../lib/brandAccent';
 import { dashboardColorTokens } from '../../lib/dashboardTheme';
 
 export const nivoDarkTheme = {
@@ -23,7 +24,7 @@ export const nivoDarkTheme = {
             fontWeight: 300,
         },
     },
-    crosshair: { line: { stroke: '#ec4899', strokeWidth: 1, strokeOpacity: 0.5 } },
+    crosshair: { line: { stroke: BRAND_ACCENT.hex, strokeWidth: 1, strokeOpacity: 0.5 } },
 };
 
 export const nivoLightTheme = {
@@ -51,13 +52,14 @@ export const nivoLightTheme = {
 };
 
 export const CHART_COLORS = {
-    current: '#ec4899',
+    // T143: purple-led series. Brand purple first, then tints of it; green/red only for up/down meaning.
+    current: BRAND_ACCENT.hex,
     prior: '#64748b',
-    secondary: '#06b6d4',
+    secondary: '#c77dff',
     positive: '#10b981',
     negative: '#f43f5e',
-    paid: '#f59e0b',
-    organic: '#8b5cf6',
+    paid: '#e2c4ff',
+    organic: '#7c3aed',
 };
 
 export const getChartTheme = (isDark) => (isDark ? nivoDarkTheme : nivoLightTheme);

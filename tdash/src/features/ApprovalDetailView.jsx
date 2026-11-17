@@ -52,8 +52,8 @@ const associationLabel = (association) => (
     reviewerAssociationOptions.find((option) => option.value === association)?.label || association || ''
 );
 
-const associationBadgeClass = 'inline-flex rounded-full border border-fuchsia-400/35 bg-fuchsia-500/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-fuchsia-100';
-const optimisticItemClass = 'pending-surface-soft border-sky-400/20 bg-sky-500/8 opacity-80';
+const associationBadgeClass = 'inline-flex rounded-full border border-[rgb(var(--brand-accent-rgb)/0.35)] bg-[rgb(var(--brand-accent-rgb)/0.14)] px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-zinc-100';
+const optimisticItemClass = 'pending-surface-soft border-[rgb(var(--brand-accent-rgb)/0.2)] bg-[rgb(var(--brand-accent-rgb)/0.08)] opacity-80';
 
 const authorLabel = (author) => {
     if (!author) {
@@ -147,7 +147,7 @@ const DecisionActionCard = ({ option, saving, onClick }) => (
         type="button"
         disabled={saving}
         onClick={onClick}
-        className={`flex-1 rounded-md border px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${DECISION_CARD_STYLES[option.value] || 'border-white/10 bg-white/5 text-slate-200 hover:border-sky-300/40 hover:text-white'}`}
+        className={`flex-1 rounded-md border px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${DECISION_CARD_STYLES[option.value] || 'border-white/10 bg-white/5 text-slate-200 hover:border-[rgb(var(--brand-accent-rgb)/0.4)] hover:text-white'}`}
     >
         {option.label}
     </button>
@@ -690,15 +690,15 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                     <section className={`relative overflow-hidden rounded-md border px-6 py-8 sm:px-8 ${refreshing ? 'page-section-reload' : ''} ${panelClass}`}>
                         <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${STATUS_CARD_ACCENTS[approval.status] || 'from-slate-400 to-slate-500'}`} />
                         <div className="absolute inset-0 pointer-events-none">
-                            <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-sky-500/10 blur-3xl" />
-                            <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
+                            <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[rgb(var(--brand-accent-rgb)/0.1)] blur-3xl" />
+                            <div className="absolute left-10 bottom-0 h-40 w-40 rounded-full bg-[rgb(var(--brand-accent-rgb)/0.1)] blur-3xl" />
                         </div>
                         <div className="relative">
                             <div className="flex items-start justify-between gap-3">
                                 <h1 className="flex flex-wrap items-center gap-3 text-3xl font-light tracking-tight text-gray-100 sm:text-4xl">
                                     <span>Review Portal</span>
-                                    <Search className="h-5 w-5 text-sky-300" />
-                                    <span className="text-lg font-medium text-sky-300 sm:text-xl">{approval.title}</span>
+                                    <Search className="h-5 w-5 text-[var(--brand-accent-soft)]" />
+                                    <span className="text-lg font-medium text-[var(--brand-accent-soft)] sm:text-xl">{approval.title}</span>
                                 </h1>
                                 {refreshing && (
                                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#8f94aa]">
@@ -795,7 +795,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                                         <button
                                             type="submit"
                                             disabled={saving}
-                                            className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="inline-flex items-center gap-2 rounded-md bg-[var(--brand-accent)] px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <Upload className="h-4 w-4" />
                                             Upload version
@@ -830,7 +830,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                                                 href={selectedAsset.s3Url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="mt-4 inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400"
+                                                className="mt-4 inline-flex items-center gap-2 rounded-md bg-[var(--brand-accent)] px-4 py-2 text-sm text-white transition hover:bg-sky-400"
                                             >
                                                 <Download className="h-4 w-4" />
                                                 Download asset
@@ -965,7 +965,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                                             )}
                                             <div className="flex items-center gap-2">
                                                 {reviewer.pending && (
-                                                    <span className="inline-flex items-center gap-1 rounded-full border border-sky-400/25 bg-sky-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-sky-100">
+                                                    <span className="inline-flex items-center gap-1 rounded-full border border-[rgb(var(--brand-accent-rgb)/0.25)] bg-[rgb(var(--brand-accent-rgb)/0.1)] px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-sky-100">
                                                         <span className="h-1.5 w-1.5 rounded-full bg-sky-300 animate-pulse" />
                                                         Inviting
                                                     </span>
@@ -1025,7 +1025,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                                     <button
                                         type="button"
                                         onClick={() => openCommentModal()}
-                                        className="inline-flex items-center gap-2 rounded-md border border-violet-400/30 bg-violet-500 px-4 py-2 text-sm font-light text-white shadow-lg shadow-violet-500/20 transition hover:border-violet-300/40 hover:bg-violet-400"
+                                        className="inline-flex items-center gap-2 rounded-md border border-[rgb(var(--brand-accent-rgb)/0.3)] bg-[var(--brand-accent)] px-4 py-2 text-sm font-light text-white shadow-lg shadow-black/20 transition hover:border-[rgb(var(--brand-accent-rgb)/0.4)] hover:bg-violet-400"
                                     >
                                         <MessageCircle className="h-4 w-4" />
                                         Add comment
@@ -1041,7 +1041,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                                         : 'border-dashboard-border bg-dashboard-shell';
                                     const avatarTone = isInternalComment
                                         ? 'border-amber-400/30 bg-amber-500/12 text-amber-100'
-                                        : 'border-sky-400/20 bg-sky-500/10 text-sky-100';
+                                        : 'border-[rgb(var(--brand-accent-rgb)/0.2)] bg-[rgb(var(--brand-accent-rgb)/0.1)] text-sky-100';
 
                                     return (
                                         <div
@@ -1069,7 +1069,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                                                                 </span>
                                                             )}
                                                             {item.parentCommentId && (
-                                                                <span className="inline-flex rounded-full border border-sky-400/25 bg-sky-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-sky-100">
+                                                                <span className="inline-flex rounded-full border border-[rgb(var(--brand-accent-rgb)/0.25)] bg-[rgb(var(--brand-accent-rgb)/0.1)] px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-sky-100">
                                                                     Reply
                                                                 </span>
                                                             )}
@@ -1082,7 +1082,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                                                     <button
                                                         type="button"
                                                         onClick={() => openCommentModal(item)}
-                                                        className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-sky-200 transition hover:border-sky-400/30 hover:bg-sky-500/10 hover:text-white"
+                                                        className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-[var(--brand-accent-soft)] transition hover:border-[rgb(var(--brand-accent-rgb)/0.3)] hover:bg-[rgb(var(--brand-accent-rgb)/0.1)] hover:text-white"
                                                         aria-label={`Reply to ${authorLabel(item.author)}`}
                                                     >
                                                         <User className="h-3.5 w-3.5" />
@@ -1177,7 +1177,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                         </div>
 
                         {replyTo && (
-                            <div className="mt-5 rounded-lg border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm font-light text-sky-100">
+                            <div className="mt-5 rounded-lg border border-[rgb(var(--brand-accent-rgb)/0.2)] bg-[rgb(var(--brand-accent-rgb)/0.1)] px-4 py-3 text-sm font-light text-sky-100">
                                 Replying to {authorLabel(replyTo.author)}
                             </div>
                         )}
@@ -1222,7 +1222,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                                     type="submit"
                                     aria-label="Send"
                                     disabled={saving || !comment.trim()}
-                                    className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex items-center gap-2 rounded-md bg-[var(--brand-accent)] px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     <Send className="h-4 w-4" />
                                     Send
@@ -1319,7 +1319,7 @@ const ScopedApprovalDetailView = ({ approvalId, initialApproval, user, onBack, o
                                 <button
                                     type="submit"
                                     disabled={saving || !reviewerEmail.trim()}
-                                    className="inline-flex items-center gap-2 rounded-md bg-sky-500 px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex items-center gap-2 rounded-md bg-[var(--brand-accent)] px-4 py-2 text-sm text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     <MailPlus className="h-4 w-4" />
                                     Add reviewer

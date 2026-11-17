@@ -115,7 +115,7 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [], events = [] })
                                     <button
                                         key={u.id}
                                         onClick={() => handleMentionUser(u)}
-                                        className={`w-full text-left px-3 py-2 flex items-center space-x-2 hover:bg-indigo-500/10 transition-colors ${isDark ? 'text-gray-200' : 'text-gray-700'}`}
+                                        className={`w-full text-left px-3 py-2 flex items-center space-x-2 hover:bg-[rgb(var(--brand-accent-rgb)/0.1)] transition-colors ${isDark ? 'text-gray-200' : 'text-gray-700'}`}
                                     >
                                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${isDark ? 'bg-[#333]' : 'bg-gray-200'}`}>
                                             {u.firstName?.[0] || u.lastName?.[0] || '?'}
@@ -202,7 +202,7 @@ const CreateTaskModal = ({ onClose, onCreate, isDark, users = [], events = [] })
                     </button>
                     <button
                         onClick={handleCreate}
-                        className={`px-6 py-2 text-sm font-medium text-white rounded-lg shadow-lg transition-all ${isDark ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'}`}
+                        className={`px-6 py-2 text-sm font-medium text-white rounded-lg shadow-lg transition-all ${isDark ? 'bg-indigo-600 hover:bg-[var(--brand-accent)] shadow-black/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-black/20'}`}
                     >
                         Create Task
                     </button>
