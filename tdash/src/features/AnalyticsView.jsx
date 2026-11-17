@@ -537,6 +537,8 @@ const AnalyticsView = ({ isDark, user }) => {
                 description="Review Tixmo commerce reporting separately from GA4 web-traffic readiness."
                 icon={BarChart3}
                 iconClassName={isDark ? 'text-cyan-300' : 'text-sky-700'}
+                glowTopClassName="bg-cyan-400/10"
+                glowBottomClassName="bg-sky-500/10"
                 badges={(
                     <DashboardChip
                         isDark={isDark}
@@ -703,7 +705,7 @@ const AnalyticsView = ({ isDark, user }) => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <KpiCard label="Visitors" value={formatNumber(trafficData.visitors)} icon={Users} accent="blue" iconClassName="text-cyan-300" isDark={isDark} />
                     <KpiCard label="Sessions" value={formatNumber(trafficData.sessions)} icon={MousePointerClick} accent="violet" iconClassName="text-violet-300" isDark={isDark} />
-                    <KpiCard label="Page Views" value={formatNumber(trafficData.pageViews)} icon={Eye} accent="brand" iconClassName="text-[var(--section-accent)]" isDark={isDark} />
+                    <KpiCard label="Page Views" value={formatNumber(trafficData.pageViews)} icon={Eye} accent="brand" iconClassName="text-pink-400" isDark={isDark} />
                     <KpiCard label="Bounce Rate" value={formatPercent(trafficData.bounceRate)} icon={TrendingUp} accent="amber" iconClassName="text-orange-300" isDark={isDark} />
                 </div>
 
@@ -918,8 +920,8 @@ const AnalyticsView = ({ isDark, user }) => {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <KpiCard label={`Total Revenue (${selectedCurrency.toUpperCase()})`} value={formatCurrency(filteredSalesData?.totalRevenue || 0)} icon={DollarSign} accent="violet" iconClassName="text-indigo-400" isDark={isDark} />
-                <KpiCard label="Tickets Sold" value={formatNumber(filteredSalesData?.totalTicketsSold || 0)} icon={Ticket} accent="brand" iconClassName="text-[var(--section-accent)]" isDark={isDark} />
-                <KpiCard label="Total Orders" value={formatNumber(filteredSalesData?.totalOrders || 0)} icon={ShoppingCart} accent="violet" iconClassName="text-[var(--section-accent)]" isDark={isDark} />
+                <KpiCard label="Tickets Sold" value={formatNumber(filteredSalesData?.totalTicketsSold || 0)} icon={Ticket} accent="brand" iconClassName="text-pink-400" isDark={isDark} />
+                <KpiCard label="Total Orders" value={formatNumber(filteredSalesData?.totalOrders || 0)} icon={ShoppingCart} accent="violet" iconClassName="text-fuchsia-400" isDark={isDark} />
                 <KpiCard label="Avg Order Value" value={formatCurrency(filteredSalesData?.averageOrderValue || 0)} icon={TrendingUp} accent="green" iconClassName="text-emerald-400" isDark={isDark} />
             </div>
 

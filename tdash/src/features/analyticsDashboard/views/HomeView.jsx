@@ -49,7 +49,7 @@ export const HomeView = ({ isDark, dashboard }) => {
                     <DashboardSurface isDark={isDark} accent="brand" className="flex h-full flex-col p-4">
                         <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-light">
                             <span className={cn('inline-flex items-center gap-2', theme.textSecondary)}>
-                                <span className="h-0.5 w-4 rounded-full bg-[var(--section-accent)]" aria-hidden="true" />
+                                <span className="h-0.5 w-4 rounded-full bg-pink-500" aria-hidden="true" />
                                 This period
                             </span>
                             <span className={cn('inline-flex items-center gap-2', theme.textSecondary)}>

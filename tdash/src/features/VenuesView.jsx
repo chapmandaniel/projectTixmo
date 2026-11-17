@@ -54,7 +54,7 @@ const VenuesView = ({
                 </div>
                 <button
                     onClick={() => setShowWizard(true)}
-                    className={`flex items-center space-x-2 px-4 py-2 font-light tracking-wide text-sm rounded-md transition-all ${isDark ? 'bg-[var(--section-accent)] text-zinc-950 hover:brightness-110 shadow-md shadow-black/20' : 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'}`}
+                    className={`flex items-center space-x-2 px-4 py-2 font-light tracking-wide text-sm rounded-md transition-all ${isDark ? 'bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 shadow-md shadow-pink-500/20 text-white' : 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'}`}
                 >
                     <Plus size={16} />
                     <span>Create Venue</span>
@@ -73,7 +73,7 @@ const VenuesView = ({
                     <p className={`text-sm font-light mb-6 ${isDark ? 'text-[#a1a5b7]' : 'text-gray-500'}`}>Get started by adding your first venue location.</p>
                     <button
                         onClick={() => setShowWizard(true)}
-                        className={`px-6 py-2.5 rounded-md text-sm font-light tracking-wide transition-colors ${isDark ? 'bg-[var(--section-accent)] text-zinc-950 hover:brightness-110 shadow-md shadow-black/20' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                        className={`px-6 py-2.5 rounded-md text-sm font-light tracking-wide transition-colors ${isDark ? 'bg-gradient-to-r from-pink-500 to-orange-400 text-white shadow-md shadow-pink-500/20' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
                     >
                         Add Venue
                     </button>

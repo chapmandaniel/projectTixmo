@@ -116,7 +116,7 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
                 title="Social"
                 description={`${MOCK_BRAND}. Demo numbers only.`}
                 icon={Share2}
-                iconClassName="text-[var(--section-accent)]"
+                iconClassName="text-fuchsia-300"
                 badges={(
                     <>
                         <DashboardChip isDark={isDark}>Mock data</DashboardChip>

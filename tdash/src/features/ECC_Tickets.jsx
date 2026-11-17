@@ -82,7 +82,7 @@ const ECC_Tickets = ({ event, isDark }) => {
                 </div>
                 <button
                     onClick={handleCreate}
-                    className={`px-4 py-2 text-sm font-light tracking-wide rounded-md flex items-center shadow-lg transition-all ${isDark ? 'bg-[var(--section-accent)] text-zinc-950 hover:brightness-110 shadow-black/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'}`}
+                    className={`px-4 py-2 text-sm font-light tracking-wide rounded-md flex items-center shadow-lg transition-all ${isDark ? 'bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-400 hover:to-orange-300 text-white shadow-pink-500/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'}`}
                 >
                     <Plus size={16} className="mr-2" /> Add Ticket Type
                 </button>
@@ -94,25 +94,25 @@ const ECC_Tickets = ({ event, isDark }) => {
                     <table className={`w-full text-left text-sm ${isDark ? 'text-gray-300' : 'text-gray-500'}`}>
                         <thead className={`${isDark ? 'bg-[#151521] text-[#a1a5b7] border-b border-[#2b2b40]/60' : 'bg-gray-50 text-gray-400'} text-xs uppercase font-normal tracking-wider`}>
                             <tr>
-                                <th className="px-6 py-3 font-normal cursor-pointer hover:text-[var(--section-accent)] transition-colors" onClick={() => handleSort('name')}>
+                                <th className="px-6 py-3 font-normal cursor-pointer hover:text-pink-400 transition-colors" onClick={() => handleSort('name')}>
                                     <div className="flex items-center space-x-1">
                                         <span>Name</span>
                                         {sortBy === 'name' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
                                     </div>
                                 </th>
-                                <th className="px-6 py-3 font-normal cursor-pointer hover:text-[var(--section-accent)] transition-colors" onClick={() => handleSort('price')}>
+                                <th className="px-6 py-3 font-normal cursor-pointer hover:text-pink-400 transition-colors" onClick={() => handleSort('price')}>
                                     <div className="flex items-center space-x-1">
                                         <span>Price</span>
                                         {sortBy === 'price' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
                                     </div>
                                 </th>
-                                <th className="px-6 py-3 font-normal cursor-pointer hover:text-[var(--section-accent)] transition-colors" onClick={() => handleSort('sold')}>
+                                <th className="px-6 py-3 font-normal cursor-pointer hover:text-pink-400 transition-colors" onClick={() => handleSort('sold')}>
                                     <div className="flex items-center space-x-1">
                                         <span>Sold / Total</span>
                                         {sortBy === 'sold' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
                                     </div>
                                 </th>
-                                <th className="px-6 py-3 font-normal cursor-pointer hover:text-[var(--section-accent)] transition-colors" onClick={() => handleSort('status')}>
+                                <th className="px-6 py-3 font-normal cursor-pointer hover:text-pink-400 transition-colors" onClick={() => handleSort('status')}>
                                     <div className="flex items-center space-x-1">
                                         <span>Status</span>
                                         {sortBy === 'status' && (sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
@@ -140,7 +140,7 @@ const ECC_Tickets = ({ event, isDark }) => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center space-x-2">
                                                 <div className={`w-24 h-1.5 rounded-full border ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-gray-100 border-transparent'}`}>
-                                                    <div className={`h-1.5 rounded-full ${isDark ? 'bg-[var(--section-accent)]' : 'bg-indigo-600'}`} style={{ width: `${ticketSoldPercent(ticket)}%` }}></div>
+                                                    <div className={`h-1.5 rounded-full ${isDark ? 'bg-gradient-to-r from-pink-500 to-orange-400' : 'bg-indigo-600'}`} style={{ width: `${ticketSoldPercent(ticket)}%` }}></div>
                                                 </div>
                                                 <span className="text-xs font-light tracking-wide text-[#a1a5b7]">{ticket.sold || 0} / {ticket.quantity}</span>
                                             </div>

@@ -52,7 +52,7 @@ const associationLabel = (association) => (
     reviewerAssociationOptions.find((option) => option.value === association)?.label || association || ''
 );
 
-const associationBadgeClass = 'inline-flex rounded-full border border-fuchsia-400/35 bg-[rgb(var(--section-accent-rgb)/0.14)] px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-zinc-100';
+const associationBadgeClass = 'inline-flex rounded-full border border-fuchsia-400/35 bg-fuchsia-500/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-fuchsia-100';
 const optimisticItemClass = 'pending-surface-soft border-sky-400/20 bg-sky-500/8 opacity-80';
 
 const authorLabel = (author) => {

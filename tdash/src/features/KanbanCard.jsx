@@ -92,7 +92,7 @@ const KanbanCard = ({ item, isDark, onDelete, onExpand, isCompact, users = [] })
             {(item.eventName || due) && (
                 <div className="-mt-2 mb-3 flex flex-wrap items-center gap-1.5 text-[11px] font-light" data-testid="kanban-card-meta">
                     {item.eventName && (
-                        <span className={`max-w-full truncate rounded px-1.5 py-0.5 ${isDark ? 'bg-[rgb(var(--section-accent-rgb)/0.14)] text-[var(--section-accent)]' : 'bg-pink-50 text-pink-700'}`}>{item.eventName}</span>
+                        <span className={`max-w-full truncate rounded px-1.5 py-0.5 ${isDark ? 'bg-pink-500/10 text-pink-300' : 'bg-pink-50 text-pink-700'}`}>{item.eventName}</span>
                     )}
                     {due && (
                         <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${dueTone[due.tone]}`}>

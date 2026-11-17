@@ -669,6 +669,8 @@ const ScopedApprovalsDashboard = ({ user, isDark = true }) => {
                         title="Approvals"
                         icon={CheckCircle2}
                         iconClassName={isDark ? 'text-sky-300' : 'text-sky-700'}
+                        glowTopClassName="bg-sky-500/10"
+                        glowBottomClassName="bg-cyan-400/10"
                         className={refreshing ? 'page-section-reload' : ''}
                         badges={(
                             <>

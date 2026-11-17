@@ -24,7 +24,7 @@ const DashboardPlaceholderView = ({
                 title={title}
                 description={description}
                 icon={Icon}
-                iconClassName="text-[var(--section-accent)]"
+                iconClassName="text-fuchsia-300"
                 badges={(
                     <DashboardChip isDark={isDark} className="uppercase tracking-[0.18em]">
                         {badgeLabel}

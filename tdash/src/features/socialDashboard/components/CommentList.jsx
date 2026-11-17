@@ -19,7 +19,7 @@ export const CommentList = ({ isDark, comments, emptyTitle = 'Nothing here yet',
                     <div className="mt-2 flex flex-wrap items-center gap-3">
                         <p className={cn('text-[11px]', theme.textMuted)}>{formatDateTime(comment.createdAt)}</p>
                         {replyStub ? (
-                            <button type="button" className="text-xs text-[var(--section-accent)]" onClick={() => {}}>Reply</button>
+                            <button type="button" className="text-xs text-pink-400" onClick={() => {}}>Reply</button>
                         ) : null}
                     </div>
                 </li>
