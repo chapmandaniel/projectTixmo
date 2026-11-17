@@ -462,8 +462,8 @@ export const DashboardModuleTile = ({
                             className={cn(
                                 'transition-colors duration-300',
                                 isFavorite
-                                    ? 'fill-[#ff3366] text-[#ff3366]'
-                                    : cn(isDark ? 'text-[#4a4d64]' : 'text-slate-300', 'hover:text-[#ff3366]')
+                                    ? 'fill-[var(--brand-accent)] text-[var(--brand-accent)]'
+                                    : cn(isDark ? 'text-[#4a4d64]' : 'text-slate-300', 'hover:text-[var(--brand-accent-soft)]')
                             )}
                         />
                     </button>

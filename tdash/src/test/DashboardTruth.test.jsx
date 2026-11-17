@@ -60,7 +60,7 @@ describe('Dashboard truth', () => {
         expect(eventCard.className).not.toContain('border-white');
         expect(eventVisibilityButton.className).toContain('opacity-0');
         expect(eventFavoriteButton.className).not.toContain('opacity-0');
-        expect(eventFavoriteIcon?.className.baseVal || eventFavoriteIcon?.getAttribute('class')).toContain('fill-[#ff3366]');
+        expect(eventFavoriteIcon?.className.baseVal || eventFavoriteIcon?.getAttribute('class')).toContain('fill-[var(--brand-accent)]');
 
         const hiddenTeamCard = screen.getByTestId('dashboard-card-team');
         const hiddenTeamVisibilityButton = within(hiddenTeamCard).getByTestId('dashboard-visibility-team');
