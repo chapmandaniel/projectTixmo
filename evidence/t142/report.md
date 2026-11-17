@@ -67,10 +67,20 @@ A full local `verify:api` was not used as the gate: `order-confirm-expiry.race.t
 | Ref | SHA | Notes |
 | --- | --- | --- |
 | `main` (T140 / this branch base) | `a702a4a025244d4cfcc087298a720a943f177eab` | unchanged |
-| T142 head | (filled after push) | branch `fix/t142-mention-notifications` |
+| T142 code head | `9cab1b16e404d4e091bf35b076438ca2d3d59d28` | first commit on `fix/t142-mention-notifications`; required checks ran here |
+| T142 evidence commit | docs-only follow-up on this branch | records the PR URL and CI results; no code change |
 
-PR: (filled after open). Draft only. Do not merge without Daniel. No staging/prod deploy.
+PR: https://github.com/chapmandaniel/projectTixmo/pull/221 (draft). Do not merge without Daniel. No staging/prod deploy.
 
 ## CI
 
-(filled after required checks complete)
+All required checks are green on `9cab1b16`. CI was not re-run without a code change; these are the automatic `pull_request` runs from the branch push. Times below are when the jobs finished (UTC converted to NST).
+
+| Check | Result | Duration | Run / job | Finished (NST) |
+| --- | --- | --- | --- | --- |
+| local-gates | pass | 17m15s | [44023342829 / 133837720429](https://github.com/chapmandaniel/projectTixmo/actions/runs/44023342829/job/133837720429) | 2026-11-17 02:07 NST |
+| configured-image-restore | pass | 2m33s | [44023342829 / 133837720176](https://github.com/chapmandaniel/projectTixmo/actions/runs/44023342829/job/133837720176) | 2026-11-17 01:52 NST |
+| guard-and-build (Tdash Design System) | pass | 5s | [44023342704 / 133837719512](https://github.com/chapmandaniel/projectTixmo/actions/runs/44023342704/job/133837719512) | 2026-11-17 01:49 NST |
+| http-soak | skipped | — | [44023342710](https://github.com/chapmandaniel/projectTixmo/actions/runs/44023342710) | not required |
+
+The later evidence-only commit on this branch does not touch `tixmoapi2/` or other gate paths, so follow-up `local-gates` / `configured-image-restore` runs should skip as "no relevant changes" and still succeed. The code SHA above remains the one that executed the full suite.
