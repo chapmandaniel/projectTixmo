@@ -38,6 +38,7 @@ const OrdersView = lazy(() => import('./features/OrdersView'));
 const DevDashboard = lazy(() => import('./features/DevDashboard'));
 const ScannersView = lazy(() => import('./features/ScannersView'));
 const SecurityView = lazy(() => import('./features/security/SecurityView'));
+const ScamSwarmView = lazy(() => import('./features/scamswarm/ScamSwarmView'));
 const NotificationsView = lazy(() => import('./features/NotificationsView'));
 // Busy feedback must be immediately available without suspending the retained form.
 import WaitingRoomView from './features/WaitingRoomView';
@@ -112,6 +113,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         {/* Settings and Audit are removed from this demo build; old links land on Home. */}
                         <Route path="/settings/*" element={<Navigate to="/dashboard" replace />} />
                         <Route path="/security" element={<SecurityView isDark={isDark} />} />
+                        <Route path="/scamswarm" element={<ScamSwarmView isDark={isDark} />} />
                         <Route path="/notifications" element={<NotificationsView isDark={isDark} />} />
                         <Route path="/creative" element={<DashboardPlaceholderView isDark={isDark} title="ProMo" icon={Wand2} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/assets" element={<AssetLibraryView isDark={isDark} />} />

@@ -3,7 +3,7 @@ import {
     Home, Calendar, BarChart3, Bell,
     Users, CheckSquare, Sun, Moon,
     LogOut, CheckCircle, User, Image,
-    Menu, X, Share2, ShieldCheck
+    Menu, X, Share2, ShieldCheck, Radar
 } from 'lucide-react';
 import { isSocialDashboardNavVisible } from '../features/socialDashboard/flag';
 
@@ -21,6 +21,7 @@ const navItems = [
     { id: 'approvals', icon: CheckCircle, label: 'Reviews' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics' },
     { id: 'security', icon: ShieldCheck, label: 'Security' },
+    { id: 'scamswarm', icon: Radar, label: 'ScamSwarm' },
 ];
 
 const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
