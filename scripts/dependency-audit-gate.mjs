@@ -28,8 +28,9 @@ export const MINIMATCH_DEV_ADVISORY = 'GHSA-g3hv-75wg-m249';
 // https://github.com/advisories/GHSA-fc5q-39xc-vjpf
 // The advisory was republished into the npm audit feed on 2026-11-17.
 // There is no first_patched_version and no release after 4.0.7. Every copy
-// in tixmoapi2 is a dev-only install under Jest, lint-staged, @parcel/watcher,
-// tinyglobby, anymatch, or fdir, and is off the production walk. Remove this
+// in tixmoapi2 and tdash is a dev-only install under Jest, lint-staged, Vite,
+// Vitest, @parcel/watcher, tinyglobby, anymatch, or fdir, and is off the
+// production walk. Remove this
 // exception when a patched picomatch is published and the lockfile no longer
 // resolves a version at or below 4.0.7. Review it again on 2026-12-17 if the
 // patch is still missing.
@@ -57,6 +58,8 @@ const PICOMATCH_PARENTS = new Set([
   'jest-util',
   'lint-staged',
   'tinyglobby',
+  'vite',
+  'vitest',
 ]);
 
 const ADVISORY_ID = /GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}/i;
@@ -399,7 +402,7 @@ export function evaluateDependencyAudit(report, lockfile) {
   if ([...ids].some((id) => id.toLowerCase() === PICOMATCH_DEV_ADVISORY.toLowerCase())) {
     const installs = picomatchInstalls(lockfile);
     if (!installs.ok) return installs;
-    ignored.push(`ignored ${PICOMATCH_DEV_ADVISORY} on dev-only picomatch <=4.0.7 under Jest, lint-staged, and related glob tooling; remove when a patched picomatch exists (https://github.com/advisories/GHSA-fc5q-39xc-vjpf)`);
+    ignored.push(`ignored ${PICOMATCH_DEV_ADVISORY} on dev-only picomatch <=4.0.7 under Jest, lint-staged, Vite, Vitest, and related glob tooling; remove when a patched picomatch exists (https://github.com/advisories/GHSA-fc5q-39xc-vjpf)`);
   }
   return { ok: true, ignored: ignored.join('; ') };
 }

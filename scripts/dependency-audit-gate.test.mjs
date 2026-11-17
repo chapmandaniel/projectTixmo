@@ -276,6 +276,35 @@ test('the API lockfile keeps vulnerable picomatch dev-only under known glob tool
   assert.equal(decision.ok, true, decision.reason);
 });
 
+
+test('passes when dev-only picomatch is required by vite and vitest', () => {
+  const lock = devPicomatchLock();
+  lock.packages['node_modules/vite'] = { version: '6.4.5', dev: true, dependencies: { picomatch: '^4.0.2' } };
+  lock.packages['node_modules/vitest'] = { version: '4.1.12', dev: true, dependencies: { picomatch: '^4.0.3' } };
+  const decision = evaluateDependencyAudit(findingReportWithPicomatch(), lock);
+  assert.equal(decision.ok, true, decision.reason);
+});
+
+test('the dashboard lockfile keeps vulnerable picomatch dev-only under vite and vitest', () => {
+  const lock = JSON.parse(readFileSync(new URL('../tdash/package-lock.json', import.meta.url), 'utf8'));
+  const decision = evaluateDependencyAudit({
+    vulnerabilities: {
+      picomatch: {
+        name: 'picomatch',
+        severity: 'high',
+        via: [viaAdvisory(PICOMATCH_URL, 'picomatch', 'high')],
+        effects: ['vite', 'vitest', 'tinyglobby'],
+        nodes: ['node_modules/picomatch'],
+      },
+      vite: { name: 'vite', severity: 'high', via: ['picomatch'], nodes: ['node_modules/vite'] },
+      vitest: { name: 'vitest', severity: 'high', via: ['picomatch'], nodes: ['node_modules/vitest'] },
+      tinyglobby: { name: 'tinyglobby', severity: 'high', via: ['picomatch'], nodes: ['node_modules/tinyglobby'] },
+    },
+  }, lock);
+  assert.equal(decision.ok, true, decision.reason);
+  assert.match(decision.ignored, new RegExp(PICOMATCH_DEV_ADVISORY));
+});
+
 test('the market gate does not widen npm audit', () => {
   const source = readFileSync(new URL('./verify-market-local.mjs', import.meta.url), 'utf8');
   assert.match(source, /evaluateDependencyAudit/);
