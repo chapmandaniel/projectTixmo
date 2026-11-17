@@ -1,6 +1,6 @@
 import { eventSaleTiming, withEventSaleTiming } from '../../src/api/events/event-sale-window';
 
-// Same boundary as prisma/lib/upcoming.cjs: COALESCE(end, start) <= now.
+// Same boundary as prisma/lib/upcoming.cjs: COALESCE(end, start) <= UTC now.
 const { isUpcoming } = require('../../prisma/lib/upcoming.cjs');
 
 const at = (iso: string) => new Date(iso);

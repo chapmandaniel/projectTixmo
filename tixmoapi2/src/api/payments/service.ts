@@ -308,8 +308,13 @@ export class PaymentService {
         SELECT status, attempt_generation
         FROM payment_webhook_events WHERE id = ${claim.eventId} FOR UPDATE`;
       // Sample live eligibility only AFTER acquiring the row lock (not before a lock wait).
+      // Prisma DateTime without @db.Timestamptz is stored as timestamp
+      // without time zone in UTC clock time. clock_timestamp() is timestamptz,
+      // so a non-UTC session would treat a stale UTC lease as still live
+      // (or a fresh lease as expired). Compare against UTC clock time.
+      // Keep clock_timestamp() so a long transaction does not freeze the lease clock.
       const lease = await tx.$queryRaw<Array<{ live: boolean }>>`
-        SELECT processing_started_at > clock_timestamp() - interval '300 seconds' AS live
+        SELECT processing_started_at > ((clock_timestamp() AT TIME ZONE 'UTC') - interval '300 seconds') AS live
         FROM payment_webhook_events WHERE id = ${claim.eventId}`;
       const row = rows[0];
       if (

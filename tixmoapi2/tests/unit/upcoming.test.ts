@@ -23,8 +23,12 @@ describe('shared upcoming rule', () => {
       )
     ).toBe(false);
     expect(isUpcoming({ endDatetime: null, startDatetime: null }, now)).toBe(false);
-    expect(UPCOMING_SQL).toBe('COALESCE(end_datetime, start_datetime) > now()');
-    expect(ENDED_SQL).toBe('COALESCE(end_datetime, start_datetime) <= now()');
+    expect(UPCOMING_SQL).toBe(
+      "COALESCE(end_datetime, start_datetime) > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"
+    );
+    expect(ENDED_SQL).toBe(
+      "COALESCE(end_datetime, start_datetime) <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"
+    );
   });
 
   it('uses the same predicate in the reconcile CLI and the runbook SQL', () => {
