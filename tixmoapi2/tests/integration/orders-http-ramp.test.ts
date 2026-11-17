@@ -76,11 +76,31 @@ const writeReceipt = () => {
     fs.writeFileSync(receiptPath, JSON.stringify(value) + '\n', { mode: 0o600 });
   }
 };
+async function releaseStaleClientBackends() {
+  // Prior files in this Jest process leave idle Prisma pools. Default pool size
+  // is num_cpus*2+1, so a handful of leaked clients fill Postgres and this
+  // stage's checkouts wait. Isolated runs never see that; --runInBand does.
+  const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/client');
+  const janitor = new PrismaClient();
+  try {
+    await janitor.$queryRawUnsafe(`
+      SELECT pg_terminate_backend(pid)
+      FROM pg_stat_activity
+      WHERE datname = current_database()
+        AND pid <> pg_backend_pid()
+        AND backend_type = 'client backend'
+    `);
+  } finally {
+    await janitor.$disconnect();
+  }
+}
+
 async function runRampStage(actorCount: number) {
   if (unsafePriorStage || previousStageFailed)
     throw Error('Earlier ramp stage failed; later load not started');
   jest.resetModules(); // Every stage must capture its OWN real middleware/Redis lifetimes.
   mockTransportCalls = 0;
+  await releaseStaleClientBackends();
   if (actorCount === 100) expect(fs.existsSync(receiptPath)).toBe(false);
   writeReceipt();
   const ids = {
@@ -190,6 +210,12 @@ async function runRampStage(actorCount: number) {
       );
       spies.push({ mockRestore: () => replaced.restore() });
     }
+    // NODE_ENV=test disables the public-event cache (TTL 0) so writes are
+    // immediately visible. This ramp measures anonymous browsing during
+    // checkout, so restore the production 4s TTL after resetModules. A Bearer
+    // token on those GETs would still skip the cache via authenticatedPublicRead.
+    const publicCacheTtl = jest.replaceProperty(config, 'publicEventCacheTtlSeconds', 4);
+    spies.push({ mockRestore: () => publicCacheTtl.restore() });
     // Middleware may continue after a client deadline; observe its actual promise
     // before app/routes capture the exports. Preserve the real next() behavior.
     const auth = await import('../../src/middleware/auth');
@@ -435,7 +461,8 @@ async function runRampStage(actorCount: number) {
               ? '/api/v1/orders'
               : '/api/v1/orders/' + orderId + '/recovery';
         const client = kind === 'reservation' ? request(url).post(route) : request(url).get(route);
-        client.set('Authorization', `Bearer ${tokens[actor]}`).set('X-Forwarded-For', '127.0.0.1');
+        client.set('X-Forwarded-For', '127.0.0.1');
+        if (kind !== 'public') client.set('Authorization', `Bearer ${tokens[actor]}`);
         if (kind === 'reservation')
           client.send({ items: [{ ticketTypeId: ids.ticketType, quantity: 1 }] });
         const response = await client.timeout({ response: 5000, deadline: 8000 });
