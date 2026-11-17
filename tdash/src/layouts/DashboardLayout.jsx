@@ -64,15 +64,15 @@ const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
         <Link
             to={`/${item.id}`}
             className={cn(
-                'group relative flex h-10 shrink-0 items-center justify-center gap-2 rounded-[10px] px-2.5 text-sm font-light transition-all duration-200',
+                'group relative flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-2 text-sm font-light transition-all duration-200 min-[1600px]:gap-2 min-[1600px]:px-2.5',
                 active
                     ? (isDark ? 'bg-[#2a2b40] text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-slate-900 text-white shadow-sm')
                     : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
             )}
             aria-current={active ? 'page' : undefined}
         >
-            {/* Demo build: icons only from 1400px so every tab fits on a 1280-1440px presentation screen. */}
-            <div className="relative hidden items-center justify-center min-[1400px]:flex">
+            {/* Demo build: icons only from 1440px (tighter padding below 1600px) so every tab, including ScamSwarm, fits on a 1280-1440px presentation screen. */}
+            <div className="relative hidden items-center justify-center min-[1440px]:flex">
                 <item.icon size={18} className={cn('shrink-0', active ? 'drop-shadow-sm' : '')} />
             </div>
             <span className="whitespace-nowrap leading-none">{item.label}</span>

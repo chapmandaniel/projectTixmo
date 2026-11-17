@@ -5,7 +5,7 @@ import { assigneeName, statusLabel, summarize } from './scamSwarmData';
 export const SUGGESTED_QUESTIONS = [
     'What needs my attention first?',
     'Which event is targeted the most?',
-    'Which platform has the most scams?',
+    'Which platform has the most risk?',
     'What should I tell my fans?',
 ];
 
@@ -15,17 +15,13 @@ const normalize = (value) => String(value || '')
     .replace(/\s+/g, ' ')
     .trim();
 
+const joinList = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`);
+
 const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 const openRisky = (findings) => (findings || [])
     .filter((f) => f.status !== 'resolved' && f.verdict !== 'safe')
     .sort((a, b) => b.score - a.score);
-
-const countBy = (items, key) => {
-    const counts = new Map();
-    items.forEach((item) => counts.set(item[key], (counts.get(item[key]) || 0) + 1));
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-};
 
 const answerFirst = (findings) => {
     const risky = openRisky(findings);
@@ -35,36 +31,49 @@ const answerFirst = (findings) => {
     return `Start with the highest scores that are still open: ${lines.join('; ')}. Open each one to report it to the platform or request a takedown. If fans may already have paid, use Warn fans too.`;
 };
 
+const rankBy = (items, key) => {
+    const groups = new Map();
+    items.forEach((item) => {
+        const g = groups.get(item[key]) || { name: item[key], count: 0, score: 0 };
+        g.count += 1;
+        g.score += item.score;
+        groups.set(item[key], g);
+    });
+    return [...groups.values()].sort((a, b) => b.count - a.count || b.score - a.score);
+};
+
 const answerEvent = (findings) => {
-    const risky = (findings || []).filter((f) => f.verdict !== 'safe');
-    if (!risky.length) return 'No event has risky mentions right now.';
-    const [[event, count], second] = countBy(risky, 'event');
-    const kinds = [...new Set(risky.filter((f) => f.event === event).map((f) => f.kindLabel.toLowerCase()))];
-    let text = `${event} is targeted the most, with ${plural(count, 'risky finding')} (${kinds.join(', ')}).`;
-    if (second) text += ` Next is ${second[0]} with ${second[1]}.`;
+    const risky = openRisky(findings);
+    if (!risky.length) return 'No event has open risky mentions right now.';
+    const [top, second] = rankBy(risky, 'event');
+    const kinds = [...new Set(risky.filter((f) => f.event === top.name).map((f) => f.kindLabel.toLowerCase()))];
+    let text = `${top.name} is targeted the most, with ${plural(top.count, 'open risky finding')} (${kinds.join(', ')}).`;
+    if (second && second.count === top.count) text += ` ${second.name} also has ${second.count}, but with lower risk scores.`;
+    else if (second) text += ` Next is ${second.name} with ${second.count}.`;
     text += ' Big on-sale moments attract copycats, so a fan warning before the next announcement is a good idea.';
     return text;
 };
 
 const answerPlatform = (findings) => {
-    const scams = (findings || []).filter((f) => f.verdict === 'scam');
-    if (!scams.length) return 'There are no likely scams on any platform right now.';
-    const ranked = countBy(scams, 'platformLabel');
+    const risky = openRisky(findings);
+    if (!risky.length) return 'There are no open risky findings on any platform right now.';
+    const ranked = rankBy(risky, 'platformLabel');
     const [top] = ranked;
-    const rest = ranked.slice(1).map(([name, count]) => `${name} ${count}`).join(', ');
-    return `${top[0]} has the most likely scams (${top[1]}).${rest ? ` Then ${rest}.` : ''} Reports go through each platform's own impersonation or fraud form, and ScamSwarm prefills it for you.`;
+    const scams = risky.filter((f) => f.platformLabel === top.name && f.verdict === 'scam').length;
+    const rest = ranked.slice(1).map((g) => `${g.name} ${g.count}`).join(', ');
+    return `${top.name} has the most open risky findings (${top.count}, and ${scams} ${scams === 1 ? 'is a likely scam' : 'are likely scams'}).${rest ? ` Then ${rest}.` : ''} Reports go through each platform's own impersonation or fraud form, and ScamSwarm prefills it for you.`;
 };
 
 const answerFans = (findings) => {
     const risky = openRisky(findings);
     const events = [...new Set(risky.map((f) => f.event))];
-    const target = events.length ? ` Focus on ${events.slice(0, 3).join(', ')}.` : '';
+    const target = events.length ? ` Focus on ${joinList(events.slice(0, 3))}.` : '';
     return `Keep it short and calm: official tickets are only sold on your Tixmo pages, transfers only happen inside Tixmo, and you never ask for card details, gift cards or e-transfers by DM.${target} Open a finding and choose Warn fans to get a draft post and email you can edit. In this demo, nothing gets sent.`;
 };
 
 const answerCounts = (findings) => {
     const s = summarize(findings);
-    return `ScamSwarm is tracking ${plural(s.total, 'mention')} of your events outside Tixmo: ${s.scam} likely scams and ${s.attention} that need attention are still open, ${s.safe} look safe, ${s.reported} are reported and ${s.resolved} are taken down or resolved.`;
+    return `ScamSwarm is tracking ${plural(s.total, 'mention')} of your events outside Tixmo: ${s.scam} likely scams and ${s.attention} that need attention are still open, ${s.safe} look safe, ${s.reported} ${s.reported === 1 ? 'is' : 'are'} reported and ${s.resolved} ${s.resolved === 1 ? 'is' : 'are'} taken down or resolved.`;
 };
 
 const answerSafe = (findings) => {

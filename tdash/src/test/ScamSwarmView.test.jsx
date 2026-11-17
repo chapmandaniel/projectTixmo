@@ -34,7 +34,7 @@ describe('ScamSwarm data', () => {
         const findings = buildSeedFindings();
         expect(answerMooseQuestion('What needs my attention first?', findings)).toMatch(/@northIight\.giveaways/);
         expect(answerMooseQuestion('Which event is targeted the most?', findings)).toMatch(/Harbour Lights Festival is targeted the most/);
-        expect(answerMooseQuestion('Which platform has the most scams?', findings)).toMatch(/has the most likely scams/);
+        expect(answerMooseQuestion('Which platform has the most risk?', findings)).toMatch(/Facebook has the most open risky findings/);
         expect(answerMooseQuestion('What should I tell my fans?', findings)).toMatch(/nothing gets sent/);
         expect(answerMooseQuestion('banana', findings)).toMatch(/I can only talk about the ScamSwarm findings/);
     });
