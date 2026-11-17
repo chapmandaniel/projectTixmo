@@ -261,7 +261,7 @@ const TodoView = ({ isDark, user }) => {
                     <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className={`flex items-center justify-center space-x-2 px-4 py-2 text-sm font-normal rounded-md transition-all shadow-lg ${isDark ? 'bg-[var(--section-accent)] text-zinc-950 hover:brightness-110 shadow-black/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
+                            className={`flex items-center justify-center space-x-2 px-4 py-2 text-sm font-normal rounded-md transition-all shadow-lg ${isDark ? 'bg-indigo-500 text-white hover:bg-indigo-400 shadow-indigo-500/20' : 'bg-gray-800 text-white hover:bg-gray-700 shadow-gray-400/20'}`}
                         >
                             <Plus size={16} />
                             <span>Create Task</span>

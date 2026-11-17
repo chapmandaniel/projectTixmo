@@ -218,8 +218,8 @@ const TeamView = ({ isDark, user: currentUser }) => {
             { id: 'total', label: 'Members', value: users.length, icon: Users, accent: 'brand', iconClassName: 'text-[var(--section-accent)]' },
             { id: 'active', label: 'Active', value: active, icon: CheckCircle2, accent: 'green', iconClassName: 'text-emerald-300' },
             { id: 'pending', label: 'Pending', value: pending, icon: Clock3, accent: 'amber', iconClassName: 'text-amber-300' },
-            { id: 'admins', label: 'Admins', value: admins, icon: Shield, accent: 'violet', iconClassName: 'text-[var(--section-accent)]' },
-            { id: 'managers', label: 'Managers', value: managers, icon: Shield, accent: 'blue', iconClassName: 'text-[var(--section-accent)]' },
+            { id: 'admins', label: 'Admins', value: admins, icon: Shield, accent: 'violet', iconClassName: 'text-violet-300' },
+            { id: 'managers', label: 'Managers', value: managers, icon: Shield, accent: 'blue', iconClassName: 'text-cyan-300' },
         ];
     }, [users]);
 
