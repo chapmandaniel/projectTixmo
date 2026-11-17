@@ -20,6 +20,8 @@ Only read-only production checks were made. No production login, signup, purchas
 | GitHub main | Branch protection API reports unprotected |
 | Audit changes | Reports and evidence only; no application source changes or commit/push/merge |
 
+Note (2026-11-17): `main` is now protected with the required status checks `local-gates` and `configured-image-restore`. The GitHub merge queue is off. The “unprotected” result above is the October 4, 2026 finding, not the current state.
+
 The API contains business operations for events, venues, users, tasks, assets, approvals, customers, orders, tickets, scanners, promo codes, reporting and waitlists. The dashboard deliberately marks QuantMo, Social, ProMo and Marketing Hub outside V1 beta. Those placeholders are a scope decision, not completed integrations. The repository contains scanner administration and sync APIs, but no verified camera/offline scanner client.
 
 ## What is already useful

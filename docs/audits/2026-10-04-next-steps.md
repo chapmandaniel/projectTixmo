@@ -56,6 +56,8 @@ Make the gate describe actual acceptance:
 - Configure uptime targets and scheduling; missing required targets must fail instead of silently skipping.
 - Add dependency-aware readiness and delivered alerts; prove Postmark/S3 behavior and backup restore.
 - Protect main with the actual root workflow checks after they are reliable; nested component workflows do not execute as root workflows.
+
+  Note (2026-11-17): This item is done. `main` is now protected with the required status checks `local-gates` and `configured-image-restore`. The GitHub merge queue is off.
 - Validate the deployed API/dashboard SHA and runtime configuration after each release.
 
 ## Pilot completion criteria
