@@ -173,7 +173,14 @@ function discoverDevTools(browser, profile, timeoutError, timeoutMs = 15000) {
     browser.stderr.resume(); // Continue draining after discovery without printing anything.
     browser.once("error", failed);
     browser.once("exit", failed);
-    timer = setTimeout(() => finish(timeoutError()), timeoutMs);
+    // Timers run before I/O. Yield once so a buffered DevTools announcement
+    // that arrived while the loop was stalled is not reported as a deadline.
+    timer = setTimeout(() => {
+      setImmediate(() => {
+        if (settled) return;
+        finish(timeoutError());
+      });
+    }, timeoutMs);
     if (browser.exitCode != null || browser.signalCode != null) {
       failed();
       return;

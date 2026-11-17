@@ -19,6 +19,7 @@ const {
   clearDevToolsActivePort,
   listDevToolsPages,
 } = require("./devtools-discovery.cjs");
+const { deadline, BrowserDeadline } = require("./cdp-deadline.cjs");
 const { api, frontendPort, fixture } = guard(process.env);
 const load = createRequire(resolve(root, "tdash/package.json"));
 let stage = 1,
@@ -40,7 +41,7 @@ const watchdog = setTimeout(() => cancel(), 150000);
 const workspace = await mkdtemp(resolve(tmpdir(), "tixmo-scanner-browser-"));
 const identity = await lstat(workspace);
 const origin = `http://127.0.0.1:${frontendPort}`;
-class Deadline extends Error {}
+class Deadline extends BrowserDeadline {}
 class FixedFailure extends Error {
   constructor(reason, entryType = 0) {
     super("Scanner proof failed");
@@ -50,17 +51,15 @@ class FixedFailure extends Error {
 }
 let detail = 0;
 async function bounded(promise, ms = 10000) {
-  let timer;
   try {
     return await Promise.race([
-      promise,
+      deadline(promise, ms),
       ...(!cleaning ? [cancellation] : []),
-      new Promise((_, reject) => {
-        timer = setTimeout(() => reject(new Deadline()), ms);
-      }),
     ]);
-  } finally {
-    clearTimeout(timer);
+  } catch (error) {
+    if (error instanceof BrowserDeadline && !(error instanceof Deadline))
+      throw new Deadline();
+    throw error;
   }
 }
 const mark = (value) => {
@@ -201,6 +200,33 @@ async function keyAbsent(profile) {
   }
   await visit(profile);
 }
+async function connectPage(target) {
+  const started = Date.now();
+  const budget = 15000;
+  let last = new Deadline();
+  while (Date.now() - started <= budget) {
+    const candidate = new WebSocket(target);
+    try {
+      await bounded(
+        new Promise((resolve, reject) => {
+          candidate.addEventListener("open", resolve, { once: true });
+          candidate.addEventListener("error", reject, { once: true });
+        }),
+        Math.min(2000, Math.max(1, budget - (Date.now() - started))),
+      );
+      return candidate;
+    } catch (error) {
+      last = error instanceof Deadline ? error : new Deadline();
+      try {
+        candidate.close();
+      } catch {
+        /* already closed */
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+  throw last;
+}
 async function open(index) {
   const profile = join(workspace, "profile" + index);
   await mkdir(profile, { mode: 0o700 });
@@ -210,7 +236,7 @@ async function open(index) {
   record.child = spawn(
     process.env.TIXMO_BROWSER_PATH,
     [
-      "--headless",
+      "--headless=new",
       "--no-sandbox",
       "--disable-gpu",
       "--disable-dev-shm-usage",
@@ -239,9 +265,20 @@ async function open(index) {
   });
   // Attach rejection handling immediately, including a spawn failure during discovery.
   void record.closed.catch(() => {});
-  const debug = new URL(
-    await discoverDevTools(record.child, profile, () => new Deadline()),
-  );
+  let debugUrl;
+  try {
+    debugUrl = await discoverDevTools(
+      record.child,
+      profile,
+      () => new Deadline(),
+    );
+  } catch (error) {
+    if (error instanceof Deadline) throw error;
+    if (error && error.message === "Browser discovery rejected")
+      throw new Deadline();
+    throw error;
+  }
+  const debug = new URL(debugUrl);
   assert.equal(debug.protocol, "ws:");
   assert.equal(debug.hostname, "127.0.0.1");
   record.debugOrigin = "http://" + debug.host;
@@ -259,14 +296,7 @@ async function open(index) {
   );
   assert.equal(target.host, debug.host);
   assert.equal(target.protocol, "ws:");
-  const ws = (record.ws = new WebSocket(target));
-  await bounded(
-    new Promise((resolve, reject) => {
-      ws.addEventListener("open", resolve, { once: true });
-      ws.addEventListener("error", reject, { once: true });
-    }),
-    5000,
-  );
+  const ws = (record.ws = await connectPage(target));
   let sequence = 0;
   const commands = new Map();
   const rejectAll = (closed = false) => {
@@ -289,7 +319,7 @@ async function open(index) {
         commands.set(id, { resolve, reject, method });
         ws.send(JSON.stringify({ id, method, params }));
       }),
-      5000,
+      15000,
     ).finally(() => commands.delete(id));
   };
   record.send = send;
@@ -414,7 +444,7 @@ try {
   // steal it. Release immediately before preview so TIME_WAIT is not minutes old.
   await sendIpc({ releasePort: true });
   await bounded(portReleasedGate, 10000);
-  vite = await preview({
+  const previewOptions = {
     ...config,
     preview: {
       host: "127.0.0.1",
@@ -423,7 +453,30 @@ try {
       headers: { "Content-Security-Policy": csp },
       proxy: { "/api": { target: api.origin, changeOrigin: true } },
     },
-  });
+  };
+  // Parent close() and this bind are different processes. Wait until THIS
+  // process can own the port; do not retry the suite or pick another port.
+  vite = await bounded(
+    (async () => {
+      const started = Date.now();
+      const budget = 8000;
+      let last;
+      while (Date.now() - started <= budget) {
+        try {
+          return await preview(previewOptions);
+        } catch (error) {
+          last = error;
+          const code = error && error.code;
+          const text = String((error && error.message) || error);
+          if (code !== "EADDRINUSE" && !/EADDRINUSE|already in use/i.test(text))
+            throw error;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+      }
+      throw last instanceof Deadline ? last : new Deadline();
+    })(),
+    8000,
+  );
   await bounded(
     (async () => {
       for (let i = 0; i < 50; i++) {

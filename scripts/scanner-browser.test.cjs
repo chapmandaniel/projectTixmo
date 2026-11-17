@@ -203,6 +203,10 @@ test("collected mounted test and worker keep real transport, barrier, isolation 
     path.join(__dirname, "browser/scanner-sessions.mjs"),
     "utf8",
   );
+  const discovery = fs.readFileSync(
+    path.join(__dirname, "browser/devtools-discovery.cjs"),
+    "utf8",
+  );
   const workflow = fs.readFileSync(
     path.join(__dirname, "../.github/workflows/market-readiness-local.yml"),
     "utf8",
@@ -220,8 +224,14 @@ test("collected mounted test and worker keep real transport, barrier, isolation 
   assert.match(testSource, /await financial\(\)/);
   assert.match(testSource, /beforeFresh/);
   assert.match(worker, /--user-data-dir=/);
+  assert.match(worker, /--headless=new/);
   assert.match(worker, /--disable-dev-shm-usage/);
   assert.match(worker, /releasePort: true/);
+  assert.match(worker, /require\("\.\/cdp-deadline\.cjs"\)/);
+  assert.match(worker, /EADDRINUSE/);
+  assert.match(worker, /async function connectPage\(target\)/);
+  assert.match(discovery, /setImmediate\(\(\) => \{/);
+  assert.match(discovery, /finish\(timeoutError\(\)\)/);
   assert.match(worker, /Promise.all\(\[\s*a.click/);
   assert.match(worker, /Fetch.continueRequest/);
   assert.doesNotMatch(
