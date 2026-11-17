@@ -76,31 +76,11 @@ const writeReceipt = () => {
     fs.writeFileSync(receiptPath, JSON.stringify(value) + '\n', { mode: 0o600 });
   }
 };
-async function releaseStaleClientBackends() {
-  // Prior files in this Jest process leave idle Prisma pools. Default pool size
-  // is num_cpus*2+1, so a handful of leaked clients fill Postgres and this
-  // stage's checkouts wait. Isolated runs never see that; --runInBand does.
-  const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/client');
-  const janitor = new PrismaClient();
-  try {
-    await janitor.$queryRawUnsafe(`
-      SELECT pg_terminate_backend(pid)
-      FROM pg_stat_activity
-      WHERE datname = current_database()
-        AND pid <> pg_backend_pid()
-        AND backend_type = 'client backend'
-    `);
-  } finally {
-    await janitor.$disconnect();
-  }
-}
-
 async function runRampStage(actorCount: number) {
   if (unsafePriorStage || previousStageFailed)
     throw Error('Earlier ramp stage failed; later load not started');
   jest.resetModules(); // Every stage must capture its OWN real middleware/Redis lifetimes.
   mockTransportCalls = 0;
-  await releaseStaleClientBackends();
   if (actorCount === 100) expect(fs.existsSync(receiptPath)).toBe(false);
   writeReceipt();
   const ids = {

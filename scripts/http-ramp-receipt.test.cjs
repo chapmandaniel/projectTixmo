@@ -270,7 +270,6 @@ test('current managed workflow collects pure tests and binds fresh report to cur
     'utf8'
   );
   assert.match(source, /jest.resetModules\(\)/);
-  assert.match(source, /pg_terminate_backend\(pid\)/);
   assert.match(source, /\/api\/v1\/events\/public\//);
   assert.match(source, /replaceProperty\(config, 'publicEventCacheTtlSeconds', 4\)/);
   assert.match(source, /if \(kind !== 'public'\) client.set\('Authorization', `Bearer \$\{tokens\[actor\]\}`\)/);
