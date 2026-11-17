@@ -156,7 +156,7 @@ const ScannersView = ({
                 title={title}
                 description={description}
                 icon={Smartphone}
-                iconClassName={isDark ? 'text-pink-300' : 'text-rose-700'}
+                iconClassName={isDark ? 'text-[var(--brand-accent-soft)]' : 'text-rose-700'}
                 actions={(
                     <DashboardButton
                         isDark={isDark}
@@ -201,7 +201,7 @@ const ScannersView = ({
             <DashboardSurface isDark={isDark} accent={activeTab === 'scanners' ? 'brand' : 'blue'} className="p-0">
                 {isLoading ? (
                     <div className="p-12 text-center sm:p-20">
-                        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-dashboard-accent"></div>
+                        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[var(--brand-accent)]"></div>
                         <p className={cn('mt-4 text-sm font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>Loading...</p>
                     </div>
                 ) : fetchError ? (
@@ -354,7 +354,7 @@ const ScannersView = ({
                                     <div className={cn('mt-4 grid grid-cols-2 gap-3 text-xs font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>
                                         <div>
                                             <span>Type</span>
-                                            <p className={isDark ? 'text-sky-300' : 'text-sky-700'}>{log.scanType}</p>
+                                            <p className={isDark ? 'text-[var(--brand-accent-soft)]' : 'text-sky-700'}>{log.scanType}</p>
                                         </div>
                                         <div className="min-w-0">
                                             <span>Ticket</span>

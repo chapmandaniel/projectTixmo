@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#f97316"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#a855f7" stop-opacity=".45"/><stop offset="1" stop-color="#120a1a" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#120a1a"/><stop offset="1" stop-color="#120a1a"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="900" height="1200" fill="#120a1a"/>
+<rect width="900" height="1200" fill="url(#r)"/>
+<circle cx="594" cy="336" r="180" fill="#e9d5ff"/>
+<circle cx="666" cy="288" r="171" fill="url(#bgfill)"/>
+<path d="M162 504 Q 342 408 522 504 Q 486 588 378 552 L 342 528 L 306 552 Q 198 588 162 504 Z" fill="url(#g)"/>
+<ellipse cx="261" cy="516" rx="40" ry="18" fill="#000"/><ellipse cx="423" cy="516" rx="40" ry="18" fill="#000"/>
+<rect width="900" height="1200" fill="url(#shade)"/>
+<text x="72" y="672" font-size="102" font-weight="800" fill="#fff" letter-spacing="2">HALLOWEEN</text>
+<text x="72" y="776" font-size="102" font-weight="800" fill="#fff" letter-spacing="2">MASQUERADE</text>
+<rect x="72" y="916" width="108" height="6" fill="#e9d5ff"/>
+<text x="72" y="979" font-size="30" fill="#fff" letter-spacing="4">FOUNDRY HALL</text>
+<text x="72" y="1024" font-size="23" fill="#fff" opacity=".75" letter-spacing="3">MASKS REQUIRED · COSTUME CONTEST · 19+</text>
+<text x="828" y="65" text-anchor="end" font-size="19" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

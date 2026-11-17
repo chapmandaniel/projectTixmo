@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="600" viewBox="0 0 1600 600" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#94a3b8" stop-opacity=".45"/><stop offset="1" stop-color="#14141f" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14141f"/><stop offset="1" stop-color="#14141f"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1600" height="600" fill="#14141f"/>
+<rect width="1600" height="600" fill="url(#r)"/>
+<path d="M-768 0 L -704 0 L -1568 372 L -1632 372 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M-640 0 L -576 0 L -1440 372 L -1504 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M-512 0 L -448 0 L -1312 372 L -1376 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M-384 0 L -320 0 L -1184 372 L -1248 372 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M-256 0 L -192 0 L -1056 372 L -1120 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M-128 0 L -64 0 L -928 372 L -992 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M0 0 L 64 0 L -800 372 L -864 372 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M128 0 L 192 0 L -672 372 L -736 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M256 0 L 320 0 L -544 372 L -608 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M384 0 L 448 0 L -416 372 L -480 372 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M512 0 L 576 0 L -288 372 L -352 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M640 0 L 704 0 L -160 372 L -224 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M768 0 L 832 0 L -32 372 L -96 372 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M896 0 L 960 0 L 96 372 L 32 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1024 0 L 1088 0 L 224 372 L 160 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1152 0 L 1216 0 L 352 372 L 288 372 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M1280 0 L 1344 0 L 480 372 L 416 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1408 0 L 1472 0 L 608 372 L 544 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1536 0 L 1600 0 L 736 372 L 672 372 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M1664 0 L 1728 0 L 864 372 L 800 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1792 0 L 1856 0 L 992 372 L 928 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1920 0 L 1984 0 L 1120 372 L 1056 372 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M2048 0 L 2112 0 L 1248 372 L 1184 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M2176 0 L 2240 0 L 1376 372 L 1312 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M2304 0 L 2368 0 L 1504 372 L 1440 372 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M2432 0 L 2496 0 L 1632 372 L 1568 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M2560 0 L 2624 0 L 1760 372 L 1696 372 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M2688 0 L 2752 0 L 1888 372 L 1824 372 Z" fill="#e2e8f0" opacity=".22"/>
+<circle cx="1152" cy="168" r="256" fill="#f472b6" opacity=".85"/>
+<rect width="1600" height="600" fill="url(#shade)"/>
+<text x="128" y="300" font-size="79" font-weight="800" fill="#fff" letter-spacing="2">FOG CITY STROBE</text>
+<text x="128" y="371" font-size="25" fill="#fff" opacity=".85" letter-spacing="4">FOUNDRY HALL · TICKETS AT NORTHLIGHT.EXAMPLE.COM</text>
+<text x="1472" y="115" text-anchor="end" font-size="22" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

@@ -1,0 +1,53 @@
+{
+  "deployment": {
+    "id": "e7b2483d-a257-48ba-92eb-54372aeed540",
+    "status": "SUCCESS",
+    "createdAt": "2026-11-16T15:17:20.544Z",
+    "staticUrl": "labs.tixmo.co",
+    "commitHash": "8646ae92015bac1b0f4eda812295eaa8a2ce1e9b"
+  },
+  "events": [
+    {
+      "step": "SNAPSHOT_CODE",
+      "createdAt": "2026-11-16T15:17:21.983Z",
+      "completedAt": "2026-11-16T15:18:25.191Z",
+      "error": null
+    },
+    {
+      "step": "BUILD_IMAGE",
+      "createdAt": "2026-11-16T15:17:23.385Z",
+      "completedAt": "2026-11-16T15:18:25.194Z",
+      "error": null
+    },
+    {
+      "step": "PUBLISH_IMAGE",
+      "createdAt": "2026-11-16T15:18:25.199Z",
+      "completedAt": "2026-11-16T15:18:25.126Z",
+      "error": null
+    },
+    {
+      "step": "CREATE_CONTAINER",
+      "createdAt": "2026-11-16T15:18:25.640Z",
+      "completedAt": "2026-11-16T15:18:30.148Z",
+      "error": null
+    },
+    {
+      "step": "HEALTHCHECK",
+      "createdAt": "2026-11-16T15:18:30.380Z",
+      "completedAt": "2026-11-16T15:18:30.799Z",
+      "error": null
+    },
+    {
+      "step": "CONFIGURE_NETWORK",
+      "createdAt": "2026-11-16T15:18:30.933Z",
+      "completedAt": "2026-11-16T15:18:33.483Z",
+      "error": null
+    },
+    {
+      "step": "DRAIN_INSTANCES",
+      "createdAt": "2026-11-16T15:18:34.731Z",
+      "completedAt": "2026-11-16T15:18:34.729Z",
+      "error": null
+    }
+  ]
+}

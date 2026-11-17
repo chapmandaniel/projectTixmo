@@ -1,3 +1,4 @@
+import { LAST_REFRESH_AT } from './demoClock';
 export const NOT_AVAILABLE = 'Not available for this account yet';
 
 export const likesCommentsShares = (post) => post.likes + post.commentsCount + post.shares;
@@ -60,7 +61,7 @@ export const openOnLabel = (platform) => {
 
 export const commentAge = (iso) => {
     const then = new Date(iso).getTime();
-    const now = new Date('2026-11-11T08:14:22-03:30').getTime();
+    const now = new Date(LAST_REFRESH_AT).getTime();
     const hours = Math.max(1, Math.round((now - then) / (1000 * 60 * 60)));
     if (hours < 24) return `${hours}h ago`;
     const days = Math.round(hours / 24);

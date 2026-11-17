@@ -45,8 +45,15 @@ export default function EventSalesControl({ event, user, isDark, onUpdate }) {
             setMessage(error.response?.data?.message || error.message || 'Sales control failed. Retry the same request.');
         } finally { if (valid()) { inFlight.current = false; setBusy(false); } }
     };
-    return <DashboardSurface isDark={isDark} className="mb-4 space-y-3 p-4">
-        <h3>New ticket sales: {current.salesPaused ? 'paused' : 'not paused'}</h3>
+    // Demo build: collapsed by default so the event workspace leads with sales, not the emergency control.
+    return <DashboardSurface isDark={isDark} accent={null} className="mb-4 p-4">
+        <details open={Boolean(request.current) || current.salesPaused === true || Boolean(message) || undefined}>
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-light">
+            <span className={`h-2 w-2 rounded-full ${current.salesPaused ? 'bg-amber-400' : 'bg-emerald-400'}`} aria-hidden="true" />
+            <h3 className="inline">New ticket sales: {current.salesPaused ? 'paused' : 'not paused'}</h3>
+            <span className="ml-auto text-xs opacity-70">Sales controls</span>
+        </summary>
+        <div className="mt-3 space-y-3">
         <p>Existing orders and tickets keep their existing rules. Resume does not change event status or inventory. Resume requires incident review.</p>
         <label htmlFor="sales-control-reason">Operational reason (no credentials)</label>
         <DashboardTextInput id="sales-control-reason" isDark={isDark} maxLength={1000} value={reason}
@@ -59,5 +66,7 @@ export default function EventSalesControl({ event, user, isDark, onUpdate }) {
             request.current = null; setCanDiscard(false); setReason(''); setMessage('Request discarded. Enter a new reason to submit a new explicit action.');
         }}>Discard rejected request</DashboardButton> : null}
         <p role="status">{message}</p>
+        </div>
+        </details>
     </DashboardSurface>;
 }

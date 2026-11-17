@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { NavLink, Route, Routes, useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { NavLink, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
 import { Share2 } from 'lucide-react';
 import {
     DashboardChip,
@@ -45,9 +45,7 @@ const ANALYST_NAV = [
 
 export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
     const theme = getDashboardTheme(isDark);
-    const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
-    const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${location.pathname}${location.search}`;
     const analystViews = isSocialDashboardAnalystViewsEnabled();
 
     const filters = {
@@ -112,26 +110,16 @@ export default function SocialDashboardApp({ isDark, basePath = '/social' }) {
 
     return (
         <DashboardPage className="space-y-6">
-            <div
-                data-testid="social-dashboard-url"
-                className={cn(
-                    'rounded-md border px-3 py-2 font-mono text-xs',
-                    isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-zinc-300' : 'border-slate-200 bg-white text-slate-700'
-                )}
-            >
-                {publicUrl}
-            </div>
             <DashboardPageHeader
                 isDark={isDark}
                 eyebrow="Labs prototype"
                 title="Social"
                 description={`${MOCK_BRAND}. Demo numbers only.`}
                 icon={Share2}
-                iconClassName="text-fuchsia-300"
+                iconClassName="text-[var(--brand-accent-soft)]"
                 badges={(
                     <>
                         <DashboardChip isDark={isDark}>Mock data</DashboardChip>
-                        <DashboardChip isDark={isDark} className="max-w-full break-all">{publicUrl}</DashboardChip>
                     </>
                 )}
             />

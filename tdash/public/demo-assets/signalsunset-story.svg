@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fb923c"/><stop offset="1" stop-color="#f43f5e"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#fb923c" stop-opacity=".45"/><stop offset="1" stop-color="#3b0d2c" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b0d2c"/><stop offset="1" stop-color="#3b0d2c"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1920" fill="#3b0d2c"/>
+<rect width="1080" height="1920" fill="url(#r)"/>
+<circle cx="540" cy="806" r="216" fill="url(#g)"/>
+<path d="M0 1920 L 0 848 L 135 762 L 270 773 L 405 783 L 540 830 L 675 711 L 810 728 L 945 824 L 1080 743 L 1080 1920 Z" fill="#000" opacity="0.30"/>
+<path d="M0 1920 L 0 996 L 135 857 L 270 857 L 405 900 L 540 895 L 675 859 L 810 975 L 945 986 L 1080 984 L 1080 1920 Z" fill="#000" opacity="0.45"/>
+<path d="M0 1920 L 0 1028 L 135 1050 L 270 1037 L 405 1115 L 540 1121 L 675 1054 L 810 1108 L 945 1030 L 1080 1081 L 1080 1920 Z" fill="#000" opacity="0.60"/>
+<path d="M0 1920 L 0 1121 L 135 1116 L 270 1159 L 405 1260 L 540 1140 L 675 1232 L 810 1139 L 945 1219 L 1080 1216 L 1080 1920 Z" fill="#000" opacity="0.75"/>
+<rect width="1080" height="1920" fill="url(#shade)"/>
+<text x="86" y="1152" font-size="111" font-weight="800" fill="#fff" letter-spacing="2">SIGNAL HILL</text>
+<text x="86" y="1265" font-size="111" font-weight="800" fill="#fff" letter-spacing="2">SUNSET</text>
+<text x="86" y="1378" font-size="111" font-weight="800" fill="#fff" letter-spacing="2">SESSIONS</text>
+<rect x="86" y="1531" width="130" height="6" fill="#fde68a"/>
+<text x="86" y="1606" font-size="36" fill="#fff" letter-spacing="4">SIGNAL HILL AMPHITHEATRE</text>
+<text x="86" y="1660" font-size="28" fill="#fff" opacity=".75" letter-spacing="3">OPEN AIR · GOLDEN HOUR · ALL AGES</text>
+<rect x="86" y="1661" width="907" height="130" rx="65" fill="#fff"/>
+<text x="540" y="1747" text-anchor="middle" font-size="48" font-weight="700" fill="#3b0d2c" letter-spacing="3">GET TICKETS</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

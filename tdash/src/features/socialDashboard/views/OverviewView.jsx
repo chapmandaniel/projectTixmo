@@ -79,7 +79,7 @@ export const OverviewView = ({ isDark, dashboard, href }) => {
                             className="text-left"
                             aria-pressed={metric === item.id}
                         >
-                            <DashboardSurface isDark={isDark} accent={item.accent} interactive className={cn('p-4', metric === item.id && 'ring-1 ring-pink-400/40')}>
+                            <DashboardSurface isDark={isDark} accent={item.accent} interactive className={cn('p-4', metric === item.id && 'ring-1 ring-[rgb(var(--brand-accent-rgb)/0.4)]')}>
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
                                         <p className={cn('text-[10px] uppercase tracking-[0.16em]', theme.textTertiary)}>{item.label}</p>
@@ -88,7 +88,7 @@ export const OverviewView = ({ isDark, dashboard, href }) => {
                                             {change === null ? 'Prior period too small to compare' : `${formatSignedPercent(change)} vs prior 28 days`}
                                         </p>
                                     </div>
-                                    <Icon size={18} className="text-pink-400" />
+                                    <Icon size={18} className="text-[var(--brand-accent-soft)]" />
                                 </div>
                                 <div className="mt-3">
                                     <Sparkline values={kpi.sparkline} isDark={isDark} />
@@ -174,7 +174,7 @@ export const OverviewView = ({ isDark, dashboard, href }) => {
                 accent="violet"
                 title="Post gallery"
                 description="Strong posts, posts below their usual range, and posts with active discussion. Performance and audience response are separate readings."
-                actions={<Link to={href('posts')} className="text-sm text-pink-400">Open all posts</Link>}
+                actions={<Link to={href('posts')} className="text-sm text-[var(--brand-accent-soft)]">Open all posts</Link>}
             >
                 <div className="flex gap-4 overflow-x-auto pb-2">
                     {galleryPosts.map((post) => (
@@ -195,7 +195,7 @@ export const OverviewView = ({ isDark, dashboard, href }) => {
                     <p className={cn('mt-4 text-sm font-light', theme.textSecondary)}>
                         Leading positive theme: praise for colour / lineup. Leading negative theme: limited merch stock.
                     </p>
-                    <Link to={href('community')} className="mt-3 inline-block text-sm text-pink-400">Open community report</Link>
+                    <Link to={href('community')} className="mt-3 inline-block text-sm text-[var(--brand-accent-soft)]">Open community report</Link>
                 </DashboardSection>
                 <DashboardSection isDark={isDark} accent="amber" title="Brand conversation" description={`${LISTENING_QUERY.name}. Terms and sources stay visible on the listening view.`}>
                     <div className="flex flex-wrap gap-2">
@@ -206,7 +206,7 @@ export const OverviewView = ({ isDark, dashboard, href }) => {
                     <p className={cn('mt-4 text-sm font-light', theme.textSecondary)}>
                         Mentions spiked on {LISTENING_SPIKE_DATE}. Sample: {LISTENING_MENTIONS[0].text}
                     </p>
-                    <Link to={href(`listening?spike=${LISTENING_SPIKE_DATE}`)} className="mt-3 inline-block text-sm text-pink-400">Open listening query</Link>
+                    <Link to={href(`listening?spike=${LISTENING_SPIKE_DATE}`)} className="mt-3 inline-block text-sm text-[var(--brand-accent-soft)]">Open listening query</Link>
                 </DashboardSection>
             </div>
 
@@ -222,7 +222,7 @@ export const OverviewView = ({ isDark, dashboard, href }) => {
                             <li key={insight.id}>
                                 <Link to={target} className={cn('block rounded-md border p-4 transition', isDark ? 'border-dashboard-border hover:bg-dashboard-panelAlt' : 'border-slate-200 hover:bg-slate-50')}>
                                     <p className={cn('text-sm font-light leading-6', theme.textPrimary)}>{insight.text}</p>
-                                    <p className="mt-2 text-xs text-pink-400">Open supporting view</p>
+                                    <p className="mt-2 text-xs text-[var(--brand-accent-soft)]">Open supporting view</p>
                                 </Link>
                             </li>
                         );

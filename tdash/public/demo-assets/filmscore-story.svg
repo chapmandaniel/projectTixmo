@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14b8a6"/><stop offset="1" stop-color="#f59e0b"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#14b8a6" stop-opacity=".45"/><stop offset="1" stop-color="#111827" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111827"/><stop offset="1" stop-color="#111827"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1920" fill="#111827"/>
+<rect width="1080" height="1920" fill="url(#r)"/>
+<line x1="540" y1="960" x2="-1015" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="-886" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="-756" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="-626" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="-497" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="-367" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="-238" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="-108" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="22" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="151" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="281" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="410" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="540" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="670" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="799" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="929" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="1058" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="1188" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="1318" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="1447" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="1577" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="1706" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="1836" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="1966" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="540" y1="960" x2="2095" y2="1920" stroke="#14b8a6" stroke-width="2" opacity=".5"/>
+<line x1="0" y1="971" x2="1080" y2="971" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="998" x2="1080" y2="998" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1039" x2="1080" y2="1039" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1093" x2="1080" y2="1093" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1159" x2="1080" y2="1159" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1236" x2="1080" y2="1236" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1324" x2="1080" y2="1324" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1423" x2="1080" y2="1423" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1532" x2="1080" y2="1532" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1651" x2="1080" y2="1651" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<line x1="0" y1="1781" x2="1080" y2="1781" stroke="#14b8a6" stroke-width="2" opacity=".45"/>
+<circle cx="540" cy="960" r="238" fill="url(#g)"/>
+<rect x="0" y="960" width="1080" height="960" fill="#000" opacity=".35"/>
+<rect width="1080" height="1920" fill="url(#shade)"/>
+<text x="86" y="1152" font-size="122" font-weight="800" fill="#fff" letter-spacing="2">TIDEWATER</text>
+<text x="86" y="1276" font-size="122" font-weight="800" fill="#fff" letter-spacing="2">FILM SCORE</text>
+<text x="86" y="1401" font-size="122" font-weight="800" fill="#fff" letter-spacing="2">LIVE</text>
+<rect x="86" y="1568" width="130" height="6" fill="#ffffff"/>
+<text x="86" y="1644" font-size="36" fill="#fff" letter-spacing="4">GOWER STREET THEATRE</text>
+<text x="86" y="1698" font-size="28" fill="#fff" opacity=".75" letter-spacing="3">FULL ORCHESTRA · SCREEN · SCORE</text>
+<rect x="86" y="1661" width="907" height="130" rx="65" fill="#fff"/>
+<text x="540" y="1747" text-anchor="middle" font-size="48" font-weight="700" fill="#111827" letter-spacing="3">GET TICKETS</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

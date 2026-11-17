@@ -1,0 +1,870 @@
+{
+ "desktop:dashboard": {
+  "url": "https://labs.tixmo.co/dashboard",
+  "console": [],
+  "failed": [],
+  "text": "Welcome back, Avery\n\nHere is what is happening across your events today.\n\nTickets sold today\n\n234\n\n120 orders \u00b7 $19,753\n\nRevenue, last 30 days\n\n$281,523\n\n3,487 tickets\n\nOn sale now\n\n9\n\nLive now: Kitchen Party Social\n\nOpen tasks\n\n40\n\n1 due today or overdue\n\nWaiting on review\n\n5\n\nCreative out with reviewers\n\nTicket sales, last 14 days\n\nPaid tickets per day across every event.\n\n2 weeks ago\nToday\nLatest activity\n\nWhat the team and your buyers did most recently.\n\nDoors open: Kitchen Party Social\n\nTwo scanners are live at The Battery Club. 354 tickets sold.\n\n22 min ago\n\nOwen mentioned you\n\n\"Float counted, tablet 1 at the front\" on Tonight: walk-up ticket float.\n\n1 hr ago\n\nApproval updated: Winter Lanterns Gala invitation\n\nImogen added the charity number in revision 3.\n\n2 hr ago\n\nApproval waiting: Harbour Lights main poster\n\nHana uploaded revision 3 for Lantern Static management.\n\n3 hr ago\n\nHarbour Lights passed 2400 tickets\n\nHarbour Lights Festival is 68% sold. VIP Deck is moving fastest this week.\n\n4 hr ago\nEvent Manager\n\nCreate events and manage sales, scanners, and venues from one dashboard.\n\nTask Manager\n\nCollaborate, assign work, and track operational follow-through.\n\nAsset Library\n\nBrowse uploaded creative, preview versions, and copy share links for internal or external handoff.\n\n5\nReview Portal\n\nReview pending requests.\n\nAnalytics\n\nDeep dive into your metrics.\n\nSecurity\n\nHow your event pages, dashboard, checkout and door devices are doing.\n\nTeam Members\n\nManage organization ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:events": {
+  "url": "https://labs.tixmo.co/events",
+  "console": [],
+  "failed": [],
+  "text": "Event Manager\nCreate New Event\n\nUse Event Studio for the V1 event setup path: basics, venue, tickets, preview, draft, and publish.\n\nEvent Library\n\nReview drafts, published events, and direct links into each event workspace.\n\nSales\n\nList transactions with event-aware filters and sorting for finance and box office review.\n\nScanners\n\nManage scanner devices, access, and entry logs from one operations panel.\n\nVenues\n\nMaintain venue details, capacity, and location records that power event creation.\n\nCurrent Events\n5\n\nCOMEDY\n\nLate Show Comedy Club\nSold Out\n11/19/2026\nGower Street Theatre\n\nCONCERT\n\nSaltwater Sessions: Mara Vale\nOn Sale\n11/22/2026\nChapel Street Studio\n\nCONCERT\n\nAurora After Dark\nOn Sale\n11/28/2026\nThe Lantern Room\n\nFOOD & MUSIC\n\nIceberg Alley Jazz Brunch\nOn Sale\n12/5/2026\nThe Battery Club\n\nFESTIVAL\n\nHarbour Lights Festival\nOn Sale\n12/12/2026\nHarbourfront Commons",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "eventLinks": [],
+ "desktop:todo": {
+  "url": "https://labs.tixmo.co/todo",
+  "console": [],
+  "failed": [],
+  "text": "Task Manager\nCreate Task\nAll events\nDuckworth Indie Weekender\nSignal Hill Sunset Sessions\nNorthern Static Live\nHalloween Masquerade\nQuiet Harbour Acoustic\nEmber Choir: Winter Songs\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nAurora After Dark\nIceberg Alley Jazz Brunch\nHarbour Lights Festival\nBattery Road Blues Night\nFog City Strobe\nNew Year's Eve at Harbourfront\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\nFilter\nTo Do\n19\nOPS\n\nFinalize VIP Deck catering headcount\n\nHarbour Lights Festival\nNov 25\nMedium\nRT\nView\nOPS\n\nLantern walk safety briefing with volunteers\n\nHarbour Lights Festival\nDec 8\nMedium\nGW\nView\nMARKETING\n\nPaid social: Harbour Lights final push\n\nHarbour Lights Festival\nNov 30\nMedium\nLF\nView\nOPS\n\nDoor staffing plan: 6 lanes\n\nHarbour Lights Festival\nNov 28\nHigh\nDK\n1\nView\nGENERAL\n\nTable-for-four host scripts\n\nAurora After Dark\nNov 26\nLow\nRT\nView\nMARKETING\n\nAnnounce support act for Fog City Strobe\n\nFog City Strobe\nNov 23\nMedium\nJO\n1\nView\nMARKETING\n\nKitchen Party photo recap\n\nKitchen Party Social\nTomorrow\nLow\nHS\nView\nOPS\n\nMara Vale meet & greet logistics\n\nSaltwater Sessions: Mara Vale\nNov 21\nMedium\nKM\nView\nGENERAL\n\nBrunch menu sign-off with Battery Club\n\nIceberg Alley Jazz Brunch\nNov 25\nMedium\nGW\nView\nOPS\n\nNYE security plan with harbour authority\n\nNew Year's Eve at Harbourfront\nDec 6\nHigh\nDK\nView\nDESIGN\n\nNYE countdown screen content\n\nNew Year's Eve at Harbourfront\nDec 11\nLow\nIH\nView\nLEGAL\n\nGala sponso",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:team": {
+  "url": "https://labs.tixmo.co/team",
+  "console": [],
+  "failed": [],
+  "text": "Team Members\n\nManage organization access, role coverage, and pending invites from one roster.\n\nAdd member\n\nMEMBERS\n\n22\n\nACTIVE\n\n19\n\nPENDING\n\n3\n\nADMINS\n\n3\n\nMANAGERS\n\n4\n\nTeam directory\n\nEveryone with access, their role, and whether they have completed their invite.\n\n22 members\nMEMBER\nROLE\nTITLE\nSTATUS\nAQ\n\nAvery Quinlan\n\nYOU\n\navery@northlight.example.com\n\nOWNER\nHead of Live Operations\nActive\nActive now\nPR\n\nPriya Raman\n\npriya.raman@northlight.example.com\n\nADMIN\nDirector of Finance & Operations\nActive\nActive 54 min ago\nTR\n\nTomas Reyes\n\ntomas.reyes@northlight.example.com\n\nADMIN\nGeneral Manager\nActive\nActive 2 hr ago\nGW\n\nGrace Whelan\n\ngrace.whelan@northlight.example.com\n\nMANAGER\nVenue Operations Manager\nActive\nActive 5 hr ago\nJO\n\nJordan Okafor\n\njordan.okafor@northlight.example.com\n\nMANAGER\nMarketing Lead\nActive\nActive 28 min ago\nNP\n\nNathan Pike\n\nnathan.pike@northlight.example.com\n\nMANAGER\nBox Office Manager\nActive\nActive 38 min ago\nSM\n\nSofia Marchetti\n\nsofia.marchetti@northlight.example.com\n\nMANAGER\nProduction Manager\nActive\nActive 1 hr ago\nDK\n\nDev Kapoor\n\ndev.kapoor@northlight.example.com\n\nSCANNER\nDoor & Access Lead\nActive\nActive 25 min ago\nFW\n\nFiona Walsh\n\nfiona.walsh@northlight.example.com\n\nSCANNER\nDoor Supervisor\nActive\nActive 34 min ago\nHS\n\nHana Sato\n\nhana.sato@northlight.example.com\n\nTEAM MEMBER\nSocial & Content Producer\nActive\nActive 20 min ago\nIH\n\nImogen Hart\n\nimogen.hart@northlight.example.com\n\nTEAM MEMBER\nGraphic Designer\nActive\nActive 1 hr ago\nKM\n\nKwame Mensah\n\nkwame.mens",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:assets": {
+  "url": "https://labs.tixmo.co/assets",
+  "console": [],
+  "failed": [],
+  "text": "Asset Library\n\nBrowse, organize, and download assets by the event or brand library they belong to.\n\n62 assets\n17 folders\n1 selected\n\nFOLDERS\n\nAll assets\nBrand library\nNorthlight Brand Kit\nHarbour Lights Festival campaign\nIceberg Alley Jazz Brunch campaign\nKitchen Party Social campaign\nSaltwater Sessions: Mara Vale campaign\nLate Show Comedy Club campaign\nAurora After Dark campaign\nFog City Strobe campaign\nNew Year's Eve at Harbourfront campaign\nWinter Lanterns Gala campaign\nBattery Road Blues Night campaign\nTemplates\nTidewater Film Score Live campaign\nEmber Choir: Winter Songs campaign\nHalloween Masquerade campaign\nNorthern Static Live campaign\nHarbour Lights Festival\nAurora After Dark\nSaltwater Sessions: Mara Vale\nLate Show Comedy Club\nSponsors & partners\nWinter Lanterns Gala\nTidewater Film Score Live\nBattery Road Blues Night\nIceberg Alley Jazz Brunch\nKitchen Party Social\nFog City Strobe\nNew Year's Eve at Harbourfront\nEmber Choir: Winter Songs\nHalloween Masquerade\nNorthern Static Live\nAll assets\nAll assets\n62 assets\nNew Folder\nUpload Assets\nType\nImages\nVideo\nDocuments\nOther files\nSort by: Likely used\nSort by: Newest\nSort by: Oldest\nSort by: Largest\nSort by: Smallest\nSort by: Name A-Z\nDownload Selected (1)\n\nFOLDERS IN ALL ASSETS\n\nBrand library\n\n0 assets\n\nNorthlight Brand Kit\n\n7 assets\n\nHarbour Lights Festival campaign\n\n5 assets\n\nIceberg Alley Jazz Brunch campaign\n\n4 assets\n\nKitchen Party Social campaign\n\n4 assets\n\nSaltwater Sessions: Mara Vale campaign\n\n4 assets\n\nLate Show Com",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:approvals": {
+  "url": "https://labs.tixmo.co/approvals",
+  "console": [],
+  "failed": [],
+  "text": "Approvals\n15 SHOWING\nFilter by event\nDuckworth Indie Weekender\nSignal Hill Sunset Sessions\nNorthern Static Live\nHalloween Masquerade\nQuiet Harbour Acoustic\nEmber Choir: Winter Songs\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nAurora After Dark\nIceberg Alley Jazz Brunch\nHarbour Lights Festival\nBattery Road Blues Night\nFog City Strobe\nNew Year's Eve at Harbourfront\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\nAll statuses\nIn Progress\nApproved\nCancelled\nNew submission\nCancelled\nOverdue\nV1\nBlues Night poster\n\nBattery Road Blues Night\n\nDue\nNov 4, 2026, 7:21 PM\nStatus\nCancelled\nArchive\nDelete\nApproved\nOverdue\nV1\nLate Show sold-out graphic\n\nLate Show Comedy Club\n\nDue\nNov 6, 2026, 11:21 AM\nStatus\nApproved\nIn approved assets\nArchive\nDelete\nApproved\nOverdue\nV2\nSaltwater Sessions poster\n\nSaltwater Sessions: Mara Vale\n\nDue\nNov 8, 2026, 11:21 PM\nStatus\nApproved\nIn approved assets\nArchive\nDelete\nCancelled\nOverdue\nV1\nNew Year's Eve VIP lounge banner\n\nNew Year's Eve at Harbourfront\n\nDue\nNov 9, 2026, 7:21 PM\nStatus\nCancelled\nArchive\nDelete\nApproved\nOverdue\nV1\nAurora After Dark story teaser\n\nAurora After Dark\n\nDue\nNov 13, 2026, 3:21 AM\nStatus\nApproved\nIn approved assets\nArchive\nDelete\nApproved\nOverdue\nV2\nHarbour Lights lineup card\n\nHarbour Lights Festival\n\nDue\nNov 14, 2026, 7:21 PM\nStatus\nApproved\nIn approved assets\nArchive\nDelete\nIn Progress\nV3\nHarbour Lights main poster\n\nHarbour Lights Festival\n\nDue\nNov 17, 2026, 5:00 P",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:moose": {
+  "replies": "Hi, I'm Moose, Tixmo's AI assistant. Ask me about the numbers on this page for Aurora After Dark.\nWhich event is selling fastest?\nHarbour Lights Festival is selling fastest over last 28 days, with 540 purchases from 6,840 visitors (42% ahead of the prior period). Next is Halloween Masquerade, with 400 purchases. You're looking at Aurora After Dark right now, which has 118 purchases (rank 7 of 19 in this range).\nHow did last weekend compare?\nLast weekend (Sat Nov 14-Sun Nov 15) brought 173 visitors and 12 purchases on Aurora After Dark. That's 125% ahead of the weekend before (Sat Nov 7-Sun Nov 8), when you had 77 visitors and 9 purchases.\nWhere are my buyers coming from?\nOn Aurora After Dark over last 28 days, Organic Social is your strongest source, with 405 visitors and 36 purchases. Organic Search is next (211 visitors, 29 purchases). The most visitors are coming from St. John's (565). Most people are on Desktop.\nWhat should I promote next?\nLooking at Aurora After Dark over last 28 days: you had 1,180 visitors and 118 purchases, 28% ahead of the prior period. The biggest drop in the ticket path is 72% drop-off to Added to cart. I'd start with a reminder or offer that helps people take the next step. Organic Social is already your strongest source (405 visitors, 36 purchases), so a focused boost there usually goes further than spreading spend. One heads-up on this page: Traffic spiked on Saturday.\nHow many visitors do we have?\nI'm Moose, Tixmo's assistant. I can only talk about the analytics on this page. You're looking at Aurora After Dark for last 28 days: 1,180 visitors, 2,460 page views and 118 purchases, 28% ahead of the prior period. 23 people are on your site right now. Try asking which event is selling fastest, how last weekend compared, where buyers are coming from, or what to promote next."
+ },
+ "desktop:analytics": {
+  "url": "https://labs.tixmo.co/analytics",
+  "console": [],
+  "failed": [],
+  "text": "Analytics\nMock data\n\nNorthlight Live (demo). Demo numbers only.\n\nSITE / EVENT PAGE\nAll pages\nAurora After Dark\nHarbour Lights Festival\nFog City Strobe\nQuiet Harbour Acoustic\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nIceberg Alley Jazz Brunch\nNew Year's Eve at Harbourfront\nBattery Road Blues Night\nNorthern Static Live\nSignal Hill Sunset Sessions\nHalloween Masquerade\nDuckworth Indie Weekender\nEmber Choir: Winter Songs\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\n7 days\n28 days\n90 days\n23 people on your site right now\n\nUpdated 5 min ago\n\nThis period\nLast period\nForecast\n10-20\n10-21\n10-22\n10-23\n10-24\n10-25\n10-26\n10-27\n10-28\n10-29\n10-30\n10-31\n11-01\n11-02\n11-03\n11-04\n11-05\n11-06\n11-07\n11-08\n11-09\n11-10\n11-11\n11-12\n11-13\n11-14\n11-15\n11-16\n11-17\n11-18\n11-19\n11-20\n11-21\n11-22\n11-23\n0\n10\n20\n30\n40\n50\n60\n70\n80\n90\n100\n110\n120\n130\n\nVisitors are running 18% ahead of last period.\n\nMoose\n\nTixmo's AI assistant\n\nHi, I'm Moose, Tixmo's AI assistant. Ask me about the numbers on this page for Aurora After Dark.\nWhich event is selling fastest?\nHarbour Lights Festival is selling fastest over last 28 days, with 540 purchases from 6,840 visitors (42% ahead of the prior period). Next is Halloween Masquerade, with 400 purchases. You're looking at Aurora After Dark right now, which has 118 purchases (rank 7 of 19 in this range).\nHow did last weekend compare?\nLast weekend (Sat Nov 14-Sun Nov 15) brought 173 visitors and 12 purchase",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:analytics/classic": {
+  "url": "https://labs.tixmo.co/analytics",
+  "console": [],
+  "failed": [],
+  "text": "Analytics\nMock data\n\nNorthlight Live (demo). Demo numbers only.\n\nSITE / EVENT PAGE\nAll pages\nAurora After Dark\nHarbour Lights Festival\nFog City Strobe\nQuiet Harbour Acoustic\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nIceberg Alley Jazz Brunch\nNew Year's Eve at Harbourfront\nBattery Road Blues Night\nNorthern Static Live\nSignal Hill Sunset Sessions\nHalloween Masquerade\nDuckworth Indie Weekender\nEmber Choir: Winter Songs\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\n7 days\n28 days\n90 days\n23 people on your site right now\n\nUpdated 5 min ago\n\nThis period\nLast period\nForecast\n10-20\n10-21\n10-22\n10-23\n10-24\n10-25\n10-26\n10-27\n10-28\n10-29\n10-30\n10-31\n11-01\n11-02\n11-03\n11-04\n11-05\n11-06\n11-07\n11-08\n11-09\n11-10\n11-11\n11-12\n11-13\n11-14\n11-15\n11-16\n11-17\n11-18\n11-19\n11-20\n11-21\n11-22\n11-23\n0\n10\n20\n30\n40\n50\n60\n70\n80\n90\n100\n110\n120\n130\n\nVisitors are running 18% ahead of last period.\n\nMoose\n\nTixmo's AI assistant\n\nHi, I'm Moose, Tixmo's AI assistant. Ask me about the numbers on this page for Aurora After Dark.\nWhich event is selling fastest?\nHow did last weekend compare?\nWhere are my buyers coming from?\nWhat should I promote next?\n\nVisitors\n\n1,180\n\nup 18.0% vs previous 28 days\n\nPage views\n\n2,460\n\nup 17.1% vs previous 28 days\n\nAvg time on site\n\n1m 42s\n\nup 13.3% vs previous 28 days\n\nPurchases\n\n118\n\nup 28.3% vs previous 28 days\n\nHeads up\n\nTraffic spiked on Saturday\n\nOrganic Social jumped after the lineup post.\n\nSee why\n\nPaid ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:settings": {
+  "url": "https://labs.tixmo.co/dashboard",
+  "console": [],
+  "failed": [],
+  "text": "Welcome back, Avery\n\nHere is what is happening across your events today.\n\nTickets sold today\n\n234\n\n120 orders \u00b7 $19,753\n\nRevenue, last 30 days\n\n$281,523\n\n3,487 tickets\n\nOn sale now\n\n9\n\nLive now: Kitchen Party Social\n\nOpen tasks\n\n40\n\n1 due today or overdue\n\nWaiting on review\n\n5\n\nCreative out with reviewers\n\nTicket sales, last 14 days\n\nPaid tickets per day across every event.\n\n2 weeks ago\nToday\nLatest activity\n\nWhat the team and your buyers did most recently.\n\nDoors open: Kitchen Party Social\n\nTwo scanners are live at The Battery Club. 354 tickets sold.\n\n23 min ago\n\nOwen mentioned you\n\n\"Float counted, tablet 1 at the front\" on Tonight: walk-up ticket float.\n\n1 hr ago\n\nApproval updated: Winter Lanterns Gala invitation\n\nImogen added the charity number in revision 3.\n\n2 hr ago\n\nApproval waiting: Harbour Lights main poster\n\nHana uploaded revision 3 for Lantern Static management.\n\n3 hr ago\n\nHarbour Lights passed 2400 tickets\n\nHarbour Lights Festival is 68% sold. VIP Deck is moving fastest this week.\n\n4 hr ago\nEvent Manager\n\nCreate events and manage sales, scanners, and venues from one dashboard.\n\nTask Manager\n\nCollaborate, assign work, and track operational follow-through.\n\nAsset Library\n\nBrowse uploaded creative, preview versions, and copy share links for internal or external handoff.\n\n5\nReview Portal\n\nReview pending requests.\n\nAnalytics\n\nDeep dive into your metrics.\n\nSecurity\n\nHow your event pages, dashboard, checkout and door devices are doing.\n\nTeam Members\n\nManage organization ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:staff-actions": {
+  "url": "https://labs.tixmo.co/dashboard",
+  "console": [],
+  "failed": [],
+  "text": "Welcome back, Avery\n\nHere is what is happening across your events today.\n\nTickets sold today\n\n234\n\n120 orders \u00b7 $19,753\n\nRevenue, last 30 days\n\n$281,523\n\n3,487 tickets\n\nOn sale now\n\n9\n\nLive now: Kitchen Party Social\n\nOpen tasks\n\n40\n\n1 due today or overdue\n\nWaiting on review\n\n5\n\nCreative out with reviewers\n\nTicket sales, last 14 days\n\nPaid tickets per day across every event.\n\n2 weeks ago\nToday\nLatest activity\n\nWhat the team and your buyers did most recently.\n\nDoors open: Kitchen Party Social\n\nTwo scanners are live at The Battery Club. 354 tickets sold.\n\n23 min ago\n\nOwen mentioned you\n\n\"Float counted, tablet 1 at the front\" on Tonight: walk-up ticket float.\n\n1 hr ago\n\nApproval updated: Winter Lanterns Gala invitation\n\nImogen added the charity number in revision 3.\n\n2 hr ago\n\nApproval waiting: Harbour Lights main poster\n\nHana uploaded revision 3 for Lantern Static management.\n\n3 hr ago\n\nHarbour Lights passed 2400 tickets\n\nHarbour Lights Festival is 68% sold. VIP Deck is moving fastest this week.\n\n4 hr ago\nEvent Manager\n\nCreate events and manage sales, scanners, and venues from one dashboard.\n\nTask Manager\n\nCollaborate, assign work, and track operational follow-through.\n\nAsset Library\n\nBrowse uploaded creative, preview versions, and copy share links for internal or external handoff.\n\n5\nReview Portal\n\nReview pending requests.\n\nAnalytics\n\nDeep dive into your metrics.\n\nSecurity\n\nHow your event pages, dashboard, checkout and door devices are doing.\n\nTeam Members\n\nManage organization ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:social": {
+  "url": "https://labs.tixmo.co/social",
+  "console": [],
+  "failed": [],
+  "text": "Social\n\nNorthlight Live (demo). Demo numbers only.\n\nMock data\nAll\n7d\n28d\n90d\nACCOUNT\nAll accounts\n@northlight.live.demo\n@northlightlive.demo\nyoutube.com/@northlightlivedemo\nfacebook.com/northlightlivedemo\nlinkedin.com/company/northlight-live-demo\n\nUpdated 5 min ago\n\nHome\nPosts\nFans\nAccounts\nNeeds your attention\n\n7\n\nComplaints picking up\n\nMostly on Aurora After Dark Reel\n\nno new ones yesterday\n\nReview\n\n22\n\nNegative comments on a post\n\nFog City strobe is being called out for the wrong night in the caption.\n\nno new ones yesterday\n\nOpen post\n\n7\n\nUnanswered questions\n\nOldest waiting 20d, on Fog City carousel\n\nno new ones yesterday\n\nReply\n\n3\n\nUnusual mention spike\n\n3 mentions on Nov 3\n\n+2 vs a usual day\n\nReview\n\nPeople reached\n\n1.5M\n\nup 7.1% vs previous 28 days\n\nLikes, comments & shares\n\n75K\n\nup 7.1% vs previous 28 days\n\nNew followers\n\n4.5K\n\ndown 1.6% vs previous 28 days\n\nLink clicks\n\n7.9K\n\nup 3.6% vs previous 28 days\n\nWhat happened\n\nYour Aurora After Dark Reel was your best post in the last 28 days \u2014 12x your usual reach.\n\nThe Fog City strobe brought in more likes, comments and shares than any other post.\n\nFans keep asking about merch sizes and whether the shuttle runs after 1am.\n\nTop posts\n\nINSTAGRAM \u00b7 REEL\n\nAurora After Dark Reel\n\nAurora After Dark Reel\n\nAurora After Dark \u2014 lineup drop. Fog, violet, and the first 400 jackets.\n\n@northlight.live.demo\n\n168K people reached\n\n1.2K likes, comments & shares\n\nBetter than usual\n\ud83d\ude00 Mostly positive\n\nTIKTOK \u00b7 VIDEO\n\nFog City strobe\n\nFog City ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:social/overview": {
+  "url": "https://labs.tixmo.co/social/overview",
+  "console": [],
+  "failed": [],
+  "text": "Social\n\nNorthlight Live (demo). Demo numbers only.\n\nMock data\nAll\n7d\n28d\n90d\nACCOUNT\nAll accounts\n@northlight.live.demo\n@northlightlive.demo\nyoutube.com/@northlightlivedemo\nfacebook.com/northlightlivedemo\nlinkedin.com/company/northlight-live-demo\n\nUpdated 5 min ago\n\nHome\nPosts\nFans\nAccounts",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:orders": {
+  "url": "https://labs.tixmo.co/orders",
+  "console": [],
+  "failed": [],
+  "text": "Orders\n\nView and manage ticket sales and transactions.\n\nAll events\nDuckworth Indie Weekender\nSignal Hill Sunset Sessions\nNorthern Static Live\nHalloween Masquerade\nQuiet Harbour Acoustic\nEmber Choir: Winter Songs\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nAurora After Dark\nIceberg Alley Jazz Brunch\nHarbour Lights Festival\nBattery Road Blues Night\nFog City Strobe\nNew Year's Eve at Harbourfront\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\nAll statuses\nPaid\nPending\nCancelled\nRefunded\nNewest first\nOldest first\nEvent A-Z\nEvent Z-A\nAmount high-low\nAmount low-high\nORDER #\tCUSTOMER\tEVENT\tAMOUNT\tDATE\tSTATUS\tACTIONS\nNL-004953\t\nCeline Abbott\nceline.abbott.789+nldemo@example.org\n\tNew Year's Eve at Harbourfront\tCA$295.72\t11/16/2026\tPaid\t\n\nNL-002219\t\nAlex Haddad\nalex.haddad.106+nldemo@example.org\n\tHarbour Lights Festival\tCA$86.09\t11/16/2026\tPaid\t\n\nNL-002218\t\nLuca Drew\nluca.drew.748+nldemo@example.org\n\tHarbour Lights Festival\tCA$172.19\t11/16/2026\tPaid\t\n\nNL-002217\t\nInes Patel\nines.patel.320+nldemo@example.org\n\tHarbour Lights Festival\tCA$172.19\t11/16/2026\tPaid\t\n\nNL-002216\t\nOlive Cole\nolive.cole.976+nldemo@example.org\n\tHarbour Lights Festival\tCA$172.19\t11/16/2026\tPaid\t\n\nNL-002215\t\nErin Andersen\nerin.andersen.1366+nldemo@example.org\n\tHarbour Lights Festival\tCA$86.09\t11/16/2026\tPaid\t\n\nNL-002214\t\nRiley West\nriley.west.1061+nldemo@example.org\n\tHarbour Lights Festival\tCA$172.19\t11/16/2026\tPaid\t\n\nNL-002213\t\nJamal Barry\njamal.ba",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:venues": {
+  "url": "https://labs.tixmo.co/venues",
+  "console": [],
+  "failed": [],
+  "text": "Venues\n\nManage your venue locations and details.\n\nCreate Venue\nGower Street Theatre\n650 cap\n61 Gower Street\nSt. John's, NL\nSignal Hill Amphitheatre\n2500 cap\n230 Signal Hill Road\nSt. John's, NL\nThe Battery Club\n450 cap\n40 Battery Road\nSt. John's, NL\nChapel Street Studio\n360 cap\n12 Chapel Street\nSt. John's, NL\nFoundry Hall\n1800 cap\n88 Duckworth Street\nSt. John's, NL\nThe Lantern Room\n1200 cap\n214 Water Street\nSt. John's, NL\nHarbourfront Commons\n4200 cap\n1 Harbour Drive\nSt. John's, NL",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:scanners": {
+  "url": "https://labs.tixmo.co/scanners",
+  "console": [],
+  "failed": [],
+  "text": "Scanner Management\n\nManage scanning devices and view entry logs.\n\nFIELD OPS\nRegister New Scanner\nActive Scanners\nScan Logs\nNAME\tDEVICE ID\tEVENT\tSTATUS\tLAST ACTIVE\tACTIONS\nOld iPad (lost)\tnld-old-ipad-lost-\tNot bound to an event\tREVOKED\t8/18/2026, 5:41:31 AM\t\n\nSignal Hill Gate\tnld-signal-hill-gate\tNot bound to an event\tDISABLED\t9/15/2026, 5:01:31 PM\t\nChange event\n\nBox Office Tablet 2\tnld-box-office-tablet-2\tNot bound to an event\tACTIVE\t11/16/2026, 9:01:31 AM\t\nChange event\n\nBox Office Tablet 1\tnld-box-office-tablet-1\tNot bound to an event\tACTIVE\t11/16/2026, 11:15:31 AM\t\nChange event\n\nChapel Street Door\tnld-chapel-street-door\tSaltwater Sessions: Mara Vale\tACTIVE\t11/7/2026, 12:21:31 PM\t\nChange event\n\nGower Lobby\tnld-gower-lobby\tLate Show Comedy Club\tACTIVE\t11/13/2026, 10:01:31 AM\t\nChange event\n\nFoundry South\tnld-foundry-south\tFog City Strobe\tACTIVE\t10/31/2026, 11:21:31 AM\t\nChange event\n\nFoundry North\tnld-foundry-north\tFog City Strobe\tACTIVE\t10/31/2026, 1:01:31 PM\t\nChange event\n\nLantern Room Door\tnld-lantern-room-door\tAurora After Dark\tACTIVE\t11/13/2026, 11:41:31 AM\t\nChange event\n\nVIP Lane\tnld-vip-lane\tHarbour Lights Festival\tACTIVE\t11/14/2026, 11:01:31 AM\t\nChange event\n\nPage 1 of 2\n\nPrevious\nNext",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:security": {
+  "url": "https://labs.tixmo.co/security",
+  "console": [],
+  "failed": [],
+  "text": "Security\n\nA plain-language look at Northlight Live's own event pages, team dashboard, checkout and door devices \u2014 so you can see that your platforms are safe.\n\nYour platforms look safe\nLast checked 3 min ago\nLast 24 hours\n\nEvent pages online\n\n19 / 19\n\nHTTPS valid on every page\n\nTwo-factor on your team\n\n19 / 19\n\n3 invites still pending \u2014 2FA starts when they join\n\nCheckout screening\n\nAll clear\n\n0 chargeback-risk flags\n\nDoor devices\n\nAll in order\n\n12 online \u00b7 1 paused \u00b7 1 revoked\n\nWhat this means for you\n\nNothing here needs urgent attention. Your event pages are up and locked with HTTPS, your team is signed in safely, checkout is being screened, and tonight's door devices are ready. Every suspected attack in the last 30 days was blocked or mitigated, and nothing was breached. Two teammates are recommended to choose a stronger password, and three invites will set up 2FA when they join.\n\nYour platforms\n\nEach surface is checked on a regular cycle. Green means nothing urgent needs your attention.\n\nEvent websites & ticket pages\n\nUptime 100%\n\nHealthy\n\nPAGE VISITS REVIEWED\n\n30,901\n\nUNEXPECTED PAGE CHANGES\n\n0\n\nEvery public event and ticket page is up. HTTPS is valid (renews in 76 days). No defacement or unexpected page changes.\n\n19 event and ticket pages online \u00b7 100% uptime today\nHTTPS valid on every public page\nNo defacement or unexpected edits to your pages\nUnwanted traffic is stopped automatically \u2014 see Suspected Attacks and Protection Layers\n\nWHAT THIS MEANS FOR YOU\n\nBuyers can re",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:notifications": {
+  "url": "https://labs.tixmo.co/notifications",
+  "console": [],
+  "failed": [],
+  "text": "Notifications\n\n24 in your inbox \u00b7 5 unread on this page\n\nMark all as read\nDoors open: Kitchen Party Social\n\nTwo scanners are live at The Battery Club. 354 tickets sold.\n\nNOV 16, 11:15 A.M.\nOwen mentioned you\n\n\"Float counted, tablet 1 at the front\" on Tonight: walk-up ticket float.\n\nNOV 16, 10:23 A.M.\nApproval updated: Winter Lanterns Gala invitation\n\nImogen added the charity number in revision 3.\n\nNOV 16, 9:16 A.M.\nApproval waiting: Harbour Lights main poster\n\nHana uploaded revision 3 for Lantern Static management.\n\nNOV 16, 8:21 A.M.\nHarbour Lights passed 2400 tickets\n\nHarbour Lights Festival is 68% sold. VIP Deck is moving fastest this week.\n\nNOV 16, 7:56 A.M.\nTomas mentioned you\n\n\"5 of 8 signed. Chasing the last three today\" on Food truck contracts.\n\nNOV 16, 7:21 A.M.\nTable for Four sold\n\nA Table for Four was booked for Aurora After Dark.\n\nNOV 16, 6:11 A.M.\nReviewer comment: Mara Vale meet & greet post\n\nMara Vale management asked for a wording change.\n\nNOV 16, 3:21 A.M.\nDaily security report: all systems healthy\n\nAll 6 log sources scanned overnight reported healthy. No action needed.\n\nNOV 16, 1:21 A.M.\nLate Show Comedy Club is in 3 days\n\nSold out. 42 people on the waitlist.\n\nNOV 15, 8:21 P.M.\nLucia mentioned you\n\n\"Draft ready, header in Templates\" on Weekly newsletter.\n\nNOV 15, 5:01 P.M.\nSettlement ready: Ember Choir\n\nSales and attendance reconciled for Ember Choir: Winter Songs.\n\nNOV 15, 10:21 A.M.\nReviewer approved: Harbour Lights lineup card\n\nLantern Static management ap",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:events/b1283592-6c72-4827-9904-48b4e64ae28c": {
+  "url": "https://labs.tixmo.co/events/b1283592-6c72-4827-9904-48b4e64ae28c",
+  "console": [],
+  "failed": [],
+  "text": "Harbour Lights Festival\nSAT, DEC 12\n\u2022\nHARBOURFRONT COMMONS\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nExit\nSales period\nLast 7 days\nLast 30 days\nLast 90 days\nRevenue currency\nCAD\nUSD (historical orders)\nRefresh\n\nPAID REVENUE\n\nCA$26,947.41\n\nLast 7 days \u00b7 CAD only\n\nPAID ORDERS\n\n163\n\nLast 7 days \u00b7 CAD only\n\nTICKETS SOLD\n\n2404\n\nEvent total \u00b7 capacity 3560\n\nADMITTED TICKETS\n\n0\n\nEvent total \u00b7 recorded admissions\n\nDaily paid sales\n\nRecorded order dates in UTC. Refunds are excluded from paid revenue.\n\nDate (UTC)\tOrders\tTickets\tRevenue\n2026-11-09\t5\t8\tCA$688.75\n2026-11-10\t12\t20\tCA$1,721.87\n2026-11-11\t21\t43\tCA$3,702.04\n2026-11-12\t14\t25\tCA$2,152.34\n2026-11-13\t14\t33\tCA$2,841.12\n2026-11-14\t17\t34\tCA$2,927.20\n2026-11-15\t19\t43\tCA$3,702.06\n2026-11-16\t61\t107\tCA$9,212.03\nRecent paid orders\n\nNL-002219 \u00b7 CA$86.09\n\n11/16/2026, 11:10:41 AM\n\nNL-002218 \u00b7 CA$172.19\n\n11/16/2026, 10:56:08 AM\n\nNL-002217 \u00b7 CA$172.19\n\n11/16/2026, 10:53:46 AM\n\nNL-002216 \u00b7 CA$172.19\n\n11/16/2026, 10:38:21 AM\n\nNL-002215 \u00b7 CA$86.09\n\n11/16/2026, 10:38:21 AM\n\nNL-002214 \u00b7 CA$172.19\n\n11/16/2026, 10:28:05 AM\n\nNL-002213 \u00b7 CA$172.19\n\n11/16/2026, 10:21:30 AM\n\nNL-002212 \u00b7 CA$172.19\n\n11/16/2026, 10:10:50 AM\n\nNL-002211 \u00b7 CA$172.19\n\n11/16/2026, 10:08:56 AM\n\nNL-002210 \u00b7 CA$172.19\n\n11/16/2026, 9:49:42 AM\n\nView orders\n\nPage views and conversion rate are unavailable until traffic reporting is connected.",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:events/b1283592-6c72-4827-9904-48b4e64ae28c/orders": {
+  "url": "https://labs.tixmo.co/events/b1283592-6c72-4827-9904-48b4e64ae28c/orders",
+  "console": [],
+  "failed": [],
+  "text": "Harbour Lights Festival\nSAT, DEC 12\n\u2022\nHARBOURFRONT COMMONS\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nExit\nSearch orders\nSearch\nOrder status\nAll statuses\nPENDING\nPAID\nCANCELLED\nREFUNDED\nPARTIALLY REFUNDED\nExport CSV\nOrder\tCustomer\tDate\tStatus\tTotal\tTickets\tAction\nNL-002219\tAlex Haddad\n\nalex.haddad.106+nldemo@example.org\n\n\t11/16/2026, 11:10:41 AM\tPaid\tCA$86.09\t1\tView order\nNL-002218\tLuca Drew\n\nluca.drew.748+nldemo@example.org\n\n\t11/16/2026, 10:56:08 AM\tPaid\tCA$172.19\t2\tView order\nNL-002217\tInes Patel\n\nines.patel.320+nldemo@example.org\n\n\t11/16/2026, 10:53:46 AM\tPaid\tCA$172.19\t2\tView order\nNL-002216\tOlive Cole\n\nolive.cole.976+nldemo@example.org\n\n\t11/16/2026, 10:38:21 AM\tPaid\tCA$172.19\t2\tView order\nNL-002215\tErin Andersen\n\nerin.andersen.1366+nldemo@example.org\n\n\t11/16/2026, 10:38:21 AM\tPaid\tCA$86.09\t1\tView order\nNL-002214\tRiley West\n\nriley.west.1061+nldemo@example.org\n\n\t11/16/2026, 10:28:05 AM\tPaid\tCA$172.19\t2\tView order\nNL-002213\tJamal Barry\n\njamal.barry.221+nldemo@example.org\n\n\t11/16/2026, 10:21:30 AM\tPaid\tCA$172.19\t2\tView order\nNL-002212\tInes Carter\n\nines.carter.1220+nldemo@example.org\n\n\t11/16/2026, 10:10:50 AM\tPaid\tCA$172.19\t2\tView order\nNL-002211\tNia Power\n\nnia.power.452+nldemo@example.org\n\n\t11/16/2026, 10:08:56 AM\tPaid\tCA$172.19\t2\tView order\nNL-002210\tKira Tucker\n\nkira.tucker.672+nldemo@example.org\n\n\t11/16/2026, 9:49:42 AM\tPaid\tCA$172.19\t2\tView order\nNL-002209\tOlive Sheppard\n\nolive.sheppard.376+nldemo@ex",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:events/b1283592-6c72-4827-9904-48b4e64ae28c/attendees": {
+  "url": "https://labs.tixmo.co/events/b1283592-6c72-4827-9904-48b4e64ae28c/attendees",
+  "console": [],
+  "failed": [],
+  "text": "Harbour Lights Festival\nSAT, DEC 12\n\u2022\nHARBOURFRONT COMMONS\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nExit\nSearch\nFilter\nExport List\nGUEST\tTICKET TYPE\tSTATUS\tORDER #\tACTIONS\n\nAH\n\nAlex Haddad\n\nalex.haddad.106+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002219\t\n\n\nLD\n\nLuca Drew\n\nluca.drew.748+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002218\t\n\n\nLD\n\nLuca Drew\n\nluca.drew.748+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002218\t\n\n\nIP\n\nInes Patel\n\nines.patel.320+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002217\t\n\n\nIP\n\nInes Patel\n\nines.patel.320+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002217\t\n\n\nOC\n\nOlive Cole\n\nolive.cole.976+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002216\t\n\n\nOC\n\nOlive Cole\n\nolive.cole.976+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002216\t\n\n\nEA\n\nErin Andersen\n\nerin.andersen.1366+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002215\t\n\n\nRW\n\nRiley West\n\nriley.west.1061+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002214\t\n\n\nRW\n\nRiley West\n\nriley.west.1061+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002214\t\n\n\nJB\n\nJamal Barry\n\njamal.barry.221+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002213\t\n\n\nJB\n\nJamal Barry\n\njamal.barry.221+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002213\t\n\n\nIC\n\nInes Carter\n\nines.carter.1220+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002212\t\n\n\nIC\n\n",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:events/b1283592-6c72-4827-9904-48b4e64ae28c/tickets": {
+  "url": "https://labs.tixmo.co/events/b1283592-6c72-4827-9904-48b4e64ae28c/tickets",
+  "console": [],
+  "failed": [],
+  "text": "Harbour Lights Festival\nSAT, DEC 12\n\u2022\nHARBOURFRONT COMMONS\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nExit\nTicket Classes\n\nManage ticket types and pricing tiers for this event.\n\nAdd Ticket Type\nNAME\n\t\nPRICE\n\t\nSOLD / TOTAL\n\t\nSTATUS\n\tACTIONS\nEarly Bird GA\t$59.00\t\n68 / 600\n\tActive\t\n\nGeneral Admission\t$69.00\t\n1576 / 2200\n\tActive\t\n\nWeekend Pass\t$159.00\t\n500 / 500\n\tSold Out\t\n\nVIP Deck\t$189.00\t\n260 / 260\n\tSold Out\t",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:events/d6d38086-1e81-4b03-b669-6c4607a5fa32": {
+  "url": "https://labs.tixmo.co/events/d6d38086-1e81-4b03-b669-6c4607a5fa32",
+  "console": [],
+  "failed": [],
+  "text": "Kitchen Party Social\nMON, NOV 16\n\u2022\nTHE BATTERY CLUB\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nExit\nSales period\nLast 7 days\nLast 30 days\nLast 90 days\nRevenue currency\nCAD\nUSD (historical orders)\nRefresh\n\nPAID REVENUE\n\nCA$5,084.63\n\nLast 7 days \u00b7 CAD only\n\nPAID ORDERS\n\n76\n\nLast 7 days \u00b7 CAD only\n\nTICKETS SOLD\n\n354\n\nEvent total \u00b7 capacity 440\n\nADMITTED TICKETS\n\n213\n\nEvent total \u00b7 recorded admissions\n\nDaily paid sales\n\nRecorded order dates in UTC. Refunds are excluded from paid revenue.\n\nDate (UTC)\tOrders\tTickets\tRevenue\n2026-11-10\t1\t3\tCA$93.58\n2026-11-11\t10\t23\tCA$717.48\n2026-11-12\t15\t30\tCA$935.81\n2026-11-13\t14\t27\tCA$842.23\n2026-11-14\t13\t25\tCA$779.85\n2026-11-15\t8\t21\tCA$655.08\n2026-11-16\t15\t34\tCA$1,060.60\nRecent paid orders\n\nNL-003893 \u00b7 CA$124.78\n\n11/16/2026, 6:47:48 AM\n\nNL-003892 \u00b7 CA$31.19\n\n11/16/2026, 6:17:34 AM\n\nNL-003891 \u00b7 CA$31.19\n\n11/16/2026, 5:58:17 AM\n\nNL-003890 \u00b7 CA$62.39\n\n11/16/2026, 5:41:17 AM\n\nNL-003889 \u00b7 CA$93.58\n\n11/16/2026, 3:47:38 AM\n\nNL-003888 \u00b7 CA$62.39\n\n11/16/2026, 3:31:06 AM\n\nNL-003887 \u00b7 CA$31.19\n\n11/16/2026, 3:00:20 AM\n\nNL-003886 \u00b7 CA$31.19\n\n11/16/2026, 2:26:28 AM\n\nNL-003885 \u00b7 CA$62.39\n\n11/16/2026, 2:06:26 AM\n\nNL-003884 \u00b7 CA$62.39\n\n11/16/2026, 1:46:57 AM\n\nView orders\n\nPage views and conversion rate are unavailable until traffic reporting is connected.",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:events/d6d38086-1e81-4b03-b669-6c4607a5fa32/orders": {
+  "url": "https://labs.tixmo.co/events/d6d38086-1e81-4b03-b669-6c4607a5fa32/orders",
+  "console": [],
+  "failed": [],
+  "text": "Kitchen Party Social\nMON, NOV 16\n\u2022\nTHE BATTERY CLUB\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nExit\nSearch orders\nSearch\nOrder status\nAll statuses\nPENDING\nPAID\nCANCELLED\nREFUNDED\nPARTIALLY REFUNDED\nExport CSV\nOrder\tCustomer\tDate\tStatus\tTotal\tTickets\tAction\nNL-003893\tNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\t11/16/2026, 6:47:48 AM\tPaid\tCA$124.78\t4\tView order\nNL-003892\tUma Murphy\n\numa.murphy.532+nldemo@example.org\n\n\t11/16/2026, 6:17:34 AM\tPaid\tCA$31.19\t1\tView order\nNL-003891\tLuca Barry\n\nluca.barry.1298+nldemo@example.org\n\n\t11/16/2026, 5:58:17 AM\tPaid\tCA$31.19\t1\tView order\nNL-003890\tClara West\n\nclara.west.514+nldemo@example.org\n\n\t11/16/2026, 5:41:17 AM\tPaid\tCA$62.39\t2\tView order\nNL-003889\tNia Dunne\n\nnia.dunne.802+nldemo@example.org\n\n\t11/16/2026, 3:47:38 AM\tPaid\tCA$93.58\t3\tView order\nNL-003888\tVictor Ryan\n\nvictor.ryan.1233+nldemo@example.org\n\n\t11/16/2026, 3:31:06 AM\tPaid\tCA$62.39\t2\tView order\nNL-003887\tYara Andersen\n\nyara.andersen.1235+nldemo@example.org\n\n\t11/16/2026, 3:00:20 AM\tPaid\tCA$31.19\t1\tView order\nNL-003886\tTaylor Power\n\ntaylor.power.1358+nldemo@example.org\n\n\t11/16/2026, 2:26:28 AM\tPaid\tCA$31.19\t1\tView order\nNL-003885\tJules Novak\n\njules.novak.904+nldemo@example.org\n\n\t11/16/2026, 2:06:26 AM\tPaid\tCA$62.39\t2\tView order\nNL-003884\tCeline Lopez\n\nceline.lopez.889+nldemo@example.org\n\n\t11/16/2026, 1:46:57 AM\tPaid\tCA$62.39\t2\tView order\nNL-003883\tCasey Silva\n\ncasey.silva.1109+nldemo@example.org\n\n\t11/16/2026,",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:events/d6d38086-1e81-4b03-b669-6c4607a5fa32/attendees": {
+  "url": "https://labs.tixmo.co/events/d6d38086-1e81-4b03-b669-6c4607a5fa32/attendees",
+  "console": [],
+  "failed": [],
+  "text": "Kitchen Party Social\nMON, NOV 16\n\u2022\nTHE BATTERY CLUB\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nExit\nSearch\nFilter\nExport List\nGUEST\tTICKET TYPE\tSTATUS\tORDER #\tACTIONS\n\nNN\n\nNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003893\t\n\n\nNN\n\nNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003893\t\n\n\nNN\n\nNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003893\t\n\n\nNN\n\nNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003893\t\n\n\nUM\n\nUma Murphy\n\numa.murphy.532+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003892\t\n\n\nLB\n\nLuca Barry\n\nluca.barry.1298+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003891\t\n\n\nCW\n\nClara West\n\nclara.west.514+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003890\t\n\n\nCW\n\nClara West\n\nclara.west.514+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003890\t\n\n\nND\n\nNia Dunne\n\nnia.dunne.802+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003889\t\n\n\nND\n\nNia Dunne\n\nnia.dunne.802+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003889\t\n\n\nND\n\nNia Dunne\n\nnia.dunne.802+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003889\t\n\n\nVR\n\nVictor Ryan\n\nvictor.ryan.1233+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003888\t\n\n\nVR\n\nVictor Ryan\n\nvictor.ryan.1233+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003888\t\n\n\nYA\n\nYara Andersen\n\nyara.an",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "desktop:events/d6d38086-1e81-4b03-b669-6c4607a5fa32/tickets": {
+  "url": "https://labs.tixmo.co/events/d6d38086-1e81-4b03-b669-6c4607a5fa32/tickets",
+  "console": [],
+  "failed": [],
+  "text": "Kitchen Party Social\nMON, NOV 16\n\u2022\nTHE BATTERY CLUB\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nExit\nTicket Classes\n\nManage ticket types and pricing tiers for this event.\n\nAdd Ticket Type\nNAME\n\t\nPRICE\n\t\nSOLD / TOTAL\n\t\nSTATUS\n\tACTIONS\nGeneral Admission\t$25.00\t\n294 / 380\n\tActive\t\n\nKitchen Table\t$40.00\t\n60 / 60\n\tSold Out\t",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews\n5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:dashboard": {
+  "url": "https://labs.tixmo.co/dashboard",
+  "console": [],
+  "failed": [],
+  "text": "Welcome back, Avery\n\nHere is what is happening across your events today.\n\nTickets sold today\n\n234\n\n120 orders \u00b7 $19,753\n\nRevenue, last 30 days\n\n$281,523\n\n3,487 tickets\n\nOn sale now\n\n9\n\nLive now: Kitchen Party Social\n\nOpen tasks\n\n40\n\n1 due today or overdue\n\nWaiting on review\n\n5\n\nCreative out with reviewers\n\nTicket sales, last 14 days\n\nPaid tickets per day across every event.\n\n2 weeks ago\nToday\nLatest activity\n\nWhat the team and your buyers did most recently.\n\nDoors open: Kitchen Party Social\n\nTwo scanners are live at The Battery Club. 354 tickets sold.\n\n25 min ago\n\nOwen mentioned you\n\n\"Float counted, tablet 1 at the front\" on Tonight: walk-up ticket float.\n\n1 hr ago\n\nApproval updated: Winter Lanterns Gala invitation\n\nImogen added the charity number in revision 3.\n\n2 hr ago\n\nApproval waiting: Harbour Lights main poster\n\nHana uploaded revision 3 for Lantern Static management.\n\n3 hr ago\n\nHarbour Lights passed 2400 tickets\n\nHarbour Lights Festival is 68% sold. VIP Deck is moving fastest this week.\n\n4 hr ago\nEvent Manager\n\nCreate events and manage sales, scanners, and venues from one dashboard.\n\nTask Manager\n\nCollaborate, assign work, and track operational follow-through.\n\nAsset Library\n\nBrowse uploaded creative, preview versions, and copy share links for internal or external handoff.\n\n5\nReview Portal\n\nReview pending requests.\n\nAnalytics\n\nDeep dive into your metrics.\n\nSecurity\n\nHow your event pages, dashboard, checkout and door devices are doing.\n\nTeam Members\n\nManage organization ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:events": {
+  "url": "https://labs.tixmo.co/events",
+  "console": [],
+  "failed": [],
+  "text": "Event Manager\nCreate New Event\n\nUse Event Studio for the V1 event setup path: basics, venue, tickets, preview, draft, and publish.\n\nEvent Library\n\nReview drafts, published events, and direct links into each event workspace.\n\nSales\n\nList transactions with event-aware filters and sorting for finance and box office review.\n\nScanners\n\nManage scanner devices, access, and entry logs from one operations panel.\n\nVenues\n\nMaintain venue details, capacity, and location records that power event creation.\n\nCurrent Events\n5\n\nCOMEDY\n\nLate Show Comedy Club\nSold Out\n11/19/2026\nGower Street Theatre\n\nCONCERT\n\nSaltwater Sessions: Mara Vale\nOn Sale\n11/22/2026\nChapel Street Studio\n\nCONCERT\n\nAurora After Dark\nOn Sale\n11/28/2026\nThe Lantern Room\n\nFOOD & MUSIC\n\nIceberg Alley Jazz Brunch\nOn Sale\n12/5/2026\nThe Battery Club\n\nFESTIVAL\n\nHarbour Lights Festival\nOn Sale\n12/12/2026\nHarbourfront Commons",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:todo": {
+  "url": "https://labs.tixmo.co/todo",
+  "console": [],
+  "failed": [],
+  "text": "Task Manager\nCreate Task\nAll events\nDuckworth Indie Weekender\nSignal Hill Sunset Sessions\nNorthern Static Live\nHalloween Masquerade\nQuiet Harbour Acoustic\nEmber Choir: Winter Songs\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nAurora After Dark\nIceberg Alley Jazz Brunch\nHarbour Lights Festival\nBattery Road Blues Night\nFog City Strobe\nNew Year's Eve at Harbourfront\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\nFilter\nTo Do\n19\nOPS\n\nFinalize VIP Deck catering headcount\n\nHarbour Lights Festival\nNov 25\nMedium\nRT\nView\nOPS\n\nLantern walk safety briefing with volunteers\n\nHarbour Lights Festival\nDec 8\nMedium\nGW\nView\nMARKETING\n\nPaid social: Harbour Lights final push\n\nHarbour Lights Festival\nNov 30\nMedium\nLF\nView\nOPS\n\nDoor staffing plan: 6 lanes\n\nHarbour Lights Festival\nNov 28\nHigh\nDK\n1\nView\nGENERAL\n\nTable-for-four host scripts\n\nAurora After Dark\nNov 26\nLow\nRT\nView\nMARKETING\n\nAnnounce support act for Fog City Strobe\n\nFog City Strobe\nNov 23\nMedium\nJO\n1\nView\nMARKETING\n\nKitchen Party photo recap\n\nKitchen Party Social\nTomorrow\nLow\nHS\nView\nOPS\n\nMara Vale meet & greet logistics\n\nSaltwater Sessions: Mara Vale\nNov 21\nMedium\nKM\nView\nGENERAL\n\nBrunch menu sign-off with Battery Club\n\nIceberg Alley Jazz Brunch\nNov 25\nMedium\nGW\nView\nOPS\n\nNYE security plan with harbour authority\n\nNew Year's Eve at Harbourfront\nDec 6\nHigh\nDK\nView\nDESIGN\n\nNYE countdown screen content\n\nNew Year's Eve at Harbourfront\nDec 11\nLow\nIH\nView\nLEGAL\n\nGala sponso",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:team": {
+  "url": "https://labs.tixmo.co/team",
+  "console": [],
+  "failed": [],
+  "text": "Team Members\n\nManage organization access, role coverage, and pending invites from one roster.\n\nAdd member\n\nMEMBERS\n\n22\n\nACTIVE\n\n19\n\nPENDING\n\n3\n\nADMINS\n\n3\n\nMANAGERS\n\n4\n\nTeam directory\n\nEveryone with access, their role, and whether they have completed their invite.\n\n22 members\nAQ\n\nAvery Quinlan\n\nYOU\n\navery@northlight.example.com\n\nROLE\nOWNER\nTITLE\nHead of Live Operations\nSTATUS\nActive\nActive now\nPR\n\nPriya Raman\n\npriya.raman@northlight.example.com\n\nROLE\nADMIN\nTITLE\nDirector of Finance & Operations\nSTATUS\nActive\nActive 58 min ago\nTR\n\nTomas Reyes\n\ntomas.reyes@northlight.example.com\n\nROLE\nADMIN\nTITLE\nGeneral Manager\nSTATUS\nActive\nActive 2 hr ago\nGW\n\nGrace Whelan\n\ngrace.whelan@northlight.example.com\n\nROLE\nMANAGER\nTITLE\nVenue Operations Manager\nSTATUS\nActive\nActive 5 hr ago\nJO\n\nJordan Okafor\n\njordan.okafor@northlight.example.com\n\nROLE\nMANAGER\nTITLE\nMarketing Lead\nSTATUS\nActive\nActive 32 min ago\nNP\n\nNathan Pike\n\nnathan.pike@northlight.example.com\n\nROLE\nMANAGER\nTITLE\nBox Office Manager\nSTATUS\nActive\nActive 42 min ago\nSM\n\nSofia Marchetti\n\nsofia.marchetti@northlight.example.com\n\nROLE\nMANAGER\nTITLE\nProduction Manager\nSTATUS\nActive\nActive 1 hr ago\nDK\n\nDev Kapoor\n\ndev.kapoor@northlight.example.com\n\nROLE\nSCANNER\nTITLE\nDoor & Access Lead\nSTATUS\nActive\nActive 29 min ago\nFW\n\nFiona Walsh\n\nfiona.walsh@northlight.example.com\n\nROLE\nSCANNER\nTITLE\nDoor Supervisor\nSTATUS\nActive\nActive 38 min ago\nHS\n\nHana Sato\n\nhana.sato@northlight.example.com\n\nROLE\nTEAM MEMBER\nTITLE\nSocial & Content Producer\nSTATUS\nAct",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:assets": {
+  "url": "https://labs.tixmo.co/assets",
+  "console": [],
+  "failed": [],
+  "text": "Asset Library\n\nBrowse, organize, and download assets by the event or brand library they belong to.\n\n62 assets\n17 folders\n1 selected\n\nFOLDERS\n\nAll assets\nBrand library\nNorthlight Brand Kit\nHarbour Lights Festival campaign\nIceberg Alley Jazz Brunch campaign\nKitchen Party Social campaign\nSaltwater Sessions: Mara Vale campaign\nLate Show Comedy Club campaign\nAurora After Dark campaign\nFog City Strobe campaign\nNew Year's Eve at Harbourfront campaign\nWinter Lanterns Gala campaign\nBattery Road Blues Night campaign\nTemplates\nTidewater Film Score Live campaign\nEmber Choir: Winter Songs campaign\nHalloween Masquerade campaign\nNorthern Static Live campaign\nHarbour Lights Festival\nAurora After Dark\nSaltwater Sessions: Mara Vale\nLate Show Comedy Club\nSponsors & partners\nWinter Lanterns Gala\nTidewater Film Score Live\nBattery Road Blues Night\nIceberg Alley Jazz Brunch\nKitchen Party Social\nFog City Strobe\nNew Year's Eve at Harbourfront\nEmber Choir: Winter Songs\nHalloween Masquerade\nNorthern Static Live\nAll assets\nAll assets\n62 assets\nNew Folder\nUpload Assets\nType\nImages\nVideo\nDocuments\nOther files\nSort by: Likely used\nSort by: Newest\nSort by: Oldest\nSort by: Largest\nSort by: Smallest\nSort by: Name A-Z\nDownload Selected (1)\n\nFOLDERS IN ALL ASSETS\n\nBrand library\n\n0 assets\n\nNorthlight Brand Kit\n\n7 assets\n\nHarbour Lights Festival campaign\n\n5 assets\n\nIceberg Alley Jazz Brunch campaign\n\n4 assets\n\nKitchen Party Social campaign\n\n4 assets\n\nSaltwater Sessions: Mara Vale campaign\n\n4 assets\n\nLate Show Com",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:approvals": {
+  "url": "https://labs.tixmo.co/approvals",
+  "console": [],
+  "failed": [],
+  "text": "Approvals\n15 SHOWING\nFilter by event\nDuckworth Indie Weekender\nSignal Hill Sunset Sessions\nNorthern Static Live\nHalloween Masquerade\nQuiet Harbour Acoustic\nEmber Choir: Winter Songs\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nAurora After Dark\nIceberg Alley Jazz Brunch\nHarbour Lights Festival\nBattery Road Blues Night\nFog City Strobe\nNew Year's Eve at Harbourfront\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\nAll statuses\nIn Progress\nApproved\nCancelled\nNew submission\nCancelled\nOverdue\nV1\nBlues Night poster\n\nBattery Road Blues Night\n\nDue\nNov 4, 2026, 7:21 PM\nStatus\nCancelled\nArchive\nDelete\nApproved\nOverdue\nV1\nLate Show sold-out graphic\n\nLate Show Comedy Club\n\nDue\nNov 6, 2026, 11:21 AM\nStatus\nApproved\nIn approved assets\nArchive\nDelete\nApproved\nOverdue\nV2\nSaltwater Sessions poster\n\nSaltwater Sessions: Mara Vale\n\nDue\nNov 8, 2026, 11:21 PM\nStatus\nApproved\nIn approved assets\nArchive\nDelete\nCancelled\nOverdue\nV1\nNew Year's Eve VIP lounge banner\n\nNew Year's Eve at Harbourfront\n\nDue\nNov 9, 2026, 7:21 PM\nStatus\nCancelled\nArchive\nDelete\nApproved\nOverdue\nV1\nAurora After Dark story teaser\n\nAurora After Dark\n\nDue\nNov 13, 2026, 3:21 AM\nStatus\nApproved\nIn approved assets\nArchive\nDelete\nApproved\nOverdue\nV2\nHarbour Lights lineup card\n\nHarbour Lights Festival\n\nDue\nNov 14, 2026, 7:21 PM\nStatus\nApproved\nIn approved assets\nArchive\nDelete\nIn Progress\nV3\nHarbour Lights main poster\n\nHarbour Lights Festival\n\nDue\nNov 17, 2026, 5:00 P",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:moose": {
+  "replies": "Hi, I'm Moose, Tixmo's AI assistant. Ask me about the numbers on this page for Aurora After Dark.\nWhich event is selling fastest?\nHarbour Lights Festival is selling fastest over last 28 days, with 540 purchases from 6,840 visitors (42% ahead of the prior period). Next is Halloween Masquerade, with 400 purchases. You're looking at Aurora After Dark right now, which has 118 purchases (rank 7 of 19 in this range).\nHow did last weekend compare?\nLast weekend (Sat Nov 14-Sun Nov 15) brought 173 visitors and 12 purchases on Aurora After Dark. That's 125% ahead of the weekend before (Sat Nov 7-Sun Nov 8), when you had 77 visitors and 9 purchases.\nWhere are my buyers coming from?\nOn Aurora After Dark over last 28 days, Organic Social is your strongest source, with 405 visitors and 36 purchases. Organic Search is next (211 visitors, 29 purchases). The most visitors are coming from St. John's (565). Most people are on Desktop.\nWhat should I promote next?\nLooking at Aurora After Dark over last 28 days: you had 1,180 visitors and 118 purchases, 28% ahead of the prior period. The biggest drop in the ticket path is 72% drop-off to Added to cart. I'd start with a reminder or offer that helps people take the next step. Organic Social is already your strongest source (405 visitors, 36 purchases), so a focused boost there usually goes further than spreading spend. One heads-up on this page: Traffic spiked on Saturday.\nHow many visitors do we have?\nI'm Moose, Tixmo's assistant. I can only talk about the analytics on this page. You're looking at Aurora After Dark for last 28 days: 1,180 visitors, 2,460 page views and 118 purchases, 28% ahead of the prior period. 23 people are on your site right now. Try asking which event is selling fastest, how last weekend compared, where buyers are coming from, or what to promote next."
+ },
+ "mobile:analytics": {
+  "url": "https://labs.tixmo.co/analytics",
+  "console": [],
+  "failed": [],
+  "text": "Analytics\nMock data\n\nNorthlight Live (demo). Demo numbers only.\n\nSITE / EVENT PAGE\nAll pages\nAurora After Dark\nHarbour Lights Festival\nFog City Strobe\nQuiet Harbour Acoustic\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nIceberg Alley Jazz Brunch\nNew Year's Eve at Harbourfront\nBattery Road Blues Night\nNorthern Static Live\nSignal Hill Sunset Sessions\nHalloween Masquerade\nDuckworth Indie Weekender\nEmber Choir: Winter Songs\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\n7 days\n28 days\n90 days\n23 people on your site right now\n\nUpdated 5 min ago\n\nThis period\nLast period\nForecast\n10-20\n10-21\n10-22\n10-23\n10-24\n10-25\n10-26\n10-27\n10-28\n10-29\n10-30\n10-31\n11-01\n11-02\n11-03\n11-04\n11-05\n11-06\n11-07\n11-08\n11-09\n11-10\n11-11\n11-12\n11-13\n11-14\n11-15\n11-16\n11-17\n11-18\n11-19\n11-20\n11-21\n11-22\n11-23\n0\n10\n20\n30\n40\n50\n60\n70\n80\n90\n100\n110\n120\n130\n\nVisitors are running 18% ahead of last period.\n\nMoose\n\nTixmo's AI assistant\n\nHi, I'm Moose, Tixmo's AI assistant. Ask me about the numbers on this page for Aurora After Dark.\nWhich event is selling fastest?\nHarbour Lights Festival is selling fastest over last 28 days, with 540 purchases from 6,840 visitors (42% ahead of the prior period). Next is Halloween Masquerade, with 400 purchases. You're looking at Aurora After Dark right now, which has 118 purchases (rank 7 of 19 in this range).\nHow did last weekend compare?\nLast weekend (Sat Nov 14-Sun Nov 15) brought 173 visitors and 12 purchase",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:analytics/classic": {
+  "url": "https://labs.tixmo.co/analytics",
+  "console": [],
+  "failed": [],
+  "text": "Analytics\nMock data\n\nNorthlight Live (demo). Demo numbers only.\n\nSITE / EVENT PAGE\nAll pages\nAurora After Dark\nHarbour Lights Festival\nFog City Strobe\nQuiet Harbour Acoustic\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nIceberg Alley Jazz Brunch\nNew Year's Eve at Harbourfront\nBattery Road Blues Night\nNorthern Static Live\nSignal Hill Sunset Sessions\nHalloween Masquerade\nDuckworth Indie Weekender\nEmber Choir: Winter Songs\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\n7 days\n28 days\n90 days\n23 people on your site right now\n\nUpdated 5 min ago\n\nThis period\nLast period\nForecast\n10-20\n10-21\n10-22\n10-23\n10-24\n10-25\n10-26\n10-27\n10-28\n10-29\n10-30\n10-31\n11-01\n11-02\n11-03\n11-04\n11-05\n11-06\n11-07\n11-08\n11-09\n11-10\n11-11\n11-12\n11-13\n11-14\n11-15\n11-16\n11-17\n11-18\n11-19\n11-20\n11-21\n11-22\n11-23\n0\n10\n20\n30\n40\n50\n60\n70\n80\n90\n100\n110\n120\n130\n\nVisitors are running 18% ahead of last period.\n\nMoose\n\nTixmo's AI assistant\n\nHi, I'm Moose, Tixmo's AI assistant. Ask me about the numbers on this page for Aurora After Dark.\nWhich event is selling fastest?\nHow did last weekend compare?\nWhere are my buyers coming from?\nWhat should I promote next?\n\nVisitors\n\n1,180\n\nup 18.0% vs previous 28 days\n\nPage views\n\n2,460\n\nup 17.1% vs previous 28 days\n\nAvg time on site\n\n1m 42s\n\nup 13.3% vs previous 28 days\n\nPurchases\n\n118\n\nup 28.3% vs previous 28 days\n\nHeads up\n\nTraffic spiked on Saturday\n\nOrganic Social jumped after the lineup post.\n\nSee why\n\nPaid ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:settings": {
+  "url": "https://labs.tixmo.co/dashboard",
+  "console": [],
+  "failed": [],
+  "text": "Welcome back, Avery\n\nHere is what is happening across your events today.\n\nTickets sold today\n\n234\n\n120 orders \u00b7 $19,753\n\nRevenue, last 30 days\n\n$281,523\n\n3,487 tickets\n\nOn sale now\n\n9\n\nLive now: Kitchen Party Social\n\nOpen tasks\n\n40\n\n1 due today or overdue\n\nWaiting on review\n\n5\n\nCreative out with reviewers\n\nTicket sales, last 14 days\n\nPaid tickets per day across every event.\n\n2 weeks ago\nToday\nLatest activity\n\nWhat the team and your buyers did most recently.\n\nDoors open: Kitchen Party Social\n\nTwo scanners are live at The Battery Club. 354 tickets sold.\n\n26 min ago\n\nOwen mentioned you\n\n\"Float counted, tablet 1 at the front\" on Tonight: walk-up ticket float.\n\n1 hr ago\n\nApproval updated: Winter Lanterns Gala invitation\n\nImogen added the charity number in revision 3.\n\n2 hr ago\n\nApproval waiting: Harbour Lights main poster\n\nHana uploaded revision 3 for Lantern Static management.\n\n3 hr ago\n\nHarbour Lights passed 2400 tickets\n\nHarbour Lights Festival is 68% sold. VIP Deck is moving fastest this week.\n\n4 hr ago\nEvent Manager\n\nCreate events and manage sales, scanners, and venues from one dashboard.\n\nTask Manager\n\nCollaborate, assign work, and track operational follow-through.\n\nAsset Library\n\nBrowse uploaded creative, preview versions, and copy share links for internal or external handoff.\n\n5\nReview Portal\n\nReview pending requests.\n\nAnalytics\n\nDeep dive into your metrics.\n\nSecurity\n\nHow your event pages, dashboard, checkout and door devices are doing.\n\nTeam Members\n\nManage organization ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:staff-actions": {
+  "url": "https://labs.tixmo.co/dashboard",
+  "console": [],
+  "failed": [],
+  "text": "Welcome back, Avery\n\nHere is what is happening across your events today.\n\nTickets sold today\n\n234\n\n120 orders \u00b7 $19,753\n\nRevenue, last 30 days\n\n$281,523\n\n3,487 tickets\n\nOn sale now\n\n9\n\nLive now: Kitchen Party Social\n\nOpen tasks\n\n40\n\n1 due today or overdue\n\nWaiting on review\n\n5\n\nCreative out with reviewers\n\nTicket sales, last 14 days\n\nPaid tickets per day across every event.\n\n2 weeks ago\nToday\nLatest activity\n\nWhat the team and your buyers did most recently.\n\nDoors open: Kitchen Party Social\n\nTwo scanners are live at The Battery Club. 354 tickets sold.\n\n26 min ago\n\nOwen mentioned you\n\n\"Float counted, tablet 1 at the front\" on Tonight: walk-up ticket float.\n\n1 hr ago\n\nApproval updated: Winter Lanterns Gala invitation\n\nImogen added the charity number in revision 3.\n\n2 hr ago\n\nApproval waiting: Harbour Lights main poster\n\nHana uploaded revision 3 for Lantern Static management.\n\n3 hr ago\n\nHarbour Lights passed 2400 tickets\n\nHarbour Lights Festival is 68% sold. VIP Deck is moving fastest this week.\n\n4 hr ago\nEvent Manager\n\nCreate events and manage sales, scanners, and venues from one dashboard.\n\nTask Manager\n\nCollaborate, assign work, and track operational follow-through.\n\nAsset Library\n\nBrowse uploaded creative, preview versions, and copy share links for internal or external handoff.\n\n5\nReview Portal\n\nReview pending requests.\n\nAnalytics\n\nDeep dive into your metrics.\n\nSecurity\n\nHow your event pages, dashboard, checkout and door devices are doing.\n\nTeam Members\n\nManage organization ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:social": {
+  "url": "https://labs.tixmo.co/social",
+  "console": [],
+  "failed": [],
+  "text": "Social\n\nNorthlight Live (demo). Demo numbers only.\n\nMock data\nAll\n7d\n28d\n90d\nACCOUNT\nAll accounts\n@northlight.live.demo\n@northlightlive.demo\nyoutube.com/@northlightlivedemo\nfacebook.com/northlightlivedemo\nlinkedin.com/company/northlight-live-demo\n\nUpdated 5 min ago\n\nHome\nPosts\nFans\nAccounts\nNeeds your attention\n\n7\n\nComplaints picking up\n\nMostly on Aurora After Dark Reel\n\nno new ones yesterday\n\nReview\n\n22\n\nNegative comments on a post\n\nFog City strobe is being called out for the wrong night in the caption.\n\nno new ones yesterday\n\nOpen post\n\n7\n\nUnanswered questions\n\nOldest waiting 20d, on Fog City carousel\n\nno new ones yesterday\n\nReply\n\n3\n\nUnusual mention spike\n\n3 mentions on Nov 3\n\n+2 vs a usual day\n\nReview\n\nPeople reached\n\n1.5M\n\nup 7.1% vs previous 28 days\n\nLikes, comments & shares\n\n75K\n\nup 7.1% vs previous 28 days\n\nNew followers\n\n4.5K\n\ndown 1.6% vs previous 28 days\n\nLink clicks\n\n7.9K\n\nup 3.6% vs previous 28 days\n\nWhat happened\n\nYour Aurora After Dark Reel was your best post in the last 28 days \u2014 12x your usual reach.\n\nThe Fog City strobe brought in more likes, comments and shares than any other post.\n\nFans keep asking about merch sizes and whether the shuttle runs after 1am.\n\nTop posts\n\nINSTAGRAM \u00b7 REEL\n\nAurora After Dark Reel\n\nAurora After Dark Reel\n\nAurora After Dark \u2014 lineup drop. Fog, violet, and the first 400 jackets.\n\n@northlight.live.demo\n\n168K people reached\n\n1.2K likes, comments & shares\n\nBetter than usual\n\ud83d\ude00 Mostly positive\n\nTIKTOK \u00b7 VIDEO\n\nFog City strobe\n\nFog City ",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:social/overview": {
+  "url": "https://labs.tixmo.co/social/overview",
+  "console": [],
+  "failed": [],
+  "text": "Social\n\nNorthlight Live (demo). Demo numbers only.\n\nMock data\nAll\n7d\n28d\n90d\nACCOUNT\nAll accounts\n@northlight.live.demo\n@northlightlive.demo\nyoutube.com/@northlightlivedemo\nfacebook.com/northlightlivedemo\nlinkedin.com/company/northlight-live-demo\n\nUpdated 5 min ago\n\nHome\nPosts\nFans\nAccounts",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:orders": {
+  "url": "https://labs.tixmo.co/orders",
+  "console": [],
+  "failed": [],
+  "text": "Orders\n\nView and manage ticket sales and transactions.\n\nAll events\nDuckworth Indie Weekender\nSignal Hill Sunset Sessions\nNorthern Static Live\nHalloween Masquerade\nQuiet Harbour Acoustic\nEmber Choir: Winter Songs\nKitchen Party Social\nLate Show Comedy Club\nSaltwater Sessions: Mara Vale\nAurora After Dark\nIceberg Alley Jazz Brunch\nHarbour Lights Festival\nBattery Road Blues Night\nFog City Strobe\nNew Year's Eve at Harbourfront\nWinter Lanterns Gala\nTidewater Film Score Live\nSpring Tide Sessions\nSolstice Block Party\nAll statuses\nPaid\nPending\nCancelled\nRefunded\nNewest first\nOldest first\nEvent A-Z\nEvent Z-A\nAmount high-low\nAmount low-high\nORDER #\tCUSTOMER\tEVENT\tAMOUNT\tDATE\tSTATUS\tACTIONS\nNL-004953\t\nCeline Abbott\nceline.abbott.789+nldemo@example.org\n\tNew Year's Eve at Harbourfront\tCA$295.72\t11/16/2026\tPaid\t\n\nNL-002219\t\nAlex Haddad\nalex.haddad.106+nldemo@example.org\n\tHarbour Lights Festival\tCA$86.09\t11/16/2026\tPaid\t\n\nNL-002218\t\nLuca Drew\nluca.drew.748+nldemo@example.org\n\tHarbour Lights Festival\tCA$172.19\t11/16/2026\tPaid\t\n\nNL-002217\t\nInes Patel\nines.patel.320+nldemo@example.org\n\tHarbour Lights Festival\tCA$172.19\t11/16/2026\tPaid\t\n\nNL-002216\t\nOlive Cole\nolive.cole.976+nldemo@example.org\n\tHarbour Lights Festival\tCA$172.19\t11/16/2026\tPaid\t\n\nNL-002215\t\nErin Andersen\nerin.andersen.1366+nldemo@example.org\n\tHarbour Lights Festival\tCA$86.09\t11/16/2026\tPaid\t\n\nNL-002214\t\nRiley West\nriley.west.1061+nldemo@example.org\n\tHarbour Lights Festival\tCA$172.19\t11/16/2026\tPaid\t\n\nNL-002213\t\nJamal Barry\njamal.ba",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:venues": {
+  "url": "https://labs.tixmo.co/venues",
+  "console": [],
+  "failed": [],
+  "text": "Venues\n\nManage your venue locations and details.\n\nCreate Venue\nGower Street Theatre\n650 cap\n61 Gower Street\nSt. John's, NL\nSignal Hill Amphitheatre\n2500 cap\n230 Signal Hill Road\nSt. John's, NL\nThe Battery Club\n450 cap\n40 Battery Road\nSt. John's, NL\nChapel Street Studio\n360 cap\n12 Chapel Street\nSt. John's, NL\nFoundry Hall\n1800 cap\n88 Duckworth Street\nSt. John's, NL\nThe Lantern Room\n1200 cap\n214 Water Street\nSt. John's, NL\nHarbourfront Commons\n4200 cap\n1 Harbour Drive\nSt. John's, NL",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:scanners": {
+  "url": "https://labs.tixmo.co/scanners",
+  "console": [],
+  "failed": [],
+  "text": "Scanner Management\n\nManage scanning devices and view entry logs.\n\nFIELD OPS\nRegister New Scanner\nActive Scanners\nScan Logs\nOld iPad (lost)\n\nnld-old-ipad-lost-\n\nNot bound to an event\n\nREVOKED\nLast active\n8/18/2026, 5:41:31 AM\nRevoke access\nSignal Hill Gate\n\nnld-signal-hill-gate\n\nNot bound to an event\n\nDISABLED\nLast active\n9/15/2026, 5:01:31 PM\nChange event\nRevoke access\nBox Office Tablet 2\n\nnld-box-office-tablet-2\n\nNot bound to an event\n\nACTIVE\nLast active\n11/16/2026, 9:01:31 AM\nChange event\nRevoke access\nBox Office Tablet 1\n\nnld-box-office-tablet-1\n\nNot bound to an event\n\nACTIVE\nLast active\n11/16/2026, 11:15:31 AM\nChange event\nRevoke access\nChapel Street Door\n\nnld-chapel-street-door\n\nSaltwater Sessions: Mara Vale\n\nACTIVE\nLast active\n11/7/2026, 12:21:31 PM\nChange event\nRevoke access\nGower Lobby\n\nnld-gower-lobby\n\nLate Show Comedy Club\n\nACTIVE\nLast active\n11/13/2026, 10:01:31 AM\nChange event\nRevoke access\nFoundry South\n\nnld-foundry-south\n\nFog City Strobe\n\nACTIVE\nLast active\n10/31/2026, 11:21:31 AM\nChange event\nRevoke access\nFoundry North\n\nnld-foundry-north\n\nFog City Strobe\n\nACTIVE\nLast active\n10/31/2026, 1:01:31 PM\nChange event\nRevoke access\nLantern Room Door\n\nnld-lantern-room-door\n\nAurora After Dark\n\nACTIVE\nLast active\n11/13/2026, 11:41:31 AM\nChange event\nRevoke access\nVIP Lane\n\nnld-vip-lane\n\nHarbour Lights Festival\n\nACTIVE\nLast active\n11/14/2026, 11:01:31 AM\nChange event\nRevoke access\n\nPage 1 of 2\n\nPrevious\nNext",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:security": {
+  "url": "https://labs.tixmo.co/security",
+  "console": [],
+  "failed": [],
+  "text": "Security\n\nA plain-language look at Northlight Live's own event pages, team dashboard, checkout and door devices \u2014 so you can see that your platforms are safe.\n\nYour platforms look safe\nLast checked just now\nLast 24 hours\n\nEvent pages online\n\n19 / 19\n\nHTTPS valid on every page\n\nTwo-factor on your team\n\n19 / 19\n\n3 invites still pending \u2014 2FA starts when they join\n\nCheckout screening\n\nAll clear\n\n0 chargeback-risk flags\n\nDoor devices\n\nAll in order\n\n12 online \u00b7 1 paused \u00b7 1 revoked\n\nWhat this means for you\n\nNothing here needs urgent attention. Your event pages are up and locked with HTTPS, your team is signed in safely, checkout is being screened, and tonight's door devices are ready. Every suspected attack in the last 30 days was blocked or mitigated, and nothing was breached. Two teammates are recommended to choose a stronger password, and three invites will set up 2FA when they join.\n\nYour platforms\n\nEach surface is checked on a regular cycle. Green means nothing urgent needs your attention.\n\nEvent websites & ticket pages\n\nUptime 100%\n\nHealthy\n\nPAGE VISITS REVIEWED\n\n30,917\n\nUNEXPECTED PAGE CHANGES\n\n0\n\nEvery public event and ticket page is up. HTTPS is valid (renews in 76 days). No defacement or unexpected page changes.\n\n19 event and ticket pages online \u00b7 100% uptime today\nHTTPS valid on every public page\nNo defacement or unexpected edits to your pages\nUnwanted traffic is stopped automatically \u2014 see Suspected Attacks and Protection Layers\n\nWHAT THIS MEANS FOR YOU\n\nBuyers can rea",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:notifications": {
+  "url": "https://labs.tixmo.co/notifications",
+  "console": [],
+  "failed": [],
+  "text": "Notifications\n\n24 in your inbox \u00b7 5 unread on this page\n\nMark all as read\nDoors open: Kitchen Party Social\n\nTwo scanners are live at The Battery Club. 354 tickets sold.\n\nNOV 16, 11:15 A.M.\nOwen mentioned you\n\n\"Float counted, tablet 1 at the front\" on Tonight: walk-up ticket float.\n\nNOV 16, 10:23 A.M.\nApproval updated: Winter Lanterns Gala invitation\n\nImogen added the charity number in revision 3.\n\nNOV 16, 9:16 A.M.\nApproval waiting: Harbour Lights main poster\n\nHana uploaded revision 3 for Lantern Static management.\n\nNOV 16, 8:21 A.M.\nHarbour Lights passed 2400 tickets\n\nHarbour Lights Festival is 68% sold. VIP Deck is moving fastest this week.\n\nNOV 16, 7:56 A.M.\nTomas mentioned you\n\n\"5 of 8 signed. Chasing the last three today\" on Food truck contracts.\n\nNOV 16, 7:21 A.M.\nTable for Four sold\n\nA Table for Four was booked for Aurora After Dark.\n\nNOV 16, 6:11 A.M.\nReviewer comment: Mara Vale meet & greet post\n\nMara Vale management asked for a wording change.\n\nNOV 16, 3:21 A.M.\nDaily security report: all systems healthy\n\nAll 6 log sources scanned overnight reported healthy. No action needed.\n\nNOV 16, 1:21 A.M.\nLate Show Comedy Club is in 3 days\n\nSold out. 42 people on the waitlist.\n\nNOV 15, 8:21 P.M.\nLucia mentioned you\n\n\"Draft ready, header in Templates\" on Weekly newsletter.\n\nNOV 15, 5:01 P.M.\nSettlement ready: Ember Choir\n\nSales and attendance reconciled for Ember Choir: Winter Songs.\n\nNOV 15, 10:21 A.M.\nReviewer approved: Harbour Lights lineup card\n\nLantern Static management ap",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:events/b1283592-6c72-4827-9904-48b4e64ae28c": {
+  "url": "https://labs.tixmo.co/events/b1283592-6c72-4827-9904-48b4e64ae28c",
+  "console": [],
+  "failed": [],
+  "text": "Harbour Lights Festival\nSAT, DEC 12\nHARBOURFRONT COMMONS\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nSales period\nLast 7 days\nLast 30 days\nLast 90 days\nRevenue currency\nCAD\nUSD (historical orders)\nRefresh\n\nPAID REVENUE\n\nCA$26,947.41\n\nLast 7 days \u00b7 CAD only\n\nPAID ORDERS\n\n163\n\nLast 7 days \u00b7 CAD only\n\nTICKETS SOLD\n\n2404\n\nEvent total \u00b7 capacity 3560\n\nADMITTED TICKETS\n\n0\n\nEvent total \u00b7 recorded admissions\n\nDaily paid sales\n\nRecorded order dates in UTC. Refunds are excluded from paid revenue.\n\nDate (UTC)\tOrders\tTickets\tRevenue\n2026-11-09\t5\t8\tCA$688.75\n2026-11-10\t12\t20\tCA$1,721.87\n2026-11-11\t21\t43\tCA$3,702.04\n2026-11-12\t14\t25\tCA$2,152.34\n2026-11-13\t14\t33\tCA$2,841.12\n2026-11-14\t17\t34\tCA$2,927.20\n2026-11-15\t19\t43\tCA$3,702.06\n2026-11-16\t61\t107\tCA$9,212.03\nRecent paid orders\n\nNL-002219 \u00b7 CA$86.09\n\n11/16/2026, 11:10:41 AM\n\nNL-002218 \u00b7 CA$172.19\n\n11/16/2026, 10:56:08 AM\n\nNL-002217 \u00b7 CA$172.19\n\n11/16/2026, 10:53:46 AM\n\nNL-002216 \u00b7 CA$172.19\n\n11/16/2026, 10:38:21 AM\n\nNL-002215 \u00b7 CA$86.09\n\n11/16/2026, 10:38:21 AM\n\nNL-002214 \u00b7 CA$172.19\n\n11/16/2026, 10:28:05 AM\n\nNL-002213 \u00b7 CA$172.19\n\n11/16/2026, 10:21:30 AM\n\nNL-002212 \u00b7 CA$172.19\n\n11/16/2026, 10:10:50 AM\n\nNL-002211 \u00b7 CA$172.19\n\n11/16/2026, 10:08:56 AM\n\nNL-002210 \u00b7 CA$172.19\n\n11/16/2026, 9:49:42 AM\n\nView orders\n\nPage views and conversion rate are unavailable until traffic reporting is connected.",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:events/b1283592-6c72-4827-9904-48b4e64ae28c/orders": {
+  "url": "https://labs.tixmo.co/events/b1283592-6c72-4827-9904-48b4e64ae28c/orders",
+  "console": [],
+  "failed": [],
+  "text": "Harbour Lights Festival\nSAT, DEC 12\nHARBOURFRONT COMMONS\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nSearch orders\nSearch\nOrder status\nAll statuses\nPENDING\nPAID\nCANCELLED\nREFUNDED\nPARTIALLY REFUNDED\nExport CSV\nOrder\tCustomer\tDate\tStatus\tTotal\tTickets\tAction\nNL-002219\tAlex Haddad\n\nalex.haddad.106+nldemo@example.org\n\n\t11/16/2026, 11:10:41 AM\tPaid\tCA$86.09\t1\tView order\nNL-002218\tLuca Drew\n\nluca.drew.748+nldemo@example.org\n\n\t11/16/2026, 10:56:08 AM\tPaid\tCA$172.19\t2\tView order\nNL-002217\tInes Patel\n\nines.patel.320+nldemo@example.org\n\n\t11/16/2026, 10:53:46 AM\tPaid\tCA$172.19\t2\tView order\nNL-002216\tOlive Cole\n\nolive.cole.976+nldemo@example.org\n\n\t11/16/2026, 10:38:21 AM\tPaid\tCA$172.19\t2\tView order\nNL-002215\tErin Andersen\n\nerin.andersen.1366+nldemo@example.org\n\n\t11/16/2026, 10:38:21 AM\tPaid\tCA$86.09\t1\tView order\nNL-002214\tRiley West\n\nriley.west.1061+nldemo@example.org\n\n\t11/16/2026, 10:28:05 AM\tPaid\tCA$172.19\t2\tView order\nNL-002213\tJamal Barry\n\njamal.barry.221+nldemo@example.org\n\n\t11/16/2026, 10:21:30 AM\tPaid\tCA$172.19\t2\tView order\nNL-002212\tInes Carter\n\nines.carter.1220+nldemo@example.org\n\n\t11/16/2026, 10:10:50 AM\tPaid\tCA$172.19\t2\tView order\nNL-002211\tNia Power\n\nnia.power.452+nldemo@example.org\n\n\t11/16/2026, 10:08:56 AM\tPaid\tCA$172.19\t2\tView order\nNL-002210\tKira Tucker\n\nkira.tucker.672+nldemo@example.org\n\n\t11/16/2026, 9:49:42 AM\tPaid\tCA$172.19\t2\tView order\nNL-002209\tOlive Sheppard\n\nolive.sheppard.376+nldemo@example.o",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:events/b1283592-6c72-4827-9904-48b4e64ae28c/attendees": {
+  "url": "https://labs.tixmo.co/events/b1283592-6c72-4827-9904-48b4e64ae28c/attendees",
+  "console": [],
+  "failed": [],
+  "text": "Harbour Lights Festival\nSAT, DEC 12\nHARBOURFRONT COMMONS\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nSearch\nFilter\nExport List\nGUEST\tTICKET TYPE\tSTATUS\tORDER #\tACTIONS\n\nAH\n\nAlex Haddad\n\nalex.haddad.106+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002219\t\n\n\nLD\n\nLuca Drew\n\nluca.drew.748+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002218\t\n\n\nLD\n\nLuca Drew\n\nluca.drew.748+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002218\t\n\n\nIP\n\nInes Patel\n\nines.patel.320+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002217\t\n\n\nIP\n\nInes Patel\n\nines.patel.320+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002217\t\n\n\nOC\n\nOlive Cole\n\nolive.cole.976+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002216\t\n\n\nOC\n\nOlive Cole\n\nolive.cole.976+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002216\t\n\n\nEA\n\nErin Andersen\n\nerin.andersen.1366+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002215\t\n\n\nRW\n\nRiley West\n\nriley.west.1061+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002214\t\n\n\nRW\n\nRiley West\n\nriley.west.1061+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002214\t\n\n\nJB\n\nJamal Barry\n\njamal.barry.221+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002213\t\n\n\nJB\n\nJamal Barry\n\njamal.barry.221+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002213\t\n\n\nIC\n\nInes Carter\n\nines.carter.1220+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-002212\t\n\n\nIC\n\nInes Ca",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:events/b1283592-6c72-4827-9904-48b4e64ae28c/tickets": {
+  "url": "https://labs.tixmo.co/events/b1283592-6c72-4827-9904-48b4e64ae28c/tickets",
+  "console": [],
+  "failed": [],
+  "text": "Harbour Lights Festival\nSAT, DEC 12\nHARBOURFRONT COMMONS\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nTicket Classes\n\nManage ticket types and pricing tiers for this event.\n\nAdd Ticket Type\nNAME\n\t\nPRICE\n\t\nSOLD / TOTAL\n\t\nSTATUS\n\tACTIONS\nEarly Bird GA\t$59.00\t\n68 / 600\n\tActive\t\n\nGeneral Admission\t$69.00\t\n1576 / 2200\n\tActive\t\n\nWeekend Pass\t$159.00\t\n500 / 500\n\tSold Out\t\n\nVIP Deck\t$189.00\t\n260 / 260\n\tSold Out\t",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:events/d6d38086-1e81-4b03-b669-6c4607a5fa32": {
+  "url": "https://labs.tixmo.co/events/d6d38086-1e81-4b03-b669-6c4607a5fa32",
+  "console": [],
+  "failed": [],
+  "text": "Kitchen Party Social\nMON, NOV 16\nTHE BATTERY CLUB\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nSales period\nLast 7 days\nLast 30 days\nLast 90 days\nRevenue currency\nCAD\nUSD (historical orders)\nRefresh\n\nPAID REVENUE\n\nCA$5,084.63\n\nLast 7 days \u00b7 CAD only\n\nPAID ORDERS\n\n76\n\nLast 7 days \u00b7 CAD only\n\nTICKETS SOLD\n\n354\n\nEvent total \u00b7 capacity 440\n\nADMITTED TICKETS\n\n213\n\nEvent total \u00b7 recorded admissions\n\nDaily paid sales\n\nRecorded order dates in UTC. Refunds are excluded from paid revenue.\n\nDate (UTC)\tOrders\tTickets\tRevenue\n2026-11-10\t1\t3\tCA$93.58\n2026-11-11\t10\t23\tCA$717.48\n2026-11-12\t15\t30\tCA$935.81\n2026-11-13\t14\t27\tCA$842.23\n2026-11-14\t13\t25\tCA$779.85\n2026-11-15\t8\t21\tCA$655.08\n2026-11-16\t15\t34\tCA$1,060.60\nRecent paid orders\n\nNL-003893 \u00b7 CA$124.78\n\n11/16/2026, 6:47:48 AM\n\nNL-003892 \u00b7 CA$31.19\n\n11/16/2026, 6:17:34 AM\n\nNL-003891 \u00b7 CA$31.19\n\n11/16/2026, 5:58:17 AM\n\nNL-003890 \u00b7 CA$62.39\n\n11/16/2026, 5:41:17 AM\n\nNL-003889 \u00b7 CA$93.58\n\n11/16/2026, 3:47:38 AM\n\nNL-003888 \u00b7 CA$62.39\n\n11/16/2026, 3:31:06 AM\n\nNL-003887 \u00b7 CA$31.19\n\n11/16/2026, 3:00:20 AM\n\nNL-003886 \u00b7 CA$31.19\n\n11/16/2026, 2:26:28 AM\n\nNL-003885 \u00b7 CA$62.39\n\n11/16/2026, 2:06:26 AM\n\nNL-003884 \u00b7 CA$62.39\n\n11/16/2026, 1:46:57 AM\n\nView orders\n\nPage views and conversion rate are unavailable until traffic reporting is connected.",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:events/d6d38086-1e81-4b03-b669-6c4607a5fa32/orders": {
+  "url": "https://labs.tixmo.co/events/d6d38086-1e81-4b03-b669-6c4607a5fa32/orders",
+  "console": [],
+  "failed": [],
+  "text": "Kitchen Party Social\nMON, NOV 16\nTHE BATTERY CLUB\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nSearch orders\nSearch\nOrder status\nAll statuses\nPENDING\nPAID\nCANCELLED\nREFUNDED\nPARTIALLY REFUNDED\nExport CSV\nOrder\tCustomer\tDate\tStatus\tTotal\tTickets\tAction\nNL-003893\tNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\t11/16/2026, 6:47:48 AM\tPaid\tCA$124.78\t4\tView order\nNL-003892\tUma Murphy\n\numa.murphy.532+nldemo@example.org\n\n\t11/16/2026, 6:17:34 AM\tPaid\tCA$31.19\t1\tView order\nNL-003891\tLuca Barry\n\nluca.barry.1298+nldemo@example.org\n\n\t11/16/2026, 5:58:17 AM\tPaid\tCA$31.19\t1\tView order\nNL-003890\tClara West\n\nclara.west.514+nldemo@example.org\n\n\t11/16/2026, 5:41:17 AM\tPaid\tCA$62.39\t2\tView order\nNL-003889\tNia Dunne\n\nnia.dunne.802+nldemo@example.org\n\n\t11/16/2026, 3:47:38 AM\tPaid\tCA$93.58\t3\tView order\nNL-003888\tVictor Ryan\n\nvictor.ryan.1233+nldemo@example.org\n\n\t11/16/2026, 3:31:06 AM\tPaid\tCA$62.39\t2\tView order\nNL-003887\tYara Andersen\n\nyara.andersen.1235+nldemo@example.org\n\n\t11/16/2026, 3:00:20 AM\tPaid\tCA$31.19\t1\tView order\nNL-003886\tTaylor Power\n\ntaylor.power.1358+nldemo@example.org\n\n\t11/16/2026, 2:26:28 AM\tPaid\tCA$31.19\t1\tView order\nNL-003885\tJules Novak\n\njules.novak.904+nldemo@example.org\n\n\t11/16/2026, 2:06:26 AM\tPaid\tCA$62.39\t2\tView order\nNL-003884\tCeline Lopez\n\nceline.lopez.889+nldemo@example.org\n\n\t11/16/2026, 1:46:57 AM\tPaid\tCA$62.39\t2\tView order\nNL-003883\tCasey Silva\n\ncasey.silva.1109+nldemo@example.org\n\n\t11/16/2026, 1:05:5",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:events/d6d38086-1e81-4b03-b669-6c4607a5fa32/attendees": {
+  "url": "https://labs.tixmo.co/events/d6d38086-1e81-4b03-b669-6c4607a5fa32/attendees",
+  "console": [],
+  "failed": [],
+  "text": "Kitchen Party Social\nMON, NOV 16\nTHE BATTERY CLUB\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nSearch\nFilter\nExport List\nGUEST\tTICKET TYPE\tSTATUS\tORDER #\tACTIONS\n\nNN\n\nNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003893\t\n\n\nNN\n\nNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003893\t\n\n\nNN\n\nNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003893\t\n\n\nNN\n\nNia Novak\n\nnia.novak.602+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003893\t\n\n\nUM\n\nUma Murphy\n\numa.murphy.532+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003892\t\n\n\nLB\n\nLuca Barry\n\nluca.barry.1298+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003891\t\n\n\nCW\n\nClara West\n\nclara.west.514+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003890\t\n\n\nCW\n\nClara West\n\nclara.west.514+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003890\t\n\n\nND\n\nNia Dunne\n\nnia.dunne.802+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003889\t\n\n\nND\n\nNia Dunne\n\nnia.dunne.802+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003889\t\n\n\nND\n\nNia Dunne\n\nnia.dunne.802+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003889\t\n\n\nVR\n\nVictor Ryan\n\nvictor.ryan.1233+nldemo@example.org\n\n\tGeneral Admission\t\nChecked In\n\tNL-003888\t\n\n\nVR\n\nVictor Ryan\n\nvictor.ryan.1233+nldemo@example.org\n\n\tGeneral Admission\t\nConfirmed\n\tNL-003888\t\n\n\nYA\n\nYara Andersen\n\nyara.andersen.",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobile:events/d6d38086-1e81-4b03-b669-6c4607a5fa32/tickets": {
+  "url": "https://labs.tixmo.co/events/d6d38086-1e81-4b03-b669-6c4607a5fa32/tickets",
+  "console": [],
+  "failed": [],
+  "text": "Kitchen Party Social\nMON, NOV 16\nTHE BATTERY CLUB\nOn Sale\nEvent page\nCheckout\nNew ticket sales: not paused\nSales controls\nOverview\nOrders\nAttendees\nTickets\nSettings\nTicket Classes\n\nManage ticket types and pricing tiers for this event.\n\nAdd Ticket Type\nNAME\n\t\nPRICE\n\t\nSOLD / TOTAL\n\t\nSTATUS\n\tACTIONS\nGeneral Admission\t$25.00\t\n294 / 380\n\tActive\t\n\nKitchen Table\t$40.00\t\n60 / 60\n\tSold Out\t",
+  "nav": [
+   "Home",
+   "Events",
+   "Tasks",
+   "Team",
+   "Assets",
+   "Reviews5",
+   "Analytics",
+   "Security",
+   "Social"
+  ]
+ },
+ "mobileMenu": [
+  "Home",
+  "Events",
+  "Tasks",
+  "Team",
+  "Assets",
+  "Reviews\n5",
+  "Analytics",
+  "Security",
+  "Social"
+ ]
+}

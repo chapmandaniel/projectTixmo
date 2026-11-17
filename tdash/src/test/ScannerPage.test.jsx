@@ -106,6 +106,18 @@ describe('Online scanner', () => {
         expect(await screen.findByText(/nothing is saved offline/)).toBeInTheDocument();
         expect(fetch).toHaveBeenCalledTimes(1);
     });
+    it('does not download a ticket sync, persist an offline queue, or call validate while offline', async () => {
+        render(<ScannerPage />); await connect(); enter();
+        Object.defineProperty(navigator, 'onLine', { configurable: true, value: false }); check();
+        expect(await screen.findByText(/nothing is saved offline/)).toBeInTheDocument();
+        expect(screen.getByText(/No offline admission or queued scans/)).toBeInTheDocument();
+        expect(screen.queryByText(/sync/i)).not.toBeInTheDocument();
+        const urls = fetch.mock.calls.map(([url]) => String(url));
+        expect(urls.some((url) => url.includes('/scanners/sync'))).toBe(false);
+        expect(urls.some((url) => url.includes('/scanners/validate'))).toBe(false);
+        expect(localStorage.getItem(SCANNER_KEY_STORAGE)).toBe(key);
+        expect(Object.keys(localStorage)).toEqual([SCANNER_KEY_STORAGE]);
+    });
     it('offers manual fallback when camera detection is unsupported', async () => {
         render(<ScannerPage />); await connect(); fireEvent.click(screen.getByRole('button', { name: 'Start camera' }));
         expect(await screen.findByText(/Camera QR scanning is unavailable/)).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
     DashboardChip,
     DashboardEmptyState,
@@ -18,9 +18,7 @@ import { HomeView } from './views/HomeView';
 
 export default function AnalyticsDashboardApp({ isDark }) {
     const theme = getDashboardTheme(isDark);
-    const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
-    const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${location.pathname}${location.search}`;
 
     const pageId = searchParams.get('page') || DEFAULT_PAGE_ID;
     const range = searchParams.get('range') || DEFAULT_RANGE;
@@ -50,15 +48,6 @@ export default function AnalyticsDashboardApp({ isDark }) {
                     <p className={cn('mt-1 text-sm font-light', theme.textSecondary)}>
                         {MOCK_PROMOTER}. Demo numbers only.
                     </p>
-                </div>
-                <div
-                    data-testid="analytics-dashboard-url"
-                    className={cn(
-                        'max-w-full truncate rounded-md border px-3 py-1 font-mono text-[11px]',
-                        isDark ? 'border-dashboard-border bg-dashboard-panelMuted text-zinc-300' : 'border-slate-200 bg-white text-slate-700'
-                    )}
-                >
-                    {publicUrl}
                 </div>
             </div>
 

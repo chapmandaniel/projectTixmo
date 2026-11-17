@@ -1,11 +1,12 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { restoreProcessEnv, snapshotProcessEnv } from '../helpers/restore-process-env';
 
 describe('S3 endpoint URL style', () => {
-  const original = { ...process.env };
+  const original = snapshotProcessEnv();
 
   afterEach(() => {
-    process.env = { ...original };
+    restoreProcessEnv(original);
     jest.resetModules();
   });
 

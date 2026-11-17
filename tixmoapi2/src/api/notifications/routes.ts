@@ -57,7 +57,7 @@ router.get('/', validate(validation.getNotificationsSchema), controller.getNotif
  *       200:
  *         description: Notification marked as read
  */
-router.put('/:id/read', controller.markAsRead);
+router.put('/:id/read', validate(validation.markAsReadSchema), controller.markAsRead);
 
 /**
  * @swagger

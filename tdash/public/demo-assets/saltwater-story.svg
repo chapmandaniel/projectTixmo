@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#2dd4bf"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#38bdf8" stop-opacity=".45"/><stop offset="1" stop-color="#082f49" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#082f49"/><stop offset="1" stop-color="#082f49"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1920" fill="#082f49"/>
+<rect width="1080" height="1920" fill="url(#r)"/>
+<path d="M0 346 Q 135 316 270 346 T 540 346 T 810 346 T 1080 346" fill="none" stroke="#38bdf8" stroke-width="6" opacity="0.35"/>
+<path d="M0 461 Q 135 431 270 461 T 540 461 T 810 461 T 1080 461" fill="none" stroke="#2dd4bf" stroke-width="7" opacity="0.41"/>
+<path d="M0 576 Q 135 546 270 576 T 540 576 T 810 576 T 1080 576" fill="none" stroke="#38bdf8" stroke-width="8" opacity="0.47"/>
+<path d="M0 691 Q 135 661 270 691 T 540 691 T 810 691 T 1080 691" fill="none" stroke="#2dd4bf" stroke-width="9" opacity="0.53"/>
+<path d="M0 806 Q 135 776 270 806 T 540 806 T 810 806 T 1080 806" fill="none" stroke="#38bdf8" stroke-width="10" opacity="0.59"/>
+<path d="M0 922 Q 135 892 270 922 T 540 922 T 810 922 T 1080 922" fill="none" stroke="#2dd4bf" stroke-width="11" opacity="0.65"/>
+<path d="M0 1037 Q 135 1007 270 1037 T 540 1037 T 810 1037 T 1080 1037" fill="none" stroke="#38bdf8" stroke-width="12" opacity="0.71"/>
+<path d="M0 1152 Q 135 1122 270 1152 T 540 1152 T 810 1152 T 1080 1152" fill="none" stroke="#2dd4bf" stroke-width="13" opacity="0.77"/>
+<path d="M0 1267 Q 135 1237 270 1267 T 540 1267 T 810 1267 T 1080 1267" fill="none" stroke="#38bdf8" stroke-width="14" opacity="0.83"/>
+<rect width="1080" height="1920" fill="url(#shade)"/>
+<text x="86" y="1152" font-size="136" font-weight="800" fill="#fff" letter-spacing="2">SALTWATER</text>
+<text x="86" y="1291" font-size="136" font-weight="800" fill="#fff" letter-spacing="2">SESSIONS</text>
+<rect x="86" y="1477" width="130" height="6" fill="#f0f9ff"/>
+<text x="86" y="1553" font-size="36" fill="#fff" letter-spacing="4">CHAPEL STREET STUDIO</text>
+<text x="86" y="1607" font-size="28" fill="#fff" opacity=".75" letter-spacing="3">MARA VALE · INTIMATE LIVE SET</text>
+<rect x="86" y="1661" width="907" height="130" rx="65" fill="#fff"/>
+<text x="540" y="1747" text-anchor="middle" font-size="48" font-weight="700" fill="#082f49" letter-spacing="3">GET TICKETS</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

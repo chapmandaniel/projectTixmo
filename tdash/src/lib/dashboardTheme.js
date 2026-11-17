@@ -13,7 +13,7 @@ export const dashboardColorTokens = {
 export const getDashboardTheme = (isDark) => {
     if (isDark) {
         return {
-            shell: 'bg-dashboard-shell text-zinc-100 selection:bg-dashboard-accent/30',
+            shell: 'bg-dashboard-shell text-zinc-100 selection:bg-[rgb(var(--brand-accent-rgb)/0.3)]',
             shellOverlay: '',
             panel: 'border-[#31324a] bg-[#1f1f31] text-[#f2f2f7]',
             panelMuted: 'border-[#242438] bg-[#171723] text-[#f2f2f7]',
@@ -54,11 +54,3 @@ export const getDashboardTheme = (isDark) => {
     };
 };
 
-export const dashboardAccentGradients = {
-    brand: 'from-pink-500 via-rose-500 to-orange-400',
-    violet: 'from-fuchsia-500 via-violet-500 to-cyan-400',
-    blue: 'from-sky-500 via-cyan-500 to-blue-500',
-    green: 'from-lime-400 via-emerald-500 to-teal-500',
-    amber: 'from-amber-400 via-orange-500 to-rose-500',
-    slate: 'from-slate-500 via-slate-600 to-slate-700',
-};

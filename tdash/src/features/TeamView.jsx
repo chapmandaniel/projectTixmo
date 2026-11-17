@@ -12,6 +12,7 @@ import {
     X,
 } from 'lucide-react';
 import TeamMemberWizard from './TeamMemberWizard';
+import MemberAvatar, { relativeActive } from '../components/dashboard/MemberAvatar';
 import api from '../lib/api';
 import { getStoredUser } from '../lib/session';
 import {
@@ -73,10 +74,14 @@ const TeamView = ({ isDark, user: currentUser }) => {
         setLoading(true);
         try {
             const query = scopedUser?.organizationId
-                ? `/users?organizationId=${encodeURIComponent(scopedUser.organizationId)}`
-                : '/users';
+                ? `/users?organizationId=${encodeURIComponent(scopedUser.organizationId)}&limit=100`
+                : '/users?limit=100';
             const res = await api.get(query);
-            setUsers(res.data.data.users || []);
+            const list = res.data.data.users || [];
+            // Roster reads top-down: leadership first, pending invites last.
+            setUsers([...list].sort((a, b) => (Number(!a.emailVerified) - Number(!b.emailVerified))
+                || (getRoleLevel(b.role) - getRoleLevel(a.role))
+                || String(a.firstName || '').localeCompare(String(b.firstName || ''))));
             setError('');
         } catch (err) {
             console.error(err);
@@ -191,13 +196,13 @@ const TeamView = ({ isDark, user: currentUser }) => {
     const getRoleBadge = (role) => {
         switch (role) {
             case 'OWNER':
-                return { icon: Lock, color: isDark ? 'bg-pink-500/12 text-pink-300' : 'bg-pink-50 text-pink-700' };
+                return { icon: Lock, color: isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.14)] text-[var(--brand-accent-soft)]' : 'bg-pink-50 text-pink-700' };
             case 'ADMIN':
-                return { icon: Shield, color: isDark ? 'bg-orange-500/12 text-orange-300' : 'bg-orange-50 text-orange-700' };
+                return { icon: Shield, color: isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.12)] text-[var(--brand-accent-soft)]' : 'bg-orange-50 text-orange-700' };
             case 'MANAGER':
-                return { icon: Shield, color: isDark ? 'bg-cyan-500/12 text-cyan-300' : 'bg-cyan-50 text-cyan-700' };
+                return { icon: Shield, color: isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.12)] text-[var(--brand-accent-soft)]' : 'bg-cyan-50 text-cyan-700' };
             case 'TEAM_MEMBER':
-                return { icon: User, color: isDark ? 'bg-indigo-500/12 text-indigo-300' : 'bg-blue-50 text-blue-700' };
+                return { icon: User, color: isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.12)] text-[var(--brand-accent-soft)]' : 'bg-blue-50 text-blue-700' };
             default:
                 return { icon: User, color: isDark ? 'bg-slate-500/12 text-slate-300' : 'bg-slate-50 text-slate-700' };
         }
@@ -210,11 +215,11 @@ const TeamView = ({ isDark, user: currentUser }) => {
         const managers = users.filter((member) => member.role === 'MANAGER').length;
 
         return [
-            { id: 'total', label: 'Members', value: users.length, icon: Users, accent: 'brand', iconClassName: 'text-pink-300' },
+            { id: 'total', label: 'Members', value: users.length, icon: Users, accent: 'brand', iconClassName: 'text-[var(--brand-accent-soft)]' },
             { id: 'active', label: 'Active', value: active, icon: CheckCircle2, accent: 'green', iconClassName: 'text-emerald-300' },
             { id: 'pending', label: 'Pending', value: pending, icon: Clock3, accent: 'amber', iconClassName: 'text-amber-300' },
-            { id: 'admins', label: 'Admins', value: admins, icon: Shield, accent: 'violet', iconClassName: 'text-violet-300' },
-            { id: 'managers', label: 'Managers', value: managers, icon: Shield, accent: 'blue', iconClassName: 'text-cyan-300' },
+            { id: 'admins', label: 'Admins', value: admins, icon: Shield, accent: 'violet', iconClassName: 'text-[var(--brand-accent-soft)]' },
+            { id: 'managers', label: 'Managers', value: managers, icon: Shield, accent: 'blue', iconClassName: 'text-[var(--brand-accent-soft)]' },
         ];
     }, [users]);
 
@@ -234,15 +239,13 @@ const TeamView = ({ isDark, user: currentUser }) => {
                 title="Team Members"
                 description="Manage organization access, role coverage, and pending invites from one roster."
                 icon={Users}
-                iconClassName={isDark ? 'text-pink-300' : 'text-pink-700'}
-                glowTopClassName="bg-pink-500/10"
-                glowBottomClassName="bg-cyan-400/10"
+                iconClassName={isDark ? 'text-[var(--brand-accent-soft)]' : 'text-pink-700'}
                 actions={(
                     <DashboardButton
                         isDark={isDark}
                         onClick={() => setIsWizardOpen(true)}
                         className={cn(
-                            isDark ? 'border-pink-500 bg-pink-500 hover:border-pink-400 hover:bg-pink-400' : ''
+                            isDark ? 'border-[var(--brand-accent)] bg-[var(--brand-accent)] text-white hover:brightness-110' : ''
                         )}
                     >
                         <UserPlus size={16} />
@@ -333,16 +336,14 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                 >
                                     <div className="grid gap-4 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_44px] lg:items-center">
                                         <div className="flex min-w-0 items-center gap-4">
-                                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-light ${isDark ? 'bg-dashboard-panelAlt text-gray-200' : 'bg-white text-gray-700 shadow-sm'}`}>
-                                                {member.firstName?.[0]}{member.lastName?.[0]}
-                                            </div>
+                                            <MemberAvatar firstName={member.firstName} lastName={member.lastName} email={member.email} size="lg" muted={!member.emailVerified} />
                                             <div className="min-w-0">
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     <p className={cn('truncate text-base font-light', uiTheme.textPrimary)}>
                                                         {member.firstName} {member.lastName}
                                                     </p>
                                                     {isCurrentUser && (
-                                                        <span className={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] ${isDark ? 'bg-cyan-500/12 text-cyan-200' : 'bg-cyan-50 text-cyan-700'}`}>
+                                                        <span className={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] ${isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.12)] text-[var(--brand-accent-soft)]' : 'bg-cyan-50 text-cyan-700'}`}>
                                                             You
                                                         </span>
                                                     )}
@@ -362,7 +363,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                                             onChange={(event) => setRoleDrafts((current) => ({ ...current, [member.id]: event.target.value }))}
                                                             className={cn(
                                                                 'h-9 rounded-md border px-2 text-xs font-light outline-hidden transition',
-                                                                isDark ? 'border-dashboard-borderStrong bg-dashboard-panelAlt text-zinc-100 focus:border-pink-400' : 'border-slate-200 bg-white text-slate-900 focus:border-slate-400'
+                                                                isDark ? 'border-dashboard-borderStrong bg-dashboard-panelAlt text-zinc-100 focus:border-[var(--brand-accent)]' : 'border-slate-200 bg-white text-slate-900 focus:border-slate-400'
                                                             )}
                                                         >
                                                             {assignableRoles.map((role) => (
@@ -375,7 +376,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                                             disabled={savingRoleUserId === member.id}
                                                             className={cn(
                                                                 'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-60',
-                                                                isDark ? 'bg-pink-500 text-white hover:bg-pink-400' : 'bg-slate-900 text-white hover:bg-slate-800'
+                                                                isDark ? 'bg-[var(--brand-accent)] text-white hover:brightness-110' : 'bg-slate-900 text-white hover:bg-slate-800'
                                                             )}
                                                             title="Save role"
                                                         >
@@ -426,6 +427,11 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                                         : (isDark ? 'bg-amber-500/12 text-amber-300' : 'bg-amber-50 text-amber-700')
                                                 }`}>
                                                 {member.emailVerified ? 'Active' : 'Pending'}
+                                            </div>
+                                            <div className={cn('mt-1 text-xs font-light', uiTheme.textTertiary)} data-testid="member-last-active">
+                                                {member.emailVerified
+                                                    ? (relativeActive(member.lastLogin) || 'Not signed in yet')
+                                                    : 'Invite sent'}
                                             </div>
                                             {member.invitationPending && canEditMemberRole && (
                                                 <DashboardButton isDark={isDark} variant="secondary" className="mt-2" disabled={resendingId === member.id}

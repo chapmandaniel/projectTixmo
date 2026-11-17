@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fb923c"/><stop offset="1" stop-color="#fde68a"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#fb923c" stop-opacity=".45"/><stop offset="1" stop-color="#1c0f08" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c0f08"/><stop offset="1" stop-color="#1c0f08"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1920" fill="#1c0f08"/>
+<rect width="1080" height="1920" fill="url(#r)"/>
+<rect x="302" y="1083" width="43" height="346" rx="6" fill="#ffffff" opacity=".9"/>
+<path d="M324 910 Q 362 1025 324 1079 Q 286 1025 324 910 Z" fill="url(#g)"/>
+<circle cx="324" cy="1006" r="97" fill="#fb923c" opacity=".12"/>
+<rect x="432" y="1060" width="43" height="461" rx="6" fill="#ffffff" opacity=".9"/>
+<path d="M454 887 Q 491 1002 454 1056 Q 416 1002 454 887 Z" fill="url(#g)"/>
+<circle cx="454" cy="983" r="97" fill="#fb923c" opacity=".12"/>
+<rect x="562" y="1083" width="43" height="346" rx="6" fill="#ffffff" opacity=".9"/>
+<path d="M583 910 Q 621 1025 583 1079 Q 545 1025 583 910 Z" fill="url(#g)"/>
+<circle cx="583" cy="1006" r="97" fill="#fb923c" opacity=".12"/>
+<rect x="691" y="1060" width="43" height="461" rx="6" fill="#ffffff" opacity=".9"/>
+<path d="M713 887 Q 751 1002 713 1056 Q 675 1002 713 887 Z" fill="url(#g)"/>
+<circle cx="713" cy="983" r="97" fill="#fb923c" opacity=".12"/>
+<rect x="821" y="1083" width="43" height="346" rx="6" fill="#ffffff" opacity=".9"/>
+<path d="M842 910 Q 880 1025 842 1079 Q 805 1025 842 910 Z" fill="url(#g)"/>
+<circle cx="842" cy="1006" r="97" fill="#fb923c" opacity=".12"/>
+<rect width="1080" height="1920" fill="url(#shade)"/>
+<text x="86" y="1152" font-size="102" font-weight="800" fill="#fff" letter-spacing="2">EMBER CHOIR</text>
+<text x="86" y="1256" font-size="102" font-weight="800" fill="#fff" letter-spacing="2">WINTER SONGS</text>
+<rect x="86" y="1396" width="130" height="6" fill="#ffffff"/>
+<text x="86" y="1471" font-size="36" fill="#fff" letter-spacing="4">GOWER STREET THEATRE</text>
+<text x="86" y="1525" font-size="28" fill="#fff" opacity=".75" letter-spacing="3">A CANDLELIT EVENING OF CHORAL MUSIC</text>
+<rect x="86" y="1661" width="907" height="130" rx="65" fill="#fff"/>
+<text x="540" y="1747" text-anchor="middle" font-size="48" font-weight="700" fill="#1c0f08" letter-spacing="3">GET TICKETS</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

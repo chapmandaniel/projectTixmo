@@ -86,7 +86,7 @@ const writeApprovalsDashboardCache = (user, { approvals, events }) => {
 const REVIEW_STATUS_META = {
     IN_PROGRESS: {
         label: 'In Progress',
-        chip: 'bg-sky-500/15 text-sky-200 border border-sky-400/30',
+        chip: 'bg-[rgb(var(--brand-accent-rgb)/0.15)] text-[var(--brand-accent-soft)] border border-[rgb(var(--brand-accent-rgb)/0.3)]',
         accent: 'from-sky-400 to-cyan-500',
         icon: Clock3,
     },
@@ -323,7 +323,7 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                                 <button
                                     type="button"
                                     onClick={addReviewer}
-                                    className="rounded-2xl border border-sky-400/40 bg-sky-500/10 px-4 py-3 text-sm font-medium text-sky-200 transition hover:bg-sky-500/20"
+                                    className="rounded-2xl border border-[rgb(var(--brand-accent-rgb)/0.4)] bg-[rgb(var(--brand-accent-rgb)/0.1)] px-4 py-3 text-sm font-medium text-[var(--brand-accent-soft)] transition hover:bg-[rgb(var(--brand-accent-rgb)/0.2)]"
                                 >
                                     Add
                                 </button>
@@ -376,7 +376,7 @@ const CreateApprovalModal = ({ events, onClose, onCreated }) => {
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-2xl bg-[var(--brand-accent)] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {submitting ? 'Submitting…' : 'Create approval'}
                         </button>
@@ -668,9 +668,7 @@ const ScopedApprovalsDashboard = ({ user, isDark = true }) => {
                         isDark={isDark}
                         title="Approvals"
                         icon={CheckCircle2}
-                        iconClassName={isDark ? 'text-sky-300' : 'text-sky-700'}
-                        glowTopClassName="bg-sky-500/10"
-                        glowBottomClassName="bg-cyan-400/10"
+                        iconClassName={isDark ? 'text-[var(--brand-accent-soft)]' : 'text-sky-700'}
                         className={refreshing ? 'page-section-reload' : ''}
                         badges={(
                             <>
@@ -678,7 +676,7 @@ const ScopedApprovalsDashboard = ({ user, isDark = true }) => {
                                     {visibleApprovals.length} showing
                                 </DashboardChip>
                                 {refreshing ? (
-                                    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${isDark ? 'border-sky-400/20 bg-sky-500/10 text-sky-200' : 'border-sky-200 bg-sky-50 text-sky-700'}`}>
+                                    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.22em] ${isDark ? 'border-[rgb(var(--brand-accent-rgb)/0.2)] bg-[rgb(var(--brand-accent-rgb)/0.1)] text-[var(--brand-accent-soft)]' : 'border-sky-200 bg-sky-50 text-sky-700'}`}>
                                         <RefreshCcw className="h-3.5 w-3.5 animate-spin" />
                                         Syncing latest
                                     </span>
@@ -723,7 +721,7 @@ const ScopedApprovalsDashboard = ({ user, isDark = true }) => {
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(true)}
-                                    className={`relative inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                                    className={`relative inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm transition-colors ${isDark ? 'bg-[var(--brand-accent)] text-white hover:bg-sky-400' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
                                 >
                                     <Plus className="h-4 w-4" />
                                     New submission
@@ -783,7 +781,7 @@ const ScopedApprovalsDashboard = ({ user, isDark = true }) => {
                                         <div className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${meta.accent}`} />
                                         <div className={`aspect-[1.2/1] ${isDark ? 'bg-[linear-gradient(135deg,_rgba(56,189,248,0.14),_rgba(30,30,45,0.8))]' : 'bg-[linear-gradient(135deg,_rgba(14,165,233,0.08),_rgba(255,255,255,0.9))]'}`}>
                                             {previewAsset?.mimeType?.startsWith('image/') ? (
-                                                <img src={previewAsset.s3Url} alt={approval.title} loading="lazy" className="h-full w-full object-cover" />
+                                                <img src={previewAsset.s3Url} alt={approval.title} loading="lazy" className="h-full w-full object-contain" />
                                             ) : (
                                                 <div className={`flex h-full items-center justify-center text-sm font-light ${isDark ? 'text-[#8f94aa]' : 'text-gray-500'}`}>
                                                     Latest version preview unavailable

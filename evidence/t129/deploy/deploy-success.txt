@@ -1,0 +1,8 @@
+{
+  "time": "2026-11-16 11:35:43 NST",
+  "sha": "a6bb6b591e683384e943e71da971eaa121fa772f",
+  "dash": "fcb2408e-3cac-4e23-a2fa-9418c4113697",
+  "api": "d3a657fe-4abf-4a56-9429-766f32ccda25",
+  "apiSha": "9f2c523bb3c37f852123668a007b34fa88e7d8f9",
+  "apiMoved": false
+}

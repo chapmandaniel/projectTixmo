@@ -105,7 +105,7 @@ const RegisterScannerModal = ({ onClose, onSuccess, isDark, scanner = null }) =>
         }
     };
 
-    const inputClass = `w-full px-4 py-2 rounded-lg border focus:outline-hidden focus:ring-2 focus:ring-indigo-500 ${isDark
+    const inputClass = `w-full px-4 py-2 rounded-lg border focus:outline-hidden focus:ring-2 focus:ring-[rgb(var(--brand-accent-rgb)/1)] ${isDark
         ? 'bg-[#252525] border-[#333] text-white'
         : 'bg-white border-gray-300 text-gray-900'
         }`;

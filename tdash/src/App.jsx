@@ -27,20 +27,19 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 const DashboardHome = lazy(() => import('./features/DashboardHome'));
 const EventsView = lazy(() => import('./features/EventsView'));
-const AnalyticsView = lazy(() => import('./features/AnalyticsView'));
 const AnalyticsDashboardApp = lazy(() => import('./features/analyticsDashboard/AnalyticsDashboardApp'));
 const TodoView = lazy(() => import('./features/TodoView'));
 const TeamView = lazy(() => import('./features/TeamView'));
 const EventManagementDashboard = lazy(() => import('./features/EventManagementDashboard'));
 const AssetLibraryView = lazy(() => import('./features/AssetLibraryView'));
-const SettingsView = lazy(() => import('./features/SettingsView'));
-const IntegrationsView = lazy(() => import('./features/IntegrationsView'));
 const VenuesView = lazy(() => import('./features/VenuesView'));
 const ApprovalsDashboard = lazy(() => import('./features/ApprovalsDashboard'));
 const OrdersView = lazy(() => import('./features/OrdersView'));
 const DevDashboard = lazy(() => import('./features/DevDashboard'));
 const ScannersView = lazy(() => import('./features/ScannersView'));
-const StaffActionsView = lazy(() => import('./features/StaffActionsView'));
+const SecurityView = lazy(() => import('./features/security/SecurityView'));
+const ScamSwarmView = lazy(() => import('./features/scamswarm/ScamSwarmView'));
+const NotificationsView = lazy(() => import('./features/NotificationsView'));
 // Busy feedback must be immediately available without suspending the retained form.
 import WaitingRoomView from './features/WaitingRoomView';
 const ExternalReviewPage = lazy(() => import('./pages/ExternalReviewPage'));
@@ -98,7 +97,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         <Route path="/dashboard" element={<DashboardHome user={user} onNavigate={handleNavigationEvent} isDark={isDark} />} />
                         <Route path="/events" element={<EventsView user={user} isDark={isDark} />} />
                         <Route path="/events/:eventId/*" element={<EventManagementDashboard user={user} isDark={isDark} />} />
-                        <Route path="/analytics/classic" element={<AnalyticsView isDark={isDark} user={user} />} />
+                        <Route path="/analytics/classic" element={<Navigate to="/analytics" replace />} />
                         <Route path="/analytics/*" element={<AnalyticsDashboardApp isDark={isDark} basePath="/analytics" />} />
                         <Route path="/quantmo" element={<DashboardPlaceholderView isDark={isDark} title="QuantMo" icon={BrainCircuit} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/todo" element={<TodoView isDark={isDark} user={user} />} />
@@ -111,8 +110,11 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                                 : <DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />}
                         />
                         <Route path="/orders" element={<OrdersView isDark={isDark} />} />
-                        <Route path="/settings" element={<SettingsView isDark={isDark} user={user} />} />
-                        <Route path="/settings/integrations" element={<IntegrationsView isDark={isDark} user={user} />} />
+                        {/* Settings and Audit are removed from this demo build; old links land on Home. */}
+                        <Route path="/settings/*" element={<Navigate to="/dashboard" replace />} />
+                        <Route path="/security" element={<SecurityView isDark={isDark} />} />
+                        <Route path="/scamswarm" element={<ScamSwarmView isDark={isDark} />} />
+                        <Route path="/notifications" element={<NotificationsView isDark={isDark} />} />
                         <Route path="/creative" element={<DashboardPlaceholderView isDark={isDark} title="ProMo" icon={Wand2} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/assets" element={<AssetLibraryView isDark={isDark} />} />
                         <Route path="/venues" element={<VenuesView isDark={isDark} user={user} />} />
@@ -122,7 +124,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         {/* Coming Soon hubs */}
                         <Route path="/marketing" element={<DashboardPlaceholderView isDark={isDark} title="Marketing Hub" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
                         <Route path="/scanners" element={<ScannersView isDark={isDark} user={user} />} />
-                        <Route path="/staff-actions" element={<StaffActionsView isDark={isDark} user={user} />} />
+                        <Route path="/staff-actions" element={<Navigate to="/dashboard" replace />} />
                         <Route path="/promo" element={<Navigate to="/dashboard" replace />} />
 
                         {/* Fallback to dashboard */}

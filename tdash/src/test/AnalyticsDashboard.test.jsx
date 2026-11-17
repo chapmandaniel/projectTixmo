@@ -1,12 +1,20 @@
 import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
+
+// Pin the clock so weekday copy and the as-of date stay stable in this file.
+vi.hoisted(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-13T15:00:00Z'));
+});
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import AnalyticsDashboardApp from '../features/analyticsDashboard/AnalyticsDashboardApp';
 import {
+    ANALYTICS_PAGES,
     EMPTY_STATE_MESSAGE,
     GA4_SOURCES,
     selectAnalyticsDashboard,
+    spikeWeekdayName,
 } from '../features/analyticsDashboard/mockAnalytics';
 import { adaptGa4Report, makeGa4Report } from '../features/analyticsDashboard/ga4Adapter';
 import { formatChartHover, formatDuration } from '../features/analyticsDashboard/formatters';
@@ -108,8 +116,18 @@ describe('Analytics dashboard prototype', () => {
         expect(screen.getByLabelText('Site / event page')).toHaveValue('aurora-after-dark');
         expect(screen.getByRole('button', { name: 'Last 28 days' })).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByTestId('analytics-home-hero')).toBeInTheDocument();
-        expect(screen.getByTestId('analytics-hero-chart')).toHaveClass('order-2', 'lg:order-1');
-        expect(screen.getByTestId('analytics-hero-stats')).toHaveClass('order-1', 'lg:order-2');
+        expect(screen.getByTestId('analytics-hero-chart')).toBeInTheDocument();
+        expect(screen.getByTestId('moose-chat')).toBeInTheDocument();
+        expect(screen.getByTestId('analytics-home-hero')).toHaveClass('lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]');
+        expect(screen.getByTestId('analytics-hero-stats')).toHaveClass('lg:grid-cols-4');
+        expect(screen.getByTestId('analytics-hero-stats')).not.toHaveClass('lg:order-2');
+        expect(screen.getByRole('heading', { name: 'Moose' })).toBeInTheDocument();
+        expect(screen.getByText("Tixmo's AI assistant")).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Which event is selling fastest?' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'How did last weekend compare?' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Where are my buyers coming from?' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'What should I promote next?' })).toBeInTheDocument();
+        expect(screen.getByLabelText('Ask Moose about these numbers')).toBeInTheDocument();
 
         expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('Visitors')).toBeInTheDocument();
         expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('1,180')).toBeInTheDocument();
@@ -125,9 +143,9 @@ describe('Analytics dashboard prototype', () => {
         expect(screen.getByTestId('analytics-pace')).toHaveTextContent('Visitors are running 18% ahead of last period.');
 
         expect(screen.getByRole('heading', { name: 'Heads up' })).toBeInTheDocument();
-        expect(screen.getByText('Traffic spiked on Tuesday')).toBeInTheDocument();
+        expect(screen.getByText(`Traffic spiked on ${spikeWeekdayName('aurora-after-dark')}`)).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'What happened' })).toBeInTheDocument();
-        expect(screen.getByText('Visitors jumped Tuesday after the lineup went up on Organic Social.')).toBeInTheDocument();
+        expect(screen.getByText(`Visitors jumped ${spikeWeekdayName('aurora-after-dark')} after the lineup went up on Organic Social.`)).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Where visitors come from' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Top pages' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Ticket path' })).toBeInTheDocument();
@@ -153,7 +171,17 @@ describe('Analytics dashboard prototype', () => {
         expect(screen.queryByText(EMPTY_STATE_MESSAGE)).not.toBeInTheDocument();
     });
 
+    it('answers a suggested Moose question from the numbers on the page', () => {
+        mount('/analytics');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Which event is selling fastest?' }));
+        const replies = screen.getAllByTestId('moose-message-moose');
+        expect(replies.at(-1)).toHaveTextContent('Harbour Lights Festival is selling fastest over last 28 days');
+        expect(replies.at(-1)).toHaveTextContent('You\'re looking at Aurora After Dark right now, which has 118 purchases');
+    });
+
     it('changes the numbers and every section when the site / event page changes', () => {
+
         mount('/analytics');
 
         fireEvent.change(screen.getByTestId('analytics-page-select'), {
@@ -166,7 +194,7 @@ describe('Analytics dashboard prototype', () => {
         expect(within(screen.getByTestId('analytics-kpi-purchases')).getByText('540')).toBeInTheDocument();
         expect(screen.getByText('61 people on your site right now')).toBeInTheDocument();
         expect(screen.getByText('Festival visitors rose after the Saturday lineup went public.')).toBeInTheDocument();
-        expect(screen.queryByText('Visitors jumped Tuesday after the lineup went up on Organic Social.')).not.toBeInTheDocument();
+        expect(screen.queryByText(`Visitors jumped ${spikeWeekdayName('aurora-after-dark')} after the lineup went up on Organic Social.`)).not.toBeInTheDocument();
         expect(screen.getByText('Weekend passes')).toBeInTheDocument();
         expect(screen.getByText('Paid Social is the fastest-growing door in.')).toBeInTheDocument();
         expect(within(screen.getByTestId('analytics-path-purchase')).getByText('540')).toBeInTheDocument();
@@ -181,9 +209,9 @@ describe('Analytics dashboard prototype', () => {
         expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('410')).toBeInTheDocument();
         expect(within(screen.getByTestId('analytics-kpi-visitors')).queryByText('1,180')).not.toBeInTheDocument();
         expect(within(screen.getByTestId('analytics-kpi-time')).getByText('1m 42s')).toBeInTheDocument();
-        expect(screen.getByText('This week is quieter than last week after Tuesday’s Organic Social rush.')).toBeInTheDocument();
+        expect(screen.getByText(`This week is quieter than last week after ${spikeWeekdayName('aurora-after-dark')}’s Organic Social rush.`)).toBeInTheDocument();
         expect(screen.getAllByText(/vs previous 7 days/).length).toBeGreaterThan(0);
-        expect(screen.queryByText('Visitors jumped Tuesday after the lineup went up on Organic Social.')).not.toBeInTheDocument();
+        expect(screen.queryByText(`Visitors jumped ${spikeWeekdayName('aurora-after-dark')} after the lineup went up on Organic Social.`)).not.toBeInTheDocument();
         expect(within(screen.getByTestId('analytics-path-purchase')).getByText('28')).toBeInTheDocument();
     });
 
@@ -194,26 +222,27 @@ describe('Analytics dashboard prototype', () => {
             target: { value: 'all' },
         });
 
+        const all = selectAnalyticsDashboard({ pageId: 'all', range: '28' });
         expect(screen.getByTestId('analytics-page-select')).toHaveValue('all');
-        expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('9,000')).toBeInTheDocument();
-        expect(screen.getByText('92 people on your site right now')).toBeInTheDocument();
+        expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText(all.kpis.visitors.current.toLocaleString('en-US'))).toBeInTheDocument();
+        expect(screen.getByText(all.liveNow.label)).toBeInTheDocument();
         expect(screen.getByText('Harbour Lights Festival is carrying most of the visitors this month.')).toBeInTheDocument();
         expect(screen.getByText('/events/harbour-lights-festival')).toBeInTheDocument();
+        expect(screen.getByText('Kitchen Party Social')).toBeInTheDocument();
     });
 
-    it('shows the empty state for a page with no traffic', () => {
+    it('shows post-show traffic for the completed show instead of an empty page', () => {
         mount('/analytics');
 
         fireEvent.change(screen.getByTestId('analytics-page-select'), {
             target: { value: 'quiet-harbour-acoustic' },
         });
 
-        expect(screen.getByText(EMPTY_STATE_MESSAGE)).toBeInTheDocument();
-        expect(screen.queryByText('Visitors')).not.toBeInTheDocument();
-        expect(screen.queryByText('23 people on your site right now')).not.toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'What happened' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Heads up' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('heading', { name: 'Ticket path' })).not.toBeInTheDocument();
+        expect(screen.queryByText(EMPTY_STATE_MESSAGE)).not.toBeInTheDocument();
+        expect(within(screen.getByTestId('analytics-kpi-visitors')).getByText('640')).toBeInTheDocument();
+        expect(within(screen.getByTestId('analytics-kpi-purchases')).getByText('46')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'What happened' })).toBeInTheDocument();
+        expect(screen.getByText('Visits peaked on show day, then turned into photo views.')).toBeInTheDocument();
     });
 
     it('sorts channel cards by visitors and keeps checkout drop-off on the ticket path', () => {
@@ -241,6 +270,20 @@ describe('Analytics dashboard prototype', () => {
         expect(formatChartHover({ date: '2026-11-18', forecast: 14 })).toBe(
             'Wed Nov 18: on pace for about 14 visitors'
         );
+    });
+
+    it('includes every seeded event in the site / event page filter', () => {
+        const eventPages = ANALYTICS_PAGES.filter((page) => page.id !== 'all');
+        expect(eventPages).toHaveLength(19);
+        mount('/analytics');
+        const values = [...screen.getByTestId('analytics-page-select').querySelectorAll('option')].map((option) => option.value);
+        expect(values).toContain('all');
+        eventPages.forEach((page) => {
+            expect(values).toContain(page.id);
+        });
+        const kitchen = selectAnalyticsDashboard({ pageId: 'kitchen-party-social', range: '28' });
+        expect(kitchen.kpis.purchases.current).toBeGreaterThan(0);
+        expect(kitchen.liveNow.people).toBe(47);
     });
 
     it('is deterministic for the same page and period', () => {

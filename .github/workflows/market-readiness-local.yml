@@ -3,15 +3,6 @@ name: Tixmo Market Readiness Local Gates
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - '.github/dependabot.yml'
-      - '.github/workflows/dependency-audit-scheduled.yml'
-      - '.github/workflows/market-readiness-local.yml'
-      - '.github/workflows/uptime-status.yml'
-      - 'package.json'
-      - 'scripts/**'
-      - 'tdash/**'
-      - 'tixmoapi2/**'
   push:
     branches:
       - main
@@ -23,6 +14,9 @@ on:
       - 'scripts/**'
       - 'tdash/**'
       - 'tixmoapi2/**'
+
+permissions:
+  contents: read
 
 jobs:
   local-gates:
@@ -67,7 +61,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Detect relevant changes
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          bash scripts/ci-relevant-changes.sh \
+            '.github/dependabot.yml' \
+            '.github/workflows/dependency-audit-scheduled.yml' \
+            '.github/workflows/market-readiness-local.yml' \
+            '.github/workflows/uptime-status.yml' \
+            'package.json' \
+            'scripts' \
+            'tdash' \
+            'tixmoapi2'
+
+      - name: Skip (no relevant changes)
+        if: steps.changes.outputs.relevant != 'true'
+        run: 'echo "skipped: no relevant changes"'
+
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.relevant == 'true'
         with:
           node-version: '24.21.0'
           cache: npm
@@ -76,12 +91,15 @@ jobs:
             tdash/package-lock.json
 
       - name: Install API dependencies
+        if: steps.changes.outputs.relevant == 'true'
         run: npm ci --prefix tixmoapi2
 
       - name: Install dashboard dependencies
+        if: steps.changes.outputs.relevant == 'true'
         run: npm ci --prefix tdash
 
       - name: Verify populated migration upgrade
+        if: steps.changes.outputs.relevant == 'true'
         # Reuse only this job's disposable loopback services; no inherited app target.
         env:
           TIXMO_ALLOW_TEST_RESET: 'true'
@@ -92,12 +110,14 @@ jobs:
           TIXMO_TEST_DATABASE_URL="$DATABASE_URL" node scripts/verify-payment-upgrade.cjs
 
       - name: Require existing system Chrome for buyer continuity acceptance
+        if: steps.changes.outputs.relevant == 'true'
         run: |
           node scripts/wallet-browser.test.cjs
           test -x /usr/bin/google-chrome
           /usr/bin/google-chrome --version
 
       - name: Prepare fresh aggregate-only HTTP pressure evidence
+        if: steps.changes.outputs.relevant == 'true'
         run: |
           node --test scripts/http-pressure-receipt.test.cjs
           node scripts/http-pressure-receipt.cjs clear
@@ -111,6 +131,7 @@ jobs:
           node scripts/scanner-browser-guard.cjs clear
 
       - name: Run market readiness gates
+        if: steps.changes.outputs.relevant == 'true'
         id: market
         # job.services is available at step scope, not jobs.<job_id>.env.
         env:
@@ -198,18 +219,41 @@ jobs:
         with:
           # Full history so OLD_COMMIT can be proved to predate this candidate.
           fetch-depth: 0
+      - name: Detect relevant changes
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          bash scripts/ci-relevant-changes.sh \
+            '.github/dependabot.yml' \
+            '.github/workflows/dependency-audit-scheduled.yml' \
+            '.github/workflows/market-readiness-local.yml' \
+            '.github/workflows/uptime-status.yml' \
+            'package.json' \
+            'scripts' \
+            'tdash' \
+            'tixmoapi2'
+      - name: Skip (no relevant changes)
+        if: steps.changes.outputs.relevant != 'true'
+        run: 'echo "skipped: no relevant changes"'
       - name: Fetch main history for the rollback ancestor check
+        if: steps.changes.outputs.relevant == 'true'
         run: git fetch --no-tags origin main
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.relevant == 'true'
         with:
           node-version: '24.21.0'
           cache: npm
           cache-dependency-path: tixmoapi2/package-lock.json
       - name: Install isolated API tools
+        if: steps.changes.outputs.relevant == 'true'
         run: npm ci --prefix tixmoapi2
       - name: Check synthetic restore guards
+        if: steps.changes.outputs.relevant == 'true'
         run: node --test scripts/image-restore.test.cjs scripts/application-rollback.test.cjs scripts/parity-upgrade.test.cjs scripts/auth-ip.test.cjs
       - name: Qualify configured images with synthetic new-database restore
+        if: steps.changes.outputs.relevant == 'true'
         env:
           TIXMO_IMAGE_RESTORE: synthetic-only
           PG_CONTAINER: ${{ job.services.postgres.id }}
@@ -217,8 +261,10 @@ jobs:
           DATABASE_URL: postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_restore_source?schema=public
         run: node scripts/verify-image-restore.cjs
       - name: Build actual production image with matching PostgreSQL 18 clients
+        if: steps.changes.outputs.relevant == 'true'
         run: docker build --tag tixmo-task603-production:ci tixmoapi2
       - name: Qualify packaged snapshot roundtrip against only this job's synthetic source
+        if: steps.changes.outputs.relevant == 'true'
         env:
           DATABASE_URL: postgresql://tixmo_restore_ci:synthetic_restore_password@127.0.0.1:${{ job.services.postgres.ports[5432] }}/tixmo_disposable_restore_source?schema=public
         run: |
@@ -257,16 +303,20 @@ jobs:
           ! docker inspect "$owned_container" >/dev/null 2>&1
           owned_container=''
       - name: Checkout exact qualified rollback API source
+        if: steps.changes.outputs.relevant == 'true'
         uses: actions/checkout@v4
         with:
           ref: ac74faaf7b36ed9c01872d0e689dc5dce0fa8d6c
           path: .rollback-old
           persist-credentials: false
       - name: Verify previous-main rollback pin
+        if: steps.changes.outputs.relevant == 'true'
         run: node -e "const p=require('./scripts/verify-application-rollback.cjs');p.parity('tixmoapi2','.rollback-old/tixmoapi2')"
       - name: Build exact previously qualified API image
+        if: steps.changes.outputs.relevant == 'true'
         run: docker build --tag tixmo-task606-old:ci .rollback-old/tixmoapi2
       - name: Qualify new-old-new mounted applications on retained migrated database
+        if: steps.changes.outputs.relevant == 'true'
         env:
           GITHUB_ACTIONS: 'true'
           TIXMO_APPLICATION_ROLLBACK: synthetic-only
@@ -274,6 +324,7 @@ jobs:
           REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/6
         run: node scripts/verify-application-rollback.cjs
       - name: Qualify populated prior-schema upgrade on configured images
+        if: steps.changes.outputs.relevant == 'true'
         env:
           GITHUB_ACTIONS: 'true'
           TIXMO_POPULATED_PARITY: synthetic-only
@@ -283,6 +334,7 @@ jobs:
           REDIS_URL: redis://127.0.0.1:${{ job.services.redis.ports[6379] }}/7
         run: node scripts/verify-parity-upgrade.cjs
       - name: Measure unchanged production auth shared-IP limits on disposable services
+        if: steps.changes.outputs.relevant == 'true'
         env:
           GITHUB_ACTIONS: "true"
           TIXMO_AUTH_IP: synthetic-only

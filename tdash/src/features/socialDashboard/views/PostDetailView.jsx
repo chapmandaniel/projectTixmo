@@ -19,7 +19,7 @@ export const PostDetailView = ({ isDark, postId, href }) => {
     const post = getPostById(postId);
 
     if (!post) {
-        return <DashboardEmptyState isDark={isDark} title="That post is not in this demo" description="Try another post from Home or Posts." action={<Link to={href('posts')} className="text-pink-400">Back to posts</Link>} />;
+        return <DashboardEmptyState isDark={isDark} title="That post is not in this demo" description="Try another post from Home or Posts." action={<Link to={href('posts')} className="text-[var(--brand-accent-soft)]">Back to posts</Link>} />;
     }
 
     const account = getAccountById(post.accountId);
@@ -45,8 +45,8 @@ export const PostDetailView = ({ isDark, postId, href }) => {
                 description={post.caption}
                 actions={(
                     <div className="flex flex-wrap gap-2">
-                        <Link to={href('posts')} className="text-sm text-pink-400">All posts</Link>
-                        <a href={post.mockPermalink} className="text-sm text-pink-400" onClick={(event) => event.preventDefault()}>{openOnLabel(post.platform)}</a>
+                        <Link to={href('posts')} className="text-sm text-[var(--brand-accent-soft)]">All posts</Link>
+                        <a href={post.mockPermalink} className="text-sm text-[var(--brand-accent-soft)]" onClick={(event) => event.preventDefault()}>{openOnLabel(post.platform)}</a>
                     </div>
                 )}
             >

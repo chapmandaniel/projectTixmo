@@ -113,7 +113,7 @@ export const PostsView = ({ isDark, dashboard, href, compareIds, onToggleCompare
                                 <p className="mt-3 text-sm">{peopleReachedValue(post) === null ? NOT_AVAILABLE : `${formatNumber(peopleReachedValue(post))} people reached`}</p>
                                 <p className={cn('text-sm', theme.textSecondary)}>{formatNumber(likesCommentsShares(post))} likes, comments & shares</p>
                                 <p className="mt-2 text-sm">{usualBadge(post).label} · {fanMood(post).label}</p>
-                                <Link to={href(`posts/${post.id}`)} className="mt-3 inline-block text-sm text-pink-400">Open post</Link>
+                                <Link to={href(`posts/${post.id}`)} className="mt-3 inline-block text-sm text-[var(--brand-accent-soft)]">Open post</Link>
                             </div>
                         ))}
                     </div>

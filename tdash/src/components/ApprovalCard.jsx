@@ -44,9 +44,9 @@ const STATUS_CONFIG = {
     },
     CHANGES_REQUESTED: {
         label: 'Changes Requested',
-        color: 'bg-orange-500',
-        bgColor: 'bg-orange-500/10',
-        textColor: 'text-orange-400',
+        color: 'bg-[var(--brand-accent)]',
+        bgColor: 'bg-[rgb(var(--brand-accent-rgb)/0.1)]',
+        textColor: 'text-[var(--brand-accent-soft)]',
         icon: AlertCircle
     },
     REJECTED: {
@@ -60,7 +60,7 @@ const STATUS_CONFIG = {
 
 const PRIORITY_CONFIG = {
     STANDARD: { label: 'Standard', color: 'text-gray-400' },
-    URGENT: { label: 'Urgent', color: 'text-orange-400' },
+    URGENT: { label: 'Urgent', color: 'text-[var(--brand-accent-soft)]' },
     CRITICAL: { label: 'Critical', color: 'text-red-400' },
 };
 
@@ -202,7 +202,7 @@ const ApprovalCard = ({
                         </p>
                     </div>
                 ) : isSocial ? (
-                    <div className="w-full h-full p-4 flex flex-col justify-center items-center gap-3 bg-gradient-to-br from-pink-500/10 to-purple-500/10">
+                    <div className="w-full h-full p-4 flex flex-col justify-center items-center gap-3 bg-[rgb(var(--brand-accent-rgb)/0.1)] ">
                         <SocialIcon className={`w-10 h-10 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
                         <p className={`text-xs text-center line-clamp-3 px-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                             {approval.content?.caption || 'No caption'}
@@ -230,8 +230,8 @@ const ApprovalCard = ({
 
                 {/* Type Badge */}
                 <div className={`absolute bottom-3 left-3 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm border ${isSocial
-                        ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
-                        : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                        ? 'bg-[rgb(var(--brand-accent-rgb)/0.2)] text-[var(--brand-accent-soft)] border-[rgb(var(--brand-accent-rgb)/0.3)]'
+                        : 'bg-[rgb(var(--brand-accent-rgb)/0.2)] text-[var(--brand-accent-soft)] border-[rgb(var(--brand-accent-rgb)/0.3)]'
                     }`}>
                     {approval.type || 'MEDIA'}
                 </div>

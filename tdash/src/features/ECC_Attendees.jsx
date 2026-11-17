@@ -11,7 +11,7 @@ const AttendeeRow = ({ ticket, event, isDark, onCheckIn, onRevoke }) => {
     <tr className={`transition-colors text-sm ${isDark ? 'hover:bg-[#232336] border-b border-[#2b2b40]/60' : 'hover:bg-gray-50 border-b border-gray-100'}`}>
         <td className="px-6 py-4">
             <div className="flex items-center">
-                <div className={`w-8 h-8 rounded-md flex items-center justify-center mr-3 text-xs font-normal tracking-wider ${isDark ? 'bg-pink-500/10 text-pink-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                <div className={`w-8 h-8 rounded-md flex items-center justify-center mr-3 text-xs font-normal tracking-wider ${isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.14)] text-[var(--brand-accent-soft)]' : 'bg-indigo-100 text-indigo-600'}`}>
                     {ticket.user?.firstName?.[0] || '?'}{ticket.user?.lastName?.[0] || '?'}
                 </div>
                 <div>
@@ -30,7 +30,7 @@ const AttendeeRow = ({ ticket, event, isDark, onCheckIn, onRevoke }) => {
                         <CheckCircle size={12} className="mr-1" /> {statusLabel}
                     </span>
                 ) : admitted ? (
-                    <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-sm text-xs font-normal tracking-wide border ${isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.1)] text-[var(--brand-accent-soft)] border-[rgb(var(--brand-accent-rgb)/0.2)]' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
                         {statusLabel}
                     </span>
                 ) : (

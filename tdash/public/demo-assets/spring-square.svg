@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4ade80"/><stop offset="1" stop-color="#a3e635"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#4ade80" stop-opacity=".45"/><stop offset="1" stop-color="#052e16" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#052e16"/><stop offset="1" stop-color="#052e16"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1080" fill="#052e16"/>
+<rect width="1080" height="1080" fill="url(#r)"/>
+<path d="M0 194 Q 135 164 270 194 T 540 194 T 810 194 T 1080 194" fill="none" stroke="#4ade80" stroke-width="6" opacity="0.35"/>
+<path d="M0 259 Q 135 229 270 259 T 540 259 T 810 259 T 1080 259" fill="none" stroke="#a3e635" stroke-width="7" opacity="0.41"/>
+<path d="M0 324 Q 135 294 270 324 T 540 324 T 810 324 T 1080 324" fill="none" stroke="#4ade80" stroke-width="8" opacity="0.47"/>
+<path d="M0 389 Q 135 359 270 389 T 540 389 T 810 389 T 1080 389" fill="none" stroke="#a3e635" stroke-width="9" opacity="0.53"/>
+<path d="M0 454 Q 135 424 270 454 T 540 454 T 810 454 T 1080 454" fill="none" stroke="#4ade80" stroke-width="10" opacity="0.59"/>
+<path d="M0 518 Q 135 488 270 518 T 540 518 T 810 518 T 1080 518" fill="none" stroke="#a3e635" stroke-width="11" opacity="0.65"/>
+<path d="M0 583 Q 135 553 270 583 T 540 583 T 810 583 T 1080 583" fill="none" stroke="#4ade80" stroke-width="12" opacity="0.71"/>
+<path d="M0 648 Q 135 618 270 648 T 540 648 T 810 648 T 1080 648" fill="none" stroke="#a3e635" stroke-width="13" opacity="0.77"/>
+<path d="M0 713 Q 135 683 270 713 T 540 713 T 810 713 T 1080 713" fill="none" stroke="#4ade80" stroke-width="14" opacity="0.83"/>
+<rect width="1080" height="1080" fill="url(#shade)"/>
+<text x="86" y="540" font-size="111" font-weight="800" fill="#fff" letter-spacing="2">SPRING TIDE</text>
+<text x="86" y="653" font-size="111" font-weight="800" fill="#fff" letter-spacing="2">SESSIONS</text>
+<rect x="86" y="805" width="130" height="6" fill="#ecfccb"/>
+<text x="86" y="881" font-size="36" fill="#fff" letter-spacing="4">THE LANTERN ROOM</text>
+<text x="86" y="935" font-size="28" fill="#fff" opacity=".75" letter-spacing="3">MONTHLY EMERGING-ARTIST SERIES</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

@@ -1,4 +1,13 @@
 import { parsePlatformFilter } from './platforms';
+import {
+    LAST_REFRESH_AT,
+    RANGE_END,
+    REPORT_TIMEZONE,
+    addDaysIso,
+    shiftDemoIso,
+} from './demoClock';
+
+export { LAST_REFRESH_AT, RANGE_END, REPORT_TIMEZONE };
 
 /**
  * Typed mock-data module for the Social Dashboard prototype.
@@ -87,20 +96,18 @@ import { parsePlatformFilter } from './platforms';
  * @property {PostComment[]} comments
  */
 
-export const REPORT_TIMEZONE = 'America/St_Johns';
-export const LAST_REFRESH_AT = '2026-11-11T08:14:22-03:30';
 export const MOCK_BRAND = 'Northlight Live (demo)';
 export const SCOPE_LABEL = 'Owned accounts · mock snapshot · not live data';
 
 export const CURRENT_RANGE = {
-    start: '2026-10-14',
-    end: '2026-11-10',
-    label: 'Last 28 complete days',
+    start: addDaysIso(RANGE_END, -27),
+    end: RANGE_END,
+    label: 'Last 28 days',
 };
 
 export const PRIOR_RANGE = {
-    start: '2026-09-16',
-    end: '2026-10-13',
+    start: addDaysIso(RANGE_END, -55),
+    end: addDaysIso(RANGE_END, -28),
     label: 'Previous 28 days',
 };
 
@@ -146,13 +153,6 @@ const mulberry32 = (seed) => () => {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
 
-const addDaysIso = (iso, days) => {
-    const cursor = new Date(`${iso}T12:00:00Z`);
-    cursor.setUTCDate(cursor.getUTCDate() + days);
-    return cursor.toISOString().slice(0, 10);
-};
-
-export const RANGE_END = '2026-11-10';
 export const DATE_RANGE_OPTIONS = [
     { id: '7', days: 7, label: 'Last 7 days', short: '7d' },
     { id: '28', days: 28, label: 'Last 28 days', short: '28d' },
@@ -193,7 +193,7 @@ const buildSeries = (dates, spec, bumpDay) => {
 /** @type {Record<string, {full: DailyPoint[], current: DailyPoint[], prior: DailyPoint[]}>} */
 export const ACCOUNT_SERIES = Object.fromEntries(
     ACCOUNTS.map((account) => {
-        const full = buildSeries(FULL_DATES, ACCOUNT_SERIES_SEEDS[account.id], '2026-10-28');
+        const full = buildSeries(FULL_DATES, ACCOUNT_SERIES_SEEDS[account.id], shiftDemoIso('2026-10-28'));
         return [account.id, {
             full,
             current: full.slice(-28),
@@ -219,24 +219,24 @@ const retentionCurve = (dropAt = 8) => Array.from({ length: 21 }, (_, i) => {
 
 /** @type {PostComment[]} */
 const AURORA_COMMENTS = [
-    { id: 'c1', postId: 'ig-reel-aurora', author: 'Mira Chen (demo)', text: 'The teal and violet lighting on that stage drop is unreal. Need this for Harbour Lights.', sentiment: 'positive', theme: 'Praise for colour options', reactions: 42, isQuestion: false, teamReplied: false, createdAt: '2026-10-28T19:12:00-03:30' },
-    { id: 'c2', postId: 'ig-reel-aurora', author: 'Owen Blake (demo)', text: 'Lineup is stacked. Already grabbed two GA. Northlight always delivers.', sentiment: 'positive', theme: 'Praise for lineup', reactions: 31, isQuestion: false, teamReplied: false, createdAt: '2026-10-28T19:18:00-03:30' },
-    { id: 'c3', postId: 'ig-reel-aurora', author: 'Sable Ortiz (demo)', text: 'Do you restock the night-shift tees? Sizing chart still 404s on the mock shop.', sentiment: 'negative', theme: 'Complaints about limited stock', reactions: 19, isQuestion: true, teamReplied: true, createdAt: '2026-10-28T19:41:00-03:30' },
-    { id: 'c4', postId: 'ig-reel-aurora', author: 'Jonah Hale (demo)', text: 'What sizes are left for the reflective jacket? XL gone in 20 minutes last drop.', sentiment: 'neutral', theme: 'Questions about sizing', reactions: 14, isQuestion: true, teamReplied: true, createdAt: '2026-10-28T20:02:00-03:30' },
-    { id: 'c5', postId: 'ig-reel-aurora', author: 'Priya Nair (demo)', text: 'Love the reel, but merch sold out before I could check out. Please stagger drops.', sentiment: 'mixed', theme: 'Complaints about limited stock', reactions: 22, isQuestion: false, teamReplied: true, createdAt: '2026-10-28T20:15:00-03:30' },
-    { id: 'c6', postId: 'ig-reel-aurora', author: 'Eli Park (demo)', text: 'Are GA tickets still transferable between the Friday and Saturday rooms?', sentiment: 'neutral', theme: 'Questions about tickets', reactions: 9, isQuestion: true, teamReplied: false, createdAt: '2026-10-28T21:04:00-03:30' },
-    { id: 'c7', postId: 'ig-reel-aurora', author: 'Noa Ellison (demo)', text: 'Colour grade on the fog look is chef’s kiss. Best Northlight reel this year.', sentiment: 'positive', theme: 'Praise for colour options', reactions: 27, isQuestion: false, teamReplied: false, createdAt: '2026-10-29T09:22:00-03:30' },
-    { id: 'c8', postId: 'ig-reel-aurora', author: 'Chris Vale (demo)', text: 'Audio clipped hard at 0:12. The drop deserved a cleaner mix.', sentiment: 'negative', theme: 'Complaints about audio', reactions: 11, isQuestion: false, teamReplied: false, createdAt: '2026-10-29T11:40:00-03:30' },
-    { id: 'c9', postId: 'ig-reel-aurora', author: 'Harper Quinn (demo)', text: 'Is there an accessible viewing platform for Aurora After Dark?', sentiment: 'neutral', theme: 'Questions about accessibility', reactions: 16, isQuestion: true, teamReplied: true, createdAt: '2026-10-29T14:08:00-03:30' },
-    { id: 'c10', postId: 'ig-reel-aurora', author: 'Demo User 11', text: '🔥🔥🔥', sentiment: 'unclassified', theme: 'Unclassified', reactions: 4, isQuestion: false, teamReplied: false, createdAt: '2026-10-29T16:01:00-03:30' },
-    { id: 'c11', postId: 'ig-reel-aurora', author: 'Léa Moreau (demo)', text: 'Trop beau le violet, vous sortez les vestes quand?', sentiment: 'unclassified', theme: 'Unclassified', reactions: 3, isQuestion: true, teamReplied: false, createdAt: '2026-10-29T18:44:00-03:30' },
-    { id: 'c12', postId: 'ig-reel-aurora', author: 'Theo Ames (demo)', text: 'Doors at 8 or 9? Last year the set started late and we missed the opener.', sentiment: 'neutral', theme: 'Questions about doors', reactions: 8, isQuestion: true, teamReplied: false, createdAt: '2026-10-30T08:17:00-03:30' },
+    { id: 'c1', postId: 'ig-reel-aurora', author: 'Mira Chen (demo)', text: 'The teal and violet lighting on that stage drop is unreal. Need this for Harbour Lights.', sentiment: 'positive', theme: 'Praise for colour options', reactions: 42, isQuestion: false, teamReplied: false, createdAt: shiftDemoIso('2026-10-28T19:12:00-03:30') },
+    { id: 'c2', postId: 'ig-reel-aurora', author: 'Owen Blake (demo)', text: 'Lineup is stacked. Already grabbed two GA. Northlight always delivers.', sentiment: 'positive', theme: 'Praise for lineup', reactions: 31, isQuestion: false, teamReplied: false, createdAt: shiftDemoIso('2026-10-28T19:18:00-03:30') },
+    { id: 'c3', postId: 'ig-reel-aurora', author: 'Sable Ortiz (demo)', text: 'Do you restock the night-shift tees? Sizing chart still 404s on the mock shop.', sentiment: 'negative', theme: 'Complaints about limited stock', reactions: 19, isQuestion: true, teamReplied: true, createdAt: shiftDemoIso('2026-10-28T19:41:00-03:30') },
+    { id: 'c4', postId: 'ig-reel-aurora', author: 'Jonah Hale (demo)', text: 'What sizes are left for the reflective jacket? XL gone in 20 minutes last drop.', sentiment: 'neutral', theme: 'Questions about sizing', reactions: 14, isQuestion: true, teamReplied: true, createdAt: shiftDemoIso('2026-10-28T20:02:00-03:30') },
+    { id: 'c5', postId: 'ig-reel-aurora', author: 'Priya Nair (demo)', text: 'Love the reel, but merch sold out before I could check out. Please stagger drops.', sentiment: 'mixed', theme: 'Complaints about limited stock', reactions: 22, isQuestion: false, teamReplied: true, createdAt: shiftDemoIso('2026-10-28T20:15:00-03:30') },
+    { id: 'c6', postId: 'ig-reel-aurora', author: 'Eli Park (demo)', text: 'Are GA tickets still transferable between the Friday and Saturday rooms?', sentiment: 'neutral', theme: 'Questions about tickets', reactions: 9, isQuestion: true, teamReplied: false, createdAt: shiftDemoIso('2026-10-28T21:04:00-03:30') },
+    { id: 'c7', postId: 'ig-reel-aurora', author: 'Noa Ellison (demo)', text: 'Colour grade on the fog look is chef’s kiss. Best Northlight reel this year.', sentiment: 'positive', theme: 'Praise for colour options', reactions: 27, isQuestion: false, teamReplied: false, createdAt: shiftDemoIso('2026-10-29T09:22:00-03:30') },
+    { id: 'c8', postId: 'ig-reel-aurora', author: 'Chris Vale (demo)', text: 'Audio clipped hard at 0:12. The drop deserved a cleaner mix.', sentiment: 'negative', theme: 'Complaints about audio', reactions: 11, isQuestion: false, teamReplied: false, createdAt: shiftDemoIso('2026-10-29T11:40:00-03:30') },
+    { id: 'c9', postId: 'ig-reel-aurora', author: 'Harper Quinn (demo)', text: 'Is there an accessible viewing platform for Aurora After Dark?', sentiment: 'neutral', theme: 'Questions about accessibility', reactions: 16, isQuestion: true, teamReplied: true, createdAt: shiftDemoIso('2026-10-29T14:08:00-03:30') },
+    { id: 'c10', postId: 'ig-reel-aurora', author: 'Demo User 11', text: '🔥🔥🔥', sentiment: 'unclassified', theme: 'Unclassified', reactions: 4, isQuestion: false, teamReplied: false, createdAt: shiftDemoIso('2026-10-29T16:01:00-03:30') },
+    { id: 'c11', postId: 'ig-reel-aurora', author: 'Léa Moreau (demo)', text: 'Trop beau le violet, vous sortez les vestes quand?', sentiment: 'unclassified', theme: 'Unclassified', reactions: 3, isQuestion: true, teamReplied: false, createdAt: shiftDemoIso('2026-10-29T18:44:00-03:30') },
+    { id: 'c12', postId: 'ig-reel-aurora', author: 'Theo Ames (demo)', text: 'Doors at 8 or 9? Last year the set started late and we missed the opener.', sentiment: 'neutral', theme: 'Questions about doors', reactions: 8, isQuestion: true, teamReplied: false, createdAt: shiftDemoIso('2026-10-30T08:17:00-03:30') },
 ];
 
 const commentsFor = (postId, rows) => rows.map((row, index) => ({
     id: `${postId}-c${index + 1}`,
     postId,
-    createdAt: `2026-10-${20 + (index % 8)}T18:${String(10 + index).padStart(2, '0')}:00-03:30`,
+    createdAt: shiftDemoIso(`2026-10-${20 + (index % 8)}T18:${String(10 + index).padStart(2, '0')}:00-03:30`),
     reactions: 3 + index,
     teamReplied: index % 3 === 0,
     ...row,
@@ -250,7 +250,7 @@ export const POSTS = [
         platform: 'instagram',
         format: 'reel',
         distribution: 'organic',
-        publishedAt: '2026-10-28T18:05:00-03:30',
+        publishedAt: shiftDemoIso('2026-10-28T18:05:00-03:30'),
         caption: 'Aurora After Dark — lineup drop. Fog, violet, and the first 400 jackets.',
         thumbnailLabel: 'Aurora After Dark Reel',
         themes: ['lineup', 'merch', 'aurora-after-dark'],
@@ -286,7 +286,7 @@ export const POSTS = [
         platform: 'instagram',
         format: 'carousel',
         distribution: 'organic',
-        publishedAt: '2026-10-22T16:40:00-03:30',
+        publishedAt: shiftDemoIso('2026-10-22T16:40:00-03:30'),
         caption: 'Fog City Sessions — five rooms, one weekend pass.',
         thumbnailLabel: 'Fog City carousel',
         themes: ['fog-city', 'tickets'],
@@ -325,7 +325,7 @@ export const POSTS = [
         platform: 'instagram',
         format: 'reel',
         distribution: 'organic',
-        publishedAt: '2026-10-18T12:10:00-03:30',
+        publishedAt: shiftDemoIso('2026-10-18T12:10:00-03:30'),
         caption: 'Quick recap from last Thursday’s soundcheck.',
         thumbnailLabel: 'Soundcheck recap',
         themes: ['behind-the-scenes'],
@@ -363,7 +363,7 @@ export const POSTS = [
         platform: 'instagram',
         format: 'reel',
         distribution: 'organic',
-        publishedAt: '2026-11-10T22:40:00-03:30',
+        publishedAt: shiftDemoIso('2026-11-10T22:40:00-03:30'),
         caption: 'Doors tomorrow. Bring the reflective jacket if you copped one.',
         thumbnailLabel: 'Doors tomorrow',
         themes: ['aurora-after-dark'],
@@ -401,7 +401,7 @@ export const POSTS = [
         platform: 'instagram',
         format: 'image',
         distribution: 'paid',
-        publishedAt: '2026-10-16T11:00:00-03:30',
+        publishedAt: shiftDemoIso('2026-10-16T11:00:00-03:30'),
         caption: 'Early-bird GA for Harbour Lights Festival. Demo ad creative.',
         thumbnailLabel: 'Early-bird GA ad',
         themes: ['tickets', 'harbour-lights'],
@@ -440,7 +440,7 @@ export const POSTS = [
         platform: 'instagram',
         format: 'image',
         distribution: 'organic',
-        publishedAt: '2026-10-25T09:30:00-03:30',
+        publishedAt: shiftDemoIso('2026-10-25T09:30:00-03:30'),
         caption: 'Poster study for Fog City. Static still.',
         thumbnailLabel: 'Poster study',
         themes: ['creative'],
@@ -478,7 +478,7 @@ export const POSTS = [
         platform: 'tiktok',
         format: 'video',
         distribution: 'organic',
-        publishedAt: '2026-10-28T19:30:00-03:30',
+        publishedAt: shiftDemoIso('2026-10-28T19:30:00-03:30'),
         caption: 'POV: the Fog City strobe hits and the floor disappears.',
         thumbnailLabel: 'Fog City strobe',
         themes: ['fog-city', 'lineup'],
@@ -518,7 +518,7 @@ export const POSTS = [
         platform: 'tiktok',
         format: 'video',
         distribution: 'organic',
-        publishedAt: '2026-11-02T15:20:00-03:30',
+        publishedAt: shiftDemoIso('2026-11-02T15:20:00-03:30'),
         caption: 'How to get from Harbour Station to the warehouse. 40 seconds.',
         thumbnailLabel: 'Transit guide',
         themes: ['logistics'],
@@ -558,7 +558,7 @@ export const POSTS = [
         platform: 'youtube',
         format: 'video',
         distribution: 'organic',
-        publishedAt: '2026-10-20T12:00:00-03:30',
+        publishedAt: shiftDemoIso('2026-10-20T12:00:00-03:30'),
         caption: 'Building the Aurora room: truss, fog, and the 40-minute delay.',
         thumbnailLabel: 'Aurora room build',
         themes: ['behind-the-scenes', 'aurora-after-dark'],
@@ -597,7 +597,7 @@ export const POSTS = [
         platform: 'facebook',
         format: 'text',
         distribution: 'organic',
-        publishedAt: '2026-09-30T10:15:00-03:30',
+        publishedAt: shiftDemoIso('2026-09-30T10:15:00-03:30'),
         caption: 'Reminder: last year’s Harbour Lights recap album is still up. Older post still getting clicks this period.',
         thumbnailLabel: 'Recap album',
         themes: ['harbour-lights'],
@@ -635,7 +635,7 @@ export const POSTS = [
         platform: 'linkedin',
         format: 'text',
         distribution: 'unknown',
-        publishedAt: '2026-10-24T08:00:00-03:30',
+        publishedAt: shiftDemoIso('2026-10-24T08:00:00-03:30'),
         caption: 'Hiring two door leads for Harbour Lights. Demo post — reach not supplied.',
         thumbnailLabel: 'Door leads hiring',
         themes: ['hiring'],
@@ -673,7 +673,7 @@ export const POSTS = [
         platform: 'instagram',
         format: 'story',
         distribution: 'organic',
-        publishedAt: '2026-11-04T20:00:00-03:30',
+        publishedAt: shiftDemoIso('2026-11-04T20:00:00-03:30'),
         caption: 'Story frame: merch table at midnight.',
         thumbnailLabel: 'Merch table story',
         themes: ['merch'],
@@ -712,7 +712,7 @@ export const LISTENING_QUERY = {
     coverageNote: 'Mock peer set. Mentions of multiple brands are counted once per brand.',
 };
 
-export const LISTENING_SPIKE_DATE = '2026-10-28';
+export const LISTENING_SPIKE_DATE = shiftDemoIso('2026-10-28');
 
 export const LISTENING_TOPICS = [
     { id: 'lineup', label: 'Lineup / artists', mentions: 420, sentiment: 0.62 },
@@ -723,11 +723,11 @@ export const LISTENING_TOPICS = [
 ];
 
 export const LISTENING_MENTIONS = [
-    { id: 'm1', date: '2026-10-28', source: 'TikTok', author: 'clipbot.demo', text: 'Northlight just dropped Aurora After Dark and the comments are feral.', sentiment: 'positive', topic: 'lineup' },
-    { id: 'm2', date: '2026-10-28', source: 'Instagram', author: 'jacketwatch.demo', text: 'Jacket sold out in 12 minutes. Classic Northlight merch drop.', sentiment: 'negative', topic: 'merch' },
-    { id: 'm3', date: '2026-10-28', source: 'X', author: 'harbour.radar.demo', text: 'Fog City clip is circulating with the wrong night labelled.', sentiment: 'negative', topic: 'lineup' },
-    { id: 'm4', date: '2026-10-29', source: 'Blog', author: 'eastport-weekly.demo', text: 'Northlight’s Aurora reel is the week’s most-shared local clip.', sentiment: 'positive', topic: 'lineup' },
-    { id: 'm5', date: '2026-11-02', source: 'TikTok', author: 'bus-map.demo', text: 'That Harbour Station walkthrough is doing numbers. Shuttle questions everywhere.', sentiment: 'neutral', topic: 'transit' },
+    { id: 'm1', date: shiftDemoIso('2026-10-28'), source: 'TikTok', author: 'clipbot.demo', text: 'Northlight just dropped Aurora After Dark and the comments are feral.', sentiment: 'positive', topic: 'lineup' },
+    { id: 'm2', date: shiftDemoIso('2026-10-28'), source: 'Instagram', author: 'jacketwatch.demo', text: 'Jacket sold out in 12 minutes. Classic Northlight merch drop.', sentiment: 'negative', topic: 'merch' },
+    { id: 'm3', date: shiftDemoIso('2026-10-28'), source: 'X', author: 'harbour.radar.demo', text: 'Fog City clip is circulating with the wrong night labelled.', sentiment: 'negative', topic: 'lineup' },
+    { id: 'm4', date: shiftDemoIso('2026-10-29'), source: 'Blog', author: 'eastport-weekly.demo', text: 'Northlight’s Aurora reel is the week’s most-shared local clip.', sentiment: 'positive', topic: 'lineup' },
+    { id: 'm5', date: shiftDemoIso('2026-11-02'), source: 'TikTok', author: 'bus-map.demo', text: 'That Harbour Station walkthrough is doing numbers. Shuttle questions everywhere.', sentiment: 'neutral', topic: 'transit' },
 ];
 
 export const COMPETITORS = [
@@ -789,7 +789,7 @@ export const COMMUNITY = {
     responseRate: 80,
     medianFirstReplyMinutes: 42,
     p90FirstReplyMinutes: 186,
-    observationCutoff: '2026-11-11T08:00:00-03:30',
+    observationCutoff: shiftDemoIso('2026-11-11T08:00:00-03:30'),
     unclassified: 48,
     classified: 794,
     eligibleComments: 842,

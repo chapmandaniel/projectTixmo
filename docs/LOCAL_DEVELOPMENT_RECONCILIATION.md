@@ -51,5 +51,7 @@ After the reviewed integration lands, update the original checkout to main,
 install its locked dependencies and run the full market gate from that folder.
 Retire the superseded original branch only after the checkout is clean. All
 committed development heads must be ancestors of main. No new production
-application deployment is part of this reconciliation; production auto-deploy
-remains paused for the coordinated account/data rollout.
+application deployment is part of this reconciliation. Production does not
+auto-deploy. Production deploys are manual, pinned full-SHA
+`serviceInstanceDeployV2` calls; autodeploy is OFF. No production deploy is
+part of this reconciliation.

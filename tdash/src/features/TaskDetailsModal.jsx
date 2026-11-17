@@ -3,16 +3,27 @@ import { Users, Check, X, Edit3, Download, Plus, Paperclip, Send } from 'lucide-
 
 import api from '../lib/api';
 
+const PRIORITY_OPTIONS = [
+    { value: 'HIGH', label: 'High' },
+    { value: 'MEDIUM', label: 'Medium' },
+    { value: 'LOW', label: 'Low' },
+];
+
+const toPriorityEnum = (value) => String(value || '').toUpperCase();
+
 const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
     const [message, setMessage] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState(task.content);
     const [editDescription, setEditDescription] = useState(task.description || '');
     const [editTag, setEditTag] = useState(task.tag);
-    const [editPriority, setEditPriority] = useState(task.priority);
+    const [editPriority, setEditPriority] = useState(toPriorityEnum(task.priority));
     const messagesEndRef = useRef(null);
 
     const priorityColors = {
+        HIGH: isDark ? 'text-rose-400 bg-rose-400/10' : 'text-rose-600 bg-rose-50',
+        MEDIUM: isDark ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50',
+        LOW: isDark ? 'text-emerald-400 bg-emerald-400/10' : 'text-emerald-600 bg-emerald-50',
         High: isDark ? 'text-rose-400 bg-rose-400/10' : 'text-rose-600 bg-rose-50',
         Medium: isDark ? 'text-amber-400 bg-amber-400/10' : 'text-amber-600 bg-amber-50',
         Low: isDark ? 'text-emerald-400 bg-emerald-400/10' : 'text-emerald-600 bg-emerald-50',
@@ -32,7 +43,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
             content: editTitle,
             description: editDescription,
             tag: editTag,
-            priority: editPriority
+            priority: toPriorityEnum(editPriority)
         });
         setIsEditing(false);
     };
@@ -121,17 +132,19 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                                     />
                                     <select
                                         value={editPriority}
-                                        onChange={(e) => setEditPriority(e.target.value)}
+                                        onChange={(e) => setEditPriority(toPriorityEnum(e.target.value))}
                                         className={`text-xs px-2 py-0.5 rounded font-medium outline-hidden border ${isDark ? 'bg-[#252525] border-[#333] text-gray-300' : 'bg-white border-gray-200 text-gray-700'}`}
                                     >
-                                        <option value="High">High</option>
-                                        <option value="Medium">Medium</option>
-                                        <option value="Low">Low</option>
+                                        {PRIORITY_OPTIONS.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
                                     </select>
                                 </>
                             ) : (
                                 <>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark ? 'bg-indigo-500/10 text-indigo-300' : 'bg-indigo-50 text-indigo-600'}`}>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.1)] text-[var(--brand-accent-soft)]' : 'bg-indigo-50 text-indigo-600'}`}>
                                         {task.tag}
                                     </span>
                                     <div className={`flex items-center space-x-1 text-xs px-2 py-0.5 rounded-full ${priorityColors[task.priority] || 'text-gray-500'}`}>
@@ -191,7 +204,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                                     type="text"
                                     value={editTitle}
                                     onChange={(e) => setEditTitle(e.target.value)}
-                                    className={`w-full text-xl font-semibold bg-transparent outline-hidden border-b pb-1 ${isDark ? 'text-gray-100 border-indigo-500' : 'text-gray-900 border-indigo-600'}`}
+                                    className={`w-full text-xl font-semibold bg-transparent outline-hidden border-b pb-1 ${isDark ? 'text-gray-100 border-[var(--brand-accent)]' : 'text-gray-900 border-indigo-600'}`}
                                 />
                                 <textarea
                                     value={editDescription}
@@ -243,7 +256,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                             {task.messages?.map((msg, idx) => (
                                 <div key={msg.id} className={`flex space-x-3 ${msg.sender === 'You' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-light shrink-0 ${msg.sender === 'You'
-                                        ? (isDark ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white')
+                                        ? (isDark ? 'bg-[var(--brand-accent)] text-white' : 'bg-indigo-600 text-white')
                                         : (isDark ? 'bg-[#333] text-gray-300' : 'bg-gray-100 text-gray-600')
                                         }`}>
                                         {msg.sender.charAt(0)}
@@ -254,7 +267,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                                             <span className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{msg.time}</span>
                                         </div>
                                         <div className={`p-3 rounded-xl text-sm ${msg.sender === 'You'
-                                            ? (isDark ? 'bg-indigo-500/20 text-indigo-200 rounded-tr-none' : 'bg-indigo-50 text-indigo-900 rounded-tr-none')
+                                            ? (isDark ? 'bg-[rgb(var(--brand-accent-rgb)/0.2)] text-[var(--brand-accent-soft)] rounded-tr-none' : 'bg-indigo-50 text-indigo-900 rounded-tr-none')
                                             : (isDark ? 'bg-[#252525] text-gray-300 rounded-tl-none' : 'bg-gray-50 text-gray-700 rounded-tl-none')
                                             }`}>
                                             {msg.text}
@@ -278,7 +291,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                                 <button
                                     key={u.id}
                                     onClick={() => handleMentionUser(u)}
-                                    className={`w-full text-left px-3 py-2 flex items-center space-x-2 hover:bg-indigo-500/10 transition-colors ${isDark ? 'text-gray-200' : 'text-gray-700'}`}
+                                    className={`w-full text-left px-3 py-2 flex items-center space-x-2 hover:bg-[rgb(var(--brand-accent-rgb)/0.1)] transition-colors ${isDark ? 'text-gray-200' : 'text-gray-700'}`}
                                 >
                                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${isDark ? 'bg-[#333]' : 'bg-gray-200'}`}>
                                         {u.firstName[0]}
@@ -309,7 +322,7 @@ const TaskDetailsModal = ({ task, onClose, onUpdate, isDark, users = [] }) => {
                             onClick={handleSend}
                             disabled={!message.trim()}
                             className={`p-2 rounded-lg transition-all ${message.trim()
-                                ? (isDark ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-indigo-600 text-white shadow-md')
+                                ? (isDark ? 'bg-[var(--brand-accent)] text-white shadow-lg shadow-black/20' : 'bg-indigo-600 text-white shadow-md')
                                 : (isDark ? 'text-gray-600 cursor-not-allowed' : 'text-gray-300 cursor-not-allowed')
                                 }`}
                         >

@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     Home, Calendar, BarChart3, Bell,
     Users, CheckSquare, Sun, Moon,
-    Settings, LogOut, CheckCircle, User, Image, ClipboardList,
-    Menu, X, Share2
+    LogOut, CheckCircle, User, Image,
+    Menu, X, Share2, ShieldCheck, Radar
 } from 'lucide-react';
 import { isSocialDashboardNavVisible } from '../features/socialDashboard/flag';
 
@@ -11,6 +11,7 @@ import api from '../lib/api';
 import { Link } from 'react-router-dom';
 import { DashboardIconButton } from '../components/dashboard/DashboardPrimitives';
 import { cn } from '../lib/utils';
+import { accentClasses } from '../lib/brandAccent';
 
 const navItems = [
     { id: 'dashboard', icon: Home, label: 'Home' },
@@ -18,10 +19,10 @@ const navItems = [
     { id: 'todo', icon: CheckSquare, label: 'Tasks' },
     { id: 'team', icon: Users, label: 'Team' },
     { id: 'assets', icon: Image, label: 'Assets' },
-    { id: 'approvals', icon: CheckCircle, label: 'Review Portal' },
+    { id: 'approvals', icon: CheckCircle, label: 'Reviews' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics' },
-    { id: 'settings', icon: Settings, label: 'Settings' },
-    { id: 'staff-actions', icon: ClipboardList, label: 'Audit', roles: ['OWNER', 'ADMIN'] },
+    { id: 'security', icon: ShieldCheck, label: 'Security' },
+    { id: 'scamswarm', icon: Radar, label: 'ScamSwarm' },
 ];
 
 const DASHBOARD_POLL_INTERVAL_MS = 2 * 60 * 1000;
@@ -37,12 +38,12 @@ const MobileNavLink = ({ item, activeView, isDark, pendingApprovalsCount, onNavi
             className={cn(
                 'flex min-h-11 shrink-0 items-center gap-3 rounded-[10px] px-3.5 text-sm font-light',
                 active
-                    ? (isDark ? 'bg-[#2a2b40] text-white' : 'bg-slate-900 text-white shadow-sm')
+                    ? (isDark ? cn(accentClasses.tintStrong, 'text-white') : cn(accentClasses.bar, 'text-white shadow-sm'))
                     : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
             )}
             aria-current={active ? 'page' : undefined}
         >
-            <item.icon size={18} className="shrink-0" />
+            <item.icon size={18} className={cn('shrink-0', active && isDark && accentClasses.text)} />
             <span className="leading-none">{item.label}</span>
             {badge ? (
                 <span className={cn(
@@ -64,25 +65,26 @@ const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
         <Link
             to={`/${item.id}`}
             className={cn(
-                'group relative flex h-10 shrink-0 items-center justify-center gap-2 rounded-[10px] px-3.5 text-sm font-light transition-all duration-200',
+                'group relative flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] px-2 text-sm font-light transition-all duration-200 min-[1600px]:gap-2 min-[1600px]:px-2.5',
                 active
-                    ? (isDark ? 'bg-[#2a2b40] text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-slate-900 text-white shadow-sm')
+                    ? (isDark ? cn(accentClasses.tintStrong, 'text-white') : cn(accentClasses.bar, 'text-white shadow-sm'))
                     : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
             )}
             aria-current={active ? 'page' : undefined}
         >
-            <div className="relative flex items-center justify-center">
-                <item.icon size={18} className={cn('shrink-0', active ? 'drop-shadow-sm' : '')} />
-                {badge && (
-                    <span className={cn(
-                        'absolute -right-3 -top-2 flex h-4 w-4 items-center justify-center rounded-full border-2 text-[9px] font-medium text-white shadow-sm',
-                        isDark ? 'bg-[#ff3366] border-[#1f1e30]' : 'bg-rose-500 border-white'
-                    )}>
-                        {badge > 9 ? '9+' : badge}
-                    </span>
-                )}
+            {/* Demo build: icons only from 1440px (tighter padding below 1600px) so every tab, including ScamSwarm, fits on a 1280-1440px presentation screen. */}
+            <div className="relative hidden items-center justify-center min-[1440px]:flex">
+                <item.icon size={18} className={cn('shrink-0', active ? cn('drop-shadow-sm', isDark && accentClasses.text) : '')} />
             </div>
             <span className="whitespace-nowrap leading-none">{item.label}</span>
+            {badge ? (
+                <span className={cn(
+                    'flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-medium text-white',
+                    isDark ? 'bg-[#ff3366]' : 'bg-rose-500'
+                )}>
+                    {badge > 9 ? '9+' : badge}
+                </span>
+            ) : null}
         </Link>
     );
 };
@@ -227,11 +229,22 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
         }
     };
 
+    const handleMarkAllRead = async () => {
+        try {
+            await api.put('/notifications/read-all');
+            const readAt = new Date().toISOString();
+            setNotifications(prev => prev.map(n => (n.readAt ? n : { ...n, readAt })));
+            setUnreadCount(0);
+        } catch (error) {
+            console.error('Failed to mark all read', error);
+        }
+    };
+
     // Horizontal Scrolling
     const scrollContainerRef = React.useRef(null);
 
     return (
-        <div className={cn('min-h-screen flex flex-col transition-colors duration-300', isDark ? 'bg-[#151521] text-zinc-100 selection:bg-[#ff3366]/30' : 'bg-[#f5f6fa] text-slate-900 selection:bg-slate-200')}>
+        <div className={cn('min-h-screen flex flex-col transition-colors duration-300', isDark ? 'bg-[#151521] text-zinc-100 selection:bg-[rgb(var(--brand-accent-rgb)/0.3)]' : 'bg-[#f5f6fa] text-slate-900 selection:bg-slate-200')}>
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -256,7 +269,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                     <nav
                         ref={scrollContainerRef}
                         aria-label="Primary"
-                        className="hide-scrollbar flex w-full items-center gap-2 overflow-x-auto px-2 py-2.5 scroll-smooth"
+                        className="hide-scrollbar flex w-full items-center gap-1 overflow-x-auto px-2 py-2.5 scroll-smooth"
                     >
                         {visibleNavItems.map(item => (
                             <TopbarItem
@@ -332,8 +345,8 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                                                 )}
                                             >
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <span className={`text-sm font-light ${isDark ? 'text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-orange-400' : 'text-indigo-600'}`}>{n.subject}</span>
-                                                    {!n.readAt && <span className="w-2 h-2 rounded-full bg-fuchsia-500 mt-1 shadow-sm shadow-fuchsia-500/50"></span>}
+                                                    <span className={`text-sm font-light ${isDark ? 'text-[var(--brand-accent-soft)]' : 'text-indigo-600'}`}>{n.subject}</span>
+                                                    {!n.readAt && <span className="w-2 h-2 rounded-full bg-[var(--brand-accent)] mt-1 shadow-sm shadow-black/30"></span>}
                                                 </div>
                                                 <p className={cn('text-xs mb-2 leading-relaxed font-light', isDark ? 'text-[#a1a5b7]' : 'text-slate-600')}>{n.message}</p>
                                                 <span className={cn('text-[10px] uppercase tracking-wider font-light', isDark ? 'text-[#5e6278]' : 'text-slate-400')}>
@@ -344,23 +357,28 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                                     )}
                                 </div>
                                 <div className={cn('p-3 text-center border-t', isDark ? 'border-[#2b2b40]/60 bg-[#151521]' : 'border-gray-100 bg-gray-50')}>
-                                    <button className={cn('text-sm font-light tracking-wide', isDark ? 'text-[#8e8fa6]' : 'text-slate-600')}>
-                                        VIEW ALL
-                                    </button>
+                                    <div className="flex items-center justify-center gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={handleMarkAllRead}
+                                            className={cn('text-sm font-light tracking-wide', isDark ? 'text-[#8e8fa6] hover:text-zinc-100' : 'text-slate-600 hover:text-slate-900')}
+                                        >
+                                            MARK ALL READ
+                                        </button>
+                                        <Link
+                                            to="/notifications"
+                                            onClick={() => setShowNotifications(false)}
+                                            className={cn('text-sm font-light tracking-wide', isDark ? 'text-[#8e8fa6] hover:text-zinc-100' : 'text-slate-600 hover:text-slate-900')}
+                                        >
+                                            VIEW ALL
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    {(user?.role === 'OWNER' || user?.role === 'ADMIN') && (
-                        <Link
-                            to="/dev"
-                            className={`inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-light transition-colors ${isDark ? 'text-indigo-400 hover:bg-[#232336] hover:text-indigo-300' : 'text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
-                            title="Developer Terminal"
-                        >
-                            &gt;_
-                        </Link>
-                    )}
+                    {/* Demo build: developer terminal shortcut hidden from the header (route /dev still exists). */}
 
                     <div className="flex items-center gap-2">
                         <div className={cn(

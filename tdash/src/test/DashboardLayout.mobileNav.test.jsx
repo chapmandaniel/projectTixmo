@@ -18,7 +18,7 @@ vi.mock('../lib/api', () => ({
 const owner = { firstName: 'Avery', lastName: 'Stone', role: 'OWNER', email: 'demo.admin@tixmo.test' };
 const member = { firstName: 'Parker', lastName: 'Reed', role: 'TEAM_MEMBER', email: 'demo.ops@tixmo.test' };
 
-const destinations = ['Home', 'Events', 'Tasks', 'Team', 'Assets', 'Review Portal', 'Analytics', 'Settings', 'Audit'];
+const destinations = ['Home', 'Events', 'Tasks', 'Team', 'Assets', 'Reviews', 'Analytics', 'Security', 'ScamSwarm'];
 
 const renderLayout = (user = owner) => render(
     <MemoryRouter>
@@ -75,11 +75,13 @@ describe('Dashboard mobile navigation', () => {
         expect(screen.getByText('Dashboard Content')).toBeInTheDocument();
     });
 
-    it('hides owner-only destinations from members', () => {
+    it('shows Security and no Settings or Audit for any role', () => {
         renderLayout(member);
         fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
         const menu = screen.getByRole('navigation', { name: 'Dashboard' });
         expect(within(menu).queryByRole('link', { name: 'Audit' })).not.toBeInTheDocument();
-        expect(within(menu).getByRole('link', { name: 'Settings' })).toBeInTheDocument();
+        expect(within(menu).queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();
+        expect(within(menu).getByRole('link', { name: 'Security' })).toHaveAttribute('href', '/security');
+        expect(within(menu).getByRole('link', { name: 'ScamSwarm' })).toHaveAttribute('href', '/scamswarm');
     });
 });

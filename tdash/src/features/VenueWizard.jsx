@@ -103,7 +103,7 @@ const VenueWizard = ({ onClose, onSuccess, isDark, user }) => {
                         <div className={`absolute top-1/2 left-0 w-full h-0.5 -translate-y-1/2 ${isDark ? 'bg-[#333]' : 'bg-gray-200'}`} />
                         {/* Active Progress */}
                         <div
-                            className="absolute top-1/2 left-0 h-0.5 -translate-y-1/2 bg-indigo-500 transition-all duration-300"
+                            className="absolute top-1/2 left-0 h-0.5 -translate-y-1/2 bg-[var(--brand-accent)] transition-all duration-300"
                             style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
                         />
 
@@ -114,7 +114,7 @@ const VenueWizard = ({ onClose, onSuccess, isDark, user }) => {
                             return (
                                 <div key={s.id} className="relative flex flex-col items-center z-10">
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 mb-2
-                                        ${isActive ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-110' :
+                                        ${isActive ? 'bg-indigo-600 text-white shadow-lg shadow-black/20 scale-110' :
                                             isCompleted ? 'bg-indigo-600 text-white' :
                                                 isDark ? 'bg-[#333] text-gray-400 border-2 border-[#1a1a1a]' : 'bg-white text-gray-400 border-2 border-gray-100 shadow-sm'}`}
                                     >
@@ -271,9 +271,9 @@ const VenueWizard = ({ onClose, onSuccess, isDark, user }) => {
                     <button
                         onClick={step === 3 ? handleSubmit : nextStep}
                         disabled={loading}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center shadow-lg shadow-indigo-500/20
+                        className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center shadow-lg shadow-black/20
                             ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}
-                            bg-indigo-600 hover:bg-indigo-500 text-white`}
+                            bg-indigo-600 hover:bg-[var(--brand-accent)] text-white`}
                     >
                         {loading ? (
                             <span className="flex items-center">Creating...</span>

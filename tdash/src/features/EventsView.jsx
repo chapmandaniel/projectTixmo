@@ -41,7 +41,7 @@ const TOOL_DEFINITIONS = [
         description: 'Use Event Studio for the V1 event setup path: basics, venue, tickets, preview, draft, and publish.',
         icon: Sparkles,
         accent: 'violet',
-        iconClassName: 'text-fuchsia-400',
+        iconClassName: 'text-[var(--brand-accent-soft)]',
     },
     {
         id: 'library',
@@ -49,7 +49,7 @@ const TOOL_DEFINITIONS = [
         description: 'Review drafts, published events, and direct links into each event workspace.',
         icon: LayoutGrid,
         accent: 'brand',
-        iconClassName: 'text-pink-400',
+        iconClassName: 'text-[var(--brand-accent-soft)]',
     },
     {
         id: 'sales',
@@ -57,7 +57,7 @@ const TOOL_DEFINITIONS = [
         description: 'List transactions with event-aware filters and sorting for finance and box office review.',
         icon: CreditCard,
         accent: 'blue',
-        iconClassName: 'text-cyan-400',
+        iconClassName: 'text-[var(--brand-accent-soft)]',
     },
     {
         id: 'scanners',
@@ -65,7 +65,7 @@ const TOOL_DEFINITIONS = [
         description: 'Manage scanner devices, access, and entry logs from one operations panel.',
         icon: ScanLine,
         accent: 'amber',
-        iconClassName: 'text-amber-400',
+        iconClassName: 'text-[var(--brand-accent-soft)]',
     },
     {
         id: 'venues',
@@ -73,7 +73,7 @@ const TOOL_DEFINITIONS = [
         description: 'Maintain venue details, capacity, and location records that power event creation.',
         icon: MapPin,
         accent: 'green',
-        iconClassName: 'text-emerald-400',
+        iconClassName: 'text-[var(--brand-accent-soft)]',
     },
 ];
 
@@ -96,6 +96,18 @@ const readDevSettings = () => {
 
 const extractEvents = (response) => response?.data?.data?.events || response?.data?.events || [];
 const extractOrders = (response) => response?.data?.data?.orders || [];
+const totalOf = (response, list) => Number(response?.data?.data?.pagination?.total) || list.length;
+// Paid sales per event (all time) so the library cards show real sell-through and revenue.
+const withSales = (events, salesResponse) => {
+    const rows = salesResponse?.data?.data?.salesByEvent;
+    if (!Array.isArray(rows)) return events;
+    const byId = new Map(rows.map((row) => [row.eventId, row]));
+    return events.map((event) => {
+        const row = byId.get(event.id);
+        if (!row) return event;
+        return { ...event, sold: event.sold ?? row.ticketsSold, revenue: event.revenue ?? row.revenue };
+    });
+};
 const extractVenues = (response) => response?.data?.data?.venues || response?.data?.data || [];
 const extractScanners = (response) => {
     const payload = response?.data?.data;
@@ -104,6 +116,18 @@ const extractScanners = (response) => {
 };
 
 const getEventName = (event) => event.title || event.name || 'Untitled Event';
+
+// Poster artwork for the event cards; only web URLs or same-origin paths are rendered.
+const getEventPoster = (event) => {
+    const candidate = event?.images?.poster || event?.images?.main;
+    if (typeof candidate !== 'string' || !candidate) return '';
+    if (candidate.startsWith('/') && !candidate.startsWith('//')) return candidate;
+    try {
+        return ['https:', 'http:'].includes(new URL(candidate).protocol) ? candidate : '';
+    } catch {
+        return '';
+    }
+};
 const getEventStart = (event) => event.startDateTime || event.startDatetime || null;
 
 const formatEventDate = (value) => {
@@ -181,8 +205,11 @@ const ActiveEventCard = ({ event, isDark, onOpen }) => {
             className="group p-5 text-left"
         >
             <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-pink-300' : 'text-pink-600')}>
+                {getEventPoster(event) ? (
+                    <img src={getEventPoster(event)} alt="" loading="lazy" className="h-14 w-11 shrink-0 rounded object-cover shadow-sm" data-testid="event-poster-thumb" />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                    <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-[var(--brand-accent-soft)]' : 'text-pink-600')}>
                         {event.category || 'Active event'}
                     </p>
                     <h3 className={cn('mt-1 truncate text-base font-light tracking-tight', uiTheme.textPrimary)}>
@@ -220,7 +247,7 @@ const ActiveEventsRail = ({ isDark, events, loading, onOpen }) => {
 
             {loading ? (
                 <div className="flex items-center justify-center py-16">
-                    <Loader2 size={28} className={cn('animate-spin', isDark ? 'text-fuchsia-400' : 'text-fuchsia-600')} />
+                    <Loader2 size={28} className={cn('animate-spin', isDark ? 'text-[var(--brand-accent-soft)]' : 'text-fuchsia-600')} />
                 </div>
             ) : events.length === 0 ? (
                 <DashboardEmptyState
@@ -268,9 +295,7 @@ const EventLibrary = ({
                 title="Event Library"
                 description="Browse drafts, live events, and hand off into event management."
                 icon={LayoutGrid}
-                iconClassName={isDark ? 'text-pink-300' : 'text-pink-700'}
-                glowTopClassName="bg-pink-500/10"
-                glowBottomClassName="bg-cyan-400/10"
+                iconClassName={isDark ? 'text-[var(--brand-accent-soft)]' : 'text-pink-700'}
                 actions={(
                     <div className="flex flex-wrap gap-3">
                         {showAutoGenerate ? (
@@ -280,7 +305,7 @@ const EventLibrary = ({
                                 onClick={onAutoGenerate}
                                 disabled={autoGenerating}
                                 className={cn(
-                                    isDark ? 'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-100 hover:bg-fuchsia-500/20' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100'
+                                    isDark ? 'border-[rgb(var(--brand-accent-rgb)/0.45)] bg-[rgb(var(--brand-accent-rgb)/0.14)] text-zinc-100 hover:bg-[rgb(var(--brand-accent-rgb)/0.22)]' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100'
                                 )}
                             >
                                 <Zap size={16} className={autoGenerating ? 'animate-pulse' : ''} />
@@ -316,7 +341,7 @@ const EventLibrary = ({
 
             {loading ? (
                 <div className="flex items-center justify-center py-24">
-                    <Loader2 size={32} className={cn('animate-spin', isDark ? 'text-fuchsia-400' : 'text-fuchsia-600')} />
+                    <Loader2 size={32} className={cn('animate-spin', isDark ? 'text-[var(--brand-accent-soft)]' : 'text-fuchsia-600')} />
                 </div>
             ) : events.length === 0 ? (
                 <DashboardEmptyState
@@ -343,9 +368,14 @@ const EventLibrary = ({
                                 onClick={() => onNavigate(`/events/${generateEventSlug(getEventName(event), event.id)}`, { state: { event } })}
                                 className="p-5 text-left"
                             >
+                                <div className="flex gap-5">
+                                {getEventPoster(event) ? (
+                                    <img src={getEventPoster(event)} alt={`${getEventName(event)} poster`} loading="lazy" className="hidden h-44 w-32 shrink-0 rounded-md object-cover shadow-md sm:block" data-testid="event-poster" />
+                                ) : null}
+                                <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
-                                        <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-pink-300' : 'text-pink-600')}>{event.category || 'Event'}</p>
+                                        <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-[var(--brand-accent-soft)]' : 'text-pink-600')}>{event.category || 'Event'}</p>
                                         <h3 className={cn('mt-2 text-2xl font-light tracking-tight', uiTheme.textPrimary)}>{getEventName(event)}</h3>
                                     </div>
                                     <StatusBadge status={event.status} isDark={isDark} />
@@ -369,7 +399,7 @@ const EventLibrary = ({
                                             <span className={uiTheme.textPrimary}>{progress}%</span>
                                         </div>
                                         <div className={cn('h-1.5 rounded-full', isDark ? 'bg-dashboard-shell' : 'bg-slate-100')}>
-                                            <div className="h-1.5 rounded-full bg-gradient-to-r from-pink-500 to-orange-400" style={{ width: `${progress}%` }} />
+                                            <div className="h-1.5 rounded-full bg-[var(--brand-accent)]" style={{ width: `${progress}%` }} />
                                         </div>
                                     </div>
 
@@ -383,6 +413,8 @@ const EventLibrary = ({
                                             <ChevronRight size={16} />
                                         </span>
                                     </div>
+                                </div>
+                                </div>
                                 </div>
                             </DashboardSurface>
                         );
@@ -410,18 +442,20 @@ const EventsView = ({ isDark, user }) => {
     const fetchDashboardData = async () => {
         try {
             setIsLoading(true);
-            const [eventsResponse, ordersResponse, venuesResponse, scannersResponse] = await Promise.all([
+            const [eventsResponse, ordersResponse, venuesResponse, scannersResponse, salesResponse] = await Promise.all([
                 api.get('/events?limit=100'),
                 api.get('/orders?page=1&limit=100').catch(() => null),
                 api.get('/venues?limit=100').catch(() => null),
                 api.get('/scanners?page=1&limit=100').catch(() => null),
+                api.get('/analytics/sales').catch(() => null),
             ]);
 
-            const nextEvents = extractEvents(eventsResponse);
+            const nextEvents = withSales(extractEvents(eventsResponse), salesResponse);
             setEvents(nextEvents);
-            setOrdersCount(extractOrders(ordersResponse).length);
-            setVenuesCount(extractVenues(venuesResponse).length);
-            setScannersCount(extractScanners(scannersResponse).length);
+            setOrdersCount(totalOf(ordersResponse, extractOrders(ordersResponse)));
+            const venueList = extractVenues(venuesResponse);
+            setVenuesCount(totalOf(venuesResponse, Array.isArray(venueList) ? venueList : []));
+            setScannersCount(totalOf(scannersResponse, extractScanners(scannersResponse)));
         } catch (error) {
             console.error('Failed to load Event Manager data', error);
             setEvents([]);
@@ -582,9 +616,7 @@ const EventsView = ({ isDark, user }) => {
                 isDark={isDark}
                 title="Event Manager"
                 icon={Calendar}
-                iconClassName={isDark ? 'text-pink-300' : 'text-pink-700'}
-                glowTopClassName="bg-pink-500/10"
-                glowBottomClassName="bg-cyan-400/10"
+                iconClassName={isDark ? 'text-[var(--brand-accent-soft)]' : 'text-pink-700'}
             />
 
             <section className="grid grid-cols-1 items-start gap-7 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">

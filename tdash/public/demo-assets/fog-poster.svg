@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset="1" stop-color="#e2e8f0"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#94a3b8" stop-opacity=".45"/><stop offset="1" stop-color="#14141f" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14141f"/><stop offset="1" stop-color="#14141f"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="900" height="1200" fill="#14141f"/>
+<rect width="900" height="1200" fill="url(#r)"/>
+<path d="M-432 0 L -396 0 L -882 744 L -918 744 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M-360 0 L -324 0 L -810 744 L -846 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M-288 0 L -252 0 L -738 744 L -774 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M-216 0 L -180 0 L -666 744 L -702 744 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M-144 0 L -108 0 L -594 744 L -630 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M-72 0 L -36 0 L -522 744 L -558 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M0 0 L 36 0 L -450 744 L -486 744 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M72 0 L 108 0 L -378 744 L -414 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M144 0 L 180 0 L -306 744 L -342 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M216 0 L 252 0 L -234 744 L -270 744 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M288 0 L 324 0 L -162 744 L -198 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M360 0 L 396 0 L -90 744 L -126 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M432 0 L 468 0 L -18 744 L -54 744 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M504 0 L 540 0 L 54 744 L 18 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M576 0 L 612 0 L 126 744 L 90 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M648 0 L 684 0 L 198 744 L 162 744 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M720 0 L 756 0 L 270 744 L 234 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M792 0 L 828 0 L 342 744 L 306 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M864 0 L 900 0 L 414 744 L 378 744 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M936 0 L 972 0 L 486 744 L 450 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1008 0 L 1044 0 L 558 744 L 522 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1080 0 L 1116 0 L 630 744 L 594 744 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M1152 0 L 1188 0 L 702 744 L 666 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1224 0 L 1260 0 L 774 744 L 738 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1296 0 L 1332 0 L 846 744 L 810 744 Z" fill="#e2e8f0" opacity=".22"/>
+<path d="M1368 0 L 1404 0 L 918 744 L 882 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1440 0 L 1476 0 L 990 744 L 954 744 Z" fill="#94a3b8" opacity=".22"/>
+<path d="M1512 0 L 1548 0 L 1062 744 L 1026 744 Z" fill="#e2e8f0" opacity=".22"/>
+<circle cx="648" cy="336" r="144" fill="#f472b6" opacity=".85"/>
+<rect width="900" height="1200" fill="url(#shade)"/>
+<text x="72" y="672" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">FOG CITY</text>
+<text x="72" y="794" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">STROBE</text>
+<rect x="72" y="959" width="108" height="6" fill="#f472b6"/>
+<text x="72" y="1022" font-size="30" fill="#fff" letter-spacing="4">FOUNDRY HALL</text>
+<text x="72" y="1067" font-size="20" fill="#fff" opacity=".75" letter-spacing="3">INDIE-DANCE DOUBLE BILL · SUPPORT: LANTERN STATIC</text>
+<text x="828" y="65" text-anchor="end" font-size="19" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

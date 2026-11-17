@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#86efac"/><stop offset="1" stop-color="#fef3c7"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#86efac" stop-opacity=".45"/><stop offset="1" stop-color="#1f2a24" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f2a24"/><stop offset="1" stop-color="#1f2a24"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="900" height="1200" fill="#1f2a24"/>
+<rect width="900" height="1200" fill="url(#r)"/>
+<circle cx="558" cy="384" r="45" fill="none" stroke="#86efac" stroke-width="3" opacity="0.90"/>
+<circle cx="558" cy="384" r="76" fill="none" stroke="#fef3c7" stroke-width="6" opacity="0.83"/>
+<circle cx="558" cy="384" r="108" fill="none" stroke="#fbbf24" stroke-width="9" opacity="0.76"/>
+<circle cx="558" cy="384" r="140" fill="none" stroke="#86efac" stroke-width="3" opacity="0.69"/>
+<circle cx="558" cy="384" r="171" fill="none" stroke="#fef3c7" stroke-width="6" opacity="0.62"/>
+<circle cx="558" cy="384" r="203" fill="none" stroke="#fbbf24" stroke-width="9" opacity="0.55"/>
+<circle cx="558" cy="384" r="234" fill="none" stroke="#86efac" stroke-width="3" opacity="0.48"/>
+<circle cx="558" cy="384" r="266" fill="none" stroke="#fef3c7" stroke-width="6" opacity="0.41"/>
+<circle cx="558" cy="384" r="297" fill="none" stroke="#fbbf24" stroke-width="9" opacity="0.34"/>
+<circle cx="558" cy="384" r="328" fill="none" stroke="#86efac" stroke-width="3" opacity="0.27"/>
+<rect width="900" height="1200" fill="url(#shade)"/>
+<text x="72" y="672" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">QUIET</text>
+<text x="72" y="794" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">HARBOUR</text>
+<text x="72" y="917" font-size="120" font-weight="800" fill="#fff" letter-spacing="2">ACOUSTIC</text>
+<rect x="72" y="1081" width="108" height="6" fill="#fbbf24"/>
+<text x="72" y="1144" font-size="30" fill="#fff" letter-spacing="4">CHAPEL STREET STUDIO</text>
+<text x="72" y="1189" font-size="23" fill="#fff" opacity=".75" letter-spacing="3">SONGWRITERS IN THE ROUND · SEATED</text>
+<text x="828" y="65" text-anchor="end" font-size="19" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

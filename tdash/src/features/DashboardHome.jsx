@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Calendar, BarChart3,
     Users, CheckSquare,
-    Settings, CheckCircle, Image
+    ShieldCheck, CheckCircle, Image
 } from 'lucide-react';
 import api from '../lib/api';
 import {
@@ -12,15 +12,16 @@ import {
     DASHBOARD_HOME_TRUTH_VERSION,
 } from '../lib/dashboardTruth';
 import { DashboardModuleTile, DashboardPage, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
+import HomePulse from './home/HomePulse';
 
 const gridItems = [
-    { id: 'events', icon: Calendar, label: 'Event Manager', description: 'Create events and manage sales, scanners, and venues from one dashboard.', accent: 'from-pink-500 to-orange-400', iconClassName: 'text-pink-500' },
-    { id: 'todo', icon: CheckSquare, label: 'Task Manager', description: 'Collaborate, assign work, and track operational follow-through.', accent: 'from-indigo-400 to-purple-500', iconClassName: 'text-indigo-400' },
-    { id: 'team', icon: Users, label: 'Team Members', description: 'Manage organization access.', accent: 'from-gray-600 to-gray-700', iconClassName: 'text-gray-500' },
-    { id: 'assets', icon: Image, label: 'Asset Library', description: 'Browse uploaded creative, preview versions, and copy share links for internal or external handoff.', accent: 'from-sky-500 to-cyan-400', iconClassName: 'text-sky-400' },
-    { id: 'approvals', icon: CheckCircle, label: 'Review Portal', description: 'Review pending requests.', accent: 'from-lime-400 to-emerald-500', iconClassName: 'text-lime-400' },
-    { id: 'analytics', icon: BarChart3, label: 'Analytics', description: 'Deep dive into your metrics.', accent: 'from-blue-400 to-indigo-600', iconClassName: 'text-blue-400' },
-    { id: 'settings', icon: Settings, label: 'Settings', description: 'Configure application preferences.', accent: 'from-gray-700 to-gray-800', iconClassName: 'text-gray-500' },
+    { id: 'events', icon: Calendar, label: 'Event Manager', description: 'Create events and manage sales, scanners, and venues from one dashboard.' },
+    { id: 'todo', icon: CheckSquare, label: 'Task Manager', description: 'Collaborate, assign work, and track operational follow-through.' },
+    { id: 'team', icon: Users, label: 'Team Members', description: 'Manage organization access.' },
+    { id: 'assets', icon: Image, label: 'Asset Library', description: 'Browse uploaded creative, preview versions, and copy share links for internal or external handoff.' },
+    { id: 'approvals', icon: CheckCircle, label: 'Review Portal', description: 'Review pending requests.' },
+    { id: 'analytics', icon: BarChart3, label: 'Analytics', description: 'Deep dive into your metrics.' },
+    { id: 'security', icon: ShieldCheck, label: 'Security', description: 'How your event pages, dashboard, checkout and door devices are doing.' },
 ];
 
 const DashboardHome = ({ isDark, user }) => {
@@ -125,10 +126,9 @@ const DashboardHome = ({ isDark, user }) => {
             <DashboardTitleBar
                 isDark={isDark}
                 title={`Welcome back, ${user?.firstName || 'User'}`}
-                description="Access all your modules and tools from your control center."
-                glowTopClassName="bg-fuchsia-500/10"
-                glowBottomClassName="bg-cyan-400/10"
+                description="Here is what is happening across your events today."
             />
+            {user ? <HomePulse isDark={isDark} pendingApprovals={pendingApprovalsCount} /> : null}
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 xl:grid-cols-4">
                 {sortedItems.map((item) => {
                     const badge = item.id === 'approvals' && pendingApprovalsCount > 0 ? pendingApprovalsCount : null;
@@ -149,7 +149,7 @@ const DashboardHome = ({ isDark, user }) => {
                             data-card-id={item.id}
                             data-hidden={isHidden ? 'true' : 'false'}
                             data-testid={`dashboard-card-${item.id}`}
-                            className="focus-visible:ring-fuchsia-500"
+                            className="focus-visible:ring-[var(--brand-accent)]"
                         />
                     );
                 })}

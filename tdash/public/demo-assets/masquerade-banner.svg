@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="600" viewBox="0 0 1600 600" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#f97316"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#a855f7" stop-opacity=".45"/><stop offset="1" stop-color="#120a1a" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#120a1a"/><stop offset="1" stop-color="#120a1a"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1600" height="600" fill="#120a1a"/>
+<rect width="1600" height="600" fill="url(#r)"/>
+<circle cx="1056" cy="168" r="320" fill="#e9d5ff"/>
+<circle cx="1184" cy="144" r="304" fill="url(#bgfill)"/>
+<path d="M288 252 Q 608 204 928 252 Q 864 294 672 276 L 608 264 L 544 276 Q 352 294 288 252 Z" fill="url(#g)"/>
+<ellipse cx="464" cy="258" rx="72" ry="9" fill="#000"/><ellipse cx="752" cy="258" rx="72" ry="9" fill="#000"/>
+<rect width="1600" height="600" fill="url(#shade)"/>
+<text x="128" y="300" font-size="59" font-weight="800" fill="#fff" letter-spacing="2">HALLOWEEN MASQUERADE</text>
+<text x="128" y="353" font-size="18" fill="#fff" opacity=".85" letter-spacing="4">FOUNDRY HALL · TICKETS AT NORTHLIGHT.EXAMPLE.COM</text>
+<text x="1472" y="115" text-anchor="end" font-size="22" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

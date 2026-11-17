@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" font-family="Inter, Helvetica, Arial, sans-serif"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#facc15"/><stop offset="1" stop-color="#fb923c"/></linearGradient><radialGradient id="r" cx=".7" cy=".2" r=".9"><stop offset="0" stop-color="#facc15" stop-opacity=".45"/><stop offset="1" stop-color="#3f1d0b" stop-opacity="0"/></radialGradient><linearGradient id="bgfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f1d0b"/><stop offset="1" stop-color="#3f1d0b"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".65"/></linearGradient><filter id="b"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect width="1080" height="1080" fill="#3f1d0b"/>
+<rect width="1080" height="1080" fill="url(#r)"/>
+<circle cx="734" cy="324" r="259" fill="url(#g)"/>
+<rect x="475" y="272" width="518" height="4" fill="#000" opacity=".28"/>
+<rect x="475" y="319" width="518" height="6" fill="#000" opacity=".28"/>
+<rect x="475" y="365" width="518" height="8" fill="#000" opacity=".28"/>
+<rect x="475" y="412" width="518" height="10" fill="#000" opacity=".28"/>
+<rect x="475" y="459" width="518" height="12" fill="#000" opacity=".28"/>
+<rect x="475" y="505" width="518" height="14" fill="#000" opacity=".28"/>
+<rect x="475" y="552" width="518" height="16" fill="#000" opacity=".28"/>
+<path d="M0 799 Q 270 759 540 799 T 1080 799 V 1080 H 0 Z" fill="#facc15" opacity="0.18"/>
+<path d="M0 864 Q 270 824 540 864 T 1080 864 V 1080 H 0 Z" fill="#facc15" opacity="0.30"/>
+<path d="M0 929 Q 270 889 540 929 T 1080 929 V 1080 H 0 Z" fill="#facc15" opacity="0.42"/>
+<path d="M0 994 Q 270 954 540 994 T 1080 994 V 1080 H 0 Z" fill="#facc15" opacity="0.54"/>
+<rect width="1080" height="1080" fill="url(#shade)"/>
+<text x="86" y="540" font-size="111" font-weight="800" fill="#fff" letter-spacing="2">SOLSTICE</text>
+<text x="86" y="653" font-size="111" font-weight="800" fill="#fff" letter-spacing="2">BLOCK PARTY</text>
+<rect x="86" y="805" width="130" height="6" fill="#fff7ed"/>
+<text x="86" y="881" font-size="36" fill="#fff" letter-spacing="4">HARBOURFRONT COMMONS</text>
+<text x="86" y="935" font-size="28" fill="#fff" opacity=".75" letter-spacing="3">LONGEST DAY · STREET FOOD · THREE STAGES</text>
+<text x="994" y="78" text-anchor="end" font-size="23" font-weight="700" fill="#fff" opacity=".8" letter-spacing="5">NORTHLIGHT LIVE</text></svg>

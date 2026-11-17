@@ -68,7 +68,7 @@ export const AttentionGrid = ({ isDark, cards, href }) => {
                         {card.actionLabel && card.to ? (
                             <Link
                                 to={href(card.to)}
-                                className="mt-4 inline-flex items-center justify-center rounded-md border border-dashboard-accent bg-dashboard-accent px-4 py-2.5 text-sm font-light text-white"
+                                className="mt-4 inline-flex items-center justify-center rounded-md border border-[var(--brand-accent)] bg-[var(--brand-accent)] px-4 py-2.5 text-sm font-light text-white"
                             >
                                 {card.actionLabel}
                             </Link>
