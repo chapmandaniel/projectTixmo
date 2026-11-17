@@ -114,33 +114,36 @@ the owned CI services. This is not browser, deployed-limit, region-latency,
 ### Installation
 
 ```bash
-# 1. Clone the repository
+# 1. Clone chapmandaniel/projectTixmo (this API is a package in that repo)
 git clone <repository-url>
-cd tixmoapi2
+cd projectTixmo
 
 # 2. Install dependencies (same lockfile install CI uses)
-npm ci
+npm ci --prefix tixmoapi2
 
 # 3. Set up environment variables
-cp .env.example .env
-# Edit .env with your configuration:
+cp tixmoapi2/.env.example tixmoapi2/.env
+# Edit tixmoapi2/.env with your configuration:
 # - DATABASE_URL
 # - REDIS_URL
 # - JWT_SECRET
 # - JWT_REFRESH_SECRET
+# Generate secrets as described in docs/vendor-import-local.md. Do not commit them.
 
-# 4. Start database services (Compose file in this directory)
-docker compose up -d
+# 4. Start shared development services (Compose file in this directory)
+# This starts database `tixmoapi`. It is not a disposable test target.
+docker compose -f tixmoapi2/docker-compose.yml up -d
 # From the repo root the same stack is `npm run dev:services`.
+# If Docker is not available, run local PostgreSQL 14 and Redis 7 and point .env at them.
 
 # 5. Run database migrations
-npx prisma migrate dev
+npm --prefix tixmoapi2 run migrate
 
-# 6. Generate Prisma client
-npx prisma generate
+# 6. Generate Prisma client (also runs as part of npm --prefix tixmoapi2 run build)
+npm --prefix tixmoapi2 exec -- prisma generate
 
 # 7. Start development server
-npm run dev
+npm --prefix tixmoapi2 run dev
 ```
 
 The server will start at `http://localhost:3000`
@@ -160,8 +163,27 @@ open http://localhost:3000/api/v1/docs
 
 ### Run Tests
 
+Do not point tests at the shared Compose database `tixmoapi`. From the repo
+root, provision a disposable loopback Postgres database named
+`tixmo_disposable_<name>` and a loopback Redis URL on database `/1` through
+`/15`, then:
+
 ```bash
-# Run all tests
+# Preferred: schema push + the Jest suite, with target safety checks
+TIXMO_ALLOW_DESTRUCTIVE_TESTS=1 \
+  DATABASE_URL=postgresql://tixmo@127.0.0.1:5432/tixmo_disposable_local \
+  REDIS_URL=redis://127.0.0.1:6379/1 \
+  npm run verify:api
+```
+
+`verify:api` does not start containers, run `prisma migrate`, or load
+application `.env` files. See `docs/LOCAL_MARKET_READINESS_GATES.md`.
+
+From this directory, after the same disposable environment is exported:
+
+```bash
+npm run typecheck
+npm run lint
 npm test
 
 # Run tests in watch mode
@@ -170,6 +192,8 @@ npm run test:watch
 # Generate coverage report
 npm run test:coverage
 ```
+
+`npm test` already passes `--runInBand`.
 
 ---
 

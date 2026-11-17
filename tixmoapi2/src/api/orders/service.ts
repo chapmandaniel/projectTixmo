@@ -750,11 +750,15 @@ export class OrderService {
         const exclude = excludeIds.length
           ? Prisma.sql`AND id NOT IN (${Prisma.join([...excludeIds])})`
           : Prisma.empty;
+        // Prisma DateTime without @db.Timestamptz is stored as timestamp
+        // without time zone in UTC clock time. NOW() follows the session
+        // TimeZone, so a non-UTC database would skip holds that have already
+        // expired in UTC. Compare against UTC clock time.
         const rows = await tx.$queryRaw<Array<{ id: string; order_number: string }>>`
           SELECT id, order_number
           FROM orders
           WHERE status = 'PENDING'::"OrderStatus"
-            AND expires_at < NOW()
+            AND expires_at < (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
             ${exclude}
           ORDER BY expires_at ASC, id ASC
           LIMIT 1
@@ -794,7 +798,7 @@ export class OrderService {
   async cancelExpiredHoldIfPending(tx: Prisma.TransactionClient, id: string): Promise<boolean> {
     const affected = await tx.$executeRaw`
       UPDATE orders
-      SET status = 'CANCELLED'::"OrderStatus", updated_at = NOW()
+      SET status = 'CANCELLED'::"OrderStatus", updated_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
       WHERE id = ${id} AND status = 'PENDING'::"OrderStatus"
     `;
     if (affected !== 1) return false;

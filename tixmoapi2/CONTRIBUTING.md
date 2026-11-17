@@ -7,8 +7,14 @@
 
 1. Fork the repository
 2. Clone `chapmandaniel/projectTixmo` and work in `tixmoapi2/`. This API is a package in that repo, not a separate git repository.
-3. Install dependencies from `tixmoapi2/`: `npm ci`
+3. Install dependencies from the repo root: `npm ci --prefix tixmoapi2`
 4. Create a new branch: `git checkout -b feature/your-feature-name`
+
+API tests need a disposable loopback Postgres database named
+`tixmo_disposable_<name>`, a loopback Redis URL on database `/1` through
+`/15`, and `TIXMO_ALLOW_DESTRUCTIVE_TESTS=1`. The shared Compose database
+`tixmoapi` is not a valid test target. See the root `README.md` and
+`docs/LOCAL_MARKET_READINESS_GATES.md`.
 
 ## Development Workflow
 
