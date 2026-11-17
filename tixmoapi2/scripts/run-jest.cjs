@@ -35,7 +35,11 @@ function ensureLocalJestHeap(env, minMb = DEFAULT_HEAP_MB) {
 
 function runJest(argv = process.argv.slice(2), env = process.env) {
   const jest = require.resolve('jest/bin/jest');
-  const child = spawn(process.execPath, [jest, ...argv], {
+  // Combined #220/#221 suites can leave open handles after a complete run,
+  // so npm test would hang even when every test passed. --forceExit does not
+  // change assertions; skip if the caller already passed it.
+  const args = argv.includes('--forceExit') ? argv : [...argv, '--forceExit'];
+  const child = spawn(process.execPath, [jest, ...args], {
     stdio: 'inherit',
     env: ensureLocalJestHeap(env),
     windowsHide: true,
