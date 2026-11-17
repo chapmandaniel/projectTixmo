@@ -8,6 +8,12 @@ export const getNotificationsSchema = z.object({
   }),
 });
 
+export const markAsReadSchema = z.object({
+  params: z.object({
+    id: z.string().guid('Invalid uuid'),
+  }),
+});
+
 export const updatePreferencesSchema = z.object({
   body: z.object({
     emailOrderConfirm: z.boolean().optional(),
