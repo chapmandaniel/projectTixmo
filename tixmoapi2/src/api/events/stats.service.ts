@@ -133,6 +133,10 @@ export class EventStatsService {
     const timelineMap = new Map<string, { entries: number; exits: number }>();
 
     scans.forEach((scan) => {
+      if (scan.scanType !== 'ENTRY' && scan.scanType !== 'EXIT') {
+        return;
+      }
+
       const hour = new Date(scan.scannedAt);
       hour.setMinutes(0, 0, 0); // Round to hour
       const key = hour.toISOString();
@@ -141,7 +145,7 @@ export class EventStatsService {
 
       if (scan.scanType === 'ENTRY') {
         current.entries++;
-      } else if (scan.scanType === 'EXIT') {
+      } else {
         current.exits++;
       }
 

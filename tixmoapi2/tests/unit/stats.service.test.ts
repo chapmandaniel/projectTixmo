@@ -255,16 +255,51 @@ describe('EventStatsService', () => {
       expect(timeline[1]).toMatchObject({ entryCount: 1, exitCount: 0, occupancy: 0 });
     });
 
-    // stats.service.ts:142-148 records VALIDATION (and any non ENTRY/EXIT) hours
-    // as zero-count buckets instead of ignoring them. Command Center timeline is
-    // documented as an entry/exit hourly breakdown.
-    it.skip('omits hours that only contain successful VALIDATION scans', async () => {
+    it('omits hours that only contain successful VALIDATION scans', async () => {
       mockPrisma.event.findUnique.mockResolvedValue({ id: mockEventId });
       mockPrisma.scanLog.findMany.mockResolvedValue([
         { scannedAt: new Date('2026-11-13T18:10:00.000Z'), scanType: 'VALIDATION' },
       ]);
 
       await expect(eventStatsService.getEntryTimeline(mockEventId)).resolves.toEqual([]);
+    });
+
+    it('counts ENTRY in a mixed hour and omits a neighboring VALIDATION-only hour', async () => {
+      mockPrisma.event.findUnique.mockResolvedValue({ id: mockEventId });
+
+      // Cluster each hour's scans away from :00/:30 so UTC hours stay local hours
+      // in half-hour offsets (America/St_Johns, Asia/Kolkata).
+      const hourAEntry = new Date('2026-11-13T17:10:00.000Z');
+      const hourBValidation = new Date('2026-11-13T18:10:00.000Z');
+      const hourBEntry = new Date('2026-11-13T18:20:00.000Z');
+      const hourBValidation2 = new Date('2026-11-13T18:25:00.000Z');
+      const hourCValidationOnly = new Date('2026-11-13T19:10:00.000Z');
+      mockPrisma.scanLog.findMany.mockResolvedValue([
+        { scannedAt: hourAEntry, scanType: 'ENTRY' },
+        { scannedAt: hourBValidation, scanType: 'VALIDATION' },
+        { scannedAt: hourBEntry, scanType: 'ENTRY' },
+        { scannedAt: hourBValidation2, scanType: 'VALIDATION' },
+        { scannedAt: hourCValidationOnly, scanType: 'VALIDATION' },
+      ]);
+
+      const timeline = await eventStatsService.getEntryTimeline(mockEventId);
+
+      expect(timeline).toHaveLength(2);
+      expect(timeline[0]).toEqual({
+        timestamp: localHourTimestamp(hourAEntry),
+        entryCount: 1,
+        exitCount: 0,
+        occupancy: 1,
+      });
+      expect(timeline[1]).toEqual({
+        timestamp: localHourTimestamp(hourBEntry),
+        entryCount: 1,
+        exitCount: 0,
+        occupancy: 2,
+      });
+      expect(timeline.map((row) => row.timestamp.toISOString())).not.toContain(
+        localHourTimestamp(hourCValidationOnly).toISOString()
+      );
     });
   });
 
