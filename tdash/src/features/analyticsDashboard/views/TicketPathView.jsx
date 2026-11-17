@@ -29,7 +29,7 @@ export const TicketPathView = ({ isDark, dashboard }) => {
                                 </p>
                             </div>
                             <div className={cn('mt-4 h-3 overflow-hidden rounded-full', isDark ? 'bg-dashboard-panelMuted' : 'bg-slate-100')}>
-                                <div className="h-full rounded-full bg-pink-500" style={{ width }} />
+                                <div className="h-full rounded-full bg-[var(--section-accent)]" style={{ width }} />
                             </div>
                             {step.dropOff ? (
                                 <p className={cn('mt-3 text-sm font-light leading-6', theme.textPrimary)}>{step.dropOff}</p>

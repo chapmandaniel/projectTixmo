@@ -52,7 +52,7 @@ export const CommunityView = ({ isDark, href }) => {
                 <p className={cn('mt-4 text-sm font-light', theme.textSecondary)}>
                     Top praise: colour / lineup. Top criticism: merch stock. Recurring questions: sizing, tickets, accessibility.
                 </p>
-                <Link to={href('posts/ig-reel-aurora')} className="mt-2 inline-block text-sm text-pink-400">Open supporting comments</Link>
+                <Link to={href('posts/ig-reel-aurora')} className="mt-2 inline-block text-sm text-[var(--section-accent)]">Open supporting comments</Link>
             </DashboardSection>
 
             <DashboardSection isDark={isDark} accent="amber" title="Responsiveness" description={`Observation cutoff ${COMMUNITY.observationCutoff}. ${COMMUNITY.businessHours}`}>

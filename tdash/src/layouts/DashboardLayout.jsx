@@ -11,6 +11,7 @@ import api from '../lib/api';
 import { Link } from 'react-router-dom';
 import { DashboardIconButton } from '../components/dashboard/DashboardPrimitives';
 import { cn } from '../lib/utils';
+import { accentClasses, getSectionAccent, sectionAccentStyle } from '../lib/sectionAccents';
 
 const navItems = [
     { id: 'dashboard', icon: Home, label: 'Home' },
@@ -33,16 +34,20 @@ const MobileNavLink = ({ item, activeView, isDark, pendingApprovalsCount, onNavi
         <Link
             to={`/${item.id}`}
             onClick={onNavigate}
+            data-section={item.id}
+            style={sectionAccentStyle(item.id)}
             className={cn(
-                'flex min-h-11 shrink-0 items-center gap-3 rounded-[10px] px-3.5 text-sm font-light',
+                'relative flex min-h-11 shrink-0 items-center gap-3 rounded-[10px] px-3.5 text-sm font-light',
                 active
-                    ? (isDark ? 'bg-[#2a2b40] text-white' : 'bg-slate-900 text-white shadow-sm')
+                    ? cn(accentClasses.tint, isDark ? 'text-white' : 'text-slate-900')
                     : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
             )}
             aria-current={active ? 'page' : undefined}
         >
-            <item.icon size={18} className="shrink-0" />
+            {active ? <span aria-hidden="true" data-testid="nav-active-indicator" className={cn('absolute inset-y-2 left-0 w-[3px] rounded-full', accentClasses.bar)} /> : null}
+            <item.icon size={18} className={cn('shrink-0', accentClasses.text, active ? '' : 'opacity-80')} />
             <span className="leading-none">{item.label}</span>
+            <span aria-hidden="true" data-testid="nav-accent-dot" className={cn('h-1.5 w-1.5 shrink-0 rounded-full', accentClasses.bar, badge ? '' : 'ml-auto')} />
             {badge ? (
                 <span className={cn(
                     'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-medium text-white',
@@ -62,19 +67,24 @@ const TopbarItem = ({ item, activeView, isDark, pendingApprovalsCount }) => {
     return (
         <Link
             to={`/${item.id}`}
+            data-section={item.id}
+            style={sectionAccentStyle(item.id)}
             className={cn(
                 'group relative flex h-10 shrink-0 items-center justify-center gap-2 rounded-[10px] px-2.5 text-sm font-light transition-all duration-200',
                 active
-                    ? (isDark ? 'bg-[#2a2b40] text-white shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'bg-slate-900 text-white shadow-sm')
+                    ? cn(accentClasses.tint, isDark ? 'text-white' : 'text-slate-900')
                     : (isDark ? 'text-[#8e8fa6] hover:bg-[#232336] hover:text-zinc-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900')
             )}
             aria-current={active ? 'page' : undefined}
         >
+            {/* T135: every tab carries its section accent (dot below 1400px, tinted icon from 1400px) so colors are learnable. */}
+            <span aria-hidden="true" data-testid="nav-accent-dot" className={cn('h-1.5 w-1.5 shrink-0 rounded-full min-[1400px]:hidden', accentClasses.bar, active ? '' : 'opacity-80')} />
             {/* Demo build: icons only from 1400px so every tab fits on a 1280-1440px presentation screen. */}
             <div className="relative hidden items-center justify-center min-[1400px]:flex">
-                <item.icon size={18} className={cn('shrink-0', active ? 'drop-shadow-sm' : '')} />
+                <item.icon size={18} className={cn('shrink-0', accentClasses.text, active ? 'drop-shadow-sm' : 'opacity-80')} />
             </div>
             <span className="whitespace-nowrap leading-none">{item.label}</span>
+            {active ? <span aria-hidden="true" data-testid="nav-active-indicator" className={cn('absolute inset-x-2.5 -bottom-[5px] h-[2px] rounded-full', accentClasses.bar)} /> : null}
             {badge ? (
                 <span className={cn(
                     'flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-medium text-white',
@@ -229,9 +239,14 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
 
     // Horizontal Scrolling
     const scrollContainerRef = React.useRef(null);
+    const sectionAccent = getSectionAccent(activeView);
 
     return (
-        <div className={cn('min-h-screen flex flex-col transition-colors duration-300', isDark ? 'bg-[#151521] text-zinc-100 selection:bg-[#ff3366]/30' : 'bg-[#f5f6fa] text-slate-900 selection:bg-slate-200')}>
+        <div
+            data-section={sectionAccent.section}
+            style={sectionAccentStyle(sectionAccent.section)}
+            className={cn('min-h-screen flex flex-col transition-colors duration-300', isDark ? 'bg-[#151521] text-zinc-100 selection:bg-[rgb(var(--section-accent-rgb)/0.3)]' : 'bg-[#f5f6fa] text-slate-900 selection:bg-slate-200')}
+        >
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -332,7 +347,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
                                                 )}
                                             >
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <span className={`text-sm font-light ${isDark ? 'text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-orange-400' : 'text-indigo-600'}`}>{n.subject}</span>
+                                                    <span className={`text-sm font-light ${isDark ? accentClasses.text : 'text-indigo-600'}`}>{n.subject}</span>
                                                     {!n.readAt && <span className="w-2 h-2 rounded-full bg-fuchsia-500 mt-1 shadow-sm shadow-fuchsia-500/50"></span>}
                                                 </div>
                                                 <p className={cn('text-xs mb-2 leading-relaxed font-light', isDark ? 'text-[#a1a5b7]' : 'text-slate-600')}>{n.message}</p>

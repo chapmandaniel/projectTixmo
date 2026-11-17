@@ -23,14 +23,14 @@ export const HeadsUpCards = ({ isDark, cards }) => {
                         {card.to?.startsWith('#') ? (
                             <a
                                 href={card.to}
-                                className="mt-4 inline-flex items-center text-sm font-light text-pink-400 hover:text-pink-300"
+                                className="mt-4 inline-flex items-center text-sm font-light text-[var(--section-accent)] hover:text-[var(--section-accent)]"
                             >
                                 See why
                             </a>
                         ) : card.to ? (
                             <Link
                                 to={card.to}
-                                className="mt-4 inline-flex items-center text-sm font-light text-pink-400 hover:text-pink-300"
+                                className="mt-4 inline-flex items-center text-sm font-light text-[var(--section-accent)] hover:text-[var(--section-accent)]"
                             >
                                 See why
                             </Link>

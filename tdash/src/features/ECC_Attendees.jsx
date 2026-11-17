@@ -11,7 +11,7 @@ const AttendeeRow = ({ ticket, event, isDark, onCheckIn, onRevoke }) => {
     <tr className={`transition-colors text-sm ${isDark ? 'hover:bg-[#232336] border-b border-[#2b2b40]/60' : 'hover:bg-gray-50 border-b border-gray-100'}`}>
         <td className="px-6 py-4">
             <div className="flex items-center">
-                <div className={`w-8 h-8 rounded-md flex items-center justify-center mr-3 text-xs font-normal tracking-wider ${isDark ? 'bg-pink-500/10 text-pink-400' : 'bg-indigo-100 text-indigo-600'}`}>
+                <div className={`w-8 h-8 rounded-md flex items-center justify-center mr-3 text-xs font-normal tracking-wider ${isDark ? 'bg-[rgb(var(--section-accent-rgb)/0.14)] text-[var(--section-accent)]' : 'bg-indigo-100 text-indigo-600'}`}>
                     {ticket.user?.firstName?.[0] || '?'}{ticket.user?.lastName?.[0] || '?'}
                 </div>
                 <div>

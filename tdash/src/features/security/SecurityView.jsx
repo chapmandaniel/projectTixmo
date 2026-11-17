@@ -13,6 +13,7 @@ import { cn } from '../../lib/utils';
 import { MooseChat } from '../../components/dashboard/MooseChat';
 import { buildSecurityReport, relativeTime } from './securityReport';
 import { answerMooseQuestion, SUGGESTED_QUESTIONS as MOOSE_QUESTIONS } from './securityMooseAnswers';
+import { accentClasses } from '../../lib/sectionAccents';
 
 const formatCount = (value) => new Intl.NumberFormat('en-CA').format(value);
 
@@ -118,10 +119,8 @@ const SecurityView = ({ isDark = true, now: fixedNow }) => {
                 isDark={isDark}
                 title="Security"
                 icon={ShieldCheck}
-                iconClassName="text-emerald-400"
+                iconClassName={accentClasses.text}
                 description="A plain-language look at Northlight Live's own event pages, team dashboard, checkout and door devices — so you can see that your platforms are safe."
-                glowTopClassName="bg-emerald-500/10"
-                glowBottomClassName="bg-cyan-400/10"
                 badges={(
                     <>
                         <HealthyPill isDark={isDark} label="Your platforms look safe" className="px-3 text-xs" />

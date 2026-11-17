@@ -2,16 +2,11 @@ import React from 'react';
 import { Heart, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { dashboardAccentGradients, getDashboardTheme } from '../../lib/dashboardTheme';
+import { getDashboardTheme } from '../../lib/dashboardTheme';
+import { accentClasses, sectionAccentStyle } from '../../lib/sectionAccents';
 
-const surfaceAccentMap = {
-    brand: dashboardAccentGradients.brand,
-    violet: dashboardAccentGradients.violet,
-    blue: dashboardAccentGradients.blue,
-    green: dashboardAccentGradients.green,
-    amber: dashboardAccentGradients.amber,
-    slate: dashboardAccentGradients.slate,
-};
+// T135: any truthy `accent` renders the scoped section accent as one solid
+// strip (the old per-card gradient keywords are accepted but no longer vary).
 
 export const DashboardSurface = ({
     as: Component = 'div',
@@ -37,7 +32,8 @@ export const DashboardSurface = ({
             {accent ? (
                 <div
                     aria-hidden="true"
-                    className={cn('pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r', surfaceAccentMap[accent] || accent)}
+                    data-testid="surface-accent"
+                    className={cn('pointer-events-none absolute inset-x-0 top-0 h-[3px]', accentClasses.bar)}
                 />
             ) : null}
             {children}
@@ -74,7 +70,7 @@ export const DashboardButton = ({ isDark, variant = 'primary', className, childr
 
     const variants = {
         primary: isDark
-            ? 'border-dashboard-accent bg-dashboard-accent text-white hover:border-rose-500 hover:bg-rose-500'
+            ? accentClasses.button
             : 'border-slate-900 bg-slate-900 text-white hover:border-slate-800 hover:bg-slate-800',
         secondary: isDark
             ? 'border-dashboard-border bg-dashboard-panel text-zinc-100 hover:bg-dashboard-panelAlt'
@@ -105,9 +101,9 @@ export const DashboardButton = ({ isDark, variant = 'primary', className, childr
 export const DashboardTextInput = ({ isDark, className, ...props }) => (
     <input
         className={cn(
-            'h-11 w-full rounded-md border px-3 text-sm font-light outline-hidden transition focus:ring-2 focus:ring-pink-500/20',
+            'h-11 w-full rounded-md border px-3 text-sm font-light outline-hidden transition focus:ring-2 focus:ring-[rgb(var(--section-accent-rgb)/0.2)]',
             isDark
-                ? 'border-white/10 bg-white/5 text-zinc-100 placeholder:text-zinc-500 focus:border-pink-400'
+                ? 'border-white/10 bg-white/5 text-zinc-100 placeholder:text-zinc-500 focus:border-[var(--section-accent)]'
                 : 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-slate-400',
             className
         )}
@@ -118,9 +114,9 @@ export const DashboardTextInput = ({ isDark, className, ...props }) => (
 export const DashboardSelect = ({ isDark, className, children, ...props }) => (
     <select
         className={cn(
-            'h-11 w-full rounded-md border px-3 text-sm font-light outline-hidden transition focus:ring-2 focus:ring-pink-500/20',
+            'h-11 w-full rounded-md border px-3 text-sm font-light outline-hidden transition focus:ring-2 focus:ring-[rgb(var(--section-accent-rgb)/0.2)]',
             isDark
-                ? 'border-white/10 bg-white/5 text-zinc-100 focus:border-pink-400'
+                ? 'border-white/10 bg-white/5 text-zinc-100 focus:border-[var(--section-accent)]'
                 : 'border-slate-200 bg-white text-slate-900 focus:border-slate-400',
             className
         )}
@@ -143,16 +139,15 @@ export const DashboardTitleBar = ({
     bodyClassName,
     titleClassName,
     descriptionClassName,
-    glowTopClassName = 'bg-fuchsia-500/10',
-    glowBottomClassName = 'bg-cyan-400/10',
 }) => {
     const TitleTag = titleSuffix ? 'div' : 'h1';
 
     return (
         <section className={cn('page-section-enter relative overflow-hidden rounded-md border p-6 sm:p-8', isDark ? 'border-[#2b2b40] bg-[#1e1e2d] shadow-2xl shadow-black/20' : 'border-gray-200 bg-white shadow-sm', className)}>
             <div className="absolute inset-0 pointer-events-none">
-                <div className={cn('absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl', glowTopClassName)} />
-                <div className={cn('absolute left-10 bottom-0 h-40 w-40 rounded-full blur-3xl', glowBottomClassName)} />
+                <div data-testid="title-accent-strip" className={cn('absolute inset-x-0 top-0 h-[3px]', accentClasses.bar)} />
+                <div className={cn('absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl', accentClasses.glow)} />
+                <div className={cn('absolute left-10 bottom-0 h-40 w-40 rounded-full blur-3xl', accentClasses.glow)} />
             </div>
             <div className={cn('relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between', bodyClassName)}>
                 <div>
@@ -350,7 +345,7 @@ export const DashboardWorkspaceTile = ({
 }) => (
     <Component
         className={cn(
-            'group relative flex min-h-[196px] flex-col overflow-hidden rounded-md border px-7 pb-7 pt-7 text-left outline-hidden transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-fuchsia-500',
+            'group relative flex min-h-[196px] flex-col overflow-hidden rounded-md border px-7 pb-7 pt-7 text-left outline-hidden transition-colors duration-300 focus-visible:ring-2 focus-visible:ring-[var(--section-accent)]',
             isHidden
                 ? (isDark
                     ? 'border-[#242438] bg-[#171723] text-[#616579] opacity-55'
@@ -365,7 +360,7 @@ export const DashboardWorkspaceTile = ({
         {accent ? (
             <div
                 aria-hidden="true"
-                className={cn('absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r transition-opacity duration-300', surfaceAccentMap[accent] || accent, isHidden ? 'opacity-15' : 'opacity-90')}
+                className={cn('absolute inset-x-0 top-0 h-[3px] transition-opacity duration-300', accentClasses.bar, isHidden ? 'opacity-15' : 'opacity-90')}
             />
         ) : null}
 
@@ -424,9 +419,11 @@ export const DashboardModuleTile = ({
             as={Link}
             to={to}
             isDark={isDark}
-            accent={item.accent}
+            accent={item.accent ?? true}
             icon={item.icon}
-            iconClassName={item.iconClassName}
+            iconClassName={item.iconClassName ?? accentClasses.text}
+            style={item.id ? sectionAccentStyle(item.id) : undefined}
+            data-section={item.id}
             title={item.label}
             description={item.description}
             badge={badge ? (badge > 9 ? '9+' : badge) : null}

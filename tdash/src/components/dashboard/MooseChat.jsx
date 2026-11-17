@@ -86,7 +86,7 @@ export const MooseChat = ({
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                    <span className={cn('flex h-9 w-9 items-center justify-center rounded-md', isDark ? 'bg-pink-400/15 text-pink-300' : 'bg-pink-50 text-pink-600')}>
+                    <span className={cn('flex h-9 w-9 items-center justify-center rounded-md', isDark ? 'bg-[rgb(var(--section-accent-rgb)/0.14)] text-[var(--section-accent)]' : 'bg-pink-50 text-pink-600')}>
                         <Sparkles size={18} />
                     </span>
                     <div>
@@ -108,7 +108,7 @@ export const MooseChat = ({
                         className={cn(
                             'max-w-[95%] rounded-md px-3 py-2 text-sm font-light leading-6',
                             message.role === 'user'
-                                ? (isDark ? 'ml-auto bg-pink-400/15 text-zinc-100' : 'ml-auto bg-pink-50 text-slate-800')
+                                ? (isDark ? 'ml-auto bg-[rgb(var(--section-accent-rgb)/0.14)] text-zinc-100' : 'ml-auto bg-pink-50 text-slate-800')
                                 : (isDark ? 'bg-white/5 text-zinc-200' : 'bg-slate-50 text-slate-700')
                         )}
                     >

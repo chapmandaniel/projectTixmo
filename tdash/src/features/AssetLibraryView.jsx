@@ -617,7 +617,7 @@ const AssetSelectionToggle = ({ checked, isDark, onToggle }) => (
         className={cn(
             'inline-flex h-6 w-6 items-center justify-center rounded-md border transition',
             checked
-                ? 'border-pink-400 bg-pink-500 text-white shadow-[0_0_0_1px_rgba(236,72,153,0.18)]'
+                ? 'border-[var(--section-accent)] bg-[var(--section-accent)] text-zinc-950'
                 : isDark
                     ? 'border-white/15 bg-black/20 text-transparent hover:border-white/30'
                     : 'border-slate-200 bg-white text-transparent hover:border-slate-300'
@@ -736,7 +736,7 @@ const FolderRail = ({
                             className={cn(
                                 'flex w-full items-center justify-between rounded-md border px-2 py-2 text-left transition',
                                 active
-                                    ? 'border-pink-400/40 bg-gradient-to-r from-fuchsia-500/20 to-violet-500/15 text-white'
+                                    ? 'border-[rgb(var(--section-accent-rgb)/0.45)] bg-[rgb(var(--section-accent-rgb)/0.18)] text-white'
                                     : isDark
                                         ? cn('border-transparent bg-transparent hover:border-white/10 hover:bg-white/5 hover:text-white', uiTheme.textSecondary)
                                         : 'border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900',
@@ -767,7 +767,7 @@ const FolderRail = ({
                                     className={cn(
                                         'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md',
                                         active
-                                            ? 'bg-white/10 text-pink-200'
+                                            ? 'bg-white/10 text-[var(--section-accent)]'
                                             : isDark
                                                 ? cn('bg-white/5', uiTheme.textTertiary)
                                                 : 'bg-slate-100 text-slate-500'
@@ -824,7 +824,7 @@ const FolderTile = ({ folder, isDark, movingAssetId, onDropAsset, onOpen }) => {
             className={cn('group overflow-hidden p-4 text-left', canDrop && 'ring-2 ring-cyan-400/40')}
         >
             <div className="flex items-start justify-between gap-3">
-                <span className={cn('inline-flex h-11 w-11 items-center justify-center rounded-md', isDark ? 'bg-white/10 text-fuchsia-200' : 'bg-slate-100 text-slate-700')}>
+                <span className={cn('inline-flex h-11 w-11 items-center justify-center rounded-md', isDark ? 'bg-white/10 text-[var(--section-accent)]' : 'bg-slate-100 text-slate-700')}>
                     <Icon className="h-5 w-5" />
                 </span>
             </div>
@@ -955,7 +955,7 @@ const AssetCard = ({
         }}
         className={cn(
             'group overflow-hidden text-left',
-            isActive && 'ring-2 ring-pink-500/40'
+            isActive && 'ring-2 ring-[rgb(var(--section-accent-rgb)/0.45)]'
         )}
     >
         <div className="relative">
@@ -1219,7 +1219,7 @@ const AssetUploadModal = ({
                     className={cn(
                         'mt-5 rounded-md border border-dashed p-6 text-center transition',
                         isDragging
-                            ? 'border-fuchsia-400/60 bg-fuchsia-500/10'
+                            ? 'border-[rgb(var(--section-accent-rgb)/0.45)] bg-[rgb(var(--section-accent-rgb)/0.14)]'
                             : isDark
                                 ? 'border-white/15 bg-white/5'
                                 : 'border-slate-200 bg-slate-50'
@@ -1238,7 +1238,7 @@ const AssetUploadModal = ({
                         onDropFiles(Array.from(event.dataTransfer.files || []));
                     }}
                 >
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-fuchsia-300">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-[var(--section-accent)]">
                         <Upload className="h-6 w-6" />
                     </div>
                     <p className={cn('mt-3 text-lg font-light', uiTheme.textPrimary)}>Drop files here</p>
@@ -1287,7 +1287,7 @@ const AssetUploadModal = ({
                             <button
                                 type="button"
                                 onClick={onCreateFolder}
-                                className={cn('inline-flex items-center gap-1.5 text-xs font-light transition', isDark ? 'text-fuchsia-200 hover:text-white' : 'text-slate-600 hover:text-slate-900')}
+                                className={cn('inline-flex items-center gap-1.5 text-xs font-light transition', isDark ? 'text-[var(--section-accent)] hover:text-white' : 'text-slate-600 hover:text-slate-900')}
                             >
                                 <FolderPlus className="h-3.5 w-3.5" />
                                 Create folder
@@ -1516,7 +1516,7 @@ const ShareFolderModal = ({
                                     className={cn(
                                         'flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 transition',
                                         checked
-                                            ? isDark ? 'border-fuchsia-400/40 bg-fuchsia-500/10' : 'border-slate-300 bg-slate-100'
+                                            ? isDark ? 'border-[rgb(var(--section-accent-rgb)/0.45)] bg-[rgb(var(--section-accent-rgb)/0.14)]' : 'border-slate-300 bg-slate-100'
                                             : isDark ? 'border-white/10 bg-white/5 hover:bg-white/10' : 'border-slate-200 bg-white hover:bg-slate-50'
                                     )}
                                 >

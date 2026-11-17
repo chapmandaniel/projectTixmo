@@ -105,7 +105,7 @@ export default function NotificationsView({ isDark }) {
                     ? `${pagination.total} in your inbox${unread ? ` · ${unread} unread on this page` : ''}`
                     : 'Activity from your organization.'}
                 icon={Bell}
-                iconClassName={isDark ? 'text-fuchsia-300' : 'text-fuchsia-700'}
+                iconClassName={isDark ? 'text-[var(--section-accent)]' : 'text-fuchsia-700'}
                 actions={notifications.some((item) => item && !item.readAt) ? (
                     <DashboardButton
                         isDark={isDark}
@@ -152,12 +152,12 @@ export default function NotificationsView({ isDark }) {
                                         <div className="flex items-start justify-between gap-3">
                                             <span className={cn(
                                                 'text-sm font-light',
-                                                isDark ? 'text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-orange-400' : 'text-indigo-600'
+                                                isDark ? 'text-[var(--section-accent)]' : 'text-indigo-600'
                                             )}>
                                                 {item.subject}
                                             </span>
                                             {unreadItem ? (
-                                                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-fuchsia-500" aria-label="Unread" />
+                                                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--section-accent)]" aria-label="Unread" />
                                             ) : null}
                                         </div>
                                         <p className={cn('text-sm font-light leading-relaxed', theme.textSecondary)}>{item.message}</p>

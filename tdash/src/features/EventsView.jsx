@@ -41,7 +41,7 @@ const TOOL_DEFINITIONS = [
         description: 'Use Event Studio for the V1 event setup path: basics, venue, tickets, preview, draft, and publish.',
         icon: Sparkles,
         accent: 'violet',
-        iconClassName: 'text-fuchsia-400',
+        iconClassName: 'text-[var(--section-accent)]',
     },
     {
         id: 'library',
@@ -49,7 +49,7 @@ const TOOL_DEFINITIONS = [
         description: 'Review drafts, published events, and direct links into each event workspace.',
         icon: LayoutGrid,
         accent: 'brand',
-        iconClassName: 'text-pink-400',
+        iconClassName: 'text-[var(--section-accent)]',
     },
     {
         id: 'sales',
@@ -209,7 +209,7 @@ const ActiveEventCard = ({ event, isDark, onOpen }) => {
                     <img src={getEventPoster(event)} alt="" loading="lazy" className="h-14 w-11 shrink-0 rounded object-cover shadow-sm" data-testid="event-poster-thumb" />
                 ) : null}
                 <div className="min-w-0 flex-1">
-                    <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-pink-300' : 'text-pink-600')}>
+                    <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-[var(--section-accent)]' : 'text-pink-600')}>
                         {event.category || 'Active event'}
                     </p>
                     <h3 className={cn('mt-1 truncate text-base font-light tracking-tight', uiTheme.textPrimary)}>
@@ -247,7 +247,7 @@ const ActiveEventsRail = ({ isDark, events, loading, onOpen }) => {
 
             {loading ? (
                 <div className="flex items-center justify-center py-16">
-                    <Loader2 size={28} className={cn('animate-spin', isDark ? 'text-fuchsia-400' : 'text-fuchsia-600')} />
+                    <Loader2 size={28} className={cn('animate-spin', isDark ? 'text-[var(--section-accent)]' : 'text-fuchsia-600')} />
                 </div>
             ) : events.length === 0 ? (
                 <DashboardEmptyState
@@ -295,9 +295,7 @@ const EventLibrary = ({
                 title="Event Library"
                 description="Browse drafts, live events, and hand off into event management."
                 icon={LayoutGrid}
-                iconClassName={isDark ? 'text-pink-300' : 'text-pink-700'}
-                glowTopClassName="bg-pink-500/10"
-                glowBottomClassName="bg-cyan-400/10"
+                iconClassName={isDark ? 'text-[var(--section-accent)]' : 'text-pink-700'}
                 actions={(
                     <div className="flex flex-wrap gap-3">
                         {showAutoGenerate ? (
@@ -307,7 +305,7 @@ const EventLibrary = ({
                                 onClick={onAutoGenerate}
                                 disabled={autoGenerating}
                                 className={cn(
-                                    isDark ? 'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-100 hover:bg-fuchsia-500/20' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100'
+                                    isDark ? 'border-[rgb(var(--section-accent-rgb)/0.45)] bg-[rgb(var(--section-accent-rgb)/0.14)] text-zinc-100 hover:bg-[rgb(var(--section-accent-rgb)/0.22)]' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100'
                                 )}
                             >
                                 <Zap size={16} className={autoGenerating ? 'animate-pulse' : ''} />
@@ -343,7 +341,7 @@ const EventLibrary = ({
 
             {loading ? (
                 <div className="flex items-center justify-center py-24">
-                    <Loader2 size={32} className={cn('animate-spin', isDark ? 'text-fuchsia-400' : 'text-fuchsia-600')} />
+                    <Loader2 size={32} className={cn('animate-spin', isDark ? 'text-[var(--section-accent)]' : 'text-fuchsia-600')} />
                 </div>
             ) : events.length === 0 ? (
                 <DashboardEmptyState
@@ -377,7 +375,7 @@ const EventLibrary = ({
                                 <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
-                                        <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-pink-300' : 'text-pink-600')}>{event.category || 'Event'}</p>
+                                        <p className={cn('text-[10px] uppercase tracking-[0.16em]', isDark ? 'text-[var(--section-accent)]' : 'text-pink-600')}>{event.category || 'Event'}</p>
                                         <h3 className={cn('mt-2 text-2xl font-light tracking-tight', uiTheme.textPrimary)}>{getEventName(event)}</h3>
                                     </div>
                                     <StatusBadge status={event.status} isDark={isDark} />
@@ -401,7 +399,7 @@ const EventLibrary = ({
                                             <span className={uiTheme.textPrimary}>{progress}%</span>
                                         </div>
                                         <div className={cn('h-1.5 rounded-full', isDark ? 'bg-dashboard-shell' : 'bg-slate-100')}>
-                                            <div className="h-1.5 rounded-full bg-gradient-to-r from-pink-500 to-orange-400" style={{ width: `${progress}%` }} />
+                                            <div className="h-1.5 rounded-full bg-[var(--section-accent)]" style={{ width: `${progress}%` }} />
                                         </div>
                                     </div>
 
@@ -618,9 +616,7 @@ const EventsView = ({ isDark, user }) => {
                 isDark={isDark}
                 title="Event Manager"
                 icon={Calendar}
-                iconClassName={isDark ? 'text-pink-300' : 'text-pink-700'}
-                glowTopClassName="bg-pink-500/10"
-                glowBottomClassName="bg-cyan-400/10"
+                iconClassName={isDark ? 'text-[var(--section-accent)]' : 'text-pink-700'}
             />
 
             <section className="grid grid-cols-1 items-start gap-7 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">

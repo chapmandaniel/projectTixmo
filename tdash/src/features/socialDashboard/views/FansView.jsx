@@ -87,11 +87,11 @@ export const FansView = ({ isDark, dashboard, href }) => {
                                 {row.author} · on {getPostById(row.postId)?.thumbnailLabel || row.postTitle} · {commentAge(row.createdAt)}
                             </p>
                             <div className="mt-3 flex flex-wrap gap-3">
-                                <Link to={href(`posts/${row.postId}`)} className="text-sm text-pink-400">Open post</Link>
+                                <Link to={href(`posts/${row.postId}`)} className="text-sm text-[var(--section-accent)]">Open post</Link>
                                 {tab !== 'mentions' ? (
                                     <button
                                         type="button"
-                                        className="text-sm text-pink-400"
+                                        className="text-sm text-[var(--section-accent)]"
                                         onClick={() => setHandled((current) => new Set(current).add(row.id))}
                                     >
                                         Mark handled

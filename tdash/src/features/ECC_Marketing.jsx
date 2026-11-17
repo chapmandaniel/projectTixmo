@@ -76,7 +76,7 @@ const ECC_Marketing = ({ event, isDark }) => {
                 </div>
                 <button
                     onClick={handleCreate}
-                    className={`px-4 py-2 text-sm font-light tracking-wide rounded-md flex items-center shadow-lg transition-all ${isDark ? 'bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-400 hover:to-orange-300 text-white shadow-pink-500/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'}`}
+                    className={`px-4 py-2 text-sm font-light tracking-wide rounded-md flex items-center shadow-lg transition-all ${isDark ? 'bg-[var(--section-accent)] text-zinc-950 hover:brightness-110 shadow-black/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'}`}
                 >
                     <Plus size={16} className="mr-2" /> Create Promo Code
                 </button>
@@ -114,7 +114,7 @@ const ECC_Marketing = ({ event, isDark }) => {
                                     className={`flex items-center space-x-2 px-3 py-1.5 rounded-md border cursor-pointer transition-colors ${isDark ? 'bg-[#151521] border-[#2b2b40]/60 hover:bg-[#232336]' : 'bg-gray-50 border-gray-200/60 hover:bg-gray-100'}`}
                                     onClick={() => copyToClipboard(code.code, code.id)}
                                 >
-                                    <span className={`font-mono font-light tracking-wide ${isDark ? 'text-pink-400' : 'text-indigo-600'}`}>{code.code}</span>
+                                    <span className={`font-mono font-light tracking-wide ${isDark ? 'text-[var(--section-accent)]' : 'text-indigo-600'}`}>{code.code}</span>
                                     {copiedId === code.id ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} className="opacity-50" />}
                                 </div>
                                 <StatusBadge status={code.status} isDark={isDark} />
@@ -135,7 +135,7 @@ const ECC_Marketing = ({ event, isDark }) => {
                                 </div>
                                 <div className={`w-full h-1.5 rounded-full border ${isDark ? 'bg-[#151521] border-[#2b2b40]/60' : 'bg-gray-100 border-transparent'}`}>
                                     <div
-                                        className={`h-1.5 rounded-full ${isDark ? 'bg-gradient-to-r from-pink-500 to-orange-400' : 'bg-indigo-600'}`}
+                                        className={`h-1.5 rounded-full ${isDark ? 'bg-[var(--section-accent)]' : 'bg-indigo-600'}`}
                                         style={{ width: `${code.maxUses ? Math.min((code.usesCount / code.maxUses) * 100, 100) : 0}%` }}
                                     ></div>
                                 </div>

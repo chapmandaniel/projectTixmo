@@ -73,7 +73,7 @@ const PromoCodesView = ({ isDark }) => {
                 </div>
                 <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 shadow-md shadow-pink-500/20 text-white rounded-md transition-colors font-light tracking-wide text-sm"
+                    className="flex items-center justify-center space-x-2 px-4 py-2 bg-[var(--section-accent)] text-zinc-950 hover:brightness-110 shadow-md shadow-black/20 rounded-md transition-colors font-light tracking-wide text-sm"
                 >
                     <Plus size={18} />
                     <span>Create Promo Code</span>
@@ -90,7 +90,7 @@ const PromoCodesView = ({ isDark }) => {
                             placeholder="Search by Code..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-10 pr-4 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-light tracking-wide ${isDark
+                            className={`w-full pl-10 pr-4 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-[var(--section-accent)] font-light tracking-wide ${isDark
                                 ? 'bg-[#151521] border-[#2b2b40] text-gray-200 placeholder-gray-500'
                                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                                 }`}
@@ -102,7 +102,7 @@ const PromoCodesView = ({ isDark }) => {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => { setPage(1); setStatusFilter(e.target.value); }}
-                                className={`pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-pink-500 appearance-none font-light tracking-wide ${isDark
+                                className={`pl-10 pr-8 py-2 rounded-md border focus:outline-hidden focus:ring-2 focus:ring-[var(--section-accent)] appearance-none font-light tracking-wide ${isDark
                                     ? 'bg-[#151521] border-[#2b2b40] text-gray-200'
                                     : 'bg-white border-gray-300 text-gray-900'
                                     }`}
@@ -130,7 +130,7 @@ const PromoCodesView = ({ isDark }) => {
             <div className={`overflow-hidden rounded-md border ${isDark ? 'border-[#2b2b40] bg-[#1e1e2d]' : 'border-gray-200 bg-white'}`}>
                 {isLoading ? (
                     <div className="p-20 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--section-accent)] mx-auto"></div>
                         <p className={`mt-4 text-sm font-light ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Loading promo codes...</p>
                     </div>
                 ) : filteredCodes.length === 0 ? (
@@ -158,7 +158,7 @@ const PromoCodesView = ({ isDark }) => {
                                 {filteredCodes.map((code) => (
                                     <tr key={code.id} className={`group transition-colors ${isDark ? 'hover:bg-[#232336]' : 'hover:bg-gray-50'}`}>
                                         <td className="p-4">
-                                            <span className="font-mono tracking-wide bg-indigo-50 text-indigo-700 px-2 py-1 rounded-sm dark:bg-pink-500/10 dark:text-pink-400">
+                                            <span className="font-mono tracking-wide bg-indigo-50 text-indigo-700 px-2 py-1 rounded-sm dark:bg-[rgb(var(--section-accent-rgb)/0.14)] dark:text-[var(--section-accent)]">
                                                 {code.code}
                                             </span>
                                         </td>

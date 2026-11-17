@@ -196,7 +196,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
     const getRoleBadge = (role) => {
         switch (role) {
             case 'OWNER':
-                return { icon: Lock, color: isDark ? 'bg-pink-500/12 text-pink-300' : 'bg-pink-50 text-pink-700' };
+                return { icon: Lock, color: isDark ? 'bg-[rgb(var(--section-accent-rgb)/0.14)] text-[var(--section-accent)]' : 'bg-pink-50 text-pink-700' };
             case 'ADMIN':
                 return { icon: Shield, color: isDark ? 'bg-orange-500/12 text-orange-300' : 'bg-orange-50 text-orange-700' };
             case 'MANAGER':
@@ -215,7 +215,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
         const managers = users.filter((member) => member.role === 'MANAGER').length;
 
         return [
-            { id: 'total', label: 'Members', value: users.length, icon: Users, accent: 'brand', iconClassName: 'text-pink-300' },
+            { id: 'total', label: 'Members', value: users.length, icon: Users, accent: 'brand', iconClassName: 'text-[var(--section-accent)]' },
             { id: 'active', label: 'Active', value: active, icon: CheckCircle2, accent: 'green', iconClassName: 'text-emerald-300' },
             { id: 'pending', label: 'Pending', value: pending, icon: Clock3, accent: 'amber', iconClassName: 'text-amber-300' },
             { id: 'admins', label: 'Admins', value: admins, icon: Shield, accent: 'violet', iconClassName: 'text-violet-300' },
@@ -239,15 +239,13 @@ const TeamView = ({ isDark, user: currentUser }) => {
                 title="Team Members"
                 description="Manage organization access, role coverage, and pending invites from one roster."
                 icon={Users}
-                iconClassName={isDark ? 'text-pink-300' : 'text-pink-700'}
-                glowTopClassName="bg-pink-500/10"
-                glowBottomClassName="bg-cyan-400/10"
+                iconClassName={isDark ? 'text-[var(--section-accent)]' : 'text-pink-700'}
                 actions={(
                     <DashboardButton
                         isDark={isDark}
                         onClick={() => setIsWizardOpen(true)}
                         className={cn(
-                            isDark ? 'border-pink-500 bg-pink-500 hover:border-pink-400 hover:bg-pink-400' : ''
+                            isDark ? 'border-[var(--section-accent)] bg-[var(--section-accent)] text-zinc-950 hover:brightness-110' : ''
                         )}
                     >
                         <UserPlus size={16} />
@@ -365,7 +363,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                                             onChange={(event) => setRoleDrafts((current) => ({ ...current, [member.id]: event.target.value }))}
                                                             className={cn(
                                                                 'h-9 rounded-md border px-2 text-xs font-light outline-hidden transition',
-                                                                isDark ? 'border-dashboard-borderStrong bg-dashboard-panelAlt text-zinc-100 focus:border-pink-400' : 'border-slate-200 bg-white text-slate-900 focus:border-slate-400'
+                                                                isDark ? 'border-dashboard-borderStrong bg-dashboard-panelAlt text-zinc-100 focus:border-[var(--section-accent)]' : 'border-slate-200 bg-white text-slate-900 focus:border-slate-400'
                                                             )}
                                                         >
                                                             {assignableRoles.map((role) => (
@@ -378,7 +376,7 @@ const TeamView = ({ isDark, user: currentUser }) => {
                                                             disabled={savingRoleUserId === member.id}
                                                             className={cn(
                                                                 'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-60',
-                                                                isDark ? 'bg-pink-500 text-white hover:bg-pink-400' : 'bg-slate-900 text-white hover:bg-slate-800'
+                                                                isDark ? 'bg-[var(--section-accent)] text-zinc-950 hover:brightness-110' : 'bg-slate-900 text-white hover:bg-slate-800'
                                                             )}
                                                             title="Save role"
                                                         >

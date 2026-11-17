@@ -156,7 +156,7 @@ const ScannersView = ({
                 title={title}
                 description={description}
                 icon={Smartphone}
-                iconClassName={isDark ? 'text-pink-300' : 'text-rose-700'}
+                iconClassName={isDark ? 'text-[var(--section-accent)]' : 'text-rose-700'}
                 actions={(
                     <DashboardButton
                         isDark={isDark}

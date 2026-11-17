@@ -1,3 +1,4 @@
+import { SECTION_ACCENTS } from '../../lib/sectionAccents';
 import { dashboardColorTokens } from '../../lib/dashboardTheme';
 
 export const nivoDarkTheme = {
@@ -23,7 +24,7 @@ export const nivoDarkTheme = {
             fontWeight: 300,
         },
     },
-    crosshair: { line: { stroke: '#ec4899', strokeWidth: 1, strokeOpacity: 0.5 } },
+    crosshair: { line: { stroke: SECTION_ACCENTS.analytics.hex, strokeWidth: 1, strokeOpacity: 0.5 } },
 };
 
 export const nivoLightTheme = {
@@ -51,7 +52,8 @@ export const nivoLightTheme = {
 };
 
 export const CHART_COLORS = {
-    current: '#ec4899',
+    // T135: the primary series uses the section accent.
+    current: SECTION_ACCENTS.analytics.hex,
     prior: '#64748b',
     secondary: '#06b6d4',
     positive: '#10b981',

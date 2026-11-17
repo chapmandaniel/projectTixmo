@@ -36,7 +36,7 @@ const ApprovalGalleryCard = ({ approval, isDark, onClick }) => {
                 }`}
         >
             {/* Colorful Gradient Top Bar for Square Aesthetic */}
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-pink-500 to-orange-400 opacity-70 group-hover:opacity-100 transition-opacity duration-300 z-50"></div>
+            <div className="absolute top-0 left-0 w-full h-[3px] bg-[var(--section-accent)] opacity-70 group-hover:opacity-100 transition-opacity duration-300 z-50"></div>
             {/* Thumbnail Header - Larger for Gallery */}
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100 dark:bg-[#222]">
                 {primaryAsset?.mimeType?.startsWith('image/') ? (

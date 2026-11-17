@@ -5,6 +5,7 @@ import api from '../../lib/api';
 import { DashboardSection, DashboardSurface } from '../../components/dashboard/DashboardPrimitives';
 import { getDashboardTheme } from '../../lib/dashboardTheme';
 import { cn } from '../../lib/utils';
+import { accentClasses } from '../../lib/sectionAccents';
 
 const DAY = 86400000;
 const money = (v) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(v || 0);
@@ -63,11 +64,11 @@ export const summarizePulse = ({ today, month, trend, events: rawEvents, tasks: 
     };
 };
 
-const Tile = ({ isDark, to, icon: Icon, label, value, detail, accent = 'brand', iconClassName }) => {
+const Tile = ({ isDark, to, icon: Icon, label, value, detail, iconClassName = accentClasses.text }) => {
     const theme = getDashboardTheme(isDark);
     return (
-        <Link to={to} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500">
-            <DashboardSurface isDark={isDark} accent={accent} className="h-full p-4 transition-transform hover:-translate-y-0.5 sm:p-5">
+        <Link to={to} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--section-accent)]">
+            <DashboardSurface isDark={isDark} className="h-full p-4 transition-transform hover:-translate-y-0.5 sm:p-5">
                 <div className="flex items-center justify-between gap-2">
                     <p className={cn('text-xs font-light sm:text-sm', theme.textSecondary)}>{label}</p>
                     <Icon size={16} className={iconClassName} />
@@ -123,15 +124,15 @@ const HomePulse = ({ isDark, pendingApprovals = 0, now: fixedNow }) => {
     return (
         <div className="space-y-5" data-testid="home-pulse">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-                <Tile isDark={isDark} to="/orders" icon={Ticket} iconClassName="text-pink-400" label="Tickets sold today" value={count(state.ticketsToday)}
+                <Tile isDark={isDark} to="/orders" icon={Ticket} label="Tickets sold today" value={count(state.ticketsToday)}
                     detail={`${count(state.ordersToday)} orders · ${money(state.revenueToday)}`} />
-                <Tile isDark={isDark} to="/analytics" icon={TrendingUp} accent="green" iconClassName="text-emerald-400" label="Revenue, last 30 days" value={money(state.revenue30)}
+                <Tile isDark={isDark} to="/analytics" icon={TrendingUp} label="Revenue, last 30 days" value={money(state.revenue30)}
                     detail={`${count(state.tickets30)} tickets`} />
-                <Tile isDark={isDark} to="/events" icon={liveName ? Radio : CalendarDays} accent="violet" iconClassName={liveName ? 'text-rose-400 animate-pulse' : 'text-violet-300'} label="On sale now" value={count(state.onSale)}
+                <Tile isDark={isDark} to="/events" icon={liveName ? Radio : CalendarDays} iconClassName={cn(accentClasses.text, liveName && 'animate-pulse')} label="On sale now" value={count(state.onSale)}
                     detail={liveName ? `Live now: ${liveName}` : (state.next ? `Next: ${state.next.name}` : 'No upcoming events')} />
-                <Tile isDark={isDark} to="/todo" icon={CheckSquare} accent="blue" iconClassName="text-indigo-300" label="Open tasks" value={count(state.openTasks)}
+                <Tile isDark={isDark} to="/todo" icon={CheckSquare} label="Open tasks" value={count(state.openTasks)}
                     detail={state.dueSoon ? `${state.dueSoon} due today or overdue` : 'Nothing due today'} />
-                <Tile isDark={isDark} to="/approvals" icon={Bell} accent="amber" iconClassName="text-amber-300" label="Waiting on review" value={count(pendingApprovals)}
+                <Tile isDark={isDark} to="/approvals" icon={Bell} label="Waiting on review" value={count(pendingApprovals)}
                     detail={pendingApprovals ? 'Creative out with reviewers' : 'All reviews answered'} />
             </div>
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -140,7 +141,7 @@ const HomePulse = ({ isDark, pendingApprovals = 0, now: fixedNow }) => {
                         {state.days.map((d, i) => (
                             <div key={d.date} className="flex h-full flex-1 flex-col justify-end" title={`${d.date}: ${d.tickets} tickets`}>
                                 <span
-                                    className={cn('w-full rounded-sm', i === state.days.length - 1 ? 'bg-pink-400' : (isDark ? 'bg-pink-400/35' : 'bg-pink-500/35'))}
+                                    className={cn('w-full rounded-sm', i === state.days.length - 1 ? accentClasses.bar : accentClasses.tintFaint)}
                                     style={{ height: `${Math.max(4, Math.round((d.tickets / maxTickets) * 100))}%` }}
                                 />
                             </div>

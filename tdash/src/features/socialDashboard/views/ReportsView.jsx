@@ -86,7 +86,7 @@ export const ReportsView = ({ isDark, dashboard, href }) => {
                     ))}
                 </div>
                 <p className={cn('mt-4 text-sm', theme.textSecondary)}>Leading themes: lineup praise, merch stock, transit questions.</p>
-                <Link to={href('')} className="mt-2 inline-block text-sm text-pink-400">Open full overview</Link>
+                <Link to={href('')} className="mt-2 inline-block text-sm text-[var(--section-accent)]">Open full overview</Link>
             </DashboardSection>
 
             <DashboardSection
