@@ -201,7 +201,7 @@ const ScannersView = ({
             <DashboardSurface isDark={isDark} accent={activeTab === 'scanners' ? 'brand' : 'blue'} className="p-0">
                 {isLoading ? (
                     <div className="p-12 text-center sm:p-20">
-                        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-dashboard-accent"></div>
+                        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-[var(--brand-accent)]"></div>
                         <p className={cn('mt-4 text-sm font-light', isDark ? 'text-dashboard-muted' : 'text-slate-500')}>Loading...</p>
                     </div>
                 ) : fetchError ? (

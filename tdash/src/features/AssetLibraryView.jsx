@@ -1525,7 +1525,7 @@ const ShareFolderModal = ({
                                             type="checkbox"
                                             checked={checked}
                                             onChange={() => onToggleFolderSelection(folder.id)}
-                                            className="h-4 w-4 rounded border-dashboard-border bg-dashboard-panel text-dashboard-accent focus:ring-dashboard-accent/40"
+                                            className="h-4 w-4 rounded border-dashboard-border bg-dashboard-panel text-[var(--brand-accent)] focus:ring-dashboard-accent/40"
                                         />
                                         <span className="min-w-0">
                                             <span className={cn('block truncate text-sm font-light', uiTheme.textPrimary)}>

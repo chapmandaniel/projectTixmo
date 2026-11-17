@@ -13,7 +13,7 @@ export const dashboardColorTokens = {
 export const getDashboardTheme = (isDark) => {
     if (isDark) {
         return {
-            shell: 'bg-dashboard-shell text-zinc-100 selection:bg-dashboard-accent/30',
+            shell: 'bg-dashboard-shell text-zinc-100 selection:bg-[rgb(var(--brand-accent-rgb)/0.3)]',
             shellOverlay: '',
             panel: 'border-[#31324a] bg-[#1f1f31] text-[#f2f2f7]',
             panelMuted: 'border-[#242438] bg-[#171723] text-[#f2f2f7]',
