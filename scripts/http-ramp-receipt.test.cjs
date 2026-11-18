@@ -271,6 +271,8 @@ test('current managed workflow collects pure tests and binds fresh report to cur
   );
   assert.match(source, /jest.resetModules\(\)/);
   assert.match(source, /\/api\/v1\/events\/public\//);
+  assert.match(source, /replaceProperty\(config, 'publicEventCacheTtlSeconds', 4\)/);
+  assert.match(source, /if \(kind !== 'public'\) client.set\('Authorization', `Bearer \$\{tokens\[actor\]\}`\)/);
   assert.match(source, /expect\(metrics.publicReadP95Ms\).toBeLessThanOrEqual\(500\)/);
   assert.match(source, /expect\(metrics.reservationP95Ms\).toBeLessThanOrEqual\(2000\)/);
   assert.match(source, /expect\(metrics.unexpected5xxFraction\).toBeLessThan\(0.005\)/);

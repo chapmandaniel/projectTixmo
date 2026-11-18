@@ -190,6 +190,12 @@ async function runRampStage(actorCount: number) {
       );
       spies.push({ mockRestore: () => replaced.restore() });
     }
+    // NODE_ENV=test disables the public-event cache (TTL 0) so writes are
+    // immediately visible. This ramp measures anonymous browsing during
+    // checkout, so restore the production 4s TTL after resetModules. A Bearer
+    // token on those GETs would still skip the cache via authenticatedPublicRead.
+    const publicCacheTtl = jest.replaceProperty(config, 'publicEventCacheTtlSeconds', 4);
+    spies.push({ mockRestore: () => publicCacheTtl.restore() });
     // Middleware may continue after a client deadline; observe its actual promise
     // before app/routes capture the exports. Preserve the real next() behavior.
     const auth = await import('../../src/middleware/auth');
@@ -435,7 +441,8 @@ async function runRampStage(actorCount: number) {
               ? '/api/v1/orders'
               : '/api/v1/orders/' + orderId + '/recovery';
         const client = kind === 'reservation' ? request(url).post(route) : request(url).get(route);
-        client.set('Authorization', `Bearer ${tokens[actor]}`).set('X-Forwarded-For', '127.0.0.1');
+        client.set('X-Forwarded-For', '127.0.0.1');
+        if (kind !== 'public') client.set('Authorization', `Bearer ${tokens[actor]}`);
         if (kind === 'reservation')
           client.send({ items: [{ ticketTypeId: ids.ticketType, quantity: 1 }] });
         const response = await client.timeout({ response: 5000, deadline: 8000 });
