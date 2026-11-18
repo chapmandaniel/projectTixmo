@@ -444,7 +444,7 @@ ORDER BY category;
 
 ## 6. Stale ON_SALE and PUBLISHED events
 
-Separate from the demo inventory. Ended means `COALESCE(end_datetime, start_datetime) <= now()`, the complement of the shared upcoming rule in `tixmoapi2/prisma/lib/upcoming.cjs`: `COALESCE(end_datetime, start_datetime) > now()`. A no-end event uses its start. A no-end event with a past start is ended. An event with no start and no end is not upcoming and is not in this list. The statement does not change rows.
+Separate from the demo inventory. Ended means `COALESCE(end_datetime, start_datetime) <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')`, the complement of the shared upcoming rule in `tixmoapi2/prisma/lib/upcoming.cjs`: `COALESCE(end_datetime, start_datetime) > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')`. Event bounds are stored as UTC clock time in timestamp-without-time-zone columns, so the comparison uses UTC rather than `now()`, which follows the session TimeZone. A no-end event uses its start. A no-end event with a past start is ended. An event with no start and no end is not upcoming and is not in this list. The statement does not change rows.
 
 ```sql
 SELECT e.id, e.name, e.slug, e.status, e.start_datetime, e.end_datetime,
@@ -454,6 +454,6 @@ FROM events e
 JOIN organizations o ON o.id = e.organization_id
 WHERE e.status IN ('ON_SALE', 'PUBLISHED')
   AND e.deleted_at IS NULL
-  AND COALESCE(e.end_datetime, e.start_datetime) <= now()
+  AND COALESCE(e.end_datetime, e.start_datetime) <= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 ORDER BY boundary, e.id;
 ```

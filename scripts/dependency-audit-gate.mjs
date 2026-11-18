@@ -24,9 +24,22 @@ export const DEEPMERGE_DEV_ADVISORY = 'GHSA-gcqx-w48m-w2h4';
 // Review it again on 2026-11-30.
 export const MINIMATCH_DEV_ADVISORY = 'GHSA-g3hv-75wg-m249';
 
+// GHSA-fc5q-39xc-vjpf (CVE-2026-112366) covers picomatch <=4.0.7.
+// https://github.com/advisories/GHSA-fc5q-39xc-vjpf
+// The advisory was republished into the npm audit feed on 2026-11-17.
+// There is no first_patched_version and no release after 4.0.7. Every copy
+// in tixmoapi2 and tdash is a dev-only install under Jest, lint-staged, Vite,
+// Vitest, @parcel/watcher, tinyglobby, anymatch, or fdir, and is off the
+// production walk. Remove this
+// exception when a patched picomatch is published and the lockfile no longer
+// resolves a version at or below 4.0.7. Review it again on 2026-12-17 if the
+// patch is still missing.
+export const PICOMATCH_DEV_ADVISORY = 'GHSA-fc5q-39xc-vjpf';
+
 const EXEMPT_ADVISORY_PACKAGES = new Map([
   [DEEPMERGE_DEV_ADVISORY.toLowerCase(), 'deepmerge'],
   [MINIMATCH_DEV_ADVISORY.toLowerCase(), 'minimatch'],
+  [PICOMATCH_DEV_ADVISORY.toLowerCase(), 'picomatch'],
 ]);
 
 const MINIMATCH_V3_PARENTS = new Set([
@@ -34,6 +47,19 @@ const MINIMATCH_V3_PARENTS = new Set([
   '@eslint/eslintrc',
   '@humanwhocodes/config-array',
   'glob',
+]);
+
+const PICOMATCH_PARENTS = new Set([
+  '@parcel/watcher',
+  'anymatch',
+  'fdir',
+  'jest-haste-map',
+  'jest-message-util',
+  'jest-util',
+  'lint-staged',
+  'tinyglobby',
+  'vite',
+  'vitest',
 ]);
 
 const ADVISORY_ID = /GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}/i;
@@ -295,6 +321,49 @@ function minimatchInstalls(lockfile) {
   return { ok: true };
 }
 
+function picomatchInstalls(lockfile) {
+  const packages = lockfile?.packages;
+  if (!packages || typeof packages !== 'object') return { ok: false, reason: 'lockfile has no package graph' };
+  const keys = Object.keys(packages).filter(
+    (key) => key === 'node_modules/picomatch' || key.endsWith('/node_modules/picomatch')
+  );
+  const vulnerable = keys.filter((key) => versionBelow(packages[key]?.version, '4.0.8'));
+  if (vulnerable.length === 0) {
+    return { ok: false, reason: `${PICOMATCH_DEV_ADVISORY} is present but no picomatch at or below 4.0.7 is installed` };
+  }
+
+  const root = packages[''] || {};
+  const prodRoots = [];
+  for (const name of dependencyNames(root, false)) {
+    const key = resolveInstalled(packages, '', name);
+    if (key) prodRoots.push(key);
+  }
+  const prod = walk(packages, prodRoots);
+
+  for (const key of vulnerable) {
+    if (packages[key]?.dev !== true) {
+      return { ok: false, reason: `${key} is not a dev-only install` };
+    }
+    if (prod.has(key)) return { ok: false, reason: `${PICOMATCH_DEV_ADVISORY} is reachable from a production dependency` };
+  }
+
+  for (const [key, node] of Object.entries(packages)) {
+    for (const name of dependencyNames(node, key === '')) {
+      if (name !== 'picomatch') continue;
+      const installed = resolveInstalled(packages, key, name);
+      if (!installed || !vulnerable.includes(installed)) continue;
+      const parent = packageName(key);
+      if (!PICOMATCH_PARENTS.has(parent)) {
+        return {
+          ok: false,
+          reason: `${packages[installed].version} picomatch is required by ${key || 'the package root'}, which cannot keep an unpatched picomatch`,
+        };
+      }
+    }
+  }
+  return { ok: true };
+}
+
 export function evaluateDependencyAudit(report, lockfile) {
   if (!report || typeof report !== 'object' || report.error) {
     return { ok: false, reason: 'npm audit did not return a vulnerability report' };
@@ -329,6 +398,11 @@ export function evaluateDependencyAudit(report, lockfile) {
     const installs = minimatchInstalls(lockfile);
     if (!installs.ok) return installs;
     ignored.push(`ignored ${MINIMATCH_DEV_ADVISORY} on dev-only minimatch 3 under eslint and glob 7; remove when those packages stop installing minimatch below 11.0.1 (https://github.com/advisories/GHSA-g3hv-75wg-m249)`);
+  }
+  if ([...ids].some((id) => id.toLowerCase() === PICOMATCH_DEV_ADVISORY.toLowerCase())) {
+    const installs = picomatchInstalls(lockfile);
+    if (!installs.ok) return installs;
+    ignored.push(`ignored ${PICOMATCH_DEV_ADVISORY} on dev-only picomatch <=4.0.7 under Jest, lint-staged, Vite, Vitest, and related glob tooling; remove when a patched picomatch exists (https://github.com/advisories/GHSA-fc5q-39xc-vjpf)`);
   }
   return { ok: true, ignored: ignored.join('; ') };
 }

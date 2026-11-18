@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { evaluateDependencyAudit, DEEPMERGE_DEV_ADVISORY, MINIMATCH_DEV_ADVISORY } from './dependency-audit-gate.mjs';
+import { evaluateDependencyAudit, DEEPMERGE_DEV_ADVISORY, MINIMATCH_DEV_ADVISORY, PICOMATCH_DEV_ADVISORY } from './dependency-audit-gate.mjs';
 
 const ADVISORY_URL = 'https://github.com/advisories/GHSA-gcqx-w48m-w2h4';
 const MINIMATCH_URL = 'https://github.com/advisories/GHSA-g3hv-75wg-m249';
@@ -200,6 +200,109 @@ test('the API lockfile keeps vulnerable minimatch dev-only under eslint and glob
   const lock = JSON.parse(readFileSync(new URL('../tixmoapi2/package-lock.json', import.meta.url), 'utf8'));
   const decision = evaluateDependencyAudit(findingReportWithMinimatch(), lock);
   assert.equal(decision.ok, true, decision.reason);
+});
+
+
+const PICOMATCH_URL = 'https://github.com/advisories/GHSA-fc5q-39xc-vjpf';
+
+function devPicomatchLock() {
+  const lock = devMinimatchLock();
+  lock.packages[''].devDependencies.jest = '30.5.2';
+  lock.packages['node_modules/jest-util'] = { version: '30.5.1', dev: true, dependencies: { picomatch: '^4.0.3' } };
+  lock.packages['node_modules/jest-util/node_modules/picomatch'] = { version: '4.0.7', dev: true };
+  lock.packages['node_modules/lint-staged'] = { version: '16.2.7', dev: true, dependencies: { picomatch: '^4.0.7' } };
+  lock.packages['node_modules/lint-staged/node_modules/picomatch'] = { version: '4.0.7', dev: true };
+  return lock;
+}
+
+function findingReportWithPicomatch(extra = {}) {
+  return findingReportWithMinimatch({
+    picomatch: {
+      name: 'picomatch',
+      severity: 'high',
+      via: [viaAdvisory(PICOMATCH_URL, 'picomatch', 'high')],
+      effects: ['jest-util', 'lint-staged'],
+      nodes: [
+        'node_modules/jest-util/node_modules/picomatch',
+        'node_modules/lint-staged/node_modules/picomatch',
+      ],
+    },
+    'jest-util': {
+      name: 'jest-util',
+      severity: 'high',
+      via: ['picomatch'],
+      nodes: ['node_modules/jest-util'],
+    },
+    'lint-staged': {
+      name: 'lint-staged',
+      severity: 'high',
+      via: ['picomatch'],
+      nodes: ['node_modules/lint-staged'],
+    },
+    ...extra,
+  });
+}
+
+test('passes when dev-only picomatch is exempt beside the other findings', () => {
+  const decision = evaluateDependencyAudit(findingReportWithPicomatch(), devPicomatchLock());
+  assert.equal(decision.ok, true, decision.reason);
+  assert.match(decision.ignored, new RegExp(PICOMATCH_DEV_ADVISORY));
+  assert.match(decision.ignored, new RegExp(MINIMATCH_DEV_ADVISORY));
+  assert.match(decision.ignored, new RegExp(DEEPMERGE_DEV_ADVISORY));
+});
+
+test('fails when picomatch is required outside the known dev tooling', () => {
+  const lock = devPicomatchLock();
+  lock.packages['node_modules/tools'] = { dev: true, dependencies: { picomatch: '4.0.7' } };
+  lock.packages['node_modules/tools/node_modules/picomatch'] = { version: '4.0.7', dev: true };
+  const decision = evaluateDependencyAudit(findingReportWithPicomatch(), lock);
+  assert.equal(decision.ok, false);
+  assert.match(decision.reason, /tools/);
+});
+
+test('fails when vulnerable picomatch is on a production path', () => {
+  const lock = devPicomatchLock();
+  lock.packages[''].dependencies = { app: '1.0.0' };
+  lock.packages['node_modules/app'] = { dependencies: { picomatch: '4.0.7' } };
+  lock.packages['node_modules/app/node_modules/picomatch'] = { version: '4.0.7' };
+  const decision = evaluateDependencyAudit(findingReportWithPicomatch(), lock);
+  assert.equal(decision.ok, false);
+  assert.match(decision.reason, /dev-only|production/);
+});
+
+test('the API lockfile keeps vulnerable picomatch dev-only under known glob tooling', () => {
+  const lock = JSON.parse(readFileSync(new URL('../tixmoapi2/package-lock.json', import.meta.url), 'utf8'));
+  const decision = evaluateDependencyAudit(findingReportWithPicomatch(), lock);
+  assert.equal(decision.ok, true, decision.reason);
+});
+
+
+test('passes when dev-only picomatch is required by vite and vitest', () => {
+  const lock = devPicomatchLock();
+  lock.packages['node_modules/vite'] = { version: '6.4.5', dev: true, dependencies: { picomatch: '^4.0.2' } };
+  lock.packages['node_modules/vitest'] = { version: '4.1.12', dev: true, dependencies: { picomatch: '^4.0.3' } };
+  const decision = evaluateDependencyAudit(findingReportWithPicomatch(), lock);
+  assert.equal(decision.ok, true, decision.reason);
+});
+
+test('the dashboard lockfile keeps vulnerable picomatch dev-only under vite and vitest', () => {
+  const lock = JSON.parse(readFileSync(new URL('../tdash/package-lock.json', import.meta.url), 'utf8'));
+  const decision = evaluateDependencyAudit({
+    vulnerabilities: {
+      picomatch: {
+        name: 'picomatch',
+        severity: 'high',
+        via: [viaAdvisory(PICOMATCH_URL, 'picomatch', 'high')],
+        effects: ['vite', 'vitest', 'tinyglobby'],
+        nodes: ['node_modules/picomatch'],
+      },
+      vite: { name: 'vite', severity: 'high', via: ['picomatch'], nodes: ['node_modules/vite'] },
+      vitest: { name: 'vitest', severity: 'high', via: ['picomatch'], nodes: ['node_modules/vitest'] },
+      tinyglobby: { name: 'tinyglobby', severity: 'high', via: ['picomatch'], nodes: ['node_modules/tinyglobby'] },
+    },
+  }, lock);
+  assert.equal(decision.ok, true, decision.reason);
+  assert.match(decision.ignored, new RegExp(PICOMATCH_DEV_ADVISORY));
 });
 
 test('the market gate does not widen npm audit', () => {
