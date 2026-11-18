@@ -25,6 +25,7 @@ import reviewRoutes from './review/routes';
 import assetRoutes from './assets/routes';
 import staffActionRoutes from './staff-actions/routes';
 import showpassRoutes, { showpassWebhookRouter } from './vendors/routes';
+import socialRoutes from './social/routes';
 
 const router = Router();
 
@@ -67,6 +68,7 @@ versionRouter.use('/assets', assetRoutes);
 versionRouter.use('/review', reviewRoutes);
 versionRouter.use('/staff-actions', staffActionRoutes);
 versionRouter.use('/organizations/:organizationId/showpass', showpassRoutes);
+versionRouter.use('/social', socialRoutes);
 versionRouter.use('/vendors/showpass', showpassWebhookRouter);
 
 // Mount versioned routes

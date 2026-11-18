@@ -7,7 +7,9 @@ const CommentThread = ({
     isDark,
     currentUser,
     disabled = false,
-    placeholder = 'Add a comment...'
+    placeholder = 'Add a comment...',
+    emptyTitle = 'No comments yet',
+    emptyHint = 'Start the conversation',
 }) => {
     const [content, setContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -79,8 +81,8 @@ const CommentThread = ({
                 {comments.length === 0 ? (
                     <div className={`text-center py-12 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                         <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                        <p>No comments yet</p>
-                        <p className="text-sm mt-1">Start the conversation</p>
+                        <p>{emptyTitle}</p>
+                        <p className="text-sm mt-1">{emptyHint}</p>
                     </div>
                 ) : (
                     comments.map((comment) => (

@@ -1,4 +1,5 @@
 import { assetShareLogPath } from '../utils/assetShareLogPath';
+import { socialRequestLogPath } from '../social/redaction';
 import { buyerRecoveryLogPath } from '../utils/buyerRecoveryLogPath';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../config/logger';
@@ -11,6 +12,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
     const safeUrl =
       buyerRecoveryLogPath(req.originalUrl) ||
       assetShareLogPath(req.originalUrl) ||
+      socialRequestLogPath(req.originalUrl) ||
       req.originalUrl;
     const message = `${req.method} ${safeUrl} ${res.statusCode} - ${duration}ms`;
 

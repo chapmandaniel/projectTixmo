@@ -48,6 +48,8 @@ const BuyerPasswordResetPage = lazy(() => import('./pages/BuyerPasswordResetPage
 const WalletPage = lazy(() => import('./pages/WalletPage'));
 const ScannerPage = lazy(() => import('./pages/ScannerPage'));
 const EventOnSalePage = lazy(() => import('./pages/EventOnSalePage'));
+const SocialCommandCenter = lazy(() => import('./features/social/SocialCommandCenter'));
+const SocialPreview = import.meta.env.DEV ? lazy(() => import('./features/social/SocialCommandCenter')) : null;
 const EventOnSalePreview = import.meta.env.DEV ? lazy(() => import('./pages/EventOnSalePreview')) : null;
 const FestivalPreview = import.meta.env.DEV ? lazy(() => import('./pages/FestivalPage')) : null;
 const FestivalEventPreview = import.meta.env.DEV ? lazy(() => import('./pages/FestivalPage').then(module => ({ default: module.FestivalEventPreview }))) : null;
@@ -99,7 +101,7 @@ const AppContent = ({ user, handleLogout, isDark, toggleTheme, globalError, setG
                         <Route path="/todo" element={<TodoView isDark={isDark} user={user} />} />
                         <Route path="/personal-todo" element={<Navigate to="/dashboard" replace />} />
                         <Route path="/team" element={<TeamView isDark={isDark} />} />
-                        <Route path="/social" element={<DashboardPlaceholderView isDark={isDark} title="Social" icon={MessageCircle} description={betaHoldDescription} badgeLabel="Outside V1 beta" />} />
+                        <Route path="/social/*" element={<SocialCommandCenter isDark={isDark} user={user} />} />
                         <Route path="/orders" element={<OrdersView isDark={isDark} />} />
                         <Route path="/settings" element={<SettingsView isDark={isDark} user={user} />} />
                         <Route path="/settings/integrations" element={<IntegrationsView isDark={isDark} user={user} />} />
@@ -302,6 +304,7 @@ const App = () => {
                 {/* External unauthenticated routes */}
                 <Route path="/scan" element={<ScannerPage isDark={isDark} />} />
                 <Route path="/e/:slug" element={<EventOnSalePage />} />
+                {SocialPreview && <Route path="/preview/social/*" element={<SocialPreview isDark={isDark} preview user={{ firstName: 'Avery', lastName: 'Stone', role: 'OWNER', email: 'avery@festival.test' }} />} />}
                 {EventOnSalePreview && <Route path="/preview/event-onsale" element={<EventOnSalePreview />} />}
                 {FestivalPreview && <Route path="/preview/festival" element={<FestivalPreview />} />}
                 {FestivalEventPreview && <Route path="/preview/festival/events/:slug" element={<FestivalEventPreview />} />}

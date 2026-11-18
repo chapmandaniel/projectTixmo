@@ -97,6 +97,12 @@ model User {
   assetLibraryFolderSharesCreated AssetLibraryFolderShare[] @relation("AssetLibraryFolderShareCreator")
   invitationsReceived StaffInvitation[] @relation("InvitationRecipient")
   invitationsIssued StaffInvitation[] @relation("InvitationIssuer")
+  socialIssuesAssigned SocialIssue[] @relation("SocialIssueAssignee")
+  socialIssueNotes SocialIssueNote[] @relation("SocialIssueNoteAuthor")
+  socialIssueActivities SocialIssueActivity[] @relation("SocialIssueActivityActor")
+  socialConnectionsCreated SocialConnection[] @relation("SocialConnectionCreator")
+  socialModeHoldsCreated SocialModeHold[] @relation("SocialModeHoldActor")
+  socialEventMappingsOverridden SocialEventMapping[] @relation("SocialEventMappingActor")
 
   @@map("users")
 }
@@ -141,6 +147,13 @@ model Organization {
   assetLibraryFolderShares AssetLibraryFolderShare[]
   vendorConnections VendorConnection[]
   vendorFestivalConfigs VendorFestivalConfig[]
+  socialConnections SocialConnection[]
+  socialSettings SocialOrgSettings?
+  socialIssues SocialIssue[]
+  socialPosts SocialPost[]
+  socialComments SocialComment[]
+  socialModeHolds SocialModeHold[]
+  socialEventMappings SocialEventMapping[]
 
   @@map("organizations")
 }
@@ -223,6 +236,10 @@ model Event {
   tasks Task[]
   vendorEventLink VendorEventLink?
   soldCountSnapshots VendorSoldCountSnapshot[]
+  socialEventMappings SocialEventMapping[]
+  socialPosts SocialPost[]
+  socialIssues SocialIssue[]
+  socialModeHolds SocialModeHold[]
 
   @@map("events")
 }
@@ -579,6 +596,7 @@ enum NotificationType {
   PROMO
   ANNOUNCEMENT
   TASK_MENTION
+  SOCIAL_ALERT
 }
 
 enum NotificationStatus {
@@ -1159,4 +1177,272 @@ model VendorFixtureRuntime {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("vendor_fixture_runtime")
+}
+
+// Social Command Center v1 — sandbox-only. Additive tables. No buyer/order/ticket FKs.
+
+enum SocialTokenKind {
+  sandbox
+  live
+}
+
+enum SocialConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  NEEDS_ATTENTION
+}
+
+enum SocialPlatform {
+  FACEBOOK_PAGE
+  INSTAGRAM
+}
+
+enum SocialIssueState {
+  NEW
+  IN_PROGRESS
+  HANDLED
+  DISMISSED
+}
+
+enum SocialSeverity {
+  HIGH
+  MED
+  LOW
+}
+
+enum SocialThresholdMode {
+  NORMAL
+  ON_SALE_DAY
+  EVENT_DAY
+}
+
+enum SocialMappingSource {
+  automatic
+  override
+}
+
+model SocialConnection {
+  id                 String                 @id @default(uuid())
+  organizationId     String                 @map("organization_id")
+  organization       Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platform           SocialPlatform
+  externalAccountId  String                 @map("external_account_id")
+  displayName        String                 @map("display_name")
+  handle             String?
+  status             SocialConnectionStatus @default(CONNECTED)
+  tokenKind          SocialTokenKind        @map("token_kind")
+  keyId              String?                @map("key_id")
+  tokenCiphertext    String?                @map("token_ciphertext") @db.Text
+  refreshCiphertext  String?                @map("refresh_ciphertext") @db.Text
+  lookupHmac         String?                @map("lookup_hmac")
+  graphBaseUrl       String                 @map("graph_base_url")
+  scopes             String[]               @default([])
+  linkedConnectionId String?                @map("linked_connection_id")
+  lastSyncAt         DateTime?              @map("last_sync_at")
+  lastErrorCode      String?                @map("last_error_code")
+  lastErrorAt        DateTime?              @map("last_error_at")
+  createdById        String?                @map("created_by_id")
+  createdBy          User?                  @relation("SocialConnectionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
+  posts              SocialPost[]
+  comments           SocialComment[]
+
+  @@unique([organizationId, platform, externalAccountId])
+  @@index([organizationId, status])
+  @@map("social_connections")
+}
+
+model SocialOrgSettings {
+  id                    String   @id @default(uuid())
+  organizationId        String   @unique @map("organization_id")
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  thresholds            Json
+  keywords              Json
+  highEmailEnabled      Boolean  @default(true) @map("high_email_enabled")
+  digestEnabled         Boolean  @default(false) @map("digest_enabled")
+  digestHourLocal       Int      @default(9) @map("digest_hour_local")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("social_org_settings")
+}
+
+model SocialModeHold {
+  id             String              @id @default(uuid())
+  organizationId String              @map("organization_id")
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  eventId        String?             @map("event_id")
+  event          Event?              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  mode           SocialThresholdMode
+  until          DateTime
+  actorId        String?             @map("actor_id")
+  actor          User?               @relation("SocialModeHoldActor", fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime            @default(now()) @map("created_at")
+
+  @@index([organizationId, eventId, until])
+  @@map("social_mode_holds")
+}
+
+model SocialEventMapping {
+  id             String              @id @default(uuid())
+  organizationId String              @map("organization_id")
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  externalPostId String              @map("external_post_id")
+  eventId        String              @map("event_id")
+  event          Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  source         SocialMappingSource @default(automatic)
+  actorId        String?             @map("actor_id")
+  actor          User?               @relation("SocialEventMappingActor", fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  @@unique([organizationId, externalPostId])
+  @@index([organizationId, eventId])
+  @@map("social_event_mappings")
+}
+
+model SocialPost {
+  id                String           @id @default(uuid())
+  organizationId    String           @map("organization_id")
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connectionId      String           @map("connection_id")
+  connection        SocialConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  eventId           String?          @map("event_id")
+  event             Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  externalPostId    String           @map("external_post_id")
+  platform          SocialPlatform
+  captionExcerpt    String?          @map("caption_excerpt") @db.VarChar(280)
+  permalink         String?
+  postedAt          DateTime         @map("posted_at")
+  reach             Int?
+  engagements       Int?
+  commentsCount     Int              @default(0) @map("comments_count")
+  insightsPending   Boolean          @default(false) @map("insights_pending")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  comments          SocialComment[]
+  issues            SocialIssue[]
+
+  @@unique([organizationId, externalPostId])
+  @@index([organizationId, postedAt])
+  @@index([organizationId, eventId])
+  @@map("social_posts")
+}
+
+model SocialComment {
+  id                   String           @id @default(uuid())
+  organizationId       String           @map("organization_id")
+  organization         Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connectionId         String           @map("connection_id")
+  connection           SocialConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  postId               String           @map("post_id")
+  post                 SocialPost       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  externalCommentId    String           @map("external_comment_id")
+  parentExternalId     String?          @map("parent_external_id")
+  providerCommenterId  String?          @map("provider_commenter_id")
+  handle               String?
+  body                 String?          @db.Text
+  permalink            String?
+  isPageReply          Boolean          @default(false) @map("is_page_reply")
+  createdTime          DateTime         @map("created_time")
+  sentimentLabel       String?          @map("sentiment_label")
+  topicLabel           String?          @map("topic_label")
+  classifierConfidence Float?           @map("classifier_confidence")
+  purgedAt             DateTime?        @map("purged_at")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+  issueLinks           SocialIssueComment[]
+
+  @@unique([organizationId, externalCommentId])
+  @@index([organizationId, createdTime])
+  @@index([postId, createdTime])
+  @@map("social_comments")
+}
+
+model SocialIssue {
+  id               String           @id @default(uuid())
+  organizationId   String           @map("organization_id")
+  organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  eventId          String?          @map("event_id")
+  event            Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  postId           String?          @map("post_id")
+  post             SocialPost?      @relation(fields: [postId], references: [id], onDelete: SetNull)
+  kind             String
+  topic            String
+  severity         SocialSeverity
+  state            SocialIssueState @default(NEW)
+  ruleText         String           @map("rule_text") @db.Text
+  mode             SocialThresholdMode
+  waveBucketKey    String?          @map("wave_bucket_key")
+  commentCount     Int              @default(0) @map("comment_count")
+  assigneeId       String?          @map("assignee_id")
+  assignee         User?            @relation("SocialIssueAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  dismissReason    String?          @map("dismiss_reason") @db.VarChar(1000)
+  lastAlertAt      DateTime?        @map("last_alert_at")
+  handledAt        DateTime?        @map("handled_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  comments         SocialIssueComment[]
+  notes            SocialIssueNote[]
+  activities       SocialIssueActivity[]
+
+  @@index([organizationId, state, severity])
+  @@index([organizationId, waveBucketKey])
+  @@index([organizationId, eventId])
+  @@map("social_issues")
+}
+
+model SocialIssueComment {
+  id        String        @id @default(uuid())
+  issueId   String        @map("issue_id")
+  issue     SocialIssue   @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  commentId String        @map("comment_id")
+  comment   SocialComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@unique([issueId, commentId])
+  @@map("social_issue_comments")
+}
+
+model SocialIssueNote {
+  id        String      @id @default(uuid())
+  issueId   String      @map("issue_id")
+  issue     SocialIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  authorId  String?     @map("author_id")
+  author    User?       @relation("SocialIssueNoteAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  body      String      @db.Text
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([issueId, createdAt])
+  @@map("social_issue_notes")
+}
+
+model SocialIssueActivity {
+  id        String      @id @default(uuid())
+  issueId   String      @map("issue_id")
+  issue     SocialIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  actorId   String?     @map("actor_id")
+  actor     User?       @relation("SocialIssueActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  detail    String?     @db.VarChar(1000)
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([issueId, createdAt])
+  @@map("social_issue_activities")
+}
+
+model SocialSyncRun {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  startedAt      DateTime @default(now()) @map("started_at")
+  finishedAt     DateTime? @map("finished_at")
+  status         String
+  postsFetched   Int      @default(0) @map("posts_fetched")
+  commentsFetched Int     @default(0) @map("comments_fetched")
+  errorCode      String?  @map("error_code")
+  trigger        String   @default("manual")
+
+  @@index([organizationId, startedAt])
+  @@map("social_sync_runs")
 }

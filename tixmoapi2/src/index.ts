@@ -6,6 +6,8 @@ import { startApprovalReminderJob } from './jobs/approval-reminder.job';
 import { startVendorSyncJob } from './jobs/vendor-sync.job';
 import { startOrderExpiryJob } from './jobs/order-expiry.job';
 import { startPaymentRecoveryJob } from './jobs/payment-recovery.job';
+import { startSocialPollJob } from './jobs/social-poll.job';
+import { startSocialRetentionJob } from './jobs/social-retention.job';
 import { assertSandboxDatabaseHosts } from './services/sandbox-host-guard';
 
 // app imported dynamically after connection
@@ -41,6 +43,8 @@ void (async () => {
       startPaymentRecoveryJob();
       startApprovalReminderJob();
       startVendorSyncJob();
+      startSocialPollJob();
+      startSocialRetentionJob();
     });
   } catch (err) {
     logger.error('Failed to start server', err as Error);
