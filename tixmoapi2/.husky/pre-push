@@ -7,13 +7,14 @@
 rm -f runtime/task6[0-9][0-9]-*.json
 
 # The API suite runs in a single Jest process (--runInBand, required by the
-# shared disposable database), and its heap peaks near Node's default V8 limit
-# on <=8 GB machines (~2 GB). Raise only that ceiling so the hook does not OOM.
-# Same commands and tests; a failure still blocks the push. An existing
-# --max-old-space-size in NODE_OPTIONS wins, so callers can choose another size.
+# shared disposable database). Local full-suite runs need an 8192 MiB V8
+# ceiling (T144); CI leaves the runner default (tixmoapi2/scripts/run-jest.cjs).
+# Raise only that ceiling so the hook does not OOM. Same commands and tests;
+# a failure still blocks the push. An existing --max-old-space-size of 8192
+# or higher in NODE_OPTIONS wins; npm test also bumps a smaller cap.
 case " ${NODE_OPTIONS:-} " in
   *" --max-old-space-size="*) ;;
-  *) NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=4096"
+  *) NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=8192"
      export NODE_OPTIONS ;;
 esac
 
