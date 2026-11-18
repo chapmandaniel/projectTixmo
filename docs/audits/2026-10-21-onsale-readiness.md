@@ -44,6 +44,8 @@ The local kanban CLI is unavailable. No task claim, board status or team availab
 | Monitoring | [Scheduled run 39540481002](https://github.com/chapmandaniel/projectTixmo/actions/runs/39540481002) failed on production `/ready` 404; multiple recent repeats | Cause is verified; incident/recovery alert delivery unproven |
 | Main protection | Classic protection API: “Branch not protected”; active branch rules API: empty array | Independent review is procedural, not enforced by GitHub |
 
+Note (2026-11-17): `main` is now protected with the required status checks `local-gates` and `configured-image-restore`. The GitHub merge queue is off. The “Branch not protected” result above is the October 21, 2026 finding, not the current state.
+
 Detailed sanitized observations and exact commands/results are in [current-observation.json](2026-10-21-onsale-evidence/current-observation.json). Separate runtime-config and dependency artifacts are in the same directory. Hosted checks were inspected live; the full runtime suite was not rerun locally after an exact-baseline hosted pass.
 
 The market gate has 337 API lint warnings and a design guard with 926 grandfathered violations. Neither invalidates its pass; neither proves a warning-free or fully accessible product. Broad cleanup is not the critical path.

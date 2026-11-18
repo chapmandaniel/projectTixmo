@@ -69,6 +69,10 @@ prove Docker port publication, or establish a successful full integration run.
 YAML syntax can be checked separately with an available YAML parser; an actual
 CI run remains required for runner/service integration evidence.
 
+## GitHub protection on `main`
+
+Merges into `main` require the GitHub status checks `local-gates` and `configured-image-restore` (jobs in this workflow). The GitHub merge queue is off. `guard-and-build` (Tdash Design System) is not a required check.
+
 ## Evidence To Capture
 
 - Local terminal output when run manually.
