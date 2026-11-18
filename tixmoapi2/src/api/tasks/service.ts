@@ -1,6 +1,7 @@
 import { Task, TaskComment, Prisma } from '@prisma/client';
 import { logger } from '../../config/logger';
 import { notificationApiService } from '../notifications/service';
+import { mentionsNeedingFirstNameFallback, parseNameMentions } from './mentions';
 
 import prisma from '../../config/prisma';
 
@@ -41,16 +42,24 @@ export const TaskService = {
       },
     });
 
-    // Handle description mentions if creator is known
+    // Await mention processing so a 201 means notification rows are written.
+    // Mention failures must not fail task creation (the row is already stored).
     if (creatorId && data.description) {
-      this.processMentions({
-        taskId: task.id,
-        content: data.description,
-        organizationId: task.organizationId,
-        actorUserId: creatorId,
-        taskTitle: task.title,
-        source: 'DESCRIPTION',
-      }).catch((err) => logger.error('Failed to process creation mentions', err));
+      try {
+        await this.processMentions({
+          taskId: task.id,
+          content: data.description,
+          organizationId: task.organizationId,
+          actorUserId: creatorId,
+          taskTitle: task.title,
+          source: 'DESCRIPTION',
+        });
+      } catch (err) {
+        const detail = err instanceof Error ? err.stack || err.message : String(err);
+        logger.error(
+          `Failed to process creation mentions taskId=${task.id} organizationId=${task.organizationId} actorUserId=${creatorId} source=DESCRIPTION: ${detail}`
+        );
+      }
     }
 
     return task;
@@ -209,16 +218,23 @@ export const TaskService = {
     });
 
     if (task) {
-      this.processMentions({
-        taskId: task.id,
-        content,
-        organizationId: task.organizationId,
-        actorUserId: userId,
-        taskTitle: task.title,
-        source: 'COMMENT',
-        commentId: comment.id,
-        actorName: comment.user.firstName, // optimize: already fetched
-      }).catch((err) => logger.error('Failed to process comment mentions', err));
+      try {
+        await this.processMentions({
+          taskId: task.id,
+          content,
+          organizationId: task.organizationId,
+          actorUserId: userId,
+          taskTitle: task.title,
+          source: 'COMMENT',
+          commentId: comment.id,
+          actorName: comment.user.firstName, // optimize: already fetched
+        });
+      } catch (err) {
+        const detail = err instanceof Error ? err.stack || err.message : String(err);
+        logger.error(
+          `Failed to process comment mentions taskId=${task.id} commentId=${comment.id} organizationId=${task.organizationId} actorUserId=${userId} source=COMMENT: ${detail}`
+        );
+      }
     }
 
     return comment;
@@ -245,8 +261,8 @@ export const TaskService = {
     commentId?: string;
     actorName?: string;
   }) {
+    const { taskId, content, organizationId, actorUserId, taskTitle, source, commentId } = params;
     try {
-      const { taskId, content, organizationId, actorUserId, taskTitle, source, commentId } = params;
       let actorName = params.actorName;
 
       if (!actorName) {
@@ -257,63 +273,70 @@ export const TaskService = {
         actorName = actor?.firstName || 'Someone';
       }
 
-      // Regex to capture @Firstname and optional Lastname
-      // e.g. @Daniel or @Daniel Chapman
-      const mentionRegex = /@([a-zA-Z0-9]+)(?:\s([a-zA-Z0-9]+))?/g;
-      let match;
-      const mentionedQueries: any[] = [];
+      const mentions = parseNameMentions(content);
+      if (mentions.length === 0) return;
 
-      // Reset regex lastIndex
-      mentionRegex.lastIndex = 0;
+      const scopedToOrg = {
+        organizationId,
+        id: { not: actorUserId }, // Don't notify self
+      };
 
-      while ((match = mentionRegex.exec(content)) !== null) {
-        const firstName = match[1];
-        const lastName = match[2];
-
-        const query: any = {
-          firstName: { equals: firstName, mode: 'insensitive' },
-        };
-        if (lastName) {
-          query.lastName = { equals: lastName, mode: 'insensitive' };
-        }
-        mentionedQueries.push(query);
-      }
-
-      if (mentionedQueries.length > 0) {
-        const mentionedUsers = await prisma.user.findMany({
+      const mentionedUsers: Array<{ id: string; firstName: string; lastName: string | null }> = [];
+      const withLastName = mentions.filter((mention) => mention.lastName);
+      if (withLastName.length > 0) {
+        const fullNameMatches = await prisma.user.findMany({
           where: {
-            organizationId,
-            id: { not: actorUserId }, // Don't notify self
-            OR: mentionedQueries,
+            ...scopedToOrg,
+            OR: withLastName.map((mention) => ({
+              firstName: { equals: mention.firstName, mode: 'insensitive' as const },
+              lastName: { equals: mention.lastName, mode: 'insensitive' as const },
+            })),
           },
-          select: { id: true, firstName: true },
+          select: { id: true, firstName: true, lastName: true },
         });
-
-        // Deduplicate
-        const uniqueUsers = [...new Map(mentionedUsers.map((u) => [u.id, u])).values()];
-
-        const contextMsg = source === 'COMMENT' ? 'commented' : 'mentioned you in a task';
-
-        await Promise.all(
-          uniqueUsers.map((u) =>
-            notificationApiService.createNotification({
-              userId: u.id,
-              type: 'TASK_MENTION',
-              subject: `You were mentioned in "${taskTitle}"`,
-              message: `${actorName} ${contextMsg}: "${content.length > 50 ? content.substring(0, 50) + '...' : content}"`,
-              metadata: { taskId, commentId, source },
-            })
-          )
-        );
-
-        if (uniqueUsers.length > 0) {
-          logger.info(
-            `Sent ${uniqueUsers.length} mention notifications for task ${taskId} (${source})`
-          );
-        }
+        mentionedUsers.push(...fullNameMatches);
       }
+
+      const firstNameLookups = mentionsNeedingFirstNameFallback(mentions, mentionedUsers);
+      if (firstNameLookups.length > 0) {
+        const firstNameMatches = await prisma.user.findMany({
+          where: {
+            ...scopedToOrg,
+            OR: firstNameLookups.map((mention) => ({
+              firstName: { equals: mention.firstName, mode: 'insensitive' as const },
+            })),
+          },
+          select: { id: true, firstName: true, lastName: true },
+        });
+        mentionedUsers.push(...firstNameMatches);
+      }
+
+      const uniqueUsers = [...new Map(mentionedUsers.map((u) => [u.id, u])).values()];
+      if (uniqueUsers.length === 0) return;
+
+      const contextMsg = source === 'COMMENT' ? 'commented' : 'mentioned you in a task';
+
+      await Promise.all(
+        uniqueUsers.map((u) =>
+          notificationApiService.createNotification({
+            userId: u.id,
+            type: 'TASK_MENTION',
+            subject: `You were mentioned in "${taskTitle}"`,
+            message: `${actorName} ${contextMsg}: "${content.length > 50 ? content.substring(0, 50) + '...' : content}"`,
+            metadata: { taskId, commentId, source },
+          })
+        )
+      );
+
+      logger.info(
+        `Sent ${uniqueUsers.length} mention notifications for task ${taskId} (${source})`
+      );
     } catch (error) {
-      logger.error('Error in processMentions', error);
+      const detail = error instanceof Error ? error.stack || error.message : String(error);
+      logger.error(
+        `Error in processMentions taskId=${taskId} commentId=${commentId ?? ''} organizationId=${organizationId} actorUserId=${actorUserId} source=${source}: ${detail}`
+      );
+      throw error;
     }
   },
 };

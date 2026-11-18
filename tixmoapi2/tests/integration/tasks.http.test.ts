@@ -349,7 +349,8 @@ describe('Tasks HTTP', () => {
         .set(auth(teammate.accessToken));
       expect(inbox.status).toBe(200);
       mention = (inbox.body.data?.notifications || []).find(
-        (row: { type: string }) => row.type === 'TASK_MENTION'
+        (row: { type: string; metadata?: { taskId?: string } }) =>
+          row.type === 'TASK_MENTION' && row.metadata?.taskId === taskId
       );
       if (!mention) await new Promise((resolve) => setTimeout(resolve, 50));
     }
@@ -369,5 +370,45 @@ describe('Tasks HTTP', () => {
         (row: { type: string }) => row.type === 'TASK_MENTION'
       )
     ).toEqual([]);
+  });
+
+  it('writes a TASK_MENTION notification row for a first-name @mention followed by sentence text', async () => {
+    // T140/T142: QA posted "@Qat140mnt please see this" and got no row because
+    // the parser consumed "please" as a last name. Mentions are now awaited, so
+    // the row must exist as soon as the comment 201 returns.
+    const created = await createTask(owner.accessToken, { title: 'Radio check' });
+    expect(created.status).toBe(201);
+    const taskId = created.body.id as string;
+
+    const commented = await request(app)
+      .post(`/api/v1/tasks/${taskId}/comments`)
+      .set(auth(owner.accessToken))
+      .send({ content: '@Sam please see this.' });
+    expect(commented.status).toBe(201);
+
+    const inbox = await request(app)
+      .get('/api/v1/notifications')
+      .query({ unreadOnly: 'true' })
+      .set(auth(teammate.accessToken));
+    expect(inbox.status).toBe(200);
+    const mention = (inbox.body.data?.notifications || []).find(
+      (row: { type: string; metadata?: { taskId?: string } }) =>
+        row.type === 'TASK_MENTION' && row.metadata?.taskId === taskId
+    );
+    expect(mention).toMatchObject({
+      userId: teammate.user.id,
+      type: 'TASK_MENTION',
+      subject: expect.stringMatching(/Radio check/),
+    });
+
+    const row = await prisma.notification.findFirst({
+      where: {
+        userId: teammate.user.id,
+        type: 'TASK_MENTION',
+        metadata: { path: ['taskId'], equals: taskId },
+      },
+    });
+    expect(row).not.toBeNull();
+    expect(row?.userId).toBe(teammate.user.id);
   });
 });
