@@ -218,4 +218,28 @@ export const TaskController = {
       return next(error);
     }
   },
+
+  deleteComment: async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id, commentId } = req.params;
+      const userId = req.user?.userId;
+      if (!userId)
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not authenticated' });
+
+      const organizationId = await TaskService.getUserOrganizationId(userId);
+      if (!organizationId)
+        return res
+          .status(StatusCodes.FORBIDDEN)
+          .json({ message: 'User does not belong to an organization' });
+
+      await TaskService.deleteComment(id, commentId, {
+        userId,
+        role: req.user?.role,
+        organizationId,
+      });
+      return res.status(StatusCodes.NO_CONTENT).send();
+    } catch (error) {
+      return next(error);
+    }
+  },
 };

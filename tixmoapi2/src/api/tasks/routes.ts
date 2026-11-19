@@ -204,4 +204,39 @@ router.post(
   TaskController.addComment
 );
 
+/**
+ * @swagger
+ * /tasks/{id}/comments/{commentId}:
+ *   delete:
+ *     summary: Delete a task comment
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       204:
+ *         description: Comment deleted
+ *       403:
+ *         description: Requester is not the comment author or an ADMIN
+ *       404:
+ *         description: Comment not found or is outside the organization
+ */
+router.delete(
+  '/:id/comments/:commentId',
+  [param('id').isUUID(), param('commentId').isUUID(), validate],
+  TaskController.deleteComment
+);
+
 export default router;

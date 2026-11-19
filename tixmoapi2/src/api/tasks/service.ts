@@ -3,6 +3,7 @@ import { logger } from '../../config/logger';
 import { notificationApiService } from '../notifications/service';
 
 import prisma from '../../config/prisma';
+import { ApiError } from '../../utils/ApiError';
 
 const taskEventSelect = { id: true, name: true, slug: true, ticketingMode: true };
 
@@ -222,6 +223,47 @@ export const TaskService = {
     }
 
     return comment;
+  },
+
+  /**
+   * Delete a comment. Only the author or an ADMIN may delete.
+   * Missing comments and comments outside the caller's organization are 404.
+   * Mention notifications for the comment are removed with it (metadata.commentId).
+   */
+  async deleteComment(
+    taskId: string,
+    commentId: string,
+    actor: { userId: string; role?: string; organizationId: string }
+  ): Promise<void> {
+    const comment = await prisma.taskComment.findFirst({
+      where: {
+        id: commentId,
+        taskId,
+        task: { organizationId: actor.organizationId },
+      },
+      select: { id: true, userId: true },
+    });
+
+    if (!comment) {
+      throw ApiError.notFound('Comment not found');
+    }
+
+    if (comment.userId !== actor.userId && actor.role !== 'ADMIN') {
+      throw ApiError.forbidden('Only the comment author or an ADMIN may delete this comment');
+    }
+
+    await prisma.$transaction([
+      prisma.notification.deleteMany({
+        where: {
+          type: 'TASK_MENTION',
+          metadata: {
+            path: ['commentId'],
+            equals: comment.id,
+          },
+        },
+      }),
+      prisma.taskComment.delete({ where: { id: comment.id } }),
+    ]);
   },
 
   async getUserOrganizationId(userId: string): Promise<string | null> {
