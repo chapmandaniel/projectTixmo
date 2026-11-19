@@ -9,6 +9,7 @@ describe('Tasks HTTP', () => {
 
   let owner: { user: { id: string }; accessToken: string };
   let teammate: { user: { id: string }; accessToken: string };
+  let admin: { user: { id: string }; accessToken: string };
   let foreign: { user: { id: string }; accessToken: string };
   let noOrg: { user: { id: string }; accessToken: string };
   let org: { id: string };
@@ -36,6 +37,25 @@ describe('Tasks HTTP', () => {
       where: { id: teammate.user.id },
       data: { organizationId: org.id },
     });
+    admin = await registerUser(app, {
+      email: `${key}-admin@test.invalid`,
+      firstName: 'Ada',
+      lastName: 'Admin',
+    });
+    await prisma.user.update({
+      where: { id: admin.user.id },
+      data: { organizationId: org.id, role: 'ADMIN', isPlatformAdmin: false },
+    });
+    const adminLogin = await request(app)
+      .post('/api/v1/auth/login')
+      .send({
+        email: `${key}-admin@test.invalid`,
+        password: 'SecurePass123!',
+      });
+    if (!adminLogin.body?.data?.accessToken) {
+      throw new Error(`Failed to login org admin: ${JSON.stringify(adminLogin.body)}`);
+    }
+    admin = { user: { id: admin.user.id }, accessToken: adminLogin.body.data.accessToken };
     foreign = await registerUser(app, {
       email: `${key}-foreign@test.invalid`,
       firstName: 'Pat',
@@ -367,6 +387,121 @@ describe('Tasks HTTP', () => {
     expect(
       (foreignInbox.body.data?.notifications || []).filter(
         (row: { type: string }) => row.type === 'TASK_MENTION'
+      )
+    ).toEqual([]);
+  });
+
+  it('lets the author or an ADMIN delete a comment, forbids other users, and hides missing or foreign comments', async () => {
+    const created = await createTask(owner.accessToken, { title: 'Clean up radios' });
+    expect(created.status).toBe(201);
+    const taskId = created.body.id as string;
+
+    const authored = await request(app)
+      .post(`/api/v1/tasks/${taskId}/comments`)
+      .set(auth(teammate.accessToken))
+      .send({ content: 'I will pack the radios' });
+    expect(authored.status).toBe(201);
+    const authoredId = authored.body.id as string;
+
+    const authorDeleted = await request(app)
+      .delete(`/api/v1/tasks/${taskId}/comments/${authoredId}`)
+      .set(auth(teammate.accessToken));
+    expect(authorDeleted.status).toBe(204);
+    expect(
+      (await request(app).get(`/api/v1/tasks/${taskId}`).set(auth(owner.accessToken))).body.comments
+    ).toEqual([]);
+
+    const forAdmin = await request(app)
+      .post(`/api/v1/tasks/${taskId}/comments`)
+      .set(auth(teammate.accessToken))
+      .send({ content: 'Need an admin to remove this' });
+    expect(forAdmin.status).toBe(201);
+    const forAdminId = forAdmin.body.id as string;
+
+    const ownerForbidden = await request(app)
+      .delete(`/api/v1/tasks/${taskId}/comments/${forAdminId}`)
+      .set(auth(owner.accessToken));
+    expect(ownerForbidden.status).toBe(403);
+    expect(ownerForbidden.body.message).toMatch(/author or an ADMIN/i);
+
+    const stillThere = await request(app)
+      .get(`/api/v1/tasks/${taskId}`)
+      .set(auth(owner.accessToken));
+    expect(stillThere.body.comments.map((row: { id: string }) => row.id)).toContain(forAdminId);
+
+    const adminDeleted = await request(app)
+      .delete(`/api/v1/tasks/${taskId}/comments/${forAdminId}`)
+      .set(auth(admin.accessToken));
+    expect(adminDeleted.status).toBe(204);
+    expect(
+      (
+        await request(app).get(`/api/v1/tasks/${taskId}`).set(auth(owner.accessToken))
+      ).body.comments.map((row: { id: string }) => row.id)
+    ).not.toContain(forAdminId);
+
+    const missing = randomUUID();
+    const missingRes = await request(app)
+      .delete(`/api/v1/tasks/${taskId}/comments/${missing}`)
+      .set(auth(teammate.accessToken));
+    expect(missingRes.status).toBe(404);
+
+    const remaining = await request(app)
+      .post(`/api/v1/tasks/${taskId}/comments`)
+      .set(auth(teammate.accessToken))
+      .send({ content: 'visible only inside the org' });
+    expect(remaining.status).toBe(201);
+    const foreignHidden = await request(app)
+      .delete(`/api/v1/tasks/${taskId}/comments/${remaining.body.id}`)
+      .set(auth(foreign.accessToken));
+    expect(foreignHidden.status).toBe(404);
+    expect(
+      (
+        await request(app).get(`/api/v1/tasks/${taskId}`).set(auth(owner.accessToken))
+      ).body.comments.map((row: { id: string }) => row.id)
+    ).toContain(remaining.body.id);
+  });
+
+  it('removes mention notifications when a task comment is deleted', async () => {
+    const created = await createTask(owner.accessToken, { title: 'Radio check' });
+    expect(created.status).toBe(201);
+    const taskId = created.body.id as string;
+
+    const commented = await request(app)
+      .post(`/api/v1/tasks/${taskId}/comments`)
+      .set(auth(owner.accessToken))
+      .send({ content: '@Sam Lee please confirm radios' });
+    expect(commented.status).toBe(201);
+    const commentId = commented.body.id as string;
+
+    let mention: { id?: string; type?: string } | undefined;
+    for (let attempt = 0; attempt < 20 && !mention; attempt += 1) {
+      const inbox = await request(app)
+        .get('/api/v1/notifications')
+        .query({ unreadOnly: 'true' })
+        .set(auth(teammate.accessToken));
+      expect(inbox.status).toBe(200);
+      mention = (inbox.body.data?.notifications || []).find(
+        (row: { type: string; metadata?: { commentId?: string } }) =>
+          row.type === 'TASK_MENTION' && row.metadata?.commentId === commentId
+      );
+      if (!mention) await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    expect(mention).toBeTruthy();
+
+    const deleted = await request(app)
+      .delete(`/api/v1/tasks/${taskId}/comments/${commentId}`)
+      .set(auth(owner.accessToken));
+    expect(deleted.status).toBe(204);
+
+    const inbox = await request(app)
+      .get('/api/v1/notifications')
+      .query({ unreadOnly: 'true' })
+      .set(auth(teammate.accessToken));
+    expect(inbox.status).toBe(200);
+    expect(
+      (inbox.body.data?.notifications || []).filter(
+        (row: { type: string; metadata?: { commentId?: string } }) =>
+          row.type === 'TASK_MENTION' && row.metadata?.commentId === commentId
       )
     ).toEqual([]);
   });
