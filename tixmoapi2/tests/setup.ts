@@ -8,6 +8,12 @@ if (process.env.TIXMO_TEST_ENV_CAPTURED !== '1') {
   process.env.TIXMO_CAPTURED_BROWSER_PATH = process.env.TIXMO_BROWSER_PATH ?? '';
 }
 
+jest.mock('dotenv', () => {
+  const actual = jest.requireActual<typeof import('dotenv')>('dotenv');
+  const config = () => ({ parsed: {} });
+  return { ...actual, config, default: { ...actual, config } };
+});
+
 import { execSync } from 'child_process';
 import path from 'path';
 import { AddressInfo, Server } from 'net';
