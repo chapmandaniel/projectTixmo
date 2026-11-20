@@ -245,8 +245,10 @@ Use these helpers to reduce boilerplate and avoid FK cleanup issues. Tests shoul
 
 **How to run tests (local)**
 ```bash
-# Run all tests sequentially (recommended for DB-backed tests)
-npm test -- --runInBand
+# Run all tests sequentially. Requires the disposable test environment
+# (TIXMO_ALLOW_DESTRUCTIVE_TESTS=1, tixmo_disposable_<name> database, Redis /1../15);
+# from the repo root prefer `npm run verify:api`. The test script already passes --runInBand.
+npm test
 
 # Run a single test file
 npm test -- tests/integration/tickets.test.ts
@@ -262,7 +264,7 @@ npm run typecheck
 ## CI & Automation
 
 - CI lives in the repository root `.github/workflows/`. GitHub does not run a workflow nested under `tixmoapi2/`. `Tixmo Market Readiness Local Gates` runs `npm run verify:market` from the repo root on pulls that touch this package.
-- Local API checks: `npm run typecheck` and `npm test` (the test script already passes `--runInBand`).
+- Local API checks: `npm run typecheck`, and `npm run verify:api` from the repo root against a disposable database (`npm test` works only with the same disposable environment exported; the test script already passes `--runInBand`).
 - Consider adding coverage gating and test artifact uploads in CI if required.
 
 ### ESLint Configuration & Lint Errors (Fixed Nov 6, 2025)
@@ -316,32 +318,41 @@ Update these docs if you change helper signatures.
 ### Prerequisites
 - Node.js >= 24.21.0 and < 25 (`engines` in `package.json`; CI uses 24.21.0)
 - Docker with the Compose plugin, or another local PostgreSQL 14 and Redis 7
-- PostgreSQL 14
+- PostgreSQL 14 (Ubuntu 24.04 apt ships 16: use PGDG, see `../docs/LOCAL_SETUP_NATIVE.md`)
 - Redis 7
 
 ### Quick Start
+This API is a package in the `chapmandaniel/projectTixmo` monorepo. Run these from the repo root.
 ```bash
 # Install dependencies (same lockfile install CI uses)
-npm ci
+npm ci --prefix tixmoapi2
 
-# Setup environment
-cp .env.example .env
+# Setup environment, then fill in JWT_SECRET, JWT_REFRESH_SECRET,
+# SESSION_SECRET and VENDOR_CREDENTIAL_KEY (see docs/vendor-import-local.md)
+cp tixmoapi2/.env.example tixmoapi2/.env
 
-# Start database & cache (Compose file in this directory)
-docker compose up -d
+# Start database & cache (shared development stack, database `tixmoapi`)
+npm run dev:services
+# No Docker? Install PostgreSQL 14 and Redis 7 and create the role and
+# database: see docs/LOCAL_SETUP_NATIVE.md
 
-# Run migrations
-npx prisma migrate dev
+# Apply migrations (prisma migrate deploy; do not use `prisma migrate dev`)
+npm --prefix tixmoapi2 run migrate
 
-# Start development server
+# Optional: seed the fake market demo organization (see docs/MARKET_DEMO_DATA.md)
+npm run demo:market
+
+# Start development server (add `-- --no-services` when Docker is not installed)
 npm run dev
-
-# Run tests
-npm test
 
 # View API documentation
 open http://localhost:3000/api/v1/docs
 ```
+
+Tests do not run against `tixmoapi`. Use a disposable database and
+`npm run verify:api` from the repo root (see Testing Strategy above and
+`../docs/LOCAL_SETUP_NATIVE.md`). A local `tixmoapi2/.env` can break a few
+suites, so move it aside while testing.
 
 ### Environment Variables
 ```env
@@ -501,8 +512,10 @@ See API_DOCS_GUIDE.md for full instructions, schemas overview, and troubleshooti
 # Install dependencies (same lockfile install CI uses)
 npm ci
 
-# Run tests sequentially (DB-backed). The test script already passes --runInBand.
-npm test
+# Run the DB-backed API tests from the repo root. Needs a disposable
+# tixmo_disposable_<name> database, a Redis /1../15 URL and
+# TIXMO_ALLOW_DESTRUCTIVE_TESTS=1 (see ../docs/LOCAL_SETUP_NATIVE.md).
+npm run verify:api
 ```
 
 ---
