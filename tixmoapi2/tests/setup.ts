@@ -8,12 +8,6 @@ if (process.env.TIXMO_TEST_ENV_CAPTURED !== '1') {
   process.env.TIXMO_CAPTURED_BROWSER_PATH = process.env.TIXMO_BROWSER_PATH ?? '';
 }
 
-jest.mock('dotenv', () => {
-  const actual = jest.requireActual<typeof import('dotenv')>('dotenv');
-  const config = () => ({ parsed: {} });
-  return { ...actual, config, default: { ...actual, config } };
-});
-
 import { execSync } from 'child_process';
 import path from 'path';
 import { AddressInfo, Server } from 'net';
@@ -23,6 +17,14 @@ const { bootstrapTestDatabase } = require('../../scripts/verification-safety.cjs
 bootstrapTestDatabase(process.env, execSync, path.resolve(__dirname, '..'));
 
 // Mock Redis client globally
+// Keep jest.mock('dotenv') below this marker. scripts/verification-safety.test.mjs
+// evals the prefix above in a Node vm with no Jest globals.
+jest.mock('dotenv', () => {
+  const actual = jest.requireActual<typeof import('dotenv')>('dotenv');
+  const config = () => ({ parsed: {} });
+  return { ...actual, config, default: { ...actual, config } };
+});
+
 // Supertest binds an unspecified address but always targets IPv4. On macOS an
 // IPv6 listener can share a port with an unrelated IPv4 listener. Connect to the
 // family we actually bound so test requests cannot reach that other service.
