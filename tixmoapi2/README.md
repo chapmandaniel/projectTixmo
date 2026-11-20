@@ -399,10 +399,9 @@ Comprehensive documentation is available in the following files:
 
 - **[DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)** - 32-week development roadmap
 - **[PROGRESS.md](PROGRESS.md)** - Live progress tracking and metrics
-- **[NEXT_STEPS.md](NEXT_STEPS.md)** - Detailed action plan for upcoming work
-- **[READY_TO_RUN.md](READY_TO_RUN.md)** - Quick start guide
-- **[AUTH_IMPLEMENTATION.md](AUTH_IMPLEMENTATION.md)** - Authentication system docs
-- **[QUICKSTART.md](QUICKSTART.md)** - Developer onboarding guide
+- **[MASTER_DOCUMENTATION.md](MASTER_DOCUMENTATION.md)** - Authoritative project and API documentation
+- **[LOCAL_SETUP_NATIVE.md](../docs/LOCAL_SETUP_NATIVE.md)** - Setup without Docker (PostgreSQL 14 on Ubuntu 24.04), market demo seed and login, `.env` versus Jest
+- **[MARKET_DEMO_DATA.md](../docs/MARKET_DEMO_DATA.md)** - Seeded demo organization and login
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
 
 ---

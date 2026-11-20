@@ -45,23 +45,36 @@ chore: update dependencies
 - Write unit tests for all utility functions
 - Write integration tests for API endpoints
 - Aim for >80% code coverage
-- Run tests before committing: `npm test`
+- Run tests before committing with `npm run verify:api` from the repo root
+
+API tests are destructive and refuse to run against the shared development
+database `tixmoapi`. They need `TIXMO_ALLOW_DESTRUCTIVE_TESTS=1`, a loopback
+`DATABASE_URL` whose database is named `tixmo_disposable_<name>`, and a
+loopback `REDIS_URL` on database `/1` through `/15`. See
+`docs/LOCAL_SETUP_NATIVE.md` (repo root) for creating them.
 
 ```bash
-# Run all tests
-npm test
+# From the repo root: schema push + the full API Jest suite
+TIXMO_ALLOW_DESTRUCTIVE_TESTS=1 \
+  DATABASE_URL=postgresql://tixmo:tixmo_dev_password@127.0.0.1:5432/tixmo_disposable_local \
+  REDIS_URL=redis://127.0.0.1:6379/1 \
+  npm run verify:api
 
-# Run tests in watch mode
+# From tixmoapi2/, with the same variables exported:
+npm test                  # the script already passes --runInBand
 npm run test:watch
-
-# Check coverage
 npm run test:coverage
 ```
+
+A local `tixmoapi2/.env` copied from `.env.example` can make a few suites fail
+(auth `429` responses and the CORS config test), because some tests reload the
+config with `NODE_ENV` set to `development` or `production`. Move `.env` aside
+while running the suite. Details in `docs/LOCAL_SETUP_NATIVE.md`.
 
 ### Pull Request Process
 
 1. Update your branch with main: `git pull origin main`
-2. Run tests: `npm test`
+2. Run tests: `npm run verify:api` from the repo root (disposable database required, see Testing above)
 3. Run linter: `npm run lint:fix`
 4. Format code: `npm run format`
 5. Commit your changes
@@ -173,8 +186,7 @@ tests/
 ## Questions?
 
 - Check the [Development Plan](./DEVELOPMENT_PLAN.md)
-- Review [Next Steps](./NEXT_STEPS.md)
-- Check [Project Manager](./PROJECT_MANAGER.md)
+- Review [Progress](./PROGRESS.md)
 - Ask in team chat or create an issue
 
 ## Documentation maintenance
