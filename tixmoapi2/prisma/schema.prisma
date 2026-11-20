@@ -968,9 +968,9 @@ model ApprovalReminder {
   providerMessageId String?           @map("provider_message_id")
   lastError         String?           @map("last_error") @db.Text
   createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
+  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at")
 
-  @@unique([approvalRevisionId, reviewerId, reminderType])
+  @@unique([approvalRevisionId, reviewerId, reminderType], map: "approval_reminders_approval_revision_id_reviewer_id_reminder_ty")
   @@index([status, claimedAt])
   @@map("approval_reminders")
 }
@@ -1085,7 +1085,7 @@ model VendorFestivalConfig {
   createdAt            DateTime         @default(now()) @map("created_at")
   updatedAt            DateTime         @updatedAt @map("updated_at")
 
-  @@unique([organizationId, provider, vendorVenueId])
+  @@unique([organizationId, provider, vendorVenueId], map: "vendor_festival_configs_organization_id_provider_vendor_venue_i")
   @@map("vendor_festival_configs")
 }
 
@@ -1103,7 +1103,7 @@ model VendorEventLink {
   createdAt           DateTime       @default(now()) @map("created_at")
   updatedAt           DateTime       @updatedAt @map("updated_at")
 
-  @@unique([organizationId, provider, externalItemId])
+  @@unique([organizationId, provider, externalItemId], map: "vendor_event_links_organization_id_provider_external_item_id_ke")
   @@index([externalItemId])
   @@map("vendor_event_links")
 }
@@ -1120,8 +1120,8 @@ model VendorSoldCountSnapshot {
   capturedAt            DateTime              @default(now()) @map("captured_at")
   source                VendorSoldCountSource
 
-  @@unique([eventId, externalTicketTypeId])
-  @@index([organizationId, externalItemId])
+  @@unique([eventId, externalTicketTypeId], map: "vendor_sold_count_snapshots_event_id_external_ticket_type_id_ke")
+  @@index([organizationId, externalItemId], map: "vendor_sold_count_snapshots_organization_id_external_item_id_id")
   @@map("vendor_sold_count_snapshots")
 }
 
@@ -1144,7 +1144,7 @@ model VendorWebhookInbox {
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
 
-  @@unique([connectionId, signedInvoiceId, eventType])
+  @@unique([connectionId, signedInvoiceId, eventType], map: "vendor_webhook_inbox_connection_id_signed_invoice_id_event_type")
   @@index([status, processingStartedAt])
   @@map("vendor_webhook_inbox")
 }
