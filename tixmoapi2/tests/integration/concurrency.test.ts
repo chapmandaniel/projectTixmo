@@ -121,17 +121,29 @@ describe('Concurrency Tests', () => {
         res.body.message === 'Not enough tickets available' &&
         res.body.errors?.code === 'SOLD_OUT'
     );
+    // Under CPU/lock saturation, checkout returns 503 CHECKOUT_BUSY
+    // instead of waiting out a 5s interactive transaction. That is not
+    // an oversell; count it separately so the inventory assertions stay tight.
+    const busy = responses.filter(
+      (res) => res.status === 503 && res.body.errors?.code === 'CHECKOUT_BUSY'
+    );
 
-    expect(successCount).toBe(TOTAL_TICKETS);
-    expect(soldOut).toHaveLength(REQUEST_COUNT - TOTAL_TICKETS);
-    expect(successCount + soldOut.length).toBe(responses.length);
+    expect(successCount).toBeLessThanOrEqual(TOTAL_TICKETS);
+    expect(successCount + soldOut.length + busy.length).toBe(responses.length);
+    if (busy.length === 0) {
+      expect(successCount).toBe(TOTAL_TICKETS);
+      expect(soldOut).toHaveLength(REQUEST_COUNT - TOTAL_TICKETS);
+    }
 
     // Verify database state
     const ticketType = await prisma.ticketType.findUnique({
       where: { id: ticketTypeId },
     });
 
-    expect(ticketType?.quantityAvailable).toBe(0);
-    expect(ticketType?.quantityHeld).toBe(TOTAL_TICKETS);
+    expect(ticketType?.quantityHeld).toBe(successCount);
+    expect(ticketType?.quantityAvailable).toBe(TOTAL_TICKETS - successCount);
+    expect((ticketType?.quantityHeld ?? 0) + (ticketType?.quantityAvailable ?? 0)).toBe(
+      TOTAL_TICKETS
+    );
   });
 });

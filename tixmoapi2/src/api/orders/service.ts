@@ -704,7 +704,13 @@ export class OrderService {
     const scope = actorId ? await this.actorOrderScope(actorId) : userId ? { userId } : {};
     const observed = await prisma.order.findFirst({ where: { id, ...scope } });
     if (!observed) throw ApiError.notFound('Order not found');
+    // Same lock and statement limits as checkout and cancelExpiredOrder. This
+    // path is also used after a checkout transaction times out
+    // (releaseTimedOutReservation). Without the limits, a lock held by a
+    // sibling checkout can stall this cancel for many seconds and leave the
+    // original request hanging past the caller's deadline.
     return prisma.$transaction(async (tx) => {
+      await applyCheckoutDbLimits(tx);
       await lockOrder(tx, id);
       const current = await tx.order.findFirst({ where: { id, ...scope } });
       if (!current) throw ApiError.notFound('Order not found');
@@ -715,7 +721,7 @@ export class OrderService {
       )
         throw ApiError.badRequest('Cannot cancel order that has changed');
       return this.cancelOrderInTransaction(tx, id, scope);
-    });
+    }, checkoutTransactionOptions());
   }
 
   /**
