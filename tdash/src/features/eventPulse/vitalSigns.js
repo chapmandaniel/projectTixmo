@@ -10,7 +10,7 @@
 
 import { ANALYTICS_PAGES, selectAnalyticsDashboard } from '../analyticsDashboard/mockAnalytics';
 import { POSTS } from '../socialDashboard/mockData';
-import { buildSeedFindings } from '../scamswarm/scamSwarmData';
+import { buildSeedFindings, plainKind } from '../scamswarm/scamSwarmData';
 import { buildSuspectedAttacks } from '../security/securityReport';
 import { generateEventSlug } from '../../lib/utils';
 
@@ -126,7 +126,7 @@ const safetySign = ({ safety }) => {
             to: `/scamswarm?event=${encodeURIComponent(first.event)}`,
             state: safety.scams.length ? 'bad' : 'watch',
             headline: safety.scams.length ? plural(safety.scams.length, 'likely scam') : `${plural(risky, 'thing')} to check`,
-            detail: `${first.kindLabel} on ${first.platformLabel}${risky > 1 ? ` and ${count(risky - 1)} more to check` : ''}`,
+            detail: `${plainKind(first)} on ${first.platformLabel}${risky > 1 ? ` and ${count(risky - 1)} more to check` : ''}`,
         };
     }
     if (safety.attacks.length) {
