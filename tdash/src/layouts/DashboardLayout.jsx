@@ -6,6 +6,7 @@ import {
     Menu, X, Share2, ShieldCheck, Radar
 } from 'lucide-react';
 import { isSocialDashboardNavVisible } from '../features/socialDashboard/flag';
+import { pageAccentStyle } from '../lib/pageAccent';
 
 import api from '../lib/api';
 import { Link } from 'react-router-dom';
@@ -244,7 +245,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, isDark, toggleTheme
     const scrollContainerRef = React.useRef(null);
 
     return (
-        <div className={cn('min-h-screen flex flex-col transition-colors duration-300', isDark ? 'bg-[#151521] text-zinc-100 selection:bg-[rgb(var(--brand-accent-rgb)/0.3)]' : 'bg-[#f5f6fa] text-slate-900 selection:bg-slate-200')}>
+        <div style={pageAccentStyle(activeView)} data-page-accent={activeView} className={cn('min-h-screen flex flex-col transition-colors duration-300', isDark ? 'bg-[#151521] text-zinc-100 selection:bg-[rgb(var(--brand-accent-rgb)/0.3)]' : 'bg-[#f5f6fa] text-slate-900 selection:bg-slate-200')}>
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

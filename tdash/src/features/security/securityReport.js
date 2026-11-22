@@ -190,7 +190,7 @@ export const buildTeamHealth = (now = Date.now()) => {
             leak = {
                 status: 'resolved',
                 label: 'Match already reset',
-                detail: `Appeared on a known breach list; already reset ${relativeTime(leakResetAt, now)}. No further action needed.`,
+                detail: `Appeared on a known breach list; already reset ${relativeTime(leakResetAt, now)}.`,
             };
             nextStep = { label: 'Already reset. No further action needed.', action: null };
             attention = 'resolved';
@@ -310,6 +310,18 @@ export const buildProtectionLayers = (now = Date.now()) => {
     };
 };
 
+// The plain-language read at the top of the page: the verdict first, then what
+// is fine, then the one small thing worth doing. `meaning` is the same words as
+// a single paragraph (Moose and older callers read that).
+export const MEANING = {
+    headline: 'Nothing here needs urgent attention.',
+    points: [
+        { tone: 'ok', text: 'Your event pages are up and locked with HTTPS, your team is signed in safely, checkout is being screened, and tonight\'s door devices are ready.' },
+        { tone: 'protected', text: 'Every suspected attack in the last 30 days was blocked or mitigated, and nothing was breached.' },
+        { tone: 'nudge', text: 'Two teammates are recommended to choose a stronger password, and three invites will set up 2FA when they join.' },
+    ],
+};
+
 export const buildSecurityReport = (now = Date.now()) => {
     const rand = prng(daySeed(now));
     // Share of the day elapsed keeps counts growing through the day instead of jumping.
@@ -378,7 +390,9 @@ export const buildSecurityReport = (now = Date.now()) => {
         scannedAt: scanAt,
         nextScanAt: new Date(scanAt.getTime() + SCAN_INTERVAL_MINUTES * MINUTE),
         windowLabel: 'Last 24 hours',
-        meaning: 'Nothing here needs urgent attention. Your event pages are up and locked with HTTPS, your team is signed in safely, checkout is being screened, and tonight\'s door devices are ready. Every suspected attack in the last 30 days was blocked or mitigated, and nothing was breached. Two teammates are recommended to choose a stronger password, and three invites will set up 2FA when they join.',
+        meaning: [MEANING.headline, ...MEANING.points.map((point) => point.text)].join(' '),
+        meaningHeadline: MEANING.headline,
+        meaningPoints: MEANING.points,
         sources,
         devices: DOOR_DEVICES,
         team,
