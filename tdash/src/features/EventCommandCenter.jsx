@@ -9,7 +9,7 @@ import { formatEventDate, DEFAULT_EVENT_TIMEZONE } from '../lib/eventTime';
 import EventSalesControl from './EventSalesControl';
 import StatusBadge from '../components/StatusBadge';
 import { DashboardButton, DashboardIconButton } from '../components/dashboard/DashboardPrimitives';
-import ECC_Overview from './ECC_Overview';
+import EventPulseOverview from './eventPulse/EventPulseOverview';
 import ECC_Orders from './ECC_Orders';
 import ECC_Attendees from './ECC_Attendees';
 import ECC_Tickets from './ECC_Tickets';
@@ -93,7 +93,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
     const renderContent = () => {
         switch (activeView) {
             case 'overview':
-                return <ECC_Overview event={event} isDark={isDark} onViewOrders={() => navigate(`/events/${event.id}/orders`)} />;
+                return <EventPulseOverview event={event} isDark={isDark} onViewOrders={() => navigate(`/events/${event.id}/orders`)} />;
             case 'orders':
                 return externalSale ? <ExternalSaleNotice purchaseUrl={purchaseUrl} /> : <ECC_Orders event={event} isDark={isDark} />;
             case 'attendees':
@@ -113,7 +113,7 @@ const EventCommandCenter = ({ event, onBack, isDark, user, onUpdate }) => {
             case 'settings':
                 return <ECC_Settings event={event} isDark={isDark} user={user} onEdit={() => setShowEditModal(true)} onDeleted={() => { onUpdate?.(); onBack?.(); }} />;
             default:
-                return <ECC_Overview event={event} isDark={isDark} onViewOrders={() => navigate(`/events/${event.id}/orders`)} />;
+                return <EventPulseOverview event={event} isDark={isDark} onViewOrders={() => navigate(`/events/${event.id}/orders`)} />;
         }
     };
 

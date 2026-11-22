@@ -23,7 +23,7 @@ vi.mock('../lib/api', () => ({
     },
 }));
 
-vi.mock('../features/ECC_Overview', () => ({
+vi.mock('../features/eventPulse/EventPulseOverview', () => ({
     default: ({ event }) => <div>Overview for {event.name || event.title}</div>,
 }));
 

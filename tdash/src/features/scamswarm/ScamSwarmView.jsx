@@ -442,7 +442,12 @@ const timeNow = () => new Date().toLocaleTimeString('en-CA', { hour: 'numeric', 
 const ScamSwarmView = ({ isDark = true }) => {
     const theme = getDashboardTheme(isDark);
     const [findings, setFindings] = useState(buildSeedFindings);
-    const [filters, setFilters] = useState({ verdict: 'all', platform: 'all', event: 'all', status: 'all' });
+    // An event page can link here already filtered: /scamswarm?event=<event name>.
+    const [filters, setFilters] = useState(() => {
+        const wanted = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('event');
+        const event = wanted && eventsIn(buildSeedFindings()).includes(wanted) ? wanted : 'all';
+        return { verdict: 'all', platform: 'all', event, status: 'all' };
+    });
     const [openId, setOpenId] = useState(null);
 
     const summary = useMemo(() => summarize(findings), [findings]);
