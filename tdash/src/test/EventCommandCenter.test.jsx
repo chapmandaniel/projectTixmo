@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import EventCommandCenter from '../features/EventCommandCenter';
 
-vi.mock('../features/ECC_Overview', () => ({
+vi.mock('../features/eventPulse/EventPulseOverview', () => ({
     default: ({ event }) => <div>Overview for {event.name}</div>,
 }));
 

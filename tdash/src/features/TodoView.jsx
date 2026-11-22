@@ -35,7 +35,8 @@ const TodoView = ({ isDark, user }) => {
     const [expandedColId, setExpandedColId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [events, setEvents] = useState([]);
-    const [eventFilter, setEventFilter] = useState('');
+    // An event page can link here already filtered: /todo?event=<event id>.
+    const [eventFilter, setEventFilter] = useState(() => (typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('event') || ''));
 
     useEffect(() => {
         fetchTasks();
