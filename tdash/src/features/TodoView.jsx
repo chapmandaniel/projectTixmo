@@ -6,7 +6,7 @@ import KanbanCard from './KanbanCard';
 import api from '../lib/api';
 import { auth } from '../lib/auth';
 import { DashboardSelect, DashboardTitleBar } from '../components/dashboard/DashboardPrimitives';
-import { accentClasses } from '../lib/brandAccent';
+import { pageAccentClasses } from '../lib/pageAccent';
 
 const STATUS_MAP = {
     'TO_DO': 'todo',
@@ -218,12 +218,12 @@ const TodoView = ({ isDark, user }) => {
         }
     };
 
-    // T135: columns share the Tasks accent; Done keeps semantic green.
+    // Open columns carry the soft Tasks page line; Done keeps semantic green.
     const COLUMN_ACCENTS = {
-        todo: accentClasses.bar,
-        inProgress: accentClasses.bar,
-        review: accentClasses.bar,
-        done: 'bg-emerald-400'
+        todo: pageAccentClasses.strip,
+        inProgress: pageAccentClasses.strip,
+        review: pageAccentClasses.strip,
+        done: 'h-[2px] bg-emerald-400'
     };
 
     return (
@@ -287,7 +287,7 @@ const TodoView = ({ isDark, user }) => {
                         onDrop={(e) => handleDrop(e, colId)}
                         className={`relative h-full flex-shrink-0 w-72 lg:flex-1 min-w-[280px] rounded-md p-4 flex flex-col transition-all border overflow-hidden ${isDark ? 'bg-[#1e1e2d] border-[#2b2b40]/60 shadow-lg shadow-black/20' : 'bg-gray-50 border-gray-200/60'}`}
                     >
-                        <div className={`absolute top-0 left-0 w-full h-[3px] ${COLUMN_ACCENTS[colId]} opacity-80`}></div>
+                        <div className={`absolute top-0 left-0 w-full ${COLUMN_ACCENTS[colId]} opacity-80`}></div>
 
                         <div className="flex justify-between items-center mb-4 z-10 pt-1">
                             <div className="flex items-center space-x-2">

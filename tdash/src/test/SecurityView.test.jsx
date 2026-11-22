@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import SecurityView from '../features/security/SecurityView';
-import { buildSecurityReport, buildTeamHealth, DOC_IP_RANGES, lastScanAt, relativeTime, TEAM_ROSTER } from '../features/security/securityReport';
+import { buildSecurityReport, buildTeamHealth, DOC_IP_RANGES, lastScanAt, PROTECTION_LAYER_DEFS, relativeTime, TEAM_ROSTER } from '../features/security/securityReport';
+import { LAYER_INFO, areaTone, attackInfo } from '../features/security/securityAreas';
 
 const NOW = new Date('2026-11-16T14:47:00Z').getTime();
 
@@ -102,6 +103,94 @@ describe('SecurityView', () => {
 
         fireEvent.click(within(within(health).getByTestId('team-health-liam')).getByRole('button', { name: 'Send reminder' }));
         expect(within(health).getByRole('button', { name: 'Send reminder sent (demo)' })).toBeDisabled();
+    });
+
+    it('tells the parts of the page apart: one colour per area, and green or amber only for status', () => {
+        render(<SecurityView isDark now={NOW} />);
+
+        // The only accent line belongs to the page header; cards and sections draw none.
+        expect(screen.getAllByTestId('title-accent-strip')).toHaveLength(1);
+        expect(screen.queryAllByTestId('surface-accent')).toHaveLength(0);
+
+        // Each platform keeps its own colour, and none of them borrows a status colour.
+        const sources = screen.getByTestId('security-sources');
+        const badgeClasses = ['website', 'account', 'checkout', 'doors'].map((id) => {
+            const card = within(sources).getByTestId(`security-source-${id}`);
+            const badge = card.querySelector('span[aria-hidden="true"]');
+            expect(badge.className).toContain(areaTone(id, true).badge);
+            return areaTone(id, true).badge;
+        });
+        expect(new Set(badgeClasses).size).toBe(4);
+        for (const id of ['website', 'account', 'checkout', 'doors', 'data']) {
+            for (const theme of [true, false]) {
+                expect(Object.values(areaTone(id, theme)).join(' ')).not.toMatch(/emerald|green|amber|yellow|red|rose/);
+            }
+        }
+
+        // Protection layers are grouped by what they look after, in plain words first.
+        const layers = screen.getByTestId('protection-layers');
+        const pages = within(layers).getByTestId('protection-group-website');
+        expect(pages).toHaveTextContent('Event pages');
+        for (const id of ['waf', 'ddos', 'bots', 'tls']) {
+            expect(within(pages).getByTestId(`protection-layer-${id}`)).toBeInTheDocument();
+        }
+        expect(within(layers).getByTestId('protection-layer-waf')).toHaveTextContent('Blocks break-in attempts on your pages');
+        expect(within(layers).getByTestId('protection-layer-waf')).toHaveTextContent('Web application firewall (WAF)');
+        expect(within(within(layers).getByTestId('protection-group-checkout')).getByTestId('protection-layer-fraud')).toBeInTheDocument();
+        expect(Object.keys(LAYER_INFO).sort()).toEqual(PROTECTION_LAYER_DEFS.map((layer) => layer.id).sort());
+
+        // Attacks lead with what happened; the technical name stays on the row.
+        const firstAttack = within(screen.getByTestId('suspected-attacks-list')).getAllByRole('listitem')[0];
+        expect(firstAttack).toHaveTextContent('Someone tried stolen passwords on your team sign-in');
+        expect(firstAttack).toHaveTextContent('Credential stuffing');
+        for (const item of buildSecurityReport(NOW).attacks.items) {
+            expect(attackInfo(item.kind).plain).not.toBe(item.kind);
+        }
+
+        // Amber is kept for the two people with something to do, and they come first.
+        const rows = within(screen.getByTestId('team-health-roster')).getAllByRole('listitem');
+        expect(rows.slice(0, 2).map((row) => row.getAttribute('data-testid'))).toEqual(['team-health-liam', 'team-health-sean']);
+        const amberRows = rows.filter((row) => /amber/.test(row.className));
+        expect(amberRows.map((row) => row.getAttribute('data-testid'))).toEqual(['team-health-liam', 'team-health-sean']);
+        expect(screen.getByTestId('team-health-avery')).not.toHaveTextContent('Action recommended');
+        expect(screen.getByTestId('team-health-avery')).not.toHaveTextContent('All clear');
+
+        // A device paused on purpose is labelled, not flagged as a problem.
+        expect(screen.getByTestId('security-device-signal')).toHaveTextContent('Paused');
+        expect(screen.getByTestId('security-device-signal').className).not.toMatch(/amber/);
+        expect(screen.getByTestId('security-device-lost-ipad')).toHaveTextContent('Revoked');
+    });
+
+    it('reads the verdict first and lets the activity feed be narrowed to one area', () => {
+        render(<SecurityView isDark now={NOW} />);
+
+        const summary = screen.getByTestId('security-hero-summary');
+        expect(summary).toHaveTextContent('Nothing here needs urgent attention.');
+        const report = buildSecurityReport(NOW);
+        expect(report.meaning).toBe([report.meaningHeadline, ...report.meaningPoints.map((point) => point.text)].join(' '));
+        expect(report.meaning).toContain('Two teammates are recommended to choose a stronger password');
+        expect(within(summary).getByRole('button', { name: 'See who' })).toBeInTheDocument();
+        // The verdict comes before the four tiles.
+        expect(
+            screen.getByText('Nothing here needs urgent attention.').compareDocumentPosition(screen.getByText('Event pages online'))
+            & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+
+        const feed = screen.getByTestId('security-feed');
+        const total = within(feed).getAllByRole('listitem').length;
+        expect(total).toBe(report.feed.length);
+        // Routine "all clear" rows stay quiet; only the notable ones carry a label.
+        expect(within(feed).queryByText('All clear')).not.toBeInTheDocument();
+        expect(within(feed).getAllByText('Protected').length).toBe(report.feed.filter((item) => item.tone === 'protected').length);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Checkout' }));
+        const checkoutRows = within(feed).getAllByRole('listitem');
+        expect(checkoutRows).toHaveLength(report.feed.filter((item) => item.source === 'checkout').length);
+        expect(checkoutRows.length).toBeLessThan(total);
+        expect(screen.getByRole('button', { name: 'Checkout' })).toHaveAttribute('aria-pressed', 'true');
+
+        fireEvent.click(screen.getByRole('button', { name: 'All' }));
+        expect(within(feed).getAllByRole('listitem')).toHaveLength(total);
     });
 
     it('keeps the last check within five minutes of now and the team-health numbers stable and fake', () => {

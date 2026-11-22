@@ -107,6 +107,21 @@
     animation: fadeIn 0.3s ease-in-out;
   }
 
+  /* One thin, soft line per page in that page's own colour (src/lib/pageAccent.js). */
+  .page-accent-strip {
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--page-accent-rgb, var(--brand-accent-rgb)) / 0.9),
+      rgb(var(--page-accent-rgb, var(--brand-accent-rgb)) / 0.35) 45%,
+      rgb(var(--page-accent-rgb, var(--brand-accent-rgb)) / 0.06)
+    );
+  }
+
+  .page-accent-glow {
+    background: rgb(var(--page-accent-rgb, var(--brand-accent-rgb)) / 0.1);
+  }
+
   .page-section-enter {
     animation: pageSectionEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
     animation-delay: var(--section-delay, 0ms);

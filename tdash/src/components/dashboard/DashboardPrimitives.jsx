@@ -4,14 +4,18 @@ import { Link } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { getDashboardTheme } from '../../lib/dashboardTheme';
 import { accentClasses } from '../../lib/brandAccent';
+import { PAGE_ACCENTS, pageAccentClasses, pageAccentIconStyle } from '../../lib/pageAccent';
 
-// T135: any truthy `accent` renders the scoped section accent as one solid
-// strip (the old per-card gradient keywords are accepted but no longer vary).
+// The accent line is used sparingly: one per page, on the page header. A
+// surface only draws it when asked with accent="hero" (a page with no header
+// bar). The older colour keywords (brand, slate, green, ...) are still accepted
+// by callers but no longer draw anything, so cards stop competing for the eye.
+const drawsAccent = (accent) => accent === 'hero';
 
 export const DashboardSurface = ({
     as: Component = 'div',
     isDark,
-    accent = 'brand',
+    accent = false,
     interactive = false,
     className,
     children,
@@ -29,11 +33,11 @@ export const DashboardSurface = ({
             )}
             {...props}
         >
-            {accent ? (
+            {drawsAccent(accent) ? (
                 <div
                     aria-hidden="true"
                     data-testid="surface-accent"
-                    className={cn('pointer-events-none absolute inset-x-0 top-0 h-[3px]', accentClasses.bar)}
+                    className={cn('pointer-events-none absolute inset-x-0 top-0', pageAccentClasses.strip)}
                 />
             ) : null}
             {children}
@@ -145,16 +149,15 @@ export const DashboardTitleBar = ({
     return (
         <section className={cn('page-section-enter relative overflow-hidden rounded-md border p-6 sm:p-8', isDark ? 'border-[#2b2b40] bg-[#1e1e2d] shadow-2xl shadow-black/20' : 'border-gray-200 bg-white shadow-sm', className)}>
             <div className="absolute inset-0 pointer-events-none">
-                <div data-testid="title-accent-strip" className={cn('absolute inset-x-0 top-0 h-[3px]', accentClasses.bar)} />
-                <div className={cn('absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl', accentClasses.glow)} />
-                <div className={cn('absolute left-10 bottom-0 h-40 w-40 rounded-full blur-3xl', accentClasses.glow)} />
+                <div data-testid="title-accent-strip" className={cn('absolute inset-x-0 top-0', pageAccentClasses.strip)} />
+                <div className={cn('absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl', pageAccentClasses.glow)} />
             </div>
             <div className={cn('relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between', bodyClassName)}>
                 <div>
                     <TitleTag className={cn('flex flex-wrap items-baseline gap-3 text-3xl font-light tracking-tight sm:text-4xl', isDark ? 'text-gray-100' : 'text-gray-900', titleClassName)}>
                         <span className="inline-flex items-center gap-2">
                             <span>{title}</span>
-                            {Icon ? <Icon className={cn('h-6 w-6 sm:h-7 sm:w-7', iconClassName)} /> : null}
+                            {Icon ? <Icon className={cn('h-6 w-6 sm:h-7 sm:w-7', iconClassName)} style={pageAccentIconStyle(isDark)} /> : null}
                         </span>
                         {titleSuffix ? titleSuffix : null}
                     </TitleTag>
@@ -231,7 +234,7 @@ export const DashboardPage = ({ className, children }) => (
     </div>
 );
 
-export const DashboardSection = ({ isDark, accent = 'slate', title, description, actions, className, children }) => {
+export const DashboardSection = ({ isDark, accent = false, title, description, actions, className, children }) => {
     const theme = getDashboardTheme(isDark);
 
     return (
@@ -329,9 +332,10 @@ export const DashboardStripedRow = ({
 export const DashboardWorkspaceTile = ({
     as: Component = 'button',
     isDark,
-    accent = 'brand',
+    accent = false,
     icon: Icon,
     iconClassName,
+    iconStyle,
     title,
     description,
     badge,
@@ -357,15 +361,15 @@ export const DashboardWorkspaceTile = ({
         )}
         {...props}
     >
-        {accent ? (
+        {drawsAccent(accent) ? (
             <div
                 aria-hidden="true"
-                className={cn('absolute inset-x-0 top-0 h-[3px] transition-opacity duration-300', accentClasses.bar, isHidden ? 'opacity-15' : 'opacity-90')}
+                className={cn('absolute inset-x-0 top-0 transition-opacity duration-300', pageAccentClasses.strip, isHidden ? 'opacity-15' : 'opacity-90')}
             />
         ) : null}
 
         <div className="z-10 mb-9 flex w-full items-center justify-between">
-            {Icon ? <Icon size={27} className={iconClassName} /> : children}
+            {Icon ? <Icon size={27} className={iconClassName} style={iconStyle} /> : children}
             {badge ? (
                 <span className="flex h-6 items-center justify-center rounded-full bg-[#ff3366] px-3 text-[11px] font-medium text-white shadow-md">
                     {badge}
@@ -402,6 +406,15 @@ export const DashboardWorkspaceTile = ({
     </Component>
 );
 
+// A Home tile wears the colour of the dashboard it opens, so the colour on the
+// tile is the colour of that page's header. Tiles for pages with no colour of
+// their own keep the brand purple from their class.
+const moduleIconStyle = (id, isDark) => {
+    const accent = id ? PAGE_ACCENTS[id] : null;
+    if (!accent) return undefined;
+    return { color: isDark ? accent.softHex : accent.inkHex };
+};
+
 export const DashboardModuleTile = ({
     to,
     item,
@@ -422,6 +435,7 @@ export const DashboardModuleTile = ({
             accent={item.accent ?? true}
             icon={item.icon}
             iconClassName={item.iconClassName ?? accentClasses.text}
+            iconStyle={moduleIconStyle(item.id, isDark)}
             title={item.label}
             description={item.description}
             badge={badge ? (badge > 9 ? '9+' : badge) : null}

@@ -221,7 +221,7 @@ const EventPulseOverview = ({ event, isDark, onViewOrders, now: fixedNow }) => {
 
     return (
         <div className={cn('space-y-6', theme.textPrimary)} data-testid="event-pulse">
-            <DashboardSurface isDark={isDark} accent="brand" className="p-5 sm:p-6">
+            <DashboardSurface isDark={isDark} accent="hero" className="p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                         <p className={cn('text-xs font-light', theme.textSecondary)}>Event pulse</p>
