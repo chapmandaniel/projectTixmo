@@ -449,3 +449,177 @@ export const sweepSummary = {
     lastSweepMinutes: 4,
     mentionsScanned: 18420,
 };
+
+// ---------------------------------------------------------------------------
+// Promoter view. The scoring above stays the engine; everything below turns
+// it into the three things a promoter asks: is anyone ripping off my fans,
+// how bad is it, and what do I do. Plain words, no scores on the page.
+// ---------------------------------------------------------------------------
+
+export const PLAIN_KINDS = {
+    giveaway: 'Fake giveaway',
+    impersonator: 'Fake account posing as you',
+    resale: 'Resale scam',
+    phishing: 'Fake login page',
+    counterfeit: 'Fake tickets for sale',
+    fan: 'Fan page',
+    reseller: 'Fan reselling a ticket',
+};
+
+export const plainKind = (finding) => PLAIN_KINDS[finding?.kind] || finding?.kindLabel || 'Suspicious post';
+
+// Poster art already served with the Labs dashboard (tdash/public/demo-assets).
+const EVENT_POSTER_KEYS = {
+    'Harbour Lights Festival': 'harbour',
+    'Aurora After Dark': 'aurora',
+    'Kitchen Party Social': 'kitchen',
+    'Late Show Comedy Club': 'comedy',
+    'Saltwater Sessions: Mara Vale': 'saltwater',
+    'Winter Lanterns Gala': 'gala',
+    'Iceberg Alley Jazz Brunch': 'jazz',
+};
+export const eventPoster = (eventName) => (EVENT_POSTER_KEYS[eventName] ? `/demo-assets/${EVENT_POSTER_KEYS[eventName]}-poster.svg` : '');
+
+export const BUCKETS = {
+    needs: { id: 'needs', label: 'Needs you' },
+    look: { id: 'look', label: 'Worth a look' },
+    handled: { id: 'handled', label: 'Handled' },
+    fine: { id: 'fine', label: 'Looks fine' },
+};
+export const BUCKET_ORDER = ['needs', 'look', 'handled', 'fine'];
+
+/** Where a finding sits for the promoter: waiting on them, worth a glance, dealt with, or harmless. */
+export const bucketOf = (finding) => {
+    if (finding.verdict === 'safe') return 'fine';
+    if (finding.status === 'reported' || finding.status === 'resolved') return 'handled';
+    return finding.verdict === 'scam' ? 'needs' : 'look';
+};
+
+export const countBuckets = (findings) => {
+    const counts = { needs: 0, look: 0, handled: 0, fine: 0 };
+    (findings || []).forEach((finding) => { counts[bucketOf(finding)] += 1; });
+    return counts;
+};
+
+/** How many people a post or page can reach, when the capture says so. */
+export const reachPeople = (finding) => {
+    const text = String(finding?.reach || '');
+    const match = text.match(/([\d.]+)\s*(k)?\s*(followers|views)/i) || text.match(/group of\s*([\d.]+)\s*(k)?/i);
+    if (!match) return 0;
+    return Math.round(Number(match[1]) * (match[2] ? 1000 : 1));
+};
+
+const people = (value) => new Intl.NumberFormat('en-CA').format(Math.round(value / 100) * 100 || value);
+
+export const reachWords = (finding) => {
+    const count = reachPeople(finding);
+    return count ? `Could reach about ${people(count)} people` : finding.reach;
+};
+
+/** How sure Moose is, in words and as a 1-5 level for the dots. Never a number on the page. */
+export const sureness = (finding) => {
+    const score = finding?.score || 0;
+    const level = Math.max(1, Math.min(5, Math.ceil(score / 20)));
+    if (finding?.verdict === 'safe') return { level, label: 'Looks fine' };
+    if (score >= 85) return { level, label: 'Almost certainly a scam' };
+    if (score >= 70) return { level, label: 'Very likely a scam' };
+    return { level, label: 'Might be a scam' };
+};
+
+const HARM = /^(asks|collects|charges|wants|payment|winners|fake|claims|links to a look-alike|poses|lists more|barcode)/i;
+const GOOD = /official|face.value|warns fans|personal fan|active for|years old/i;
+
+/** The one line that says what this does to fans: the harm if there is one, otherwise the strongest sign. */
+export const mainReason = (finding) => {
+    const signals = [...(finding?.signals || [])].sort((a, b) => b.points - a.points);
+    if (finding?.verdict === 'safe') return (signals.find((signal) => GOOD.test(signal.label)) || signals[signals.length - 1])?.label || '';
+    const harm = signals.find((signal) => signal.points > 0 && HARM.test(signal.label));
+    return (harm || signals[0])?.label || '';
+};
+
+const STARTS_WITH_VERB = /^(asks|collects|charges|wants|poses|claims|lists|links|uses|copies|reuses|replies|runs)\b/i;
+
+/** "a fake giveaway on Instagram that asks entrants for card details by DM" */
+export const describeFinding = (finding) => {
+    const kind = plainKind(finding).toLowerCase();
+    const what = `${finding.kind === 'counterfeit' ? '' : 'a '}${kind} on ${finding.platform === 'web' ? 'the web' : finding.platformLabel}`;
+    const reason = mainReason(finding);
+    if (!reason) return what;
+    const clause = reason[0].toLowerCase() + reason.slice(1);
+    return STARTS_WITH_VERB.test(reason) ? `${what} that ${clause}` : `${what}: ${clause}`;
+};
+
+/** The step Moose recommends, so each card carries one clear button. */
+export const nextStep = (finding) => {
+    const bucket = bucketOf(finding);
+    if (bucket === 'fine') return null;
+    if (bucket === 'handled') {
+        if (finding.status === 'resolved') return { id: 'done', label: finding.resolution || 'Resolved' };
+        return { id: 'waiting', label: `Reported. Waiting on ${finding.platform === 'web' ? 'the host' : finding.platformLabel}` };
+    }
+    if (bucket === 'look') return { id: 'open', label: 'Take a look' };
+    if (finding.platform === 'web') return { id: 'takedown', label: 'Get it taken down' };
+    return { id: 'report', label: `Report to ${finding.platformLabel}` };
+};
+
+/** One row per event that anything was found for, most in need first. */
+export const groupByEvent = (findings) => {
+    const groups = new Map();
+    (findings || []).forEach((finding) => {
+        const group = groups.get(finding.event) || { event: finding.event, poster: eventPoster(finding.event), needs: 0, look: 0, handled: 0, fine: 0, reach: 0, total: 0 };
+        const bucket = bucketOf(finding);
+        group[bucket] += 1;
+        group.total += 1;
+        if (bucket === 'needs') group.reach += reachPeople(finding);
+        groups.set(finding.event, group);
+    });
+    return [...groups.values()].sort((a, b) => b.needs - a.needs || b.look - a.look || b.total - a.total || a.event.localeCompare(b.event));
+};
+
+const listed = (items) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`);
+
+/**
+ * Moose speaks first: a headline and a few plain lines about what is out there.
+ * @returns {{ tone: 'bad'|'watch'|'good', pill: string, headline: string, lines: string[] }}
+ */
+export const buildScamRead = (findings) => {
+    const list = findings || [];
+    const needs = list.filter((finding) => bucketOf(finding) === 'needs').sort((a, b) => b.score - a.score);
+    const counts = countBuckets(list);
+    const waiting = list.filter((finding) => finding.status === 'reported').length;
+    const gone = list.filter((finding) => finding.status === 'resolved' && finding.verdict !== 'safe').length;
+    const handledLine = counts.handled
+        ? `${[waiting ? `${waiting} ${waiting === 1 ? 'is' : 'are'} reported and waiting on the platform` : '', gone ? `${gone} ${gone === 1 ? 'is' : 'are'} already gone` : ''].filter(Boolean).join(', and ')}.`
+        : '';
+
+    if (needs.length) {
+        const reach = needs.reduce((sum, finding) => sum + reachPeople(finding), 0);
+        const worst = needs[0];
+        const targets = groupByEvent(needs);
+        const lines = [`The worst is ${describeFinding(worst)}.`];
+        if (targets.length > 1) lines.push(`${targets[0].event} is the main target${targets[0].needs > 1 ? `, with ${targets[0].needs} of them` : ''}.`);
+        lines.push(`I have written the report for ${needs.length === 1 ? 'it' : 'each one'}, and a warning you can send to ticket holders.`);
+        return {
+            tone: 'bad',
+            pill: `${needs.length} ${needs.length === 1 ? 'scam needs' : 'scams need'} you`,
+            headline: `${needs.length} ${needs.length === 1 ? 'scam is' : 'scams are'} live${reach ? ` and could reach about ${people(reach)} people` : ' right now'}.`,
+            lines,
+        };
+    }
+    if (counts.look) {
+        return {
+            tone: 'watch',
+            pill: `${counts.look} worth a look`,
+            headline: 'Nothing dangerous is waiting on you.',
+            lines: [`${counts.look} ${counts.look === 1 ? 'post is' : 'posts are'} worth a look, but ${counts.look === 1 ? 'it does' : 'they do'} not look like outright scams.`, handledLine].filter(Boolean),
+        };
+    }
+    return {
+        tone: 'good',
+        pill: 'All clear',
+        headline: 'All clear. Nobody out there is pretending to be you.',
+        lines: [handledLine, counts.fine ? `${counts.fine} fan ${counts.fine === 1 ? 'page or resale looks' : 'pages and resales look'} fine.` : ''].filter(Boolean),
+    };
+};
+
+export { listed as joinPlain };
