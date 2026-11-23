@@ -33,7 +33,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
     "@vitejs/plugin-react": "^4.7.0",
-    "jsdom": "^27.4.0",
+    "jsdom": "^31.0.1",
     "postcss": "^8.5.32",
     "tailwindcss": "^4.3.3",
     "vite": "6.4.5",
